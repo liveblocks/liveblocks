@@ -21,16 +21,20 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.15.3",
-    "dependency-cruiser": "^16.3.3",
-    "prettier": "^3.3.2",
+    "@types/node": "^18.19.70",
+    "dependency-cruiser": "^16.9.0",
+    "prettier": "^3.4.2",
     "publint": "^0.2.8",
     "ts-morph": "^22.0.0",
     "tsd": "^0.31.1",
-    "tsup": "^8.1.0",
+    "tsup": "^8.3.5",
     "turbo": "^2.3.3",
-    "typescript": "<4.8"
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": ">=22.x"
+  },
+  "overrides": {
+    "@types/node": "$@types/node"
   }
 }

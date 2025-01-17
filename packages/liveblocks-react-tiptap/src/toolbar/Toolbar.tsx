@@ -1,16 +1,23 @@
 import {
+  BlockquoteIcon,
   BoldIcon,
   Button,
-  capitalize,
-  ChevronDownIcon,
+  CheckIcon,
   CodeIcon,
   CommentIcon,
+  H1Icon,
+  H2Icon,
+  H3Icon,
   ItalicIcon,
+  ListOrderedIcon,
+  ListUnorderedIcon,
   QuestionMarkIcon,
   RedoIcon,
+  SelectButton,
   ShortcutTooltip,
   SparklesIcon,
   StrikethroughIcon,
+  TextIcon,
   TooltipProvider,
   UnderlineIcon,
   UndoIcon,
@@ -18,18 +25,20 @@ import {
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { Editor } from "@tiptap/react";
-import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useMemo, useState } from "react";
+import type {
+  ComponentProps,
+  ComponentType,
+  KeyboardEvent,
+  ReactNode,
+} from "react";
+import { forwardRef, useCallback, useContext, useMemo } from "react";
 
-import { DEFAULT_AI_NAME } from "../ai/AiToolbar";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
-import type {
-  AiExtensionStorage,
-  ExtendedChainedCommands,
-} from "../types";
+import type { AiExtensionStorage, ExtendedChainedCommands } from "../types";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
 
-export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
+export const BLOCK_SELECT_SIDE_OFFSET = 10;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
 
 export interface ToolbarSlotProps {
@@ -39,34 +48,127 @@ export interface ToolbarSlotProps {
 export type ToolbarSlot = ReactNode | ComponentType<ToolbarSlotProps>;
 
 export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
+  /**
+   * The Tiptap editor.
+   */
   editor: Editor | null;
+
+  /**
+   * The content of the toolbar, overriding the default content.
+   * Use the `before` and `after` props if you want to keep and extend the default content.
+   */
   children?: ToolbarSlot;
-  leading?: ToolbarSlot;
-  trailing?: ToolbarSlot;
+
+  /**
+   * The content to display at the start of the toolbar.
+   */
+  before?: ToolbarSlot;
+
+  /**
+   * The content to display at the end of the toolbar.
+   */
+  after?: ToolbarSlot;
 }
 
-interface ToolbarButtonProps extends ComponentProps<"button"> {
+export interface ToolbarButtonProps extends ComponentProps<"button"> {
+  /**
+   * The name of this button displayed in its tooltip.
+   */
+  name: string;
+
+  /**
+   * An optional icon displayed in this button.
+   */
   icon?: ReactNode;
-  label: string;
+
+  /**
+   * An optional keyboard shortcut displayed in this button's tooltip.
+   *
+   * @example
+   * "Mod-Alt-B" → "⌘⌥B" in Apple environments, "⌃⌥B" otherwise
+   * "Ctrl-Shift-Escape" → "⌃⇧⎋"
+   * "Space" → "␣"
+   */
   shortcut?: string;
 }
 
-interface ToolbarToggleProps extends ToolbarButtonProps {
+export interface ToolbarToggleProps extends ToolbarButtonProps {
+  /**
+   * Whether the button is toggled.
+   */
   active: boolean;
 }
 
-interface ToolbarSelectOption {
-  value: string;
-  label?: string;
+export interface ToolbarBlockSelectorItem {
+  /**
+   * The name of this block element, displayed as the label of this item.
+   */
+  name: string;
+
+  /**
+   * Optionally replace the name used as the label of this item by any content.
+   */
+  label?: ReactNode;
+
+  /**
+   * An optional icon displayed in this item.
+   */
   icon?: ReactNode;
+
+  /**
+   * Whether this block element is currently active.
+   * Set to `"default"` to display this item when no other item is active.
+   */
+  isActive: ((editor: Editor) => boolean) | "default";
+
+  /**
+   * A callback invoked when this item is selected.
+   */
+  setActive: (editor: Editor) => void;
 }
 
-interface ToolbarSelectProps extends ComponentProps<"button"> {
-  label: string;
-  options: ToolbarSelectOption[];
+export interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
+  /**
+   * The items displayed in this block selector.
+   * When provided as an array, the default items are overridden. To avoid this,
+   * a function can be provided instead and it will receive the default items.
+   *
+   * @example
+   * <Toolbar.BlockSelector
+   *   items={[
+   *     {
+   *       name: "Text",
+   *       isActive: "default",
+   *       setActive: () => { ... },
+   *     },
+   *     {
+   *       name: "Heading 1",
+   *       isActive: () => { ... },
+   *       setActive: () => { ... },
+   *     },
+   *   ]}
+   * />
+   *
+   * @example
+   * <Toolbar.BlockSelector
+   *   items={(defaultItems) => [
+   *     ...defaultItems,
+   *     {
+   *       name: "Custom block",
+   *       isActive: () => { ... },
+   *       setActive: () => { ... },
+   *     },
+   *   ]}
+   * />
+   */
+  items?:
+    | ToolbarBlockSelectorItem[]
+    | ((
+        defaultItems: ToolbarBlockSelectorItem[]
+      ) => ToolbarBlockSelectorItem[]);
 }
 
-type ToolbarSeparatorProps = ComponentProps<"div">;
+export type ToolbarSeparatorProps = ComponentProps<"div">;
 
 export function applyToolbarSlot(
   slot: ToolbarSlot,
@@ -82,15 +184,36 @@ export function applyToolbarSlot(
 }
 
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  ({ icon, children, label, shortcut, ...props }, forwardedRef) => {
+  ({ icon, children, name, shortcut, onKeyDown, ...props }, forwardedRef) => {
+    const floatingToolbarContext = useContext(FloatingToolbarContext);
+    const closeFloatingToolbar = floatingToolbarContext?.close;
+
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLButtonElement>) => {
+        onKeyDown?.(event);
+
+        if (
+          !event.isDefaultPrevented() &&
+          closeFloatingToolbar &&
+          event.key === "Escape"
+        ) {
+          closeFloatingToolbar();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      [onKeyDown, closeFloatingToolbar]
+    );
+
     return (
-      <ShortcutTooltip content={label} shortcut={shortcut}>
+      <ShortcutTooltip content={name} shortcut={shortcut}>
         <Button
           type="button"
           variant="toolbar"
           ref={forwardedRef}
           icon={icon}
           {...props}
+          onKeyDown={handleKeyDown}
         >
           {children}
         </Button>
@@ -109,60 +232,234 @@ const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
   }
 );
 
-const ToolbarSelect = forwardRef<HTMLButtonElement, ToolbarSelectProps>(
-  ({ options, ...props }, forwardedRef) => {
-    // const editor = useCurrentEditor("ToolbarSelect", "Toolbar");
-    const [value, setValue] = useState<string>();
-    const formattedValue = useMemo(() => {
-      const option = options.find((option) => option.value === value);
+function createDefaultBlockSelectorItems(
+  editor: Editor
+): ToolbarBlockSelectorItem[] {
+  const items: (ToolbarBlockSelectorItem | null)[] = [
+    {
+      name: "Text",
+      icon: <TextIcon />,
+      isActive: "default",
+      setActive: (editor) => editor.chain().focus().clearNodes().run(),
+    },
+    "toggleHeading" in editor.commands
+      ? {
+          name: "Heading 1",
+          icon: <H1Icon />,
+          isActive: (editor) => editor.isActive("heading", { level: 1 }),
+          setActive: (editor) =>
+            (
+              editor.chain().focus().clearNodes() as ExtendedChainedCommands<
+                "toggleHeading",
+                [{ level: number }]
+              >
+            )
+              .toggleHeading({ level: 1 })
+              .run(),
+        }
+      : null,
+    "toggleHeading" in editor.commands
+      ? {
+          name: "Heading 2",
+          icon: <H2Icon />,
+          isActive: (editor) => editor.isActive("heading", { level: 2 }),
+          setActive: (editor) =>
+            (
+              editor.chain().focus().clearNodes() as ExtendedChainedCommands<
+                "toggleHeading",
+                [{ level: number }]
+              >
+            )
+              .toggleHeading({ level: 2 })
+              .run(),
+        }
+      : null,
+    "toggleHeading" in editor.commands
+      ? {
+          name: "Heading 3",
+          icon: <H3Icon />,
+          isActive: (editor) => editor.isActive("heading", { level: 3 }),
+          setActive: (editor) =>
+            (
+              editor.chain().focus().clearNodes() as ExtendedChainedCommands<
+                "toggleHeading",
+                [{ level: number }]
+              >
+            )
+              .toggleHeading({ level: 3 })
+              .run(),
+        }
+      : null,
+    "toggleBulletList" in editor.commands
+      ? {
+          name: "Bullet list",
+          icon: <ListUnorderedIcon />,
+          isActive: (editor) => editor.isActive("bulletList"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleBulletList">
+            )
+              .toggleBulletList()
+              .run(),
+        }
+      : null,
+    "toggleOrderedList" in editor.commands
+      ? {
+          name: "Numbered list",
+          icon: <ListOrderedIcon />,
+          isActive: (editor) => editor.isActive("orderedList"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleOrderedList">
+            )
+              .toggleOrderedList()
+              .run(),
+        }
+      : null,
+    "toggleBlockquote" in editor.commands
+      ? {
+          name: "Blockquote",
+          icon: <BlockquoteIcon />,
+          isActive: (editor) => editor.isActive("blockquote"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleBlockquote">
+            )
+              .toggleBlockquote()
+              .run(),
+        }
+      : null,
+  ];
 
-      return option ? option.label ?? capitalize(option.value) : undefined;
-    }, [value, options]);
+  return items.filter(Boolean) as ToolbarBlockSelectorItem[];
+}
 
-    // const parent = useEditorState({
-    //   editor,
-    //   selector: (ctx) => {
-    //     return ctx.editor.state.selection.$from.parent.type;
-    //   },
-    // });
+const ToolbarBlockSelector = forwardRef<
+  HTMLButtonElement,
+  ToolbarBlockSelectorProps
+>(({ items, onKeyDown, ...props }, forwardedRef) => {
+  const floatingToolbarContext = useContext(FloatingToolbarContext);
+  const closeFloatingToolbar = floatingToolbarContext?.close;
+  const editor = useCurrentEditor(
+    "BlockSelector",
+    "Toolbar or FloatingToolbar"
+  );
+  const resolvedItems = useMemo(() => {
+    if (Array.isArray(items)) {
+      return items;
+    }
 
-    return (
-      <SelectPrimitive.Root value={value} onValueChange={setValue}>
-        <ShortcutTooltip content="Turn into…">
-          <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
-            <Button type="button" variant="toolbar">
-              {formattedValue ?? "Select…"}
-              <ChevronDownIcon className="lb-dropdown-chevron" />
-            </Button>
-          </SelectPrimitive.Trigger>
-        </ShortcutTooltip>
-        <SelectPrimitive.Portal>
+    const defaultItems = createDefaultBlockSelectorItems(editor);
+
+    return items ? items(defaultItems) : defaultItems;
+  }, [editor, items]);
+  let defaultItem: ToolbarBlockSelectorItem | undefined;
+  let activeItem = editor.isInitialized
+    ? resolvedItems.find((item) => {
+        if (item.isActive === "default") {
+          defaultItem = item;
+          return false;
+        }
+
+        return item.isActive(editor);
+      })
+    : undefined;
+
+  if (!activeItem) {
+    activeItem = defaultItem;
+  }
+
+  const handleItemChange = (name: string) => {
+    const item = resolvedItems.find((item) => item.name === name);
+
+    if (item) {
+      item.setActive(editor);
+
+      // If present in a floating toolbar, close it on change
+      floatingToolbarContext?.close();
+    }
+  };
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLButtonElement>) => {
+      onKeyDown?.(event);
+
+      if (
+        !event.isDefaultPrevented() &&
+        closeFloatingToolbar &&
+        event.key === "Escape"
+      ) {
+        closeFloatingToolbar();
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    [onKeyDown, closeFloatingToolbar]
+  );
+
+  return (
+    <SelectPrimitive.Root
+      value={activeItem?.name}
+      onValueChange={handleItemChange}
+    >
+      <ShortcutTooltip content="Turn into…">
+        <SelectPrimitive.Trigger
+          asChild
+          {...props}
+          ref={forwardedRef}
+          onKeyDown={handleKeyDown}
+          disabled={resolvedItems.length === 0}
+        >
+          <SelectButton variant="toolbar">
+            {activeItem?.name ?? "Turn into…"}
+          </SelectButton>
+        </SelectPrimitive.Trigger>
+      </ShortcutTooltip>
+      <SelectPrimitive.Portal>
+        <FloatingToolbarExternal>
           <SelectPrimitive.Content
             position="popper"
-            sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+            sideOffset={BLOCK_SELECT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
             className="lb-root lb-portal lb-elevation lb-dropdown"
           >
-            {options.map((option) => (
+            {resolvedItems.map((item) => (
               <SelectPrimitive.Item
-                key={option.value}
-                value={option.value}
+                key={item.name}
+                value={item.name}
                 className="lb-dropdown-item"
+                data-name={item.name}
               >
-                {option.icon ? (
-                  <span className="lb-icon-container">{option.icon}</span>
+                {item.icon ? (
+                  <span className="lb-dropdown-item-icon lb-icon-container">
+                    {item.icon}
+                  </span>
                 ) : null}
                 <span className="lb-dropdown-item-label">
-                  {option.label ?? capitalize(option.value)}
+                  {item.label ?? item.name}
                 </span>
+                {item.name === activeItem?.name ? (
+                  <span className="lb-dropdown-item-accessory lb-icon-container">
+                    <CheckIcon />
+                  </span>
+                ) : null}
               </SelectPrimitive.Item>
             ))}
           </SelectPrimitive.Content>
-        </SelectPrimitive.Portal>
-      </SelectPrimitive.Root>
-    );
-  }
-);
+        </FloatingToolbarExternal>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
+});
 
 const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
   ({ className, ...props }, forwardedRef) => {
@@ -187,14 +484,14 @@ function ToolbarSectionHistory() {
   return (
     <>
       <ToolbarButton
-        label="Undo"
+        name="Undo"
         icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
       />
       <ToolbarButton
-        label="Redo"
+        name="Redo"
         icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.chain().focus().redo().run()}
@@ -217,20 +514,9 @@ function ToolbarSectionInline() {
 
   return (
     <>
-      <ToolbarSelect
-        label="Turn into"
-        options={[
-          {
-            value: "Text",
-          },
-          {
-            value: "Heading 1",
-          },
-        ]}
-      />
       {supportsBold && (
         <ToolbarToggle
-          label="Bold"
+          name="Bold"
           icon={<BoldIcon />}
           shortcut="Mod-B"
           onClick={() =>
@@ -253,7 +539,7 @@ function ToolbarSectionInline() {
       )}
       {supportsItalic && (
         <ToolbarToggle
-          label="Italic"
+          name="Italic"
           icon={<ItalicIcon />}
           shortcut="Mod-I"
           onClick={() =>
@@ -276,7 +562,7 @@ function ToolbarSectionInline() {
       )}
       {supportsUnderline && (
         <ToolbarToggle
-          label="Underline"
+          name="Underline"
           icon={<UnderlineIcon />}
           shortcut="Mod-U"
           onClick={() =>
@@ -303,7 +589,7 @@ function ToolbarSectionInline() {
       )}
       {supportsStrike && (
         <ToolbarToggle
-          label="Strikethrough"
+          name="Strikethrough"
           icon={<StrikethroughIcon />}
           shortcut="Mod-U"
           onClick={() =>
@@ -326,7 +612,7 @@ function ToolbarSectionInline() {
       )}
       {supportsCode && (
         <ToolbarToggle
-          label="Inline code"
+          name="Inline code"
           icon={<CodeIcon />}
           shortcut="Mod-E"
           onClick={() =>
@@ -362,7 +648,7 @@ function ToolbarSectionCollaboration() {
     <>
       {supportsThread && (
         <ToolbarButton
-          label="Add a comment"
+          name="Add a comment"
           icon={<CommentIcon />}
           onClick={() =>
             (
@@ -384,19 +670,15 @@ function ToolbarSectionCollaboration() {
 function ToolbarSectionAi() {
   const editor = useCurrentEditor("SectionAi", "Toolbar or FloatingToolbar");
   const supportsAi = "askAi" in editor.commands;
-  const aiName =
-    (
-      editor.storage.liveblocksAi as
-      | AiExtensionStorage
-      | undefined
-    )?.name ?? DEFAULT_AI_NAME;
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage | undefined)
+    ?.name;
 
   return (
     <>
       {supportsAi && (
         <>
           <ToolbarButton
-            label={`Ask ${aiName} anything…`}
+            name={`Ask ${aiName} anything…`}
             icon={<SparklesIcon />}
             onClick={() =>
               (
@@ -407,7 +689,7 @@ function ToolbarSectionAi() {
             Ask {aiName}
           </ToolbarButton>
           <ToolbarButton
-            label="Explain"
+            name="Explain"
             icon={<QuestionMarkIcon />}
             onClick={() =>
               (
@@ -437,6 +719,7 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
           <ToolbarSeparator />
         </>
       ) : null}
+      <ToolbarBlockSelector />
       <ToolbarSectionInline />
       {supportsThread ? (
         <>
@@ -448,12 +731,27 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   );
 }
 
+/**
+ * A static toolbar containing actions and values related to the editor.
+ *
+ * @example
+ * <Toolbar editor={editor} />
+ *
+ * @example
+ * <Toolbar editor={editor}>
+ *   <Toolbar.BlockSelector />
+ *   <Toolbar.Separator />
+ *   <Toolbar.SectionInline />
+ *   <Toolbar.Separator />
+ *   <Toolbar.Button name="Custom action" onClick={() => { ... }} icon={<Icon.QuestionMark />} />
+ * </Toolbar>
+ */
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
     (
       {
-        leading,
-        trailing,
+        before,
+        after,
         children = DefaultToolbarContent,
         editor,
         className,
@@ -478,9 +776,9 @@ export const Toolbar = Object.assign(
               className={classNames("lb-root lb-tiptap-toolbar", className)}
               {...props}
             >
-              {applyToolbarSlot(leading, slotProps)}
+              {applyToolbarSlot(before, slotProps)}
               {applyToolbarSlot(children, slotProps)}
-              {applyToolbarSlot(trailing, slotProps)}
+              {applyToolbarSlot(after, slotProps)}
             </div>
           </EditorProvider>
         </TooltipProvider>
@@ -488,11 +786,54 @@ export const Toolbar = Object.assign(
     }
   ),
   {
+    /**
+     * A button for triggering actions.
+     *
+     * @example
+     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }}>Comment</Toolbar.Button>
+     *
+     * @example
+     * <Toolbar.Button name="Mention someone" icon={<Icon.Mention />} onClick={() => { ... }} />
+     */
     Button: ToolbarButton,
+
+    /**
+     * A toggle button for values that can be active or inactive.
+     *
+     * @example
+     * <Toolbar.Toggle name="Bold" active={isBold}>Bold</Toolbar.Toggle>
+     *
+     * @example
+     * <Toolbar.Toggle name="Italic" icon={<Icon.Italic />} shortcut="Mod-I" active={isItalic} onClick={() => { ... }} />
+     */
     Toggle: ToolbarToggle,
+
+    /**
+     * A dropdown selector to switch between different block types.
+     *
+     * @example
+     * <Toolbar.BlockSelector />
+     */
+    BlockSelector: ToolbarBlockSelector,
+
+    /**
+     * A visual (and accessible) separator to separate sections in a toolbar.
+     */
     Separator: ToolbarSeparator,
+
+    /**
+     * A section containing history actions. (e.g. undo, redo)
+     */
     SectionHistory: ToolbarSectionHistory,
+
+    /**
+     * A section containing inline formatting actions. (e.g. bold, italic, underline, ...)
+     */
     SectionInline: ToolbarSectionInline,
+
+    /**
+     * A section containing collaborative actions. (e.g. adding a comment)
+     */
     SectionCollaboration: ToolbarSectionCollaboration,
     SectionAi: ToolbarSectionAi,
   }

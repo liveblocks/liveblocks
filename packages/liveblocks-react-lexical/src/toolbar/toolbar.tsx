@@ -1,20 +1,36 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import {
+  $createHeadingNode,
+  $createQuoteNode,
+  $isHeadingNode,
+} from "@lexical/rich-text";
+import { $setBlocksType } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
 import {
+  BlockquoteIcon,
   BoldIcon,
   Button,
+  CheckIcon,
   CodeIcon,
   CommentIcon,
+  H1Icon,
+  H2Icon,
+  H3Icon,
   ItalicIcon,
   RedoIcon,
+  SelectButton,
   ShortcutTooltip,
   StrikethroughIcon,
+  TextIcon,
   TooltipProvider,
   UnderlineIcon,
   UndoIcon,
 } from "@liveblocks/react-ui/_private";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
+  $createParagraphNode,
+  $getSelection,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
@@ -26,13 +42,30 @@ import {
   REDO_COMMAND,
   UNDO_COMMAND,
 } from "lexical";
-import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useCallback, useEffect, useState } from "react";
+import type {
+  ComponentProps,
+  ComponentType,
+  KeyboardEvent,
+  ReactNode,
+} from "react";
+import {
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
+import { isBlockNodeActive } from "../is-block-node-active";
 import { useIsCommandRegistered } from "../is-command-registered";
 import { isTextFormatActive } from "../is-text-format-active";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
+
+export const BLOCK_SELECT_SIDE_OFFSET = 10;
+export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
 
 export interface ToolbarSlotProps {
   editor: LexicalEditor;
@@ -41,22 +74,122 @@ export interface ToolbarSlotProps {
 export type ToolbarSlot = ReactNode | ComponentType<ToolbarSlotProps>;
 
 export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
+  /**
+   * The content of the toolbar, overriding the default content.
+   * Use the `before` and `after` props if you want to keep and extend the default content.
+   */
   children?: ToolbarSlot;
-  leading?: ToolbarSlot;
-  trailing?: ToolbarSlot;
+
+  /**
+   * The content to display at the start of the toolbar.
+   */
+  before?: ToolbarSlot;
+
+  /**
+   * The content to display at the end of the toolbar.
+   */
+  after?: ToolbarSlot;
 }
 
-interface ToolbarButtonProps extends ComponentProps<"button"> {
+export interface ToolbarButtonProps extends ComponentProps<"button"> {
+  /**
+   * The name of this button displayed in its tooltip.
+   */
+  name: string;
+
+  /**
+   * An optional icon displayed in this button.
+   */
   icon?: ReactNode;
-  label: string;
+
+  /**
+   * An optional keyboard shortcut displayed in this button's tooltip.
+   *
+   * @example
+   * "Mod-Alt-B" → "⌘⌥B" in Apple environments, "⌃⌥B" otherwise
+   * "Ctrl-Shift-Escape" → "⌃⇧⎋"
+   * "Space" → "␣"
+   */
   shortcut?: string;
 }
 
-interface ToolbarToggleProps extends ToolbarButtonProps {
+export interface ToolbarToggleProps extends ToolbarButtonProps {
+  /**
+   * Whether the button is toggled.
+   */
   active: boolean;
 }
 
-type ToolbarSeparatorProps = ComponentProps<"div">;
+export type ToolbarSeparatorProps = ComponentProps<"div">;
+
+export interface ToolbarBlockSelectorItem {
+  /**
+   * The name of this block element, displayed as the label of this item.
+   */
+  name: string;
+
+  /**
+   * Optionally replace the name used as the label of this item by any content.
+   */
+  label?: ReactNode;
+
+  /**
+   * An optional icon displayed in this item.
+   */
+  icon?: ReactNode;
+
+  /**
+   * Whether this block element is currently active.
+   * Set to `"default"` to display this item when no other item is active.
+   */
+  isActive: ((editor: LexicalEditor) => boolean) | "default";
+
+  /**
+   * A callback invoked when this item is selected.
+   */
+  setActive: (editor: LexicalEditor) => void;
+}
+
+export interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
+  /**
+   * The items displayed in this block selector.
+   * When provided as an array, the default items are overridden. To avoid this,
+   * a function can be provided instead and it will receive the default items.
+   *
+   * @example
+   * <Toolbar.BlockSelector
+   *   items={[
+   *     {
+   *       name: "Text",
+   *       isActive: "default",
+   *       setActive: () => { ... },
+   *     },
+   *     {
+   *       name: "Heading 1",
+   *       isActive: () => { ... },
+   *       setActive: () => { ... },
+   *     },
+   *   ]}
+   * />
+   *
+   * @example
+   * <Toolbar.BlockSelector
+   *   items={(defaultItems) => [
+   *     ...defaultItems,
+   *     {
+   *       name: "Custom block",
+   *       isActive: () => { ... },
+   *       setActive: () => { ... },
+   *     },
+   *   ]}
+   * />
+   */
+  items?:
+    | ToolbarBlockSelectorItem[]
+    | ((
+        defaultItems: ToolbarBlockSelectorItem[]
+      ) => ToolbarBlockSelectorItem[]);
+}
 
 export function applyToolbarSlot(
   slot: ToolbarSlot,
@@ -72,15 +205,36 @@ export function applyToolbarSlot(
 }
 
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  ({ icon, children, label, shortcut, ...props }, forwardedRef) => {
+  ({ icon, children, name, shortcut, onKeyDown, ...props }, forwardedRef) => {
+    const floatingToolbarContext = useContext(FloatingToolbarContext);
+    const closeFloatingToolbar = floatingToolbarContext?.close;
+
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLButtonElement>) => {
+        onKeyDown?.(event);
+
+        if (
+          !event.isDefaultPrevented() &&
+          closeFloatingToolbar &&
+          event.key === "Escape"
+        ) {
+          closeFloatingToolbar();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      [onKeyDown, closeFloatingToolbar]
+    );
+
     return (
-      <ShortcutTooltip content={label} shortcut={shortcut}>
+      <ShortcutTooltip content={name} shortcut={shortcut}>
         <Button
           type="button"
           variant="toolbar"
           ref={forwardedRef}
           icon={icon}
           {...props}
+          onKeyDown={handleKeyDown}
         >
           {children}
         </Button>
@@ -144,14 +298,14 @@ function ToolbarSectionHistory() {
   return (
     <>
       <ToolbarButton
-        label="Undo"
+        name="Undo"
         icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}
         disabled={!canUndo}
       />
       <ToolbarButton
-        label="Redo"
+        name="Redo"
         icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}
@@ -168,7 +322,7 @@ function ToolbarSectionInline() {
   return supportsTextFormat ? (
     <>
       <ToolbarToggle
-        label="Bold"
+        name="Bold"
         icon={<BoldIcon />}
         shortcut="Mod-B"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
@@ -176,21 +330,21 @@ function ToolbarSectionInline() {
       />
 
       <ToolbarToggle
-        label="Italic"
+        name="Italic"
         icon={<ItalicIcon />}
         shortcut="Mod-I"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
         active={isTextFormatActive(editor, "italic")}
       />
       <ToolbarToggle
-        label="Underline"
+        name="Underline"
         icon={<UnderlineIcon />}
         shortcut="Mod-U"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
         active={isTextFormatActive(editor, "underline")}
       />
       <ToolbarToggle
-        label="Strikethrough"
+        name="Strikethrough"
         icon={<StrikethroughIcon />}
         onClick={() =>
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")
@@ -198,7 +352,7 @@ function ToolbarSectionInline() {
         active={isTextFormatActive(editor, "strikethrough")}
       />
       <ToolbarToggle
-        label="Inline code"
+        name="Inline code"
         icon={<CodeIcon />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
         active={isTextFormatActive(editor, "code")}
@@ -215,7 +369,7 @@ function ToolbarSectionCollaboration() {
     <>
       {supportsThread ? (
         <ToolbarButton
-          label="Add a comment"
+          name="Add a comment"
           icon={<CommentIcon />}
           onClick={() =>
             editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)
@@ -238,6 +392,7 @@ function DefaultToolbarContent() {
       {supportsTextFormat ? (
         <>
           <ToolbarSeparator />
+          <ToolbarBlockSelector />
           <ToolbarSectionInline />
         </>
       ) : null}
@@ -264,16 +419,191 @@ function useRerender() {
   }, [setRerender]);
 }
 
+function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
+  const items: (ToolbarBlockSelectorItem | null)[] = [
+    {
+      name: "Text",
+      icon: <TextIcon />,
+      isActive: "default",
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createParagraphNode()),
+    },
+    {
+      name: "Heading 1",
+      icon: <H1Icon />,
+      isActive: (editor) => {
+        return isBlockNodeActive(editor, (node) =>
+          $isHeadingNode(node) ? node.getTag() === "h1" : false
+        );
+      },
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createHeadingNode("h1")),
+    },
+    {
+      name: "Heading 2",
+      icon: <H2Icon />,
+      isActive: (editor) =>
+        isBlockNodeActive(editor, (node) =>
+          $isHeadingNode(node) ? node.getTag() === "h2" : false
+        ),
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createHeadingNode("h2")),
+    },
+    {
+      name: "Heading 3",
+      icon: <H3Icon />,
+      isActive: (editor) =>
+        isBlockNodeActive(editor, (node) =>
+          $isHeadingNode(node) ? node.getTag() === "h3" : false
+        ),
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createHeadingNode("h3")),
+    },
+    {
+      name: "Blockquote",
+      icon: <BlockquoteIcon />,
+      isActive: (editor) =>
+        isBlockNodeActive(editor, (node) => node.getType() === "quote"),
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createQuoteNode()),
+    },
+  ];
+
+  return items.filter(Boolean) as ToolbarBlockSelectorItem[];
+}
+
+const ToolbarBlockSelector = forwardRef<
+  HTMLButtonElement,
+  ToolbarBlockSelectorProps
+>(({ items, onKeyDown, ...props }, forwardedRef) => {
+  const floatingToolbarContext = useContext(FloatingToolbarContext);
+  const closeFloatingToolbar = floatingToolbarContext?.close;
+  const [editor] = useLexicalComposerContext();
+  const resolvedItems = useMemo(() => {
+    if (Array.isArray(items)) {
+      return items;
+    }
+
+    const defaultItems = createDefaultBlockSelectorItems();
+
+    return items ? items(defaultItems) : defaultItems;
+  }, [items]);
+  let defaultItem: ToolbarBlockSelectorItem | undefined;
+  let activeItem = resolvedItems.find((item) => {
+    if (item.isActive === "default") {
+      defaultItem = item;
+      return false;
+    }
+
+    return item.isActive(editor);
+  });
+
+  if (!activeItem) {
+    activeItem = defaultItem;
+  }
+
+  const handleItemChange = (name: string) => {
+    const item = resolvedItems.find((item) => item.name === name);
+
+    if (item) {
+      editor.update(() => item.setActive(editor));
+
+      // If present in a floating toolbar, close it on change
+      floatingToolbarContext?.close();
+    }
+  };
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLButtonElement>) => {
+      onKeyDown?.(event);
+
+      if (
+        !event.isDefaultPrevented() &&
+        closeFloatingToolbar &&
+        event.key === "Escape"
+      ) {
+        closeFloatingToolbar();
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    [onKeyDown, closeFloatingToolbar]
+  );
+
+  return (
+    <SelectPrimitive.Root
+      value={activeItem?.name}
+      onValueChange={handleItemChange}
+    >
+      <ShortcutTooltip content="Turn into…">
+        <SelectPrimitive.Trigger
+          asChild
+          {...props}
+          ref={forwardedRef}
+          onKeyDown={handleKeyDown}
+          disabled={resolvedItems.length === 0}
+        >
+          <SelectButton variant="toolbar">
+            {activeItem?.name ?? "Turn into…"}
+          </SelectButton>
+        </SelectPrimitive.Trigger>
+      </ShortcutTooltip>
+      <SelectPrimitive.Portal>
+        <FloatingToolbarExternal>
+          <SelectPrimitive.Content
+            position="popper"
+            sideOffset={BLOCK_SELECT_SIDE_OFFSET}
+            collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+            className="lb-root lb-portal lb-elevation lb-dropdown"
+          >
+            {resolvedItems.map((item) => (
+              <SelectPrimitive.Item
+                key={item.name}
+                value={item.name}
+                className="lb-dropdown-item"
+                data-name={item.name}
+              >
+                {item.icon ? (
+                  <span className="lb-dropdown-item-icon lb-icon-container">
+                    {item.icon}
+                  </span>
+                ) : null}
+                <span className="lb-dropdown-item-label">
+                  {item.label ?? item.name}
+                </span>
+                {item.name === activeItem?.name ? (
+                  <span className="lb-dropdown-item-accessory lb-icon-container">
+                    <CheckIcon />
+                  </span>
+                ) : null}
+              </SelectPrimitive.Item>
+            ))}
+          </SelectPrimitive.Content>
+        </FloatingToolbarExternal>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
+});
+
+/**
+ * A static toolbar containing actions and values related to the editor.
+ *
+ * @example
+ * <Toolbar  />
+ *
+ * @example
+ * <Toolbar >
+ *   <Toolbar.BlockSelector />
+ *   <Toolbar.Separator />
+ *   <Toolbar.SectionInline />
+ *   <Toolbar.Separator />
+ *   <Toolbar.Button name="Custom action" onClick={() => { ... }} icon={<Icon.QuestionMark />} />
+ * </Toolbar>
+ */
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
     (
-      {
-        leading,
-        trailing,
-        children = DefaultToolbarContent,
-        className,
-        ...props
-      },
+      { before, after, children = DefaultToolbarContent, className, ...props },
       forwardedRef
     ) => {
       const [editor] = useLexicalComposerContext();
@@ -327,20 +657,63 @@ export const Toolbar = Object.assign(
             className={classNames("lb-root lb-lexical-toolbar", className)}
             {...props}
           >
-            {applyToolbarSlot(leading, slotProps)}
+            {applyToolbarSlot(before, slotProps)}
             {applyToolbarSlot(children, slotProps)}
-            {applyToolbarSlot(trailing, slotProps)}
+            {applyToolbarSlot(after, slotProps)}
           </div>
         </TooltipProvider>
       );
     }
   ),
   {
+    /**
+     * A button for triggering actions.
+     *
+     * @example
+     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }}>Comment</Toolbar.Button>
+     *
+     * @example
+     * <Toolbar.Button name="Mention someone" icon={<Icon.Mention />} onClick={() => { ... }} />
+     */
     Button: ToolbarButton,
+
+    /**
+     * A toggle button for values that can be active or inactive.
+     *
+     * @example
+     * <Toolbar.Toggle name="Bold" active={isBold}>Bold</Toolbar.Toggle>
+     *
+     * @example
+     * <Toolbar.Toggle name="Italic" icon={<Icon.Italic />} shortcut="Mod-I" active={isItalic} onClick={() => { ... }} />
+     */
     Toggle: ToolbarToggle,
+
+    /**
+     * A dropdown selector to switch between different block types.
+     *
+     * @example
+     * <Toolbar.BlockSelector />
+     */
+    BlockSelector: ToolbarBlockSelector,
+
+    /**
+     * A visual (and accessible) separator to separate sections in a toolbar.
+     */
     Separator: ToolbarSeparator,
+
+    /**
+     * A section containing history actions. (e.g. undo, redo)
+     */
     SectionHistory: ToolbarSectionHistory,
+
+    /**
+     * A section containing inline formatting actions. (e.g. bold, italic, underline, ...)
+     */
     SectionInline: ToolbarSectionInline,
+
+    /**
+     * A section containing collaborative actions. (e.g. adding a comment)
+     */
     SectionCollaboration: ToolbarSectionCollaboration,
   }
 );

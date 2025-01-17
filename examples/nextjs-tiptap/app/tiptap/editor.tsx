@@ -18,7 +18,9 @@ import VersionsDialog from "../version-history-dialog";
 
 export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension({
-    ai: true,
+    ai: {
+      name: "Liveblocks",
+    },
   });
 
   const editor = useEditor({
@@ -36,9 +38,11 @@ export default function TiptapEditor() {
       liveblocks,
     ],
   });
+
   editor?.on("contentError", (error) => {
-    console.log("CONTENT ERROR", error, editor);
+    console.warn("contentError:", error, editor);
   });
+
   return (
     <div className="relative min-h-screen flex flex-col">
       <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">

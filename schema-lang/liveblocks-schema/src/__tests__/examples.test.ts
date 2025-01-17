@@ -138,12 +138,10 @@ describe("examples", () => {
             name: {
               _kind: "TypeName",
               name: "Storage",
-              range: expect.anything(),
             },
             leadingComment: null,
             isStatic: false,
             fields: expect.anything(),
-            range: expect.anything(),
           });
         })
       );
@@ -158,7 +156,6 @@ describe("examples", () => {
           expect(parseOnly(content)).toEqual({
             _kind: "Document",
             definitions: expect.anything(),
-            range: expect.anything(),
           });
 
           if (!expectedError) {

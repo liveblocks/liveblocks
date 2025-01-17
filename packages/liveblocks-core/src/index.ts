@@ -122,6 +122,7 @@ export type {
 export { makeEventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
+export { isPlainObject, isStartsWithOperator } from "./lib/guards";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
@@ -130,6 +131,7 @@ export { objectToQuery } from "./lib/objectToQuery";
 export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
+export type { Relax } from "./lib/Relax";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export type { ISignal, SignalType } from "./lib/signals";
@@ -142,7 +144,6 @@ export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
   compactObject,
-  isPlainObject,
   mapValues,
   memoizeOnSuccess,
   raise,

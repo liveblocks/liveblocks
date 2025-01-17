@@ -20,7 +20,6 @@ import {
   ShortenIcon,
   SparklesIcon,
   TooltipProvider,
-  TranslateIcon,
   UndoIcon,
   useRefs,
 } from "@liveblocks/react-ui/_private";
@@ -34,13 +33,7 @@ import type {
   ReactNode,
   RefObject,
 } from "react";
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
@@ -51,12 +44,9 @@ import type {
   ExtendedChainedCommands,
   FloatingPosition,
 } from "../types";
-import {
-  getDomRangeFromTextSelection,
-} from "../utils";
+import { getDomRangeFromSelection } from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
-export const DEFAULT_AI_NAME = "AI";
 
 export interface AiToolbarProps
   extends Omit<ComponentProps<"div">, "value" | "defaultValue"> {
@@ -114,8 +104,6 @@ function tiptapFloating(editor: Editor | null): Middleware {
     },
   };
 }
-
-
 
 const AiToolbarDropdownGroup = forwardRef<
   HTMLDivElement,
@@ -218,8 +206,7 @@ function AiToolbarPromptContent({
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
 }) {
-  const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
 
@@ -355,9 +342,7 @@ function AiToolbarThinking({
   editor: Editor;
   prompt: string;
 }) {
-  const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
-
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleCancel = useCallback(() => {
     (editor.commands as AiCommands<boolean>).cancelAskAi();
@@ -431,10 +416,9 @@ function AiToolbarContainer({
     }) ?? "";
   const isPromptMultiline = useMemo(() => prompt.includes("\n"), [prompt]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const hasCommandState = useCommandState(
+  const hasDropdownItems = useCommandState(
     (state) => state.filtered.count > 0
   ) as boolean;
-  const hasDropdownItems = state === "reviewing" || hasCommandState;
   const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
 
   useEffect(() => {
@@ -477,10 +461,7 @@ function AiToolbarContainer({
               isDropdownHidden={isDropdownHidden}
             />
           ) : state === "thinking" ? (
-            <AiToolbarThinking
-              editor={editor}
-              prompt={prompt}
-            />
+            <AiToolbarThinking editor={editor} prompt={prompt} />
           ) : state === "reviewing" ? (
             <AiToolbarReviewing
               editor={editor}
@@ -516,27 +497,21 @@ function AiToolbarContainer({
   );
 }
 
-
 const defaultSuggestions = (
   <>
-    <AiToolbarSuggestionsGroup label="Generate">
+    <AiToolbarSuggestionsGroup label="Modify">
       <AiToolbarSuggestion icon={<EditIcon />}>
         Improve writing
       </AiToolbarSuggestion>
       <AiToolbarSuggestion icon={<CheckIcon />}>
         Fix mistakes
       </AiToolbarSuggestion>
-      <AiToolbarSuggestion icon={<ShortenIcon />}>
-        Simplify the text
-      </AiToolbarSuggestion>
+      <AiToolbarSuggestion icon={<ShortenIcon />}>Simplify</AiToolbarSuggestion>
       <AiToolbarSuggestion icon={<LengthenIcon />}>
         Add more detail
       </AiToolbarSuggestion>
     </AiToolbarSuggestionsGroup>
-    <AiToolbarSuggestionsGroup label="Modify selection">
-      <AiToolbarSuggestion icon={<TranslateIcon />}>
-        Translate to English
-      </AiToolbarSuggestion>
+    <AiToolbarSuggestionsGroup label="Generate">
       <AiToolbarSuggestion icon={<QuestionMarkIcon />}>
         Explain
       </AiToolbarSuggestion>
@@ -622,7 +597,7 @@ export const AiToolbar = Object.assign(
           if (!selection) {
             setReference(null);
           } else {
-            const domRange = getDomRangeFromTextSelection(selection, editor);
+            const domRange = getDomRangeFromSelection(selection, editor);
 
             setReference(domRange);
           }

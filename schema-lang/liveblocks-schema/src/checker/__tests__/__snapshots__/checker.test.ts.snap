@@ -14,23 +14,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "r",
-              "range": [
-                56,
-                57,
-              ],
             },
             "optional": false,
-            "range": [
-              56,
-              65,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                59,
-                65,
-              ],
             },
           },
           {
@@ -39,23 +27,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "g",
-              "range": [
-                67,
-                68,
-              ],
             },
             "optional": false,
-            "range": [
-              67,
-              76,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                70,
-                76,
-              ],
             },
           },
           {
@@ -64,23 +40,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "b",
-              "range": [
-                78,
-                79,
-              ],
             },
             "optional": false,
-            "range": [
-              78,
-              87,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                81,
-                87,
-              ],
             },
           },
         ],
@@ -89,15 +53,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "RGB",
-          "range": [
-            50,
-            53,
-          ],
         },
-        "range": [
-          45,
-          89,
-        ],
       },
       {
         "_kind": "ObjectTypeDefinition",
@@ -108,23 +64,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "type",
-              "range": [
-                117,
-                121,
-              ],
             },
             "optional": false,
-            "range": [
-              117,
-              154,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "StringType",
-              "range": [
-                123,
-                154,
-              ],
             },
           },
           {
@@ -133,23 +77,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "x",
-              "range": [
-                163,
-                164,
-              ],
             },
             "optional": false,
-            "range": [
-              163,
-              172,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                166,
-                172,
-              ],
             },
           },
           {
@@ -158,23 +90,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "y",
-              "range": [
-                181,
-                182,
-              ],
             },
             "optional": false,
-            "range": [
-              181,
-              190,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                184,
-                190,
-              ],
             },
           },
           {
@@ -183,23 +103,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "width",
-              "range": [
-                199,
-                204,
-              ],
             },
             "optional": false,
-            "range": [
-              199,
-              212,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                206,
-                212,
-              ],
             },
           },
           {
@@ -208,23 +116,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "height",
-              "range": [
-                221,
-                227,
-              ],
             },
             "optional": false,
-            "range": [
-              221,
-              235,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                229,
-                235,
-              ],
             },
           },
           {
@@ -233,39 +129,19 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "fills",
-              "range": [
-                244,
-                249,
-              ],
             },
             "optional": true,
-            "range": [
-              244,
-              257,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "ArrayType",
               "ofType": {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  252,
-                  255,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "RGB",
-                  "range": [
-                    252,
-                    255,
-                  ],
                 },
               },
-              "range": [
-                252,
-                257,
-              ],
             },
           },
           {
@@ -274,39 +150,19 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "strokes",
-              "range": [
-                266,
-                273,
-              ],
             },
             "optional": true,
-            "range": [
-              266,
-              289,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "LiveListType",
               "ofType": {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  285,
-                  288,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "RGB",
-                  "range": [
-                    285,
-                    288,
-                  ],
                 },
               },
-              "range": [
-                276,
-                289,
-              ],
             },
           },
         ],
@@ -315,15 +171,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "Rect",
-          "range": [
-            102,
-            106,
-          ],
         },
-        "range": [
-          97,
-          297,
-        ],
       },
       {
         "_kind": "ObjectTypeDefinition",
@@ -334,23 +182,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "type",
-              "range": [
-                327,
-                331,
-              ],
             },
             "optional": false,
-            "range": [
-              327,
-              366,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "StringType",
-              "range": [
-                333,
-                366,
-              ],
             },
           },
           {
@@ -359,23 +195,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "cx",
-              "range": [
-                375,
-                377,
-              ],
             },
             "optional": false,
-            "range": [
-              375,
-              385,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                379,
-                385,
-              ],
             },
           },
           {
@@ -384,23 +208,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "cy",
-              "range": [
-                394,
-                396,
-              ],
             },
             "optional": false,
-            "range": [
-              394,
-              404,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                398,
-                404,
-              ],
             },
           },
           {
@@ -409,23 +221,11 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "radius",
-              "range": [
-                413,
-                419,
-              ],
             },
             "optional": false,
-            "range": [
-              413,
-              427,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                421,
-                427,
-              ],
             },
           },
           {
@@ -434,31 +234,15 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "fill",
-              "range": [
-                436,
-                440,
-              ],
             },
             "optional": true,
-            "range": [
-              436,
-              448,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                445,
-                448,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  445,
-                  448,
-                ],
               },
             },
           },
@@ -468,31 +252,15 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "stroke",
-              "range": [
-                457,
-                463,
-              ],
             },
             "optional": true,
-            "range": [
-              457,
-              469,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                466,
-                469,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  466,
-                  469,
-                ],
               },
             },
           },
@@ -502,15 +270,7 @@ exports[`checker large document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "Circle",
-          "range": [
-            310,
-            316,
-          ],
         },
-        "range": [
-          305,
-          477,
-        ],
       },
       {
         "_kind": "ObjectTypeDefinition",
@@ -521,31 +281,15 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "mycircle",
-              "range": [
-                543,
-                551,
-              ],
             },
             "optional": false,
-            "range": [
-              543,
-              571,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": true,
-              "range": [
-                553,
-                571,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "Circle",
-                "range": [
-                  564,
-                  570,
-                ],
               },
             },
           },
@@ -555,31 +299,15 @@ exports[`checker large document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "myrect",
-              "range": [
-                580,
-                586,
-              ],
             },
             "optional": false,
-            "range": [
-              580,
-              604,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": true,
-              "range": [
-                588,
-                604,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "Rect",
-                "range": [
-                  599,
-                  603,
-                ],
               },
             },
           },
@@ -589,20 +317,8 @@ exports[`checker large document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "Storage",
-          "range": [
-            490,
-            497,
-          ],
         },
-        "range": [
-          485,
-          612,
-        ],
       },
-    ],
-    "range": [
-      7,
-      612,
     ],
   },
   "definitions": [
@@ -615,23 +331,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "r",
-            "range": [
-              56,
-              57,
-            ],
           },
           "optional": false,
-          "range": [
-            56,
-            65,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              59,
-              65,
-            ],
           },
         },
         {
@@ -640,23 +344,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "g",
-            "range": [
-              67,
-              68,
-            ],
           },
           "optional": false,
-          "range": [
-            67,
-            76,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              70,
-              76,
-            ],
           },
         },
         {
@@ -665,23 +357,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "b",
-            "range": [
-              78,
-              79,
-            ],
           },
           "optional": false,
-          "range": [
-            78,
-            87,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              81,
-              87,
-            ],
           },
         },
       ],
@@ -690,15 +370,7 @@ exports[`checker large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "RGB",
-        "range": [
-          50,
-          53,
-        ],
       },
-      "range": [
-        45,
-        89,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -709,23 +381,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "type",
-            "range": [
-              117,
-              121,
-            ],
           },
           "optional": false,
-          "range": [
-            117,
-            154,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "StringType",
-            "range": [
-              123,
-              154,
-            ],
           },
         },
         {
@@ -734,23 +394,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "x",
-            "range": [
-              163,
-              164,
-            ],
           },
           "optional": false,
-          "range": [
-            163,
-            172,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              166,
-              172,
-            ],
           },
         },
         {
@@ -759,23 +407,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "y",
-            "range": [
-              181,
-              182,
-            ],
           },
           "optional": false,
-          "range": [
-            181,
-            190,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              184,
-              190,
-            ],
           },
         },
         {
@@ -784,23 +420,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "width",
-            "range": [
-              199,
-              204,
-            ],
           },
           "optional": false,
-          "range": [
-            199,
-            212,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              206,
-              212,
-            ],
           },
         },
         {
@@ -809,23 +433,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "height",
-            "range": [
-              221,
-              227,
-            ],
           },
           "optional": false,
-          "range": [
-            221,
-            235,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              229,
-              235,
-            ],
           },
         },
         {
@@ -834,39 +446,19 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "fills",
-            "range": [
-              244,
-              249,
-            ],
           },
           "optional": true,
-          "range": [
-            244,
-            257,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                252,
-                255,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  252,
-                  255,
-                ],
               },
             },
-            "range": [
-              252,
-              257,
-            ],
           },
         },
         {
@@ -875,39 +467,19 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "strokes",
-            "range": [
-              266,
-              273,
-            ],
           },
           "optional": true,
-          "range": [
-            266,
-            289,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "LiveListType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                285,
-                288,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  285,
-                  288,
-                ],
               },
             },
-            "range": [
-              276,
-              289,
-            ],
           },
         },
       ],
@@ -916,15 +488,7 @@ exports[`checker large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Rect",
-        "range": [
-          102,
-          106,
-        ],
       },
-      "range": [
-        97,
-        297,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -935,23 +499,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "type",
-            "range": [
-              327,
-              331,
-            ],
           },
           "optional": false,
-          "range": [
-            327,
-            366,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "StringType",
-            "range": [
-              333,
-              366,
-            ],
           },
         },
         {
@@ -960,23 +512,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cx",
-            "range": [
-              375,
-              377,
-            ],
           },
           "optional": false,
-          "range": [
-            375,
-            385,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              379,
-              385,
-            ],
           },
         },
         {
@@ -985,23 +525,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cy",
-            "range": [
-              394,
-              396,
-            ],
           },
           "optional": false,
-          "range": [
-            394,
-            404,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              398,
-              404,
-            ],
           },
         },
         {
@@ -1010,23 +538,11 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "radius",
-            "range": [
-              413,
-              419,
-            ],
           },
           "optional": false,
-          "range": [
-            413,
-            427,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              421,
-              427,
-            ],
           },
         },
         {
@@ -1035,31 +551,15 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "fill",
-            "range": [
-              436,
-              440,
-            ],
           },
           "optional": true,
-          "range": [
-            436,
-            448,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              445,
-              448,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "RGB",
-              "range": [
-                445,
-                448,
-              ],
             },
           },
         },
@@ -1069,31 +569,15 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "stroke",
-            "range": [
-              457,
-              463,
-            ],
           },
           "optional": true,
-          "range": [
-            457,
-            469,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              466,
-              469,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "RGB",
-              "range": [
-                466,
-                469,
-              ],
             },
           },
         },
@@ -1103,15 +587,7 @@ exports[`checker large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Circle",
-        "range": [
-          310,
-          316,
-        ],
       },
-      "range": [
-        305,
-        477,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -1122,31 +598,15 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "mycircle",
-            "range": [
-              543,
-              551,
-            ],
           },
           "optional": false,
-          "range": [
-            543,
-            571,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": true,
-            "range": [
-              553,
-              571,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Circle",
-              "range": [
-                564,
-                570,
-              ],
             },
           },
         },
@@ -1156,31 +616,15 @@ exports[`checker large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "myrect",
-            "range": [
-              580,
-              586,
-            ],
           },
           "optional": false,
-          "range": [
-            580,
-            604,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": true,
-            "range": [
-              588,
-              604,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Rect",
-              "range": [
-                599,
-                603,
-              ],
             },
           },
         },
@@ -1190,15 +634,7 @@ exports[`checker large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Storage",
-        "range": [
-          490,
-          497,
-        ],
       },
-      "range": [
-        485,
-        612,
-      ],
     },
   ],
   "getDefinition": [Function],
@@ -1211,31 +647,15 @@ exports[`checker large document (snapshot test) 1`] = `
         "name": {
           "_kind": "Identifier",
           "name": "mycircle",
-          "range": [
-            543,
-            551,
-          ],
         },
         "optional": false,
-        "range": [
-          543,
-          571,
-        ],
         "trailingComment": null,
         "type": {
           "_kind": "TypeRef",
           "asLiveObject": true,
-          "range": [
-            553,
-            571,
-          ],
           "ref": {
             "_kind": "TypeName",
             "name": "Circle",
-            "range": [
-              564,
-              570,
-            ],
           },
         },
       },
@@ -1245,31 +665,15 @@ exports[`checker large document (snapshot test) 1`] = `
         "name": {
           "_kind": "Identifier",
           "name": "myrect",
-          "range": [
-            580,
-            586,
-          ],
         },
         "optional": false,
-        "range": [
-          580,
-          604,
-        ],
         "trailingComment": null,
         "type": {
           "_kind": "TypeRef",
           "asLiveObject": true,
-          "range": [
-            588,
-            604,
-          ],
           "ref": {
             "_kind": "TypeName",
             "name": "Rect",
-            "range": [
-              599,
-              603,
-            ],
           },
         },
       },
@@ -1279,15 +683,7 @@ exports[`checker large document (snapshot test) 1`] = `
     "name": {
       "_kind": "TypeName",
       "name": "Storage",
-      "range": [
-        490,
-        497,
-      ],
     },
-    "range": [
-      485,
-      612,
-    ],
   },
 }
 `;
@@ -1306,23 +702,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "r",
-              "range": [
-                56,
-                57,
-              ],
             },
             "optional": false,
-            "range": [
-              56,
-              62,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                59,
-                62,
-              ],
             },
           },
           {
@@ -1331,23 +715,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "g",
-              "range": [
-                64,
-                65,
-              ],
             },
             "optional": false,
-            "range": [
-              64,
-              70,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                67,
-                70,
-              ],
             },
           },
           {
@@ -1356,23 +728,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "b",
-              "range": [
-                72,
-                73,
-              ],
             },
             "optional": false,
-            "range": [
-              72,
-              78,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                75,
-                78,
-              ],
             },
           },
         ],
@@ -1381,15 +741,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "RGB",
-          "range": [
-            50,
-            53,
-          ],
         },
-        "range": [
-          45,
-          80,
-        ],
       },
       {
         "_kind": "ObjectTypeDefinition",
@@ -1400,23 +752,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "type",
-              "range": [
-                108,
-                112,
-              ],
             },
             "optional": false,
-            "range": [
-              108,
-              120,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "LiteralType",
-              "range": [
-                114,
-                120,
-              ],
               "value": "rect",
             },
           },
@@ -1426,23 +766,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "x",
-              "range": [
-                129,
-                130,
-              ],
             },
             "optional": false,
-            "range": [
-              129,
-              135,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                132,
-                135,
-              ],
             },
           },
           {
@@ -1451,23 +779,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "y",
-              "range": [
-                144,
-                145,
-              ],
             },
             "optional": false,
-            "range": [
-              144,
-              150,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                147,
-                150,
-              ],
             },
           },
           {
@@ -1476,23 +792,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "width",
-              "range": [
-                159,
-                164,
-              ],
             },
             "optional": false,
-            "range": [
-              159,
-              169,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                166,
-                169,
-              ],
             },
           },
           {
@@ -1501,23 +805,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "height",
-              "range": [
-                178,
-                184,
-              ],
             },
             "optional": false,
-            "range": [
-              178,
-              189,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                186,
-                189,
-              ],
             },
           },
           {
@@ -1526,39 +818,19 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "fills",
-              "range": [
-                198,
-                203,
-              ],
             },
             "optional": true,
-            "range": [
-              198,
-              211,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "ArrayType",
               "ofType": {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  206,
-                  209,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "RGB",
-                  "range": [
-                    206,
-                    209,
-                  ],
                 },
               },
-              "range": [
-                206,
-                211,
-              ],
             },
           },
           {
@@ -1567,39 +839,19 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "strokes",
-              "range": [
-                220,
-                227,
-              ],
             },
             "optional": true,
-            "range": [
-              220,
-              243,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "LiveListType",
               "ofType": {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  239,
-                  242,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "RGB",
-                  "range": [
-                    239,
-                    242,
-                  ],
                 },
               },
-              "range": [
-                230,
-                243,
-              ],
             },
           },
         ],
@@ -1608,15 +860,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "Rect",
-          "range": [
-            93,
-            97,
-          ],
         },
-        "range": [
-          88,
-          251,
-        ],
       },
       {
         "_kind": "ObjectTypeDefinition",
@@ -1627,23 +871,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "type",
-              "range": [
-                281,
-                285,
-              ],
             },
             "optional": false,
-            "range": [
-              281,
-              295,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "LiteralType",
-              "range": [
-                287,
-                295,
-              ],
               "value": "circle",
             },
           },
@@ -1653,23 +885,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "cx",
-              "range": [
-                304,
-                306,
-              ],
             },
             "optional": false,
-            "range": [
-              304,
-              311,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                308,
-                311,
-              ],
             },
           },
           {
@@ -1678,23 +898,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "cy",
-              "range": [
-                320,
-                322,
-              ],
             },
             "optional": false,
-            "range": [
-              320,
-              327,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                324,
-                327,
-              ],
             },
           },
           {
@@ -1703,23 +911,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "radius",
-              "range": [
-                336,
-                342,
-              ],
             },
             "optional": false,
-            "range": [
-              336,
-              347,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "NumberType",
-              "range": [
-                344,
-                347,
-              ],
             },
           },
           {
@@ -1728,31 +924,15 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "fill",
-              "range": [
-                356,
-                360,
-              ],
             },
             "optional": true,
-            "range": [
-              356,
-              368,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                365,
-                368,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  365,
-                  368,
-                ],
               },
             },
           },
@@ -1762,31 +942,15 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "stroke",
-              "range": [
-                377,
-                383,
-              ],
             },
             "optional": true,
-            "range": [
-              377,
-              389,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                386,
-                389,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  386,
-                  389,
-                ],
               },
             },
           },
@@ -1796,15 +960,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "Circle",
-          "range": [
-            264,
-            270,
-          ],
         },
-        "range": [
-          259,
-          397,
-        ],
       },
       {
         "_kind": "ObjectTypeDefinition",
@@ -1815,16 +971,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "mycircle",
-              "range": [
-                463,
-                471,
-              ],
             },
             "optional": false,
-            "range": [
-              463,
-              498,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "UnionType",
@@ -1832,30 +980,14 @@ exports[`checker large legacy document (snapshot test) 1`] = `
                 {
                   "_kind": "TypeRef",
                   "asLiveObject": true,
-                  "range": [
-                    473,
-                    491,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "Circle",
-                    "range": [
-                      484,
-                      490,
-                    ],
                   },
                 },
                 {
                   "_kind": "NullType",
-                  "range": [
-                    494,
-                    498,
-                  ],
                 },
-              ],
-              "range": [
-                473,
-                498,
               ],
             },
           },
@@ -1865,16 +997,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             "name": {
               "_kind": "Identifier",
               "name": "myrect",
-              "range": [
-                507,
-                513,
-              ],
             },
             "optional": false,
-            "range": [
-              507,
-              547,
-            ],
             "trailingComment": null,
             "type": {
               "_kind": "UnionType",
@@ -1882,37 +1006,17 @@ exports[`checker large legacy document (snapshot test) 1`] = `
                 {
                   "_kind": "TypeRef",
                   "asLiveObject": true,
-                  "range": [
-                    515,
-                    531,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "Rect",
-                    "range": [
-                      526,
-                      530,
-                    ],
                   },
                 },
                 {
                   "_kind": "StringType",
-                  "range": [
-                    534,
-                    540,
-                  ],
                 },
                 {
                   "_kind": "NullType",
-                  "range": [
-                    543,
-                    547,
-                  ],
                 },
-              ],
-              "range": [
-                515,
-                547,
               ],
             },
           },
@@ -1922,20 +1026,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "name": {
           "_kind": "TypeName",
           "name": "Storage",
-          "range": [
-            410,
-            417,
-          ],
         },
-        "range": [
-          405,
-          555,
-        ],
       },
-    ],
-    "range": [
-      7,
-      555,
     ],
   },
   "definitions": [
@@ -1948,23 +1040,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "r",
-            "range": [
-              56,
-              57,
-            ],
           },
           "optional": false,
-          "range": [
-            56,
-            62,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              59,
-              62,
-            ],
           },
         },
         {
@@ -1973,23 +1053,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "g",
-            "range": [
-              64,
-              65,
-            ],
           },
           "optional": false,
-          "range": [
-            64,
-            70,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              67,
-              70,
-            ],
           },
         },
         {
@@ -1998,23 +1066,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "b",
-            "range": [
-              72,
-              73,
-            ],
           },
           "optional": false,
-          "range": [
-            72,
-            78,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              75,
-              78,
-            ],
           },
         },
       ],
@@ -2023,15 +1079,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "RGB",
-        "range": [
-          50,
-          53,
-        ],
       },
-      "range": [
-        45,
-        80,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -2042,23 +1090,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "type",
-            "range": [
-              108,
-              112,
-            ],
           },
           "optional": false,
-          "range": [
-            108,
-            120,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "LiteralType",
-            "range": [
-              114,
-              120,
-            ],
             "value": "rect",
           },
         },
@@ -2068,23 +1104,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "x",
-            "range": [
-              129,
-              130,
-            ],
           },
           "optional": false,
-          "range": [
-            129,
-            135,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              132,
-              135,
-            ],
           },
         },
         {
@@ -2093,23 +1117,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "y",
-            "range": [
-              144,
-              145,
-            ],
           },
           "optional": false,
-          "range": [
-            144,
-            150,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              147,
-              150,
-            ],
           },
         },
         {
@@ -2118,23 +1130,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "width",
-            "range": [
-              159,
-              164,
-            ],
           },
           "optional": false,
-          "range": [
-            159,
-            169,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              166,
-              169,
-            ],
           },
         },
         {
@@ -2143,23 +1143,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "height",
-            "range": [
-              178,
-              184,
-            ],
           },
           "optional": false,
-          "range": [
-            178,
-            189,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              186,
-              189,
-            ],
           },
         },
         {
@@ -2168,39 +1156,19 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "fills",
-            "range": [
-              198,
-              203,
-            ],
           },
           "optional": true,
-          "range": [
-            198,
-            211,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                206,
-                209,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  206,
-                  209,
-                ],
               },
             },
-            "range": [
-              206,
-              211,
-            ],
           },
         },
         {
@@ -2209,39 +1177,19 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "strokes",
-            "range": [
-              220,
-              227,
-            ],
           },
           "optional": true,
-          "range": [
-            220,
-            243,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "LiveListType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                239,
-                242,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "RGB",
-                "range": [
-                  239,
-                  242,
-                ],
               },
             },
-            "range": [
-              230,
-              243,
-            ],
           },
         },
       ],
@@ -2250,15 +1198,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Rect",
-        "range": [
-          93,
-          97,
-        ],
       },
-      "range": [
-        88,
-        251,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -2269,23 +1209,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "type",
-            "range": [
-              281,
-              285,
-            ],
           },
           "optional": false,
-          "range": [
-            281,
-            295,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "LiteralType",
-            "range": [
-              287,
-              295,
-            ],
             "value": "circle",
           },
         },
@@ -2295,23 +1223,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cx",
-            "range": [
-              304,
-              306,
-            ],
           },
           "optional": false,
-          "range": [
-            304,
-            311,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              308,
-              311,
-            ],
           },
         },
         {
@@ -2320,23 +1236,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cy",
-            "range": [
-              320,
-              322,
-            ],
           },
           "optional": false,
-          "range": [
-            320,
-            327,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              324,
-              327,
-            ],
           },
         },
         {
@@ -2345,23 +1249,11 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "radius",
-            "range": [
-              336,
-              342,
-            ],
           },
           "optional": false,
-          "range": [
-            336,
-            347,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              344,
-              347,
-            ],
           },
         },
         {
@@ -2370,31 +1262,15 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "fill",
-            "range": [
-              356,
-              360,
-            ],
           },
           "optional": true,
-          "range": [
-            356,
-            368,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              365,
-              368,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "RGB",
-              "range": [
-                365,
-                368,
-              ],
             },
           },
         },
@@ -2404,31 +1280,15 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "stroke",
-            "range": [
-              377,
-              383,
-            ],
           },
           "optional": true,
-          "range": [
-            377,
-            389,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              386,
-              389,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "RGB",
-              "range": [
-                386,
-                389,
-              ],
             },
           },
         },
@@ -2438,15 +1298,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Circle",
-        "range": [
-          264,
-          270,
-        ],
       },
-      "range": [
-        259,
-        397,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -2457,16 +1309,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "mycircle",
-            "range": [
-              463,
-              471,
-            ],
           },
           "optional": false,
-          "range": [
-            463,
-            498,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -2474,30 +1318,14 @@ exports[`checker large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": true,
-                "range": [
-                  473,
-                  491,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Circle",
-                  "range": [
-                    484,
-                    490,
-                  ],
                 },
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  494,
-                  498,
-                ],
               },
-            ],
-            "range": [
-              473,
-              498,
             ],
           },
         },
@@ -2507,16 +1335,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "myrect",
-            "range": [
-              507,
-              513,
-            ],
           },
           "optional": false,
-          "range": [
-            507,
-            547,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -2524,37 +1344,17 @@ exports[`checker large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": true,
-                "range": [
-                  515,
-                  531,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Rect",
-                  "range": [
-                    526,
-                    530,
-                  ],
                 },
               },
               {
                 "_kind": "StringType",
-                "range": [
-                  534,
-                  540,
-                ],
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  543,
-                  547,
-                ],
               },
-            ],
-            "range": [
-              515,
-              547,
             ],
           },
         },
@@ -2564,15 +1364,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Storage",
-        "range": [
-          410,
-          417,
-        ],
       },
-      "range": [
-        405,
-        555,
-      ],
     },
   ],
   "getDefinition": [Function],
@@ -2585,16 +1377,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "name": {
           "_kind": "Identifier",
           "name": "mycircle",
-          "range": [
-            463,
-            471,
-          ],
         },
         "optional": false,
-        "range": [
-          463,
-          498,
-        ],
         "trailingComment": null,
         "type": {
           "_kind": "UnionType",
@@ -2602,30 +1386,14 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             {
               "_kind": "TypeRef",
               "asLiveObject": true,
-              "range": [
-                473,
-                491,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "Circle",
-                "range": [
-                  484,
-                  490,
-                ],
               },
             },
             {
               "_kind": "NullType",
-              "range": [
-                494,
-                498,
-              ],
             },
-          ],
-          "range": [
-            473,
-            498,
           ],
         },
       },
@@ -2635,16 +1403,8 @@ exports[`checker large legacy document (snapshot test) 1`] = `
         "name": {
           "_kind": "Identifier",
           "name": "myrect",
-          "range": [
-            507,
-            513,
-          ],
         },
         "optional": false,
-        "range": [
-          507,
-          547,
-        ],
         "trailingComment": null,
         "type": {
           "_kind": "UnionType",
@@ -2652,37 +1412,17 @@ exports[`checker large legacy document (snapshot test) 1`] = `
             {
               "_kind": "TypeRef",
               "asLiveObject": true,
-              "range": [
-                515,
-                531,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "Rect",
-                "range": [
-                  526,
-                  530,
-                ],
               },
             },
             {
               "_kind": "StringType",
-              "range": [
-                534,
-                540,
-              ],
             },
             {
               "_kind": "NullType",
-              "range": [
-                543,
-                547,
-              ],
             },
-          ],
-          "range": [
-            515,
-            547,
           ],
         },
       },
@@ -2692,15 +1432,7 @@ exports[`checker large legacy document (snapshot test) 1`] = `
     "name": {
       "_kind": "TypeName",
       "name": "Storage",
-      "range": [
-        410,
-        417,
-      ],
     },
-    "range": [
-      405,
-      555,
-    ],
   },
 }
 `;

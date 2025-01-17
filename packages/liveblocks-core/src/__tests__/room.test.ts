@@ -264,6 +264,7 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
+        // @ts-expect-error We're testing unknown codes
         SOCKET_REFUSES(4242 /* Unknown code */, "An unknown error reason"),
         SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
@@ -282,6 +283,7 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
+        // @ts-expect-error We're testing unknown codes
         SOCKET_REFUSES(4342 /* Unknown code */, "An unknown error reason"),
         SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
@@ -1957,7 +1959,7 @@ describe("room", () => {
 
       storage.root.set("x", 1);
 
-      expect(storageStatusCallback).toBeCalledWith("synchronizing");
+      expect(storageStatusCallback).toHaveBeenCalledWith("synchronizing");
       expect(room.getStorageStatus()).toBe("synchronizing");
 
       const storageJson = lsonToJson(storage.root);
@@ -1974,7 +1976,7 @@ describe("room", () => {
       await waitUntilStorageUpdate(room);
       expectStorage({ x: 1 });
       expect(room.getStorageStatus()).toBe("synchronized");
-      expect(storageStatusCallback).toBeCalledWith("synchronized");
+      expect(storageStatusCallback).toHaveBeenCalledWith("synchronized");
 
       expect(storageStatusCallback).toHaveBeenCalledTimes(2);
     });

@@ -1,6 +1,6 @@
 // Private APIs
 
-export { Button } from "../components/internal/Button";
+export { Button, SelectButton } from "../components/internal/Button";
 export { List } from "../components/internal/List";
 export {
   ShortcutTooltip,
@@ -10,4 +10,5 @@ export {
 export { User } from "../components/internal/User";
 export * from "../icons";
 export { capitalize } from "../utils/capitalize";
+export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";

@@ -102,10 +102,7 @@ export function getTextSelectionFromRelativeSelection(
   return new TextSelection($start, $end);
 }
 
-export function getDomRangeFromTextSelection(
-  selection: Selection,
-  editor: Editor
-) {
+export function getDomRangeFromSelection(selection: Selection, editor: Editor) {
   const { from, to } = selection;
   const fromPos = editor.view.domAtPos(from);
   const endPos = editor.view.domAtPos(to);
@@ -117,9 +114,9 @@ export function getDomRangeFromTextSelection(
   return domRange;
 }
 
-export function compareTextSelections(
-  a: TextSelection | null | undefined,
-  b: TextSelection | null | undefined
+export function compareSelections(
+  a: Selection | null | undefined,
+  b: Selection | null | undefined
 ) {
   if (!a || !b) {
     return false;

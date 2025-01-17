@@ -1,7 +1,7 @@
 import { Extension, Mark, mergeAttributes } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
-import { Plugin, TextSelection } from "@tiptap/pm/state";
+import { Plugin } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
@@ -110,7 +110,7 @@ const Comment = Mark.create({
         threadPositions,
         selectedThreadPos:
           selectedThreadId !== null
-            ? threadPositions.get(selectedThreadId)?.to ?? null
+            ? (threadPositions.get(selectedThreadId)?.to ?? null)
             : null,
       };
     };
@@ -203,7 +203,7 @@ export const CommentsExtension = Extension.create<
 
   addStorage() {
     return {
-      pendingCommentSelection: null,
+      pendingComment: false,
     };
   },
 
@@ -220,14 +220,11 @@ export const CommentsExtension = Extension.create<
             data: null,
           })
         );
-        this.storage.pendingCommentSelection = new TextSelection(
-          this.editor.state.selection.$anchor,
-          this.editor.state.selection.$head
-        );
+        this.storage.pendingComment = true;
         return true;
       },
       closePendingComment: () => () => {
-        this.storage.pendingCommentSelection = null;
+        this.storage.pendingComment = false;
         return true;
       },
       selectThread: (id: string | null) => () => {
@@ -242,13 +239,14 @@ export const CommentsExtension = Extension.create<
       addComment:
         (id: string) =>
         ({ commands }) => {
-          if (!this.storage.pendingCommentSelection) {
+          if (
+            !this.storage.pendingComment ||
+            this.editor.state.selection.empty
+          ) {
             return false;
           }
-          this.editor.state.selection = this.storage.pendingCommentSelection;
           commands.setMark(LIVEBLOCKS_COMMENT_MARK_TYPE, { threadId: id });
-          this.storage.pendingCommentSelection = null;
-
+          this.storage.pendingComment = false;
           return true;
         },
     };
@@ -262,28 +260,22 @@ export const CommentsExtension = Extension.create<
     { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap
   ) {
     // ignore changes made by yjs
-    if (
-      !this.storage.pendingCommentSelection ||
-      transaction.getMeta(ySyncPluginKey)
-    ) {
+    if (!this.storage.pendingComment || transaction.getMeta(ySyncPluginKey)) {
       return;
     }
-    this.storage.pendingCommentSelection = null;
+    // if selection changes, hide the composer. We could keep the composer open and move it to the new selection?
+    this.storage.pendingComment = false;
   },
-  // TODO: this.storage.pendingCommentSelection needs to be a Yjs Relative Position that gets translated back to absolute position.
-  // Commit: eba949d32d6010a3d8b3f7967d73d4deb015b02a has code that can help with this.
   addProseMirrorPlugins() {
     return [
       new Plugin({
         key: THREADS_ACTIVE_SELECTION_PLUGIN,
         props: {
-          decorations: ({ doc }) => {
-            const active = this.storage.pendingCommentSelection !== null;
-            if (!active) {
+          decorations: ({ doc, selection }) => {
+            if (!this.storage.pendingComment) {
               return DecorationSet.create(doc, []);
             }
-            const { from, to } = this.storage
-              .pendingCommentSelection as TextSelection;
+            const { from, to } = selection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-active-selection",

@@ -12,7 +12,6 @@
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
     "@liveblocks/client": "file:../../packages/liveblocks-client",
-    "@liveblocks/core": "file:../../packages/liveblocks-core",
     "@liveblocks/node": "file:../../packages/liveblocks-node",
     "@liveblocks/react": "file:../../packages/liveblocks-react",
     "@liveblocks/react-tiptap": "file:../../packages/liveblocks-react-tiptap",

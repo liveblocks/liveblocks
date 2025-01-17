@@ -19,7 +19,8 @@ import type {
   LiveblocksExtensionStorage,
   YSyncBinding,
 } from "../types";
-import { DEFAULT_AI_NAME } from "./AiToolbar";
+
+const DEFAULT_AI_NAME = "AI";
 
 const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
   name: "liveblocksAi",
@@ -27,7 +28,9 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
     return {
       doc: undefined,
       pud: undefined,
-      resolveAiPrompt: undefined,
+
+      // The actual default resolver is set in LiveblocksExtension via AiExtension.configure()
+      resolveAiPrompt: () => Promise.reject(),
       name: DEFAULT_AI_NAME,
     };
   },
@@ -152,6 +155,8 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           setTimeout(() => {
             if (this.storage.snapshot) {
               this.storage.state = "reviewing"; // waiting for input ?
+              this.storage.previousPrompt = this.storage.prompt;
+              this.storage.prompt = "";
               this.editor.commands.compareSnapshot(this.storage.snapshot);
             }
           }, 1);
@@ -191,9 +196,10 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           const executePrompt = async () => {
             await provider.pause();
 
-            const responseText = this.options.resolveAiPrompt
-              ? await this.options.resolveAiPrompt(prompt, text) // TODO: why can the prompt be undefined?
-              : "not implemented";
+            const responseText = await this.options.resolveAiPrompt(
+              prompt,
+              text
+            );
             // TODO: handle error
             if (responseText) {
               //this.editor.commands.insertContent(responseText);
