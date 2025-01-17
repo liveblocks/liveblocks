@@ -9,7 +9,7 @@ marking a notification as read fails, etc.
 
 ### `@liveblocks/react`
 
-- **Breaking**: Behavior of `useErrorListener()` has changed.
+#### **Breaking**: More errors can appear in `useErrorListener()`
 
 ```ts
 // ❌ Before: required a RoomProvider and would only notify about errors for that room
@@ -19,20 +19,39 @@ useErrorListener((err: LiveblocksError) => {
 });
 ```
 
-It may make sense to lift the `useErrorListener()` hook up to a higher level in
-your app (above the `RoomProvider`) to make this more explicit.
+See the
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+learn how to adapt your code.
 
-If you nest the listener underneath a `RoomProvider`, you probably want to use
-the `useRoomErrorListener()` instead.
+#### Filtering by absence of metadata
+
+We now support filtering threads by _absence_ of metadata as well in
+`useThreads({ query })` (or `useUserThreads_experimental({ query })`).
+
+For example, you can now filter threads that do not have a `color` attribute set
+in their metadata:
+
+```ts
+useThreads({
+  query: {
+    // Filter any "pinned" threads that don't have a color set
+    metadata: {
+      pinned: true,
+      color: null, // ✨
+    },
+  },
+});
+```
+
+See the
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+learn how to adapt your code.
 
 ### `@liveblocks/client`
 
 The error listener APIs will now receive more errors in general, including
 errors from using Comments & Notifications. Previously, these would only receive
 room connection errors (e.g. when using Presence, Storage, or Yjs).
-
-For example, now when creation of a thread fails, deletion of a comment fails,
-marking a notification as read fails, etc, these can be detected via:
 
 ```ts
 // 👌 Same as before, but might now also receive errors related to Comments & Notifications
@@ -43,31 +62,6 @@ room.subscribe("error", (err) => { ... });
 
 - Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
   enable experimental V2 encoding for Yjs.
-
-### `@liveblocks/react`
-
-Filtering threads by metadata using `useThreads({ query })` (or
-`useUserThreads_experimental({ query })`) now supports explicit filtering for
-metadata absence using `null`.
-
-For example, you can now use `{ query: { metadata: { color: null } } }` to
-filter threads that do not have a `color` attribute in their metadata.
-
-> [!NOTE]  
-> Although officially never supported before, due to a bug in previous
-> implementations, filtering for metadata absence was sort of possible by using
-> explicit-`undefined`. This is no longer supported, because it would not
-> properly filter the threads in the backend. If you relied on this behavior,
-> please ensure you change `undefined` to `null`.
-
-```tsx
-// Filter pinned threads that don't have a `color` set
-useThreads({ query: { metadata: { pinned: true, color: null } } });
-
-// These two queries are now equivalent
-useThreads({ query: { metadata: { pinned: true } } });
-useThreads({ query: { metadata: { pinned: true, color: undefined } } });
-```
 
 ## 2.15.2
 
