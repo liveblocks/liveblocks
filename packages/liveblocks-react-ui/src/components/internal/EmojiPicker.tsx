@@ -196,7 +196,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
                     placeholder={$.EMOJI_PICKER_SEARCH_PLACEHOLDER}
                     autoFocus
                   />
-                  <SearchIcon className="lb-emoji-picker-search-icon" />
+                  <SearchIcon />
                 </div>
               </div>
               <EmojiPickerPrimitive.Content

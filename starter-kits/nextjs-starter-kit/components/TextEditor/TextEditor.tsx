@@ -24,8 +24,7 @@ import { CommentIcon } from "@/icons";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { useIsMobile } from "@/utils";
 import { CustomTaskItem } from "./CustomTaskItem";
-import { SelectionMenu } from "./SelectionMenu";
-import { Toolbar } from "./Toolbar";
+import { SelectionToolbar, StaticToolbar } from "./Toolbars";
 import { WordCount } from "./WordCount";
 import styles from "./TextEditor.module.css";
 
@@ -159,10 +158,10 @@ function TiptapEditor() {
         className={styles.editorHeader}
         data-disabled={disableToolbar || undefined}
       >
-        <Toolbar editor={editor} />
+        <StaticToolbar editor={editor} />
       </div>
       <div className={styles.editorPanel}>
-        {editor ? <SelectionMenu editor={editor} /> : null}
+        <SelectionToolbar editor={editor} />
         <div className={styles.editorContainerOffset}>
           <div className={styles.editorContainer}>
             <EditorContent editor={editor} />
@@ -193,10 +192,8 @@ function Threads({ editor }: { editor: Editor | null }) {
       <div className={styles.noComments}>
         <div className={styles.noCommentsHeader}>No comments yet</div>
         <p>
-          <span className={styles.noCommentsButton}>
-            <CommentIcon />
-          </span>
-          Create a comment by selecting text and pressing the comment button.
+          Create a comment by selecting text and pressing the{" "}
+          <CommentIcon className={styles.noCommentsIcon} /> Comment button.
         </p>
       </div>
     );
