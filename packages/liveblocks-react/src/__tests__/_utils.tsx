@@ -2,8 +2,10 @@ import type {
   BaseMetadata,
   ClientOptions,
   JsonObject,
+  ThreadData,
 } from "@liveblocks/client";
 import { createClient, LiveList, LiveObject } from "@liveblocks/client";
+import { QueryParser, type AST } from "@liveblocks/query-parser";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { JSXElementConstructor, ReactElement, ReactNode } from "react";
@@ -15,6 +17,7 @@ import {
 import { createRoomContext } from "../room";
 import { RoomProvider } from "./_liveblocks.config";
 import MockWebSocket from "./_MockWebSocket";
+import { assertNever, isPlainObject } from "@liveblocks/core";
 
 /**
  * Testing context for all tests. Sets up a default RoomProvider to wrap all
@@ -114,3 +117,74 @@ export function generateFakeJwt(options: { userId: string }) {
     )}.${btoa("fake_signature")}`
   );
 }
+
+// NOTE: This parser definition should match the backend!
+// See https://github.com/liveblocks/liveblocks-backend/blob/ca297795/shared/postgres-prisma/src/queryParsers/parseThreadQuery.ts#L15-L23
+const parser = new QueryParser({
+  fields: {
+    resolved: "boolean",
+  },
+  indexableFields: {
+    metadata: "mixed",
+  },
+  allowNull: true,
+});
+
+function getFieldValue(
+  thread: ThreadData<BaseMetadata>,
+  field: AST.Field
+): unknown {
+  switch (field._kind) {
+    case "DirectField":
+      return thread[field.ref.name as keyof ThreadData<BaseMetadata>];
+
+    case "KeyedField": {
+      const base = thread[field.base.name as keyof ThreadData<BaseMetadata>];
+      return isPlainObject(base) ? base?.[field.key] : undefined;
+    }
+
+    default:
+      return assertNever(field, "Unhandled case");
+  }
+}
+
+function matchesConditionGroup(
+  cond: AST.ConditionGroup,
+  thread: ThreadData<BaseMetadata>
+): boolean {
+  switch (cond._kind) {
+    case "OrCondition":
+    case "NotCondition":
+      throw new Error("Not supported");
+
+    case "ExactCondition": {
+      const actual = getFieldValue(thread, cond.field);
+      const expected = cond.value.value === null ? undefined : cond.value.value;
+      return actual === expected;
+    }
+
+    case "PrefixCondition": {
+      const actual = getFieldValue(thread, cond.field);
+      const expected = cond.prefix.value;
+      return typeof actual === "string" && actual.startsWith(expected);
+    }
+
+    case "NumericCondition":
+      throw new Error("Not implemented yet");
+
+    default:
+      return assertNever(cond, "Unhandled case");
+  }
+}
+
+function matchesQuery(
+  query: AST.Query,
+  thread: ThreadData<BaseMetadata>
+): boolean {
+  return query.allOf.every((group) => matchesConditionGroup(group, thread));
+}
+
+export const makeThreadFilter = (queryText: string) => {
+  const query = parser.parse(queryText).query;
+  return (thread: ThreadData<BaseMetadata>) => matchesQuery(query, thread);
+};
