@@ -155,9 +155,9 @@ const AiToolbarSuggestion = forwardRef<
 
   const handleSelect = useCallback(
     (prompt: string) => {
-      (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
-        manualPrompt ?? prompt
-      );
+      (
+        editor.commands as unknown as AiCommands<boolean>
+      ).$startAiToolbarThinking(manualPrompt ?? prompt);
     },
     [editor, manualPrompt]
   );
@@ -179,11 +179,13 @@ function AiToolbarReviewingSuggestions({
   prompt: string;
 }) {
   const handleRetry = useCallback(() => {
-    (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(prompt);
+    (editor.commands as unknown as AiCommands<boolean>).$startAiToolbarThinking(
+      prompt
+    );
   }, [editor, prompt]);
 
   const handleDiscard = useCallback(() => {
-    (editor.commands as AiCommands<boolean>).$closeAiToolbar();
+    (editor.commands as unknown as AiCommands<boolean>).$closeAiToolbar();
   }, [editor]);
 
   return (
@@ -252,9 +254,9 @@ function AiToolbarCustomPromptContent({
 
       if (event.shiftKey) {
         // If the shift key is pressed, add a new line
-        editor.commands._updateAiToolbarCustomPrompt(
-          (customPrompt) => customPrompt + "\n"
-        );
+        (
+          editor.commands as unknown as AiCommands<boolean>
+        )._updateAiToolbarCustomPrompt((customPrompt) => customPrompt + "\n");
       } else {
         const selectedDropdownItem = dropdownRef.current?.querySelector(
           "[role='option'][data-selected='true']"
@@ -265,7 +267,9 @@ function AiToolbarCustomPromptContent({
           selectedDropdownItem.click();
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
-          editor.commands.$startAiToolbarThinking(customPrompt);
+          (
+            editor.commands as unknown as AiCommands<boolean>
+          ).$startAiToolbarThinking(customPrompt);
         }
       }
     }
@@ -273,7 +277,9 @@ function AiToolbarCustomPromptContent({
 
   const handleCustomPromptChange = useCallback(
     (customPrompt: string) => {
-      editor.commands._updateAiToolbarCustomPrompt(customPrompt);
+      (
+        editor.commands as unknown as AiCommands<boolean>
+      )._updateAiToolbarCustomPrompt(customPrompt);
     },
     [editor]
   );
@@ -283,7 +289,7 @@ function AiToolbarCustomPromptContent({
       return;
     }
 
-    (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
+    (editor.commands as unknown as AiCommands<boolean>).$startAiToolbarThinking(
       customPrompt
     );
   }, [editor, customPrompt, isCustomPromptEmpty]);
@@ -361,7 +367,9 @@ function AiToolbarThinking({
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleCancel = useCallback(() => {
-    (editor.commands as AiCommands<boolean>).$cancelAiToolbarThinking();
+    (
+      editor.commands as unknown as AiCommands<boolean>
+    ).$cancelAiToolbarThinking();
   }, [editor]);
 
   return (
@@ -444,7 +452,9 @@ function AiToolbarContainer({
         event.stopPropagation();
 
         if (phase === "thinking") {
-          (editor.commands as AiCommands<boolean>).$cancelAiToolbarThinking();
+          (
+            editor.commands as unknown as AiCommands<boolean>
+          ).$cancelAiToolbarThinking();
         } else {
           // TODO: Improve typing
           (editor.chain() as ExtendedChainedCommands<"$closeAiToolbar">)
@@ -599,7 +609,7 @@ export const AiToolbar = Object.assign(
         }
 
         if (!selection && phase !== "closed") {
-          (editor.commands as AiCommands<boolean>).$closeAiToolbar();
+          (editor.commands as unknown as AiCommands<boolean>).$closeAiToolbar();
         }
       }, [phase, editor, selection]);
 
@@ -639,7 +649,9 @@ export const AiToolbar = Object.assign(
               ? !dropdownRef.current.contains(event.target as Node)
               : true)
           ) {
-            (editor.commands as AiCommands<boolean>).$closeAiToolbar();
+            (
+              editor.commands as unknown as AiCommands<boolean>
+            ).$closeAiToolbar();
           }
         };
 

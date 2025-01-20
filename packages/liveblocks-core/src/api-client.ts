@@ -334,6 +334,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     prompt: string;
     selectionText: string;
     context: string;
+    signal: AbortSignal;
   }): Promise<string>;
 }
 
@@ -1126,6 +1127,7 @@ export function createApiClient<M extends BaseMetadata>({
     prompt: string;
     selectionText: string;
     context: string;
+    signal: AbortSignal;
   }): Promise<string> {
     const result = await httpClient.post<{
       content: { type: "text"; text: string }[];
@@ -1139,7 +1141,8 @@ export function createApiClient<M extends BaseMetadata>({
         prompt: options.prompt,
         selectionText: options.selectionText,
         context: options.context,
-      }
+      },
+      { signal: options.signal }
     );
     if (!result || result.content.length === 0) {
       throw new Error("No content returned from server");

@@ -20,8 +20,12 @@ export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension({
     ai: {
       name: "Liveblocks",
-      resolveAiPrompt: async (prompt, selectionText) => {
+      resolveAiPrompt: async ({ prompt, selectionText, signal }) => {
         await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        if (signal.aborted) {
+          throw new DOMException("", "AbortError");
+        }
 
         return `Results\n- prompt: ${prompt}\n- text: ${selectionText}`;
       },

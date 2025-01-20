@@ -4,6 +4,7 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
 import {
   AI_TOOLBAR_SELECTION_PLUGIN,
+  type AiCommands,
   type AiExtensionOptions,
   type AiExtensionStorage,
   type AiToolbarOutput,
@@ -45,9 +46,13 @@ export const AiExtension = Extension.create<
     return {
       askAi: (prompt) => () => {
         if (typeof prompt === "string") {
-          this.editor.commands.$startAiToolbarThinking(prompt);
+          (
+            this.editor.commands as unknown as AiCommands<boolean>
+          ).$startAiToolbarThinking(prompt);
         } else {
-          this.editor.commands.$openAiToolbarAsking();
+          (
+            this.editor.commands as unknown as AiCommands<boolean>
+          ).$openAiToolbarAsking();
         }
 
         return true;
@@ -110,20 +115,37 @@ export const AiExtension = Extension.create<
 
         // 3. Execute the AI request
         this.options
-          .resolveAiPrompt(
+          .resolveAiPrompt({
             prompt,
-            "TODO: The selected text OR the last output if it's a refinement prompt"
-          )
+            selectionText:
+              "TODO: The selected text OR the last output if it's a refinement prompt",
+
+            // TODO: Add doc context
+            context: "",
+            signal: abortController.signal,
+          })
           .then((output) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
+
             // 3.a. If the AI request succeeds, set to "reviewing" phase with the output
-            this.editor.commands._handleAiToolbarThinkingSuccess({
+            (
+              this.editor.commands as unknown as AiCommands<boolean>
+            )._handleAiToolbarThinkingSuccess({
               type: "other",
               text: output,
             });
           })
           .catch((error) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
+
             // 3.b. If the AI request fails, set to "asking" phase with error
-            this.editor.commands._handleAiToolbarThinkingError(error as Error);
+            (
+              this.editor.commands as unknown as AiCommands<boolean>
+            )._handleAiToolbarThinkingError(error as Error);
           });
 
         return true;
@@ -195,22 +217,24 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      _updateAiToolbarCustomPrompt: (customPrompt) => () => {
-        const currentState = this.storage.state;
+      _updateAiToolbarCustomPrompt:
+        (customPrompt: string | ((currentCustomPrompt: string) => string)) =>
+        () => {
+          const currentState = this.storage.state;
 
-        // 1. If NOT in a phase with a custom prompt, do nothing
-        if (typeof currentState.customPrompt !== "string") {
-          return false;
-        }
+          // 1. If NOT in a phase with a custom prompt, do nothing
+          if (typeof currentState.customPrompt !== "string") {
+            return false;
+          }
 
-        // 2. Update the custom prompt
-        this.storage.state.customPrompt =
-          typeof customPrompt === "function"
-            ? customPrompt(currentState.customPrompt)
-            : customPrompt;
+          // 2. Update the custom prompt
+          this.storage.state.customPrompt =
+            typeof customPrompt === "function"
+              ? customPrompt(currentState.customPrompt)
+              : customPrompt;
 
-        return true;
-      },
+          return true;
+        },
     };
   },
   addProseMirrorPlugins() {

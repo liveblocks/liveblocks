@@ -28,11 +28,18 @@ export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
+type ResolveAiPromptArgs = {
+  prompt: string;
+
+  // TODO: Rename `selectionText` to `text` (when refining it's not a selection)
+  selectionText: string;
+  context: string;
+  signal: AbortSignal;
+};
+
 export interface AiConfiguration {
   name?: string;
-
-  // TODO: Should `selectionText` be renamed? In the case of a refinement, it's not selected text but the previous output.
-  resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
+  resolveAiPrompt?: (args: ResolveAiPromptArgs) => Promise<string>;
 }
 
 export type LiveblocksExtensionOptions = {
@@ -60,10 +67,10 @@ export const enum ThreadPluginActions {
 }
 
 export type AiExtensionOptions = {
-  name: string;
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
-  resolveAiPrompt: (prompt: string, selectionText: string) => Promise<string>;
+  name: string;
+  resolveAiPrompt: (args: ResolveAiPromptArgs) => Promise<string>;
 };
 
 export type AiToolbarOutput = {

@@ -1049,6 +1049,7 @@ export type PrivateRoomApi = {
     prompt: string;
     selectionText: string;
     context: string;
+    signal: AbortSignal;
   }): Promise<string>;
 
   // NOTE: These are only used in our e2e test app!
@@ -1610,6 +1611,7 @@ export function createRoom<
     prompt: string;
     selectionText: string;
     context: string;
+    signal: AbortSignal;
   }) {
     return httpClient.executeContextualPrompt({
       roomId,
