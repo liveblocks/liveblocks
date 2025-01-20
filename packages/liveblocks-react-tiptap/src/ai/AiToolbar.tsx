@@ -355,27 +355,32 @@ function AiToolbarAsking({
   );
 }
 
-function AiToolbarThinking({
-  editor,
-  prompt,
-}: {
-  editor: Editor;
-  prompt: string;
-}) {
+function AiToolbarThinking({ editor }: { editor: Editor }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleCancel = useCallback(() => {
     (editor.commands as unknown as AiCommands).$cancelAiToolbarThinking();
   }, [editor]);
 
+  // Focus the toolbar content and clear the current window selection while thinking
+  useLayoutEffect(() => {
+    contentRef.current?.focus();
+    window.getSelection()?.removeAllRanges();
+  }, []);
+
   return (
     <>
-      <div className="lb-tiptap-ai-toolbar-content">
+      <div
+        className="lb-tiptap-ai-toolbar-content"
+        tabIndex={0}
+        ref={contentRef}
+      >
         <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
           <SparklesIcon />
         </span>
         <div className="lb-tiptap-ai-toolbar-thinking">
-          {aiName} is thinking… ({prompt})
+          {aiName} is thinking…
         </div>
         <div className="lb-tiptap-ai-toolbar-actions">
           <ShortcutTooltip content="Cancel" shortcut="Escape">
@@ -474,7 +479,7 @@ function AiToolbarContainer({
               isDropdownHidden={isDropdownHidden}
             />
           ) : state.phase === "thinking" ? (
-            <AiToolbarThinking editor={editor} prompt={state.prompt} />
+            <AiToolbarThinking editor={editor} />
           ) : state.phase === "reviewing" ? (
             <AiToolbarReviewing
               editor={editor}
@@ -552,8 +557,9 @@ export const AiToolbar = Object.assign(
         useEditorState({
           editor,
           selector: (ctx) => {
-            return (ctx.editor?.storage.liveblocksAi as AiExtensionStorage)
-              ?.state;
+            return (
+              ctx.editor?.storage.liveblocksAi as AiExtensionStorage | undefined
+            )?.state;
           },
         }) ?? DEFAULT_STATE;
       const phase = state.phase;

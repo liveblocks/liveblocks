@@ -153,7 +153,12 @@ export const AiExtension = Extension.create<
           return false;
         }
 
-        // 2. Set to "asking" phase
+        // 2. Blur the editor if needed
+        if (this.editor.isFocused) {
+          this.editor.commands.blur();
+        }
+
+        // 3. Set to "asking" phase
         this.storage.state = {
           phase: "asking",
 
@@ -172,10 +177,15 @@ export const AiExtension = Extension.create<
           return false;
         }
 
+        // 2. Blur the editor if needed
+        if (this.editor.isFocused) {
+          this.editor.commands.blur();
+        }
+
         const abortController = new AbortController();
         const provider = getLiveblocksYjsProvider(this.editor);
 
-        // 2. Set to "thinking" phase
+        // 3. Set to "thinking" phase
         this.storage.state = {
           phase: "thinking",
           customPrompt: currentState.customPrompt ?? "",
@@ -183,10 +193,10 @@ export const AiExtension = Extension.create<
           abortController,
         };
 
-        // 3. Block the editor
+        // 4. Block the editor
         this.editor.setEditable(false);
 
-        // 4. Execute the AI request
+        // 5. Execute the AI request
         const executeAiRequest = async () => {
           await provider?.pause();
 
@@ -211,7 +221,7 @@ export const AiExtension = Extension.create<
               return;
             }
 
-            // 4.a. If the AI request succeeds, set to "reviewing" phase with the output
+            // 5.a. If the AI request succeeds, set to "reviewing" phase with the output
             (
               this.editor.commands as unknown as AiCommands
             )._handleAiToolbarThinkingSuccess({
@@ -224,7 +234,7 @@ export const AiExtension = Extension.create<
               return;
             }
 
-            // 4.b. If the AI request fails, set to "asking" phase with error
+            // 5.b. If the AI request fails, set to "asking" phase with error
             (
               this.editor.commands as unknown as AiCommands
             )._handleAiToolbarThinkingError(error as Error);
@@ -278,6 +288,8 @@ export const AiExtension = Extension.create<
             (this.editor.commands as AiCommands)._renderAiToolbarDiffInEditor(
               this.storage.snapshot
             );
+
+            // TODO: We now rely on editor.state.selection but this breaks it, should we update editor.state.selection or keep our own selection?
             this.editor.commands.insertContentAt(
               this.editor.state.selection.from,
               // TODO: The current endpoint returns Tiptap-shaped JSON directly, not text

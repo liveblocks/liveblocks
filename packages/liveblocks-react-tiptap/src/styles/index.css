@@ -332,6 +332,7 @@
   display: flex;
   justify-content: space-between;
   inline-size: 100%;
+  outline: none;
 }
 
 .lb-tiptap-ai-toolbar-output-container,
