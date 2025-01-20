@@ -1,12 +1,7 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import type { InternalSyncStatus } from "./client";
-import type {
-  Delegates,
-  LiveblocksError,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -84,6 +79,7 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
+import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
 import type {
   InternalOthersEvent,
@@ -580,12 +576,12 @@ export type Room<
    *
    * @param {string} data the doc update to send to the server, base64 encoded uint8array
    */
-  updateYDoc(data: string, guid?: string): void;
+  updateYDoc(data: string, guid?: string, isV2?: boolean): void;
 
   /**
    * Sends a request for the current document from liveblocks server
    */
-  fetchYDoc(stateVector: string, guid?: string): void;
+  fetchYDoc(stateVector: string, guid?: string, isV2?: boolean): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -638,7 +634,6 @@ export type Room<
     readonly self: Observable<User<P, U>>;
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
-    readonly error: Observable<LiveblocksError>;
     /**
      * @deprecated Renamed to `storageBatch`. The `storage` event source will
      * soon be replaced by another/incompatible API.
@@ -1229,6 +1224,7 @@ export type RoomConfig<M extends BaseMetadata> = {
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
   createSyncSource: () => SyncSource;
+  errorEventSource: EventSource<LiveblocksError>;
 };
 
 function userToTreeNode(
@@ -1473,13 +1469,17 @@ export function createRoom<
   managedSocket.events.statusDidChange.subscribe(handleConnectionLossEvent);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
-  managedSocket.events.onLiveblocksError.subscribe((err) => {
-    if (process.env.NODE_ENV !== "production") {
-      console.error(
-        `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
-      );
+  managedSocket.events.onConnectionError.subscribe(({ message, code }) => {
+    const type = "ROOM_CONNECTION_ERROR";
+    const err = new LiveblocksError(message, { type, code, roomId });
+    const didNotify = config.errorEventSource.notify(err);
+    if (!didNotify) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `Connection to websocket server closed. Reason: ${message} (code: ${code}).`
+        );
+      }
     }
-    eventHub.error.notify(err);
   });
 
   const pool: ManagedPool = {
@@ -1556,7 +1556,6 @@ export function createRoom<
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
-    error: makeEventSource<LiveblocksError>(),
     storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -2176,7 +2175,8 @@ export function createRoom<
             user:
               message.actor < 0
                 ? null
-                : others.find((u) => u.connectionId === message.actor) ?? null,
+                : (others.find((u) => u.connectionId === message.actor) ??
+                  null),
             event: message.event,
           });
           break;
@@ -2348,11 +2348,12 @@ export function createRoom<
     return messages;
   }
 
-  function updateYDoc(update: string, guid?: string) {
+  function updateYDoc(update: string, guid?: string, isV2?: boolean) {
     const clientMsg: UpdateYDocClientMsg = {
       type: ClientMsgCode.UPDATE_YDOC,
       update,
       guid,
+      v2: isV2,
     };
     context.buffer.messages.push(clientMsg);
     eventHub.ydoc.notify(clientMsg);
@@ -2471,7 +2472,7 @@ export function createRoom<
     };
   }
 
-  function fetchYDoc(vector: string, guid?: string): void {
+  function fetchYDoc(vector: string, guid?: string, isV2?: boolean): void {
     // don't allow multiple fetches in the same buffer with the same vector
     // dev tools may also call with a different vector (if its opened later), and that's okay
     // because the updates will be ignored by the provider
@@ -2480,7 +2481,8 @@ export function createRoom<
         return (
           m.type === ClientMsgCode.FETCH_YDOC &&
           m.vector === vector &&
-          m.guid === guid
+          m.guid === guid &&
+          m.v2 === isV2
         );
       })
     ) {
@@ -2488,6 +2490,7 @@ export function createRoom<
         type: ClientMsgCode.FETCH_YDOC,
         vector,
         guid,
+        v2: isV2,
       });
     }
 
@@ -2686,7 +2689,6 @@ export function createRoom<
     others: eventHub.others.observable,
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
-    error: eventHub.error.observable,
     /** @deprecated */
     storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
@@ -2944,7 +2946,11 @@ export function createRoom<
       },
 
       id: config.roomId,
-      subscribe: makeClassicSubscribeFn(events),
+      subscribe: makeClassicSubscribeFn(
+        config.roomId,
+        events,
+        config.errorEventSource
+      ),
 
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
@@ -3036,7 +3042,11 @@ function makeClassicSubscribeFn<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(events: Room<P, S, U, E, M>["events"]): SubscribeFn<P, S, U, E> {
+>(
+  roomId: string,
+  events: Room<P, S, U, E, M>["events"],
+  errorEvents: EventSource<LiveblocksError>
+): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
@@ -3102,8 +3112,13 @@ function makeClassicSubscribeFn<
           });
         }
 
-        case "error":
-          return events.error.subscribe(callback as Callback<Error>);
+        case "error": {
+          return errorEvents.subscribe((err) => {
+            if (err.roomId === roomId) {
+              return (callback as Callback<Error>)(err);
+            }
+          });
+        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);

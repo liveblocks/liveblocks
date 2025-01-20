@@ -1,14 +1,72 @@
 import * as console from "./fancy-console";
+import { isPlainObject } from "./guards";
 import type { JsonObject } from "./Json";
-import { wait } from "./utils";
+import { tryParseJson, wait } from "./utils";
 
 export class HttpError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
+  public response: Response;
+  public details?: JsonObject;
+
+  private constructor(
+    message: string,
+    response: Response,
+    details?: JsonObject
   ) {
     super(message);
+    this.name = "HttpError";
+    this.response = response;
+    this.details = details;
+  }
+
+  static async fromResponse(response: Response): Promise<HttpError> {
+    // Try to extract `message` and `details` from the response, and
+    // construct the HttpError instance
+    let bodyAsText: string | undefined;
+    try {
+      bodyAsText = await response.text();
+    } catch {
+      // Ignore
+    }
+
+    const bodyAsJson = bodyAsText ? tryParseJson(bodyAsText) : undefined;
+
+    let bodyAsJsonObject: JsonObject | undefined;
+    if (isPlainObject(bodyAsJson)) {
+      bodyAsJsonObject = bodyAsJson;
+    }
+
+    let message = "";
+    message ||=
+      typeof bodyAsJsonObject?.message === "string"
+        ? bodyAsJsonObject.message
+        : "";
+    message ||=
+      typeof bodyAsJsonObject?.error === "string" ? bodyAsJsonObject.error : "";
+    if (bodyAsJson === undefined) {
+      message ||= bodyAsText || "";
+    }
+    message ||= response.statusText;
+
+    let path: string | undefined;
+    try {
+      path = new URL(response.url).pathname;
+    } catch {
+      // Ignore
+    }
+    message +=
+      path !== undefined
+        ? ` (got status ${response.status} from ${path})`
+        : ` (got status ${response.status})`;
+
+    const details = bodyAsJsonObject;
+    return new HttpError(message, response, details);
+  }
+
+  /**
+   * Convenience accessor for response.status.
+   */
+  get status(): number {
+    return this.response.status;
   }
 }
 

@@ -9,7 +9,8 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, ThreadData } from "@liveblocks/client";
+import type { DM } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,

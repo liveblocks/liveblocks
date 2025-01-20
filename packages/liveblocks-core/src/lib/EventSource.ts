@@ -23,9 +23,11 @@ export type Observable<T> = {
 
 export type EventSource<T> = Observable<T> & {
   /**
-   * Notify all subscribers about the event.
+   * Notify all subscribers about the event. Will return `false` if there
+   * weren't any subscribers at the time the .notify() was called, or `true` if
+   * there was at least one subscriber.
    */
-  notify(event: T): void;
+  notify(event: T): boolean;
   /**
    * Returns the number of active subscribers.
    */
@@ -112,7 +114,12 @@ export function makeEventSource<T>(): EventSource<T> {
   }
 
   function notify(event: T) {
-    _observers.forEach((callback) => callback(event));
+    let called = false;
+    for (const callback of _observers) {
+      callback(event);
+      called = true;
+    }
+    return called;
   }
 
   function count() {
@@ -164,8 +171,9 @@ export function makeBufferableEventSource<T>(): BufferableEventSource<T> {
   function notifyOrBuffer(event: T) {
     if (_buffer !== null) {
       _buffer.push(event);
+      return false;
     } else {
-      eventSource.notify(event);
+      return eventSource.notify(event);
     }
   }
 

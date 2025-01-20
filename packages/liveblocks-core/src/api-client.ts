@@ -1540,14 +1540,7 @@ class HttpClient {
     const response = await this.#rawFetch(endpoint, authValue, options, params);
 
     if (!response.ok) {
-      let error: HttpError;
-      try {
-        const errorBody = (await response.json()) as { message: string };
-        error = new HttpError(errorBody.message, response.status, errorBody);
-      } catch {
-        error = new HttpError(response.statusText, response.status);
-      }
-      throw error;
+      throw await HttpError.fromResponse(response);
     }
 
     let body;

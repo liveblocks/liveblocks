@@ -37,7 +37,7 @@
  *************************************/
 
 .lb-lexical-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -47,23 +47,26 @@
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
   user-select: none;
   transition-property: background, color, opacity;
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 :is(.lb-lexical-suggestions-list-item) {
-  &:where([data-highlighted], [data-selected]) {
+  &:where(
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
 
-  &:where(:disabled, [data-disabled]) {
+  &:where(:disabled, [data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -107,7 +110,7 @@
 
   @include invisible-selection;
 
-  &:where([data-selected]) {
+  &:where([data-selected]:not([data-selected="false"])) {
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
   }
@@ -202,4 +205,39 @@
 
 .lb-lexical-floating-composer {
   inline-size: var(--lb-lexical-floating-size);
+}
+
+/*************************************
+ *              Toolbar              *
+ *************************************/
+
+.lb-lexical-toolbar {
+  --lb-lexical-toolbar-spacing: calc(0.25 * var(--lb-spacing));
+
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: var(--lb-lexical-toolbar-spacing);
+  align-items: center;
+  padding: var(--lb-lexical-toolbar-spacing);
+  background: var(--lb-background);
+}
+
+.lb-lexical-floating-toolbar {
+  --lb-lexical-toolbar-spacing: $lb-elevation-padding;
+}
+
+.lb-lexical-toolbar-separator {
+  position: relative;
+  align-self: stretch;
+  inline-size: 1px;
+  margin-inline: 1px;
+  pointer-events: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 10% 0;
+    background: var(--lb-foreground-subtle);
+  }
 }

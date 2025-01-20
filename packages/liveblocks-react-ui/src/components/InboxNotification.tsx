@@ -339,16 +339,16 @@ const InboxNotificationLayout = forwardRef<
                           <DropdownItem
                             onSelect={handleMarkAsRead}
                             onClick={stopPropagation}
+                            icon={<CheckIcon />}
                           >
-                            <CheckIcon className="lb-dropdown-item-icon" />
                             {$.INBOX_NOTIFICATION_MARK_AS_READ}
                           </DropdownItem>
                         ) : null}
                         <DropdownItem
                           onSelect={handleDelete}
                           onClick={stopPropagation}
+                          icon={<DeleteIcon />}
                         >
-                          <DeleteIcon className="lb-dropdown-item-icon" />
                           {$.INBOX_NOTIFICATION_DELETE}
                         </DropdownItem>
                       </>
@@ -362,9 +362,8 @@ const InboxNotificationLayout = forwardRef<
                           onPointerDown={preventDefaultAndStopPropagation}
                           onPointerUp={preventDefaultAndStopPropagation}
                           aria-label={$.INBOX_NOTIFICATION_MORE}
-                        >
-                          <EllipsisIcon className="lb-button-icon" />
-                        </Button>
+                          icon={<EllipsisIcon />}
+                        />
                       </DropdownTrigger>
                     </Tooltip>
                   </Dropdown>

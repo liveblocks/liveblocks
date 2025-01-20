@@ -19,7 +19,7 @@
   align-items: flex-start;
   background: var(--color-surface-elevated);
   border-bottom: 1px solid var(--color-border);
-  padding: var(--space-3);
+  padding: var(--space-1) var(--space-3);
   z-index: var(--z-above);
 }
 

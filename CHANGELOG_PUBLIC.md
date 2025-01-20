@@ -13,6 +13,148 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 3 (2025-01-17)
+
+## v2.16.0
+
+We've created new toolbar elements that allow you to import a default floating toolbar
+in Tiptap and Lexical. It's also possible to use these APIs to build custom or
+static toolbars. We've updated a number of our examples to show how to do this.
+
+Our error listener APIs will now receive more errors in general, including
+errors from using Comments & Notifications. Previously, these would only receive
+room connection errors from Presence, Storage, or Yjs. For example, now when 
+creation of a thread fails, deletion of a comment fails, marking a notification 
+as read fails, etc.
+
+### `@liveblocks/react`
+
+#### **Breaking**: More errors can appear in `useErrorListener()`
+
+```ts
+// ❌ Before: required a RoomProvider and would only notify about errors for that room
+// ✅ Now: requires a LiveblocksProvider and will notify about errors for any room
+useErrorListener((err: LiveblocksError) => {
+  /* show toast, or notify Sentry, Datadog, etc */
+});
+```
+
+See the
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+learn how to adapt your code.
+
+#### Filtering by absence of metadata
+
+We now support filtering threads by _absence_ of metadata as well in
+`useThreads({ query })` (or `useUserThreads_experimental({ query })`). For example,
+you can now filter threads that do not have a `color` attribute set in their 
+metadata:
+
+```ts
+useThreads({
+  query: {
+    // Filter any "pinned" threads that don't have a color set
+    metadata: {
+      pinned: true,
+      color: null, // ✨
+    },
+  },
+});
+```
+
+See the
+[Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
+learn how to adapt your code.
+
+#### Bug fixes
+
+- Automatically refresh Comments and Notifications when the browser window
+  regains focus.
+
+### `@liveblocks/client`
+
+The error listener APIs will now receive more errors in general, including
+errors from using Comments & Notifications. Previously, these would only receive
+room connection errors from Presence, Storage, or Yjs.
+
+```ts
+// 👌 Same as before, but might now also receive errors related to Comments & Notifications
+room.subscribe("error", (err) => { ... });
+```
+
+### `@liveblocks/react-ui`
+
+- Most of the icons used in the default components are now usable as
+  `<Icon.* />` via `import { Icon } from "@liveblocks/react-ui"`.
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- Add `<Toolbar />` and `<FloatingToolbar />` components to simplify building
+  editor toolbars. They come with default controls out-of-the-box based on what
+  the editor they’re attached to supports, but they’re also heavily extendable
+  and customizable. Use inner components like `<Toolbar.Toggle />` and
+  `<Toolbar.Separator />` to extend the defaults with your own actions, or start
+  from scratch while customizing some of the defaults via
+  `<Toolbar.SectionInline />` or `<Toolbar.BlockSelector />` for example.
+
+### `@liveblocks/react-lexical`
+
+- Add `isTextFormatActive` and `isBlockNodeActive` utilities.
+
+## Examples
+
+- Updated [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use the new `FloatingToolbar`.
+- Updated many text editor examples to use the new `FloatingToolbar`:
+  - [Advanced collaborative text editor (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)`.
+  - [Collaborative text editor (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap).
+  - [Collaborative text editor (Lexical)](https://liveblocks.io/examples/collaborative-text-editor/nextjs-lexical).
+  - [Text editor comments (Tiptap)](https://liveblocks.io/examples/text-editor-comments/nextjs-comments-tiptap).
+  - [Next.js Tiptap editor](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced).
+  - [Next.js Tiptap editor](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced).
+ 
+## Dashboard
+
+- Allow rate limit configuration for webhook endpoints.
+- Fix download comments attachments action in text editor view from room detail page.
+
+## Contributors
+
+jrowny, sugardarius, ctnicholas, nvie, marcbouchenoire
+
+# Week 2 (2025-01-10)
+
+## 2.15.2
+
+### All packages
+
+- Fix `useLayoutEffect` warnings when using React versions lower than 18.3.0 and SSR.
+
+### `@liveblocks/react`
+
+- Fix memory leak in some hooks.
+- Fix bug where querying metadata with `useThreads()` would not always reuse the cache correctly.
+
+## Website
+
+- New blog post: [What’s new in Liveblocks: December 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-december-edition-2024).
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire
+
+# Week 52 (2024-12-27)
+
+## 2.15.1
+
+### All packages
+
+- Fix rollup config to always ensure `"use client"` directives are on top of
+  files after build.
+
+## Contributors
+
+sugardarius
+
 # Week 51 (2024-12-20)
 
 ## v2.15.0
@@ -43,7 +185,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 ## Examples
 
 - Adjusted email templates to allow switching the logo more easily.
-- Next.js Starter Kit improvements:
+- [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) improvements:
   - Renaming a document updates it immediately for everyone else.
   - Clicking outside of the rename input saves the new name.
   - Added tldraw's dark mode.
