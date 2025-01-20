@@ -1,0 +1,343 @@
+---
+meta:
+  title: "How to configure Notification Settings"
+  description:
+    "Learn how to configure notification settings in the dashboard and in your
+    application."
+---
+
+Liveblocks allows your to embed a notification settings configuration experience
+in your application. This guide will show you how to configure notification
+settings.
+
+"add more context here"
+
+## What we're building
+
+In this guide we'll be learning how to configure notification settings at the
+project level in the dashboard and how to implement a notification settings
+configuration page in your application.
+
+"add more context here"
+
+## What are inbox notifications?
+
+"add section here to explain the relation between inbox notifications and
+notification settings in the dashboard and in an application."
+
+## Using webhooks
+
+Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
+send requests to your API endpoint when certain events occurs. One webhook we
+provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+webhook.
+
+"add more context here"
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send a POST request to the back end in
+your project. In this guide, we’ll be using a Next.js route handler (API
+endpoint) as an example, but other frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-notifications
+```
+
+Make a note of this endpoint URL, as you’ll be using it later.
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhooks dashboard.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when a comment
+has been created.
+
+<Steps>
+  <Step>
+    <StepTitle>Select your project</StepTitle>
+    <StepContent>
+      From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+      like to use with webhooks, or create a new project.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-create-project.png"
+          alt="Create a Liveblocks project"
+          width={712}
+          height={445}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Webhooks”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Create an endpoint</StepTitle>
+  <StepContent>
+    Click the **“Create endpoint…”** button on the webhooks dashboard to start
+    setting up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Get your webhook secret key</StepTitle>
+  <StepContent>
+    Click **“Create endpoint”** at the bottom, then find your **“Webhook secret
+    key”** on the next page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+        alt="Copy your webhook secret key"
+        width={710}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Note that you can filter specifically for `notification` events, but we’re
+      ignoring this for now so we can test more easily. Let’s go back to the
+      code.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Setup notification settings on the dashboard
+
+"add more context here."
+
+### Enable notification settings on the dashboard
+
+"add more context here."
+
+### Change throttle interval
+
+"add more context here"
+
+### Instant notifications note
+
+"add more context here"
+
+### Add custom notification kinds
+
+"add more context here"
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your “Webhook secret key” from the Liveblocks dashboard—in a
+real project we’d recommend using an environment variable for this.
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Send notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Check the event and notification permissions
+
+After verifying the request, we can then check we’re receiving the correct type
+of event. There are different `notification` events, and in this case we’d like
+to check for
+[text mention notification](/docs/platform/webhooks#TextMention-notification),
+as we’re specifically listening for new text mentions. We can do this using
+[`isTextMentionNotificationEvent`](/docs/api-reference/liveblocks-node#isTextMentionNotificationEvent).
+
+```ts
+import {
+  WebhookHandler,
+  isTextMentionNotificationEvent,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  // When an inbox notification has been created
+  if (isTextMentionNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    // Send notifications
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Note that we’re also checking if the user should receive a notification, and
+getting their email address—Liveblocks doesn’t have knowledge of your
+permissions system on the back end, so it’s your responsibility to check if this
+user should have access to the room.
+
+"add section to explain developers can check isThreadNotificationEvent or
+isCustomNotificationEvent"
+
+## Build a settings page in your project
+
+"add more context here"
+
+### Create a settings page
+
+"add more context here"
+
+### Use the Liveblocks packages to read and update notification settings
+
+"add more context here"
+
+## Send notifications
+
+"add more context here"
+
+### Check event channel
+
+"add more context here"
+
+### Send notifications with the good channel
+
+"add more context here"
+
+## Recap

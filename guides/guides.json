@@ -387,5 +387,12 @@
     "technologies": ["react-ui", "nodejs", "lexical", "tiptap"],
     "date": "2024-11-29",
     "featured": true
+  },
+  {
+    "title": "How to configure notification settings",
+    "path": "/how-to-configure-notification-settings",
+    "topics": ["notifications", "tutorials"],
+    "technologies": ["react-ui", "nodejs"],
+    "featured": true
   }
 ]
