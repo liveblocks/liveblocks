@@ -70,6 +70,27 @@ export type AiToolbarOutput = {
   text: string;
 };
 
+/**
+ * The state of the AI toolbar.
+ *
+ *                             ┌────────────────────────────────────────────────────────────────────────────────┐
+ *                             │                                                                                │
+ *                             │ ┌──────────────────────────────────────────────┐                               │
+ *                             ▼ ▼                                              │                               │
+ *              ┌───────$closeAiToolbar()───────┐                               │                               │
+ *              ▼                               │                               │                               │
+ *  ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
+ *  │        CLOSED         │       │        ASKING         │       │       THINKING        │       │       REVIEWING       │
+ *  └───────────────────────┘       └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
+ *              │                            ▲ ▲ │ ▲                          ▲ │ │                            │ ▲
+ *              └────$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─│─│─ ─ ─ ─ ─ ─ ─ ─ ✓ ─ ─ ─ ─ ─ ─ ┼ ┘
+ *              │                              │ ▼                            │ │                              │
+ *              └────────────────$startAiToolbarThinking(prompt)──────────────┘ │                              │
+ *                                             │ ▲                              │                              │
+ *                                             │ └──────────────────────────────┼──────────────────────────────┘
+ *                                             │                                │
+ *                                             └────$cancelAiToolbarThinking()──┘
+ */
 export type AiToolbarState = Relax<
   | {
       phase: "closed";
@@ -164,7 +185,7 @@ export type CommentsCommands<ReturnType> = {
 export type AiCommands<ReturnType> = {
   askAi: (prompt?: string) => ReturnType;
 
-  // Transitions
+  // Transitions (see AiToolbarState)
 
   /**
    * @internal
