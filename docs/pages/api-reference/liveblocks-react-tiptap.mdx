@@ -82,16 +82,313 @@ Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 
 ### Toolbar
 
+Displays a toolbar, allowing you to change the styles of selected text. You can
+add JSX before or after, or the toolbar’s options can be
+[customized](#creating-a-custom-toolbar).
+
+[TODO img]
+
+Pass your Tiptap `editor` to use the component. By default, the toolbar has a
+button for creating comment threads, add [`FloatingComposer`][] to enable this.
+Display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  Toolbar,
+  // +++
+  FloatingComposer,
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      // +++
+      <Toolbar editor={editor} />
+      // +++
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
+  );
+}
+```
+
+#### Inserting JSX and buttons [#inserting-jsx-and-buttons]
+
+You can insert JSX nodes and components `before` the first button and `after`
+the last button using `before` and `after`. Components such as
+[`Toolbar.Button`][] and [`Toolbar.Toggle`][] can be used to create new buttons.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+<Toolbar
+  editor={editor}
+  // +++
+  before={<>I'm at the start</>}
+  after={
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+  }
+  // +++
+/>;
+```
+
+For more complex customization, instead read
+[creating a custom floating toolbar](#creating-a-custom-toolbar).
+
+#### Creating a custom toolbar [#creating-a-custom-toolbar]
+
+By passing elements as children, it’s possible to create a fully custom toolbar.
+
+```tsx highlight="6"
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      Hello <strong>world</strong>
+    </Toolbar>
+  );
+}
+```
+
+Each part of our default toolbar is available as blocks which can be slotted
+together. This is how the default floating toolbar is constructed:
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+You can mix these default components with any custom ones of your own. Below the
+[`Toolbar.SectionHistory`][] component is added alongside some custom buttons
+created with [`Toolbar.Button`][], [`Toolbar.Toggle`][], and [`Icon`][]. The
+highlight toggle button requires a
+[Tiptap extension](https://tiptap.dev/docs/editor/extensions/marks/highlight).
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      // +++
+      <Toolbar.SectionHistory />
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Help"
+        icon={<Icon.QuestionMark />}
+        shortcut="CMD-H"
+        onClick={() => console.log("help")}
+      />
+      <Toolbar.Toggle
+        name="Highlight"
+        icon={<div>🖊️</div>}
+        active={editor?.isActive("highlight") ?? false}
+        onClick={() => editor?.chain().focus().toggleHighlight().run()}
+        disabled={!editor?.can().chain().focus().toggleHighlight().run()}
+      />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+To learn more about the different components, read more below.
+
+#### Props [#Toolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null">
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content of the toolbar, overriding the default content. Use the `before`
+    and `after` props if you want to keep and extend the default content. Any
+    `ReactNode` or `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="before" type="ReactNode">
+    The content to display at the start of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="after" type="ReactNode">
+    The content to display at the end of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Toolbar.Button
 
 #### Toolbar.Toggle
 
 #### Toolbar.BlockSelector
 
+Adds a dropdown selector for switching between different block types, such as
+_text_, _heading 1_, _blockquote_. Props will be passed to the inner `button`
+element. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  <Toolbar.BlockSelector />
+</Toolbar>
+```
+
+##### Use custom item options
+
+If you’d like to change the items shown in the dropdown menu, you can pass a
+custom `items` array. Below a code block item
+([Tiptap extension](https://tiptap.dev/docs/editor/extensions/nodes/code-block))
+is added after the default options .
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  <Toolbar.BlockSelector items={(defaultItems) => ([
+    ...defaultItems,
+    // +++
+    {
+      name: "Code block",
+      icon: <div>❮ ❯</div>, // Optional
+      isActive:(editor) => editor.isActive("codeBlock"),
+      setActive: (editor) => editor.chain().focus().clearNodes().toggleCodeBlock().run(),
+    }
+    // +++
+  ])} />
+</Toolbar>
+```
+
+You can also render custom JSX in the dropdown with `label`. The toolbar button
+will still display the `name`, but in the dropdown, the `label` will be used
+instead of the `name` and `icon`.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  <Toolbar.BlockSelector items={(defaultItems) => ([
+    ...defaultItems,
+    {
+      name: "Code block",
+// +++
+      label: <div className="font-mono">Code</div>, // Optional, overwrites `icon` + `name`
+// +++
+      isActive:(editor) => editor.isActive("codeBlock"),
+      setActive: (editor) => editor.chain().focus().clearNodes().toggleCodeBlock().run(),
+    }
+  ])} />
+</Toolbar>
+```
+
+##### Customize item styles
+
+By passing a `label` property, you can overwrite the styles of the dropdown
+items. In the snippet below, the default items are customized to show an example
+of the styles they apply to the document.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar.BlockSelector
+  items={(defaultItems) =>
+    defaultItems.map((item) => {
+      let label;
+
+      if (item.name === "Text") {
+        label = <span>Regular text</span>;
+      }
+
+      if (item.name === "Heading 1") {
+        label = (
+          <span style={{ fontSize: 18, fontWeight: "bold" }}>Heading 1</span>
+        );
+      }
+
+      if (item.name === "Heading 2") {
+        label = (
+          <span style={{ fontSize: 16, fontWeight: "bold" }}>Heading 2</span>
+        );
+      }
+
+      if (item.name === "Heading 3") {
+        label = (
+          <span style={{ fontSize: 15, fontWeight: "bold" }}>Heading 3</span>
+        );
+      }
+
+      if (item.name === "Blockquote") {
+        label = (
+          <span style={{ borderLeft: "3px solid gray", paddingLeft: 8 }}>
+            Blockquote
+          </span>
+        );
+      }
+
+      return {
+        ...item,
+        label,
+        icon: null, // Hide all icons
+      };
+    })
+  }
+/>;
+```
+
+##### Props [#ToolbarBlockSelector-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="items"
+    type="function"
+    detailedType="ToolbarBlockSelectorItem[] | (defaultItems: ToolbarBlockSelectorItem[]) => ToolbarBlockSelectorItem[]"
+  >
+    The items displayed in this block selector. When provided as an array, the
+    default items are overridden. To avoid this, a function can be provided
+    instead and it will receive the default items.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Toolbar.Separator
 
 Adds a visual, and accessible, separator used to separate sections in the
-toolbar. Can also be placed inside [`FloatingToolbar`][].
+toolbar. Props will be passed to the inner `div` element. Can also be placed
+inside [`FloatingToolbar`][].
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
@@ -120,7 +417,7 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 
 #### Toolbar.SectionInline
 
-Adds a section containing inline formatting actions such _bold_, _italic_,
+Adds a section containing inline formatting actions such as _bold_, _italic_,
 _underline_. Can also be placed inside [`FloatingToolbar`][].
 
 ```tsx
@@ -152,7 +449,7 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 
 Displays a floating toolbar near the current Tiptap selection, allowing you to
 change styles. You can add JSX before or after, or the toolbar’s options can be
-[customized]().
+[customized](#creating-a-custom-floating-toolbar).
 
 ```tsx
 <FloatingToolbar editor={editor} />
@@ -214,14 +511,15 @@ defines the vertical distance in pixels from the selection.
 />
 ```
 
-#### Inserting JSX and buttons
+#### Inserting JSX and buttons [#inserting-jsx-and-buttons-floating]
 
 You can insert JSX nodes and components `before` the first button and `after`
 the last button using `before` and `after`. Components such as
 [`Toolbar.Button`][] and [`Toolbar.Toggle`][] can be used to create new buttons.
 
 ```tsx
-import { Icon, Toolbar } from "@liveblocks/react-tiptap";
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
 
 <FloatingToolbar
   editor={editor}
@@ -283,10 +581,13 @@ function CustomToolbar({ editor }: { editor: Editor | null }) {
 
 You can mix these default components with any custom ones of your own. Below the
 [`Toolbar.SectionHistory`][] component is added alongside some custom buttons
-created with [`Toolbar.Button`][] and [`Toolbar.Toggle`][].
+created with [`Toolbar.Button`][], [`Toolbar.Toggle`][], and [`Icon`][]. The
+highlight toggle button requires a
+[Tiptap extension](https://tiptap.dev/docs/editor/extensions/marks/highlight).
 
 ```tsx
 import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
 import { Editor } from "@tiptap/react";
 
 function CustomToolbar({ editor }: { editor: Editor | null }) {
@@ -303,7 +604,7 @@ function CustomToolbar({ editor }: { editor: Editor | null }) {
       />
       <Toolbar.Toggle
         name="Highlight"
-        icon={<HighlightIcon />}
+        icon={<div>🖊️</div>}
         active={editor?.isActive("highlight") ?? false}
         onClick={() => editor?.chain().focus().toggleHighlight().run()}
         disabled={!editor?.can().chain().focus().toggleHighlight().run()}
@@ -315,6 +616,33 @@ function CustomToolbar({ editor }: { editor: Editor | null }) {
 ```
 
 To learn more about the different components, read more under [`Toolbar`][].
+
+#### Props [#FloatingToolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null">
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="position" type={`"top" | "bottom"`}>
+    The vertical position of the floating toolbar.
+  </PropertiesListItem>
+  <PropertiesListItem name="offset" type="number">
+    The vertical offset of the floating toolbar from the selection.{" "}
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content of the toolbar, overriding the default content. Use the `before`
+    and `after` props if you want to keep and extend the default content. Any
+    `ReactNode` or `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="before" type="ReactNode">
+    The content to display at the start of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="after" type="ReactNode">
+    The content to display at the end of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### FloatingComposer
 
@@ -1305,6 +1633,7 @@ learn how to do this under
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`Icon`]: /docs/api-reference/liveblocks-react-ui#Icon
 [`Toolbar`]: #Toolbar
 [`Toolbar.Button`]: #Toolbar.Button
 [`Toolbar.Toggle`]: #Toolbar.Toggle
