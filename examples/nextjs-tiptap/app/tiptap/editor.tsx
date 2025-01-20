@@ -27,7 +27,7 @@ export default function TiptapEditor() {
           throw new DOMException("", "AbortError");
         }
 
-        return `Results\n- prompt: ${prompt}\n- text: ${selectionText}`;
+        return `${selectionText} (${prompt})`;
       },
     },
   });

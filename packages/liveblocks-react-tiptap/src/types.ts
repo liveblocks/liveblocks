@@ -4,8 +4,8 @@ import type { Content } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
-import type { ProsemirrorMapping } from "y-prosemirror/dist/src/lib";
-import type { Doc, PermanentUserData, XmlFragment } from "yjs";
+import type { ProsemirrorBinding } from "y-prosemirror";
+import type { Doc, PermanentUserData, Snapshot } from "yjs";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -157,6 +157,7 @@ export type AiToolbarState = Relax<
 export type AiExtensionStorage = {
   name: string;
   state: AiToolbarState;
+  snapshot?: Snapshot;
 };
 
 export type ThreadPluginState = {
@@ -263,16 +264,15 @@ export type AiCommands<ReturnType = boolean> = {
   _updateAiToolbarCustomPrompt: (
     customPrompt: string | ((currentCustomPrompt: string) => string)
   ) => ReturnType;
-};
 
-// these types are not exported from y-prosemirror
-export type YSyncBinding = {
-  doc: Doc;
-  type: XmlFragment;
-  mapping: ProsemirrorMapping;
-  mux: (fn: () => void) => void;
+  /**
+   * @internal
+   *
+   * Render a snapshot diff in the editor.
+   */
+  _renderAiToolbarDiffInEditor: (previous?: Snapshot) => ReturnType;
 };
 
 export type YSyncPluginState = {
-  binding: YSyncBinding;
+  binding: ProsemirrorBinding;
 };
