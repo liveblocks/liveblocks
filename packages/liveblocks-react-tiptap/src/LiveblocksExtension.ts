@@ -359,7 +359,7 @@ export const useLiveblocksExtension = (
           field: options.field,
         }),
         CollaborationCursor.configure({
-          provider: this.storage.provider, //todo change the ! to an assert
+          provider: this.storage.provider,
         }),
       ];
 

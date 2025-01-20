@@ -178,7 +178,13 @@ export type ExtendedChainedCommands<
   A extends any[] = [],
 > = ChainedCommands & Record<T, (...args: A) => ChainedCommands>;
 
-export type CommentsCommands<ReturnType> = {
+export type ChainedAiCommands = ChainedCommands & {
+  [K in keyof AiCommands]: (
+    ...args: Parameters<AiCommands[K]>
+  ) => ChainedCommands;
+};
+
+export type CommentsCommands<ReturnType = boolean> = {
   /**
    * Add a comment
    */
@@ -190,7 +196,7 @@ export type CommentsCommands<ReturnType> = {
   closePendingComment: () => ReturnType;
 };
 
-export type AiCommands<ReturnType> = {
+export type AiCommands<ReturnType = boolean> = {
   askAi: (prompt?: string) => ReturnType;
 
   // Transitions (see AiToolbarState)

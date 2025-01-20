@@ -41,7 +41,7 @@ import { EditorProvider, useCurrentEditor } from "../context";
 import type {
   AiCommands,
   AiExtensionStorage,
-  ExtendedChainedCommands,
+  ChainedAiCommands,
   FloatingPosition,
 } from "../types";
 import { getDomRangeFromSelection } from "../utils";
@@ -155,9 +155,9 @@ const AiToolbarSuggestion = forwardRef<
 
   const handleSelect = useCallback(
     (prompt: string) => {
-      (
-        editor.commands as unknown as AiCommands<boolean>
-      ).$startAiToolbarThinking(manualPrompt ?? prompt);
+      (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
+        manualPrompt ?? prompt
+      );
     },
     [editor, manualPrompt]
   );
@@ -179,13 +179,11 @@ function AiToolbarReviewingSuggestions({
   prompt: string;
 }) {
   const handleRetry = useCallback(() => {
-    (editor.commands as unknown as AiCommands<boolean>).$startAiToolbarThinking(
-      prompt
-    );
+    (editor.commands as unknown as AiCommands).$startAiToolbarThinking(prompt);
   }, [editor, prompt]);
 
   const handleDiscard = useCallback(() => {
-    (editor.commands as unknown as AiCommands<boolean>).$closeAiToolbar();
+    (editor.commands as unknown as AiCommands).$closeAiToolbar();
   }, [editor]);
 
   return (
@@ -254,9 +252,9 @@ function AiToolbarCustomPromptContent({
 
       if (event.shiftKey) {
         // If the shift key is pressed, add a new line
-        (
-          editor.commands as unknown as AiCommands<boolean>
-        )._updateAiToolbarCustomPrompt((customPrompt) => customPrompt + "\n");
+        (editor.commands as unknown as AiCommands)._updateAiToolbarCustomPrompt(
+          (customPrompt) => customPrompt + "\n"
+        );
       } else {
         const selectedDropdownItem = dropdownRef.current?.querySelector(
           "[role='option'][data-selected='true']"
@@ -267,9 +265,9 @@ function AiToolbarCustomPromptContent({
           selectedDropdownItem.click();
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
-          (
-            editor.commands as unknown as AiCommands<boolean>
-          ).$startAiToolbarThinking(customPrompt);
+          (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
+            customPrompt
+          );
         }
       }
     }
@@ -277,9 +275,9 @@ function AiToolbarCustomPromptContent({
 
   const handleCustomPromptChange = useCallback(
     (customPrompt: string) => {
-      (
-        editor.commands as unknown as AiCommands<boolean>
-      )._updateAiToolbarCustomPrompt(customPrompt);
+      (editor.commands as unknown as AiCommands)._updateAiToolbarCustomPrompt(
+        customPrompt
+      );
     },
     [editor]
   );
@@ -289,7 +287,7 @@ function AiToolbarCustomPromptContent({
       return;
     }
 
-    (editor.commands as unknown as AiCommands<boolean>).$startAiToolbarThinking(
+    (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
       customPrompt
     );
   }, [editor, customPrompt, isCustomPromptEmpty]);
@@ -367,9 +365,7 @@ function AiToolbarThinking({
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleCancel = useCallback(() => {
-    (
-      editor.commands as unknown as AiCommands<boolean>
-    ).$cancelAiToolbarThinking();
+    (editor.commands as unknown as AiCommands).$cancelAiToolbarThinking();
   }, [editor]);
 
   return (
@@ -452,15 +448,9 @@ function AiToolbarContainer({
         event.stopPropagation();
 
         if (phase === "thinking") {
-          (
-            editor.commands as unknown as AiCommands<boolean>
-          ).$cancelAiToolbarThinking();
+          (editor.commands as unknown as AiCommands).$cancelAiToolbarThinking();
         } else {
-          // TODO: Improve typing
-          (editor.chain() as ExtendedChainedCommands<"$closeAiToolbar">)
-            .$closeAiToolbar()
-            .focus()
-            .run();
+          (editor.chain() as ChainedAiCommands).$closeAiToolbar().focus().run();
         }
       }
     };
@@ -609,7 +599,7 @@ export const AiToolbar = Object.assign(
         }
 
         if (!selection && phase !== "closed") {
-          (editor.commands as unknown as AiCommands<boolean>).$closeAiToolbar();
+          (editor.commands as unknown as AiCommands).$closeAiToolbar();
         }
       }, [phase, editor, selection]);
 
@@ -649,9 +639,7 @@ export const AiToolbar = Object.assign(
               ? !dropdownRef.current.contains(event.target as Node)
               : true)
           ) {
-            (
-              editor.commands as unknown as AiCommands<boolean>
-            ).$closeAiToolbar();
+            (editor.commands as unknown as AiCommands).$closeAiToolbar();
           }
         };
 

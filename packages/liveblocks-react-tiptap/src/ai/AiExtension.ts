@@ -47,11 +47,11 @@ export const AiExtension = Extension.create<
       askAi: (prompt) => () => {
         if (typeof prompt === "string") {
           (
-            this.editor.commands as unknown as AiCommands<boolean>
+            this.editor.commands as unknown as AiCommands
           ).$startAiToolbarThinking(prompt);
         } else {
           (
-            this.editor.commands as unknown as AiCommands<boolean>
+            this.editor.commands as unknown as AiCommands
           ).$openAiToolbarAsking();
         }
 
@@ -131,7 +131,7 @@ export const AiExtension = Extension.create<
 
             // 3.a. If the AI request succeeds, set to "reviewing" phase with the output
             (
-              this.editor.commands as unknown as AiCommands<boolean>
+              this.editor.commands as unknown as AiCommands
             )._handleAiToolbarThinkingSuccess({
               type: "other",
               text: output,
@@ -144,7 +144,7 @@ export const AiExtension = Extension.create<
 
             // 3.b. If the AI request fails, set to "asking" phase with error
             (
-              this.editor.commands as unknown as AiCommands<boolean>
+              this.editor.commands as unknown as AiCommands
             )._handleAiToolbarThinkingError(error as Error);
           });
 
