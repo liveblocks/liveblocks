@@ -236,7 +236,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
           {...props}
           onKeyDown={handleKeyDown}
         >
-          {children}
+          {!children && !icon ? name : children}
         </Button>
       </ShortcutTooltip>
     );
@@ -670,7 +670,7 @@ export const Toolbar = Object.assign(
      * A button for triggering actions.
      *
      * @example
-     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }}>Comment</Toolbar.Button>
+     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }} />
      *
      * @example
      * <Toolbar.Button name="Mention someone" icon={<Icon.Mention />} onClick={() => { ... }} />
@@ -681,7 +681,7 @@ export const Toolbar = Object.assign(
      * A toggle button for values that can be active or inactive.
      *
      * @example
-     * <Toolbar.Toggle name="Bold" active={isBold}>Bold</Toolbar.Toggle>
+     * <Toolbar.Toggle name="Bold" active={isBold} />
      *
      * @example
      * <Toolbar.Toggle name="Italic" icon={<Icon.Italic />} shortcut="Mod-I" active={isItalic} onClick={() => { ... }} />
