@@ -30,7 +30,7 @@ export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
 export interface AiConfiguration {
   name?: string;
-  // TODO: Should `selectionText` be renamed? In the case of a refinement, it's not selected text but the previous results.
+  // TODO: Should `selectionText` be renamed? In the case of a refinement, it's not selected text but the previous output.
   resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
 }
 
@@ -63,6 +63,11 @@ export type AiExtensionOptions = {
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
   resolveAiPrompt: (prompt: string, selectionText: string) => Promise<string>;
+};
+
+export type AiToolbarOutput = {
+  type: "modify" | "continue" | "other";
+  text: string;
 };
 
 export type AiToolbarState = Relax<
@@ -114,9 +119,9 @@ export type AiToolbarState = Relax<
       prompt: string;
 
       /**
-       * The results of the AI request.
+       * The output of the AI request.
        */
-      results: string;
+      output: AiToolbarOutput;
     }
 >;
 
@@ -151,6 +156,7 @@ export type CommentsCommands<ReturnType> = {
   addComment: (id: string) => ReturnType;
   selectThread: (id: string | null) => ReturnType;
   addPendingComment: () => ReturnType;
+
   /** @internal */
   closePendingComment: () => ReturnType;
 };
@@ -158,42 +164,68 @@ export type CommentsCommands<ReturnType> = {
 export type AiCommands<ReturnType> = {
   askAi: (prompt?: string) => ReturnType;
 
-  // Internal APIs
+  // Transitions
 
   /**
+   * @internal
+   * @transition
+   *
    * Close the AI toolbar.
    */
   $closeAiToolbar: () => ReturnType;
 
   /**
+   * @internal
+   * @transition
+   *
    * Open the AI toolbar in the "asking" phase.
    */
   $openAiToolbarAsking: () => ReturnType;
 
   /**
+   * @internal
+   * @transition
+   *
    * Set (and open if not already open) the AI toolbar in the "thinking" phase with the given prompt.
    */
   $startAiToolbarThinking: (prompt: string) => ReturnType;
 
   /**
-   * Handle the success of the current "thinking" phase.
-   */
-  $handleAiToolbarThinkingSuccess: (results: string) => ReturnType;
-
-  /**
-   * Handle an error of the current "thinking" phase.
-   */
-  $handleAiToolbarThinkingError: (error: Error) => ReturnType;
-
-  /**
+   * @internal
+   * @transition
+   *
    * Cancel the current "thinking" phase, going back to the "asking" phase.
    */
   $cancelAiToolbarThinking: () => ReturnType;
 
+  // Other
+
   /**
+   * @internal
+   *
+   * Handle the success of the current "thinking" phase.
+   *
+   * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
+   * but storage updates don't trigger their listeners if not called from a command.
+   */
+  _handleAiToolbarThinkingSuccess: (output: AiToolbarOutput) => ReturnType;
+
+  /**
+   * @internal
+   *
+   * Handle an error of the current "thinking" phase.
+   *
+   * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
+   * but storage updates don't trigger their listeners if not called from a command.
+   */
+  _handleAiToolbarThinkingError: (error: Error) => ReturnType;
+
+  /**
+   * @internal
+   *
    * Update the current custom AI prompt.
    */
-  $updateAiToolbarCustomPrompt: (
+  _updateAiToolbarCustomPrompt: (
     customPrompt: string | ((currentCustomPrompt: string) => string)
   ) => ReturnType;
 };

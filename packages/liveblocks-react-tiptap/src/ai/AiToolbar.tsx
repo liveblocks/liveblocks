@@ -252,7 +252,7 @@ function AiToolbarCustomPromptContent({
 
       if (event.shiftKey) {
         // If the shift key is pressed, add a new line
-        (editor.commands as AiCommands<boolean>).$updateAiToolbarCustomPrompt(
+        editor.commands._updateAiToolbarCustomPrompt(
           (customPrompt) => customPrompt + "\n"
         );
       } else {
@@ -265,9 +265,7 @@ function AiToolbarCustomPromptContent({
           selectedDropdownItem.click();
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
-          (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
-            customPrompt
-          );
+          editor.commands.$startAiToolbarThinking(customPrompt);
         }
       }
     }
@@ -275,9 +273,7 @@ function AiToolbarCustomPromptContent({
 
   const handleCustomPromptChange = useCallback(
     (customPrompt: string) => {
-      (editor.commands as AiCommands<boolean>).$updateAiToolbarCustomPrompt(
-        customPrompt
-      );
+      editor.commands._updateAiToolbarCustomPrompt(customPrompt);
     },
     [editor]
   );

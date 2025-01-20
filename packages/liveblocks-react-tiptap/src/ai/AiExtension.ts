@@ -1,9 +1,9 @@
 import { Extension } from "@tiptap/core";
 
 import type {
-  AiCommands,
   AiExtensionOptions,
   AiExtensionStorage,
+  AiToolbarOutput,
   AiToolbarState,
 } from "../types";
 
@@ -42,11 +42,9 @@ export const AiExtension = Extension.create<
     return {
       askAi: (prompt) => () => {
         if (typeof prompt === "string") {
-          (this.editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
-            prompt
-          );
+          this.editor.commands.$startAiToolbarThinking(prompt);
         } else {
-          (this.editor.commands as AiCommands<boolean>).$openAiToolbarAsking();
+          this.editor.commands.$openAiToolbarAsking();
         }
 
         return true;
@@ -111,62 +109,19 @@ export const AiExtension = Extension.create<
         this.options
           .resolveAiPrompt(
             prompt,
-            "TODO: The selected text OR the last results if it's a refinement prompt"
+            "TODO: The selected text OR the last output if it's a refinement prompt"
           )
-          .then((results) => {
-            // 3.a. If the AI request succeeds, set to "reviewing" phase with results
-            (
-              this.editor.commands as AiCommands<boolean>
-            ).$handleAiToolbarThinkingSuccess(results);
+          .then((output) => {
+            // 3.a. If the AI request succeeds, set to "reviewing" phase with the output
+            this.editor.commands._handleAiToolbarThinkingSuccess({
+              type: "other",
+              text: output,
+            });
           })
           .catch((error) => {
             // 3.b. If the AI request fails, set to "asking" phase with error
-            (
-              this.editor.commands as AiCommands<boolean>
-            ).$handleAiToolbarThinkingError(error as Error);
+            this.editor.commands._handleAiToolbarThinkingError(error as Error);
           });
-
-        return true;
-      },
-
-      $handleAiToolbarThinkingSuccess: (results: string) => () => {
-        const currentState = this.storage.state;
-
-        // 1. If NOT in "thinking" phase, do nothing
-        if (currentState.phase !== "thinking") {
-          return false;
-        }
-
-        // 2. Set to "reviewing" phase with results
-        this.storage.state = {
-          phase: "reviewing",
-          customPrompt: "",
-          prompt: currentState.prompt,
-          results,
-        };
-
-        return true;
-      },
-
-      $handleAiToolbarThinkingError: (error: Error) => () => {
-        const currentState = this.storage.state;
-
-        // 1. If NOT in "thinking" phase, do nothing
-        if (currentState.phase !== "thinking") {
-          return false;
-        }
-
-        // 2. Set to "asking" phase with error
-        this.storage.state = {
-          phase: "asking",
-          // If the custom prompt is different than the prompt, reset it
-          customPrompt:
-            currentState.prompt === currentState.customPrompt
-              ? currentState.customPrompt
-              : "",
-          // TODO: Improve error handling
-          error,
-        };
 
         return true;
       },
@@ -195,7 +150,49 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      $updateAiToolbarCustomPrompt: (customPrompt) => () => {
+      _handleAiToolbarThinkingSuccess: (output: AiToolbarOutput) => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "thinking" phase, do nothing
+        if (currentState.phase !== "thinking") {
+          return false;
+        }
+
+        // 2. Set to "reviewing" phase with the output
+        this.storage.state = {
+          phase: "reviewing",
+          customPrompt: "",
+          prompt: currentState.prompt,
+          output,
+        };
+
+        return true;
+      },
+
+      _handleAiToolbarThinkingError: (error: Error) => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "thinking" phase, do nothing
+        if (currentState.phase !== "thinking") {
+          return false;
+        }
+
+        // 2. Set to "asking" phase with error
+        this.storage.state = {
+          phase: "asking",
+          // If the custom prompt is different than the prompt, reset it
+          customPrompt:
+            currentState.prompt === currentState.customPrompt
+              ? currentState.customPrompt
+              : "",
+          // TODO: Improve error handling
+          error,
+        };
+
+        return true;
+      },
+
+      _updateAiToolbarCustomPrompt: (customPrompt) => () => {
         const currentState = this.storage.state;
 
         // 1. If NOT in a phase with a custom prompt, do nothing
