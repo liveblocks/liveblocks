@@ -743,6 +743,26 @@
           },
           "404": {
             "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "Storage already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "CANNOT_UPDATE_EXISTING_STORAGE": {
+                    "value": {
+                      "error": "CANNOT_UPDATE_EXISTING_STORAGE",
+                      "message": "The room already has storage data. It's only possible to initialize the storage for an empty room.",
+                      "suggestion": "Create another room or clear this room storage first.",
+                      "docs": ""
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
