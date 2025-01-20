@@ -264,15 +264,15 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 </Toolbar>
 ```
 
-Optionally takes an icon which will `visually` replace the `name`. Als
-optionally can accept a shortcut, which is displayed in the tooltip. Comment key
+Optionally takes an icon which will `visually` replace the `name`. Also
+optionally accepts a shortcut, which is displayed in the tooltip. Comment key
 names are converted to symbols. Here are various examples.
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
 import { Icon } from "@liveblocks/react-ui";
 
-// Tooltip: Comment [⌘+C]
+// Tooltip: Questio [⌘+Q]
 <Toolbar.Button name="Question" shortcut="CMD+Q" onClick={/* ... */} />
 
 // Custom icon, replaces the name in the button
@@ -295,7 +295,7 @@ import { Icon } from "@liveblocks/react-ui";
 />
 ```
 
-#### Props [#ToolbarButton-props]
+##### Props [#ToolbarButton-props]
 
 <PropertiesList>
   <PropertiesListItem name="name" type="string" required>
@@ -312,6 +312,115 @@ import { Icon } from "@liveblocks/react-ui";
 </PropertiesList>
 
 #### Toolbar.Toggle
+
+A toggle button for values that can be active or inactive. Best used with text
+editor commands. The `name` is displayed in a tooltip. Props will be passed to
+the underlying `button` element.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  <Toolbar.Toggle
+    name="Highlight"
+    active={editor?.isActive("highlight") ?? false}
+    onClick={() => editor?.chain().focus().toggleHighlight().run()}
+  />
+</Toolbar>
+```
+
+The snippet above shows how to use the Toggle with the
+[Tiptap highlight extension](https://tiptap.dev/docs/editor/extensions/marks/highlight).
+The toggle button can also be toggled with `useState`.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+import { useState } from "react";
+
+function CustomToggle({ editor }: { editor: Editor | null }) {
+  const [active, setActive] = useState(false);
+
+  return (
+    <Toolbar.Toggle
+      name="Toggle options"
+      active={active}
+      onClick={() => setActive(!active)}
+    />
+  );
+}
+```
+
+`Toolbar.Toggle` optionally takes an icon which will `visually` replace the
+`name`. Also optionally accepts a shortcut, which is displayed in the tooltip.
+Comment key names are converted to symbols. Here are various examples.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// Tooltip: Highlight [⌘+H]
+<Toolbar.Toggle
+  name="Highlight"
+  shortcut="CMD+H"
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Custom icon, replaces the name in the button
+<Toolbar.Toggle
+  name="Highlight"
+  icon={<div>🖊</div>}
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Using a Liveblocks icon, replaces the name in the button
+<Toolbar.Toggle
+  name="Highlight"
+  icon={<Icon.QuestionMark />}
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Passing children visually replaces the `name` and `icon`
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+>
+  🖊️Highlight
+</Toolbar.Toggle>
+
+// Props are passed to the inner `button`
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+  style={{ marginLeft: 10 }}
+  className="custom-toggle"
+  onMouseOver={() => console.log("Hovered")}
+/>
+```
+
+##### Props [#ToolbarToggle-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" required>
+    The name of this button displayed in its tooltip. Will also be displayed in
+    the button if no `icon` or `children` are passed.
+  </PropertiesListItem>
+  <PropertiesListItem name="active" type="boolean" required>
+    Whether the button is toggled.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this button.
+  </PropertiesListItem>
+  <PropertiesListItem name="shortcut" type="string">
+    An optional keyboard shortcut displayed in this button’s tooltip. Common
+    shortcuts such will be replaced by their symbols, for example `CMD` → `⌘`.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Toolbar.BlockSelector
 
