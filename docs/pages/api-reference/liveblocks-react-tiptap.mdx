@@ -233,7 +233,7 @@ To learn more about the different components, read more below.
 #### Props [#Toolbar-props]
 
 <PropertiesList>
-  <PropertiesListItem name="editor" type="Editor | null">
+  <PropertiesListItem name="editor" type="Editor | null" required>
     The Tiptap editor.
   </PropertiesListItem>
   <PropertiesListItem name="children" type="ReactNode">
@@ -252,6 +252,64 @@ To learn more about the different components, read more below.
 </PropertiesList>
 
 #### Toolbar.Button
+
+A button for triggering actions. The `name` is displayed in a tooltip. Props
+such as `onClick` will be passed to the underlying `button` element.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  <Toolbar.Button name="Question" onClick={(e) => console.log("Clicked")} />
+</Toolbar>
+```
+
+Optionally takes an icon which will `visually` replace the `name`. Als
+optionally can accept a shortcut, which is displayed in the tooltip. Comment key
+names are converted to symbols. Here are various examples.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// Tooltip: Comment [⌘+C]
+<Toolbar.Button name="Question" shortcut="CMD+Q" onClick={/* ... */} />
+
+// Custom icon, replaces the name in the button
+<Toolbar.Button name="Question" icon={<div>?</div>} onClick={/* ... */} />
+
+// Using a Liveblocks icon, replaces the name in the button
+<Toolbar.Button name="Question" icon={<Icon.QuestionMark />} onClick={/* ... */} />
+
+// Passing children visually replaces the `name` and `icon`
+<Toolbar.Button name="Question" onClick={/* ... */}>
+  ? Ask a question
+</Toolbar.Button>
+
+// Props are passed to the inner `button`
+<Toolbar.Button
+  name="Question"
+  style={{ marginLeft: 10 }}
+  className="custom-button"
+  onMouseOver={() => console.log("Hovered")}
+/>
+```
+
+#### Props [#ToolbarButton-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" required>
+    The name of this button displayed in its tooltip. Will also be displayed in
+    the button if no `icon` or `children` are passed.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this button.
+  </PropertiesListItem>
+  <PropertiesListItem name="shortcut" type="string">
+    An optional keyboard shortcut displayed in this button’s tooltip. Common
+    shortcuts such will be replaced by their symbols, for example `CMD` → `⌘`.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Toolbar.Toggle
 
@@ -620,7 +678,7 @@ To learn more about the different components, read more under [`Toolbar`][].
 #### Props [#FloatingToolbar-props]
 
 <PropertiesList>
-  <PropertiesListItem name="editor" type="Editor | null">
+  <PropertiesListItem name="editor" type="Editor | null" required>
     The Tiptap editor.
   </PropertiesListItem>
   <PropertiesListItem name="position" type={`"top" | "bottom"`}>
