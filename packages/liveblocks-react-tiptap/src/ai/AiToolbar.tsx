@@ -33,7 +33,15 @@ import type {
   ReactNode,
   RefObject,
 } from "react";
-import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
+import {
+  createContext,
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
@@ -41,6 +49,7 @@ import { EditorProvider, useCurrentEditor } from "../context";
 import type {
   AiCommands,
   AiExtensionStorage,
+  AiToolbarState,
   ChainedAiCommands,
   FloatingPosition,
 } from "../types";
@@ -71,6 +80,25 @@ type AiToolbarSuggestionsGroupProps = AiToolbarDropdownGroupProps;
 interface AiToolbarSuggestionProps extends ComponentProps<"div"> {
   prompt?: string;
   icon?: ReactNode;
+}
+
+interface AiToolbarContext {
+  state: AiToolbarState;
+  toolbarRef: RefObject<HTMLDivElement>;
+  dropdownRef: RefObject<HTMLDivElement>;
+  isDropdownHidden: boolean;
+}
+
+const AiToolbarContext = createContext<AiToolbarContext | null>(null);
+
+function useAiToolbarContext() {
+  const context = useContext(AiToolbarContext);
+
+  if (!context) {
+    throw new Error("useAiToolbarContext must be used within an AiToolbar");
+  }
+
+  return context;
 }
 
 /**
@@ -171,13 +199,11 @@ const AiToolbarSuggestion = forwardRef<
   );
 });
 
-function AiToolbarReviewingSuggestions({
-  editor,
-  prompt,
-}: {
-  editor: Editor;
-  prompt: string;
-}) {
+function AiToolbarReviewingSuggestions() {
+  const editor = useCurrentEditor("ReviewingSuggestions", "AiToolbar");
+  const { state } = useAiToolbarContext();
+  const { prompt } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
+
   const handleRetry = useCallback(() => {
     (editor.commands as unknown as AiCommands).$startAiToolbarThinking(prompt);
   }, [editor, prompt]);
@@ -206,19 +232,15 @@ function AiToolbarReviewingSuggestions({
   );
 }
 
-function AiToolbarCustomPromptContent({
-  editor,
-  customPrompt,
-  dropdownRef,
-  isDropdownHidden,
-}: {
-  editor: Editor;
-  customPrompt: string;
-  dropdownRef: RefObject<HTMLDivElement>;
-  isDropdownHidden: boolean;
-}) {
+function AiToolbarCustomPromptContent() {
+  const editor = useCurrentEditor("CustomPromptContent", "AiToolbar");
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const { state, dropdownRef, isDropdownHidden } = useAiToolbarContext();
+  const { customPrompt } = state as Exclude<
+    AiToolbarState,
+    { phase: "closed" }
+  >;
   const isCustomPromptEmpty = useMemo(
     () => customPrompt.trim() === "",
     [customPrompt]
@@ -332,30 +354,12 @@ function AiToolbarCustomPromptContent({
   );
 }
 
-function AiToolbarAsking({
-  editor,
-  customPrompt,
-  dropdownRef,
-  isDropdownHidden,
-}: {
-  editor: Editor;
-  customPrompt: string;
-  dropdownRef: RefObject<HTMLDivElement>;
-  isDropdownHidden: boolean;
-}) {
-  return (
-    <>
-      <AiToolbarCustomPromptContent
-        editor={editor}
-        customPrompt={customPrompt}
-        dropdownRef={dropdownRef}
-        isDropdownHidden={isDropdownHidden}
-      />
-    </>
-  );
+function AiToolbarAsking() {
+  return <AiToolbarCustomPromptContent />;
 }
 
-function AiToolbarThinking({ editor }: { editor: Editor }) {
+function AiToolbarThinking() {
+  const editor = useCurrentEditor("AiToolbarThinking", "AiToolbar");
   const contentRef = useRef<HTMLDivElement>(null);
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
@@ -398,39 +402,30 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
   );
 }
 
-function AiToolbarReviewing({
-  editor,
-  customPrompt,
-  dropdownRef,
-  isDropdownHidden,
-}: {
-  editor: Editor;
-  customPrompt: string;
-  dropdownRef: RefObject<HTMLDivElement>;
-  isDropdownHidden: boolean;
-}) {
+function AiToolbarReviewing() {
   return (
     <>
-      <AiToolbarCustomPromptContent
-        editor={editor}
-        customPrompt={customPrompt}
-        dropdownRef={dropdownRef}
-        isDropdownHidden={isDropdownHidden}
-      />
+      {/* <div className="lb-tiptap-ai-toolbar-output-container">
+        <div className="lb-tiptap-ai-toolbar-output">
+          TODO: Display non-diff outputs inline here
+        </div>
+      </div> */}
+      <AiToolbarCustomPromptContent />
     </>
   );
 }
 
 function AiToolbarContainer({
-  editor,
   state,
+  toolbarRef,
   dropdownRef,
   children,
 }: PropsWithChildren<{
-  editor: Editor;
   state: AiExtensionStorage["state"];
+  toolbarRef: RefObject<HTMLDivElement>;
   dropdownRef: RefObject<HTMLDivElement>;
 }>) {
+  const editor = useCurrentEditor("AiToolbarContainer", "AiToolbar");
   const phase = state.phase;
   const customPrompt = state.customPrompt;
   const isCustomPromptMultiline = useMemo(
@@ -468,25 +463,17 @@ function AiToolbarContainer({
   }, [editor, phase]);
 
   return (
-    <>
+    <AiToolbarContext.Provider
+      value={{ state, toolbarRef, dropdownRef, isDropdownHidden }}
+    >
       <div className="lb-tiptap-ai-toolbar-container">
         <div className="lb-elevation lb-tiptap-ai-toolbar">
           {state.phase === "asking" ? (
-            <AiToolbarAsking
-              editor={editor}
-              customPrompt={state.customPrompt}
-              dropdownRef={dropdownRef}
-              isDropdownHidden={isDropdownHidden}
-            />
+            <AiToolbarAsking />
           ) : state.phase === "thinking" ? (
-            <AiToolbarThinking editor={editor} />
+            <AiToolbarThinking />
           ) : state.phase === "reviewing" ? (
-            <AiToolbarReviewing
-              editor={editor}
-              customPrompt={state.customPrompt}
-              dropdownRef={dropdownRef}
-              isDropdownHidden={isDropdownHidden}
-            />
+            <AiToolbarReviewing />
           ) : null}
         </div>
         <div
@@ -505,16 +492,13 @@ function AiToolbarContainer({
           ref={dropdownRef}
         >
           {state.phase === "reviewing" ? (
-            <AiToolbarReviewingSuggestions
-              editor={editor}
-              prompt={state.prompt}
-            />
+            <AiToolbarReviewingSuggestions />
           ) : (
             children
           )}
         </Command.List>
       ) : null}
-    </>
+    </AiToolbarContext.Provider>
   );
 }
 
@@ -685,9 +669,9 @@ export const AiToolbar = Object.assign(
               {...props}
             >
               <AiToolbarContainer
-                editor={editor}
                 state={state}
                 dropdownRef={dropdownRef}
+                toolbarRef={toolbarRef}
               >
                 {typeof Suggestions === "function" ? (
                   <Suggestions children={defaultSuggestions} />
