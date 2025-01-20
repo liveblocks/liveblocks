@@ -15,7 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 4 (2025-01-24)
 
+## Documentation
+
+- Added missing 409 response to Initialize Storage REST API.
+- Typo fixed in custom notification snippet.
+
 ## Contributors
+
+jltimm, ctnicholas
 
 # Week 3 (2025-01-17)
 
