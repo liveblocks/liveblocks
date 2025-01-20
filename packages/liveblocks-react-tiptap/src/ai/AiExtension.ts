@@ -332,7 +332,6 @@ export const AiExtension = Extension.create<
           }, 100);
         }
 
-        // 4. insert the output.
         const { from, to } = this.editor.state.selection;
         // if the selection is empty, insert at the end of the selection
         const contentTarget = this.editor.state.selection.empty
@@ -347,8 +346,10 @@ export const AiExtension = Extension.create<
           customPrompt: "",
           prompt: currentState.prompt,
           output,
-          contentTarget,
+          contentTarget: { from, to: from + output.text.length }, // take into account the new length with output
         };
+
+        // 4. insert the output.
         return this.editor.commands.insertContentAt(contentTarget, output.text);
       },
 
