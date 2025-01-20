@@ -628,14 +628,16 @@ export const AiToolbar = Object.assign(
         }
 
         const handleOutsideEvent = (event: MouseEvent) => {
-          if (!toolbarRef.current || !dropdownRef.current) {
+          if (!toolbarRef.current) {
             return;
           }
 
           if (
             event.target &&
             !toolbarRef.current.contains(event.target as Node) &&
-            !dropdownRef.current.contains(event.target as Node)
+            (dropdownRef.current
+              ? !dropdownRef.current.contains(event.target as Node)
+              : true)
           ) {
             (editor.commands as AiCommands<boolean>).$closeAiToolbar();
           }

@@ -30,6 +30,7 @@ export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
 export interface AiConfiguration {
   name?: string;
+
   // TODO: Should `selectionText` be renamed? In the case of a refinement, it's not selected text but the previous output.
   resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
 }

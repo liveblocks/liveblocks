@@ -1,10 +1,13 @@
 import { Extension } from "@tiptap/core";
+import { Plugin } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
-import type {
-  AiExtensionOptions,
-  AiExtensionStorage,
-  AiToolbarOutput,
-  AiToolbarState,
+import {
+  AI_TOOLBAR_SELECTION_PLUGIN,
+  type AiExtensionOptions,
+  type AiExtensionStorage,
+  type AiToolbarOutput,
+  type AiToolbarState,
 } from "../types";
 
 const DEFAULT_AI_NAME = "AI";
@@ -34,9 +37,9 @@ export const AiExtension = Extension.create<
   onCreate() {
     // Turn off gc for snapshots to work
     // TODO: remove this later, we only need to compare two full copies
-    //if (this.options.doc) {
-    //this.options.doc.gc = false;
-    //}
+    // if (this.options.doc) {
+    // this.options.doc.gc = false;
+    // }
   },
   addCommands() {
     return {
@@ -209,5 +212,26 @@ export const AiExtension = Extension.create<
         return true;
       },
     };
+  },
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: AI_TOOLBAR_SELECTION_PLUGIN,
+        props: {
+          decorations: ({ doc, selection }) => {
+            if (this.storage.state.phase === "closed") {
+              return DecorationSet.create(doc, []);
+            }
+            const { from, to } = selection;
+            const decorations: Decoration[] = [
+              Decoration.inline(from, to, {
+                class: "lb-root lb-selection lb-tiptap-active-selection",
+              }),
+            ];
+            return DecorationSet.create(doc, decorations);
+          },
+        },
+      }),
+    ];
   },
 });
