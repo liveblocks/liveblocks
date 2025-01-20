@@ -233,6 +233,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
           variant="toolbar"
           ref={forwardedRef}
           icon={icon}
+          aria-label={!children ? name : undefined}
           {...props}
           onKeyDown={handleKeyDown}
         >
