@@ -1,7 +1,7 @@
 // A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
-    id: "charlie.layne@example.com",
+    id: "nyWnem",
     info: {
       name: "Charlie Layne",
       color: "#D583F0",
@@ -9,7 +9,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "mislav.abha@example.com",
+    id: "91TRgi",
     info: {
       name: "Mislav Abha",
       color: "#F08385",
@@ -17,7 +17,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "tatum.paolo@example.com",
+    id: "1ltG8B",
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -25,7 +25,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "anjali.wanda@example.com",
+    id: "7L2rVt",
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
@@ -33,7 +33,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jody.hekla@example.com",
+    id: "O4pheE",
     info: {
       name: "Jody Hekla",
       color: "#85BBF0",
@@ -41,7 +41,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "emil.joyce@example.com",
+    id: "T7jObe",
     info: {
       name: "Emil Joyce",
       color: "#8594F0",
@@ -49,7 +49,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jory.quispe@example.com",
+    id: "Pr1eY8",
     info: {
       name: "Jory Quispe",
       color: "#85DBF0",
@@ -57,7 +57,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "quinn.elton@example.com",
+    id: "YRK05s",
     info: {
       name: "Quinn Elton",
       color: "#87EE85",
