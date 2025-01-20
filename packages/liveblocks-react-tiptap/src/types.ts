@@ -151,6 +151,11 @@ export type AiToolbarState = Relax<
        * The output of the AI request.
        */
       output: AiToolbarOutput;
+
+      /**
+       * The selection of the editor when the AI request was made.
+       */
+      contentTarget: number | { from: number; to: number };
     }
 >;
 
@@ -209,6 +214,14 @@ export type AiCommands<ReturnType = boolean> = {
    * Close the AI toolbar.
    */
   $closeAiToolbar: () => ReturnType;
+
+  /**
+   * @internal
+   * @transition
+   *
+   * Accept the AI output.
+   */
+  $acceptAiToolbarOutput: () => ReturnType;
 
   /**
    * @internal

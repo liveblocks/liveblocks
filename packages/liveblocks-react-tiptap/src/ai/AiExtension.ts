@@ -2,6 +2,7 @@ import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
+import type { Transaction } from "@tiptap/pm/state";
 import { Plugin } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
@@ -87,9 +88,46 @@ export const AiExtension = Extension.create<
         return true;
       },
 
+      $acceptAiToolbarOutput:
+        () =>
+        // todo: figure out why I needed to manually type this
+        ({ tr }: { tr: Transaction }) => {
+          const currentState = this.storage.state;
+          if (currentState.phase !== "reviewing") {
+            return false;
+          }
+          const binding = getYjsBinding(this.editor);
+          if (!binding) {
+            return false;
+          }
+
+          const fragmentContent = yXmlFragmentToProseMirrorFragment(
+            binding.type,
+            this.editor.state.schema
+          );
+          tr.setMeta("addToHistory", false);
+          tr.replace(
+            0,
+            this.editor.state.doc.content.size,
+            new Slice(Fragment.from(fragmentContent), 0, 0)
+          );
+          tr.setMeta(ySyncPluginKey, {
+            snapshot: null,
+            prevSnapshot: null,
+          });
+
+          // TODO: move this cleanup to somewhere that closeAIToolbar can share
+          getLiveblocksYjsProvider(this.editor)?.unpause();
+          this.editor.setEditable(true);
+          this.storage.snapshot = undefined;
+          this.storage.state = { phase: "closed" };
+          return true;
+        },
+
       $closeAiToolbar:
         () =>
-        ({ tr }) => {
+        // todo: figure out why I needed to manually type this
+        ({ tr }: { tr: Transaction }) => {
           const currentState = this.storage.state;
 
           // 1. If in "thinking" phase, cancel the current AI request
@@ -280,33 +318,38 @@ export const AiExtension = Extension.create<
 
         // TODO: Diff vs other output types
         // 2. If the output is a diff, apply it to the editor
-        if (output && this.options.doc) {
+        if (this.options.doc) {
           this.options.doc.gc = false;
           this.storage.snapshot = snapshot(this.options.doc);
-
-          if (this.storage.snapshot) {
-            (this.editor.commands as AiCommands)._renderAiToolbarDiffInEditor(
-              this.storage.snapshot
-            );
-
-            // TODO: We now rely on editor.state.selection but this breaks it, should we update editor.state.selection or keep our own selection?
-            this.editor.commands.insertContentAt(
-              this.editor.state.selection.from,
-              // TODO: The current endpoint returns Tiptap-shaped JSON directly, not text
-              output.text
-            );
-          }
+          // TODO: We now rely on editor.state.selection but this breaks it, should we update editor.state.selection or keep our own selection?
+          // settimeout will make this execute after the current transaction is committed, which is returned by the insert content command.
+          setTimeout(() => {
+            if (this.storage.snapshot) {
+              (
+                this.editor.commands as unknown as AiCommands
+              )._renderAiToolbarDiffInEditor(this.storage.snapshot);
+            }
+          }, 100);
         }
 
+        // 4. insert the output.
+        const { from, to } = this.editor.state.selection;
+        // if the selection is empty, insert at the end of the selection
+        const contentTarget = this.editor.state.selection.empty
+          ? this.editor.state.selection.to
+          : {
+              from,
+              to,
+            };
         // 3. Set to "reviewing" phase with the output
         this.storage.state = {
           phase: "reviewing",
           customPrompt: "",
           prompt: currentState.prompt,
           output,
+          contentTarget,
         };
-
-        return true;
+        return this.editor.commands.insertContentAt(contentTarget, output.text);
       },
 
       _handleAiToolbarThinkingError: (error: Error) => () => {
@@ -363,14 +406,13 @@ export const AiExtension = Extension.create<
         const currentSnapshot = snapshot(this.options.doc);
 
         if (equalSnapshots(previousSnapshot, currentSnapshot)) {
-          return false;
+          return true;
         }
 
         const binding = getYjsBinding(this.editor);
 
         if (binding) {
           binding.renderSnapshot(currentSnapshot, previousSnapshot);
-
           return true;
         }
 

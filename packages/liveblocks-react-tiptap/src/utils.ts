@@ -102,8 +102,14 @@ export function getTextSelectionFromRelativeSelection(
   return new TextSelection($start, $end);
 }
 
-export function getDomRangeFromSelection(selection: Selection, editor: Editor) {
-  const { from, to } = selection;
+export function getDomRangeFromSelection(
+  selection: { from: number; to: number } | number,
+  editor: Editor
+) {
+  const { from, to } =
+    typeof selection === "number"
+      ? { from: selection, to: selection }
+      : selection;
   const fromPos = editor.view.domAtPos(from);
   const endPos = editor.view.domAtPos(to);
 

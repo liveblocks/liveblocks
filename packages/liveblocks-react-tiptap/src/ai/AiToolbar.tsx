@@ -212,9 +212,13 @@ function AiToolbarReviewingSuggestions() {
     (editor.commands as unknown as AiCommands).$closeAiToolbar();
   }, [editor]);
 
+  const handleAccept = useCallback(() => {
+    (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput();
+  }, [editor]);
+
   return (
     <>
-      <AiToolbarDropdownItem icon={<CheckIcon />}>
+      <AiToolbarDropdownItem icon={<CheckIcon />} onSelect={handleAccept}>
         {/* TODO: Add logic */}
         Replace selection
       </AiToolbarDropdownItem>
@@ -546,8 +550,8 @@ export const AiToolbar = Object.assign(
             )?.state;
           },
         }) ?? DEFAULT_STATE;
-      const phase = state.phase;
       const selection = editor?.state.selection;
+      const phase = state.phase;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
           padding: AI_TOOLBAR_COLLISION_PADDING,
@@ -601,15 +605,17 @@ export const AiToolbar = Object.assign(
         setReference(null);
 
         setTimeout(() => {
-          if (!selection) {
+          if (state.phase === "reviewing") {
+            const domRange = getDomRangeFromSelection(state.contentTarget, editor);
+            setReference(domRange);
+          } else if (!selection) {
             setReference(null);
           } else {
             const domRange = getDomRangeFromSelection(selection, editor);
-
             setReference(domRange);
           }
         }, 0);
-      }, [selection, editor, isOpen, setReference]);
+      }, [selection, editor, isOpen, state.phase, state.contentTarget, setReference]);
 
       // Close the toolbar when clicking anywhere outside of it
       useEffect(() => {
