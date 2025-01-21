@@ -86,6 +86,12 @@ Displays a toolbar, allowing you to change the styles of selected text. You can
 add content before or after, or the toolbar’s options can be
 [customized](#creating-a-custom-toolbar).
 
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />;
+```
+
 <Figure>
   <Image
     src="/assets/text-editor/toolbar.png"
@@ -636,7 +642,9 @@ change styles. You can add content before or after, or the toolbar’s options c
 be [customized](#creating-a-custom-floating-toolbar).
 
 ```tsx
-<FloatingToolbar editor={editor} />
+import { FloatingToolbar } from "@liveblocks/react-tiptap";
+
+<FloatingToolbar editor={editor} />;
 ```
 
 <Figure>
