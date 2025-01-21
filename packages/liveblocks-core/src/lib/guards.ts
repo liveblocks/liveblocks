@@ -18,3 +18,34 @@ export function isStartsWithOperator(
 ): blob is { startsWith: string } {
   return isPlainObject(blob) && typeof blob.startsWith === "string";
 }
+
+/**
+ * Check if value is not a null object
+ */
+export function isNotNullObject(value: unknown): value is object {
+  return typeof value === "object" && value !== null;
+}
+
+export function isProcessEnvAvailable(): boolean {
+  if (typeof process === "undefined" || !isNotNullObject(process)) {
+    return false;
+  }
+
+  if (!("env" in process) || !isNotNullObject(process.env)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function isImportMetaEnvAvailable(): boolean {
+  if (typeof import.meta === "undefined" || !isNotNullObject(import.meta)) {
+    return false;
+  }
+
+  if (!("env" in import.meta) || !isNotNullObject(import.meta.env)) {
+    return false;
+  }
+
+  return true;
+}
