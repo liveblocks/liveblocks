@@ -91,7 +91,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
   Resolve<
   {
     /**
-     * Whether or not the room automatically connects to Liveblock servers.
+     * Whether or not the room automatically connects to Liveblocks servers.
      * Default is true.
      *
      * Usually set to false when the client is used from the server to not call
