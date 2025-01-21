@@ -83,14 +83,21 @@ Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 ### Toolbar
 
 Displays a toolbar, allowing you to change the styles of selected text. You can
-add JSX before or after, or the toolbar’s options can be
+add content before or after, or the toolbar’s options can be
 [customized](#creating-a-custom-toolbar).
 
-[TODO img]
+<Figure>
+  <Image
+    src="/assets/text-editor/toolbar.png"
+    alt="Toolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
 
-Pass your Tiptap `editor` to use the component. By default, the toolbar has a
-button for creating comment threads, add [`FloatingComposer`][] to enable this.
-Display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+Pass your Tiptap `editor` to use the component. By default, one of the toolbar
+buttons can create comment threads—to enable this add [`FloatingComposer`][] and
+display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
 
 ```tsx
 import {
@@ -126,11 +133,11 @@ function TextEditor() {
 }
 ```
 
-#### Inserting JSX and buttons [#inserting-jsx-and-buttons]
+#### Extending the defaults [#toolbar-extending-the-defaults]
 
-You can insert JSX nodes and components `before` the first button and `after`
-the last button using `before` and `after`. Components such as
-[`Toolbar.Button`][] and [`Toolbar.Toggle`][] can be used to create new buttons.
+You can insert content `before` the first button and `after` the last button
+using `before` and `after`. Components such as [`Toolbar.Button`][] and
+[`Toolbar.Toggle`][] can be used to create new buttons.
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
@@ -272,7 +279,10 @@ names are converted to symbols. Here are various examples.
 import { Toolbar } from "@liveblocks/react-tiptap";
 import { Icon } from "@liveblocks/react-ui";
 
-// Tooltip: Questio [⌘+Q]
+// Button says "Question"
+<Toolbar.Toggle name="Question" onClick={/* ... */} />
+
+// Tooltip says "Question [⌘+Q]"
 <Toolbar.Button name="Question" shortcut="CMD+Q" onClick={/* ... */} />
 
 // Custom icon, replaces the name in the button
@@ -359,7 +369,14 @@ Comment key names are converted to symbols. Here are various examples.
 import { Toolbar } from "@liveblocks/react-tiptap";
 import { Icon } from "@liveblocks/react-ui";
 
-// Tooltip: Highlight [⌘+H]
+// Button says "Highlight"
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Tooltip says "Highlight [⌘+H]"
 <Toolbar.Toggle
   name="Highlight"
   shortcut="CMD+H"
@@ -461,9 +478,12 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 </Toolbar>
 ```
 
-You can also render custom JSX in the dropdown with `label`. The toolbar button
-will still display the `name`, but in the dropdown, the `label` will be used
-instead of the `name` and `icon`.
+##### Customize item styles
+
+By passing a `label` property, you can overwrite the styles of the dropdown
+items. The toolbar button will still display the `name`, but in the dropdown,
+the `label` will be used instead of the `name` and `icon`. Below, a new item is
+added and its `label` is customized.
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
@@ -483,11 +503,8 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 </Toolbar>
 ```
 
-##### Customize item styles
-
-By passing a `label` property, you can overwrite the styles of the dropdown
-items. In the snippet below, the default items are customized to show an example
-of the styles they apply to the document.
+You can also customize the default items. Below each item is styled to represent
+the effect each block applies to the document.
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
@@ -615,18 +632,25 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 ### FloatingToolbar
 
 Displays a floating toolbar near the current Tiptap selection, allowing you to
-change styles. You can add JSX before or after, or the toolbar’s options can be
-[customized](#creating-a-custom-floating-toolbar).
+change styles. You can add content before or after, or the toolbar’s options can
+be [customized](#creating-a-custom-floating-toolbar).
 
 ```tsx
 <FloatingToolbar editor={editor} />
 ```
 
-[TODO img]
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-toolbar.png"
+    alt="FloatingToolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
 
-Pass your Tiptap `editor` to use the component. By default, the toolbar has a
-button for creating comment threads, add [`FloatingComposer`][] to enable this.
-Display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+Pass your Tiptap `editor` to use the component. By default, one of the toolbar
+buttons can create comment threads—to enable this add [`FloatingComposer`][] and
+display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
 
 ```tsx
 import {
@@ -678,11 +702,11 @@ defines the vertical distance in pixels from the selection.
 />
 ```
 
-#### Inserting JSX and buttons [#inserting-jsx-and-buttons-floating]
+#### Extending the defaults [#floating-toolbar-extending-the-default]
 
-You can insert JSX nodes and components `before` the first button and `after`
-the last button using `before` and `after`. Components such as
-[`Toolbar.Button`][] and [`Toolbar.Toggle`][] can be used to create new buttons.
+You can insert custom content `before` the first button and `after` the last
+button using `before` and `after`. Components such as [`Toolbar.Button`][] and
+[`Toolbar.Toggle`][] can be used to create new buttons.
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
