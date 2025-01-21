@@ -298,7 +298,7 @@
 
 .lb-tiptap-ai-toolbar-output-container {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   border-block-end: 1px solid var(--lb-foreground-subtle);
 }
 

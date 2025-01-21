@@ -1,6 +1,7 @@
 // A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
+    // TODO: Revert to email
     id: "nyWnem",
     info: {
       name: "Charlie Layne",
@@ -9,6 +10,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "91TRgi",
     info: {
       name: "Mislav Abha",
@@ -17,6 +19,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "1ltG8B",
     info: {
       name: "Tatum Paolo",
@@ -25,6 +28,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "7L2rVt",
     info: {
       name: "Anjali Wanda",
@@ -33,6 +37,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "O4pheE",
     info: {
       name: "Jody Hekla",
@@ -41,6 +46,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "T7jObe",
     info: {
       name: "Emil Joyce",
@@ -49,6 +55,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "Pr1eY8",
     info: {
       name: "Jory Quispe",
@@ -57,6 +64,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
+    // TODO: Revert to email
     id: "YRK05s",
     info: {
       name: "Quinn Elton",

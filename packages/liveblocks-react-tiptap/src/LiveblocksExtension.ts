@@ -382,7 +382,6 @@ export const useLiveblocksExtension = (
           selectionText,
           context,
           signal,
-          retryCount = 0,
         }: ResolveAiPromptArgs): Promise<AiResponse> => {
           const result = await room[kInternal].executeContextualPrompt({
             prompt,
@@ -391,36 +390,17 @@ export const useLiveblocksExtension = (
             signal,
           });
 
-          if (retryCount > 3) {
-            throw new Error("Failed to resolve AI prompt");
+          const parsedResponse = JSON.parse(result) as JsonObject;
+          const type =
+            typeof parsedResponse.type === "string" ? parsedResponse.type : "";
+          if (
+            typeof parsedResponse.content === "string" &&
+            ["insert", "modification", "other"].includes(type)
+          ) {
+            return parsedResponse as AiResponse;
           }
 
-          const retry = () => {
-            return resolveAiPrompt({
-              prompt,
-              selectionText,
-              context,
-              signal,
-              retryCount: retryCount + 1,
-            });
-          };
-          // TODO: proper backoff
-          try {
-            const parsedResponse = JSON.parse(result) as JsonObject;
-            const type =
-              typeof parsedResponse.type === "string"
-                ? parsedResponse.type
-                : "";
-            if (
-              typeof parsedResponse.content === "string" &&
-              ["insert", "modification", "other"].includes(type)
-            ) {
-              return parsedResponse as AiResponse;
-            }
-            return retry();
-          } catch (e) {
-            return retry();
-          }
+          throw new Error("Failed to resolve AI prompt");
         };
         extensions.push(
           AiExtension.configure({

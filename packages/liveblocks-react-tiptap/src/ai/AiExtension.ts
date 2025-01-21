@@ -1,8 +1,8 @@
+import { autoRetry, HttpError } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { Editor } from "@tiptap/core";
+import type { CommandProps, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
-import type { Transaction } from "@tiptap/pm/state";
 import { Plugin } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
@@ -30,6 +30,9 @@ import {
 
 const DEFAULT_AI_NAME = "AI";
 export const DEFAULT_STATE: AiToolbarState = { phase: "closed" };
+
+const RESOLVE_AI_PROMPT_RETRY_ATTEMPTS = 3;
+const RESOLVE_AI_PROMPT_RETRY_DELAYS = [1000, 2000, 4000];
 
 function getYjsBinding(editor: Editor) {
   return (ySyncPluginKey.getState(editor.view.state) as YSyncPluginState)
@@ -65,13 +68,6 @@ export const AiExtension = Extension.create<
       name: this.options.name,
     };
   },
-  onCreate() {
-    // Turn off gc for snapshots to work
-    // TODO: remove this later, we only need to compare two full copies
-    // if (this.options.doc) {
-    // this.options.doc.gc = false;
-    // }
-  },
   addCommands() {
     return {
       askAi: (prompt) => () => {
@@ -90,8 +86,7 @@ export const AiExtension = Extension.create<
 
       $acceptAiToolbarOutput:
         () =>
-        // todo: figure out why I needed to manually type this
-        ({ tr }: { tr: Transaction }) => {
+        ({ tr }: CommandProps) => {
           const currentState = this.storage.state;
           if (currentState.phase !== "reviewing") {
             return false;
@@ -126,8 +121,7 @@ export const AiExtension = Extension.create<
 
       $closeAiToolbar:
         () =>
-        // todo: figure out why I needed to manually type this
-        ({ tr }: { tr: Transaction }) => {
+        ({ tr }: CommandProps) => {
           const currentState = this.storage.state;
 
           // 1. If in "thinking" phase, cancel the current AI request
@@ -220,6 +214,7 @@ export const AiExtension = Extension.create<
 
         if (currentState.phase === "reviewing") {
           // TODO: this is a retry, we should actually retry and start thinking again
+          //       Maybe not, it could be a refinement prompt
           return (
             this.editor.commands as unknown as AiCommands
           ).$closeAiToolbar();
@@ -244,30 +239,43 @@ export const AiExtension = Extension.create<
         // 4. Block the editor
         this.editor.setEditable(false);
 
-        // 5. Execute the AI request
-        const executeAiRequest = async () => {
-          await provider?.pause();
-          const { from, to } = this.editor.state.selection.empty
-            ? {
-                // TODO: this is a hack to get the context around the selection, we need to improve this
-                from: Math.max(this.editor.state.selection.to - 30, 0),
-                to: this.editor.state.selection.to,
-              }
-            : this.editor.state.selection;
-          return this.options.resolveAiPrompt({
-            prompt,
-            selectionText: this.editor.state.doc.textBetween(from, to, " "),
-            /*
+        // 5. Start the AI request
+        autoRetry(
+          async () => {
+            await provider?.pause();
+            const { from, to } = this.editor.state.selection.empty
+              ? {
+                  // TODO: this is a hack to get the context around the selection, we need to improve this
+                  from: Math.max(this.editor.state.selection.to - 30, 0),
+                  to: this.editor.state.selection.to,
+                }
+              : this.editor.state.selection;
+
+            return this.options.resolveAiPrompt({
+              prompt,
+              selectionText: this.editor.state.doc.textBetween(from, to, " "),
+              /*
                TODO: This needs a maximum to avoid overloading context, for now I've arbitrailiry chosen 3000
                characters but this will need to be improved, probably using word boundary of some sort (languages can make that tricky)
                as well as choosing text around the selection, so before/after.
             */
-            context: this.editor.getText().slice(0, 3_000),
-            signal: abortController.signal,
-          });
-        };
+              context: this.editor.getText().slice(0, 3_000),
+              signal: abortController.signal,
+            });
+          },
+          RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
+          RESOLVE_AI_PROMPT_RETRY_DELAYS,
 
-        executeAiRequest()
+          (error) => {
+            // Don't retry on 4xx errors or if the request was aborted
+            return (
+              abortController.signal.aborted ||
+              (error instanceof HttpError &&
+                error.status >= 400 &&
+                error.status < 500)
+            );
+          }
+        )
           .then((output) => {
             if (abortController.signal.aborted) {
               return;
@@ -330,13 +338,33 @@ export const AiExtension = Extension.create<
           return false;
         }
 
-        // TODO: Diff vs other output types
+        let selection: { from: number; to: number } =
+          this.editor.state.selection;
+
         // 2. If the output is a diff, apply it to the editor
         if (["modification", "insert"].includes(output.type)) {
           this.options.doc.gc = false;
           this.storage.snapshot = snapshot(this.options.doc);
-          // TODO: We now rely on editor.state.selection but this breaks it, should we update editor.state.selection or keep our own selection?
-          // settimeout will make this execute after the current transaction is committed, which is returned by the insert content command.
+
+          const { empty, from, to } = this.editor.state.selection;
+
+          // if the selection is empty, insert at the end of the selection
+          const contentTarget =
+            empty || output.type === "insert"
+              ? to
+              : {
+                  from,
+                  to,
+                };
+
+          // when inserting, use the "to" position, otherwise when modifing, use the "from" position
+          const targetTo = output.type === "insert" ? to : from;
+
+          // 2.a. Insert the output.
+          this.editor.commands.insertContentAt(contentTarget, output.text);
+
+          // 2.b. Diff the output in the editor
+          // TODO: setTimeout will make this execute after the current transaction is committed, which is returned by the insert content command.
           setTimeout(() => {
             if (this.storage.snapshot) {
               (
@@ -344,23 +372,12 @@ export const AiExtension = Extension.create<
               )._renderAiToolbarDiffInEditor(this.storage.snapshot);
             }
           }, 100);
-        } else {
-          // "Other"
-          return true;
+
+          selection = {
+            from,
+            to: targetTo + output.text.length, // take into account the new length with output
+          };
         }
-
-        const { from, to } = this.editor.state.selection;
-        // if the selection is empty, insert at the end of the selection
-        const contentTarget =
-          this.editor.state.selection.empty || output.type === "insert"
-            ? this.editor.state.selection.to
-            : {
-                from,
-                to,
-              };
-
-        // when inserting, use the "to" position, otherwise when modifing, use the "from" position
-        const targetTo = output.type === "insert" ? to : from;
 
         // 3. Set to "reviewing" phase with the output
         this.storage.state = {
@@ -368,11 +385,10 @@ export const AiExtension = Extension.create<
           customPrompt: "",
           prompt: currentState.prompt,
           output,
-          contentTarget: { from, to: targetTo + output.text.length }, // take into account the new length with output
+          selection,
         };
 
-        // 4. insert the output.
-        return this.editor.commands.insertContentAt(contentTarget, output.text);
+        return true;
       },
 
       _handleAiToolbarThinkingError: (error: Error) => () => {
@@ -449,10 +465,15 @@ export const AiExtension = Extension.create<
         key: AI_TOOLBAR_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc, selection }) => {
-            if (this.storage.state.phase === "closed") {
+            if (
+              this.storage.state.phase === "closed" ||
+              // TODO: Don't show the selection when reviewing diff outputs
+              (this.storage.state.phase === "reviewing" &&
+                this.storage.state.output.type !== "other")
+            ) {
               return DecorationSet.create(doc, []);
             }
-            const { from, to } = selection;
+            const { from, to } = this.storage.state.selection ?? selection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-active-selection",

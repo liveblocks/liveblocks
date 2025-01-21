@@ -35,7 +35,6 @@ export type ResolveAiPromptArgs = {
   selectionText: string;
   context: string;
   signal: AbortSignal;
-  retryCount?: number;
 };
 
 export interface AiConfiguration {
@@ -87,18 +86,20 @@ export type AiToolbarOutput = {
  *                             │ ┌──────────────────────────────────────────────┐                               │
  *                             ▼ ▼                                              │                               │
  *              ┌───────$closeAiToolbar()───────┐                               │                               │
- *              ▼                               │                               │                               │
+ *              ▼                               ◇                               ◇                               ◇
  *  ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
  *  │        CLOSED         │       │        ASKING         │       │       THINKING        │       │       REVIEWING       │
  *  └───────────────────────┘       └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
- *              │                            ▲ ▲ │ ▲                          ▲ │ │                            │ ▲
- *              └────$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─│─│─ ─ ─ ─ ─ ─ ─ ─ ✓ ─ ─ ─ ─ ─ ─ ┼ ┘
- *              │                              │ ▼                            │ │                              │
- *              └────────────────$startAiToolbarThinking(prompt)──────────────┘ │                              │
- *                                             │ ▲                              │                              │
- *                                             │ └──────────────────────────────┼──────────────────────────────┘
- *                                             │                                │
- *                                             └────$cancelAiToolbarThinking()──┘
+ *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇
+ *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │
+ *           │ │                               │ ▼                            │ │                               │ │
+ *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │
+ *           │                                 │ ▲                              │                               │ │
+ *           │                                 │ └──────────────────────────────┼───────────────────────────────┘ │
+ *           │                                 │                                │                                 │
+ *           │                                 └───$cancelAiToolbarThinking()───┘                                 │
+ *           │                                                                                                    │
+ *           └───────────────────────$acceptAiToolbarOutput() / $applyAiToolbarOtherOutput()──────────────────────┘
  */
 export type AiToolbarState = Relax<
   | {
@@ -156,7 +157,7 @@ export type AiToolbarState = Relax<
       /**
        * The selection of the editor when the AI request was made.
        */
-      contentTarget: number | { from: number; to: number };
+      selection: { from: number; to: number };
     }
 >;
 
