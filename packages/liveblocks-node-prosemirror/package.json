@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/node-prosemirror",
-  "version": "2.16.1",
+  "version": "2.16.1-ai2",
   "description": "A server-side utility that lets you modify prosemirror and tiptap documents hosted in Liveblocks.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -34,8 +34,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/core": "2.16.1",
-    "@liveblocks/node": "2.16.1",
+    "@liveblocks/core": "2.16.1-ai2",
+    "@liveblocks/node": "2.16.1-ai2",
     "yjs": "^13.6.20"
   },
   "peerDependencies": {
