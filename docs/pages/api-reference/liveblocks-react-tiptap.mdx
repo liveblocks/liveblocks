@@ -184,7 +184,7 @@ function CustomToolbar({ editor }: { editor: Editor | null }) {
 ```
 
 Each part of our default toolbar is available as blocks which can be slotted
-together. This is how the default floating toolbar is constructed:
+together. This is how the default toolbar is constructed:
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
@@ -463,24 +463,25 @@ import { Toolbar } from "@liveblocks/react-tiptap";
 If you’d like to change the items shown in the dropdown menu, you can pass a
 custom `items` array. Below a code block item
 ([Tiptap extension](https://tiptap.dev/docs/editor/extensions/nodes/code-block))
-is added after the default options .
+is added after the default options.
 
 ```tsx
 import { Toolbar } from "@liveblocks/react-tiptap";
 
-<Toolbar editor={editor} />
-  <Toolbar.BlockSelector items={(defaultItems) => ([
-    ...defaultItems,
-    // +++
-    {
-      name: "Code block",
-      icon: <div>❮ ❯</div>, // Optional
-      isActive:(editor) => editor.isActive("codeBlock"),
-      setActive: (editor) => editor.chain().focus().clearNodes().toggleCodeBlock().run(),
-    }
-    // +++
-  ])} />
-</Toolbar>
+<Toolbar editor={editor}>
+  <Toolbar.BlockSelector
+    items={(defaultItems) => [
+      ...defaultItems,
+      {
+        name: "Code block",
+        icon: <div>❮ ❯</div>, // Optional
+        isActive: (editor) => editor.isActive("codeBlock"),
+        setActive: (editor) =>
+          editor.chain().focus().clearNodes().toggleCodeBlock().run(),
+      },
+    ]}
+  />
+</Toolbar>;
 ```
 
 ##### Customize item styles
