@@ -142,7 +142,7 @@ const YChangeMark = Mark.create({
           }
           return {
             "data-ychange-type": attributes.type,
-            class: `lb-changed-${attributes.type}`,
+            class: `lb-root lb-tiptap-change-${attributes.type}`,
           };
         },
       },
