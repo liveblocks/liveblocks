@@ -135,6 +135,798 @@ Note that `liveblocksConfig` sets `editorState` to `null` because
 
 ## Default components
 
+### Toolbar
+
+Displays a toolbar, allowing you to change the styles of selected text. You can
+add content before or after, or the toolbar’s options can be
+[customized](#creating-a-custom-toolbar).
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    // +++
+    <Toolbar />
+    // +++
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/toolbar.png"
+    alt="Toolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+By default, one of the toolbar buttons can create comment threads—to enable this
+add [`FloatingComposer`][] and display threads with [`AnchoredThreads`][] or
+[`FloatingThreads`][]. Should be nested inside [`LiveblocksPlugin`][].
+
+```tsx
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { useThreads } from "@liveblocks/react/suspense";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  FloatingComposer,
+  // +++
+  Toolbar,
+  //+++
+} from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  const { threads } = useThreads();
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        // +++
+        <Toolbar />
+        // +++
+        <FloatingComposer style={{ width: "350px" }} />
+        <FloatingThreads threads={threads} style={{ width: "350px" }} />
+      </LiveblocksPlugin>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+#### Extending the defaults [#toolbar-extending-the-defaults]
+
+You can insert content `before` the first button and `after` the last button
+using `before` and `after`. Components such as [`Toolbar.Button`][] and
+[`Toolbar.Toggle`][] can be used to create new buttons.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+import { Icon } from "@liveblocks/react-ui";
+
+<Toolbar
+  // +++
+  before={<>I'm at the start</>}
+  after={
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+  }
+  // +++
+/>;
+```
+
+For more complex customization, instead read
+[creating a custom floating toolbar](#creating-a-custom-toolbar).
+
+#### Creating a custom toolbar [#creating-a-custom-toolbar]
+
+By passing elements as children, it’s possible to create a fully custom toolbar.
+
+```tsx highlight="6"
+import { Toolbar } from "@liveblocks/react-lexical";
+
+function CustomToolbar() {
+  return (
+    <Toolbar>
+      Hello <strong>world</strong>
+    </Toolbar>
+  );
+}
+```
+
+Each part of our default toolbar is available as blocks which can be slotted
+together. This is how the default toolbar is constructed:
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+function CustomToolbar() {
+  return (
+    <Toolbar>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+You can mix these default components with any custom ones of your own. Below the
+[`Toolbar.SectionHistory`][] component is added alongside some custom buttons
+created with [`Toolbar.Button`][], [`Toolbar.Toggle`][], and [`Icon`][].
+
+```tsx
+import { FORMAT_TEXT_COMMAND } from "lexical";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { isTextFormatActive, Toolbar } from "@liveblocks/react-lexical";
+import { Icon } from "@liveblocks/react-ui";
+
+function CustomToolbar() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <Toolbar>
+      // +++
+      <Toolbar.SectionHistory />
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Help"
+        icon={<Icon.QuestionMark />}
+        shortcut="CMD-H"
+        onClick={() => console.log("help")}
+      />
+      <Toolbar.Toggle
+        name="Bold"
+        icon={<strong>B️</strong>}
+        active={isTextFormatActive(editor, "bold")}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+      />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+To learn more about the different components, read more below.
+
+#### Props [#Toolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="LexicalEditor" required>
+    The Lexical editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content of the toolbar, overriding the default content. Use the `before`
+    and `after` props if you want to keep and extend the default content. Any
+    `ReactNode` or `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="before" type="ReactNode">
+    The content to display at the start of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="after" type="ReactNode">
+    The content to display at the end of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.Button
+
+A button for triggering actions. The `name` is displayed in a tooltip. Props
+such as `onClick` will be passed to the underlying `button` element.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  <Toolbar.Button name="Question" onClick={(e) => console.log("Clicked")} />
+</Toolbar>
+```
+
+Optionally takes an icon which will `visually` replace the `name`. Also
+optionally accepts a shortcut, which is displayed in the tooltip. Comment key
+names are converted to symbols. Here are various examples.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+import { Icon } from "@liveblocks/react-ui";
+
+// Button says "Question"
+<Toolbar.Toggle name="Question" onClick={/* ... */} />
+
+// Tooltip says "Question [⌘+Q]"
+<Toolbar.Button name="Question" shortcut="CMD+Q" onClick={/* ... */} />
+
+// Custom icon, replaces the name in the button
+<Toolbar.Button name="Question" icon={<div>?</div>} onClick={/* ... */} />
+
+// Using a Liveblocks icon, replaces the name in the button
+<Toolbar.Button name="Question" icon={<Icon.QuestionMark />} onClick={/* ... */} />
+
+// Passing children visually replaces the `name` and `icon`
+<Toolbar.Button name="Question" onClick={/* ... */}>
+  ? Ask a question
+</Toolbar.Button>
+
+// Props are passed to the inner `button`
+<Toolbar.Button
+  name="Question"
+  style={{ marginLeft: 10 }}
+  className="custom-button"
+  onMouseOver={() => console.log("Hovered")}
+/>
+```
+
+##### Props [#ToolbarButton-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" required>
+    The name of this button displayed in its tooltip. Will also be displayed in
+    the button if no `icon` or `children` are passed.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this button.
+  </PropertiesListItem>
+  <PropertiesListItem name="shortcut" type="string">
+    An optional keyboard shortcut displayed in this button’s tooltip. Common
+    shortcuts such will be replaced by their symbols, for example `CMD` → `⌘`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.Toggle
+
+A toggle button for values that can be active or inactive. Best used with text
+editor commands. The `name` is displayed in a tooltip. Props will be passed to
+the underlying `button` element.
+
+```tsx
+import { FORMAT_TEXT_COMMAND } from "lexical";
+import { isTextFormatActive, Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  <Toolbar.Toggle
+    name="Highlight"
+    active={isTextFormatActive(editor, "bold")}
+    onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+  />
+</Toolbar>
+```
+
+The snippet above shows how to toggle bold styling. The toggle button can also
+be toggled with `useState`.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+import { useState } from "react";
+
+function CustomToggle() {
+  const [active, setActive] = useState(false);
+
+  return (
+    <Toolbar.Toggle
+      name="Toggle options"
+      active={active}
+      onClick={() => setActive(!active)}
+    />
+  );
+}
+```
+
+`Toolbar.Toggle` optionally takes an icon which will `visually` replace the
+`name`. Also optionally accepts a shortcut, which is displayed in the tooltip.
+Comment key names are converted to symbols. Here are various examples.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+import { Icon } from "@liveblocks/react-ui";
+
+// Button says "Highlight"
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Tooltip says "Highlight [⌘+H]"
+<Toolbar.Toggle
+  name="Highlight"
+  shortcut="CMD+H"
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Custom icon, replaces the name in the button
+<Toolbar.Toggle
+  name="Highlight"
+  icon={<div>🖊</div>}
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Using a Liveblocks icon, replaces the name in the button
+<Toolbar.Toggle
+  name="Highlight"
+  icon={<Icon.QuestionMark />}
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Passing children visually replaces the `name` and `icon`
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+>
+  🖊️Highlight
+</Toolbar.Toggle>
+
+// Props are passed to the inner `button`
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+  style={{ marginLeft: 10 }}
+  className="custom-toggle"
+  onMouseOver={() => console.log("Hovered")}
+/>
+```
+
+##### Props [#ToolbarToggle-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" required>
+    The name of this button displayed in its tooltip. Will also be displayed in
+    the button if no `icon` or `children` are passed.
+  </PropertiesListItem>
+  <PropertiesListItem name="active" type="boolean" required>
+    Whether the button is toggled.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this button.
+  </PropertiesListItem>
+  <PropertiesListItem name="shortcut" type="string">
+    An optional keyboard shortcut displayed in this button’s tooltip. Common
+    shortcuts such will be replaced by their symbols, for example `CMD` → `⌘`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.BlockSelector
+
+Adds a dropdown selector for switching between different block types, such as
+_text_, _heading 1_, _blockquote_. Props will be passed to the inner `button`
+element. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  <Toolbar.BlockSelector />
+</Toolbar>
+```
+
+##### Use custom item options
+
+If you’d like to change the items shown in the dropdown menu, you can pass a
+custom `items` array. Below a code block item
+([Lexical extension](https://lexical.dev/docs/api/modules/lexical_code)) is
+added after the default options.
+
+```tsx
+import { isBlockNodeActive, Toolbar } from "@liveblocks/react-lexical";
+import { $setBlocksType } from "@lexical/selection";
+import { $isCodeNode } from "@lexical/code";
+import { $getSelection } from "lexical";
+
+<Toolbar>
+  <Toolbar.BlockSelector
+    items={(defaultItems) => [
+      ...defaultItems,
+      {
+        name: "Code block",
+        icon: <div>❮ ❯</div>, // Optional
+        isActive: (editor) => isBlockNodeActive(editor, $isCodeNode),
+        setActive: (editor) =>
+          $setBlocksType($getSelection(), () => $createCodeNode()),
+      },
+    ]}
+  />
+</Toolbar>;
+```
+
+##### Customize item styles
+
+By passing a `label` property, you can overwrite the styles of the dropdown
+items. The toolbar button will still display the `name`, but in the dropdown,
+the `label` will be used instead of the `name` and `icon`. Below, a new item is
+added and its `label` is customized.
+
+```tsx
+import { isBlockNodeActive, Toolbar } from "@liveblocks/react-lexical";
+import { $setBlocksType } from "@lexical/selection";
+import { $isCodeNode } from "@lexical/code";
+import { $getSelection } from "lexical";
+
+<Toolbar />
+  <Toolbar.BlockSelector items={(defaultItems) => ([
+    ...defaultItems,
+    {
+      name: "Code block",
+// +++
+      label: <div className="font-mono">Code</div>, // Optional, overwrites `icon` + `name`
+// +++
+      isActive: (editor) => isBlockNodeActive(editor, $isCodeNode),
+        setActive: (editor) =>
+          $setBlocksType($getSelection(), () => $createCodeNode()),
+    }
+  ])} />
+</Toolbar>
+```
+
+You can also customize the default items. Below each item is styled to represent
+the effect each block applies to the document.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar.BlockSelector
+  items={(defaultItems) =>
+    defaultItems.map((item) => {
+      let label;
+
+      if (item.name === "Text") {
+        label = <span>Regular text</span>;
+      }
+
+      if (item.name === "Heading 1") {
+        label = (
+          <span style={{ fontSize: 18, fontWeight: "bold" }}>Heading 1</span>
+        );
+      }
+
+      if (item.name === "Heading 2") {
+        label = (
+          <span style={{ fontSize: 16, fontWeight: "bold" }}>Heading 2</span>
+        );
+      }
+
+      if (item.name === "Heading 3") {
+        label = (
+          <span style={{ fontSize: 15, fontWeight: "bold" }}>Heading 3</span>
+        );
+      }
+
+      if (item.name === "Blockquote") {
+        label = (
+          <span style={{ borderLeft: "3px solid gray", paddingLeft: 8 }}>
+            Blockquote
+          </span>
+        );
+      }
+
+      return {
+        ...item,
+        label,
+        icon: null, // Hide all icons
+      };
+    })
+  }
+/>;
+```
+
+##### Props [#ToolbarBlockSelector-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="items"
+    type="function"
+    detailedType="ToolbarBlockSelectorItem[] | (defaultItems: ToolbarBlockSelectorItem[]) => ToolbarBlockSelectorItem[]"
+  >
+    The items displayed in this block selector. When provided as an array, the
+    default items are overridden. To avoid this, a function can be provided
+    instead and it will receive the default items.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.Separator
+
+Adds a visual, and accessible, separator used to separate sections in the
+toolbar. Props will be passed to the inner `div` element. Can also be placed
+inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  // +++
+  <Toolbar.SectionHistory />
+  // +++
+</Toolbar>
+```
+
+#### Toolbar.SectionHistory
+
+Adds a section containing _undo_ and _redo_ buttons. Can also be placed inside
+[`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  // +++
+  <Toolbar.SectionHistory />
+  // +++
+</Toolbar>
+```
+
+#### Toolbar.SectionInline
+
+Adds a section containing inline formatting actions such as _bold_, _italic_,
+_underline_. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  // +++
+  <Toolbar.SectionInline />
+  // +++
+</Toolbar>
+```
+
+#### Toolbar.SectionCollaboration
+
+Adds a section containing an _add comment_ button. Can also be placed inside
+[`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-lexical";
+
+<Toolbar />
+  // +++
+  <Toolbar.SectionCollaboration />
+  // +++
+</Toolbar>
+```
+
+### FloatingToolbar
+
+Displays a floating toolbar near the current Lexical selection, allowing you to
+change styles. You can add content before or after, or the toolbar’s options can
+be [customized](#creating-a-custom-floating-toolbar).
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    // +++
+    <FloatingToolbar />
+    // +++
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-toolbar.png"
+    alt="FloatingToolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+By default, one of the toolbar buttons can create comment threads—to enable this
+add [`FloatingComposer`][] and display threads with [`AnchoredThreads`][] or
+[`FloatingThreads`][]. Should be nested inside [`LiveblocksPlugin`][].
+
+```tsx
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { useThreads } from "@liveblocks/react/suspense";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  FloatingComposer,
+  // +++
+  FloatingToolbar,
+  //+++
+} from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  const { threads } = useThreads();
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        // +++
+        <FloatingToolbar />
+        // +++
+        <FloatingComposer style={{ width: "350px" }} />
+        <FloatingThreads threads={threads} style={{ width: "350px" }} />
+      </LiveblocksPlugin>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        placeholder={<div>Enter some text...</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+    </LexicalComposer>
+  );
+}
+```
+
+#### Changing float position
+
+Using `position` and `offset` you can reposition the toolbar relative to the
+current selection. `position` can be set to `"top"` or `"bottom"`, and `offset`
+defines the vertical distance in pixels from the selection.
+
+```tsx
+<FloatingToolbar
+  // +++
+  position="bottom" // Position can be `top` or `bottom`
+  offset={12} // Distance in px from selection
+  // +++
+/>
+```
+
+#### Extending the defaults [#floating-toolbar-extending-the-default]
+
+You can insert custom content `before` the first button and `after` the last
+button using `before` and `after`. Components such as [`Toolbar.Button`][] and
+[`Toolbar.Toggle`][] can be used to create new buttons.
+
+```tsx
+import { FloatingToolbar } from "@liveblocks/react-lexical";
+import { Icon } from "@liveblocks/react-ui";
+
+<FloatingToolbar
+  // +++
+  before={<>I'm at the start</>}
+  after={
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+  }
+  // +++
+/>;
+```
+
+For more complex customization, instead read
+[creating a custom floating toolbar](#creating-a-custom-floating-toolbar).
+
+#### Creating a custom floating toolbar [#creating-a-custom-floating-toolbar]
+
+By passing elements as children, it’s possible to create a fully custom floating
+toolbar.
+
+```tsx highlight="7"
+import { FloatingToolbar } from "@liveblocks/react-lexical";
+
+function CustomToolbar() {
+  return (
+    <FloatingToolbar>
+      Hello <strong>world</strong>
+    </FloatingToolbar>
+  );
+}
+```
+
+Each part of our default toolbar is available as blocks which can be slotted
+together. This is how the default floating toolbar is constructed:
+
+```tsx
+import { FloatingToolbar } from "@liveblocks/react-lexical";
+
+function CustomToolbar() {
+  return (
+    <FloatingToolbar>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </FloatingToolbar>
+  );
+}
+```
+
+You can mix these default components with any custom ones of your own. Below the
+[`Toolbar.SectionHistory`][] component is added alongside some custom buttons
+created with [`Toolbar.Button`][], [`Toolbar.Toggle`][], and [`Icon`][].
+
+```tsx
+import { FORMAT_TEXT_COMMAND } from "lexical";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { isTextFormatActive, FloatingToolbar } from "@liveblocks/react-lexical";
+import { Icon } from "@liveblocks/react-ui";
+
+function CustomToolbar() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <FloatingToolbar>
+      // +++
+      <Toolbar.SectionHistory />
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Help"
+        icon={<Icon.QuestionMark />}
+        shortcut="CMD-H"
+        onClick={() => console.log("help")}
+      />
+      <Toolbar.Toggle
+        name="Bold"
+        icon={<strong>B️</strong>}
+        active={isTextFormatActive(editor, "bold")}
+        onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+      />
+      // +++
+    </FloatingToolbar>
+  );
+}
+```
+
+To learn more about the different components, read more under [`Toolbar`][].
+
+#### Props [#FloatingToolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="LexicalEditor" required>
+    The Lexical editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="position" type={`"top" | "bottom"`}>
+    The vertical position of the floating toolbar.
+  </PropertiesListItem>
+  <PropertiesListItem name="offset" type="number">
+    The vertical offset of the floating toolbar from the selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content of the toolbar, overriding the default content. Use the `before`
+    and `after` props if you want to keep and extend the default content. Any
+    `ReactNode` or `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="before" type="ReactNode">
+    The content to display at the start of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="after" type="ReactNode">
+    The content to display at the end of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### FloatingComposer
 
 Displays a [`Composer`][] near the current Lexical selection, allowing you to
@@ -907,12 +1699,10 @@ import { useEditorStatus } from "@liveblocks/react-lexical";
 const status = useEditorStatus();
 ```
 
-The possible value are:
+The possible values are:
 
 - `not-loaded`: Initial editor state when entering the room.
 - `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
-- `synchronizing`: Not working yet at runtime! Will be available in a future
-  release.
 - `synchronized`: The editor state is sync with Liveblocks servers.
 
 ### useIsThreadActive
@@ -927,8 +1717,124 @@ import { useIsThreadActive } from "@liveblocks/react-lexical";
 const isActive = useIsThreadActive(thread.id);
 ```
 
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="strinng" required>
+    The ID of the thread.
+  </PropertiesListItem>
+</PropertiesList>
+
 This hook can be useful to style threads based on whether their associated
 thread annotations are selected or not in the editor.
+
+## Utilities
+
+### isTextFormatActive
+
+Checks if a text format (bold, italic, etc.) is active in the current selection.
+Takes a Lexical editor, and returns a `boolean`.
+
+```tsx
+import { isTextFormatActive } from "@liveblocks/react-lexical";
+
+// "true" | "false"
+const isActive = isTextFormatActive(editor, "bold");
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="editor" type="LexicalEditor" required>
+    The Lexical editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="format" type="TextFormatType" required>
+    The Lexical text format to check for in the current selection.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Creating toggle buttons
+
+The `isTextFormatActive` helper is particularly useful for creating buttons with
+[`Toolbar.Toggle`][].
+
+```tsx
+import { FORMAT_TEXT_COMMAND } from "lexical";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+// +++
+import { isTextFormatActive, Toolbar } from "@liveblocks/react-lexical";
+// +++
+
+function CustomToggleButton() {
+  const [editor] = useLexicalComposerContext();
+
+  return (
+    <Toolbar.Toggle
+      name="Bold"
+      icon={<strong>B️</strong>}
+      // +++
+      active={isTextFormatActive(editor, "bold")}
+      // +++
+      onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
+    />
+  );
+}
+```
+
+### isBlockNodeActive
+
+Checks if a block node is active in the current selection. If the selection
+contains multiple block nodes, it will only return `true` if all of them are of
+the same type.
+
+```tsx
+import { isBlockNodeActive } from "@liveblocks/react-lexical";
+import { $isTextNode } from "lexical";
+
+// Checking if text node is currently active
+const isActive = isBlockNodeActive(editor, $isTextNode);
+```
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="editor" type="LexicalEditor" required>
+    The Lexical editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="isActive"
+    type="(node: LexicalNode) => boolean"
+    required
+  >
+    Function that passes the current node, helping you check if the current
+    block node is active. Helpful in combination with `$is___Node` functions.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Creating custom block selector items
+
+The `isBlockNodeActive` helper is particularly useful for adding custom
+[`Toolbar.BlockSelector`][] items.
+
+```tsx
+//+++
+import { isBlockNodeActive, Toolbar } from "@liveblocks/react-lexical";
+// +++
+import { $setBlocksType } from "@lexical/selection";
+import { $isCodeNode } from "@lexical/code";
+import { $getSelection } from "lexical";
+
+<Toolbar>
+  <Toolbar.BlockSelector
+    items={(defaultItems) => [
+      ...defaultItems,
+      {
+        name: "Code block",
+        icon: <div>❮ ❯</div>,
+        // +++
+        isActive: (editor) => isBlockNodeActive(editor, $isCodeNode),
+        // +++
+        setActive: (editor) =>
+          $setBlocksType($getSelection(), () => $createCodeNode()),
+      },
+    ]}
+  />
+</Toolbar>;
+```
 
 ## Stylesheets
 
@@ -954,6 +1860,16 @@ learn how to do this under
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`Icon`]: /docs/api-reference/liveblocks-react-ui#Icon
+[`Toolbar`]: #Toolbar
+[`Toolbar.Button`]: #Toolbar.Button
+[`Toolbar.Toggle`]: #Toolbar.Toggle
+[`Toolbar.BlockSelector`]: #Toolbar.BlockSelector
+[`Toolbar.Separator`]: #Toolbar.Separator
+[`Toolbar.SectionHistory`]: #Toolbar.SectionHistory
+[`Toolbar.SectionInline`]: #Toolbar.SectionInline
+[`Toolbar.SectionCollaboration`]: #Toolbar.SectionCollaboration
+[`FloatingToolbar`]: #FloatingToolbar
 [`FloatingComposer`]: #FloatingComposer
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
