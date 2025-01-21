@@ -138,8 +138,9 @@ Note that `liveblocksConfig` sets `editorState` to `null` because
 ### Toolbar
 
 Displays a toolbar, allowing you to change the styles of selected text. You can
-add content before or after, or the toolbar’s options can be
-[customized](#creating-a-custom-toolbar).
+add content [before or after](#toolbar-extending-the-defaults), or the toolbar’s
+options can be [customized](#creating-a-custom-toolbar). A
+[floating toolbar](#FloatingToolbar) also exists.
 
 ```tsx
 <LexicalComposer initialConfig={initialConfig}>
@@ -639,7 +640,7 @@ import { Toolbar } from "@liveblocks/react-lexical";
 <PropertiesList>
   <PropertiesListItem
     name="items"
-    type="function"
+    type="array | function"
     detailedType="ToolbarBlockSelectorItem[] | (defaultItems: ToolbarBlockSelectorItem[]) => ToolbarBlockSelectorItem[]"
   >
     The items displayed in this block selector. When provided as an array, the
@@ -712,8 +713,10 @@ import { Toolbar } from "@liveblocks/react-lexical";
 ### FloatingToolbar
 
 Displays a floating toolbar near the current Lexical selection, allowing you to
-change styles. You can add content before or after, or the toolbar’s options can
-be [customized](#creating-a-custom-floating-toolbar).
+change styles. You can add content
+[before or after](#floating-toolbar-extending-the-defaults), or the toolbar’s
+options can be [customized](#creating-a-custom-floating-toolbar). A
+[static toolbar](#Toolbar) also exists.
 
 ```tsx
 <LexicalComposer initialConfig={initialConfig}>
