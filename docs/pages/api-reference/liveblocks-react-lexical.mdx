@@ -340,9 +340,9 @@ such as `onClick` will be passed to the underlying `button` element.
 ```tsx
 import { Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   <Toolbar.Button name="Question" onClick={(e) => console.log("Clicked")} />
-</Toolbar>
+</Toolbar>;
 ```
 
 Optionally takes an icon which will visually replace the `name`. Also optionally
@@ -405,13 +405,13 @@ the underlying `button` element.
 import { FORMAT_TEXT_COMMAND } from "lexical";
 import { isTextFormatActive, Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   <Toolbar.Toggle
     name="Highlight"
     active={isTextFormatActive(editor, "bold")}
     onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
   />
-</Toolbar>
+</Toolbar>;
 ```
 
 The snippet above shows how to toggle bold styling. The toggle button can also
@@ -521,9 +521,9 @@ element. Can also be placed inside [`FloatingToolbar`][].
 ```tsx
 import { Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   <Toolbar.BlockSelector />
-</Toolbar>
+</Toolbar>;
 ```
 
 ##### Use custom item options
@@ -568,20 +568,22 @@ import { $setBlocksType } from "@lexical/selection";
 import { $isCodeNode } from "@lexical/code";
 import { $getSelection } from "lexical";
 
-<Toolbar />
-  <Toolbar.BlockSelector items={(defaultItems) => ([
-    ...defaultItems,
-    {
-      name: "Code block",
-// +++
-      label: <div className="font-mono">Code</div>, // Optional, overwrites `icon` + `name`
-// +++
-      isActive: (editor) => isBlockNodeActive(editor, $isCodeNode),
+<Toolbar>
+  <Toolbar.BlockSelector
+    items={(defaultItems) => [
+      ...defaultItems,
+      {
+        name: "Code block",
+        // +++
+        label: <div className="font-mono">Code</div>, // Optional, overwrites `icon` + `name`
+        // +++
+        isActive: (editor) => isBlockNodeActive(editor, $isCodeNode),
         setActive: (editor) =>
           $setBlocksType($getSelection(), () => $createCodeNode()),
-    }
-  ])} />
-</Toolbar>
+      },
+    ]}
+  />
+</Toolbar>;
 ```
 
 You can also customize the default items. Below each item is styled to represent
@@ -658,11 +660,11 @@ inside [`FloatingToolbar`][].
 ```tsx
 import { Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   // +++
   <Toolbar.SectionHistory />
   // +++
-</Toolbar>
+</Toolbar>;
 ```
 
 #### Toolbar.SectionHistory
@@ -673,11 +675,11 @@ Adds a section containing _undo_ and _redo_ buttons. Can also be placed inside
 ```tsx
 import { Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   // +++
   <Toolbar.SectionHistory />
   // +++
-</Toolbar>
+</Toolbar>;
 ```
 
 #### Toolbar.SectionInline
@@ -688,11 +690,11 @@ _underline_. Can also be placed inside [`FloatingToolbar`][].
 ```tsx
 import { Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   // +++
   <Toolbar.SectionInline />
   // +++
-</Toolbar>
+</Toolbar>;
 ```
 
 #### Toolbar.SectionCollaboration
@@ -703,11 +705,11 @@ Adds a section containing an _add comment_ button. Can also be placed inside
 ```tsx
 import { Toolbar } from "@liveblocks/react-lexical";
 
-<Toolbar />
+<Toolbar>
   // +++
   <Toolbar.SectionCollaboration />
   // +++
-</Toolbar>
+</Toolbar>;
 ```
 
 ### FloatingToolbar
