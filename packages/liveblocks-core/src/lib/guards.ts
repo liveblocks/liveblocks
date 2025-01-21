@@ -26,6 +26,9 @@ export function isNotNullObject(value: unknown): value is object {
   return typeof value === "object" && value !== null;
 }
 
+/**
+ * Check if `process.env` is available
+ */
 export function isProcessEnvAvailable(): boolean {
   if (typeof process === "undefined" || !isNotNullObject(process)) {
     return false;
@@ -38,12 +41,17 @@ export function isProcessEnvAvailable(): boolean {
   return true;
 }
 
-export function isImportMetaEnvAvailable(): boolean {
-  if (typeof import.meta === "undefined" || !isNotNullObject(import.meta)) {
-    return false;
-  }
+function isImportMetaEnv(
+  value: unknown
+): value is { env: Record<string, unknown> } {
+  return isNotNullObject(value) && "env" in value && isNotNullObject(value.env);
+}
 
-  if (!("env" in import.meta) || !isNotNullObject(import.meta.env)) {
+/**
+ * Check if `import.meta.env` is available
+ */
+export function isImportMetaEnvAvailable(): boolean {
+  if (typeof import.meta === "undefined" || !isImportMetaEnv(import.meta)) {
     return false;
   }
 
