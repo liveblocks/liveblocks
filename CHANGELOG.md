@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v2.16.1
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- `<Toolbar.Button />` and `<Toolbar.Toggle />` now display their `name`
+  visually if `children` and `icon` aren’t set.
+
 ## v2.16.0
 
 Our error listener APIs will now receive more errors in general, including
