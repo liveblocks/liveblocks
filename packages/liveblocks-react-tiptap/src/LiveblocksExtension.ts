@@ -31,8 +31,10 @@ import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import type {
+  AiResponse,
   LiveblocksExtensionOptions,
   LiveblocksExtensionStorage,
+  ResolveAiPromptArgs,
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
@@ -359,7 +361,7 @@ export const useLiveblocksExtension = (
           field: options.field,
         }),
         CollaborationCursor.configure({
-          provider: this.storage.provider, //todo change the ! to an assert
+          provider: this.storage.provider,
         }),
       ];
 
@@ -375,17 +377,34 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
+        const resolveAiPrompt = async ({
+          prompt,
+          selectionText,
+          context,
+          signal,
+        }: ResolveAiPromptArgs): Promise<AiResponse> => {
+          const result = await room[kInternal].executeContextualPrompt({
+            prompt,
+            selectionText,
+            context,
+            signal,
+          });
+
+          const parsedResponse = JSON.parse(result) as JsonObject;
+          const type =
+            typeof parsedResponse.type === "string" ? parsedResponse.type : "";
+          if (
+            typeof parsedResponse.content === "string" &&
+            ["insert", "modification", "other"].includes(type)
+          ) {
+            return parsedResponse as AiResponse;
+          }
+
+          throw new Error("Failed to resolve AI prompt");
+        };
         extensions.push(
           AiExtension.configure({
-            resolveAiPrompt: async (prompt, selectionText) => {
-              const result = await room[kInternal].executeContextualPrompt({
-                prompt,
-                selectionText,
-                context: "", // TODO: add doc context
-              });
-
-              return result;
-            },
+            resolveAiPrompt,
             ...(typeof options.ai === "boolean" ? {} : options.ai),
             doc: this.storage.doc,
             pud: this.storage.permanentUserData,

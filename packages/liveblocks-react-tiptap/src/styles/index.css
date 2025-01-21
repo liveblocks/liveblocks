@@ -132,9 +132,9 @@
 }
 
 :where(
-    .lb-tiptap-thread-mark:not([data-orphan="true"])
-      .lb-tiptap-thread-mark-selected
-  ) {
+  .lb-tiptap-thread-mark:not([data-orphan="true"])
+    .lb-tiptap-thread-mark-selected
+) {
   color: var(--lb-accent);
   text-decoration-line: underline;
   text-decoration-color: var(--lb-accent-moderate);
@@ -298,7 +298,7 @@
 
 .lb-tiptap-ai-toolbar-output-container {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
   border-block-end: 1px solid var(--lb-foreground-subtle);
 }
 
@@ -329,14 +329,16 @@
 }
 
 .lb-tiptap-ai-toolbar-content {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   inline-size: 100%;
+  min-inline-size: 0;
+  outline: none;
 }
 
 .lb-tiptap-ai-toolbar-output-container,
 .lb-tiptap-ai-toolbar-content {
-  max-block-size: calc(4lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
+  max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
   padding: var(--lb-tiptap-ai-toolbar-padding);
 
   /* overflow-block: auto; doesn't work as expected */
@@ -344,11 +346,10 @@
   overflow-y: auto;
 }
 
-.lb-tiptap-ai-toolbar-prompt-container {
+.lb-tiptap-ai-toolbar-custom-prompt-container {
   position: relative;
   z-index: auto;
   display: grid;
-  flex: 1 0 auto;
   margin-block: calc(-1 * var(--lb-tiptap-ai-toolbar-padding));
   line-height: $lb-button-size;
 
@@ -367,17 +368,21 @@
 }
 
 .lb-tiptap-ai-toolbar-icon-container {
+  position: sticky;
+  inset-block-start: 0;
   align-items: center;
   align-self: start;
   color: var(--lb-foreground-moderate);
 }
 
 .lb-tiptap-ai-toolbar-actions {
+  position: sticky;
+  inset-block-end: 0;
   gap: var(--lb-tiptap-ai-toolbar-padding);
   align-self: end;
 }
 
-.lb-tiptap-ai-toolbar-prompt {
+.lb-tiptap-ai-toolbar-custom-prompt {
   all: unset;
   background: transparent;
   color: var(--lb-foreground);
@@ -389,8 +394,8 @@
   }
 }
 
-.lb-tiptap-ai-toolbar-prompt,
-.lb-tiptap-ai-toolbar-prompt-container::before {
+.lb-tiptap-ai-toolbar-custom-prompt,
+.lb-tiptap-ai-toolbar-custom-prompt-container::before {
   /* Overlap the textarea and its value to auto-size it */
   grid-area: 1 / 1 / 2 / 2;
   box-sizing: inherit;
@@ -424,9 +429,9 @@
 }
 
 :is(
-    .lb-tiptap-ai-toolbar-halo-horizontal,
-    .lb-tiptap-ai-toolbar-halo-vertical
-  ) {
+  .lb-tiptap-ai-toolbar-halo-horizontal,
+  .lb-tiptap-ai-toolbar-halo-vertical
+) {
   position: absolute;
   inset: 0;
 

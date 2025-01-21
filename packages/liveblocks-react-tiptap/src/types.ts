@@ -1,10 +1,11 @@
+import type { Relax } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
-import type { ProsemirrorMapping } from "y-prosemirror/dist/src/lib";
-import type { Doc, PermanentUserData, Snapshot, XmlFragment } from "yjs";
+import type { ProsemirrorBinding } from "y-prosemirror";
+import type { Doc, PermanentUserData, Snapshot } from "yjs";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -27,9 +28,18 @@ export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
+export type ResolveAiPromptArgs = {
+  prompt: string;
+
+  // TODO: Rename `selectionText` to `text` (when refining it's not a selection)
+  selectionText: string;
+  context: string;
+  signal: AbortSignal;
+};
+
 export interface AiConfiguration {
   name?: string;
-  resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
+  resolveAiPrompt?: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
 }
 
 export type LiveblocksExtensionOptions = {
@@ -57,27 +67,105 @@ export const enum ThreadPluginActions {
 }
 
 export type AiExtensionOptions = {
-  name: string;
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
-  resolveAiPrompt: (prompt: string, selectionText: string) => Promise<string>;
+  name: string;
+  resolveAiPrompt: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
 };
 
-export type AiExtensionStorage =
+export type AiToolbarOutput = {
+  type: "modification" | "insert" | "other";
+  text: string;
+};
+
+/**
+ * The state of the AI toolbar.
+ *
+ *                             ┌────────────────────────────────────────────────────────────────────────────────┐
+ *                             │                                                                                │
+ *                             │ ┌──────────────────────────────────────────────┐                               │
+ *                             ▼ ▼                                              │                               │
+ *              ┌───────$closeAiToolbar()───────┐                               │                               │
+ *              ▼                               ◇                               ◇                               ◇
+ *  ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
+ *  │        CLOSED         │       │        ASKING         │       │       THINKING        │       │       REVIEWING       │
+ *  └───────────────────────┘       └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
+ *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇
+ *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │
+ *           │ │                               │ ▼                            │ │                               │ │
+ *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │
+ *           │                                 │ ▲                              │                               │ │
+ *           │                                 │ └──────────────────────────────┼───────────────────────────────┘ │
+ *           │                                 │                                │                                 │
+ *           │                                 └───$cancelAiToolbarThinking()───┘                                 │
+ *           │                                                                                                    │
+ *           └───────────────────────$acceptAiToolbarOutput() / $applyAiToolbarOtherOutput()──────────────────────┘
+ */
+export type AiToolbarState = Relax<
   | {
-      state: "asking" | "thinking" | "reviewing";
-      name: string;
-      snapshot: Snapshot | undefined;
-      prompt: string;
-      previousPrompt: string | undefined;
+      phase: "closed";
     }
   | {
-      state: "closed";
-      name: string;
-      snapshot: undefined;
-      prompt: undefined;
-      previousPrompt: undefined;
-    };
+      phase: "asking";
+
+      /**
+       * The custom prompt being written in the toolbar.
+       */
+      customPrompt: string;
+
+      /**
+       * A potential error that occurred during the last AI request.
+       */
+      error?: Error;
+    }
+  | {
+      phase: "thinking";
+
+      /**
+       * The custom prompt being written in the toolbar.
+       */
+      customPrompt: string;
+
+      /**
+       * An abort controller to cancel the AI request.
+       */
+      abortController: AbortController;
+
+      /**
+       * The prompt sent to the AI.
+       */
+      prompt: string;
+    }
+  | {
+      phase: "reviewing";
+
+      /**
+       * The custom prompt being written in the toolbar.
+       */
+      customPrompt: string;
+
+      /**
+       * The prompt sent to the AI.
+       */
+      prompt: string;
+
+      /**
+       * The output of the AI request.
+       */
+      output: AiToolbarOutput;
+
+      /**
+       * The selection of the editor when the AI request was made.
+       */
+      selection: { from: number; to: number };
+    }
+>;
+
+export type AiExtensionStorage = {
+  name: string;
+  state: AiToolbarState;
+  snapshot?: Snapshot;
+};
 
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
@@ -98,45 +186,113 @@ export type ExtendedChainedCommands<
   A extends any[] = [],
 > = ChainedCommands & Record<T, (...args: A) => ChainedCommands>;
 
-export type CommentsCommands<ReturnType> = {
+export type ChainedAiCommands = ChainedCommands & {
+  [K in keyof AiCommands]: (
+    ...args: Parameters<AiCommands[K]>
+  ) => ChainedCommands;
+};
+
+export type CommentsCommands<ReturnType = boolean> = {
   /**
    * Add a comment
    */
   addComment: (id: string) => ReturnType;
   selectThread: (id: string | null) => ReturnType;
   addPendingComment: () => ReturnType;
+
   /** @internal */
   closePendingComment: () => ReturnType;
 };
 
-export type AiCommands<ReturnType> = {
-  askAi: (prompt?: string, isContinue?: boolean) => ReturnType;
-  /** @internal */
-  acceptAi: () => ReturnType;
-  /** @internal */
-  cancelAskAi: () => ReturnType;
-  /** @internal */
-  retryAskAi: () => ReturnType;
-  /** @internal */
-  reviewAi: () => ReturnType;
-  /** @internal */
-  closeAi: () => ReturnType;
-  /** @internal */
-  setAiPrompt: (prompt: string | ((prompt: string) => string)) => ReturnType;
-  /** @internal */
-  applyPrompt: (result: string, isContinue: boolean) => ReturnType;
-  /** @internal */
-  compareSnapshot: (snapshot: Snapshot) => ReturnType;
-};
+export type AiCommands<ReturnType = boolean> = {
+  askAi: (prompt?: string) => ReturnType;
 
-// these types are not exported from y-prosemirror
-export type YSyncBinding = {
-  doc: Doc;
-  type: XmlFragment;
-  mapping: ProsemirrorMapping;
-  mux: (fn: () => void) => void;
+  // Transitions (see AiToolbarState)
+
+  /**
+   * @internal
+   * @transition
+   *
+   * Close the AI toolbar.
+   */
+  $closeAiToolbar: () => ReturnType;
+
+  /**
+   * @internal
+   * @transition
+   *
+   * Accept the AI output.
+   */
+  $acceptAiToolbarOutput: () => ReturnType;
+
+  /**
+   * @internal
+   * @transition
+   *
+   * Open the AI toolbar in the "asking" phase.
+   */
+  $openAiToolbarAsking: () => ReturnType;
+
+  /**
+   * @internal
+   * @transition
+   *
+   * Set (and open if not already open) the AI toolbar in the "thinking" phase with the given prompt.
+   */
+  $startAiToolbarThinking: (prompt: string) => ReturnType;
+
+  /**
+   * @internal
+   * @transition
+   *
+   * Cancel the current "thinking" phase, going back to the "asking" phase.
+   */
+  $cancelAiToolbarThinking: () => ReturnType;
+
+  // Other
+
+  /**
+   * @internal
+   *
+   * Handle the success of the current "thinking" phase.
+   *
+   * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
+   * but storage updates don't trigger their listeners if not called from a command.
+   */
+  _handleAiToolbarThinkingSuccess: (output: AiToolbarOutput) => ReturnType;
+
+  /**
+   * @internal
+   *
+   * Handle an error of the current "thinking" phase.
+   *
+   * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
+   * but storage updates don't trigger their listeners if not called from a command.
+   */
+  _handleAiToolbarThinkingError: (error: Error) => ReturnType;
+
+  /**
+   * @internal
+   *
+   * Update the current custom AI prompt.
+   */
+  _updateAiToolbarCustomPrompt: (
+    customPrompt: string | ((currentCustomPrompt: string) => string)
+  ) => ReturnType;
+
+  /**
+   * @internal
+   *
+   * Render a snapshot diff in the editor.
+   */
+  _renderAiToolbarDiffInEditor: (previous?: Snapshot) => ReturnType;
 };
 
 export type YSyncPluginState = {
-  binding: YSyncBinding;
+  binding: ProsemirrorBinding;
+};
+
+export type AiResponse = {
+  content: string;
+  type: "insert" | "modification" | "other";
 };
