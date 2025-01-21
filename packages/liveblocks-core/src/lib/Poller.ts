@@ -204,6 +204,7 @@ export function makePoller(
   // unregister these event handlers.
   doc?.addEventListener("visibilitychange", onVisibilityChange);
   win?.addEventListener("online", onVisibilityChange);
+  win?.addEventListener("focus", pollNowIfStale);
 
   fsm.start();
   return {

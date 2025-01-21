@@ -29,7 +29,7 @@ import type {
   DU,
   EnterOptions,
   IYjsProvider,
-  LiveblocksError,
+  LiveblocksErrorContext,
   OpaqueClient,
   RoomEventMessage,
   SignalType,
@@ -46,7 +46,6 @@ import {
   errorIf,
   HttpError,
   kInternal,
-  makeEventSource,
   makePoller,
   ServerMsgCode,
 } from "@liveblocks/core";
@@ -97,21 +96,6 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
-import {
-  AddReactionError,
-  type CommentsError,
-  CreateCommentError,
-  CreateThreadError,
-  DeleteCommentError,
-  DeleteThreadError,
-  EditCommentError,
-  EditThreadMetadataError,
-  MarkInboxNotificationAsReadError,
-  MarkThreadAsResolvedError,
-  MarkThreadAsUnresolvedError,
-  RemoveReactionError,
-  UpdateNotificationSettingsError,
-} from "./types/errors";
 import type { UmbrellaStore } from "./umbrella-store";
 import { makeRoomThreadsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -189,21 +173,6 @@ function getCurrentUserId(client: Client): string {
   return userId;
 }
 
-function handleApiError(err: HttpError): Error {
-  const message = `Request failed with status ${err.status}: ${err.message}`;
-
-  // Log details about FORBIDDEN errors
-  if (err.details?.error === "FORBIDDEN") {
-    const detailedMessage = [message, err.details.suggestion, err.details.docs]
-      .filter(Boolean)
-      .join("\n");
-
-    console.error(detailedMessage);
-  }
-
-  return new Error(message);
-}
-
 const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
@@ -243,32 +212,38 @@ function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function makeRoomExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
-  // Note: This error event source includes both comments and room notifications settings!!
-  const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
-
   function onMutationFailure(
-    innerError: Error,
     optimisticId: string,
-    createPublicError: (error: Error) => CommentsError<M>
-  ) {
+    context: LiveblocksErrorContext & { roomId: string },
+    innerError: Error
+  ): void {
     store.optimisticUpdates.remove(optimisticId);
 
+    // All mutation failures are expected to be HTTP errors ultimately - only
+    // ever notify the user about those.
     if (innerError instanceof HttpError) {
-      const error = handleApiError(innerError);
-      commentsErrorEventSource.notify(createPublicError(error));
-      return;
-    }
+      // Always log details about 403 Forbidden errors to the console as well
+      if (innerError.status === 403) {
+        const detailedMessage = [
+          innerError.message,
+          innerError.details?.suggestion,
+          innerError.details?.docs,
+        ]
+          .filter(Boolean)
+          .join("\n");
 
-    if (innerError instanceof HttpError) {
-      handleApiError(innerError);
-      // TODO: Create public error and notify via notificationsErrorEventSource?
-      return;
-    }
+        console.error(detailedMessage);
+      }
 
-    throw innerError;
+      client[kInternal].emitError(context, innerError);
+    } else {
+      // In this context, a non-HTTP error is unexpected and should be
+      // considered a bug we should get fixed. Don't notify the user about it.
+      throw innerError;
+    }
   }
 
   const threadsPollersByRoomId = new DefaultMap((roomId: string) =>
@@ -319,7 +294,6 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   return {
     store,
-    commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
     getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(
       threadsPollersByRoomId
@@ -385,7 +359,6 @@ function makeRoomContextBundle<
     useBroadcastEvent,
     useOthersListener,
     useLostConnectionListener,
-    useErrorListener,
     useEventListener,
 
     useHistory,
@@ -443,7 +416,6 @@ function makeRoomContextBundle<
       useBroadcastEvent,
       useOthersListener,
       useLostConnectionListener,
-      useErrorListener,
       useEventListener,
 
       useHistory,
@@ -495,8 +467,6 @@ function makeRoomContextBundle<
 
       ...shared.suspense,
     },
-
-    useCommentsErrorListener,
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -958,24 +928,6 @@ function useLostConnectionListener(
   );
 }
 
-/**
- * useErrorListener is a React hook that allows you to respond to potential room
- * connection errors.
- *
- * @example
- * useErrorListener(er => {
- *   console.error(er);
- * })
- */
-function useErrorListener(callback: (err: LiveblocksError) => void): void {
-  const room = useRoom();
-  const savedCallback = useLatest(callback);
-  useEffect(
-    () => room.events.error.subscribe((e) => savedCallback.current(e)),
-    [room, savedCallback]
-  );
-}
-
 function useEventListener<
   P extends JsonObject,
   U extends BaseUserMeta,
@@ -1333,21 +1285,6 @@ function useThreads<M extends BaseMetadata>(
   return result;
 }
 
-/**
- * @private Internal API, do not rely on it.
- */
-function useCommentsErrorListener<M extends BaseMetadata>(
-  callback: (error: CommentsError<M>) => void
-) {
-  const client = useClient();
-  const savedCallback = useLatest(callback);
-  const { commentsErrorEventSource } = getRoomExtrasForClient<M>(client);
-
-  useEffect(() => {
-    return commentsErrorEventSource.subscribe(savedCallback.current);
-  }, [savedCallback, commentsErrorEventSource]);
-}
-
 function useCreateThread<M extends BaseMetadata>(): (
   options: CreateThreadOptions<M>
 ) => ThreadData<M> {
@@ -1419,16 +1356,16 @@ function useCreateRoomThread<M extends BaseMetadata>(
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (err) =>
-                new CreateThreadError(err, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  body,
-                  metadata,
-                })
+              {
+                type: "CREATE_THREAD_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+                metadata,
+              },
+              err
             )
         );
 
@@ -1469,9 +1406,9 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         },
         (err: Error) =>
           onMutationFailure(
-            err,
             optimisticId,
-            (err) => new DeleteThreadError(err, { roomId, threadId })
+            { type: "DELETE_THREAD_ERROR", roomId, threadId },
+            err
           )
       );
     },
@@ -1511,14 +1448,14 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
             store.patchThread(threadId, optimisticId, { metadata }, updatedAt),
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new EditThreadMetadataError(error, {
-                  roomId,
-                  threadId,
-                  metadata,
-                })
+              {
+                type: "EDIT_THREAD_METADATA_ERROR",
+                roomId,
+                threadId,
+                metadata,
+              },
+              err
             )
         );
     },
@@ -1578,15 +1515,15 @@ function useCreateRoomComment(
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (err) =>
-                new CreateCommentError(err, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  body,
-                })
+              {
+                type: "CREATE_COMMENT_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+              },
+              err
             )
         );
 
@@ -1660,15 +1597,9 @@ function useEditRoomComment(
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new EditCommentError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  body,
-                })
+              { type: "EDIT_COMMENT_ERROR", roomId, threadId, commentId, body },
+              err
             )
         );
     },
@@ -1717,14 +1648,9 @@ function useDeleteRoomComment(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new DeleteCommentError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                })
+              { type: "DELETE_COMMENT_ERROR", roomId, threadId, commentId },
+              err
             )
         );
     },
@@ -1774,15 +1700,15 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new AddReactionError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
+              {
+                type: "ADD_REACTION_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                emoji,
+              },
+              err
             )
         );
     },
@@ -1838,15 +1764,15 @@ function useRemoveRoomCommentReaction(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new RemoveReactionError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
+              {
+                type: "REMOVE_REACTION_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                emoji,
+              },
+              err
             )
         );
     },
@@ -1906,12 +1832,13 @@ function useMarkRoomThreadAsRead(roomId: string) {
           },
           (err: Error) => {
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new MarkInboxNotificationAsReadError(error, {
-                  inboxNotificationId: inboxNotification.id,
-                })
+              {
+                type: "MARK_INBOX_NOTIFICATION_AS_READ_ERROR",
+                roomId,
+                inboxNotificationId: inboxNotification.id,
+              },
+              err
             );
             return;
           }
@@ -1962,13 +1889,9 @@ function useMarkRoomThreadAsResolved(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new MarkThreadAsResolvedError(error, {
-                  roomId,
-                  threadId,
-                })
+              { type: "MARK_THREAD_AS_RESOLVED_ERROR", roomId, threadId },
+              err
             )
         );
     },
@@ -2017,13 +1940,9 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new MarkThreadAsUnresolvedError(error, {
-                  roomId,
-                  threadId,
-                })
+              { type: "MARK_THREAD_AS_UNRESOLVED_ERROR", roomId, threadId },
+              err
             )
         );
     },
@@ -2272,12 +2191,9 @@ function useUpdateRoomNotificationSettings() {
         },
         (err: Error) =>
           onMutationFailure(
-            err,
             optimisticId,
-            (error) =>
-              new UpdateNotificationSettingsError(error, {
-                roomId: room.id,
-              })
+            { type: "UPDATE_NOTIFICATION_SETTINGS_ERROR", roomId: room.id },
+            err
           )
       );
     },
@@ -3128,7 +3044,6 @@ const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
-  CreateThreadError,
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -3139,8 +3054,6 @@ export {
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
-  // TODO: Move to `liveblocks-react-lexical`
-  useCommentsErrorListener,
   useCreateComment,
   useCreateRoomComment,
   useCreateRoomThread,
@@ -3155,7 +3068,6 @@ export {
   useEditRoomComment,
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
-  useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
   useHistoryVersionData,

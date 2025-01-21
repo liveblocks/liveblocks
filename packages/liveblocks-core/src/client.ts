@@ -10,6 +10,7 @@ import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import type { Observable } from "./lib/EventSource";
+import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
@@ -42,6 +43,8 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { LiveblocksErrorContext } from "./types/LiveblocksError";
+import { LiveblocksError } from "./types/LiveblocksError";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
@@ -155,6 +158,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   as<M2 extends BaseMetadata>(): Client<U, M2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
+  emitError(context: LiveblocksErrorContext, cause?: Error): void;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -379,11 +383,9 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
 
   /**
    * All possible client events, subscribable from a single place.
-   *
-   * @private These event sources are private for now, but will become public
-   * once they're stable.
    */
   readonly events: {
+    readonly error: Observable<LiveblocksError>;
     readonly syncStatus: Observable<void>;
   };
 } & NotificationsApi<M>;
@@ -611,6 +613,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
+        errorEventSource: liveblocksErrorSource,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
@@ -730,6 +733,8 @@ export function createClient<U extends BaseUserMeta = DU>(
   const syncStatusSources: Signal<InternalSyncStatus>[] = [];
   const syncStatusSignal = new Signal<InternalSyncStatus>("synchronized");
 
+  const liveblocksErrorSource = makeEventSource<LiveblocksError>();
+
   function getSyncStatus(): SyncStatus {
     const status = syncStatusSignal.get();
     return status === "synchronizing" ? status : "synchronized";
@@ -821,6 +826,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
+        error: liveblocksErrorSource,
         syncStatus: syncStatusSignal,
       },
 
@@ -838,6 +844,13 @@ export function createClient<U extends BaseUserMeta = DU>(
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
         createSyncSource,
+        emitError: (context: LiveblocksErrorContext, cause?: Error) => {
+          const error = LiveblocksError.from(context, cause);
+          const didNotify = liveblocksErrorSource.notify(error);
+          if (!didNotify) {
+            console.error(error.message);
+          }
+        },
       },
     },
     kInternal,

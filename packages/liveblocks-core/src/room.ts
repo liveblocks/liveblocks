@@ -1,12 +1,7 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import type { InternalSyncStatus } from "./client";
-import type {
-  Delegates,
-  LiveblocksError,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -84,6 +79,7 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
+import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
 import type {
   InternalOthersEvent,
@@ -638,7 +634,6 @@ export type Room<
     readonly self: Observable<User<P, U>>;
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
-    readonly error: Observable<LiveblocksError>;
     /**
      * @deprecated Renamed to `storageBatch`. The `storage` event source will
      * soon be replaced by another/incompatible API.
@@ -1236,6 +1231,7 @@ export type RoomConfig<M extends BaseMetadata> = {
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
   createSyncSource: () => SyncSource;
+  errorEventSource: EventSource<LiveblocksError>;
 };
 
 function userToTreeNode(
@@ -1480,13 +1476,17 @@ export function createRoom<
   managedSocket.events.statusDidChange.subscribe(handleConnectionLossEvent);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
-  managedSocket.events.onLiveblocksError.subscribe((err) => {
-    if (process.env.NODE_ENV !== "production") {
-      console.error(
-        `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
-      );
+  managedSocket.events.onConnectionError.subscribe(({ message, code }) => {
+    const type = "ROOM_CONNECTION_ERROR";
+    const err = new LiveblocksError(message, { type, code, roomId });
+    const didNotify = config.errorEventSource.notify(err);
+    if (!didNotify) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `Connection to websocket server closed. Reason: ${message} (code: ${code}).`
+        );
+      }
     }
-    eventHub.error.notify(err);
   });
 
   const pool: ManagedPool = {
@@ -1563,7 +1563,6 @@ export function createRoom<
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
-    error: makeEventSource<LiveblocksError>(),
     storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -2709,7 +2708,6 @@ export function createRoom<
     others: eventHub.others.observable,
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
-    error: eventHub.error.observable,
     /** @deprecated */
     storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
@@ -2969,7 +2967,11 @@ export function createRoom<
       },
 
       id: config.roomId,
-      subscribe: makeClassicSubscribeFn(events),
+      subscribe: makeClassicSubscribeFn(
+        config.roomId,
+        events,
+        config.errorEventSource
+      ),
 
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
@@ -3061,7 +3063,11 @@ function makeClassicSubscribeFn<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(events: Room<P, S, U, E, M>["events"]): SubscribeFn<P, S, U, E> {
+>(
+  roomId: string,
+  events: Room<P, S, U, E, M>["events"],
+  errorEvents: EventSource<LiveblocksError>
+): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
@@ -3127,8 +3133,13 @@ function makeClassicSubscribeFn<
           });
         }
 
-        case "error":
-          return events.error.subscribe(callback as Callback<Error>);
+        case "error": {
+          return errorEvents.subscribe((err) => {
+            if (err.roomId === roomId) {
+              return (callback as Callback<Error>)(err);
+            }
+          });
+        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);

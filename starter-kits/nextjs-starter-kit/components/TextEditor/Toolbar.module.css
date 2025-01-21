@@ -50,3 +50,8 @@
 .headingsSelect {
   width: 130px;
 }
+
+/* Use set width in static toolbar */
+[data-toolbar="static"] .blockSelector {
+  width: 130px;
+}

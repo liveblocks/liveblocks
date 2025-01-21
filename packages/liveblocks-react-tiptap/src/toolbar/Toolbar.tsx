@@ -212,10 +212,11 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
           variant="toolbar"
           ref={forwardedRef}
           icon={icon}
+          aria-label={!children ? name : undefined}
           {...props}
           onKeyDown={handleKeyDown}
         >
-          {children}
+          {!children && !icon ? name : children}
         </Button>
       </ShortcutTooltip>
     );
@@ -430,7 +431,7 @@ const ToolbarBlockSelector = forwardRef<
             position="popper"
             sideOffset={BLOCK_SELECT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-            className="lb-root lb-portal lb-elevation lb-dropdown"
+            className="lb-root lb-portal lb-elevation lb-dropdown lb-select-dropdown lb-tiptap-block-selector-dropdown"
           >
             {resolvedItems.map((item) => (
               <SelectPrimitive.Item
@@ -790,7 +791,7 @@ export const Toolbar = Object.assign(
      * A button for triggering actions.
      *
      * @example
-     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }}>Comment</Toolbar.Button>
+     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }} />
      *
      * @example
      * <Toolbar.Button name="Mention someone" icon={<Icon.Mention />} onClick={() => { ... }} />
@@ -801,7 +802,7 @@ export const Toolbar = Object.assign(
      * A toggle button for values that can be active or inactive.
      *
      * @example
-     * <Toolbar.Toggle name="Bold" active={isBold}>Bold</Toolbar.Toggle>
+     * <Toolbar.Toggle name="Bold" active={isBold} />
      *
      * @example
      * <Toolbar.Toggle name="Italic" icon={<Icon.Italic />} shortcut="Mod-I" active={isItalic} onClick={() => { ... }} />
@@ -835,6 +836,10 @@ export const Toolbar = Object.assign(
      * A section containing collaborative actions. (e.g. adding a comment)
      */
     SectionCollaboration: ToolbarSectionCollaboration,
+
+    /**
+     * A section containing AI actions. (e.g. opening the AI toolbar)
+     */
     SectionAi: ToolbarSectionAi,
   }
 );

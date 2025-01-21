@@ -48,7 +48,7 @@ export {
   toAbsoluteUrl,
 } from "./comments/comment-body";
 export { generateCommentUrl } from "./comments/comment-url";
-export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
+export type { BaseAuthResult, Delegates } from "./connection";
 export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
@@ -137,7 +137,7 @@ export { shallow } from "./lib/shallow";
 export type { ISignal, SignalType } from "./lib/signals";
 export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
-export { stringify, unstringify } from "./lib/stringify";
+export { stringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { url, urljoin } from "./lib/url";
 export type { Brand, DistributiveOmit } from "./lib/utils";
@@ -271,6 +271,8 @@ export type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
+export type { LiveblocksErrorContext } from "./types/LiveblocksError";
+export { LiveblocksError } from "./types/LiveblocksError";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
 export type { OthersEvent } from "./types/Others";

@@ -10,6 +10,7 @@ import type {
   BaseRoomInfo,
   DM,
   DU,
+  LiveblocksError,
   OpaqueClient,
   SyncStatus,
 } from "@liveblocks/core";
@@ -464,9 +465,16 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
             optimisticId
           );
         },
-        () => {
-          // TODO: Broadcast errors to client
+        (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
+          // XXX_vincent Add unit test for this error
+          client[kInternal].emitError(
+            {
+              type: "MARK_INBOX_NOTIFICATION_AS_READ_ERROR",
+              inboxNotificationId,
+            },
+            err
+          );
         }
       );
     },
@@ -488,9 +496,13 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
         // Replace the optimistic update by the real thing
         store.markAllInboxNotificationsRead(optimisticId, readAt);
       },
-      () => {
-        // TODO: Broadcast errors to client
+      (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
+        client[kInternal].emitError(
+          // No roomId, threadId, commentId to include for this error
+          { type: "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR" },
+          err
+        );
       }
     );
   }, [client]);
@@ -513,9 +525,13 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
           // Replace the optimistic update by the real thing
           store.deleteInboxNotification(inboxNotificationId, optimisticId);
         },
-        () => {
-          // TODO: Broadcast errors to client
+        (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
+          // XXX_vincent Add unit test for this error
+          client[kInternal].emitError(
+            { type: "DELETE_INBOX_NOTIFICATION_ERROR", inboxNotificationId },
+            err
+          );
         }
       );
     },
@@ -537,9 +553,13 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
         // Replace the optimistic update by the real thing
         store.deleteAllInboxNotifications(optimisticId);
       },
-      () => {
-        // TODO: Broadcast errors to client
+      (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
+        // XXX_vincent Add unit test for this error
+        client[kInternal].emitError(
+          { type: "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR" },
+          err
+        );
       }
     );
   }, [client]);
@@ -759,6 +779,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
       useIsInsideRoom,
+      useErrorListener,
       useSyncStatus,
     },
     suspense: {
@@ -767,6 +788,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
       useIsInsideRoom,
+      useErrorListener,
       useSyncStatus,
     },
   };
@@ -1237,6 +1259,25 @@ function useSyncStatus(options?: UseSyncStatusOptions): SyncStatus {
   return useSyncStatus_withClient(useClient(), options);
 }
 
+/**
+ * useErrorListener is a React hook that allows you to respond to any
+ * Liveblocks error, for example room connection errors, errors
+ * creating/editing/deleting threads, etc.
+ *
+ * @example
+ * useErrorListener(err => {
+ *   console.error(err);
+ * })
+ */
+function useErrorListener(callback: (err: LiveblocksError) => void): void {
+  const client = useClient();
+  const savedCallback = useLatest(callback);
+  useEffect(
+    () => client.events.error.subscribe((e) => savedCallback.current(e)),
+    [client, savedCallback]
+  );
+}
+
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1248,6 +1289,7 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
+  useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,
   useSyncStatus,
