@@ -168,7 +168,10 @@ export const AiExtension = Extension.create<
                 });
 
                 getLiveblocksYjsProvider(this.editor)?.unpause();
-                docFromSnapshot.gc = true;
+
+                if (this.options.doc) {
+                  this.options.doc.gc = true;
+                }
 
                 this.storage.snapshot = undefined;
               }
@@ -215,6 +218,13 @@ export const AiExtension = Extension.create<
           return false;
         }
 
+        if (currentState.phase === "reviewing") {
+          // TODO: this is a retry, we should actually retry and start thinking again
+          return (
+            this.editor.commands as unknown as AiCommands
+          ).$closeAiToolbar();
+        }
+
         // 2. Blur the editor if needed
         if (this.editor.isFocused) {
           this.editor.commands.blur();
@@ -237,18 +247,22 @@ export const AiExtension = Extension.create<
         // 5. Execute the AI request
         const executeAiRequest = async () => {
           await provider?.pause();
-
+          const { from, to } = this.editor.state.selection.empty
+            ? {
+                // TODO: this is a hack to get the context around the selection, we need to improve this
+                from: Math.max(this.editor.state.selection.to - 30, 0),
+                to: this.editor.state.selection.to,
+              }
+            : this.editor.state.selection;
           return this.options.resolveAiPrompt({
             prompt,
-            // TODO: If it's a refinement prompt, the last output should be used, not the selection
-            selectionText: this.editor.state.doc.textBetween(
-              this.editor.state.selection.from,
-              this.editor.state.selection.to,
-              " "
-            ),
-
-            // TODO: Add doc context
-            context: "",
+            selectionText: this.editor.state.doc.textBetween(from, to, " "),
+            /*
+               TODO: This needs a maximum to avoid overloading context, for now I've arbitrailiry chosen 3000
+               characters but this will need to be improved, probably using word boundary of some sort (languages can make that tricky)
+               as well as choosing text around the selection, so before/after.
+            */
+            context: this.editor.getText().slice(0, 3_000),
             signal: abortController.signal,
           });
         };
@@ -263,8 +277,8 @@ export const AiExtension = Extension.create<
             (
               this.editor.commands as unknown as AiCommands
             )._handleAiToolbarThinkingSuccess({
-              type: "other",
-              text: output,
+              type: output.type,
+              text: output.content,
             });
           })
           .catch((error) => {
@@ -312,13 +326,13 @@ export const AiExtension = Extension.create<
         const currentState = this.storage.state;
 
         // 1. If NOT in "thinking" phase, do nothing
-        if (currentState.phase !== "thinking") {
+        if (currentState.phase !== "thinking" || !this.options.doc) {
           return false;
         }
 
         // TODO: Diff vs other output types
         // 2. If the output is a diff, apply it to the editor
-        if (this.options.doc) {
+        if (["modification", "insert"].includes(output.type)) {
           this.options.doc.gc = false;
           this.storage.snapshot = snapshot(this.options.doc);
           // TODO: We now rely on editor.state.selection but this breaks it, should we update editor.state.selection or keep our own selection?
@@ -330,23 +344,31 @@ export const AiExtension = Extension.create<
               )._renderAiToolbarDiffInEditor(this.storage.snapshot);
             }
           }, 100);
+        } else {
+          // "Other"
+          return true;
         }
 
         const { from, to } = this.editor.state.selection;
         // if the selection is empty, insert at the end of the selection
-        const contentTarget = this.editor.state.selection.empty
-          ? this.editor.state.selection.to
-          : {
-              from,
-              to,
-            };
+        const contentTarget =
+          this.editor.state.selection.empty || output.type === "insert"
+            ? this.editor.state.selection.to
+            : {
+                from,
+                to,
+              };
+
+        // when inserting, use the "to" position, otherwise when modifing, use the "from" position
+        const targetTo = output.type === "insert" ? to : from;
+
         // 3. Set to "reviewing" phase with the output
         this.storage.state = {
           phase: "reviewing",
           customPrompt: "",
           prompt: currentState.prompt,
           output,
-          contentTarget: { from, to: from + output.text.length }, // take into account the new length with output
+          contentTarget: { from, to: targetTo + output.text.length }, // take into account the new length with output
         };
 
         // 4. insert the output.

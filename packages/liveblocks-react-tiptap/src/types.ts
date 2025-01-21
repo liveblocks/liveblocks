@@ -28,18 +28,19 @@ export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
-type ResolveAiPromptArgs = {
+export type ResolveAiPromptArgs = {
   prompt: string;
 
   // TODO: Rename `selectionText` to `text` (when refining it's not a selection)
   selectionText: string;
   context: string;
   signal: AbortSignal;
+  retryCount?: number;
 };
 
 export interface AiConfiguration {
   name?: string;
-  resolveAiPrompt?: (args: ResolveAiPromptArgs) => Promise<string>;
+  resolveAiPrompt?: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
 }
 
 export type LiveblocksExtensionOptions = {
@@ -70,11 +71,11 @@ export type AiExtensionOptions = {
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
   name: string;
-  resolveAiPrompt: (args: ResolveAiPromptArgs) => Promise<string>;
+  resolveAiPrompt: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
 };
 
 export type AiToolbarOutput = {
-  type: "modify" | "continue" | "other";
+  type: "modification" | "insert" | "other";
   text: string;
 };
 
@@ -288,4 +289,9 @@ export type AiCommands<ReturnType = boolean> = {
 
 export type YSyncPluginState = {
   binding: ProsemirrorBinding;
+};
+
+export type AiResponse = {
+  content: string;
+  type: "insert" | "modification" | "other";
 };

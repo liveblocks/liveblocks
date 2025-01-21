@@ -31,8 +31,10 @@ import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import type {
+  AiResponse,
   LiveblocksExtensionOptions,
   LiveblocksExtensionStorage,
+  ResolveAiPromptArgs,
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
@@ -375,23 +377,54 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
-        extensions.push(
-          AiExtension.configure({
-            resolveAiPrompt: async ({
+        const resolveAiPrompt = async ({
+          prompt,
+          selectionText,
+          context,
+          signal,
+          retryCount = 0,
+        }: ResolveAiPromptArgs): Promise<AiResponse> => {
+          const result = await room[kInternal].executeContextualPrompt({
+            prompt,
+            selectionText,
+            context,
+            signal,
+          });
+
+          if (retryCount > 3) {
+            throw new Error("Failed to resolve AI prompt");
+          }
+
+          const retry = () => {
+            return resolveAiPrompt({
               prompt,
               selectionText,
               context,
               signal,
-            }) => {
-              const result = await room[kInternal].executeContextualPrompt({
-                prompt,
-                selectionText,
-                context,
-                signal,
-              });
-
-              return result;
-            },
+              retryCount: retryCount + 1,
+            });
+          };
+          // TODO: proper backoff
+          try {
+            const parsedResponse = JSON.parse(result) as JsonObject;
+            const type =
+              typeof parsedResponse.type === "string"
+                ? parsedResponse.type
+                : "";
+            if (
+              typeof parsedResponse.content === "string" &&
+              ["insert", "modification", "other"].includes(type)
+            ) {
+              return parsedResponse as AiResponse;
+            }
+            return retry();
+          } catch (e) {
+            return retry();
+          }
+        };
+        extensions.push(
+          AiExtension.configure({
+            resolveAiPrompt,
             ...(typeof options.ai === "boolean" ? {} : options.ai),
             doc: this.storage.doc,
             pud: this.storage.permanentUserData,
