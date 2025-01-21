@@ -84,6 +84,76 @@ userInfo: {
 }
 ```
 
+## Toolbars
+
+Two toolbars are available allowing you to create a
+[static toolbar](/docs/api-reference/liveblocks-react-lexical#Toolbar), or a
+[floating toolbar](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar),
+as seen below.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-toolbar.png"
+    alt="FloatingToolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Add
+[`Toolbar`](http://localhost:3001/docs/api-reference/liveblocks-react-lexical#Toolbar)
+and
+[`FloatingToolbar`](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar)
+to enable these features.
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  <LiveblocksPlugin>
+    <Toolbar />
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
+It’s easy to
+[customize a toolbar’s content](/docs/api-reference/liveblocks-react-lexical#toolbar-extending-the-defaults),
+piecing together sections like blocks.
+
+```tsx
+function CustomToolbar() {
+  return (
+    <Toolbar>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+You can also easily create
+[custom styled buttons](/docs/api-reference/liveblocks-react-lexical#Toolbar.Button),
+and
+[more](/docs/api-reference/liveblocks-react-lexical#creating-a-custom-toolbar),
+with any functionality you like.
+
+```tsx
+function CustomButton() {
+  return (
+    // +++
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+    // +++
+  );
+}
+```
+
 ## Annotations and comments
 
 Add [Comments](/docs/ready-made-features/comments) to your text editor, allowing
@@ -111,16 +181,6 @@ Add a floating Comments composer to your text editor using
 </LexicalComposer>
 ```
 
-You can then create a button that
-[opens the new annotation composer](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer)
-for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
-
-```tsx
-<button onClick={() => editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND)}>
-  💬 New comment
-</button>
-```
-
 Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
 alongside
 [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
@@ -143,7 +203,9 @@ export function Threads({ editor }) {
 
 `FloatingThreads` displays floating threads below text highlights in the editor,
 ideal for mobile, whereas `AnchoredThreads` displays threads vertically
-alongside the editor which is great on desktop.
+alongside the editor which is great on desktop. To create a new thread use the
+button in a [pre-built toolbar](#Toolbars), or
+[build a button yourself](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer).
 
 ## Notifications
 
