@@ -47,6 +47,12 @@ function getLiveblocksYjsProvider(editor: Editor) {
   )?.provider as LiveblocksYjsProvider | undefined;
 }
 
+export function isAiToolbarDiffOutput(
+  output: AiToolbarOutput
+): output is Extract<AiToolbarOutput, { type: "modification" | "insert" }> {
+  return output.type === "modification" || output.type === "insert";
+}
+
 export const AiExtension = Extension.create<
   AiExtensionOptions,
   AiExtensionStorage
@@ -235,14 +241,6 @@ export const AiExtension = Extension.create<
           return false;
         }
 
-        if (currentState.phase === "reviewing") {
-          // TODO: this is a retry, we should actually retry and start thinking again
-          //       Maybe not, it could be a refinement prompt
-          return (
-            this.editor.commands as unknown as AiCommands
-          ).$closeAiToolbar();
-        }
-
         // 2. Blur the editor if needed
         if (this.editor.isFocused) {
           this.editor.commands.blur();
@@ -326,6 +324,21 @@ export const AiExtension = Extension.create<
         return true;
       },
 
+      // TODO: Revert diff if needed
+      $retryAiToolbarThinking: () => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "reviewing" phase, do nothing
+        if (currentState.phase !== "reviewing") {
+          return false;
+        }
+
+        // 2. Start the AI request with the last prompt
+        return (
+          this.editor.commands as unknown as AiCommands
+        ).$startAiToolbarThinking(currentState.prompt);
+      },
+
       $cancelAiToolbarThinking: () => () => {
         const currentState = this.storage.state;
 
@@ -365,7 +378,8 @@ export const AiExtension = Extension.create<
           this.editor.state.selection;
 
         // 2. If the output is a diff, apply it to the editor
-        if (["modification", "insert"].includes(output.type)) {
+        if (isAiToolbarDiffOutput(output)) {
+          output;
           this.options.doc.gc = false;
           this.storage.snapshot = takeSnapshot(this.options.doc);
 
@@ -466,7 +480,7 @@ export const AiExtension = Extension.create<
             if (
               this.storage.state.phase === "closed" ||
               (this.storage.state.phase === "reviewing" &&
-                this.storage.state.output.type !== "other")
+                isAiToolbarDiffOutput(this.storage.state.output))
             ) {
               return DecorationSet.create(doc, []);
             }

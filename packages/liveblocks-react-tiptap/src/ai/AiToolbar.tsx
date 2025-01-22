@@ -55,7 +55,7 @@ import type {
   FloatingPosition,
 } from "../types";
 import { getDomRangeFromSelection } from "../utils";
-import { DEFAULT_STATE } from "./AiExtension";
+import { DEFAULT_STATE, isAiToolbarDiffOutput } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
@@ -213,13 +213,17 @@ function AiToolbarReviewingSuggestions() {
     (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput();
   }, [editor]);
 
-  if (output.type === "insert" || output.type === "modification") {
+  const handleRetry = useCallback(() => {
+    (editor.commands as unknown as AiCommands).$retryAiToolbarThinking();
+  }, [editor]);
+
+  if (isAiToolbarDiffOutput(output)) {
     return (
       <>
         <AiToolbarDropdownItem icon={<CheckIcon />} onSelect={handleAccept}>
           Accept
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<UndoIcon />} disabled>
+        <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={handleRetry}>
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem icon={<CrossIcon />} onSelect={handleDiscard}>
@@ -227,7 +231,7 @@ function AiToolbarReviewingSuggestions() {
         </AiToolbarDropdownItem>
       </>
     );
-  } else if (output.type === "other") {
+  } else {
     return (
       <>
         <AiToolbarDropdownItem icon={<CheckIcon />} disabled>
@@ -245,8 +249,6 @@ function AiToolbarReviewingSuggestions() {
       </>
     );
   }
-
-  return null;
 }
 
 function AiToolbarCustomPromptContent({ disabled }: { disabled?: boolean }) {

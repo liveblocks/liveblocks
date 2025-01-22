@@ -73,10 +73,21 @@ export type AiExtensionOptions = {
   resolveAiPrompt: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
 };
 
-export type AiToolbarOutput = {
-  type: "modification" | "insert" | "other";
-  text: string;
-};
+export type AiToolbarOutput = Relax<
+  | {
+      // TODO: Rename to "replace"?
+      type: "modification";
+      text: string;
+    }
+  | {
+      type: "insert";
+      text: string;
+    }
+  | {
+      type: "other";
+      text: string;
+    }
+>;
 
 /**
  * The state of the AI toolbar.
@@ -90,16 +101,19 @@ export type AiToolbarOutput = {
  *  ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
  *  │        CLOSED         │       │        ASKING         │       │       THINKING        │       │       REVIEWING       │
  *  └───────────────────────┘       └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
- *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇
- *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │
- *           │ │                               │ ▼                            │ │                               │ │
- *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │
- *           │                                 │ ▲                              │                               │ │
- *           │                                 │ └──────────────────────────────┼───────────────────────────────┘ │
- *           │                                 │                                │                                 │
- *           │                                 └───$cancelAiToolbarThinking()───┘                                 │
- *           │                                                                                                    │
- *           └───────────────────────$acceptAiToolbarOutput() / $applyAiToolbarOtherOutput()──────────────────────┘
+ *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇ ◇
+ *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │ │
+ *           │ │                               │ ▼                            │ │                               │ │ │
+ *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │ │
+ *           │                                 │ ▲ ▲                            │                               │ │ │
+ *           │                                 │ │ └────────────────────────────┼───────────────────────────────┘ │ │
+ *           │                                 │ │                              │                                 │ │
+ *           │                                 │ └───────────────────$retryAiToolbarThinking()────────────────────┘ │
+ *           │                                 │                                │                                   │
+ *           │                                 └───$cancelAiToolbarThinking()───┘                                   │
+ *           │                                                                                                      │
+ *           └───────────────────────$acceptAiToolbarOutput() / $applyAiToolbarOtherOutput()────────────────────────┘
+ *
  */
 export type AiToolbarState = Relax<
   | {
@@ -245,6 +259,14 @@ export type AiCommands<ReturnType = boolean> = {
    * @internal
    * @transition
    *
+   * Retry the last prompt while going back to the "thinking" phase.
+   */
+  $retryAiToolbarThinking: () => ReturnType;
+
+  /**
+   * @internal
+   * @transition
+   *
    * Cancel the current "thinking" phase, going back to the "asking" phase.
    */
   $cancelAiToolbarThinking: () => ReturnType;
@@ -286,6 +308,6 @@ export type YSyncPluginState = {
 };
 
 export type AiResponse = {
-  content: string;
   type: "insert" | "modification" | "other";
+  content: string;
 };
