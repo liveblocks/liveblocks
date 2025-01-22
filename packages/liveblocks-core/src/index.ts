@@ -159,14 +159,6 @@ export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
-  ChannelNotificationSetting,
-  ChannelsNotificationSettings,
-  NotificationChannel,
-  NotificationKind,
-  PartialChannelsNotificationSettings,
-} from "./protocol/ChannelsNotificationSettings";
-export { isChannelNotificationSettingEnabled } from "./protocol/ChannelsNotificationSettings";
-export type {
   BroadcastEventClientMsg,
   ClientMsg,
   FetchStorageClientMsg,
@@ -258,6 +250,14 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
+export { isNotificationChannelEnabled } from "./protocol/UserNotificationSettings";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
 export type {

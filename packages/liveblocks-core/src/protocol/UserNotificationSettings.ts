@@ -18,23 +18,23 @@ export type NotificationKind<K extends keyof DAD = keyof DAD> =
   | K;
 
 /**
- * A channel notification setting is a set of notification kinds.
+ * A notification channel settings is a set of notification kinds.
  * One setting can have multiple kinds (+ augmentation)
  */
-export type ChannelNotificationSetting = {
+export type NotificationChannelSettings = {
   [K in NotificationKind]: boolean;
 };
 
 /**
- * Channels notification settings are a set of channel notification setting.
- * One channel for one setting.
+ * User notification settings are a set of notification channel setting.
+ * One channel for one set of settings.
  */
-export type ChannelsNotificationSettings = {
-  [C in NotificationChannel]: ChannelNotificationSetting;
+export type UserNotificationSettings = {
+  [C in NotificationChannel]: NotificationChannelSettings;
 };
 
 /**
- * It creates a deep partial specific for `ChannelsNotificationSettings`
+ * It creates a deep partial specific for `UserNotificationSettings`
  * to offer a nice DX when updating the settings (e.g not being forced to define every keys)
  * and at the same the some preserver the augmentation for custom kinds (e.g `liveblocks.config.ts`).
  */
@@ -50,16 +50,16 @@ type DeepPartialWithAugmentation<T> = T extends object
  * Partial channels notification settings
  * with augmentation preserved gracefully
  */
-export type PartialChannelsNotificationSettings =
-  DeepPartialWithAugmentation<ChannelsNotificationSettings>;
+export type PartialUserNotificationSettings =
+  DeepPartialWithAugmentation<UserNotificationSettings>;
 
 /**
  *
- * Utility to check if a channel notification setting
+ * Utility to check if a notification channel settings
  * is enabled for every notification kinds.
  */
-export function isChannelNotificationSettingEnabled(
-  setting: ChannelNotificationSetting
+export function isNotificationChannelEnabled(
+  settings: NotificationChannelSettings
 ): boolean {
-  return values(setting).every((enabled) => enabled === true);
+  return values(settings).every((enabled) => enabled === true);
 }

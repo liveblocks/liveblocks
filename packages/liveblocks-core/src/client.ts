@@ -23,7 +23,7 @@ import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   ChannelsNotificationSettings,
   PartialChannelsNotificationSettings,
-} from "./protocol/ChannelsNotificationSettings";
+} from "./protocol/UserNotificationSettings";
 import type {
   BaseMetadata,
   ThreadData,

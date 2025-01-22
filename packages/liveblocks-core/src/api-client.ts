@@ -23,7 +23,7 @@ import type { Permission } from "./protocol/AuthToken";
 import type {
   ChannelsNotificationSettings,
   PartialChannelsNotificationSettings,
-} from "./protocol/ChannelsNotificationSettings";
+} from "./protocol/UserNotificationSettings";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
