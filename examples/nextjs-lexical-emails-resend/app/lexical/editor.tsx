@@ -11,10 +11,11 @@ import {
   AnchoredThreads,
   liveblocksConfig,
   LiveblocksPlugin,
-  useEditorStatus,
+  useIsEditorReady,
   FloatingThreads,
+  Toolbar,
+  FloatingToolbar,
 } from "@liveblocks/react-lexical";
-import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Loading from "../loading";
 import VersionHistoryDialog from "../version-history-dialog";
@@ -32,19 +33,22 @@ const initialConfig = liveblocksConfig({
 });
 
 export default function Editor() {
-  const status = useEditorStatus();
+  const ready = useIsEditorReady();
 
   return (
     <div className="relative min-h-screen flex flex-col">
       <LexicalComposer initialConfig={initialConfig}>
         <LiveblocksPlugin>
-          {status === "not-loaded" || status === "loading" ? (
+          {!ready ? (
             <Loading />
           ) : (
             <>
               <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
                 <VersionHistoryDialog />
                 <NotificationsPopover />
+              </div>
+              <div className="border-b border-border/80 bg-background">
+                <Toolbar className="w-full" />
               </div>
 
               <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
@@ -63,7 +67,6 @@ export default function Editor() {
                   />
 
                   <FloatingComposer className="w-[350px]" />
-
                   <FloatingToolbar />
                 </div>
 
