@@ -407,6 +407,33 @@
   white-space: pre-wrap;
 }
 
+.lb-tiptap-ai-toolbar-error {
+  --lb-dynamic-background: var(--lb-background-destructive-subtle);
+
+  position: relative;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  align-items: center;
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+  background: var(--lb-dynamic-background);
+  color: var(--lb-destructive);
+  font-size: 0.875em;
+  text-wrap: balance;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-block-start: 1px solid var(--lb-destructive-moderate);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  :where(.lb-icon-container) {
+    color: var(--lb-destructive-secondary);
+  }
+}
+
 .lb-tiptap-ai-toolbar-halo {
   --lb-tiptap-ai-toolbar-halo-blur: 16px;
   --lb-tiptap-ai-toolbar-halo-outset: 8px;

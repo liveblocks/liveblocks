@@ -22,6 +22,7 @@ import {
   TooltipProvider,
   UndoIcon,
   useRefs,
+  WarningIcon,
 } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import { Command, useCommandState } from "cmdk";
@@ -372,7 +373,22 @@ function AiToolbarCustomPromptContent({ disabled }: { disabled?: boolean }) {
 }
 
 function AiToolbarAsking() {
-  return <AiToolbarCustomPromptContent />;
+  const { state } = useAiToolbarContext();
+  const { error } = state as Exclude<AiToolbarState, { phase: "closed" }>;
+
+  return (
+    <>
+      <AiToolbarCustomPromptContent />
+      {error ? (
+        <div className="lb-tiptap-ai-toolbar-error">
+          <span className="lb-icon-container">
+            <WarningIcon />
+          </span>
+          There was a problem with your request.
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 function AiToolbarThinking() {

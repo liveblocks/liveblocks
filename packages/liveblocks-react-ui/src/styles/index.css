@@ -52,6 +52,18 @@
     var(--lb-accent-contrast),
     100
   );
+  --lb-background-destructive-faint: color-mix-scale(
+    var(--lb-background),
+    var(--lb-destructive),
+    var(--lb-destructive-contrast),
+    50
+  );
+  --lb-background-destructive-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-destructive),
+    var(--lb-destructive-contrast),
+    100
+  );
   --lb-accent-subtle: color-mix-scale(
     var(--lb-dynamic-background),
     var(--lb-accent),
@@ -74,6 +86,30 @@
     var(--lb-dynamic-background),
     var(--lb-accent),
     var(--lb-accent-contrast),
+    800
+  );
+  --lb-destructive-subtle: color-mix-scale(
+    var(--lb-dynamic-background),
+    var(--lb-destructive),
+    var(--lb-destructive-contrast),
+    100
+  );
+  --lb-destructive-moderate: color-mix-scale(
+    var(--lb-dynamic-background),
+    var(--lb-destructive),
+    var(--lb-destructive-contrast),
+    400
+  );
+  --lb-destructive-tertiary: color-mix-scale(
+    var(--lb-dynamic-background),
+    var(--lb-destructive),
+    var(--lb-destructive-contrast),
+    600
+  );
+  --lb-destructive-secondary: color-mix-scale(
+    var(--lb-dynamic-background),
+    var(--lb-destructive),
+    var(--lb-destructive-contrast),
     800
   );
   --lb-foreground-subtle: color-mix-scale(

@@ -269,7 +269,7 @@ export type AiCommands<ReturnType = boolean> = {
    * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
    * but storage updates don't trigger their listeners if not called from a command.
    */
-  _handleAiToolbarThinkingError: (error: Error) => ReturnType;
+  _handleAiToolbarThinkingError: (error: unknown) => ReturnType;
 
   /**
    * @internal

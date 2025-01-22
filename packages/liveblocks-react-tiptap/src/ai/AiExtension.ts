@@ -297,7 +297,7 @@ export const AiExtension = Extension.create<
             // 5.b. If the AI request fails, set to "asking" phase with error
             (
               this.editor.commands as unknown as AiCommands
-            )._handleAiToolbarThinkingError(error as Error);
+            )._handleAiToolbarThinkingError(error);
           });
 
         return true;
@@ -391,7 +391,7 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      _handleAiToolbarThinkingError: (error: Error) => () => {
+      _handleAiToolbarThinkingError: (error: unknown) => () => {
         const currentState = this.storage.state;
 
         // 1. If NOT in "thinking" phase, do nothing
@@ -402,7 +402,10 @@ export const AiExtension = Extension.create<
         // 2. Unblock the editor
         this.editor.setEditable(true);
 
-        // 3. Set to "asking" phase with error
+        // 3. Log the error
+        console.error(error);
+
+        // 4. Set to "asking" phase with error
         this.storage.state = {
           phase: "asking",
           // If the custom prompt is different than the prompt, reset it
@@ -410,8 +413,11 @@ export const AiExtension = Extension.create<
             currentState.prompt === currentState.customPrompt
               ? currentState.customPrompt
               : "",
-          // TODO: Improve error handling
-          error,
+          // Pass the error so it can be displayed
+          error:
+            error instanceof Error
+              ? error
+              : new Error(String(error), { cause: error }),
         };
 
         return true;
