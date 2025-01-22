@@ -54,7 +54,7 @@ import type {
   ChainedAiCommands,
   FloatingPosition,
 } from "../types";
-import { getDomRangeFromSelection } from "../utils";
+import { getDomRange } from "../utils";
 import { DEFAULT_STATE, isAiToolbarDiffOutput } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
@@ -584,7 +584,7 @@ export const AiToolbar = Object.assign(
             )?.state;
           },
         }) ?? DEFAULT_STATE;
-      const selection = state.selection ?? editor?.state.selection;
+      const range = state.range ?? editor?.state.selection;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
           padding: AI_TOOLBAR_COLLISION_PADDING,
@@ -605,7 +605,7 @@ export const AiToolbar = Object.assign(
           },
         };
       }, [editor, position, sideOffset]);
-      const isOpen = selection !== undefined && state.phase !== "closed";
+      const isOpen = range !== undefined && state.phase !== "closed";
       const {
         refs: { setReference, setFloating },
         strategy,
@@ -625,10 +625,10 @@ export const AiToolbar = Object.assign(
           return;
         }
 
-        if (!selection && state.phase !== "closed") {
+        if (!range && state.phase !== "closed") {
           (editor.commands as unknown as AiCommands).$closeAiToolbar();
         }
-      }, [state.phase, editor, selection]);
+      }, [state.phase, editor, range]);
 
       useLayoutEffect(() => {
         if (!editor || !isOpen) {
@@ -638,14 +638,14 @@ export const AiToolbar = Object.assign(
         setReference(null);
 
         setTimeout(() => {
-          if (!selection) {
+          if (!range) {
             setReference(null);
           } else {
-            const domRange = getDomRangeFromSelection(selection, editor);
+            const domRange = getDomRange(editor, range);
             setReference(domRange);
           }
         }, 0);
-      }, [selection, editor, isOpen, setReference]);
+      }, [range, editor, isOpen, setReference]);
 
       // Close the toolbar when clicking anywhere outside of it
       useEffect(() => {

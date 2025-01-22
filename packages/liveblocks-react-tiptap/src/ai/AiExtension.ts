@@ -1,6 +1,6 @@
 import { autoRetry, HttpError } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { CommandProps, Editor } from "@tiptap/core";
+import type { CommandProps, Editor, Range } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import { Plugin } from "@tiptap/pm/state";
@@ -225,7 +225,6 @@ export const AiExtension = Extension.create<
         // 3. Set to "asking" phase
         this.storage.state = {
           phase: "asking",
-
           // Initialize the custom prompt as empty
           customPrompt: "",
         };
@@ -324,7 +323,6 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      // TODO: Revert diff if needed
       $retryAiToolbarThinking: () => () => {
         const currentState = this.storage.state;
 
@@ -332,6 +330,8 @@ export const AiExtension = Extension.create<
         if (currentState.phase !== "reviewing") {
           return false;
         }
+
+        // TODO: Revert diff if needed
 
         // 2. Start the AI request with the last prompt
         return (
@@ -370,49 +370,47 @@ export const AiExtension = Extension.create<
         const currentState = this.storage.state;
 
         // 1. If NOT in "thinking" phase, do nothing
-        if (currentState.phase !== "thinking" || !this.options.doc) {
+        if (currentState.phase !== "thinking") {
           return false;
         }
 
-        let selection: { from: number; to: number } =
-          this.editor.state.selection;
+        let range: Range = this.editor.state.selection;
 
         // 2. If the output is a diff, apply it to the editor
-        if (isAiToolbarDiffOutput(output)) {
-          output;
+        if (isAiToolbarDiffOutput(output) && this.options.doc) {
           this.options.doc.gc = false;
           this.storage.snapshot = takeSnapshot(this.options.doc);
 
-          const { empty, from, to } = this.editor.state.selection;
-
-          // if the selection is empty, insert at the end of the selection
-          const contentTarget =
-            empty || output.type === "insert"
-              ? to
-              : {
-                  from,
-                  to,
-                };
-
-          // when inserting, use the "to" position, otherwise when modifing, use the "from" position
-          const targetTo = output.type === "insert" ? to : from;
+          const { selection } = this.editor.state;
 
           // 2.a. Insert the output (the diff will be rendered after the change is applied in onUpdate())
-          this.editor.commands.insertContentAt(contentTarget, output.text);
+          this.editor.commands.insertContentAt(
+            selection.empty || output.type === "insert"
+              ? // If the selection is empty, insert at the end of it
+                selection.to
+              : // Otherwise, overwrite the selection
+                selection,
+            output.text
+          );
 
-          selection = {
-            from,
-            to: targetTo + output.text.length, // take into account the new length with output
+          // Update the range to take into account the diff
+          range = {
+            from: selection.from,
+            // TODO: This isn't correct and the toolbar is not positioned correctly
+            to:
+              output.type === "insert"
+                ? selection.to + output.text.length
+                : selection.to + output.text.length,
           };
         }
 
         // 3. Set to "reviewing" phase with the output
         this.storage.state = {
           phase: "reviewing",
+          range,
           customPrompt: "",
           prompt: currentState.prompt,
           output,
-          selection,
         };
 
         return true;
@@ -435,6 +433,7 @@ export const AiExtension = Extension.create<
         // 4. Set to "asking" phase with error
         this.storage.state = {
           phase: "asking",
+          range: currentState.range,
           // If the custom prompt is different than the prompt, reset it
           customPrompt:
             currentState.prompt === currentState.customPrompt
@@ -485,7 +484,7 @@ export const AiExtension = Extension.create<
               return DecorationSet.create(doc, []);
             }
 
-            const { from, to } = this.storage.state.selection ?? selection;
+            const { from, to } = this.storage.state.range ?? selection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-active-selection",

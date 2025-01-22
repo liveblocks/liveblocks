@@ -91,14 +91,8 @@ export const mapFragment = (
   return Fragment.from(content);
 };
 
-export function getDomRangeFromSelection(
-  selection: { from: number; to: number } | number,
-  editor: Editor
-) {
-  const { from, to } =
-    typeof selection === "number"
-      ? { from: selection, to: selection }
-      : selection;
+export function getDomRange(editor: Editor, range: Range) {
+  const { from, to } = range;
   const fromPos = editor.view.domAtPos(from);
   const endPos = editor.view.domAtPos(to);
 
