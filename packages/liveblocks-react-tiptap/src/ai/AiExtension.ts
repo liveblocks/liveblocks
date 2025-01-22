@@ -14,7 +14,7 @@ import {
   createDocFromSnapshot,
   emptySnapshot,
   equalSnapshots,
-  snapshot,
+  snapshot as takeSnapshot,
 } from "yjs";
 
 import {
@@ -67,6 +67,29 @@ export const AiExtension = Extension.create<
       state: DEFAULT_STATE,
       name: this.options.name,
     };
+  },
+  // When reviewing a diff, we render it in the editor after the change is applied
+  onUpdate() {
+    // The diff is applied right before moving to the "reviewing" phase
+    if (this.storage.state.phase !== "thinking") {
+      return;
+    }
+
+    if (!this.options.doc || !this.storage.snapshot) {
+      return;
+    }
+
+    const previousSnapshot: Snapshot = this.storage.snapshot ?? emptySnapshot;
+    const currentSnapshot = takeSnapshot(this.options.doc);
+
+    if (equalSnapshots(previousSnapshot, currentSnapshot)) {
+      return;
+    }
+
+    getYjsBinding(this.editor)?.renderSnapshot(
+      currentSnapshot,
+      previousSnapshot
+    );
   },
   addCommands() {
     return {
@@ -344,7 +367,7 @@ export const AiExtension = Extension.create<
         // 2. If the output is a diff, apply it to the editor
         if (["modification", "insert"].includes(output.type)) {
           this.options.doc.gc = false;
-          this.storage.snapshot = snapshot(this.options.doc);
+          this.storage.snapshot = takeSnapshot(this.options.doc);
 
           const { empty, from, to } = this.editor.state.selection;
 
@@ -360,18 +383,8 @@ export const AiExtension = Extension.create<
           // when inserting, use the "to" position, otherwise when modifing, use the "from" position
           const targetTo = output.type === "insert" ? to : from;
 
-          // 2.a. Insert the output.
+          // 2.a. Insert the output (the diff will be rendered after the change is applied in onUpdate())
           this.editor.commands.insertContentAt(contentTarget, output.text);
-
-          // 2.b. Diff the output in the editor
-          // TODO: setTimeout will make this execute after the current transaction is committed, which is returned by the insert content command.
-          setTimeout(() => {
-            if (this.storage.snapshot) {
-              (
-                this.editor.commands as unknown as AiCommands
-              )._renderAiToolbarDiffInEditor(this.storage.snapshot);
-            }
-          }, 100);
 
           selection = {
             from,
@@ -441,28 +454,6 @@ export const AiExtension = Extension.create<
 
           return true;
         },
-
-      _renderAiToolbarDiffInEditor: (previous?: Snapshot) => () => {
-        if (!this.options.doc) {
-          return false;
-        }
-
-        const previousSnapshot: Snapshot = previous ?? emptySnapshot;
-        const currentSnapshot = snapshot(this.options.doc);
-
-        if (equalSnapshots(previousSnapshot, currentSnapshot)) {
-          return true;
-        }
-
-        const binding = getYjsBinding(this.editor);
-
-        if (binding) {
-          binding.renderSnapshot(currentSnapshot, previousSnapshot);
-          return true;
-        }
-
-        return false;
-      },
     };
   },
   addProseMirrorPlugins() {
@@ -471,20 +462,22 @@ export const AiExtension = Extension.create<
         key: AI_TOOLBAR_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc, selection }) => {
+            // Don't show the AI toolbar selection if the toolbar is closed or when reviewing diff outputs
             if (
               this.storage.state.phase === "closed" ||
-              // TODO: Don't show the selection when reviewing diff outputs
               (this.storage.state.phase === "reviewing" &&
                 this.storage.state.output.type !== "other")
             ) {
               return DecorationSet.create(doc, []);
             }
+
             const { from, to } = this.storage.state.selection ?? selection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-active-selection",
               }),
             ];
+
             return DecorationSet.create(doc, decorations);
           },
         },
