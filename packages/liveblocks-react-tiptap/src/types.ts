@@ -279,13 +279,6 @@ export type AiCommands<ReturnType = boolean> = {
   _updateAiToolbarCustomPrompt: (
     customPrompt: string | ((currentCustomPrompt: string) => string)
   ) => ReturnType;
-
-  /**
-   * @internal
-   *
-   * Render a snapshot diff in the editor.
-   */
-  _renderAiToolbarDiffInEditor: (previous?: Snapshot) => ReturnType;
 };
 
 export type YSyncPluginState = {
