@@ -6,8 +6,6 @@ import type {
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
 import { HttpError, nanoid, Permission } from "@liveblocks/core";
-import type { AST } from "@liveblocks/query-parser";
-import { QueryParser } from "@liveblocks/query-parser";
 import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
 import {
   type ResponseResolver,
@@ -21,35 +19,9 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { createContextsForTest } from "./_utils";
+import { createContextsForTest, makeThreadFilter } from "./_utils";
 
 const server = setupServer();
-
-const parser = new QueryParser({
-  fields: {},
-  indexableFields: {
-    metadata: "mixed",
-  },
-});
-
-const getFilter = (
-  clauses: AST.Clause[],
-  indexedFieldKey: string,
-  filterKey: string
-) => {
-  const filter = clauses.find(
-    (clause) =>
-      clause.field._kind === "IndexedField" &&
-      clause.field.base.name === indexedFieldKey &&
-      clause.field.key === filterKey
-  );
-
-  return {
-    key: filter?.field._kind === "IndexedField" ? filter.field.key : "",
-    operator: filter?.operator.op,
-    value: filter?.value.value,
-  };
-};
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
@@ -184,19 +156,10 @@ describe("useUserThreads", () => {
       mockGetUserThreads((req, res, ctx) => {
         const url = new URL(req.url);
         const query = url.searchParams.get("query");
-        const parseRes = parser.parse(query ?? "");
-
-        const metadataPinned = getFilter(
-          parseRes.query.clauses,
-          "metadata",
-          "pinned"
-        );
-
+        const pred = query ? makeThreadFilter(query) : () => true;
         return res(
           ctx.json({
-            threads: [pinnedThread, unpinnedThread].filter(
-              (thread) => thread.metadata.pinned === metadataPinned.value
-            ),
+            threads: [pinnedThread, unpinnedThread].filter(pred),
             inboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),

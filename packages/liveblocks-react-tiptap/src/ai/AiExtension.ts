@@ -1,6 +1,10 @@
+import { autoRetry, HttpError } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import type { CommandProps, Editor, Range } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
+import { Plugin } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
   ySyncPluginKey,
   yXmlFragmentToProseMirrorFragment,
@@ -10,19 +14,49 @@ import {
   createDocFromSnapshot,
   emptySnapshot,
   equalSnapshots,
-  snapshot,
+  snapshot as takeSnapshot,
 } from "yjs";
 
-import type {
-  AiExtensionOptions,
-  AiExtensionStorage,
-  LiveblocksExtensionStorage,
-  YSyncBinding,
+import {
+  AI_TOOLBAR_SELECTION_PLUGIN,
+  type AiCommands,
+  type AiExtensionOptions,
+  type AiExtensionStorage,
+  type AiToolbarOutput,
+  type AiToolbarState,
+  type LiveblocksExtensionStorage,
+  type YSyncPluginState,
 } from "../types";
 
 const DEFAULT_AI_NAME = "AI";
+export const DEFAULT_STATE: AiToolbarState = { phase: "closed" };
 
-const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
+const RESOLVE_AI_PROMPT_RETRY_ATTEMPTS = 3;
+const RESOLVE_AI_PROMPT_RETRY_DELAYS = [1000, 2000, 4000];
+
+function getYjsBinding(editor: Editor) {
+  return (ySyncPluginKey.getState(editor.view.state) as YSyncPluginState)
+    .binding;
+}
+
+function getLiveblocksYjsProvider(editor: Editor) {
+  return (
+    editor.extensionStorage.liveblocksExtension as
+      | LiveblocksExtensionStorage
+      | undefined
+  )?.provider as LiveblocksYjsProvider | undefined;
+}
+
+export function isAiToolbarDiffOutput(
+  output: AiToolbarOutput
+): output is Extract<AiToolbarOutput, { type: "modification" | "insert" }> {
+  return output.type === "modification" || output.type === "insert";
+}
+
+export const AiExtension = Extension.create<
+  AiExtensionOptions,
+  AiExtensionStorage
+>({
   name: "liveblocksAi",
   addOptions() {
     return {
@@ -36,92 +70,69 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
   },
   addStorage() {
     return {
-      snapshot: undefined,
-      prompt: undefined,
-      previousPrompt: undefined,
-      state: "closed",
+      state: DEFAULT_STATE,
       name: this.options.name,
     };
   },
-  onCreate() {
-    // Turn off gc for snapshots to work
-    // TODO: remove this later, we only need to compare two full copies
-    //if (this.options.doc) {
-    //this.options.doc.gc = false;
-    //}
+  // When reviewing a diff, we render it in the editor after the change is applied
+  onUpdate() {
+    // The diff is applied right before moving to the "reviewing" phase
+    if (this.storage.state.phase !== "thinking") {
+      return;
+    }
+
+    if (!this.options.doc || !this.storage.snapshot) {
+      return;
+    }
+
+    const previousSnapshot: Snapshot = this.storage.snapshot ?? emptySnapshot;
+    const currentSnapshot = takeSnapshot(this.options.doc);
+
+    if (equalSnapshots(previousSnapshot, currentSnapshot)) {
+      return;
+    }
+
+    getYjsBinding(this.editor)?.renderSnapshot(
+      currentSnapshot,
+      previousSnapshot
+    );
   },
   addCommands() {
     return {
-      acceptAi:
-        () =>
-        ({ editor, tr }) => {
-          this.storage.state = "closed";
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const binding = ySyncPluginKey.getState(
-            this.editor.view.state
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          ).binding as YSyncBinding;
-          if (binding !== null) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            binding.mapping.clear();
+      askAi: (prompt) => () => {
+        if (typeof prompt === "string") {
+          (
+            this.editor.commands as unknown as AiCommands
+          ).$startAiToolbarThinking(prompt);
+        } else {
+          (
+            this.editor.commands as unknown as AiCommands
+          ).$openAiToolbarAsking();
+        }
 
-            const fragmentContent = yXmlFragmentToProseMirrorFragment(
-              binding.type,
-              editor.state.schema
-            );
-            tr.setMeta("addToHistory", false);
-            tr.replace(
-              0,
-              editor.state.doc.content.size,
-              new Slice(Fragment.from(fragmentContent), 0, 0)
-            );
-            tr.setMeta(ySyncPluginKey, {
-              snapshot: null,
-              prevSnapshot: null,
-            });
-          }
+        return true;
+      },
 
-          const provider = (
-            editor.extensionStorage
-              .liveblocksExtension as LiveblocksExtensionStorage
-          ).provider as LiveblocksYjsProvider;
-          provider.unpause();
-          this.storage.snapshot = undefined;
-          this.editor.setEditable(true);
-          return true;
-        },
-      closeAi:
+      $acceptAiToolbarOutput:
         () =>
-        ({ editor, tr }) => {
-          this.storage.state = "closed";
-          this.storage.prompt = undefined;
-          this.storage.previousPrompt = undefined;
-          if (!this.storage.snapshot) {
+        ({ tr }: CommandProps) => {
+          const currentState = this.storage.state;
+          if (currentState.phase !== "reviewing") {
             return false;
           }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const binding = ySyncPluginKey.getState(
-            this.editor.view.state
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-          ).binding as YSyncBinding;
-          if (binding === null) {
+          const binding = getYjsBinding(this.editor);
+          if (!binding) {
             return false;
           }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          binding.mapping.clear();
-          const docFromSnapshot = createDocFromSnapshot(
-            binding.doc,
-            this.storage.snapshot
-          );
-          const type = docFromSnapshot.getXmlFragment("default"); // TODO, field
+
           const fragmentContent = yXmlFragmentToProseMirrorFragment(
-            type,
-            editor.state.schema
+            binding.type,
+            this.editor.state.schema
           );
           tr.setMeta("addToHistory", false);
           tr.replace(
             0,
-            editor.state.doc.content.size,
+            this.editor.state.doc.content.size,
             new Slice(Fragment.from(fragmentContent), 0, 0)
           );
           tr.setMeta(ySyncPluginKey, {
@@ -129,152 +140,361 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
             prevSnapshot: null,
           });
 
-          const provider = (
-            editor.extensionStorage
-              .liveblocksExtension as LiveblocksExtensionStorage
-          ).provider as LiveblocksYjsProvider;
-          provider.unpause();
-          docFromSnapshot.gc = true;
-
+          // TODO: move this cleanup to somewhere that closeAIToolbar can share
+          getLiveblocksYjsProvider(this.editor)?.unpause();
           this.editor.setEditable(true);
-
           this.storage.snapshot = undefined;
-          this.editor.setEditable(true);
+          this.storage.state = { phase: "closed" };
           return true;
         },
 
-      applyPrompt:
-        (result: string, isContinue: boolean = false) =>
-        ({ commands, state }) => {
-          if (!this.options.doc) {
-            return false;
+      $closeAiToolbar:
+        () =>
+        ({ tr }: CommandProps) => {
+          const currentState = this.storage.state;
+
+          // 1. If in "thinking" phase, cancel the current AI request
+          if (currentState.phase === "thinking") {
+            currentState.abortController.abort();
           }
-          const { from, to } = state.selection;
-          this.options.doc.gc = false;
-          this.storage.snapshot = snapshot(this.options.doc);
-          setTimeout(() => {
-            if (this.storage.snapshot) {
-              this.storage.state = "reviewing"; // waiting for input ?
-              this.storage.previousPrompt = this.storage.prompt;
-              this.storage.prompt = "";
-              this.editor.commands.compareSnapshot(this.storage.snapshot);
-            }
-          }, 1);
-          return commands.insertContentAt(
-            isContinue ? to : { from, to },
-            isContinue ? " " + result : result
-          );
-          //return true;
-        },
-      askAi:
-        (prompt: string | undefined, isContinue: boolean = false) =>
-        ({ editor }) => {
+
+          // 2. If in "thinking" or "reviewing" phase, revert the editor if possible and unblock it
           if (
-            !this.options.doc ||
-            (this.editor.state.selection.empty && !isContinue)
+            currentState.phase === "thinking" ||
+            currentState.phase === "reviewing"
           ) {
-            return false;
-          }
-          if (!prompt) {
-            this.storage.state = "asking";
-            return true;
-          }
-          this.storage.state = "thinking";
-          this.storage.prompt = prompt;
-          this.editor.setEditable(false);
-          const { from, to } = this.editor.state.selection;
-          const text = this.editor.state.doc.textBetween(
-            isContinue ? 0 : from,
-            to,
-            " "
-          );
+            if (this.storage.snapshot) {
+              const binding = getYjsBinding(this.editor);
 
-          const provider = (
-            editor.extensionStorage
-              .liveblocksExtension as LiveblocksExtensionStorage
-          ).provider as LiveblocksYjsProvider;
-          const executePrompt = async () => {
-            await provider.pause();
+              if (binding) {
+                binding.mapping.clear();
 
-            const responseText = await this.options.resolveAiPrompt(
-              prompt,
-              text
-            );
-            // TODO: handle error
-            if (responseText) {
-              //this.editor.commands.insertContent(responseText);
-              setTimeout(() => {
-                this.editor.commands.applyPrompt(responseText, isContinue);
-              }, 1);
-            } else {
-              console.log("no response from ai");
-              this.storage.state = "closed";
-              this.editor.setEditable(true);
+                const docFromSnapshot = createDocFromSnapshot(
+                  binding.doc,
+                  this.storage.snapshot
+                );
+                const type = docFromSnapshot.getXmlFragment("default"); // TODO: field
+                const fragmentContent = yXmlFragmentToProseMirrorFragment(
+                  type,
+                  this.editor.state.schema
+                );
+
+                tr.setMeta("addToHistory", false);
+                tr.replace(
+                  0,
+                  this.editor.state.doc.content.size,
+                  new Slice(Fragment.from(fragmentContent), 0, 0)
+                );
+                tr.setMeta(ySyncPluginKey, {
+                  snapshot: null,
+                  prevSnapshot: null,
+                });
+
+                getLiveblocksYjsProvider(this.editor)?.unpause();
+
+                if (this.options.doc) {
+                  this.options.doc.gc = true;
+                }
+
+                this.storage.snapshot = undefined;
+              }
             }
-          };
 
-          void executePrompt();
+            this.editor.setEditable(true);
+          }
+
+          // 4. Set to "closed" phase
+          this.storage.state = { phase: "closed" };
 
           return true;
         },
-      retryAskAi: () => () => {
-        if (this.storage.state !== "reviewing") {
-          return false;
-        }
-        this.storage.prompt = this.storage.previousPrompt ?? "";
-        this.storage.previousPrompt = undefined;
-        this.editor.commands.askAi(this.storage.prompt);
-        return true;
-      },
-      setAiPrompt: (prompt: string | ((prompt: string) => string)) => () => {
-        this.storage.prompt =
-          typeof prompt === "function"
-            ? prompt(this.storage.prompt ?? "")
-            : prompt;
-        return true;
-      },
-      cancelAskAi: () => () => {
-        if (this.storage.state !== "thinking") {
+
+      $openAiToolbarAsking: () => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "closed" phase, do nothing
+        if (currentState.phase !== "closed") {
           return false;
         }
 
-        // TODO: actually cancel the execution
-        this.storage.state = "asking";
+        // 2. Blur the editor if needed
+        if (this.editor.isFocused) {
+          this.editor.commands.blur();
+        }
+
+        // 3. Set to "asking" phase
+        this.storage.state = {
+          phase: "asking",
+          // Initialize the custom prompt as empty
+          customPrompt: "",
+        };
 
         return true;
       },
-      compareSnapshot: (previous?: Snapshot) => () => {
-        if (!this.options.doc) {
-          return false;
-        }
-        const prevSnapshot: Snapshot = previous ?? emptySnapshot;
-        const currentSnapshot = snapshot(this.options.doc);
 
-        if (equalSnapshots(prevSnapshot, currentSnapshot)) {
+      $startAiToolbarThinking: (prompt: string) => () => {
+        const currentState = this.storage.state;
+
+        // 1. If in "thinking" phase already, do nothing
+        if (currentState.phase === "thinking") {
           return false;
         }
 
-        /*this.editor.view.dispatch(
-          this.editor.view.state.tr.setMeta(ySyncPluginKey, {
-            permanentUserData: this.options.pud,
-            snapshot: currentSnapshot,
-            prevSnapshot,
+        // 2. Blur the editor if needed
+        if (this.editor.isFocused) {
+          this.editor.commands.blur();
+        }
+
+        const abortController = new AbortController();
+        const provider = getLiveblocksYjsProvider(this.editor);
+
+        // 3. Set to "thinking" phase
+        this.storage.state = {
+          phase: "thinking",
+          customPrompt: currentState.customPrompt ?? "",
+          prompt,
+          abortController,
+        };
+
+        // 4. Block the editor
+        this.editor.setEditable(false);
+
+        // 5. Start the AI request
+        autoRetry(
+          async () => {
+            await provider?.pause();
+            const { from, to } = this.editor.state.selection.empty
+              ? {
+                  // TODO: this is a hack to get the context around the selection, we need to improve this
+                  from: Math.max(this.editor.state.selection.to - 30, 0),
+                  to: this.editor.state.selection.to,
+                }
+              : this.editor.state.selection;
+
+            return this.options.resolveAiPrompt({
+              prompt,
+              selectionText: this.editor.state.doc.textBetween(from, to, " "),
+              /*
+               TODO: This needs a maximum to avoid overloading context, for now I've arbitrailiry chosen 3000
+               characters but this will need to be improved, probably using word boundary of some sort (languages can make that tricky)
+               as well as choosing text around the selection, so before/after.
+            */
+              context: this.editor.getText().slice(0, 3_000),
+              signal: abortController.signal,
+            });
+          },
+          RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
+          RESOLVE_AI_PROMPT_RETRY_DELAYS,
+
+          (error) => {
+            // Don't retry on 4xx errors or if the request was aborted
+            return (
+              abortController.signal.aborted ||
+              (error instanceof HttpError &&
+                error.status >= 400 &&
+                error.status < 500)
+            );
+          }
+        )
+          .then((output) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
+
+            // 5.a. If the AI request succeeds, set to "reviewing" phase with the output
+            (
+              this.editor.commands as unknown as AiCommands
+            )._handleAiToolbarThinkingSuccess({
+              type: output.type,
+              text: output.content,
+            });
           })
-        );*/
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const binding = ySyncPluginKey.getState(
-          this.editor.view.state
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        ).binding;
-        if (binding !== null) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-          binding.renderSnapshot(currentSnapshot, prevSnapshot);
-          return true;
-        }
-        return false;
+          .catch((error) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
+
+            // 5.b. If the AI request fails, set to "asking" phase with error
+            (
+              this.editor.commands as unknown as AiCommands
+            )._handleAiToolbarThinkingError(error);
+          });
+
+        return true;
       },
+
+      $retryAiToolbarThinking: () => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "reviewing" phase, do nothing
+        if (currentState.phase !== "reviewing") {
+          return false;
+        }
+
+        // TODO: Revert diff if needed
+
+        // 2. Start the AI request with the last prompt
+        return (
+          this.editor.commands as unknown as AiCommands
+        ).$startAiToolbarThinking(currentState.prompt);
+      },
+
+      $cancelAiToolbarThinking: () => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "thinking" phase, do nothing
+        if (currentState.phase !== "thinking") {
+          return false;
+        }
+
+        // 2. Cancel the current AI request
+        currentState.abortController.abort();
+
+        // 3. Unblock the editor
+        this.editor.setEditable(true);
+
+        // 4. Set to "asking" phase
+        this.storage.state = {
+          phase: "asking",
+          // If the custom prompt is different than the prompt, reset it
+          customPrompt:
+            currentState.prompt === currentState.customPrompt
+              ? currentState.customPrompt
+              : "",
+        };
+
+        return true;
+      },
+
+      _handleAiToolbarThinkingSuccess: (output: AiToolbarOutput) => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "thinking" phase, do nothing
+        if (currentState.phase !== "thinking") {
+          return false;
+        }
+
+        let range: Range = this.editor.state.selection;
+
+        // 2. If the output is a diff, apply it to the editor
+        if (isAiToolbarDiffOutput(output) && this.options.doc) {
+          this.options.doc.gc = false;
+          this.storage.snapshot = takeSnapshot(this.options.doc);
+
+          const { selection } = this.editor.state;
+
+          // 2.a. Insert the output (the diff will be rendered after the change is applied in onUpdate())
+          this.editor.commands.insertContentAt(
+            selection.empty || output.type === "insert"
+              ? // If the selection is empty, insert at the end of it
+                selection.to
+              : // Otherwise, overwrite the selection
+                selection,
+            output.text
+          );
+
+          // Update the range to take into account the diff
+          range = {
+            from: selection.from,
+            // TODO: This isn't correct and the toolbar is not positioned correctly
+            to:
+              output.type === "insert"
+                ? selection.to + output.text.length
+                : selection.to + output.text.length,
+          };
+        }
+
+        // 3. Set to "reviewing" phase with the output
+        this.storage.state = {
+          phase: "reviewing",
+          range,
+          customPrompt: "",
+          prompt: currentState.prompt,
+          output,
+        };
+
+        return true;
+      },
+
+      _handleAiToolbarThinkingError: (error: unknown) => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "thinking" phase, do nothing
+        if (currentState.phase !== "thinking") {
+          return false;
+        }
+
+        // 2. Unblock the editor
+        this.editor.setEditable(true);
+
+        // 3. Log the error
+        console.error(error);
+
+        // 4. Set to "asking" phase with error
+        this.storage.state = {
+          phase: "asking",
+          range: currentState.range,
+          // If the custom prompt is different than the prompt, reset it
+          customPrompt:
+            currentState.prompt === currentState.customPrompt
+              ? currentState.customPrompt
+              : "",
+          // Pass the error so it can be displayed
+          error:
+            error instanceof Error
+              ? error
+              : new Error(String(error), { cause: error }),
+        };
+
+        return true;
+      },
+
+      _updateAiToolbarCustomPrompt:
+        (customPrompt: string | ((currentCustomPrompt: string) => string)) =>
+        () => {
+          const currentState = this.storage.state;
+
+          // 1. If NOT in a phase with a custom prompt, do nothing
+          if (typeof currentState.customPrompt !== "string") {
+            return false;
+          }
+
+          // 2. Update the custom prompt
+          this.storage.state.customPrompt =
+            typeof customPrompt === "function"
+              ? customPrompt(currentState.customPrompt)
+              : customPrompt;
+
+          return true;
+        },
     };
   },
-});
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: AI_TOOLBAR_SELECTION_PLUGIN,
+        props: {
+          decorations: ({ doc, selection }) => {
+            // Don't show the AI toolbar selection if the toolbar is closed or when reviewing diff outputs
+            if (
+              this.storage.state.phase === "closed" ||
+              (this.storage.state.phase === "reviewing" &&
+                isAiToolbarDiffOutput(this.storage.state.output))
+            ) {
+              return DecorationSet.create(doc, []);
+            }
 
-export { AiExtension };
+            const { from, to } = this.storage.state.range ?? selection;
+            const decorations: Decoration[] = [
+              Decoration.inline(from, to, {
+                class: "lb-root lb-selection lb-tiptap-active-selection",
+              }),
+            ];
+
+            return DecorationSet.create(doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});

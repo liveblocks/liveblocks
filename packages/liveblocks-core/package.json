@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "2.15.2",
+  "version": "2.16.1",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "type": "commonjs",
   "main": "./dist/index.js",
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@liveblocks/query-parser": "^0.0.4",
+    "@liveblocks/query-parser": "^0.1.1",
     "@types/ws": "^8.5.10",
     "dotenv": "^16.4.5",
     "eslint-plugin-rulesdir": "^0.2.2",

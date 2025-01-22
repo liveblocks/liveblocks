@@ -6,7 +6,6 @@ import {
   forwardRef,
   useContext,
   useId,
-  useMemo,
 } from "react";
 
 // This file is separate to avoid circular dependencies
@@ -24,10 +23,7 @@ export const FloatingToolbarExternal = forwardRef<
   ComponentProps<"div">
 >(({ children, style, ...props }, forwardedRef) => {
   const id = useId();
-  const externalId = useMemo(
-    () => `liveblocks-floating-toolbar-external-${id}`,
-    [id]
-  );
+  const externalId = `liveblocks-floating-toolbar-external-${id}`;
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const registerExternal = floatingToolbarContext?.registerExternal;
 

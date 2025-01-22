@@ -5,13 +5,8 @@ import type {
   User,
 } from "@liveblocks/core";
 import { kInternal, TextEditorType } from "@liveblocks/core";
+import { useClient, useRoom } from "@liveblocks/react";
 import {
-  useClient,
-  useCommentsErrorListener,
-  useRoom,
-} from "@liveblocks/react";
-import {
-  CreateThreadError,
   getUmbrellaStoreForClient,
   useCreateTextMention,
   useDeleteTextMention,
@@ -31,8 +26,10 @@ import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import type {
+  AiResponse,
   LiveblocksExtensionOptions,
   LiveblocksExtensionStorage,
+  ResolveAiPromptArgs,
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
@@ -145,7 +142,7 @@ const YChangeMark = Mark.create({
           }
           return {
             "data-ychange-type": attributes.type,
-            class: `lb-changed-${attributes.type}`,
+            class: `lb-root lb-tiptap-change-${attributes.type}`,
           };
         },
       },
@@ -178,12 +175,16 @@ export const useLiveblocksExtension = (
 
   // TODO: we don't need these things if comments isn't turned on...
   // TODO: we don't have a reference to the editor here, need to figure this out
-  useCommentsErrorListener((error) => {
-    // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-    if (error instanceof CreateThreadError) {
-      // handleThreadDelete(error.context.threadId);
-    }
-  });
+  // useErrorListener((error) => {
+  //   // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
+  //   if (
+  //     error.context.type === "CREATE_THREAD_ERROR" &&
+  //     error.context.roomId === room.id
+  //   ) {
+  //     handleThreadDelete(error.context.threadId);
+  //   }
+  // });
+
   const isEditorReady = useIsEditorReady();
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
@@ -359,7 +360,7 @@ export const useLiveblocksExtension = (
           field: options.field,
         }),
         CollaborationCursor.configure({
-          provider: this.storage.provider, //todo change the ! to an assert
+          provider: this.storage.provider,
         }),
       ];
 
@@ -375,17 +376,34 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
+        const resolveAiPrompt = async ({
+          prompt,
+          selectionText,
+          context,
+          signal,
+        }: ResolveAiPromptArgs): Promise<AiResponse> => {
+          const result = await room[kInternal].executeContextualPrompt({
+            prompt,
+            selectionText,
+            context,
+            signal,
+          });
+
+          const parsedResponse = JSON.parse(result) as JsonObject;
+          const type =
+            typeof parsedResponse.type === "string" ? parsedResponse.type : "";
+          if (
+            typeof parsedResponse.content === "string" &&
+            ["insert", "modification", "other"].includes(type)
+          ) {
+            return parsedResponse as AiResponse;
+          }
+
+          throw new Error("Failed to resolve AI prompt");
+        };
         extensions.push(
           AiExtension.configure({
-            resolveAiPrompt: async (prompt, selectionText) => {
-              const result = await room[kInternal].executeContextualPrompt({
-                prompt,
-                selectionText,
-                context: "", // TODO: add doc context
-              });
-
-              return result;
-            },
+            resolveAiPrompt,
             ...(typeof options.ai === "boolean" ? {} : options.ai),
             doc: this.storage.doc,
             pud: this.storage.permanentUserData,

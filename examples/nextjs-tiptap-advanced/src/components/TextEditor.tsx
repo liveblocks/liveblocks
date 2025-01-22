@@ -19,8 +19,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { CustomTaskItem } from "./CustomTaskItem";
-import { SelectionMenu } from "./SelectionMenu";
-import { Toolbar } from "./Toolbar";
+import { StaticToolbar, SelectionToolbar } from "./Toolbars";
 import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 
@@ -136,11 +135,11 @@ export function Editor() {
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
-        {editor && <Toolbar editor={editor} />}
+        <StaticToolbar editor={editor} />
         <Avatars />
       </div>
       <div className={styles.editorPanel}>
-        {editor && <SelectionMenu editor={editor} />}
+        <SelectionToolbar editor={editor} />
         <EditorContent editor={editor} className={styles.editorContainer} />
         <FloatingComposer editor={editor} style={{ width: 350 }} />
         <FloatingThreads threads={threads} editor={editor} />

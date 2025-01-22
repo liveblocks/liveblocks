@@ -160,15 +160,15 @@ describe("client", () => {
   });
 
   test("should return a list of room when getRooms with query params receives a successful response", async () => {
-    const query =
-      'roomId^"liveblocks:" AND metadata["color"]:"blue" AND metadata["size"]:"10"';
+    const expectedQuery =
+      "roomId^'liveblocks:' metadata['color']:'blue' metadata['size']:'10'";
 
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
         const url = new URL(res.request.url);
 
         expect(url.searchParams.size).toEqual(1);
-        expect(url.searchParams.get("query")).toEqual(query);
+        expect(url.searchParams.get("query")).toEqual(expectedQuery);
         return HttpResponse.json(
           {
             nextPage: "/v2/rooms?startingAfter=1",
@@ -183,7 +183,7 @@ describe("client", () => {
 
     await expect(
       client.getRooms({
-        query,
+        query: expectedQuery,
       })
     ).resolves.toEqual({
       nextPage: "/v2/rooms?startingAfter=1",
@@ -606,20 +606,18 @@ describe("client", () => {
   });
 
   test("should return a filtered list of threads when a query parameter is used for getThreads with a metadata object", async () => {
-    const query =
-      'metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["organization"]^"liveblocks:"';
-    server.use(
-      http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
-        const url = new URL(res.request.url);
+    const expectedQuery =
+      "metadata['status']:'open' metadata['priority']:3 metadata['organization']^'liveblocks:'";
 
-        expect(url.searchParams.get("query")).toEqual(query);
-        return HttpResponse.json(
-          {
-            data: [thread],
-          },
-          { status: 200 }
-        );
-      })
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`,
+        ({ request }) => {
+          const url = new URL(request.url);
+          expect(url.searchParams.get("query")).toEqual(expectedQuery);
+          return HttpResponse.json({ data: [thread] }, { status: 200 });
+        }
+      )
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
