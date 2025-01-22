@@ -12,7 +12,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.2",
     "@liveblocks/client": "^2.16.0",
     "@liveblocks/emails": "^2.16.0",
     "@liveblocks/node": "^2.16.0",
@@ -24,13 +23,9 @@
     "@radix-ui/react-popover": "^1.0.7",
     "@react-email/components": "0.0.26",
     "@react-email/render": "1.0.2",
-    "@tiptap/extension-collaboration": "^2.6.6",
-    "@tiptap/extension-collaboration-cursor": "^2.6.6",
-    "@tiptap/extension-mention": "^2.7.1",
     "@tiptap/pm": "^2.6.6",
     "@tiptap/react": "^2.6.6",
     "@tiptap/starter-kit": "^2.6.6",
-    "@tiptap/suggestion": "^2.7.1",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
@@ -41,9 +36,7 @@
     "react-email": "3.0.6",
     "resend": "^4.0.1-alpha.0",
     "tailwind-merge": "^2.5.4",
-    "tippy.js": "^6.3.7",
-    "typescript": "^5.2.2",
-    "yjs": "^13.6.19"
+    "typescript": "^5.2.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
