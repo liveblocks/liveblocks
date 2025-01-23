@@ -181,10 +181,11 @@ export const AiExtension = Extension.create<
             view.dispatch(tr);
           }
 
+          // 3. Unblock the editor
           getLiveblocksYjsProvider(this.editor)?.unpause();
           this.editor.setEditable(true);
 
-          // 3. Set to "closed" phase
+          // 4. Set to "closed" phase
           this.storage.state = { phase: "closed" };
 
           return true;
@@ -232,10 +233,12 @@ export const AiExtension = Extension.create<
             );
             if (revertTr) {
               view.dispatch(revertTr);
-              getLiveblocksYjsProvider(this.editor)?.unpause();
-              this.editor.setEditable(true);
             }
           }
+
+          // 3. Unblock the editor
+          getLiveblocksYjsProvider(this.editor)?.unpause();
+          this.editor.setEditable(true);
 
           // 4. Set to "closed" phase
           this.storage.state = { phase: "closed" };
