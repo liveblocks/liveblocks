@@ -284,6 +284,13 @@ export type AiCommands<ReturnType = boolean> = {
   /**
    * @internal
    *
+   * Revert a diff
+   */
+  _revertDiff: () => ReturnType;
+
+  /**
+   * @internal
+   *
    * Handle the success of the current "thinking" phase.
    *
    * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))

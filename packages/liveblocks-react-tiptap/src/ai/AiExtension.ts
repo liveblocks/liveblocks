@@ -11,7 +11,7 @@ import {
   ySyncPluginKey,
   yXmlFragmentToProseMirrorFragment,
 } from "y-prosemirror";
-import type { Snapshot } from "yjs";
+import type { Doc, Snapshot } from "yjs";
 import {
   createDocFromSnapshot,
   emptySnapshot,
@@ -53,6 +53,51 @@ export function isAiToolbarDiffOutput(
   output: AiToolbarOutput
 ): output is Extract<AiToolbarOutput, { type: "modification" | "insert" }> {
   return output.type === "modification" || output.type === "insert";
+}
+
+function getRevertTransaction(
+  tr: Transaction,
+  editor: Editor,
+  storage: AiExtensionStorage,
+  doc?: Doc
+): Transaction | null {
+  if (storage.snapshot) {
+    const binding = getYjsBinding(editor);
+
+    if (binding) {
+      binding.mapping.clear();
+
+      const docFromSnapshot = createDocFromSnapshot(
+        binding.doc,
+        storage.snapshot
+      );
+      const type = docFromSnapshot.getXmlFragment("default"); // TODO: field
+      const fragmentContent = yXmlFragmentToProseMirrorFragment(
+        type,
+        editor.state.schema
+      );
+
+      tr.setMeta("addToHistory", false);
+      tr.replace(
+        0,
+        editor.state.doc.content.size,
+        new Slice(Fragment.from(fragmentContent), 0, 0)
+      );
+      tr.setMeta(ySyncPluginKey, {
+        snapshot: null,
+        prevSnapshot: null,
+      });
+
+      if (doc) {
+        doc.gc = true;
+      }
+
+      storage.snapshot = undefined;
+
+      return tr;
+    }
+  }
+  return null;
 }
 
 export const AiExtension = Extension.create<
@@ -127,9 +172,26 @@ export const AiExtension = Extension.create<
           return true;
         },
 
+      _revertDiff:
+        () =>
+        ({ tr, view }: CommandProps) => {
+          const revertTr = getRevertTransaction(
+            tr,
+            this.editor,
+            this.storage,
+            this.options.doc
+          );
+          if (revertTr) {
+            view.dispatch(revertTr);
+            getLiveblocksYjsProvider(this.editor)?.unpause();
+            return true;
+          }
+          return false;
+        },
+
       $closeAiToolbar:
         () =>
-        ({ tr }: CommandProps) => {
+        ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
 
           // 1. If in "thinking" phase, cancel the current AI request
@@ -142,44 +204,19 @@ export const AiExtension = Extension.create<
             currentState.phase === "thinking" ||
             currentState.phase === "reviewing"
           ) {
-            if (this.storage.snapshot) {
-              const binding = getYjsBinding(this.editor);
-
-              if (binding) {
-                binding.mapping.clear();
-
-                const docFromSnapshot = createDocFromSnapshot(
-                  binding.doc,
-                  this.storage.snapshot
-                );
-                const type = docFromSnapshot.getXmlFragment("default"); // TODO: field
-                const fragmentContent = yXmlFragmentToProseMirrorFragment(
-                  type,
-                  this.editor.state.schema
-                );
-
-                tr.setMeta("addToHistory", false);
-                tr.replace(
-                  0,
-                  this.editor.state.doc.content.size,
-                  new Slice(Fragment.from(fragmentContent), 0, 0)
-                );
-                tr.setMeta(ySyncPluginKey, {
-                  snapshot: null,
-                  prevSnapshot: null,
-                });
-
-                getLiveblocksYjsProvider(this.editor)?.unpause();
-
-                if (this.options.doc) {
-                  this.options.doc.gc = true;
-                }
-
-                this.storage.snapshot = undefined;
-              }
+            // get the revert transaction and dispatch it
+            const revertTr = getRevertTransaction(
+              tr,
+              this.editor,
+              this.storage,
+              this.options.doc
+            );
+            if (revertTr) {
+              view.dispatch(revertTr);
+              getLiveblocksYjsProvider(this.editor)?.unpause();
+              this.editor.setEditable(true);
+              return true;
             }
-
-            this.editor.setEditable(true);
           }
 
           // 4. Set to "closed" phase
@@ -302,21 +339,32 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      $retryAiToolbarThinking: () => () => {
-        const currentState = this.storage.state;
+      $retryAiToolbarThinking:
+        () =>
+        ({ tr, view }: CommandProps) => {
+          const currentState = this.storage.state;
 
-        // 1. If NOT in "reviewing" phase, do nothing
-        if (currentState.phase !== "reviewing") {
-          return false;
-        }
+          // 1. If NOT in "reviewing" phase, do nothing
+          if (currentState.phase !== "reviewing") {
+            return false;
+          }
 
-        // TODO: Revert diff if needed
+          const revertTr = getRevertTransaction(
+            tr,
+            this.editor,
+            this.storage,
+            this.options.doc
+          );
+          if (revertTr) {
+            // important, in this scenario we do not unpause the provider
+            view.dispatch(revertTr);
+          }
 
-        // 2. Start the AI request with the last prompt
-        return (
-          this.editor.commands as unknown as AiCommands
-        ).$startAiToolbarThinking(currentState.prompt);
-      },
+          // 2. Start the AI request with the last prompt
+          return (
+            this.editor.commands as unknown as AiCommands
+          ).$startAiToolbarThinking(currentState.prompt);
+        },
 
       $cancelAiToolbarThinking: () => () => {
         const currentState = this.storage.state;
