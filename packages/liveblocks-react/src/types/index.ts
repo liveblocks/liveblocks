@@ -19,7 +19,6 @@ import type {
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
-  ChannelsNotificationSettings,
   Client,
   CommentAttachment,
   CommentBody,
@@ -28,8 +27,8 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
-  PartialChannelsNotificationSettings,
   PartialUnless,
+  PartialUserNotificationSettings,
   Patchable,
   QueryMetadata,
   Relax,
@@ -39,6 +38,7 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
 
@@ -170,7 +170,7 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
-export type ChannelsNotificationSettingsAsyncResult = AsyncResult<ChannelsNotificationSettings, "settings"> // prettier-ignore
+export type UserNotificationSettingsAsyncResult = AsyncResult<UserNotificationSettings, "settings"> // prettier-ignore
 
 export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
