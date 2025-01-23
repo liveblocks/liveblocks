@@ -12,7 +12,7 @@ import type {
   DU,
   LiveblocksError,
   OpaqueClient,
-  PartialChannelsNotificationSettings,
+  PartialUserNotificationSettings,
   SyncStatus,
 } from "@liveblocks/core";
 import {
@@ -42,7 +42,6 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
-  ChannelsNotificationSettingsAsyncResult,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
@@ -53,6 +52,7 @@ import type {
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
+  UserNotificationSettingsAsyncResult,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
@@ -289,26 +289,26 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
   );
 
-  const channelNotificationSettingsPoller = makePoller(
+  const userNotificationSettingsPoller = makePoller(
     async (signal) => {
       try {
-        return await store.refreshChannelsNotificationSettings(signal);
+        return await store.refreshUserNotificationSettings(signal);
       } catch (err) {
         console.warn(
-          `Polling new channel notification settings failed: ${String(err)}`
+          `Polling new user notification settings failed: ${String(err)}`
         );
         throw err;
       }
     },
-    config.CHANNEL_NOTIFICATION_SETTINGS_INTERVAL,
-    { maxStaleTimeMs: config.CHANNEL_NOTIFICATION_SETTINGS_MAX_STALE_TIME }
+    config.USER_NOTIFICATION_SETTINGS_INTERVAL,
+    { maxStaleTimeMs: config.USER_NOTIFICATION_SETTINGS_MAX_STALE_TIME }
   );
 
   return {
     store,
     notificationsPoller,
     userThreadsPoller,
-    channelNotificationSettingsPoller,
+    userNotificationSettingsPoller,
   };
 }
 
@@ -332,8 +332,8 @@ function makeLiveblocksContextBundle<
   const useDeleteAllInboxNotifications = () =>
     useDeleteAllInboxNotifications_withClient(client);
 
-  const useUpdateChannelsNotificationSettings = () =>
-    useUpdateChannelsNotificationSettings_withClient(client);
+  const useUpdateNotificationSettings = () =>
+    useUpdateNotificationSettings_withClient(client);
 
   // NOTE: This version of the LiveblocksProvider does _not_ take any props.
   // This is because we already have a client bound to it.
@@ -362,9 +362,8 @@ function makeLiveblocksContextBundle<
     useDeleteInboxNotification,
     useDeleteAllInboxNotifications,
 
-    useChannelsNotificationSettings: () =>
-      useChannelsNotificationSettings_withClient(client),
-    useUpdateChannelsNotificationSettings,
+    useNotificationSettings: () => useNotificationSettings_withClient(client),
+    useUpdateNotificationSettings,
 
     useInboxNotificationThread,
     useUserThreads_experimental,
@@ -387,9 +386,9 @@ function makeLiveblocksContextBundle<
 
       useInboxNotificationThread,
 
-      useChannelsNotificationSettings: () =>
-        useChannelsNotificationSettingsSuspense_withClient(client),
-      useUpdateChannelsNotificationSettings,
+      useNotificationSettings: () =>
+        useNotificationSettingsSuspense_withClient(client),
+      useUpdateNotificationSettings,
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
@@ -628,21 +627,21 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 }
 
-function useUpdateChannelsNotificationSettings_withClient(
+function useUpdateNotificationSettings_withClient(
   client: OpaqueClient
-): (settings: PartialChannelsNotificationSettings) => void {
+): (settings: PartialUserNotificationSettings) => void {
   return useCallback(
-    (settings: PartialChannelsNotificationSettings): void => {
+    (settings: PartialUserNotificationSettings): void => {
       const { store } = getLiveblocksExtrasForClient(client);
       const optimisticUpdateId = store.optimisticUpdates.add({
-        type: "update-channels-notification-settings",
+        type: "update-user-notification-settings",
         settings,
       });
 
-      client.updateChannelsNotificationSettings(settings).then(
+      client.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateChannelsNotificationSettings_confirmOptimisticUpdate(
+          store.updateUserNotificationSettings_confirmOptimisticUpdate(
             settings,
             optimisticUpdateId
           );
@@ -657,20 +656,20 @@ function useUpdateChannelsNotificationSettings_withClient(
   );
 }
 
-function useChannelsNotificationSettings_withClient(
+function useNotificationSettings_withClient(
   client: OpaqueClient
 ): [
-  ChannelsNotificationSettingsAsyncResult,
-  (settings: PartialChannelsNotificationSettings) => void,
+  UserNotificationSettingsAsyncResult,
+  (settings: PartialUserNotificationSettings) => void,
 ] {
-  const updateChannelsNotificationSettings =
-    useUpdateChannelsNotificationSettings_withClient(client);
+  const updateNotificationSettings =
+    useUpdateNotificationSettings_withClient(client);
 
-  const { store, channelNotificationSettingsPoller: poller } =
+  const { store, userNotificationSettingsPoller: poller } =
     getLiveblocksExtrasForClient(client);
 
   useEffect(() => {
-    void store.outputs.channelNotificationSettings.waitUntilLoaded();
+    void store.outputs.userNotificationSettings.waitUntilLoaded();
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -689,34 +688,35 @@ function useChannelsNotificationSettings_withClient(
     };
   }, [poller]);
 
-  const settings = useSignal(store.outputs.channelNotificationSettings.signal);
+  const settings = useSignal(store.outputs.userNotificationSettings.signal);
 
   return useMemo(() => {
-    return [settings, updateChannelsNotificationSettings];
-  }, [settings, updateChannelsNotificationSettings]);
+    return [settings, updateNotificationSettings];
+  }, [settings, updateNotificationSettings]);
 }
 
-function useChannelsNotificationSettingsSuspense_withClient(
+function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-  ChannelsNotificationSettingsAsyncResult,
-  (settings: PartialChannelsNotificationSettings) => void,
+  UserNotificationSettingsAsyncResult,
+  (settings: PartialUserNotificationSettings) => void,
 ] {
   const store = getLiveblocksExtrasForClient(client).store;
 
-  // Suspend until there are at least some channel notification settings
-  use(store.outputs.channelNotificationSettings.waitUntilLoaded());
+  // Suspend until there are at least some user notification settings
+  use(store.outputs.userNotificationSettings.waitUntilLoaded());
 
-  // We're in a Suspense world here, and as such, the useChannelsNotificationSettings()
+  // We're in a Suspense world here, and as such, the useNotificationSettings()
   // hook is expected to only return success results when we're here.
-  const [settings, updateChannelsNotificationSettings] =
-    useChannelsNotificationSettings_withClient(client);
+  const [settings, updateNotificationSettings] =
+    useNotificationSettings_withClient(client);
+
   assert(!settings.error, "Did not expect error");
   assert(!settings.isLoading, "Did not expect loading");
 
   return useMemo(() => {
-    return [settings, updateChannelsNotificationSettings];
-  }, [settings, updateChannelsNotificationSettings]);
+    return [settings, updateNotificationSettings];
+  }, [settings, updateNotificationSettings]);
 }
 
 function useUser_withClient<U extends BaseUserMeta>(
@@ -1205,34 +1205,34 @@ function useUnreadInboxNotificationsCountSuspense() {
 }
 
 /**
- * Returns the channels notification settings for the current user.
+ * Returns notification settings for the current user.
  *
  * @example
- * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+ * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
  */
-function useChannelsNotificationSettings() {
-  return useChannelsNotificationSettings_withClient(useClient());
+function useNotificationSettings() {
+  return useNotificationSettings_withClient(useClient());
 }
 
 /**
- * Returns the channels notification settings for the current user.
+ * Returns notification settings for the current user.
  *
  * @example
- * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+ * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
  */
-function useChannelsNotificationSettingsSuspense() {
-  return useChannelsNotificationSettingsSuspense_withClient(useClient());
+function useNotificationSettingsSuspense() {
+  return useNotificationSettingsSuspense_withClient(useClient());
 }
 
 /**
- * Returns a function that updates the user's channels notification
+ * Returns a function that updates the user's notification
  * settings for a project.
  *
  * @example
- * const updateChannelsNotificationSettings = useUpdateChannelsNotificationSettings()
+ * const updateNotificationSettings = useUpdateNotificationSettings()
  */
-function useUpdateChannelsNotificationSettings() {
-  return useUpdateChannelsNotificationSettings_withClient(useClient());
+function useUpdateNotificationSettings() {
+  return useUpdateNotificationSettings_withClient(useClient());
 }
 
 function useUser<U extends BaseUserMeta>(userId: string) {
@@ -1446,9 +1446,9 @@ export {
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
-  useChannelsNotificationSettings,
-  useChannelsNotificationSettingsSuspense,
-  useUpdateChannelsNotificationSettings,
+  useNotificationSettings,
+  useNotificationSettingsSuspense,
+  useUpdateNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };

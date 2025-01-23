@@ -13,10 +13,7 @@ export type {
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";
-export {
-  shallow,
-  isChannelNotificationSettingEnabled,
-} from "@liveblocks/client";
+export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
 export {
@@ -28,7 +25,7 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
-  useUpdateChannelsNotificationSettings,
+  useUpdateNotificationSettings,
   useSyncStatus,
   useErrorListener,
 } from "./liveblocks";
@@ -84,7 +81,7 @@ export {
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,
-  useChannelsNotificationSettingsSuspense as useChannelsNotificationSettings,
+  useNotificationSettingsSuspense as useChannelsNotificationSettings,
   useRoomInfoSuspense as useRoomInfo,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,

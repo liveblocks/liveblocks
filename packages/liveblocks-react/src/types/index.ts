@@ -1141,25 +1141,25 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 
   /**
-   * Returns the channels notification settings for the current user.
+   * Returns notification settings for the current user.
    *
    * @example
-   * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+   * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
    */
-  useChannelsNotificationSettings(): [
-    ChannelsNotificationSettingsAsyncResult,
-    (settings: PartialChannelsNotificationSettings) => void,
+  useNotificationSettings(): [
+    UserNotificationSettingsAsyncResult,
+    (settings: PartialUserNotificationSettings) => void,
   ];
 
   /**
-   * Returns a function that updates the user's channels notification
+   * Returns a function that updates the user's notification
    * settings for a project.
    *
    * @example
-   * const updateChannelsNotificationSettings = useUpdateChannelsNotificationSettings()
+   * const updateNotificationSettings = useUpdateNotificationSettings()
    */
-  useUpdateChannelsNotificationSettings(): (
-    settings: PartialChannelsNotificationSettings
+  useUpdateNotificationSettings(): (
+    settings: PartialUserNotificationSettings
   ) => void;
 
   /**
@@ -1227,14 +1227,14 @@ export type LiveblocksContextBundle<
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
 
             /**
-             * Returns the channels notification settings for the current user.
+             * Returns notification settings for the current user.
              *
              * @example
-             * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+             * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
              */
-            useChannelsNotificationSettings(): [
-              ChannelsNotificationSettingsAsyncResult,
-              (settings: PartialChannelsNotificationSettings) => void,
+            useNotificationSettings(): [
+              UserNotificationSettingsAsyncResult,
+              (settings: PartialUserNotificationSettings) => void,
             ];
 
             /**
