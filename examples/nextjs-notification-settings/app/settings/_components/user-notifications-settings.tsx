@@ -188,6 +188,13 @@ export function UserNotificationsSettings() {
       <hr />
 
       <div className="mb-6 mt-6">
+        <h2 className="text-2xl font-bold mb-2">Slack Notifications</h2>
+        <p className="text-gray-600 text-sm">
+          Choose how you want to receive Slack notifications.
+        </p>
+      </div>
+
+      <div className="mb-6">
         <div className="flex items-center">
           <Switch.Root
             className={cn(
@@ -213,6 +220,15 @@ export function UserNotificationsSettings() {
       <hr />
 
       <div className="mb-6 mt-6">
+        <h2 className="text-2xl font-bold mb-2">
+          Microsoft Teams Notifications
+        </h2>
+        <p className="text-gray-600 text-sm">
+          Choose how you want to receive Microsoft Teams notifications.
+        </p>
+      </div>
+
+      <div className="mb-6">
         <div className="flex items-center">
           <Switch.Root
             className={cn(
@@ -236,6 +252,13 @@ export function UserNotificationsSettings() {
       </div>
 
       <hr />
+
+      <div className="mb-6 mt-6">
+        <h2 className="text-2xl font-bold mb-2">Web Push Notifications</h2>
+        <p className="text-gray-600 text-sm">
+          Choose how you want to receive Web Push notifications.
+        </p>
+      </div>
 
       <div className="mb-6 mt-6">
         <div className="flex items-center">
