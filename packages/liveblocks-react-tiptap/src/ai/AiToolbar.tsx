@@ -9,6 +9,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
+  ArrowCornerDownRightIcon,
   Button,
   CheckIcon,
   CrossIcon,
@@ -211,8 +212,7 @@ function AiToolbarReviewingSuggestions() {
         <AiToolbarDropdownItem
           icon={<CheckIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands)
-              .$acceptAiToolbarDiffOutput
+            (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput
           }
         >
           Accept
@@ -237,16 +237,11 @@ function AiToolbarReviewingSuggestions() {
     return (
       <>
         <AiToolbarDropdownItem
-          icon={<CheckIcon />}
-          onSelect={() =>
-            (
-              editor.commands as unknown as AiCommands
-            ).$applyAiToolbarOtherOutput("replace")
+          icon={<ArrowCornerDownRightIcon />}
+          onSelect={
+            (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput
           }
         >
-          Replace selection
-        </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<CheckIcon />} disabled>
           Insert below
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem

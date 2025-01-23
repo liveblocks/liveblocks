@@ -136,66 +136,57 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      $applyAiToolbarOtherOutput:
+      $acceptAiToolbarOutput:
         () =>
         ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
 
-          if (
-            currentState.phase !== "reviewing" ||
-            isAiToolbarDiffOutput(currentState.output)
-          ) {
+          // 1. If NOT in "reviewing" phase, do nothing
+          if (currentState.phase !== "reviewing") {
             return false;
           }
 
-          tr.insertText(
-            currentState.output.text,
-            currentState.range.from,
-            currentState.range.to
-          );
-          view.dispatch(tr);
+          // 2. Accept the output
+          if (isAiToolbarDiffOutput(currentState.output)) {
+            // 2.a. If the output is a diff, apply it definitely
+            const binding = getYjsBinding(this.editor);
+            if (!binding) {
+              return false;
+            }
+
+            const fragmentContent = yXmlFragmentToProseMirrorFragment(
+              binding.type,
+              this.editor.state.schema
+            );
+            tr.setMeta("addToHistory", false);
+            tr.replace(
+              0,
+              this.editor.state.doc.content.size,
+              new Slice(Fragment.from(fragmentContent), 0, 0)
+            );
+            tr.setMeta(ySyncPluginKey, {
+              snapshot: null,
+              prevSnapshot: null,
+            });
+
+            this.storage.snapshot = undefined;
+          } else {
+            // 2.b. If the output is not a diff, insert it below the selection
+            tr.insertText(
+              currentState.output.text,
+              // TODO: Insert below as a new paragraph?
+              currentState.range.from,
+              currentState.range.to
+            );
+            view.dispatch(tr);
+          }
 
           getLiveblocksYjsProvider(this.editor)?.unpause();
           this.editor.setEditable(true);
 
-          return true;
-        },
-
-      $acceptAiToolbarDiffOutput:
-        () =>
-        ({ tr }: CommandProps) => {
-          const currentState = this.storage.state;
-          if (
-            currentState.phase !== "reviewing" ||
-            !isAiToolbarDiffOutput(currentState.output)
-          ) {
-            return false;
-          }
-          const binding = getYjsBinding(this.editor);
-          if (!binding) {
-            return false;
-          }
-
-          const fragmentContent = yXmlFragmentToProseMirrorFragment(
-            binding.type,
-            this.editor.state.schema
-          );
-          tr.setMeta("addToHistory", false);
-          tr.replace(
-            0,
-            this.editor.state.doc.content.size,
-            new Slice(Fragment.from(fragmentContent), 0, 0)
-          );
-          tr.setMeta(ySyncPluginKey, {
-            snapshot: null,
-            prevSnapshot: null,
-          });
-
-          // TODO: move this cleanup to somewhere that closeAIToolbar can share
-          getLiveblocksYjsProvider(this.editor)?.unpause();
-          this.editor.setEditable(true);
-          this.storage.snapshot = undefined;
+          // 3. Set to "closed" phase
           this.storage.state = { phase: "closed" };
+
           return true;
         },
 

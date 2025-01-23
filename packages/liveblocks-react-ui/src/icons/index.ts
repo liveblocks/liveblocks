@@ -1,3 +1,5 @@
+export { ArrowCornerDownRightIcon } from "./ArrowCornerDownRight";
+export { ArrowCornerUpRightIcon } from "./ArrowCornerUpRight";
 export { ArrowDownIcon } from "./ArrowDown";
 export { ArrowUpIcon } from "./ArrowUp";
 export { AttachmentIcon } from "./Attachment";

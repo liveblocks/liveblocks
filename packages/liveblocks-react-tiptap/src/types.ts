@@ -101,20 +101,18 @@ export type AiToolbarOutput = Relax<
  *  ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
  *  │        CLOSED         │       │        ASKING         │       │       THINKING        │       │       REVIEWING       │
  *  └───────────────────────┘       └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
- *         ▲ ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇ ◇ ◇
- *         │ │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │ │ │
- *         │ │ │                               │ ▼                            │ │                               │ │ │ │
- *         │ │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │ │ │
- *         │ │                                 │ ▲ ▲                            │                               │ │ │ │
- *         │ │                                 │ │ └────────────────────────────┼───────────────────────────────┘ │ │ │
- *         │ │                                 │ │                              │                                 │ │ │
- *         │ │                                 │ └───────────────────$retryAiToolbarThinking()────────────────────┘ │ │
- *         │ │                                 │                                │                                   │ │
- *         │ │                                 └───$cancelAiToolbarThinking()───┘                                   │ │
- *         │ │                                                                                                      │ │
- *         │ └───────────────────────────────────────$acceptAiToolbarOutput()───────────────────────────────────────┘ │
- *         │                                                                                                          │
- *         └──────────────────────────────────$applyAiToolbarOtherOutput(placement)───────────────────────────────────┘
+ *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇ ◇
+ *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │ │
+ *           │ │                               │ ▼                            │ │                               │ │ │
+ *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │ │
+ *           │                                 │ ▲ ▲                            │                               │ │ │
+ *           │                                 │ │ └────────────────────────────┼───────────────────────────────┘ │ │
+ *           │                                 │ │                              │                                 │ │
+ *           │                                 │ └───────────────────$retryAiToolbarThinking()────────────────────┘ │
+ *           │                                 │                                │                                   │
+ *           │                                 └───$cancelAiToolbarThinking()───┘                                   │
+ *           │                                                                                                      │
+ *           └───────────────────────────────────────$acceptAiToolbarOutput()───────────────────────────────────────┘
  *
  */
 export type AiToolbarState = Relax<
@@ -238,19 +236,9 @@ export type AiCommands<ReturnType = boolean> = {
    * @internal
    * @transition
    *
-   * Accept the current AI diff output and close the AI toolbar.
+   * Accept the current AI output and close the AI toolbar.
    */
-  $acceptAiToolbarDiffOutput: () => ReturnType;
-
-  /**
-   * @internal
-   * @transition
-   *
-   * Apply the current AI other output and close the AI toolbar.
-   */
-  $applyAiToolbarOtherOutput: (
-    placement: "replace" /* TODO: "before" | "after" */
-  ) => ReturnType;
+  $acceptAiToolbarOutput: () => ReturnType;
 
   /**
    * @internal

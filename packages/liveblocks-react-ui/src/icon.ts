@@ -3,6 +3,8 @@
 // via `import { Icon } from "@liveblocks/react-ui"` and `<Icon.* />`.
 
 export {
+  ArrowCornerDownRightIcon as ArrowCornerDownRight,
+  ArrowCornerUpRightIcon as ArrowCornerUpRight,
   AttachmentIcon as Attachment,
   BlockquoteIcon as Blockquote,
   BoldIcon as Bold,
