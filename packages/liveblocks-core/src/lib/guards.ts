@@ -27,35 +27,3 @@ export function isNotNullObject(
 ): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
-
-/**
- * Check if `process.env` is available
- */
-export function isProcessEnvAvailable(): boolean {
-  if (typeof process === "undefined" || !isNotNullObject(process)) {
-    return false;
-  }
-
-  if (!("env" in process) || !isNotNullObject(process.env)) {
-    return false;
-  }
-
-  return true;
-}
-
-function isImportMetaEnv(
-  value: unknown
-): value is { env: Record<string, unknown> } {
-  return isNotNullObject(value) && "env" in value && isNotNullObject(value.env);
-}
-
-/**
- * Check if `import.meta.env` is available
- */
-export function isImportMetaEnvAvailable(): boolean {
-  if (typeof import.meta === "undefined" || !isImportMetaEnv(import.meta)) {
-    return false;
-  }
-
-  return true;
-}
