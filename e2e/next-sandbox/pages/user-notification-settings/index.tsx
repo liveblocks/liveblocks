@@ -1,10 +1,4 @@
-import {
-  ClientSideSuspense,
-  createLiveblocksContext,
-  createRoomContext,
-} from "@liveblocks/react";
-import type { FallbackProps } from "react-error-boundary";
-import { ErrorBoundary } from "react-error-boundary";
+import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
 import Button from "../../utils/Button";
@@ -33,45 +27,20 @@ const client = createLiveblocksClient({
   },
 });
 
-const {
-  suspense: { LiveblocksProvider, useChannelsNotificationSettings },
-} = createLiveblocksContext(client);
+const { LiveblocksProvider, useNotificationSettings } =
+  createLiveblocksContext(client);
 
-const {
-  suspense: { RoomProvider, useSelf },
-} = createRoomContext(client);
-
-function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-  return (
-    <div style={{ border: "2px solid red", color: "red" }}>
-      <p>Oops, an unexpected error happened.</p>
-      <pre>{String(error)}</pre>
-      <button onClick={resetErrorBoundary}>Retry</button>
-    </div>
-  );
-}
+const { RoomProvider, useSelf } = createRoomContext(client);
 
 function WithLiveblocksProvider(props: React.PropsWithChildren) {
-  return (
-    <LiveblocksProvider>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <ClientSideSuspense fallback="Loading...">
-          {props.children}
-        </ClientSideSuspense>
-      </ErrorBoundary>
-    </LiveblocksProvider>
-  );
+  return <LiveblocksProvider>{props.children}</LiveblocksProvider>;
 }
 
 function WithRoomProvider(props: React.PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <ClientSideSuspense fallback="Loading...">
-          {props.children}
-        </ClientSideSuspense>
-      </ErrorBoundary>
+      {props.children}
     </RoomProvider>
   );
 }
@@ -121,10 +90,9 @@ function Channel({
     </div>
   );
 }
-
 function Settings() {
   const [{ isLoading, error, settings }, updateSettings] =
-    useChannelsNotificationSettings();
+    useNotificationSettings();
 
   return (
     <div
@@ -207,7 +175,7 @@ function Header() {
         fontFamily: "sans-serif",
       }}
     >
-      <h3>Channels notification settings</h3>
+      <h3>User notification settings</h3>
       <div style={{ display: "flex", width: "100%", margin: "8px 0" }}>
         <table width="100%">
           <tbody>
