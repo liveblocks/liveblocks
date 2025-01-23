@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       roomId: body.roomId,
     });
 
-    // await liveblocks.updateChannelsNotificationSettings({
+    // await liveblocks.updateNotificationSettings({
     //   userId: `user-${userIndex}`,
     //   data: {
     //     email: {

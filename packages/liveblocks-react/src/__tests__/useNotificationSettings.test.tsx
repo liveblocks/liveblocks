@@ -188,7 +188,7 @@ describe("useNotificationSettings", () => {
     });
 
     await waitFor(() =>
-      // Channels notification settings response from the server should be updated accordingly
+      // User notification settings response from the server should be updated accordingly
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {

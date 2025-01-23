@@ -949,7 +949,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
-    const channelsNotificationSettingsFetcher = async (): Promise<void> => {
+    const userNotificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getNotificationSettings();
       this.userNotificationSettings.update(result);
     };
@@ -959,7 +959,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.#userNotificationSettings = new SinglePageResource(
-      channelsNotificationSettingsFetcher
+      userNotificationSettingsFetcher
     );
 
     this.threads = new ThreadDB();
