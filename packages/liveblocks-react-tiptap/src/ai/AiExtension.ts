@@ -3,7 +3,9 @@ import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { CommandProps, Editor, Range } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
+import type { Transaction } from "@tiptap/pm/state";
 import { Plugin } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
   ySyncPluginKey,
@@ -73,29 +75,6 @@ export const AiExtension = Extension.create<
       state: DEFAULT_STATE,
       name: this.options.name,
     };
-  },
-  // When reviewing a diff, we render it in the editor after the change is applied
-  onUpdate() {
-    // The diff is applied right before moving to the "reviewing" phase
-    if (this.storage.state.phase !== "thinking") {
-      return;
-    }
-
-    if (!this.options.doc || !this.storage.snapshot) {
-      return;
-    }
-
-    const previousSnapshot: Snapshot = this.storage.snapshot ?? emptySnapshot;
-    const currentSnapshot = takeSnapshot(this.options.doc);
-
-    if (equalSnapshots(previousSnapshot, currentSnapshot)) {
-      return;
-    }
-
-    getYjsBinding(this.editor)?.renderSnapshot(
-      currentSnapshot,
-      previousSnapshot
-    );
   },
   addCommands() {
     return {
@@ -366,32 +345,71 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      _handleAiToolbarThinkingSuccess: (output: AiToolbarOutput) => () => {
-        const currentState = this.storage.state;
-
-        // 1. If NOT in "thinking" phase, do nothing
-        if (currentState.phase !== "thinking") {
-          return false;
+      _showDiff: () => () => {
+        // The diff is applied right before moving to the "reviewing" phase
+        if (this.storage.state.phase !== "reviewing") {
+          return;
         }
 
-        let range: Range = this.editor.state.selection;
+        if (!this.options.doc || !this.storage.snapshot) {
+          return;
+        }
 
-        // 2. If the output is a diff, apply it to the editor
-        if (isAiToolbarDiffOutput(output) && this.options.doc) {
+        const previousSnapshot: Snapshot =
+          this.storage.snapshot ?? emptySnapshot;
+        const currentSnapshot = takeSnapshot(this.options.doc);
+
+        if (equalSnapshots(previousSnapshot, currentSnapshot)) {
+          return;
+        }
+
+        getYjsBinding(this.editor)?.renderSnapshot(
+          currentSnapshot,
+          previousSnapshot
+        );
+      },
+
+      _handleAiToolbarThinkingSuccess:
+        (output: AiToolbarOutput) =>
+        ({
+          commands,
+          view,
+          tr,
+        }: {
+          commands: AiCommands;
+          view: EditorView;
+          tr: Transaction;
+        }) => {
+          const currentState = this.storage.state;
+
+          // 1. If NOT in "thinking" phase, do nothing
+          if (currentState.phase !== "thinking") {
+            return false;
+          }
+
+          let range: Range = this.editor.state.selection;
+
+          // 2. If this is not a diff, the output will just be in the popup, set  to "reviewing" phase with the output
+          if (!isAiToolbarDiffOutput(output)) {
+            this.storage.state = {
+              phase: "reviewing",
+              range,
+              customPrompt: "",
+              prompt: currentState.prompt,
+              output,
+            };
+            return true;
+          }
+
+          if (!this.options.doc) {
+            return false;
+          }
+
+          // 3. If the output is a diff, apply it to the editor
           this.options.doc.gc = false;
           this.storage.snapshot = takeSnapshot(this.options.doc);
 
           const { selection } = this.editor.state;
-
-          // 2.a. Insert the output (the diff will be rendered after the change is applied in onUpdate())
-          this.editor.commands.insertContentAt(
-            selection.empty || output.type === "insert"
-              ? // If the selection is empty, insert at the end of it
-                selection.to
-              : // Otherwise, overwrite the selection
-                selection,
-            output.text
-          );
 
           // Update the range to take into account the diff
           range = {
@@ -400,21 +418,24 @@ export const AiExtension = Extension.create<
             to:
               output.type === "insert"
                 ? selection.to + output.text.length
-                : selection.to + output.text.length,
+                : selection.from + output.text.length,
           };
-        }
+          // 4. Set to "reviewing" phase with the new range)
+          this.storage.state = {
+            phase: "reviewing",
+            range,
+            customPrompt: "",
+            prompt: currentState.prompt,
+            output,
+          };
 
-        // 3. Set to "reviewing" phase with the output
-        this.storage.state = {
-          phase: "reviewing",
-          range,
-          customPrompt: "",
-          prompt: currentState.prompt,
-          output,
-        };
+          // 4. Insert the output
+          tr.insertText(output.text, selection.from, selection.to);
+          view.dispatch(tr);
 
-        return true;
-      },
+          // 5. Show the diff
+          return commands._showDiff();
+        },
 
       _handleAiToolbarThinkingError: (error: unknown) => () => {
         const currentState = this.storage.state;

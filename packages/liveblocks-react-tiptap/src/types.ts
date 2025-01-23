@@ -277,6 +277,13 @@ export type AiCommands<ReturnType = boolean> = {
   /**
    * @internal
    *
+   * Show the diff of the current "reviewing" phase.
+   */
+  _showDiff: () => ReturnType;
+
+  /**
+   * @internal
+   *
    * Handle the success of the current "thinking" phase.
    *
    * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))

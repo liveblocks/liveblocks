@@ -270,7 +270,9 @@ export class LiveblocksYjsProvider<
 
   unpause(): void {
     this.isPaused = false;
-    this.setupOfflineSupport();
+    if (this.options.offlineSupport_experimental) {
+      this.setupOfflineSupport();
+    }
     this.rootDocHandler.syncDoc();
   }
 
