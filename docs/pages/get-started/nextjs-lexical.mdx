@@ -113,8 +113,8 @@ package.
       Now that we set up Liveblocks, we can start integrating Lexical and Liveblocks in the `Editor.tsx` file.
       To make the editor collaborative, we can use
       [`LiveblocksPlugin`](/docs/api-reference/liveblocks-react-lexical#LiveblocksPlugin)
-      from `@liveblocks/react-lexical`.
-
+      from `@liveblocks/react-lexical`. [`FloatingToolbar`](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar)
+      adds a text selection toolbar.
 
       ```tsx file="app/Editor.tsx"
       "use client";
@@ -126,8 +126,8 @@ package.
       import {
         liveblocksConfig,
         LiveblocksPlugin,
+        FloatingToolbar,
       } from "@liveblocks/react-lexical";
-      import { Toolbar } from "./Toolbar";
       import { Threads } from "./Threads";
 
       export function Editor() {
@@ -142,7 +142,6 @@ package.
 
         return (
           <LexicalComposer initialConfig={initialConfig}>
-            <Toolbar />
             <div className="editor">
               <RichTextPlugin
                 contentEditable={<ContentEditable />}
@@ -151,6 +150,7 @@ package.
               />
               <LiveblocksPlugin>
                 <Threads />
+                <FloatingToolbar />
               </LiveblocksPlugin>
             </div>
           </LexicalComposer>
@@ -196,39 +196,6 @@ package.
 
   </Step>
   <Step>
-    <StepTitle>Create a toolbar</StepTitle>
-    <StepContent>
-
-      To create threads with the [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer),
-      we need to create a button that opens the composer. Create a toolbar in `Toolbar.tsx`
-      with a button that opens the composer using [`OPEN_FLOATING_COMPOSER_COMMAND`](/docs/api-reference/liveblocks-react-lexical#Opening-the-composer).
-
-      ```tsx file="app/Toolbar.tsx"
-      "use client";
-
-      import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-      import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
-
-      export function Toolbar() {
-        const [editor] = useLexicalComposerContext();
-
-        return (
-          <div className="toolbar">
-            <button
-              onClick={() =>
-                editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)
-              }
-            >
-              💬 New comment
-            </button>
-          </div>
-        );
-      }
-      ```
-    </StepContent>
-
-  </Step>
-  <Step>
     <StepTitle>Style your editor</StepTitle>
     <StepContent>
 
@@ -250,22 +217,6 @@ package.
 
       [data-lexical-editor] p {
         margin: 0.8em 0;
-      }
-
-      .toolbar {
-        padding: 8px;
-        border-bottom: 1px solid #E6E6E7;
-      }
-
-      .toolbar > button {
-        all: unset;
-        font-weight: 500;
-        padding: 8px;
-        border-radius: 6px;
-      }
-
-      .toolbar > button:hover {
-        background: #F4F4F5;
       }
 
       /* For mobile */

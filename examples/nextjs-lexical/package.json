@@ -10,7 +10,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.0",
     "@lexical/list": "0.16.1",
     "@lexical/react": "0.16.1",
     "@lexical/rich-text": "0.16.1",
