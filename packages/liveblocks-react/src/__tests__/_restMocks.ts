@@ -1,13 +1,13 @@
 import type {
   BaseMetadata,
-  ChannelsNotificationSettings,
   CommentData,
   InboxNotificationData,
-  PartialChannelsNotificationSettings,
+  PartialUserNotificationSettings,
   Permission,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -231,28 +231,28 @@ export function mockUpdateRoomNotificationSettings(
   );
 }
 
-export function mockGetChannelsNotificationSettings(
+export function mockGetUserNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    ChannelsNotificationSettings
+    UserNotificationSettings
   >
 ) {
   return rest.get(
-    "https://api.liveblocks.io/v2/c/channels-notification-settings",
+    "https://api.liveblocks.io/v2/c/notification-settings",
     resolver
   );
 }
 
-export function mockUpdateChannelsNotificationSettings(
+export function mockUpdateUserNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    PartialChannelsNotificationSettings
+    PartialUserNotificationSettings
   >
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/channels-notification-settings",
+    "https://api.liveblocks.io/v2/c/notification-settings",
     resolver
   );
 }
