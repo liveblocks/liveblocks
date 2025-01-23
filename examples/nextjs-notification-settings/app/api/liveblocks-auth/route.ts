@@ -9,9 +9,6 @@ import { USER_INFO } from "../dummy-users";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  // XXX
-  // @ts-expect-error
-  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
 export async function POST(request: NextRequest) {

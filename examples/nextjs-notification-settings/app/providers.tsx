@@ -8,9 +8,6 @@ export function Providers({ children }: { children?: React.ReactNode }) {
   return (
     <LiveblocksProvider
       authEndpoint={`/api/liveblocks-auth${userId ? `?userId=${userId}` : ""}`}
-      // XXX
-      // @ts-expect-error
-      baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
           userIds.map((userId) => ["userIds", userId])

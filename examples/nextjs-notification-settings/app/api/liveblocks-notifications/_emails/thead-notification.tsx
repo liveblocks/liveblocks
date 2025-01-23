@@ -75,10 +75,8 @@ export async function sendThreadNotificationEmail(
     const html = await render(email, { pretty: true });
 
     const { error } = await resend.emails.send({
-      from: "Liveblocks <hello@dev.notifications.liveblocks.io>",
-      // XXX
-      // CHANGE WITH YOUR EMAIL
-      to: "aurelien.dupaysdexemple+channel@liveblocks.io",
+      from: "My Liveblocks App <hello@my-liveblocks-app.com>",
+      to: "<some_user_email>@acme.inc",
       subject,
       html,
     });
