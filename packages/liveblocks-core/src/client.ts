@@ -9,6 +9,7 @@ import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
+import { getEnvVar } from "./lib/environment";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -450,11 +451,22 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
+  let selectedBaseUrl: string | undefined = undefined;
+  if (baseUrl !== undefined) {
+    selectedBaseUrl = baseUrl;
+  } else {
+    selectedBaseUrl =
+      getEnvVar("LIVEBLOCKS_BASE_URL") ??
+      getEnvVar("NEXT_PUBLIC_LIVEBLOCKS_BASE_URL") ??
+      getEnvVar("VITE_LIVEBLOCKS_BASE_URL") ??
+      undefined;
+  }
+
   if (
-    typeof baseUrl === "string" &&
-    baseUrl.startsWith("http") // Must be http or https URL
+    typeof selectedBaseUrl === "string" &&
+    selectedBaseUrl.startsWith("http") // Must be http or https URL
   ) {
-    return baseUrl;
+    return selectedBaseUrl;
   } else {
     return DEFAULT_BASE_URL;
   }
