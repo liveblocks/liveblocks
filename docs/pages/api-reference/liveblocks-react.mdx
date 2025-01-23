@@ -2974,28 +2974,28 @@ const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 updateRoomNotificationSettings({ threads: "all" });
 ```
 
-## Channels Notification Settings [#channels-notification-settings]
+## User Notification Settings [#user-notification-settings]
 
 <Banner title="Private beta">
 
-Channels notification settings is currently in private beta. If you would like
+User notification settings is currently in private beta. If you would like
 access to the beta, please [contact us](https://liveblocks.io/contact/sales).
 We’d love to hear from you.
 
 </Banner>
 
-### useChannelsNotificationSettings [@badge=LiveblocksProvider]
+### useNotificationSettings [@badge=LiveblocksProvider]
 
-Channels notification settings are project based. It means the settings are the
-same for every room.
+User notification settings are project based. It means the settings are the same
+for every room.
 
 Returns the user’s notification settings in the current project.
 
 ```tsx
-import { useChannelsNotificationSettings } from "@liveblocks/react";
+import { useNotificationSettings } from "@liveblocks/react";
 
 const [{ isLoading, error, settings }, updateSettings] =
-  useChannelsNotificationSettings();
+  useNotificationSettings();
 ```
 
 The `updateSettings` function can be used to update the notification settings.
@@ -3009,22 +3009,22 @@ const onUpdate = () => {
 ```
 
 Error handling is an important aspect to consider when using the
-`useChannelsNotificationSettings` hook. The `error` fields provides information
-about any error that occurred during the fetch operation.
+`useNotificationSettings` hook. The `error` fields provides information about
+any error that occurred during the fetch operation.
 
 The following example shows how to display error messages for both initial
 loading errors and errors that occur when fetching more inbox notifications.
 
 ```tsx
-import { useChannelsNotificationSettings } from "@liveblocks/react";
+import { useNotificationSettings } from "@liveblocks/react";
 
 const [{ isLoading, error, settings }, updateSettings] =
-  useChannelsNotificationSettings();
+  useNotificationSettings();
 
 if (error) {
   return (
     <div>
-      <p>Error loading channels notification settings: {error.message}</p>
+      <p>Error loading user notification settings: {error.message}</p>
     </div>
   );
 }
@@ -3034,19 +3034,18 @@ if (error) {
 return a loading state and will throw and error to the nearest `ErrorBoundary`
 if initial load failed.
 
-### useUpdateChannelsNotificationSettings [@badge=LiveblocksProvider]
+### useUpdatesNotificationSettings [@badge=LiveblocksProvider]
 
-Returns a function that updates user's channels notification settings in the
-current project.
+Returns a function that updates user's notification settings in the current
+project.
 
-Use this if you don't need the current user's channels notification settings in
-your component, but you need to update them (e.g a unsubscribe button).
+Use this if you don't need the current user's notification settings in your
+component, but you need to update them (e.g a unsubscribe button).
 
 ```tsx
-import { useUpdateChannelsNotificationSettings } from "@liveblocks/react";
+import { useUpdateNotificationSettings } from "@liveblocks/react";
 
-const updateChannelsNotificationSettings =
-  useUpdateChannelsNotificationSettings();
+const updateNotificationSettings = useUpdateNotificationSettings();
 ```
 
 ## Version History

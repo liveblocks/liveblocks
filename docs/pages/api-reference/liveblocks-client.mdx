@@ -3208,41 +3208,41 @@ const settings = await room.updateNotificationSettings({
   </PropertiesListItem>
 </PropertiesList>
 
-## Channels Notification Settings [#channels-notification-settings]
+## User Notification Settings [#user-notification-settings]
 
 <Banner title="Private beta">
 
-Channels notification settings is currently in private beta. If you would like
+User notification settings is currently in private beta. If you would like
 access to the beta, please [contact us](https://liveblocks.io/contact/sales).
 We’d love to hear from you.
 
 </Banner>
 
-### Client.getChannelsNotificationSettings
+### Client.getNotificationSettings
 
-Returns the current user's channels notification settings.
+Returns the current user's notification settings.
 
 ```ts
-const settings = await client.getChannelsNotificationSettings();
+const settings = await client.getNotificationSettings();
 
 // { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
 console.log(settings);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="ChannelsNotificationSettings">
-    Current user’s channels notification settings.
+  <PropertiesListItem name="settings" type="UserNotificationSettings">
+    Current user’s notification settings.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-### Client.updateChannelsNotificationSettings
+### Client.updateNotificationSettings
 
-Updates the current user’s channels notification settings.
+Updates the current user’s notification settings.
 
 ```ts
-const settings = await client.updateChannelsNotificationSettings({
+const settings = await client.updateNotificationSettings({
   email: { thread: false },
   slack: { thread: true },
 });
@@ -3252,14 +3252,14 @@ console.log(settings);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="ChannelsNotificationSettings">
-    Current user’s channels notification settings.
+  <PropertiesListItem name="settings" type="UserNotificationSettings">
+    Current user’s notification settings.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="settings" type="object" required>
-    A deep partial object containing the channels notification settings to
+    A deep partial object containing the user notification settings to
     update.
 
     ```js title="deep partial 1" isCollapsable isCollapsed
