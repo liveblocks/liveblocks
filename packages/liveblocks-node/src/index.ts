@@ -76,7 +76,7 @@ export type {
 } from "@liveblocks/core";
 export {
   getMentionedIdsFromCommentBody,
-  isChannelNotificationSettingEnabled,
+  isNotificationChannelEnabled,
   stringifyCommentBody,
 } from "@liveblocks/core";
 

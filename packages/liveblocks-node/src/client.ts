@@ -6,7 +6,6 @@
 import type {
   BaseMetadata,
   BaseUserMeta,
-  ChannelsNotificationSettings,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -24,8 +23,8 @@ import type {
   KDAD,
   LsonObject,
   OptionalTupleUnless,
-  PartialChannelsNotificationSettings,
   PartialUnless,
+  PartialUserNotificationSettings,
   Patchable,
   PlainLsonObject,
   QueryMetadata,
@@ -35,6 +34,7 @@ import type {
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -1645,38 +1645,36 @@ export class Liveblocks {
   }
 
   /**
-   * Get channels notification settings for a user for a project.
-   * @param params.userId The user ID to get the channels notifications settings for.
+   * Get notification settings for a user for a project.
+   * @param params.userId The user ID to get the notifications settings for.
    */
-  public async getChannelsNotificationSettings(params: {
+  public async getsNotificationSettings(params: {
     userId: string;
-  }): Promise<ChannelsNotificationSettings> {
+  }): Promise<UserNotificationSettings> {
     const { userId } = params;
 
-    const res = await this.#get(
-      url`/v2/users/${userId}/channels-notification-settings`
-    );
+    const res = await this.#get(url`/v2/users/${userId}/notification-settings`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as ChannelsNotificationSettings;
+    return (await res.json()) as UserNotificationSettings;
   }
 
   /**
-   * Update the user's channels notification settings.
-   * @param params.userId The user ID to update the channels notification settings for.
-   * @param params.data The new channels notification settings for the user.
+   * Update the user's notification settings.
+   * @param params.userId The user ID to update the notification settings for.
+   * @param params.data The new notification settings for the user.
    */
-  public async updateChannelsNotificationSettings(params: {
+  public async updateNotificationSettings(params: {
     userId: string;
-    data: PartialChannelsNotificationSettings;
-  }): Promise<ChannelsNotificationSettings> {
+    data: PartialUserNotificationSettings;
+  }): Promise<UserNotificationSettings> {
     const { userId, data } = params;
 
     const res = await this.#post(
-      url`/v2/users/${userId}/channels-notification-settings`,
+      url`/v2/users/${userId}/notification-settings`,
       data
     );
 
@@ -1685,19 +1683,19 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as ChannelsNotificationSettings;
+    return (await res.json()) as UserNotificationSettings;
   }
 
   /**
-   * Delete the user's channels notification settings
-   * @param params.userId The user ID to update the channels notification settings for.
+   * Delete the user's notification settings
+   * @param params.userId The user ID to update the notification settings for.
    */
-  public async deleteChannelsNotificationSettings(params: {
+  public async deleteNotificationSettings(params: {
     userId: string;
   }): Promise<void> {
     const { userId } = params;
     const res = await this.#delete(
-      url`/v2/users/${userId}/channels-notification-settings`
+      url`/v2/users/${userId}/notification-settings`
     );
     if (!res.ok) {
       const text = await res.text();
