@@ -34,7 +34,7 @@ const ALLOW_NO_FACTORY = [
   // Re-exported from `@liveblocks/client` so they cannot be returned by
   // the factories. So it makes no sense to warn about these.
   "shallow",
-  "isChannelNotificationSettingEnabled",
+  "isNotificationChannelEnabled",
 
   // TODO: These are all exported types, which cannot be returned by the
   // factories, so it makes no sense to warn about these. We should auto-detect
