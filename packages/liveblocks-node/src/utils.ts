@@ -1,14 +1,27 @@
+import { getEnvVar } from "./environment";
+
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
 // Valid alphabet for secret/public keys
 const VALID_KEY_CHARS_REGEX = /^[\w-]+$/;
 
 export function getBaseUrl(baseUrl?: string | undefined): string {
+  let selectedBaseUrl: string | undefined = undefined;
+  if (baseUrl !== undefined) {
+    selectedBaseUrl = baseUrl;
+  } else {
+    selectedBaseUrl =
+      getEnvVar("LIVEBLOCKS_BASE_URL") ??
+      getEnvVar("NEXT_PUBLIC_LIVEBLOCKS_BASE_URL") ??
+      getEnvVar("VITE_LIVEBLOCKS_BASE_URL") ??
+      undefined;
+  }
+
   if (
-    typeof baseUrl === "string" &&
-    baseUrl.startsWith("http") // Must be http or https URL
+    typeof selectedBaseUrl === "string" &&
+    selectedBaseUrl.startsWith("http") // Must be http or https URL
   ) {
-    return baseUrl;
+    return selectedBaseUrl;
   } else {
     return DEFAULT_BASE_URL;
   }
