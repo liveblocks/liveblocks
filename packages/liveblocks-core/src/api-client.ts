@@ -1462,7 +1462,7 @@ export function createApiClient<M extends BaseMetadata>({
     markThreadAsResolved,
     markThreadAsUnresolved,
     markRoomInboxNotificationAsRead,
-    // Room notifications\
+    // Room notifications
     getNotificationSettings,
     updateNotificationSettings,
     // Room text editor
