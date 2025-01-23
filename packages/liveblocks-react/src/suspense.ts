@@ -81,7 +81,7 @@ export {
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,
-  useNotificationSettingsSuspense as useChannelsNotificationSettings,
+  useNotificationSettingsSuspense as useNotificationSettings,
   useRoomInfoSuspense as useRoomInfo,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,

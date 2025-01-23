@@ -1,6 +1,6 @@
 import type {
   BaseMetadata,
-  ChannelsNotificationSettings,
+  UserNotificationSettings,
   Json,
   Lson,
 } from "@liveblocks/client";
@@ -882,22 +882,22 @@ import { expectAssignable, expectError, expectType } from "tsd";
 }
 
 // ---------------------------------------------------------
-// the useChannelsNotificationSettings() hook
+// the useNotificationSettings() hook
 {
   const [{ isLoading, error, settings }, update] =
-    classic.useChannelsNotificationSettings();
+    classic.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
-// the useChannelsNotificationSettings() hook suspense
+// the useNotificationSettings() hook suspense
 {
   const [{ isLoading, error, settings }, update] =
-    suspense.useChannelsNotificationSettings();
+    suspense.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------

@@ -1,4 +1,4 @@
-import type { ChannelsNotificationSettings } from "@liveblocks/core";
+import type { UserNotificationSettings } from "@liveblocks/core";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
@@ -994,22 +994,22 @@ declare global {
 }
 
 // ---------------------------------------------------------
-// the useChannelsNotificationSettings() hook
+// the usesNotificationSettings() hook
 {
   const [{ isLoading, error, settings }, update] =
-    classic.useChannelsNotificationSettings();
+    classic.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
-// the useChannelsNotificationSettings() hook suspense
+// the usesNotificationSettings() hook suspense
 {
   const [{ isLoading, error, settings }, update] =
-    suspense.useChannelsNotificationSettings();
+    suspense.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------

@@ -1,5 +1,5 @@
 import type {
-  ChannelsNotificationSettings,
+  UserNotificationSettings,
   Json,
   Room,
   User,
@@ -1152,22 +1152,22 @@ ctx.useOthersListener(({ user, type }) => {
 }
 
 // ---------------------------------------------------------
-// the useChannelsNotificationSettings() hook
+// the useNotificationSettings() hook
 {
   const [{ isLoading, error, settings }, update] =
-    lbctx.useChannelsNotificationSettings();
+    lbctx.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
-// the useChannelsNotificationSettings() hook suspense
+// the useNotificationSettings() hook suspense
 {
   const [{ isLoading, error, settings }, update] =
-    lbctx.suspense.useChannelsNotificationSettings();
+    lbctx.suspense.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------
