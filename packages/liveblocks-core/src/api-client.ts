@@ -20,10 +20,6 @@ import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
-import type {
-  ChannelsNotificationSettings,
-  PartialChannelsNotificationSettings,
-} from "./protocol/UserNotificationSettings";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -47,6 +43,10 @@ import type {
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type {
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -363,11 +363,14 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  getChannelsNotificationSettings(): Promise<ChannelsNotificationSettings>;
+  // Note: Using term `user` on those two following methods
+  // to avoid confusion with the same methods used in the `RoomHttpApi`.
+  // Let's wait the room subscription renaming to be here.
+  getUserNotificationSettings(): Promise<UserNotificationSettings>;
 
-  updateChannelsNotificationSettings(
-    settings: PartialChannelsNotificationSettings
-  ): Promise<ChannelsNotificationSettings>;
+  updateUserNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1329,25 +1332,30 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * Channels notifications settings (Project level)
+   * User notifications settings (Project level)
    * -------------------------------------------------------------------------------------------------
+   *
+   * Note: Using term `user` on those two following methods
+   * to avoid confusion with the same methods used in the `RoomHttpApi`.
+   *
+   * Let's wait the room subscription renaming to be here.
    */
-  async function getChannelsNotificationSettings(options?: {
+  async function getUserNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<ChannelsNotificationSettings> {
-    return httpClient.get<ChannelsNotificationSettings>(
-      url`/v2/c/channels-notification-settings`,
+  }): Promise<UserNotificationSettings> {
+    return httpClient.get<UserNotificationSettings>(
+      url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
       { signal: options?.signal }
     );
   }
 
-  async function updateChannelsNotificationSettings(
-    settings: PartialChannelsNotificationSettings
-  ): Promise<ChannelsNotificationSettings> {
-    return httpClient.post<ChannelsNotificationSettings>(
-      url`/v2/c/channels-notification-settings`,
+  async function updateUserNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings> {
+    return httpClient.post<UserNotificationSettings>(
+      url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
     );
@@ -1453,12 +1461,10 @@ export function createApiClient<M extends BaseMetadata>({
     removeReaction,
     markThreadAsResolved,
     markThreadAsUnresolved,
-    // Room notifications
     markRoomInboxNotificationAsRead,
-    updateNotificationSettings,
-    // Channel notification settings
+    // Room notifications\
     getNotificationSettings,
-    updateChannelsNotificationSettings,
+    updateNotificationSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1482,7 +1488,8 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getChannelsNotificationSettings,
+    getUserNotificationSettings,
+    updateUserNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
