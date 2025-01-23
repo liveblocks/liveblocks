@@ -1,13 +1,13 @@
 import type {
-  ChannelsNotificationSettings,
-  PartialChannelsNotificationSettings,
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 
-import { applyOptimisticUpdates_forChannelNotificationSettings } from "../../umbrella-store";
+import { applyOptimisticUpdates_forUserNotificationSettings } from "../../umbrella-store";
 
-describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
-  const defaultSettings: ChannelsNotificationSettings = {
+describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
+  const defaultSettings: UserNotificationSettings = {
     email: {
       thread: false,
       textMention: false,
@@ -31,11 +31,11 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   };
 
   it("should return the same object when no updates are provided", () => {
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: {},
         },
@@ -45,15 +45,15 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should update a single property in a single channel", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: { thread: true },
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },
@@ -67,18 +67,18 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should update multiple properties in a single channel", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: {
         thread: true,
         textMention: true,
       },
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },
@@ -91,16 +91,16 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should update multiple channels simultaneously", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: { thread: true },
       slack: { textMention: false },
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },
@@ -114,7 +114,7 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should ignore undefined values in updates", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: {
         thread: true,
         textMention: undefined,
@@ -122,11 +122,11 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
       },
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },
@@ -139,15 +139,15 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should handle empty channel updates", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: {},
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },
@@ -158,15 +158,15 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should preserve other channels when updating one", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: { thread: true },
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },
@@ -179,7 +179,7 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   });
 
   it("should handle all boolean combinations", () => {
-    const updates: PartialChannelsNotificationSettings = {
+    const updates: PartialUserNotificationSettings = {
       email: {
         thread: true,
         textMention: false,
@@ -187,11 +187,11 @@ describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
       },
     };
 
-    const result = applyOptimisticUpdates_forChannelNotificationSettings(
+    const result = applyOptimisticUpdates_forUserNotificationSettings(
       defaultSettings,
       [
         {
-          type: "update-channels-notification-settings",
+          type: "update-user-notification-settings",
           id: nanoid(),
           settings: updates,
         },

@@ -47,7 +47,7 @@ type DeepPartialWithAugmentation<T> = T extends object
   : T;
 
 /**
- * Partial channels notification settings
+ * Partial user notification settings
  * with augmentation preserved gracefully
  */
 export type PartialUserNotificationSettings =
