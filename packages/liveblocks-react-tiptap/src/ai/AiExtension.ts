@@ -5,7 +5,6 @@ import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { Plugin } from "@tiptap/pm/state";
-import type { EditorView } from "@tiptap/pm/view";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import {
   ySyncPluginKey,
@@ -137,11 +136,39 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      $acceptAiToolbarOutput:
+      $applyAiToolbarOtherOutput:
+        () =>
+        ({ tr, view }: CommandProps) => {
+          const currentState = this.storage.state;
+
+          if (
+            currentState.phase !== "reviewing" ||
+            isAiToolbarDiffOutput(currentState.output)
+          ) {
+            return false;
+          }
+
+          tr.insertText(
+            currentState.output.text,
+            currentState.range.from,
+            currentState.range.to
+          );
+          view.dispatch(tr);
+
+          getLiveblocksYjsProvider(this.editor)?.unpause();
+          this.editor.setEditable(true);
+
+          return true;
+        },
+
+      $acceptAiToolbarDiffOutput:
         () =>
         ({ tr }: CommandProps) => {
           const currentState = this.storage.state;
-          if (currentState.phase !== "reviewing") {
+          if (
+            currentState.phase !== "reviewing" ||
+            !isAiToolbarDiffOutput(currentState.output)
+          ) {
             return false;
           }
           const binding = getYjsBinding(this.editor);
@@ -172,7 +199,8 @@ export const AiExtension = Extension.create<
           return true;
         },
 
-      _revertDiff:
+      // TODO: When should this be called? We already revert on close and on retry
+      _revertAiToolbarOutputDiff:
         () =>
         ({ tr, view }: CommandProps) => {
           const revertTr = getRevertTransaction(
@@ -215,7 +243,6 @@ export const AiExtension = Extension.create<
               view.dispatch(revertTr);
               getLiveblocksYjsProvider(this.editor)?.unpause();
               this.editor.setEditable(true);
-              return true;
             }
           }
 
@@ -393,14 +420,14 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      _showDiff: () => () => {
+      _showAiToolbarOutputDiff: () => () => {
         // The diff is applied right before moving to the "reviewing" phase
         if (this.storage.state.phase !== "reviewing") {
-          return;
+          return false;
         }
 
         if (!this.options.doc || !this.storage.snapshot) {
-          return;
+          return false;
         }
 
         const previousSnapshot: Snapshot =
@@ -408,26 +435,20 @@ export const AiExtension = Extension.create<
         const currentSnapshot = takeSnapshot(this.options.doc);
 
         if (equalSnapshots(previousSnapshot, currentSnapshot)) {
-          return;
+          return true;
         }
 
         getYjsBinding(this.editor)?.renderSnapshot(
           currentSnapshot,
           previousSnapshot
         );
+
+        return true;
       },
 
       _handleAiToolbarThinkingSuccess:
         (output: AiToolbarOutput) =>
-        ({
-          commands,
-          view,
-          tr,
-        }: {
-          commands: AiCommands;
-          view: EditorView;
-          tr: Transaction;
-        }) => {
+        ({ commands, view, tr }: CommandProps) => {
           const currentState = this.storage.state;
 
           // 1. If NOT in "thinking" phase, do nothing
@@ -437,7 +458,7 @@ export const AiExtension = Extension.create<
 
           let range: Range = this.editor.state.selection;
 
-          // 2. If this is not a diff, the output will just be in the popup, set  to "reviewing" phase with the output
+          // 2. If this is not a diff, the output will just be in the popup, set to "reviewing" phase with the output
           if (!isAiToolbarDiffOutput(output)) {
             this.storage.state = {
               phase: "reviewing",
@@ -446,6 +467,7 @@ export const AiExtension = Extension.create<
               prompt: currentState.prompt,
               output,
             };
+
             return true;
           }
 
@@ -468,7 +490,8 @@ export const AiExtension = Extension.create<
                 ? selection.to + output.text.length
                 : selection.from + output.text.length,
           };
-          // 4. Set to "reviewing" phase with the new range)
+
+          // 4. Set to "reviewing" phase with the new range
           this.storage.state = {
             phase: "reviewing",
             range,
@@ -477,12 +500,16 @@ export const AiExtension = Extension.create<
             output,
           };
 
-          // 4. Insert the output
+          // 5. Insert the output
           tr.insertText(output.text, selection.from, selection.to);
           view.dispatch(tr);
 
-          // 5. Show the diff
-          return commands._showDiff();
+          // 6. Show the diff
+          (commands as unknown as AiCommands)._showAiToolbarOutputDiff();
+
+          // We moved to the "reviewing" phase, so even if `_showAiToolbarOutputDiff`
+          // returns `false` somehow, we still want to return `true`
+          return true;
         },
 
       _handleAiToolbarThinkingError: (error: unknown) => () => {

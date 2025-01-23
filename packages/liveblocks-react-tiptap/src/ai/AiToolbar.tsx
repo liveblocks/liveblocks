@@ -205,28 +205,30 @@ function AiToolbarReviewingSuggestions() {
   const { state } = useAiToolbarContext();
   const { output } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
 
-  const handleDiscard = useCallback(() => {
-    (editor.commands as unknown as AiCommands).$closeAiToolbar();
-  }, [editor]);
-
-  const handleAccept = useCallback(() => {
-    (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput();
-  }, [editor]);
-
-  const handleRetry = useCallback(() => {
-    (editor.commands as unknown as AiCommands).$retryAiToolbarThinking();
-  }, [editor]);
-
   if (isAiToolbarDiffOutput(output)) {
     return (
       <>
-        <AiToolbarDropdownItem icon={<CheckIcon />} onSelect={handleAccept}>
+        <AiToolbarDropdownItem
+          icon={<CheckIcon />}
+          onSelect={
+            (editor.commands as unknown as AiCommands)
+              .$acceptAiToolbarDiffOutput
+          }
+        >
           Accept
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={handleRetry}>
+        <AiToolbarDropdownItem
+          icon={<UndoIcon />}
+          onSelect={
+            (editor.commands as unknown as AiCommands).$retryAiToolbarThinking
+          }
+        >
           Try again
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<CrossIcon />} onSelect={handleDiscard}>
+        <AiToolbarDropdownItem
+          icon={<CrossIcon />}
+          onSelect={(editor.commands as unknown as AiCommands).$closeAiToolbar}
+        >
           Discard
         </AiToolbarDropdownItem>
       </>
@@ -234,16 +236,31 @@ function AiToolbarReviewingSuggestions() {
   } else {
     return (
       <>
-        <AiToolbarDropdownItem icon={<CheckIcon />} disabled>
+        <AiToolbarDropdownItem
+          icon={<CheckIcon />}
+          onSelect={() =>
+            (
+              editor.commands as unknown as AiCommands
+            ).$applyAiToolbarOtherOutput("replace")
+          }
+        >
           Replace selection
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem icon={<CheckIcon />} disabled>
           Insert below
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<UndoIcon />} disabled>
+        <AiToolbarDropdownItem
+          icon={<UndoIcon />}
+          onSelect={
+            (editor.commands as unknown as AiCommands).$retryAiToolbarThinking
+          }
+        >
           Try again
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<CrossIcon />} onSelect={handleDiscard}>
+        <AiToolbarDropdownItem
+          icon={<CrossIcon />}
+          onSelect={(editor.commands as unknown as AiCommands).$closeAiToolbar}
+        >
           Discard
         </AiToolbarDropdownItem>
       </>
