@@ -1,34 +1,28 @@
 "use client";
 
 import {
-  useChannelsNotificationSettings,
-  isChannelNotificationSettingEnabled,
+  useNotificationSettings,
+  isNotificationChannelEnabled,
 } from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
 import { cn } from "../../../utils/cn";
 
-export function ChannelsNotificationsSettings() {
-  const [{ isLoading, error, settings }, updateChannelNotificationSettings] =
-    useChannelsNotificationSettings();
+export function UserNotificationsSettings() {
+  const [{ isLoading, error, settings }, updateNotificationSettings] =
+    useNotificationSettings();
 
   if (isLoading) return null;
   if (error) return null; // or throw/capture error
 
-  const isEmailChannelEnabled = isChannelNotificationSettingEnabled(
-    settings.email
-  );
-  const isSlackChannelEnabled = isChannelNotificationSettingEnabled(
-    settings.slack
-  );
-  const isTeamsChannelEnabled = isChannelNotificationSettingEnabled(
-    settings.teams
-  );
-  const isWebPushChannelEnabled = isChannelNotificationSettingEnabled(
+  const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
+  const isSlackChannelEnabled = isNotificationChannelEnabled(settings.slack);
+  const isTeamsChannelEnabled = isNotificationChannelEnabled(settings.teams);
+  const isWebPushChannelEnabled = isNotificationChannelEnabled(
     settings.webPush
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       email: {
         thread: checked,
         textMention: checked,
@@ -38,7 +32,7 @@ export function ChannelsNotificationsSettings() {
   };
 
   const handleChangeSlackChannel = (checked: boolean): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       slack: {
         thread: checked,
         textMention: checked,
@@ -48,7 +42,7 @@ export function ChannelsNotificationsSettings() {
   };
 
   const handleChangeTeamsChannel = (checked: boolean): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       teams: {
         thread: checked,
         textMention: checked,
@@ -58,7 +52,7 @@ export function ChannelsNotificationsSettings() {
   };
 
   const handleChangeWebPushChannel = (checked: boolean): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       webPush: {
         thread: checked,
         textMention: checked,
@@ -68,13 +62,13 @@ export function ChannelsNotificationsSettings() {
   };
 
   const handleChangeEmailChannelThreadKind = (checked: boolean): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       email: { thread: checked },
     });
   };
 
   const handleChangeEmailChannelTextMentionKind = (checked: boolean): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       email: {
         textMention: checked,
       },
@@ -84,7 +78,7 @@ export function ChannelsNotificationsSettings() {
   const handleChangeEmailChannel$fileUploadedKind = (
     checked: boolean
   ): void => {
-    updateChannelNotificationSettings({
+    updateNotificationSettings({
       email: {
         $fileUploaded: checked,
       },

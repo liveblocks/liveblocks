@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Collaborative Rich Text Editor (TipTap)
+# Notification Settings Experience
 
 <p>
   <a href="https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap">
@@ -32,7 +32,7 @@ As users edit the document, changes will be automatically persisted and syncedâ€
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-tiptap --api-key
+npx create-liveblocks-app@latest --example nextjs-notification-settings --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling you to automatically get your API key from your [liveblocks.io](https://liveblocks.io) account.
