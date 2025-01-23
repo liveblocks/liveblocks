@@ -21,10 +21,6 @@ import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
-  ChannelsNotificationSettings,
-  PartialChannelsNotificationSettings,
-} from "./protocol/UserNotificationSettings";
-import type {
   BaseMetadata,
   ThreadData,
   ThreadDeleteInfo,
@@ -33,6 +29,10 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type {
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
 import type {
   OpaqueRoom,
   OptionalTupleUnless,
@@ -265,29 +265,30 @@ export type NotificationsApi<M extends BaseMetadata> = {
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
   /**
-   * Gets channels notifications settings for a user for a project.
+   * Gets notifications settings for a user for a project.
    *
    * @example
-   * const channelsNotificationSettings = await client.getChannelsNotificationSettings();
+   * const notificationSettings = await client.getNotificationSettings();
    */
-  getChannelsNotificationSettings(options?: {
+  getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<ChannelsNotificationSettings>;
+  }): Promise<UserNotificationSettings>;
 
   /**
-   * Update channels notifications for a user for a project.
+   * Update notifications settings for a user for a project.
    *
    * @example
-   * await client.updateChannelsNotificationSettings({
+   * await client.updateNotificationSettings({
    *  email: {
    *    thread: true,
    *    textMention: false,
+   *    $customKind1: true,
    *  }
    * })
    */
-  updateChannelsNotificationSettings(
-    settings: PartialChannelsNotificationSettings
-  ): Promise<ChannelsNotificationSettings>;
+  updateNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings>;
 };
 
 /**
@@ -847,10 +848,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       deleteInboxNotification: httpClient.deleteInboxNotification,
 
       // Public channel notification settings API
-      getChannelsNotificationSettings:
-        httpClient.getChannelsNotificationSettings,
-      updateChannelsNotificationSettings:
-        httpClient.updateChannelsNotificationSettings,
+      getNotificationSettings: httpClient.getUserNotificationSettings,
+      updateNotificationSettings: httpClient.updateUserNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {
