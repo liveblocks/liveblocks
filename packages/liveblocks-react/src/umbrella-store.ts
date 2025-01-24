@@ -843,16 +843,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   //   Mutate inputs...                                             ...observe clean/consistent output!
   //
-  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID       (Part 1)
+  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID           (Part 1)
   //           /                           |                 |
-  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications       (Part 1)
+  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications           (Part 1)
   //          \                          | |                 | |    & notifications by ID
   //         | \                         | |      Apply      | |
-  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Room Notification Settings   (Part 2)
   //          \                          |        Updates    |  |
-  //           `------- etc etc ---------+                   |  +--> History Versions         (Part 3)
+  //           `------- etc etc ---------+                   |  +--> History Versions             (Part 3)
   //                       ^                                 |
-  //                       |                                 +-----> Channels Notification Settings (Part 4)
+  //                       |                                 +-----> User Notification Settings   (Part 4)
   //                       |
   //                       |
   //                       |                        ^                  ^
