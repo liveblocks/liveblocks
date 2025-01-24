@@ -383,6 +383,12 @@
   }
 }
 
+.lb-dropdown-separator {
+  block-size: 1px;
+  margin: $lb-elevation-padding calc(-1 * $lb-elevation-padding);
+  background: var(--lb-foreground-subtle);
+}
+
 .lb-dropdown-item {
   :where(.lb-icon-container) {
     margin-inline-start: calc(-0.125 * var(--lb-spacing));

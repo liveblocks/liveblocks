@@ -70,16 +70,16 @@ export interface AiToolbarProps
   suggestions?: ReactNode | ComponentType<PropsWithChildren>;
 }
 
-interface AiToolbarDropdownGroupProps extends ComponentProps<"div"> {
-  label: string;
-}
+type AiToolbarDropdownSeparatorProps = ComponentProps<"div">;
 
 interface AiToolbarDropdownItemProps
   extends ComponentProps<typeof Command.Item> {
   icon?: ReactNode;
 }
 
-type AiToolbarSuggestionsGroupProps = AiToolbarDropdownGroupProps;
+type AiToolbarSuggestionsSeparatorProps = AiToolbarDropdownSeparatorProps;
+
+type AiToolbarSuggestionsLabelProps = ComponentProps<"span">;
 
 interface AiToolbarSuggestionProps extends ComponentProps<"div"> {
   prompt?: string;
@@ -138,35 +138,33 @@ function tiptapFloating(editor: Editor | null): Middleware {
   };
 }
 
-const AiToolbarDropdownGroup = forwardRef<
+const AiToolbarDropdownSeparator = forwardRef<
   HTMLDivElement,
-  AiToolbarDropdownGroupProps
->(({ children, label, ...props }, forwardedRef) => {
+  AiToolbarDropdownSeparatorProps
+>(({ className, ...props }, forwardedRef) => {
   return (
-    <Command.Group
-      heading={<span className="lb-dropdown-label">{label}</span>}
+    <Command.Separator
+      className={classNames("lb-dropdown-separator", className)}
       {...props}
       ref={forwardedRef}
-    >
-      {children}
-    </Command.Group>
+    />
   );
 });
 
-const AiToolbarSuggestionsGroup = forwardRef<
+const AiToolbarSuggestionsSeparator = forwardRef<
   HTMLDivElement,
-  AiToolbarSuggestionsGroupProps
+  AiToolbarSuggestionsSeparatorProps
 >((props, forwardedRef) => {
-  return <AiToolbarDropdownGroup ref={forwardedRef} {...props} />;
+  return <AiToolbarDropdownSeparator ref={forwardedRef} {...props} />;
 });
 
 const AiToolbarDropdownItem = forwardRef<
   HTMLDivElement,
   AiToolbarDropdownItemProps
->(({ children, onSelect, icon, ...props }, forwardedRef) => {
+>(({ children, onSelect, icon, className, ...props }, forwardedRef) => {
   return (
     <Command.Item
-      className="lb-dropdown-item"
+      className={classNames("lb-dropdown-item", className)}
       onSelect={onSelect}
       {...props}
       ref={forwardedRef}
@@ -176,6 +174,21 @@ const AiToolbarDropdownItem = forwardRef<
         <span className="lb-dropdown-item-label">{children}</span>
       ) : null}
     </Command.Item>
+  );
+});
+
+const AiToolbarSuggestionsLabel = forwardRef<
+  HTMLDivElement,
+  AiToolbarSuggestionsLabelProps
+>(({ children, className, ...props }, forwardedRef) => {
+  return (
+    <span
+      ref={forwardedRef}
+      className={classNames("lb-dropdown-label", className)}
+      {...props}
+    >
+      {children}
+    </span>
   );
 });
 
@@ -561,46 +574,43 @@ function AiToolbarContainer({
 
 const defaultSuggestions = (
   <>
-    <AiToolbarSuggestionsGroup label="Modify">
-      <AiToolbarSuggestion
-        icon={<EditIcon />}
-        prompt="Improve the quality of the text"
-      >
-        Improve writing
-      </AiToolbarSuggestion>
-      <AiToolbarSuggestion
-        icon={<CheckIcon />}
-        prompt="Fix spelling & grammar errors in the text"
-      >
-        Fix mistakes
-      </AiToolbarSuggestion>
-      <AiToolbarSuggestion
-        icon={<ShortenIcon />}
-        prompt="Shorten the text, simplifying it"
-      >
-        Simplify
-      </AiToolbarSuggestion>
-      <AiToolbarSuggestion
-        icon={<LengthenIcon />}
-        prompt="Lengthen the text, going into more detail"
-      >
-        Add more detail
-      </AiToolbarSuggestion>
-      <AiToolbarSuggestion
-        icon={<SparklesTextIcon />}
-        prompt="Continue writing from the text's end"
-      >
-        Continue writing
-      </AiToolbarSuggestion>
-    </AiToolbarSuggestionsGroup>
-    <AiToolbarSuggestionsGroup label="Other">
-      <AiToolbarSuggestion
-        icon={<QuestionMarkIcon />}
-        prompt="Explain what the text is about"
-      >
-        Explain
-      </AiToolbarSuggestion>
-    </AiToolbarSuggestionsGroup>
+    <AiToolbarSuggestion
+      icon={<EditIcon />}
+      prompt="Improve the quality of the text"
+    >
+      Improve writing
+    </AiToolbarSuggestion>
+    <AiToolbarSuggestion
+      icon={<CheckIcon />}
+      prompt="Fix spelling & grammar errors in the text"
+    >
+      Fix mistakes
+    </AiToolbarSuggestion>
+    <AiToolbarSuggestion
+      icon={<ShortenIcon />}
+      prompt="Shorten the text, simplifying it"
+    >
+      Simplify
+    </AiToolbarSuggestion>
+    <AiToolbarSuggestion
+      icon={<LengthenIcon />}
+      prompt="Lengthen the text, going into more detail"
+    >
+      Add more detail
+    </AiToolbarSuggestion>
+    <AiToolbarSuggestionsSeparator />
+    <AiToolbarSuggestion
+      icon={<SparklesTextIcon />}
+      prompt="Continue writing from the text's end"
+    >
+      Continue writing
+    </AiToolbarSuggestion>
+    <AiToolbarSuggestion
+      icon={<QuestionMarkIcon />}
+      prompt="Explain what the text is about"
+    >
+      Explain
+    </AiToolbarSuggestion>
   </>
 );
 
@@ -808,15 +818,22 @@ export const AiToolbar = Object.assign(
     /**
      * @beta
      *
-     * A group of prompt suggestions displayed in the AI toolbar.
+     * A prompt suggestion displayed in the AI toolbar.
      */
-    SuggestionsGroup: AiToolbarSuggestionsGroup,
+    Suggestion: AiToolbarSuggestion,
 
     /**
      * @beta
      *
-     * A prompt suggestion displayed in the AI toolbar.
+     * A label to describe a group of prompt suggestions displayed in the AI toolbar.
      */
-    Suggestion: AiToolbarSuggestion,
+    SuggestionsLabel: AiToolbarSuggestionsLabel,
+
+    /**
+     * @beta
+     *
+     * A separator between groups of prompt suggestions displayed in the AI toolbar.
+     */
+    SuggestionsSeparator: AiToolbarSuggestionsSeparator,
   }
 );
