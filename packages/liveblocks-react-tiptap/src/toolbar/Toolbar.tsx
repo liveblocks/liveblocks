@@ -695,7 +695,7 @@ function ToolbarSectionAi() {
             onClick={() =>
               (
                 editor.chain().focus() as ExtendedChainedCommands<"askAi">
-              ).askAi("Explain")
+              ).askAi("Explain what the text is about")
             }
           >
             Explain

@@ -27,6 +27,7 @@ export {
   SendIcon as Send,
   ShortenIcon as Shorten,
   SparklesIcon as Sparkles,
+  SparklesTextIcon as SparklesText,
   StrikethroughIcon as Strikethrough,
   TextIcon as Text,
   TranslateIcon as Translate,

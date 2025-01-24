@@ -20,6 +20,7 @@ import {
   ShortcutTooltip,
   ShortenIcon,
   SparklesIcon,
+  SparklesTextIcon,
   TooltipProvider,
   UndoIcon,
   useRefs,
@@ -561,19 +562,42 @@ function AiToolbarContainer({
 const defaultSuggestions = (
   <>
     <AiToolbarSuggestionsGroup label="Modify">
-      <AiToolbarSuggestion icon={<EditIcon />}>
+      <AiToolbarSuggestion
+        icon={<EditIcon />}
+        prompt="Improve the quality of the text"
+      >
         Improve writing
       </AiToolbarSuggestion>
-      <AiToolbarSuggestion icon={<CheckIcon />}>
+      <AiToolbarSuggestion
+        icon={<CheckIcon />}
+        prompt="Fix spelling & grammar errors in the text"
+      >
         Fix mistakes
       </AiToolbarSuggestion>
-      <AiToolbarSuggestion icon={<ShortenIcon />}>Simplify</AiToolbarSuggestion>
-      <AiToolbarSuggestion icon={<LengthenIcon />}>
+      <AiToolbarSuggestion
+        icon={<ShortenIcon />}
+        prompt="Shorten the text, simplifying it"
+      >
+        Simplify
+      </AiToolbarSuggestion>
+      <AiToolbarSuggestion
+        icon={<LengthenIcon />}
+        prompt="Lengthen the text, going into more detail"
+      >
         Add more detail
       </AiToolbarSuggestion>
+      <AiToolbarSuggestion
+        icon={<SparklesTextIcon />}
+        prompt="Continue writing from the text's end"
+      >
+        Continue writing
+      </AiToolbarSuggestion>
     </AiToolbarSuggestionsGroup>
-    <AiToolbarSuggestionsGroup label="Generate">
-      <AiToolbarSuggestion icon={<QuestionMarkIcon />}>
+    <AiToolbarSuggestionsGroup label="Other">
+      <AiToolbarSuggestion
+        icon={<QuestionMarkIcon />}
+        prompt="Explain what the text is about"
+      >
         Explain
       </AiToolbarSuggestion>
     </AiToolbarSuggestionsGroup>
