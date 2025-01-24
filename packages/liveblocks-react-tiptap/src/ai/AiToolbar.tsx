@@ -62,7 +62,7 @@ import { DEFAULT_STATE, isAiToolbarDiffOutput } from "./AiExtension";
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
 export interface AiToolbarProps
-  extends Omit<ComponentProps<"div">, "value" | "defaultValue"> {
+  extends Omit<ComponentProps<"div">, "value" | "defaultValue" | "children"> {
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
@@ -580,6 +580,11 @@ const defaultSuggestions = (
   </>
 );
 
+/**
+ * @beta
+ *
+ * A floating AI toolbar attached to the editor.
+ */
 export const AiToolbar = Object.assign(
   forwardRef<HTMLDivElement, AiToolbarProps>(
     (
@@ -776,7 +781,18 @@ export const AiToolbar = Object.assign(
     }
   ),
   {
+    /**
+     * @beta
+     *
+     * A group of prompt suggestions displayed in the AI toolbar.
+     */
     SuggestionsGroup: AiToolbarSuggestionsGroup,
+
+    /**
+     * @beta
+     *
+     * A prompt suggestion displayed in the AI toolbar.
+     */
     Suggestion: AiToolbarSuggestion,
   }
 );

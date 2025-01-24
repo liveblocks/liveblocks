@@ -28,6 +28,9 @@ export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
+/**
+ * @beta
+ */
 export type ResolveAiPromptArgs = {
   prompt: string;
 
