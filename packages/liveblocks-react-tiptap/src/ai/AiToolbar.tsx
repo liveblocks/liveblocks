@@ -90,8 +90,6 @@ interface AiToolbarContext {
   toolbarRef: RefObject<HTMLDivElement>;
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
-  selectedDropdownValue: string;
-  setSelectedDropdownValue: (value: string) => void;
 }
 
 const AiToolbarContext = createContext<AiToolbarContext | null>(null);
@@ -206,35 +204,8 @@ const AiToolbarSuggestion = forwardRef<
 
 function AiToolbarReviewingSuggestions() {
   const editor = useCurrentEditor("ReviewingSuggestions", "AiToolbar");
-  const { state, dropdownRef, setSelectedDropdownValue } =
-    useAiToolbarContext();
+  const { state } = useAiToolbarContext();
   const { output } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
-
-  // Select the first dropdown item if no item is already selected
-  useEffect(() => {
-    if (!dropdownRef.current) {
-      return;
-    }
-
-    const selectedDropdownItem = dropdownRef.current.querySelector(
-      "[role='option'][data-selected='true']"
-    );
-
-    if (selectedDropdownItem) {
-      return;
-    }
-
-    const firstDropdownItem =
-      dropdownRef.current.querySelector("[role='option']");
-
-    if (!firstDropdownItem) {
-      return;
-    }
-
-    setSelectedDropdownValue(
-      (firstDropdownItem as HTMLElement).dataset.value ?? ""
-    );
-  }, [dropdownRef, setSelectedDropdownValue]);
 
   if (isAiToolbarDiffOutput(output)) {
     return (
@@ -500,15 +471,11 @@ function AiToolbarContainer({
   state,
   toolbarRef,
   dropdownRef,
-  selectedDropdownValue,
-  setSelectedDropdownValue,
   children,
 }: PropsWithChildren<{
   state: AiToolbarState;
   toolbarRef: RefObject<HTMLDivElement>;
   dropdownRef: RefObject<HTMLDivElement>;
-  selectedDropdownValue: string;
-  setSelectedDropdownValue: (value: string) => void;
 }>) {
   const editor = useCurrentEditor("AiToolbarContainer", "AiToolbar");
   const customPrompt = state.customPrompt;
@@ -553,8 +520,6 @@ function AiToolbarContainer({
         toolbarRef,
         dropdownRef,
         isDropdownHidden,
-        selectedDropdownValue,
-        setSelectedDropdownValue,
       }}
     >
       <div className="lb-tiptap-ai-toolbar-container">
@@ -682,6 +647,31 @@ export const AiToolbar = Object.assign(
       }, [state.phase]);
 
       useEffect(() => {
+        // Reset the selected dropdown value when the dropdown is closed
+        if (state.phase === "closed") {
+          setSelectedDropdownValue("");
+
+          return;
+        }
+
+        // Otherwise, make sure a dropdown item is selected when moving between phases
+        const selectedDropdownItem = dropdownRef.current?.querySelector(
+          "[role='option'][data-selected='true']"
+        );
+
+        if (selectedDropdownItem) {
+          return;
+        }
+
+        const firstDropdownItem =
+          dropdownRef.current?.querySelector("[role='option']");
+
+        setSelectedDropdownValue(
+          (firstDropdownItem as HTMLElement | null)?.dataset.value ?? ""
+        );
+      }, [state.phase, dropdownRef, setSelectedDropdownValue]);
+
+      useEffect(() => {
         if (!editor) {
           return;
         }
@@ -771,8 +761,6 @@ export const AiToolbar = Object.assign(
                 state={state}
                 dropdownRef={dropdownRef}
                 toolbarRef={toolbarRef}
-                selectedDropdownValue={selectedDropdownValue}
-                setSelectedDropdownValue={setSelectedDropdownValue}
               >
                 {typeof Suggestions === "function" ? (
                   <Suggestions children={defaultSuggestions} />
