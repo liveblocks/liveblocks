@@ -1648,7 +1648,7 @@ export class Liveblocks {
    * Get notification settings for a user for a project.
    * @param params.userId The user ID to get the notifications settings for.
    */
-  public async getsNotificationSettings(params: {
+  public async getNotificationSettings(params: {
     userId: string;
   }): Promise<UserNotificationSettings> {
     const { userId } = params;

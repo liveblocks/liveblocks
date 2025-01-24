@@ -1408,12 +1408,12 @@ describe("client", () => {
 
     const client = new Liveblocks({ secret: "sk_xxx" });
 
-    await expect(client.getsNotificationSettings({ userId })).resolves.toEqual(
+    await expect(client.getNotificationSettings({ userId })).resolves.toEqual(
       settings
     );
   });
 
-  test("should throw a LiveblocksError when getsNotificationSettings receives an error response", async () => {
+  test("should throw a LiveblocksError when getNotificationSettings receives an error response", async () => {
     const userId = "dracula";
     const error = {
       error: "USER_NOT_FOUND",
@@ -1434,7 +1434,7 @@ describe("client", () => {
     // This should throw a LiveblocksError
     try {
       // Attempt to get, which should fail and throw an error.
-      await client.getsNotificationSettings({ userId });
+      await client.getNotificationSettings({ userId });
 
       // If it doesn't throw, fail the test.
       expect(true).toBe(false);
