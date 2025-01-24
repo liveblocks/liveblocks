@@ -4,7 +4,8 @@ import { expect, test } from "@playwright/test";
 import { genRoomId, getJson, preparePage, waitForJson } from "../utils";
 
 const SLOW = { timeout: 20_000 };
-const TEST_URL = "http://localhost:3007/notification-settings/with-suspense";
+const TEST_URL =
+  "http://localhost:3007/user-notification-settings/with-suspense";
 
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const skipOnCI = process.env.CI ? test.skip : test;
@@ -46,7 +47,7 @@ test.describe("User notification settings", () => {
       await expect(page.locator(`#${channel}ThreadKind`)).toContainText(
         old1 === "Yes" ? "No" : "Yes"
       );
-      await expect(page.locator(`#${channel}ThreadKind`)).toContainText(
+      await expect(page.locator(`#${channel}TextMentionKind`)).toContainText(
         old2 === "Yes" ? "No" : "Yes"
       );
     }

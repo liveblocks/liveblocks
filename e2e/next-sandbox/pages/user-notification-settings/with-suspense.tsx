@@ -108,7 +108,11 @@ function Channel({
             id={name + "TextMentionKind"}
             name="Text Mention"
             value={
-              thread === undefined ? "undefined" : textMention ? "Yes" : "No"
+              textMention === undefined
+                ? "undefined"
+                : textMention
+                  ? "Yes"
+                  : "No"
             }
           />
         </tbody>

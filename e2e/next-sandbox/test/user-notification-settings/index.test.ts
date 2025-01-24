@@ -45,7 +45,7 @@ test.describe("User notification settings", () => {
       await expect(page.locator(`#${channel}ThreadKind`)).toContainText(
         old1 === "Yes" ? "No" : "Yes"
       );
-      await expect(page.locator(`#${channel}ThreadKind`)).toContainText(
+      await expect(page.locator(`#${channel}TextMentionKind`)).toContainText(
         old2 === "Yes" ? "No" : "Yes"
       );
     }
