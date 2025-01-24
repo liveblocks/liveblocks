@@ -43,6 +43,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -89,6 +90,8 @@ interface AiToolbarContext {
   toolbarRef: RefObject<HTMLDivElement>;
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
+  selectedDropdownValue: string;
+  setSelectedDropdownValue: (value: string) => void;
 }
 
 const AiToolbarContext = createContext<AiToolbarContext | null>(null);
@@ -203,8 +206,35 @@ const AiToolbarSuggestion = forwardRef<
 
 function AiToolbarReviewingSuggestions() {
   const editor = useCurrentEditor("ReviewingSuggestions", "AiToolbar");
-  const { state } = useAiToolbarContext();
+  const { state, dropdownRef, setSelectedDropdownValue } =
+    useAiToolbarContext();
   const { output } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
+
+  // Select the first dropdown item if no item is already selected
+  useEffect(() => {
+    if (!dropdownRef.current) {
+      return;
+    }
+
+    const selectedDropdownItem = dropdownRef.current.querySelector(
+      "[role='option'][data-selected='true']"
+    );
+
+    if (selectedDropdownItem) {
+      return;
+    }
+
+    const firstDropdownItem =
+      dropdownRef.current.querySelector("[role='option']");
+
+    if (!firstDropdownItem) {
+      return;
+    }
+
+    setSelectedDropdownValue(
+      (firstDropdownItem as HTMLElement).dataset.value ?? ""
+    );
+  }, [dropdownRef, setSelectedDropdownValue]);
 
   if (isAiToolbarDiffOutput(output)) {
     return (
@@ -470,11 +500,15 @@ function AiToolbarContainer({
   state,
   toolbarRef,
   dropdownRef,
+  selectedDropdownValue,
+  setSelectedDropdownValue,
   children,
 }: PropsWithChildren<{
   state: AiToolbarState;
   toolbarRef: RefObject<HTMLDivElement>;
   dropdownRef: RefObject<HTMLDivElement>;
+  selectedDropdownValue: string;
+  setSelectedDropdownValue: (value: string) => void;
 }>) {
   const editor = useCurrentEditor("AiToolbarContainer", "AiToolbar");
   const customPrompt = state.customPrompt;
@@ -514,7 +548,14 @@ function AiToolbarContainer({
 
   return (
     <AiToolbarContext.Provider
-      value={{ state, toolbarRef, dropdownRef, isDropdownHidden }}
+      value={{
+        state,
+        toolbarRef,
+        dropdownRef,
+        isDropdownHidden,
+        selectedDropdownValue,
+        setSelectedDropdownValue,
+      }}
     >
       <div className="lb-tiptap-ai-toolbar-container">
         <div className="lb-elevation lb-tiptap-ai-toolbar">
@@ -631,6 +672,14 @@ export const AiToolbar = Object.assign(
       const toolbarRef = useRef<HTMLDivElement>(null);
       const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
       const dropdownRef = useRef<HTMLDivElement>(null);
+      const [selectedDropdownValue, setSelectedDropdownValue] = useState("");
+
+      // Reset the selected dropdown value when the toolbar is closed
+      useEffect(() => {
+        if (state.phase === "closed") {
+          setSelectedDropdownValue("");
+        }
+      }, [state.phase]);
 
       useEffect(() => {
         if (!editor) {
@@ -714,12 +763,16 @@ export const AiToolbar = Object.assign(
                   ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
                   : "translate3d(0, -200%, 0)",
               }}
+              value={selectedDropdownValue}
+              onValueChange={setSelectedDropdownValue}
               {...props}
             >
               <AiToolbarContainer
                 state={state}
                 dropdownRef={dropdownRef}
                 toolbarRef={toolbarRef}
+                selectedDropdownValue={selectedDropdownValue}
+                setSelectedDropdownValue={setSelectedDropdownValue}
               >
                 {typeof Suggestions === "function" ? (
                   <Suggestions children={defaultSuggestions} />
