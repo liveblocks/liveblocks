@@ -13,7 +13,7 @@ import { useExampleUserId } from "./use-example-user-id";
 export default function Page() {
   const userId = useExampleUserId();
   const roomId = useExampleRoomId(
-    "liveblocks:channel-notifications-settings-examples:nextjs"
+    "liveblocks:notifications-settings-examples:nextjs"
   );
 
   return (
