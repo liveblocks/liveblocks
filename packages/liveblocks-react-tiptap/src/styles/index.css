@@ -372,7 +372,6 @@
   z-index: auto;
   display: grid;
   margin-block: calc(-1 * var(--lb-tiptap-ai-toolbar-padding));
-  line-height: $lb-button-size;
 
   &::before {
     /* The space is important when handling new lines */
@@ -388,7 +387,10 @@
   box-sizing: inherit;
   inline-size: 100%;
   min-inline-size: 0;
-  padding: var(--lb-tiptap-ai-toolbar-padding);
+  padding: calc(
+      var(--lb-tiptap-ai-toolbar-padding) + ($lb-button-size - 1lh) / 2
+    )
+    var(--lb-tiptap-ai-toolbar-padding);
   font: inherit;
   letter-spacing: inherit;
   white-space: pre-wrap;
