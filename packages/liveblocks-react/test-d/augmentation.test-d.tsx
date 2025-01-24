@@ -994,7 +994,7 @@ declare global {
 }
 
 // ---------------------------------------------------------
-// the usesNotificationSettings() hook
+// the useNotificationSettings() hook
 {
   const [{ isLoading, error, settings }, update] =
     classic.useNotificationSettings();
@@ -1003,7 +1003,7 @@ declare global {
   expectType<UserNotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
-// the usesNotificationSettings() hook suspense
+// the useNotificationSettings() hook suspense
 {
   const [{ isLoading, error, settings }, update] =
     suspense.useNotificationSettings();
