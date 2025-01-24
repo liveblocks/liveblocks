@@ -539,13 +539,13 @@
 }
 
 .lb-tiptap-ai-toolbar-thinking {
-  display: flex;
-  flex: 1 0 auto;
-  align-items: center;
+  @include truncate;
+
+  align-self: center;
   min-inline-size: 0;
+  max-inline-size: fit-content;
   padding-inline: var(--lb-tiptap-ai-toolbar-padding);
   color: var(--lb-foreground-moderate);
-  cursor: wait;
   user-select: none;
   animation: lb-animation-shimmer 8s linear infinite;
 }
