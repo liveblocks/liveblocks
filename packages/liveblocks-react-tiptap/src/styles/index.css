@@ -436,6 +436,8 @@
   pointer-events: none;
   transition-duration: 1s;
   transition-property: opacity;
+  animation: lb-animation-ai-toolbar-halo-scale-in 1s
+    cubic-bezier(0.165, 0.84, 0.44, 1) both;
 
   &:where(:not([data-active])) {
     opacity: 0.5;
@@ -454,7 +456,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    opacity: 0.25;
+    opacity: 0.175;
     animation-timing-function: cubic-bezier(0.455, 0.03, 0.515, 0.955);
     animation-iteration-count: infinite;
   }
@@ -488,8 +490,7 @@
       transparent 80%
     );
     background-position: top left;
-    background-size: 800px 100%;
-    background-repeat: space;
+    background-size: 75% 100%;
     animation-name: lb-animation-ai-toolbar-halo-horizontal;
     animation-duration: 6s;
     animation-delay: -2s;
@@ -498,8 +499,6 @@
 }
 
 .lb-tiptap-ai-toolbar-halo-vertical {
-  opacity: 0;
-
   &::before {
     inset-block-start: -50%;
     inline-size: 100%;
@@ -613,6 +612,16 @@
 /*************************************
  *            Animations             *
  *************************************/
+
+@keyframes lb-animation-ai-toolbar-halo-scale-in {
+  from {
+    transform: scale(0.5);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
 
 @keyframes lb-animation-ai-toolbar-halo-horizontal {
   from {
