@@ -547,9 +547,9 @@
   min-inline-size: 0;
   max-inline-size: fit-content;
   padding-inline: var(--lb-tiptap-ai-toolbar-padding);
-  color: var(--lb-foreground-moderate);
+  color: var(--lb-foreground-tertiary);
   user-select: none;
-  animation: lb-animation-shimmer 8s linear infinite;
+  animation: lb-animation-ai-toolbar-shimmer 8s linear infinite;
 }
 
 .lb-tiptap-ai-toolbar-dropdown {
@@ -614,6 +614,28 @@
 /*************************************
  *            Animations             *
  *************************************/
+
+@keyframes lb-animation-ai-toolbar-shimmer {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      #000 8%,
+      rgb(0 0 0 / 50%) 20%,
+      rgb(0 0 0 / 50%) 80%,
+      #000 92%
+    );
+    mask-size: 400% 100%;
+  }
+
+  from {
+    mask-position: 200% 0;
+  }
+
+  to {
+    mask-position: -200% 0;
+  }
+}
 
 @keyframes lb-animation-ai-toolbar-halo-scale-in {
   from {
