@@ -296,9 +296,31 @@
   color: var(--lb-foreground);
 }
 
+.lb-tiptap-ai-toolbar-output-container,
+.lb-tiptap-ai-toolbar-content {
+  max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
+}
+
+.lb-tiptap-ai-toolbar-content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+  outline: none;
+}
+
 .lb-tiptap-ai-toolbar-output-container {
+  --lb-line-height-crop: calc(1lh - 1em) / -2;
+
   display: flex;
   flex-direction: column;
+  padding: calc(var(--lb-spacing) + var(--lb-line-height-crop))
+    var(--lb-spacing);
   border-block-end: 1px solid var(--lb-foreground-subtle);
 }
 
@@ -308,55 +330,6 @@
     display: inline-block;
     vertical-align: middle;
     user-select: none;
-  }
-
-  /* stylelint-disable-next-line selector-class-pattern */
-  :where(.collaboration-cursor__label) {
-    display: flex;
-    gap: 0.1875em;
-    align-items: center;
-
-    :where(.lb-icon-container) {
-      margin-inline-start: -0.125em;
-
-      &,
-      & svg {
-        inline-size: 1em;
-        block-size: 1em;
-      }
-    }
-  }
-}
-
-.lb-tiptap-ai-toolbar-content {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  inline-size: 100%;
-  min-inline-size: 0;
-  outline: none;
-}
-
-.lb-tiptap-ai-toolbar-output-container,
-.lb-tiptap-ai-toolbar-content {
-  max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
-  padding: var(--lb-tiptap-ai-toolbar-padding);
-
-  /* overflow-block: auto; doesn't work as expected */
-  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
-  overflow-y: auto;
-}
-
-.lb-tiptap-ai-toolbar-custom-prompt-container {
-  position: relative;
-  z-index: auto;
-  display: grid;
-  margin-block: calc(-1 * var(--lb-tiptap-ai-toolbar-padding));
-  line-height: $lb-button-size;
-
-  &::before {
-    /* The space is important when handling new lines */
-    content: attr(data-value) " ";
-    visibility: hidden;
   }
 }
 
@@ -391,6 +364,20 @@
 
   &::placeholder {
     color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-tiptap-ai-toolbar-custom-prompt-container {
+  position: relative;
+  z-index: auto;
+  display: grid;
+  margin-block: calc(-1 * var(--lb-tiptap-ai-toolbar-padding));
+  line-height: $lb-button-size;
+
+  &::before {
+    /* The space is important when handling new lines */
+    content: attr(data-value) " ";
+    visibility: hidden;
   }
 }
 
