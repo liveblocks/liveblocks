@@ -275,9 +275,9 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
     }
 
     const store = config(
-      (args) => {
+      (...args) => {
         const { liveblocks: _, ...oldState } = get();
-        set(args);
+        set(...args);
         const { liveblocks: __, ...newState } = get();
 
         if (maybeRoom) {
