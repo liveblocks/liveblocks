@@ -12,7 +12,6 @@ import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./Toolbar";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
-import VersionsDialog from "../version-history-dialog";
 import { SettingsButton } from "../settings-button";
 import { TriggerCustomNotificationButton } from "../trigger-custom-notification-button";
 
@@ -37,7 +36,6 @@ export default function TiptapEditor({ userId }: { userId: string | null }) {
   return (
     <div className="relative min-h-screen flex flex-col">
       <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
-        <VersionsDialog editor={editor} />
         <TriggerCustomNotificationButton />
         <NotificationsPopover />
         <SettingsButton userId={userId} />
