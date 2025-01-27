@@ -23,6 +23,9 @@ export const {
       session.user.info = userInfo;
       return session;
     },
+    authorized: async ({ auth }) => {
+      return !!auth;
+    },
   },
   pages: {
     signIn: "/signin",
