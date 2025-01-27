@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
+import { signIn } from "next-auth/react";
 
 import { users } from "@/data/users";
-import { signIn } from "@/auth/manager";
 
 import {
   Select,
@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function SignIn() {
