@@ -277,6 +277,7 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
     const store = config(
       (...args) => {
         const { liveblocks: _, ...oldState } = get();
+        // @ts-expect-error a bit too dynamic to type
         set(...args);
         const { liveblocks: __, ...newState } = get();
 
