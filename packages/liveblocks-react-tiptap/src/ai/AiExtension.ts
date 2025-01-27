@@ -172,13 +172,26 @@ export const AiExtension = Extension.create<
             this.storage.snapshot = undefined;
           } else {
             // 2.b. If the output is not a diff, insert it below the selection
-            tr.insertText(
-              currentState.output.text,
-              // TODO: Insert below as a new paragraph?
-              currentState.range.from,
-              currentState.range.to
+
+            const block =
+              this.editor.schema.nodes.paragraph ||
+              Object.values(this.editor.schema.nodes).find(
+                (node) => node.isBlock
+              );
+
+            if (!block) {
+              throw new Error("Could not insert a new paragraph.");
+            }
+
+            const paragraph = block.create(
+              {},
+              this.editor.schema.text(currentState.output.text)
             );
+
+            tr.insert(this.editor.state.selection.$to.end() + 1, paragraph);
             view.dispatch(tr);
+            // Prevent TipTap from dispatching this transaction, because we already did. (this is a hack)
+            tr.setMeta("preventDispatch", true);
           }
 
           // 3. Unblock the editor
@@ -233,6 +246,8 @@ export const AiExtension = Extension.create<
             );
             if (revertTr) {
               view.dispatch(revertTr);
+              // Prevent TipTap from dispatching this transaction, because we already did. (this is a hack)
+              tr.setMeta("preventDispatch", true);
             }
           }
 
@@ -242,9 +257,6 @@ export const AiExtension = Extension.create<
 
           // 4. Set to "closed" phase
           this.storage.state = { phase: "closed" };
-
-          // Prevents TipTap from dispatching this transaction, because we already did.
-          tr.setMeta("preventDispatch", true);
 
           return true;
         },
@@ -500,7 +512,7 @@ export const AiExtension = Extension.create<
           // 5. Insert the output
           tr.insertText(output.text, selection.from, selection.to);
           view.dispatch(tr);
-          // prevent TipTap from dispatching this transaction, because we already did. (this is a hack)
+          // Prevent Tiptap from dispatching this transaction, because we already did. (this is a hack)
           tr.setMeta("preventDispatch", true);
 
           // 6. Show the diff
