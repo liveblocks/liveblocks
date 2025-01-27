@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers";
 
 import "./globals.css";
+import { Shell } from "./_components/shell";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,9 +38,7 @@ export default async function RootLayout({
       </head>
       <body className={inter.className}>
         <Providers session={session}>
-          <main className="text-base bg-background/95 text-foreground">
-            {children}
-          </main>
+          <Shell>{children}</Shell>
         </Providers>
         <Toaster />
       </body>

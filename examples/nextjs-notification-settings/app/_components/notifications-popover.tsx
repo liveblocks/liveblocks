@@ -1,3 +1,5 @@
+"use client";
+
 import { Suspense } from "react";
 import {
   useInboxNotifications,
@@ -10,7 +12,7 @@ import * as Popover from "@radix-ui/react-popover";
 
 import Loading from "../_components/loading";
 
-export default function NotificationsPopover() {
+export function NotificationsPopover() {
   return (
     <Popover.Root>
       <Popover.Trigger

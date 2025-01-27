@@ -4,7 +4,7 @@ import { UserNotificationsSettings } from "./_components/user-notifications-sett
 
 export default function SettingsPage() {
   return (
-    <div className="flex flex-col w-full items-center justify-center h-screen">
+    <div className="flex flex-col w-full items-center justify-center h-full">
       <UserNotificationsSettings />
     </div>
   );
