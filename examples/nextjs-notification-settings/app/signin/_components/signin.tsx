@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { signIn } from "next-auth/react";
 
 import { users } from "@/data/users";
-
+import { getInitials } from "@/utils/get-initials";
 import {
   Select,
   SelectContent,
@@ -38,7 +38,7 @@ export function SignIn() {
               <div className="flex flex-row items-center gap-1">
                 <Avatar className="size-6">
                   <AvatarImage src={item.picture} alt={item.title} />
-                  <AvatarFallback>{item.title.slice(0, 2)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(item.title)}</AvatarFallback>
                 </Avatar>
                 <span>{item.title}</span>
               </div>
