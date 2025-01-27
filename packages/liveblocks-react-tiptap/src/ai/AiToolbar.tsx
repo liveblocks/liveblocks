@@ -2,8 +2,10 @@ import {
   autoUpdate,
   type DetectOverflowOptions,
   hide,
+  limitShift,
   type Middleware,
   offset,
+  shift,
   useFloating,
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
@@ -654,6 +656,16 @@ export const AiToolbar = Object.assign(
             tiptapFloating(editor),
             hide(detectOverflowOptions),
             offset(sideOffset),
+            shift({
+              ...detectOverflowOptions,
+              mainAxis: false,
+              crossAxis: true,
+              limiter: limitShift({
+                offset: ({ rects }) => ({
+                  crossAxis: rects.reference.height,
+                }),
+              }),
+            }),
           ],
           whileElementsMounted: (...args) => {
             return autoUpdate(...args, {
