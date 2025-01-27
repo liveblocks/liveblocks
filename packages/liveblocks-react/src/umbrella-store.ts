@@ -399,12 +399,17 @@ export class PaginatedResource {
     }
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
-    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialPageFetch$ = autoRetry(
-      () => this.#fetchPage(/* cursor */ undefined),
-      5,
-      [5000, 5000, 10000, 15000]
-    );
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error.
+    //
+    // We do not want to run this code on the server so if `window` is not defined, we return a resolved promise.
+    const initialPageFetch$ =
+      typeof window !== "undefined"
+        ? autoRetry(
+            () => this.#fetchPage(/* cursor */ undefined),
+            5,
+            [5000, 5000, 10000, 15000]
+          )
+        : Promise.resolve(null);
 
     const promise = usify(initialPageFetch$);
 
@@ -473,12 +478,13 @@ class SinglePageResource {
     }
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
-    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher$ = autoRetry(
-      () => this.#fetchPage(),
-      5,
-      [5000, 5000, 10000, 15000]
-    );
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error.
+    //
+    // We do not want to run this code on the server so if `window` is not defined, we return a resolved promise.
+    const initialFetcher$ =
+      typeof window !== "undefined"
+        ? autoRetry(() => this.#fetchPage(), 5, [5000, 5000, 10000, 15000])
+        : Promise.resolve();
 
     const promise = usify(initialFetcher$);
 
