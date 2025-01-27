@@ -13,6 +13,23 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 4 (2025-01-24)
+
+## v2.16.1
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- `<Toolbar.Button />` and `<Toolbar.Toggle />` now display their `name` visually if `children` and `icon` aren’t set.
+
+## Documentation
+
+- Added missing 409 response to Initialize Storage REST API.
+- Typo fixed in custom notification snippet.
+
+## Contributors
+
+jltimm, ctnicholas, marcbouchenoire
+
 # Week 3 (2025-01-17)
 
 ## v2.16.0
