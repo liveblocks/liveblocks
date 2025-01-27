@@ -1,6 +1,7 @@
 ## vNEXT (not yet published)
 
 - Fix bug in Zustand typing in case the multi-argument form of `set()` is used
+  (thanks [@hans-lizihan](https://github.com/hans-lizihan))
 
 ## v2.16.1
 
