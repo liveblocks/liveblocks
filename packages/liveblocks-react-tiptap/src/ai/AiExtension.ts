@@ -243,6 +243,9 @@ export const AiExtension = Extension.create<
           // 4. Set to "closed" phase
           this.storage.state = { phase: "closed" };
 
+          // Prevents TipTap from dispatching this transaction, because we already did.
+          tr.setMeta("preventDispatch", true);
+
           return true;
         },
 
@@ -442,7 +445,7 @@ export const AiExtension = Extension.create<
 
       _handleAiToolbarThinkingSuccess:
         (output: AiToolbarOutput) =>
-        ({ commands, view, tr }: CommandProps) => {
+        ({ view, tr }: CommandProps) => {
           const currentState = this.storage.state;
 
           // 1. If NOT in "thinking" phase, do nothing
@@ -497,9 +500,13 @@ export const AiExtension = Extension.create<
           // 5. Insert the output
           tr.insertText(output.text, selection.from, selection.to);
           view.dispatch(tr);
+          // prevent TipTap from dispatching this transaction, because we already did. (this is a hack)
+          tr.setMeta("preventDispatch", true);
 
           // 6. Show the diff
-          (commands as unknown as AiCommands)._showAiToolbarOutputDiff();
+          (
+            this.editor.commands as unknown as AiCommands
+          )._showAiToolbarOutputDiff();
 
           // We moved to the "reviewing" phase, so even if `_showAiToolbarOutputDiff`
           // returns `false` somehow, we still want to return `true`
