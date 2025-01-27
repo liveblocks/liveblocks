@@ -113,3 +113,52 @@ export function compareSelections(
 
   return a.eq(b);
 }
+
+/**
+ * Get the document text up to a maximum length while making sure
+ * the selection is always included.
+ */
+export function getDocumentText(editor: Editor, maxLength = 10_000) {
+  const { selection } = editor.state;
+
+  const lengthSelection = selection.to - selection.from;
+
+  // If the selection is too large, return as much of it as possible
+  // TODO: This won't work for continuations, etc, but is there a better way? Truncating the middle of the selection?
+  if (lengthSelection > maxLength) {
+    return editor.state.doc.textBetween(
+      selection.from,
+      selection.from + maxLength,
+      " "
+    );
+  }
+
+  const lengthBeforeSelection = selection.from;
+  const lengthAfterSelection = editor.state.doc.content.size - selection.to;
+
+  // Compensate when some length is truncated by the document size
+  const availableLengthOutsideSelection =
+    Math.max(0, maxLength - lengthSelection) / 2;
+  const unusedLengthBeforeSelection =
+    availableLengthOutsideSelection > lengthBeforeSelection
+      ? availableLengthOutsideSelection - lengthBeforeSelection
+      : 0;
+  const unusedLengthAfterSelection =
+    availableLengthOutsideSelection > lengthAfterSelection
+      ? availableLengthOutsideSelection - lengthAfterSelection
+      : 0;
+
+  // TODO: Find the closest word boundaries to avoid starting/stopping in the middle of a word
+  return editor.state.doc.textBetween(
+    Math.max(
+      0,
+      selection.from -
+        (availableLengthOutsideSelection + unusedLengthAfterSelection)
+    ),
+    Math.min(
+      selection.to + unusedLengthBeforeSelection,
+      editor.state.doc.content.size
+    ),
+    " "
+  );
+}

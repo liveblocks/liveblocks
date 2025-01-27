@@ -28,6 +28,7 @@ import {
   type LiveblocksExtensionStorage,
   type YSyncPluginState,
 } from "../types";
+import { getDocumentText } from "../utils";
 
 const DEFAULT_AI_NAME = "AI";
 export const DEFAULT_STATE: AiToolbarState = { phase: "closed" };
@@ -316,23 +317,15 @@ export const AiExtension = Extension.create<
         autoRetry(
           async () => {
             await provider?.pause();
-            const { from, to } = this.editor.state.selection.empty
-              ? {
-                  // TODO: this is a hack to get the context around the selection, we need to improve this
-                  from: Math.max(this.editor.state.selection.to - 30, 0),
-                  to: this.editor.state.selection.to,
-                }
-              : this.editor.state.selection;
 
             return this.options.resolveAiPrompt({
               prompt,
-              selectionText: this.editor.state.doc.textBetween(from, to, " "),
-              /*
-               TODO: This needs a maximum to avoid overloading context, for now I've arbitrailiry chosen 3000
-               characters but this will need to be improved, probably using word boundary of some sort (languages can make that tricky)
-               as well as choosing text around the selection, so before/after.
-            */
-              context: this.editor.getText().slice(0, 3_000),
+              selectionText: this.editor.state.doc.textBetween(
+                this.editor.state.selection.from,
+                this.editor.state.selection.to,
+                " "
+              ),
+              context: getDocumentText(this.editor, 3_000),
               signal: abortController.signal,
             });
           },
