@@ -18,8 +18,6 @@ export const authConfig: NextAuthConfig = {
           throw new Error("No credentials or email");
         }
 
-        console.log("credentials", credentials);
-
         const user = getUser(credentials.email);
 
         if (!user) {
