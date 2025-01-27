@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { NotificationsPopover } from "./notifications-popover";
 import { SettingsButton } from "./settings-button";
+import { EditorButton } from "./editor-button";
 
 export function Shell({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export function Shell({ children }: { children?: React.ReactNode }) {
         </div>
         <div className="flex items-center justify-end">
           <NotificationsPopover />
-          {pathname !== "/settings" ? <SettingsButton /> : null}
+          {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
         </div>
       </div>
       {children}
