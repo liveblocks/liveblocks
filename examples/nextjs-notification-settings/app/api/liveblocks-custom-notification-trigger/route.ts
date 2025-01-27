@@ -23,17 +23,6 @@ export async function POST(request: Request) {
       roomId: body.roomId,
     });
 
-    // await liveblocks.updateNotificationSettings({
-    //   userId: `user-${userIndex}`,
-    //   data: {
-    //     email: {
-    //       textMention: true,
-    //       thread: false,
-    //       $fileUploaded: true,
-    //     },
-    //   },
-    // });
-
     return new Response(null, { status: 200 });
   } catch (err) {
     return Response.json(
