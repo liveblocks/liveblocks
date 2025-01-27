@@ -1,6 +1,6 @@
 import type { Relax } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { Content, Range } from "@tiptap/core";
+import type { Content } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
@@ -155,12 +155,6 @@ export type AiToolbarState = Relax<
     }
   | {
       phase: "reviewing";
-
-      /**
-       * The range which the toolbar is attached to.
-       * Because of diffs, the range could be different than the original selection.
-       */
-      range: Range;
 
       /**
        * The custom prompt being written in the toolbar.

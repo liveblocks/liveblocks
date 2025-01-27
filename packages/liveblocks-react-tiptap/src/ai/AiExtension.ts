@@ -1,6 +1,6 @@
 import { autoRetry, HttpError } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { CommandProps, Editor, Range } from "@tiptap/core";
+import type { CommandProps, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
@@ -465,13 +465,10 @@ export const AiExtension = Extension.create<
             return false;
           }
 
-          let range: Range = this.editor.state.selection;
-
           // 2. If this is not a diff, the output will just be in the popup, set to "reviewing" phase with the output
           if (!isAiToolbarDiffOutput(output)) {
             this.storage.state = {
               phase: "reviewing",
-              range,
               customPrompt: "",
               prompt: currentState.prompt,
               output,
@@ -488,29 +485,20 @@ export const AiExtension = Extension.create<
           this.options.doc.gc = false;
           this.storage.snapshot = takeSnapshot(this.options.doc);
 
-          const { selection } = this.editor.state;
-
-          // Update the range to take into account the diff
-          range = {
-            from: selection.from,
-            // TODO: This isn't correct and the toolbar is not positioned correctly
-            to:
-              output.type === "insert"
-                ? selection.to + output.text.length
-                : selection.from + output.text.length,
-          };
-
           // 4. Set to "reviewing" phase with the new range
           this.storage.state = {
             phase: "reviewing",
-            range,
             customPrompt: "",
             prompt: currentState.prompt,
             output,
           };
 
           // 5. Insert the output
-          tr.insertText(output.text, selection.from, selection.to);
+          tr.insertText(
+            output.text,
+            this.editor.state.selection.from,
+            this.editor.state.selection.to
+          );
           view.dispatch(tr);
           // Prevent Tiptap from dispatching this transaction, because we already did. (this is a hack)
           tr.setMeta("preventDispatch", true);
@@ -542,7 +530,6 @@ export const AiExtension = Extension.create<
         // 4. Set to "asking" phase with error
         this.storage.state = {
           phase: "asking",
-          range: currentState.range,
           // If the custom prompt is different than the prompt, reset it
           customPrompt:
             currentState.prompt === currentState.customPrompt
@@ -593,7 +580,7 @@ export const AiExtension = Extension.create<
               return DecorationSet.create(doc, []);
             }
 
-            const { from, to } = this.storage.state.range ?? selection;
+            const { from, to } = selection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-active-selection",

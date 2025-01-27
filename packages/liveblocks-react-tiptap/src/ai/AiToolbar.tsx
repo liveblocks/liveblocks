@@ -641,7 +641,7 @@ export const AiToolbar = Object.assign(
             )?.state;
           },
         }) ?? DEFAULT_STATE;
-      const range = state.range ?? editor?.state.selection;
+      const selection = editor?.state.selection;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
           padding: AI_TOOLBAR_COLLISION_PADDING,
@@ -662,7 +662,7 @@ export const AiToolbar = Object.assign(
           },
         };
       }, [editor, position, sideOffset]);
-      const isOpen = range !== undefined && state.phase !== "closed";
+      const isOpen = selection !== undefined && state.phase !== "closed";
       const {
         refs: { setReference, setFloating },
         strategy,
@@ -715,10 +715,10 @@ export const AiToolbar = Object.assign(
           return;
         }
 
-        if (!range && state.phase !== "closed") {
+        if (!selection && state.phase !== "closed") {
           (editor.commands as unknown as AiCommands).$closeAiToolbar();
         }
-      }, [state.phase, editor, range]);
+      }, [state.phase, editor, selection]);
 
       useLayoutEffect(() => {
         if (!editor || !isOpen) {
@@ -728,14 +728,49 @@ export const AiToolbar = Object.assign(
         setReference(null);
 
         setTimeout(() => {
-          if (!range) {
-            setReference(null);
-          } else {
-            const domRange = getDomRange(editor, range);
+          if (
+            state.phase === "reviewing" &&
+            isAiToolbarDiffOutput(state.output)
+          ) {
+            const changes = editor.view.dom.querySelectorAll(
+              "ychange[data-liveblocks]"
+            );
+
+            // When diffs are displayed, we manually calculate bounds around all the
+            // rendered changes instead of using the selection
+            setReference({
+              getBoundingClientRect: () => {
+                const rects: DOMRect[] = [];
+
+                changes.forEach((change) => {
+                  rects.push(change.getBoundingClientRect());
+                });
+
+                const minX = Math.min(...rects.map((rect) => rect.left));
+                const minY = Math.min(...rects.map((rect) => rect.top));
+                const maxX = Math.max(...rects.map((rect) => rect.right));
+                const maxY = Math.max(...rects.map((rect) => rect.bottom));
+
+                return {
+                  x: minX,
+                  y: minY,
+                  width: maxX - minX,
+                  height: maxY - minY,
+                  top: minY,
+                  left: minX,
+                  bottom: maxY,
+                  right: maxX,
+                };
+              },
+            });
+          } else if (selection) {
+            const domRange = getDomRange(editor, selection);
             setReference(domRange);
+          } else {
+            setReference(null);
           }
         }, 0);
-      }, [range, editor, isOpen, setReference]);
+      }, [selection, editor, isOpen, setReference, state.phase, state.output]);
 
       // Close the toolbar when clicking anywhere outside of it
       useEffect(() => {
