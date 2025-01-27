@@ -1,6 +1,6 @@
 import { autoRetry, HttpError } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { CommandProps, Editor } from "@tiptap/core";
+import type { CommandProps, Editor, Range } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
@@ -205,24 +205,6 @@ export const AiExtension = Extension.create<
           return true;
         },
 
-      // TODO: When should this be called? We already revert on close and on retry
-      _revertAiToolbarOutputDiff:
-        () =>
-        ({ tr, view }: CommandProps) => {
-          const revertTr = getRevertTransaction(
-            tr,
-            this.editor,
-            this.storage,
-            this.options.doc
-          );
-          if (revertTr) {
-            view.dispatch(revertTr);
-            getLiveblocksYjsProvider(this.editor)?.unpause();
-            return true;
-          }
-          return false;
-        },
-
       $closeAiToolbar:
         () =>
         ({ tr, view }: CommandProps) => {
@@ -301,6 +283,11 @@ export const AiExtension = Extension.create<
         const abortController = new AbortController();
         const provider = getLiveblocksYjsProvider(this.editor);
 
+        const currentSelection: Range = {
+          from: this.editor.state.selection.from,
+          to: this.editor.state.selection.to,
+        };
+
         // 3. Set to "thinking" phase
         this.storage.state = {
           phase: "thinking",
@@ -308,6 +295,7 @@ export const AiExtension = Extension.create<
           prompt,
           abortController,
           previousOutput: currentState.output,
+          previousSelection: currentSelection,
         };
 
         // 4. Block the editor
@@ -321,8 +309,8 @@ export const AiExtension = Extension.create<
             return this.options.resolveAiPrompt({
               prompt,
               selectionText: this.editor.state.doc.textBetween(
-                this.editor.state.selection.from,
-                this.editor.state.selection.to,
+                currentSelection.from,
+                currentSelection.to,
                 " "
               ),
               context: getDocumentText(this.editor, 3_000),
@@ -388,12 +376,22 @@ export const AiExtension = Extension.create<
           if (revertTr) {
             // important, in this scenario we do not unpause the provider
             view.dispatch(revertTr);
+            // Prevent Tiptap from dispatching this transaction, because we already did. (this is a hack)
+            tr.setMeta("preventDispatch", true);
           }
 
-          // 2. Start the AI request with the last prompt
-          return (
+          // 2. restore the selection before starting to think again
+          this.editor.commands.setTextSelection(currentState.previousSelection);
+
+          // 3. Start the AI request with the last prompt
+          (
             this.editor.commands as unknown as AiCommands
-          ).$startAiToolbarThinking(currentState.prompt);
+          ).$startAiToolbarThinking(
+            currentState.prompt,
+            currentState.previousSelection
+          );
+
+          return true;
         },
 
       $cancelAiToolbarThinking: () => () => {
@@ -466,6 +464,7 @@ export const AiExtension = Extension.create<
               customPrompt: "",
               prompt: currentState.prompt,
               output,
+              previousSelection: currentState.previousSelection,
             };
 
             return true;
@@ -485,6 +484,7 @@ export const AiExtension = Extension.create<
             customPrompt: "",
             prompt: currentState.prompt,
             output,
+            previousSelection: currentState.previousSelection,
           };
 
           // 5. Insert the output

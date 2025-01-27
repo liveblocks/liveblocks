@@ -1,6 +1,6 @@
 import type { Relax } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { Content } from "@tiptap/core";
+import type { Content, Range } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
@@ -157,6 +157,11 @@ export type AiToolbarState = Relax<
        * The previous output if this "thinking" phase is a refinement.
        */
       previousOutput?: AiToolbarOutput;
+
+      /**
+       * Stored selection
+       */
+      previousSelection: Range;
     }
   | {
       phase: "reviewing";
@@ -175,6 +180,11 @@ export type AiToolbarState = Relax<
        * The output of the AI request.
        */
       output: AiToolbarOutput;
+
+      /**
+       * Stored selection
+       */
+      previousSelection: Range;
     }
 >;
 
@@ -256,7 +266,10 @@ export type AiCommands<ReturnType = boolean> = {
    *
    * Set (and open if not already open) the AI toolbar in the "thinking" phase with the given prompt.
    */
-  $startAiToolbarThinking: (prompt: string) => ReturnType;
+  $startAiToolbarThinking: (
+    prompt: string,
+    previousSelection?: Range
+  ) => ReturnType;
 
   /**
    * @internal
@@ -282,13 +295,6 @@ export type AiCommands<ReturnType = boolean> = {
    * Show the diff of the current "reviewing" phase.
    */
   _showAiToolbarOutputDiff: () => ReturnType;
-
-  /**
-   * @internal
-   *
-   * Revert a diff that was applied to the editor.
-   */
-  _revertAiToolbarOutputDiff: () => ReturnType;
 
   /**
    * @internal
