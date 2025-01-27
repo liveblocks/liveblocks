@@ -20,12 +20,12 @@ export function getEnvVar<K extends keyof EnvConfig>(
 ): EnvConfig[K] | undefined {
   switch (key) {
     case "LIVEBLOCKS_BASE_URL": {
-      return typeof process.env !== "undefined"
-        ? process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL
+      return typeof process !== "undefined"
+        ? process.env.LIVEBLOCKS_BASE_URL
         : undefined;
     }
     case "NEXT_PUBLIC_LIVEBLOCKS_BASE_URL": {
-      return typeof process.env !== "undefined"
+      return typeof process !== "undefined"
         ? process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL
         : undefined;
     }
