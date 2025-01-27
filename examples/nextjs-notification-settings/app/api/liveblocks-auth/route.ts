@@ -1,6 +1,8 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { users } from "@/data/users";
+
+import { auth } from "@/auth/manager";
+import { getUser } from "@/lib/database";
 
 /**
  * Authenticating your Liveblocks application
@@ -19,21 +21,23 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  const searchParams = request.nextUrl.searchParams;
-  const userId = searchParams.get("userId");
+  const userSession = await auth();
+  if (!userSession) {
+    return new NextResponse("no authenticated user", { status: 403 });
+  }
 
-  let userIndex = 0;
+  const userId = userSession.user.info.id;
+  const user = getUser(userId);
 
-  if (userId !== null) {
-    userIndex = parseInt(userId.replace("user-", ""), 10);
-  } else {
-    // Get the current user's unique id from your database
-    userIndex = Math.floor(Math.random() * users.length);
+  if (!user) {
+    return new NextResponse(`no user found in db for id '${userId}'`, {
+      status: 404,
+    });
   }
 
   // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(`user-${userIndex}`, {
-    userInfo: users[userIndex],
+  const session = liveblocks.prepareSession(userId, {
+    userInfo: { name: user.name, color: user.color, picture: user.picture },
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
