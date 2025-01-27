@@ -2,10 +2,6 @@ import type { User } from "@/types/data";
 import { users } from "@/data/users";
 
 export function getUser(userId: string): User | undefined {
-  if (!userId.startsWith("user-")) {
-    return undefined;
-  }
-
   const user = users.find((user) => user.id === userId);
   if (!user) {
     console.warn(`

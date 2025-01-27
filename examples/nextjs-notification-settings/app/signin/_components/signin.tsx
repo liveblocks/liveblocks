@@ -15,9 +15,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function SignIn() {
-  const handleChange = useCallback((email: string) => {
-    signIn("credentials", { email });
+  const handleChange = useCallback((value: string) => {
+    signIn("credentials", { email: value });
   }, []);
+
   const items = users.map((user) => ({
     value: user.id,
     title: user.name,
