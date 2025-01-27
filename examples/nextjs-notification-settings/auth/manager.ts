@@ -11,8 +11,6 @@ export const {
 } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    // Get extra user info from your database to pass to front-end
-    // For front end, update next-auth.d.ts with session type
     async session({ session }: { session: any }) {
       const userInfo = getUser(session.user.email);
 
