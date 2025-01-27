@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
+import { auth } from "@/auth/manager";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers";
 
@@ -9,10 +10,15 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Liveblocks",
+  title: "Liveblocks User Notifications",
 };
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
   return (
     <html lang="en">
       <head>
@@ -30,7 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className={inter.className}>
-        <Providers>
+        <Providers session={session}>
           <main className="text-base bg-background/95 text-foreground">
             {children}
           </main>
