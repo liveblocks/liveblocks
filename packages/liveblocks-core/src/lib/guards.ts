@@ -18,12 +18,3 @@ export function isStartsWithOperator(
 ): blob is { startsWith: string } {
   return isPlainObject(blob) && typeof blob.startsWith === "string";
 }
-
-/**
- * Check if value is not a null object
- */
-export function isNotNullObject(
-  value: unknown
-): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
