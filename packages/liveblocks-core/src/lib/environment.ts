@@ -24,7 +24,8 @@ export function getEnvVar<K extends keyof EnvConfig>(
         ? process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL
         : undefined;
     case "VITE_LIVEBLOCKS_BASE_URL":
-      return typeof import.meta.env !== "undefined"
+      return typeof import.meta !== "undefined" &&
+        typeof import.meta.env !== "undefined"
         ? import.meta.env.VITE_LIVEBLOCKS_BASE_URL
         : undefined;
     default:
