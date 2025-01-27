@@ -37,7 +37,7 @@ export function Shell({ children }: { children?: React.ReactNode }) {
             <NotificationsPopover />
             {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
             <Popover>
-              <PopoverTrigger>
+              <PopoverTrigger className="ml-2">
                 <Avatar className="size-6">
                   <AvatarImage
                     src={session?.user.info.picture}
@@ -48,7 +48,11 @@ export function Shell({ children }: { children?: React.ReactNode }) {
                   </AvatarFallback>
                 </Avatar>
               </PopoverTrigger>
-              <PopoverContent className="flex flex-col w-[320px] gap-1.5 p-2">
+              <PopoverContent
+                className="flex flex-col w-[320px] gap-1.5 p-2"
+                sideOffset={8}
+                align="end"
+              >
                 <div className="flex flex-col gap-0.5">
                   <h3 className="text-lg font-semibold">
                     {session?.user.info.name}

@@ -25,8 +25,6 @@ export function SignIn() {
     picture: user.picture,
   }));
 
-  console.log("items", items);
-
   return (
     <div className="flex flex-col gap-2">
       <h3 className="text-xl font-bold">Sign in to your account</h3>

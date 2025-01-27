@@ -18,6 +18,9 @@ export function Providers({
       <LiveblocksProvider
         throttle={16}
         authEndpoint={`/api/liveblocks-auth`}
+        // XXX
+        // @ts-expect-error
+        baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
         resolveUsers={async ({ userIds }) => {
           return userIds.map((userId) => getUser(userId)).filter(Boolean);
         }}
