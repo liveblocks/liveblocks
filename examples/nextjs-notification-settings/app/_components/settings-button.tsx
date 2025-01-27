@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
 
-export function SettingsButton({ userId }: { userId: string | null }) {
+export function SettingsButton() {
   return (
     <Link
       title="go to settings"
-      href={`/settings${userId ? `?userId=${userId}` : ""}`}
+      href={`/settings`}
       className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8"
     >
       <svg

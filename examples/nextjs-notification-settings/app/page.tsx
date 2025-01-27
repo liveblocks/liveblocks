@@ -6,13 +6,11 @@ import { useSearchParams } from "next/navigation";
 import Loading from "./_components/loading";
 
 import Editor from "./tiptap/editor";
-import { useExampleUserId } from "./use-example-user-id";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
-  const userId = useExampleUserId();
   const roomId = useExampleRoomId(
     "liveblocks:notifications-settings-examples:nextjs"
   );
@@ -25,7 +23,7 @@ export default function Page() {
       }}
     >
       <ClientSideSuspense fallback={<Loading />}>
-        <Editor userId={userId} />
+        <Editor />
       </ClientSideSuspense>
     </RoomProvider>
   );

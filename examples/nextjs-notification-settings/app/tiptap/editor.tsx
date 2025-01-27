@@ -19,7 +19,7 @@ import { TriggerCustomNotificationButton } from "../_components/trigger-custom-n
 
 import { Toolbar } from "./Toolbar";
 
-export default function TiptapEditor({ userId }: { userId: string | null }) {
+export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
 
   const editor = useEditor({
@@ -42,7 +42,7 @@ export default function TiptapEditor({ userId }: { userId: string | null }) {
       <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
         <TriggerCustomNotificationButton />
         <NotificationsPopover />
-        <SettingsButton userId={userId} />
+        <SettingsButton />
       </div>
       <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
         <div className="relative flex flex-1 flex-col gap-2">
