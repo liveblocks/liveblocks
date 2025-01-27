@@ -1,5 +1,11 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react`
+
+- Fix bug in internal store to avoid to fetch on the server on first render.
+
+### `@liveblocks/zustand`
+
 - Fix bug in Zustand typing in case the multi-argument form of `set()` is used
   (thanks [@hans-lizihan](https://github.com/hans-lizihan))
 
