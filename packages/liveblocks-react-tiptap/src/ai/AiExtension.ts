@@ -306,6 +306,7 @@ export const AiExtension = Extension.create<
           customPrompt: currentState.customPrompt ?? "",
           prompt,
           abortController,
+          previousOutput: currentState.output,
         };
 
         // 4. Block the editor

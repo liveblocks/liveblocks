@@ -152,6 +152,11 @@ export type AiToolbarState = Relax<
        * The prompt sent to the AI.
        */
       prompt: string;
+
+      /**
+       * The previous output if this "thinking" phase is a refinement.
+       */
+      previousOutput?: AiToolbarOutput;
     }
   | {
       phase: "reviewing";
