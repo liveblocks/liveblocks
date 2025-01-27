@@ -1,12 +1,10 @@
+import type { User } from "@/types/data";
+
 declare global {
   interface Liveblocks {
     UserMeta: {
       id: string;
-      info: {
-        name: string;
-        picture: string;
-        color: string;
-      };
+      info: Pick<User, "name" | "picture" | "color">;
     };
     ActivitiesData: {
       $fileUploaded: {
