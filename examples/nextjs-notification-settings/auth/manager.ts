@@ -24,6 +24,9 @@ export const {
     authorized: async ({ auth }) => {
       return !!auth;
     },
+    redirect: async ({ url, baseUrl }) => {
+      return url.startsWith(baseUrl) ? url : baseUrl;
+    },
   },
   pages: {
     signIn: "/signin",
