@@ -57,7 +57,6 @@ import type {
   AiExtensionStorage,
   AiToolbarState,
   ChainedAiCommands,
-  FloatingPosition,
 } from "../types";
 import { getDomRange } from "../utils";
 import { DEFAULT_STATE, isAiToolbarDiffOutput } from "./AiExtension";
@@ -67,7 +66,6 @@ export const AI_TOOLBAR_COLLISION_PADDING = 10;
 export interface AiToolbarProps
   extends Omit<ComponentProps<"div">, "value" | "defaultValue" | "children"> {
   editor: Editor | null;
-  position?: FloatingPosition;
   offset?: number;
   suggestions?: ReactNode | ComponentType<PropsWithChildren>;
 }
@@ -136,6 +134,26 @@ function tiptapFloating(editor: Editor | null): Middleware {
       return {
         x: editorRect.x,
       };
+    },
+  };
+}
+
+/**
+ * A custom Floating UI middleware to flip the toolbar/dropdown when shifted more than 100%.
+ */
+function flipToolbar(): Middleware {
+  return {
+    name: "flipToolbar",
+    fn({ elements, middlewareData, rects }) {
+      const shiftOffsetY = middlewareData.shift?.y ?? 0;
+
+      if (Math.abs(shiftOffsetY) >= rects.floating.height) {
+        elements.floating.setAttribute("data-liveblocks-ai-toolbar-flip", "");
+      } else {
+        elements.floating.removeAttribute("data-liveblocks-ai-toolbar-flip");
+      }
+
+      return {};
     },
   };
 }
@@ -625,7 +643,6 @@ export const AiToolbar = Object.assign(
   forwardRef<HTMLDivElement, AiToolbarProps>(
     (
       {
-        position = "bottom",
         offset: sideOffset = 6,
         editor,
         className,
@@ -651,7 +668,7 @@ export const AiToolbar = Object.assign(
 
         return {
           strategy: "fixed",
-          placement: position,
+          placement: "bottom",
           middleware: [
             tiptapFloating(editor),
             hide(detectOverflowOptions),
@@ -660,12 +677,9 @@ export const AiToolbar = Object.assign(
               ...detectOverflowOptions,
               mainAxis: false,
               crossAxis: true,
-              limiter: limitShift({
-                offset: ({ rects }) => ({
-                  crossAxis: rects.reference.height,
-                }),
-              }),
+              limiter: limitShift(),
             }),
+            flipToolbar(),
           ],
           whileElementsMounted: (...args) => {
             return autoUpdate(...args, {
@@ -673,7 +687,7 @@ export const AiToolbar = Object.assign(
             });
           },
         };
-      }, [editor, position, sideOffset]);
+      }, [editor, sideOffset]);
       const isOpen = selection !== undefined && state.phase !== "closed";
       const {
         refs: { setReference, setFloating },
