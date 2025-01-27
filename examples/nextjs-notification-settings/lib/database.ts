@@ -25,3 +25,13 @@ export function getUser(userId: string): User | undefined {
 
   return user;
 }
+
+export function searchUsers(text: string): string[] {
+  const filteredUserIds = users
+    .filter((user) =>
+      text ? user.name.toLowerCase().includes(text.toLowerCase()) : true
+    )
+    .map((user) => user.id);
+
+  return filteredUserIds;
+}
