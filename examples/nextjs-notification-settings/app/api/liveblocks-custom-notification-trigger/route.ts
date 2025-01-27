@@ -1,5 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
-import { USER_INFO } from "../dummy-users";
+import { users } from "@/data/users";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -8,7 +8,7 @@ const liveblocks = new Liveblocks({
 export async function POST(request: Request) {
   const body = await request.json();
   console.log("body", body);
-  const userIndex = Math.floor(Math.random() * USER_INFO.length);
+  const userIndex = Math.floor(Math.random() * users.length);
 
   try {
     await liveblocks.triggerInboxNotification({

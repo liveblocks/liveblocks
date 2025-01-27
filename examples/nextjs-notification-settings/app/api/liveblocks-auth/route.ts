@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { USER_INFO } from "../dummy-users";
+import { users } from "@/data/users";
 
 /**
  * Authenticating your Liveblocks application
@@ -25,12 +25,12 @@ export async function POST(request: NextRequest) {
     userIndex = parseInt(userId.replace("user-", ""), 10);
   } else {
     // Get the current user's unique id from your database
-    userIndex = Math.floor(Math.random() * USER_INFO.length);
+    userIndex = Math.floor(Math.random() * users.length);
   }
 
   // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`user-${userIndex}`, {
-    userInfo: USER_INFO[userIndex],
+    userInfo: users[userIndex],
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard

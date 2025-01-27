@@ -1,24 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { USER_INFO } from "../dummy-users";
-
-/**
- * Get users' info from their ID
- * For `resolveUsers` in liveblocks.config.ts
- */
-
-function getUser(userId: string) {
-  if (!userId.startsWith("user-")) {
-    return;
-  }
-
-  const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
-
-  return {
-    name: USER_INFO[userIndex].name,
-    avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
-    color: USER_INFO[userIndex].color,
-  };
-}
+import { getUser } from "@/lib/database";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
