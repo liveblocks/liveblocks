@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { LiveblocksProvider } from "@liveblocks/react";
 
+import { User } from "@/types/data";
 import { getUser, searchUsers } from "@/lib/database";
 
 export function Providers({
@@ -22,7 +23,14 @@ export function Providers({
         // @ts-expect-error
         baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
         resolveUsers={async ({ userIds }) => {
-          return userIds.map((userId) => getUser(userId)).filter(Boolean);
+          const users = userIds
+            .map((userId) => getUser(userId))
+            .filter(Boolean) as User[];
+          return users.map((user) => ({
+            name: user.name,
+            color: user.color,
+            picture: user.picture,
+          }));
         }}
         resolveMentionSuggestions={async ({ text }) => {
           return searchUsers(text);
