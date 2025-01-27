@@ -2,7 +2,6 @@ import { Liveblocks } from "@liveblocks/node";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth/manager";
-import { getUser } from "@/lib/database";
 
 /**
  * Authenticating your Liveblocks application
@@ -22,21 +21,16 @@ export async function POST() {
   }
 
   const userSession = await auth();
-  if (!userSession) {
-    return new NextResponse("no authenticated user", { status: 403 });
-  }
 
-  const userId = userSession.user.info.id;
-  const user = getUser(userId);
-
-  if (!user) {
-    return new NextResponse(`no user found in db for id '${userId}'`, {
-      status: 404,
-    });
-  }
+  const user = userSession?.user.info ?? {
+    id: "anonymous",
+    name: "Anonymous",
+    color: "#f3f3f3",
+    picture: "https://liveblocks.io/avatars/avatar-0.png",
+  };
 
   // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(userId, {
+  const session = liveblocks.prepareSession(user.id, {
     userInfo: { name: user.name, color: user.color, picture: user.picture },
   });
 
