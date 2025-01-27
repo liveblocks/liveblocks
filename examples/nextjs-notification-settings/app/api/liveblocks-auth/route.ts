@@ -1,5 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { auth } from "@/auth/manager";
 import { getUser } from "@/lib/database";
@@ -16,7 +16,7 @@ const liveblocks = new Liveblocks({
   baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   if (!process.env.LIVEBLOCKS_SECRET_KEY) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
