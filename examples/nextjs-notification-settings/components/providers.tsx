@@ -1,7 +1,7 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
-import { useExampleUserId } from "./use-example-user-id";
+import { useExampleUserId } from "../app/use-example-user-id";
 
 export function Providers({ children }: { children?: React.ReactNode }) {
   const userId = useExampleUserId();

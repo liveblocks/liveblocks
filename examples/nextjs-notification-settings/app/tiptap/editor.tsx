@@ -1,19 +1,23 @@
 "use client";
 
-import NotificationsPopover from "../notifications-popover";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+
+import { useThreads } from "@liveblocks/react";
 import {
   useLiveblocksExtension,
   FloatingComposer,
   FloatingThreads,
   AnchoredThreads,
 } from "@liveblocks/react-tiptap";
-import StarterKit from "@tiptap/starter-kit";
+
+import { useIsMobile } from "@/hooks/use-is-mobile";
+
+import NotificationsPopover from "../_components/notifications-popover";
+import { SettingsButton } from "../_components/settings-button";
+import { TriggerCustomNotificationButton } from "../_components/trigger-custom-notification-button";
+
 import { Toolbar } from "./Toolbar";
-import { useThreads } from "@liveblocks/react";
-import { useIsMobile } from "./use-is-mobile";
-import { SettingsButton } from "../settings-button";
-import { TriggerCustomNotificationButton } from "../trigger-custom-notification-button";
 
 export default function TiptapEditor({ userId }: { userId: string | null }) {
   const liveblocks = useLiveblocksExtension();

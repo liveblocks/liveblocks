@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+
+import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "@/components/providers";
+
 import "./globals.css";
-import { Toaster } from "./toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,9 +30,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className={inter.className}>
-        <main className="text-base bg-background/95 text-foreground">
-          {children}
-        </main>
+        <Providers>
+          <main className="text-base bg-background/95 text-foreground">
+            {children}
+          </main>
+        </Providers>
         <Toaster />
       </body>
     </html>

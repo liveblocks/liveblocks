@@ -1,12 +1,14 @@
+import { Suspense } from "react";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
 } from "@liveblocks/react/suspense";
 import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+
 import * as Popover from "@radix-ui/react-popover";
-import { Suspense } from "react";
-import Loading from "./loading";
+
+import Loading from "../_components/loading";
 
 export default function NotificationsPopover() {
   return (

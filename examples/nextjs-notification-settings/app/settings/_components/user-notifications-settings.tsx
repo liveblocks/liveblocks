@@ -5,7 +5,8 @@ import {
   isNotificationChannelEnabled,
 } from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
-import { cn } from "../../../utils/cn";
+
+import { cn } from "@/utils/cn";
 
 export function UserNotificationsSettings() {
   const [{ isLoading, error, settings }, updateNotificationSettings] =

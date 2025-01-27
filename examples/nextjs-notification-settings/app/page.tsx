@@ -1,10 +1,11 @@
 "use client";
 
-import Loading from "./loading";
 import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
+
+import Loading from "./_components/loading";
+
 import Editor from "./tiptap/editor";
-import { Providers } from "./providers";
 import { useExampleUserId } from "./use-example-user-id";
 
 // Learn how to structure your collaborative Next.js app
@@ -17,18 +18,16 @@ export default function Page() {
   );
 
   return (
-    <Providers>
-      <RoomProvider
-        id={roomId}
-        initialPresence={{
-          cursor: null,
-        }}
-      >
-        <ClientSideSuspense fallback={<Loading />}>
-          <Editor userId={userId} />
-        </ClientSideSuspense>
-      </RoomProvider>
-    </Providers>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        cursor: null,
+      }}
+    >
+      <ClientSideSuspense fallback={<Loading />}>
+        <Editor userId={userId} />
+      </ClientSideSuspense>
+    </RoomProvider>
   );
 }
 

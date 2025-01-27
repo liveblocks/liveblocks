@@ -1,7 +1,7 @@
 "use client";
 
 import { useRoom } from "@liveblocks/react";
-import { useToast } from "./use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 export function TriggerCustomNotificationButton() {
   const room = useRoom();
