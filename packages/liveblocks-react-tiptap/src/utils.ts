@@ -121,7 +121,6 @@ const GET_DOCUMENT_TEXT_TRUNCATION = "[…]";
  * the selection is always included.
  */
 export function getDocumentText(editor: Editor, maxLength = 10_000) {
-  // TODO: Find the closest word boundaries to avoid starting/stopping in the middle of a word?
   const { selection, doc } = editor.state;
 
   const selectionLength = selection.to - selection.from;
@@ -168,6 +167,7 @@ export function getDocumentText(editor: Editor, maxLength = 10_000) {
       );
     }
 
+    // TODO: Find the closest word boundaries to avoid starting/stopping in the middle of a word?
     return doc.textBetween(
       Math.max(0, selection.from - beforeLength),
       Math.min(doc.content.size, selection.to + afterLength),

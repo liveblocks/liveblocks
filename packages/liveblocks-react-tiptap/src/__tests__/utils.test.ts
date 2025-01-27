@@ -159,5 +159,29 @@ describe("utils", () => {
       );
       expect(text).toMatchSnapshot();
     });
+
+    test("should support elements", () => {
+      editor.commands.clearContent();
+      editor.commands.insertContent(`<p>${"lorem ".repeat(200)}</p>`);
+      editor.commands.insertContent(
+        "<ul><li>lorem ipsum</li><li><p>lorem ipsum</p></li><li><em>?</em></li></ul>"
+      );
+      editor.commands.insertContent(`<p>${"ipsum ".repeat(100)}</p>`);
+      editor.commands.insertContent("<pre><code>const a = 1;</code></pre>");
+
+      // Select 200 characters in the middle of the document
+      editor.commands.setTextSelection({
+        from: editor.state.doc.content.size / 2 - 100,
+        to: editor.state.doc.content.size / 2 + 100,
+      });
+
+      const text = getDocumentText(editor, 1000);
+
+      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
+        1000,
+        GET_DOCUMENT_TEXT_LENGTH_DELTA
+      );
+      expect(text).toMatchSnapshot();
+    });
   });
 });
