@@ -451,22 +451,13 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
-  let selectedBaseUrl: string | undefined = undefined;
-  if (baseUrl !== undefined) {
-    selectedBaseUrl = baseUrl;
-  } else {
-    selectedBaseUrl =
-      getEnvVar("LIVEBLOCKS_BASE_URL") ??
-      getEnvVar("NEXT_PUBLIC_LIVEBLOCKS_BASE_URL") ??
-      getEnvVar("VITE_LIVEBLOCKS_BASE_URL") ??
-      undefined;
-  }
+  const targetBaseUrl = baseUrl ?? getEnvVar();
 
   if (
-    typeof selectedBaseUrl === "string" &&
-    selectedBaseUrl.startsWith("http") // Must be http or https URL
+    typeof targetBaseUrl === "string" &&
+    targetBaseUrl.startsWith("http") // Must be http or https URL
   ) {
-    return selectedBaseUrl;
+    return targetBaseUrl;
   } else {
     return DEFAULT_BASE_URL;
   }
