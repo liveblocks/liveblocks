@@ -35,6 +35,7 @@ export function Shell({ children }: { children?: React.ReactNode }) {
         {session ? (
           <div className="flex items-center justify-end gap-0.5">
             <NotificationsPopover />
+
             {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
             <Popover>
               <PopoverTrigger className="ml-2">

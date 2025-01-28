@@ -1,9 +1,7 @@
 "use client";
 
-import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
-
-import Loading from "./loading";
 
 /**
  * This function is used when deploying an example on liveblocks.io.
@@ -27,7 +25,7 @@ export function Room({ children }: { children: React.ReactNode }) {
         cursor: null,
       }}
     >
-      <ClientSideSuspense fallback={<Loading />}>{children}</ClientSideSuspense>
+      {children}
     </RoomProvider>
   );
 }

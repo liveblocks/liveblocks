@@ -3,9 +3,12 @@
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { LiveblocksProvider } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 
 import { User } from "@/types/data";
 import { getUser, searchUsers } from "@/lib/database";
+
+import Loading from "./loading";
 
 export function Providers({
   session,
@@ -36,7 +39,9 @@ export function Providers({
           return searchUsers(text);
         }}
       >
-        {children}
+        <ClientSideSuspense fallback={<Loading />}>
+          {children}
+        </ClientSideSuspense>
       </LiveblocksProvider>
     </SessionProvider>
   );
