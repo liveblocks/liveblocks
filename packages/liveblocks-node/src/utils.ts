@@ -1,24 +1,5 @@
-import { getBaseUrlFromEnvVar } from "./environment";
-
-const DEFAULT_BASE_URL = "https://api.liveblocks.io";
-
 // Valid alphabet for secret/public keys
 const VALID_KEY_CHARS_REGEX = /^[\w-]+$/;
-
-export function getBaseUrl(baseUrl?: string | undefined): string {
-  const targetBaseUrl = baseUrl ?? getBaseUrlFromEnvVar();
-
-  if (
-    typeof targetBaseUrl === "string" &&
-    // Check on the value `undefined` because of our tsup config
-    targetBaseUrl !== "undefined" &&
-    targetBaseUrl.startsWith("http") // Must be http or https URL
-  ) {
-    return targetBaseUrl;
-  } else {
-    return DEFAULT_BASE_URL;
-  }
-}
 
 export async function fetchPolyfill(): Promise<typeof fetch> {
   return typeof globalThis.fetch !== "undefined"

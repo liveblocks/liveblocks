@@ -39,6 +39,7 @@ import {
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  getBaseUrl,
   objectToQuery,
   url,
   urljoin,
@@ -49,7 +50,6 @@ import {
   assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
-  getBaseUrl,
   normalizeStatusCode,
 } from "./utils";
 

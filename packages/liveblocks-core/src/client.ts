@@ -2,17 +2,16 @@ import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
-import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
-import { getBaseUrlFromEnvVar } from "./lib/environment";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
+import { getBaseUrl } from "./lib/get-base-url";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Relax } from "./lib/Relax";
@@ -449,21 +448,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   /** @internal */
   enableDebugLogging?: boolean;
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
-
-function getBaseUrl(baseUrl?: string | undefined): string {
-  const targetBaseUrl = baseUrl ?? getBaseUrlFromEnvVar();
-
-  if (
-    typeof targetBaseUrl === "string" &&
-    // Check on the value `undefined` because of our tsup config
-    targetBaseUrl !== "undefined" &&
-    targetBaseUrl.startsWith("http") // Must be http or https URL
-  ) {
-    return targetBaseUrl;
-  } else {
-    return DEFAULT_BASE_URL;
-  }
-}
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
