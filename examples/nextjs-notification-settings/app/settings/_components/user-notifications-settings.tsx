@@ -6,16 +6,15 @@ import {
 } from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
 
-import { cn } from "@/utils/cn";
-
+import { Loading } from "@/components/loading";
 import { SettingSwitch } from "./setting-switch";
 
 export function UserNotificationsSettings() {
   const [{ isLoading, error, settings }, updateNotificationSettings] =
     useNotificationSettings();
 
-  if (isLoading) return null;
-  if (error) return null; // or throw/capture error
+  if (isLoading) return <Loading />;
+  if (error) throw error; // or throw/capture error
 
   const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
   const isSlackChannelEnabled = isNotificationChannelEnabled(settings.slack);

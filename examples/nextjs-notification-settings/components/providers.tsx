@@ -8,7 +8,7 @@ import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { User } from "@/types/data";
 import { getUser, searchUsers } from "@/lib/database";
 
-import Loading from "./loading";
+import { Loading } from "./loading";
 
 export function Providers({
   session,

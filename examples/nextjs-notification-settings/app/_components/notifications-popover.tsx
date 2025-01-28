@@ -10,7 +10,7 @@ import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 
 import * as Popover from "@radix-ui/react-popover";
 
-import Loading from "@/components/loading";
+import { Loading } from "@/components/loading";
 
 export function NotificationsPopover() {
   return (

@@ -1,4 +1,4 @@
-export default function Loading() {
+export function Loading() {
   return (
     <div className="absolute flex w-full h-full items-center justify-center flex-1 p-4">
       <img
