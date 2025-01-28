@@ -23,6 +23,7 @@
     "@liveblocks/yjs": "^2.17.0-usrnotsettings1",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-label": "^2.1.1",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-select": "^2.1.5",
     "@radix-ui/react-separator": "^1.1.1",
