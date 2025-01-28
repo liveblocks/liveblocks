@@ -1,4 +1,4 @@
-import { DEFAULT_BASE_URL } from "../constants";
+import { DEFAULT_BASE_URL } from "./constants";
 
 const safeGet = (fn: () => string | undefined): string | undefined => {
   try {

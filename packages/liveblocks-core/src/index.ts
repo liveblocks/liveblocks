@@ -75,6 +75,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export { getBaseUrl } from "./get-base-url";
 export type {
   DAD,
   DE,
@@ -122,7 +123,6 @@ export type {
 export { makeEventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
-export { getBaseUrl } from "./lib/get-base-url";
 export { isPlainObject, isStartsWithOperator } from "./lib/guards";
 export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
