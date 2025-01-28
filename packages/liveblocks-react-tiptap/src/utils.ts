@@ -114,38 +114,64 @@ export function compareSelections(
   return a.eq(b);
 }
 
-const GET_DOCUMENT_TEXT_TRUNCATION = "[…]";
+export type DocumentText = {
+  beforeSelection: string;
+  selection: string;
+  afterSelection: string;
+};
 
-/**
- * Get the document text up to a maximum length while making sure
- * the selection is always included.
- */
-export function getDocumentText(editor: Editor, maxLength = 10_000) {
+const DOCUMENT_TEXT_TRUNCATION = "[…]";
+const DOCUMENT_TEXT_BLOCK_SEPARATOR = " ";
+
+export function getDocumentText(
+  editor: Editor,
+  maxLength = 10_000
+): DocumentText {
   const { selection, doc } = editor.state;
 
   const selectionLength = selection.to - selection.from;
 
   if (maxLength >= doc.content.size) {
     // If the document is smaller than the maximum length, return the entire document
-    return doc.textBetween(0, doc.content.size, " ");
+    return {
+      beforeSelection: doc.textBetween(
+        0,
+        selection.from,
+        DOCUMENT_TEXT_BLOCK_SEPARATOR
+      ),
+      selection: doc.textBetween(
+        selection.from,
+        selection.to,
+        DOCUMENT_TEXT_BLOCK_SEPARATOR
+      ),
+      afterSelection: doc.textBetween(
+        selection.to,
+        doc.content.size,
+        DOCUMENT_TEXT_BLOCK_SEPARATOR
+      ),
+    };
   } else if (selectionLength > maxLength) {
     // If the selection is too large, truncate its middle to still allow continuations
     const selectionStart = doc.textBetween(
       selection.from,
       selection.from +
         Math.floor(maxLength / 2) -
-        GET_DOCUMENT_TEXT_TRUNCATION.length,
-      " "
+        DOCUMENT_TEXT_TRUNCATION.length,
+      DOCUMENT_TEXT_BLOCK_SEPARATOR
     );
     const selectionEnd = doc.textBetween(
       selection.to -
         Math.floor(maxLength / 2) +
-        GET_DOCUMENT_TEXT_TRUNCATION.length,
+        DOCUMENT_TEXT_TRUNCATION.length,
       selection.to,
-      " "
+      DOCUMENT_TEXT_BLOCK_SEPARATOR
     );
 
-    return `${selectionStart}${GET_DOCUMENT_TEXT_TRUNCATION}${selectionEnd}`;
+    return {
+      beforeSelection: "",
+      selection: `${selectionStart}${DOCUMENT_TEXT_TRUNCATION}${selectionEnd}`,
+      afterSelection: "",
+    };
   } else {
     // If the selection is smaller than (or equal to) the maximum length, extract as much as possible from the document around the selection
 
@@ -167,11 +193,35 @@ export function getDocumentText(editor: Editor, maxLength = 10_000) {
       );
     }
 
-    // TODO: Find the closest word boundaries to avoid starting/stopping in the middle of a word?
-    return doc.textBetween(
+    let beforeSelection = doc.textBetween(
       Math.max(0, selection.from - beforeLength),
-      Math.min(doc.content.size, selection.to + afterLength),
-      " "
+      selection.from,
+      DOCUMENT_TEXT_BLOCK_SEPARATOR
     );
+    let afterSelection = doc.textBetween(
+      selection.to,
+      Math.min(doc.content.size, selection.to + afterLength),
+      DOCUMENT_TEXT_BLOCK_SEPARATOR
+    );
+
+    // Add leading truncation if `beforeSelection` doesn't contain the document's start
+    if (selection.from - beforeLength > 0) {
+      beforeSelection = `${DOCUMENT_TEXT_TRUNCATION}${beforeSelection}`;
+    }
+
+    // Add trailing truncation if `afterSelection` doesn't contain the document's end
+    if (selection.to + afterLength < doc.content.size) {
+      afterSelection = `${afterSelection}${DOCUMENT_TEXT_TRUNCATION}`;
+    }
+
+    return {
+      beforeSelection,
+      selection: doc.textBetween(
+        selection.from,
+        selection.to,
+        DOCUMENT_TEXT_BLOCK_SEPARATOR
+      ),
+      afterSelection,
+    };
   }
 }

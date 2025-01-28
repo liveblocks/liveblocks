@@ -3,28 +3,19 @@ import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 
-import { getDocumentText } from "../utils";
+import { type DocumentText, getDocumentText } from "../utils";
 
-// textBetween can return different lengths depending on the content (e.g. line breaks, paragraphs, etc)
-const GET_DOCUMENT_TEXT_LENGTH_DELTA = 5;
+function expectDocumentTextLength(text: DocumentText, expectedLength: number) {
+  // Allow for some variance in the total length because of textBetween's behavior and truncations
+  const delta = 8;
+  const length =
+    text.beforeSelection.length +
+    text.selection.length +
+    text.afterSelection.length;
 
-expect.extend({
-  toAlmostEqual(a: number, b: number, delta = 1) {
-    return {
-      pass: Math.abs(a - b) < delta,
-      message: () => `Expected ${a} to be almost (±${delta}) equal to ${b}`,
-    };
-  },
-});
-
-type ExtendedExpect<T> = jest.JestMatchersShape<
-  jest.Matchers<void, T> & {
-    toAlmostEqual: (a: number, b: number, delta?: number) => boolean;
-  },
-  jest.Matchers<Promise<void>, T> & {
-    toAlmostEqual: (a: number, b: number, delta?: number) => boolean;
-  }
->;
+  expect(length).toBeGreaterThanOrEqual(expectedLength - delta);
+  expect(length).toBeLessThanOrEqual(expectedLength + delta);
+}
 
 describe("utils", () => {
   describe("getDocumentText", () => {
@@ -52,10 +43,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 1000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        1000,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, 1000);
       expect(text).toMatchSnapshot();
     });
 
@@ -73,11 +61,8 @@ describe("utils", () => {
       );
       const text = getDocumentText(editor, 200);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        200,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
-      expect(text.includes(selectionText)).toBeTruthy();
+      expectDocumentTextLength(text, 200);
+      expect(text.selection.includes(selectionText)).toBeTruthy();
     });
 
     test("should truncate the selection if it is too large", () => {
@@ -89,10 +74,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 1000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        1000,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, 1000);
       expect(text).toMatchSnapshot();
     });
 
@@ -105,10 +87,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 10000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        editor.state.doc.content.size,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, editor.state.doc.content.size);
       expect(text).toMatchSnapshot();
     });
 
@@ -121,10 +100,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 1000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        1000,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, 1000);
       expect(text).toMatchSnapshot();
     });
 
@@ -137,10 +113,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 1000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        1000,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, 1000);
       expect(text).toMatchSnapshot();
     });
 
@@ -153,10 +126,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 1000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        1000,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, 1000);
       expect(text).toMatchSnapshot();
     });
 
@@ -177,10 +147,7 @@ describe("utils", () => {
 
       const text = getDocumentText(editor, 1000);
 
-      (expect(text.length) as ExtendedExpect<number>).toAlmostEqual(
-        1000,
-        GET_DOCUMENT_TEXT_LENGTH_DELTA
-      );
+      expectDocumentTextLength(text, 1000);
       expect(text).toMatchSnapshot();
     });
   });

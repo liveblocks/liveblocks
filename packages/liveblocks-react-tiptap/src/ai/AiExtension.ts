@@ -343,6 +343,8 @@ export const AiExtension = Extension.create<
             async () => {
               await provider?.pause();
 
+              const documentText = getDocumentText(this.editor, 3_000);
+
               console.log({
                 withPreviousOutput,
                 previousOutput: currentState.output,
@@ -350,13 +352,17 @@ export const AiExtension = Extension.create<
 
               return this.options.resolveAiPrompt({
                 prompt,
+                // TODO: Switch to new context format (context: { beforeSelection, selection, afterSelection }, previousOutput: ...)
                 selectionText: this.editor.state.doc.textBetween(
                   this.editor.state.selection.from,
                   this.editor.state.selection.to,
                   " "
                 ),
-                // TODO: If withPreviousOutput is false, don't pass previousOutput in the context
-                context: getDocumentText(this.editor, 3_000),
+                // TODO: Same as above
+                context:
+                  documentText.beforeSelection +
+                  documentText.selection +
+                  documentText.afterSelection,
                 signal: abortController.signal,
               });
             },
