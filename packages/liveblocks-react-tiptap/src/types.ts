@@ -271,7 +271,10 @@ export type AiCommands<ReturnType = boolean> = {
    *
    * Set (and open if not already open) the AI toolbar in the "thinking" phase with the given prompt.
    */
-  $startAiToolbarThinking: (prompt: string) => ReturnType;
+  $startAiToolbarThinking: (
+    prompt: string,
+    withPreviousOutput?: boolean
+  ) => ReturnType;
 
   /**
    * @internal

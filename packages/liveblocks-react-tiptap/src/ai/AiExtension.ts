@@ -280,130 +280,139 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      $startAiToolbarThinking: (prompt: string) => () => {
-        const currentState = this.storage.state;
-
-        // 1. If in "thinking" phase already, do nothing
-        if (currentState.phase === "thinking") {
-          return false;
-        }
-
-        // 2. Blur the editor if needed
-        if (this.editor.isFocused) {
-          this.editor.commands.blur();
-        }
-
-        const abortController = new AbortController();
-        const provider = getLiveblocksYjsProvider(this.editor);
-
-        // 3. Set to "thinking" phase
-        this.storage.state = {
-          phase: "thinking",
-          // Store the initial selection if the toolbar is opened directly in the "thinking" phase
-          initialSelection: currentState.initialSelection ?? {
-            from: this.editor.state.selection.from,
-            to: this.editor.state.selection.to,
-          },
-          // Initialize the custom prompt as empty if the toolbar is opened directly in the "thinking" phase
-          customPrompt: currentState.customPrompt ?? "",
-          prompt,
-          abortController,
-          previousOutput: currentState.output,
-        };
-
-        // 4. Block the editor
-        this.editor.setEditable(false);
-
-        // 5. Start the AI request
-        autoRetry(
-          async () => {
-            await provider?.pause();
-
-            return this.options.resolveAiPrompt({
-              prompt,
-              selectionText: this.editor.state.doc.textBetween(
-                this.editor.state.selection.from,
-                this.editor.state.selection.to,
-                " "
-              ),
-              context: getDocumentText(this.editor, 3_000),
-              signal: abortController.signal,
-            });
-          },
-          RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
-          RESOLVE_AI_PROMPT_RETRY_DELAYS,
-
-          (error) => {
-            // Don't retry on 4xx errors or if the request was aborted
-            return (
-              abortController.signal.aborted ||
-              (error instanceof HttpError &&
-                error.status >= 400 &&
-                error.status < 500)
-            );
-          }
-        )
-          .then((output) => {
-            if (abortController.signal.aborted) {
-              return;
-            }
-
-            // 5.a. If the AI request succeeds, set to "reviewing" phase with the output
-            (
-              this.editor.commands as unknown as AiCommands
-            )._handleAiToolbarThinkingSuccess({
-              type: output.type,
-              text: output.content,
-            });
-          })
-          .catch((error) => {
-            if (abortController.signal.aborted) {
-              return;
-            }
-
-            // 5.b. If the AI request fails, set to "asking" phase with error
-            (
-              this.editor.commands as unknown as AiCommands
-            )._handleAiToolbarThinkingError(error);
-          });
-
-        return true;
-      },
-
-      $retryAiToolbarThinking:
-        () =>
+      $startAiToolbarThinking:
+        (prompt: string, withPreviousOutput: boolean = true) =>
         ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
 
-          // 1. If NOT in "reviewing" phase, do nothing
-          if (currentState.phase !== "reviewing") {
+          // 1. If in "thinking" phase already, do nothing
+          if (currentState.phase === "thinking") {
             return false;
           }
 
-          // 2. Revert the editor if possible
-          const revertTr = getRevertTransaction(
-            tr,
-            this.editor,
-            this.storage,
-            this.options.doc
-          );
-          if (revertTr) {
-            // Important: in this scenario we do not unpause the provider
-            view.dispatch(revertTr);
-            // Prevent Tiptap from dispatching this transaction, because we already did (this is a hack)
-            tr.setMeta("preventDispatch", true);
+          // 2. Blur the editor if needed
+          if (this.editor.isFocused) {
+            this.editor.commands.blur();
           }
 
-          // 3. Restore the initial selection before starting to think again
-          this.editor.commands.setTextSelection(currentState.initialSelection);
+          const abortController = new AbortController();
+          const provider = getLiveblocksYjsProvider(this.editor);
 
-          // 4. Start the AI request with the last prompt
-          (
-            this.editor.commands as unknown as AiCommands
-          ).$startAiToolbarThinking(currentState.prompt);
+          // 3. If this is a retry or a refinement, revert the editor and restore the initial selection
+          if (currentState.phase === "reviewing") {
+            // 3.a. Revert the editor
+            const revertTr = getRevertTransaction(
+              tr,
+              this.editor,
+              this.storage,
+              this.options.doc
+            );
+            if (revertTr) {
+              // Important: in this scenario we do not unpause the provider
+              view.dispatch(revertTr);
+              // Prevent Tiptap from dispatching this transaction, because we already did (this is a hack)
+              tr.setMeta("preventDispatch", true);
+            }
+
+            // 3.b. Restore the initial selection
+            this.editor.commands.setTextSelection(
+              currentState.initialSelection
+            );
+          }
+
+          // 4. Set to "thinking" phase
+          this.storage.state = {
+            phase: "thinking",
+            // Store the initial selection if the toolbar is opened directly in the "thinking" phase
+            initialSelection: currentState.initialSelection ?? {
+              from: this.editor.state.selection.from,
+              to: this.editor.state.selection.to,
+            },
+            // Initialize the custom prompt as empty if the toolbar is opened directly in the "thinking" phase
+            customPrompt: currentState.customPrompt ?? "",
+            prompt,
+            abortController,
+            previousOutput: currentState.output,
+          };
+
+          // 5. Block the editor
+          this.editor.setEditable(false);
+
+          // 6. Start the AI request
+          autoRetry(
+            async () => {
+              await provider?.pause();
+
+              console.log({
+                withPreviousOutput,
+                previousOutput: currentState.output,
+              });
+
+              return this.options.resolveAiPrompt({
+                prompt,
+                selectionText: this.editor.state.doc.textBetween(
+                  this.editor.state.selection.from,
+                  this.editor.state.selection.to,
+                  " "
+                ),
+                // TODO: If withPreviousOutput is false, don't pass previousOutput in the context
+                context: getDocumentText(this.editor, 3_000),
+                signal: abortController.signal,
+              });
+            },
+            RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
+            RESOLVE_AI_PROMPT_RETRY_DELAYS,
+
+            (error) => {
+              // Don't retry on 4xx errors or if the request was aborted
+              return (
+                abortController.signal.aborted ||
+                (error instanceof HttpError &&
+                  error.status >= 400 &&
+                  error.status < 500)
+              );
+            }
+          )
+            .then((output) => {
+              if (abortController.signal.aborted) {
+                return;
+              }
+
+              // 6.a. If the AI request succeeds, set to "reviewing" phase with the output
+              (
+                this.editor.commands as unknown as AiCommands
+              )._handleAiToolbarThinkingSuccess({
+                type: output.type,
+                text: output.content,
+              });
+            })
+            .catch((error) => {
+              if (abortController.signal.aborted) {
+                return;
+              }
+
+              // 6.b. If the AI request fails, set to "asking" phase with error
+              (
+                this.editor.commands as unknown as AiCommands
+              )._handleAiToolbarThinkingError(error);
+            });
 
           return true;
         },
+
+      $retryAiToolbarThinking: () => () => {
+        const currentState = this.storage.state;
+
+        // 1. If NOT in "reviewing" phase, do nothing
+        if (currentState.phase !== "reviewing") {
+          return false;
+        }
+
+        // 2. Call $startAiToolbarThinking with the last prompt but without the last output since it's a retry
+        return (
+          this.editor.commands as unknown as AiCommands
+        ).$startAiToolbarThinking(currentState.prompt, false);
+      },
 
       $cancelAiToolbarThinking: () => () => {
         const currentState = this.storage.state;

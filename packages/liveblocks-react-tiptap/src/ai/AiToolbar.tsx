@@ -298,7 +298,7 @@ function AiToolbarReviewingSuggestions() {
   }
 }
 
-function AiToolbarCustomPromptContent({ disabled }: { disabled?: boolean }) {
+function AiToolbarCustomPromptContent() {
   const editor = useCurrentEditor("CustomPromptContent", "AiToolbar");
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -401,7 +401,6 @@ function AiToolbarCustomPromptContent({ disabled }: { disabled?: boolean }) {
             onKeyDown={handlePromptKeyDown}
             rows={1}
             autoFocus
-            disabled={disabled}
           />
         </Command.Input>
       </div>
@@ -412,7 +411,7 @@ function AiToolbarCustomPromptContent({ disabled }: { disabled?: boolean }) {
             variant="primary"
             aria-label={`Ask ${aiName}`}
             icon={<SendIcon />}
-            disabled={isCustomPromptEmpty || disabled}
+            disabled={isCustomPromptEmpty}
             onClick={handleSendClick}
           />
         </ShortcutTooltip>
@@ -495,8 +494,7 @@ function AiToolbarReviewing() {
           <div className="lb-tiptap-ai-toolbar-output">{output.text}</div>
         </div>
       ) : null}
-      {/* TODO: Allow to refine the output with another prompt */}
-      <AiToolbarCustomPromptContent disabled />
+      <AiToolbarCustomPromptContent />
     </>
   );
 }
