@@ -708,6 +708,9 @@ function useNotificationSettingsSuspense_withClient(
   UserNotificationSettingsAsyncResult,
   (settings: PartialUserNotificationSettings) => void,
 ] {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some user notification settings
