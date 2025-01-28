@@ -51,8 +51,8 @@ function getLiveblocksYjsProvider(editor: Editor) {
 
 export function isAiToolbarDiffOutput(
   output: AiToolbarOutput
-): output is Extract<AiToolbarOutput, { type: "modification" | "insert" }> {
-  return output.type === "modification" || output.type === "insert";
+): output is Extract<AiToolbarOutput, { type: "replace" | "insert" }> {
+  return output.type === "replace" || output.type === "insert";
 }
 
 function getRevertTransaction(
@@ -281,7 +281,7 @@ export const AiExtension = Extension.create<
       },
 
       $startAiToolbarThinking:
-        (prompt: string, withPreviousOutput: boolean = true) =>
+        (prompt: string, withPreviousOutput: boolean = false) =>
         ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
 
@@ -343,27 +343,21 @@ export const AiExtension = Extension.create<
             async () => {
               await provider?.pause();
 
-              const documentText = getDocumentText(this.editor, 3_000);
-
-              console.log({
-                withPreviousOutput,
-                previousOutput: currentState.output,
-              });
+              const context = getDocumentText(this.editor, 3_000);
 
               return this.options.resolveAiPrompt({
                 prompt,
-                // TODO: Switch to new context format (context: { beforeSelection, selection, afterSelection }, previousOutput: ...)
-                selectionText: this.editor.state.doc.textBetween(
-                  this.editor.state.selection.from,
-                  this.editor.state.selection.to,
-                  " "
-                ),
-                // TODO: Same as above
-                context:
-                  documentText.beforeSelection +
-                  documentText.selection +
-                  documentText.afterSelection,
+                context,
                 signal: abortController.signal,
+                previous: withPreviousOutput
+                  ? {
+                      prompt: currentState.prompt ?? "",
+                      output: {
+                        type: currentState.output?.type ?? "",
+                        content: currentState.output?.text ?? "",
+                      },
+                    }
+                  : undefined,
               });
             },
             RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
@@ -503,7 +497,9 @@ export const AiExtension = Extension.create<
           // 5. Insert the output
           tr.insertText(
             output.text,
-            this.editor.state.selection.from,
+            output.type === "insert"
+              ? this.editor.state.selection.to
+              : this.editor.state.selection.from,
             this.editor.state.selection.to
           );
           view.dispatch(tr);

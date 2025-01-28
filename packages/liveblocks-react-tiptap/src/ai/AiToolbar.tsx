@@ -355,7 +355,7 @@ function AiToolbarCustomPromptContent() {
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
           (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
-            customPrompt
+            customPrompt, state.phase === "reviewing"
           );
         }
       }
@@ -377,9 +377,9 @@ function AiToolbarCustomPromptContent() {
     }
 
     (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
-      customPrompt
+      customPrompt, state.phase === "reviewing"
     );
-  }, [editor, customPrompt, isCustomPromptEmpty]);
+  }, [editor, customPrompt, isCustomPromptEmpty, state.phase]);
 
   return (
     <div className="lb-tiptap-ai-toolbar-content">

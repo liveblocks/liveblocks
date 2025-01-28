@@ -327,13 +327,24 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 
   executeContextualPrompt({
     roomId,
-    selectionText,
+    prompt,
     context,
+    signal,
   }: {
     roomId: string;
     prompt: string;
-    selectionText: string;
-    context: string;
+    context: {
+      beforeSelection: string;
+      selection: string;
+      afterSelection: string;
+    };
+    previous?: {
+      prompt: string;
+      output: {
+        type: string;
+        content: string;
+      };
+    };
     signal: AbortSignal;
   }): Promise<string>;
 }
@@ -1125,8 +1136,18 @@ export function createApiClient<M extends BaseMetadata>({
   async function executeContextualPrompt(options: {
     roomId: string;
     prompt: string;
-    selectionText: string;
-    context: string;
+    context: {
+      beforeSelection: string;
+      selection: string;
+      afterSelection: string;
+    };
+    previous?: {
+      prompt: string;
+      output: {
+        type: string;
+        content: string;
+      };
+    };
     signal: AbortSignal;
   }): Promise<string> {
     const result = await httpClient.post<{
@@ -1139,8 +1160,12 @@ export function createApiClient<M extends BaseMetadata>({
       }),
       {
         prompt: options.prompt,
-        selectionText: options.selectionText,
-        context: options.context,
+        context: {
+          beforeSelection: options.context.beforeSelection,
+          selection: options.context.selection,
+          afterSelection: options.context.afterSelection,
+        },
+        previous: options.previous,
       },
       { signal: options.signal }
     );

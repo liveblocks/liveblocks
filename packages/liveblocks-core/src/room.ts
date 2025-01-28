@@ -1042,8 +1042,18 @@ export type PrivateRoomApi = {
 
   executeContextualPrompt(options: {
     prompt: string;
-    selectionText: string;
-    context: string;
+    context: {
+      beforeSelection: string;
+      selection: string;
+      afterSelection: string;
+    };
+    previous?: {
+      prompt: string;
+      output: {
+        type: string;
+        content: string;
+      };
+    };
     signal: AbortSignal;
   }): Promise<string>;
 
@@ -1608,8 +1618,18 @@ export function createRoom<
 
   async function executeContextualPrompt(options: {
     prompt: string;
-    selectionText: string;
-    context: string;
+    context: {
+      beforeSelection: string;
+      selection: string;
+      afterSelection: string;
+    };
+    previous?: {
+      prompt: string;
+      output: {
+        type: string;
+        content: string;
+      };
+    };
     signal: AbortSignal;
   }) {
     return httpClient.executeContextualPrompt({

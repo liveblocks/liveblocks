@@ -379,14 +379,14 @@ export const useLiveblocksExtension = (
       if (options.ai) {
         const resolveAiPrompt = async ({
           prompt,
-          selectionText,
           context,
+          previous,
           signal,
         }: ResolveAiPromptArgs): Promise<AiResponse> => {
           const result = await room[kInternal].executeContextualPrompt({
             prompt,
-            selectionText,
             context,
+            previous,
             signal,
           });
 
@@ -395,7 +395,7 @@ export const useLiveblocksExtension = (
             typeof parsedResponse.type === "string" ? parsedResponse.type : "";
           if (
             typeof parsedResponse.content === "string" &&
-            ["insert", "modification", "other"].includes(type)
+            ["insert", "replace", "other"].includes(type)
           ) {
             return parsedResponse as AiResponse;
           }

@@ -7,6 +7,8 @@ import type { ChainedCommands, SingleCommands } from "@tiptap/react";
 import type { ProsemirrorBinding } from "y-prosemirror";
 import type { Doc, PermanentUserData, Snapshot } from "yjs";
 
+import type { DocumentText } from "./utils";
+
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
   "lb-plugin-mention-paste"
@@ -33,11 +35,15 @@ export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
  */
 export type ResolveAiPromptArgs = {
   prompt: string;
-
-  // TODO: Rename `selectionText` to `text` (when refining it's not a selection)
-  selectionText: string;
-  context: string;
   signal: AbortSignal;
+  context: DocumentText;
+  previous?: {
+    prompt: string;
+    output: {
+      type: string;
+      content: string;
+    };
+  };
 };
 
 export interface AiConfiguration {
@@ -78,8 +84,7 @@ export type AiExtensionOptions = {
 
 export type AiToolbarOutput = Relax<
   | {
-      // TODO: Rename to "replace"?
-      type: "modification";
+      type: "replace";
       text: string;
     }
   | {
@@ -326,6 +331,6 @@ export type YSyncPluginState = {
 };
 
 export type AiResponse = {
-  type: "insert" | "modification" | "other";
+  type: "insert" | "replace" | "other";
   content: string;
 };
