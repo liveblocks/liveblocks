@@ -239,7 +239,18 @@ const AiToolbarSuggestion = forwardRef<
 function AiToolbarReviewingSuggestions() {
   const editor = useCurrentEditor("ReviewingSuggestions", "AiToolbar");
   const { state } = useAiToolbarContext();
-  const { output } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
+  const { prompt, output } = state as Extract<
+    AiToolbarState,
+    { phase: "reviewing" }
+  >;
+
+  const retry = useCallback(() => {
+    // Retry with the same prompt
+    (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
+      prompt,
+      false
+    );
+  }, [editor, prompt]);
 
   if (isAiToolbarDiffOutput(output)) {
     return (
@@ -252,12 +263,7 @@ function AiToolbarReviewingSuggestions() {
         >
           Accept
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem
-          icon={<UndoIcon />}
-          onSelect={
-            (editor.commands as unknown as AiCommands).$retryAiToolbarThinking
-          }
-        >
+        <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={retry}>
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
@@ -279,12 +285,7 @@ function AiToolbarReviewingSuggestions() {
         >
           Insert below
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem
-          icon={<UndoIcon />}
-          onSelect={
-            (editor.commands as unknown as AiCommands).$retryAiToolbarThinking
-          }
-        >
+        <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={retry}>
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem

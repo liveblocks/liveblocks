@@ -104,18 +104,16 @@ export type AiToolbarOutput = Relax<
  *  ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
  *  │        CLOSED         │       │        ASKING         │       │       THINKING        │       │       REVIEWING       │
  *  └───────────────────────┘       └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
- *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇ ◇
- *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │ │
- *           │ │                               │ ▼                            │ │                               │ │ │
- *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │ │
- *           │                                 │ ▲ ▲                            │                               │ │ │
- *           │                                 │ │ └────────────────────────────┼───────────────────────────────┘ │ │
- *           │                                 │ │                              │                                 │ │
- *           │                                 │ └───────────────────$retryAiToolbarThinking()────────────────────┘ │
- *           │                                 │                                │                                   │
- *           │                                 └───$cancelAiToolbarThinking()───┘                                   │
- *           │                                                                                                      │
- *           └───────────────────────────────────────$acceptAiToolbarOutput()───────────────────────────────────────┘
+ *           ▲ ◇ ◇                           ▲ ▲ ◇ ▲                          ▲ ◇                             ▲ ◇ ◇
+ *           │ │ └───$openAiToolbarAsking()──┘ │ │ └ ─ ─ ─ ─ ─ ─⚠─ ─ ─ ─ ─ ─ ─│─├── ─ ─ ─ ─ ─ ─✓─ ─ ─ ─ ─ ─ ─ ┘ │ │
+ *           │ │                               │ ▼                            │ │                               │ │
+ *           │ └─────────────────$startAiToolbarThinking(prompt)──────────────┘ │                               │ │
+ *           │                                 │ ▲                              │                               │ │
+ *           │                                 │ └──────────────────────────────┼───────────────────────────────┘ │
+ *           │                                 │                                │                                 │
+ *           │                                 └───$cancelAiToolbarThinking()───┘                                 │
+ *           │                                                                                                    │
+ *           └──────────────────────────────────────$acceptAiToolbarOutput()──────────────────────────────────────┘
  *
  */
 export type AiToolbarState = Relax<
@@ -275,14 +273,6 @@ export type AiCommands<ReturnType = boolean> = {
     prompt: string,
     withPreviousOutput?: boolean
   ) => ReturnType;
-
-  /**
-   * @internal
-   * @transition
-   *
-   * Retry the last prompt while going back to the "thinking" phase.
-   */
-  $retryAiToolbarThinking: () => ReturnType;
 
   /**
    * @internal

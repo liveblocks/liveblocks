@@ -400,20 +400,6 @@ export const AiExtension = Extension.create<
           return true;
         },
 
-      $retryAiToolbarThinking: () => () => {
-        const currentState = this.storage.state;
-
-        // 1. If NOT in "reviewing" phase, do nothing
-        if (currentState.phase !== "reviewing") {
-          return false;
-        }
-
-        // 2. Call $startAiToolbarThinking with the last prompt but without the last output since it's a retry
-        return (
-          this.editor.commands as unknown as AiCommands
-        ).$startAiToolbarThinking(currentState.prompt, false);
-      },
-
       $cancelAiToolbarThinking: () => () => {
         const currentState = this.storage.state;
 
