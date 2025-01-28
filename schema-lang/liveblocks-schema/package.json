@@ -32,7 +32,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@types/didyoumean": "^1.2.0",
-    "ast-generator": "^0.3.0",
+    "ast-generator": "^0.4.0",
     "peggy": "^2.0.1",
     "pkg": "^4.4.9",
     "ts-node": "^10.9.1",
