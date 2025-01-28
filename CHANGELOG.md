@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.16.2
+
 ### `@liveblocks/react`
 
 - Improve error message if hooks are accidentally called server side
