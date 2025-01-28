@@ -6,7 +6,7 @@ const get = (fn: () => string | undefined): string | undefined => {
   }
 };
 
-export function getEnvVar(): string | undefined {
+export function getBaseUrlFromEnvVar(): string | undefined {
   return (
     get(() => process.env.LIVEBLOCKS_BASE_URL) ??
     get(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??

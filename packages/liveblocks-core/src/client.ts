@@ -9,7 +9,7 @@ import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
-import { getEnvVar } from "./lib/environment";
+import { getBaseUrlFromEnvVar } from "./lib/environment";
 import type { Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -451,7 +451,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
-  const targetBaseUrl = baseUrl ?? getEnvVar();
+  const targetBaseUrl = baseUrl ?? getBaseUrlFromEnvVar();
 
   if (
     typeof targetBaseUrl === "string" &&
