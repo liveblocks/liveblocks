@@ -13,8 +13,6 @@ import { sendFileUploadedNotification } from "./_notifications/file-uploaded-not
 // Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-  // @ts-expect-error
-  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
 // Add your webhook secret key from a project's webhooks dashboard
