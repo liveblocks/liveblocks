@@ -6,10 +6,10 @@ type EnvConfig = {
 
 const getImportMeta = (): Record<string, string> | undefined => {
   try {
-    // Split the string to prevent parser from detecting it
-    const parts = ["import", ".meta", ".env"];
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-implied-eval
-    return new Function("return " + parts.join(""))();
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const fn = new Function("return import.meta.env;");
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return fn();
   } catch {
     return undefined;
   }
