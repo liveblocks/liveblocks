@@ -1,6 +1,6 @@
 import { DEFAULT_BASE_URL } from "../constants";
 
-const get = (fn: () => string | undefined): string | undefined => {
+const safeGet = (fn: () => string | undefined): string | undefined => {
   try {
     return fn();
   } catch {
@@ -10,9 +10,9 @@ const get = (fn: () => string | undefined): string | undefined => {
 
 const getFromEnvVar = (): string | undefined => {
   return (
-    get(() => process.env.LIVEBLOCKS_BASE_URL) ??
-    get(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??
-    get(
+    safeGet(() => process.env.LIVEBLOCKS_BASE_URL) ??
+    safeGet(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??
+    safeGet(
       () =>
         (
           import.meta as ImportMeta & {
