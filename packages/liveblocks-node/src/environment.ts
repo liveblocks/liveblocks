@@ -1,43 +1,22 @@
-type EnvConfig = {
-  LIVEBLOCKS_BASE_URL: string;
-  NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: string;
-  VITE_LIVEBLOCKS_BASE_URL: string;
-};
-
-const getImportMeta = (): Record<string, string> | undefined => {
+const get = (fn: () => string | undefined): string | undefined => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    const fn = new Function("return import.meta.env;");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fn();
   } catch {
     return undefined;
   }
 };
 
-export function getEnvVar<K extends keyof EnvConfig>(
-  key: K
-): EnvConfig[K] | undefined {
-  switch (key) {
-    case "LIVEBLOCKS_BASE_URL": {
-      return typeof process !== "undefined"
-        ? process.env.LIVEBLOCKS_BASE_URL
-        : undefined;
-    }
-    case "NEXT_PUBLIC_LIVEBLOCKS_BASE_URL": {
-      return typeof process !== "undefined"
-        ? process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL
-        : undefined;
-    }
-    case "VITE_LIVEBLOCKS_BASE_URL": {
-      const importMetaEnv = getImportMeta();
-      if (importMetaEnv) {
-        return importMetaEnv.VITE_LIVEBLOCKS_BASE_URL ?? undefined;
-      }
-
-      return undefined;
-    }
-    default:
-      return undefined;
-  }
+export function getBaseUrlFromEnvVar(): string | undefined {
+  return (
+    get(() => process.env.LIVEBLOCKS_BASE_URL) ??
+    get(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??
+    get(
+      () =>
+        (
+          import.meta as ImportMeta & {
+            env: Record<string, string | undefined>;
+          }
+        ).env.VITE_LIVEBLOCKS_BASE_URL
+    )
+  );
 }

@@ -1,4 +1,4 @@
-import { getEnvVar } from "./environment";
+import { getBaseUrlFromEnvVar } from "./environment";
 
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
@@ -6,22 +6,15 @@ const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 const VALID_KEY_CHARS_REGEX = /^[\w-]+$/;
 
 export function getBaseUrl(baseUrl?: string | undefined): string {
-  let selectedBaseUrl: string | undefined = undefined;
-  if (baseUrl !== undefined) {
-    selectedBaseUrl = baseUrl;
-  } else {
-    selectedBaseUrl =
-      getEnvVar("LIVEBLOCKS_BASE_URL") ??
-      getEnvVar("NEXT_PUBLIC_LIVEBLOCKS_BASE_URL") ??
-      getEnvVar("VITE_LIVEBLOCKS_BASE_URL") ??
-      undefined;
-  }
+  const targetBaseUrl = baseUrl ?? getBaseUrlFromEnvVar();
 
   if (
-    typeof selectedBaseUrl === "string" &&
-    selectedBaseUrl.startsWith("http") // Must be http or https URL
+    typeof targetBaseUrl === "string" &&
+    // Check on the value `undefined` because of our tsup config
+    targetBaseUrl !== "undefined" &&
+    targetBaseUrl.startsWith("http") // Must be http or https URL
   ) {
-    return selectedBaseUrl;
+    return targetBaseUrl;
   } else {
     return DEFAULT_BASE_URL;
   }
