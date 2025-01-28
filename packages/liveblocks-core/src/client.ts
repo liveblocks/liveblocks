@@ -455,6 +455,8 @@ function getBaseUrl(baseUrl?: string | undefined): string {
 
   if (
     typeof targetBaseUrl === "string" &&
+    // Check on the value `undefined` because of our tsup config
+    targetBaseUrl !== "undefined" &&
     targetBaseUrl.startsWith("http") // Must be http or https URL
   ) {
     return targetBaseUrl;
