@@ -1,5 +1,13 @@
 ## vNEXT (not yet published)
 
+## v2.16.2
+
+### `@liveblocks/react`
+
+- Improve error message if hooks are accidentally called server side
+
+### `@liveblocks/zustand`
+
 - Fix bug in Zustand typing in case the multi-argument form of `set()` is used
   (thanks [@hans-lizihan](https://github.com/hans-lizihan))
 
