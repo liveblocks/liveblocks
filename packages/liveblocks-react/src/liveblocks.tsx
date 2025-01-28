@@ -38,6 +38,7 @@ import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
+import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -437,6 +438,9 @@ function useInboxNotifications_withClient<T>(
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
@@ -461,6 +465,9 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
@@ -1099,6 +1106,9 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const client = useClient();
   const { store } = getLiveblocksExtrasForClient<M>(client);
   const queryKey = makeUserThreadsQueryKey(options.query);
