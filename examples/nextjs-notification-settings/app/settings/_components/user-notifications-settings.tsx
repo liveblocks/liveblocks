@@ -8,6 +8,8 @@ import * as Switch from "@radix-ui/react-switch";
 
 import { cn } from "@/utils/cn";
 
+import { SettingSwitch } from "./setting-switch";
+
 export function UserNotificationsSettings() {
   const [{ isLoading, error, settings }, updateNotificationSettings] =
     useNotificationSettings();
@@ -95,95 +97,43 @@ export function UserNotificationsSettings() {
         </p>
       </div>
       <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              isEmailChannelEnabled ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="emailNotifications"
-            name="emailNotifications"
-            checked={isEmailChannelEnabled}
-            onCheckedChange={handleChangeEmailChannel}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="emailNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive email (all kind) notifications
-          </label>
-        </div>
+        <SettingSwitch
+          id="emailNotifications"
+          checked={isEmailChannelEnabled}
+          onChange={handleChangeEmailChannel}
+        >
+          Receive email (all kind) notifications
+        </SettingSwitch>
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              settings.email.thread ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="threadNotifications"
-            name="threadNotifications"
-            checked={settings.email.thread}
-            onCheckedChange={handleChangeEmailChannelThreadKind}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="threadNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive thread kind email notifications
-          </label>
-        </div>
+        <SettingSwitch
+          id="threadNotifications"
+          checked={settings.email.thread}
+          onChange={handleChangeEmailChannelThreadKind}
+        >
+          Receive thread kind email notifications
+        </SettingSwitch>
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              settings.email.textMention ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="textMentionNotifications"
-            name="textMentionNotifications"
-            checked={settings.email.textMention}
-            onCheckedChange={handleChangeEmailChannelTextMentionKind}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="textMentionNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive text mention kind email notifications
-          </label>
-        </div>
+        <SettingSwitch
+          id="textMentionNotifications"
+          checked={settings.email.textMention}
+          onChange={handleChangeEmailChannelTextMentionKind}
+        >
+          Receive text mention kind email notifications
+        </SettingSwitch>
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              settings.email.$fileUploaded ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="$customNotifications"
-            name="$customNotifications"
-            checked={settings.email.$fileUploaded}
-            onCheckedChange={handleChangeEmailChannel$fileUploadedKind}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="$customNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive $fileUploaded (custom) kind notifications
-          </label>
-        </div>
+        <SettingSwitch
+          id="$customNotifications"
+          checked={settings.email.$fileUploaded}
+          onChange={handleChangeEmailChannel$fileUploadedKind}
+        >
+          Receive $fileUploaded (custom) kind email notifications
+        </SettingSwitch>
       </div>
 
       <hr />
@@ -196,26 +146,13 @@ export function UserNotificationsSettings() {
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              isSlackChannelEnabled ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="slackNotifications"
-            name="slackNotifications"
-            checked={isSlackChannelEnabled}
-            onCheckedChange={handleChangeSlackChannel}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="slackNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive Slack notifications (all kind)
-          </label>
-        </div>
+        <SettingSwitch
+          id="slackNotifications"
+          checked={isSlackChannelEnabled}
+          onChange={handleChangeSlackChannel}
+        >
+          Receive Slack notifications (all kind)
+        </SettingSwitch>
       </div>
 
       <hr />
@@ -230,26 +167,13 @@ export function UserNotificationsSettings() {
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              isTeamsChannelEnabled ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="teamsNotifications"
-            name="teamsNotifications"
-            checked={isTeamsChannelEnabled}
-            onCheckedChange={handleChangeTeamsChannel}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="teamsNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive Teams notifications (all kind)
-          </label>
-        </div>
+        <SettingSwitch
+          id="teamsNotifications"
+          checked={isTeamsChannelEnabled}
+          onChange={handleChangeTeamsChannel}
+        >
+          Receive Teams notifications (all kind)
+        </SettingSwitch>
       </div>
 
       <hr />
@@ -262,26 +186,13 @@ export function UserNotificationsSettings() {
       </div>
 
       <div className="mb-6 mt-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              isWebPushChannelEnabled ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="webPushNotifications"
-            name="webPushNotifications"
-            checked={isWebPushChannelEnabled}
-            onCheckedChange={handleChangeWebPushChannel}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="webPushNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive web push notifications (all kind)
-          </label>
-        </div>
+        <SettingSwitch
+          id="webPushNotifications"
+          checked={isWebPushChannelEnabled}
+          onChange={handleChangeWebPushChannel}
+        >
+          Receive web push notifications (all kind)
+        </SettingSwitch>
       </div>
     </div>
   );

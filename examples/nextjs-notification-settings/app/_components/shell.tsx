@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useCallback } from "react";
 
 import { getInitials } from "@/utils/get-initials";
 import {
@@ -16,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { NotificationsPopover } from "./notifications-popover";
 import { SettingsButton } from "./settings-button";
 import { EditorButton } from "./editor-button";
-import { useCallback } from "react";
 
 export function Shell({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
