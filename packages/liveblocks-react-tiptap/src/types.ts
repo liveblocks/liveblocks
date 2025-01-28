@@ -159,7 +159,7 @@ export type AiToolbarState = Relax<
       previousOutput?: AiToolbarOutput;
 
       /**
-       * Stored selection
+       * The selection stored before starting a "thinking" phase.
        */
       previousSelection: Range;
     }
@@ -182,7 +182,7 @@ export type AiToolbarState = Relax<
       output: AiToolbarOutput;
 
       /**
-       * Stored selection
+       * The selection stored before starting the last "thinking" phase.
        */
       previousSelection: Range;
     }

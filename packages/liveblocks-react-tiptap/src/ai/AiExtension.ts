@@ -234,11 +234,18 @@ export const AiExtension = Extension.create<
             }
           }
 
-          // 3. Unblock the editor
+          // 3. Restore the selection if possible
+          if (currentState.previousSelection) {
+            this.editor.commands.setTextSelection(
+              currentState.previousSelection
+            );
+          }
+
+          // 4. Unblock the editor
           getLiveblocksYjsProvider(this.editor)?.unpause();
           this.editor.setEditable(true);
 
-          // 4. Set to "closed" phase
+          // 5. Set to "closed" phase
           this.storage.state = { phase: "closed" };
 
           return true;
@@ -313,6 +320,7 @@ export const AiExtension = Extension.create<
                 currentSelection.to,
                 " "
               ),
+              // TODO: getDocumentText should use previousSelection?
               context: getDocumentText(this.editor, 3_000),
               signal: abortController.signal,
             });
@@ -367,6 +375,7 @@ export const AiExtension = Extension.create<
             return false;
           }
 
+          // 2. Revert the editor if possible
           const revertTr = getRevertTransaction(
             tr,
             this.editor,
@@ -374,16 +383,16 @@ export const AiExtension = Extension.create<
             this.options.doc
           );
           if (revertTr) {
-            // important, in this scenario we do not unpause the provider
+            // Important: in this scenario we do not unpause the provider
             view.dispatch(revertTr);
             // Prevent Tiptap from dispatching this transaction, because we already did. (this is a hack)
             tr.setMeta("preventDispatch", true);
           }
 
-          // 2. restore the selection before starting to think again
+          // 3. Restore the selection before starting to think again
           this.editor.commands.setTextSelection(currentState.previousSelection);
 
-          // 3. Start the AI request with the last prompt
+          // 4. Start the AI request with the last prompt
           (
             this.editor.commands as unknown as AiCommands
           ).$startAiToolbarThinking(
