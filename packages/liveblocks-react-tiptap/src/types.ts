@@ -126,6 +126,11 @@ export type AiToolbarState = Relax<
       phase: "asking";
 
       /**
+       * The selection stored when opening the AI toolbar.
+       */
+      initialSelection: Range;
+
+      /**
        * The custom prompt being written in the toolbar.
        */
       customPrompt: string;
@@ -137,6 +142,11 @@ export type AiToolbarState = Relax<
     }
   | {
       phase: "thinking";
+
+      /**
+       * The selection stored when opening the AI toolbar.
+       */
+      initialSelection: Range;
 
       /**
        * The custom prompt being written in the toolbar.
@@ -157,14 +167,14 @@ export type AiToolbarState = Relax<
        * The previous output if this "thinking" phase is a refinement.
        */
       previousOutput?: AiToolbarOutput;
-
-      /**
-       * The selection stored before starting a "thinking" phase.
-       */
-      previousSelection: Range;
     }
   | {
       phase: "reviewing";
+
+      /**
+       * The selection stored when opening the AI toolbar.
+       */
+      initialSelection: Range;
 
       /**
        * The custom prompt being written in the toolbar.
@@ -180,11 +190,6 @@ export type AiToolbarState = Relax<
        * The output of the AI request.
        */
       output: AiToolbarOutput;
-
-      /**
-       * The selection stored before starting the last "thinking" phase.
-       */
-      previousSelection: Range;
     }
 >;
 
@@ -266,10 +271,7 @@ export type AiCommands<ReturnType = boolean> = {
    *
    * Set (and open if not already open) the AI toolbar in the "thinking" phase with the given prompt.
    */
-  $startAiToolbarThinking: (
-    prompt: string,
-    previousSelection?: Range
-  ) => ReturnType;
+  $startAiToolbarThinking: (prompt: string) => ReturnType;
 
   /**
    * @internal

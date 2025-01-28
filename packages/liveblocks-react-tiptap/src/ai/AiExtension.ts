@@ -1,6 +1,6 @@
 import { autoRetry, HttpError } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { CommandProps, Editor, Range } from "@tiptap/core";
+import type { CommandProps, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
@@ -191,7 +191,7 @@ export const AiExtension = Extension.create<
 
             tr.insert(this.editor.state.selection.$to.end() + 1, paragraph);
             view.dispatch(tr);
-            // Prevent TipTap from dispatching this transaction, because we already did. (this is a hack)
+            // Prevent TipTap from dispatching this transaction, because we already did (this is a hack)
             tr.setMeta("preventDispatch", true);
           }
 
@@ -210,17 +210,22 @@ export const AiExtension = Extension.create<
         ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
 
-          // 1. If in "thinking" phase, cancel the current AI request
+          // 1. If already in "closed" phase, do nothing
+          if (currentState.phase === "closed") {
+            return false;
+          }
+
+          // 2. If in "thinking" phase, cancel the current AI request
           if (currentState.phase === "thinking") {
             currentState.abortController.abort();
           }
 
-          // 2. If in "thinking" or "reviewing" phase, revert the editor if possible and unblock it
+          // 3. If in "thinking" or "reviewing" phase, revert the editor if possible and unblock it
           if (
             currentState.phase === "thinking" ||
             currentState.phase === "reviewing"
           ) {
-            // get the revert transaction and dispatch it
+            // Get the revert transaction and dispatch it
             const revertTr = getRevertTransaction(
               tr,
               this.editor,
@@ -229,23 +234,19 @@ export const AiExtension = Extension.create<
             );
             if (revertTr) {
               view.dispatch(revertTr);
-              // Prevent TipTap from dispatching this transaction, because we already did. (this is a hack)
+              // Prevent TipTap from dispatching this transaction, because we already did (this is a hack)
               tr.setMeta("preventDispatch", true);
             }
           }
 
-          // 3. Restore the selection if possible
-          if (currentState.previousSelection) {
-            this.editor.commands.setTextSelection(
-              currentState.previousSelection
-            );
-          }
+          // 4. Restore the initial selection
+          this.editor.commands.setTextSelection(currentState.initialSelection);
 
-          // 4. Unblock the editor
+          // 5. Unblock the editor
           getLiveblocksYjsProvider(this.editor)?.unpause();
           this.editor.setEditable(true);
 
-          // 5. Set to "closed" phase
+          // 6. Set to "closed" phase
           this.storage.state = { phase: "closed" };
 
           return true;
@@ -267,6 +268,11 @@ export const AiExtension = Extension.create<
         // 3. Set to "asking" phase
         this.storage.state = {
           phase: "asking",
+          // Store the initial selection
+          initialSelection: {
+            from: this.editor.state.selection.from,
+            to: this.editor.state.selection.to,
+          },
           // Initialize the custom prompt as empty
           customPrompt: "",
         };
@@ -290,19 +296,19 @@ export const AiExtension = Extension.create<
         const abortController = new AbortController();
         const provider = getLiveblocksYjsProvider(this.editor);
 
-        const currentSelection: Range = {
-          from: this.editor.state.selection.from,
-          to: this.editor.state.selection.to,
-        };
-
         // 3. Set to "thinking" phase
         this.storage.state = {
           phase: "thinking",
+          // Store the initial selection if the toolbar is opened directly in the "thinking" phase
+          initialSelection: currentState.initialSelection ?? {
+            from: this.editor.state.selection.from,
+            to: this.editor.state.selection.to,
+          },
+          // Initialize the custom prompt as empty if the toolbar is opened directly in the "thinking" phase
           customPrompt: currentState.customPrompt ?? "",
           prompt,
           abortController,
           previousOutput: currentState.output,
-          previousSelection: currentSelection,
         };
 
         // 4. Block the editor
@@ -316,11 +322,10 @@ export const AiExtension = Extension.create<
             return this.options.resolveAiPrompt({
               prompt,
               selectionText: this.editor.state.doc.textBetween(
-                currentSelection.from,
-                currentSelection.to,
+                this.editor.state.selection.from,
+                this.editor.state.selection.to,
                 " "
               ),
-              // TODO: getDocumentText should use previousSelection?
               context: getDocumentText(this.editor, 3_000),
               signal: abortController.signal,
             });
@@ -385,20 +390,17 @@ export const AiExtension = Extension.create<
           if (revertTr) {
             // Important: in this scenario we do not unpause the provider
             view.dispatch(revertTr);
-            // Prevent Tiptap from dispatching this transaction, because we already did. (this is a hack)
+            // Prevent Tiptap from dispatching this transaction, because we already did (this is a hack)
             tr.setMeta("preventDispatch", true);
           }
 
-          // 3. Restore the selection before starting to think again
-          this.editor.commands.setTextSelection(currentState.previousSelection);
+          // 3. Restore the initial selection before starting to think again
+          this.editor.commands.setTextSelection(currentState.initialSelection);
 
           // 4. Start the AI request with the last prompt
           (
             this.editor.commands as unknown as AiCommands
-          ).$startAiToolbarThinking(
-            currentState.prompt,
-            currentState.previousSelection
-          );
+          ).$startAiToolbarThinking(currentState.prompt);
 
           return true;
         },
@@ -420,6 +422,7 @@ export const AiExtension = Extension.create<
         // 4. Set to "asking" phase
         this.storage.state = {
           phase: "asking",
+          initialSelection: currentState.initialSelection,
           // If the custom prompt is different than the prompt, reset it
           customPrompt:
             currentState.prompt === currentState.customPrompt
@@ -470,10 +473,10 @@ export const AiExtension = Extension.create<
           if (!isAiToolbarDiffOutput(output)) {
             this.storage.state = {
               phase: "reviewing",
+              initialSelection: currentState.initialSelection,
               customPrompt: "",
               prompt: currentState.prompt,
               output,
-              previousSelection: currentState.previousSelection,
             };
 
             return true;
@@ -490,10 +493,10 @@ export const AiExtension = Extension.create<
           // 4. Set to "reviewing" phase with the new range
           this.storage.state = {
             phase: "reviewing",
+            initialSelection: currentState.initialSelection,
             customPrompt: "",
             prompt: currentState.prompt,
             output,
-            previousSelection: currentState.previousSelection,
           };
 
           // 5. Insert the output
@@ -503,7 +506,7 @@ export const AiExtension = Extension.create<
             this.editor.state.selection.to
           );
           view.dispatch(tr);
-          // Prevent Tiptap from dispatching this transaction, because we already did. (this is a hack)
+          // Prevent Tiptap from dispatching this transaction, because we already did (this is a hack)
           tr.setMeta("preventDispatch", true);
 
           // 6. Show the diff
@@ -533,6 +536,7 @@ export const AiExtension = Extension.create<
         // 4. Set to "asking" phase with error
         this.storage.state = {
           phase: "asking",
+          initialSelection: currentState.initialSelection,
           // If the custom prompt is different than the prompt, reset it
           customPrompt:
             currentState.prompt === currentState.customPrompt
