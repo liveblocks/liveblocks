@@ -410,10 +410,12 @@ function useInboxNotifications_withClient<T>(
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  ensureNotOnServer();
   use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
