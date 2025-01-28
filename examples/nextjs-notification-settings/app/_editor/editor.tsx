@@ -19,6 +19,7 @@ export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
 
   const editor = useEditor({
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
