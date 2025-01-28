@@ -2,7 +2,7 @@
 
 ### `@liveblocks/react`
 
-- Fix bug in internal store to avoid to fetch on the server on first render.
+- Improve error message if hooks are accidentally called server side
 
 ### `@liveblocks/zustand`
 
