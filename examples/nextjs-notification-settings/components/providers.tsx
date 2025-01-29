@@ -20,6 +20,9 @@ export function Providers({
   return (
     <SessionProvider session={session}>
       <LiveblocksProvider
+        // XXX
+        // @ts-expect-error
+        baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
         throttle={16}
         authEndpoint="/api/liveblocks-auth"
         resolveUsers={async ({ userIds }) => {
