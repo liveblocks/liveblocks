@@ -1,5 +1,6 @@
 "use client";
 
+import type { NotificationChannelSettings } from "@liveblocks/core";
 import {
   useNotificationSettings,
   isNotificationChannelEnabled,
@@ -7,6 +8,11 @@ import {
 
 import { Loading } from "@/components/loading";
 import { SettingSwitch } from "./setting-switch";
+
+const getAvailableKinds = (settings: NotificationChannelSettings): string => {
+  const kinds = Object.keys(settings);
+  return kinds.join(", ");
+};
 
 export function UserNotificationsSettings() {
   const [{ isLoading, error, settings }, updateNotificationSettings] =
@@ -100,7 +106,7 @@ export function UserNotificationsSettings() {
           checked={isEmailChannelEnabled}
           onChange={handleChangeEmailChannel}
         >
-          Receive email (all kind) notifications
+          Receive Email notifications ({getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
 
@@ -149,7 +155,7 @@ export function UserNotificationsSettings() {
           checked={isSlackChannelEnabled}
           onChange={handleChangeSlackChannel}
         >
-          Receive Slack notifications (all kind)
+          Receive Slack notifications ({getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
 
@@ -170,7 +176,7 @@ export function UserNotificationsSettings() {
           checked={isTeamsChannelEnabled}
           onChange={handleChangeTeamsChannel}
         >
-          Receive Teams notifications (all kind)
+          Receive Teams notifications ({getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
 
@@ -189,7 +195,7 @@ export function UserNotificationsSettings() {
           checked={isWebPushChannelEnabled}
           onChange={handleChangeWebPushChannel}
         >
-          Receive web push notifications (all kind)
+          Receive web push notifications ({getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
     </div>
