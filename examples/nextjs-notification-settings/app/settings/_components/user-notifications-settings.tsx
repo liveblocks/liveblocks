@@ -106,7 +106,8 @@ export function UserNotificationsSettings() {
           checked={isEmailChannelEnabled}
           onChange={handleChangeEmailChannel}
         >
-          Receive Email notifications ({getAvailableKinds(settings.email)})
+          Receive Email notifications (all kinds:{" "}
+          {getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
 
@@ -155,7 +156,8 @@ export function UserNotificationsSettings() {
           checked={isSlackChannelEnabled}
           onChange={handleChangeSlackChannel}
         >
-          Receive Slack notifications ({getAvailableKinds(settings.email)})
+          Receive Slack notifications (all kinds:{" "}
+          {getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
 
@@ -176,7 +178,8 @@ export function UserNotificationsSettings() {
           checked={isTeamsChannelEnabled}
           onChange={handleChangeTeamsChannel}
         >
-          Receive Teams notifications ({getAvailableKinds(settings.email)})
+          Receive Teams notifications (all kinds:{" "}
+          {getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
 
@@ -195,7 +198,8 @@ export function UserNotificationsSettings() {
           checked={isWebPushChannelEnabled}
           onChange={handleChangeWebPushChannel}
         >
-          Receive web push notifications ({getAvailableKinds(settings.email)})
+          Receive web push notifications (all kinds:{" "}
+          {getAvailableKinds(settings.email)})
         </SettingSwitch>
       </div>
     </div>
