@@ -9,9 +9,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:ast": "generate-ast src/ast/ast.grammar src/ast/generated-ast.ts && tsc && node bin/update-returntypes.js",
-    "build:parser": "peggy --plugin ../../node_modules/ts-pegjs/src/tspegjs.js --extra-options-file pegconfig.json --allowed-start-rules Document --cache -o src/parser/generated-parser.ts src/parser/schema-lang.pegjs && tsc",
+    "build": "tsc && tsup",
+    "build:ast": "generate-ast src/ast/ast.grammar src/ast/generated-ast.ts && node bin/update-returntypes.js",
+    "build:parser": "peggy --plugin ../../node_modules/ts-pegjs/src/tspegjs.js --extra-options-file pegconfig.json --allowed-start-rules Document --cache -o src/parser/generated-parser.ts src/parser/schema-lang.pegjs",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
