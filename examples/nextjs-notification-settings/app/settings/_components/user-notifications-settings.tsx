@@ -4,7 +4,6 @@ import {
   useNotificationSettings,
   isNotificationChannelEnabled,
 } from "@liveblocks/react";
-import * as Switch from "@radix-ui/react-switch";
 
 import { Loading } from "@/components/loading";
 import { SettingSwitch } from "./setting-switch";
