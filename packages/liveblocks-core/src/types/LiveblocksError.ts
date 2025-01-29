@@ -80,7 +80,7 @@ type CommentsOrNotificationsErrorContext =
 
 export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
-  | CommentsOrNotificationsErrorContext // from Comments or Notifications
+  | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
 >;
 
 export class LiveblocksError extends Error {

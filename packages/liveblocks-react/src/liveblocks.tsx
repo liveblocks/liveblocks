@@ -5,15 +5,16 @@ import type {
   ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
-import type {
-  AsyncResult,
-  BaseRoomInfo,
-  DM,
-  DU,
-  LiveblocksError,
-  OpaqueClient,
-  PartialUserNotificationSettings,
-  SyncStatus,
+import {
+  type AsyncResult,
+  type BaseRoomInfo,
+  type DM,
+  type DU,
+  HttpError,
+  type LiveblocksError,
+  type OpaqueClient,
+  type PartialUserNotificationSettings,
+  type SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
@@ -657,10 +658,27 @@ function useUpdateNotificationSettings_withClient(
         (err: Error) => {
           // Remove optimistic update when it fails
           store.optimisticUpdates.remove(optimisticUpdateId);
-          client[kInternal].emitError(
-            { type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR" },
-            err
-          );
+          // Check if the error is an HTTP error
+          if (err instanceof HttpError) {
+            if (err.status === 422) {
+              const msg = [err.details?.error, err.details?.reason]
+                .filter(Boolean)
+                .join("\n");
+              console.error(msg);
+            }
+
+            client[kInternal].emitError(
+              {
+                type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR",
+              },
+              err
+            );
+          }
+          // A non-HTTP error is unexpected and must be considered as a bug.
+          // We should fix it and do not notify users about it.
+          else {
+            throw err;
+          }
         }
       );
     },
