@@ -7,7 +7,6 @@ import { auth } from "@/auth/manager";
  * Authenticating your Liveblocks application
  * https://liveblocks.io/docs/authentication
  */
-
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
