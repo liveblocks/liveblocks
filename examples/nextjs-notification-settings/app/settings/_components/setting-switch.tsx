@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 
 export function SettingSwitch({
   id,
-  checked,
+  checked = false,
   disabled = false,
   onChange,
   children,
 }: {
   id: string;
-  checked: boolean;
+  checked?: boolean;
   disabled?: boolean;
   onChange: (checked: boolean) => void;
   children?: React.ReactNode;
