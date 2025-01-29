@@ -54,6 +54,7 @@ import type {
   UserAsyncResult,
   UserAsyncSuccess,
   UserNotificationSettingsAsyncResult,
+  UserNotificationSettingsAsyncSuccess,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
@@ -705,7 +706,7 @@ function useNotificationSettings_withClient(
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-  UserNotificationSettingsAsyncResult,
+  UserNotificationSettingsAsyncSuccess,
   (settings: PartialUserNotificationSettings) => void,
 ] {
   // Throw error if we're calling this hook server side
