@@ -1,10 +1,10 @@
 "use client";
 
-import { useRoom } from "@liveblocks/react";
+import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { useToast } from "@/hooks/use-toast";
 
 export function TriggerCustomNotificationButton() {
-  const room = useRoom();
+  const roomId = useExampleRoomId();
   const { toast } = useToast();
 
   // Keep it simple for now
@@ -22,7 +22,7 @@ export function TriggerCustomNotificationButton() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            roomId: room.id,
+            roomId,
           }),
         }
       );

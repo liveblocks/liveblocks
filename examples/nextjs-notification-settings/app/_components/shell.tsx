@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationsPopover } from "./notifications-popover";
 import { SettingsButton } from "./settings-button";
 import { EditorButton } from "./editor-button";
+import { TriggerCustomNotificationButton } from "./trigger-custom-notification-button";
 
 export function Shell({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
@@ -35,6 +36,10 @@ export function Shell({ children }: { children?: React.ReactNode }) {
         {session ? (
           <div className="flex items-center justify-end gap-0.5">
             <NotificationsPopover />
+
+            <Suspense fallback={null}>
+              <TriggerCustomNotificationButton />
+            </Suspense>
 
             <Suspense fallback={null}>
               {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
