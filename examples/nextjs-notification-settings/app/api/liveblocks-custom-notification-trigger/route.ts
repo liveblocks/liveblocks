@@ -10,8 +10,9 @@ const liveblocks = new Liveblocks({
 
 export async function POST(request: Request) {
   const body = await request.json();
-  console.log("body", body);
 
+  // We do not want to send the custom notification
+  // to the same current authenticated user
   const currentUserIndex = users.findIndex(
     (user) => user.id === body.currentUserId
   );
