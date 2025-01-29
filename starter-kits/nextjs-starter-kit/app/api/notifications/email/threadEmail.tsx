@@ -1,5 +1,5 @@
-import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails/src";
-import { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 import { DOCUMENT_URL } from "@/constants";
 import { getDocument } from "@/lib/actions";
 import { getUser, getUsers } from "@/lib/database";

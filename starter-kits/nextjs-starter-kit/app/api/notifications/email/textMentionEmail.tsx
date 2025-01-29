@@ -1,5 +1,8 @@
 import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
-import { Liveblocks, TextMentionNotificationEvent } from "@liveblocks/node";
+import type {
+  Liveblocks,
+  TextMentionNotificationEvent,
+} from "@liveblocks/node";
 import { DOCUMENT_URL } from "@/constants";
 import { getDocument } from "@/lib/actions";
 import { getUser, getUsers } from "@/lib/database";
