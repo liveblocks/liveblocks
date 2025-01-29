@@ -1,43 +1,50 @@
 "use client";
 
-import { useRoom } from "@liveblocks/react";
+import { useCallback } from "react";
+
+import { useExampleRoomId } from "@/hooks/use-example-room-id";
 import { useToast } from "@/hooks/use-toast";
 
-export function TriggerCustomNotificationButton() {
-  const room = useRoom();
+export function TriggerCustomNotificationButton({
+  currentUserId,
+}: {
+  currentUserId: string;
+}) {
+  const roomId = useExampleRoomId();
   const { toast } = useToast();
 
-  // Keep it simple for now
-  const onClick = async (
-    e: React.MouseEvent<HTMLButtonElement>
-  ): Promise<void> => {
-    e.preventDefault();
+  const onClick = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
+      e.preventDefault();
 
-    try {
-      const response = await fetch(
-        "/api/liveblocks-custom-notification-trigger",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            roomId: room.id,
-          }),
+      try {
+        const response = await fetch(
+          "/api/liveblocks-custom-notification-trigger",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              roomId,
+              currentUserId,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
         }
-      );
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+        toast({
+          title: "Custom notification triggered ✅",
+        });
+      } catch (err) {
+        console.error(err);
       }
-
-      toast({
-        title: "Custom notification triggered ✅",
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    },
+    [currentUserId, roomId, toast]
+  );
 
   return (
     <button

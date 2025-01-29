@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useCallback } from "react";
+import { useCallback, Suspense } from "react";
 
 import { getInitials } from "@/utils/get-initials";
 import {
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationsPopover } from "./notifications-popover";
 import { SettingsButton } from "./settings-button";
 import { EditorButton } from "./editor-button";
+import { TriggerCustomNotificationButton } from "./trigger-custom-notification-button";
 
 export function Shell({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
@@ -36,16 +37,24 @@ export function Shell({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center justify-end gap-0.5">
             <NotificationsPopover />
 
-            {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
+            <Suspense fallback={null}>
+              <TriggerCustomNotificationButton
+                currentUserId={session.user.info.id}
+              />
+            </Suspense>
+
+            <Suspense fallback={null}>
+              {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
+            </Suspense>
             <Popover>
               <PopoverTrigger className="ml-2">
                 <Avatar className="size-6">
                   <AvatarImage
-                    src={session?.user.info.picture}
-                    alt={session?.user.info.name}
+                    src={session.user.info.picture}
+                    alt={session.user.info.name}
                   />
                   <AvatarFallback>
-                    {getInitials(session?.user.info.name)}
+                    {getInitials(session.user.info.name)}
                   </AvatarFallback>
                 </Avatar>
               </PopoverTrigger>
@@ -56,10 +65,10 @@ export function Shell({ children }: { children?: React.ReactNode }) {
               >
                 <div className="flex flex-col gap-0.5">
                   <h3 className="text-lg font-semibold">
-                    {session?.user.info.name}
+                    {session.user.info.name}
                   </h3>
                   <span className="text-sm text-muted-foreground">
-                    {session?.user.info.id}
+                    {session.user.info.id}
                   </span>
                 </div>
                 <Separator />
