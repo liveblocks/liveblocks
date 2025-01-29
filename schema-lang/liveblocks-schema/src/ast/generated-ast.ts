@@ -36,10 +36,15 @@ function createNode<N extends Node>(
 ): N {
   const node = base as N;
 
+  const semanticMeth = (key: SemanticMethod) =>
+    method((context) => semantics[key](node, context));
+
   Object.defineProperties(base, {
     range: { enumerable: false },
     children: getter(() => iterChildren(node)),
     descendants: getter(() => iterDescendants(node)),
+
+    check: semanticMeth("check"),
   });
 
   _nodes.add(node);
@@ -104,6 +109,133 @@ export type ScalarType =
   | LiteralType;
 
 export type Type = NonUnionType | UnionType;
+
+export type SemanticProperty = never;
+export type SemanticMethod = "check";
+
+type UserDefinedReturnType<K extends SemanticProperty | SemanticMethod> =
+  K extends keyof Semantics
+    ? Semantics[K] extends (...args: any[]) => infer R
+      ? R
+      : Semantics[K] extends infer UP
+        ? UP
+        : never
+    : never;
+
+type UserDefinedContext<K extends SemanticProperty | SemanticMethod> =
+  K extends keyof Semantics
+    ? Semantics[K] extends (context: infer C, ...rest: any[]) => any
+      ? C
+      : undefined
+    : never;
+
+export interface ExhaustiveDispatchMap<T, C> {
+  ArrayType(node: ArrayType, context: C): T;
+  BooleanType(node: BooleanType, context: C): T;
+  Document(node: Document, context: C): T;
+  FieldDef(node: FieldDef, context: C): T;
+  Identifier(node: Identifier, context: C): T;
+  LiteralType(node: LiteralType, context: C): T;
+  LiveListType(node: LiveListType, context: C): T;
+  LiveMapType(node: LiveMapType, context: C): T;
+  NullType(node: NullType, context: C): T;
+  NumberType(node: NumberType, context: C): T;
+  ObjectLiteralType(node: ObjectLiteralType, context: C): T;
+  ObjectTypeDefinition(node: ObjectTypeDefinition, context: C): T;
+  StringType(node: StringType, context: C): T;
+  TypeName(node: TypeName, context: C): T;
+  TypeRef(node: TypeRef, context: C): T;
+  UnionType(node: UnionType, context: C): T;
+}
+
+type DispatchFn<T, C> = (node: Node, context: C) => T;
+
+interface PartialDispatchMap<T, C>
+  extends Partial<ExhaustiveDispatchMap<T, C>> {
+  beforeEach?(node: Node, context: C): void;
+  afterEach?(node: Node, context: C): void;
+
+  Node?(node: Node, context: C): T;
+}
+
+export type PartialDispatcher<T, C> =
+  | PartialDispatchMap<T, C>
+  | DispatchFn<T, C>;
+
+const NOT_IMPLEMENTED = Symbol();
+
+const stub = (msg: string) => {
+  return Object.defineProperty(
+    (_node: Node, _context: any): any => {
+      throw new Error(msg);
+    },
+    NOT_IMPLEMENTED,
+    { value: NOT_IMPLEMENTED, enumerable: false }
+  );
+};
+
+const mStub = (name: string) =>
+  stub(
+    `Semantic method '${name}' is not defined yet. Use 'defineMethod(${JSON.stringify(name)}, { ... })' before calling '.${name}()' on a node.`
+  );
+
+const semantics = {
+  check: mStub("check"),
+};
+
+function dispatch<
+  K extends SemanticProperty | SemanticMethod,
+  N extends Node,
+  R = UserDefinedReturnType<K>,
+  C = UserDefinedContext<K>,
+>(name: K, node: N, dispatcher: PartialDispatcher<R, C>, context: C): R {
+  const handler =
+    typeof dispatcher === "function"
+      ? dispatcher
+      : (dispatcher[node._kind] ?? dispatcher.Node);
+
+  if (handler === undefined) {
+    throw new Error(
+      `Semantic '${name}' is only partially defined and missing definition for '${node._kind}'`
+    );
+  }
+
+  if (typeof dispatcher !== "function") dispatcher.beforeEach?.(node, context);
+  const rv = handler(node as never, context);
+  if (typeof dispatcher !== "function") dispatcher.afterEach?.(node, context);
+  return rv;
+}
+
+export function defineMethod<
+  M extends SemanticMethod,
+  R = UserDefinedReturnType<M>,
+  C = UserDefinedContext<M>,
+>(name: M, dispatcher: PartialDispatcher<R, C>): void {
+  if (!semantics.hasOwnProperty(name)) {
+    const err = new Error(
+      `Unknown semantic method '${name}'. Did you forget to add 'semantic method ${name}()' in your grammar?`
+    );
+    Error.captureStackTrace(err, defineMethod);
+    throw err;
+  }
+
+  if (!(NOT_IMPLEMENTED in semantics[name])) {
+    const err = new Error(`Semantic method '${name}' is already defined`);
+    Error.captureStackTrace(err, defineMethod);
+    throw err;
+  }
+
+  semantics[name] = (node: Node, context: C) =>
+    dispatch(name, node, dispatcher, context);
+}
+
+export function defineMethodExhaustively<
+  M extends SemanticMethod,
+  R = UserDefinedReturnType<M>,
+  C = UserDefinedContext<M>,
+>(name: M, dispatcher: ExhaustiveDispatchMap<R, C>): void {
+  return defineMethod(name, dispatcher);
+}
 
 export type Node =
   | ArrayType
