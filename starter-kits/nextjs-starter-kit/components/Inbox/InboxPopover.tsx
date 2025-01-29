@@ -34,6 +34,7 @@ export function InboxPopover(
       {...props}
     >
       <Button variant="secondary" icon={<InboxIcon />} iconButton>
+        <span className="sr-only">Notification inbox</span>
         <ClientSideSuspense fallback={null}>
           <InboxPopoverUnreadCount />
         </ClientSideSuspense>

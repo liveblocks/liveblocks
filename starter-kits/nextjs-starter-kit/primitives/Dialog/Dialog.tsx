@@ -1,6 +1,6 @@
 import * as RadixDialog from "@radix-ui/react-dialog";
 import { ReactNode } from "react";
-import { CrossIcon } from "../../icons";
+import { CrossIcon } from "@/icons";
 import { Button } from "../Button";
 import styles from "./Dialog.module.css";
 

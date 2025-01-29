@@ -10,6 +10,11 @@
   padding: var(--space-3) var(--space-3) var(--space-3) var(--space-8);
 }
 
+.inboxHeaderButtons {
+  display: flex;
+  gap: var(--space-6);
+}
+
 .inboxHeader h2 {
   font-weight: 500;
 }
