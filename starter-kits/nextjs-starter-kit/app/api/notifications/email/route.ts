@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     isCustomNotificationEvent(event) &&
     event.data.kind === "$addedToDocument"
   ) {
-    return await addedToDocumentEmail(event);
+    return await addedToDocumentEmail(liveblocks, event);
   }
 
   return new Response("Event type not used", {
