@@ -11,11 +11,23 @@ const liveblocks = new Liveblocks({
 export async function POST(request: Request) {
   const body = await request.json();
   console.log("body", body);
-  const userIndex = Math.floor(Math.random() * users.length);
+
+  const currentUserIndex = users.findIndex(
+    (user) => user.id === body.currentUserId
+  );
+  const otherUsers =
+    currentUserIndex !== -1
+      ? [
+          ...users.slice(0, currentUserIndex),
+          ...users.slice(currentUserIndex + 1),
+        ]
+      : users;
+
+  const userIndex = Math.floor(Math.random() * otherUsers.length);
 
   try {
     await liveblocks.triggerInboxNotification({
-      userId: `user-${userIndex}`,
+      userId: otherUsers[userIndex].id,
       kind: "$fileUploaded",
       subjectId: "my-file",
       activityData: {

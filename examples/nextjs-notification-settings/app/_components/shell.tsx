@@ -38,7 +38,9 @@ export function Shell({ children }: { children?: React.ReactNode }) {
             <NotificationsPopover />
 
             <Suspense fallback={null}>
-              <TriggerCustomNotificationButton />
+              <TriggerCustomNotificationButton
+                currentUserId={session.user.info.id}
+              />
             </Suspense>
 
             <Suspense fallback={null}>
@@ -48,11 +50,11 @@ export function Shell({ children }: { children?: React.ReactNode }) {
               <PopoverTrigger className="ml-2">
                 <Avatar className="size-6">
                   <AvatarImage
-                    src={session?.user.info.picture}
-                    alt={session?.user.info.name}
+                    src={session.user.info.picture}
+                    alt={session.user.info.name}
                   />
                   <AvatarFallback>
-                    {getInitials(session?.user.info.name)}
+                    {getInitials(session.user.info.name)}
                   </AvatarFallback>
                 </Avatar>
               </PopoverTrigger>
@@ -63,10 +65,10 @@ export function Shell({ children }: { children?: React.ReactNode }) {
               >
                 <div className="flex flex-col gap-0.5">
                   <h3 className="text-lg font-semibold">
-                    {session?.user.info.name}
+                    {session.user.info.name}
                   </h3>
                   <span className="text-sm text-muted-foreground">
-                    {session?.user.info.id}
+                    {session.user.info.id}
                   </span>
                 </div>
                 <Separator />
