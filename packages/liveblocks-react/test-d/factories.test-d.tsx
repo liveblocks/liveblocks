@@ -364,6 +364,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -384,6 +385,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -404,6 +406,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -424,6 +427,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);

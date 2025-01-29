@@ -5,15 +5,16 @@ import type {
   ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
-import type {
-  AsyncResult,
-  BaseRoomInfo,
-  DM,
-  DU,
-  LiveblocksError,
-  OpaqueClient,
-  PartialUserNotificationSettings,
-  SyncStatus,
+import {
+  type AsyncResult,
+  type BaseRoomInfo,
+  type DM,
+  type DU,
+  HttpError,
+  type LiveblocksError,
+  type OpaqueClient,
+  type PartialUserNotificationSettings,
+  type SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
@@ -54,6 +55,7 @@ import type {
   UserAsyncResult,
   UserAsyncSuccess,
   UserNotificationSettingsAsyncResult,
+  UserNotificationSettingsAsyncSuccess,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
@@ -653,9 +655,30 @@ function useUpdateNotificationSettings_withClient(
             optimisticUpdateId
           );
         },
-        () => {
+        (err: Error) => {
           // Remove optimistic update when it fails
           store.optimisticUpdates.remove(optimisticUpdateId);
+          // Check if the error is an HTTP error
+          if (err instanceof HttpError) {
+            if (err.status === 422) {
+              const msg = [err.details?.error, err.details?.reason]
+                .filter(Boolean)
+                .join("\n");
+              console.error(msg);
+            }
+
+            client[kInternal].emitError(
+              {
+                type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR",
+              },
+              err
+            );
+          }
+          // A non-HTTP error is unexpected and must be considered as a bug.
+          // We should fix it and do not notify users about it.
+          else {
+            throw err;
+          }
         }
       );
     },
@@ -695,17 +718,17 @@ function useNotificationSettings_withClient(
     };
   }, [poller]);
 
-  const settings = useSignal(store.outputs.userNotificationSettings.signal);
+  const result = useSignal(store.outputs.userNotificationSettings.signal);
 
   return useMemo(() => {
-    return [settings, updateNotificationSettings];
-  }, [settings, updateNotificationSettings]);
+    return [result, updateNotificationSettings];
+  }, [result, updateNotificationSettings]);
 }
 
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-  UserNotificationSettingsAsyncResult,
+  UserNotificationSettingsAsyncSuccess,
   (settings: PartialUserNotificationSettings) => void,
 ] {
   // Throw error if we're calling this hook server side
@@ -718,15 +741,15 @@ function useNotificationSettingsSuspense_withClient(
 
   // We're in a Suspense world here, and as such, the useNotificationSettings()
   // hook is expected to only return success results when we're here.
-  const [settings, updateNotificationSettings] =
+  const [result, updateNotificationSettings] =
     useNotificationSettings_withClient(client);
 
-  assert(!settings.error, "Did not expect error");
-  assert(!settings.isLoading, "Did not expect loading");
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
 
   return useMemo(() => {
-    return [settings, updateNotificationSettings];
-  }, [settings, updateNotificationSettings]);
+    return [result, updateNotificationSettings];
+  }, [result, updateNotificationSettings]);
 }
 
 function useUser_withClient<U extends BaseUserMeta>(
