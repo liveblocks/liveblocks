@@ -82,7 +82,17 @@ export async function threadEmail(
       email = (
         <div>
           <div>
-            @{emailData.comment.author.id} at {emailData.comment.createdAt}
+            @{emailData.comment.author.id} at{" "}
+            {emailData.comment.createdAt
+              .toLocaleString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
+              .replace(",", "")}
           </div>
           <div>{emailData.comment.reactBody}</div>
         </div>
