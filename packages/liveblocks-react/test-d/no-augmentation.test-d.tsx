@@ -895,9 +895,9 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   const [{ isLoading, error, settings }, update] =
     suspense.useNotificationSettings();
-  expectType<boolean>(isLoading);
-  expectType<Error | undefined>(error);
-  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<false>(isLoading);
+  expectType<undefined>(error);
+  expectType<UserNotificationSettings>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------
