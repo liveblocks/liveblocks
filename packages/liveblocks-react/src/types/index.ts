@@ -171,6 +171,7 @@ export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "co
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
 export type UserNotificationSettingsAsyncResult = AsyncResult<UserNotificationSettings, "settings"> // prettier-ignore
+export type UserNotificationSettingsAsyncSuccess = AsyncSuccess<UserNotificationSettings, "settings">; // prettier-ignore
 
 export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
