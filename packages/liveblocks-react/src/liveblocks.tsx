@@ -695,11 +695,11 @@ function useNotificationSettings_withClient(
     };
   }, [poller]);
 
-  const settings = useSignal(store.outputs.userNotificationSettings.signal);
+  const result = useSignal(store.outputs.userNotificationSettings.signal);
 
   return useMemo(() => {
-    return [settings, updateNotificationSettings];
-  }, [settings, updateNotificationSettings]);
+    return [result, updateNotificationSettings];
+  }, [result, updateNotificationSettings]);
 }
 
 function useNotificationSettingsSuspense_withClient(
@@ -718,15 +718,15 @@ function useNotificationSettingsSuspense_withClient(
 
   // We're in a Suspense world here, and as such, the useNotificationSettings()
   // hook is expected to only return success results when we're here.
-  const [settings, updateNotificationSettings] =
+  const [result, updateNotificationSettings] =
     useNotificationSettings_withClient(client);
 
-  assert(!settings.error, "Did not expect error");
-  assert(!settings.isLoading, "Did not expect loading");
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
 
   return useMemo(() => {
-    return [settings, updateNotificationSettings];
-  }, [settings, updateNotificationSettings]);
+    return [result, updateNotificationSettings];
+  }, [result, updateNotificationSettings]);
 }
 
 function useUser_withClient<U extends BaseUserMeta>(
