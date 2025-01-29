@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useCallback } from "react";
+import { useCallback, Suspense } from "react";
 
 import { getInitials } from "@/utils/get-initials";
 import {
@@ -36,7 +36,9 @@ export function Shell({ children }: { children?: React.ReactNode }) {
           <div className="flex items-center justify-end gap-0.5">
             <NotificationsPopover />
 
-            {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
+            <Suspense fallback={null}>
+              {pathname !== "/settings" ? <SettingsButton /> : <EditorButton />}
+            </Suspense>
             <Popover>
               <PopoverTrigger className="ml-2">
                 <Avatar className="size-6">
