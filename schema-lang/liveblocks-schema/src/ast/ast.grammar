@@ -5,6 +5,9 @@
 #
 # This is used to generate the AST TypeScript module.
 #
+set discriminator "_kind"
+semantic method check()
+
 Document {
   definitions: @Definition+
 }

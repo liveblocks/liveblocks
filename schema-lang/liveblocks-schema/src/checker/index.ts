@@ -19,11 +19,36 @@ import type {
   TypeRef,
   UnionType,
 } from "../ast";
-import { isLiveType, isScalarType, visit } from "../ast";
+import { defineMethod, isLiveType, isScalarType } from "../ast";
 import { assertNever } from "../lib/assert";
 import { didyoumean as dym } from "../lib/didyoumean";
 import type { ErrorReporter, Suggestion } from "../lib/error-reporting";
 import { prettify } from "../prettify";
+
+declare module "../ast" {
+  interface Semantics {
+    check(context: Context): void;
+  }
+}
+
+defineMethod("check", {
+  ArrayType: checkArrayType,
+  Identifier: checkIdentifier,
+  LiteralType: checkLiteralType,
+  LiveMapType: checkLiveMapType,
+  ObjectLiteralType: checkObjectLiteralType,
+  ObjectTypeDefinition: checkObjectTypeDefinition,
+  TypeName: checkTypeName,
+  TypeRef: checkTypeRef,
+  UnionType: checkUnionType,
+
+  Node: () => {},
+  afterEach: (node, context) => {
+    for (const child of node.children) {
+      child.check(context);
+    }
+  },
+});
 
 function quote(value: string): string {
   return `'${value.replace(/'/g, "\\'")}'`;
@@ -704,85 +729,70 @@ function decideStaticOrLive(doc: Document, context: Context): void {
   // First, if a definition uses a Live construct somewhere in its definition,
   // it must be a live type itself
   for (const def of context.registeredTypes.values()) {
-    if (def._kind !== "ObjectTypeDefinition") {
-      continue;
-    }
+    if (def._kind !== "ObjectTypeDefinition") continue;
 
-    try {
-      visit(
-        def,
-        {
-          LiveListType: () => {
-            liveObjRefs.set(def.name.name, null);
-            throw "break";
-          },
+    for (const sub of def.descendants) {
+      if (sub._kind === "LiveListType") {
+        liveObjRefs.set(def.name.name, null);
+        break;
+      }
 
-          LiveMapType: () => {
-            liveObjRefs.set(def.name.name, null);
-            throw "break";
-          },
+      if (sub._kind === "LiveMapType") {
+        liveObjRefs.set(def.name.name, null);
+        break;
+      }
 
-          TypeRef: (ref) => {
-            if (ref.asLiveObject) {
-              liveObjRefs.set(def.name.name, null);
-              throw "break";
-            }
-          },
-        },
-        null
-      );
-    } catch {
-      // Ignore
+      if (sub._kind === "TypeRef") {
+        if (sub.asLiveObject) {
+          liveObjRefs.set(def.name.name, null);
+          break;
+        }
+      }
     }
   }
 
   // Otherwise, it's static only if all references to it don't use LiveObject<>
-  visit(
-    doc,
-    {
-      TypeRef: (typeRef) => {
-        const def = context.registeredTypes.get(typeRef.ref.name);
-        if (def !== undefined) {
-          context.unreferencedDefs.delete(def);
-        }
+  for (const sub of doc.descendants) {
+    if (sub._kind !== "TypeRef") continue;
+    const typeRef = sub;
 
-        if (def?._kind !== "ObjectTypeDefinition") {
-          return;
-        }
+    const def = context.registeredTypes.get(typeRef.ref.name);
+    if (def !== undefined) {
+      context.unreferencedDefs.delete(def);
+    }
 
-        if (typeRef.asLiveObject) {
-          const conflict = staticObjRefs.get(def.name.name);
-          if (conflict === undefined) {
-            liveObjRefs.set(def.name.name, typeRef);
-          } else {
-            context.report(
-              `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(typeRef.range)}. You cannot mix these references.`, // prettier-ignore
-              conflict.range,
-              [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
-            );
-          }
-        } else {
-          const conflict = liveObjRefs.get(def.name.name);
-          if (conflict === undefined) {
-            staticObjRefs.set(def.name.name, typeRef);
-          } else if (conflict === null) {
-            context.report(
-              `Type ${quote(def.name.name)} uses Live constructs, so it must be referenced as ${quote(`LiveObject<${def.name.name}>`)}`, // prettier-ignore
-              typeRef.range,
-              [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
-            );
-          } else {
-            context.report(
-              `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(conflict.range)}. You cannot mix these references.`, // prettier-ignore
-              typeRef.range,
-              [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
-            );
-          }
-        }
-      },
-    },
-    null
-  );
+    if (def?._kind !== "ObjectTypeDefinition") continue;
+
+    if (typeRef.asLiveObject) {
+      const conflict = staticObjRefs.get(def.name.name);
+      if (conflict === undefined) {
+        liveObjRefs.set(def.name.name, typeRef);
+      } else {
+        context.report(
+          `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(typeRef.range)}. You cannot mix these references.`, // prettier-ignore
+          conflict.range,
+          [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
+        );
+      }
+    } else {
+      const conflict = liveObjRefs.get(def.name.name);
+      if (conflict === undefined) {
+        staticObjRefs.set(def.name.name, typeRef);
+      } else if (conflict === null) {
+        context.report(
+          `Type ${quote(def.name.name)} uses Live constructs, so it must be referenced as ${quote(`LiveObject<${def.name.name}>`)}`, // prettier-ignore
+          typeRef.range,
+          [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
+        );
+      } else {
+        context.report(
+          `Type ${quote(def.name.name)} already referenced as ${quote(`LiveObject<${def.name.name}>`)} on line ${context.lineno(conflict.range)}. You cannot mix these references.`, // prettier-ignore
+          typeRef.range,
+          [{ type: "replace", name: `LiveObject<${def.name.name}>` }]
+        );
+      }
+    }
+  }
 
   for (const staticName of staticObjRefs.keys()) {
     const def = context.registeredTypes.get(staticName)!;
@@ -836,21 +846,7 @@ export function check(
   decideStaticOrLive(doc, context);
 
   // Last pass: check the entire tree
-  visit(
-    doc,
-    {
-      ArrayType: checkArrayType,
-      Identifier: checkIdentifier,
-      LiteralType: checkLiteralType,
-      LiveMapType: checkLiveMapType,
-      ObjectLiteralType: checkObjectLiteralType,
-      ObjectTypeDefinition: checkObjectTypeDefinition,
-      TypeName: checkTypeName,
-      TypeRef: checkTypeRef,
-      UnionType: checkUnionType,
-    },
-    context
-  );
+  doc.check(context);
 
   if (!context.registeredTypes.has("Storage")) {
     context.errorReporter.throwSemanticError(

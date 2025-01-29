@@ -14,9 +14,9 @@
 const fs = require("fs");
 
 const types = fs
-  .readFileSync("src/ast/index.ts", "utf-8")
+  .readFileSync("src/ast/generated-ast.ts", "utf-8")
   .split("\n")
-  .filter((line) => line.startsWith("export type "))
+  .filter((line) => line.includes(" extends Semantics"))
   .map((line) => line.split(" ")[2])
   .sort();
 
