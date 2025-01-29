@@ -654,9 +654,13 @@ function useUpdateNotificationSettings_withClient(
             optimisticUpdateId
           );
         },
-        () => {
+        (err: Error) => {
           // Remove optimistic update when it fails
           store.optimisticUpdates.remove(optimisticUpdateId);
+          client[kInternal].emitError(
+            { type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR" },
+            err
+          );
         }
       );
     },
