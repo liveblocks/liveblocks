@@ -27,6 +27,7 @@ export * from "./More";
 export * from "./Plus";
 export * from "./Redo";
 export * from "./Select";
+export * from "./Settings";
 export * from "./Share";
 export * from "./SignIn";
 export * from "./SignOut";
