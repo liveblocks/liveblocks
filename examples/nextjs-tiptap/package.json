@@ -10,6 +10,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.5",
+    "@ai-sdk/openai-compatible": "^0.1.6",
     "@floating-ui/react-dom": "^2.1.2",
     "@liveblocks/client": "file:../../packages/liveblocks-client",
     "@liveblocks/node": "file:../../packages/liveblocks-node",
@@ -29,11 +31,14 @@
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
+    "ai": "^4.1.11",
     "next": "^14.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "^5.2.2",
-    "yjs": "^13.6.19"
+    "yjs": "^13.6.19",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.19",
