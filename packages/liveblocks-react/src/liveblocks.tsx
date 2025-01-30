@@ -873,6 +873,9 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     polyfills: useInitial(o.polyfills),
     unstable_fallbackToHTTP: useInitial(o.unstable_fallbackToHTTP),
     unstable_streamData: useInitial(o.unstable_streamData),
+    unstable_splitMessagesIfNeeded: useInitial(
+      o.unstable_splitMessagesIfNeeded
+    ),
     preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
 
     authEndpoint: useInitialUnlessFunction(o.authEndpoint),

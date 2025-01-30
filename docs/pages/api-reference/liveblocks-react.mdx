@@ -403,6 +403,13 @@ function App() {
     Experimental. Stream the initial Storage content over HTTP, instead of
     waiting for a large initial WebSocket message to be sent from the server.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="unstable_splitMessagesIfNeeded"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Split up messages if the max message size is exceeded.
+  </PropertiesListItem>
 </PropertiesList>
 
 #### LiveblocksProvider with public key [#LiveblocksProviderPublicKey]

@@ -405,7 +405,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   polyfills?: Polyfills;
   unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
-
+  unstable_splitMessagesIfNeeded?: boolean;
   /**
    * A function that returns a list of user IDs matching a string.
    */
@@ -616,6 +616,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         errorEventSource: liveblocksErrorSource,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
+        unstable_splitMessagesIfNeeded:
+          !!clientOptions.unstable_splitMessagesIfNeeded,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
       }

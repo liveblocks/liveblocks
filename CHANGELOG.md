@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- Add unstable_splitMessagesIfNeeded option to split up messages if the max
+  message size is exceeded.
+
 ## v2.16.2
 
 ### `@liveblocks/react`

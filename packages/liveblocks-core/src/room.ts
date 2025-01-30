@@ -39,7 +39,11 @@ import {
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
+import type {
+  ClientMsg,
+  UpdateStorageClientMsg,
+  UpdateYDocClientMsg,
+} from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -1050,9 +1054,9 @@ export type PrivateRoomApi = {
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
-// slightly lower (1kB) to trigger sending over HTTP, to account for messaging
-// overhead, so we're not right at the limit.
-// NOTE: this only works with the unstable_fallbackToHTTP option enabled
+// slightly lower (1kB) to trigger sending over HTTP or splitting the messages,
+// to account for messaging overhead, so we're not right at the limit.
+// NOTE: this is only relevant with the unstable_fallbackToHTTP or unstable_splitMessagesIfNeeded options enabled.
 const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
 
 function makeIdFactory(connectionId: number): IdFactory {
@@ -1212,6 +1216,7 @@ export type RoomConfig<M extends BaseMetadata> = {
 
   unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
+  unstable_splitMessagesIfNeeded?: boolean;
 
   polyfills?: Polyfills;
 
@@ -1599,13 +1604,121 @@ export function createRoom<
     return httpClient.createTextVersion({ roomId });
   }
 
+  // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
+  // if this turns out to be expensive, we could just guess with a lower value.
+  function measureSerializedPayload(serializedPayload: string) {
+    return new TextEncoder().encode(serializedPayload).length;
+  }
+
+  function chunkMessages(messages: ClientMsg<P, E>[]): Array<{
+    message: ClientMsg<P, E>;
+    size: number;
+  }> {
+    const chunkedMessages: Array<{
+      message: ClientMsg<P, E>;
+      size: number;
+    }> = [];
+
+    for (const message of messages) {
+      const serialized = JSON.stringify(message);
+      const size = measureSerializedPayload(serialized);
+
+      if (
+        message.type !== ClientMsgCode.UPDATE_STORAGE ||
+        size < MAX_SOCKET_MESSAGE_SIZE
+      ) {
+        chunkedMessages.push({ message, size });
+        continue;
+      }
+
+      // UPDATE_STORAGE message is too big: break it into multiple chunks.
+      let currentMessage: UpdateStorageClientMsg = {
+        type: ClientMsgCode.UPDATE_STORAGE,
+        ops: [],
+      };
+
+      // Note: this approximates the size of the update storage message (in bytes) by only considering the sum of the ops sizes + 1 byte per op
+      // for the commas separating the ops when stringified. It does not precisely account for the array / object overhead.
+      let currentMessageSize = 0;
+
+      for (const op of message.ops) {
+        const opSize = measureSerializedPayload(JSON.stringify(op));
+        if (currentMessageSize + opSize + 1 < MAX_SOCKET_MESSAGE_SIZE) {
+          currentMessage.ops.push(op);
+          currentMessageSize += opSize + 1;
+        } else {
+          if (currentMessage.ops.length > 0) {
+            chunkedMessages.push({
+              message: currentMessage,
+              size: currentMessageSize,
+            });
+          }
+
+          // Note: it's possible that the op is too large to fit in a single message.
+          // If unstable_fallbackToHTTP is enabled, this message will be sent over HTTP instead.
+          currentMessage = {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [op],
+          };
+          currentMessageSize = opSize;
+        }
+      }
+
+      if (currentMessage.ops.length > 0) {
+        chunkedMessages.push({
+          message: currentMessage,
+          size: currentMessageSize,
+        });
+      }
+    }
+
+    return chunkedMessages;
+  }
+
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const serializedPayload = JSON.stringify(messages);
     const nonce = context.dynamicSessionInfoSig.get()?.nonce;
-    if (config.unstable_fallbackToHTTP && nonce) {
-      // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
-      // if this turns out to be expensive, we could just guess with a lower value.
-      const size = new TextEncoder().encode(serializedPayload).length;
+    const shouldFallbackToHTTP = config.unstable_fallbackToHTTP && nonce;
+    if (config.unstable_splitMessagesIfNeeded) {
+      const chunkedMessages = chunkMessages(messages);
+
+      if (
+        !shouldFallbackToHTTP ||
+        chunkedMessages.every(
+          (message) => message.size < MAX_SOCKET_MESSAGE_SIZE
+        )
+      ) {
+        const serializedPayloads: string[] = [];
+        let currentBatch: ClientMsg<P, E>[] = [];
+        // Note: this approximates the size of the message batches by only considering the sum of the message sizes and does
+        // not consider the overhead of the JSON serialization of the array.
+        let currentBatchSize = 0;
+
+        for (const { message, size } of chunkedMessages) {
+          if (currentBatchSize + size < MAX_SOCKET_MESSAGE_SIZE) {
+            currentBatch.push(message);
+            currentBatchSize += size;
+          } else {
+            serializedPayloads.push(JSON.stringify(currentBatch));
+            currentBatch = [message];
+            currentBatchSize = size;
+          }
+        }
+
+        if (currentBatch.length > 0) {
+          serializedPayloads.push(JSON.stringify(currentBatch));
+        }
+
+        for (const serializedPayload of serializedPayloads) {
+          managedSocket.send(serializedPayload);
+        }
+
+        return;
+      }
+    }
+
+    const serializedPayload = JSON.stringify(messages);
+    if (shouldFallbackToHTTP) {
+      const size = measureSerializedPayload(serializedPayload);
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
         void httpClient
           .sendMessages<P, E>({ roomId, nonce, messages })
@@ -1620,6 +1733,7 @@ export function createRoom<
         return;
       }
     }
+
     managedSocket.send(serializedPayload);
   }
 
