@@ -27,7 +27,7 @@ import type {
   CommentsExtensionStorage,
   ExtendedChainedCommands,
 } from "../types";
-import { compareSelections, getDomRange } from "../utils";
+import { compareSelections, getDomRangeFromSelection } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
@@ -97,7 +97,10 @@ export const FloatingComposer = forwardRef<
     if (!pendingCommentSelection) {
       setReference(null);
     } else {
-      const domRange = getDomRange(editor, pendingCommentSelection);
+      const domRange = getDomRangeFromSelection(
+        editor,
+        pendingCommentSelection
+      );
 
       setReference(domRange);
     }

@@ -3,7 +3,11 @@ import type { ContextualPromptContext } from "@liveblocks/core";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
-import type { EditorState, Selection } from "@tiptap/pm/state";
+import {
+  type EditorState,
+  type Selection,
+  TextSelection,
+} from "@tiptap/pm/state";
 import {
   getRelativeSelection,
   relativePositionToAbsolutePosition,
@@ -95,14 +99,26 @@ export const mapFragment = (
   return Fragment.from(content);
 };
 
-export function getDomRange(editor: Editor, range: Range) {
-  const { from, to } = range;
-  const fromPos = editor.view.domAtPos(from);
-  const endPos = editor.view.domAtPos(to);
+export function getDomRangeFromSelection(editor: Editor, selection: Selection) {
+  // If the selection is collapsed in an empty block node, extend it to the block node
+  if (selection.from === selection.to) {
+    const parentNode = selection.$from.parent;
+
+    if (parentNode.isBlock && parentNode.content.size === 0) {
+      selection = TextSelection.create(
+        editor.state.doc,
+        selection.$from.before(),
+        selection.$from.after()
+      );
+    }
+  }
+
+  const from = editor.view.domAtPos(selection.from);
+  const to = editor.view.domAtPos(selection.to);
 
   const domRange = document.createRange();
-  domRange.setStart(fromPos.node, fromPos.offset);
-  domRange.setEnd(endPos.node, endPos.offset);
+  domRange.setStart(from.node, from.offset);
+  domRange.setEnd(to.node, to.offset);
 
   return domRange;
 }

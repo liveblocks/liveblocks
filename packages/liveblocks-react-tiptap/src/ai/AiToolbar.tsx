@@ -58,7 +58,7 @@ import type {
   AiToolbarState,
   ChainedAiCommands,
 } from "../types";
-import { getDomRange } from "../utils";
+import { getDomRangeFromSelection } from "../utils";
 import { DEFAULT_STATE, isContextualPromptDiffResponse } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
@@ -790,7 +790,7 @@ export const AiToolbar = Object.assign(
               },
             });
           } else if (selection) {
-            const domRange = getDomRange(editor, selection);
+            const domRange = getDomRangeFromSelection(editor, selection);
             setReference(domRange);
           } else {
             setReference(null);
