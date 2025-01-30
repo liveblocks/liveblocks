@@ -3218,7 +3218,7 @@ const settings = await room.updateNotificationSettings({
 ### Client.getNotificationSettings
 
 Returns the user’s notification settings in the current project, in other words
-which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+which [notification webhook events] (/docs/platform/webhooks#NotificationEvent)
 will be sent for the current user. User notification settings are project-based,
 which means that this returns the current user’s settings for every room.
 
@@ -3228,6 +3228,8 @@ const settings = await client.getNotificationSettings();
 // { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
 console.log(settings);
 ```
+
+A user’s initial settings are `true` for every enabled `kind` in the dashboard.
 
 <PropertiesList title="Returns">
   <PropertiesListItem name="settings" type="UserNotificationSettings">
@@ -3252,7 +3254,7 @@ const settings = await client.updateNotificationSettings({
   slack: { textMention: true },
 });
 
-// { email: { thread: false, ... }, slack: { thread: true, ... }, ... }
+// { email: { thread: false, ... }, slack: { textMention: true, ... }, ... }
 console.log(settings);
 ```
 
