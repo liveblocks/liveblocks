@@ -3092,13 +3092,12 @@ load failed.
 
 ### useUpdateNotificationSettings [@badge=LiveblocksProvider]
 
-Returns a function that updates user's notification settings in the current
-project, which affects which
-[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the current user. User notification settings are project-based, which
-means that `updateSettings` modifies the current user’s settings in every room.
-Each notification `kind` must first be enabled on your project’s notification
-dashboard page before settings can be used.
+Returns a function that updates user’s notification settings, which affects
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the current user. User notification settings are project-based,
+which means that `updateSettings` modifies the current user’s settings in every
+room. Each notification `kind` must first be enabled on your project’s
+notification dashboard page before settings can be used.
 
 ```tsx
 import { useUpdateNotificationSettings } from "@liveblocks/react";

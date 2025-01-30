@@ -3217,7 +3217,10 @@ const settings = await room.updateNotificationSettings({
 
 ### Client.getNotificationSettings
 
-Returns the current user's notification settings.
+Returns the user’s notification settings in the current project, in other words
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the current user. User notification settings are project-based,
+which means that this returns the current user’s settings for every room.
 
 ```ts
 const settings = await client.getNotificationSettings();
@@ -3236,12 +3239,17 @@ console.log(settings);
 
 ### Client.updateNotificationSettings
 
-Updates the current user’s notification settings.
+Updates the current user’s notification settings, which affects which
+[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
+sent for the current user. User notification settings are project-based, which
+means that this modifies the current user’s settings in every room. Each
+notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
 
 ```ts
 const settings = await client.updateNotificationSettings({
   email: { thread: false },
-  slack: { thread: true },
+  slack: { textMention: true },
 });
 
 // { email: { thread: false, ... }, slack: { thread: true, ... }, ... }
@@ -3257,24 +3265,36 @@ console.log(settings);
 <PropertiesList title="Arguments">
   <PropertiesListItem name="settings" type="object" required>
     A deep partial object containing the user notification settings to
-    update.
-
-    ```js title="deep partial 1" isCollapsable isCollapsed
-    {
-      email: { thread: false },
-      slack: { thread: true },
-    }
-    ```
+    update. Custom notifications can be set too.
 
     <div className="-mt-2">
+    ```js title="Examples" isCollapsable isCollapsed
+    // You only need to pass partials
+    await client.updateNotificationSettings({
+      email: { thread: true },
+    });
 
-    ```js title="deep partial 2" isCollapsable isCollapsed
-    {
-      email: { thread: false, textMention: true },
-      webPush: { textMention: false },
-    }
+    // Enabling a custom notification on the slack channel
+    await client.updateNotificationSettings({
+      slack: { $myCustomNotification: true },
+    });
+
+    // Setting complex settings
+    await client.updateNotificationSettings({
+      email: {
+        thread: true,
+        textMention: false,
+        $newDocument: true,
+      },
+        slack: {
+        thread: false,
+        $fileUpload: false,
+      },
+        teams: {
+        thread: true,
+      },
+    });
     ```
-
     </div>
 
   </PropertiesListItem>
