@@ -3003,9 +3003,11 @@ updateRoomNotificationSettings({ threads: "all" });
 
 ### useNotificationSettings [@badge=LiveblocksProvider]
 
-Returns the user’s notification settings in the current project. User
-notification settings are project-based, which means that `settings` and
-`updateSettings` are for the current user’s settings in every room.
+Returns the user’s notification settings in the current project, in other words
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the current user. User notification settings are project-based,
+which means that `settings` and `updateSettings` are for the current user’s
+settings in every room.
 
 ```tsx
 import { useNotificationSettings } from "@liveblocks/react";
@@ -3019,36 +3021,44 @@ console.log(settings);
 
 // Disabling thread notifications on the email channel
 updateSettings({
-  email: { thread: false },
+  email: {
+    thread: false,
+  },
 });
 ```
 
-Use this hook to adjust which
-[notification webhook events](/docs/platform/webhooks#NotificationEvent) are
-sent for each user—each notification `kind` must first be enabled on your
-project’s notification dashboard before settings can be used. You can also pass
-custom notifications, if they’ve been added to your dashboard.
+#### Updating notification settings [#useNotificationSettings-updating-notification-settings]
+
+The `updateSettings` function can be used to update the current user’s
+notification settings, changing their settings for every room in the project.
+Each notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
 
 ```tsx
+// You only need to pass partials
+updateSettings({
+  email: { thread: true },
+});
+
 // Enabling a custom notification on the slack channel
 updateSettings({
   slack: { $myCustomNotification: true },
 });
-```
 
-#### Updating settings [#useNotificationSettings-updating-settings]
-
-The `updateSettings` function can be used to update the current user’s
-notification settings, changing their settings for every room in the project. A
-partial can be passed.
-
-```tsx
-const [{ isLoading, error, settings }, updateSettings] =
-  useNotificationSettings();
-
-// Passing a partial
+// Setting complex settings
 updateSettings({
-  email: { thread: true },
+  email: {
+    thread: true,
+    textMention: false,
+    $newDocument: true,
+  },
+  slack: {
+    thread: false,
+    $fileUpload: false,
+  },
+  teams: {
+    thread: true,
+  },
 });
 ```
 
@@ -3080,11 +3090,15 @@ if (error) {
 a loading state and will throw and error to the nearest `ErrorBoundary` if initial
 load failed.
 
-### useUpdatesNotificationSettings [@badge=LiveblocksProvider]
+### useUpdateNotificationSettings [@badge=LiveblocksProvider]
 
 Returns a function that updates user's notification settings in the current
-project. Use this if you don't need the current user's notification settings in
-your component, but you need to update them (e.g a unsubscribe button).
+project, which affects which
+[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
+sent for the current user. User notification settings are project-based, which
+means that `updateSettings` modifies the current user’s settings in every room.
+Each notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
 
 ```tsx
 import { useUpdateNotificationSettings } from "@liveblocks/react";
@@ -3094,6 +3108,38 @@ const updateSettings = useUpdateNotificationSettings();
 // Disabling thread notifications on the email channel
 updateSettings({
   email: { thread: false },
+});
+```
+
+Works the same as `updateSettings` in
+[`useNotificationSettings`](#useNotificationSettings). You can pass a partial
+object, or many settings at once.
+
+```tsx
+// You only need to pass partials
+updateSettings({
+  email: { thread: true },
+});
+
+// Enabling a custom notification on the slack channel
+updateSettings({
+  slack: { $myCustomNotification: true },
+});
+
+// Setting complex settings
+updateSettings({
+  email: {
+    thread: true,
+    textMention: false,
+    $newDocument: true,
+  },
+  slack: {
+    thread: false,
+    $fileUpload: false,
+  },
+  teams: {
+    thread: true,
+  },
 });
 ```
 
