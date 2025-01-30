@@ -1,8 +1,7 @@
 // A mock database with example users
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
-    // TODO: Revert to email
-    id: "nyWnem",
+    id: "charlie.layne@example.com",
     info: {
       name: "Charlie Layne",
       color: "#D583F0",
@@ -10,8 +9,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "91TRgi",
+    id: "mislav.abha@example.com",
     info: {
       name: "Mislav Abha",
       color: "#F08385",
@@ -19,8 +17,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "1ltG8B",
+    id: "tatum.paolo@example.com",
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -28,8 +25,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "7L2rVt",
+    id: "anjali.wanda@example.com",
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
@@ -37,8 +33,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "O4pheE",
+    id: "jody.hekla@example.com",
     info: {
       name: "Jody Hekla",
       color: "#85BBF0",
@@ -46,8 +41,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "T7jObe",
+    id: "emil.joyce@example.com",
     info: {
       name: "Emil Joyce",
       color: "#8594F0",
@@ -55,8 +49,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "Pr1eY8",
+    id: "jory.quispe@example.com",
     info: {
       name: "Jory Quispe",
       color: "#85DBF0",
@@ -64,8 +57,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    // TODO: Revert to email
-    id: "YRK05s",
+    id: "quinn.elton@example.com",
     info: {
       name: "Quinn Elton",
       color: "#87EE85",
