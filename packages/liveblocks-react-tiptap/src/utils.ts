@@ -1,4 +1,5 @@
 import type { ClientRectObject } from "@floating-ui/react-dom";
+import type { ContextualPromptContext } from "@liveblocks/core";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
@@ -12,6 +13,9 @@ import type { RelativePosition } from "yjs";
 
 import type { YSyncPluginState } from "./types";
 import { LIVEBLOCKS_MENTION_TYPE } from "./types";
+
+const CONTEXT_TRUNCATION = "[…]";
+const CONTEXT_BLOCK_SEPARATOR = " ";
 
 export const getRelativeSelectionFromState = (state: EditorState) => {
   const pluginState = ySyncPluginKey.getState(state) as YSyncPluginState;
@@ -114,19 +118,10 @@ export function compareSelections(
   return a.eq(b);
 }
 
-export type DocumentText = {
-  beforeSelection: string;
-  selection: string;
-  afterSelection: string;
-};
-
-const DOCUMENT_TEXT_TRUNCATION = "[…]";
-const DOCUMENT_TEXT_BLOCK_SEPARATOR = " ";
-
-export function getDocumentText(
+export function getContextualPromptContext(
   editor: Editor,
   maxLength = 10_000
-): DocumentText {
+): ContextualPromptContext {
   const { selection, doc } = editor.state;
 
   const selectionLength = selection.to - selection.from;
@@ -137,39 +132,35 @@ export function getDocumentText(
       beforeSelection: doc.textBetween(
         0,
         selection.from,
-        DOCUMENT_TEXT_BLOCK_SEPARATOR
+        CONTEXT_BLOCK_SEPARATOR
       ),
       selection: doc.textBetween(
         selection.from,
         selection.to,
-        DOCUMENT_TEXT_BLOCK_SEPARATOR
+        CONTEXT_BLOCK_SEPARATOR
       ),
       afterSelection: doc.textBetween(
         selection.to,
         doc.content.size,
-        DOCUMENT_TEXT_BLOCK_SEPARATOR
+        CONTEXT_BLOCK_SEPARATOR
       ),
     };
   } else if (selectionLength > maxLength) {
     // If the selection is too large, truncate its middle to still allow continuations
     const selectionStart = doc.textBetween(
       selection.from,
-      selection.from +
-        Math.floor(maxLength / 2) -
-        DOCUMENT_TEXT_TRUNCATION.length,
-      DOCUMENT_TEXT_BLOCK_SEPARATOR
+      selection.from + Math.floor(maxLength / 2) - CONTEXT_TRUNCATION.length,
+      CONTEXT_BLOCK_SEPARATOR
     );
     const selectionEnd = doc.textBetween(
-      selection.to -
-        Math.floor(maxLength / 2) +
-        DOCUMENT_TEXT_TRUNCATION.length,
+      selection.to - Math.floor(maxLength / 2) + CONTEXT_TRUNCATION.length,
       selection.to,
-      DOCUMENT_TEXT_BLOCK_SEPARATOR
+      CONTEXT_BLOCK_SEPARATOR
     );
 
     return {
       beforeSelection: "",
-      selection: `${selectionStart}${DOCUMENT_TEXT_TRUNCATION}${selectionEnd}`,
+      selection: `${selectionStart}${CONTEXT_TRUNCATION}${selectionEnd}`,
       afterSelection: "",
     };
   } else {
@@ -196,22 +187,22 @@ export function getDocumentText(
     let beforeSelection = doc.textBetween(
       Math.max(0, selection.from - beforeLength),
       selection.from,
-      DOCUMENT_TEXT_BLOCK_SEPARATOR
+      CONTEXT_BLOCK_SEPARATOR
     );
     let afterSelection = doc.textBetween(
       selection.to,
       Math.min(doc.content.size, selection.to + afterLength),
-      DOCUMENT_TEXT_BLOCK_SEPARATOR
+      CONTEXT_BLOCK_SEPARATOR
     );
 
     // Add leading truncation if `beforeSelection` doesn't contain the document's start
     if (selection.from - beforeLength > 0) {
-      beforeSelection = `${DOCUMENT_TEXT_TRUNCATION}${beforeSelection}`;
+      beforeSelection = `${CONTEXT_TRUNCATION}${beforeSelection}`;
     }
 
     // Add trailing truncation if `afterSelection` doesn't contain the document's end
     if (selection.to + afterLength < doc.content.size) {
-      afterSelection = `${afterSelection}${DOCUMENT_TEXT_TRUNCATION}`;
+      afterSelection = `${afterSelection}${CONTEXT_TRUNCATION}`;
     }
 
     return {
@@ -219,7 +210,7 @@ export function getDocumentText(
       selection: doc.textBetween(
         selection.from,
         selection.to,
-        DOCUMENT_TEXT_BLOCK_SEPARATOR
+        CONTEXT_BLOCK_SEPARATOR
       ),
       afterSelection,
     };

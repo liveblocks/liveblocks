@@ -1,4 +1,8 @@
-import type { Relax } from "@liveblocks/core";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+  Relax,
+} from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content, Range } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
@@ -6,8 +10,6 @@ import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
 import type { ProsemirrorBinding } from "y-prosemirror";
 import type { Doc, PermanentUserData, Snapshot } from "yjs";
-
-import type { DocumentText } from "./utils";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -33,22 +35,26 @@ export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 /**
  * @beta
  */
-export type ResolveAiPromptArgs = {
+export type ResolveContextualPromptArgs = {
   prompt: string;
-  signal: AbortSignal;
-  context: DocumentText;
+  context: ContextualPromptContext;
   previous?: {
     prompt: string;
-    output: {
-      type: string;
-      content: string;
-    };
+    response: ContextualPromptResponse;
   };
+  signal: AbortSignal;
 };
+
+/**
+ * @beta
+ */
+export type ResolveContextualPromptResponse = ContextualPromptResponse;
 
 export interface AiConfiguration {
   name?: string;
-  resolveAiPrompt?: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
+  resolveContextualPrompt?: (
+    args: ResolveContextualPromptArgs
+  ) => Promise<ContextualPromptResponse>;
 }
 
 export type LiveblocksExtensionOptions = {
@@ -79,23 +85,10 @@ export type AiExtensionOptions = {
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
   name: string;
-  resolveAiPrompt: (args: ResolveAiPromptArgs) => Promise<AiResponse>;
+  resolveContextualPrompt: (
+    args: ResolveContextualPromptArgs
+  ) => Promise<ContextualPromptResponse>;
 };
-
-export type AiToolbarOutput = Relax<
-  | {
-      type: "replace";
-      text: string;
-    }
-  | {
-      type: "insert";
-      text: string;
-    }
-  | {
-      type: "other";
-      text: string;
-    }
->;
 
 /**
  * The state of the AI toolbar.
@@ -118,7 +111,7 @@ export type AiToolbarOutput = Relax<
  *           │                                 │                                │                                 │
  *           │                                 └───$cancelAiToolbarThinking()───┘                                 │
  *           │                                                                                                    │
- *           └──────────────────────────────────────$acceptAiToolbarOutput()──────────────────────────────────────┘
+ *           └─────────────────────────────────────$acceptAiToolbarResponse()─────────────────────────────────────┘
  *
  */
 export type AiToolbarState = Relax<
@@ -167,9 +160,9 @@ export type AiToolbarState = Relax<
       prompt: string;
 
       /**
-       * The previous output if this "thinking" phase is a refinement.
+       * The previous response if this "thinking" phase is a refinement.
        */
-      previousOutput?: AiToolbarOutput;
+      previousResponse?: ContextualPromptResponse;
     }
   | {
       phase: "reviewing";
@@ -190,9 +183,9 @@ export type AiToolbarState = Relax<
       prompt: string;
 
       /**
-       * The output of the AI request.
+       * The response of the AI request.
        */
-      output: AiToolbarOutput;
+      response: ContextualPromptResponse;
     }
 >;
 
@@ -256,9 +249,9 @@ export type AiCommands<ReturnType = boolean> = {
    * @internal
    * @transition
    *
-   * Accept the current AI output and close the AI toolbar.
+   * Accept the current AI response and close the AI toolbar.
    */
-  $acceptAiToolbarOutput: () => ReturnType;
+  $acceptAiToolbarResponse: () => ReturnType;
 
   /**
    * @internal
@@ -276,7 +269,7 @@ export type AiCommands<ReturnType = boolean> = {
    */
   $startAiToolbarThinking: (
     prompt: string,
-    withPreviousOutput?: boolean
+    withPreviousResponse?: boolean
   ) => ReturnType;
 
   /**
@@ -294,25 +287,21 @@ export type AiCommands<ReturnType = boolean> = {
    *
    * Show the diff of the current "reviewing" phase.
    */
-  _showAiToolbarOutputDiff: () => ReturnType;
+  _showAiToolbarReviewingDiff: () => ReturnType;
 
   /**
    * @internal
    *
    * Handle the success of the current "thinking" phase.
-   *
-   * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
-   * but storage updates don't trigger their listeners if not called from a command.
    */
-  _handleAiToolbarThinkingSuccess: (output: AiToolbarOutput) => ReturnType;
+  _handleAiToolbarThinkingSuccess: (
+    response: ContextualPromptResponse
+  ) => ReturnType;
 
   /**
    * @internal
    *
    * Handle an error of the current "thinking" phase.
-   *
-   * This should be handled in $startAiToolbarThinking directly (.then(success).catch(error))
-   * but storage updates don't trigger their listeners if not called from a command.
    */
   _handleAiToolbarThinkingError: (error: unknown) => ReturnType;
 
@@ -328,9 +317,4 @@ export type AiCommands<ReturnType = boolean> = {
 
 export type YSyncPluginState = {
   binding: ProsemirrorBinding;
-};
-
-export type AiResponse = {
-  type: "insert" | "replace" | "other";
-  content: string;
 };

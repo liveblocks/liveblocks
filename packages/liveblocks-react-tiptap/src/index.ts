@@ -26,7 +26,11 @@ export type {
   ToolbarToggleProps,
 } from "./toolbar/Toolbar";
 export { Toolbar } from "./toolbar/Toolbar";
-export type { AiConfiguration, ResolveAiPromptArgs } from "./types";
+export type {
+  AiConfiguration,
+  ResolveContextualPromptArgs,
+  ResolveContextualPromptResponse,
+} from "./types";
 export type { HistoryVersionPreviewProps } from "./version-history/HistoryVersionPreview";
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
 

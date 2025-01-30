@@ -19,6 +19,10 @@ import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
@@ -333,17 +337,10 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   }: {
     roomId: string;
     prompt: string;
-    context: {
-      beforeSelection: string;
-      selection: string;
-      afterSelection: string;
-    };
+    context: ContextualPromptContext;
     previous?: {
       prompt: string;
-      output: {
-        type: string;
-        content: string;
-      };
+      response: ContextualPromptResponse;
     };
     signal: AbortSignal;
   }): Promise<string>;
@@ -1133,20 +1130,14 @@ export function createApiClient<M extends BaseMetadata>({
       }
     );
   }
+
   async function executeContextualPrompt(options: {
     roomId: string;
     prompt: string;
-    context: {
-      beforeSelection: string;
-      selection: string;
-      afterSelection: string;
-    };
+    context: ContextualPromptContext;
     previous?: {
       prompt: string;
-      output: {
-        type: string;
-        content: string;
-      };
+      response: ContextualPromptResponse;
     };
     signal: AbortSignal;
   }): Promise<string> {
@@ -1508,7 +1499,7 @@ export function createApiClient<M extends BaseMetadata>({
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
-    // ai
+    // AI
     executeContextualPrompt,
   };
 }

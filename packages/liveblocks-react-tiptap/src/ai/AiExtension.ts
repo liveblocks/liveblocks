@@ -1,4 +1,8 @@
-import { autoRetry, HttpError } from "@liveblocks/core";
+import {
+  autoRetry,
+  type ContextualPromptResponse,
+  HttpError,
+} from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { CommandProps, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
@@ -23,12 +27,11 @@ import {
   type AiCommands,
   type AiExtensionOptions,
   type AiExtensionStorage,
-  type AiToolbarOutput,
   type AiToolbarState,
   type LiveblocksExtensionStorage,
   type YSyncPluginState,
 } from "../types";
-import { getDocumentText } from "../utils";
+import { getContextualPromptContext } from "../utils";
 
 const DEFAULT_AI_NAME = "AI";
 export const DEFAULT_STATE: AiToolbarState = { phase: "closed" };
@@ -49,10 +52,13 @@ function getLiveblocksYjsProvider(editor: Editor) {
   )?.provider as LiveblocksYjsProvider | undefined;
 }
 
-export function isAiToolbarDiffOutput(
-  output: AiToolbarOutput
-): output is Extract<AiToolbarOutput, { type: "replace" | "insert" }> {
-  return output.type === "replace" || output.type === "insert";
+export function isContextualPromptDiffResponse(
+  response: ContextualPromptResponse
+): response is Extract<
+  ContextualPromptResponse,
+  { type: "replace" | "insert" }
+> {
+  return response.type === "replace" || response.type === "insert";
 }
 
 function getRevertTransaction(
@@ -111,7 +117,7 @@ export const AiExtension = Extension.create<
       pud: undefined,
 
       // The actual default resolver is set in LiveblocksExtension via AiExtension.configure()
-      resolveAiPrompt: () => Promise.reject(),
+      resolveContextualPrompt: () => Promise.reject(),
       name: DEFAULT_AI_NAME,
     };
   },
@@ -137,7 +143,7 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      $acceptAiToolbarOutput:
+      $acceptAiToolbarResponse:
         () =>
         ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
@@ -147,9 +153,9 @@ export const AiExtension = Extension.create<
             return false;
           }
 
-          // 2. Accept the output
-          if (isAiToolbarDiffOutput(currentState.output)) {
-            // 2.a. If the output is a diff, apply it definitely
+          // 2. Accept the response
+          if (isContextualPromptDiffResponse(currentState.response)) {
+            // 2.a. If the response is a diff, apply it definitely
             const binding = getYjsBinding(this.editor);
             if (!binding) {
               return false;
@@ -172,8 +178,7 @@ export const AiExtension = Extension.create<
 
             this.storage.snapshot = undefined;
           } else {
-            // 2.b. If the output is not a diff, insert it below the selection
-
+            // 2.b. If the response is not a diff, insert it below the selection
             const block =
               this.editor.schema.nodes.paragraph ||
               Object.values(this.editor.schema.nodes).find(
@@ -186,7 +191,7 @@ export const AiExtension = Extension.create<
 
             const paragraph = block.create(
               {},
-              this.editor.schema.text(currentState.output.text)
+              this.editor.schema.text(currentState.response.text)
             );
 
             tr.insert(this.editor.state.selection.$to.end() + 1, paragraph);
@@ -281,7 +286,7 @@ export const AiExtension = Extension.create<
       },
 
       $startAiToolbarThinking:
-        (prompt: string, withPreviousOutput: boolean = false) =>
+        (prompt: string, withPreviousResponse?: boolean) =>
         ({ tr, view }: CommandProps) => {
           const currentState = this.storage.state;
 
@@ -332,7 +337,7 @@ export const AiExtension = Extension.create<
             customPrompt: currentState.customPrompt ?? "",
             prompt,
             abortController,
-            previousOutput: currentState.output,
+            previousResponse: currentState.response,
           };
 
           // 5. Block the editor
@@ -343,21 +348,22 @@ export const AiExtension = Extension.create<
             async () => {
               await provider?.pause();
 
-              const context = getDocumentText(this.editor, 3_000);
+              const context = getContextualPromptContext(this.editor, 3_000);
 
-              return this.options.resolveAiPrompt({
+              return this.options.resolveContextualPrompt({
                 prompt,
                 context,
                 signal: abortController.signal,
-                previous: withPreviousOutput
-                  ? {
-                      prompt: currentState.prompt ?? "",
-                      output: {
-                        type: currentState.output?.type ?? "",
-                        content: currentState.output?.text ?? "",
-                      },
-                    }
-                  : undefined,
+                previous:
+                  withPreviousResponse && currentState.phase === "reviewing"
+                    ? {
+                        prompt: currentState.prompt,
+                        response: {
+                          type: currentState.response?.type,
+                          text: currentState.response?.text,
+                        },
+                      }
+                    : undefined,
               });
             },
             RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
@@ -373,17 +379,17 @@ export const AiExtension = Extension.create<
               );
             }
           )
-            .then((output) => {
+            .then((response) => {
               if (abortController.signal.aborted) {
                 return;
               }
 
-              // 6.a. If the AI request succeeds, set to "reviewing" phase with the output
+              // 6.a. If the AI request succeeds, set to "reviewing" phase with the response
               (
                 this.editor.commands as unknown as AiCommands
               )._handleAiToolbarThinkingSuccess({
-                type: output.type,
-                text: output.content,
+                type: response.type,
+                text: response.text,
               });
             })
             .catch((error) => {
@@ -428,7 +434,7 @@ export const AiExtension = Extension.create<
         return true;
       },
 
-      _showAiToolbarOutputDiff: () => () => {
+      _showAiToolbarReviewingDiff: () => () => {
         // The diff is applied right before moving to the "reviewing" phase
         if (this.storage.state.phase !== "reviewing") {
           return false;
@@ -455,7 +461,7 @@ export const AiExtension = Extension.create<
       },
 
       _handleAiToolbarThinkingSuccess:
-        (output: AiToolbarOutput) =>
+        (response: ContextualPromptResponse) =>
         ({ view, tr }: CommandProps) => {
           const currentState = this.storage.state;
 
@@ -464,14 +470,14 @@ export const AiExtension = Extension.create<
             return false;
           }
 
-          // 2. If this is not a diff, the output will just be in the popup, set to "reviewing" phase with the output
-          if (!isAiToolbarDiffOutput(output)) {
+          // 2. If this is not a diff, the response will just be in the toolbar, set to "reviewing" phase directly with the response
+          if (!isContextualPromptDiffResponse(response)) {
             this.storage.state = {
               phase: "reviewing",
               initialSelection: currentState.initialSelection,
               customPrompt: "",
               prompt: currentState.prompt,
-              output,
+              response,
             };
 
             return true;
@@ -481,7 +487,7 @@ export const AiExtension = Extension.create<
             return false;
           }
 
-          // 3. If the output is a diff, apply it to the editor
+          // 3. Otherwise, the response is a diff, apply it to the editor
           this.options.doc.gc = false;
           this.storage.snapshot = takeSnapshot(this.options.doc);
 
@@ -491,13 +497,13 @@ export const AiExtension = Extension.create<
             initialSelection: currentState.initialSelection,
             customPrompt: "",
             prompt: currentState.prompt,
-            output,
+            response,
           };
 
-          // 5. Insert the output
+          // 5. Insert the response's text
           tr.insertText(
-            output.text,
-            output.type === "insert"
+            response.text,
+            response.type === "insert"
               ? this.editor.state.selection.to
               : this.editor.state.selection.from,
             this.editor.state.selection.to
@@ -509,9 +515,9 @@ export const AiExtension = Extension.create<
           // 6. Show the diff
           (
             this.editor.commands as unknown as AiCommands
-          )._showAiToolbarOutputDiff();
+          )._showAiToolbarReviewingDiff();
 
-          // We moved to the "reviewing" phase, so even if `_showAiToolbarOutputDiff`
+          // We moved to the "reviewing" phase, so even if `_showAiToolbarReviewingDiff`
           // returns `false` somehow, we still want to return `true`
           return true;
         },
@@ -575,11 +581,11 @@ export const AiExtension = Extension.create<
         key: AI_TOOLBAR_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc, selection }) => {
-            // Don't show the AI toolbar selection if the toolbar is closed or when reviewing diff outputs
+            // Don't show the AI toolbar selection if the toolbar is closed or when reviewing diff responses
             if (
               this.storage.state.phase === "closed" ||
               (this.storage.state.phase === "reviewing" &&
-                isAiToolbarDiffOutput(this.storage.state.output))
+                isContextualPromptDiffResponse(this.storage.state.response))
             ) {
               return DecorationSet.create(doc, []);
             }

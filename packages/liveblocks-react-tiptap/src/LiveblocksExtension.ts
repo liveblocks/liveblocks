@@ -26,10 +26,10 @@ import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import type {
-  AiResponse,
   LiveblocksExtensionOptions,
   LiveblocksExtensionStorage,
-  ResolveAiPromptArgs,
+  ResolveContextualPromptArgs,
+  ResolveContextualPromptResponse,
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
@@ -377,12 +377,12 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
-        const resolveAiPrompt = async ({
+        const resolveContextualPrompt = async ({
           prompt,
           context,
           previous,
           signal,
-        }: ResolveAiPromptArgs): Promise<AiResponse> => {
+        }: ResolveContextualPromptArgs): Promise<ResolveContextualPromptResponse> => {
           const result = await room[kInternal].executeContextualPrompt({
             prompt,
             context,
@@ -397,14 +397,14 @@ export const useLiveblocksExtension = (
             typeof parsedResponse.content === "string" &&
             ["insert", "replace", "other"].includes(type)
           ) {
-            return parsedResponse as AiResponse;
+            return parsedResponse as ResolveContextualPromptResponse;
           }
 
           throw new Error("Failed to resolve AI prompt");
         };
         extensions.push(
           AiExtension.configure({
-            resolveAiPrompt,
+            resolveContextualPrompt,
             ...(typeof options.ai === "boolean" ? {} : options.ai),
             doc: this.storage.doc,
             pud: this.storage.permanentUserData,

@@ -305,7 +305,7 @@
   pointer-events: auto;
 }
 
-.lb-tiptap-ai-toolbar-output-container,
+.lb-tiptap-ai-toolbar-response-container,
 .lb-tiptap-ai-toolbar-content {
   max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
 
@@ -323,7 +323,7 @@
   outline: none;
 }
 
-.lb-tiptap-ai-toolbar-output-container {
+.lb-tiptap-ai-toolbar-response-container {
   --lb-line-height-crop: calc(1lh - 1em) / -2;
 
   display: flex;
@@ -333,7 +333,7 @@
   border-block-end: 1px solid var(--lb-foreground-subtle);
 }
 
-.lb-tiptap-ai-toolbar-output {
+.lb-tiptap-ai-toolbar-response {
   &::before {
     content: "\FEFF";
     display: inline-block;

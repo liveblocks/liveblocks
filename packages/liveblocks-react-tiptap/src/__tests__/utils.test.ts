@@ -1,24 +1,28 @@
+import type { ContextualPromptContext } from "@liveblocks/core";
 import { Editor } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 
-import { type DocumentText, getDocumentText } from "../utils";
+import { getContextualPromptContext } from "../utils";
 
-function expectDocumentTextLength(text: DocumentText, expectedLength: number) {
+function expectContextLength(
+  context: ContextualPromptContext,
+  expectedLength: number
+) {
   // Allow for some variance in the total length because of textBetween's behavior and truncations
   const delta = 8;
   const length =
-    text.beforeSelection.length +
-    text.selection.length +
-    text.afterSelection.length;
+    context.beforeSelection.length +
+    context.selection.length +
+    context.afterSelection.length;
 
   expect(length).toBeGreaterThanOrEqual(expectedLength - delta);
   expect(length).toBeLessThanOrEqual(expectedLength + delta);
 }
 
 describe("utils", () => {
-  describe("getDocumentText", () => {
+  describe("getContextualPromptContext", () => {
     let editor: Editor;
 
     beforeEach(() => {
@@ -41,10 +45,10 @@ describe("utils", () => {
         to: editor.state.doc.content.size / 2,
       });
 
-      const text = getDocumentText(editor, 1000);
+      const context = getContextualPromptContext(editor, 1000);
 
-      expectDocumentTextLength(text, 1000);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, 1000);
+      expect(context).toMatchSnapshot();
     });
 
     test("should prioritize the selection", () => {
@@ -59,10 +63,10 @@ describe("utils", () => {
         editor.state.selection.to,
         " "
       );
-      const text = getDocumentText(editor, 200);
+      const context = getContextualPromptContext(editor, 200);
 
-      expectDocumentTextLength(text, 200);
-      expect(text.selection.includes(selectionText)).toBeTruthy();
+      expectContextLength(context, 200);
+      expect(context.selection.includes(selectionText)).toBeTruthy();
     });
 
     test("should truncate the selection if it is too large", () => {
@@ -72,10 +76,10 @@ describe("utils", () => {
         to: editor.state.doc.content.size,
       });
 
-      const text = getDocumentText(editor, 1000);
+      const context = getContextualPromptContext(editor, 1000);
 
-      expectDocumentTextLength(text, 1000);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, 1000);
+      expect(context).toMatchSnapshot();
     });
 
     test("should take into account the document size", () => {
@@ -85,10 +89,10 @@ describe("utils", () => {
         to: editor.state.doc.content.size - 50,
       });
 
-      const text = getDocumentText(editor, 10000);
+      const context = getContextualPromptContext(editor, 10000);
 
-      expectDocumentTextLength(text, editor.state.doc.content.size);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, editor.state.doc.content.size);
+      expect(context).toMatchSnapshot();
     });
 
     test("should balance the available length equally on both sides of the selection", () => {
@@ -98,10 +102,10 @@ describe("utils", () => {
         to: editor.state.doc.content.size / 2 + 100,
       });
 
-      const text = getDocumentText(editor, 1000);
+      const context = getContextualPromptContext(editor, 1000);
 
-      expectDocumentTextLength(text, 1000);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, 1000);
+      expect(context).toMatchSnapshot();
     });
 
     test("should compensate after the selection if before is not enough", () => {
@@ -111,10 +115,10 @@ describe("utils", () => {
         to: 200,
       });
 
-      const text = getDocumentText(editor, 1000);
+      const context = getContextualPromptContext(editor, 1000);
 
-      expectDocumentTextLength(text, 1000);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, 1000);
+      expect(context).toMatchSnapshot();
     });
 
     test("should compensate before the selection if after is not enough", () => {
@@ -124,10 +128,10 @@ describe("utils", () => {
         to: editor.state.doc.content.size - 150,
       });
 
-      const text = getDocumentText(editor, 1000);
+      const context = getContextualPromptContext(editor, 1000);
 
-      expectDocumentTextLength(text, 1000);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, 1000);
+      expect(context).toMatchSnapshot();
     });
 
     test("should support elements", () => {
@@ -145,10 +149,10 @@ describe("utils", () => {
         to: editor.state.doc.content.size / 2 + 100,
       });
 
-      const text = getDocumentText(editor, 1000);
+      const context = getContextualPromptContext(editor, 1000);
 
-      expectDocumentTextLength(text, 1000);
-      expect(text).toMatchSnapshot();
+      expectContextLength(context, 1000);
+      expect(context).toMatchSnapshot();
     });
   });
 });

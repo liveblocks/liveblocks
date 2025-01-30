@@ -36,6 +36,10 @@ import {
   memoizeOnSuccess,
   tryParseJson,
 } from "./lib/utils";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -1042,17 +1046,10 @@ export type PrivateRoomApi = {
 
   executeContextualPrompt(options: {
     prompt: string;
-    context: {
-      beforeSelection: string;
-      selection: string;
-      afterSelection: string;
-    };
+    context: ContextualPromptContext;
     previous?: {
       prompt: string;
-      output: {
-        type: string;
-        content: string;
-      };
+      response: ContextualPromptResponse;
     };
     signal: AbortSignal;
   }): Promise<string>;
@@ -1618,17 +1615,10 @@ export function createRoom<
 
   async function executeContextualPrompt(options: {
     prompt: string;
-    context: {
-      beforeSelection: string;
-      selection: string;
-      afterSelection: string;
-    };
+    context: ContextualPromptContext;
     previous?: {
       prompt: string;
-      output: {
-        type: string;
-        content: string;
-      };
+      response: ContextualPromptResponse;
     };
     signal: AbortSignal;
   }) {
@@ -2968,7 +2958,7 @@ export function createRoom<
         getTextVersion,
         // create a version
         createTextVersion,
-        // execute contextual prompt
+        // execute a contextual prompt
         executeContextualPrompt,
 
         // Support for the Liveblocks browser extension

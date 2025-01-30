@@ -59,7 +59,7 @@ import type {
   ChainedAiCommands,
 } from "../types";
 import { getDomRange } from "../utils";
-import { DEFAULT_STATE, isAiToolbarDiffOutput } from "./AiExtension";
+import { DEFAULT_STATE, isContextualPromptDiffResponse } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
@@ -239,31 +239,25 @@ const AiToolbarSuggestion = forwardRef<
 function AiToolbarReviewingSuggestions() {
   const editor = useCurrentEditor("ReviewingSuggestions", "AiToolbar");
   const { state } = useAiToolbarContext();
-  const { prompt, output } = state as Extract<
-    AiToolbarState,
-    { phase: "reviewing" }
-  >;
+  const { response } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
 
-  const retry = useCallback(() => {
-    // Retry with the same prompt
-    (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
-      prompt,
-      false
-    );
-  }, [editor, prompt]);
-
-  if (isAiToolbarDiffOutput(output)) {
+  if (isContextualPromptDiffResponse(response)) {
     return (
       <>
         <AiToolbarDropdownItem
           icon={<CheckIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput
+            (editor.commands as unknown as AiCommands).$acceptAiToolbarResponse
           }
         >
           Accept
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={retry}>
+        <AiToolbarDropdownItem
+          icon={<UndoIcon />}
+          onSelect={
+            (editor.commands as unknown as AiCommands).$startAiToolbarThinking
+          }
+        >
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
@@ -280,12 +274,17 @@ function AiToolbarReviewingSuggestions() {
         <AiToolbarDropdownItem
           icon={<ArrowCornerDownRightIcon />}
           onSelect={
-            (editor.commands as unknown as AiCommands).$acceptAiToolbarOutput
+            (editor.commands as unknown as AiCommands).$acceptAiToolbarResponse
           }
         >
           Insert below
         </AiToolbarDropdownItem>
-        <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={retry}>
+        <AiToolbarDropdownItem
+          icon={<UndoIcon />}
+          onSelect={
+            (editor.commands as unknown as AiCommands).$startAiToolbarThinking
+          }
+        >
           Try again
         </AiToolbarDropdownItem>
         <AiToolbarDropdownItem
@@ -355,7 +354,8 @@ function AiToolbarCustomPromptContent() {
         } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
           (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
-            customPrompt, state.phase === "reviewing"
+            customPrompt,
+            state.phase === "reviewing"
           );
         }
       }
@@ -377,7 +377,8 @@ function AiToolbarCustomPromptContent() {
     }
 
     (editor.commands as unknown as AiCommands).$startAiToolbarThinking(
-      customPrompt, state.phase === "reviewing"
+      customPrompt,
+      state.phase === "reviewing"
     );
   }, [editor, customPrompt, isCustomPromptEmpty, state.phase]);
 
@@ -486,13 +487,13 @@ function AiToolbarThinking() {
 
 function AiToolbarReviewing() {
   const { state } = useAiToolbarContext();
-  const { output } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
+  const { response } = state as Extract<AiToolbarState, { phase: "reviewing" }>;
 
   return (
     <>
-      {output.type === "other" ? (
-        <div className="lb-tiptap-ai-toolbar-output-container">
-          <div className="lb-tiptap-ai-toolbar-output">{output.text}</div>
+      {response.type === "other" ? (
+        <div className="lb-tiptap-ai-toolbar-response-container">
+          <div className="lb-tiptap-ai-toolbar-response">{response.text}</div>
         </div>
       ) : null}
       <AiToolbarCustomPromptContent />
@@ -755,7 +756,7 @@ export const AiToolbar = Object.assign(
         setTimeout(() => {
           if (
             state.phase === "reviewing" &&
-            isAiToolbarDiffOutput(state.output)
+            isContextualPromptDiffResponse(state.response)
           ) {
             const changes = editor.view.dom.querySelectorAll(
               "ychange[data-liveblocks]"
@@ -795,7 +796,14 @@ export const AiToolbar = Object.assign(
             setReference(null);
           }
         }, 0);
-      }, [selection, editor, isOpen, setReference, state.phase, state.output]);
+      }, [
+        selection,
+        editor,
+        isOpen,
+        setReference,
+        state.phase,
+        state.response,
+      ]);
 
       // Close the toolbar when clicking anywhere outside of it
       useEffect(() => {
