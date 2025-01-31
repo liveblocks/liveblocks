@@ -19,12 +19,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/react`
 
-- Improve error message if hooks are accidentally called server side
+- Improve error message if hooks are accidentally called server side.
 
 ### `@liveblocks/zustand`
 
-- Fix bug in Zustand typing in case the multi-argument form of `set()` is used
-  (thanks [@hans-lizihan](https://github.com/hans-lizihan))
+- Fix bug in Zustand typing in case the multi-argument form of `set()` is used.
 
 ## Website
 
@@ -36,7 +35,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas, stevenfabre, sugardarius, nvie
+ctnicholas, stevenfabre, sugardarius, nvie, hans-lizihan
 
 # Week 4 (2025-01-24)
 
