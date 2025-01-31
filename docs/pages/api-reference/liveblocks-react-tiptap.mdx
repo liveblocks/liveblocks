@@ -830,7 +830,7 @@ To learn more about the different components, read more under [`Toolbar`][].
     The vertical position of the floating toolbar.
   </PropertiesListItem>
   <PropertiesListItem name="offset" type="number">
-    The vertical offset of the floating toolbar from the selection.{" "}
+    The vertical offset of the floating toolbar from the selection.
   </PropertiesListItem>
   <PropertiesListItem name="children" type="ReactNode">
     The content of the toolbar, overriding the default content. Use the `before`
@@ -1514,7 +1514,7 @@ offset that’s added when a thread is selected.
   </PropertiesListItem>
 </PropertiesList>
 
-### HistoryVersionPreview
+### HistoryVersionPreview [@badge=beta]
 
 <Banner title="Private beta">
 
@@ -1530,7 +1530,7 @@ logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
 render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 
-#### Usage
+#### Usage [#HistoryVersionPreview-usage]
 
 ```tsx
 import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
@@ -1545,7 +1545,7 @@ function VersionPreview({ selectedVersion, onVersionRestore }) {
 }
 ```
 
-#### Props
+#### Props [#HistoryVersionPreview-props]
 
 <PropertiesList>
   <PropertiesListItem name="version" type="HistoryVersion" required>
@@ -1562,6 +1562,163 @@ function VersionPreview({ selectedVersion, onVersionRestore }) {
 The `HistoryVersionPreview` component renders a read-only view of the specified
 version of the editor content. It also provides a button for users to restore
 the displayed version.
+
+### AiToolbar [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+Displays a floating AI toolbar near the current Tiptap selection, allowing you
+to use AI to apply changes to the document or ask questions about it.
+
+```tsx
+<AiToolbar editor={editor} />
+```
+
+Pass your Tiptap `editor` to use the component, and enable (or customize) the AI
+option in [`useLiveblocksExtension`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  AiToolbar,
+  // +++
+  FloatingToolbar,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    // +++
+    ai: true,
+    // +++
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <AiToolbar editor={editor} />
+      // +++
+      <FloatingToolbar editor={editor} />
+    </div>
+  );
+}
+```
+
+#### Opening the toolbar [#AiToolbar-opening]
+
+To open the `AiToolbar`, you need to call the `askAi`
+[command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks.
+
+```tsx
+import { Editor } from "@tiptap/react";
+
+function Toolbar({ editor }: { editor: Editor | null }) {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={() => {
+        // +++
+        editor.chain().focus().askAi().run();
+        // +++
+      }}
+    >
+      ✨ Ask AI
+    </button>
+  );
+}
+```
+
+You can also pass a prompt to the `askAi` command and it will directly request
+it when opening the toolbar.
+
+```tsx
+<button
+  onClick={() => {
+    // +++
+    editor.chain().focus().askAi("Add emojis to the text").run();
+    // +++
+  }}
+>
+  😃 Emojify
+</button>
+```
+
+#### Customizing suggestions [#AiToolbar-suggestions]
+
+By default, the AI toolbar displays a list of suggestions (e.g. “Fix mistakes”,
+“Explain”, etc). These can be customized via the `suggestions` prop.
+
+```tsx
+<AiToolbar
+  editor={editor}
+  // +++
+  suggestions={
+    <>
+      <AiToolbar.SuggestionsLabel>Suggested</AiToolbar.SuggestionsLabel>
+      <AiToolbar.Suggestion>Fix mistakes</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion prompt="Add emojis to the text">
+        Emojify
+      </AiToolbar.Suggestion>
+      <AiToolbar.SuggestionsSeparator />
+      <AiToolbar.Suggestion icon={<Icon.Sparkles />}>
+        Continue writing
+      </AiToolbar.Suggestion>
+    </>
+  }
+  // +++
+/>
+```
+
+Doing so will override the default suggestions, instead you can use a function
+to keep them while adding your own.
+
+```tsx
+<AiToolbar
+  editor={editor}
+  // +++
+  suggestions={({ children }) => (
+    <>
+      {children}
+      // +++
+      <AiToolbar.SuggestionsSeparator />
+      <AiToolbar.SuggestionsLabel>Custom</AiToolbar.SuggestionsLabel>
+      <AiToolbar.Suggestion>Custom suggestion</AiToolbar.Suggestion>
+    </>
+  )}
+/>
+```
+
+#### Props [#AiToolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null" required>
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="offset" type="number">
+    The vertical offset of the AI toolbar from the selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="suggestions" type="ReactNode">
+    The prompt suggestions to display below the AI toolbar.
+  </PropertiesListItem>
+</PropertiesList>
 
 ## Hooks
 
@@ -1619,7 +1776,14 @@ function TextEditor() {
     Enable comments in the editor.
   </PropertiesListItem>
   <PropertiesListItem name="mentions" defaultValue="true" type="boolean">
-    Enabled mentions in the editor.
+    Enable mentions in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="ai"
+    defaultValue="false"
+    type="boolean | AiConfiguration"
+  >
+    Enable AI in the editor and optionally customize configuration options.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1833,6 +1997,7 @@ learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
+[`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
@@ -1849,4 +2014,5 @@ learn how to do this under
 [`FloatingComposer`]: #FloatingComposer
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
+[`AiToolbar`]: #AiToolbar
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense

@@ -65,8 +65,19 @@ export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
 export interface AiToolbarProps
   extends Omit<ComponentProps<"div">, "value" | "defaultValue" | "children"> {
+  /**
+   * The Tiptap editor.
+   */
   editor: Editor | null;
+
+  /**
+   * The vertical offset of the AI toolbar from the selection.
+   */
   offset?: number;
+
+  /**
+   * The prompt suggestions to display below the AI toolbar.
+   */
   suggestions?: ReactNode | ComponentType<PropsWithChildren>;
 }
 
