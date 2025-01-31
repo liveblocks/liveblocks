@@ -29,6 +29,7 @@ import {
   type AiExtensionStorage,
   type AiToolbarState,
   type LiveblocksExtensionStorage,
+  type ResolveContextualPromptResponse,
   type YSyncPluginState,
 } from "../types";
 import { getContextualPromptContext } from "../utils";
@@ -59,6 +60,18 @@ export function isContextualPromptDiffResponse(
   { type: "replace" | "insert" }
 > {
   return response.type === "replace" || response.type === "insert";
+}
+
+function isResolveContextualPromptResponse(
+  response: unknown
+): response is ResolveContextualPromptResponse {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    typeof (response as { text: unknown }).text === "string" &&
+    typeof (response as { type: unknown }).type === "string" &&
+    ["insert", "replace", "other"].includes((response as { type: string }).type)
+  );
 }
 
 function getRevertTransaction(
@@ -348,11 +361,10 @@ export const AiExtension = Extension.create<
             async () => {
               await provider?.pause();
 
-              const context = getContextualPromptContext(this.editor, 3_000);
-
-              return this.options.resolveContextualPrompt({
+              // 6.a. Resolve the AI prompt
+              const response = (await this.options.resolveContextualPrompt({
                 prompt,
-                context,
+                context: getContextualPromptContext(this.editor, 3_000),
                 signal: abortController.signal,
                 previous:
                   withPreviousResponse && currentState.phase === "reviewing"
@@ -364,7 +376,14 @@ export const AiExtension = Extension.create<
                         },
                       }
                     : undefined,
-              });
+              })) as unknown;
+
+              // 6.b. Validate the response
+              if (isResolveContextualPromptResponse(response)) {
+                return response;
+              } else {
+                throw new Error("Failed to resolve AI prompt.");
+              }
             },
             RESOLVE_AI_PROMPT_RETRY_ATTEMPTS,
             RESOLVE_AI_PROMPT_RETRY_DELAYS,

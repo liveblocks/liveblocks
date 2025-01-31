@@ -390,18 +390,10 @@ export const useLiveblocksExtension = (
             signal,
           });
 
-          const parsedResponse = JSON.parse(result) as JsonObject;
-          const type =
-            typeof parsedResponse.type === "string" ? parsedResponse.type : "";
-          if (
-            typeof parsedResponse.content === "string" &&
-            ["insert", "replace", "other"].includes(type)
-          ) {
-            return parsedResponse as ResolveContextualPromptResponse;
-          }
-
-          throw new Error("Failed to resolve AI prompt");
+          // This response is validated afterwards by AiExtension itself
+          return JSON.parse(result) as ResolveContextualPromptResponse;
         };
+
         extensions.push(
           AiExtension.configure({
             resolveContextualPrompt,
