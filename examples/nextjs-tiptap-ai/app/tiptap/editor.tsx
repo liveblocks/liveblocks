@@ -8,6 +8,7 @@ import {
   FloatingThreads,
   AnchoredThreads,
   Toolbar,
+  AiToolbar,
   FloatingToolbar,
 } from "@liveblocks/react-tiptap";
 import StarterKit from "@tiptap/starter-kit";
@@ -16,7 +17,20 @@ import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
 export default function TiptapEditor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    ai: {
+      name: "Liveblocks",
+      // resolveContextualPrompt: async ({ prompt, context, signal }) => {
+      //   const response = await fetch("/api/contextual-prompt", {
+      //     method: "POST",
+      //     body: JSON.stringify({ prompt, context }),
+      //     signal,
+      //   });
+
+      //   return response.json();
+      // },
+    },
+  });
 
   const editor = useEditor({
     editorProps: {
@@ -25,12 +39,17 @@ export default function TiptapEditor() {
         class: "outline-none flex-1 transition-all",
       },
     },
+    enableContentCheck: true,
     extensions: [
       StarterKit.configure({
         history: false,
       }),
       liveblocks,
     ],
+  });
+
+  editor?.on("contentError", (error) => {
+    console.warn("contentError:", error, editor);
   });
 
   return (
@@ -47,6 +66,7 @@ export default function TiptapEditor() {
           <EditorContent editor={editor} />
           <FloatingComposer editor={editor} className="w-[350px]" />
           <FloatingToolbar editor={editor} />
+          <AiToolbar editor={editor} />
         </div>
 
         <div className="xl:[&:not(:has(.lb-tiptap-anchored-threads))]:pr-[200px] [&:not(:has(.lb-tiptap-anchored-threads))]:pr-[50px]">
