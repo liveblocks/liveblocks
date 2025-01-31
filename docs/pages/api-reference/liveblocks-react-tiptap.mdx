@@ -1664,7 +1664,8 @@ it when opening the toolbar.
 #### Customizing suggestions [#AiToolbar-suggestions]
 
 By default, the AI toolbar displays a list of suggestions (e.g. “Fix mistakes”,
-“Explain”, etc). These can be customized via the `suggestions` prop.
+“Explain”, etc). These can be customized via the `suggestions` prop and the
+[`AiToolbar.Suggestion`][] component.
 
 ```tsx
 <AiToolbar
@@ -1719,6 +1720,103 @@ to keep them while adding your own.
     The prompt suggestions to display below the AI toolbar.
   </PropertiesListItem>
 </PropertiesList>
+
+#### AiToolbar.Suggestion
+
+A prompt suggestion displayed below the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      // +++
+      <AiToolbar.Suggestion>Fix mistakes</AiToolbar.Suggestion>
+      // +++
+    </>
+  }
+/>;
+```
+
+By default, selecting a suggestion will use its label from the `children` as the
+prompt, this can be overridden with the `prompt` prop. Also optionally takes an
+icon.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// "Translate in French" is displayed in the suggestion and used as the prompt
+<AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+
+// "Emojify" is displayed in the suggestion but "Add emojis to the text" is used as the prompt
+<AiToolbar.Suggestion prompt="Add emojis to the text">Emojify</AiToolbar.Suggestion>
+
+// Custom icon
+<AiToolbar.Suggestion icon={<div>?</div>}>Explain</AiToolbar.Suggestion>
+
+// Using a Liveblocks icon
+<AiToolbar.Suggestion icon={<Icon.QuestionMark />}>Explain</AiToolbar.Suggestion>
+```
+
+##### Props [#AiToolbarSuggestion-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The suggestion’s label, used as the prompt if the `prompt` prop is not set.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed before the label.
+  </PropertiesListItem>
+  <PropertiesListItem name="prompt" type="string">
+    The prompt to use instead of the label.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### AiToolbar.SuggestionsLabel
+
+A label to describe a group of prompt suggestions displayed in the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      // +++
+      <AiToolbar.SuggestionsLabel>Translation</AiToolbar.SuggestionsLabel>
+      // +++
+      <AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion>Translate in English</AiToolbar.Suggestion>
+    </>
+  }
+/>;
+```
+
+#### AiToolbar.SuggestionsSeparator
+
+A separator between groups of prompt suggestions displayed in the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      <AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion>Translate in English</AiToolbar.Suggestion>
+      // +++
+      <AiToolbar.SuggestionsSeparator />
+      // +++
+      <AiToolbar.Suggestion>Custom suggestion</AiToolbar.Suggestion>
+    </>
+  }
+/>;
+```
 
 ## Hooks
 
@@ -2015,4 +2113,7 @@ learn how to do this under
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
 [`AiToolbar`]: #AiToolbar
+[`AiToolbar.Suggestion`]: #AiToolbar.Suggestion
+[`AiToolbar.SuggestionsLabel`]: #AiToolbar.SuggestionsLabel
+[`AiToolbar.SuggestionsSeparator`]: #AiToolbar.SuggestionsSeparator
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense
