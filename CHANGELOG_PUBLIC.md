@@ -15,13 +15,17 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 5 (2025-01-31)
 
+## Website
+
+- New blog post: [Great agent experience starts with great collaboration](https://liveblocks.io/blog/great-agent-experience-great-collaboration).
+
 ## Documentation
 
 - Better info on `initialStorage` values.
 
 ## Contributors
 
-ctnicholas
+ctnicholas, stevenfabre
 
 # Week 4 (2025-01-24)
 
