@@ -12,8 +12,12 @@ export default defineConfig({
     // Replace __VERSION__ globals with concrete version
     const pkg = require("./package.json");
     options.define.__VERSION__ = JSON.stringify(pkg.version);
-    // Replace `import.meta.env.VITE_LIVEBLOCKS_BASE_URL` with `"undefined"` string value.
-    // for cjs builds. tsup does not authorize of pure `undefined` value.
+
+    // Replaces:
+    // - `__IMPORT_META__.env.FOO` → `import.meta.env.FOO`  (in ESM output)
+    // - `__IMPORT_META__.env.FOO` → `null.meta.env.FOO`    (in CJS output)
+    //
+    // We need to do this, because `import.meta` is a *syntax error* in CJS files.
     if (context.format !== "cjs") {
       options.define["__IMPORT_META__"] = "import.meta";
     } else {
