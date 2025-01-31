@@ -103,13 +103,12 @@ export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
-export type AiExtensionOptions = {
+export type AiExtensionOptions = Pick<
+  AiConfiguration,
+  "name" | "resolveContextualPrompt"
+> & {
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
-  name: string;
-  resolveContextualPrompt: (
-    args: ResolveContextualPromptArgs
-  ) => Promise<ContextualPromptResponse>;
 };
 
 /**
