@@ -15,6 +15,17 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 5 (2025-01-31)
 
+## v2.16.2
+
+### `@liveblocks/react`
+
+- Improve error message if hooks are accidentally called server side
+
+### `@liveblocks/zustand`
+
+- Fix bug in Zustand typing in case the multi-argument form of `set()` is used
+  (thanks [@hans-lizihan](https://github.com/hans-lizihan))
+
 ## Website
 
 - New blog post: [Great agent experience starts with great collaboration](https://liveblocks.io/blog/great-agent-experience-great-collaboration).
@@ -25,7 +36,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas, stevenfabre
+ctnicholas, stevenfabre, sugardarius, nvie
 
 # Week 4 (2025-01-24)
 
