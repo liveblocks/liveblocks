@@ -4,7 +4,7 @@ import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import { getBaseUrl } from "./get-base-url";
+import { getBaseUrl } from "./env";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";

@@ -1,9 +1,9 @@
 import { createApiClient } from "../api-client";
 import { createAuthManager } from "../auth-manager";
-import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
+import { DEFAULT_BASE_URL } from "../env";
 import { kInternal } from "../internal";
 import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
