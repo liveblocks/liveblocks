@@ -36,12 +36,27 @@ export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
  * @beta
  */
 export type ResolveContextualPromptArgs = {
+  /**
+   * The prompt being requested by the user.
+   */
   prompt: string;
+
+  /**
+   * The context of the document and its current selection.
+   */
   context: ContextualPromptContext;
+
+  /**
+   * The previous request and its response, if this is a follow-up request.
+   */
   previous?: {
     prompt: string;
     response: ContextualPromptResponse;
   };
+
+  /**
+   * An abort signal that can be used to cancel requests.
+   */
   signal: AbortSignal;
 };
 
@@ -51,7 +66,14 @@ export type ResolveContextualPromptArgs = {
 export type ResolveContextualPromptResponse = ContextualPromptResponse;
 
 export interface AiConfiguration {
+  /**
+   * The AI's name. ("Ask {name} anything…", "{name} is thinking…", etc)
+   */
   name?: string;
+
+  /**
+   * A function that returns an a response to a contextual prompt.
+   */
   resolveContextualPrompt?: (
     args: ResolveContextualPromptArgs
   ) => Promise<ContextualPromptResponse>;
