@@ -1,5 +1,7 @@
 import { DEFAULT_BASE_URL } from "./constants";
 
+declare let __IMPORT_META__: { env: Record<string, string> };
+
 const safeGet = (fn: () => string | undefined): string | undefined => {
   try {
     return fn();
@@ -12,14 +14,7 @@ const getFromEnvVar = (): string | undefined => {
   return (
     safeGet(() => process.env.LIVEBLOCKS_BASE_URL) ??
     safeGet(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??
-    safeGet(
-      () =>
-        (
-          import.meta as ImportMeta & {
-            env: Record<string, string | undefined>;
-          }
-        ).env.VITE_LIVEBLOCKS_BASE_URL
-    )
+    safeGet(() => __IMPORT_META__.env.VITE_LIVEBLOCKS_BASE_URL)
   );
 };
 

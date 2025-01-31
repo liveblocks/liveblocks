@@ -8,5 +8,4 @@ module.exports = {
 
   // Collect code coverage for this project, when using the --coverage flag
   coveragePathIgnorePatterns: ["/__tests__/"],
-  setupFiles: [...commonJestConfig.setupFiles, "<rootDir>/jest.setup.ts"],
 };

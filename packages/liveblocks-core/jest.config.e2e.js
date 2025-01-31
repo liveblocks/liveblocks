@@ -11,5 +11,4 @@ module.exports = {
   testTimeout: 30000,
 
   roots: ["<rootDir>/e2e"],
-  setupFiles: [...commonJestConfig.setupFiles, "<rootDir>/jest.setup.ts"],
 };

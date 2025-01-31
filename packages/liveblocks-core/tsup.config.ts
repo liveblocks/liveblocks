@@ -14,8 +14,10 @@ export default defineConfig({
     options.define.__VERSION__ = JSON.stringify(pkg.version);
     // Replace `import.meta.env.VITE_LIVEBLOCKS_BASE_URL` with `"undefined"` string value.
     // for cjs builds. tsup does not authorize of pure `undefined` value.
-    if (context.format === "cjs") {
-      options.define["import.meta.env.VITE_LIVEBLOCKS_BASE_URL"] = "undefined";
+    if (context.format !== "cjs") {
+      options.define["__IMPORT_META__"] = "import.meta";
+    } else {
+      options.define["__IMPORT_META__"] = "null";
     }
   },
 });
