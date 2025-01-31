@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 5 (2025-01-31)
 
+## Documentation
+
+- Better info on `initialStorage` values.
+
 ## Contributors
+
+ctnicholas
 
 # Week 4 (2025-01-24)
 
