@@ -554,18 +554,6 @@ function Component() {
 
 {/* TODO: Document classes and data attributes */}
 
-#### Icon
-
-Most of the icons used in the default components can be used via `<Icon.* />`.
-They are stroke-based and designed for use at 20×20 pixels.
-
-```tsx
-import { Icon } from "@liveblocks/react-ui";
-
-<Icon.QuestionMark />
-<Icon.Mention  />
-```
-
 ### Primitives
 
 Primitives are unstyled, headless components that can be used to create fully
@@ -1888,15 +1876,19 @@ Displays a custom notification kind.
     $myCustomNotificationKind: (props) => {
       const activityData = props.inboxNotification.activities[0].data;
 
-      return(
+      return (
         <InboxNotification.Custom
-          title={<>User <strong>{activityData.file}</strong></>}
+          title={
+            <>
+              User <strong>{activityData.file}</strong>
+            </>
+          }
           aside={<InboxNotification.Icon>❌</InboxNotification.Icon>}
           {...props}
         >
           {activityData.errorDescription}
         </InboxNotification.Custom>
-      )
+      );
     },
   }}
 />
