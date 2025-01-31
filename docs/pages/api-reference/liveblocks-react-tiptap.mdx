@@ -2033,6 +2033,56 @@ function Threads({ editor }: { editor: Editor }) {
 // +++
 ```
 
+#### Generating AI toolbar responses [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+By default, the [`AiToolbar`][] component sends its requests to Liveblocks to
+generate its responses. This can be customized via the `resolveContextualPrompt`
+option in [`useLiveblocksExtension`][]. This option accepts an async function
+which will be called by the AI toolbar whenever a prompt is requested, it will
+receive the prompt and some context (the document’s and selection’s text, the
+previous request if it’s a follow-up, etc) and is expected to return the type of
+response and the text to use.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    ai: {
+      // +++
+      resolveContextualPrompt: async ({ prompt, context, signal }) => {
+        const response = await fetch("/api/contextual-prompt", {
+          method: "POST",
+          body: JSON.stringify({ prompt, context }),
+          signal,
+        });
+
+        return response.json();
+      },
+      // +++
+    },
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // ...
+}
+```
+
 ### useIsEditorReady
 
 Used to check if the editor content has been loaded or not, helpful for
