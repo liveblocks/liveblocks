@@ -113,17 +113,16 @@ package.
     Now that we set up Liveblocks, we can start integrating Tiptap and Liveblocks in the `Editor.tsx` file.
     To make the editor collaborative, we can add
     [`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
-    from `@liveblocks/react-tiptap`.
-
+    from `@liveblocks/react-tiptap`. [`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar)
+    adds a text selection toolbar.
 
     ```tsx file="app/Editor.tsx"
     "use client";
 
-    import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+    import { useLiveblocksExtension, FloatingToolbar } from "@liveblocks/react-tiptap";
     import { useEditor, EditorContent } from "@tiptap/react";
     import StarterKit from "@tiptap/starter-kit";
     import { Threads } from "./Threads";
-    import { Toolbar } from "./Toolbar";
 
     export function Editor() {
       const liveblocks = useLiveblocksExtension();
@@ -141,9 +140,9 @@ package.
 
       return (
         <div>
-          <Toolbar editor={editor} />
           <EditorContent editor={editor} className="editor" />
           <Threads editor={editor} />
+          <FloatingToolbar editor={editor} />
         </div>
       );
     }
@@ -192,36 +191,6 @@ package.
 
 </Step>
 <Step>
-  <StepTitle>Create a toolbar</StepTitle>
-  <StepContent>
-
-    To create threads with the [`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer),
-    we need to create a button that opens the composer. Create a toolbar in `Toolbar.tsx`
-    with a button that opens the composer using [`addPendingComment`](/docs/api-reference/liveblocks-react-tiptap#Opening-the-composer).
-
-    ```tsx file="app/Toolbar.tsx"
-    import { Editor } from "@tiptap/react";
-
-    export function Toolbar({ editor }: { editor: Editor | null }) {
-      return (
-        <div className="toolbar">
-          <button
-            onClick={() => {
-              editor?.chain().focus().addPendingComment().run();
-            }}
-            data-active={editor?.isActive("liveblocksCommentMark")}
-          >
-            💬 New comment
-          </button>
-        </div>
-      );
-    }
-    ```
-
-</StepContent>
-
-</Step>
-<Step>
   <StepTitle>Style your editor</StepTitle>
   <StepContent>
 
@@ -240,22 +209,6 @@ package.
       padding: 2px 12px;
       outline: none;
       width: 100%;
-    }
-
-    .toolbar {
-      padding: 8px;
-      border-bottom: 1px solid #E6E6E7;
-    }
-
-    .toolbar > button {
-      all: unset;
-      font-weight: 500;
-      padding: 8px;
-      border-radius: 6px;
-    }
-
-    .toolbar > button:hover {
-      background: #F4F4F5;
     }
 
     /* For mobile */

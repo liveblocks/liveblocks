@@ -62,6 +62,7 @@ import {
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
+import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -2047,6 +2048,9 @@ function useRoomNotificationSettingsSuspense(): [
   RoomNotificationSettingsAsyncSuccess,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
   const room = useRoom();
@@ -2152,6 +2156,9 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
  * const { versions } = useHistoryVersions();
  */
 function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const client = useClient();
   const room = useRoom();
   const store = getRoomExtrasForClient(client).store;
@@ -2201,17 +2208,8 @@ function useUpdateRoomNotificationSettings() {
   );
 }
 
-function ensureNotServerSide(): void {
-  // Error early if suspense is used in a server-side context
-  if (typeof window === "undefined") {
-    throw new Error(
-      "You cannot use the Suspense version of this hook on the server side. Make sure to only call them on the client side.\nFor tips, see https://liveblocks.io/docs/api-reference/liveblocks-react#suspense-avoid-ssr"
-    );
-  }
-}
-
 function useSuspendUntilPresenceReady(): void {
-  // Throw an error if we're calling this on the server side
+  // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const room = useRoom();
@@ -2297,7 +2295,7 @@ function useOtherSuspense<P extends JsonObject, U extends BaseUserMeta, T>(
 }
 
 function useSuspendUntilStorageReady(): void {
-  // Throw an error if we're calling this on the server side
+  // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const room = useRoom();
@@ -2332,6 +2330,9 @@ function useStorageStatusSuspense(
 function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
   const client = useClient();
   const room = useRoom();
 
