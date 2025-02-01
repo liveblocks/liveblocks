@@ -1,0 +1,224 @@
+---
+meta:
+  title: "@liveblocks/node-prosemirror"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/node-prosemirror package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/node-prosemirror` provides a Node.js package to export and modify
+[ProseMirror](https://prosemirror.net/). Because TipTap uses ProseMirror under
+the hood, this package can be used to modify [TipTap](https://tiptap.dev/)
+documents as well.
+
+## withProsemirrorDocument
+
+`withProsemirrorDocument` is the main entry point to modifying a document on the
+server. It takes a room ID and a
+[Liveblocks Node client](/docs/api-reference/liveblocks-node#Liveblocks-client),
+and returns a callback used to work with ProseMirror documents stored in
+Liveblocks.
+
+```ts highlight="8-14"
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  (api) => {
+    // Modify your document with the api
+    // ...
+  }
+);
+```
+
+### Options
+
+The `withProsemirrorDocument` function takes the following options:
+
+- `roomId`: The ID of the room to use.
+- `client`: The Liveblocks client to use.
+- `schema`: (optional) The prosemirror schema to use for the document. If no
+  schema is provided, the default schema is StarterKit + Liveblocks Mentions and
+  comments
+- `field`: (optional) The field to use for the document. Defaults to `default`.
+
+### Returning data
+
+Get your editor’s text content by returning `api.getText()` inside the callback.
+
+```ts
+const textContent = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.getText()
+);
+
+// "My content"
+console.log(textContent);
+```
+
+### ProseMirror document API
+
+You can easily modify your document with the ProseMirror document API.
+
+#### api.update((doc: Node, tr: Transaction) => Transaction)
+
+Liveblocks provides `api.update` which is a callback that provides the current
+document and a prosemirror transaction. This makes it easy to use ProseMirror's
+built in functions. When you've finished, return the transaction and any it will
+be persisted and appear in realtime to connected users as soon as the `update`
+promise resolves.
+
+Transaction is a subclass of prosemirror's Transforms. See a full list of
+transforms
+[here](https://prosemirror.net/docs/ref/#transform.Document_transforms) and
+transactions fucntions
+[here](https://prosemirror.net/docs/ref/#state.Transaction).
+
+```ts
+await withProsemirrorDocument(
+  {
+    client,
+    roomId: "test-room",
+  },
+  async (api) => {
+    await api.update((_, tr) => {
+      return tr.insertText("hello");
+    });
+  }
+);
+```
+
+#### api.getText: (options)
+
+Returns the text content of the document. It has the following options:
+
+- `blockSeparator`: (optional) The separator to use for blocks. Defaults to
+  `\n\n`.
+- `textSerializers`: (optional) The serializers to use for text. Defaults to
+  `{}`.
+
+Note: This api uses TipTap's getText internally. TextSerializers are a concept
+from
+[TipTap](https://github.com/ueberdosis/tiptap/blob/3e59097b34ce8bc8c39e1def67eb31a1d9f9e5c2/packages/core/src/types.ts#L357).
+If you are having trouble with a ProseMirror document, you may want to use
+`api.getEditorState().doc.textBetween()` instead.
+
+```ts
+const textContent = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.getText({ blockSeparator: "<br/>" });
+);
+```
+
+#### api.setContent(content: null | object | string)
+
+For convenience, some method such as `setContent` are provided at the api level.
+
+Here’s an example that sets a document and returns the json content after it has
+been updated.
+
+```ts
+const exampleDoc = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Example Text",
+        },
+      ],
+    },
+  ],
+};
+
+const json = await withProsemirrorDocument<string>(
+  {
+    client,
+    roomId: "test-room",
+  },
+  async (api) => {
+    await api.setContent(exampleDoc);
+    return JSON.stringify(api.toJSON());
+  }
+);
+```
+
+#### doc.getEditorState
+
+Returns the current prosemirror state.
+
+```ts
+const editorState = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.getEditorState()
+);
+```
+
+#### api.toJSON
+
+Returns a serialized JSON object representation of your document. See
+prosemirror's
+[.toJSON](https://prosemirror.net/docs/ref/#state.EditorState.toJSON)
+documentation for more information.
+
+```ts
+const docAsJSON = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.toJSON()
+);
+```
+
+#### api.clearContent
+
+Clears the content of the document.
+
+```ts
+await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.clearContent()
+);
+```
+
+#### api.toMarkdown
+
+Returns a markdown `string` of your document. By default it uses the
+defaultMarkdownSerializer from
+[prosemirror-markdown](https://github.com/prosemirror/prosemirror-markdown), but
+you may pass your own.
+
+```ts
+const markdown = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.toMarkdown()
+);
+```
+
+With a custom serializer:
+
+```ts
+import { defaultMarkdownSerializer } from "prosemirror-markdown";
+
+const mySerializer = new MarkdownSerializer({
+  marks: {
+    ...defaultMarkdownSerializer.marks,
+    em: {
+      open: "*",
+      close: "*",
+      mixable: true,
+      expelEnclosingWhitespace: true,
+    },
+  },
+});
+
+const markdown = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.toMarkdown(mySerializer)
+);
+```
