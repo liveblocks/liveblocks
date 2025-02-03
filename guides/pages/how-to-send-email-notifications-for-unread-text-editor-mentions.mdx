@@ -7,10 +7,10 @@ meta:
 ---
 
 Liveblocks allows you to embed a text editing experience with
-[Text Editor](/docs/ready-made-features/text-editor) using Tiptap or Lexical. Using our webhooks and
-REST API, it’s possible get unread text mentions and use them to email users
-when they’re mentioned in a document. Notifications can also be displayed in
-your app using
+[Text Editor](/docs/ready-made-features/text-editor) using Tiptap or Lexical.
+Using our webhooks and REST API, it’s possible get unread text mentions and use
+them to email users when they’re mentioned in a document. Notifications can also
+be displayed in your app using
 [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
 and the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
@@ -163,6 +163,37 @@ has been created.
       </Figure>
     </StepContent>
   </Step>
+
+<Step>
+  <StepTitle>Go to the notifications dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Notifications”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-notifications.png"
+        alt="Click notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Enable the textMention notification type</StepTitle>
+  <StepContent>
+    Click on **“Edit”** at the top right, enable `textMention` notifications,
+    and publish your changes.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-textMention-notification.png"
+        alt="Enable textMention notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
 
 <Step>
   <StepTitle>Go to the webhooks dashboard</StepTitle>
