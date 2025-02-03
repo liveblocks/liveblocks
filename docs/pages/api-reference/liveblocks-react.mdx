@@ -2975,7 +2975,22 @@ update them.
 import { useRoomNotificationSettings } from "@liveblocks/react/suspense";
 
 const [{ settings }, updateSettings] = useRoomNotificationSettings();
+
+// { threads: "replies_and_mentions" }
+console.log(settings);
+
+// No longer receive thread notifications in this room
+updateSettings({
+  threads: "none",
+});
 ```
+
+These are the three possible values that can be set:
+
+- `"all"` Receive notifications for every activity.
+- `"replies_and_mentions"` Receive notifications for mentions and thread you’re
+  participating in.
+- `"none"` No notifications are received.
 
 ### useUpdateRoomNotificationSettings [@badge=RoomProvider]
 
@@ -2989,19 +3004,27 @@ component, but you need to update them (e.g. an unsubscribe button).
 import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
 
 const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-updateRoomNotificationSettings({ threads: "all" });
+
+// No longer receive thread notifications in this room
+updateSettings({
+  threads: "none",
+});
 ```
 
-## User Notification Settings [#user-notification-settings]
+These are the three possible values that can be set:
 
-{/* TODO move this whole section into the Notifications section after release */}
-
-<Banner type="warning" title="Feature still in beta">
-  User notification settings feature is currently in beta and has not been
-  publicly released yet.
-</Banner>
+- `"all"` Receive notifications for every activity.
+- `"replies_and_mentions"` Receive notifications for mentions and thread you’re
+  participating in.
+- `"none"` No notifications are received.
 
 ### useNotificationSettings [@badge=LiveblocksProvider]
+
+<Banner>
+
+User notification settings is currently in beta.
+
+</Banner>
 
 Returns the user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
@@ -3091,6 +3114,12 @@ a loading state and will throw and error to the nearest `ErrorBoundary` if initi
 load failed.
 
 ### useUpdateNotificationSettings [@badge=LiveblocksProvider]
+
+<Banner>
+
+User notification settings is currently in beta.
+
+</Banner>
 
 Returns a function that updates user’s notification settings, which affects
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)

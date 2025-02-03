@@ -1784,14 +1784,7 @@ await liveblocks.deleteAllInboxNotifications({
 });
 ```
 
-### User Notification Settings [#user-notification-settings]
-
-<Banner type="warning" title="Feature still in beta">
-  User notification settings feature is currently in beta and has not been
-  publicly released yet.
-</Banner>
-
-#### Liveblocks.getNotificationSettings [#get-users-userId-notification-settings]
+#### Liveblocks.getNotificationSettings [#get-users-userId-notification-settings] [@badge=Beta]
 
 Returns a user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
@@ -1808,7 +1801,7 @@ const settings = await liveblocks.getNotificationSettings({
 console.log(settings);
 ```
 
-#### Liveblocks.updateNotificationSettings [#post-users-userId-notification-settings]
+#### Liveblocks.updateNotificationSettings [#post-users-userId-notification-settings] [@badge=Beta]
 
 Updates a user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
@@ -1863,7 +1856,7 @@ await liveblocks.updateNotificationSettings({
 });
 ```
 
-#### Liveblocks.delete-notification-settings [#delete-users-userId-notification-settings]
+#### Liveblocks.deleteNotificationSettings [#delete-users-userId-notification-settings] [@badge=Beta]
 
 Deletes the user’s notification settings, resetting them to the default values.
 The default values can be adjusted in a project’s notification dashboard page.

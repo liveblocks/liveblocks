@@ -3208,17 +3208,10 @@ const settings = await room.updateNotificationSettings({
   </PropertiesListItem>
 </PropertiesList>
 
-## User Notification Settings [#user-notification-settings]
-
-<Banner type="warning" title="Feature still in beta">
-  User notification settings feature is currently in beta and has not been
-  publicly released yet.
-</Banner>
-
-### Client.getNotificationSettings
+### Client.getNotificationSettings [@badge=Beta]
 
 Returns the user’s notification settings in the current project, in other words
-which [notification webhook events] (/docs/platform/webhooks#NotificationEvent)
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
 will be sent for the current user. User notification settings are project-based,
 which means that this returns the current user’s settings for every room.
 
@@ -3239,7 +3232,7 @@ A user’s initial settings are `true` for every enabled `kind` in the dashboard
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-### Client.updateNotificationSettings
+### Client.updateNotificationSettings [@badge=Beta]
 
 Updates the current user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
