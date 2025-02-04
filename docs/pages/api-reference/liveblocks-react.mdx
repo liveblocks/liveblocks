@@ -2969,7 +2969,9 @@ notification ID you passed to it, without any fetching or waterfalls.
 ### useRoomNotificationSettings [@badge=RoomProvider]
 
 Returns the user’s notification settings for the current room and a function to
-update them.
+update them. Updating this setting will change which
+[`inboxNotifications`](#useInboxNotifications) the current user receives in the
+current room.
 
 ```tsx
 import { useRoomNotificationSettings } from "@liveblocks/react/suspense";
@@ -2995,10 +2997,9 @@ These are the three possible values that can be set:
 ### useUpdateRoomNotificationSettings [@badge=RoomProvider]
 
 Returns a function that updates the user’s notification settings for the current
-room.
-
-Use this if you don’t need the current user’s notification settings in your
-component, but you need to update them (e.g. an unsubscribe button).
+room. Updating this setting will change which
+[`inboxNotifications`](#useInboxNotifications) the current user receives in the
+current room.
 
 ```tsx
 import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
@@ -3017,6 +3018,9 @@ These are the three possible values that can be set:
 - `"replies_and_mentions"` Receive notifications for mentions and thread you’re
   participating in.
 - `"none"` No notifications are received.
+
+Works the same as `updateSettings` in
+[`useRoomNotificationSettings`](#useRoomNotificationSettings).
 
 ### useNotificationSettings [@badge=LiveblocksProvider]
 

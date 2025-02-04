@@ -3130,7 +3130,9 @@ await client.deleteInboxNotification("in_xxx");
 
 ### Room.getNotificationSettings
 
-Gets the user’s notification settings for the current room.
+Gets the user’s notification settings for the current room. This notates which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
 
 ```ts
 const settings = await room.getNotificationSettings();
@@ -3162,7 +3164,10 @@ const settings = await room.getNotificationSettings();
 
 ### Room.updateNotificationSettings
 
-Updates the user’s notification settings for the current room.
+Updates the user’s notification settings for the current room. Updating this
+setting will change which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
 
 ```ts
 const settings = await room.updateNotificationSettings({
