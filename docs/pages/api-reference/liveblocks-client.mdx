@@ -189,13 +189,16 @@ const client = createClient({
   <PropertiesListItem
     name="unstable_largeMessageStrategy"
     detailedType='"default" | "error" | "fallback-to-http" | "split"'
+    defaultValue={`"default"`}
   >
-    Experimental. How to handle WebSocket messages that are larger than the maximum message size.
+    <div className="-mb-3">
+      Experimental. How to handle WebSocket messages that are larger than the maximum message size. Can be set to one of four values:
+    </div>
 
-    **Default**: Just try to send anyway.<br />
-    **Error**: Throw an error locally in the client and don't send.<br />
-    **Fallback to HTTP**: Try sending the update over HTTP instead of WebSockets.<br />
-    **Split**: Break the message up into chunks each of which is smaller than the maximum message
+    - `"default"` Just try to send anyway.
+    - `"error"` Throw an error locally in the client and don't send.
+    - `"fallback-to-http"` Try sending the update over HTTP instead of WebSockets.
+    - `"split"` Break the message up into chunks each of which is smaller than the maximum message
     size. Note that this strategy will break atomic handling of client messages on the server, which
     may or may not be a problem for your use case.
 
