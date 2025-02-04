@@ -268,7 +268,7 @@ await withProsemirrorDocument(
     // get editor content
     const text = api.getText();
 
-    await api.update((_, tr) => {
+    await api.update((doc, tr) => {
       // Make real-time updates
       // ...
     });

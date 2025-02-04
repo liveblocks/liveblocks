@@ -29,7 +29,9 @@ const liveblocks = new Liveblocks({
 // +++
 const textContent = await withProsemirrorDocument(
   { roomId: "your-room-id", client: liveblocks },
-  (api) => api.getText()
+  async (api) => {
+    return api.getText();
+  }
 );
 // +++
 
