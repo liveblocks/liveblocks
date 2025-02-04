@@ -2,8 +2,18 @@
 
 ### `@liveblocks/client`
 
-- Add unstable_splitMessagesIfNeeded option to split up messages if the max
-  message size is exceeded.
+- Add `unstable_largeMessageStrategy` flag (experimental) to allow specifying
+  the preferred strategy for dealing with messages that are too large to send
+  over WebSockets. There now is a choice between:
+
+  - `default` Just send anyway (although it will fail)
+  - `error` Error early in the client, don't attempt to send
+  - `fallback-to-http` Send the message over HTTP instead of WebSocket
+  - `split` Split the large message up into smaller chunks (this sacrifices
+    atomicity)
+
+- Deprecated the `unstable_fallbackToHTTP` experimental flag (please set
+  `unstable_largeMessageStrategy="fallback-to-http"` instead).
 
 ## v2.16.2
 
