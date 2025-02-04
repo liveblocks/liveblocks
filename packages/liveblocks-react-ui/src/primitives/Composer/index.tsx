@@ -1396,9 +1396,15 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const onSubmitEnd = useCallback(() => {
-      clear();
-      blur();
-      clearAttachments();
+      try {
+        clear();
+        blur();
+        clearAttachments();
+      } catch {
+        // The editor might have been unmounted at this point,
+        // so we can't (and don't need to) clear and blur it.
+      }
+
       setSubmitting(false);
     }, [blur, clear, clearAttachments]);
 
