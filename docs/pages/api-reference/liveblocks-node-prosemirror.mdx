@@ -7,9 +7,9 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/node-prosemirror` provides a Node.js package to export and modify
-[ProseMirror](https://prosemirror.net/). Because TipTap uses ProseMirror under
-the hood, this package can be used to modify [TipTap](https://tiptap.dev/)
-documents as well.
+[ProseMirror](https://prosemirror.net/). Because Tiptap uses ProseMirror under
+the hood, this package can be used to modify
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap) documents as well.
 
 ## withProsemirrorDocument
 
@@ -36,16 +36,26 @@ await withProsemirrorDocument(
 );
 ```
 
-### Options
-
-The `withProsemirrorDocument` function takes the following options:
-
-- `roomId`: The ID of the room to use.
-- `client`: The Liveblocks client to use.
-- `schema`: (optional) The prosemirror schema to use for the document. If no
-  schema is provided, the default schema is StarterKit + Liveblocks Mentions and
-  comments
-- `field`: (optional) The field to use for the document. Defaults to `default`.
+<PropertiesList title="Options">
+  <PropertiesListItem name="roomId" type="string" required>
+    The ID of the room to use.
+  </PropertiesListItem>
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    The [Liveblocks
+    client](/docs/api-reference/liveblocks-node#Liveblocks-client) to use.
+  </PropertiesListItem>
+  <PropertiesListItem name="schema" type="Schema">
+    Optional. The ProseMirror schema to use for the document. If no schema is
+    provided, the default schema is [Tiptap
+    StarterKit](/docs/editor/extensions/functionality/starterkit), Liveblocks
+    mentions, and Liveblocks comments.
+  </PropertiesListItem>
+  <PropertiesListItem name="field" type="string">
+    Optional. The
+    [field](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors) to use
+    for the document. Defaults to `default`.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Returning data
 
@@ -68,16 +78,10 @@ You can easily modify your document with the ProseMirror document API.
 #### api.update((doc: Node, tr: Transaction) => Transaction)
 
 Liveblocks provides `api.update` which is a callback that provides the current
-document and a prosemirror transaction. This makes it easy to use ProseMirror's
-built in functions. When you've finished, return the transaction and any it will
-be persisted and appear in realtime to connected users as soon as the `update`
-promise resolves.
-
-Transaction is a subclass of prosemirror's Transforms. See a full list of
-transforms
-[here](https://prosemirror.net/docs/ref/#transform.Document_transforms) and
-transactions fucntions
-[here](https://prosemirror.net/docs/ref/#state.Transaction).
+document and a ProseMirror transaction. This makes it easy to use ProseMirror’s
+built in functions. When you've finished, return the transaction and any changes
+will be persisted, and appear in realtime to connected users as soon as the
+`update` promise resolves.
 
 ```ts
 await withProsemirrorDocument(
@@ -93,6 +97,12 @@ await withProsemirrorDocument(
 );
 ```
 
+Transaction is a subclass of ProseMirror’s Transforms. On the ProseMirror
+website you can find a full list of
+[transforms](https://prosemirror.net/docs/ref/#transform.Document_transforms)
+and
+[transactions functions](https://prosemirror.net/docs/ref/#state.Transaction).
+
 #### api.getText: (options)
 
 Returns the text content of the document. It has the following options:
@@ -102,7 +112,7 @@ Returns the text content of the document. It has the following options:
 - `textSerializers`: (optional) The serializers to use for text. Defaults to
   `{}`.
 
-Note: This api uses TipTap's getText internally. TextSerializers are a concept
+Note: This api uses Tiptap’s getText internally. TextSerializers are a concept
 from
 [TipTap](https://github.com/ueberdosis/tiptap/blob/3e59097b34ce8bc8c39e1def67eb31a1d9f9e5c2/packages/core/src/types.ts#L357).
 If you are having trouble with a ProseMirror document, you may want to use
@@ -152,7 +162,7 @@ const json = await withProsemirrorDocument<string>(
 
 #### doc.getEditorState
 
-Returns the current prosemirror state.
+Returns the current ProseMirror state.
 
 ```ts
 const editorState = await withProsemirrorDocument(
@@ -164,7 +174,7 @@ const editorState = await withProsemirrorDocument(
 #### api.toJSON
 
 Returns a serialized JSON object representation of your document. See
-prosemirror's
+ProseMirror’s
 [.toJSON](https://prosemirror.net/docs/ref/#state.EditorState.toJSON)
 documentation for more information.
 
@@ -189,7 +199,7 @@ await withProsemirrorDocument(
 #### api.toMarkdown
 
 Returns a markdown `string` of your document. By default it uses the
-defaultMarkdownSerializer from
+`defaultMarkdownSerializer` from
 [prosemirror-markdown](https://github.com/prosemirror/prosemirror-markdown), but
 you may pass your own.
 

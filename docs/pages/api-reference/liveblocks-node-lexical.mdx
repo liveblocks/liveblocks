@@ -33,6 +33,23 @@ await withLexicalDocument(
 );
 ```
 
+<PropertiesList title="Options">
+  <PropertiesListItem name="roomId" type="string" required>
+    The ID of the room to use.
+  </PropertiesListItem>
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    The [Liveblocks
+    client](/docs/api-reference/liveblocks-node#Liveblocks-client) to use.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="nodes"
+    type="Klass<LexicalNode>[] | LexicalNodeReplacement[]"
+  >
+    Optional. The Lexical nodes used in the document. Will extend the default
+    schema which uses Liveblocks mentions and Liveblocks comments.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Returning data
 
 Get your editor’s text content by returning `doc.getTextContent` inside the
