@@ -23,10 +23,12 @@ export async function sendTextMentionNotification(
     case "teams": {
       // send teams notification
       response = new Response(null, { status: 200 });
+      break;
     }
     case "webPush": {
       // send web push notification
       response = new Response(null, { status: 200 });
+      break;
     }
   }
 
