@@ -30,6 +30,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
+  LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -403,9 +404,10 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
+  unstable_largeMessageStrategy?: LargeMessageStrategy;
+  /** @deprecated Use `unstable_largeMessageStrategy="fallback-to-http"` instead. */
   unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
-  unstable_splitMessagesIfNeeded?: boolean;
   /**
    * A function that returns a list of user IDs matching a string.
    */
@@ -614,10 +616,12 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
+        unstable_largeMessageStrategy:
+          clientOptions.unstable_largeMessageStrategy ??
+          (clientOptions.unstable_fallbackToHTTP
+            ? "fallback-to-http"
+            : undefined),
         unstable_streamData: !!clientOptions.unstable_streamData,
-        unstable_splitMessagesIfNeeded:
-          !!clientOptions.unstable_splitMessagesIfNeeded,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
       }

@@ -388,12 +388,18 @@ function App() {
     Native](#LiveblocksProviderReactNative).
   </PropertiesListItem>
   <PropertiesListItem
-    name="unstable_fallbackToHTTP"
-    type="boolean"
-    defaultValue="false"
+    name="unstable_largeMessageStrategy"
+    detailedType='"default" | "error" | "fallback-to-http" | "split"'
   >
-    Experimental. Automatically fall back to HTTP when a message is too large
-    for WebSockets.
+    Experimental. How to handle WebSocket messages that are larger than the maximum message size.
+
+    **Default**: Just try to send anyway.<br />
+    **Error**: Throw an error locally in the client and don't send.<br />
+    **Fallback to HTTP**: Try sending the update over HTTP instead of WebSockets.<br />
+    **Split**: Break the message up into chunks each of which is smaller than the maximum message
+    size. Note that this strategy will break atomic handling of client messages on the server, which
+    may or may not be a problem for your use case.
+
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -402,13 +408,6 @@ function App() {
   >
     Experimental. Stream the initial Storage content over HTTP, instead of
     waiting for a large initial WebSocket message to be sent from the server.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="unstable_splitMessagesIfNeeded"
-    type="boolean"
-    defaultValue="false"
-  >
-    Experimental. Split up messages if the max message size is exceeded.
   </PropertiesListItem>
 </PropertiesList>
 

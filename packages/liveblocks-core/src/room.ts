@@ -34,6 +34,7 @@ import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  raise,
   tryParseJson,
 } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
@@ -1053,10 +1054,22 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
-// The maximum message size on websockets is 1MB. We'll set the threshold
-// slightly lower (1kB) to trigger sending over HTTP or splitting the messages,
-// to account for messaging overhead, so we're not right at the limit.
-// NOTE: this is only relevant with the unstable_fallbackToHTTP or unstable_splitMessagesIfNeeded options enabled.
+//
+// The maximum message size on websockets is 1MB. If a message larger than this
+// threshold is attempted to be sent, one of the following strategies will be
+// used, based on the value of the `unstable_largeMessageStrategy` option:
+//
+// - 'default'           - Send anyway and hope for the best (the default)
+// - 'error'             - Throw an error locally in the client and don't send
+//                         (should probably become the default)
+// - 'fallback-to-http'  - Try sending the update over HTTP instead
+// - 'split'             - Tries breaking the message up into chunks that are
+//                         smaller than 1 MB each, and send them separately.
+//                         Using this strategy sacrifices atomic processing of
+//                         each client message in the server. If any chunk is
+//                         still larger than 1 MB, falls back to "error" strategy.
+//
+// In practice, we'll set threshold to slightly less than 1 MB.
 const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
 
 function makeIdFactory(connectionId: number): IdFactory {
@@ -1205,6 +1218,12 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
+export type LargeMessageStrategy =
+  | "default"
+  | "error"
+  | "fallback-to-http"
+  | "split";
+
 /** @internal */
 export type RoomConfig<M extends BaseMetadata> = {
   delegates: RoomDelegates;
@@ -1214,9 +1233,8 @@ export type RoomConfig<M extends BaseMetadata> = {
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
 
-  unstable_fallbackToHTTP?: boolean;
+  unstable_largeMessageStrategy?: LargeMessageStrategy;
   unstable_streamData?: boolean;
-  unstable_splitMessagesIfNeeded?: boolean;
 
   polyfills?: Polyfills;
 
@@ -1604,122 +1622,99 @@ export function createRoom<
     return httpClient.createTextVersion({ roomId });
   }
 
-  // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
-  // if this turns out to be expensive, we could just guess with a lower value.
-  function measureSerializedPayload(serializedPayload: string) {
-    return new TextEncoder().encode(serializedPayload).length;
+  /**
+   * Split a single large UPDATE_STORAGE message into smaller chunks, by
+   * splitting the ops list recursively in half.
+   */
+  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
+    const { ops, ...rest } = msg;
+    if (ops.length < 2) {
+      throw new Error("Cannot split ops into smaller chunks");
+    }
+
+    const mid = Math.floor(ops.length / 2);
+    const firstHalf = ops.slice(0, mid);
+    const secondHalf = ops.slice(mid);
+
+    for (const halfOps of [firstHalf, secondHalf]) {
+      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
+      const text = JSON.stringify(half);
+      if (!isTooBigForWebSocket(text)) {
+        yield text;
+      } else {
+        yield* chunkOps(half);
+      }
+    }
   }
 
-  function chunkMessages(messages: ClientMsg<P, E>[]): Array<{
-    message: ClientMsg<P, E>;
-    size: number;
-  }> {
-    const chunkedMessages: Array<{
-      message: ClientMsg<P, E>;
-      size: number;
-    }> = [];
-
-    for (const message of messages) {
-      const serialized = JSON.stringify(message);
-      const size = measureSerializedPayload(serialized);
-
-      if (
-        message.type !== ClientMsgCode.UPDATE_STORAGE ||
-        size < MAX_SOCKET_MESSAGE_SIZE
-      ) {
-        chunkedMessages.push({ message, size });
-        continue;
-      }
-
-      // UPDATE_STORAGE message is too big: break it into multiple chunks.
-      let currentMessage: UpdateStorageClientMsg = {
-        type: ClientMsgCode.UPDATE_STORAGE,
-        ops: [],
-      };
-
-      // Note: this approximates the size of the update storage message (in bytes) by only considering the sum of the ops sizes + 1 byte per op
-      // for the commas separating the ops when stringified. It does not precisely account for the array / object overhead.
-      let currentMessageSize = 0;
-
-      for (const op of message.ops) {
-        const opSize = measureSerializedPayload(JSON.stringify(op));
-        if (currentMessageSize + opSize + 1 < MAX_SOCKET_MESSAGE_SIZE) {
-          currentMessage.ops.push(op);
-          currentMessageSize += opSize + 1;
-        } else {
-          if (currentMessage.ops.length > 0) {
-            chunkedMessages.push({
-              message: currentMessage,
-              size: currentMessageSize,
-            });
-          }
-
-          // Note: it's possible that the op is too large to fit in a single message.
-          // If unstable_fallbackToHTTP is enabled, this message will be sent over HTTP instead.
-          currentMessage = {
-            type: ClientMsgCode.UPDATE_STORAGE,
-            ops: [op],
-          };
-          currentMessageSize = opSize;
-        }
-      }
-
-      if (currentMessage.ops.length > 0) {
-        chunkedMessages.push({
-          message: currentMessage,
-          size: currentMessageSize,
-        });
+  /**
+   * Split the message array in half (two chunks), and try to send each chunk
+   * separately. If the chunk is still too big, repeat the process. If a chunk
+   * can no longer be split up (i.e. is 1 message), then error.
+   */
+  function* chunkMessages(
+    messages: ClientMsg<P, E>[]
+  ): IterableIterator<string> {
+    if (messages.length < 2) {
+      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
+        yield* chunkOps(messages[0]);
+      } else {
+        throw new Error(
+          "Cannot split into chunks smaller than the allowed message size"
+        );
       }
     }
 
-    return chunkedMessages;
+    const mid = Math.floor(messages.length / 2);
+    const firstHalf = messages.slice(0, mid);
+    const secondHalf = messages.slice(mid);
+
+    for (const half of [firstHalf, secondHalf]) {
+      const text = JSON.stringify(half);
+      if (!isTooBigForWebSocket(text)) {
+        yield text;
+      } else {
+        yield* chunkMessages(half);
+      }
+    }
+  }
+
+  function isTooBigForWebSocket(text: string): boolean {
+    // The theoretical worst case is that each character in the string is
+    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
+    // so we can spare ourselves the TextEncoder() measurement overhead with
+    // this heuristic.
+    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
+      return false;
+    }
+
+    // Otherwise we need to measure to be sure
+    return new TextEncoder().encode(text).length < MAX_SOCKET_MESSAGE_SIZE;
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const nonce = context.dynamicSessionInfoSig.get()?.nonce;
-    const shouldFallbackToHTTP = config.unstable_fallbackToHTTP && nonce;
-    if (config.unstable_splitMessagesIfNeeded) {
-      const chunkedMessages = chunkMessages(messages);
+    const strategy = config.unstable_largeMessageStrategy ?? "default";
 
-      if (
-        !shouldFallbackToHTTP ||
-        chunkedMessages.every(
-          (message) => message.size < MAX_SOCKET_MESSAGE_SIZE
-        )
-      ) {
-        const serializedPayloads: string[] = [];
-        let currentBatch: ClientMsg<P, E>[] = [];
-        // Note: this approximates the size of the message batches by only considering the sum of the message sizes and does
-        // not consider the overhead of the JSON serialization of the array.
-        let currentBatchSize = 0;
-
-        for (const { message, size } of chunkedMessages) {
-          if (currentBatchSize + size < MAX_SOCKET_MESSAGE_SIZE) {
-            currentBatch.push(message);
-            currentBatchSize += size;
-          } else {
-            serializedPayloads.push(JSON.stringify(currentBatch));
-            currentBatch = [message];
-            currentBatchSize = size;
-          }
-        }
-
-        if (currentBatch.length > 0) {
-          serializedPayloads.push(JSON.stringify(currentBatch));
-        }
-
-        for (const serializedPayload of serializedPayloads) {
-          managedSocket.send(serializedPayload);
-        }
-
-        return;
-      }
+    const text = JSON.stringify(messages);
+    const isTooBig = strategy !== "default" && isTooBigForWebSocket(text);
+    if (!isTooBig) {
+      // Happy path (message isn't too big)
+      return managedSocket.send(text);
     }
 
-    const serializedPayload = JSON.stringify(messages);
-    if (shouldFallbackToHTTP) {
-      const size = measureSerializedPayload(serializedPayload);
-      if (size > MAX_SOCKET_MESSAGE_SIZE) {
+    // If message is too big for WebSockets, we need to follow a strategy
+    switch (strategy) {
+      case "error":
+        throw new Error("Message is too large for websockets");
+
+      case "fallback-to-http": {
+        console.warn(
+          "Message is too large for websockets, so sending over HTTP instead"
+        );
+        const nonce =
+          context.dynamicSessionInfoSig.get()?.nonce ??
+          raise("Session is not authorized to send message over HTTP");
+
         void httpClient
           .sendMessages<P, E>({ roomId, nonce, messages })
           .then((resp) => {
@@ -1727,14 +1722,19 @@ export function createRoom<
               managedSocket.reconnect();
             }
           });
+        return;
+      }
+
+      case "split": {
         console.warn(
-          "Message was too large for websockets and sent over HTTP instead"
+          "Message is too large for websockets, splitting into smaller chunks"
         );
+        for (const chunk of chunkMessages(messages)) {
+          managedSocket.send(chunk);
+        }
         return;
       }
     }
-
-    managedSocket.send(serializedPayload);
   }
 
   const self = DerivedSignal.from(
