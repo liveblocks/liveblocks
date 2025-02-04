@@ -2,14 +2,75 @@
 meta:
   title: "Getting ProseMirror state on the server"
   description:
-    "Learn how to retrieve your Yjs document’s ProseMirror state on the server"
+    "Learn how to retrieve your document’s ProseMirror state on the server"
 ---
 
-Using [`@liveblocks/node`](/docs/api-reference/liveblocks-node), it’s possible
-to retrieve the state of your ProseMirror document, and its
-[`Y.Doc`](https://docs.yjs.dev/api/y.doc), on the server.
+Using
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror),
+it’s possible to retrieve the state of your ProseMirror document on the server.
 
-## Getting Tiptap document state
+## Getting document state
+
+To get your document state, you can use
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument)
+and
+[`api.getText`](/docs/api-reference/liveblocks-node-prosemirror#api.getText).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const textContent = await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks, field: "prosemirror" },
+  (api) => api.getText()
+);
+// +++
+
+// "My content"
+console.log(textContent);
+```
+
+## Modifying document state
+
+To modify document state with transactions, use
+[`api.update`](/docs/api-reference/liveblocks-node-prosemirror#api.update). On
+the ProseMirror website you can find a full list of
+[transforms](https://prosemirror.net/docs/ref/#transform.Document_transforms)
+and
+[transactions functions](https://prosemirror.net/docs/ref/#state.Transaction).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks, field: "prosemirror" },
+  // +++
+  async (api) => {
+    await api.update((_, tr) => {
+      // Transaction example
+      return tr.insertText("Hello world");
+    });
+  }
+  // +++
+);
+```
+
+## Using Yjs APIs instead
+
+We don’t generally recommend it, but it’s also possible to use
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node) to retrieve the state
+of your ProseMirror document, and its [`Y.Doc`](https://docs.yjs.dev/api/y.doc),
+on the server. This may give you more control in some cases.
 
 Using
 [`Liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary)
@@ -37,12 +98,12 @@ export async function POST() {
   Y.applyUpdate(yDoc, new Uint8Array(update));
 
   // Get ProseMirror state from the default Yjs property it uses, "prosemirror"
-  const tiptapState = yDocToProsemirrorJSON(yDoc, "prosemirror");
+  const prosemirrorState = yDocToProsemirrorJSON(yDoc, "prosemirror");
 
   // { type: "doc", content: [{ type: "paragraph", content: [...] }] }
-  console.log(tiptapState);
+  console.log(prosemirrorState);
 }
 ```
 
-If you’d like to edit your document, make sure to read
+If you’d like to edit your `Y.Doc`, make sure to read
 [how to use your `Y.Doc` on the server](/docs/guides/how-to-use-your-ydoc-on-the-server).
