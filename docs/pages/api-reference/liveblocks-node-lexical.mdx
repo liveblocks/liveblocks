@@ -26,12 +26,18 @@ const liveblocks = new Liveblocks({
 
 await withLexicalDocument(
   { roomId: "your-room-id", client: liveblocks },
-  (doc) => {
+  async (doc) => {
     // Modify your Lexical `doc`
     // ...
   }
 );
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="returns" type="T">
+    Returns the value you return from the `doc` callback.
+  </PropertiesListItem>
+</PropertiesList>
 
 <PropertiesList title="Options">
   <PropertiesListItem name="roomId" type="string" required>
@@ -58,7 +64,11 @@ callback.
 ```ts
 const textContent = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.getTextContent()
+  // +++
+  async (doc) => {
+    return doc.getTextContent();
+  }
+  // +++
 );
 
 // "My content"
@@ -75,7 +85,7 @@ import { CodeNode } from "@lexical/code";
 
 await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks, nodes: [CodeNode] },
-  (doc) => {
+  async (doc) => {
     // Modify your Lexical `doc`
     // ...
   }
@@ -92,19 +102,31 @@ Liveblocks provides `doc.update` which is a callback function similar to
 Lexical’s `editor.update`. This makes it easy to use Lexical’s editor functions.
 Any edits will be persisted and appear in realtime to connected users as soon as
 the `update` promise resolves. Unlike Lexical’s `editor.update`, this change is
-always discrete.
+always discrete. The callback can also be an `async` function.
 
 ```ts
 await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
   async (doc) => {
+    // +++
     await doc.update(() => {
       // Make your modifications
       // ...
     });
+    // +++
   }
 );
 ```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="callback" type="() => void">
+    Callback function where you should handle your modifications.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Example usage
 
 Here’s an example of some modifications to a Lexical document.
 
@@ -117,17 +139,17 @@ await withLexicalDocument(
   async (doc) => {
     await doc.update(() => {
       // Adding a paragraph node with contained text node
+      // +++
       const root = $getRoot();
       const paragraphNode = $createParagraphNode();
       const textNode = $createTextNode("Hello world");
       paragraphNode.append(textNode);
       root.append(paragraphNode);
+      // +++
     });
   }
 );
 ```
-
-The callback can also be an `async` function.
 
 #### doc.getTextContent
 
@@ -136,9 +158,21 @@ Returns the text content from the root node as a `string`.
 ```ts
 const textContent = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.getTextContent()
+  // +++
+  async (doc) => {
+    return doc.getTextContent();
+  }
+  // +++
 );
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="content" type="string">
+    Returns the text retrieved from the document.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### doc.getEditorState
 
@@ -147,9 +181,21 @@ Returns Lexical’s [editorState](https://lexical.dev/docs/concepts/editor-state
 ```ts
 const editorState = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.getEditorState()
+  // +++
+  async (doc) => {
+    return doc.getEditorState();
+  }
+  // +++
 );
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="editorState" type="EditorState">
+    Your editor’s Lexical state.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### doc.getLexicalEditor
 
@@ -159,9 +205,21 @@ Returns a headless Lexical editor.
 ```ts
 const headlessEditor = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.getLexicalEditor()
+  // +++
+  async (doc) => {
+    return doc.getLexicalEditor();
+  }
+  // +++
 );
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="headlessEditor" type="LexicalEditor">
+    Your headless Lexical editor.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### doc.toJSON
 
@@ -172,9 +230,24 @@ page for more information.
 ```ts
 const docAsJSON = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.toJson()
+  // +++
+  async (doc) => {
+    return doc.toJson();
+  }
+  // +++
 );
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="docAsJson"
+    type="SerializedEditorState<SerializedLexicalNode>"
+  >
+    A serialized JSON object representation of your document.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
 #### doc.toMarkdown
 
@@ -185,6 +258,18 @@ more information.
 ```ts
 const markdown = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.toMarkdown()
+  // +++
+  async (doc) => {
+    return doc.toMarkdown();
+  }
+  // +++
 );
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="markdown" type="string">
+    Returns the markdown string.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
