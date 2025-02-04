@@ -1638,7 +1638,7 @@ export function createRoom<
 
     for (const halfOps of [firstHalf, secondHalf]) {
       const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
-      const text = JSON.stringify(half);
+      const text = JSON.stringify([half]);
       if (!isTooBigForWebSocket(text)) {
         yield text;
       } else {
@@ -1658,6 +1658,7 @@ export function createRoom<
     if (messages.length < 2) {
       if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
         yield* chunkOps(messages[0]);
+        return;
       } else {
         throw new Error(
           "Cannot split into chunks smaller than the allowed message size"
@@ -1689,7 +1690,7 @@ export function createRoom<
     }
 
     // Otherwise we need to measure to be sure
-    return new TextEncoder().encode(text).length < MAX_SOCKET_MESSAGE_SIZE;
+    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
