@@ -242,6 +242,40 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
+## AI agents and editing on the server
+
+Fetch and modify your text editor’s content from the server, enabling features
+such as AI agents. Easily make changes that update in real-time for every
+connected user.
+
+<Figure>
+  <Image
+    src="/assets/text-editor/ai.png"
+    alt="AI suggestions"
+    width={1312}
+    height={874}
+  />
+</Figure>
+
+Use
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument)
+to get your editor’s content and make modifications live.
+
+```tsx
+await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  async (api) => {
+    // get editor content
+    const text = api.getText();
+
+    await api.update((_, tr) => {
+      // Make real-time updates
+      // ...
+    });
+  }
+);
+```
+
 ## Multiple editors
 
 It’s possible to use multiple Tiptap editors on a single page, and each editor
