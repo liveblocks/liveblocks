@@ -2835,6 +2835,32 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserNotificationSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "email": {
+                        "thread": true,
+                        "textMention": false,
+                        "customNotification": true
+                      },
+                      "slack": {
+                        "thread": true,
+                        "textMention": true,
+                        "customNotification": false
+                      },
+                      "teams": {
+                        "thread": false,
+                        "textMention": true,
+                        "customNotification": true
+                      },
+                      "webPush": {
+                        "thread": true,
+                        "textMention": true,
+                        "customNotification": false
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -2868,6 +2894,22 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PartialUserNotificationSettings"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "email": {
+                      "thread": true,
+                      "textMention": false
+                    },
+                    "slack": {
+                      "textMention": false
+                    },
+                    "webPush": {
+                      "thread": true
+                    }
+                  }
+                }
               }
             }
           }
@@ -2879,6 +2921,32 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserNotificationSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "email": {
+                        "thread": true,
+                        "textMention": false,
+                        "customNotification": true
+                      },
+                      "slack": {
+                        "thread": true,
+                        "textMention": true,
+                        "customNotification": false
+                      },
+                      "teams": {
+                        "thread": false,
+                        "textMention": true,
+                        "customNotification": true
+                      },
+                      "webPush": {
+                        "thread": true,
+                        "textMention": true,
+                        "customNotification": false
+                      }
+                    }
+                  }
                 }
               }
             }
