@@ -1056,18 +1056,8 @@ export type PrivateRoomApi = {
 
 //
 // The maximum message size on websockets is 1MB. If a message larger than this
-// threshold is attempted to be sent, one of the following strategies will be
-// used, based on the value of the `unstable_largeMessageStrategy` option:
-//
-// - 'default'           - Send anyway and hope for the best (the default)
-// - 'error'             - Throw an error locally in the client and don't send
-//                         (should probably become the default)
-// - 'fallback-to-http'  - Try sending the update over HTTP instead
-// - 'split'             - Tries breaking the message up into chunks that are
-//                         smaller than 1 MB each, and send them separately.
-//                         Using this strategy sacrifices atomic processing of
-//                         each client message in the server. If any chunk is
-//                         still larger than 1 MB, falls back to "error" strategy.
+// threshold is attempted to be sent, the strategy picked via the
+// `largeMessageStrategy` option will be used.
 //
 // In practice, we'll set threshold to slightly less than 1 MB.
 const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
