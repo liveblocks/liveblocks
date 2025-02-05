@@ -28,7 +28,7 @@
 // Just so TypeScript doesn't trip up on `__IMPORT_META__`
 declare let __IMPORT_META__: { env: Record<string, string | undefined> };
 
-const _ = <T>(fn: () => T): T | undefined => {
+const noThrow = <T>(fn: () => T): T | undefined => {
   try {
     return fn();
   } catch {
@@ -41,9 +41,9 @@ export const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 function getBaseUrlFromEnv(): unknown {
   //                          ^^^^^^^ Deliberately unknown. We should always verify and never trust this returned value.
   return (
-    _(() => process.env.LIVEBLOCKS_BASE_URL) ??
-    _(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??
-    _(() => __IMPORT_META__.env.VITE_LIVEBLOCKS_BASE_URL)
+    noThrow(() => process.env.LIVEBLOCKS_BASE_URL) ??
+    noThrow(() => process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL) ??
+    noThrow(() => __IMPORT_META__.env.VITE_LIVEBLOCKS_BASE_URL)
   );
 }
 
