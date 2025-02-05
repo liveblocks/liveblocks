@@ -22,8 +22,8 @@
 </p>
 
 **[Liveblocks](https://liveblocks.io) provides customizable pre-built features
-that boost user engagement by adding collaboration to your product. All without
-derailing your roadmap.**
+for human and AI collaboration, used to make your product multiplayer, engaging,
+and AI‑ready. All without derailing your roadmap.**
 
 **[Get started now](https://liveblocks.io/signup)**
 
