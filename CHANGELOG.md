@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v2.16.3
+
+### `@liveblocks/react-ui`
+
+- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
+  callback.
+
 ## v2.16.2
 
 ### `@liveblocks/react`
