@@ -2,18 +2,27 @@
 
 ### `@liveblocks/client`
 
-- Add `unstable_largeMessageStrategy` flag (experimental) to allow specifying
+- Report a console error when a client attempts to send a WebSocket message that
+  is >1 MB (which is not supported). Previously the client would silently fail
+  in this scenario.
+
+- Added a new client config option `largeMessageStrategy` to allow specifying
   the preferred strategy for dealing with messages that are too large to send
   over WebSockets. There now is a choice between:
 
-  - `default` Just send anyway (although it will fail)
-  - `error` Error early in the client, don't attempt to send
-  - `fallback-to-http` Send the message over HTTP instead of WebSocket
-  - `split` Split the large message up into smaller chunks (this sacrifices
-    atomicity)
+  - `default` Don’t send anything, but log the error to the console
+  - `split` Split the large message up into smaller chunks (at the cost of
+    sacrificing atomicity)
+  - `experimental-fallback-to-http` Send the message over HTTP instead of
+    WebSocket
 
 - Deprecated the `unstable_fallbackToHTTP` experimental flag (please set
-  `unstable_largeMessageStrategy="fallback-to-http"` instead).
+  `largeMessageStrategy="experimental-fallback-to-http"` instead).
+
+### `@liveblocks/react`
+
+- Added `<LiveblocksProvider largeMessageStrategy="..." />` prop to
+  LiveblocksProvider. See above for possible options.
 
 ## v2.16.2
 
