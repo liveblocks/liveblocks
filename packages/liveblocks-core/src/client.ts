@@ -404,8 +404,8 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
-  unstable_largeMessageStrategy?: LargeMessageStrategy;
-  /** @deprecated Use `unstable_largeMessageStrategy="fallback-to-http"` instead. */
+  largeMessageStrategy?: LargeMessageStrategy;
+  /** @deprecated Use `largeMessageStrategy="experimental-fallback-to-http"` instead. */
   unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
   /**
@@ -616,10 +616,10 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        unstable_largeMessageStrategy:
-          clientOptions.unstable_largeMessageStrategy ??
+        largeMessageStrategy:
+          clientOptions.largeMessageStrategy ??
           (clientOptions.unstable_fallbackToHTTP
-            ? "fallback-to-http"
+            ? "experimental-fallback-to-http"
             : undefined),
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,

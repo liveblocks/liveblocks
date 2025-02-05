@@ -1221,7 +1221,7 @@ export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 export type LargeMessageStrategy =
   | "default"
   | "error"
-  | "fallback-to-http"
+  | "experimental-fallback-to-http"
   | "split";
 
 /** @internal */
@@ -1232,8 +1232,8 @@ export type RoomConfig<M extends BaseMetadata> = {
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
+  largeMessageStrategy?: LargeMessageStrategy;
 
-  unstable_largeMessageStrategy?: LargeMessageStrategy;
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
@@ -1694,7 +1694,7 @@ export function createRoom<
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const strategy = config.unstable_largeMessageStrategy ?? "default";
+    const strategy = config.largeMessageStrategy ?? "default";
 
     const text = JSON.stringify(messages);
     const isTooBig = strategy !== "default" && isTooBigForWebSocket(text);
@@ -1708,7 +1708,7 @@ export function createRoom<
       case "error":
         throw new Error("Message is too large for websockets");
 
-      case "fallback-to-http": {
+      case "experimental-fallback-to-http": {
         console.warn(
           "Message is too large for websockets, so sending over HTTP instead"
         );
