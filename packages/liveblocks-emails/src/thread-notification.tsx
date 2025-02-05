@@ -33,10 +33,12 @@ import type { ResolveRoomInfoArgs } from "./lib/types";
 /** @internal */
 export const getUnreadComments = ({
   comments,
+  previousUnreadInboxNotification,
   inboxNotification,
   userId,
 }: {
   comments: CommentData[];
+  previousUnreadInboxNotification: InboxNotificationData | null;
   inboxNotification: InboxNotificationData;
   userId: string;
 }): CommentDataWithBody[] => {
@@ -48,7 +50,10 @@ export const getUnreadComments = ({
     .filter((c) =>
       readAt
         ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
-        : c.createdAt <= inboxNotification.notifiedAt
+        : previousUnreadInboxNotification !== null
+          ? c.createdAt >= previousUnreadInboxNotification.notifiedAt &&
+            c.createdAt <= inboxNotification.notifiedAt
+          : c.createdAt <= inboxNotification.notifiedAt
     );
 };
 
@@ -84,13 +89,23 @@ export const extractThreadNotificationData = async ({
   event: ThreadNotificationEvent;
 }): Promise<ThreadNotificationData | null> => {
   const { threadId, roomId, userId, inboxNotificationId } = event.data;
-  const [thread, inboxNotification] = await Promise.all([
-    client.getThread({ roomId, threadId }),
-    client.getInboxNotification({ inboxNotificationId, userId }),
-  ]);
+  const [thread, inboxNotification, { data: inboxNotifications }] =
+    await Promise.all([
+      client.getThread({ roomId, threadId }),
+      client.getInboxNotification({ inboxNotificationId, userId }),
+      client.getInboxNotifications({ userId, query: { unread: true } }),
+    ]);
+
+  const previousUnreadInboxNotification =
+    inboxNotifications
+      .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime())
+      .filter(
+        ({ id, kind }) => kind === "thread" && id !== inboxNotification.id
+      )[0] ?? null;
 
   const unreadComments = getUnreadComments({
     comments: thread.comments,
+    previousUnreadInboxNotification,
     inboxNotification,
     userId,
   });
