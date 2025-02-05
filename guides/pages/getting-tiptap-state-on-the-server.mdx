@@ -2,16 +2,83 @@
 meta:
   title: "Getting Tiptap state on the server"
   description:
-    "Learn how to retrieve your Yjs document’s Tiptap state on the server"
+    "Learn how to retrieve your document’s Tiptap state on the server"
 ---
 
-Using [`@liveblocks/node`](/docs/api-reference/liveblocks-node), it’s possible
-to retrieve the state of your Tiptap document, and its
-[`Y.Doc`](https://docs.yjs.dev/api/y.doc), on the server.
-
-## Getting Tiptap document state
-
 Using
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror),
+it’s possible to retrieve the state of your Tiptap document on the server.
+Tiptap is not easy to edit on the server directly, which is why it’s necessary
+to use the ProseMirror package. Tiptap is an extension of ProseMirror.
+
+## Getting document state
+
+To get your document state, you can use
+[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument)
+and
+[`api.getText`](/docs/api-reference/liveblocks-node-prosemirror#api.getText).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+// +++
+const textContent = await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  async (api) => {
+    return api.getText();
+  }
+);
+// +++
+
+// "My content"
+console.log(textContent);
+```
+
+## Modifying document state
+
+To modify document state with transactions, use
+[`api.update`](/docs/api-reference/liveblocks-node-prosemirror#api.update). On
+the ProseMirror website you can find a full list of
+[transforms](https://prosemirror.net/docs/ref/#transform.Document_transforms)
+and
+[transactions functions](https://prosemirror.net/docs/ref/#state.Transaction).
+
+```ts
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  // +++
+  async (api) => {
+    await api.update((_, tr) => {
+      // Transaction example
+      return tr.insertText("Hello world");
+    });
+  }
+  // +++
+);
+```
+
+You’ve now learned to fetch and modify document state!
+
+## Using Yjs APIs instead
+
+We don’t generally recommend it, but it’s also possible to use
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node) to retrieve the state
+of your Tiptap document, and its [`Y.Doc`](https://docs.yjs.dev/api/y.doc), on
+the server. This may give you more control in some cases.
+
+With
 [`Liveblocks.getYjsDocumentAsBinaryUpdate`](/docs/api-reference/liveblocks-node#get-rooms-roomId-ydoc-binary)
 you can fetch your Yjs data, and place it inside a `Y.Doc`. Because Tiptap is a
 wrapper around ProseMirror, we can then call `yDocToProseMirror` from
@@ -45,5 +112,5 @@ export async function POST() {
 }
 ```
 
-If you’d like to edit your document, make sure to read
+If you’d like to edit your `Y.Doc`, make sure to read
 [how to use your `Y.Doc` on the server](/docs/guides/how-to-use-your-ydoc-on-the-server).
