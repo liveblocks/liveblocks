@@ -1220,9 +1220,8 @@ export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
 export type LargeMessageStrategy =
   | "default"
-  | "error"
-  | "experimental-fallback-to-http"
-  | "split";
+  | "split"
+  | "experimental-fallback-to-http";
 
 /** @internal */
 export type RoomConfig<M extends BaseMetadata> = {
@@ -1697,21 +1696,28 @@ export function createRoom<
     const strategy = config.largeMessageStrategy ?? "default";
 
     const text = JSON.stringify(messages);
-    const isTooBig = strategy !== "default" && isTooBigForWebSocket(text);
-    if (!isTooBig) {
-      // Happy path (message isn't too big)
-      return managedSocket.send(text);
+    if (!isTooBigForWebSocket(text)) {
+      return managedSocket.send(text); // Happy path
     }
 
     // If message is too big for WebSockets, we need to follow a strategy
     switch (strategy) {
-      case "error":
-        throw new Error("Message is too large for websockets");
+      case "default": {
+        console.error("Message is too large for websockets, not sending. Configure largeMessageStrategy option to deal with this."); // prettier-ignore
+        // Don't send the message
+        return;
+      }
+
+      case "split": {
+        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
+        for (const chunk of chunkMessages(messages)) {
+          managedSocket.send(chunk);
+        }
+        return;
+      }
 
       case "experimental-fallback-to-http": {
-        console.warn(
-          "Message is too large for websockets, so sending over HTTP instead"
-        );
+        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
         const nonce =
           context.dynamicSessionInfoSig.get()?.nonce ??
           raise("Session is not authorized to send message over HTTP");
@@ -1723,16 +1729,6 @@ export function createRoom<
               managedSocket.reconnect();
             }
           });
-        return;
-      }
-
-      case "split": {
-        console.warn(
-          "Message is too large for websockets, splitting into smaller chunks"
-        );
-        for (const chunk of chunkMessages(messages)) {
-          managedSocket.send(chunk);
-        }
         return;
       }
     }
