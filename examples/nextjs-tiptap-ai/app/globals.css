@@ -88,9 +88,17 @@ h5 {
   line-height: 1.2;
 }
 
+.tiptap:focus p[data-placeholder]::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+  color: theme("colors.foreground" / 40%);
+}
+
 blockquote {
   box-sizing: border-box;
-  border-left: 0.25rem solid rgba(209, 213, 219);
+  border-left: 0.25rem solid theme("colors.foreground" / 25%);
   padding-left: 1rem;
 }
 

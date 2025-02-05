@@ -1,7 +1,7 @@
 "use client";
 
 import NotificationsPopover from "../notifications-popover";
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, EditorEvents } from "@tiptap/react";
 import {
   useLiveblocksExtension,
   FloatingComposer,
@@ -15,11 +15,13 @@ import StarterKit from "@tiptap/starter-kit";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
-
+import { AiPlaceholder } from "./ai-placeholder";
+import { AI_NAME } from "./constants";
+import { useEffect } from "react";
 export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension({
     ai: {
-      name: "Liveblocks",
+      name: AI_NAME,
       // resolveContextualPrompt: async ({ prompt, context, signal }) => {
       //   const response = await fetch("/api/contextual-prompt", {
       //     method: "POST",
@@ -45,12 +47,21 @@ export default function TiptapEditor() {
         history: false,
       }),
       liveblocks,
+      AiPlaceholder,
     ],
   });
 
-  editor?.on("contentError", (error) => {
-    console.warn("contentError:", error, editor);
-  });
+  useEffect(() => {
+    const onContentError = (event: EditorEvents["contentError"]) => {
+      console.warn(event);
+    };
+
+    editor?.on("contentError", onContentError);
+
+    return () => {
+      editor?.off("contentError", onContentError);
+    };
+  }, [editor]);
 
   return (
     <div className="relative min-h-screen flex flex-col">
