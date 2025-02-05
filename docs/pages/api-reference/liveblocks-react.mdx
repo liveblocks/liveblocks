@@ -1179,8 +1179,9 @@ type).
 
 Storage is used to store permanent data that’s used in your application, such as
 shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
-a room is entered, you can set an initial value by using `initialStorage`. Note
-that this value is only read a single time.
+a room is entered, you can set an initial value by using `initialStorage`.
+`initialStorage` is only read and set a single time, unless a new top-level
+property is added.
 
 ```tsx
 import { LiveList, LiveObject, LiveMap } from "@liveblocks/client";
@@ -1208,6 +1209,8 @@ function App() {
 }
 ```
 
+If a new top-level property is added to `initialStorage`, the next time a user
+connects, the new property will be created. Other properties will be unaffected.
 Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).

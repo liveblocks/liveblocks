@@ -4,7 +4,7 @@
   "tasks": {
     "build:ast": {
       "dependsOn": ["^build"],
-      "outputs": ["src/ast/index.ts", "pegconfig.json"],
+      "outputs": ["src/ast/generated-ast.ts", "pegconfig.json"],
       "inputs": ["bin/update-returntypes.js", "src/ast/ast.grammar"]
     },
     "build:parser": {
