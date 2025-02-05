@@ -2842,22 +2842,22 @@
                       "email": {
                         "thread": true,
                         "textMention": false,
-                        "customNotification": true
+                        "$customNotification": true
                       },
                       "slack": {
                         "thread": true,
                         "textMention": true,
-                        "customNotification": false
+                        "$customNotification": false
                       },
                       "teams": {
                         "thread": false,
                         "textMention": true,
-                        "customNotification": true
+                        "$customNotification": true
                       },
                       "webPush": {
                         "thread": true,
                         "textMention": true,
-                        "customNotification": false
+                        "$customNotification": false
                       }
                     }
                   }
@@ -2928,22 +2928,22 @@
                       "email": {
                         "thread": true,
                         "textMention": false,
-                        "customNotification": true
+                        "$customNotification": true
                       },
                       "slack": {
                         "thread": true,
                         "textMention": true,
-                        "customNotification": false
+                        "$customNotification": false
                       },
                       "teams": {
                         "thread": false,
                         "textMention": true,
-                        "customNotification": true
+                        "$customNotification": true
                       },
                       "webPush": {
                         "thread": true,
                         "textMention": true,
-                        "customNotification": false
+                        "$customNotification": false
                       }
                     }
                   }
@@ -3935,7 +3935,7 @@
         },
         "additionalProperties": {
           "type": "boolean",
-          "description": "Custom notification kinds"
+          "description": "Custom notification kinds prefixed by a '$'"
         }
       },
       "UserNotificationSettings": {
