@@ -259,7 +259,12 @@ export type {
 } from "./protocol/UserNotificationSettings";
 export { isNotificationChannelEnabled } from "./protocol/UserNotificationSettings";
 export type { HistoryVersion } from "./protocol/VersionHistory";
-export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
+export type {
+  IYjsProvider,
+  LargeMessageStrategy,
+  PrivateRoomApi,
+  YjsSyncStatus,
+} from "./room";
 export type {
   BroadcastOptions,
   History,
