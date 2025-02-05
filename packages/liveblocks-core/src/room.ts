@@ -1070,7 +1070,7 @@ export type PrivateRoomApi = {
 //                         still larger than 1 MB, falls back to "error" strategy.
 //
 // In practice, we'll set threshold to slightly less than 1 MB.
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
+const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
