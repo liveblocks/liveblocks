@@ -1,27 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import * as z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-
-const lmstudio = createOpenAICompatible({
-  name: "lmstudio",
-  baseURL: "http://localhost:1234/v1",
-});
-
-const requestSchema = z
-  .object({
-    prompt: z.string().describe("A description of the user's request"),
-    context: z
-      .object({
-        beforeSelection: z.string().describe("The text before the selection"),
-        selection: z.string().describe("The selected text"),
-        afterSelection: z.string().describe("The text after the selection"),
-      })
-      .describe("The text editor's context"),
-  })
-  .describe("The user's request and context");
 
 const responseSchema = z
   .object({
@@ -36,6 +17,28 @@ const responseSchema = z
     "The response to the user's request (strict, all fields are required and no additional fields are allowed)"
   );
 
+const requestSchema = z
+  .object({
+    prompt: z.string().describe("A description of the user's request"),
+    context: z
+      .object({
+        beforeSelection: z.string().describe("The text before the selection"),
+        selection: z.string().describe("The selected text"),
+        afterSelection: z.string().describe("The text after the selection"),
+      })
+      .describe("The text editor's context"),
+    previous: z
+      .object({
+        prompt: z.string().describe("A description of the user's request"),
+        response: responseSchema,
+      })
+      .optional()
+      .describe(
+        "The previous request and its response, present when this request is a follow-up."
+      ),
+  })
+  .describe("The user's request and context");
+
 const system =
   "You are an helpful AI assistant in a text editor." +
   "\n\n" +
@@ -45,19 +48,20 @@ const system =
   "\n\n" +
   "You must determine the correct response type based on the user's prompt and context." +
   "\n" +
+  "If the user's request is a follow-up to a previous request, you must take the previous request and its response into account for your response." +
+  "\n" +
   "Do not explain your reasoning or describe possible changes—just apply them.";
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt, context } = requestSchema.parse(await request.json());
+    const { prompt, context, previous } = requestSchema.parse(
+      await request.json()
+    );
 
     const { object: result } = await generateObject({
-      // Use a local model with LM Studio
-      model: lmstudio(""),
-      // Use Claude with Anthropic
-      // model: anthropic("claude-3-5-sonnet-20240620"),
+      model: anthropic("claude-3-5-sonnet-20240620"),
       system,
-      prompt: JSON.stringify({ prompt, context }),
+      prompt: JSON.stringify({ prompt, context, previous }),
       schema: responseSchema,
       maxRetries: 1,
     });
