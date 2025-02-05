@@ -15,13 +15,13 @@ export default defineConfig({
 
     // Replaces:
     // - `__IMPORT_META__.env.FOO` → `import.meta.env.FOO`  (in ESM output)
-    // - `__IMPORT_META__.env.FOO` → `null.meta.env.FOO`    (in CJS output)
+    // - `__IMPORT_META__.env.FOO` → `process.env.FOO`      (in CJS output)
     //
     // We need to do this, because `import.meta` is a *syntax error* in CJS files.
     if (context.format !== "cjs") {
       options.define["__IMPORT_META__"] = "import.meta";
     } else {
-      options.define["__IMPORT_META__"] = "null";
+      options.define["__IMPORT_META__"] = "process";
     }
   },
 });
