@@ -249,7 +249,12 @@ export type {
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type { HistoryVersion } from "./protocol/VersionHistory";
-export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
+export type {
+  IYjsProvider,
+  LargeMessageStrategy,
+  PrivateRoomApi,
+  YjsSyncStatus,
+} from "./room";
 export type {
   BroadcastOptions,
   History,
