@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.17.0-rc1
+
 ### `@liveblocks/client`
 
 - Report a console error when a client attempts to send a WebSocket message that
@@ -12,17 +14,27 @@
 
   - `default` Don’t send anything, but log the error to the console
   - `split` Split the large message up into smaller chunks (at the cost of
-    sacrificing atomicity)
+    sacrificing atomicity). Thanks @adam-subframe for the contribution!
   - `experimental-fallback-to-http` Send the message over HTTP instead of
     WebSocket
 
 - Deprecated the `unstable_fallbackToHTTP` experimental flag (please set
   `largeMessageStrategy="experimental-fallback-to-http"` instead).
 
+### `@liveblocks/react-ui`
+
+- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
+  callback.
+
 ### `@liveblocks/react`
 
 - Added `<LiveblocksProvider largeMessageStrategy="..." />` prop to
   LiveblocksProvider. See above for possible options.
+
+### `@liveblocks/react-ui`
+
+- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
+  callback.
 
 ## v2.16.2
 
