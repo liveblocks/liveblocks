@@ -52,7 +52,7 @@ export const getUnreadComments = ({
     // and before (or equal) the notifiedAt date of the inbox notification.
     //
     // Same behavior as in the `InboxNotificationThread` component.
-    // See https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
     if (readAt !== null) {
       return (
         c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
@@ -80,7 +80,7 @@ export const getUnreadComments = ({
     // Otherwise takes every comments created before (or equal) the notifiedAt date of the inbox notification.
     //
     // Same behavior as in the `InboxNotificationThread` component.
-    // See https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
     return c.createdAt <= inboxNotification.notifiedAt;
   });
 };
