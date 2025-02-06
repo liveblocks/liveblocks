@@ -1,5 +1,82 @@
 ## vNEXT (not yet published)
 
+Introducing user notification settings. You can now create beautiful user
+notification settings pages into your app.
+
+### User notification settings (public beta)
+
+Our packages `@liveblocks/client`, `@liveblocks/react` and `@liveblocks/node`
+are now exposing functions to manage user notification settings on different
+notification channels and kinds.
+
+You can support `thread`, `textMention` and custom notification kinds (starting
+by a `$`) on `email`, `Slack`, `Microsoft Teams` and `Web Push` channels.
+
+#### Notification settings in the dashboard
+
+You can choose from our dashboard to enable or disable notification kinds on
+every channels you want to use in your app. It means our internal notification
+system on our infrastructure will decide to send or not an event on your
+webhook.
+
+### `@liveblocks/client`
+
+```tsx
+import { createClient } from '@liveblocks/client'
+const client = createClient({ ... })
+
+const settings = await client.getNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await client.updateNotificationSettings({
+  email: {
+    thread: false,
+  }
+});
+```
+
+### `@liveblocks/react`
+
+```tsx
+// A suspense version of this hook is available
+import { useNotificationSettings } from "@liveblocks/react";
+
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const onSave = () => {
+  updateSettings({
+    slack: {
+      textMention: false,
+    },
+  });
+};
+```
+
+### `@liveblocks/node`
+
+```tsx
+import { Liveblocks } from "@liveblocks/node";
+const liveblocks = new Liveblocks({ secret: "sk_xxx" });
+
+const settings = await liveblocks.getNotificationSettings({ userId });
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await liveblocks.updateNotificationSettings({
+  userId,
+  data: {
+    teams: {
+      $fileUploaded: true,
+    },
+  },
+});
+await liveblocks.deleteNotificationSettings({ userId });
+```
+
 ## v2.17.0-rc1
 
 ### `@liveblocks/client`
