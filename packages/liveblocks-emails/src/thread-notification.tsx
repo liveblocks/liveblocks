@@ -43,18 +43,46 @@ export const getUnreadComments = ({
   userId: string;
 }): CommentDataWithBody[] => {
   const commentsWithBody = filterCommentsWithBody(comments);
+  const otherUserComments = commentsWithBody.filter((c) => c.userId !== userId);
+
   const readAt = inboxNotification.readAt;
 
-  return commentsWithBody
-    .filter((c) => c.userId !== userId)
-    .filter((c) =>
-      readAt
-        ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
-        : previousUnreadInboxNotification !== null
-          ? c.createdAt >= previousUnreadInboxNotification.notifiedAt &&
-            c.createdAt <= inboxNotification.notifiedAt
-          : c.createdAt <= inboxNotification.notifiedAt
-    );
+  return otherUserComments.filter((c) => {
+    // If the notification was read, we only want to comments created after the readAt date
+    // and before (or equal) the notifiedAt date of the inbox notification.
+    //
+    // Same behavior as in the `InboxNotificationThread` component.
+    // See https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+    if (readAt !== null) {
+      return (
+        c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
+      );
+    }
+
+    // If there is a previous unread inbox notification,
+    // we only want to take comments created between the notifiedAt date of the previous unread inbox notification.
+    // It will avoid to create repeated comments between two unread inbox notifications.
+    //
+    // This behaviors answer to this story:
+    //  - User A creates a thread and mention in the first comment User B
+    //  - User B receive an inbox notification (IN_0) and a webhook event (WE_0) BUT do not reads it
+    //  - User C and User D add more comments in the thread
+    //  - User B still do not reads IN_O but and receive a second inbox notification (IN_1) and a webhook event (WE_1)
+    //  - THEN we want User B to receive an `unreadReplies` email data for WE_1 with only the comments created between IN_0 and IN_1.
+    // Note if between IN_0 and IN_1 User B is mentioned a second time then we return a `unreadMention` email data in `extractThreadNotificationData` function
+    if (previousUnreadInboxNotification !== null) {
+      return (
+        c.createdAt >= previousUnreadInboxNotification.notifiedAt &&
+        c.createdAt <= inboxNotification.notifiedAt
+      );
+    }
+
+    // Otherwise takes every comments created before (or equal) the notifiedAt date of the inbox notification.
+    //
+    // Same behavior as in the `InboxNotificationThread` component.
+    // See https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+    return c.createdAt <= inboxNotification.notifiedAt;
+  });
 };
 
 /** @internal */
