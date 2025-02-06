@@ -29,7 +29,11 @@ export const AiPlaceholder = Extension.create({
             const decorations: Decoration[] = [];
 
             state.doc.descendants((node, pos) => {
-              if (isEmptyTextNode(node)) {
+              if (
+                isEmptyTextNode(node) &&
+                pos <= state.selection.from &&
+                state.selection.from <= pos + node.nodeSize
+              ) {
                 decorations.push(
                   Decoration.node(pos, pos + node.nodeSize, {
                     class: "placeholder",

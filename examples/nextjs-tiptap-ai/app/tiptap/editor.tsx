@@ -22,10 +22,15 @@ export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension({
     ai: {
       name: AI_NAME,
-      // resolveContextualPrompt: async ({ prompt, context, signal }) => {
+      // resolveContextualPrompt: async ({
+      //   prompt,
+      //   context,
+      //   previous,
+      //   signal,
+      // }) => {
       //   const response = await fetch("/api/contextual-prompt", {
       //     method: "POST",
-      //     body: JSON.stringify({ prompt, context }),
+      //     body: JSON.stringify({ prompt, context, previous }),
       //     signal,
       //   });
 
