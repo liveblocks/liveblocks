@@ -1,7 +1,5 @@
 ## vNEXT (not yet published)
 
-## v2.17.0-rc1
-
 ### `@liveblocks/emails`
 
 #### Updating `prepareThreadNotificationEmailAsHtml` and `prepareThreadNotificationEmailAsReact` behaviors
@@ -32,6 +30,8 @@ Note that if between IN_0 and IN_1 User B is mentioned a second time the result
 of WE_1 will also produce a `unreadMention` email data. Because in our current
 behaviors an `unreadMention` email data keeps priority compared to
 `unreadReplies`.
+
+## v2.17.0-rc1
 
 ### `@liveblocks/client`
 
