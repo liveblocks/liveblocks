@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-## v2.17.0-rc1
+## v2.17.0
 
 ### `@liveblocks/client`
 
@@ -25,16 +25,28 @@
 
 - Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
   callback.
+- Add new icons to `<Icon.* />`.
 
 ### `@liveblocks/react`
 
 - Added `<LiveblocksProvider largeMessageStrategy="..." />` prop to
   LiveblocksProvider. See above for possible options.
 
-### `@liveblocks/react-ui`
+### `@liveblocks/react-tiptap`
 
-- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
-  callback.
+### AI Toolbar (private beta)
+
+This release adds components and utilities to add an AI toolbar to your text
+editor, available in private beta.
+
+- Add `ai` option to `useLiveblocksExtension` to enable (and configure) it.
+- Add `<AiToolbar />` component. (with `<AiToolbar.Suggestion />`,
+  `<AiToolbar.SuggestionsSeparator />`, etc)
+- Add default AI buttons in `Toolbar` and `FloatingToolbar` when the `ai` option
+  is enabled.
+- Add `askAi` Tiptap command to manually open the toolbar, it can also be
+  invoked with a prompt to directly start the request when opening the toolbar.
+  (e.g. `editor.commands.askAi("Explain this text")`)
 
 ## v2.16.2
 
