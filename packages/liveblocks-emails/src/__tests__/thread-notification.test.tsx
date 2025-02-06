@@ -1,3 +1,5 @@
+import type { InboxNotificationThreadData } from "@liveblocks/core";
+import type { ThreadData } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
@@ -50,6 +52,32 @@ describe("thread notification", () => {
   afterAll(() => server.close());
 
   const client = new Liveblocks({ secret: "sk_xxx" });
+
+  const setServerHandlers = ({
+    thread,
+    inboxNotifications,
+  }: {
+    thread: ThreadData;
+    inboxNotifications: InboxNotificationThreadData[];
+  }): void => {
+    server.use(
+      http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+        HttpResponse.json(thread, { status: 200 })
+      ),
+      http.get(
+        `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => HttpResponse.json(inboxNotifications[0], { status: 200 })
+      ),
+      http.get(`${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications`, () =>
+        HttpResponse.json(
+          { data: [...inboxNotifications] },
+          {
+            status: 200,
+          }
+        )
+      )
+    );
+  };
 
   describe("internals utils", () => {
     it("should get unread comments ", () => {
@@ -148,18 +176,7 @@ describe("thread notification", () => {
         readAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
-          HttpResponse.json(thread, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
+      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -185,18 +202,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
-          HttpResponse.json(thread, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
+      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -241,18 +247,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
-          HttpResponse.json(thread, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
+      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -328,18 +323,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
-          HttpResponse.json(thread, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
+      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -408,18 +392,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
-          HttpResponse.json(thread, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
+      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -501,31 +474,14 @@ describe("thread notification", () => {
         notifiedAt: new Date("2025-02-05T08:35:00.000Z"), // 5th Feb 2025 at 08:35
       });
 
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
-          HttpResponse.json(thread, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification2, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications`,
-          () =>
-            HttpResponse.json(
-              { data: [inboxNotification1, inboxNotification2] },
-              {
-                status: 200,
-              }
-            )
-        )
-      );
+      setServerHandlers({
+        thread,
+        inboxNotifications:
+          // Order is important in this case
+          // as we want to return `inboxNotification2` first on
+          // the call to `/v2/users/:userId/inbox-notifications/:notificationId`
+          [inboxNotification2, inboxNotification1],
+      });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -624,19 +580,10 @@ describe("thread notification", () => {
       ])(
         "should return unread mention as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsHTML = await promise();
           expect(threadNotificationEmailAsHTML).toEqual(expected);
@@ -722,19 +669,10 @@ describe("thread notification", () => {
       ])(
         "should return unread mention as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsHTML = await promise();
           expect(threadNotificationEmailAsHTML).toEqual(expected);
@@ -810,19 +748,10 @@ describe("thread notification", () => {
       ])(
         "should return unread replies as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsHTML = await promise();
           expect(threadNotificationEmailAsHTML).toEqual(expected);
@@ -911,19 +840,10 @@ describe("thread notification", () => {
       ])(
         "should return unread replies as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsHTML = await promise();
           expect(threadNotificationEmailAsHTML).toEqual(expected);
@@ -1017,19 +937,10 @@ describe("thread notification", () => {
       ])(
         "should return unread mention as React with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsReact = await promise();
 
@@ -1139,19 +1050,10 @@ describe("thread notification", () => {
       ])(
         "should return unread mention as React with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsReact = await promise();
 
@@ -1258,19 +1160,10 @@ describe("thread notification", () => {
       ])(
         "should return unread replies as React with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsReact = await promise();
 
@@ -1382,19 +1275,10 @@ describe("thread notification", () => {
       ])(
         "should return unread replies as React with resolvers: $withResolvers",
         async ({ promise, expected }) => {
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
-              () => HttpResponse.json(thread, { status: 200 })
-            )
-          );
-
-          server.use(
-            http.get(
-              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-              () => HttpResponse.json(inboxNotification, { status: 200 })
-            )
-          );
+          setServerHandlers({
+            thread,
+            inboxNotifications: [inboxNotification],
+          });
 
           const threadNotificationEmailAsReact = await promise();
 
