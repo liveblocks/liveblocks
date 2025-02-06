@@ -11,7 +11,7 @@ function isEmptyTextNode(node: Node) {
 // This extension displays a placeholder in empty paragraphs
 // and opens the AI toolbar when pressing space.
 export const AiPlaceholder = Extension.create({
-  name: "ai-placeholder",
+  name: "aiPlaceholder",
   addOptions() {
     return {
       placeholder: `Press space to ask ${AI_NAME}…`,
