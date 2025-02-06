@@ -2,34 +2,10 @@
 
 ### `@liveblocks/emails`
 
-#### Updating `prepareThreadNotificationEmailAsHtml` and `prepareThreadNotificationEmailAsReact` behaviors
-
-Now those two functions will avoid repetition of unread comments (unread mention
-or unread replies) between two unread notification.
-
-Let's take for example this story:
-
-- User A creates a thread and mention in the first comment User B
-- User B receive an inbox notification (IN_0) and a email notification from
-  webhook event (WE_0) BUT do not reads it
-- User C and User D add more comments in the thread
-- User B still do not reads IN_O and receive a second inbox notification (IN_1)
-  and a second email notification from webhook event (WE_1)
-
-Before the change of behaviors the result was:
-
-- WE_0 was producing an `unreadMention` email data
-- WE_1 was also producing an `unreadMention` email data
-
-Now the result is:
-
-- WE_0 will produce an `unreadMention` email data
-- WE_1 will now produce an `unreadReplies` email data
-
-Note that if between IN_0 and IN_1 User B is mentioned a second time the result
-of WE_1 will also produce a `unreadMention` email data. Because in our current
-behaviors an `unreadMention` email data keeps priority compared to
-`unreadReplies`.
+- Update the behavior of `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact`: the contents of previous emails data
+  are now taken into account to avoid repeating mentions and replies that are
+  still unread but have already been extracted in another email data.
 
 ## v2.17.0-rc1
 
