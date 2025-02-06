@@ -1331,21 +1331,33 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const focus = useCallback(
       (resetSelection = true) => {
-        if (!ReactEditor.isFocused(editor)) {
-          SlateTransforms.select(
-            editor,
-            resetSelection || !editor.selection
-              ? SlateEditor.end(editor, [])
-              : editor.selection
-          );
-          ReactEditor.focus(editor);
+        try {
+          if (!ReactEditor.isFocused(editor)) {
+            SlateTransforms.select(
+              editor,
+              resetSelection || !editor.selection
+                ? SlateEditor.end(editor, [])
+                : editor.selection
+            );
+            ReactEditor.focus(editor);
+          }
+        } catch {
+          // Slate's DOM-specific methods will throw if the editor's DOM
+          // node no longer exists. This action doesn't make sense on an
+          // unmounted editor so we can safely ignore it.
         }
       },
       [editor]
     );
 
     const blur = useCallback(() => {
-      ReactEditor.blur(editor);
+      try {
+        ReactEditor.blur(editor);
+      } catch {
+        // Slate's DOM-specific methods will throw if the editor's DOM
+        // node no longer exists. This action doesn't make sense on an
+        // unmounted editor so we can safely ignore it.
+      }
     }, [editor]);
 
     const createMention = useCallback(() => {
