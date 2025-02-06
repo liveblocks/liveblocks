@@ -100,11 +100,15 @@ export const mapFragment = (
 };
 
 export function getDomRangeFromSelection(editor: Editor, selection: Selection) {
-  // If the selection is collapsed in an empty block node, extend it to the block node
   if (selection.from === selection.to) {
-    const parentNode = selection.$from.parent;
+    const { parent, parentOffset } = selection.$from;
 
-    if (parentNode.isBlock && parentNode.content.size === 0) {
+    // If the selection is collapsed and in an empty block node or at the end
+    // of a text node, extend it to the entire node
+    if (
+      (parent.isBlock && parent.content.size === 0) ||
+      (parent.isTextblock && parentOffset === parent.content.size)
+    ) {
       selection = TextSelection.create(
         editor.state.doc,
         selection.$from.before(),
