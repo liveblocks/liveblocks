@@ -12,7 +12,7 @@
 
   - `default` Don’t send anything, but log the error to the console
   - `split` Split the large message up into smaller chunks (at the cost of
-    sacrificing atomicity)
+    sacrificing atomicity). Thanks @adam-subframe for the contribution!
   - `experimental-fallback-to-http` Send the message over HTTP instead of
     WebSocket
 
