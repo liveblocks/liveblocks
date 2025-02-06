@@ -19,7 +19,7 @@ import type { YSyncPluginState } from "./types";
 import { LIVEBLOCKS_MENTION_TYPE } from "./types";
 
 const CONTEXT_TRUNCATION = "[…]";
-const CONTEXT_BLOCK_SEPARATOR = " ";
+const CONTEXT_BLOCK_SEPARATOR = "\n";
 
 export const getRelativeSelectionFromState = (state: EditorState) => {
   const pluginState = ySyncPluginKey.getState(state) as YSyncPluginState;
