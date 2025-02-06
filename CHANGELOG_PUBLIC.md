@@ -13,6 +13,30 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 5 (2025-01-31)
+
+## v2.16.2
+
+### `@liveblocks/react`
+
+- Improve error message if hooks are accidentally called server side.
+
+### `@liveblocks/zustand`
+
+- Fix bug in Zustand typing in case the multi-argument form of `set()` is used.
+
+## Website
+
+- New blog post: [Great agent experience starts with great collaboration](https://liveblocks.io/blog/great-agent-experience-great-collaboration).
+
+## Documentation
+
+- Better info on `initialStorage` values.
+
+## Contributors
+
+ctnicholas, stevenfabre, sugardarius, nvie, hans-lizihan
+
 # Week 4 (2025-01-24)
 
 ## v2.16.1

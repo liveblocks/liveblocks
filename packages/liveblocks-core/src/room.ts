@@ -34,6 +34,7 @@ import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  raise,
   tryParseJson,
 } from "./lib/utils";
 import type {
@@ -43,7 +44,11 @@ import type {
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
+import type {
+  ClientMsg,
+  UpdateStorageClientMsg,
+  UpdateYDocClientMsg,
+} from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -1063,11 +1068,13 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
-// The maximum message size on websockets is 1MB. We'll set the threshold
-// slightly lower (1kB) to trigger sending over HTTP, to account for messaging
-// overhead, so we're not right at the limit.
-// NOTE: this only works with the unstable_fallbackToHTTP option enabled
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
+//
+// The maximum message size on websockets is 1MB. If a message larger than this
+// threshold is attempted to be sent, the strategy picked via the
+// `largeMessageStrategy` option will be used.
+//
+// In practice, we'll set threshold to slightly less than 1 MB.
+const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -1215,6 +1222,11 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
+export type LargeMessageStrategy =
+  | "default"
+  | "split"
+  | "experimental-fallback-to-http";
+
 /** @internal */
 export type RoomConfig<M extends BaseMetadata> = {
   delegates: RoomDelegates;
@@ -1223,8 +1235,8 @@ export type RoomConfig<M extends BaseMetadata> = {
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
+  largeMessageStrategy?: LargeMessageStrategy;
 
-  unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
@@ -1628,14 +1640,107 @@ export function createRoom<
     });
   }
 
+  /**
+   * Split a single large UPDATE_STORAGE message into smaller chunks, by
+   * splitting the ops list recursively in half.
+   */
+  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
+    const { ops, ...rest } = msg;
+    if (ops.length < 2) {
+      throw new Error("Cannot split ops into smaller chunks");
+    }
+
+    const mid = Math.floor(ops.length / 2);
+    const firstHalf = ops.slice(0, mid);
+    const secondHalf = ops.slice(mid);
+
+    for (const halfOps of [firstHalf, secondHalf]) {
+      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
+      const text = JSON.stringify([half]);
+      if (!isTooBigForWebSocket(text)) {
+        yield text;
+      } else {
+        yield* chunkOps(half);
+      }
+    }
+  }
+
+  /**
+   * Split the message array in half (two chunks), and try to send each chunk
+   * separately. If the chunk is still too big, repeat the process. If a chunk
+   * can no longer be split up (i.e. is 1 message), then error.
+   */
+  function* chunkMessages(
+    messages: ClientMsg<P, E>[]
+  ): IterableIterator<string> {
+    if (messages.length < 2) {
+      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
+        yield* chunkOps(messages[0]);
+        return;
+      } else {
+        throw new Error(
+          "Cannot split into chunks smaller than the allowed message size"
+        );
+      }
+    }
+
+    const mid = Math.floor(messages.length / 2);
+    const firstHalf = messages.slice(0, mid);
+    const secondHalf = messages.slice(mid);
+
+    for (const half of [firstHalf, secondHalf]) {
+      const text = JSON.stringify(half);
+      if (!isTooBigForWebSocket(text)) {
+        yield text;
+      } else {
+        yield* chunkMessages(half);
+      }
+    }
+  }
+
+  function isTooBigForWebSocket(text: string): boolean {
+    // The theoretical worst case is that each character in the string is
+    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
+    // so we can spare ourselves the TextEncoder() measurement overhead with
+    // this heuristic.
+    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
+      return false;
+    }
+
+    // Otherwise we need to measure to be sure
+    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
+  }
+
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const serializedPayload = JSON.stringify(messages);
-    const nonce = context.dynamicSessionInfoSig.get()?.nonce;
-    if (config.unstable_fallbackToHTTP && nonce) {
-      // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
-      // if this turns out to be expensive, we could just guess with a lower value.
-      const size = new TextEncoder().encode(serializedPayload).length;
-      if (size > MAX_SOCKET_MESSAGE_SIZE) {
+    const strategy = config.largeMessageStrategy ?? "default";
+
+    const text = JSON.stringify(messages);
+    if (!isTooBigForWebSocket(text)) {
+      return managedSocket.send(text); // Happy path
+    }
+
+    // If message is too big for WebSockets, we need to follow a strategy
+    switch (strategy) {
+      case "default": {
+        console.error("Message is too large for websockets, not sending. Configure largeMessageStrategy option to deal with this."); // prettier-ignore
+        // Don't send the message
+        return;
+      }
+
+      case "split": {
+        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
+        for (const chunk of chunkMessages(messages)) {
+          managedSocket.send(chunk);
+        }
+        return;
+      }
+
+      case "experimental-fallback-to-http": {
+        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
+        const nonce =
+          context.dynamicSessionInfoSig.get()?.nonce ??
+          raise("Session is not authorized to send message over HTTP");
+
         void httpClient
           .sendMessages<P, E>({ roomId, nonce, messages })
           .then((resp) => {
@@ -1643,13 +1748,9 @@ export function createRoom<
               managedSocket.reconnect();
             }
           });
-        console.warn(
-          "Message was too large for websockets and sent over HTTP instead"
-        );
         return;
       }
     }
-    managedSocket.send(serializedPayload);
   }
 
   const self = DerivedSignal.from(
