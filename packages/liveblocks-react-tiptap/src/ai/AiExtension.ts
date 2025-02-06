@@ -74,6 +74,18 @@ function isResolveContextualPromptResponse(
   );
 }
 
+function createParagraph(editor: Editor, text: string) {
+  const paragraph =
+    editor.schema.nodes.paragraph ??
+    Object.values(editor.schema.nodes).find((node) => node.isBlock);
+
+  if (!paragraph) {
+    throw new Error("Could not create a paragraph.");
+  }
+
+  return paragraph.create({}, text ? editor.schema.text(text) : undefined);
+}
+
 function getRevertTransaction(
   tr: Transaction,
   editor: Editor,
@@ -192,29 +204,13 @@ export const AiExtension = Extension.create<
             this.storage.snapshot = undefined;
           } else {
             // 2.b. If the response is not a diff, insert it below the selection
-            const block =
-              this.editor.schema.nodes.paragraph ??
-              Object.values(this.editor.schema.nodes).find(
-                (node) => node.isBlock
-              );
 
-            if (!block) {
-              throw new Error("Could not insert a new paragraph.");
-            }
+            const paragraphs = currentState.response.text
+              .split("\n")
+              .map((paragraph) => createParagraph(this.editor, paragraph));
 
-            const paragraph = block.create(
-              {},
-              this.editor.schema.text(currentState.response.text)
-            );
-
-            // Prevent inserting on an out-of-bounds position
-            const insertBelowPosition = Math.max(
-              this.editor.state.selection.$to.end() + 1,
-              this.editor.state.doc.content.size
-            );
-
+            tr.insert(this.editor.state.selection.$to.end(), paragraphs);
             tr.setMeta("addToHistory", true);
-            tr.insert(insertBelowPosition, paragraph);
             view.dispatch(tr);
             // Prevent TipTap from dispatching this transaction, because we already did (this is a hack)
             tr.setMeta("preventDispatch", true);

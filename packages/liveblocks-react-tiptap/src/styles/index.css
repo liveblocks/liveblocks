@@ -334,6 +334,8 @@
 }
 
 .lb-tiptap-ai-toolbar-response {
+  white-space: pre-wrap;
+
   &::before {
     content: "\FEFF";
     display: inline-block;
