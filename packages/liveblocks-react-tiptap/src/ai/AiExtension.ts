@@ -83,7 +83,7 @@ function createParagraph(editor: Editor, text: string) {
     throw new Error("Could not create a paragraph.");
   }
 
-  return paragraph.create({}, text ? editor.schema.text(text) : undefined);
+  return paragraph.create(null, text ? editor.schema.text(text) : undefined);
 }
 
 function getRevertTransaction(
@@ -522,14 +522,26 @@ export const AiExtension = Extension.create<
             response,
           };
 
-          // 5. Insert the response's text
+          // 5. Insert the response's text as inline first (and replace the selection if it's a replace) then as block if there are multiple paragraphs
+          const [firstParagraph, ...otherParagraphs] =
+            response.text.split("\n");
+
           tr.insertText(
-            response.text,
+            firstParagraph,
             response.type === "insert"
               ? this.editor.state.selection.to
               : this.editor.state.selection.from,
             this.editor.state.selection.to
           );
+
+          if (otherParagraphs.length > 0) {
+            const paragraphs = otherParagraphs.map((paragraph) =>
+              createParagraph(this.editor, paragraph)
+            );
+
+            tr.insert(tr.selection.$to.pos, paragraphs);
+          }
+
           view.dispatch(tr);
           // Prevent Tiptap from dispatching this transaction, because we already did (this is a hack)
           tr.setMeta("preventDispatch", true);
