@@ -153,6 +153,10 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";

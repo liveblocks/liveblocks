@@ -83,9 +83,16 @@ const FLOATING_TOOLBAR_OPEN_DELAY = 50;
 
 function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsThread = "addPendingComment" in editor.commands;
+  const supportsAi = "askAi" in editor.commands;
 
   return (
     <>
+      {supportsAi ? (
+        <>
+          <Toolbar.SectionAi />
+          <Toolbar.Separator />
+        </>
+      ) : null}
       <Toolbar.BlockSelector />
       <Toolbar.SectionInline />
       {supportsThread ? (

@@ -132,9 +132,9 @@
 }
 
 :where(
-    .lb-tiptap-thread-mark:not([data-orphan="true"])
-      .lb-tiptap-thread-mark-selected
-  ) {
+  .lb-tiptap-thread-mark:not([data-orphan="true"])
+    .lb-tiptap-thread-mark-selected
+) {
   color: var(--lb-accent);
   text-decoration-line: underline;
   text-decoration-color: var(--lb-accent-moderate);
@@ -267,6 +267,327 @@
 }
 
 /*************************************
+ *            AI Toolbar             *
+ *************************************/
+
+.lb-tiptap-ai-selection {
+  background: var(--lb-selection, rgb(0 0 255 / 20%));
+  pointer-events: none;
+}
+
+.lb-tiptap-ai-toolbar-portal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  inline-size: var(--lb-tiptap-editor-width);
+  outline: none;
+  pointer-events: none;
+
+  &:where([data-liveblocks-ai-toolbar-flip]) {
+    flex-direction: column-reverse;
+  }
+}
+
+.lb-tiptap-ai-toolbar-container {
+  --lb-tiptap-ai-toolbar-padding: calc(0.5 * var(--lb-spacing));
+  --lb-tiptap-ai-toolbar-height: calc(
+    $lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding)
+  );
+
+  position: relative;
+  min-block-size: var(--lb-tiptap-ai-toolbar-height);
+}
+
+.lb-tiptap-ai-toolbar {
+  display: flex;
+  flex-direction: column;
+  color: var(--lb-foreground);
+  pointer-events: auto;
+}
+
+.lb-tiptap-ai-toolbar-response-container,
+.lb-tiptap-ai-toolbar-content {
+  max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
+}
+
+.lb-tiptap-ai-toolbar-content {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+  outline: none;
+}
+
+.lb-tiptap-ai-toolbar-response-container {
+  --lb-line-height-crop: calc(1lh - 1em) / -2;
+
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--lb-spacing) + var(--lb-line-height-crop))
+    var(--lb-spacing);
+  border-block-end: 1px solid var(--lb-foreground-subtle);
+}
+
+.lb-tiptap-ai-toolbar-response {
+  white-space: pre-wrap;
+
+  &::before {
+    content: "\FEFF";
+    display: inline-block;
+    vertical-align: middle;
+    user-select: none;
+  }
+}
+
+.lb-tiptap-ai-toolbar-icon-container,
+.lb-tiptap-ai-toolbar-actions {
+  display: flex;
+  flex: none;
+  block-size: $lb-button-size;
+}
+
+.lb-tiptap-ai-toolbar-icon-container {
+  position: sticky;
+  inset-block-start: 0;
+  align-items: center;
+  align-self: start;
+  color: var(--lb-foreground-moderate);
+}
+
+.lb-tiptap-ai-toolbar-actions {
+  position: sticky;
+  inset-block-end: 0;
+  gap: var(--lb-tiptap-ai-toolbar-padding);
+  align-self: end;
+}
+
+.lb-tiptap-ai-toolbar-custom-prompt {
+  all: unset;
+  background: transparent;
+  color: var(--lb-foreground);
+  outline: none;
+  resize: none;
+
+  &::placeholder {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-tiptap-ai-toolbar-custom-prompt-container {
+  position: relative;
+  z-index: auto;
+  display: grid;
+  margin-block: calc(-1 * var(--lb-tiptap-ai-toolbar-padding));
+
+  &::before {
+    /* The space is important when handling new lines */
+    content: attr(data-value) " ";
+    visibility: hidden;
+  }
+}
+
+.lb-tiptap-ai-toolbar-custom-prompt,
+.lb-tiptap-ai-toolbar-custom-prompt-container::before {
+  /* Overlap the textarea and its value to auto-size it */
+  grid-area: 1 / 1 / 2 / 2;
+  box-sizing: inherit;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: calc(
+      var(--lb-tiptap-ai-toolbar-padding) + ($lb-button-size - 1lh) / 2
+    )
+    var(--lb-tiptap-ai-toolbar-padding);
+  font: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+}
+
+.lb-tiptap-ai-toolbar-error {
+  --lb-dynamic-background: var(--lb-background-destructive-subtle);
+
+  position: relative;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  align-items: center;
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+  background: var(--lb-dynamic-background);
+  color: var(--lb-destructive);
+  font-size: 0.875em;
+  text-wrap: balance;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-block-start: 1px solid var(--lb-destructive-moderate);
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  :where(.lb-icon-container) {
+    color: var(--lb-destructive-secondary);
+  }
+}
+
+.lb-tiptap-ai-toolbar-halo {
+  --lb-tiptap-ai-toolbar-halo-blur: 16px;
+  --lb-tiptap-ai-toolbar-halo-outset: 8px;
+
+  position: absolute;
+  inset: calc(-1 * var(--lb-tiptap-ai-toolbar-halo-outset));
+  z-index: -1;
+  overflow: hidden;
+  border-radius: calc(
+    var(--lb-radius) + var(--lb-tiptap-ai-toolbar-halo-outset)
+  );
+  filter: blur(var(--lb-tiptap-ai-toolbar-halo-blur));
+  pointer-events: none;
+  transition-duration: 1s;
+  transition-property: opacity;
+  animation: lb-animation-ai-toolbar-halo-scale-in 1s
+    cubic-bezier(0.165, 0.84, 0.44, 1) both;
+
+  &:where(:not([data-active])) {
+    opacity: 0.5;
+  }
+}
+
+:is(
+  .lb-tiptap-ai-toolbar-halo-horizontal,
+  .lb-tiptap-ai-toolbar-halo-vertical
+) {
+  position: absolute;
+  inset: 0;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.175;
+    animation-timing-function: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    animation-iteration-count: infinite;
+  }
+}
+
+.lb-tiptap-ai-toolbar-halo-horizontal {
+  &::before {
+    inline-size: 200%;
+    block-size: 100%;
+    background: linear-gradient(
+      30deg,
+      transparent 20%,
+      var(--lb-accent) 50%,
+      transparent 80%
+    );
+    background-position: top left;
+    background-size: 50% 100%;
+    animation-name: lb-animation-ai-toolbar-halo-horizontal;
+    animation-duration: 8s;
+    animation-direction: alternate;
+  }
+
+  &::after {
+    inset-inline-start: -50%;
+    inline-size: 400%;
+    block-size: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 20%,
+      var(--lb-accent) 50%,
+      transparent 80%
+    );
+    background-position: top left;
+    background-size: 75% 100%;
+    animation-name: lb-animation-ai-toolbar-halo-horizontal;
+    animation-duration: 6s;
+    animation-delay: -2s;
+    animation-direction: alternate-reverse;
+  }
+}
+
+.lb-tiptap-ai-toolbar-halo-vertical {
+  &::before {
+    inset-block-start: -50%;
+    inline-size: 100%;
+    block-size: 400%;
+    background: linear-gradient(
+      1deg,
+      transparent 40%,
+      var(--lb-accent) 50%,
+      transparent 60%
+    );
+    background-position: top left;
+    background-size: 100% 600px;
+    background-repeat: round;
+    animation-name: lb-animation-ai-toolbar-halo-vertical;
+    animation-duration: 4s;
+    animation-delay: -2s;
+    animation-direction: alternate-reverse;
+  }
+
+  &::after {
+    inset-block-start: -50%;
+    inline-size: 100%;
+    block-size: 400%;
+    background: linear-gradient(
+      -2deg,
+      transparent 40%,
+      var(--lb-accent) 50%,
+      transparent 60%
+    );
+    background-position: top left;
+    background-size: 100% 400px;
+    background-repeat: round;
+    animation-name: lb-animation-ai-toolbar-halo-vertical;
+    animation-duration: 3s;
+    animation-delay: -1s;
+    animation-direction: alternate;
+  }
+}
+
+.lb-tiptap-ai-toolbar-thinking {
+  @include truncate;
+
+  align-self: center;
+  min-inline-size: 0;
+  max-inline-size: fit-content;
+  padding-inline: var(--lb-tiptap-ai-toolbar-padding);
+  color: var(--lb-foreground-tertiary);
+  user-select: none;
+  animation: lb-animation-ai-toolbar-shimmer 8s linear infinite;
+}
+
+.lb-tiptap-ai-toolbar-dropdown {
+  inline-size: min(250px, 100%);
+  pointer-events: auto;
+}
+
+/*************************************
+ *           Diff Changes            *
+ *************************************/
+
+.lb-tiptap-change-removed {
+  color: color-mix(in srgb, currentcolor 40%, transparent);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.lb-tiptap-change-added {
+  background: color-mix(
+    in srgb,
+    var(--lb-accent) calc(var(--lb-accent-contrast) * 1.5),
+    transparent
+  );
+  color: var(--lb-accent);
+}
+
+/*************************************
  *          Collab Cursors           *
  *************************************/
 
@@ -299,4 +620,60 @@
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
+}
+
+/*************************************
+ *            Animations             *
+ *************************************/
+
+@keyframes lb-animation-ai-toolbar-shimmer {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      #000 8%,
+      rgb(0 0 0 / 50%) 20%,
+      rgb(0 0 0 / 50%) 80%,
+      #000 92%
+    );
+    mask-size: 400% 100%;
+  }
+
+  from {
+    mask-position: 200% 0;
+  }
+
+  to {
+    mask-position: -200% 0;
+  }
+}
+
+@keyframes lb-animation-ai-toolbar-halo-scale-in {
+  from {
+    transform: scale(0.5);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes lb-animation-ai-toolbar-halo-horizontal {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes lb-animation-ai-toolbar-halo-vertical {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
 }

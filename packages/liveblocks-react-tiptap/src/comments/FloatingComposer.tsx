@@ -98,8 +98,8 @@ export const FloatingComposer = forwardRef<
       setReference(null);
     } else {
       const domRange = getDomRangeFromSelection(
-        pendingCommentSelection,
-        editor
+        editor,
+        pendingCommentSelection
       );
 
       setReference(domRange);

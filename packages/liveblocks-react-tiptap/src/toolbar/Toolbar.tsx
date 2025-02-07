@@ -11,9 +11,11 @@ import {
   ItalicIcon,
   ListOrderedIcon,
   ListUnorderedIcon,
+  QuestionMarkIcon,
   RedoIcon,
   SelectButton,
   ShortcutTooltip,
+  SparklesIcon,
   StrikethroughIcon,
   TextIcon,
   TooltipProvider,
@@ -33,7 +35,7 @@ import { forwardRef, useCallback, useContext, useMemo } from "react";
 
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
-import type { ExtendedChainedCommands } from "../types";
+import type { AiExtensionStorage, ExtendedChainedCommands } from "../types";
 import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
 
 export const BLOCK_SELECT_SIDE_OFFSET = 10;
@@ -666,13 +668,58 @@ function ToolbarSectionCollaboration() {
   );
 }
 
+function ToolbarSectionAi() {
+  const editor = useCurrentEditor("SectionAi", "Toolbar or FloatingToolbar");
+  const supportsAi = "askAi" in editor.commands;
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage | undefined)
+    ?.name;
+
+  return (
+    <>
+      {supportsAi && (
+        <>
+          <ToolbarButton
+            name={`Ask ${aiName} anything…`}
+            icon={<SparklesIcon />}
+            onClick={() =>
+              (
+                editor.chain().focus() as ExtendedChainedCommands<"askAi">
+              ).askAi()
+            }
+          >
+            Ask {aiName}
+          </ToolbarButton>
+          <ToolbarButton
+            name="Explain"
+            icon={<QuestionMarkIcon />}
+            onClick={() =>
+              (
+                editor.chain().focus() as ExtendedChainedCommands<"askAi">
+              ).askAi("Explain what the text is about")
+            }
+          >
+            Explain
+          </ToolbarButton>
+        </>
+      )}
+    </>
+  );
+}
+
 function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsThread = "addPendingComment" in editor.commands;
+  const supportsAi = "askAi" in editor.commands;
 
   return (
     <>
       <ToolbarSectionHistory />
       <ToolbarSeparator />
+      {supportsAi ? (
+        <>
+          <ToolbarSectionAi />
+          <ToolbarSeparator />
+        </>
+      ) : null}
       <ToolbarBlockSelector />
       <ToolbarSectionInline />
       {supportsThread ? (
@@ -789,5 +836,10 @@ export const Toolbar = Object.assign(
      * A section containing collaborative actions. (e.g. adding a comment)
      */
     SectionCollaboration: ToolbarSectionCollaboration,
+
+    /**
+     * A section containing AI actions. (e.g. opening the AI toolbar)
+     */
+    SectionAi: ToolbarSectionAi,
   }
 );

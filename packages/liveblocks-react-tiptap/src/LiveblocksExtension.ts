@@ -1,4 +1,10 @@
-import { type IUserInfo, TextEditorType } from "@liveblocks/core";
+import type {
+  BaseUserMeta,
+  IUserInfo,
+  JsonObject,
+  User,
+} from "@liveblocks/core";
+import { kInternal, TextEditorType } from "@liveblocks/core";
 import { useClient, useRoom } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
@@ -8,16 +14,23 @@ import {
   useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { AnyExtension, Content, Editor } from "@tiptap/core";
-import { Extension, getMarkType } from "@tiptap/core";
+import type { AnyExtension, Editor } from "@tiptap/core";
+import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Doc } from "yjs";
+import { Doc, PermanentUserData } from "yjs";
 
+import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
+import type {
+  LiveblocksExtensionOptions,
+  LiveblocksExtensionStorage,
+  ResolveContextualPromptArgs,
+  ResolveContextualPromptResponse,
+} from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 const providersMap = new Map<
@@ -29,13 +42,7 @@ const docMap = new Map<string, Doc>();
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-type LiveblocksExtensionOptions = {
-  field?: string;
-  comments?: boolean; // | CommentsConfiguration
-  mentions?: boolean; // | MentionsConfiguration
-  offlineSupport_experimental?: boolean;
-  initialContent?: Content;
-};
+const pudMap = new Map<string, PermanentUserData>();
 
 const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
@@ -108,6 +115,55 @@ export function useIsEditorReady(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+const YChangeMark = Mark.create({
+  name: "ychange",
+  inclusive: false,
+  parseHTML() {
+    return [{ tag: "ychange" }];
+  },
+  addAttributes() {
+    return {
+      user: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("ychange_user") ?? null,
+        renderHTML: (attributes: { user: string | null }) => {
+          if (!attributes.user) {
+            return {};
+          }
+          return { "data-ychange-user": attributes.user };
+        },
+      },
+      type: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("ychange_type") ?? null,
+        renderHTML: (attributes: { type: string | null }) => {
+          if (!attributes.type) {
+            return {};
+          }
+          return {
+            "data-ychange-type": attributes.type,
+            "data-liveblocks": "",
+            class: `lb-root lb-tiptap-change lb-tiptap-change-${attributes.type}`,
+          };
+        },
+      },
+      color: {
+        default: null,
+        parseHTML: (element) => {
+          return element.getAttribute("ychange_color") ?? null;
+        },
+        renderHTML: () => {
+          // attributes: { color: { light: string; dark: string } | null }
+          return {}; // we don't need this color attribute for now
+        },
+      },
+    };
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ["ychange", HTMLAttributes, 0];
+  },
+});
+
 export const useLiveblocksExtension = (
   opts?: LiveblocksExtensionOptions
 ): Extension => {
@@ -159,14 +215,7 @@ export const useLiveblocksExtension = (
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
-  return Extension.create<
-    never,
-    {
-      unsubs: (() => void)[];
-      doc: Doc;
-      provider: LiveblocksYjsProvider<any, any, any, any, any>;
-    }
-  >({
+  return Extension.create<never, LiveblocksExtensionStorage>({
     name: "liveblocksExtension",
 
     onCreate() {
@@ -187,27 +236,38 @@ export const useLiveblocksExtension = (
         );
       }
       const self = room.getSelf();
-      if (self?.info) {
-        this.editor.commands.updateUser({
-          name: self.info.name,
-          color: self.info.color,
-        });
-      }
-      this.storage.unsubs.push(
-        room.events.self.subscribe(({ info }) => {
-          if (!info) {
-            return;
-          }
-          const { name, color } = info;
-          const { user } = this.storage.provider.awareness.getLocalState() as {
+      const updateUser = ({
+        info,
+        id: userId,
+      }: User<JsonObject, BaseUserMeta>) => {
+        if (!info) {
+          return;
+        }
+        const { user: storedUser } =
+          this.storage.provider.awareness.getLocalState() as {
             user: IUserInfo;
           };
-          // TODO: maybe we need a deep compare here so other info can be provided
-          if (name !== user?.name || color !== user?.color) {
-            this.editor.commands.updateUser({ name, color });
-          }
-        })
-      );
+        this.storage.permanentUserData?.setUserMapping(
+          this.storage.doc,
+          this.storage.doc.clientID,
+          userId ?? "Unknown" // TODO: change this to the user's ID so we can map it to the user's name
+        );
+        if (
+          info.name !== storedUser?.name ||
+          info.color !== storedUser?.color
+        ) {
+          this.editor.commands.updateUser({
+            name: info.name,
+            color: info.color,
+          });
+        }
+      };
+      // if we already have user info, we update the user
+      if (self?.info) {
+        updateUser(self);
+      }
+      // we also listen in case the user info changes
+      this.storage.unsubs.push(room.events.self.subscribe(updateUser));
       if (options.comments) {
         const commentMarkType = getMarkType(
           LIVEBLOCKS_COMMENT_MARK_TYPE,
@@ -261,10 +321,21 @@ export const useLiveblocksExtension = (
     onDestroy() {
       this.storage.unsubs.forEach((unsub) => unsub());
     },
+    addGlobalAttributes() {
+      return [
+        {
+          types: ["paragraph", "heading"],
+          attributes: {
+            ychange: { default: null },
+          },
+        },
+      ];
+    },
     addStorage() {
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
         docMap.set(room.id, doc);
+        pudMap.set(room.id, new PermanentUserData(doc));
         providersMap.set(
           room.id,
           new LiveblocksYjsProvider(room, doc, {
@@ -275,17 +346,22 @@ export const useLiveblocksExtension = (
       return {
         doc: docMap.get(room.id)!,
         provider: providersMap.get(room.id)!,
+        permanentUserData: pudMap.get(room.id)!,
         unsubs: [],
       };
     },
     addExtensions() {
       const extensions: AnyExtension[] = [
+        YChangeMark,
         LiveblocksCollab.configure({
+          ySyncOptions: {
+            permanentUserData: this.storage.permanentUserData,
+          },
           document: this.storage.doc,
           field: options.field,
         }),
         CollaborationCursor.configure({
-          provider: this.storage.provider, //todo change the ! to an assert
+          provider: this.storage.provider,
         }),
       ];
 
@@ -297,6 +373,33 @@ export const useLiveblocksExtension = (
           MentionExtension.configure({
             onCreateMention: createTextMention,
             onDeleteMention: deleteTextMention,
+          })
+        );
+      }
+      if (options.ai) {
+        const resolveContextualPrompt = async ({
+          prompt,
+          context,
+          previous,
+          signal,
+        }: ResolveContextualPromptArgs): Promise<ResolveContextualPromptResponse> => {
+          const result = await room[kInternal].executeContextualPrompt({
+            prompt,
+            context,
+            previous,
+            signal,
+          });
+
+          // This response is validated afterwards by AiExtension itself
+          return JSON.parse(result) as ResolveContextualPromptResponse;
+        };
+
+        extensions.push(
+          AiExtension.configure({
+            resolveContextualPrompt,
+            ...(typeof options.ai === "boolean" ? {} : options.ai),
+            doc: this.storage.doc,
+            pud: this.storage.permanentUserData,
           })
         );
       }
