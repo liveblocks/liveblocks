@@ -44,9 +44,9 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -413,7 +413,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveMentionSuggestions?: (
     args: ResolveMentionSuggestionsArgs
-  ) => OptionalPromise<string[]>;
+  ) => Awaitable<string[]>;
 
   /**
    * A function that returns user info from user IDs.
@@ -421,7 +421,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
   /**
    * A function that returns room info from room IDs.
@@ -429,7 +429,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
-  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
+  ) => Awaitable<(DRI | undefined)[] | undefined>;
 
   /**
    * Prevent the current browser tab from being closed if there are any locally
