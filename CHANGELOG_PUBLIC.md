@@ -15,7 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 6 (2025-02-07)
 
+## Documentation
+
+- [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror) documentation has been published. Use this package for editing Tiptap and ProseMirror documents on the server.
+- [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical) documentation has been improved to match the ProseMirror docs.
+
 ## Contributors
+
+jrowny, ctnicholas
 
 # Week 5 (2025-01-31)
 
