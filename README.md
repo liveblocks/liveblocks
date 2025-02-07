@@ -42,7 +42,7 @@ features which you want to use based on your requirements and the collaborative
 experiences you’re looking to add.
 
 If you have more advanced needs, you can also leverage Liveblocks to
-[host and scale local-first sync engines](/docs/platform/sync-datastore) such as
+[host and scale local-first sync engines](/docs/pages/platform/sync-datastore) such as
 Liveblocks Storage and Yjs.
 
 ### Packages and SDKs
