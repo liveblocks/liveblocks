@@ -7,31 +7,23 @@
   are now taken into account to avoid repeating mentions and replies that are
   still unread but have already been extracted in another email data.
 
-## v2.17.0-rc1
+## v2.17.0
 
 ### `@liveblocks/client`
 
 - Report a console error when a client attempts to send a WebSocket message that
   is >1 MB (which is not supported). Previously the client would silently fail
   in this scenario.
-
 - Added a new client config option `largeMessageStrategy` to allow specifying
   the preferred strategy for dealing with messages that are too large to send
   over WebSockets. There now is a choice between:
-
-  - `default` Don’t send anything, but log the error to the console
+  - `default` Don’t send anything, but log the error to the console.
   - `split` Split the large message up into smaller chunks (at the cost of
     sacrificing atomicity). Thanks @adam-subframe for the contribution!
   - `experimental-fallback-to-http` Send the message over HTTP instead of
-    WebSocket
-
+    WebSocket.
 - Deprecated the `unstable_fallbackToHTTP` experimental flag (please set
   `largeMessageStrategy="experimental-fallback-to-http"` instead).
-
-### `@liveblocks/react-ui`
-
-- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
-  callback.
 
 ### `@liveblocks/react`
 
@@ -42,6 +34,23 @@
 
 - Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
   callback.
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/react-tiptap`
+
+### AI Toolbar (private beta)
+
+This release adds components and utilities to add an AI toolbar to your text
+editor, available in private beta.
+
+- Add `ai` option to `useLiveblocksExtension` to enable (and configure) it.
+- Add `<AiToolbar />` component. (with `<AiToolbar.Suggestion />`,
+  `<AiToolbar.SuggestionsSeparator />`, etc)
+- Add default AI buttons in `Toolbar` and `FloatingToolbar` when the `ai` option
+  is enabled.
+- Add `askAi` Tiptap command to manually open the toolbar, it can also be
+  invoked with a prompt to directly start the request when opening the toolbar.
+  (e.g. `editor.commands.askAi("Explain this text")`)
 
 ## v2.16.2
 

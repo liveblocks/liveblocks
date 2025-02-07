@@ -1,3 +1,5 @@
+export { ArrowCornerDownRightIcon } from "./ArrowCornerDownRight";
+export { ArrowCornerUpRightIcon } from "./ArrowCornerUpRight";
 export { ArrowDownIcon } from "./ArrowDown";
 export { ArrowUpIcon } from "./ArrowUp";
 export { AttachmentIcon } from "./Attachment";
@@ -33,6 +35,7 @@ export { SearchIcon } from "./Search";
 export { SendIcon } from "./Send";
 export { ShortenIcon } from "./Shorten";
 export { SparklesIcon } from "./Sparkles";
+export { SparklesTextIcon } from "./SparklesText";
 export { SpinnerIcon } from "./Spinner";
 export { StrikethroughIcon } from "./Strikethrough";
 export { TextIcon } from "./Text";
