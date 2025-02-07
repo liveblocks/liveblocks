@@ -1,8 +1,8 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   DU,
   IUserInfo,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 
@@ -33,7 +33,7 @@ describe("batch users resolve", () => {
     resolveUsersMock = jest.fn(
       <U extends BaseUserMeta = DU>({
         userIds,
-      }: ResolveUsersArgs): OptionalPromise<
+      }: ResolveUsersArgs): Awaitable<
         (U["info"] | undefined)[] | undefined
       > => {
         const users: (U["info"] | undefined)[] = [];

@@ -277,6 +277,7 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
+export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
@@ -289,7 +290,6 @@ export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { LiveblocksErrorContext } from "./types/LiveblocksError";
 export { LiveblocksError } from "./types/LiveblocksError";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-export type { OptionalPromise } from "./types/OptionalPromise";
 export type { OthersEvent } from "./types/Others";
 export { TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";
