@@ -20,21 +20,31 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 ### `@liveblocks/client`
 
 - Report a console error when a client attempts to send a WebSocket message that is >1 MB (which is not supported). Previously the client would silently fail in this scenario.
-
 - Added a new client config option `largeMessageStrategy` to allow specifying the preferred strategy for dealing with messages that are too large to send over WebSockets. There now is a choice between:
-  - `default` Don’t send anything, but log the error to the console.
-  - `split` Split the large message up into smaller chunks (at the cost of sacrificing atomicity). Thank you [@adam-subframe](https://github.com/adam-subframe)!
-  - `experimental-fallback-to-http` Send the message over HTTP instead of WebSocket.
-
+  - `default` Don’t send anything, but log the error to the console
+  - `split` Split the large message up into smaller chunks (at the cost of sacrificing atomicity). Thanks @adam-subframe for the contribution!
+  - `experimental-fallback-to-http` Send the message over HTTP instead of WebSocket
 - Deprecated the `unstable_fallbackToHTTP` experimental flag (please set `largeMessageStrategy="experimental-fallback-to-http"` instead).
+
+### `@liveblocks/react-ui`
+
+- Fix crash when a `Composer` is unmounted during its `onComposerSubmit` callback.
+- Add new icons to `<Icon.* />`.
 
 ### `@liveblocks/react`
 
 - Added `<LiveblocksProvider largeMessageStrategy="..." />` prop to LiveblocksProvider. See above for possible options.
 
-### `@liveblocks/react-ui`
+### `@liveblocks/react-tiptap`
 
-- Fix crash when a `Composer` is unmounted during its `onComposerSubmit` callback.
+### AI Toolbar (private beta)
+
+This release adds components and utilities to add an AI toolbar to your text editor, available in private beta.
+
+- Add `ai` option to `useLiveblocksExtension` to enable (and configure) it.
+- Add `<AiToolbar />` component. (with `<AiToolbar.Suggestion />`, `<AiToolbar.SuggestionsSeparator />`, etc)
+- Add default AI buttons in `Toolbar` and `FloatingToolbar` when the `ai` option is enabled.
+- Add `askAi` Tiptap command to manually open the toolbar, it can also be invoked with a prompt to directly start the request when opening the toolbar. (e.g. `editor.commands.askAi("Explain this text")`)
 
 ## Documentation
 
