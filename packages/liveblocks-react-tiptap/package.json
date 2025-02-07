@@ -52,6 +52,7 @@
     "@tiptap/core": "^2.7.2",
     "@tiptap/react": "^2.7.2",
     "@tiptap/suggestion": "^2.7.2",
+    "cmdk": "^1.0.4",
     "y-prosemirror": "^1.2.12",
     "yjs": "^13.6.18"
   },

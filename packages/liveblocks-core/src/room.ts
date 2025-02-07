@@ -37,6 +37,10 @@ import {
   raise,
   tryParseJson,
 } from "./lib/utils";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -1045,6 +1049,16 @@ export type PrivateRoomApi = {
   getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<void>;
 
+  executeContextualPrompt(options: {
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }): Promise<string>;
+
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
@@ -1609,6 +1623,21 @@ export function createRoom<
 
   async function createTextVersion() {
     return httpClient.createTextVersion({ roomId });
+  }
+
+  async function executeContextualPrompt(options: {
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }) {
+    return httpClient.executeContextualPrompt({
+      roomId,
+      ...options,
+    });
   }
 
   /**
@@ -3030,6 +3059,8 @@ export function createRoom<
         getTextVersion,
         // create a version
         createTextVersion,
+        // execute a contextual prompt
+        executeContextualPrompt,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.get(),

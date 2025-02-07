@@ -47,6 +47,7 @@ export class LiveblocksYjsProvider<
   private rootDoc: Y.Doc;
   private options: ProviderOptions;
   private indexeddbProvider: IndexeddbPersistence | null = null;
+  private isPaused = false;
 
   private unsubscribers: Array<() => void> = [];
 
@@ -136,15 +137,7 @@ export class LiveblocksYjsProvider<
     );
 
     if (options.offlineSupport_experimental) {
-      this.indexeddbProvider = new IndexeddbPersistence(room.id, this.rootDoc);
-      const onIndexedDbSync = () => {
-        this.rootDocHandler.synced = true;
-      };
-      this.indexeddbProvider.on("synced", onIndexedDbSync);
-
-      this.unsubscribers.push(() => {
-        this.indexeddbProvider?.off("synced", onIndexedDbSync);
-      });
+      this.setupOfflineSupport();
     }
 
     // different consumers listen to sync and synced
@@ -160,6 +153,21 @@ export class LiveblocksYjsProvider<
     this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
   }
+
+  private setupOfflineSupport = () => {
+    this.indexeddbProvider = new IndexeddbPersistence(
+      this.room.id,
+      this.rootDoc
+    );
+    const onIndexedDbSync = () => {
+      this.rootDocHandler.synced = true;
+    };
+    this.indexeddbProvider.on("synced", onIndexedDbSync);
+
+    this.unsubscribers.push(() => {
+      this.indexeddbProvider?.off("synced", onIndexedDbSync);
+    });
+  };
 
   private handleSubdocs = ({
     loaded,
@@ -194,7 +202,7 @@ export class LiveblocksYjsProvider<
 
   private updateDoc = (update: Uint8Array, guid?: string) => {
     const canWrite = this.room.getSelf()?.canWrite ?? true;
-    if (canWrite) {
+    if (canWrite && !this.isPaused) {
       const updateId = this.getUniqueUpdateId(update);
       this.pending.push(updateId);
       this.room.updateYDoc(
@@ -252,6 +260,20 @@ export class LiveblocksYjsProvider<
   // The sync'd property is required by some provider implementations
   get synced(): boolean {
     return this.rootDocHandler.synced;
+  }
+
+  async pause(): Promise<void> {
+    await this.indexeddbProvider?.destroy();
+    this.indexeddbProvider = null;
+    this.isPaused = true;
+  }
+
+  unpause(): void {
+    this.isPaused = false;
+    if (this.options.offlineSupport_experimental) {
+      this.setupOfflineSupport();
+    }
+    this.rootDocHandler.syncDoc();
   }
 
   public getStatus(): YjsSyncStatus {
