@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Collaborative Rich Text Editor (TipTap)
+# Collaborative Rich Text Editor with AI (Tiptap)
 
 <p>
   <a href="https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap-ai">
@@ -21,11 +21,23 @@
   <img src="https://img.shields.io/badge/TipTap-message?style=flat&color=7bf" alt="TipTap" />
 </p>
 
-This example shows how to build a collaborative text editor with AI features using [Liveblocks](https://liveblocks.io), [TipTap](https://tiptap.dev/), and [Next.js](https://nextjs.org/).
+This example shows how to build a collaborative text editor with AI features using [Liveblocks](https://liveblocks.io), [Tiptap](https://tiptap.dev/), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and synced—allowing for an editor that updates in real-time across clients. Users will also be able to see who see each other’s cursors in the document.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
+
+## Getting started
+
+Set up this project manually:
+
+- Install all dependencies with `npm install`
+- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
+- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+
+<!-- TODO: use this getting started guide after example merged to website
 
 ## Getting started
 
@@ -78,3 +90,5 @@ This will download the example and ask permission to open your browser, enabling
 After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap-ai) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
 
 </details>
+
+-->
