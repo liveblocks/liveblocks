@@ -41,9 +41,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror) documentation has been published. Use this package for editing Tiptap and ProseMirror documents on the server.
 - [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical) documentation has been improved to match the ProseMirror docs.
 
+## Website
+
+- New blog post: [Which rich text editor framework should you choose in 2025?](https://liveblocks.io/blog/which-rich-text-editor-framework-should-you-choose-in-2025).
+
 ## Contributors
 
-jrowny, ctnicholas, nvie, marcbouchenoire
+jrowny, ctnicholas, nvie, marcbouchenoire, sugardarius
 
 # Week 5 (2025-01-31)
 
