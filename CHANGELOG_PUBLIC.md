@@ -23,7 +23,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Added a new client config option `largeMessageStrategy` to allow specifying the preferred strategy for dealing with messages that are too large to send over WebSockets. There now is a choice between:
   - `default` Don’t send anything, but log the error to the console
-  - `split` Split the large message up into smaller chunks (at the cost of sacrificing atomicity). Thanks @adam-subframe for the contribution!
+  - `split` Split the large message up into smaller chunks (at the cost of sacrificing atomicity). Thank you [@adam-subframe](https://github.com/adam-subframe)!
   - `experimental-fallback-to-http` Send the message over HTTP instead of WebSocket
 
 - Deprecated the `unstable_fallbackToHTTP` experimental flag (please set `largeMessageStrategy="experimental-fallback-to-http"` instead).
@@ -47,7 +47,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-jrowny, ctnicholas, nvie, marcbouchenoire, sugardarius
+jrowny, ctnicholas, nvie, marcbouchenoire, sugardarius, adam-subframe
 
 # Week 5 (2025-01-31)
 
@@ -59,7 +59,7 @@ jrowny, ctnicholas, nvie, marcbouchenoire, sugardarius
 
 ### `@liveblocks/zustand`
 
-- Fix bug in Zustand typing in case the multi-argument form of `set()` is used.
+- Fix bug in Zustand typing in case the multi-argument form of `set()` is used. Thank you [@hans-lizihan](https://github.com/hans-lizihan)!
 
 ## Website
 
