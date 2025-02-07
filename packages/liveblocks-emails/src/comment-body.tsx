@@ -1,11 +1,11 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   CommentBody,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyText,
   DU,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -147,7 +147,7 @@ export type ConvertCommentBodyAsReactOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 /**
@@ -281,7 +281,7 @@ export type ConvertCommentBodyAsHtmlOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 /**
