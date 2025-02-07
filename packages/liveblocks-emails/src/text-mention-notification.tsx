@@ -1,8 +1,8 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   DRI,
   DU,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
@@ -163,9 +163,7 @@ type PrepareTextMentionNotificationEmailBaseDataOptions = {
   /**
    * A function that returns room info from room IDs.
    */
-  resolveRoomInfo?: (
-    args: ResolveRoomInfoArgs
-  ) => OptionalPromise<DRI | undefined>;
+  resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 };
 
 export type TextMentionNotificationEmailBaseData = {
@@ -253,7 +251,7 @@ export type PrepareTextMentionNotificationEmailAsReactOptions<
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
   /**
    * The components used to customize the resulting React nodes. Each components has
@@ -364,7 +362,7 @@ export type PrepareTextMentionNotificationEmailAsHtmlOptions<
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
   /**
    * The styles used to customize the html elements in the resulting html safe string.

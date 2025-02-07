@@ -1,7 +1,7 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   DU,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import { Promise_withResolvers } from "@liveblocks/core";
@@ -10,7 +10,7 @@ import { createDevelopmentWarning } from "./warning";
 
 type ResolveUserOptionalPromise<U extends BaseUserMeta> = (
   args: ResolveUsersArgs
-) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
 /**
  * Batch calls to `resolveUsers` to one and only call.
@@ -99,7 +99,7 @@ export function createBatchUsersResolver<U extends BaseUserMeta = DU>({
 }: {
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   callerName: string;
 }): CreateBatchUsersResolverReturnType<U> {
   const warnIfNoResolveUsers = createDevelopmentWarning(
