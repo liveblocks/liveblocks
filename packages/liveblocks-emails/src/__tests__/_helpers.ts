@@ -1,4 +1,5 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   CommentBody,
   CommentData,
@@ -7,7 +8,6 @@ import type {
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
-  OptionalPromise,
   ResolveUsersArgs,
   ThreadData,
 } from "@liveblocks/core";
@@ -274,9 +274,7 @@ export const makeThreadNotificationEvent = ({
 
 export const resolveUsers = <U extends BaseUserMeta = DU>({
   userIds,
-}: ResolveUsersArgs): OptionalPromise<
-  (U["info"] | undefined)[] | undefined
-> => {
+}: ResolveUsersArgs): Awaitable<(U["info"] | undefined)[] | undefined> => {
   const users: (U["info"] | undefined)[] = [];
 
   for (const userId of userIds) {
@@ -295,7 +293,7 @@ export const RESOLVED_ROOM_INFO_TEST: DRI = {
 };
 export const getResolvedCommentUrl = (commentId: string): string =>
   `https://resend.com/#${commentId}`;
-export const resolveRoomInfo = (): OptionalPromise<DRI | undefined> => {
+export const resolveRoomInfo = (): Awaitable<DRI | undefined> => {
   return RESOLVED_ROOM_INFO_TEST;
 };
 

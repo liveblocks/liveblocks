@@ -1,4 +1,5 @@
 import type {
+  Awaitable,
   BaseRoomInfo,
   BaseUserMeta,
   CommentBody,
@@ -6,7 +7,6 @@ import type {
   DRI,
   DU,
   InboxNotificationData,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -170,9 +170,7 @@ type PrepareThreadNotificationEmailBaseDataOptions = {
   /**
    * A function that returns room info from room IDs.
    */
-  resolveRoomInfo?: (
-    args: ResolveRoomInfoArgs
-  ) => OptionalPromise<DRI | undefined>;
+  resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 };
 
 export type ThreadNotificationEmailBaseData = (
@@ -302,7 +300,7 @@ export type PrepareThreadNotificationEmailAsHtmlOptions<
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   /**
    * The styles used to customize the html elements in the resulting html safe string inside a comment body.
    * Each styles has priority over the base styles inherited.
@@ -453,7 +451,7 @@ export type PrepareThreadNotificationEmailAsReactOptions<
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   /**
    * The components used to customize the resulting React nodes inside a comment body.
    * Each components has priority over the base components inherited internally defined.

@@ -5,14 +5,13 @@
  * and then convert them more easily as React or as html.
  */
 
-import {
-  type BaseUserMeta,
-  type DU,
-  html,
-  htmlSafe,
-  type OptionalPromise,
-  type ResolveUsersArgs,
+import type {
+  Awaitable,
+  BaseUserMeta,
+  DU,
+  ResolveUsersArgs,
 } from "@liveblocks/core";
+import { html, htmlSafe } from "@liveblocks/core";
 import type { ComponentType, ReactNode } from "react";
 
 import type {
@@ -278,7 +277,7 @@ const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
   nodes: LiveblocksTextEditorNode[],
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>
 ): Promise<Map<string, U["info"]>> => {
   const resolvedUsers = new Map<string, U["info"]>();
   if (!resolveUsers) {
@@ -396,7 +395,7 @@ export type ConvertTextEditorNodesAsReactOptions<U extends BaseUserMeta = DU> =
      */
     resolveUsers?: (
       args: ResolveUsersArgs
-    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+    ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   };
 
 /**
@@ -493,7 +492,7 @@ export type ConvertTextEditorNodesAsHtmlOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 /**

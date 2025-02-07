@@ -12,7 +12,7 @@ import type {
   CommentBodyParagraph,
   CommentBodyText,
 } from "../protocol/Comments";
-import type { OptionalPromise } from "../types/OptionalPromise";
+import type { Awaitable } from "../types/Awaitable";
 
 type CommentBodyBlockElementName = Exclude<
   CommentBodyBlockElement,
@@ -131,7 +131,7 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 export function isCommentBodyParagraph(
@@ -238,7 +238,7 @@ export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>
 ): Promise<Map<string, U["info"]>> {
   const resolvedUsers = new Map<string, U["info"]>();
 
