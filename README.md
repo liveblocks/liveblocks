@@ -33,16 +33,16 @@ and AI‑ready. All without derailing your roadmap.**
 
 Liveblocks provides ready‑to‑use features through customizable pre‑built
 components that can easily be dropped into your product to boost growth:
-[Comments](/docs/ready-made-features/comments),
-[Text Editor](/docs/ready-made-features/text-editor),
-[AI Copilots](/docs/ready-made-features/ai-copilots),
-[Presence](/docs/ready-made-features/presence), and
-[Notifications](/docs/ready-made-features/notifications). You can decide
+[Comments](https://liveblocks.io/docs/ready-made-features/comments),
+[Text Editor](https://liveblocks.io/docs/ready-made-features/text-editor),
+[AI Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots),
+[Presence](https://liveblocks.io/docs/ready-made-features/presence), and
+[Notifications](https://liveblocks.io/docs/ready-made-features/notifications). You can decide
 features which you want to use based on your requirements and the collaborative
 experiences you’re looking to add.
 
 If you have more advanced needs, you can also leverage Liveblocks to
-[host and scale local-first sync engines](/docs/platform/sync-datastore) such as
+[host and scale local-first sync engines](https://liveblocks.io/docs/platform/sync-datastore) such as
 Liveblocks Storage and Yjs.
 
 ### Packages and SDKs
