@@ -18,5 +18,7 @@ function mergeRefs<T>(value: T, ...refs: Ref<T>[]) {
 }
 
 export function useRefs<T>(...refs: Ref<T>[]): RefCallback<T> {
-  return useCallback((value: T) => mergeRefs(value, ...refs), [refs]);
+  // We want to compare the individual refs themselves, not the surrounding array
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useCallback((value: T) => mergeRefs(value, ...refs), refs);
 }
