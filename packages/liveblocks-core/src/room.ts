@@ -3099,6 +3099,7 @@ export function createRoom<
       destroy: () => {
         eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
+        syncSourceForStorage.destroy();
         syncSourceForYjs.destroy();
         uninstallBgTabSpy();
         managedSocket.destroy();

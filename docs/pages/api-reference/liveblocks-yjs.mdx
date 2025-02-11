@@ -36,31 +36,19 @@ const yDoc = new Y.Doc();
 const yProvider = new LiveblocksYjsProvider(room, yDoc);
 ```
 
-When using [`@liveblocks/react`][] you can connect by using
-`LiveblocksYjsProvider` within an effect, taking the room from [`useRoom`][],
-and cleaning up afterwards.
+When using [`@liveblocks/react`][] it's best to use the `getYjsProviderForRoom`
+factory function which will be automatically clean up the provider when the room
+is destroyed or changed.
 
-```ts highlight="7,10-12"
+```ts highlight="7"
 import { useEffect } from "react";
 import * as Y from "yjs";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useRoom } from "../liveblocks.config.ts";
 
 function Component() {
   const room = useRoom();
-
-  useEffect(() => {
-    // Create Yjs document and provider
-    const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksYjsProvider(room, yDoc);
-
-    // ...
-
-    return () => {
-      yDoc.destroy();
-      yProvider.destroy();
-    };
-  }, [room]);
+  const provider = getYjsProviderForRoom(room);
 
   // ...
 }
@@ -69,7 +57,8 @@ function Component() {
 ### LiveblocksYjsProvider Options [#LiveblocksYjsProvider.options]
 
 There are a few options you can pass as a third argument into the
-LiveblocksYjsProvider:
+LiveblocksYjsProvider, or the second argument of the `getYjsProviderForRoom`
+factory function:
 
 <PropertiesList title="Constructor options">
   <PropertiesListItem
@@ -78,6 +67,14 @@ LiveblocksYjsProvider:
     defaultValue="false"
   >
     This option will load subdocs automatically.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="enablePermanentUserData"
+    type="boolean"
+    defaultValue="false"
+  >
+    This option enables yjs permanent user data class used by some libraries for
+    tracking changes by author.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -408,3 +405,18 @@ awareness.emit("destroy", true);
 [`Awareness.off("destroyed")`]: #Awareness.off.destroyed
 [`Awareness.once("destroyed")`]: #Awareness.once.destroyed
 [`Awareness.emit("destroyed")`]: #Awareness.emit.destroyed
+
+## getYjsProviderForRoom [#getYjsProviderForRoom]
+
+Factory function to get a LiveblocksYjsProvider for a room. This provider will
+automatically be cleaned up when the room is destroyed, so you don't ahve to
+destroy the provider manually. The second argument is the LiveblocksYjsProvider
+options.
+
+```ts
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+const provider = getYjsProviderForRoom(room, {
+  enablePermanentUserData: true,
+});
+```
