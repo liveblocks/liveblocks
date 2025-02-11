@@ -661,6 +661,13 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
+
+    /**
+     * Called right before the room is destroyed. The event cannot be used to
+     * prevent the room from being destroyed, only to be informed that this is
+     * imminent.
+     */
+    readonly roomWillDestroy: Observable<void>;
   };
 
   /**
@@ -1589,6 +1596,7 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
+    roomWillDestroy: makeEventSource<void>(),
   };
 
   const roomId = config.roomId;
@@ -2828,6 +2836,7 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
 
     comments: eventHub.comments.observable,
+    roomWillDestroy: eventHub.roomWillDestroy.observable,
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
@@ -3088,11 +3097,16 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
-        syncSourceForStorage.destroy();
+        eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
         syncSourceForYjs.destroy();
         uninstallBgTabSpy();
         managedSocket.destroy();
+
+        // Unregister all registered callbacks
+        for (const source of Object.values(eventHub)) {
+          source[Symbol.dispose]();
+        }
       },
 
       // Presence

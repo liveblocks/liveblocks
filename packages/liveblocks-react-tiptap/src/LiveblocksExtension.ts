@@ -342,10 +342,12 @@ export const useLiveblocksExtension = (
         const doc = new Doc();
         docMap.set(room, doc);
         pudMap.set(room, new PermanentUserData(doc));
-        provider = new LiveblocksYjsProvider(room, doc, {
+        const newProvider = new LiveblocksYjsProvider(room, doc, {
           offlineSupport_experimental: options.offlineSupport_experimental,
         });
-        providersMap.set(room, provider);
+        room.events.roomWillDestroy.subscribeOnce(() => newProvider.destroy());
+        providersMap.set(room, newProvider);
+        provider = newProvider;
       }
       return {
         doc: docMap.get(room)!,
