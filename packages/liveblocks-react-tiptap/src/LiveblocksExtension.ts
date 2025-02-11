@@ -338,7 +338,7 @@ export const useLiveblocksExtension = (
       with liveblocks yjs state. In this instance, we can just check if the room has changed, because the instance
       from useRoom will be shallowly equal to the previous instance.
       */
-      const provider = providersMap.get(room.id)!;
+      let provider = providersMap.get(room.id)!;
       if (provider && provider.room !== room) {
         // The room has changed, destroy the old provider, so a new one can be made
         provider.destroy();
@@ -348,12 +348,10 @@ export const useLiveblocksExtension = (
         const doc = new Doc();
         docMap.set(room.id, doc);
         pudMap.set(room.id, new PermanentUserData(doc));
-        providersMap.set(
-          room.id,
-          new LiveblocksYjsProvider(room, doc, {
-            offlineSupport_experimental: options.offlineSupport_experimental,
-          })
-        );
+        provider = new LiveblocksYjsProvider(room, doc, {
+          offlineSupport_experimental: options.offlineSupport_experimental,
+        });
+        providersMap.set(room.id, provider);
       }
       return {
         doc: docMap.get(room.id)!,
