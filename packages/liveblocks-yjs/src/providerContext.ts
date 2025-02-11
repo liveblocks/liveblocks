@@ -15,7 +15,6 @@ const providersMap = new WeakMap<OpaqueRoom, LiveblocksYjsProvider>();
  * Get a LiveblocksYjsProvider for a room.
  * @param room - The room to get the provider for.
  * @param options - The options for the provider.
- * @param initialDoc - The initial document to use for the provider, if not provided, a new document will be created.
  * @returns A LiveblocksYjsProvider for the room.
  */
 const getYjsProviderForRoom = (
