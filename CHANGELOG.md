@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.18.0
+
 Introducing user notification settings. You can now create beautiful user
 notification settings pages into your app.
 
