@@ -2,6 +2,7 @@ import type {
   BaseUserMeta,
   IUserInfo,
   JsonObject,
+  OpaqueRoom,
   User,
 } from "@liveblocks/core";
 import { kInternal, TextEditorType } from "@liveblocks/core";
@@ -33,16 +34,14 @@ import type {
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
-const providersMap = new Map<
-  string,
+const providersMap = new WeakMap<
+  OpaqueRoom,
   LiveblocksYjsProvider<any, any, any, any, any>
 >();
-
-const docMap = new Map<string, Doc>();
+const docMap = new WeakMap<OpaqueRoom, Doc>();
+const pudMap = new WeakMap<OpaqueRoom, PermanentUserData>();
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
-
-const pudMap = new Map<string, PermanentUserData>();
 
 const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
@@ -338,25 +337,20 @@ export const useLiveblocksExtension = (
       with liveblocks yjs state. In this instance, we can just check if the room has changed, because the instance
       from useRoom will be shallowly equal to the previous instance.
       */
-      let provider = providersMap.get(room.id);
-      if (provider && provider.room !== room) {
-        // The room has changed, destroy the old provider, so a new one can be made
-        provider.destroy();
-        providersMap.delete(room.id);
-      }
-      if (!provider || !providersMap.has(room.id)) {
+      let provider = providersMap.get(room);
+      if (provider === undefined) {
         const doc = new Doc();
-        docMap.set(room.id, doc);
-        pudMap.set(room.id, new PermanentUserData(doc));
+        docMap.set(room, doc);
+        pudMap.set(room, new PermanentUserData(doc));
         provider = new LiveblocksYjsProvider(room, doc, {
           offlineSupport_experimental: options.offlineSupport_experimental,
         });
-        providersMap.set(room.id, provider);
+        providersMap.set(room, provider);
       }
       return {
-        doc: docMap.get(room.id)!,
+        doc: docMap.get(room)!,
         provider,
-        permanentUserData: pudMap.get(room.id)!,
+        permanentUserData: pudMap.get(room)!,
         unsubs: [],
       };
     },

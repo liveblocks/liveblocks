@@ -43,18 +43,18 @@ export class LiveblocksYjsProvider<
   extends Observable<unknown>
   implements IYjsProvider
 {
-  public room: Room<P, S, U, E, M>;
-  private rootDoc: Y.Doc;
-  private options: ProviderOptions;
+  private readonly room: Room<P, S, U, E, M>;
+  private readonly rootDoc: Y.Doc;
+  private readonly options: ProviderOptions;
   private indexeddbProvider: IndexeddbPersistence | null = null;
   private isPaused = false;
 
-  private unsubscribers: Array<() => void> = [];
+  private readonly unsubscribers: Array<() => void> = [];
 
-  public awareness: Awareness<P, S, U, E, M>;
+  public readonly awareness: Awareness<P, S, U, E, M>;
 
-  public rootDocHandler: yDocHandler;
-  public subdocHandlers: Map<string, yDocHandler> = new Map();
+  public readonly rootDocHandler: yDocHandler;
+  public readonly subdocHandlers: Map<string, yDocHandler> = new Map();
 
   private pending: string[] = [];
 
