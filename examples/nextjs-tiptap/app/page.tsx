@@ -15,10 +15,6 @@ import { useState } from "react";
 
 export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap");
-  const [toggle, setToggle] = useState<"" | "1">("");
-  const toggleRoom = () => {
-    setToggle((prev) => (prev === "" ? "1" : ""));
-  };
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
@@ -48,10 +44,8 @@ export default function Page() {
         return userIds;
       }}
     >
-      <button onClick={toggleRoom}>Toggle Room: {roomId + toggle}</button>
       <RoomProvider
-        key={roomId + toggle}
-        id={roomId + toggle}
+        id={roomId}
         initialPresence={{
           cursor: null,
         }}
