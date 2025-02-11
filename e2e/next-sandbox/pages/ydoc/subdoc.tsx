@@ -54,7 +54,7 @@ function Sandbox() {
       autoloadSubdocs: false,
     });
     doc.on("subdocs", updateSubdocContent);
-    setProvider(provider);
+    setProvider(provider as LiveblocksYjsProvider<never, never, never, never, never>);
     provider.on("sync", () => {
       setSynced(true);
     });

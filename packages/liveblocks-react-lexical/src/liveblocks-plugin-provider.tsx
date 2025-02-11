@@ -61,7 +61,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => {};
+      if (provider === undefined) return () => { };
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -94,7 +94,7 @@ export function useIsEditorReady(): boolean {
 
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (yjsProvider === undefined) return () => {};
+      if (yjsProvider === undefined) return () => { };
       yjsProvider.on("status", callback);
       return () => {
         yjsProvider.off("status", callback);
@@ -218,7 +218,7 @@ export const LiveblocksPlugin = ({
         doc = new Doc();
         const provider = new LiveblocksYjsProvider(room, doc);
         yjsDocMap.set(id, doc);
-        providersMap.set(id, provider);
+        providersMap.set(id, provider as LiveblocksYjsProvider<never, never, never, never, never>);
       }
 
       return nn(
