@@ -16,10 +16,10 @@ by a `$`) on `email`, `Slack`, `Microsoft Teams` and `Web Push` channels.
 
 #### Notification settings in the dashboard
 
-You can choose from our dashboard to enable or disable notification kinds on
-every channels you want to use in your app. It means our internal notification
-system on our infrastructure will decide to send or not an event on your
-webhook.
+You can choose from our new notifications dashboard page to enable or disable
+notification kinds on every channels you want to use in your app. It means our
+internal notification system on our infrastructure will decide to send or not an
+event on your webhook.
 
 ### `@liveblocks/client`
 
