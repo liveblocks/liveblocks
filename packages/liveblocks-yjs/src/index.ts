@@ -43,7 +43,7 @@ export class LiveblocksYjsProvider<
   extends Observable<unknown>
   implements IYjsProvider
 {
-  private room: Room<P, S, U, E, M>;
+  public room: Room<P, S, U, E, M>;
   private rootDoc: Y.Doc;
   private options: ProviderOptions;
   private indexeddbProvider: IndexeddbPersistence | null = null;

@@ -332,6 +332,18 @@ export const useLiveblocksExtension = (
       ];
     },
     addStorage() {
+      /* NOTE:
+      the purpose of the providersMap is to keep the same provider alive across renders
+      re-instantiating the provider when the room hasn't changed can cause the yjs doc state to be out of sync
+      with liveblocks yjs state. In this instance, we can just check if the room has changed, because the instance
+      from useRoom will be shallowly equal to the previous instance.
+      */
+      const provider = providersMap.get(room.id)!;
+      if (provider && provider.room !== room) {
+        // The room has changed, destroy the old provider, so a new one can be made
+        provider.destroy();
+        providersMap.delete(room.id);
+      }
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
         docMap.set(room.id, doc);
@@ -345,7 +357,7 @@ export const useLiveblocksExtension = (
       }
       return {
         doc: docMap.get(room.id)!,
-        provider: providersMap.get(room.id)!,
+        provider,
         permanentUserData: pudMap.get(room.id)!,
         unsubs: [],
       };
