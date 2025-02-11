@@ -2,7 +2,6 @@ import type {
   BaseUserMeta,
   IUserInfo,
   JsonObject,
-  OpaqueRoom,
   User,
 } from "@liveblocks/core";
 import { kInternal, TextEditorType } from "@liveblocks/core";
@@ -14,14 +13,14 @@ import {
   useReportTextEditor,
   useYjsProvider,
 } from "@liveblocks/react/_private";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Doc, PermanentUserData } from "yjs";
 
 import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -33,13 +32,6 @@ import type {
   ResolveContextualPromptResponse,
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
-
-const providersMap = new WeakMap<
-  OpaqueRoom,
-  LiveblocksYjsProvider<any, any, any, any, any>
->();
-const docMap = new WeakMap<OpaqueRoom, Doc>();
-const pudMap = new WeakMap<OpaqueRoom, PermanentUserData>();
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
@@ -239,7 +231,8 @@ export const useLiveblocksExtension = (
         info,
         id: userId,
       }: User<JsonObject, BaseUserMeta>) => {
-        if (!info) {
+        // TODO: we need to check for null awareness because of a bug in the order in which the room/provider is destroyed
+        if (!info || !this.storage.provider.awareness.getLocalState()) {
           return;
         }
         const { user: storedUser } =
@@ -331,28 +324,14 @@ export const useLiveblocksExtension = (
       ];
     },
     addStorage() {
-      /* NOTE:
-      the purpose of the providersMap is to keep the same provider alive across renders
-      re-instantiating the provider when the room hasn't changed can cause the yjs doc state to be out of sync
-      with liveblocks yjs state. In this instance, we can just check if the room has changed, because the instance
-      from useRoom will be shallowly equal to the previous instance.
-      */
-      let provider = providersMap.get(room);
-      if (provider === undefined) {
-        const doc = new Doc();
-        docMap.set(room, doc);
-        pudMap.set(room, new PermanentUserData(doc));
-        const newProvider = new LiveblocksYjsProvider(room, doc, {
-          offlineSupport_experimental: options.offlineSupport_experimental,
-        });
-        room.events.roomWillDestroy.subscribeOnce(() => newProvider.destroy());
-        providersMap.set(room, newProvider);
-        provider = newProvider;
-      }
+      const provider = getYjsProviderForRoom(room, {
+        enablePermanentUserData: true,
+        offlineSupport_experimental: options.offlineSupport_experimental,
+      });
       return {
-        doc: docMap.get(room)!,
+        doc: provider.getYDoc(),
         provider,
-        permanentUserData: pudMap.get(room)!,
+        permanentUserData: provider.permanentUserData!, // TODO: we know this is true because we enabeld the option, is there a way to do that without this override?
         unsubs: [],
       };
     },

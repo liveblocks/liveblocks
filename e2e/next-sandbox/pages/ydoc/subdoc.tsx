@@ -1,4 +1,3 @@
-import type { BaseUserMeta } from "@liveblocks/core";
 import { createRoomContext, useSyncStatus } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -34,7 +33,7 @@ function Sandbox() {
   const syncStatus = useSyncStatus({ smooth: true });
   const [synced, setSynced] = useState(false);
   const [provider, setProvider] =
-    useState<LiveblocksYjsProvider<never, never, BaseUserMeta, never, never>>();
+    useState<LiveblocksYjsProvider>();
   const doc = useMemo(() => new Y.Doc(), []);
 
   const updateSubdocContent = useCallback(() => {
@@ -54,7 +53,7 @@ function Sandbox() {
       autoloadSubdocs: false,
     });
     doc.on("subdocs", updateSubdocContent);
-    setProvider(provider as LiveblocksYjsProvider<never, never, never, never, never>);
+    setProvider(provider);
     provider.on("sync", () => {
       setSynced(true);
     });

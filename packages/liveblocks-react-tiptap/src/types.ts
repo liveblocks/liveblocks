@@ -91,7 +91,7 @@ export type LiveblocksExtensionOptions = {
 export type LiveblocksExtensionStorage = {
   unsubs: (() => void)[];
   doc: Doc;
-  provider: LiveblocksYjsProvider<any, any, any, any, any>;
+  provider: LiveblocksYjsProvider;
   permanentUserData: PermanentUserData;
 };
 

@@ -8,13 +8,17 @@ import {
 } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import Editor from "./tiptap/editor";
+import { useState } from "react";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap");
-
+  const [toggle, setToggle] = useState<"" | "1">("");
+  const toggleRoom = () => {
+    setToggle((prev) => (prev === "" ? "1" : ""));
+  };
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
@@ -44,8 +48,10 @@ export default function Page() {
         return userIds;
       }}
     >
+      <button onClick={toggleRoom}>Toggle Room: {roomId + toggle}</button>
       <RoomProvider
-        id={roomId}
+        key={roomId + toggle}
+        id={roomId + toggle}
         initialPresence={{
           cursor: null,
         }}

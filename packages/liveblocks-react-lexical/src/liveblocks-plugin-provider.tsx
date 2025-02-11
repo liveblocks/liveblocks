@@ -30,7 +30,7 @@ import { useRootElement } from "./use-root-element";
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
 const providersMap = new Map<
   string,
-  LiveblocksYjsProvider<never, never, never, never, never>
+  LiveblocksYjsProvider
 >();
 
 export type EditorStatus =
@@ -218,7 +218,7 @@ export const LiveblocksPlugin = ({
         doc = new Doc();
         const provider = new LiveblocksYjsProvider(room, doc);
         yjsDocMap.set(id, doc);
-        providersMap.set(id, provider as LiveblocksYjsProvider<never, never, never, never, never>);
+        providersMap.set(id, provider);
       }
 
       return nn(
