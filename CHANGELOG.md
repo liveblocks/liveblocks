@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Fix `<Composer />` and `<Comment />` overrides not working when set on
+  `<Thread />`.
+
 ## v2.18.0
 
 Introducing user notification settings. You can now create beautiful user
