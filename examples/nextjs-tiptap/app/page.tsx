@@ -8,13 +8,13 @@ import {
 } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import Editor from "./tiptap/editor";
-import { useState } from "react";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap");
+
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
