@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/emails`
+
+- Update the behavior of `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact`: the contents of previous emails data
+  are now taken into account to avoid repeating mentions and replies that are
+  still unread but have already been extracted in another email data.
+
 ## v2.17.0
 
 ### `@liveblocks/client`
