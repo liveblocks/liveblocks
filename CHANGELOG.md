@@ -23,6 +23,9 @@ event on your webhook.
 
 ### `@liveblocks/client`
 
+We're adding two new methods in our client to get and update user notification
+settings:
+
 ```tsx
 import { createClient } from '@liveblocks/client'
 const client = createClient({ ... })
@@ -40,6 +43,11 @@ const updatedSettings = await client.updateNotificationSettings({
 
 ### `@liveblocks/react`
 
+We're adding a new set of hooks to manage user notification settings.
+
+You can either choose `useNotificationSettings` is your need to get the current
+user notification settings and update them at the same time:
+
 ```tsx
 // A suspense version of this hook is available
 import { useNotificationSettings } from "@liveblocks/react";
@@ -52,13 +60,34 @@ console.log(settings);
 const onSave = () => {
   updateSettings({
     slack: {
-      textMention: false,
+      textMention: true,
+    },
+  });
+};
+```
+
+Or you can choose `useUpdateNotificationSettings` if you just need to update the
+current user notification settings (e.g an unsubscribe button):
+
+```tsx
+// A suspense version of this hook is available
+import { useUpdateNotificationSettings } from "@liveblocks/react";
+
+const updateSettings = useUpdateNotificationSettings();
+
+const onUnsubscribe = () => {
+  updateSettings({
+    slack: {
+      thread: false,
     },
   });
 };
 ```
 
 ### `@liveblocks/node`
+
+Our Node.js client are now exposing three new methods to manage user
+notification settings:
 
 ```tsx
 import { Liveblocks } from "@liveblocks/node";
