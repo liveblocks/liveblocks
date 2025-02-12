@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.18.0
+
 Introducing user notification settings. You can now create beautiful user
 notification settings pages into your app.
 
@@ -14,12 +16,15 @@ by a `$`) on `email`, `Slack`, `Microsoft Teams` and `Web Push` channels.
 
 #### Notification settings in the dashboard
 
-You can choose from our dashboard to enable or disable notification kinds on
-every channels you want to use in your app. It means our internal notification
-system on our infrastructure will decide to send or not an event on your
-webhook.
+You can choose from our new notifications dashboard page to enable or disable
+notification kinds on every channels you want to use in your app. It means our
+internal notification system on our infrastructure will decide to send or not an
+event on your webhook.
 
 ### `@liveblocks/client`
+
+We're adding two new methods in our client to get and update user notification
+settings:
 
 ```tsx
 import { createClient } from '@liveblocks/client'
@@ -38,6 +43,11 @@ const updatedSettings = await client.updateNotificationSettings({
 
 ### `@liveblocks/react`
 
+We're adding a new set of hooks to manage user notification settings.
+
+You can either choose `useNotificationSettings` is your need to get the current
+user notification settings and update them at the same time:
+
 ```tsx
 // A suspense version of this hook is available
 import { useNotificationSettings } from "@liveblocks/react";
@@ -50,13 +60,34 @@ console.log(settings);
 const onSave = () => {
   updateSettings({
     slack: {
-      textMention: false,
+      textMention: true,
+    },
+  });
+};
+```
+
+Or you can choose `useUpdateNotificationSettings` if you just need to update the
+current user notification settings (e.g an unsubscribe button):
+
+```tsx
+// A suspense version of this hook is available
+import { useUpdateNotificationSettings } from "@liveblocks/react";
+
+const updateSettings = useUpdateNotificationSettings();
+
+const onUnsubscribe = () => {
+  updateSettings({
+    slack: {
+      thread: false,
     },
   });
 };
 ```
 
 ### `@liveblocks/node`
+
+Our Node.js client are now exposing three new methods to manage user
+notification settings:
 
 ```tsx
 import { Liveblocks } from "@liveblocks/node";
@@ -77,31 +108,30 @@ const updatedSettings = await liveblocks.updateNotificationSettings({
 await liveblocks.deleteNotificationSettings({ userId });
 ```
 
-## v2.17.0-rc1
+### `@liveblocks/emails`
+
+- Update the behavior of `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact`: the contents of previous emails data
+  are now taken into account to avoid repeating mentions and replies that are
+  still unread but have already been extracted in another email data.
+
+## v2.17.0
 
 ### `@liveblocks/client`
 
 - Report a console error when a client attempts to send a WebSocket message that
   is >1 MB (which is not supported). Previously the client would silently fail
   in this scenario.
-
 - Added a new client config option `largeMessageStrategy` to allow specifying
   the preferred strategy for dealing with messages that are too large to send
   over WebSockets. There now is a choice between:
-
-  - `default` Don’t send anything, but log the error to the console
+  - `default` Don’t send anything, but log the error to the console.
   - `split` Split the large message up into smaller chunks (at the cost of
     sacrificing atomicity). Thanks @adam-subframe for the contribution!
   - `experimental-fallback-to-http` Send the message over HTTP instead of
-    WebSocket
-
+    WebSocket.
 - Deprecated the `unstable_fallbackToHTTP` experimental flag (please set
   `largeMessageStrategy="experimental-fallback-to-http"` instead).
-
-### `@liveblocks/react-ui`
-
-- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
-  callback.
 
 ### `@liveblocks/react`
 
@@ -112,6 +142,23 @@ await liveblocks.deleteNotificationSettings({ userId });
 
 - Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
   callback.
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/react-tiptap`
+
+### AI Toolbar (private beta)
+
+This release adds components and utilities to add an AI toolbar to your text
+editor, available in private beta.
+
+- Add `ai` option to `useLiveblocksExtension` to enable (and configure) it.
+- Add `<AiToolbar />` component. (with `<AiToolbar.Suggestion />`,
+  `<AiToolbar.SuggestionsSeparator />`, etc)
+- Add default AI buttons in `Toolbar` and `FloatingToolbar` when the `ai` option
+  is enabled.
+- Add `askAi` Tiptap command to manually open the toolbar, it can also be
+  invoked with a prompt to directly start the request when opening the toolbar.
+  (e.g. `editor.commands.askAi("Explain this text")`)
 
 ## v2.16.2
 

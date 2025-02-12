@@ -5,7 +5,6 @@ import type {
   CommentData,
   DRI,
   DU,
-  InboxNotificationData,
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
@@ -317,7 +316,7 @@ export const makeUnreadMentionDataset = (): {
   threadId: string;
   comment: CommentData;
   thread: ThreadData;
-  inboxNotification: InboxNotificationData;
+  inboxNotification: InboxNotificationThreadData;
   event: ThreadNotificationEvent;
 } => {
   const threadId = generateThreadId();
@@ -346,7 +345,7 @@ export const makeUnreadRepliesDataset = (): {
   comment1: CommentData;
   comment2: CommentData;
   thread: ThreadData;
-  inboxNotification: InboxNotificationData;
+  inboxNotification: InboxNotificationThreadData;
   event: ThreadNotificationEvent;
 } => {
   const threadId = generateThreadId();

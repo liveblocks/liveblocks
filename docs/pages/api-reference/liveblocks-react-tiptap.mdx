@@ -832,7 +832,7 @@ To learn more about the different components, read more under [`Toolbar`][].
     The vertical position of the floating toolbar.
   </PropertiesListItem>
   <PropertiesListItem name="offset" type="number">
-    The vertical offset of the floating toolbar from the selection.{" "}
+    The vertical offset of the floating toolbar from the selection.
   </PropertiesListItem>
   <PropertiesListItem name="children" type="ReactNode">
     The content of the toolbar, overriding the default content. Use the `before`
@@ -1516,7 +1516,7 @@ offset that’s added when a thread is selected.
   </PropertiesListItem>
 </PropertiesList>
 
-### HistoryVersionPreview
+### HistoryVersionPreview [@badge=beta]
 
 <Banner title="Private beta">
 
@@ -1532,7 +1532,7 @@ logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
 render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 
-#### Usage
+#### Usage [#HistoryVersionPreview-usage]
 
 ```tsx
 import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
@@ -1547,7 +1547,7 @@ function VersionPreview({ selectedVersion, onVersionRestore }) {
 }
 ```
 
-#### Props
+#### Props [#HistoryVersionPreview-props]
 
 <PropertiesList>
   <PropertiesListItem name="version" type="HistoryVersion" required>
@@ -1564,6 +1564,261 @@ function VersionPreview({ selectedVersion, onVersionRestore }) {
 The `HistoryVersionPreview` component renders a read-only view of the specified
 version of the editor content. It also provides a button for users to restore
 the displayed version.
+
+### AiToolbar [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+Displays a floating AI toolbar near the current Tiptap selection, allowing you
+to use AI to apply changes to the document or ask questions about it.
+
+```tsx
+<AiToolbar editor={editor} />
+```
+
+Pass your Tiptap `editor` to use the component, and enable (or customize) the AI
+option in [`useLiveblocksExtension`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  AiToolbar,
+  // +++
+  FloatingToolbar,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    // +++
+    ai: true,
+    // +++
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <AiToolbar editor={editor} />
+      // +++
+      <FloatingToolbar editor={editor} />
+    </div>
+  );
+}
+```
+
+#### Opening the toolbar [#AiToolbar-opening]
+
+To open the `AiToolbar`, you need to call the `askAi`
+[command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks.
+
+```tsx
+import { Editor } from "@tiptap/react";
+
+function Toolbar({ editor }: { editor: Editor | null }) {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={() => {
+        // +++
+        editor.chain().focus().askAi().run();
+        // +++
+      }}
+    >
+      ✨ Ask AI
+    </button>
+  );
+}
+```
+
+You can also pass a prompt to the `askAi` command and it will directly request
+it when opening the toolbar.
+
+```tsx
+<button
+  onClick={() => {
+    // +++
+    editor.chain().focus().askAi("Add emojis to the text").run();
+    // +++
+  }}
+>
+  😃 Emojify
+</button>
+```
+
+#### Customizing suggestions [#AiToolbar-suggestions]
+
+By default, the AI toolbar displays a list of suggestions (e.g. “Fix mistakes”,
+“Explain”, etc). These can be customized via the `suggestions` prop and the
+[`AiToolbar.Suggestion`][] component.
+
+```tsx
+<AiToolbar
+  editor={editor}
+  // +++
+  suggestions={
+    <>
+      <AiToolbar.SuggestionsLabel>Suggested</AiToolbar.SuggestionsLabel>
+      <AiToolbar.Suggestion>Fix mistakes</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion prompt="Add emojis to the text">
+        Emojify
+      </AiToolbar.Suggestion>
+      <AiToolbar.SuggestionsSeparator />
+      <AiToolbar.Suggestion icon={<Icon.Sparkles />}>
+        Continue writing
+      </AiToolbar.Suggestion>
+    </>
+  }
+  // +++
+/>
+```
+
+Doing so will override the default suggestions, instead you can use a function
+to keep them while adding your own.
+
+```tsx
+<AiToolbar
+  editor={editor}
+  // +++
+  suggestions={({ children }) => (
+    <>
+      {children}
+      // +++
+      <AiToolbar.SuggestionsSeparator />
+      <AiToolbar.SuggestionsLabel>Custom</AiToolbar.SuggestionsLabel>
+      <AiToolbar.Suggestion>Custom suggestion</AiToolbar.Suggestion>
+    </>
+  )}
+/>
+```
+
+#### Props [#AiToolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null" required>
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="offset" type="number">
+    The vertical offset of the AI toolbar from the selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="suggestions" type="ReactNode">
+    The prompt suggestions to display below the AI toolbar.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### AiToolbar.Suggestion
+
+A prompt suggestion displayed below the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      // +++
+      <AiToolbar.Suggestion>Fix mistakes</AiToolbar.Suggestion>
+      // +++
+    </>
+  }
+/>;
+```
+
+By default, selecting a suggestion will use its label from the `children` as the
+prompt, this can be overridden with the `prompt` prop. Also optionally takes an
+icon.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// "Translate to French" is displayed in the suggestion and used as the prompt
+<AiToolbar.Suggestion>Translate to French</AiToolbar.Suggestion>
+
+// "Emojify" is displayed in the suggestion but "Add emojis to the text" is used as the prompt
+<AiToolbar.Suggestion prompt="Add emojis to the text">Emojify</AiToolbar.Suggestion>
+
+// Custom icon
+<AiToolbar.Suggestion icon={<div>?</div>}>Explain</AiToolbar.Suggestion>
+
+// Using a Liveblocks icon
+<AiToolbar.Suggestion icon={<Icon.QuestionMark />}>Explain</AiToolbar.Suggestion>
+```
+
+##### Props [#AiToolbarSuggestion-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The suggestion’s label, used as the prompt if the `prompt` prop is not set.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed before the label.
+  </PropertiesListItem>
+  <PropertiesListItem name="prompt" type="string">
+    The prompt to use instead of the label.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### AiToolbar.SuggestionsLabel
+
+A label to describe a group of prompt suggestions displayed in the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      // +++
+      <AiToolbar.SuggestionsLabel>Translation</AiToolbar.SuggestionsLabel>
+      // +++
+      <AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion>Translate in English</AiToolbar.Suggestion>
+    </>
+  }
+/>;
+```
+
+#### AiToolbar.SuggestionsSeparator
+
+A separator between groups of prompt suggestions displayed in the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      <AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion>Translate in English</AiToolbar.Suggestion>
+      // +++
+      <AiToolbar.SuggestionsSeparator />
+      // +++
+      <AiToolbar.Suggestion>Custom suggestion</AiToolbar.Suggestion>
+    </>
+  }
+/>;
+```
 
 ## Hooks
 
@@ -1621,7 +1876,14 @@ function TextEditor() {
     Enable comments in the editor.
   </PropertiesListItem>
   <PropertiesListItem name="mentions" defaultValue="true" type="boolean">
-    Enabled mentions in the editor.
+    Enable mentions in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="ai"
+    defaultValue="false"
+    type="boolean | AiConfiguration"
+  >
+    Enable AI in the editor and optionally customize configuration options.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1773,6 +2035,101 @@ function Threads({ editor }: { editor: Editor }) {
 // +++
 ```
 
+#### Customizing AI components [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+By default, AI components like [`AiToolbar`][] use the term `"AI"`. This can be
+customized with the `ai.name` option in [`useLiveblocksExtension`][]. This value
+will be used throughout the AI components: `"Ask {name}"` in the [`Toolbar`][]/
+[`FloatingToolbar`][] default buttons, `"{name} is thinking…"` in the
+[`AiToolbar`][], etc.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    ai: {
+      // +++
+      // "Ask Liveblocks anything…", "Liveblocks is thinking…", etc
+      name: "Liveblocks",
+      // +++
+    },
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // ...
+}
+```
+
+If you’re after visual customization, AI components like [`AiToolbar`][]
+integrate with the rest of Liveblocks' styles, heavily using tokens like
+`--lb-accent` for example. Learn more about [styling](#Stylesheets).
+
+#### Generating AI toolbar responses [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+By default, the [`AiToolbar`][] component sends its requests to Liveblocks to
+generate its responses. This can be customized via the
+`ai.resolveContextualPrompt` option in [`useLiveblocksExtension`][]. This option
+accepts an async function which will be called by the AI toolbar whenever a
+prompt is requested, it will receive the prompt and some context (the document’s
+and selection’s text, the previous request if it’s a follow-up, etc) and is
+expected to return the type of response and the text to use.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    ai: {
+      // +++
+      resolveContextualPrompt: async ({ prompt, context, signal }) => {
+        const response = await fetch("/api/contextual-prompt", {
+          method: "POST",
+          body: JSON.stringify({ prompt, context }),
+          signal,
+        });
+
+        return response.json();
+      },
+      // +++
+    },
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // ...
+}
+```
+
 ### useIsEditorReady
 
 Used to check if the editor content has been loaded or not, helpful for
@@ -1835,6 +2192,7 @@ learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
+[`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
@@ -1851,4 +2209,8 @@ learn how to do this under
 [`FloatingComposer`]: #FloatingComposer
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
+[`AiToolbar`]: #AiToolbar
+[`AiToolbar.Suggestion`]: #AiToolbar.Suggestion
+[`AiToolbar.SuggestionsLabel`]: #AiToolbar.SuggestionsLabel
+[`AiToolbar.SuggestionsSeparator`]: #AiToolbar.SuggestionsSeparator
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense

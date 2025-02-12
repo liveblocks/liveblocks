@@ -19,6 +19,10 @@ import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
@@ -328,6 +332,22 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
   }): Promise<Response>;
+
+  executeContextualPrompt({
+    roomId,
+    prompt,
+    context,
+    signal,
+  }: {
+    roomId: string;
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }): Promise<string>;
 }
 
 export interface NotificationHttpApi<M extends BaseMetadata> {
@@ -1124,6 +1144,41 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  async function executeContextualPrompt(options: {
+    roomId: string;
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }): Promise<string> {
+    const result = await httpClient.post<{
+      content: { type: "text"; text: string }[];
+    }>(
+      url`/v2/c/rooms/${options.roomId}/ai/contextual-prompt`,
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: options.roomId,
+      }),
+      {
+        prompt: options.prompt,
+        context: {
+          beforeSelection: options.context.beforeSelection,
+          selection: options.context.selection,
+          afterSelection: options.context.afterSelection,
+        },
+        previous: options.previous,
+      },
+      { signal: options.signal }
+    );
+    if (!result || result.content.length === 0) {
+      throw new Error("No content returned from server");
+    }
+    return result.content[0].text;
+  }
+
   async function listTextVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
       versions: DateToString<HistoryVersion>[];
@@ -1493,6 +1548,8 @@ export function createApiClient<M extends BaseMetadata>({
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
+    // AI
+    executeContextualPrompt,
   };
 }
 
