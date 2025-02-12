@@ -30,6 +30,10 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
+import type {
   LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
@@ -260,6 +264,32 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * await client.deleteInboxNotification("in_xxx");
    */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * Gets notifications settings for a user for a project.
+   *
+   * @example
+   * const notificationSettings = await client.getNotificationSettings();
+   */
+  getNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettings>;
+
+  /**
+   * Update notifications settings for a user for a project.
+   *
+   * @example
+   * await client.updateNotificationSettings({
+   *  email: {
+   *    thread: true,
+   *    textMention: false,
+   *    $customKind1: true,
+   *  }
+   * })
+   */
+  updateNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings>;
 };
 
 /**
@@ -822,6 +852,10 @@ export function createClient<U extends BaseUserMeta = DU>(
       markInboxNotificationAsRead: httpClient.markInboxNotificationAsRead,
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
+
+      // Public channel notification settings API
+      getNotificationSettings: httpClient.getUserNotificationSettings,
+      updateNotificationSettings: httpClient.updateUserNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {

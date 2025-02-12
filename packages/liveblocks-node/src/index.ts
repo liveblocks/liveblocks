@@ -40,6 +40,7 @@ export type {
   YDocUpdatedEvent,
 } from "./webhooks";
 export {
+  isCustomNotificationEvent,
   isTextMentionNotificationEvent,
   isThreadNotificationEvent,
   WebhookHandler,
@@ -75,6 +76,7 @@ export type {
 } from "@liveblocks/core";
 export {
   getMentionedIdsFromCommentBody,
+  isNotificationChannelEnabled,
   stringifyCommentBody,
 } from "@liveblocks/core";
 

@@ -3140,7 +3140,9 @@ await client.deleteInboxNotification("in_xxx");
 
 ### Room.getNotificationSettings
 
-Gets the user’s notification settings for the current room.
+Gets the user’s notification settings for the current room. This notates which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
 
 ```ts
 const settings = await room.getNotificationSettings();
@@ -3172,7 +3174,10 @@ const settings = await room.getNotificationSettings();
 
 ### Room.updateNotificationSettings
 
-Updates the user’s notification settings for the current room.
+Updates the user’s notification settings for the current room. Updating this
+setting will change which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
 
 ```ts
 const settings = await room.updateNotificationSettings({
@@ -3215,6 +3220,105 @@ const settings = await room.updateNotificationSettings({
     - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
     - `"none"` No notifications are received.
 
+  </PropertiesListItem>
+</PropertiesList>
+
+### Client.getNotificationSettings [@badge=Beta]
+
+Returns the user’s notification settings in the current project, in other words
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the current user. User notification settings are project-based,
+which means that this returns the current user’s settings for every room.
+
+```ts
+const settings = await client.getNotificationSettings();
+
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+```
+
+A user’s initial settings are `true` for every enabled `kind` in the dashboard.
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="UserNotificationSettings">
+    Current user’s notification settings.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Client.updateNotificationSettings [@badge=Beta]
+
+Updates the current user’s notification settings, which affects which
+[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
+sent for the current user. User notification settings are project-based, which
+means that this modifies the current user’s settings in every room. Each
+notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
+
+```ts
+const settings = await client.updateNotificationSettings({
+  email: { thread: false },
+  slack: { textMention: true },
+});
+
+// { email: { thread: false, ... }, slack: { textMention: true, ... }, ... }
+console.log(settings);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="UserNotificationSettings">
+    Current user’s notification settings.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="settings" type="object" required>
+    A deep partial object containing the user notification settings to
+    update. Custom notifications can be set too.
+
+    <div className="-mt-2">
+    ```js title="Examples" isCollapsable isCollapsed
+    // You only need to pass partials
+    await client.updateNotificationSettings({
+      email: { thread: true },
+    });
+
+    // Enabling a custom notification on the slack channel
+    await client.updateNotificationSettings({
+      slack: { $myCustomNotification: true },
+    });
+
+    // Setting complex settings
+    await client.updateNotificationSettings({
+      email: {
+        thread: true,
+        textMention: false,
+        $newDocument: true,
+      },
+        slack: {
+        thread: false,
+        $fileUpload: false,
+      },
+        teams: {
+        thread: true,
+      },
+    });
+    ```
+    </div>
+
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.email" type="ChannelNotificationSetting">
+    The email notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.slack" type="ChannelNotificationSetting">
+    The slack notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.teams" type="ChannelNotificationSetting">
+    The microsoft teams notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.webPush" type="ChannelNotificationSetting">
+    The web push notification settings.
   </PropertiesListItem>
 </PropertiesList>
 

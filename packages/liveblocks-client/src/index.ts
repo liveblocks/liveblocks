@@ -48,6 +48,9 @@ export type {
   LostConnectionEvent,
   Lson,
   LsonObject,
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
   OthersEvent,
   PlainLsonObject,
   ResolveMentionSuggestionsArgs,
@@ -64,10 +67,12 @@ export type {
   ToImmutable,
   UploadAttachmentOptions,
   User,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 export {
   createClient,
   getMentionedIdsFromCommentBody,
+  isNotificationChannelEnabled,
   LiveblocksError,
   LiveList,
   LiveMap,

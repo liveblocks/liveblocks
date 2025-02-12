@@ -387,5 +387,12 @@
     "technologies": ["react-ui", "nodejs", "lexical", "tiptap"],
     "date": "2024-11-29",
     "featured": true
+  },
+  {
+    "title": "What to check before enabling a new notification kind",
+    "path": "/what-to-check-before-enabling-a-new-notification-kind",
+    "topics": ["notifications", "webhooks"],
+    "technologies": [],
+    "date": "2025-02-05"
   }
 ]

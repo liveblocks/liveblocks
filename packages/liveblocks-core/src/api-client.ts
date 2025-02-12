@@ -47,6 +47,10 @@ import type {
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type {
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -378,6 +382,15 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   deleteAllInboxNotifications(): Promise<void>;
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  // Note: Using term `user` on those two following methods
+  // to avoid confusion with the same methods used in the `RoomHttpApi`.
+  // Let's wait the room subscription renaming to be here.
+  getUserNotificationSettings(): Promise<UserNotificationSettings>;
+
+  updateUserNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1373,6 +1386,40 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * User notifications settings (Project level)
+   * -------------------------------------------------------------------------------------------------
+   *
+   * Note: Using term `user` on those two following methods
+   * to avoid confusion with the same methods used in the `RoomHttpApi`.
+   *
+   * Let's wait the room subscription renaming to be here.
+   */
+  async function getUserNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettings> {
+    return httpClient.get<UserNotificationSettings>(
+      url`/v2/c/notification-settings`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      undefined,
+      { signal: options?.signal }
+    );
+  }
+
+  async function updateUserNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings> {
+    return httpClient.post<UserNotificationSettings>(
+      url`/v2/c/notification-settings`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      settings
+    );
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * User threads
+   * -------------------------------------------------------------------------------------------------
+   */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -1469,10 +1516,10 @@ export function createApiClient<M extends BaseMetadata>({
     removeReaction,
     markThreadAsResolved,
     markThreadAsUnresolved,
-    // Room notifications
     markRoomInboxNotificationAsRead,
-    updateNotificationSettings,
+    // Room notifications
     getNotificationSettings,
+    updateNotificationSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1496,6 +1543,8 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getUserNotificationSettings,
+    updateUserNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
