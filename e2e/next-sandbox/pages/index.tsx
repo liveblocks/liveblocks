@@ -111,6 +111,24 @@ export default function Home() {
             </li>
           </ul>
         </li>
+
+        <li>
+          <div>User Notification Settings</div>
+          <ul>
+            <li>
+              <Link href="/user-notification-settings?room=e2e-user-notif-settings&user=13">
+                Classic (as user 13)
+              </Link>
+            </li>
+          </ul>
+          <ul>
+            <li>
+              <Link href="/user-notification-settings/with-suspense?room=e2e-user-notif-settings-sus&user=13">
+                With suspense (as user 13)
+              </Link>
+            </li>
+          </ul>
+        </li>
         <li>
           <Link href="/notification-settings?room=e2e-notification-settings&user=12">
             Room notification settings

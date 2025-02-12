@@ -1,4 +1,9 @@
-import type { Json, Room, User } from "@liveblocks/client";
+import type {
+  UserNotificationSettings,
+  Json,
+  Room,
+  User,
+} from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
@@ -359,6 +364,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -379,6 +385,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -399,6 +406,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -419,6 +427,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -1145,3 +1154,24 @@ ctx.useOthersListener(({ user, type }) => {
   const status = ctx.suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
+
+// ---------------------------------------------------------
+// the useNotificationSettings() hook
+{
+  const [{ isLoading, error, settings }, update] =
+    lbctx.useNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// the useNotificationSettings() hook suspense
+{
+  const [{ isLoading, error, settings }, update] =
+    lbctx.suspense.useNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// ---------------------------------------------------------

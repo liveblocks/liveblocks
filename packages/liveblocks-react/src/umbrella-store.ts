@@ -12,6 +12,7 @@ import type {
   InboxNotificationDeleteInfo,
   ISignal,
   OpaqueClient,
+  PartialUserNotificationSettings,
   Patchable,
   Permission,
   Resolve,
@@ -19,6 +20,7 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import {
   autoRetry,
@@ -27,6 +29,8 @@ import {
   console,
   DefaultMap,
   DerivedSignal,
+  entries,
+  keys,
   kInternal,
   MutableSignal,
   nanoid,
@@ -48,6 +52,7 @@ import type {
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
   ThreadsQuery,
+  UserNotificationSettingsAsyncResult,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -65,7 +70,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | DeleteInboxNotificationOptimisticUpdate
   | DeleteAllInboxNotificationsOptimisticUpdate
-  | UpdateNotificationSettingsOptimisticUpdate;
+  | UpdateNotificationSettingsOptimisticUpdate
+  | UpdateUserNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
@@ -174,6 +180,13 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   id: string;
   roomId: string;
   settings: Partial<RoomNotificationSettings>;
+};
+
+// Note: Using term `user` to differentiate from `room` notification settings
+type UpdateUserNotificationSettingsOptimisticUpdate = {
+  type: "update-user-notification-settings";
+  id: string;
+  settings: PartialUserNotificationSettings;
 };
 
 type PaginationState = {
@@ -551,6 +564,27 @@ export type CleanThreads<M extends BaseMetadata> = {
   threadsDB: ReadonlyThreadDB<M>;
 };
 
+/**
+ * User notification settings
+ * e.g.
+ *  {
+ *    email: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *    slack: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *  }
+ * e.g. {} when before the first successful fetch.
+ */
+export type BaseUserNotificationSettings =
+  | UserNotificationSettings
+  | Record<string, never>;
+
 export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
@@ -740,6 +774,29 @@ function createStore_forPermissionHints() {
   };
 }
 
+function createStore_forUserNotificationSettings(
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+) {
+  const signal = new Signal<BaseUserNotificationSettings>({});
+
+  function update(settings: UserNotificationSettings) {
+    signal.set((prevSettings) => {
+      return {
+        ...prevSettings,
+        ...settings,
+      };
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(signal, updates, (base, updates) =>
+      applyOptimisticUpdates_forUserNotificationSettings(base, updates)
+    ),
+    // Mutations
+    update,
+  };
+}
+
 function createStore_forOptimistic<M extends BaseMetadata>(
   client: Client<BaseUserMeta, M>
 ) {
@@ -786,15 +843,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   //   Mutate inputs...                                             ...observe clean/consistent output!
   //
-  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID       (Part 1)
+  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID           (Part 1)
   //           /                           |                 |
-  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications       (Part 1)
+  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications           (Part 1)
   //          \                          | |                 | |    & notifications by ID
   //         | \                         | |      Apply      | |
-  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
-  //          \                          |        Updates       |
-  //           `------- etc etc ---------+                      +--> History Versions         (Part 3)
-  //                       ^
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Room Notification Settings   (Part 2)
+  //          \                          |        Updates    |  |
+  //           `------- etc etc ---------+                   |  +--> History Versions             (Part 3)
+  //                       ^                                 |
+  //                       |                                 +-----> User Notification Settings   (Part 4)
+  //                       |
   //                       |
   //                       |                        ^                  ^
   //                    Signal                      |                  |
@@ -814,6 +873,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
+  readonly userNotificationSettings: ReturnType<
+    typeof createStore_forUserNotificationSettings
+  >;
   readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
 
   //
@@ -846,6 +908,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       RoomId,
       LoadableResource<HistoryVersionsAsyncResult>
     >;
+    readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
   };
 
   // Notifications
@@ -860,6 +923,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Room versions
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
+
+  // User Notification Settings
+  #userNotificationSettings: SinglePageResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -881,6 +947,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
         const nextCursor = result.nextCursor;
         return nextCursor;
       }
+    );
+
+    const userNotificationSettingsFetcher = async (): Promise<void> => {
+      const result = await this.#client.getNotificationSettings();
+      this.userNotificationSettings.update(result);
+    };
+
+    this.userNotificationSettings = createStore_forUserNotificationSettings(
+      this.optimisticUpdates.signal
+    );
+
+    this.#userNotificationSettings = new SinglePageResource(
+      userNotificationSettingsFetcher
     );
 
     this.threads = new ThreadDB();
@@ -1121,6 +1200,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
+    const userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult> =
+      {
+        signal: DerivedSignal.from((): UserNotificationSettingsAsyncResult => {
+          const result = this.#userNotificationSettings.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          return ASYNC_OK(
+            "settings",
+            nn(this.userNotificationSettings.signal.get())
+          );
+        }, shallow),
+        waitUntilLoaded: this.#userNotificationSettings.waitUntilLoaded,
+      };
+
     this.outputs = {
       threadifications,
       threads,
@@ -1130,6 +1225,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingNotifications,
       settingsByRoomId,
       versionsByRoomId,
+      userNotificationSettings,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1494,6 +1590,31 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const result = await room.getNotificationSettings({ signal });
     this.roomNotificationSettings.update(roomId, result);
   }
+
+  /**
+   * Refresh User Notification Settings from poller
+   */
+  public async refreshUserNotificationSettings(signal: AbortSignal) {
+    const result = await this.#client.getNotificationSettings({
+      signal,
+    });
+    this.userNotificationSettings.update(result);
+  }
+
+  /**
+   * Updates user notification settings with a new value, replacing the
+   * corresponding optimistic update.
+   */
+  public updateUserNotificationSettings_confirmOptimisticUpdate(
+    settings: UserNotificationSettings,
+    optimisticUpdateId: string
+  ): void {
+    // Batch 1️⃣ + 2️⃣
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
+      this.userNotificationSettings.update(settings); // 2️⃣
+    });
+  }
 }
 
 /**
@@ -1726,6 +1847,54 @@ function applyOptimisticUpdates_forSettings(
     }
   }
   return settingsByRoomId;
+}
+
+/**
+ *
+ * Applies optimistic update to user notification settings
+ * in a stable way. It's a deep update, and remove potential `undefined` properties
+ * from the final output object because we update with a deep partial of `UserNotificationSettings`.
+ *
+ * exported for unit tests only.
+ */
+export function applyOptimisticUpdates_forUserNotificationSettings(
+  baseSettings: BaseUserNotificationSettings,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+): UserNotificationSettings {
+  const outcomingSettings = { ...baseSettings };
+
+  for (const optimisticUpdate of optimisticUpdates) {
+    switch (optimisticUpdate.type) {
+      case "update-user-notification-settings": {
+        const incomingSettings = optimisticUpdate.settings;
+
+        for (const channelKey of keys(incomingSettings)) {
+          const key = channelKey;
+          const channelUpdates = incomingSettings[key];
+
+          if (channelUpdates) {
+            const realChannelUpdates = Object.fromEntries(
+              entries(channelUpdates).filter(
+                ([_, value]) => value !== undefined
+              )
+            );
+
+            outcomingSettings[key] = {
+              ...outcomingSettings[key],
+              ...realChannelUpdates,
+            };
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  /**
+   * Casting to `UserNotificationSettings` because we have removed potential `undefined` properties
+   * And we return a stable object of type `UserNotificationSettings` in the derived signal.
+   */
+  return outcomingSettings as UserNotificationSettings;
 }
 
 /**

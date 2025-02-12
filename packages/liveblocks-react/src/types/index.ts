@@ -28,6 +28,7 @@ import type {
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
+  PartialUserNotificationSettings,
   Patchable,
   QueryMetadata,
   Relax,
@@ -37,6 +38,7 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
 
@@ -167,6 +169,9 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
+
+export type UserNotificationSettingsAsyncResult = AsyncResult<UserNotificationSettings, "settings"> // prettier-ignore
+export type UserNotificationSettingsAsyncSuccess = AsyncSuccess<UserNotificationSettings, "settings">; // prettier-ignore
 
 export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
@@ -1137,6 +1142,28 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 
   /**
+   * Returns notification settings for the current user.
+   *
+   * @example
+   * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
+   */
+  useNotificationSettings(): [
+    UserNotificationSettingsAsyncResult,
+    (settings: PartialUserNotificationSettings) => void,
+  ];
+
+  /**
+   * Returns a function that updates the user's notification
+   * settings for a project.
+   *
+   * @example
+   * const updateNotificationSettings = useUpdateNotificationSettings()
+   */
+  useUpdateNotificationSettings(): (
+    settings: PartialUserNotificationSettings
+  ) => void;
+
+  /**
    * Returns the current Liveblocks sync status, and triggers a re-render
    * whenever it changes. Can be used to render a "Saving..." indicator, or for
    * preventing that a browser tab can be closed until all changes have been
@@ -1199,6 +1226,17 @@ export type LiveblocksContextBundle<
              * const { count } = useUnreadInboxNotificationsCount();
              */
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
+
+            /**
+             * Returns notification settings for the current user.
+             *
+             * @example
+             * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
+             */
+            useNotificationSettings(): [
+              UserNotificationSettingsAsyncResult,
+              (settings: PartialUserNotificationSettings) => void,
+            ];
 
             /**
              * @experimental

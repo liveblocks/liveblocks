@@ -3,6 +3,7 @@ import type {
   CommentUserReaction,
   RoomNotificationSettings,
   ThreadData,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -1372,5 +1373,269 @@ describe("client", () => {
         userId,
       })
     ).resolves.toBeUndefined();
+  });
+
+  test("should get user's notification settings", async () => {
+    const userId = "florent";
+
+    const settings: UserNotificationSettings = {
+      email: {
+        thread: true,
+        textMention: false,
+      },
+      slack: {
+        thread: true,
+        textMention: false,
+      },
+      teams: {
+        thread: true,
+        textMention: false,
+      },
+      webPush: {
+        thread: true,
+        textMention: false,
+      },
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(settings, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(client.getNotificationSettings({ userId })).resolves.toEqual(
+      settings
+    );
+  });
+
+  test("should throw a LiveblocksError when getNotificationSettings receives an error response", async () => {
+    const userId = "dracula";
+    const error = {
+      error: "USER_NOT_FOUND",
+      message: "User not found",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getNotificationSettings({ userId });
+
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should update user's notification settings", async () => {
+    const userId = "nimesh";
+    const settings: UserNotificationSettings = {
+      email: {
+        textMention: false,
+        thread: false,
+      },
+      slack: {
+        thread: false,
+        textMention: false,
+      },
+      teams: {
+        thread: false,
+        textMention: false,
+      },
+      webPush: {
+        thread: false,
+        textMention: false,
+      },
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(settings, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.updateNotificationSettings({ userId, data: settings })
+    ).resolves.toEqual(settings);
+  });
+
+  test("should update user's notification settings partially", async () => {
+    const userId = "adri";
+    const settings: UserNotificationSettings = {
+      email: {
+        textMention: true,
+        thread: true,
+      },
+      slack: {
+        textMention: true,
+        thread: true,
+      },
+      teams: {
+        textMention: true,
+        thread: true,
+      },
+      webPush: {
+        thread: true,
+        textMention: true,
+      },
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(settings, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.updateNotificationSettings({
+        userId,
+        data: {
+          email: { textMention: true },
+        },
+      })
+    ).resolves.toEqual(settings);
+  });
+
+  test("should throw a LiveblocksError when updateNotificationSettings receives an error response", async () => {
+    const userId = "mina";
+    const settings: UserNotificationSettings = {
+      email: {
+        textMention: false,
+        thread: false,
+      },
+      slack: {
+        textMention: false,
+        thread: false,
+      },
+      teams: {
+        textMention: false,
+        thread: false,
+      },
+      webPush: {
+        thread: false,
+        textMention: false,
+      },
+    };
+    const error = {
+      error: "USER_NOT_FOUND",
+      message: "User not found",
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.updateNotificationSettings({
+        userId,
+        data: settings,
+      });
+
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
+
+  test("should delete user's notification settings", async () => {
+    const userId = "adri";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteNotificationSettings({ userId })
+    ).resolves.toBeUndefined();
+  });
+
+  test("should throw a LiveblocksError when deleteNotificationSettings receives an error response", async () => {
+    const userId = "jonathan";
+    const error = {
+      error: "USER_NOT_FOUND",
+      message: "User not found",
+    };
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.deleteNotificationSettings({
+        userId,
+      });
+
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
   });
 });

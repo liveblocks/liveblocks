@@ -24,6 +24,7 @@ import type {
   LsonObject,
   OptionalTupleUnless,
   PartialUnless,
+  PartialUserNotificationSettings,
   Patchable,
   PlainLsonObject,
   QueryMetadata,
@@ -33,6 +34,7 @@ import type {
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -1635,6 +1637,65 @@ export class Liveblocks {
 
     const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Get notification settings for a user for a project.
+   * @param params.userId The user ID to get the notifications settings for.
+   */
+  public async getNotificationSettings(params: {
+    userId: string;
+  }): Promise<UserNotificationSettings> {
+    const { userId } = params;
+
+    const res = await this.#get(url`/v2/users/${userId}/notification-settings`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as UserNotificationSettings;
+  }
+
+  /**
+   * Update the user's notification settings.
+   * @param params.userId The user ID to update the notification settings for.
+   * @param params.data The new notification settings for the user.
+   */
+  public async updateNotificationSettings(params: {
+    userId: string;
+    data: PartialUserNotificationSettings;
+  }): Promise<UserNotificationSettings> {
+    const { userId, data } = params;
+
+    const res = await this.#post(
+      url`/v2/users/${userId}/notification-settings`,
+      data
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as UserNotificationSettings;
+  }
+
+  /**
+   * Delete the user's notification settings
+   * @param params.userId The user ID to update the notification settings for.
+   */
+  public async deleteNotificationSettings(params: {
+    userId: string;
+  }): Promise<void> {
+    const { userId } = params;
+    const res = await this.#delete(
+      url`/v2/users/${userId}/notification-settings`
     );
     if (!res.ok) {
       const text = await res.text();

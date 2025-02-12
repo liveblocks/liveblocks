@@ -6,6 +6,13 @@
   overflow-y: auto;
 }
 
+@media (max-width: 480px) {
+  .inboxPopover {
+    width: 94vw;
+    height: 100%;
+  }
+}
+
 .inboxPopoverUnreadCount {
   position: absolute;
   top: 0;
