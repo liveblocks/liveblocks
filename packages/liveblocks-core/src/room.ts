@@ -1165,7 +1165,7 @@ type RoomState<
    */
   activeBatch: {
     ops: Op[];
-    reverseOps: HistoryOp<P>[];
+    reversedReverseOps: HistoryOp<P>[];
     updates: {
       others: [];
       presence: boolean;
@@ -1536,6 +1536,7 @@ export function createRoom<
         }
       }
 
+      const reversedReverseOpts = Array.from(reverse).reverse();
       if (activeBatch) {
         for (const op of ops) {
           activeBatch.ops.push(op);
@@ -1549,9 +1550,9 @@ export function createRoom<
             )
           );
         }
-        activeBatch.reverseOps.unshift(...reverse);
+        activeBatch.reversedReverseOps.push(...reversedReverseOpts);
       } else {
-        addToUndoStack(reverse);
+        addToUndoStack(reversedReverseOpts);
         context.redoStack.length = 0;
         dispatchOps(ops);
         notify({ storageUpdates });
@@ -1840,21 +1841,21 @@ export function createRoom<
     notify(result.updates);
   }
 
-  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
+  function _addToRealUndoStack(reverseHistoryOps: HistoryOp<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
-    context.undoStack.push(historyOps);
+    context.undoStack.push(Array.from(reverseHistoryOps).reverse());
     onHistoryChange();
   }
 
-  function addToUndoStack(historyOps: HistoryOp<P>[]) {
+  function addToUndoStack(reverseHistoryOps: HistoryOp<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.unshift(...historyOps);
+      context.pausedHistory.push(...reverseHistoryOps);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(reverseHistoryOps);
     }
   }
 
@@ -2090,7 +2091,7 @@ export function createRoom<
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
-        context.activeBatch.reverseOps.unshift({
+        context.activeBatch.reversedReverseOps.push({
           type: "presence",
           data: oldValues,
         });
@@ -2698,7 +2699,7 @@ export function createRoom<
         presence: false,
         others: [],
       },
-      reverseOps: [],
+      reversedReverseOps: [],
     };
     try {
       returnValue = callback();
@@ -2708,8 +2709,8 @@ export function createRoom<
       const currentBatch = context.activeBatch;
       context.activeBatch = null;
 
-      if (currentBatch.reverseOps.length > 0) {
-        addToUndoStack(currentBatch.reverseOps);
+      if (currentBatch.reversedReverseOps.length > 0) {
+        addToUndoStack(currentBatch.reversedReverseOps);
       }
 
       if (currentBatch.ops.length > 0) {
