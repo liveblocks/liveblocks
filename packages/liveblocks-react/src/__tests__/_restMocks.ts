@@ -2,10 +2,12 @@ import type {
   BaseMetadata,
   CommentData,
   InboxNotificationData,
+  PartialUserNotificationSettings,
   Permission,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -225,6 +227,32 @@ export function mockUpdateRoomNotificationSettings(
 ) {
   return rest.post(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
+    resolver
+  );
+}
+
+export function mockGetUserNotificationSettings(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    UserNotificationSettings
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/notification-settings",
+    resolver
+  );
+}
+
+export function mockUpdateUserNotificationSettings(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    PartialUserNotificationSettings
+  >
+) {
+  return rest.post(
+    "https://api.liveblocks.io/v2/c/notification-settings",
     resolver
   );
 }

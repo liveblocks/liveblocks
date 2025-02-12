@@ -295,6 +295,7 @@ export const Thread = forwardRef(
               const children = (
                 <Comment
                   key={comment.id}
+                  overrides={overrides}
                   className="lb-thread-comment"
                   data-unread={isUnread ? "" : undefined}
                   comment={comment}
@@ -387,6 +388,7 @@ export const Thread = forwardRef(
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
+                ...overrides,
               }}
               roomId={thread.roomId}
             />

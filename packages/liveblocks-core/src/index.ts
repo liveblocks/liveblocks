@@ -144,6 +144,8 @@ export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
   compactObject,
+  entries,
+  keys,
   mapValues,
   memoizeOnSuccess,
   raise,
@@ -252,6 +254,14 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
+export { isNotificationChannelEnabled } from "./protocol/UserNotificationSettings";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,

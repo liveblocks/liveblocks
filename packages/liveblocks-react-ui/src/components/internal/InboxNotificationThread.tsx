@@ -169,6 +169,12 @@ export function generateInboxNotificationThreadContents(
       return false;
     }
 
+    // Those behaviors are also used in `@liveblocks/emails` to extract email data
+    // for a thread notification event.
+    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-emails/src/thread-notification.tsx#L34
+    //
+    // Make sure to reflect any changes you may want to do here in `@liveblocks/emails` as well
+    // if the changes are applicable and relevant.
     return inboxNotification.readAt
       ? comment.createdAt > inboxNotification.readAt &&
           comment.createdAt <= inboxNotification.notifiedAt

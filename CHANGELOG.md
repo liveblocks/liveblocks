@@ -11,6 +11,126 @@
 
 - Fixed a bug where documents would no longer sync after room the ID changed
 
+### `@liveblocks/react-ui`
+
+- Fix `<Composer />` and `<Comment />` overrides not working when set on
+  `<Thread />`.
+
+## v2.18.0
+
+Introducing user notification settings. You can now create beautiful user
+notification settings pages into your app.
+
+### User notification settings (public beta)
+
+Our packages `@liveblocks/client`, `@liveblocks/react` and `@liveblocks/node`
+are now exposing functions to manage user notification settings on different
+notification channels and kinds.
+
+You can support `thread`, `textMention` and custom notification kinds (starting
+by a `$`) on `email`, `Slack`, `Microsoft Teams` and `Web Push` channels.
+
+#### Notification settings in the dashboard
+
+You can choose from our new notifications dashboard page to enable or disable
+notification kinds on every channels you want to use in your app. It means our
+internal notification system on our infrastructure will decide to send or not an
+event on your webhook.
+
+### `@liveblocks/client`
+
+We're adding two new methods in our client to get and update user notification
+settings:
+
+```tsx
+import { createClient } from '@liveblocks/client'
+const client = createClient({ ... })
+
+const settings = await client.getNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await client.updateNotificationSettings({
+  email: {
+    thread: false,
+  }
+});
+```
+
+### `@liveblocks/react`
+
+We're adding a new set of hooks to manage user notification settings.
+
+You can either choose `useNotificationSettings` is your need to get the current
+user notification settings and update them at the same time:
+
+```tsx
+// A suspense version of this hook is available
+import { useNotificationSettings } from "@liveblocks/react";
+
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const onSave = () => {
+  updateSettings({
+    slack: {
+      textMention: true,
+    },
+  });
+};
+```
+
+Or you can choose `useUpdateNotificationSettings` if you just need to update the
+current user notification settings (e.g an unsubscribe button):
+
+```tsx
+// A suspense version of this hook is available
+import { useUpdateNotificationSettings } from "@liveblocks/react";
+
+const updateSettings = useUpdateNotificationSettings();
+
+const onUnsubscribe = () => {
+  updateSettings({
+    slack: {
+      thread: false,
+    },
+  });
+};
+```
+
+### `@liveblocks/node`
+
+Our Node.js client are now exposing three new methods to manage user
+notification settings:
+
+```tsx
+import { Liveblocks } from "@liveblocks/node";
+const liveblocks = new Liveblocks({ secret: "sk_xxx" });
+
+const settings = await liveblocks.getNotificationSettings({ userId });
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await liveblocks.updateNotificationSettings({
+  userId,
+  data: {
+    teams: {
+      $fileUploaded: true,
+    },
+  },
+});
+await liveblocks.deleteNotificationSettings({ userId });
+```
+
+### `@liveblocks/emails`
+
+- Update the behavior of `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact`: the contents of previous emails data
+  are now taken into account to avoid repeating mentions and replies that are
+  still unread but have already been extracted in another email data.
+
 ## v2.17.0
 
 ### `@liveblocks/client`

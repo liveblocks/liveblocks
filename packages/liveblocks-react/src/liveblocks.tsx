@@ -5,14 +5,16 @@ import type {
   ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
-import type {
-  AsyncResult,
-  BaseRoomInfo,
-  DM,
-  DU,
-  LiveblocksError,
-  OpaqueClient,
-  SyncStatus,
+import {
+  type AsyncResult,
+  type BaseRoomInfo,
+  type DM,
+  type DU,
+  HttpError,
+  type LiveblocksError,
+  type OpaqueClient,
+  type PartialUserNotificationSettings,
+  type SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
@@ -52,6 +54,8 @@ import type {
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
+  UserNotificationSettingsAsyncResult,
+  UserNotificationSettingsAsyncSuccess,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
@@ -288,10 +292,26 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
   );
 
+  const userNotificationSettingsPoller = makePoller(
+    async (signal) => {
+      try {
+        return await store.refreshUserNotificationSettings(signal);
+      } catch (err) {
+        console.warn(
+          `Polling new user notification settings failed: ${String(err)}`
+        );
+        throw err;
+      }
+    },
+    config.USER_NOTIFICATION_SETTINGS_INTERVAL,
+    { maxStaleTimeMs: config.USER_NOTIFICATION_SETTINGS_MAX_STALE_TIME }
+  );
+
   return {
     store,
     notificationsPoller,
     userThreadsPoller,
+    userNotificationSettingsPoller,
   };
 }
 
@@ -314,6 +334,9 @@ function makeLiveblocksContextBundle<
 
   const useDeleteAllInboxNotifications = () =>
     useDeleteAllInboxNotifications_withClient(client);
+
+  const useUpdateNotificationSettings = () =>
+    useUpdateNotificationSettings_withClient(client);
 
   // NOTE: This version of the LiveblocksProvider does _not_ take any props.
   // This is because we already have a client bound to it.
@@ -342,6 +365,9 @@ function makeLiveblocksContextBundle<
     useDeleteInboxNotification,
     useDeleteAllInboxNotifications,
 
+    useNotificationSettings: () => useNotificationSettings_withClient(client),
+    useUpdateNotificationSettings,
+
     useInboxNotificationThread,
     useUserThreads_experimental,
 
@@ -362,6 +388,10 @@ function makeLiveblocksContextBundle<
       useDeleteAllInboxNotifications,
 
       useInboxNotificationThread,
+
+      useNotificationSettings: () =>
+        useNotificationSettingsSuspense_withClient(client),
+      useUpdateNotificationSettings,
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
@@ -604,6 +634,122 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
       [inboxNotificationId]
     )
   );
+}
+
+function useUpdateNotificationSettings_withClient(
+  client: OpaqueClient
+): (settings: PartialUserNotificationSettings) => void {
+  return useCallback(
+    (settings: PartialUserNotificationSettings): void => {
+      const { store } = getLiveblocksExtrasForClient(client);
+      const optimisticUpdateId = store.optimisticUpdates.add({
+        type: "update-user-notification-settings",
+        settings,
+      });
+
+      client.updateNotificationSettings(settings).then(
+        (settings) => {
+          // Replace the optimistic update by the real thing
+          store.updateUserNotificationSettings_confirmOptimisticUpdate(
+            settings,
+            optimisticUpdateId
+          );
+        },
+        (err: Error) => {
+          // Remove optimistic update when it fails
+          store.optimisticUpdates.remove(optimisticUpdateId);
+          // Check if the error is an HTTP error
+          if (err instanceof HttpError) {
+            if (err.status === 422) {
+              const msg = [err.details?.error, err.details?.reason]
+                .filter(Boolean)
+                .join("\n");
+              console.error(msg);
+            }
+
+            client[kInternal].emitError(
+              {
+                type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR",
+              },
+              err
+            );
+          }
+          // A non-HTTP error is unexpected and must be considered as a bug.
+          // We should fix it and do not notify users about it.
+          else {
+            throw err;
+          }
+        }
+      );
+    },
+    [client]
+  );
+}
+
+function useNotificationSettings_withClient(
+  client: OpaqueClient
+): [
+  UserNotificationSettingsAsyncResult,
+  (settings: PartialUserNotificationSettings) => void,
+] {
+  const updateNotificationSettings =
+    useUpdateNotificationSettings_withClient(client);
+
+  const { store, userNotificationSettingsPoller: poller } =
+    getLiveblocksExtrasForClient(client);
+
+  useEffect(() => {
+    void store.outputs.userNotificationSettings.waitUntilLoaded();
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  });
+
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  const result = useSignal(store.outputs.userNotificationSettings.signal);
+
+  return useMemo(() => {
+    return [result, updateNotificationSettings];
+  }, [result, updateNotificationSettings]);
+}
+
+function useNotificationSettingsSuspense_withClient(
+  client: OpaqueClient
+): [
+  UserNotificationSettingsAsyncSuccess,
+  (settings: PartialUserNotificationSettings) => void,
+] {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const store = getLiveblocksExtrasForClient(client).store;
+
+  // Suspend until there are at least some user notification settings
+  use(store.outputs.userNotificationSettings.waitUntilLoaded());
+
+  // We're in a Suspense world here, and as such, the useNotificationSettings()
+  // hook is expected to only return success results when we're here.
+  const [result, updateNotificationSettings] =
+    useNotificationSettings_withClient(client);
+
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+
+  return useMemo(() => {
+    return [result, updateNotificationSettings];
+  }, [result, updateNotificationSettings]);
 }
 
 function useUser_withClient<U extends BaseUserMeta>(
@@ -1095,6 +1241,37 @@ function useUnreadInboxNotificationsCountSuspense() {
   return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
 }
 
+/**
+ * Returns notification settings for the current user.
+ *
+ * @example
+ * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
+ */
+function useNotificationSettings() {
+  return useNotificationSettings_withClient(useClient());
+}
+
+/**
+ * Returns notification settings for the current user.
+ *
+ * @example
+ * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
+ */
+function useNotificationSettingsSuspense() {
+  return useNotificationSettingsSuspense_withClient(useClient());
+}
+
+/**
+ * Returns a function that updates the user's notification
+ * settings for a project.
+ *
+ * @example
+ * const updateNotificationSettings = useUpdateNotificationSettings()
+ */
+function useUpdateNotificationSettings() {
+  return useUpdateNotificationSettings_withClient(useClient());
+}
+
 function useUser<U extends BaseUserMeta>(userId: string) {
   const client = useClient<U>();
   return useUser_withClient(client, userId);
@@ -1306,6 +1483,9 @@ export {
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
+  useNotificationSettings,
+  useNotificationSettingsSuspense,
+  useUpdateNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
