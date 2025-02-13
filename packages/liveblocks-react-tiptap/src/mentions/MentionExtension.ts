@@ -19,6 +19,7 @@ import {
   LIVEBLOCKS_MENTION_TYPE,
 } from "../types";
 import { getMentionsFromNode, mapFragment } from "../utils";
+import { MentionNode } from "./MentionNode";
 import type { MentionsListHandle, MentionsListProps } from "./MentionsList";
 import { MentionsList } from "./MentionsList";
 
@@ -118,6 +119,10 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
       onCreateMention: () => {},
       onDeleteMention: () => {},
     };
+  },
+
+  addExtensions() {
+    return [MentionNode];
   },
 
   addProseMirrorPlugins() {
