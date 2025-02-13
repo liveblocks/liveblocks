@@ -118,7 +118,7 @@ collaboration to your React application using the APIs from the
       "use client";
 
       import * as Y from "yjs";
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
       import { useRoom } from "@/liveblocks.config";
       import { useCallback, useEffect, useState } from "react";
       import { Editor } from "@monaco-editor/react";
@@ -130,17 +130,15 @@ collaboration to your React application using the APIs from the
       export function CollaborativeEditor() {
         const [editorRef, setEditorRef] = useState<editor.IStandaloneCodeEditor>();
         const room = useRoom();
+        const yProvider = getYjsProviderForRoom(room);
 
         // Set up Liveblocks Yjs provider and attach Monaco editor
         useEffect(() => {
-          let yProvider: any;
-          let yDoc: Y.Doc;
           let binding: MonacoBinding;
 
           if (editorRef) {
-            yDoc = new Y.Doc();
+            const yDoc = yProvider.getYDoc();
             const yText = yDoc.getText("monaco");
-            yProvider = new LiveblocksYjsProvider(room, yDoc);
 
             // Attach Yjs to Monaco
             binding = new MonacoBinding(
@@ -152,8 +150,6 @@ collaboration to your React application using the APIs from the
           }
 
           return () => {
-            yDoc?.destroy();
-            yProvider?.destroy();
             binding?.destroy();
           };
         }, [editorRef, room]);

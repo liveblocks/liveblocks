@@ -48,7 +48,7 @@ collaboration to your Svelte application using the APIs from the
       <script>
       import { onMount, onDestroy } from "svelte";
       import { createClient } from "@liveblocks/client";
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
       import * as Y from "yjs";
       import { Editor } from "@tiptap/core";
       import StarterKit from "@tiptap/starter-kit";
@@ -67,8 +67,8 @@ collaboration to your Svelte application using the APIs from the
         const { room, leave } = client.enterRoom("my-room");
 
         // Set up Yjs document and Liveblocks Yjs provider
-        const yDoc = new Y.Doc();
-        const yProvider = new LiveblocksYjsProvider(room, yDoc);
+        const yProvider = getYjsProviderForRoom(room);
+        const yDoc = yProvider.getYDoc();
 
         // Set up the Tiptap editor
         editor = new Editor({

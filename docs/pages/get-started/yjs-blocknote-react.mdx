@@ -129,11 +129,10 @@ collaboration to your React application using the APIs from the
 
       function Editor() {
         const room = useRoom();
+        const yProvider = getYjsProviderForRoom(room);
+        const yDoc = yProvider.getYDoc();
 
-        // Set up Liveblocks Yjs provider
-        const provider = getYjsProviderForRoom(room);
-
-        return <BlockNote doc={provider.getYDoc()} provider={provider} />;
+        return <BlockNote doc={yDoc} provider={yProvider} />;
       }
 
 
