@@ -25,7 +25,7 @@ export default function Page() {
               style={{
                 position: "absolute",
                 left: 0,
-                right: 300,
+                right: 260,
                 top: 0,
                 bottom: 0,
               }}
@@ -34,7 +34,7 @@ export default function Page() {
             </div>
             <div
               style={{
-                width: 300,
+                width: 260,
                 position: "absolute",
                 right: 0,
                 top: 0,
