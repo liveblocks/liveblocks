@@ -132,14 +132,13 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
           )}
         </div>
       </div>
-      {open ? (
-        <Thread
-          thread={thread}
-          className="thread"
-          data-flip-vertical={nearBottomEdge || undefined}
-          data-flip-horizontal={nearRightEdge || undefined}
-        />
-      ) : null}
+      <Thread
+        style={open ? undefined : { display: "none" }}
+        thread={thread}
+        className="thread"
+        data-flip-vertical={nearBottomEdge || undefined}
+        data-flip-horizontal={nearRightEdge || undefined}
+      />
     </div>
   );
 }
