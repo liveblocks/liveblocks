@@ -20,28 +20,30 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 300,
-              top: 0,
-              bottom: 0,
-            }}
-          >
-            <CommentsCanvas />
-          </div>
-          <div
-            style={{
-              width: 300,
-              position: "absolute",
-              right: 0,
-              top: 0,
-              bottom: 0,
-              background: "white",
-            }}
-          >
-            <ThreadList />
+          <div style={{ width: "100vw", height: "100vh" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 300,
+                top: 0,
+                bottom: 0,
+              }}
+            >
+              <CommentsCanvas />
+            </div>
+            <div
+              style={{
+                width: 300,
+                position: "absolute",
+                right: 0,
+                top: 0,
+                bottom: 0,
+                background: "white",
+              }}
+            >
+              <ThreadList />
+            </div>
           </div>
         </ClientSideSuspense>
       </ErrorBoundary>
