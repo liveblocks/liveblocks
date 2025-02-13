@@ -231,8 +231,7 @@ export const useLiveblocksExtension = (
         info,
         id: userId,
       }: User<JsonObject, BaseUserMeta>) => {
-        // TODO: we need to check for null awareness because of a bug in the order in which the room/provider is destroyed
-        if (!info || !this.storage.provider.awareness.getLocalState()) {
+        if (!info) {
           return;
         }
         const { user: storedUser } =

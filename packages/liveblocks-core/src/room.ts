@@ -3097,6 +3097,12 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        // remove the roomWillDestroy event from the event hub
+        const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
+        // Unregister all registered callbacks
+        for (const source of Object.values(eventsExceptDestroy)) {
+          source[Symbol.dispose]();
+        }
         eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
         syncSourceForStorage.destroy();
@@ -3104,10 +3110,8 @@ export function createRoom<
         uninstallBgTabSpy();
         managedSocket.destroy();
 
-        // Unregister all registered callbacks
-        for (const source of Object.values(eventHub)) {
-          source[Symbol.dispose]();
-        }
+        // cleanup will destroy listener
+        roomWillDestroy[Symbol.dispose]();
       },
 
       // Presence
