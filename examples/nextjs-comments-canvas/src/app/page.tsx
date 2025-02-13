@@ -7,6 +7,7 @@ import { Loading } from "../components/Loading";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { CommentsCanvas } from "../components/CommentsCanvas";
+import { ThreadList } from "../components/ThreadList";
 
 export default function Page() {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-canvas");
@@ -19,7 +20,29 @@ export default function Page() {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <CommentsCanvas />
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              right: 300,
+              top: 0,
+              bottom: 0,
+            }}
+          >
+            <CommentsCanvas />
+          </div>
+          <div
+            style={{
+              width: 300,
+              position: "absolute",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              background: "white",
+            }}
+          >
+            <ThreadList />
+          </div>
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>
