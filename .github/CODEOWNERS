@@ -1,4 +1,5 @@
 # Public packages
+/packages/	@nvie
 /packages/liveblocks-core/	@nvie @sugardarius @marcbouchenoire
 /packages/liveblocks-client/	@nvie @sugardarius @marcbouchenoire
 /packages/liveblocks-react/	@nvie @sugardarius @marcbouchenoire
