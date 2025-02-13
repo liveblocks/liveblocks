@@ -10,12 +10,128 @@ alwaysShowAllNavigationLevels: false
 Liveblocks as the hosted back end of your realtime collaborative application.
 Read our [getting started](/docs/get-started) guides to learn more.
 
+## Setup
+
+To set up Yjs, it’s recommended to use [`getYjsProviderForRoom`][]. It’s no
+longer recommended to use [`LiveblocksYjsProvider`][] directly, as issues may
+happen when dynamically switching between rooms.
+
+### React
+
+In React, pass your room object with [`useRoom`][]. It’s fine to use this
+function in your React components. From here, you can access your `Y.Doc`.
+
+```ts
+import { useRoom } from "@liveblocks/react";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+function App() {
+  const room = useRoom();
+  const yProvider = getYjsProviderForRoom(room);
+  const yDoc = yProvider.getYDoc();
+
+  // ...
+}
+```
+
+### JavaScript
+
+In JavaScript, pass the room retrieved with [`client.enterRoom`][].
+
+```tsx
+import { createClient } from "@liveblocks/client";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+const client = createClient({
+  // Options
+  // ...
+});
+
+const { room, leave } = client.enterRoom("my-room-id", {
+  // Options
+  // ...
+});
+
+const yProvider = getYjsProviderForRoom(room);
+const yDoc = yProvider.getYDoc();
+```
+
+## getYjsProviderForRoom [#getYjsProviderForRoom]
+
+Gets the current or creates a new [`LiveblocksYjsProvider`][] for a room—this is
+the recommended way to use Yjs. This provider will automatically be cleaned up
+when the room is destroyed, so you don’t need to destroy the provider manually.
+The second argument is the [`LiveblocksYjsProvider`][] options.
+
+```ts
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
+
+const yProvider = getYjsProviderForRoom(room, {
+  // Options
+  // ...
+});
+
+const yDoc = yProvider.getYDoc();
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="yProvider" type="LiveblocksYjsProvider">
+    The [`LiveblocksYjsProvider`][] for the room. The provider is automatically
+    cleaned up and destroyed when necessary. Fetch your [`Y.Doc`][] with
+    [`LiveblocksYjsProvider.getYDoc`](#LiveblocksYjsProvider.getYDoc).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="room" type="Room" required>
+    The Liveblocks room, retrieved with [`useRoom`][] or [`client.enterRoom`][].
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.autoloadSubdocs"
+    type="boolean"
+    defaultValue="false"
+  >
+    This option will load subdocs automatically.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.enablePermanentUserData"
+    type="boolean"
+    defaultValue="false"
+  >
+    This option enables Yjs permanent user data class used by some libraries for
+    tracking changes by author.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.offlineSupport_experimental"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Enable offline support using IndexedDB. This means the after
+    the first load, documents will be stored locally and load instantly.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.useV2Encoding_experimental"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Use V2 encoding.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## LiveblocksYjsProvider [#LiveblocksYjsProvider]
 
 `LiveblocksYjsProvider` is a
 [Yjs provider](https://github.com/yjs/yjs#providers) that allows you to connect
 a Yjs document to Liveblocks. Any changes you make to the document will be
 stored on Liveblocks servers and synchronized with other clients in the room.
+
+<Banner title="Not recommended to use directly" type="warning">
+
+We generally recommend getting your Liveblocks Yjs provider with
+[`getYjsProviderForRoom`][] as it overcomes problems caused when dynamically
+switching between rooms.
+
+</Banner>
 
 You can connect by creating a Yjs document, then passing it to
 `LiveblocksYjsProvider` along with the currently connected Liveblocks room.
@@ -33,55 +149,58 @@ const { room, leave } = client.enterRoom("your-room-id");
 
 // Create Yjs document and provider
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksYjsProvider(room, yDoc);
-```
-
-When using [`@liveblocks/react`][] it's best to use the `getYjsProviderForRoom`
-factory function which will be automatically clean up the provider when the room
-is destroyed or changed.
-
-```ts highlight="7"
-import { useEffect } from "react";
-import * as Y from "yjs";
-import { getYjsProviderForRoom } from "@liveblocks/yjs";
-import { useRoom } from "../liveblocks.config.ts";
-
-function Component() {
-  const room = useRoom();
-  const provider = getYjsProviderForRoom(room);
-
+const yProvider = new LiveblocksYjsProvider(room, yDoc, {
+  // Options
   // ...
-}
+});
 ```
 
-### LiveblocksYjsProvider Options [#LiveblocksYjsProvider.options]
-
-There are a few options you can pass as a third argument into the
-LiveblocksYjsProvider, or the second argument of the `getYjsProviderForRoom`
-factory function:
-
-<PropertiesList title="Constructor options">
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="room" type="Room" required>
+    The Liveblocks room, retrieved with [`useRoom`][] or [`client.enterRoom`][].
+  </PropertiesListItem>
+  <PropertiesListItem name="yDoc" type="Y.Doc" required>
+    The [`Y.Doc`][] for the document.
+  </PropertiesListItem>
   <PropertiesListItem
-    name="autoloadSubdocs"
+    name="options.autoloadSubdocs"
     type="boolean"
     defaultValue="false"
   >
     This option will load subdocs automatically.
   </PropertiesListItem>
   <PropertiesListItem
-    name="enablePermanentUserData"
+    name="options.enablePermanentUserData"
     type="boolean"
     defaultValue="false"
   >
-    This option enables yjs permanent user data class used by some libraries for
+    This option enables Yjs permanent user data class used by some libraries for
     tracking changes by author.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.offlineSupport_experimental"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Enable offline support using IndexedDB. This means the after
+    the first load, documents will be stored locally and load instantly.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.useV2Encoding_experimental"
+    type="boolean"
+    defaultValue="false"
+  >
+    Experimental. Use V2 encoding.
   </PropertiesListItem>
 </PropertiesList>
 
+### LiveblocksYjsProvider.getYDoc
+
+Returns the current room’s root [`Y.Doc`][].
+
 ```ts
-const yProvider = new LiveblocksYjsProvider(room, yDoc, {
-  autoloadSubdocs: true, // default false
-});
+// Root Y.Doc for the room
+const yDoc = yProvider.getYDoc();
 ```
 
 ### LiveblocksYjsProvider.awareness [#LiveblocksYjsProvider.awareness]
@@ -380,7 +499,9 @@ awareness.emit("destroy", true);
 [`@liveblocks/react`]: /docs/api-reference/liveblocks-react
 [`useRoom`]: /docs/api-reference/liveblocks-react#useRoom
 [`room.getPresence`]: /docs/api-reference/liveblocks-client#Room.getPresence
+[`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
 [`useMyPresence`]: /docs/api-reference/liveblocks-react#useMyPresence
+[`getYjsProviderForRoom`]: #getYjsProviderForRoom
 [`LiveblocksYjsProvider`]: #LiveblocksYjsProvider
 [`LiveblocksYjsProvider.awareness]: #LiveblocksYjsProvider.awareness
 [`LiveblocksYjsProvider.destroy]: #LiveblocksYjsProvider.destroy
@@ -405,18 +526,4 @@ awareness.emit("destroy", true);
 [`Awareness.off("destroyed")`]: #Awareness.off.destroyed
 [`Awareness.once("destroyed")`]: #Awareness.once.destroyed
 [`Awareness.emit("destroyed")`]: #Awareness.emit.destroyed
-
-## getYjsProviderForRoom [#getYjsProviderForRoom]
-
-Gets the current or creates a new LiveblocksYjsProvider for a room. This provider will
-automatically be cleaned up when the room is destroyed, so you don't need to
-destroy the provider manually. The second argument is the LiveblocksYjsProvider
-options.
-
-```ts
-import { getYjsProviderForRoom } from "@liveblocks/yjs";
-
-const provider = getYjsProviderForRoom(room, {
-  enablePermanentUserData: true,
-});
-```
+[`Y.Doc`]: https://docs.yjs.dev/api/y.doc
