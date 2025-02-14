@@ -24,7 +24,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/yjs`
 
-- Added a factory function [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to grab an instance of yjs
+- Added a factory function [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to grab an instance of Yjs
   provider that will be automatically cleaned up when the room is
   disconnected/changed.
 - Simplified types for [`LiveblocksYjsProvider`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#LiveblocksYjsProvider).
