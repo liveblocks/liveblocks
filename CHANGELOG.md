@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.18.1
+
 ### `@liveblocks/react-ui`
 
 - Fix `<Composer />` and `<Comment />` overrides not working when set on
