@@ -48,7 +48,7 @@ collaboration to your Vue.js application using the APIs from the
       <script setup>
       import { ref, onMounted, onUnmounted } from "vue";
       import { createClient } from "@liveblocks/client";
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
       import * as Y from "yjs";
       import Quill from "quill";
       import { QuillBinding } from "y-quill";
@@ -69,9 +69,9 @@ collaboration to your Vue.js application using the APIs from the
       leave.value = info.leave;
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
-      const yDoc = new Y.Doc();
       const yText = yDoc.getText("quill");
-      const yProvider = new LiveblocksYjsProvider(room, yDoc);
+      const yProvider = getYjsProviderForRoom(room);
+      const yDoc = yProvider.getYDoc();
 
       // Attach cursors plugin
       Quill.register("modules/cursors", QuillCursors);
@@ -96,7 +96,7 @@ collaboration to your Vue.js application using the APIs from the
         });
 
         // Attach Yjs to Quill
-        binding.value = new QuillBinding(yText, quill, provider.awareness);
+        binding.value = new QuillBinding(yText, quill, yProvider.awareness);
       });
 
       onUnmounted(() => {

@@ -13,14 +13,14 @@ import {
   useReportTextEditor,
   useYjsProvider,
 } from "@liveblocks/react/_private";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Doc, PermanentUserData } from "yjs";
 
 import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -33,16 +33,7 @@ import type {
 } from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
-const providersMap = new Map<
-  string,
-  LiveblocksYjsProvider<any, any, any, any, any>
->();
-
-const docMap = new Map<string, Doc>();
-
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
-
-const pudMap = new Map<string, PermanentUserData>();
 
 const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
@@ -332,21 +323,14 @@ export const useLiveblocksExtension = (
       ];
     },
     addStorage() {
-      if (!providersMap.has(room.id)) {
-        const doc = new Doc();
-        docMap.set(room.id, doc);
-        pudMap.set(room.id, new PermanentUserData(doc));
-        providersMap.set(
-          room.id,
-          new LiveblocksYjsProvider(room, doc, {
-            offlineSupport_experimental: options.offlineSupport_experimental,
-          })
-        );
-      }
+      const provider = getYjsProviderForRoom(room, {
+        enablePermanentUserData: true,
+        offlineSupport_experimental: options.offlineSupport_experimental,
+      });
       return {
-        doc: docMap.get(room.id)!,
-        provider: providersMap.get(room.id)!,
-        permanentUserData: pudMap.get(room.id)!,
+        doc: provider.getYDoc(),
+        provider,
+        permanentUserData: provider.permanentUserData!, // TODO: we know this is true because we enabeld the option, is there a way to do that without this override?
         unsubs: [],
       };
     },

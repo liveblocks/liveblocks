@@ -1,7 +1,6 @@
 "use client";
 
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import * as Y from "yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import styles from "./Editor.module.css";
 import { Toolbar } from "@/components/Toolbar";
@@ -77,9 +76,8 @@ export default function Editor() {
             username={userInfo.name}
             providerFactory={(id, yjsDocMap) => {
               // Set up Liveblocks Yjs provider
-              const doc = new Y.Doc();
-              yjsDocMap.set(id, doc);
-              const provider = new LiveblocksYjsProvider(room, doc) as Provider;
+              const provider = getYjsProviderForRoom(room);
+              yjsDocMap.set(id, provider.getYDoc());
               return provider;
             }}
             initialEditorState={initialEditorState}

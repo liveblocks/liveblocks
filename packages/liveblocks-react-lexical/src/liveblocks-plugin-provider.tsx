@@ -30,7 +30,7 @@ import { useRootElement } from "./use-root-element";
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
 const providersMap = new Map<
   string,
-  LiveblocksYjsProvider<never, never, never, never, never>
+  LiveblocksYjsProvider
 >();
 
 export type EditorStatus =
@@ -61,7 +61,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => {};
+      if (provider === undefined) return () => { };
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -94,7 +94,7 @@ export function useIsEditorReady(): boolean {
 
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (yjsProvider === undefined) return () => {};
+      if (yjsProvider === undefined) return () => { };
       yjsProvider.on("status", callback);
       return () => {
         yjsProvider.off("status", callback);

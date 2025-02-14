@@ -7,6 +7,17 @@
 - Fix `<Composer />` and `<Comment />` overrides not working when set on
   `<Thread />`.
 
+### `@liveblocks/yjs`
+
+- Added a factory function `getYjsProviderForRoom` to grab an instance of yjs
+  provider that will be automatically cleaned up when the room is
+  disconnected/changed
+- Simplified types for `LiveblocksYjsProvider`
+
+### `@liveblocks/react-tiptap`
+
+- Fixed a bug where documents would no longer sync after room the ID changed
+
 ## v2.18.0
 
 Introducing user notification settings. You can now create beautiful user

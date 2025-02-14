@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRoom } from "@liveblocks/react/suspense";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { YKeyValue } from "y-utility/y-keyvalue";
 import * as Y from "yjs";
 import {
@@ -36,14 +36,16 @@ export function useYjsStore({
 
   // Set up Liveblocks Yjs and get multiplayer store
   const { yDoc, yStore, yProvider } = useMemo(() => {
-    const yDoc = new Y.Doc({ gc: true });
+    const yProvider = getYjsProviderForRoom(room);
+    const yDoc = yProvider.getYDoc();
+    yDoc.gc = true;
     const yArr = yDoc.getArray<{ key: string; val: TLRecord }>("tl_records");
     const yStore = new YKeyValue(yArr);
 
     return {
       yDoc,
       yStore,
-      yProvider: new LiveblocksYjsProvider(room, yDoc),
+      yProvider,
     };
   }, [room]);
 

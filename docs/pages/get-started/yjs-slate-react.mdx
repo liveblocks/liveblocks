@@ -115,7 +115,7 @@ collaboration to your React application using the APIs from the
       ```tsx file="CollaborativeEditor.tsx"
       "use client";
 
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
       import { useEffect, useMemo, useState } from "react";
       import { createEditor, Editor, Transforms } from "slate";
       import { Editable, Slate, withReact } from "slate-react";
@@ -127,27 +127,21 @@ collaboration to your React application using the APIs from the
       export function CollaborativeEditor() {
         const room = useRoom();
         const [connected, setConnected] = useState(false);
-        const [sharedType, setSharedType] = useState<Y.XmlText>();
-        const [provider, setProvider] = useState<LiveblocksProviderType>();
 
-        // Set up Liveblocks Yjs provider
+        // Set up Yjs
+        const yProvider = getYjsProviderForRoom(room);
+        const yDoc = yProvider.getYDoc();
+        const sharedType = yDoc.get("slate", Y.XmlText) as Y.XmlText;
+
         useEffect(() => {
-          const yDoc = new Y.Doc();
-          const yProvider = new LiveblocksYjsProvider(room, yDoc);
-          const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
           yProvider.on("sync", setConnected);
 
-          setSharedType(sharedDoc);
-          setProvider(yProvider);
-
           return () => {
-            yDoc?.destroy();
             yProvider?.off("sync", setConnected);
-            yProvider?.destroy();
           };
         }, [room]);
 
-        if (!connected || !sharedType || !provider) {
+        if (!connected || !sharedType) {
           return <div>Loading…</div>;
         }
 
