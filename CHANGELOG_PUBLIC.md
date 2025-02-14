@@ -36,7 +36,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 ## v2.18.0
 
 Introducing user notification settings. You can now create beautiful user
-notification settings pages into your app..
+notification settings pages in your app.
 
 ### User notification settings (public beta)
 
