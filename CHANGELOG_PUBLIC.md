@@ -169,6 +169,10 @@ await liveblocks.deleteNotificationSettings({ userId });
 - Added info for new API [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
 - Updated all Yjs [get started guides](https://liveblocks.io/docs/get-started) to use the new API.
 
+## Website
+
+- We now have [`llms.txt`](https://liveblocks.io/llms.txt) and [`llms-full.txt`](https://liveblocks.io/llms-full.txt) files on our website, used to help AI understand our product.
+
 ## Infrastructure
 
 - Preparing foundation in the backend to make Storage more efficient in the future.
