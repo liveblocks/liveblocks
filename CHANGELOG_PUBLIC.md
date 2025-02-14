@@ -159,8 +159,8 @@ await liveblocks.deleteNotificationSettings({ userId });
 
 - New guide: [What to check before enabling a new notification kind](https://liveblocks.io/docs/guides/what-to-check-before-enabling-a-new-notification-kind).
 - Added info for new methods and hooks:
-  - React: [`useNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useNotificationSettings), [`useUpdateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateNotificationSettings)- 
-  - JavaScript: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getNotificationSettings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.updateNotificationSettings)
+  - React: [`useNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useNotificationSettings), [`useUpdateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateNotificationSettings). 
+  - JavaScript: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getNotificationSettings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.updateNotificationSettings).
   - Node.js: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings), [`deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
 - Rewrote email notification overview pages for [Comments](https://liveblocks.io/docs/ready-made-features/comments/email-notifications) and [Notifications](https://liveblocks.io/docs/ready-made-features/notifications/email-notifications).
 - Adjusted existing notification guides to work with new dashboard settings.
