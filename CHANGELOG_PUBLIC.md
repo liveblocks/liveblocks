@@ -19,7 +19,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/react-ui`
 
-- Fix `<Composer />` and `<Comment />` overrides not working when set on
+- Fix `<Composer />` and `<Comment />` [overrides](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Overrides) not working when set on
   `<Thread />`.
 
 ### `@liveblocks/yjs`
