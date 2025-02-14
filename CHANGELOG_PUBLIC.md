@@ -166,9 +166,13 @@ await liveblocks.deleteNotificationSettings({ userId });
 - Added info for new API [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
 - Updated all Yjs get started guides to use the new API.
 
+## Background
+
+- Preparing foundation in the backend to make storage more efficient in the future
+
 ## Contributors
 
-ctnicholas, pierrelevaillant, flowflorent, sugardarius, jrowny, marcbouchenoire
+ctnicholas, pierrelevaillant, flowflorent, sugardarius, jrowny, marcbouchenoire, nvie
 
 # Week 6 (2025-02-07)
 
