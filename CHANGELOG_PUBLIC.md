@@ -15,6 +15,24 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 7 (2025-02-14)
 
+## v2.18.1
+
+### `@liveblocks/react-ui`
+
+- Fix `<Composer />` and `<Comment />` overrides not working when set on
+  `<Thread />`.
+
+### `@liveblocks/yjs`
+
+- Added a factory function `getYjsProviderForRoom` to grab an instance of yjs
+  provider that will be automatically cleaned up when the room is
+  disconnected/changed
+- Simplified types for `LiveblocksYjsProvider`
+
+### `@liveblocks/react-tiptap`
+
+- Fixed a bug where documents would no longer sync after room the ID changed
+
 ## v2.18.0
 
 Introducing user notification settings. You can now create beautiful user
@@ -150,7 +168,7 @@ await liveblocks.deleteNotificationSettings({ userId });
 
 ## Contributors
 
-ctnicholas, pierrelevaillant, flowflorent, sugardarius
+ctnicholas, pierrelevaillant, flowflorent, sugardarius, jrowny, marcbouchenoire
 
 # Week 6 (2025-02-07)
 
