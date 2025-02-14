@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v2.18.1
+
+### `@liveblocks/react-ui`
+
+- Fix `<Composer />` and `<Comment />` overrides not working when set on
+  `<Thread />`.
+
 ### `@liveblocks/yjs`
 
 - Added a factory function `getYjsProviderForRoom` to grab an instance of yjs
@@ -10,11 +17,6 @@
 ### `@liveblocks/react-tiptap`
 
 - Fixed a bug where documents would no longer sync after room the ID changed
-
-### `@liveblocks/react-ui`
-
-- Fix `<Composer />` and `<Comment />` overrides not working when set on
-  `<Thread />`.
 
 ## v2.18.0
 
