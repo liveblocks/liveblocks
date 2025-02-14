@@ -151,6 +151,7 @@ await liveblocks.deleteNotificationSettings({ userId });
 ## Examples
 
 - Added user notification settings to the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit].
+- Updated all Yjs examples to use [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
 
 ## Documentation
 
