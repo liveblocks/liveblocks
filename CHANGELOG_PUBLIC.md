@@ -130,6 +130,23 @@ await liveblocks.deleteNotificationSettings({ userId });
   are now taken into account to avoid repeating mentions and replies that are
   still unread but have already been extracted in another email data.
 
+## Examples
+
+- Added user notification settings to the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit].
+
+## Documentation
+
+- New guide: [What to check before enabling a new notification kind](https://liveblocks.io/docs/guides/what-to-check-before-enabling-a-new-notification-kind).
+- Added info for new methods and hooks:
+  - React: [`useNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useNotificationSettings), [`useUpdateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateNotificationSettings)- 
+  - JavaScript: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getNotificationSettings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.updateNotificationSettings)
+  - Node.js: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings), [`deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
+- Rewrote email notification overview pages for [Comments](https://liveblocks.io/docs/ready-made-features/comments/email-notifications) and [Notifications](https://liveblocks.io/docs/ready-made-features/notifications/email-notifications).
+- Adjusted existing notification guides to work with new dashboard settings.
+- Improved information structure for [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
+- Improved [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs) API reference.
+- Added info for new API [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
+- Updated all Yjs get started guides to use the new API.
 
 ## Contributors
 
