@@ -173,6 +173,10 @@ await liveblocks.deleteNotificationSettings({ userId });
 
 - We now have [`llms.txt`](https://liveblocks.io/llms.txt) and [`llms-full.txt`](https://liveblocks.io/llms-full.txt) files on our website, used to help AI understand our product.
 
+## Dashboard
+
+- Added new Notifications page to projects, allowing you to enable/disable webhooks events for different notification kinds, on different channels.
+
 ## Infrastructure
 
 - Preparing foundation in the backend to make Storage more efficient in the future.
