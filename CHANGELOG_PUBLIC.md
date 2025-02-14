@@ -24,19 +24,19 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/yjs`
 
-- Added a factory function `getYjsProviderForRoom` to grab an instance of yjs
+- Added a factory function [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to grab an instance of yjs
   provider that will be automatically cleaned up when the room is
-  disconnected/changed
-- Simplified types for `LiveblocksYjsProvider`
+  disconnected/changed.
+- Simplified types for [`LiveblocksYjsProvider`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#LiveblocksYjsProvider).
 
 ### `@liveblocks/react-tiptap`
 
-- Fixed a bug where documents would no longer sync after room the ID changed
+- Fixed a bug where documents would no longer sync after room the ID changed.
 
 ## v2.18.0
 
 Introducing user notification settings. You can now create beautiful user
-notification settings pages into your app.
+notification settings pages into your app..
 
 ### User notification settings (public beta)
 
@@ -78,8 +78,9 @@ const updatedSettings = await client.updateNotificationSettings({
 
 We're adding a new set of hooks to manage user notification settings.
 
-You can either choose `useNotificationSettings` is your need to get the current
-user notification settings and update them at the same time:
+You can either choose [`useNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useNotificationSettings) 
+if you need to get the current user notification settings and update 
+them at the same time:
 
 ```tsx
 // A suspense version of this hook is available
@@ -99,8 +100,9 @@ const onSave = () => {
 };
 ```
 
-Or you can choose `useUpdateNotificationSettings` if you just need to update the
-current user notification settings (e.g an unsubscribe button):
+Or you can choose [`useUpdateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateNotificationSettings)
+if you just need to update the current user notification settings
+(e.g an unsubscribe button):
 
 ```tsx
 // A suspense version of this hook is available
@@ -119,8 +121,8 @@ const onUnsubscribe = () => {
 
 ### `@liveblocks/node`
 
-Our Node.js client are now exposing three new methods to manage user
-notification settings:
+Our Node.js client now exposes [three new methods](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings)
+to manage user notification settings:
 
 ```tsx
 import { Liveblocks } from "@liveblocks/node";
@@ -143,14 +145,14 @@ await liveblocks.deleteNotificationSettings({ userId });
 
 ### `@liveblocks/emails`
 
-- Update the behavior of `prepareThreadNotificationEmailAsHtml` and
-  `prepareThreadNotificationEmailAsReact`: the contents of previous emails data
+- Update the behavior of [`prepareThreadNotificationEmailAsHtml`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-html) and
+  [`prepareThreadNotificationEmailAsReact`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react): the contents of previous emails data
   are now taken into account to avoid repeating mentions and replies that are
   still unread but have already been extracted in another email data.
 
 ## Examples
 
-- Added user notification settings to the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit].
+- Added user notification settings to the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
 - Updated all Yjs examples to use [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
 
 ## Documentation
@@ -167,9 +169,9 @@ await liveblocks.deleteNotificationSettings({ userId });
 - Added info for new API [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
 - Updated all Yjs get started guides to use the new API.
 
-## Background
+## Infrastructure
 
-- Preparing foundation in the backend to make storage more efficient in the future
+- Preparing foundation in the backend to make Storage more efficient in the future.
 
 ## Contributors
 
