@@ -1,7 +1,18 @@
 # Public packages
-/packages/   @nvie
-/packages/liveblocks-node/   @nvie @ofoucherot @FlowFlorent
-/packages/liveblocks-react-ui/   @marcbouchenoire
+/packages/	@nvie
+/packages/liveblocks-core/	@nvie @sugardarius @marcbouchenoire
+/packages/liveblocks-client/	@nvie @sugardarius @marcbouchenoire
+/packages/liveblocks-react/	@nvie @sugardarius @marcbouchenoire
+/packages/liveblocks-react-ui/	@marcbouchenoire @jrowny
+/packages/liveblocks-react-lexical/	@jrowny @nimeshnayaju
+/packages/liveblocks-react-tiptap/	@jrowny @nimeshnayaju
+/packages/liveblocks-emails/	@sugardarius
+/packages/liveblocks-node/	@nvie @ofoucherot @FlowFlorent
+/packages/liveblocks-node-lexical/	@jrowny
+/packages/liveblocks-node-prosemirror/	@jrowny
+/packages/liveblocks-yjs/	@jrowny @nimeshnayaju
+/packages/liveblocks-zustand/	@nvie @sugardarius
+/packages/liveblocks-redux/	@nvie @sugardarius
 /tools/create-liveblocks-app/   @CTNicholas
 /tools/liveblocks-devtools/   @nvie @marcbouchenoire
 /shared/   @nvie
