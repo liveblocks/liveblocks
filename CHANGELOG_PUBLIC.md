@@ -26,7 +26,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Added a factory function [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to grab an instance of Yjs
   provider that will be automatically cleaned up when the room is
-  disconnected/changed.
+  disconnected/changed. This is now [the recommended way to set up your Yjs app](https://liveblocks.io/docs/api-reference/liveblocks-yjs#Setup).
 - Simplified types for [`LiveblocksYjsProvider`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#LiveblocksYjsProvider).
 
 ### `@liveblocks/react-tiptap`
@@ -167,7 +167,7 @@ await liveblocks.deleteNotificationSettings({ userId });
 - Improved information structure for [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
 - Improved [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs) API reference.
 - Added info for new API [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
-- Updated all Yjs get started guides to use the new API.
+- Updated all Yjs [get started guides](https://liveblocks.io/docs/get-started) to use the new API.
 
 ## Infrastructure
 
