@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- Improve performance of undo/redo operations on large documents (thanks for the
+  contribution @rudi-c!)
+
 ## v2.18.1
 
 ### `@liveblocks/react-ui`
