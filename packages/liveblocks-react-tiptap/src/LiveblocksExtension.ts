@@ -239,11 +239,19 @@ export const useLiveblocksExtension = (
           this.storage.provider.awareness.getLocalState() as {
             user: IUserInfo;
           };
-        this.storage.permanentUserData?.setUserMapping(
-          this.storage.doc,
-          this.storage.doc.clientID,
-          userId ?? "Unknown" // TODO: change this to the user's ID so we can map it to the user's name
-        );
+        if (this.storage.permanentUserData) {
+          const pud = this.storage.permanentUserData.clients.get(
+            this.storage.doc.clientID
+          );
+          // Only update if there is no entry or if the entry is different
+          if (!pud || pud !== userId) {
+            this.storage.permanentUserData.setUserMapping(
+              this.storage.doc,
+              this.storage.doc.clientID,
+              userId ?? "Unknown" // TODO: change this to the user's ID so we can map it to the user's name
+            );
+          }
+        }
         if (
           info.name !== storedUser?.name ||
           info.color !== storedUser?.color
