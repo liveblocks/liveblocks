@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- Improve performance of undo/redo operations on large documents (thanks for the
+  contribution @rudi-c!)
+
 ### `@liveblocks/react-ui`
 
 - Fix `<Composer />` and `<Comment />` overrides not working when set on
