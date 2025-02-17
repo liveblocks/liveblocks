@@ -40,6 +40,7 @@ const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   comments: true,
   mentions: true,
   offlineSupport_experimental: false,
+  enablePermanentUserData: false,
 };
 
 const LiveblocksCollab = Collaboration.extend({
@@ -324,13 +325,14 @@ export const useLiveblocksExtension = (
     },
     addStorage() {
       const provider = getYjsProviderForRoom(room, {
-        enablePermanentUserData: true,
+        enablePermanentUserData:
+          !!options.ai || options.enablePermanentUserData,
         offlineSupport_experimental: options.offlineSupport_experimental,
       });
       return {
         doc: provider.getYDoc(),
         provider,
-        permanentUserData: provider.permanentUserData!, // TODO: we know this is true because we enabeld the option, is there a way to do that without this override?
+        permanentUserData: provider.permanentUserData,
         unsubs: [],
       };
     },
