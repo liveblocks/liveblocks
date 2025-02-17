@@ -1,25 +1,25 @@
 import { createInboxNotificationId } from "@liveblocks/core";
 import {
   combineTransactionSteps,
+  Extension,
   getChangedRanges,
-  mergeAttributes,
-  Node,
 } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Slice } from "@tiptap/pm/model";
 import { Plugin } from "@tiptap/pm/state";
-import { ReactNodeViewRenderer, ReactRenderer } from "@tiptap/react";
+import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 import { ySyncPluginKey } from "y-prosemirror";
 
 import {
+  LIVEBLOCKS_MENTION_EXTENSION,
   LIVEBLOCKS_MENTION_KEY,
   LIVEBLOCKS_MENTION_NOTIFIER_KEY,
   LIVEBLOCKS_MENTION_PASTE_KEY,
   LIVEBLOCKS_MENTION_TYPE,
 } from "../types";
 import { getMentionsFromNode, mapFragment } from "../utils";
-import { Mention } from "./Mention";
+import { MentionNode } from "./MentionNode";
 import type { MentionsListHandle, MentionsListProps } from "./MentionsList";
 import { MentionsList } from "./MentionsList";
 
@@ -110,91 +110,19 @@ const notifier = ({
   });
 };
 
-export const MentionExtension = Node.create<MentionExtensionOptions>({
-  name: LIVEBLOCKS_MENTION_TYPE,
-  group: "inline",
-  inline: true,
-  selectable: true,
-  atom: true,
+export const MentionExtension = Extension.create<MentionExtensionOptions>({
+  name: LIVEBLOCKS_MENTION_EXTENSION,
 
   priority: 101,
-  parseHTML() {
-    return [
-      {
-        tag: "liveblocks-mention",
-      },
-    ];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return ["liveblocks-mention", mergeAttributes(HTMLAttributes)];
-  },
-
-  addNodeView() {
-    return ReactNodeViewRenderer(Mention, {
-      contentDOMElementTag: "span",
-    });
-  },
-
-  addAttributes() {
-    return {
-      id: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-id"),
-        renderHTML: (attributes) => {
-          if (!attributes.id) {
-            return {};
-          }
-
-          return {
-            "data-id": attributes.id as string, // "as" typing because TipTap doesn't have a way to type attributes
-          };
-        },
-      },
-      notificationId: {
-        default: null,
-        parseHTML: (element) => element.getAttribute("data-notification-id"),
-        renderHTML: (attributes) => {
-          if (!attributes.notificationId) {
-            return {};
-          }
-
-          return {
-            "data-notification-id": attributes.notificationId as string, // "as" typing because TipTap doesn't have a way to type attributes
-          };
-        },
-      },
-    };
-  },
-  addKeyboardShortcuts() {
-    return {
-      Backspace: () =>
-        this.editor.commands.command(({ tr, state }) => {
-          let isMention = false;
-          const { selection } = state;
-          const { empty, anchor } = selection;
-
-          if (!empty) {
-            return false;
-          }
-
-          state.doc.nodesBetween(anchor - 1, anchor, (node, pos) => {
-            if (node.type.name === this.name) {
-              isMention = true;
-              tr.insertText("", pos, pos + node.nodeSize);
-            }
-          });
-
-          return isMention;
-        }),
-    };
-  },
-
   addOptions() {
     return {
       onCreateMention: () => {},
       onDeleteMention: () => {},
     };
+  },
+
+  addExtensions() {
+    return [MentionNode];
   },
 
   addProseMirrorPlugins() {
@@ -218,7 +146,7 @@ export const MentionExtension = Node.create<MentionExtensionOptions>({
             .focus()
             .insertContentAt(range, [
               {
-                type: this.name,
+                type: LIVEBLOCKS_MENTION_TYPE,
                 attrs: props as Record<string, string>,
               },
               {
@@ -235,7 +163,7 @@ export const MentionExtension = Node.create<MentionExtensionOptions>({
         },
         allow: ({ state, range }) => {
           const $from = state.doc.resolve(range.from);
-          const type = state.schema.nodes[this.name];
+          const type = state.schema.nodes[LIVEBLOCKS_MENTION_TYPE];
           const allow = !!$from.parent.type.contentMatch.matchType(type);
 
           return allow;

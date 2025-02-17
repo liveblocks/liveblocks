@@ -49,7 +49,7 @@ collaboration to your Vue.js application using the APIs from the
       <script setup>
       import { ref, onMounted, onUnmounted } from "vue";
       import { createClient } from "@liveblocks/client";
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
       import * as Y from "yjs";
       import { yCollab } from "y-codemirror.next";
       import { EditorView, basicSetup } from "codemirror";
@@ -71,9 +71,9 @@ collaboration to your Vue.js application using the APIs from the
       leave.value = info.leave;
 
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
-      const yDoc = new Y.Doc();
+      const yProvider = getYjsProviderForRoom(room);
+      const yDoc = yProvider.getYDoc();
       const yText = yDoc.getText("codemirror");
-      const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
       onMounted(() => {
         // Set up CodeMirror and extensions

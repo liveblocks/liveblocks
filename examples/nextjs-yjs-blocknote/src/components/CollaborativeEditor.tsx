@@ -4,9 +4,8 @@ import { BlockNoteEditor } from "@blocknote/core";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import * as Y from "yjs";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
 import { Toolbar } from "./Toolbar";
 import styles from "./CollaborativeEditor.module.css";
 import { Avatars } from "@/components/Avatars";
@@ -14,27 +13,13 @@ import { Avatars } from "@/components/Avatars";
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 export function CollaborativeEditor() {
   const room = useRoom();
-  const [doc, setDoc] = useState<Y.Doc>();
-  const [provider, setProvider] = useState<any>();
+  const provider = getYjsProviderForRoom(room);
 
-  // Set up Liveblocks Yjs provider
-  useEffect(() => {
-    const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksYjsProvider(room, yDoc);
-    setDoc(yDoc);
-    setProvider(yProvider);
-
-    return () => {
-      yDoc?.destroy();
-      yProvider?.destroy();
-    };
-  }, [room]);
-
-  if (!doc || !provider) {
+  if (!provider) {
     return null;
   }
 
-  return <BlockNote doc={doc} provider={provider} />;
+  return <BlockNote doc={provider.getYDoc()} provider={provider} />;
 }
 
 type EditorProps = {
