@@ -23,6 +23,7 @@ import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
+import { Deque } from "./lib/Deque";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -1157,7 +1158,7 @@ type RoomState<
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | HistoryOp<P>[];
+  pausedHistory: null | Deque<HistoryOp<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -1165,7 +1166,7 @@ type RoomState<
    */
   activeBatch: {
     ops: Op[];
-    reversedReverseOps: HistoryOp<P>[];
+    reverseOps: Deque<HistoryOp<P>>;
     updates: {
       others: [];
       presence: boolean;
@@ -1536,7 +1537,6 @@ export function createRoom<
         }
       }
 
-      const reversedReverseOpts = Array.from(reverse).reverse();
       if (activeBatch) {
         for (const op of ops) {
           activeBatch.ops.push(op);
@@ -1550,9 +1550,9 @@ export function createRoom<
             )
           );
         }
-        activeBatch.reversedReverseOps.push(...reversedReverseOpts);
+        activeBatch.reverseOps.pushLeft(reverse);
       } else {
-        addToUndoStack(reversedReverseOpts);
+        addToUndoStack(reverse);
         context.redoStack.length = 0;
         dispatchOps(ops);
         notify({ storageUpdates });
@@ -1841,21 +1841,21 @@ export function createRoom<
     notify(result.updates);
   }
 
-  function _addToRealUndoStack(reverseHistoryOps: HistoryOp<P>[]) {
+  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
-    context.undoStack.push(Array.from(reverseHistoryOps).reverse());
+    context.undoStack.push(historyOps);
     onHistoryChange();
   }
 
-  function addToUndoStack(reverseHistoryOps: HistoryOp<P>[]) {
+  function addToUndoStack(historyOps: HistoryOp<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.push(...reverseHistoryOps);
+      context.pausedHistory.pushLeft(historyOps);
     } else {
-      _addToRealUndoStack(reverseHistoryOps);
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -1912,7 +1912,7 @@ export function createRoom<
     };
   } {
     const output = {
-      reverse: [] as O[],
+      reverse: new Deque<O>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
@@ -1952,7 +1952,7 @@ export function createRoom<
           }
         }
 
-        output.reverse.unshift(reverse as O);
+        output.reverse.pushLeft(reverse as O);
         output.presence = true;
       } else {
         let source: OpSource;
@@ -1983,7 +1983,7 @@ export function createRoom<
                 applyOpResult.modified
               )
             );
-            output.reverse.unshift(...(applyOpResult.reverse as O[]));
+            output.reverse.pushLeft(applyOpResult.reverse as O[]);
           }
 
           if (
@@ -1999,7 +1999,7 @@ export function createRoom<
 
     return {
       ops,
-      reverse: output.reverse,
+      reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
         presence: output.presence,
@@ -2091,7 +2091,7 @@ export function createRoom<
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
-        context.activeBatch.reversedReverseOps.push({
+        context.activeBatch.reverseOps.pushLeft({
           type: "presence",
           data: oldValues,
         });
@@ -2246,9 +2246,9 @@ export function createRoom<
 
     const messages: ClientMsg<P, E>[] = [];
 
-    const ops = Array.from(offlineOps.values());
+    const inOps = Array.from(offlineOps.values());
 
-    const result = applyOps(ops, true);
+    const result = applyOps(inOps, true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
@@ -2699,7 +2699,7 @@ export function createRoom<
         presence: false,
         others: [],
       },
-      reversedReverseOps: [],
+      reverseOps: new Deque(),
     };
     try {
       returnValue = callback();
@@ -2709,8 +2709,8 @@ export function createRoom<
       const currentBatch = context.activeBatch;
       context.activeBatch = null;
 
-      if (currentBatch.reversedReverseOps.length > 0) {
-        addToUndoStack(currentBatch.reversedReverseOps);
+      if (currentBatch.reverseOps.length > 0) {
+        addToUndoStack(Array.from(currentBatch.reverseOps));
       }
 
       if (currentBatch.ops.length > 0) {
@@ -2732,7 +2732,7 @@ export function createRoom<
 
   function pauseHistory() {
     if (context.pausedHistory === null) {
-      context.pausedHistory = [];
+      context.pausedHistory = new Deque();
     }
   }
 
@@ -2740,7 +2740,7 @@ export function createRoom<
     const historyOps = context.pausedHistory;
     context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(Array.from(historyOps));
     }
   }
 

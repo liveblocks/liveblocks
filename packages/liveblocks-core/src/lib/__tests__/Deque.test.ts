@@ -122,7 +122,7 @@ describe("Deque", () => {
     deque1.push("foo");
     deque1.push("bar");
     const deque2 = new Deque<string>();
-    deque2.push("hello", "foo", "bar");
+    deque2.push(["hello", "foo", "bar"]);
     expect(Array.from(deque1)).toEqual(Array.from(deque2));
   });
 
@@ -132,7 +132,7 @@ describe("Deque", () => {
     deque1.pushLeft("foo");
     deque1.pushLeft("bar");
     const deque2 = new Deque<string>();
-    deque2.pushLeft("bar", "foo", "hello");
+    deque2.pushLeft(["bar", "foo", "hello"]);
     expect(Array.from(deque1)).toEqual(Array.from(deque2));
   });
 });
@@ -167,7 +167,7 @@ describe("Deque properties", () => {
           for (const [op, values] of seq) {
             if (op === "add") {
               expected.push(...values);
-              deque.push(...values);
+              deque.push(values);
             } else {
               expect(expected.pop()).toEqual(deque.pop());
             }
@@ -192,7 +192,7 @@ describe("Deque properties", () => {
           for (const [op, values] of seq) {
             if (op === "add") {
               expected.unshift(...values);
-              deque.pushLeft(...values);
+              deque.pushLeft(values);
             } else {
               expect(expected.shift()).toEqual(deque.popLeft());
             }
@@ -216,8 +216,8 @@ describe("Deque properties", () => {
 
           for (const [op, values] of seq) {
             if (op === "add") {
-              deque1.push(...values);
-              deque2.pushLeft(...values.reverse());
+              deque1.push(values);
+              deque2.pushLeft(values.reverse());
             } else {
               expect(deque1.pop()).toEqual(deque2.popLeft());
             }
