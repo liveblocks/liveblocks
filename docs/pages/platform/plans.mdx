@@ -20,6 +20,8 @@ Liveblocks. Key features include:
 - <Limits.StarterTeamMembersPerAccount /> team members per account
 - Community support
 
+{/* This file is ignoring prettier at some points because it's splitting paragraphs in two */}
+
 #### Comments
 
 {/* prettier-ignore */}
@@ -44,12 +46,12 @@ Notifications is free up to <Limits.StarterMauMax /> monthly active users and <L
 | MAU overage rate              | —                                  |
 | Monthly notifications cap     | <Limits.StarterMaxNotifications /> |
 
-#### Text editor
+#### Text Editor
 
 {/* prettier-ignore */}
-Text editor is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalTextEditorStored /> data stored.
+Text Editor is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalTextEditorStored /> data stored.
 
-| Text editor                   | Included                                |
+| Text Editor                   | Included                                |
 | ----------------------------- | --------------------------------------- |
 | Monthly active users included | <Limits.StarterMauMax />                |
 | Monthly active users cap      | <Limits.StarterMauMax />                |
@@ -61,7 +63,7 @@ Text editor is free up to <Limits.StarterMauMax /> monthly active users and <Lim
 {/* prettier-ignore */}
 Sync Datastore is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalCustomAppStored /> data stored.
 
-| Sync Datstore                 | Included                               |
+| Sync Datastore                | Included                               |
 | ----------------------------- | -------------------------------------- |
 | Monthly active users included | <Limits.StarterMauMax />               |
 | Monthly active users cap      | <Limits.StarterMauMax />               |
@@ -104,12 +106,12 @@ Notifications is free up to <Limits.StarterMauMax /> monthly active users and <L
 | MAU overage rate              | —                                  | <Limits.ProPAYGPriceNotifications /> per each additional user |
 | Monthly notifications cap     | <Limits.StarterMaxNotifications /> | <Limits.ProMaxNotifications />                                |
 
-#### Text editor
+#### Text Editor
 
 {/* prettier-ignore */}
-Text editor is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalTextEditorStored /> data stored. You can get higher limits for an additional <Limits.ProStartingPriceTextEditor />.
+Text Editor is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalTextEditorStored /> data stored. You can get higher limits for an additional <Limits.ProStartingPriceTextEditor />.
 
-| Text editor                   | Included                                | <Limits.ProStartingPriceTextEditor />                      |
+| Text Editor                   | Included                                | <Limits.ProStartingPriceTextEditor />                      |
 | ----------------------------- | --------------------------------------- | ---------------------------------------------------------- |
 | Monthly active users included | <Limits.StarterMauMax />                | <Limits.ProMauIncluded />                                  |
 | Monthly active users cap      | <Limits.StarterMauMax />                | <Limits.ProMauMax />                                       |
@@ -121,7 +123,7 @@ Text editor is free up to <Limits.StarterMauMax /> monthly active users and <Lim
 {/* prettier-ignore */}
 Sync Datastore is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalCustomAppStored /> data stored. You can get higher limits for an additional <Limits.ProStartingPriceCustomApp />.
 
-| Sync Datstore                 | Included                               | <Limits.ProStartingPriceCustomApp />                      |
+| Sync Datastore                | Included                               | <Limits.ProStartingPriceCustomApp />                      |
 | ----------------------------- | -------------------------------------- | --------------------------------------------------------- |
 | Monthly active users included | <Limits.StarterMauMax />               | <Limits.ProMauIncluded />                                 |
 | Monthly active users cap      | <Limits.StarterMauMax />               | <Limits.ProMauMax />                                      |
@@ -164,22 +166,22 @@ Notifications can be included in the enterprise plan.
 | MAU overage rate              | Custom    |
 | Monthly notifications cap     | Unlimited |
 
-#### Text editor
+#### Text Editor
 
-Text editor can be included in the enterprise plan.
+Text Editor can be included in the enterprise plan.
 
-| Text editor                   |        |
+| Text Editor                   |        |
 | ----------------------------- | ------ |
 | Monthly active users included | Custom |
 | Monthly active users cap      | Custom |
 | MAU overage rate              | Custom |
 | Total GB stored               | Custom |
 
-#### Sync Datstore
+#### Sync Datastore
 
-Sync Datstore can be included in the enterprise plan.
+Sync Datastore can be included in the enterprise plan.
 
-| Sync Datstore                 |        |
+| Sync Datastore                |        |
 | ----------------------------- | ------ |
 | Monthly active users included | Custom |
 | Monthly active users cap      | Custom |
@@ -213,10 +215,10 @@ our [Fair Use Policy](/docs/platform/limits/fair-use-policy).
 
 ### How is data storage calculated?
 
-Storage for Text Editor and Sync Datastore is a cumulative, overall calculation.
-It does not reset monthly, and the total usage will continue to accrue over time
-as you add more content and data. You can monitor your usage at any time in the
-[dashboard](/dashboard).
+Storage for Text Editor and Sync Datastore is a cumulative calculation that
+represents all data that is currently stored. It does not reset monthly, and the
+total usage will continue to accrue over time as you add more content and data.
+You can monitor your usage at any time in the [dashboard](/dashboard).
 
 ### Do you count monthly active users during testing?
 
