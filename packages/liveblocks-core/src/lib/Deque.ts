@@ -60,7 +60,7 @@ export class Deque<T> {
 
     this.#back--;
     const value = this.#data[this.#back - 1];
-    delete this.#data[this.#back];
+    delete this.#data[this.#back - 1];
     this.#size--;
     return value;
   }
