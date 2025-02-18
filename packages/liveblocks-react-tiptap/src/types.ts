@@ -88,13 +88,14 @@ export type LiveblocksExtensionOptions = {
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
   initialContent?: Content;
+  enablePermanentUserData?: boolean;
 };
 
 export type LiveblocksExtensionStorage = {
   unsubs: (() => void)[];
   doc: Doc;
   provider: LiveblocksYjsProvider;
-  permanentUserData: PermanentUserData;
+  permanentUserData?: PermanentUserData;
 };
 
 export type CommentsExtensionStorage = {
