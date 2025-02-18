@@ -478,9 +478,9 @@ function App() {
 ```
 
 `room` is the room ID that the user is connecting to. When using
-[Notifications](/docs/ready-made-features/comments/notifications), `room` can be
-`undefined`, as the client is requesting a token that grants access to multiple
-rooms, rather than a specific room.
+[Notifications](/docs/ready-made-features/comments/email-notifications), `room`
+can be `undefined`, as the client is requesting a token that grants access to
+multiple rooms, rather than a specific room.
 
 ##### Fetch your endpoint
 
@@ -787,8 +787,9 @@ function Component() {
 
 #### resolveRoomsInfo [#LiveblocksProviderResolveRoomsInfo]
 
-When using [Notifications](/docs/ready-made-features/comments/notifications)
-with [Comments](/docs/ready-made-features/comments), room IDs will be used to
+When using
+[Notifications](/docs/ready-made-features/comments/email-notifications) with
+[Comments](/docs/ready-made-features/comments), room IDs will be used to
 contextualize notifications (e.g. “Chris mentioned you in _room-id_”) in the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
