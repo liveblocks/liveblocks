@@ -5,6 +5,10 @@
 - Improve performance of undo/redo operations on large documents (thanks for the
   contribution @rudi-c!)
 
+### `@liveblocks/react-tiptap`
+
+- Fix a performance regression introduced in 2.18.1
+
 ## v2.18.1
 
 ### `@liveblocks/react-ui`
