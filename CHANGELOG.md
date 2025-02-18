@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.18.2
+
 ### `@liveblocks/client`
 
 - Improve performance of undo/redo operations on large documents (thanks for the
