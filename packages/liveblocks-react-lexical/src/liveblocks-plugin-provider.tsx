@@ -2,7 +2,7 @@ import { autoUpdate, useFloating } from "@floating-ui/react-dom";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import { nn, TextEditorType } from "@liveblocks/core";
+import { TextEditorType } from "@liveblocks/core";
 import { useRoom, useSelf } from "@liveblocks/react";
 import {
   useLayoutEffect,
@@ -10,28 +10,21 @@ import {
   useResolveMentionSuggestions,
   useYjsProvider,
 } from "@liveblocks/react/_private";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { MutableRefObject, ReactNode } from "react";
 import {
   useCallback,
   useEffect,
-  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { Doc } from "yjs";
+import type { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { ThreadMarkNode } from "./comments/thread-mark-node";
 import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
 import { useRootElement } from "./use-root-element";
-
-// TODO: Replace by ref once I understand why useRef is not stable (?!)
-const providersMap = new Map<
-  string,
-  LiveblocksYjsProvider
->();
 
 export type EditorStatus =
   /* The editor state is not loaded and has not been requested. */
@@ -150,7 +143,6 @@ export const LiveblocksPlugin = ({
     useResolveMentionSuggestions() !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
-  const previousRoomIdRef = useRef<string | null>(null);
 
   if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
     throw new Error(
@@ -200,31 +192,10 @@ export const LiveblocksPlugin = ({
 
   const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Doc>): Provider => {
-      // Destroy previously used provider to avoid memory leaks
-      // TODO: Find a way to destroy the last used provider on unmount (while working with StrictMode)
-      if (
-        previousRoomIdRef.current !== null &&
-        previousRoomIdRef.current !== id
-      ) {
-        const previousProvider = providersMap.get(id);
-        if (previousProvider !== undefined) {
-          previousProvider.destroy();
-        }
-      }
+      const provider = getYjsProviderForRoom(room);
+      yjsDocMap.set(id, provider.getYDoc());
 
-      let doc = yjsDocMap.get(id);
-
-      if (doc === undefined) {
-        doc = new Doc();
-        const provider = new LiveblocksYjsProvider(room, doc);
-        yjsDocMap.set(id, doc);
-        providersMap.set(id, provider);
-      }
-
-      return nn(
-        providersMap.get(id),
-        "Internal error. Should never happen"
-      ) as Provider;
+      return provider as Provider;
     },
     [room]
   );

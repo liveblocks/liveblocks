@@ -52,12 +52,12 @@
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
-    "@lexical/react": "0.16.1",
-    "@lexical/rich-text": "0.16.1",
-    "@lexical/selection": "0.16.1",
-    "@lexical/utils": "0.16.1",
-    "@lexical/yjs": "0.16.1",
-    "lexical": "0.16.1",
+    "@lexical/react": "0.24.0",
+    "@lexical/rich-text": "0.24.0",
+    "@lexical/selection": "0.24.0",
+    "@lexical/utils": "0.24.0",
+    "@lexical/yjs": "0.24.0",
+    "lexical": "0.24.0",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
