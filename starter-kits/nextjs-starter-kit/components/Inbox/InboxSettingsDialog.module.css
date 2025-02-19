@@ -17,7 +17,7 @@
 
 .switches h3 {
   font-weight: 500;
-  font-size: var(--size);
+  font-size: var(--size-sm);
   padding: 0 var(--space-8);
 }
 
@@ -29,7 +29,7 @@
 
 .switchBox {
   background: var(--color-surface);
-  padding: var(--space-7) var(--space-7);
+  padding: var(--space-6) var(--space-7);
   margin: 0 var(--space-8);
   display: flex;
   flex-direction: column;
