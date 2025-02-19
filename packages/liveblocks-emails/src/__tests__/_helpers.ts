@@ -175,6 +175,16 @@ export const commentBody7: CommentBody = {
   ],
 };
 
+export const commentBodyWithHtml: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Trying with <b>inject html</b> !" }],
+    },
+  ],
+};
+
 export const makeComment = ({
   userId,
   threadId,

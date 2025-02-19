@@ -13,6 +13,7 @@ import {
   commentBody5,
   commentBody6,
   commentBody7,
+  commentBodyWithHtml,
   renderToStaticMarkup,
   resolveUsers,
 } from "./_helpers";
@@ -64,6 +65,14 @@ describe("convert comment body as html", () => {
       );
       const expected =
         '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-dracula</span> !</p>';
+
+      expect(htmlBody).toEqual(expected);
+    });
+
+    it.only("should escape html entities", async () => {
+      const htmlBody = await convertCommentBodyAsHtml(commentBodyWithHtml);
+      const expected =
+        '<p style="font-size:14px;">Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>';
 
       expect(htmlBody).toEqual(expected);
     });
