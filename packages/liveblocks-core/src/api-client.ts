@@ -386,7 +386,9 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   // Note: Using term `user` on those two following methods
   // to avoid confusion with the same methods used in the `RoomHttpApi`.
   // Let's wait the room subscription renaming to be here.
-  getUserNotificationSettings(): Promise<UserNotificationSettings>;
+  getUserNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettings>;
 
   updateUserNotificationSettings(
     settings: PartialUserNotificationSettings
