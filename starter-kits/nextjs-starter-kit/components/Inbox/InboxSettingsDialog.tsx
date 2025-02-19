@@ -34,7 +34,7 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
         ) : (
           <div className={styles.dialog}>
             <div className={styles.switches}>
-              <h3>Receive thread notifications for… </h3>
+              <h3>In this document, receive thread notifications for… </h3>
               <div className={styles.selectBox}>
                 <Select
                   aboveOverlay
@@ -65,7 +65,7 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
                   value={roomSettings.settings.threads}
                 />
               </div>
-              <h3>Receive emails for…</h3>
+              <h3>In all documents, receive emails for…</h3>
               <div className={styles.switchBox}>
                 <Switch
                   label="Document invites"
