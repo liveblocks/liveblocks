@@ -15,7 +15,14 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 8 (2025-02-21)
 
+## Documentation
+
+- Added info on how data storage is calculated.
+- Fixed a number of broken links on various pages.
+
 ## Contributors
+
+ctnicholas
 
 # Week 7 (2025-02-14)
 
