@@ -8,8 +8,8 @@ https://liveblocks.io/changelog
 - Add each contributor's GitHub username.
 
 TEAM MEMBERS
-adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
-nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+adigau, ctnicholas, flowflorent, jrowny, marcbouchenoire, nimeshnayaju,
+nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
