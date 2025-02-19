@@ -100,7 +100,6 @@ describe("thread notification", () => {
       const expected = [comment2, comment3];
       const unreadComments = getUnreadComments({
         comments: [comment1, comment2, comment3],
-        previousUnreadInboxNotification: null,
         inboxNotification,
         userId: "user-dracula",
       });
@@ -129,13 +128,11 @@ describe("thread notification", () => {
 
       const unreadComments1 = getUnreadComments({
         comments: [comment1, comment2],
-        previousUnreadInboxNotification: null,
         inboxNotification,
         userId: "user-mina",
       });
       const unreadComments2 = getUnreadComments({
         comments: [comment1, comment2],
-        previousUnreadInboxNotification: null,
         inboxNotification,
         userId: "user-dracula",
       });
