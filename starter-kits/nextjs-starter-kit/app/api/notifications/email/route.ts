@@ -17,11 +17,15 @@ const liveblocks = new Liveblocks({
 });
 
 // Add your webhook secret key from a project's webhooks dashboard
-const webhookHandler = new WebhookHandler(
-  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
-);
+const WEBHOOK_SECRET_KEY = process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY;
 
 export async function POST(request: Request) {
+  if (!WEBHOOK_SECRET_KEY) {
+    return new Response("To use email notifications, first set up webhooks", {
+      status: 400,
+    });
+  }
+
   const body = await request.json();
   const headers = request.headers;
 
@@ -29,6 +33,7 @@ export async function POST(request: Request) {
 
   try {
     // Verify if this is a real webhook request
+    const webhookHandler = new WebhookHandler(WEBHOOK_SECRET_KEY);
     event = webhookHandler.verifyRequest({
       headers: headers,
       rawBody: JSON.stringify(body),
