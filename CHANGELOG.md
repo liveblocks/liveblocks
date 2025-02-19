@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/emails`
+
+- Revert the deduplication logic in email notification preparation functions
+  `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` as the optimization provided no
+  measurable benefits while increasing complexity.
+
 ## v2.18.2
 
 ### `@liveblocks/client`
