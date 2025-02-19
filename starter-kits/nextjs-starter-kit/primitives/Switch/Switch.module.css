@@ -5,8 +5,8 @@
 
 .root {
   all: unset;
-  width: 40px;
-  height: 23px;
+  width: 34px;
+  height: 20px;
   background-color: var(--color-surface-active);
   border-radius: 9999px;
   position: relative;
@@ -24,8 +24,8 @@
 
 .thumb {
   display: block;
-  width: 19px;
-  height: 19px;
+  width: 16px;
+  height: 16px;
   background-color: var(--color-surface-elevated);
   border-radius: 9999px;
   box-shadow: 0 2px 2px var(--shadow);
@@ -35,12 +35,13 @@
 }
 
 .thumb[data-state="checked"] {
-  transform: translateX(19px);
+  transform: translateX(16px);
 }
 
 .label {
   color: var(--color-text-light);
-  font-size: 15px;
+  font-size: var(--size-sm);
+  font-weight: 500;
   line-height: 1;
   user-select: none;
   padding-right: var(--space-6);
