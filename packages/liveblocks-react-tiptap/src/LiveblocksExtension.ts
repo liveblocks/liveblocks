@@ -40,6 +40,7 @@ const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   comments: true,
   mentions: true,
   offlineSupport_experimental: false,
+  enablePermanentUserData: false,
 };
 
 const LiveblocksCollab = Collaboration.extend({
@@ -238,11 +239,19 @@ export const useLiveblocksExtension = (
           this.storage.provider.awareness.getLocalState() as {
             user: IUserInfo;
           };
-        this.storage.permanentUserData?.setUserMapping(
-          this.storage.doc,
-          this.storage.doc.clientID,
-          userId ?? "Unknown" // TODO: change this to the user's ID so we can map it to the user's name
-        );
+        if (this.storage.permanentUserData) {
+          const pud = this.storage.permanentUserData.clients.get(
+            this.storage.doc.clientID
+          );
+          // Only update if there is no entry or if the entry is different
+          if (!pud || pud !== userId) {
+            this.storage.permanentUserData.setUserMapping(
+              this.storage.doc,
+              this.storage.doc.clientID,
+              userId ?? "Unknown" // TODO: change this to the user's ID so we can map it to the user's name
+            );
+          }
+        }
         if (
           info.name !== storedUser?.name ||
           info.color !== storedUser?.color
@@ -324,13 +333,14 @@ export const useLiveblocksExtension = (
     },
     addStorage() {
       const provider = getYjsProviderForRoom(room, {
-        enablePermanentUserData: true,
+        enablePermanentUserData:
+          !!options.ai || options.enablePermanentUserData,
         offlineSupport_experimental: options.offlineSupport_experimental,
       });
       return {
         doc: provider.getYDoc(),
         provider,
-        permanentUserData: provider.permanentUserData!, // TODO: we know this is true because we enabeld the option, is there a way to do that without this override?
+        permanentUserData: provider.permanentUserData,
         unsubs: [],
       };
     },

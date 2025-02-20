@@ -23,6 +23,7 @@ import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
+import { Deque } from "./lib/Deque";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -1164,7 +1165,7 @@ type RoomState<
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | HistoryOp<P>[];
+  pausedHistory: null | Deque<HistoryOp<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -1172,7 +1173,7 @@ type RoomState<
    */
   activeBatch: {
     ops: Op[];
-    reverseOps: HistoryOp<P>[];
+    reverseOps: Deque<HistoryOp<P>>;
     updates: {
       others: [];
       presence: boolean;
@@ -1556,7 +1557,7 @@ export function createRoom<
             )
           );
         }
-        activeBatch.reverseOps.unshift(...reverse);
+        activeBatch.reverseOps.pushLeft(reverse);
       } else {
         addToUndoStack(reverse);
         context.redoStack.length = 0;
@@ -1860,7 +1861,7 @@ export function createRoom<
 
   function addToUndoStack(historyOps: HistoryOp<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.unshift(...historyOps);
+      context.pausedHistory.pushLeft(historyOps);
     } else {
       _addToRealUndoStack(historyOps);
     }
@@ -1919,7 +1920,7 @@ export function createRoom<
     };
   } {
     const output = {
-      reverse: [] as O[],
+      reverse: new Deque<O>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
@@ -1959,7 +1960,7 @@ export function createRoom<
           }
         }
 
-        output.reverse.unshift(reverse as O);
+        output.reverse.pushLeft(reverse as O);
         output.presence = true;
       } else {
         let source: OpSource;
@@ -1990,7 +1991,7 @@ export function createRoom<
                 applyOpResult.modified
               )
             );
-            output.reverse.unshift(...(applyOpResult.reverse as O[]));
+            output.reverse.pushLeft(applyOpResult.reverse as O[]);
           }
 
           if (
@@ -2006,7 +2007,7 @@ export function createRoom<
 
     return {
       ops,
-      reverse: output.reverse,
+      reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
         presence: output.presence,
@@ -2098,7 +2099,7 @@ export function createRoom<
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
-        context.activeBatch.reverseOps.unshift({
+        context.activeBatch.reverseOps.pushLeft({
           type: "presence",
           data: oldValues,
         });
@@ -2253,9 +2254,9 @@ export function createRoom<
 
     const messages: ClientMsg<P, E>[] = [];
 
-    const ops = Array.from(offlineOps.values());
+    const inOps = Array.from(offlineOps.values());
 
-    const result = applyOps(ops, true);
+    const result = applyOps(inOps, true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
@@ -2706,7 +2707,7 @@ export function createRoom<
         presence: false,
         others: [],
       },
-      reverseOps: [],
+      reverseOps: new Deque(),
     };
     try {
       returnValue = callback();
@@ -2717,7 +2718,7 @@ export function createRoom<
       context.activeBatch = null;
 
       if (currentBatch.reverseOps.length > 0) {
-        addToUndoStack(currentBatch.reverseOps);
+        addToUndoStack(Array.from(currentBatch.reverseOps));
       }
 
       if (currentBatch.ops.length > 0) {
@@ -2739,7 +2740,7 @@ export function createRoom<
 
   function pauseHistory() {
     if (context.pausedHistory === null) {
-      context.pausedHistory = [];
+      context.pausedHistory = new Deque();
     }
   }
 
@@ -2747,7 +2748,7 @@ export function createRoom<
     const historyOps = context.pausedHistory;
     context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(Array.from(historyOps));
     }
   }
 
