@@ -518,14 +518,14 @@ export async function convertTextEditorNodesAsHtml(
         case "mention": {
           const user = resolvedUsers.get(node.userId);
           // prettier-ignore
-          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ?? node.userId}</span>`
+          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.userId}</span>`
         }
         case "text": {
           // Note: construction following the schema 👇
           // <code><s><em><strong>{node.text}</strong></s></em></code>
           let children = node.text;
           if (!children) {
-            return children;
+            return html`${children}`;
           }
 
           if (node.bold) {
@@ -548,7 +548,7 @@ export async function convertTextEditorNodesAsHtml(
             children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
           }
 
-          return children;
+          return html`${children}`;
         }
       }
     })
