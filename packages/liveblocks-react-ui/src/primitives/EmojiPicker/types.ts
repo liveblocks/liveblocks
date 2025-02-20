@@ -4,7 +4,7 @@ import type {
   PropsWithChildren,
 } from "react";
 
-import type { ComponentPropsWithSlot } from "../../types";
+import type { ComponentPropsWithSlot } from "../../types.js";
 
 export type Emoji = {
   emoji: string;

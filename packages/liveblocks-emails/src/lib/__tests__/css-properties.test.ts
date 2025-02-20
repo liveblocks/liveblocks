@@ -1,5 +1,5 @@
-import type { CSSProperties } from "../css-properties";
-import { toInlineCSSString } from "../css-properties";
+import type { CSSProperties } from "../css-properties.js";
+import { toInlineCSSString } from "../css-properties.js";
 
 describe("to inline css string", () => {
   it("should convert simple properties correctly", () => {

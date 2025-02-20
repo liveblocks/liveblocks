@@ -1,4 +1,4 @@
-import { ManagedOthers } from "../ManagedOthers";
+import { ManagedOthers } from "../ManagedOthers.js";
 
 type P = {
   x: number;

@@ -4,11 +4,11 @@ import type { HistoryVersion } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
 
-import { useOverrides } from "../overrides";
-import { Timestamp } from "../primitives";
-import { classNames } from "../utils/class-names";
-import { List } from "./internal/List";
-import { User } from "./internal/User";
+import { useOverrides } from "../overrides.js";
+import { Timestamp } from "../primitives.js";
+import { classNames } from "../utils/class-names.js";
+import { List } from "./internal/List.js";
+import { User } from "./internal/User.js";
 
 const AUTHORS_TRUNCATE = 3;
 

@@ -8,10 +8,10 @@ import {
   dummyCommentData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
-} from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
-import { mockCreateComment, mockGetThreads } from "./_restMocks";
-import { createContextsForTest } from "./_utils";
+} from "./_dummies.js";
+import MockWebSocket from "./_MockWebSocket.js";
+import { mockCreateComment, mockGetThreads } from "./_restMocks.js";
+import { createContextsForTest } from "./_utils.js";
 
 const server = setupServer();
 

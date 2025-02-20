@@ -1,4 +1,4 @@
-import { exists } from "./exists";
+import { exists } from "./exists.js";
 
 export function getFiles(dataTransfer: DataTransfer) {
   if (!dataTransfer.types.includes("Files")) {

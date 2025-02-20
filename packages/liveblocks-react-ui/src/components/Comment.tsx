@@ -32,51 +32,59 @@ import {
   useState,
 } from "react";
 
-import { CheckIcon } from "../icons/Check";
-import { CrossIcon } from "../icons/Cross";
-import { DeleteIcon } from "../icons/Delete";
-import { EditIcon } from "../icons/Edit";
-import { EllipsisIcon } from "../icons/Ellipsis";
-import { EmojiAddIcon } from "../icons/EmojiAdd";
+import { CheckIcon } from "../icons/Check.js";
+import { CrossIcon } from "../icons/Cross.js";
+import { DeleteIcon } from "../icons/Delete.js";
+import { EditIcon } from "../icons/Edit.js";
+import { EllipsisIcon } from "../icons/Ellipsis.js";
+import { EmojiAddIcon } from "../icons/EmojiAdd.js";
 import type {
   CommentOverrides,
   ComposerOverrides,
   GlobalOverrides,
-} from "../overrides";
-import { useOverrides } from "../overrides";
-import type { ComposerSubmitComment } from "../primitives";
-import * as CommentPrimitive from "../primitives/Comment";
+} from "../overrides.js";
+import { useOverrides } from "../overrides.js";
+import type { ComposerSubmitComment } from "../primitives.js";
+import * as CommentPrimitive from "../primitives/Comment.js";
 import type {
   CommentBodyLinkProps,
   CommentBodyMentionProps,
   CommentLinkProps,
   CommentMentionProps,
-} from "../primitives/Comment/types";
-import * as ComposerPrimitive from "../primitives/Composer";
-import { Timestamp } from "../primitives/Timestamp";
-import { useCurrentUserId } from "../shared";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions";
-import type { CommentAttachmentArgs } from "../types";
-import { classNames } from "../utils/class-names";
-import { download } from "../utils/download";
-import { useRefs } from "../utils/use-refs";
-import { useVisibleCallback } from "../utils/use-visible";
-import { useWindowFocus } from "../utils/use-window-focus";
-import type { ComposerProps } from "./Composer";
-import { Composer } from "./Composer";
+} from "../primitives/Comment/types.js";
+import * as ComposerPrimitive from "../primitives/Composer.js";
+import { Timestamp } from "../primitives/Timestamp.js";
+import { useCurrentUserId } from "../shared.js";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions.js";
+import type { CommentAttachmentArgs } from "../types.js";
+import { classNames } from "../utils/class-names.js";
+import { download } from "../utils/download.js";
+import { useRefs } from "../utils/use-refs.js";
+import { useVisibleCallback } from "../utils/use-visible.js";
+import { useWindowFocus } from "../utils/use-window-focus.js";
+import type { ComposerProps } from "./Composer.js";
+import { Composer } from "./Composer.js";
 import {
   FileAttachment,
   MediaAttachment,
   separateMediaAttachments,
-} from "./internal/Attachment";
-import { Avatar } from "./internal/Avatar";
-import { Button, CustomButton } from "./internal/Button";
-import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
-import { Emoji } from "./internal/Emoji";
-import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
-import { List } from "./internal/List";
-import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
-import { User } from "./internal/User";
+} from "./internal/Attachment.js";
+import { Avatar } from "./internal/Avatar.js";
+import { Button, CustomButton } from "./internal/Button.js";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownTrigger,
+} from "./internal/Dropdown.js";
+import { Emoji } from "./internal/Emoji.js";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker.js";
+import { List } from "./internal/List.js";
+import {
+  ShortcutTooltip,
+  Tooltip,
+  TooltipProvider,
+} from "./internal/Tooltip.js";
+import { User } from "./internal/User.js";
 
 const REACTIONS_TRUNCATE = 5;
 

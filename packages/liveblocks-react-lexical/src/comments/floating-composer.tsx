@@ -31,9 +31,9 @@ import type { ComponentRef, FormEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { createDOMRange } from "../create-dom-range";
-import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
-import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
+import { createDOMRange } from "../create-dom-range.js";
+import { createRectsFromDOMRange } from "../create-rects-from-dom-range.js";
+import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node.js";
 
 /**
  * Dispatching OPEN_FLOATING_COMPOSER_COMMAND will display the FloatingComposer

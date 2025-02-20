@@ -1,7 +1,7 @@
 import type { EditorMarks, Text } from "slate";
 import { Editor as SlateEditor, Range as SlateRange } from "slate";
 
-import { getCharacterAfter, getCharacterBefore } from "./get-character";
+import { getCharacterAfter, getCharacterBefore } from "./get-character.js";
 
 const defaultMarks: Required<EditorMarks> = {
   bold: false,

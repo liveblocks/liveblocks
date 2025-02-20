@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 
-import { Deque } from "../Deque";
+import { Deque } from "../Deque.js";
 
 describe("Deque", () => {
   test("empty", () => {

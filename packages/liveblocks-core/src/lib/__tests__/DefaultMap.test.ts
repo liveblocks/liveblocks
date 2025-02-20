@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 
-import { DefaultMap } from "../DefaultMap";
+import { DefaultMap } from "../DefaultMap.js";
 
 describe("DefaultMap", () => {
   test("cannot be used without factory function", () => {

@@ -1,8 +1,8 @@
 import { Slot } from "@radix-ui/react-slot";
 import { forwardRef } from "react";
 
-import { EMOJI_FONT_FAMILY } from "../../constants";
-import type { ComponentPropsWithSlot } from "../../types";
+import { EMOJI_FONT_FAMILY } from "../../constants.js";
+import type { ComponentPropsWithSlot } from "../../types.js";
 
 export interface EmojiProps extends ComponentPropsWithSlot<"span"> {
   emoji: string;

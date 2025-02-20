@@ -6,7 +6,7 @@ import { renderHook, screen, waitFor } from "@testing-library/react";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { act, createContextsForTest } from "./_utils";
+import { act, createContextsForTest } from "./_utils.js";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveUsers({ userIds }: ResolveUsersArgs) {

@@ -57,12 +57,12 @@ import {
   useState,
 } from "react";
 
-import { classNames } from "../classnames";
-import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
-import { isBlockNodeActive } from "../is-block-node-active";
-import { useIsCommandRegistered } from "../is-command-registered";
-import { isTextFormatActive } from "../is-text-format-active";
-import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
+import { classNames } from "../classnames.js";
+import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer.js";
+import { isBlockNodeActive } from "../is-block-node-active.js";
+import { useIsCommandRegistered } from "../is-command-registered.js";
+import { isTextFormatActive } from "../is-text-format-active.js";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared.js";
 
 export const BLOCK_SELECT_SIDE_OFFSET = 10;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;

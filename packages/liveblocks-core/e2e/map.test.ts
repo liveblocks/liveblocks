@@ -1,6 +1,6 @@
-import type { Immutable } from "../src/types/Immutable";
-import { LiveMap } from "../src/crdts/LiveMap";
-import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
+import type { Immutable } from "../src/types/Immutable.js";
+import { LiveMap } from "../src/crdts/LiveMap.js";
+import { prepareSingleClientTest, prepareTestsConflicts } from "./utils.js";
 
 describe("LiveMap single client", () => {
   test(

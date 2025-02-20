@@ -37,24 +37,24 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { useLiveblocksUIConfig } from "../config";
-import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
-import { AttachmentIcon } from "../icons/Attachment";
-import { BoldIcon } from "../icons/Bold";
-import { CodeIcon } from "../icons/Code";
-import { EmojiIcon } from "../icons/Emoji";
-import { ItalicIcon } from "../icons/Italic";
-import { MentionIcon } from "../icons/Mention";
-import { SendIcon } from "../icons/Send";
-import { StrikethroughIcon } from "../icons/Strikethrough";
-import type { ComposerOverrides, GlobalOverrides } from "../overrides";
-import { useOverrides } from "../overrides";
-import * as ComposerPrimitive from "../primitives/Composer";
+import { useLiveblocksUIConfig } from "../config.js";
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants.js";
+import { AttachmentIcon } from "../icons/Attachment.js";
+import { BoldIcon } from "../icons/Bold.js";
+import { CodeIcon } from "../icons/Code.js";
+import { EmojiIcon } from "../icons/Emoji.js";
+import { ItalicIcon } from "../icons/Italic.js";
+import { MentionIcon } from "../icons/Mention.js";
+import { SendIcon } from "../icons/Send.js";
+import { StrikethroughIcon } from "../icons/Strikethrough.js";
+import type { ComposerOverrides, GlobalOverrides } from "../overrides.js";
+import { useOverrides } from "../overrides.js";
+import * as ComposerPrimitive from "../primitives/Composer.js";
 import {
   useComposer,
   useComposerAttachmentsContext,
   useComposerEditorContext,
-} from "../primitives/Composer/contexts";
+} from "../primitives/Composer/contexts.js";
 import type {
   ComposerEditorComponents,
   ComposerEditorLinkProps,
@@ -64,20 +64,24 @@ import type {
   ComposerFormProps,
   ComposerMarkToggleProps,
   ComposerSubmitComment,
-} from "../primitives/Composer/types";
-import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions";
-import type { ComposerBodyMark } from "../types";
-import { classNames } from "../utils/class-names";
-import { useControllableState } from "../utils/use-controllable-state";
-import { FileAttachment } from "./internal/Attachment";
-import { Attribution } from "./internal/Attribution";
-import { Avatar } from "./internal/Avatar";
-import { Button } from "./internal/Button";
-import type { EmojiPickerProps } from "./internal/EmojiPicker";
-import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
-import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
-import { User } from "./internal/User";
+} from "../primitives/Composer/types.js";
+import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils.js";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions.js";
+import type { ComposerBodyMark } from "../types.js";
+import { classNames } from "../utils/class-names.js";
+import { useControllableState } from "../utils/use-controllable-state.js";
+import { FileAttachment } from "./internal/Attachment.js";
+import { Attribution } from "./internal/Attribution.js";
+import { Avatar } from "./internal/Avatar.js";
+import { Button } from "./internal/Button.js";
+import type { EmojiPickerProps } from "./internal/EmojiPicker.js";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker.js";
+import {
+  ShortcutTooltip,
+  Tooltip,
+  TooltipProvider,
+} from "./internal/Tooltip.js";
+import { User } from "./internal/User.js";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;

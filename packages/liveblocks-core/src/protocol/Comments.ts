@@ -1,6 +1,6 @@
-import type { DM } from "../globals/augmentation";
-import type { DateToString } from "../lib/DateToString";
-import type { Relax } from "../lib/Relax";
+import type { DM } from "../globals/augmentation.js";
+import type { DateToString } from "../lib/DateToString.js";
+import type { Relax } from "../lib/Relax.js";
 
 export type BaseMetadata = Record<
   string,

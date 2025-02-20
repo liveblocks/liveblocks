@@ -1,9 +1,9 @@
-import type { Json } from "../lib/Json";
-import type { PlainLson } from "../types/PlainLson";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import type { Lson, LsonObject } from "./Lson";
+import type { Json } from "../lib/Json.js";
+import type { PlainLson } from "../types/PlainLson.js";
+import { LiveList } from "./LiveList.js";
+import { LiveMap } from "./LiveMap.js";
+import { LiveObject } from "./LiveObject.js";
+import type { Lson, LsonObject } from "./Lson.js";
 
 /**
  * Helper type to convert any valid Lson type to the equivalent Json type.

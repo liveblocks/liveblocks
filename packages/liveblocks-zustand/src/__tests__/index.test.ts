@@ -18,9 +18,9 @@ import { setupServer } from "msw/node";
 import type { StateCreator } from "zustand";
 import { create } from "zustand";
 
-import type { Mapping, WithLiveblocks } from "..";
-import { liveblocks as liveblocksMiddleware } from "..";
-import { list, MockWebSocket, obj, waitFor } from "./_utils";
+import type { Mapping, WithLiveblocks } from "...js";
+import { liveblocks as liveblocksMiddleware } from "...js";
+import { list, MockWebSocket, obj, waitFor } from "./_utils.js";
 
 window.WebSocket = MockWebSocket as any;
 

@@ -17,9 +17,9 @@ import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { dummyThreadData } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
-import { createContextsForTest, makeThreadFilter } from "./_utils";
+import { dummyThreadData } from "./_dummies.js";
+import MockWebSocket from "./_MockWebSocket.js";
+import { createContextsForTest, makeThreadFilter } from "./_utils.js";
 
 const server = setupServer();
 

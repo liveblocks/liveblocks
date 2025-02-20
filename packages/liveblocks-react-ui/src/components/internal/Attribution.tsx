@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { classNames } from "../../utils/class-names.js";
 
 export function Attribution({ className, ...props }: ComponentProps<"a">) {
   return (

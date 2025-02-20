@@ -6,7 +6,7 @@ import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
-import type { ComposerBodyMark, ComposerBodyMarks } from "../../types";
+import type { ComposerBodyMark, ComposerBodyMarks } from "../../types.js";
 
 export type ComposerContext = {
   /**

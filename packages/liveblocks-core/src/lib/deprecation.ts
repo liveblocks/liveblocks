@@ -1,4 +1,4 @@
-import * as console from "./fancy-console";
+import * as console from "./fancy-console.js";
 
 /**
  * Tools to help with the controlled deprecation of public APIs.

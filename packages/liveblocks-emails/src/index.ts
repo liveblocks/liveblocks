@@ -1,6 +1,6 @@
 import { detectDupes } from "@liveblocks/core";
 
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
@@ -12,15 +12,15 @@ export type {
   CommentBodyTextComponentProps,
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
-} from "./comment-body";
-export type { ResolveRoomInfoArgs } from "./lib/types";
+} from "./comment-body.js";
+export type { ResolveRoomInfoArgs } from "./lib/types.js";
 export type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
   TextEditorContainerComponentProps,
   TextEditorMentionComponentProps,
   TextEditorTextComponentProps,
-} from "./liveblocks-text-editor";
+} from "./liveblocks-text-editor.js";
 export type {
   MentionEmailAsHtmlData,
   MentionEmailAsReactData,
@@ -28,11 +28,11 @@ export type {
   PrepareTextMentionNotificationEmailAsReactOptions,
   TextMentionNotificationEmailDataAsHtml,
   TextMentionNotificationEmailDataAsReact,
-} from "./text-mention-notification";
+} from "./text-mention-notification.js";
 export {
   prepareTextMentionNotificationEmailAsHtml,
   prepareTextMentionNotificationEmailAsReact,
-} from "./text-mention-notification";
+} from "./text-mention-notification.js";
 export type {
   CommentEmailAsHtmlData,
   CommentEmailAsReactData,
@@ -40,9 +40,9 @@ export type {
   PrepareThreadNotificationEmailAsReactOptions,
   ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
-} from "./thread-notification";
+} from "./thread-notification.js";
 export {
   prepareThreadNotificationEmailAsHtml,
   prepareThreadNotificationEmailAsReact,
-} from "./thread-notification";
+} from "./thread-notification.js";
 export type { ResolveUsersArgs } from "@liveblocks/core";

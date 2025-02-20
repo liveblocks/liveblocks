@@ -1,4 +1,4 @@
-import { nanoid } from "./nanoid";
+import { nanoid } from "./nanoid.js";
 
 const THREAD_ID_PREFIX = "th";
 const COMMENT_ID_PREFIX = "cm";

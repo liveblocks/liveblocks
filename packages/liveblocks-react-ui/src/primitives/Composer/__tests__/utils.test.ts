@@ -1,7 +1,10 @@
 import type { CommentBody } from "@liveblocks/client";
 
-import type { ComposerBody } from "../../../types";
-import { commentBodyToComposerBody, composerBodyToCommentBody } from "../utils";
+import type { ComposerBody } from "../../../types.js";
+import {
+  commentBodyToComposerBody,
+  composerBodyToCommentBody,
+} from "../utils.js";
 
 const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
   [

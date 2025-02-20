@@ -1,15 +1,15 @@
-import { StopRetrying } from "./connection";
-import { isPlainObject } from "./lib/guards";
-import type { Json } from "./lib/Json";
-import type { Relax } from "./lib/Relax";
-import { stringifyOrLog as stringify } from "./lib/stringify";
+import { StopRetrying } from "./connection.js";
+import { isPlainObject } from "./lib/guards.js";
+import type { Json } from "./lib/Json.js";
+import type { Relax } from "./lib/Relax.js";
+import { stringifyOrLog as stringify } from "./lib/stringify.js";
 import type {
   Authentication,
   CustomAuthenticationResult,
-} from "./protocol/Authentication";
-import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
-import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
-import type { Polyfills } from "./room";
+} from "./protocol/Authentication.js";
+import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken.js";
+import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken.js";
+import type { Polyfills } from "./room.js";
 
 export type AuthValue =
   | { type: "secret"; token: ParsedAuthToken }

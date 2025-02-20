@@ -4,7 +4,7 @@ import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { createRoomContext } from "../room";
+import { createRoomContext } from "../room.js";
 import {
   useCanRedo,
   useCanUndo,
@@ -15,9 +15,9 @@ import {
   useRoom,
   useStorage,
   useUndo,
-} from "./_liveblocks.config";
-import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
-import { act, renderHook } from "./_utils"; // Basically re-exports from @testing-library/react
+} from "./_liveblocks.config.js";
+import MockWebSocket, { websocketSimulator } from "./_MockWebSocket.js";
+import { act, renderHook } from "./_utils.js"; // Basically re-exports from @testing-library/react
 
 const exampleToken =
   "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-";

@@ -33,16 +33,16 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
-import { EditorProvider } from "../context";
-import type { FloatingPosition } from "../types";
-import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
+import { classNames } from "../classnames.js";
+import { EditorProvider } from "../context.js";
+import type { FloatingPosition } from "../types.js";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared.js";
 import {
   applyToolbarSlot,
   Toolbar,
   type ToolbarSlot,
   type ToolbarSlotProps,
-} from "./Toolbar";
+} from "./Toolbar.js";
 
 export interface FloatingToolbarProps
   extends Omit<ComponentProps<"div">, "children"> {

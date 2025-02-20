@@ -1,4 +1,4 @@
-import { objectUpdate } from "../../__tests__/_updatesUtils";
+import { objectUpdate } from "../../__tests__/_updatesUtils.js";
 import {
   createSerializedList,
   createSerializedObject,
@@ -6,15 +6,15 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceRemoteStorageAndReconnect,
-} from "../../__tests__/_utils";
-import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
-import { kInternal } from "../../internal";
-import { Permission } from "../../protocol/AuthToken";
-import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import { LiveList } from "../LiveList";
-import { LiveObject } from "../LiveObject";
+} from "../../__tests__/_utils.js";
+import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils.js";
+import { kInternal } from "../../internal.js";
+import { Permission } from "../../protocol/AuthToken.js";
+import { OpCode } from "../../protocol/Op.js";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt.js";
+import { CrdtType } from "../../protocol/SerializedCrdt.js";
+import { LiveList } from "../LiveList.js";
+import { LiveObject } from "../LiveObject.js";
 
 describe("LiveObject", () => {
   describe("roomId", () => {

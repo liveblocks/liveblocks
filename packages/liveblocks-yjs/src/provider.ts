@@ -5,8 +5,8 @@ import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { type Doc, parseUpdateMeta, PermanentUserData } from "yjs";
 
-import { Awareness } from "./awareness";
-import yDocHandler from "./doc";
+import { Awareness } from "./awareness.js";
+import yDocHandler from "./doc.js";
 
 export type ProviderOptions = {
   enablePermanentUserData?: boolean;

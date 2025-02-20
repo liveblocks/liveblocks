@@ -2,12 +2,15 @@ import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies.js";
 import {
   mockGetInboxNotifications,
   mockMarkAllInboxNotificationsAsRead,
-} from "./_restMocks";
-import { createContextsForTest } from "./_utils";
+} from "./_restMocks.js";
+import { createContextsForTest } from "./_utils.js";
 
 const server = setupServer();
 

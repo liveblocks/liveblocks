@@ -1,10 +1,10 @@
-import type { SerializedTiptapRootNode } from "../tiptap-editor";
+import type { SerializedTiptapRootNode } from "../tiptap-editor.js";
 import {
   findTiptapMentionNodeWithContext,
   flattenTiptapTree,
   getSerializedTiptapState,
-} from "../tiptap-editor";
-import { generateInboxNotificationId } from "./_helpers";
+} from "../tiptap-editor.js";
+import { generateInboxNotificationId } from "./_helpers.js";
 import {
   createTipTapMentionNodeWithContext,
   docStateRoot,
@@ -12,7 +12,7 @@ import {
   docUpdateBuffer,
   MENTION_ID,
   MENTIONED_USER_ID,
-} from "./_tiptap-helpers";
+} from "./_tiptap-helpers.js";
 
 describe("tiptap editor", () => {
   describe("get serialized state", () => {

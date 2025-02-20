@@ -1,4 +1,4 @@
-import type { Relax } from "../lib/Relax";
+import type { Relax } from "../lib/Relax.js";
 
 export type CustomAuthenticationResult = Relax<
   | { token: string }

@@ -1,7 +1,7 @@
 import type {
   LexicalMentionNodeWithContext,
   SerializedLexicalRootNode,
-} from "../lexical-editor";
+} from "../lexical-editor.js";
 
 /**
  * A simple `Uint8Array` representing a Lexical document

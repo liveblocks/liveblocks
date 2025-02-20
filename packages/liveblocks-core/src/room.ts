@@ -1,10 +1,10 @@
-import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
-import type { AuthManager, AuthValue } from "./auth-manager";
-import type { InternalSyncStatus } from "./client";
-import type { Delegates, LostConnectionEvent, Status } from "./connection";
-import { ManagedSocket, StopRetrying } from "./connection";
-import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
-import { OpSource } from "./crdts/AbstractCrdt";
+import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client.js";
+import type { AuthManager, AuthValue } from "./auth-manager.js";
+import type { InternalSyncStatus } from "./client.js";
+import type { Delegates, LostConnectionEvent, Status } from "./connection.js";
+import { ManagedSocket, StopRetrying } from "./connection.js";
+import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt.js";
+import { OpSource } from "./crdts/AbstractCrdt.js";
 import {
   cloneLson,
   getTreesDiffOperations,
@@ -12,46 +12,50 @@ import {
   isLiveNode,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-} from "./crdts/liveblocks-helpers";
-import { LiveObject } from "./crdts/LiveObject";
-import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
-import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
-import { kInternal } from "./internal";
-import { assertNever, nn } from "./lib/assert";
-import type { BatchStore } from "./lib/batch";
-import { Promise_withResolvers } from "./lib/controlledPromise";
-import { createCommentAttachmentId } from "./lib/createIds";
-import { captureStackTrace } from "./lib/debug";
-import { Deque } from "./lib/Deque";
-import type { Callback, EventSource, Observable } from "./lib/EventSource";
-import { makeEventSource } from "./lib/EventSource";
-import * as console from "./lib/fancy-console";
-import type { Json, JsonObject } from "./lib/Json";
-import { isJsonArray, isJsonObject } from "./lib/Json";
-import { asPos } from "./lib/position";
-import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
-import { stringifyOrLog as stringify } from "./lib/stringify";
+} from "./crdts/liveblocks-helpers.js";
+import { LiveObject } from "./crdts/LiveObject.js";
+import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson.js";
+import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates.js";
+import type { DE, DM, DP, DS, DU } from "./globals/augmentation.js";
+import { kInternal } from "./internal.js";
+import { assertNever, nn } from "./lib/assert.js";
+import type { BatchStore } from "./lib/batch.js";
+import { Promise_withResolvers } from "./lib/controlledPromise.js";
+import { createCommentAttachmentId } from "./lib/createIds.js";
+import { captureStackTrace } from "./lib/debug.js";
+import { Deque } from "./lib/Deque.js";
+import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
+import { makeEventSource } from "./lib/EventSource.js";
+import * as console from "./lib/fancy-console.js";
+import type { Json, JsonObject } from "./lib/Json.js";
+import { isJsonArray, isJsonObject } from "./lib/Json.js";
+import { asPos } from "./lib/position.js";
+import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals.js";
+import { stringifyOrLog as stringify } from "./lib/stringify.js";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
   raise,
   tryParseJson,
-} from "./lib/utils";
+} from "./lib/utils.js";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
-} from "./protocol/Ai";
-import type { Permission } from "./protocol/AuthToken";
-import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
-import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
+} from "./protocol/Ai.js";
+import type { Permission } from "./protocol/AuthToken.js";
+import {
+  canComment,
+  canWriteStorage,
+  TokenKind,
+} from "./protocol/AuthToken.js";
+import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta.js";
 import type {
   ClientMsg,
   UpdateStorageClientMsg,
   UpdateYDocClientMsg,
-} from "./protocol/ClientMsg";
-import { ClientMsgCode } from "./protocol/ClientMsg";
+} from "./protocol/ClientMsg.js";
+import { ClientMsgCode } from "./protocol/ClientMsg.js";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -62,14 +66,14 @@ import type {
   QueryMetadata,
   ThreadData,
   ThreadDeleteInfo,
-} from "./protocol/Comments";
+} from "./protocol/Comments.js";
 import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
-} from "./protocol/InboxNotifications";
-import type { Op } from "./protocol/Op";
-import { isAckOp, OpCode } from "./protocol/Op";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+} from "./protocol/InboxNotifications.js";
+import type { Op } from "./protocol/Op.js";
+import { isAckOp, OpCode } from "./protocol/Op.js";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt.js";
 import type {
   CommentsEventServerMsg,
   InitialDocumentStateServerMsg,
@@ -79,28 +83,28 @@ import type {
   UserJoinServerMsg,
   UserLeftServerMsg,
   YDocUpdateServerMsg,
-} from "./protocol/ServerMsg";
-import { ServerMsgCode } from "./protocol/ServerMsg";
-import type { HistoryVersion } from "./protocol/VersionHistory";
-import { ManagedOthers } from "./refs/ManagedOthers";
-import type * as DevTools from "./types/DevToolsTreeNode";
+} from "./protocol/ServerMsg.js";
+import { ServerMsgCode } from "./protocol/ServerMsg.js";
+import type { HistoryVersion } from "./protocol/VersionHistory.js";
+import { ManagedOthers } from "./refs/ManagedOthers.js";
+import type * as DevTools from "./types/DevToolsTreeNode.js";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
-} from "./types/IWebSocket";
-import { LiveblocksError } from "./types/LiveblocksError";
-import type { NodeMap } from "./types/NodeMap";
+} from "./types/IWebSocket.js";
+import { LiveblocksError } from "./types/LiveblocksError.js";
+import type { NodeMap } from "./types/NodeMap.js";
 import type {
   InternalOthersEvent,
   OthersEvent,
   TextEditorType,
-} from "./types/Others";
-import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import type { User } from "./types/User";
-import { PKG_VERSION } from "./version";
+} from "./types/Others.js";
+import type { Patchable } from "./types/Patchable.js";
+import type { RoomNotificationSettings } from "./types/RoomNotificationSettings.js";
+import type { User } from "./types/User.js";
+import { PKG_VERSION } from "./version.js";
 
 type TimeoutID = ReturnType<typeof setTimeout>;
 

@@ -11,12 +11,12 @@ import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import MockWebSocket from "./_MockWebSocket";
+import MockWebSocket from "./_MockWebSocket.js";
 import {
   mockGetUserNotificationSettings,
   mockUpdateUserNotificationSettings,
-} from "./_restMocks";
-import { createContextsForTest } from "./_utils";
+} from "./_restMocks.js";
+import { createContextsForTest } from "./_utils.js";
 
 const server = setupServer();
 

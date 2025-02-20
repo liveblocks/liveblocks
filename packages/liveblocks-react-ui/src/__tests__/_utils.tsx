@@ -5,7 +5,7 @@ import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 
-import { RoomProvider } from "./_liveblocks.config";
+import { RoomProvider } from "./_liveblocks.config.js";
 
 /**
  * Testing context for all tests. Sets up a default RoomProvider to wrap all

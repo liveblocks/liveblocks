@@ -1,7 +1,7 @@
 import type { Editor as SlateEditor } from "slate";
 
-import { isEmpty } from "../utils/is-empty";
-import { removeMarks } from "../utils/marks";
+import { isEmpty } from "../utils/is-empty.js";
+import { removeMarks } from "../utils/marks.js";
 
 // This plugins clears formatting on empty blocks
 // https://github.com/ianstormtaylor/slate/issues/2908

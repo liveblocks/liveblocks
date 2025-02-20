@@ -1,7 +1,7 @@
-import type { Json, JsonObject } from "../lib/Json";
-import type { BaseUserMeta } from "./BaseUserMeta";
-import type { Op } from "./Op";
-import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
+import type { Json, JsonObject } from "../lib/Json.js";
+import type { BaseUserMeta } from "./BaseUserMeta.js";
+import type { Op } from "./Op.js";
+import type { IdTuple, SerializedCrdt } from "./SerializedCrdt.js";
 
 export enum ServerMsgCode {
   // For Presence

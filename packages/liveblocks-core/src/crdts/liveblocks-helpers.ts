@@ -1,20 +1,20 @@
-import { assertNever, nn } from "../lib/assert";
-import { isPlainObject } from "../lib/guards";
-import type { Json } from "../lib/Json";
-import { stringifyOrLog as stringify } from "../lib/stringify";
-import { deepClone, entries } from "../lib/utils";
-import type { CreateOp, Op } from "../protocol/Op";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
-import type { ManagedPool } from "./AbstractCrdt";
-import { LiveList, type LiveListUpdates } from "./LiveList";
-import { LiveMap, type LiveMapUpdates } from "./LiveMap";
-import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
-import { LiveRegister } from "./LiveRegister";
-import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
-import type { StorageUpdate } from "./StorageUpdates";
+import { assertNever, nn } from "../lib/assert.js";
+import { isPlainObject } from "../lib/guards.js";
+import type { Json } from "../lib/Json.js";
+import { stringifyOrLog as stringify } from "../lib/stringify.js";
+import { deepClone, entries } from "../lib/utils.js";
+import type { CreateOp, Op } from "../protocol/Op.js";
+import { OpCode } from "../protocol/Op.js";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt.js";
+import { CrdtType } from "../protocol/SerializedCrdt.js";
+import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap.js";
+import type { ManagedPool } from "./AbstractCrdt.js";
+import { LiveList, type LiveListUpdates } from "./LiveList.js";
+import { LiveMap, type LiveMapUpdates } from "./LiveMap.js";
+import { LiveObject, type LiveObjectUpdates } from "./LiveObject.js";
+import { LiveRegister } from "./LiveRegister.js";
+import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson.js";
+import type { StorageUpdate } from "./StorageUpdates.js";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));

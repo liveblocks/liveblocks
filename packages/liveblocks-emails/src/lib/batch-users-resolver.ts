@@ -6,7 +6,7 @@ import type {
 } from "@liveblocks/core";
 import { Promise_withResolvers } from "@liveblocks/core";
 
-import { createDevelopmentWarning } from "./warning";
+import { createDevelopmentWarning } from "./warning.js";
 
 type ResolveUserOptionalPromise<U extends BaseUserMeta> = (
   args: ResolveUsersArgs

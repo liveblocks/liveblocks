@@ -1,4 +1,4 @@
-import { PatchableSignal } from "../../signals";
+import { PatchableSignal } from "../../signals.js";
 
 type P = {
   x: number;

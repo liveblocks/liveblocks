@@ -1,4 +1,4 @@
-import type { ThreadMarkNode } from "./thread-mark-node";
+import type { ThreadMarkNode } from "./thread-mark-node.js";
 
 export default function $unwrapThreadMarkNode(node: ThreadMarkNode): void {
   const children = node.getChildren();

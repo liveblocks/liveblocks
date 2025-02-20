@@ -26,8 +26,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
-import { THREADS_PLUGIN_KEY } from "../types";
+import { classNames } from "../classnames.js";
+import { THREADS_PLUGIN_KEY } from "../types.js";
 
 type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;

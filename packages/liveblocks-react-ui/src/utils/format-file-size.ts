@@ -1,4 +1,4 @@
-import { numberFormat } from "./intl";
+import { numberFormat } from "./intl.js";
 
 const BASE = 1000;
 const UNITS = ["B", "KB", "MB", "GB"] as const;

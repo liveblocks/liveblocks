@@ -2,10 +2,10 @@ import type {
   ClientOptions,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
-} from "../client";
-import { createClient } from "../client";
-import { kInternal } from "../internal";
-import { MockWebSocket } from "./_MockWebSocketServer";
+} from "../client.js";
+import { createClient } from "../client.js";
+import { kInternal } from "../internal.js";
+import { MockWebSocket } from "./_MockWebSocketServer.js";
 
 function createClientForTest(
   options?: Omit<ClientOptions, "publicApiKey" | "authEndpoint" | "polyfills">

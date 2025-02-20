@@ -34,4 +34,4 @@ export {
   UnderlineIcon as Underline,
   UndoIcon as Undo,
   WarningIcon as Warning,
-} from "./icons";
+} from "./icons.js";

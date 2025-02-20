@@ -65,28 +65,28 @@ import {
   withReact,
 } from "slate-react";
 
-import { useLiveblocksUIConfig } from "../../config";
-import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
-import { withAutoLinks } from "../../slate/plugins/auto-links";
-import { withCustomLinks } from "../../slate/plugins/custom-links";
-import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
-import type { MentionDraft } from "../../slate/plugins/mentions";
+import { useLiveblocksUIConfig } from "../../config.js";
+import { withAutoFormatting } from "../../slate/plugins/auto-formatting.js";
+import { withAutoLinks } from "../../slate/plugins/auto-links.js";
+import { withCustomLinks } from "../../slate/plugins/custom-links.js";
+import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting.js";
+import type { MentionDraft } from "../../slate/plugins/mentions.js";
 import {
   getMentionDraftAtSelection,
   insertMention,
   insertMentionCharacter,
   MENTION_CHARACTER,
   withMentions,
-} from "../../slate/plugins/mentions";
-import { withNormalize } from "../../slate/plugins/normalize";
-import { withPaste } from "../../slate/plugins/paste";
-import { getDOMRange } from "../../slate/utils/get-dom-range";
-import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
+} from "../../slate/plugins/mentions.js";
+import { withNormalize } from "../../slate/plugins/normalize.js";
+import { withPaste } from "../../slate/plugins/paste.js";
+import { getDOMRange } from "../../slate/utils/get-dom-range.js";
+import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty.js";
 import {
   getMarks,
   leaveMarkEdge,
   toggleMark as toggleEditorMark,
-} from "../../slate/utils/marks";
+} from "../../slate/utils/marks.js";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -94,16 +94,20 @@ import type {
   ComposerBodyMark,
   ComposerBodyMarks,
   ComposerBodyMention,
-} from "../../types";
-import { isKey } from "../../utils/is-key";
-import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
-import { Portal } from "../../utils/Portal";
-import { requestSubmit } from "../../utils/request-submit";
-import { useIndex } from "../../utils/use-index";
-import { useInitial } from "../../utils/use-initial";
-import { useObservable } from "../../utils/use-observable";
-import { useRefs } from "../../utils/use-refs";
-import { toAbsoluteUrl } from "../Comment/utils";
+} from "../../types.js";
+import { isKey } from "../../utils/is-key.js";
+import {
+  Persist,
+  useAnimationPersist,
+  usePersist,
+} from "../../utils/Persist.js";
+import { Portal } from "../../utils/Portal.js";
+import { requestSubmit } from "../../utils/request-submit.js";
+import { useIndex } from "../../utils/use-index.js";
+import { useInitial } from "../../utils/use-initial.js";
+import { useObservable } from "../../utils/use-observable.js";
+import { useRefs } from "../../utils/use-refs.js";
+import { toAbsoluteUrl } from "../Comment/utils.js";
 import {
   ComposerAttachmentsContext,
   ComposerContext,
@@ -115,7 +119,7 @@ import {
   useComposerEditorContext,
   useComposerFloatingToolbarContext,
   useComposerSuggestionsContext,
-} from "./contexts";
+} from "./contexts.js";
 import type {
   ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
@@ -136,7 +140,7 @@ import type {
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
   FloatingPosition,
-} from "./types";
+} from "./types.js";
 import {
   commentBodyToComposerBody,
   composerBodyToCommentBody,
@@ -145,7 +149,7 @@ import {
   useComposerAttachmentsManager,
   useContentZIndex,
   useFloatingWithOptions,
-} from "./utils";
+} from "./utils.js";
 
 const MENTION_SUGGESTIONS_POSITION: FloatingPosition = "top";
 

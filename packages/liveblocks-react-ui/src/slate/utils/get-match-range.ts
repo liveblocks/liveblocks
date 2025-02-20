@@ -5,7 +5,7 @@ import {
   Range as SlateRange,
 } from "slate";
 
-import { isWhitespaceCharacter } from "./is-whitespace-character";
+import { isWhitespaceCharacter } from "./is-whitespace-character.js";
 
 interface Options {
   include?: boolean;

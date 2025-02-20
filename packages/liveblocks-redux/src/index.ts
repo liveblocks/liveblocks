@@ -22,8 +22,8 @@ import {
   mappingToFunctionIsNotAllowed,
   mappingValueShouldBeABoolean,
   missingClient,
-} from "./errors";
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+} from "./errors.js";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 

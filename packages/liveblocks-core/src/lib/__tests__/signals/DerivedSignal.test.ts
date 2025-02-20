@@ -1,6 +1,6 @@
-import { shallow } from "../../../lib/shallow";
-import { batch, DerivedSignal, Signal } from "../../../lib/signals";
-import { DefaultMap } from "../../DefaultMap";
+import { shallow } from "../../../lib/shallow.js";
+import { batch, DerivedSignal, Signal } from "../../../lib/signals.js";
+import { DefaultMap } from "../../DefaultMap.js";
 
 it("compute signal from other signals", () => {
   const greeting = new Signal("hi");

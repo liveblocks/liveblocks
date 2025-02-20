@@ -4,9 +4,9 @@ import { useUser } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { useOverrides } from "../../overrides";
-import { useCurrentUserId } from "../../shared";
-import { classNames } from "../../utils/class-names";
+import { useOverrides } from "../../overrides.js";
+import { useCurrentUserId } from "../../shared.js";
+import { classNames } from "../../utils/class-names.js";
 
 export interface UserProps extends ComponentProps<"span"> {
   /**
@@ -27,7 +27,7 @@ export function User({ userId, replaceSelf, className, ...props }: UserProps) {
   const resolvedUserName = useMemo(() => {
     return replaceSelf && currentId === userId
       ? $.USER_SELF
-      : user?.name ?? $.USER_UNKNOWN;
+      : (user?.name ?? $.USER_UNKNOWN);
   }, [replaceSelf, currentId, userId, $.USER_SELF, $.USER_UNKNOWN, user?.name]);
 
   return (

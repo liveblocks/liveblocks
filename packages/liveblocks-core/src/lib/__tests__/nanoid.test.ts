@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import { nanoid } from "../nanoid";
+import { nanoid } from "../nanoid.js";
 
 describe("nanoid", () => {
   it("generated random strings with given length", () => {

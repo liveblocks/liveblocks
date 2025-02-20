@@ -3,11 +3,11 @@ import {
   createSerializedMap,
   createSerializedObject,
   prepareStorageTest,
-} from "../../__tests__/_utils";
-import { OpCode } from "../../protocol/Op";
-import type { LiveList } from "../LiveList";
-import type { LiveMap } from "../LiveMap";
-import type { LiveObject } from "../LiveObject";
+} from "../../__tests__/_utils.js";
+import { OpCode } from "../../protocol/Op.js";
+import type { LiveList } from "../LiveList.js";
+import type { LiveMap } from "../LiveMap.js";
+import type { LiveObject } from "../LiveObject.js";
 
 describe("Storage", () => {
   describe("subscribe generic", () => {

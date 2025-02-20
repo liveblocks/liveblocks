@@ -1,30 +1,30 @@
-import { createApiClient } from "../api-client";
-import { type AuthValue, createAuthManager } from "../auth-manager";
-import { StopRetrying } from "../connection";
-import { DEFAULT_BASE_URL } from "../constants";
-import { LiveList } from "../crdts/LiveList";
-import { LiveMap } from "../crdts/LiveMap";
-import { LiveObject } from "../crdts/LiveObject";
-import type { LsonObject } from "../crdts/Lson";
-import type { StorageUpdate } from "../crdts/StorageUpdates";
-import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
-import { kInternal } from "../internal";
-import { nn } from "../lib/assert";
-import { makeEventSource } from "../lib/EventSource";
-import * as console from "../lib/fancy-console";
-import type { Json, JsonObject } from "../lib/Json";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import { ClientMsgCode } from "../protocol/ClientMsg";
-import type { BaseMetadata } from "../protocol/Comments";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { RoomConfig, RoomDelegates } from "../room";
-import { createRoom } from "../room";
-import { WebsocketCloseCodes } from "../types/IWebSocket";
-import type { LiveblocksError } from "../types/LiveblocksError";
-import type { User } from "../types/User";
+import { createApiClient } from "../api-client.js";
+import { type AuthValue, createAuthManager } from "../auth-manager.js";
+import { StopRetrying } from "../connection.js";
+import { DEFAULT_BASE_URL } from "../constants.js";
+import { LiveList } from "../crdts/LiveList.js";
+import { LiveMap } from "../crdts/LiveMap.js";
+import { LiveObject } from "../crdts/LiveObject.js";
+import type { LsonObject } from "../crdts/Lson.js";
+import type { StorageUpdate } from "../crdts/StorageUpdates.js";
+import { legacy_patchImmutableObject, lsonToJson } from "../immutable.js";
+import { kInternal } from "../internal.js";
+import { nn } from "../lib/assert.js";
+import { makeEventSource } from "../lib/EventSource.js";
+import * as console from "../lib/fancy-console.js";
+import type { Json, JsonObject } from "../lib/Json.js";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
+import { ClientMsgCode } from "../protocol/ClientMsg.js";
+import type { BaseMetadata } from "../protocol/Comments.js";
+import { OpCode } from "../protocol/Op.js";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt.js";
+import { CrdtType } from "../protocol/SerializedCrdt.js";
+import { ServerMsgCode } from "../protocol/ServerMsg.js";
+import type { RoomConfig, RoomDelegates } from "../room.js";
+import { createRoom } from "../room.js";
+import { WebsocketCloseCodes } from "../types/IWebSocket.js";
+import type { LiveblocksError } from "../types/LiveblocksError.js";
+import type { User } from "../types/User.js";
 import {
   AUTH_SUCCESS,
   defineBehavior,
@@ -34,8 +34,12 @@ import {
   SOCKET_REFUSES,
   SOCKET_SEQUENCE,
   SOCKET_THROWS,
-} from "./_behaviors";
-import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
+} from "./_behaviors.js";
+import {
+  listUpdate,
+  listUpdateInsert,
+  listUpdateSet,
+} from "./_updatesUtils.js";
 import {
   createSerializedList,
   createSerializedObject,
@@ -48,13 +52,13 @@ import {
   prepareStorageTest,
   prepareStorageUpdateTest,
   serverMessage,
-} from "./_utils";
+} from "./_utils.js";
 import {
   waitUntilCustomEvent,
   waitUntilOthersEvent,
   waitUntilStatus,
   waitUntilStorageUpdate,
-} from "./_waitUtils";
+} from "./_waitUtils.js";
 
 const THROTTLE_DELAY = 100;
 

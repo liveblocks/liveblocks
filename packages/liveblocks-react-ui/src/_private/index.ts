@@ -1,14 +1,14 @@
 // Private APIs
 
-export { Button, SelectButton } from "../components/internal/Button";
-export { List } from "../components/internal/List";
+export { Button, SelectButton } from "../components/internal/Button.js";
+export { List } from "../components/internal/List.js";
 export {
   ShortcutTooltip,
   Tooltip,
   TooltipProvider,
-} from "../components/internal/Tooltip";
-export { User } from "../components/internal/User";
-export * from "../icons";
-export { capitalize } from "../utils/capitalize";
-export { useInitial } from "../utils/use-initial";
-export { useRefs } from "../utils/use-refs";
+} from "../components/internal/Tooltip.js";
+export { User } from "../components/internal/User.js";
+export * from "../icons.js";
+export { capitalize } from "../utils/capitalize.js";
+export { useInitial } from "../utils/use-initial.js";
+export { useRefs } from "../utils/use-refs.js";

@@ -1,7 +1,7 @@
 import type { Observable } from "@liveblocks/core";
 import { useEffect } from "react";
 
-import { useLatest } from "./use-latest";
+import { useLatest } from "./use-latest.js";
 
 export function useObservable<T>(
   observable: Observable<T>,

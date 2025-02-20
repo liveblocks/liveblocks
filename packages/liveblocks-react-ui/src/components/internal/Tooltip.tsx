@@ -4,13 +4,13 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ComponentProps, ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
-import { useLiveblocksUIConfig } from "../../config";
+import { useLiveblocksUIConfig } from "../../config.js";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
-} from "../../constants";
-import { classNames } from "../../utils/class-names";
-import { isApple } from "../../utils/is-apple";
+} from "../../constants.js";
+import { classNames } from "../../utils/class-names.js";
+import { isApple } from "../../utils/is-apple.js";
 
 const ALT_KEY = { title: "Alt", key: "⌥" };
 const COMMAND_KEY = { title: "Command", key: "⌘" };

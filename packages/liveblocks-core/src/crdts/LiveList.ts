@@ -1,24 +1,24 @@
-import { nn } from "../lib/assert";
-import { nanoid } from "../lib/nanoid";
-import type { Pos } from "../lib/position";
-import { asPos, makePosition } from "../lib/position";
-import type { CreateListOp, CreateOp, Op } from "../protocol/Op";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import type * as DevTools from "../types/DevToolsTreeNode";
-import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "../lib/assert.js";
+import { nanoid } from "../lib/nanoid.js";
+import type { Pos } from "../lib/position.js";
+import { asPos, makePosition } from "../lib/position.js";
+import type { CreateListOp, CreateOp, Op } from "../protocol/Op.js";
+import { OpCode } from "../protocol/Op.js";
+import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt.js";
+import { CrdtType } from "../protocol/SerializedCrdt.js";
+import type * as DevTools from "../types/DevToolsTreeNode.js";
+import type { ParentToChildNodeMap } from "../types/NodeMap.js";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt.js";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt.js";
 import {
   creationOpToLiveNode,
   deserialize,
   liveNodeToLson,
   lsonToLiveNode,
-} from "./liveblocks-helpers";
-import { LiveRegister } from "./LiveRegister";
-import type { LiveNode, Lson } from "./Lson";
-import type { ToImmutable } from "./utils";
+} from "./liveblocks-helpers.js";
+import { LiveRegister } from "./LiveRegister.js";
+import type { LiveNode, Lson } from "./Lson.js";
+import type { ToImmutable } from "./utils.js";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }

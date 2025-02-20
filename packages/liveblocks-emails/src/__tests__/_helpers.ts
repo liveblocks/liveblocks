@@ -22,17 +22,17 @@ import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
 import ReactDOMServer from "react-dom/server";
 
-import type { CommentDataWithBody } from "../comment-with-body";
+import type { CommentDataWithBody } from "../comment-with-body.js";
 import type {
   MentionEmailBaseData,
   TextMentionNotificationEmailData,
   TextMentionNotificationEmailDataAsReact,
-} from "../text-mention-notification";
+} from "../text-mention-notification.js";
 import type {
   CommentEmailBaseData,
   ThreadNotificationEmailData,
   ThreadNotificationEmailDataAsReact,
-} from "../thread-notification";
+} from "../thread-notification.js";
 
 export const SERVER_BASE_URL = "https://api.liveblocks.io";
 

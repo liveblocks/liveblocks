@@ -1,37 +1,37 @@
-import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
-import { nn } from "../lib/assert";
-import type { JsonObject } from "../lib/Json";
-import { nanoid } from "../lib/nanoid";
-import type { RemoveUndefinedValues } from "../lib/utils";
-import { compactObject, deepClone } from "../lib/utils";
+import type { LiveNode, Lson, LsonObject } from "../crdts/Lson.js";
+import { nn } from "../lib/assert.js";
+import type { JsonObject } from "../lib/Json.js";
+import { nanoid } from "../lib/nanoid.js";
+import type { RemoveUndefinedValues } from "../lib/utils.js";
+import { compactObject, deepClone } from "../lib/utils.js";
 import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
   Op,
   UpdateObjectOp,
-} from "../protocol/Op";
-import { OpCode } from "../protocol/Op";
+} from "../protocol/Op.js";
+import { OpCode } from "../protocol/Op.js";
 import type {
   IdTuple,
   SerializedChild,
   SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
-} from "../protocol/SerializedCrdt";
-import { CrdtType, isRootCrdt } from "../protocol/SerializedCrdt";
-import type * as DevTools from "../types/DevToolsTreeNode";
-import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+} from "../protocol/SerializedCrdt.js";
+import { CrdtType, isRootCrdt } from "../protocol/SerializedCrdt.js";
+import type * as DevTools from "../types/DevToolsTreeNode.js";
+import type { ParentToChildNodeMap } from "../types/NodeMap.js";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt.js";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt.js";
 import {
   creationOpToLson,
   deserializeToLson,
   isLiveNode,
   isLiveStructure,
-} from "./liveblocks-helpers";
-import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
+} from "./liveblocks-helpers.js";
+import type { UpdateDelta } from "./UpdateDelta.js";
+import type { ToImmutable } from "./utils.js";
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;

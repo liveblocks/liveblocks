@@ -5,13 +5,16 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
-import MockWebSocket from "./_MockWebSocket";
+import {
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies.js";
+import MockWebSocket from "./_MockWebSocket.js";
 import {
   mockGetInboxNotifications,
   mockGetInboxNotificationsDelta,
-} from "./_restMocks";
-import { createContextsForTest } from "./_utils";
+} from "./_restMocks.js";
+import { createContextsForTest } from "./_utils.js";
 
 const server = setupServer();
 

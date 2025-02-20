@@ -15,8 +15,8 @@ import {
 } from "y-prosemirror";
 import type { RelativePosition } from "yjs";
 
-import type { YSyncPluginState } from "./types";
-import { LIVEBLOCKS_MENTION_TYPE } from "./types";
+import type { YSyncPluginState } from "./types.js";
+import { LIVEBLOCKS_MENTION_TYPE } from "./types.js";
 
 const CONTEXT_TRUNCATION = "[…]";
 const CONTEXT_BLOCK_SEPARATOR = "\n";

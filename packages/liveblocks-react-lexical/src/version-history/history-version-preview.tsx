@@ -26,8 +26,8 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import type { Transaction, YEvent } from "yjs";
 import { applyUpdate, Doc } from "yjs";
 
-import { classNames } from "../classnames";
-import { liveblocksConfig } from "../liveblocks-config";
+import { classNames } from "../classnames.js";
+import { liveblocksConfig } from "../liveblocks-config.js";
 
 const AUTHORS_TRUNCATE = 3;
 

@@ -6,16 +6,16 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   replaceRemoteStorageAndReconnect,
-} from "../../__tests__/_utils";
-import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils";
-import { kInternal } from "../../internal";
-import { Permission } from "../../protocol/AuthToken";
-import { OpCode } from "../../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import { LiveList } from "../LiveList";
-import { LiveMap } from "../LiveMap";
-import { LiveObject } from "../LiveObject";
+} from "../../__tests__/_utils.js";
+import { waitUntilStorageUpdate } from "../../__tests__/_waitUtils.js";
+import { kInternal } from "../../internal.js";
+import { Permission } from "../../protocol/AuthToken.js";
+import { OpCode } from "../../protocol/Op.js";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt.js";
+import { CrdtType } from "../../protocol/SerializedCrdt.js";
+import { LiveList } from "../LiveList.js";
+import { LiveMap } from "../LiveMap.js";
+import { LiveObject } from "../LiveObject.js";
 
 describe("LiveMap", () => {
   describe("not attached", () => {

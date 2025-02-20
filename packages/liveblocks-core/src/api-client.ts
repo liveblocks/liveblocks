@@ -1,4 +1,4 @@
-import type { AuthManager, AuthValue } from "./auth-manager";
+import type { AuthManager, AuthValue } from "./auth-manager.js";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
@@ -6,26 +6,26 @@ import {
   convertToInboxNotificationDeleteInfo,
   convertToThreadData,
   convertToThreadDeleteInfo,
-} from "./convert-plain-data";
-import { autoRetry, HttpError } from "./lib/autoRetry";
-import type { BatchStore } from "./lib/batch";
-import { Batch, createBatchStore } from "./lib/batch";
-import { chunk } from "./lib/chunk";
-import { createCommentId, createThreadId } from "./lib/createIds";
-import type { DateToString } from "./lib/DateToString";
-import { DefaultMap } from "./lib/DefaultMap";
-import type { Json, JsonObject } from "./lib/Json";
-import { objectToQuery } from "./lib/objectToQuery";
-import { stringifyOrLog as stringify } from "./lib/stringify";
-import type { QueryParams, URLSafeString } from "./lib/url";
-import { url, urljoin } from "./lib/url";
-import { raise } from "./lib/utils";
+} from "./convert-plain-data.js";
+import { autoRetry, HttpError } from "./lib/autoRetry.js";
+import type { BatchStore } from "./lib/batch.js";
+import { Batch, createBatchStore } from "./lib/batch.js";
+import { chunk } from "./lib/chunk.js";
+import { createCommentId, createThreadId } from "./lib/createIds.js";
+import type { DateToString } from "./lib/DateToString.js";
+import { DefaultMap } from "./lib/DefaultMap.js";
+import type { Json, JsonObject } from "./lib/Json.js";
+import { objectToQuery } from "./lib/objectToQuery.js";
+import { stringifyOrLog as stringify } from "./lib/stringify.js";
+import type { QueryParams, URLSafeString } from "./lib/url.js";
+import { url, urljoin } from "./lib/url.js";
+import { raise } from "./lib/utils.js";
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
-} from "./protocol/Ai";
-import type { Permission } from "./protocol/AuthToken";
-import type { ClientMsg } from "./protocol/ClientMsg";
+} from "./protocol/Ai.js";
+import type { Permission } from "./protocol/AuthToken.js";
+import type { ClientMsg } from "./protocol/ClientMsg.js";
 import type {
   BaseMetadata,
   CommentAttachment,
@@ -40,23 +40,23 @@ import type {
   ThreadDataPlain,
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
-} from "./protocol/Comments";
+} from "./protocol/Comments.js";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
-} from "./protocol/InboxNotifications";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+} from "./protocol/InboxNotifications.js";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt.js";
 import type {
   PartialUserNotificationSettings,
   UserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
-import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { TextEditorType } from "./types/Others";
-import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
-import { PKG_VERSION } from "./version";
+} from "./protocol/UserNotificationSettings.js";
+import type { HistoryVersion } from "./protocol/VersionHistory.js";
+import type { TextEditorType } from "./types/Others.js";
+import type { Patchable } from "./types/Patchable.js";
+import type { RoomNotificationSettings } from "./types/RoomNotificationSettings.js";
+import { PKG_VERSION } from "./version.js";
 
 export interface RoomHttpApi<M extends BaseMetadata> {
   getThreads(options: {

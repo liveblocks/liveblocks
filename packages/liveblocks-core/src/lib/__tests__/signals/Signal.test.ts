@@ -1,7 +1,7 @@
 import fc from "fast-check";
 
-import { shallow } from "../../../lib/shallow";
-import { batch, Signal } from "../../signals";
+import { shallow } from "../../../lib/shallow.js";
+import { batch, Signal } from "../../signals.js";
 
 test("empty", () => {
   expect(new Signal({}).get()).toStrictEqual({});

@@ -2,18 +2,18 @@ import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
-import { MENTION_CHARACTER } from "../../slate/plugins/mentions";
+import { MENTION_CHARACTER } from "../../slate/plugins/mentions.js";
 import type {
   CommentBodyComponents,
   CommentBodyProps,
   CommentLinkProps,
   CommentMentionProps,
-} from "./types";
+} from "./types.js";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
   toAbsoluteUrl,
-} from "./utils";
+} from "./utils.js";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";

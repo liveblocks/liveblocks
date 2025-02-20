@@ -1,4 +1,4 @@
-import { PaginatedResource } from "../umbrella-store";
+import { PaginatedResource } from "../umbrella-store.js";
 
 function makeFetcher() {
   return jest

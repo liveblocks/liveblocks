@@ -7,7 +7,7 @@ import type {
 } from "@liveblocks/core";
 import { CrdtType, ServerMsgCode, wait } from "@liveblocks/core";
 
-import { waitFor } from "./_utils";
+import { waitFor } from "./_utils.js";
 
 /**
  * https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code

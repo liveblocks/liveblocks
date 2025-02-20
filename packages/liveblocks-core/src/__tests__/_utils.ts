@@ -1,25 +1,25 @@
-import { createApiClient } from "../api-client";
-import { createAuthManager } from "../auth-manager";
-import { DEFAULT_BASE_URL } from "../constants";
-import type { LiveObject } from "../crdts/LiveObject";
-import type { LsonObject } from "../crdts/Lson";
-import type { ToImmutable } from "../crdts/utils";
-import { kInternal } from "../internal";
-import { makeEventSource } from "../lib/EventSource";
-import type { Json, JsonObject } from "../lib/Json";
-import { makePosition } from "../lib/position";
-import { deepClone } from "../lib/utils";
+import { createApiClient } from "../api-client.js";
+import { createAuthManager } from "../auth-manager.js";
+import { DEFAULT_BASE_URL } from "../constants.js";
+import type { LiveObject } from "../crdts/LiveObject.js";
+import type { LsonObject } from "../crdts/Lson.js";
+import type { ToImmutable } from "../crdts/utils.js";
+import { kInternal } from "../internal.js";
+import { makeEventSource } from "../lib/EventSource.js";
+import type { Json, JsonObject } from "../lib/Json.js";
+import { makePosition } from "../lib/position.js";
+import { deepClone } from "../lib/utils.js";
 import type {
   AccessToken,
   IDToken,
   LegacySecretToken,
-} from "../protocol/AuthToken";
-import { Permission, TokenKind } from "../protocol/AuthToken";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { ClientMsg } from "../protocol/ClientMsg";
-import { ClientMsgCode } from "../protocol/ClientMsg";
-import type { BaseMetadata } from "../protocol/Comments";
-import type { Op } from "../protocol/Op";
+} from "../protocol/AuthToken.js";
+import { Permission, TokenKind } from "../protocol/AuthToken.js";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
+import type { ClientMsg } from "../protocol/ClientMsg.js";
+import { ClientMsgCode } from "../protocol/ClientMsg.js";
+import type { BaseMetadata } from "../protocol/Comments.js";
+import type { Op } from "../protocol/Op.js";
 import type {
   IdTuple,
   SerializedCrdt,
@@ -28,23 +28,23 @@ import type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import type { ServerMsg } from "../protocol/ServerMsg";
-import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
-import { createRoom } from "../room";
-import { WebsocketCloseCodes } from "../types/IWebSocket";
-import type { LiveblocksError } from "../types/LiveblocksError";
+} from "../protocol/SerializedCrdt.js";
+import { CrdtType } from "../protocol/SerializedCrdt.js";
+import type { ServerMsg } from "../protocol/ServerMsg.js";
+import { ServerMsgCode } from "../protocol/ServerMsg.js";
+import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room.js";
+import { createRoom } from "../room.js";
+import { WebsocketCloseCodes } from "../types/IWebSocket.js";
+import type { LiveblocksError } from "../types/LiveblocksError.js";
 import {
   ALWAYS_AUTH_WITH_LEGACY_TOKEN,
   defineBehavior,
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
-} from "./_behaviors";
-import type { MockWebSocketServer } from "./_MockWebSocketServer";
-import { MockWebSocket } from "./_MockWebSocketServer";
-import type { JsonStorageUpdate } from "./_updatesUtils";
-import { serializeUpdateToJson } from "./_updatesUtils";
+} from "./_behaviors.js";
+import type { MockWebSocketServer } from "./_MockWebSocketServer.js";
+import { MockWebSocket } from "./_MockWebSocketServer.js";
+import type { JsonStorageUpdate } from "./_updatesUtils.js";
+import { serializeUpdateToJson } from "./_updatesUtils.js";
 
 export function makeSecretLegacyToken(
   actor: number,

@@ -9,11 +9,11 @@ import { ServerMsgCode } from "@liveblocks/core";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { Comment } from "../components/Comment";
-import { Composer } from "../components/Composer";
-import { Thread } from "../components/Thread";
-import { Timestamp } from "../primitives";
-import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+import { Comment } from "../components/Comment.js";
+import { Composer } from "../components/Composer.js";
+import { Thread } from "../components/Thread.js";
+import { Timestamp } from "../primitives.js";
+import { render } from "./_utils.js"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {

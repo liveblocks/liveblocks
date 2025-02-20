@@ -4,13 +4,13 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import { forwardRef } from "react";
 
-import { useLiveblocksUIConfig } from "../../config";
+import { useLiveblocksUIConfig } from "../../config.js";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
-} from "../../constants";
-import { useOverrides } from "../../overrides";
-import { classNames } from "../../utils/class-names";
+} from "../../constants.js";
+import { useOverrides } from "../../overrides.js";
+import { classNames } from "../../utils/class-names.js";
 
 export interface DropdownProps
   extends Pick<

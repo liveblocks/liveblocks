@@ -34,13 +34,13 @@ import {
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
-import { compareNodes } from "./anchored-threads";
+import { classNames } from "../classnames.js";
+import { compareNodes } from "./anchored-threads.js";
 import {
   ActiveThreadsContext,
   type ThreadToNodesMap,
-} from "./comment-plugin-provider";
-import { ThreadToNodesContext } from "./comment-plugin-provider";
+} from "./comment-plugin-provider.js";
+import { ThreadToNodesContext } from "./comment-plugin-provider.js";
 
 type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;

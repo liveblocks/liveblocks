@@ -1,5 +1,5 @@
-import { makeEventSource } from "../lib/EventSource";
-import type * as DevTools from "./protocol";
+import { makeEventSource } from "../lib/EventSource.js";
+import type * as DevTools from "./protocol.js";
 
 type SendToPanelOptions = {
   /**

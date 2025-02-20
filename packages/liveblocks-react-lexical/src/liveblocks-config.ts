@@ -1,7 +1,7 @@
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 
-import { ThreadMarkNode } from "./comments/thread-mark-node";
-import { MentionNode } from "./mentions/mention-node";
+import { ThreadMarkNode } from "./comments/thread-mark-node.js";
+import { MentionNode } from "./mentions/mention-node.js";
 
 /**
  * Function that takes a Lexical editor config and modifies it to add the necessary

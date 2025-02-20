@@ -1,4 +1,4 @@
-import type { Brand } from "./utils";
+import type { Brand } from "./utils.js";
 
 export type QueryParams =
   | Record<string, string | number | null | undefined>

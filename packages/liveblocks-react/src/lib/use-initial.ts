@@ -1,7 +1,7 @@
 import type { Reducer } from "react";
 import { useCallback, useReducer } from "react";
 
-import { useLatest } from "./use-latest";
+import { useLatest } from "./use-latest.js";
 
 const noop = <T>(state: T) => state;
 

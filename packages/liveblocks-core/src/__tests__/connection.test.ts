@@ -1,4 +1,4 @@
-import { ManagedSocket } from "../connection";
+import { ManagedSocket } from "../connection.js";
 import {
   ALWAYS_FAIL_AUTH,
   AUTH_SUCCESS,
@@ -6,7 +6,7 @@ import {
   SOCKET_AUTOCONNECT_AND_ROOM_STATE,
   SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE,
   SOCKET_NO_BEHAVIOR,
-} from "./_behaviors";
+} from "./_behaviors.js";
 
 describe("ManagedSocket", () => {
   test("failure to authenticate", async () => {

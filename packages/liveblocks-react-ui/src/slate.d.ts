@@ -8,7 +8,7 @@ import type {
   ComposerBodyMention,
   ComposerBodyParagraph,
   ComposerBodyText,
-} from "./types";
+} from "./types.js";
 
 declare module "slate" {
   interface CustomTypes {

@@ -1,13 +1,13 @@
-import type { EventSource, Observable } from "../lib/EventSource";
-import { makeEventSource } from "../lib/EventSource";
-import type { Json } from "../lib/Json";
-import { withTimeout } from "../lib/utils";
+import type { EventSource, Observable } from "../lib/EventSource.js";
+import { makeEventSource } from "../lib/EventSource.js";
+import type { Json } from "../lib/Json.js";
+import { withTimeout } from "../lib/utils.js";
 import type {
   IWebSocket,
   IWebSocketCloseEvent,
   IWebSocketEvent,
   IWebSocketMessageEvent,
-} from "../types/IWebSocket";
+} from "../types/IWebSocket.js";
 
 type ServerEvents = {
   onOpen: Observable<IWebSocketEvent>;

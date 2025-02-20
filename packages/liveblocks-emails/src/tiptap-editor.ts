@@ -1,7 +1,7 @@
 import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 
-import { isMentionNodeAttributeId } from "./lib/utils";
+import { isMentionNodeAttributeId } from "./lib/utils.js";
 
 export interface SerializedTiptapBaseNode {
   type: string;

@@ -1,24 +1,24 @@
-import { nn } from "../lib/assert";
-import { freeze } from "../lib/freeze";
-import { nanoid } from "../lib/nanoid";
-import type { CreateMapOp, CreateOp, Op } from "../protocol/Op";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import type * as DevTools from "../types/DevToolsTreeNode";
-import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "../lib/assert.js";
+import { freeze } from "../lib/freeze.js";
+import { nanoid } from "../lib/nanoid.js";
+import type { CreateMapOp, CreateOp, Op } from "../protocol/Op.js";
+import { OpCode } from "../protocol/Op.js";
+import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt.js";
+import { CrdtType } from "../protocol/SerializedCrdt.js";
+import type * as DevTools from "../types/DevToolsTreeNode.js";
+import type { ParentToChildNodeMap } from "../types/NodeMap.js";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt.js";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt.js";
 import {
   creationOpToLiveNode,
   deserialize,
   isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
-} from "./liveblocks-helpers";
-import type { LiveNode, Lson } from "./Lson";
-import type { UpdateDelta } from "./UpdateDelta";
-import type { ToImmutable } from "./utils";
+} from "./liveblocks-helpers.js";
+import type { LiveNode, Lson } from "./Lson.js";
+import type { UpdateDelta } from "./UpdateDelta.js";
+import type { ToImmutable } from "./utils.js";
 
 /**
  * A LiveMap notification that is sent in-client to any subscribers whenever

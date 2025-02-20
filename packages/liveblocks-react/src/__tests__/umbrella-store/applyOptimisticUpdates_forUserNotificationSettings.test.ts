@@ -4,7 +4,7 @@ import type {
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 
-import { applyOptimisticUpdates_forUserNotificationSettings } from "../../umbrella-store";
+import { applyOptimisticUpdates_forUserNotificationSettings } from "../../umbrella-store.js";
 
 describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
   const defaultSettings: UserNotificationSettings = {

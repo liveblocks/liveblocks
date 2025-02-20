@@ -1,4 +1,4 @@
-import { isPlainObject } from "./guards";
+import { isPlainObject } from "./guards.js";
 
 function shallowArray(xs: unknown[], ys: unknown[]): boolean {
   if (xs.length !== ys.length) {

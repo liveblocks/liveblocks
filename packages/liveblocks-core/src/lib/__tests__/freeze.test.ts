@@ -1,4 +1,4 @@
-import { freeze } from "../freeze";
+import { freeze } from "../freeze.js";
 
 describe("freeze", () => {
   it("freezes objects", () => {

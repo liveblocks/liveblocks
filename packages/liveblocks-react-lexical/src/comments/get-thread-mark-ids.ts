@@ -1,7 +1,7 @@
 import type { LexicalNode, TextNode } from "lexical";
 import { $isTextNode } from "lexical";
 
-import { $isThreadMarkNode } from "./thread-mark-node";
+import { $isThreadMarkNode } from "./thread-mark-node.js";
 
 export default function $getThreadMarkIds(
   node: TextNode,

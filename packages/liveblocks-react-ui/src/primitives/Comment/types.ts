@@ -1,7 +1,7 @@
 import type { CommentBody } from "@liveblocks/core";
 import type { ComponentType, ReactNode } from "react";
 
-import type { ComponentPropsWithSlot } from "../../types";
+import type { ComponentPropsWithSlot } from "../../types.js";
 
 export type CommentMentionProps = ComponentPropsWithSlot<"span">;
 

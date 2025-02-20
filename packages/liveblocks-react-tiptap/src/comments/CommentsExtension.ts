@@ -5,13 +5,13 @@ import { Plugin } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
-import type { CommentsExtensionStorage, ThreadPluginState } from "../types";
+import type { CommentsExtensionStorage, ThreadPluginState } from "../types.js";
 import {
   LIVEBLOCKS_COMMENT_MARK_TYPE,
   ThreadPluginActions,
   THREADS_ACTIVE_SELECTION_PLUGIN,
   THREADS_PLUGIN_KEY,
-} from "../types";
+} from "../types.js";
 
 type ThreadPluginAction = {
   name: ThreadPluginActions;

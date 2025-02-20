@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "../lib/Json";
+import type { Json, JsonObject } from "../lib/Json.js";
 
 export type JsonTreeNode = {
   readonly type: "Json";

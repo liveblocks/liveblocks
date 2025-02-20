@@ -1,5 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { LiveblocksYjsProvider } from "..";
+import { LiveblocksYjsProvider } from "...js";
 
 describe("@liveblocks/yjs", () => {
   test("TODO", () => {

@@ -1,6 +1,6 @@
 import { type RefObject, useEffect, useState } from "react";
 
-import { useLatest } from "./use-latest";
+import { useLatest } from "./use-latest.js";
 
 type Options = { enabled?: boolean };
 

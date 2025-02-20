@@ -1,4 +1,4 @@
-import { Liveblocks } from "../client";
+import { Liveblocks } from "../client.js";
 
 const P1 = "room:read";
 const P2 = "room:write";

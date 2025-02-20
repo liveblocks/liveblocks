@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { Icon } from "../components/internal/Icon";
+import { Icon } from "../components/internal/Icon.js";
 
 export function MentionIcon(props: ComponentProps<"svg">) {
   return (

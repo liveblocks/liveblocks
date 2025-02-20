@@ -1,4 +1,4 @@
-import { parseAuthToken } from "../../protocol/AuthToken";
+import { parseAuthToken } from "../../protocol/AuthToken.js";
 
 describe("parseRoomAuthToken", () => {
   const exampleLegacyToken =

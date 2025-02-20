@@ -1,4 +1,4 @@
-import { formatFileSize } from "../utils/format-file-size";
+import { formatFileSize } from "../utils/format-file-size.js";
 
 const BASE = 1000;
 

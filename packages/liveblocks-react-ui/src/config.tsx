@@ -3,9 +3,9 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useContext, useMemo } from "react";
 
-import { type Components, ComponentsProvider } from "./components";
-import type { Overrides } from "./overrides";
-import { OverridesProvider } from "./overrides";
+import { type Components, ComponentsProvider } from "./components.js";
+import type { Overrides } from "./overrides.js";
+import { OverridesProvider } from "./overrides.js";
 
 type LiveblocksUIConfigProps = PropsWithChildren<{
   /**

@@ -1,4 +1,4 @@
-import { batch, Signal } from "../signals";
+import { batch, Signal } from "../signals.js";
 
 describe("Signals (previously createStore)", () => {
   test("should not notify subscriber right after subscribing", () => {

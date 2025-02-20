@@ -1,17 +1,20 @@
-import type { LiveNode } from "../crdts/Lson";
-import { nn } from "../lib/assert";
-import type { Json } from "../lib/Json";
-import { nanoid } from "../lib/nanoid";
-import { deepClone } from "../lib/utils";
-import type { CreateOp, CreateRegisterOp, Op } from "../protocol/Op";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedRegister } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import type * as DevTools from "../types/DevToolsTreeNode";
-import type { Immutable } from "../types/Immutable";
-import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import type { LiveNode } from "../crdts/Lson.js";
+import { nn } from "../lib/assert.js";
+import type { Json } from "../lib/Json.js";
+import { nanoid } from "../lib/nanoid.js";
+import { deepClone } from "../lib/utils.js";
+import type { CreateOp, CreateRegisterOp, Op } from "../protocol/Op.js";
+import { OpCode } from "../protocol/Op.js";
+import type {
+  IdTuple,
+  SerializedRegister,
+} from "../protocol/SerializedCrdt.js";
+import { CrdtType } from "../protocol/SerializedCrdt.js";
+import type * as DevTools from "../types/DevToolsTreeNode.js";
+import type { Immutable } from "../types/Immutable.js";
+import type { ParentToChildNodeMap } from "../types/NodeMap.js";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt.js";
+import { AbstractCrdt } from "./AbstractCrdt.js";
 
 /**
  * INTERNAL

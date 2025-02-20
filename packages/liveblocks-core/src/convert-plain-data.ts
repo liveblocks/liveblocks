@@ -8,13 +8,13 @@ import type {
   ThreadDataPlain,
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
-} from "./protocol/Comments";
+} from "./protocol/Comments.js";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
-} from "./protocol/InboxNotifications";
+} from "./protocol/InboxNotifications.js";
 
 /**
  * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.

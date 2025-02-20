@@ -15,7 +15,7 @@ import { forwardRef, useCallback, useEffect } from "react";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { applyUpdate, Doc } from "yjs";
 
-import { classNames } from "../classnames";
+import { classNames } from "../classnames.js";
 
 const AUTHORS_TRUNCATE = 3;
 

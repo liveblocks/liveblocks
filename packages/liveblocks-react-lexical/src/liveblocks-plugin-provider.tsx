@@ -12,19 +12,14 @@ import {
 } from "@liveblocks/react/_private";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { MutableRefObject, ReactNode } from "react";
-import {
-  useCallback,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { Doc } from "yjs";
 
-import { CommentPluginProvider } from "./comments/comment-plugin-provider";
-import { ThreadMarkNode } from "./comments/thread-mark-node";
-import { MentionNode } from "./mentions/mention-node";
-import { MentionPlugin } from "./mentions/mention-plugin";
-import { useRootElement } from "./use-root-element";
+import { CommentPluginProvider } from "./comments/comment-plugin-provider.js";
+import { ThreadMarkNode } from "./comments/thread-mark-node.js";
+import { MentionNode } from "./mentions/mention-node.js";
+import { MentionPlugin } from "./mentions/mention-plugin.js";
+import { useRootElement } from "./use-root-element.js";
 
 export type EditorStatus =
   /* The editor state is not loaded and has not been requested. */
@@ -54,7 +49,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => { };
+      if (provider === undefined) return () => {};
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -87,7 +82,7 @@ export function useIsEditorReady(): boolean {
 
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (yjsProvider === undefined) return () => { };
+      if (yjsProvider === undefined) return () => {};
       yjsProvider.on("status", callback);
       return () => {
         yjsProvider.off("status", callback);

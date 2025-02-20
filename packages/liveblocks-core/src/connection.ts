@@ -1,25 +1,28 @@
-import { assertNever } from "./lib/assert";
-import { controlledPromise } from "./lib/controlledPromise";
-import type { Observable } from "./lib/EventSource";
-import { makeBufferableEventSource, makeEventSource } from "./lib/EventSource";
-import * as console from "./lib/fancy-console";
-import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
-import { FSM } from "./lib/fsm";
-import type { Json } from "./lib/Json";
-import { tryParseJson, withTimeout } from "./lib/utils";
-import { ServerMsgCode } from "./protocol/ServerMsg";
+import { assertNever } from "./lib/assert.js";
+import { controlledPromise } from "./lib/controlledPromise.js";
+import type { Observable } from "./lib/EventSource.js";
+import {
+  makeBufferableEventSource,
+  makeEventSource,
+} from "./lib/EventSource.js";
+import * as console from "./lib/fancy-console.js";
+import type { BuiltinEvent, Patchable, Target } from "./lib/fsm.js";
+import { FSM } from "./lib/fsm.js";
+import type { Json } from "./lib/Json.js";
+import { tryParseJson, withTimeout } from "./lib/utils.js";
+import { ServerMsgCode } from "./protocol/ServerMsg.js";
 import type {
   IWebSocketCloseEvent,
   IWebSocketEvent,
   IWebSocketInstance,
   IWebSocketMessageEvent,
-} from "./types/IWebSocket";
+} from "./types/IWebSocket.js";
 import {
   shouldDisconnect,
   shouldReauth,
   shouldRetryWithoutReauth,
   WebsocketCloseCodes,
-} from "./types/IWebSocket";
+} from "./types/IWebSocket.js";
 
 /**
  * Returns a human-readable status indicating the current connection status of

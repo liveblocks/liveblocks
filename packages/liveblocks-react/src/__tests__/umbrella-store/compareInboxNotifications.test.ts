@@ -1,6 +1,6 @@
 import type { InboxNotificationData } from "@liveblocks/core";
 
-import { compareInboxNotifications } from "../../umbrella-store";
+import { compareInboxNotifications } from "../../umbrella-store.js";
 
 describe("compareInboxNotifications", () => {
   const inboxNotificationA: InboxNotificationData = {

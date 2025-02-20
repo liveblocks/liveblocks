@@ -17,11 +17,11 @@ import {
   LIVEBLOCKS_MENTION_NOTIFIER_KEY,
   LIVEBLOCKS_MENTION_PASTE_KEY,
   LIVEBLOCKS_MENTION_TYPE,
-} from "../types";
-import { getMentionsFromNode, mapFragment } from "../utils";
-import { MentionNode } from "./MentionNode";
-import type { MentionsListHandle, MentionsListProps } from "./MentionsList";
-import { MentionsList } from "./MentionsList";
+} from "../types.js";
+import { getMentionsFromNode, mapFragment } from "../utils.js";
+import { MentionNode } from "./MentionNode.js";
+import type { MentionsListHandle, MentionsListProps } from "./MentionsList.js";
+import { MentionsList } from "./MentionsList.js";
 
 /**
  *

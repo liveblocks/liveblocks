@@ -1,8 +1,8 @@
 import type { Descendant } from "slate";
 import { Editor as SlateEditor } from "slate";
 
-import { isEmptyString } from "./is-empty-string";
-import { isText } from "./is-text";
+import { isEmptyString } from "./is-empty-string.js";
+import { isText } from "./is-text.js";
 
 export function isEmpty(editor: SlateEditor, children: Descendant[]) {
   // Check if all blocks are empty, stopping at the first non-empty block

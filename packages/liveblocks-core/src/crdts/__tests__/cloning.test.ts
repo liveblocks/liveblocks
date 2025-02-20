@@ -4,15 +4,15 @@ import {
   listUpdate,
   listUpdateInsert,
   objectUpdate,
-} from "../../__tests__/_updatesUtils";
+} from "../../__tests__/_updatesUtils.js";
 import {
   createSerializedList,
   createSerializedObject,
   prepareStorageUpdateTest,
-} from "../../__tests__/_utils";
-import { cloneLson } from "../../crdts/liveblocks-helpers";
-import type { LiveList } from "../LiveList";
-import { liveStructure, lson } from "./_arbitraries";
+} from "../../__tests__/_utils.js";
+import { cloneLson } from "../../crdts/liveblocks-helpers.js";
+import type { LiveList } from "../LiveList.js";
+import { liveStructure, lson } from "./_arbitraries.js";
 
 describe("cloning LiveStructures", () => {
   it("basic cloning logic", async () => {

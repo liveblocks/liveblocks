@@ -1,8 +1,8 @@
 import type { LiveList, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 
-import { createRoomContext } from "../room";
-import MockWebSocket from "./_MockWebSocket";
+import { createRoomContext } from "../room.js";
+import MockWebSocket from "./_MockWebSocket.js";
 
 type Presence = {
   x: number;

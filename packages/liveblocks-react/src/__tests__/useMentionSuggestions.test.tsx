@@ -2,8 +2,8 @@ import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 
-import { useMentionSuggestions } from "../use-mention-suggestions";
-import { act, createContextsForTest } from "./_utils";
+import { useMentionSuggestions } from "../use-mention-suggestions.js";
+import { act, createContextsForTest } from "./_utils.js";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveMentionSuggestions({

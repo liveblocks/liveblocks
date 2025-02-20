@@ -3,7 +3,7 @@ import { useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes } from "react";
 import { forwardRef } from "react";
 
-import { classNames } from "../classnames";
+import { classNames } from "../classnames.js";
 
 export interface UserProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {

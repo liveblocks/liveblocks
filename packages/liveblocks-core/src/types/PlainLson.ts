@@ -40,7 +40,7 @@
  *
  */
 
-import type { Json } from "../lib/Json";
+import type { Json } from "../lib/Json.js";
 
 export type PlainLsonFields = Record<string, PlainLson>;
 

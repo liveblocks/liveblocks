@@ -26,35 +26,39 @@ import type {
 } from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 
-import type { GlobalComponents } from "../components";
-import { useComponents } from "../components";
-import { CheckIcon } from "../icons/Check";
-import { DeleteIcon } from "../icons/Delete";
-import { EllipsisIcon } from "../icons/Ellipsis";
-import { WarningIcon } from "../icons/Warning";
+import type { GlobalComponents } from "../components.js";
+import { useComponents } from "../components.js";
+import { CheckIcon } from "../icons/Check.js";
+import { DeleteIcon } from "../icons/Delete.js";
+import { EllipsisIcon } from "../icons/Ellipsis.js";
+import { WarningIcon } from "../icons/Warning.js";
 import type {
   CommentOverrides,
   GlobalOverrides,
   InboxNotificationOverrides,
-} from "../overrides";
-import { useOverrides } from "../overrides";
-import { Timestamp } from "../primitives/Timestamp";
-import { useCurrentUserId } from "../shared";
-import type { SlotProp } from "../types";
-import { classNames } from "../utils/class-names";
-import { generateURL } from "../utils/url";
-import { Avatar, type AvatarProps } from "./internal/Avatar";
-import { Button } from "./internal/Button";
-import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
+} from "../overrides.js";
+import { useOverrides } from "../overrides.js";
+import { Timestamp } from "../primitives/Timestamp.js";
+import { useCurrentUserId } from "../shared.js";
+import type { SlotProp } from "../types.js";
+import { classNames } from "../utils/class-names.js";
+import { generateURL } from "../utils/url.js";
+import { Avatar, type AvatarProps } from "./internal/Avatar.js";
+import { Button } from "./internal/Button.js";
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownTrigger,
+} from "./internal/Dropdown.js";
 import {
   generateInboxNotificationThreadContents,
   INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
   InboxNotificationComment,
-} from "./internal/InboxNotificationThread";
-import { List } from "./internal/List";
-import { Room } from "./internal/Room";
-import { Tooltip } from "./internal/Tooltip";
-import { User } from "./internal/User";
+} from "./internal/InboxNotificationThread.js";
+import { List } from "./internal/List.js";
+import { Room } from "./internal/Room.js";
+import { Tooltip } from "./internal/Tooltip.js";
+import { User } from "./internal/User.js";
 
 type ComponentTypeWithRef<
   T extends keyof JSX.IntrinsicElements,

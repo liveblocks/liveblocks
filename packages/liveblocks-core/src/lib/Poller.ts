@@ -1,4 +1,4 @@
-import { FSM } from "./fsm";
+import { FSM } from "./fsm.js";
 
 export type Poller = {
   /**

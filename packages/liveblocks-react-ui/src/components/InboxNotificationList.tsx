@@ -3,8 +3,8 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { Children, forwardRef, useRef } from "react";
 
-import { classNames } from "../utils/class-names";
-import { useVisibleCallback } from "../utils/use-visible";
+import { classNames } from "../utils/class-names.js";
+import { useVisibleCallback } from "../utils/use-visible.js";
 
 export interface InboxNotificationListProps
   extends ComponentPropsWithoutRef<"ol"> {

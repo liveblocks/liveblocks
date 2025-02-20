@@ -35,14 +35,14 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { config } from "./config";
-import { useIsInsideRoom } from "./contexts";
-import { ASYNC_OK } from "./lib/AsyncResult";
-import { count } from "./lib/itertools";
-import { ensureNotServerSide } from "./lib/ssr";
-import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
-import { useLatest } from "./lib/use-latest";
-import { use } from "./lib/use-polyfill";
+import { config } from "./config.js";
+import { useIsInsideRoom } from "./contexts.js";
+import { ASYNC_OK } from "./lib/AsyncResult.js";
+import { count } from "./lib/itertools.js";
+import { ensureNotServerSide } from "./lib/ssr.js";
+import { useInitial, useInitialUnlessFunction } from "./lib/use-initial.js";
+import { useLatest } from "./lib/use-latest.js";
+import { use } from "./lib/use-polyfill.js";
 import type {
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
@@ -58,10 +58,10 @@ import type {
   UserNotificationSettingsAsyncSuccess,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
-} from "./types";
-import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
-import { useSignal } from "./use-signal";
-import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
+} from "./types.js";
+import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store.js";
+import { useSignal } from "./use-signal.js";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector.js";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the

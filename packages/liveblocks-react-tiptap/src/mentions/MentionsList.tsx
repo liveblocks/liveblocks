@@ -18,7 +18,7 @@ import { useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes, MouseEvent } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
-import { Avatar } from "./Avatar";
+import { Avatar } from "./Avatar.js";
 
 export interface UserProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {

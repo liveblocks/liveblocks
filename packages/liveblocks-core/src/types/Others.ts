@@ -1,9 +1,9 @@
-import type { DP, DU } from "../globals/augmentation";
-import type { JsonObject } from "../lib/Json";
-import type { Relax } from "../lib/Relax";
-import type { Resolve } from "../lib/Resolve";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { User } from "./User";
+import type { DP, DU } from "../globals/augmentation.js";
+import type { JsonObject } from "../lib/Json.js";
+import type { Relax } from "../lib/Relax.js";
+import type { Resolve } from "../lib/Resolve.js";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
+import type { User } from "./User.js";
 
 export type InternalOthersEvent<
   P extends JsonObject,

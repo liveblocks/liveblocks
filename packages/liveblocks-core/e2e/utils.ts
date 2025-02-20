@@ -4,16 +4,16 @@ import fetch from "node-fetch";
 import type { URL } from "url";
 import WebSocket from "ws";
 
-import type { Room } from "../src/room";
-import type { Status } from "../src/connection";
-import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
-import { wait, withTimeout } from "../src/lib/utils";
-import type { Json, JsonObject } from "../src/lib/Json";
-import type { LiveObject } from "../src/crdts/LiveObject";
-import type { LsonObject } from "../src/crdts/Lson";
-import type { ToImmutable } from "../src/crdts/utils";
-import { createClient } from "../src/client";
-import type { BaseMetadata, NoInfr } from "../src";
+import type { Room } from "../src/room.js";
+import type { Status } from "../src/connection.js";
+import type { BaseUserMeta } from "../src/protocol/BaseUserMeta.js";
+import { wait, withTimeout } from "../src/lib/utils.js";
+import type { Json, JsonObject } from "../src/lib/Json.js";
+import type { LiveObject } from "../src/crdts/LiveObject.js";
+import type { LsonObject } from "../src/crdts/Lson.js";
+import type { ToImmutable } from "../src/crdts/utils.js";
+import { createClient } from "../src/client.js";
+import type { BaseMetadata, NoInfr } from "../src.js";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,

@@ -1,4 +1,4 @@
-import { PKG_NAME, PKG_VERSION } from "./version";
+import { PKG_NAME, PKG_VERSION } from "./version.js";
 
 const g = (
   typeof globalThis !== "undefined"

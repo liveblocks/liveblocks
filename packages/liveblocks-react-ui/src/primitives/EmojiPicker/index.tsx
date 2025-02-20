@@ -21,14 +21,14 @@ import type {
 } from "react-virtuoso";
 import { GroupedVirtuoso } from "react-virtuoso";
 
-import { isKey } from "../../utils/is-key";
+import { isKey } from "../../utils/is-key.js";
 import {
   cancelIdleCallback,
   requestIdleCallback,
-} from "../../utils/request-idle-callback";
-import { visuallyHidden } from "../../utils/visually-hidden";
-import { Emoji as EmojiPrimitive } from "../internal/Emoji";
-import { EmojiPickerContext, useEmojiPicker } from "./contexts";
+} from "../../utils/request-idle-callback.js";
+import { visuallyHidden } from "../../utils/visually-hidden.js";
+import { Emoji as EmojiPrimitive } from "../internal/Emoji.js";
+import { EmojiPickerContext, useEmojiPicker } from "./contexts.js";
 import type {
   EmojiData,
   EmojiPickerContentComponents,
@@ -38,8 +38,12 @@ import type {
   EmojiPickerRootProps,
   EmojiPickerSearchProps,
   EmojiPickerSelectionDirection,
-} from "./types";
-import { filterEmojis, generateEmojiPickerData, getEmojiData } from "./utils";
+} from "./types.js";
+import {
+  filterEmojis,
+  generateEmojiPickerData,
+  getEmojiData,
+} from "./utils.js";
 
 const DEFAULT_COLUMNS = 10;
 const DEFAULT_LOCALE = "en";

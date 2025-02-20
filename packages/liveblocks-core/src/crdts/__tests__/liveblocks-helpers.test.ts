@@ -1,15 +1,15 @@
-import { FIRST_POSITION, SECOND_POSITION } from "../../__tests__/_utils";
-import { OpCode } from "../../protocol/Op";
-import { CrdtType } from "../../protocol/SerializedCrdt";
-import type { NodeMap } from "../../types/NodeMap";
+import { FIRST_POSITION, SECOND_POSITION } from "../../__tests__/_utils.js";
+import { OpCode } from "../../protocol/Op.js";
+import { CrdtType } from "../../protocol/SerializedCrdt.js";
+import type { NodeMap } from "../../types/NodeMap.js";
 import {
   findNonSerializableValue,
   getTreesDiffOperations,
-} from "../liveblocks-helpers";
-import { LiveList } from "../LiveList";
-import { LiveMap } from "../LiveMap";
-import { LiveObject } from "../LiveObject";
-import { toPlainLson } from "../utils";
+} from "../liveblocks-helpers.js";
+import { LiveList } from "../LiveList.js";
+import { LiveMap } from "../LiveMap.js";
+import { LiveObject } from "../LiveObject.js";
+import { toPlainLson } from "../utils.js";
 
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {

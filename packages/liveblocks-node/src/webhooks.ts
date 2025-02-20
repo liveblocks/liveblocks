@@ -3,7 +3,7 @@ import * as base64 from "@stablelib/base64";
 import * as sha256 from "fast-sha256";
 import type { IncomingHttpHeaders } from "http";
 
-import { isString } from "./utils";
+import { isString } from "./utils.js";
 
 export class WebhookHandler {
   #secretBuffer: Buffer;

@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import { makeBufferableEventSource, makeEventSource } from "../EventSource";
+import { makeBufferableEventSource, makeEventSource } from "../EventSource.js";
 
 const anything = () =>
   fc.anything({

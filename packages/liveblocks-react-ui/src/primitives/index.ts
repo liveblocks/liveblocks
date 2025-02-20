@@ -1,5 +1,5 @@
-export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
-export * as Comment from "./Comment";
+export type { ComposerBodyMark, ComposerBodyMarks } from "../types.js";
+export * as Comment from "./Comment.js";
 export type {
   CommentBodyComponents,
   CommentBodyLinkProps,
@@ -7,10 +7,10 @@ export type {
   CommentBodyProps,
   CommentLinkProps,
   CommentMentionProps,
-} from "./Comment/types";
-export * as Composer from "./Composer";
-export type { ComposerContext } from "./Composer/contexts";
-export { useComposer } from "./Composer/contexts";
+} from "./Comment/types.js";
+export * as Composer from "./Composer.js";
+export type { ComposerContext } from "./Composer/contexts.js";
+export { useComposer } from "./Composer/contexts.js";
 export type {
   ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
@@ -29,9 +29,9 @@ export type {
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
-} from "./Composer/types";
-export { AttachmentTooLargeError } from "./Composer/utils";
-export * as EmojiPicker from "./EmojiPicker";
+} from "./Composer/types.js";
+export { AttachmentTooLargeError } from "./Composer/utils.js";
+export * as EmojiPicker from "./EmojiPicker.js";
 export type {
   EmojiPickerContentCategoryHeaderProps,
   EmojiPickerContentComponents,
@@ -44,8 +44,8 @@ export type {
   EmojiPickerContentRowProps,
   EmojiPickerRootProps,
   EmojiPickerSearchProps,
-} from "./EmojiPicker/types";
-export type { FileSizeProps } from "./FileSize";
-export { FileSize } from "./FileSize";
-export type { TimestampProps } from "./Timestamp";
-export { Timestamp } from "./Timestamp";
+} from "./EmojiPicker/types.js";
+export type { FileSizeProps } from "./FileSize.js";
+export { FileSize } from "./FileSize.js";
+export type { TimestampProps } from "./Timestamp.js";
+export { Timestamp } from "./Timestamp.js";

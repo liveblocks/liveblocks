@@ -2,7 +2,7 @@
 import { QueryParser } from "@liveblocks/query-parser";
 import * as fc from "fast-check";
 
-import { objectToQuery, quote } from "../objectToQuery";
+import { objectToQuery, quote } from "../objectToQuery.js";
 
 describe("objectToQuery", () => {
   it("should convert a simple key/value pair to a query", () => {

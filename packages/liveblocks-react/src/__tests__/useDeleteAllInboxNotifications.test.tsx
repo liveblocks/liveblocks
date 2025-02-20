@@ -6,14 +6,14 @@ import {
   dummyCommentData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
-} from "./_dummies";
+} from "./_dummies.js";
 import {
   mockDeleteAllInboxNotifications,
   mockDeleteComment,
   mockDeleteThread,
   mockGetInboxNotifications,
-} from "./_restMocks";
-import { createContextsForTest } from "./_utils";
+} from "./_restMocks.js";
+import { createContextsForTest } from "./_utils.js";
 
 const server = setupServer();
 

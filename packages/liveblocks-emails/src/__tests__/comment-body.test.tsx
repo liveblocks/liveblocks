@@ -1,11 +1,11 @@
 import type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
-} from "../comment-body";
+} from "../comment-body.js";
 import {
   convertCommentBodyAsHtml,
   convertCommentBodyAsReact,
-} from "../comment-body";
+} from "../comment-body.js";
 import {
   buildCommentBodyWithMention,
   commentBody1,
@@ -17,7 +17,7 @@ import {
   commentBodyWithHtml2,
   renderToStaticMarkup,
   resolveUsers,
-} from "./_helpers";
+} from "./_helpers.js";
 
 describe("convert comment body as html", () => {
   describe("w/o users resolver", () => {

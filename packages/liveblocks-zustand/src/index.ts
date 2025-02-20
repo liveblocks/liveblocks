@@ -28,7 +28,7 @@ import {
 } from "@liveblocks/core";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
