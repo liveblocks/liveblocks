@@ -7,7 +7,8 @@
 
     // For all packages, let TypeScript use the following standardized way to
     // resolve modules
-    "moduleResolution": "node",
+    "module": "node16",
+    "moduleResolution": "node16",
 
     // Don't produce *.js files when running TypeScript. We use `tsup` to
     // build our output files.
