@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/core`
+
+- Fix html escaping in `stringifyCommentBody` utility.
+
 ### `@liveblocks/client`
 
 - Log more details in specific error cases to help debugging
