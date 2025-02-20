@@ -515,6 +515,34 @@ test.describe("Composer", () => {
       ]);
     });
 
+    test("should support non-alphanumeric characters in mentions but not consecutive whitespace", async () => {
+      const { editor } = getComposer(page);
+
+      // Mentions can contain whitespace
+      await editor.pressSequentially("Hello @Alicia H");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toContainText("Alicia H.");
+
+      // Mentions can contain @ and .
+      await editor.pressSequentially(" and @email@liveblocks.");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toContainText("email@liveblocks.io");
+
+      // Mentions can contain other non-alphanumeric characters
+      await editor.pressSequentially(" and @#!?_1234$%&*()");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toContainText("#!?_1234$%&*()");
+
+      // Mentions cannot contain consecutive whitespace
+      await editor.pressSequentially(" and @li      ");
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).not.toBeVisible();
+    });
+
     test("should insert emojis via the emoji picker", async () => {
       const { editor, emojiButton } = getComposer(page);
 
