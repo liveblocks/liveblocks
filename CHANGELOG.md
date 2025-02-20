@@ -2,7 +2,11 @@
 
 ## v2.18.3
 
-### `@liveblocks/core`
+### `@liveblocks/client
+
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/node
 
 - Fix html escaping in `stringifyCommentBody` utility.
 
