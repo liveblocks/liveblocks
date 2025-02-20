@@ -30,7 +30,7 @@
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "jest --silent --verbose --color=always",
-    "test:types": "tsd",
+    "test:types": "tsd -f test-d/index.test-d.ts",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
@@ -39,6 +39,7 @@
     "yjs": "^13.6.20"
   },
   "peerDependencies": {
+    "@tiptap/core": "^2.9.1",
     "@tiptap/pm": "^2.9.1",
     "@tiptap/react": "^2.9.1",
     "@tiptap/starter-kit": "^2.9.1",
