@@ -15,9 +15,9 @@ function replacer(_key: string, value: unknown) {
 }
 
 /**
- * Like JSON.stringify(), but returns the same value no matter how keys in any
- * nested objects are ordered.
+ * Like JSON.stringify(), but using stable (sorted) object key order, so that
+ * it returns the same value for the same keys, no matter their order.
  */
-export function stringify(value: unknown): string {
+export function stableStringify(value: unknown): string {
   return JSON.stringify(value, replacer);
 }
