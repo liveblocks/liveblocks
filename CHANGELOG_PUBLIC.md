@@ -17,17 +17,14 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## v2.18.3
 
-### `@liveblocks/client`
-
-- Fix html escaping in `stringifyCommentBody` utility.
-
 ### `@liveblocks/node`
 
 - Fix html escaping in `stringifyCommentBody` utility.
 
 ### `@liveblocks/client`
 
-- Log more details in specific error cases to help debugging.
+- Log more details in specific error cases to help debugging
+- Fix html escaping in `stringifyCommentBody` utility.
 
 ### `@liveblocks/react`
 
