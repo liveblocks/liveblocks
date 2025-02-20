@@ -10,6 +10,7 @@ import type { ComposerBodyMention } from "../../types";
 import { getCharacterAfter, getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
 import { isEmptyString } from "../utils/is-empty-string";
+import { isWhitespaceCharacter } from "../utils/is-whitespace-character";
 
 export const MENTION_CHARACTER = "@";
 
@@ -36,7 +37,7 @@ export function getMentionDraftAtSelection(
       const characterBefore = getCharacterBefore(editor, point);
 
       // Ignore "@" if it's preceded by a non-whitespace character
-      if (characterBefore && characterBefore.text !== " ") {
+      if (characterBefore && !isWhitespaceCharacter(characterBefore.text)) {
         return true;
       }
 
@@ -46,7 +47,7 @@ export function getMentionDraftAtSelection(
         const characterAfter = getCharacterAfter(editor, after);
 
         // Ignore "@" if it's followed by a whitespace character
-        if (characterAfter && characterAfter.text === " ") {
+        if (isWhitespaceCharacter(characterAfter?.text)) {
           return true;
         }
       }
@@ -62,7 +63,10 @@ export function getMentionDraftAtSelection(
   const matchText = SlateEditor.string(editor, match);
 
   // Check if the match starts with the mention character (not followed by a whitespace character)
-  if (!matchText.startsWith(MENTION_CHARACTER) || matchText?.[1] === " ") {
+  if (
+    !matchText.startsWith(MENTION_CHARACTER) ||
+    isWhitespaceCharacter(matchText[1])
+  ) {
     return;
   }
 

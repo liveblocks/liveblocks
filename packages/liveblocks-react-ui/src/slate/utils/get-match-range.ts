@@ -5,6 +5,8 @@ import {
   Range as SlateRange,
 } from "slate";
 
+import { isWhitespaceCharacter } from "./is-whitespace-character";
+
 interface Options {
   include?: boolean;
   direction?: "before" | "after" | "both";
@@ -62,7 +64,7 @@ export function getMatchRange(
     if (
       !allowConsecutiveWhitespace &&
       previousCharacterWasWhitespace &&
-      lastCharacter === " "
+      isWhitespaceCharacter(lastCharacter)
     ) {
       return false;
     }
@@ -73,7 +75,7 @@ export function getMatchRange(
       (!terminators.includes(lastCharacter) ||
         ignoreTerminator?.(lastCharacter, nextPoint, direction))
     ) {
-      previousCharacterWasWhitespace = lastCharacter === " ";
+      previousCharacterWasWhitespace = isWhitespaceCharacter(lastCharacter);
       point = nextPoint;
 
       if (point.offset === 0) {
