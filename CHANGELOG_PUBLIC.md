@@ -60,7 +60,12 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Fixed a number of broken links on various pages.
 
 ## Dashboard
+
 - Internal refactoring and code clean up.
+
+## Website
+
+- New blog post: [Why collaborative features will define your product’s success](https://liveblocks.io/blog/why-collaborative-features-will-define-your-products-success).
 
 ## Contributors
 
