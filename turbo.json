@@ -9,18 +9,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
+      "inputs": ["src/**", "*.config.ts", "*.config.cts", "*.config.js"],
       "outputs": ["dist/**"]
     },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      "inputs": [
-        "jest.*",
-        "src/**/*.tsx",
-        "src/**/*.ts",
-        "test/**/*.ts",
-        "test/**/*.tsx"
-      ]
+      "inputs": ["jest.*", "vitest.*", "src/**", "test/**"]
     },
     "test:types": {
       "dependsOn": ["build"],
