@@ -1,9 +1,18 @@
 import type { Point as SlatePoint } from "slate";
-import { Editor as SlateEditor, Range as SlateRange } from "slate";
+import {
+  Editor as SlateEditor,
+  Path as SlatePath,
+  Range as SlateRange,
+} from "slate";
 
 interface Options {
   include?: boolean;
   direction?: "before" | "after" | "both";
+  ignoreTerminator?: (
+    character: string,
+    point: SlatePoint,
+    direction: "before" | "after"
+  ) => boolean;
 }
 
 const defaultOptions: Options = {
@@ -16,7 +25,10 @@ export function getMatchRange(
   terminators: string[] = [" "],
   options: Options = defaultOptions
 ): SlateRange | undefined {
-  const { include, direction } = { ...defaultOptions, ...options };
+  const { include, direction, ignoreTerminator } = {
+    ...defaultOptions,
+    ...options,
+  };
   let [start, end] = SlateRange.edges(at);
   let point: SlatePoint = start;
 
@@ -27,6 +39,12 @@ export function getMatchRange(
             unit: "character",
           })
         : SlateEditor.before(editor, point, { unit: "character" });
+
+    // Matching should stop at the end of a block
+    if (!next || SlatePath.compare(next.path, point.path) !== 0) {
+      return false;
+    }
+
     const nextWord =
       next &&
       SlateEditor.string(
@@ -38,7 +56,12 @@ export function getMatchRange(
     const lastWord =
       nextWord && nextWord[direction === "after" ? 0 : nextWord.length - 1];
 
-    if (next && lastWord && !terminators.includes(lastWord)) {
+    if (
+      next &&
+      lastWord &&
+      (!terminators.includes(lastWord) ||
+        ignoreTerminator?.(lastWord, next, direction))
+    ) {
       point = next;
 
       if (point.offset === 0) {

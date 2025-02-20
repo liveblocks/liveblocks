@@ -27,9 +27,16 @@ export function getMentionDraftAtSelection(
     return;
   }
 
-  // Match the word at the current selection by walking back
-  // until a whitespace character is found
-  const match = getMatchRange(editor, selection);
+  // Walk backwards from the selection until "@" is found, unless the character
+  // before isn't whitespace (or "@" is the block's first character)
+  const match = getMatchRange(editor, selection, ["@"], {
+    include: true,
+    ignoreTerminator: (_, point) => {
+      const characterBefore = getCharacterBefore(editor, point);
+
+      return characterBefore ? characterBefore.text !== " " : false;
+    },
+  });
 
   if (!match) {
     return;
