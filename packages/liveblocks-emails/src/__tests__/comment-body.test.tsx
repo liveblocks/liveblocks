@@ -14,6 +14,7 @@ import {
   commentBody6,
   commentBody7,
   commentBodyWithHtml,
+  commentBodyWithHtml2,
   renderToStaticMarkup,
   resolveUsers,
 } from "./_helpers";
@@ -69,10 +70,39 @@ describe("convert comment body as html", () => {
       expect(htmlBody).toEqual(expected);
     });
 
-    it("should escape html entities", async () => {
+    it("should escape html entities - text", async () => {
       const htmlBody = await convertCommentBodyAsHtml(commentBodyWithHtml);
       const expected =
         '<p style="font-size:14px;">Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>';
+
+      expect(htmlBody).toEqual(expected);
+    });
+
+    it("should escape html entities - link w/ text", async () => {
+      const htmlBody = await convertCommentBodyAsHtml(commentBodyWithHtml2);
+      const expected =
+        '<p style="font-size:14px;">Trying with <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">&lt;script&gt;injected script&lt;/script&gt;</a> !</p>';
+
+      expect(htmlBody).toEqual(expected);
+    });
+
+    it("should escape html entities - mention w/ username", async () => {
+      const htmlBody = await convertCommentBodyAsHtml(
+        buildCommentBodyWithMention({ mentionedUserId: "user-0" }),
+        {
+          resolveUsers: ({ userIds }) => {
+            return userIds.map((userId) => {
+              return {
+                id: userId,
+                name: "<style>injected style</style>",
+              };
+            });
+          },
+        }
+      );
+
+      const expected =
+        '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@&lt;style&gt;injected style&lt;/style&gt;</span> !</p>';
 
       expect(htmlBody).toEqual(expected);
     });

@@ -185,6 +185,24 @@ export const commentBodyWithHtml: CommentBody = {
   ],
 };
 
+export const commentBodyWithHtml2: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Trying with " },
+        {
+          type: "link",
+          url: "https://www.liveblocks.io",
+          text: "<script>injected script</script>",
+        },
+        { text: " !" },
+      ],
+    },
+  ],
+};
+
 export const makeComment = ({
   userId,
   threadId,
