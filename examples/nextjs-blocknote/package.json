@@ -14,6 +14,7 @@
     "@liveblocks/node": "^2.18.2",
     "@liveblocks/react": "^2.18.2",
     "@liveblocks/react-ui": "^2.18.2",
+    "@liveblocks/react-blocknote": "file:../../packages/liveblocks-react-blocknote",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.0.7",
     "@tiptap/pm": "^2.6.6",

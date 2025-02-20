@@ -20,7 +20,7 @@ import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
 import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -163,7 +163,7 @@ export const useLiveblocksExtension = (
     ...DEFAULT_OPTIONS,
     ...opts,
   };
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const editor = useRef<Editor | null>(null);
   const room = useRoom();
 
   // TODO: we don't need these things if comments isn't turned on...
@@ -186,7 +186,7 @@ export const useLiveblocksExtension = (
 
   // If the user provided initialContent, wait for ready and then set it
   useEffect(() => {
-    if (!isEditorReady || !yjsProvider || !options.initialContent || !editor)
+    if (!isEditorReady || !yjsProvider || !options.initialContent || !editor.current)
       return;
 
     // As noted in the tiptap documentation, you may not set initial content with collaboration.
@@ -195,9 +195,9 @@ export const useLiveblocksExtension = (
     const hasContentSet = ydoc.getMap("liveblocks_config").get("hasContentSet");
     if (!hasContentSet) {
       ydoc.getMap("liveblocks_config").set("hasContentSet", true);
-      editor.commands.setContent(options.initialContent);
+      editor.current.commands.setContent(options.initialContent);
     }
-  }, [isEditorReady, yjsProvider, options.initialContent, editor]);
+  }, [isEditorReady, yjsProvider, options.initialContent]);
 
   useReportTextEditor(
     TextEditorType.TipTap,
@@ -211,7 +211,7 @@ export const useLiveblocksExtension = (
     name: "liveblocksExtension",
 
     onCreate() {
-      setEditor(this.editor);
+      editor.current = this.editor;
       if (this.editor.options.content) {
         console.warn(
           "[Liveblocks] Initial content must be set in the useLiveblocksExtension hook option. Remove content from your editor options."
