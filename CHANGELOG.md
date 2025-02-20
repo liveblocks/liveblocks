@@ -9,6 +9,11 @@
 - Increases the allowed stale time for polled user threads data. Only affects
   the `useUserThreads_experimental` hook.
 
+### `@liveblocks/emails`
+
+- Revert deduplication logic introduced in `v2.18.0` as it provided no
+  measurable benefits while increasing complexity.
+
 ## v2.18.2
 
 ### `@liveblocks/client`
