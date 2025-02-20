@@ -14,9 +14,15 @@
     // build our output files.
     "noEmit": true,
 
+    // In React projects, transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
+    "jsx": "react-jsx",
+
     // Settings with an effect on the generated code
     "esModuleInterop": true, // Emit safer code for packages that use namespace/default imports
     "stripInternal": true, // Don't emit public types for things annotated with @internal
+
+    // Allow importing JSON files
+    "resolveJsonModule": true,
 
     // Use better type checking
     "strict": true,
