@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react`
+
+- Increases the allowed stale time for polled user threads data. Only affects
+  the `useUserThreads_experimental` hook.
+
 ## v2.18.2
 
 ### `@liveblocks/client`
