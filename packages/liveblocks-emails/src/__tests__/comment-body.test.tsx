@@ -69,7 +69,7 @@ describe("convert comment body as html", () => {
       expect(htmlBody).toEqual(expected);
     });
 
-    it.only("should escape html entities", async () => {
+    it("should escape html entities", async () => {
       const htmlBody = await convertCommentBodyAsHtml(commentBodyWithHtml);
       const expected =
         '<p style="font-size:14px;">Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>';

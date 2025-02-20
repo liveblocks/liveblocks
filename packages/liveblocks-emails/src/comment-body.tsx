@@ -308,7 +308,7 @@ export async function convertCommentBodyAsHtml(
         let children = element.text;
 
         if (!children) {
-          return children;
+          return html`${children}`;
         }
 
         if (element.bold) {
@@ -331,7 +331,7 @@ export async function convertCommentBodyAsHtml(
           children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
         }
 
-        return children;
+        return html`${children}`;
       },
       link: ({ element, href }) => {
         // prettier-ignore
