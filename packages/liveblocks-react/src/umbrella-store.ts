@@ -37,7 +37,7 @@ import {
   nn,
   shallow,
   Signal,
-  stringify,
+  stableStringify,
 } from "@liveblocks/core";
 
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
@@ -219,13 +219,13 @@ export function makeRoomThreadsQueryKey(
   roomId: string,
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return stringify([roomId, query ?? {}]);
+  return stableStringify([roomId, query ?? {}]);
 }
 
 export function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return stringify(query ?? {});
+  return stableStringify(query ?? {});
 }
 
 /**

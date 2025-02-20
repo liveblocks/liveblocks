@@ -1,4 +1,4 @@
-import { stringify } from "@liveblocks/core";
+import { stableStringify } from "@liveblocks/core";
 
 export function memoize<TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => TReturn
@@ -6,7 +6,7 @@ export function memoize<TArgs extends unknown[], TReturn>(
   const cache = new Map<string, TReturn>();
 
   return (...args: TArgs): TReturn => {
-    const key = JSON.stringify(args.map((arg) => stringify(arg)));
+    const key = JSON.stringify(args.map((arg) => stableStringify(arg)));
     const cached = cache.get(key);
 
     if (cached !== undefined) {
