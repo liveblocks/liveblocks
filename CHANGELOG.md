@@ -11,6 +11,8 @@
 
 ### `@liveblocks/emails`
 
+- Fix html escaping in prepare as html functions (thanks to @huy-cove for
+  reporting the issue and helping us improving our product 🙏🏻).
 - Revert deduplication logic introduced in `v2.18.0` as it provided no
   measurable benefits while increasing complexity.
 
