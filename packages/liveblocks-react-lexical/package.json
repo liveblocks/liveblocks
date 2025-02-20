@@ -19,13 +19,14 @@
       }
     },
     "./styles.css": {
-      "types": "./styles.css.d.ts",
+      "types": "./styles.css.d.cts",
       "default": "./styles.css"
     }
   },
   "files": [
     "dist/**",
     "**/*.css",
+    "**/*.css.d.cts",
     "**/*.css.d.ts",
     "**/*.css.map",
     "README.md"

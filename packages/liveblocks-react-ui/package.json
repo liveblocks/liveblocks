@@ -41,15 +41,15 @@
       }
     },
     "./styles.css": {
-      "types": "./styles.css.d.ts",
+      "types": "./styles.css.d.cts",
       "default": "./styles.css"
     },
     "./styles/dark/media-query.css": {
-      "types": "./styles/dark/media-query.css.d.ts",
+      "types": "./styles/dark/media-query.css.d.cts",
       "default": "./styles/dark/media-query.css"
     },
     "./styles/dark/attributes.css": {
-      "types": "./styles/dark/attributes.css.d.ts",
+      "types": "./styles/dark/attributes.css.d.cts",
       "default": "./styles/dark/attributes.css"
     }
   },
@@ -58,6 +58,7 @@
     "primitives/**",
     "_private/**",
     "**/*.css",
+    "**/*.css.d.cts",
     "**/*.css.d.ts",
     "**/*.css.map",
     "README.md"

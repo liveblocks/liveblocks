@@ -1,0 +1,9 @@
+{
+  // Extend the global Turbo file
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "outputs": ["dist/**", "./styles.css"]
+    }
+  }
+}
