@@ -31,8 +31,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.mjs --watch",
-    "build": "rollup --config rollup.config.mjs",
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",

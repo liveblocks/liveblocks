@@ -20,24 +20,24 @@
     },
     "./suspense": {
       "import": {
-        "types": "./dist/suspense.d.mts",
-        "default": "./dist/suspense.mjs"
+        "types": "./dist/suspense.d.ts",
+        "default": "./dist/suspense.js"
       },
       "require": {
-        "types": "./dist/suspense.d.ts",
-        "module": "./dist/suspense.mjs",
-        "default": "./dist/suspense.js"
+        "types": "./dist/suspense.d.cts",
+        "module": "./dist/suspense.js",
+        "default": "./dist/suspense.cjs"
       }
     },
     "./_private": {
       "import": {
-        "types": "./dist/_private.d.mts",
-        "default": "./dist/_private.mjs"
+        "types": "./dist/_private.d.ts",
+        "default": "./dist/_private.js"
       },
       "require": {
-        "types": "./dist/_private.d.ts",
-        "module": "./dist/_private.mjs",
-        "default": "./dist/_private.js"
+        "types": "./dist/_private.d.cts",
+        "module": "./dist/_private.js",
+        "default": "./dist/_private.cjs"
       }
     }
   },

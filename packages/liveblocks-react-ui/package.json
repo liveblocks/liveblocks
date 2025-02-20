@@ -20,24 +20,24 @@
     },
     "./primitives": {
       "import": {
-        "types": "./dist/primitives/index.d.mts",
-        "default": "./dist/primitives/index.mjs"
+        "types": "./dist/primitives/index.d.ts",
+        "default": "./dist/primitives/index.js"
       },
       "require": {
-        "types": "./dist/primitives/index.d.ts",
-        "module": "./dist/primitives/index.mjs",
-        "default": "./dist/primitives/index.js"
+        "types": "./dist/primitives/index.d.cts",
+        "module": "./dist/primitives/index.js",
+        "default": "./dist/primitives/index.cjs"
       }
     },
     "./_private": {
       "import": {
-        "types": "./dist/_private/index.d.mts",
-        "default": "./dist/_private/index.mjs"
+        "types": "./dist/_private/index.d.ts",
+        "default": "./dist/_private/index.js"
       },
       "require": {
-        "types": "./dist/_private/index.d.ts",
-        "module": "./dist/_private/index.mjs",
-        "default": "./dist/_private/index.js"
+        "types": "./dist/_private/index.d.cts",
+        "module": "./dist/_private/index.js",
+        "default": "./dist/_private/index.cjs"
       }
     },
     "./styles.css": {
@@ -63,8 +63,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.mjs --watch",
-    "build": "rollup --config rollup.config.mjs",
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
