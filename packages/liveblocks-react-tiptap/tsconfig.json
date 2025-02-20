@@ -3,6 +3,8 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
+    "lib": ["dom", "es2022"],
+
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
