@@ -271,6 +271,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
         esbuild({
           target: "es2022",
           sourceMap: true,
+          jsx: "automatic",
         }),
         preserveUseClient(),
         replace({

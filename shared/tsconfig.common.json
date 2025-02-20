@@ -14,7 +14,7 @@
     // build our output files.
     "noEmit": true,
 
-    // In React projects, transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
+    // Transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
     "jsx": "react-jsx",
 
     // Settings with an effect on the generated code
