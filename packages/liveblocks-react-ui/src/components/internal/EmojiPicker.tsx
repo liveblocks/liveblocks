@@ -7,10 +7,10 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants.js";
-import { SearchIcon } from "../../icons/Search.js";
-import { SpinnerIcon } from "../../icons/Spinner.js";
+import { SearchIcon } from "../../icons/Search.jsx";
+import { SpinnerIcon } from "../../icons/Spinner.jsx";
 import { useOverrides } from "../../overrides.js";
-import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker.js";
+import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker/index.jsx";
 import type {
   EmojiPickerContentCategoryHeaderProps,
   EmojiPickerContentEmojiProps,
@@ -21,7 +21,7 @@ import type {
   EmojiPickerContentRowProps,
 } from "../../primitives/EmojiPicker/types.js";
 import { classNames } from "../../utils/class-names.js";
-import { Emoji } from "./Emoji.js";
+import { Emoji } from "./Emoji.jsx";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;

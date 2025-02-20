@@ -12,15 +12,15 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides.js";
-import * as CommentPrimitive from "../../primitives/Comment.js";
+import * as CommentPrimitive from "../../primitives/Comment/index.jsx";
 import { classNames } from "../../utils/class-names.js";
 import {
   CommentMention,
   CommentNonInteractiveFileAttachment,
   CommentNonInteractiveLink,
   CommentNonInteractiveReaction,
-} from "../Comment.js";
-import { User } from "./User.js";
+} from "../Comment.jsx";
+import { User } from "./User.jsx";
 
 type InboxNotificationThreadCommentsContents = {
   type: "comments";

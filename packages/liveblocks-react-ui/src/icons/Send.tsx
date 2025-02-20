@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { Icon } from "../components/internal/Icon.js";
+import { Icon } from "../components/internal/Icon.jsx";
 
 export function SendIcon(props: ComponentProps<"svg">) {
   return (

@@ -7,7 +7,7 @@ import type {
 import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying.js";
-import type { ThreadsQuery } from "./types.js";
+import type { ThreadsQuery } from "./types/index.js";
 
 function sanitizeThread<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>

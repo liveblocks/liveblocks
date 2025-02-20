@@ -27,9 +27,9 @@ import {
   useState,
 } from "react";
 
-import { ArrowDownIcon } from "../icons/ArrowDown.js";
-import { ResolveIcon } from "../icons/Resolve.js";
-import { ResolvedIcon } from "../icons/Resolved.js";
+import { ArrowDownIcon } from "../icons/ArrowDown.jsx";
+import { ResolveIcon } from "../icons/Resolve.jsx";
+import { ResolvedIcon } from "../icons/Resolved.jsx";
 import type {
   CommentOverrides,
   ComposerOverrides,
@@ -39,12 +39,12 @@ import type {
 import { useOverrides } from "../overrides.js";
 import { classNames } from "../utils/class-names.js";
 import { findLastIndex } from "../utils/find-last-index.js";
-import type { CommentProps } from "./Comment.js";
-import { Comment } from "./Comment.js";
-import type { ComposerProps } from "./Composer.js";
-import { Composer } from "./Composer.js";
-import { Button } from "./internal/Button.js";
-import { Tooltip, TooltipProvider } from "./internal/Tooltip.js";
+import type { CommentProps } from "./Comment.jsx";
+import { Comment } from "./Comment.jsx";
+import type { ComposerProps } from "./Composer.jsx";
+import { Composer } from "./Composer.jsx";
+import { Button } from "./internal/Button.jsx";
+import { Tooltip, TooltipProvider } from "./internal/Tooltip.jsx";
 
 export interface ThreadProps<M extends BaseMetadata = DM>
   extends ComponentPropsWithoutRef<"div"> {

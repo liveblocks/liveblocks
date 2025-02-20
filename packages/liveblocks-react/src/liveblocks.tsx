@@ -58,7 +58,7 @@ import type {
   UserNotificationSettingsAsyncSuccess,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
-} from "./types.js";
+} from "./types/index.js";
 import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store.js";
 import { useSignal } from "./use-signal.js";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector.js";

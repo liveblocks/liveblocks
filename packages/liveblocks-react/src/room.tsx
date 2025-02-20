@@ -96,7 +96,7 @@ import type {
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
-} from "./types.js";
+} from "./types/index.js";
 import type { UmbrellaStore } from "./umbrella-store.js";
 import { makeRoomThreadsQueryKey } from "./umbrella-store.js";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect.js";

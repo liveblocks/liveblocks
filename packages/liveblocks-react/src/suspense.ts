@@ -9,7 +9,7 @@ export type {
   MutationContext,
   UseStorageStatusOptions,
   UseThreadsOptions,
-} from "./types.js";
+} from "./types/index.js";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

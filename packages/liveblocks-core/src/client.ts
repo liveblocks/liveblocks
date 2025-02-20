@@ -4,7 +4,11 @@ import { createAuthManager } from "./auth-manager.js";
 import { isIdle } from "./connection.js";
 import { DEFAULT_BASE_URL } from "./constants.js";
 import type { LsonObject } from "./crdts/Lson.js";
-import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools.js";
+import {
+  linkDevTools,
+  setupDevTools,
+  unlinkDevTools,
+} from "./devtools/index.js";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation.js";
 import { kInternal } from "./internal.js";
 import type { BatchStore } from "./lib/batch.js";

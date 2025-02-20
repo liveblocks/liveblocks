@@ -100,8 +100,8 @@ import {
   Persist,
   useAnimationPersist,
   usePersist,
-} from "../../utils/Persist.js";
-import { Portal } from "../../utils/Portal.js";
+} from "../../utils/Persist.jsx";
+import { Portal } from "../../utils/Portal.jsx";
 import { requestSubmit } from "../../utils/request-submit.js";
 import { useIndex } from "../../utils/use-index.js";
 import { useInitial } from "../../utils/use-initial.js";

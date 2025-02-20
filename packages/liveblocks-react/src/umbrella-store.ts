@@ -53,7 +53,7 @@ import type {
   ThreadsAsyncResult,
   ThreadsQuery,
   UserNotificationSettingsAsyncResult,
-} from "./types.js";
+} from "./types/index.js";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>

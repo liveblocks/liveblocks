@@ -5,10 +5,10 @@ import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
 
 import { useOverrides } from "../overrides.js";
-import { Timestamp } from "../primitives.js";
+import { Timestamp } from "../primitives/index.js";
 import { classNames } from "../utils/class-names.js";
-import { List } from "./internal/List.js";
-import { User } from "./internal/User.js";
+import { List } from "./internal/List.jsx";
+import { User } from "./internal/User.jsx";
 
 const AUTHORS_TRUNCATE = 3;
 

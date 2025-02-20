@@ -10,16 +10,16 @@ import type {
 } from "react";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import { CrossIcon } from "../../icons/Cross.js";
-import { SpinnerIcon } from "../../icons/Spinner.js";
-import { WarningIcon } from "../../icons/Warning.js";
+import { CrossIcon } from "../../icons/Cross.jsx";
+import { SpinnerIcon } from "../../icons/Spinner.jsx";
+import { WarningIcon } from "../../icons/Warning.jsx";
 import type { Overrides } from "../../overrides.js";
 import { useOverrides } from "../../overrides.js";
-import { AttachmentTooLargeError } from "../../primitives.js";
 import { useComposerAttachmentsContextOrNull } from "../../primitives/Composer/contexts.js";
+import { AttachmentTooLargeError } from "../../primitives/index.js";
 import { classNames } from "../../utils/class-names.js";
 import { formatFileSize } from "../../utils/format-file-size.js";
-import { Tooltip } from "./Tooltip.js";
+import { Tooltip } from "./Tooltip.jsx";
 
 const MAX_DISPLAYED_MEDIA_SIZE = 60 * 1024 * 1024; // 60 MB
 

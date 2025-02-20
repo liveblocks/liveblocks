@@ -13,7 +13,7 @@ import type { LiveObject } from "../src/crdts/LiveObject.js";
 import type { LsonObject } from "../src/crdts/Lson.js";
 import type { ToImmutable } from "../src/crdts/utils.js";
 import { createClient } from "../src/client.js";
-import type { BaseMetadata, NoInfr } from "../src.js";
+import type { BaseMetadata, NoInfr } from "../src/index.js";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
