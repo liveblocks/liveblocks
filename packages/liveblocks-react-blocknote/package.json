@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-blocknote",
-  "version": "2.18.1",
+  "version": "2.18.2",
   "description": "A BlockNote react plugin to enable collaboration, comments, live cursors, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -41,17 +41,17 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "2.18.1",
-    "@liveblocks/core": "2.18.1",
-    "@liveblocks/react": "2.18.1",
-    "@liveblocks/react-tiptap": "2.18.1",
-    "@liveblocks/react-ui": "2.18.1",
-    "@liveblocks/yjs": "2.18.1",
+    "@liveblocks/client": "2.18.2",
+    "@liveblocks/core": "2.18.2",
+    "@liveblocks/react": "2.18.2",
+    "@liveblocks/react-tiptap": "2.18.2",
+    "@liveblocks/react-ui": "2.18.2",
+    "@liveblocks/yjs": "2.18.2",
     "@tiptap/core": "^2.7.2"
   },
   "peerDependencies": {
-    "@blocknote/core": "^0.19.1",
-    "@blocknote/react": "^0.19.1",
+    "@blocknote/core": "^0.24.0",
+    "@blocknote/react": "^0.24.0",
     "@tiptap/core": "^2.7.2",
     "react": "^16.14.0 || ^17 || ^18",
     "react-dom": "^16.14.0 || ^17 || ^18"

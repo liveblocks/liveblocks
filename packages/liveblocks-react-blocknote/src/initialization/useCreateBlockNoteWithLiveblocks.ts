@@ -8,6 +8,7 @@ import type {
   StyleSchema,
 } from "@blocknote/core";
 import { useCreateBlockNote } from "@blocknote/react";
+import { Mark } from "@tiptap/core";
 import type { DependencyList } from "react";
 
 import type { LiveblocksExtensionOptions } from "../BlockNoteLiveblocksExtension";
@@ -27,8 +28,14 @@ export const useCreateBlockNoteWithLiveblocks = <
   deps: DependencyList = []
 ) => {
   const liveblocksExtension = useLiveblocksExtension(liveblocksOptions);
+  const commentIgnoreExtension = Mark.create({
+    extendMarkSchema(extension) {
+      console.log(extension);
+      return {};
+    },
+  });
   return useCreateBlockNote(
     withLiveblocksEditorOptions(liveblocksExtension, blocknoteOptions),
-    [liveblocksExtension, ...deps]
+    [liveblocksExtension, commentIgnoreExtension, ...deps]
   );
 };
