@@ -31,6 +31,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
+import { stringifyOrLog as stringify } from "./lib/stringify";
 import {
   compact,
   deepClone,
@@ -1665,7 +1666,7 @@ export function createRoom<
 
     for (const halfOps of [firstHalf, secondHalf]) {
       const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
-      const text = JSON.stringify([half]);
+      const text = stringify([half]);
       if (!isTooBigForWebSocket(text)) {
         yield text;
       } else {
@@ -1698,7 +1699,7 @@ export function createRoom<
     const secondHalf = messages.slice(mid);
 
     for (const half of [firstHalf, secondHalf]) {
-      const text = JSON.stringify(half);
+      const text = stringify(half);
       if (!isTooBigForWebSocket(text)) {
         yield text;
       } else {
@@ -1723,7 +1724,7 @@ export function createRoom<
   function sendMessages(messages: ClientMsg<P, E>[]) {
     const strategy = config.largeMessageStrategy ?? "default";
 
-    const text = JSON.stringify(messages);
+    const text = stringify(messages);
     if (!isTooBigForWebSocket(text)) {
       return managedSocket.send(text); // Happy path
     }
