@@ -10,6 +10,7 @@ import type { ComposerBodyMention } from "../../types";
 import { getCharacterAfter, getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
 import { isEmptyString } from "../utils/is-empty-string";
+import { isWhitespaceCharacter } from "../utils/is-whitespace-character";
 
 export const MENTION_CHARACTER = "@";
 
@@ -27,9 +28,33 @@ export function getMentionDraftAtSelection(
     return;
   }
 
-  // Match the word at the current selection by walking back
-  // until a whitespace character is found
-  const match = getMatchRange(editor, selection);
+  // Walk backwards from the selection until "@" is found, unless the character
+  // before isn't whitespace (or "@" is the block's first character)
+  const match = getMatchRange(editor, selection, ["@"], {
+    include: true,
+    allowConsecutiveWhitespace: false,
+    ignoreTerminator: (_, point) => {
+      const characterBefore = getCharacterBefore(editor, point);
+
+      // Ignore "@" if it's preceded by a non-whitespace character
+      if (characterBefore && !isWhitespaceCharacter(characterBefore.text)) {
+        return true;
+      }
+
+      const after = SlateEditor.after(editor, point, { unit: "character" });
+
+      if (after) {
+        const characterAfter = getCharacterAfter(editor, after);
+
+        // Ignore "@" if it's followed by a whitespace character
+        if (isWhitespaceCharacter(characterAfter?.text)) {
+          return true;
+        }
+      }
+
+      return false;
+    },
+  });
 
   if (!match) {
     return;
@@ -37,8 +62,11 @@ export function getMentionDraftAtSelection(
 
   const matchText = SlateEditor.string(editor, match);
 
-  // Check if the match starts with the mention character
-  if (!matchText.startsWith(MENTION_CHARACTER)) {
+  // Check if the match starts with the mention character (not followed by a whitespace character)
+  if (
+    !matchText.startsWith(MENTION_CHARACTER) ||
+    isWhitespaceCharacter(matchText[1])
+  ) {
     return;
   }
 

@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.18.3
+
 ### `@liveblocks/client`
 
 - Log more details in specific error cases to help debugging
@@ -8,6 +10,11 @@
 
 - Increases the allowed stale time for polled user threads data. Only affects
   the `useUserThreads_experimental` hook.
+
+### `@liveblocks/react-ui`
+
+- Allow spaces and more non-alphanumeric characters when creating mentions in
+  Comments composers.
 
 ### `@liveblocks/emails`
 
