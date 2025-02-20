@@ -10,11 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.18.2",
-    "@liveblocks/node": "^2.18.2",
-    "@liveblocks/react": "^2.18.2",
-    "@liveblocks/react-ui": "^2.18.2",
+    "@blocknote/mantine": "^0.24.1",
+    "@liveblocks/client": "file:../../packages/liveblocks-client",
+    "@liveblocks/node": "file:../../packages/liveblocks-node",
+    "@liveblocks/react": "file:../../packages/liveblocks-react",
     "@liveblocks/react-blocknote": "file:../../packages/liveblocks-react-blocknote",
+    "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.0.7",
     "@tiptap/pm": "^2.6.6",
