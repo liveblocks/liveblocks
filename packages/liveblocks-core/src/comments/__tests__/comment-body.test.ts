@@ -257,7 +257,82 @@ describe("stringifyCommentBody", () => {
     }
   );
 
-  test("escapes HTML", async () => {
+  test("should escape html entities - text", async () => {
+    const commentBodyHtml: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [{ text: "Trying with <b>inject html</b> !" }],
+        },
+      ],
+    };
+
+    await expect(
+      stringifyCommentBody(commentBodyHtml, { format: "html" })
+    ).resolves.toBe("<p>Trying with &lt;b&gt;inject html&lt;/b&gt; !</p>");
+  });
+
+  test("should escape html entities - link w/ text", async () => {
+    const commentBodyHtml: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { text: "Trying with " },
+            {
+              type: "link",
+              url: "https://www.liveblocks.io",
+              text: "<script>injected script</script>",
+            },
+            { text: " !" },
+          ],
+        },
+      ],
+    };
+    await expect(
+      stringifyCommentBody(commentBodyHtml, { format: "html" })
+    ).resolves.toBe(
+      '<p>Trying with <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">&lt;script&gt;injected script&lt;/script&gt;</a> !</p>'
+    );
+  });
+
+  it("should escape html entities - mention w/ username", async () => {
+    const commentBodyHtml: CommentBody = {
+      version: 1,
+      content: [
+        {
+          type: "paragraph",
+          children: [
+            { text: "Hello" },
+            { text: " " },
+            { type: "mention", id: "user-0" },
+            { text: " " },
+            { text: "!" },
+          ],
+        },
+      ],
+    };
+
+    await expect(
+      stringifyCommentBody(commentBodyHtml, {
+        format: "html",
+        resolveUsers: ({ userIds }) => {
+          return userIds.map((userId) => {
+            return {
+              id: userId,
+              name: "<style>injected style</style>",
+            };
+          });
+        },
+      })
+    ).resolves.toBe(
+      "<p>Hello <span data-mention>@&lt;style&gt;injected style&lt;/style&gt;</span> !</p>"
+    );
+  });
+
+  test("escapes html - in elements", async () => {
     const commentBodyHtml: CommentBody = {
       version: 1,
       content: [
