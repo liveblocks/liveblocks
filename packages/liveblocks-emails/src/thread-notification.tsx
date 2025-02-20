@@ -33,12 +33,10 @@ import type { ResolveRoomInfoArgs } from "./lib/types";
 /** @internal */
 export const getUnreadComments = ({
   comments,
-  previousUnreadInboxNotification,
   inboxNotification,
   userId,
 }: {
   comments: CommentData[];
-  previousUnreadInboxNotification: InboxNotificationData | null;
   inboxNotification: InboxNotificationData;
   userId: string;
 }): CommentDataWithBody[] => {
@@ -56,24 +54,6 @@ export const getUnreadComments = ({
     if (readAt !== null) {
       return (
         c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
-      );
-    }
-
-    // If there is a previous unread inbox notification,
-    // we only want to take comments created between the notifiedAt date of the previous unread inbox notification.
-    // It will avoid to create repeated comments between two unread inbox notifications.
-    //
-    // This behaviors answer to this story:
-    //  - User A creates a thread and mention in the first comment User B
-    //  - User B receive an inbox notification (IN_0) and a webhook event (WE_0) BUT do not reads it
-    //  - User C and User D add more comments in the thread
-    //  - User B still do not reads IN_O but and receive a second inbox notification (IN_1) and a webhook event (WE_1)
-    //  - THEN we want User B to receive an `unreadReplies` email data for WE_1 with only the comments created between IN_0 and IN_1.
-    // Note if between IN_0 and IN_1 User B is mentioned a second time then we return a `unreadMention` email data in `extractThreadNotificationData` function
-    if (previousUnreadInboxNotification !== null) {
-      return (
-        c.createdAt >= previousUnreadInboxNotification.notifiedAt &&
-        c.createdAt <= inboxNotification.notifiedAt
       );
     }
 
@@ -117,23 +97,13 @@ export const extractThreadNotificationData = async ({
   event: ThreadNotificationEvent;
 }): Promise<ThreadNotificationData | null> => {
   const { threadId, roomId, userId, inboxNotificationId } = event.data;
-  const [thread, inboxNotification, { data: inboxNotifications }] =
-    await Promise.all([
-      client.getThread({ roomId, threadId }),
-      client.getInboxNotification({ inboxNotificationId, userId }),
-      client.getInboxNotifications({ userId, query: { unread: true } }),
-    ]);
-
-  const previousUnreadInboxNotification =
-    inboxNotifications
-      .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime())
-      .filter(
-        ({ id, kind }) => kind === "thread" && id !== inboxNotification.id
-      )[0] ?? null;
+  const [thread, inboxNotification] = await Promise.all([
+    client.getThread({ roomId, threadId }),
+    client.getInboxNotification({ inboxNotificationId, userId }),
+  ]);
 
   const unreadComments = getUnreadComments({
     comments: thread.comments,
-    previousUnreadInboxNotification,
     inboxNotification,
     userId,
   });

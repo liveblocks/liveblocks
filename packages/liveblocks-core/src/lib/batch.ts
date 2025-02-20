@@ -2,7 +2,7 @@ import type { AsyncResult } from "./AsyncResult";
 import { Promise_withResolvers } from "./controlledPromise";
 import type { Callback, UnsubscribeCallback } from "./EventSource";
 import { MutableSignal } from "./signals";
-import { stringify } from "./stringify";
+import { stableStringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
 
@@ -141,7 +141,7 @@ export class Batch<O, I> {
   get(input: I): Promise<O> {
     // Check if there's already an identical call in the queue.
     const existingCall = this.#queue.find(
-      (call) => stringify(call.input) === stringify(input)
+      (call) => stableStringify(call.input) === stableStringify(input)
     );
 
     // If an existing call exists, return its promise.
@@ -172,7 +172,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
   const signal = new MutableSignal(new Map<string, AsyncResult<O>>());
 
   function getCacheKey(args: I): string {
-    return stringify(args);
+    return stableStringify(args);
   }
 
   function update(cacheKey: string, state: AsyncResult<O>) {

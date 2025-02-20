@@ -36,7 +36,7 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__id, node.__userId);
+    return new MentionNode(node.__id, node.__userId, node.__key);
   }
 
   createDOM(): HTMLElement {

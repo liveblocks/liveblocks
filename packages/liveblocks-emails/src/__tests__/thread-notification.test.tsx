@@ -55,10 +55,10 @@ describe("thread notification", () => {
 
   const setServerHandlers = ({
     thread,
-    inboxNotifications,
+    inboxNotification,
   }: {
     thread: ThreadData;
-    inboxNotifications: InboxNotificationThreadData[];
+    inboxNotification: InboxNotificationThreadData;
   }): void => {
     server.use(
       http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
@@ -66,15 +66,7 @@ describe("thread notification", () => {
       ),
       http.get(
         `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-        () => HttpResponse.json(inboxNotifications[0], { status: 200 })
-      ),
-      http.get(`${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications`, () =>
-        HttpResponse.json(
-          { data: [...inboxNotifications] },
-          {
-            status: 200,
-          }
-        )
+        () => HttpResponse.json(inboxNotification, { status: 200 })
       )
     );
   };
@@ -108,7 +100,6 @@ describe("thread notification", () => {
       const expected = [comment2, comment3];
       const unreadComments = getUnreadComments({
         comments: [comment1, comment2, comment3],
-        previousUnreadInboxNotification: null,
         inboxNotification,
         userId: "user-dracula",
       });
@@ -137,13 +128,11 @@ describe("thread notification", () => {
 
       const unreadComments1 = getUnreadComments({
         comments: [comment1, comment2],
-        previousUnreadInboxNotification: null,
         inboxNotification,
         userId: "user-mina",
       });
       const unreadComments2 = getUnreadComments({
         comments: [comment1, comment2],
-        previousUnreadInboxNotification: null,
         inboxNotification,
         userId: "user-dracula",
       });
@@ -176,7 +165,7 @@ describe("thread notification", () => {
         readAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
+      setServerHandlers({ thread, inboxNotification });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -202,7 +191,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
+      setServerHandlers({ thread, inboxNotification });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -247,7 +236,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
+      setServerHandlers({ thread, inboxNotification });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -323,7 +312,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
+      setServerHandlers({ thread, inboxNotification });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -392,7 +381,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotifications: [inboxNotification] });
+      setServerHandlers({ thread, inboxNotification });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -437,79 +426,6 @@ describe("thread notification", () => {
 
       expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
       expect(preparedWithResolvedRoomInfo).toEqual(expected2);
-    });
-
-    it("should avoid to repeat last comment with unread mention when there are unread unread replies for two unread inbox notification (2 events)", async () => {
-      const threadId = generateThreadId();
-      const comment1 = makeComment({
-        userId: "user-a",
-        threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-b" }),
-        createdAt: new Date("2025-02-05T08:00:00.000Z"), // 5th Feb 2025 at 08:00
-      });
-      const comment2 = makeComment({
-        userId: "user-c",
-        threadId,
-        body: commentBody1,
-        createdAt: new Date("2025-02-05T08:20:00.000Z"), // 5th Feb 2025 at 08:20
-      });
-      const comment3 = makeComment({
-        userId: "user-d",
-        threadId,
-        body: commentBody2,
-        createdAt: new Date("2025-02-05T08:30:00.000Z"), // 5th Feb 2025 at 08:30
-      });
-
-      const thread = makeThread({
-        threadId,
-        comments: [comment1, comment2, comment3],
-      });
-      const inboxNotification1 = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2025-02-05T08:10:00.000Z"), // 5th Feb 2025 at 08:10
-      });
-
-      const inboxNotification2 = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2025-02-05T08:35:00.000Z"), // 5th Feb 2025 at 08:35
-      });
-
-      setServerHandlers({
-        thread,
-        inboxNotifications:
-          // Order is important in this case
-          // as we want to return `inboxNotification2` first on
-          // the call to `/v2/users/:userId/inbox-notifications/:notificationId`
-          [inboxNotification2, inboxNotification1],
-      });
-
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-b",
-        inboxNotificationId: inboxNotification2.id,
-      });
-
-      const expectedComments = [
-        makeCommentWithBody({ comment: comment2 }),
-        makeCommentWithBody({ comment: comment3 }),
-      ];
-
-      const expected: ThreadNotificationEmailBaseData = {
-        type: "unreadReplies",
-        comments: expectedComments.map((c) =>
-          makeCommentEmailBaseData({ roomInfo: undefined, comment: c })
-        ),
-        roomInfo: {
-          name: ROOM_ID_TEST,
-        },
-      };
-
-      const emailBaseData = await prepareThreadNotificationEmailBaseData({
-        client,
-        event,
-      });
-
-      expect(emailBaseData).toEqual(expected);
     });
   });
 
@@ -582,7 +498,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -671,7 +587,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -750,7 +666,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -842,7 +758,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -939,7 +855,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1052,7 +968,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1162,7 +1078,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1277,7 +1193,7 @@ describe("thread notification", () => {
         async ({ promise, expected }) => {
           setServerHandlers({
             thread,
-            inboxNotifications: [inboxNotification],
+            inboxNotification,
           });
 
           const threadNotificationEmailAsReact = await promise();

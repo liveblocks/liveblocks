@@ -2,6 +2,7 @@ import { StopRetrying } from "./connection";
 import { isPlainObject } from "./lib/guards";
 import type { Json } from "./lib/Json";
 import type { Relax } from "./lib/Relax";
+import { stringifyOrLog as stringify } from "./lib/stringify";
 import type {
   Authentication,
   CustomAuthenticationResult,
@@ -314,7 +315,7 @@ async function fetchAuthEndpoint(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: stringify(body),
   });
   if (!res.ok) {
     const reason = `${
@@ -343,7 +344,7 @@ async function fetchAuthEndpoint(
 
   if (!isPlainObject(data) || typeof data.token !== "string") {
     throw new Error(
-      `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+      `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${stringify(
         data
       )}`
     );
