@@ -16,6 +16,7 @@ import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
+import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
@@ -1688,7 +1689,7 @@ class HttpClient {
   ): Promise<Response> {
     return await this.#rawFetch(endpoint, authValue, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: stringify(body),
     });
   }
 
@@ -1734,7 +1735,7 @@ class HttpClient {
       {
         ...options,
         method: "POST",
-        body: JSON.stringify(body),
+        body: stringify(body),
       },
       params
     );
