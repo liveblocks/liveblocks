@@ -31,6 +31,7 @@ export function getMentionDraftAtSelection(
   // before isn't whitespace (or "@" is the block's first character)
   const match = getMatchRange(editor, selection, ["@"], {
     include: true,
+    allowConsecutiveWhitespace: false,
     ignoreTerminator: (_, point) => {
       const characterBefore = getCharacterBefore(editor, point);
 

@@ -8,6 +8,7 @@ import {
 interface Options {
   include?: boolean;
   direction?: "before" | "after" | "both";
+  allowConsecutiveWhitespace?: boolean;
   ignoreTerminator?: (
     character: string,
     point: SlatePoint,
@@ -17,6 +18,7 @@ interface Options {
 
 const defaultOptions: Options = {
   direction: "before",
+  allowConsecutiveWhitespace: true,
 };
 
 export function getMatchRange(
@@ -25,44 +27,54 @@ export function getMatchRange(
   terminators: string[] = [" "],
   options: Options = defaultOptions
 ): SlateRange | undefined {
-  const { include, direction, ignoreTerminator } = {
+  const { include, direction, ignoreTerminator, allowConsecutiveWhitespace } = {
     ...defaultOptions,
     ...options,
   };
+
   let [start, end] = SlateRange.edges(at);
   let point: SlatePoint = start;
+  let previousCharacterWasWhitespace = false;
 
   function move(direction: "before" | "after"): boolean {
-    const next =
+    const nextPoint =
       direction === "after"
-        ? SlateEditor.after(editor, point, {
-            unit: "character",
-          })
+        ? SlateEditor.after(editor, point, { unit: "character" })
         : SlateEditor.before(editor, point, { unit: "character" });
 
-    // Matching should stop at the end of a block
-    if (!next || SlatePath.compare(next.path, point.path) !== 0) {
+    // Stop if we reached the end of a block
+    if (!nextPoint || SlatePath.compare(nextPoint.path, point.path) !== 0) {
       return false;
     }
 
-    const nextWord =
-      next &&
+    const nextCharacter =
+      nextPoint &&
       SlateEditor.string(
         editor,
         direction === "after"
-          ? { anchor: point, focus: next }
-          : { anchor: next, focus: point }
+          ? { anchor: point, focus: nextPoint }
+          : { anchor: nextPoint, focus: point }
       );
-    const lastWord =
-      nextWord && nextWord[direction === "after" ? 0 : nextWord.length - 1];
+    const lastCharacter =
+      nextCharacter &&
+      nextCharacter[direction === "after" ? 0 : nextCharacter.length - 1];
 
     if (
-      next &&
-      lastWord &&
-      (!terminators.includes(lastWord) ||
-        ignoreTerminator?.(lastWord, next, direction))
+      !allowConsecutiveWhitespace &&
+      previousCharacterWasWhitespace &&
+      lastCharacter === " "
     ) {
-      point = next;
+      return false;
+    }
+
+    if (
+      nextPoint &&
+      lastCharacter &&
+      (!terminators.includes(lastCharacter) ||
+        ignoreTerminator?.(lastCharacter, nextPoint, direction))
+    ) {
+      previousCharacterWasWhitespace = lastCharacter === " ";
+      point = nextPoint;
 
       if (point.offset === 0) {
         return false;
@@ -76,17 +88,13 @@ export function getMatchRange(
 
   if (direction !== "before") {
     point = end;
-
     while (move("after"));
-
     end = point;
   }
 
   if (direction !== "after") {
     point = start;
-
     while (move("before"));
-
     start = point;
   }
 
