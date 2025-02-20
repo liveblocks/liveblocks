@@ -11,6 +11,11 @@ TEAM MEMBERS
 adigau, ctnicholas, flowflorent, jrowny, marcbouchenoire, nimeshnayaju,
 nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
+OTHER USERS
+If outside users have made contributions, add them to the Contributors
+list and feel free to give them credit at the end of a line, e.g.:
+- ... Thank you [@username](https://github.com/username)!
+
 -->
 
 # Week 8 (2025-02-21)
@@ -38,8 +43,7 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/emails`
 
-- Fix html escaping in prepare as html functions (thanks to @huy-cove for
-  reporting the issue and helping us improving our product 🙏🏻).
+- Fix html escaping in prepare as html functions. Thank you [@huy-cove](https://github.com/huy-cove)!
 - Revert deduplication logic introduced in `v2.18.0` as it provided no
   measurable benefits while increasing complexity.
 
@@ -47,8 +51,7 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/client`
 
-- Improve performance of undo/redo operations on large documents (thanks for the
-  contribution @rudi-c!).
+- Improve performance of undo/redo operations on large documents. Thank you [@rudi-c](https://github.com/rudi-c)!
 
 ### `@liveblocks/react-tiptap`
 
@@ -69,7 +72,7 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius, huy-cove, rudi-c
 
 # Week 7 (2025-02-14)
 
