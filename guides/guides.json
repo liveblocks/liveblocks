@@ -181,8 +181,7 @@
     "path": "/how-to-create-a-collaborative-text-editor-with-tiptap-yjs-nextjs-and-liveblocks",
     "topics": ["tutorials", "text-editors"],
     "technologies": ["yjs", "react", "nextjs", "tiptap"],
-    "date": "2023-09-05",
-    "featured": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to create a collaborative text editor with Quill, Yjs, Next.js, and Liveblocks",
@@ -203,8 +202,7 @@
     "path": "/how-to-create-a-collaborative-code-editor-with-codemirror-yjs-nextjs-and-liveblocks",
     "topics": ["tutorials", "code-editors"],
     "technologies": ["yjs", "react", "nextjs", "codemirror"],
-    "date": "2023-09-05",
-    "featured": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a Vercel Postgres database",
@@ -218,8 +216,7 @@
     "path": "/how-to-synchronize-your-liveblocks-yjs-document-data-to-a-planetscale-mysql-database",
     "topics": ["tutorials", "webhooks", "databases"],
     "technologies": ["yjs", "nodejs"],
-    "date": "2023-09-05",
-    "featured": true
+    "date": "2023-09-05"
   },
   {
     "title": "How to synchronize your Liveblocks Yjs document data to a Supabase Postgres database",
@@ -254,8 +251,7 @@
     "path": "/how-to-synchronize-your-liveblocks-storage-document-data-to-a-supabase-postgres-database",
     "topics": ["tutorials", "webhooks", "databases"],
     "technologies": ["storage", "nodejs"],
-    "date": "2023-10-06",
-    "featured": true
+    "date": "2023-10-06"
   },
   {
     "title": "How to send email notifications when comments are created",
@@ -298,8 +294,7 @@
     "path": "/how-to-use-your-ydoc-on-the-server",
     "topics": ["data-fetching", "state", "rest-api"],
     "technologies": ["yjs", "nodejs"],
-    "date": "2024-01-04",
-    "featured": true
+    "date": "2024-01-04"
   },
   {
     "title": "Getting Tiptap state on the server",
@@ -394,5 +389,13 @@
     "topics": ["notifications", "webhooks"],
     "technologies": [],
     "date": "2025-02-05"
+  },
+  {
+    "title": "How to create a notification settings panel",
+    "path": "/how-to-create-a-notification-settings-panel",
+    "topics": ["notifications", "webhooks"],
+    "technologies": ["nodejs"],
+    "date": "2025-02-20",
+    "featured": true
   }
 ]

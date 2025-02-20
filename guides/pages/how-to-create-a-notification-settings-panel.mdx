@@ -1,0 +1,53 @@
+---
+meta:
+  title: "How to create a notification settings panel"
+  description:
+    "Learn how to create a notifications preference interface, allowing users to
+    choose which notifications they should receive."
+---
+
+[Notifications](/docs/ready-made-features/notifications) allows you to add
+in-app notifications to your product. However, it also allows you to send unread
+notifications on other channels, such as email, Slack, Microsoft Teams. This
+guide shows you how to create a notification preferences panel, allowing users
+to choose where to receive each notification.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-settings.jpg"
+    alt="Notification settings"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+## Set up webhooks first
+
+Before starting, it’s important that you’ve already set up a notification
+channel in our dashboard, and set up a webhook endpoint. Here are two guides
+that take you through how to do this:
+
+- [How to send email notifications of unread comments](/docs/guides/how-to-send-email-notifications-of-unread-comments).
+- [How to send email notifications for unread text editor mentions](/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
+
+## Enabling a notification channel
+
+If you’ve followed one of the previous guides, you should already have a enabled
+a notification kind for a certain channel in the Notifications dashboard (this
+is different to setting up a webhook), however if you already have a production
+project, make sure to read
+[what to check before enabling a notification kind](/docs/guides/what-to-check-before-enabling-a-new-notification-kind)
+before continuing, as you may change the behavior of your app.
+
+<Figure>
+  <Image
+    src="/assets/tutorials/webhooks/liveblocks-click-notifications.png"
+    alt="Notifications dashboard page"
+    width={712}
+    height={445}
+  />
+</Figure>
+
+Each notification channel has a different name, such as `email` or `slack`, but
+they all work in the same way. They have different names so you, as a developer,
+can use them in different ways.
