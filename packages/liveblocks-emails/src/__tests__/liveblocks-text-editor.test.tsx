@@ -81,6 +81,17 @@ const content3: LiveblocksTextEditorNode[] = [
   },
 ];
 
+const content4: LiveblocksTextEditorNode[] = [
+  {
+    type: "text",
+    text: "Trying with <script>alert('hi')</script>!",
+    bold: false,
+    italic: false,
+    strikethrough: false,
+    code: false,
+  },
+];
+
 const buildContentWithMention = ({
   mentionedUserId,
 }: {
@@ -334,7 +345,7 @@ describe("liveblocks text editor", () => {
       it("should convert simple text elements", async () => {
         const htmlContent = await convertTextEditorNodesAsHtml(content1);
         const expected =
-          '<div style="font-size:14px;">I think it\'s really neat mate 👌</div>';
+          '<div style="font-size:14px;">I think it&#39;s really neat mate 👌</div>';
 
         expect(htmlContent).toEqual(expected);
       });
@@ -361,6 +372,14 @@ describe("liveblocks text editor", () => {
         );
         const expected =
           '<div style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-dracula</span> !</div>';
+
+        expect(htmlContent).toEqual(expected);
+      });
+
+      it("should escape html entities", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(content4);
+        const expected =
+          '<div style="font-size:14px;">Trying with &lt;script&gt;alert(&#39;hi&#39;)&lt;/script&gt;!</div>';
 
         expect(htmlContent).toEqual(expected);
       });
