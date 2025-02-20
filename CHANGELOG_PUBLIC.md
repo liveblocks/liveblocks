@@ -15,14 +15,59 @@ nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 8 (2025-02-21)
 
+## v2.18.3
+
+### `@liveblocks/client
+
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/node
+
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/client`
+
+- Log more details in specific error cases to help debugging.
+
+### `@liveblocks/react`
+
+- Increases the allowed stale time for polled user threads data. Only affects
+  the `useUserThreads_experimental` hook.
+
+### `@liveblocks/react-ui`
+
+- Allow spaces and more non-alphanumeric characters when creating mentions in
+  Comments composers.
+
+### `@liveblocks/emails`
+
+- Fix html escaping in prepare as html functions (thanks to @huy-cove for
+  reporting the issue and helping us improving our product 🙏🏻).
+- Revert deduplication logic introduced in `v2.18.0` as it provided no
+  measurable benefits while increasing complexity.
+
+## v2.18.2
+
+### `@liveblocks/client`
+
+- Improve performance of undo/redo operations on large documents (thanks for the
+  contribution @rudi-c!).
+
+### `@liveblocks/react-tiptap`
+
+- Fix a performance regression introduced in 2.18.1.
+
 ## Documentation
 
 - Added info on how data storage is calculated.
 - Fixed a number of broken links on various pages.
 
+## Dashboard
+- Internal refactoring and code clean up.
+
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 
 # Week 7 (2025-02-14)
 
