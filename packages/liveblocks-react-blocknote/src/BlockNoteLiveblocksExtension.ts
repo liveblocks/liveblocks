@@ -1,4 +1,5 @@
 import { useLiveblocksExtension as useTipTapLiveblocksExtension } from "@liveblocks/react-tiptap";
+import type { Mark } from "@tiptap/core";
 
 export type LiveblocksExtensionOptions = Parameters<
   typeof useTipTapLiveblocksExtension
@@ -11,6 +12,15 @@ export const useLiveblocksExtension = (
     mentions: false,
     ...options,
   });
+
+  extension.config.extendMarkSchema = (mark: Mark) => {
+    if (mark.name === "liveblocksCommentMark") {
+      return {
+        blocknoteIgnore: true,
+      };
+    }
+    return {};
+  };
 
   return extension;
 };
