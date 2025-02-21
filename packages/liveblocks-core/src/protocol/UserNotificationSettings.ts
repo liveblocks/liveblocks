@@ -1,5 +1,6 @@
 import type { DAD } from "../globals/augmentation";
-import { values } from "../lib/utils";
+import { kInternal } from "../internal";
+import { raise, values } from "../lib/utils";
 
 /**
  * Pre-defined notification channels support list.
@@ -26,11 +27,38 @@ export type NotificationChannelSettings = {
 };
 
 /**
- * User notification settings are a set of notification channel setting.
+ * @private
+ *
+ * Base definition of user notification settings.
  * One channel for one set of settings.
+ *
  */
-export type UserNotificationSettings = {
+export type UserNotificationSettingsChannels = {
   [C in NotificationChannel]: NotificationChannelSettings;
+};
+
+/**
+ * @private
+ *
+ * Private properties and methods internal `UserNotificationSettings`.
+ * As a user of Liveblocks, you should nNEVER USE ANY OF THESE DIRECTLY,
+ * because bad things will happen.
+ */
+export type PrivateNotificationChannelSettingsApi = {
+  __raw__: Partial<UserNotificationSettingsChannels>;
+};
+
+/**
+ * User notification settings.
+ */
+export type UserNotificationSettings = UserNotificationSettingsChannels & {
+  /**
+   * @private
+   *
+   * `UserNotificationSettings` with private internal properties to store the raw settings
+   * and methods to mutate the object
+   */
+  [kInternal]: PrivateNotificationChannelSettingsApi;
 };
 
 /**
@@ -51,7 +79,51 @@ type DeepPartialWithAugmentation<T> = T extends object
  * with augmentation preserved gracefully
  */
 export type PartialUserNotificationSettings =
-  DeepPartialWithAugmentation<UserNotificationSettings>;
+  DeepPartialWithAugmentation<UserNotificationSettingsChannels>;
+
+/**
+ *
+ * @private
+ *
+ * Creates a `UserNotificationSettings` object with the given initial settings.
+ * It defines getters for each channel to access the settings and throws and error
+ * in case the required channel isn't enabled in the dashboard.
+ */
+export function createUserNotificationSettings(
+  initial: Partial<UserNotificationSettingsChannels>
+): UserNotificationSettings {
+  const channels: NotificationChannel[] = [
+    "email",
+    "slack",
+    "teams",
+    "webPush",
+  ];
+  const descriptors: PropertyDescriptorMap = {
+    [kInternal]: {
+      value: {
+        __raw__: initial,
+      },
+      enumerable: false,
+    },
+  };
+
+  for (const channel of channels) {
+    descriptors[channel] = {
+      enumerable: true,
+      get(this: UserNotificationSettings) {
+        const value = this[kInternal].__raw__[channel];
+        if (!value) {
+          raise(
+            `In order to use the '${channel}' channel, please set up your project first. See <link to docs>`
+          );
+        }
+        return value;
+      },
+    };
+  }
+
+  return Object.create({}, descriptors) as UserNotificationSettings;
+}
 
 /**
  *

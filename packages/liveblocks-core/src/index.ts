@@ -260,8 +260,12 @@ export type {
   NotificationKind,
   PartialUserNotificationSettings,
   UserNotificationSettings,
+  UserNotificationSettingsChannels,
 } from "./protocol/UserNotificationSettings";
-export { isNotificationChannelEnabled } from "./protocol/UserNotificationSettings";
+export {
+  createUserNotificationSettings,
+  isNotificationChannelEnabled,
+} from "./protocol/UserNotificationSettings";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,

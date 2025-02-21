@@ -11,6 +11,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
+  NotificationChannelSettings,
   OpaqueClient,
   PartialUserNotificationSettings,
   Patchable,
@@ -27,6 +28,7 @@ import {
   batch,
   compactObject,
   console,
+  createUserNotificationSettings,
   DefaultMap,
   DerivedSignal,
   entries,
@@ -564,27 +566,6 @@ export type CleanThreads<M extends BaseMetadata> = {
   threadsDB: ReadonlyThreadDB<M>;
 };
 
-/**
- * User notification settings
- * e.g.
- *  {
- *    email: {
- *      thread: true,
- *      textMention: false,
- *      $customKind: true | false,
- *    }
- *    slack: {
- *      thread: true,
- *      textMention: false,
- *      $customKind: true | false,
- *    }
- *  }
- * e.g. {} when before the first successful fetch.
- */
-export type BaseUserNotificationSettings =
-  | UserNotificationSettings
-  | Record<string, never>;
-
 export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
@@ -774,18 +755,32 @@ function createStore_forPermissionHints() {
   };
 }
 
+/**
+ * User notification settings
+ * e.g.
+ *  {
+ *    email: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *    slack: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *  }
+ * e.g. {} when before the first successful fetch.
+ */
 function createStore_forUserNotificationSettings(
   updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
 ) {
-  const signal = new Signal<BaseUserNotificationSettings>({});
+  const signal = new Signal<UserNotificationSettings>(
+    createUserNotificationSettings({})
+  );
 
   function update(settings: UserNotificationSettings) {
-    signal.set((prevSettings) => {
-      return {
-        ...prevSettings,
-        ...settings,
-      };
-    });
+    signal.set(settings);
   }
 
   return {
@@ -1858,30 +1853,29 @@ function applyOptimisticUpdates_forSettings(
  * exported for unit tests only.
  */
 export function applyOptimisticUpdates_forUserNotificationSettings(
-  baseSettings: BaseUserNotificationSettings,
+  settings: UserNotificationSettings,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
 ): UserNotificationSettings {
-  const outcomingSettings = { ...baseSettings };
+  // Create deep copy of the settings object to mutate
+  const outcomingSettings = createUserNotificationSettings({
+    ...settings[kInternal].__raw__,
+  });
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "update-user-notification-settings": {
-        const incomingSettings = optimisticUpdate.settings;
+        const patch = optimisticUpdate.settings;
 
-        for (const channelKey of keys(incomingSettings)) {
-          const key = channelKey;
-          const channelUpdates = incomingSettings[key];
+        for (const channel of keys(patch)) {
+          const updates = patch[channel];
+          if (updates !== undefined) {
+            const existing = Object.fromEntries(
+              entries(updates).filter(([, value]) => value !== undefined)
+            ) as NotificationChannelSettings; // Fine to type cas here because we've filtered out undefined values
 
-          if (channelUpdates) {
-            const realChannelUpdates = Object.fromEntries(
-              entries(channelUpdates).filter(
-                ([_, value]) => value !== undefined
-              )
-            );
-
-            outcomingSettings[key] = {
-              ...outcomingSettings[key],
-              ...realChannelUpdates,
+            outcomingSettings[kInternal].__raw__[channel] = {
+              ...outcomingSettings[kInternal].__raw__[channel],
+              ...existing,
             };
           }
         }
@@ -1889,12 +1883,7 @@ export function applyOptimisticUpdates_forUserNotificationSettings(
       }
     }
   }
-
-  /**
-   * Casting to `UserNotificationSettings` because we have removed potential `undefined` properties
-   * And we return a stable object of type `UserNotificationSettings` in the derived signal.
-   */
-  return outcomingSettings as UserNotificationSettings;
+  return outcomingSettings;
 }
 
 /**

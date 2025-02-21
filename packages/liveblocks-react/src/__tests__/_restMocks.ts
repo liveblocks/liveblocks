@@ -7,7 +7,7 @@ import type {
   RoomNotificationSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
-  UserNotificationSettings,
+  UserNotificationSettingsChannels,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -235,7 +235,7 @@ export function mockGetUserNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    UserNotificationSettings
+    UserNotificationSettingsChannels
   >
 ) {
   return rest.get(
