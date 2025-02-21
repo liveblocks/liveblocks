@@ -32,26 +32,27 @@ export type NotificationChannelSettings = {
  * Base definition of user notification settings.
  * One channel for one set of settings.
  *
+ * Plain means it's a simple object with no methods or private properties.
  */
-export type UserNotificationSettingsChannels = {
+export type UserNotificationSettingPlain = {
   [C in NotificationChannel]: NotificationChannelSettings;
 };
 
 /**
  * @private
  *
- * Private properties and methods internal `UserNotificationSettings`.
+ * Private properties and methods internal to `UserNotificationSettings`.
  * As a user of Liveblocks, you should nNEVER USE ANY OF THESE DIRECTLY,
  * because bad things will happen.
  */
 export type PrivateNotificationChannelSettingsApi = {
-  __raw__: Partial<UserNotificationSettingsChannels>;
+  __raw__: Partial<UserNotificationSettingPlain>;
 };
 
 /**
  * User notification settings.
  */
-export type UserNotificationSettings = UserNotificationSettingsChannels & {
+export type UserNotificationSettings = UserNotificationSettingPlain & {
   /**
    * @private
    *
@@ -79,7 +80,7 @@ type DeepPartialWithAugmentation<T> = T extends object
  * with augmentation preserved gracefully
  */
 export type PartialUserNotificationSettings =
-  DeepPartialWithAugmentation<UserNotificationSettingsChannels>;
+  DeepPartialWithAugmentation<UserNotificationSettingPlain>;
 
 /**
  *
@@ -90,7 +91,7 @@ export type PartialUserNotificationSettings =
  * in case the required channel isn't enabled in the dashboard.
  */
 export function createUserNotificationSettings(
-  initial: Partial<UserNotificationSettingsChannels>
+  initial: Partial<UserNotificationSettingPlain>
 ): UserNotificationSettings {
   const channels: NotificationChannel[] = [
     "email",

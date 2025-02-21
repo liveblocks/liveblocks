@@ -259,8 +259,8 @@ export type {
   NotificationChannelSettings,
   NotificationKind,
   PartialUserNotificationSettings,
+  UserNotificationSettingPlain,
   UserNotificationSettings,
-  UserNotificationSettingsChannels,
 } from "./protocol/UserNotificationSettings";
 export {
   createUserNotificationSettings,
