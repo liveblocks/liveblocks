@@ -1,3 +1,4 @@
+import { createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
@@ -553,6 +554,26 @@ export function createClient<U extends BaseUserMeta = DU>(
   };
 
   const roomsById = new Map<string, RoomDetails>();
+
+  const ai = createAi({
+    userId: currentUserId.get(),
+    lostConnectionTimeout,
+    backgroundKeepAliveTimeout: getBackgroundKeepAliveTimeout(
+      clientOptions.backgroundKeepAliveTimeout
+    ),
+    polyfills: clientOptions.polyfills,
+    delegates: {
+      createSocket: makeCreateSocketDelegateForAi(
+        baseUrl,
+        clientOptions.polyfills?.WebSocket
+      ),
+      authenticate: makeAuthDelegateForRoom("default", authManager),
+      canZombie: () => true,
+    },
+  });
+
+  // TODO: only connect if enabled
+  ai.connect();
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);

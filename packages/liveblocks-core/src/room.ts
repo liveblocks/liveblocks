@@ -102,7 +102,7 @@ import type { RoomNotificationSettings } from "./types/RoomNotificationSettings"
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
-type TimeoutID = ReturnType<typeof setTimeout>;
+export type TimeoutID = ReturnType<typeof setTimeout>;
 
 //
 // NOTE:
@@ -1099,12 +1099,12 @@ type HistoryOp<P extends JsonObject> =
 
 type IdFactory = () => string;
 
-type StaticSessionInfo = {
+export type StaticSessionInfo = {
   readonly userId?: string;
   readonly userInfo?: IUserInfo;
 };
 
-type DynamicSessionInfo = {
+export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];

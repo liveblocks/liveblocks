@@ -4,6 +4,12 @@ import type { BaseMetadata, CommentBody } from "../protocol/Comments";
 import type { Patchable } from "./Patchable";
 
 // All possible error originating from using Presence, Storage, or Yjs
+
+type AiConnectionErrorContext = {
+  type: "AI_CONNECTION_ERROR";
+  code: -1 | 4001 | (number & {}); // eslint-disable-line @typescript-eslint/ban-types
+};
+
 type RoomConnectionErrorContext = {
   type: "ROOM_CONNECTION_ERROR";
   code: -1 | 4001 | 4005 | 4006 | (number & {}); // eslint-disable-line @typescript-eslint/ban-types
@@ -81,6 +87,7 @@ type CommentsOrNotificationsErrorContext =
 export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
   | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
+  | AiConnectionErrorContext // from AI
 >;
 
 export class LiveblocksError extends Error {
@@ -122,11 +129,18 @@ export class LiveblocksError extends Error {
 function defaultMessageFromContext(context: LiveblocksErrorContext): string {
   // prettier-ignore
   switch (context.type) {
-    case "ROOM_CONNECTION_ERROR": {
+      case "ROOM_CONNECTION_ERROR": {
+        switch (context.code) {
+          case 4001: return "Not allowed to connect to the room";
+          case 4005: return "Room is already full";
+          case 4006: return "Kicked out of the room, because the room ID changed";
+          default:   return "Could not connect to the room";
+        }
+      }
+
+    case "AI_CONNECTION_ERROR": {
       switch (context.code) {
-        case 4001: return "Not allowed to connect to the room";
-        case 4005: return "Room is already full";
-        case 4006: return "Kicked out of the room, because the room ID changed";
+        case 4001: return "Not allowed to connect to ai";
         default:   return "Could not connect to the room";
       }
     }
