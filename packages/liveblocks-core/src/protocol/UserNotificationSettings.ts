@@ -90,7 +90,7 @@ export type PartialUserNotificationSettings =
  * in case the required channel isn't enabled in the dashboard.
  */
 export function createUserNotificationSettings(
-  initial: Partial<UserNotificationSettingsPlain>
+  plain: Partial<UserNotificationSettingsPlain>
 ): UserNotificationSettings {
   const channels: NotificationChannel[] = [
     "email",
@@ -101,7 +101,7 @@ export function createUserNotificationSettings(
   const descriptors: PropertyDescriptorMap = {
     [kInternal]: {
       value: {
-        __plain__: initial,
+        __plain__: plain,
       },
       enumerable: false,
     },

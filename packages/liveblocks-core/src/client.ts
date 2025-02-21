@@ -839,8 +839,8 @@ export function createClient<U extends BaseUserMeta = DU>(
   async function getNotificationSettings(options?: {
     signal?: AbortSignal;
   }): Promise<UserNotificationSettings> {
-    const rawSettings = await httpClient.getUserNotificationSettings(options);
-    const settings = createUserNotificationSettings(rawSettings);
+    const plainSettings = await httpClient.getUserNotificationSettings(options);
+    const settings = createUserNotificationSettings(plainSettings);
 
     return settings;
   }
@@ -848,9 +848,9 @@ export function createClient<U extends BaseUserMeta = DU>(
   async function updateNotificationSettings(
     settings: PartialUserNotificationSettings
   ): Promise<UserNotificationSettings> {
-    const rawSettings =
+    const plainSettings =
       await httpClient.updateUserNotificationSettings(settings);
-    const settingsObject = createUserNotificationSettings(rawSettings);
+    const settingsObject = createUserNotificationSettings(plainSettings);
 
     return settingsObject;
   }
