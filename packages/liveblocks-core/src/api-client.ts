@@ -50,7 +50,7 @@ import type {
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   PartialUserNotificationSettings,
-  UserNotificationSettings,
+  UserNotificationSettingsChannels,
 } from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
@@ -384,16 +384,21 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  // Note: Using term `user` on those two following methods
+  // Note: Using term `user` on this following method
   // to avoid confusion with the same methods used in the `RoomHttpApi`.
   // Let's wait the room subscription renaming to be here.
+  // It returns a partial of `UserNotificationSettingsChannels` as the back-end does.
   getUserNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettings>;
+  }): Promise<Partial<UserNotificationSettingsChannels>>;
 
+  // Note: Using term `user` on this following method
+  // to avoid confusion with the same methods used in the `RoomHttpApi`.
+  // Let's wait the room subscription renaming to be here.
+  // It returns a partial of `UserNotificationSettingsChannels` as the back-end does.
   updateUserNotificationSettings(
     settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettings>;
+  ): Promise<Partial<UserNotificationSettingsChannels>>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1400,8 +1405,8 @@ export function createApiClient<M extends BaseMetadata>({
    */
   async function getUserNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettings> {
-    return httpClient.get<UserNotificationSettings>(
+  }): Promise<Partial<UserNotificationSettingsChannels>> {
+    return httpClient.get<Partial<UserNotificationSettingsChannels>>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
@@ -1411,8 +1416,8 @@ export function createApiClient<M extends BaseMetadata>({
 
   async function updateUserNotificationSettings(
     settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettings> {
-    return httpClient.post<UserNotificationSettings>(
+  ): Promise<Partial<UserNotificationSettingsChannels>> {
+    return httpClient.post<Partial<UserNotificationSettingsChannels>>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
