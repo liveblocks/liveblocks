@@ -1661,7 +1661,8 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const plainSettings = (await res.json()) as UserNotificationSettingsPlain;
+    const plainSettings =
+      (await res.json()) as Partial<UserNotificationSettingsPlain>;
     const settings = createUserNotificationSettings(plainSettings);
 
     return settings;
@@ -1688,7 +1689,8 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const plainSettings = (await res.json()) as UserNotificationSettingsPlain;
+    const plainSettings =
+      (await res.json()) as Partial<UserNotificationSettingsPlain>;
     const settings = createUserNotificationSettings(plainSettings);
 
     return settings;
