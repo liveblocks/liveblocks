@@ -1379,7 +1379,7 @@ describe("client", () => {
   test("should get user's notification settings", async () => {
     const userId = "florent";
 
-    const settings: UserNotificationSettingsPlain = {
+    const settings: Partial<UserNotificationSettingsPlain> = {
       email: {
         thread: true,
         textMention: false,
@@ -1452,7 +1452,7 @@ describe("client", () => {
 
   test("should update user's notification settings", async () => {
     const userId = "nimesh";
-    const settings: UserNotificationSettingsPlain = {
+    const settings: Partial<UserNotificationSettingsPlain> = {
       email: {
         textMention: false,
         thread: false,
@@ -1509,7 +1509,7 @@ describe("client", () => {
 
   test("should update user's notification settings partially", async () => {
     const userId = "adri";
-    const settings: UserNotificationSettingsPlain = {
+    const settings: Partial<UserNotificationSettingsPlain> = {
       email: {
         textMention: true,
         thread: true,
