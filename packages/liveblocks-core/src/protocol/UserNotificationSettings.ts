@@ -1,6 +1,6 @@
 import type { DAD } from "../globals/augmentation";
 import { kInternal } from "../internal";
-import { raise, values } from "../lib/utils";
+import { entries, keys, raise, values } from "../lib/utils";
 
 /**
  * Pre-defined notification channels support list.
@@ -83,7 +83,6 @@ export type PartialUserNotificationSettings =
   DeepPartialWithAugmentation<UserNotificationSettingsPlain>;
 
 /**
- *
  * @private
  *
  * Creates a `UserNotificationSettings` object with the given initial settings.
@@ -124,6 +123,38 @@ export function createUserNotificationSettings(
   }
 
   return Object.create({}, descriptors) as UserNotificationSettings;
+}
+
+/**
+ * @private
+ *
+ * Patch a `UserNotificationSettings` object by applying kind updates
+ * coming from a `PartialUserNotificationSettings` object.
+ */
+export function patchUserNotificationSettings(
+  existing: UserNotificationSettings,
+  patch: PartialUserNotificationSettings
+): UserNotificationSettings {
+  // Create a copy of the settings object to mutate
+  const outcoming = createUserNotificationSettings({
+    ...existing[kInternal].__plain__,
+  });
+
+  for (const channel of keys(patch)) {
+    const updates = patch[channel];
+    if (updates !== undefined) {
+      const kindUpdates = Object.fromEntries(
+        entries(updates).filter(([, value]) => value !== undefined)
+      ) as NotificationChannelSettings; // Fine to type cast here because we've filtered out undefined values
+
+      outcoming[kInternal].__plain__[channel] = {
+        ...outcoming[kInternal].__plain__[channel],
+        ...kindUpdates,
+      };
+    }
+  }
+
+  return outcoming;
 }
 
 /**

@@ -265,6 +265,7 @@ export type {
 export {
   createUserNotificationSettings,
   isNotificationChannelEnabled,
+  patchUserNotificationSettings,
 } from "./protocol/UserNotificationSettings";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {

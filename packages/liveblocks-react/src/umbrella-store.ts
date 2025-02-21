@@ -11,7 +11,6 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
-  NotificationChannelSettings,
   OpaqueClient,
   PartialUserNotificationSettings,
   Patchable,
@@ -31,12 +30,11 @@ import {
   createUserNotificationSettings,
   DefaultMap,
   DerivedSignal,
-  entries,
-  keys,
   kInternal,
   MutableSignal,
   nanoid,
   nn,
+  patchUserNotificationSettings,
   shallow,
   Signal,
   stableStringify,
@@ -1856,35 +1854,15 @@ export function applyOptimisticUpdates_forUserNotificationSettings(
   settings: UserNotificationSettings,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
 ): UserNotificationSettings {
-  // Create deep copy of the settings object to mutate
-  const outcomingSettings = createUserNotificationSettings({
-    ...settings[kInternal].__plain__,
-  });
+  let outcoming: UserNotificationSettings = settings;
 
-  for (const optimisticUpdate of optimisticUpdates) {
-    switch (optimisticUpdate.type) {
-      case "update-user-notification-settings": {
-        const patch = optimisticUpdate.settings;
-
-        for (const channel of keys(patch)) {
-          const updates = patch[channel];
-          if (updates !== undefined) {
-            const existing = Object.fromEntries(
-              entries(updates).filter(([, value]) => value !== undefined)
-            ) as NotificationChannelSettings; // Fine to type cas here because we've filtered out undefined values
-
-            outcomingSettings[kInternal].__plain__[channel] = {
-              ...outcomingSettings[kInternal].__plain__[channel],
-              ...existing,
-            };
-          }
-        }
-        break;
-      }
+  for (const update of optimisticUpdates) {
+    if (update.type === "update-user-notification-settings") {
+      outcoming = patchUserNotificationSettings(outcoming, update.settings);
     }
   }
 
-  return outcomingSettings;
+  return outcoming;
 }
 
 /**
