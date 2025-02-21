@@ -9,7 +9,7 @@ import { useIsMobile } from "./use-is-mobile";
 
 export default function TiptapEditor() {
 
-  const editor = useCreateBlockNoteWithLiveblocks({});
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
 
   return (
     <div className="relative min-h-screen flex flex-col">

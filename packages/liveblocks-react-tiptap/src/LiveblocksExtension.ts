@@ -186,7 +186,12 @@ export const useLiveblocksExtension = (
 
   // If the user provided initialContent, wait for ready and then set it
   useEffect(() => {
-    if (!isEditorReady || !yjsProvider || !options.initialContent || !editor.current)
+    if (
+      !isEditorReady ||
+      !yjsProvider ||
+      !options.initialContent ||
+      !editor.current
+    )
       return;
 
     // As noted in the tiptap documentation, you may not set initial content with collaboration.
