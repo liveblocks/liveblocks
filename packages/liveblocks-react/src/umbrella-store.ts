@@ -1858,7 +1858,7 @@ export function applyOptimisticUpdates_forUserNotificationSettings(
 ): UserNotificationSettings {
   // Create deep copy of the settings object to mutate
   const outcomingSettings = createUserNotificationSettings({
-    ...settings[kInternal].__raw__,
+    ...settings[kInternal].__plain__,
   });
 
   for (const optimisticUpdate of optimisticUpdates) {
@@ -1873,8 +1873,8 @@ export function applyOptimisticUpdates_forUserNotificationSettings(
               entries(updates).filter(([, value]) => value !== undefined)
             ) as NotificationChannelSettings; // Fine to type cas here because we've filtered out undefined values
 
-            outcomingSettings[kInternal].__raw__[channel] = {
-              ...outcomingSettings[kInternal].__raw__[channel],
+            outcomingSettings[kInternal].__plain__[channel] = {
+              ...outcomingSettings[kInternal].__plain__[channel],
               ...existing,
             };
           }
@@ -1883,6 +1883,7 @@ export function applyOptimisticUpdates_forUserNotificationSettings(
       }
     }
   }
+
   return outcomingSettings;
 }
 

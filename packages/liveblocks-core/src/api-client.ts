@@ -50,7 +50,7 @@ import type {
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   PartialUserNotificationSettings,
-  UserNotificationSettingPlain,
+  UserNotificationSettingsPlain,
 } from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
@@ -387,18 +387,18 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   // Note: Using term `user` on this following method
   // to avoid confusion with the same methods used in the `RoomHttpApi`.
   // Let's wait the room subscription renaming to be here.
-  // It returns a partial of `UserNotificationSettingPlain` as the back-end does.
+  // It returns a partial of `UserNotificationSettingsPlain` as the back-end does.
   getUserNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<Partial<UserNotificationSettingPlain>>;
+  }): Promise<Partial<UserNotificationSettingsPlain>>;
 
   // Note: Using term `user` on this following method
   // to avoid confusion with the same methods used in the `RoomHttpApi`.
   // Let's wait the room subscription renaming to be here.
-  // It returns a partial of `UserNotificationSettingPlain` as the back-end does.
+  // It returns a partial of `UserNotificationSettingsPlain` as the back-end does.
   updateUserNotificationSettings(
     settings: PartialUserNotificationSettings
-  ): Promise<Partial<UserNotificationSettingPlain>>;
+  ): Promise<Partial<UserNotificationSettingsPlain>>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1405,8 +1405,8 @@ export function createApiClient<M extends BaseMetadata>({
    */
   async function getUserNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<Partial<UserNotificationSettingPlain>> {
-    return httpClient.get<Partial<UserNotificationSettingPlain>>(
+  }): Promise<Partial<UserNotificationSettingsPlain>> {
+    return httpClient.get<Partial<UserNotificationSettingsPlain>>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
@@ -1416,8 +1416,8 @@ export function createApiClient<M extends BaseMetadata>({
 
   async function updateUserNotificationSettings(
     settings: PartialUserNotificationSettings
-  ): Promise<Partial<UserNotificationSettingPlain>> {
-    return httpClient.post<Partial<UserNotificationSettingPlain>>(
+  ): Promise<Partial<UserNotificationSettingsPlain>> {
+    return httpClient.post<Partial<UserNotificationSettingsPlain>>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings

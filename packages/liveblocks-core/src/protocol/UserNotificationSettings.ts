@@ -34,7 +34,7 @@ export type NotificationChannelSettings = {
  *
  * Plain means it's a simple object with no methods or private properties.
  */
-export type UserNotificationSettingPlain = {
+export type UserNotificationSettingsPlain = {
   [C in NotificationChannel]: NotificationChannelSettings;
 };
 
@@ -46,13 +46,13 @@ export type UserNotificationSettingPlain = {
  * because bad things will happen.
  */
 export type PrivateNotificationChannelSettingsApi = {
-  __raw__: Partial<UserNotificationSettingPlain>;
+  __plain__: Partial<UserNotificationSettingsPlain>;
 };
 
 /**
  * User notification settings.
  */
-export type UserNotificationSettings = UserNotificationSettingPlain & {
+export type UserNotificationSettings = UserNotificationSettingsPlain & {
   /**
    * @private
    *
@@ -80,7 +80,7 @@ type DeepPartialWithAugmentation<T> = T extends object
  * with augmentation preserved gracefully
  */
 export type PartialUserNotificationSettings =
-  DeepPartialWithAugmentation<UserNotificationSettingPlain>;
+  DeepPartialWithAugmentation<UserNotificationSettingsPlain>;
 
 /**
  *
@@ -91,7 +91,7 @@ export type PartialUserNotificationSettings =
  * in case the required channel isn't enabled in the dashboard.
  */
 export function createUserNotificationSettings(
-  initial: Partial<UserNotificationSettingPlain>
+  initial: Partial<UserNotificationSettingsPlain>
 ): UserNotificationSettings {
   const channels: NotificationChannel[] = [
     "email",
@@ -102,7 +102,7 @@ export function createUserNotificationSettings(
   const descriptors: PropertyDescriptorMap = {
     [kInternal]: {
       value: {
-        __raw__: initial,
+        __plain__: initial,
       },
       enumerable: false,
     },
@@ -112,7 +112,7 @@ export function createUserNotificationSettings(
     descriptors[channel] = {
       enumerable: true,
       get(this: UserNotificationSettings) {
-        const value = this[kInternal].__raw__[channel];
+        const value = this[kInternal].__plain__[channel];
         if (!value) {
           raise(
             `In order to use the '${channel}' channel, please set up your project first. See <link to docs>`
