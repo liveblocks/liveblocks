@@ -24,12 +24,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/node`
 
-- Fix html escaping in `stringifyCommentBody` utility.
+- Fix HTML escaping in `stringifyCommentBody` utility.
 
 ### `@liveblocks/client`
 
 - Log more details in specific error cases to help debugging
-- Fix html escaping in `stringifyCommentBody` utility.
+- Fix HTML escaping in `stringifyCommentBody` utility.
 
 ### `@liveblocks/react`
 
@@ -43,7 +43,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/emails`
 
-- Fix html escaping in prepare as html functions. Thank you [@huy-cove](https://github.com/huy-cove)!
+- Fix HTML escaping in prepare as HTML functions. Thank you [@huy-cove](https://github.com/huy-cove)!
 - Revert deduplication logic introduced in `v2.18.0` as it provided no
   measurable benefits while increasing complexity.
 
