@@ -28,14 +28,8 @@ export const useCreateBlockNoteWithLiveblocks = <
   deps: DependencyList = []
 ) => {
   const liveblocksExtension = useLiveblocksExtension(liveblocksOptions);
-  const commentIgnoreExtension = Mark.create({
-    extendMarkSchema(extension) {
-      console.log(extension);
-      return {};
-    },
-  });
   return useCreateBlockNote(
     withLiveblocksEditorOptions(liveblocksExtension, blocknoteOptions),
-    [liveblocksExtension, commentIgnoreExtension, ...deps]
+    [liveblocksExtension, ...deps]
   );
 };
