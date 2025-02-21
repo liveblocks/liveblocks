@@ -7,9 +7,10 @@ import {
   HistoryVersionSummary,
 } from "@liveblocks/react-ui";
 import { useHistoryVersions } from "@liveblocks/react";
-import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
+import { HistoryVersionPreview } from "@liveblocks/react-blocknote";
+import { BlockNoteEditor } from "@blocknote/core";
 
-export default function VersionsDialog({ editor }: { editor: Editor | null }) {
+export default function VersionsDialog({ editor }: { editor: BlockNoteEditor | null }) {
   const [isOpen, setOpen] = useState(false);
 
   const onVersionRestore = useCallback(() => {
@@ -48,7 +49,7 @@ export default function VersionsDialog({ editor }: { editor: Editor | null }) {
   );
 }
 
-function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, editor: Editor }) {
+function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, editor: BlockNoteEditor }) {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
   const { versions, isLoading } = useHistoryVersions();
   const selectedVersion = useMemo(

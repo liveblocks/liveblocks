@@ -6,6 +6,7 @@ import type { BlockNoteEditor } from "@blocknote/core";
 import { useCreateBlockNoteWithLiveblocks, FloatingComposer, AnchoredThreads, FloatingThreads } from "@liveblocks/react-blocknote";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
+import VersionsDialog from "../version-history-dialog";
 
 export default function TiptapEditor() {
 
@@ -14,6 +15,7 @@ export default function TiptapEditor() {
   return (
     <div className="relative min-h-screen flex flex-col">
       <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
+        <VersionsDialog editor={editor} />
 
         <NotificationsPopover />
       </div>

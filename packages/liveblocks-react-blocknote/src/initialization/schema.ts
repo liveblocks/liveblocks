@@ -34,7 +34,6 @@ export const withLiveblocksSchema = <
   if (!liveblocksOptions.mentions) {
     return optionalSchema as BlockNoteSchema<B, I, S>;
   }
-
   return BlockNoteSchema.create({
     blockSpecs: optionalSchema.blockSpecs,
     inlineContentSpecs: {
@@ -46,7 +45,7 @@ export const withLiveblocksSchema = <
     // typescript needs some help here
     B,
     I & {
-      mention: typeof mentionSpec.config;
+      liveblocksMention: typeof mentionSpec.config;
     },
     S
   >;
