@@ -8,11 +8,12 @@ meta:
 
 [Notifications](/docs/ready-made-features/notifications) allows you to add
 in-app notifications to your product. However, it also allows you to send unread
-notifications on other channels, such as email, Slack, Microsoft Teams, a great
-way to link back to your app and keep users engaged. Additionally, Liveblocks
-allows your end users to individually choose which notifications they should
-receive, and on which channel. This guide shows you how to create a notification
-preferences panel, which enables this.
+notifications via other channels, such as email, Slack, Microsoft Teams—an
+effective way to link back to your app and keep users engaged.
+
+Additionally, Liveblocks allows your end users to individually choose which
+notifications they should receive, and on which channel. This guide shows you
+how to create a notification preferences panel, which enables this.
 
 <Figure>
   <Image
@@ -34,9 +35,9 @@ that take you through how to do this:
 
 ## Enabling a notification channel
 
-If you’ve followed one of the previous guides, you should already have a enabled
-a notification kind for a certain channel in the Notifications dashboard (this
-is different to setting up a webhook), however if you already have a production
+If you’ve followed one of the previous guides, you should already have enabled a
+notification kind for a certain channel in the Notifications dashboard (this is
+different to setting up a webhook), however if you already have a production
 project, make sure of
 [what to check before enabling a notification kind](/docs/guides/what-to-check-before-enabling-a-new-notification-kind)
 before continuing, as you may change the behavior of your app.
@@ -50,18 +51,157 @@ before continuing, as you may change the behavior of your app.
   />
 </Figure>
 
-Each notification channel has a different name, such as `email` or `slack`, but
-they all work in the same way. They have different names so you, as a developer,
-can use them in different ways.
+Each notification channel has a unique identifier, such as `email` or `slack`,
+but they all function in the same way. These distinct names allow developers to
+customize notifications for different platforms.
 
 ## Building the interface
 
 Now that the back end’s set up, you can use Liveblocks hooks to build the
-interface.
+interface. Each user in your app can set their own preferences for
+notifications, and after enabling a notification kind, each user’s will be set
+to the default value in the Notifications dashboard.
 
-<Banner>
+With
+[`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
+you can see the default value in your app. For example, the value if thread
+notifications on the email channel are enabled:
 
-Find a ready-made example of this in our [examples gallery](TODO notification settings
-example).
+```tsx
+import { useNotificationSettings } from "@liveblocks/react";
 
-</Banner>
+function NotificationSettings() {
+  // +++
+  const [{ isLoading, error, settings }, updateSettings] =
+    useNotificationSettings();
+  // +++
+
+  if (isLoading || error) {
+    return null;
+  }
+
+  // +++
+  // { email: { thread: true } }
+  console.log(settings);
+  // +++
+}
+```
+
+You can also use this function to toggle values—**this will disable
+corresponding webhook events for the current user, meaning they no longer
+receive notifications of that type, on that channel**. All other webhook events
+are sent as normal, only the current user is affected. Here’s how to create a
+checkbox that toggles the current user’s email/thread setting, disabling the
+corresponding webhook.
+
+```tsx
+import { useNotificationSettings } from "@liveblocks/react";
+
+function NotificationSettings() {
+  const [{ isLoading, error, settings }, updateSettings] =
+    useNotificationSettings();
+
+  if (isLoading || error) {
+    return null;
+  }
+
+  return (
+    <>
+      // +++
+      <label>
+        Receive thread notifications by email
+        <input
+          type="checkbox"
+          checked={settings.email.thread}
+          onChange={(e) =>
+            updateSettings({ email: { thread: e.target.checked } })
+          }
+        />
+      </label>
+      // +++
+    </>
+  );
+}
+```
+
+If you extend this further, you can create a whole notifications settings panel,
+with settings for each channel. You can also use
+[custom notification kinds](/docs/ready-made-features/notifications/concepts#Custom-notifications)
+as highlighted below, where we’re using a custom `$documentInvite` kind.
+
+```tsx
+import { useNotificationSettings } from "@liveblocks/react";
+
+function NotificationSettings() {
+  const [{ isLoading, error, settings }, updateSettings] =
+    useNotificationSettings();
+
+  if (isLoading || error) {
+    return null;
+  }
+
+  return (
+    <>
+      // +++
+      <label>
+        Receive document invites notifications by email
+        <input
+          type="checkbox"
+          checked={settings.email.$documentInvite}
+          onChange={(e) =>
+            updateSettings({ email: { $documentInvite: e.target.checked } })
+          }
+        />
+      </label>
+      // +++
+      <label>
+        Receive thread notifications by email
+        <input
+          type="checkbox"
+          checked={settings.email.thread}
+          onChange={(e) =>
+            updateSettings({ email: { thread: e.target.checked } })
+          }
+        />
+      </label>
+      <label>
+        Receive text mentions notifications by email
+        <input
+          type="checkbox"
+          checked={settings.email.textMention}
+          onChange={(e) =>
+            updateSettings({ email: { textMention: e.target.checked } })
+          }
+        />
+      </label>
+      <label>
+        Receive document invites notifications on Slack
+        <input
+          type="checkbox"
+          checked={settings.slack.$documentInvite}
+          onChange={(e) =>
+            updateSettings({ slack: { $documentInvite: e.target.checked } })
+          }
+        />
+      </label>
+      {/*
+        More inputs for each channel and kind here
+        ...
+      */}
+    </>
+  );
+}
+```
+
+You now have a notification settings interface that allows each user to choose
+their own settings! This works by toggling webhooks on specific channels and
+kinds.
+
+## Other methods
+
+Should you need to access and modify user notification settings outside of
+React, we also provide
+[JavaScript functions](/docs/api-reference/liveblocks-client#Client.getNotificationSettings),
+[Node.js methods](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings),
+and
+[REST API endpoints](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-notification-settings).
