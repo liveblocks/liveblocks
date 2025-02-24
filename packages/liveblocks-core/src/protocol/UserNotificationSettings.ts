@@ -30,12 +30,13 @@ export type NotificationChannelSettings = {
  * @private
  *
  * Base definition of user notification settings.
- * One channel for one set of settings.
  *
- * Plain means it's a simple object with no methods or private properties.
+ * Plain means it's a simple object with no methods or private properties coming
+ * from the remote backend. It's the raw settings object where channels cannot exists
+ * because there are no notification kinds enabled on the dashboard.
  */
 export type UserNotificationSettingsPlain = {
-  [C in NotificationChannel]: NotificationChannelSettings;
+  [C in NotificationChannel]?: NotificationChannelSettings;
 };
 
 /**
@@ -46,21 +47,23 @@ export type UserNotificationSettingsPlain = {
  * because bad things will happen.
  */
 export type PrivateNotificationChannelSettingsApi = {
-  __plain__: Partial<UserNotificationSettingsPlain>;
+  __plain__: UserNotificationSettingsPlain;
 };
 
 /**
  * User notification settings.
+ * One channel for one set of settings.
  */
-export type UserNotificationSettings = UserNotificationSettingsPlain & {
-  /**
-   * @private
-   *
-   * `UserNotificationSettings` with private internal properties to store the raw settings
-   * and methods to mutate the object
-   */
-  [kInternal]: PrivateNotificationChannelSettingsApi;
-};
+export type UserNotificationSettings =
+  Required<UserNotificationSettingsPlain> & {
+    /**
+     * @private
+     *
+     * `UserNotificationSettings` with private internal properties to store the raw settings
+     * and methods to mutate the object
+     */
+    [kInternal]: PrivateNotificationChannelSettingsApi;
+  };
 
 /**
  * It creates a deep partial specific for `UserNotificationSettings`
@@ -90,7 +93,7 @@ export type PartialUserNotificationSettings =
  * in case the required channel isn't enabled in the dashboard.
  */
 export function createUserNotificationSettings(
-  plain: Partial<UserNotificationSettingsPlain>
+  plain: UserNotificationSettingsPlain
 ): UserNotificationSettings {
   const channels: NotificationChannel[] = [
     "email",

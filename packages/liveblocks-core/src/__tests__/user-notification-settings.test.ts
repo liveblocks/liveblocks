@@ -9,7 +9,7 @@ describe("UserNotificationSettings protocol", () => {
     console.log(value);
   };
   it("should create an object with getters for each known notification channel", () => {
-    const initial: Partial<UserNotificationSettingsPlain> = {
+    const initial: UserNotificationSettingsPlain = {
       email: {
         thread: true,
         textMention: false,
@@ -31,7 +31,7 @@ describe("UserNotificationSettings protocol", () => {
   });
 
   it("should throw if a channel is not defined in initial and is accessed later", () => {
-    const initial: Partial<UserNotificationSettingsPlain> = {
+    const initial: UserNotificationSettingsPlain = {
       email: {
         thread: true,
         textMention: true,
@@ -54,7 +54,7 @@ describe("UserNotificationSettings protocol", () => {
   });
 
   it("should return valid channel settings if all channels are defined", () => {
-    const allChannels: Partial<UserNotificationSettingsPlain> = {
+    const allChannels: UserNotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: false, textMention: true },
       teams: { thread: true, textMention: false },
@@ -74,7 +74,7 @@ describe("UserNotificationSettings protocol", () => {
   });
 
   it("should return an object whose properties are enumerable (except kInternal)", () => {
-    const initial: Partial<UserNotificationSettingsPlain> = {
+    const initial: UserNotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: true, textMention: true },
       teams: { thread: true, textMention: true },
