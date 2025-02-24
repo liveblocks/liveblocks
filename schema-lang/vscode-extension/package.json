@@ -18,7 +18,7 @@
     "Programming Languages"
   ],
   "scripts": {
-    "vscode:prepublish": "npm run esbuild:base -- --minify",
+    "vscode:prepublish": "npm run esbuild -- --minify",
     "esbuild": "node ./esbuild.config.cjs",
     "test-compile": "tsc -p ./",
     "build": "npm run esbuild -- --sourcemap",
