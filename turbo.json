@@ -9,7 +9,13 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["src/**", "*.config.ts", "*.config.cts", "*.config.js"],
+      "inputs": [
+        "src/**",
+        "*.config.ts",
+        "*.config.cts",
+        "*.config.js",
+        "*.config.cjs"
+      ],
       "outputs": ["dist/**"]
     },
     "test": {
