@@ -1,4 +1,3 @@
-// Duplicated from https://github.com/liveblocks/liveblocks/blob/main/shared/tsconfig.common.json
 {
   "compilerOptions": {
     // Default compilation target for any code that runs in the browser
