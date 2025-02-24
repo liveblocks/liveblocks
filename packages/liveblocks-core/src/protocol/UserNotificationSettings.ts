@@ -1,5 +1,4 @@
 import type { DAD } from "../globals/augmentation";
-import { kInternal } from "../internal";
 import { create, entries, keys, raise, values } from "../lib/utils";
 
 /**
@@ -43,6 +42,14 @@ export type UserNotificationSettingsPlain = {
 /**
  * @private
  *
+ * Symbol to brand some properties and methods
+ * as internal and private in `UserNotificationSettings`
+ */
+const kPrivate = Symbol("user-notification-settings-private");
+
+/**
+ * @private
+ *
  * Private properties and methods internal to `UserNotificationSettings`.
  * As a user of Liveblocks, you should NEVER USE ANY OF THESE DIRECTLY,
  * because bad things will happen.
@@ -63,7 +70,7 @@ export type UserNotificationSettings =
      * `UserNotificationSettings` with private internal properties
      * to store the plain settings and methods.
      */
-    [kInternal]: PrivateUserNotificationSettingsApi;
+    [kPrivate]: PrivateUserNotificationSettingsApi;
   };
 
 /**
@@ -110,7 +117,7 @@ export function createUserNotificationSettings(
   ];
   const descriptors: PropertyDescriptorMap &
     ThisType<UserNotificationSettings> = {
-    [kInternal]: {
+    [kPrivate]: {
       value: {
         __plain__: plain,
       },
@@ -133,7 +140,7 @@ export function createUserNotificationSettings(
        * creating a well known shaped object → `UserNotificationSettings`.
        */
       get(this: UserNotificationSettings): NotificationChannelSettings {
-        const value = this[kInternal].__plain__[channel];
+        const value = this[kPrivate].__plain__[channel];
         if (!value) {
           raise(
             `In order to use the '${channel}' channel, please set up your project first. See <link to docs>`
@@ -159,7 +166,7 @@ export function patchUserNotificationSettings(
 ): UserNotificationSettings {
   // Create a copy of the settings object to mutate
   const outcoming = createUserNotificationSettings({
-    ...existing[kInternal].__plain__,
+    ...existing[kPrivate].__plain__,
   });
 
   for (const channel of keys(patch)) {
@@ -169,8 +176,8 @@ export function patchUserNotificationSettings(
         entries(updates).filter(([, value]) => value !== undefined)
       ) as NotificationChannelSettings; // Fine to type cast here because we've filtered out undefined values
 
-      outcoming[kInternal].__plain__[channel] = {
-        ...outcoming[kInternal].__plain__[channel],
+      outcoming[kPrivate].__plain__[channel] = {
+        ...outcoming[kPrivate].__plain__[channel],
         ...kindUpdates,
       };
     }

@@ -57,7 +57,7 @@ describe("UserNotificationSettings protocol", () => {
     expect(settings.teams.textMention).toBe(false);
   });
 
-  it("should return an object where properties are enumerable except `[kInternal]`", () => {
+  it("should return an object where properties are enumerable except `[kPrivate]`", () => {
     const initial: UserNotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: true, textMention: true },
