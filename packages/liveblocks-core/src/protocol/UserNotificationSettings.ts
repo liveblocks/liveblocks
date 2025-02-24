@@ -114,6 +114,17 @@ export function createUserNotificationSettings(
   for (const channel of channels) {
     descriptors[channel] = {
       enumerable: true,
+      /**
+       * In the TypeScript standard library definitions, the built-in interface for a property descriptor
+       * does not include a specialized type for the “this” context in the getter or setter functions.
+       * As a result, both the ⁠get and ⁠set methods implicitly have ⁠this: any.
+       * The reason is that property descriptors in JavaScript are used across various objects with
+       * no enforced shape for ⁠this. And so the standard library definitions have to remain as broad as possible
+       * to support any valid JavaScript usage (e.g `Object.defineProperty`).
+       *
+       * So we can safely tells that this getter is typed as `this: UserNotificationSettings` because we're
+       * creating a well known shaped object → `UserNotificationSettings`.
+       */
       get(this: UserNotificationSettings): NotificationChannelSettings {
         const value = this[kInternal].__plain__[channel];
         if (!value) {
