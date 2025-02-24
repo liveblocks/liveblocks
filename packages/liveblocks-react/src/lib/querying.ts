@@ -1,7 +1,7 @@
 import type { BaseMetadata, ThreadData } from "@liveblocks/client";
 import { isStartsWithOperator } from "@liveblocks/core";
 
-import type { ThreadsQuery } from "../types/index.js";
+import type { ThreadsQuery } from "../types";
 
 /**
  * Creates a predicate function that will filter all ThreadData instances that

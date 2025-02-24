@@ -7,7 +7,7 @@ import type {
   EmojiPickerData,
   EmojiPickerInteraction,
   EmojiPickerSelectionDirection,
-} from "./types.js";
+} from "./types";
 
 type EmojiPickerContextData = Relax<
   | { isLoading: true }

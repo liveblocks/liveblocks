@@ -1,7 +1,7 @@
 import { detectDupes } from "@liveblocks/core";
 
-import type { RoomData } from "./client.js";
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
+import type { RoomData } from "./client";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
@@ -13,8 +13,8 @@ export type {
   RoomUser,
   Schema,
   ThreadParticipants,
-} from "./client.js";
-export { Liveblocks, LiveblocksError } from "./client.js";
+} from "./client";
+export { Liveblocks, LiveblocksError } from "./client";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
@@ -38,13 +38,13 @@ export type {
   WebhookEvent,
   WebhookRequest,
   YDocUpdatedEvent,
-} from "./webhooks.js";
+} from "./webhooks";
 export {
   isCustomNotificationEvent,
   isTextMentionNotificationEvent,
   isThreadNotificationEvent,
   WebhookHandler,
-} from "./webhooks.js";
+} from "./webhooks";
 export type {
   CommentBody,
   CommentBodyBlockElement,

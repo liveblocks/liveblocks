@@ -20,9 +20,9 @@ import {
 } from "@liveblocks/core";
 import type { ComponentType, ReactNode } from "react";
 
-import { MENTION_CHARACTER } from "./lib/constants.js";
-import type { CSSProperties } from "./lib/css-properties.js";
-import { toInlineCSSString } from "./lib/css-properties.js";
+import { MENTION_CHARACTER } from "./lib/constants";
+import type { CSSProperties } from "./lib/css-properties";
+import { toInlineCSSString } from "./lib/css-properties";
 
 export type CommentBodyContainerComponentProps = {
   /**

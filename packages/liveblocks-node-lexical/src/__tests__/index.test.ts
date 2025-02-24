@@ -1,4 +1,4 @@
-import * as _ from "../index.js";
+import * as _ from "..";
 
 test.todo("Write test for createLiveblocksDocument");
 test.todo("Write test for _.$createParagraphNode");

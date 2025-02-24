@@ -1,5 +1,5 @@
-import { filterCommentsWithBody } from "../comment-with-body.js";
-import { commentBody1, generateThreadId, makeComment } from "./_helpers.js";
+import { filterCommentsWithBody } from "../comment-with-body";
+import { commentBody1, generateThreadId, makeComment } from "./_helpers";
 
 describe("Comment with body", () => {
   it("should filter comments with defined bodies", () => {

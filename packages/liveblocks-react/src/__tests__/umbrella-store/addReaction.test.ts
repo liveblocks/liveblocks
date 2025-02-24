@@ -1,5 +1,5 @@
-import { applyAddReaction } from "../../umbrella-store.js";
-import { createComment, createThread } from "./_dummies.js";
+import { applyAddReaction } from "../../umbrella-store";
+import { createComment, createThread } from "./_dummies";
 
 describe("addReaction", () => {
   it("should add a new reaction to a comment", () => {

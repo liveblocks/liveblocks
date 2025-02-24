@@ -6,7 +6,7 @@ import type {
   ResolveUsersArgs,
 } from "@liveblocks/core";
 
-import { createBatchUsersResolver } from "../batch-users-resolver.js";
+import { createBatchUsersResolver } from "../batch-users-resolver";
 
 const USERS_DB: IUserInfo[] = [
   {

@@ -5,15 +5,15 @@ import type {
   MessagesDataset as EmojibaseMessagesDataset,
 } from "emojibase";
 
-import { EMOJI_FONT_FAMILY } from "../../constants.js";
-import { capitalize } from "../../utils/capitalize.js";
+import { EMOJI_FONT_FAMILY } from "../../constants";
+import { capitalize } from "../../utils/capitalize";
 import type {
   Emoji,
   EmojiCategory,
   EmojiData,
   EmojiPickerData,
   EmojiPickerRow,
-} from "./types.js";
+} from "./types";
 
 const EMOJIBASE_VERSION = "15.3.0";
 const EMOJIBASE_CDN_URL = `https://cdn.jsdelivr.net/npm/emojibase-data@${EMOJIBASE_VERSION}`;

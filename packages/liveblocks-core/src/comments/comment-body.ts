@@ -1,7 +1,7 @@
-import type { ResolveUsersArgs } from "../client.js";
-import type { DU } from "../globals/augmentation.js";
-import { nn } from "../lib/assert.js";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
+import type { ResolveUsersArgs } from "../client";
+import type { DU } from "../globals/augmentation";
+import { nn } from "../lib/assert";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
   CommentBody,
   CommentBodyBlockElement,
@@ -11,8 +11,8 @@ import type {
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
-} from "../protocol/Comments.js";
-import type { Awaitable } from "../types/Awaitable.js";
+} from "../protocol/Comments";
+import type { Awaitable } from "../types/Awaitable";
 
 type CommentBodyBlockElementName = Exclude<
   CommentBodyBlockElement,

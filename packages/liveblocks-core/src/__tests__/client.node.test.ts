@@ -5,11 +5,11 @@
 // We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
 import { Response as NodeFetchResponse } from "node-fetch";
 
-import type { ClientOptions } from "../client.js";
-import { createClient } from "../client.js";
-import * as console from "../lib/fancy-console.js";
-import { MockWebSocket } from "./_MockWebSocketServer.js";
-import { waitUntilStatus } from "./_waitUtils.js";
+import type { ClientOptions } from "../client";
+import { createClient } from "../client";
+import * as console from "../lib/fancy-console";
+import { MockWebSocket } from "./_MockWebSocketServer";
+import { waitUntilStatus } from "./_waitUtils";
 
 const token =
   "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTAwMzMzMjgsImV4cCI6MTY5MDAzMzMzMywiayI6InNlYy1sZWdhY3kiLCJyb29tSWQiOiJlTFB3dU9tTXVUWEN6Q0dSaTVucm4iLCJhcHBJZCI6IjYyNDFjYjk1ZWQ2ODdkNWRlNWFhYTEzMiIsImFjdG9yIjoxLCJzY29wZXMiOlsicm9vbTp3cml0ZSJdLCJpZCI6InVzZXItMyIsIm1heENvbm5lY3Rpb25zUGVyUm9vbSI6MjB9.QoRc9dJJp-C1LzmQ-S_scHfFsAZ7dBcqep0bUZNyWxEWz_VeBHBBNdJpNs7b7RYRFDBi7RxkywKJlO-gNE8h3wkhebgLQVeSgI3YfTJo7J8Jzj38TzH85ZIbybaiGcxda_sYn3VohDtUHA1k67ns08Q2orJBNr30Gc88jJmc1He_7bLStsDP4M2F1NRMuFuqLULWHnPeEM7jMvLZYkbu3SBeCH4TQGyweu7qAXvP-HHtmvzOi8LdEnpxgxGjxefdu6m4a-fJj6LwoYCGi1rlLDHH9aOHFwYVrBBBVwoeIDSHoAonkPaae9AWM6igJhNt9-ihgEH6sF-qgFiPxHNXdg";

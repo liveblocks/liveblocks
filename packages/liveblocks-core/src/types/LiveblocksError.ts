@@ -1,7 +1,7 @@
-import { assertNever } from "../lib/assert.js";
-import type { Relax } from "../lib/Relax.js";
-import type { BaseMetadata, CommentBody } from "../protocol/Comments.js";
-import type { Patchable } from "./Patchable.js";
+import { assertNever } from "../lib/assert";
+import type { Relax } from "../lib/Relax";
+import type { BaseMetadata, CommentBody } from "../protocol/Comments";
+import type { Patchable } from "./Patchable";
 
 // All possible error originating from using Presence, Storage, or Yjs
 type RoomConnectionErrorContext = {

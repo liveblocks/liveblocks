@@ -2,19 +2,19 @@ import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
-} from "../liveblocks-text-editor.js";
+} from "../liveblocks-text-editor";
 import {
   convertTextEditorNodesAsHtml,
   convertTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
-} from "../liveblocks-text-editor.js";
+} from "../liveblocks-text-editor";
 import {
   generateInboxNotificationId,
   renderToStaticMarkup,
   resolveUsers,
-} from "./_helpers.js";
-import { createLexicalMentionNodeWithContext } from "./_lexical-helpers.js";
-import { createTipTapMentionNodeWithContext } from "./_tiptap-helpers.js";
+} from "./_helpers";
+import { createLexicalMentionNodeWithContext } from "./_lexical-helpers";
+import { createTipTapMentionNodeWithContext } from "./_tiptap-helpers";
 
 const content1: LiveblocksTextEditorNode[] = [
   {

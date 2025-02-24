@@ -1,8 +1,8 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { createAuthManager } from "../auth-manager.js";
-import type { ParsedAuthToken } from "../protocol/AuthToken.js";
+import { createAuthManager } from "../auth-manager";
+import type { ParsedAuthToken } from "../protocol/AuthToken";
 
 const SECONDS = 1 * 1000;
 const MINUTES = 60 * SECONDS;

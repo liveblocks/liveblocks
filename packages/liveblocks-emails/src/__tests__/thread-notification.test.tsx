@@ -6,14 +6,14 @@ import { http, HttpResponse } from "msw";
 import type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
-} from "../comment-body.js";
+} from "../comment-body";
 import type {
   CommentEmailBaseData,
   ThreadNotificationData,
   ThreadNotificationEmailBaseData,
   ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
-} from "../thread-notification.js";
+} from "../thread-notification";
 import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
@@ -22,7 +22,7 @@ import {
   prepareThreadNotificationEmailAsHtml,
   prepareThreadNotificationEmailAsReact,
   prepareThreadNotificationEmailBaseData,
-} from "../thread-notification.js";
+} from "../thread-notification";
 import {
   buildCommentBodyWithMention,
   commentBodiesAsReactToStaticMarkup,
@@ -44,7 +44,7 @@ import {
   ROOM_ID_TEST,
   server,
   SERVER_BASE_URL,
-} from "./_helpers.js";
+} from "./_helpers";
 
 describe("thread notification", () => {
   beforeAll(() => server.listen());

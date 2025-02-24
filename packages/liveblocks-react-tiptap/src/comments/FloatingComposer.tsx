@@ -26,8 +26,8 @@ import { createPortal } from "react-dom";
 import type {
   CommentsExtensionStorage,
   ExtendedChainedCommands,
-} from "../types.js";
-import { compareSelections, getDomRangeFromSelection } from "../utils.js";
+} from "../types";
+import { compareSelections, getDomRangeFromSelection } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,

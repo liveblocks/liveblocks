@@ -1,4 +1,4 @@
-import type { Json } from "../lib/Json.js";
+import type { Json } from "../lib/Json";
 
 /**
  * Represents some constraints for user info. Basically read this as: "any JSON

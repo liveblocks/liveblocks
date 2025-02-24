@@ -1,42 +1,38 @@
-import type { LiveblocksHttpApi } from "./api-client.js";
-import { createApiClient } from "./api-client.js";
-import { createAuthManager } from "./auth-manager.js";
-import { isIdle } from "./connection.js";
-import { DEFAULT_BASE_URL } from "./constants.js";
-import type { LsonObject } from "./crdts/Lson.js";
-import {
-  linkDevTools,
-  setupDevTools,
-  unlinkDevTools,
-} from "./devtools/index.js";
-import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation.js";
-import { kInternal } from "./internal.js";
-import type { BatchStore } from "./lib/batch.js";
-import { Batch, createBatchStore } from "./lib/batch.js";
-import type { Observable } from "./lib/EventSource.js";
-import { makeEventSource } from "./lib/EventSource.js";
-import * as console from "./lib/fancy-console.js";
-import type { Json, JsonObject } from "./lib/Json.js";
-import type { NoInfr } from "./lib/NoInfer.js";
-import type { Relax } from "./lib/Relax.js";
-import type { Resolve } from "./lib/Resolve.js";
-import { Signal } from "./lib/signals.js";
-import type { CustomAuthenticationResult } from "./protocol/Authentication.js";
-import { TokenKind } from "./protocol/AuthToken.js";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta.js";
+import type { LiveblocksHttpApi } from "./api-client";
+import { createApiClient } from "./api-client";
+import { createAuthManager } from "./auth-manager";
+import { isIdle } from "./connection";
+import { DEFAULT_BASE_URL } from "./constants";
+import type { LsonObject } from "./crdts/Lson";
+import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+import { kInternal } from "./internal";
+import type { BatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
+import type { Observable } from "./lib/EventSource";
+import { makeEventSource } from "./lib/EventSource";
+import * as console from "./lib/fancy-console";
+import type { Json, JsonObject } from "./lib/Json";
+import type { NoInfr } from "./lib/NoInfer";
+import type { Relax } from "./lib/Relax";
+import type { Resolve } from "./lib/Resolve";
+import { Signal } from "./lib/signals";
+import type { CustomAuthenticationResult } from "./protocol/Authentication";
+import { TokenKind } from "./protocol/AuthToken";
+import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
   ThreadData,
   ThreadDeleteInfo,
-} from "./protocol/Comments.js";
+} from "./protocol/Comments";
 import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
-} from "./protocol/InboxNotifications.js";
+} from "./protocol/InboxNotifications";
 import type {
   PartialUserNotificationSettings,
   UserNotificationSettings,
-} from "./protocol/UserNotificationSettings.js";
+} from "./protocol/UserNotificationSettings";
 import type {
   LargeMessageStrategy,
   OpaqueRoom,
@@ -46,15 +42,15 @@ import type {
   Room,
   RoomDelegates,
   SyncSource,
-} from "./room.js";
+} from "./room";
 import {
   createRoom,
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
-} from "./room.js";
-import type { Awaitable } from "./types/Awaitable.js";
-import type { LiveblocksErrorContext } from "./types/LiveblocksError.js";
-import { LiveblocksError } from "./types/LiveblocksError.js";
+} from "./room";
+import type { Awaitable } from "./types/Awaitable";
+import type { LiveblocksErrorContext } from "./types/LiveblocksError";
+import { LiveblocksError } from "./types/LiveblocksError";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;

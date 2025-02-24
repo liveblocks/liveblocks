@@ -22,16 +22,16 @@ import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
-import { AiExtension } from "./ai/AiExtension.js";
-import { CommentsExtension } from "./comments/CommentsExtension.js";
-import { MentionExtension } from "./mentions/MentionExtension.js";
+import { AiExtension } from "./ai/AiExtension";
+import { CommentsExtension } from "./comments/CommentsExtension";
+import { MentionExtension } from "./mentions/MentionExtension";
 import type {
   LiveblocksExtensionOptions,
   LiveblocksExtensionStorage,
   ResolveContextualPromptArgs,
   ResolveContextualPromptResponse,
-} from "./types.js";
-import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types.js";
+} from "./types";
+import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 

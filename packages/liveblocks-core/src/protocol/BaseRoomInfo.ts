@@ -1,4 +1,4 @@
-import type { Json } from "../lib/Json.js";
+import type { Json } from "../lib/Json";
 
 export type BaseRoomInfo = {
   [key: string]: Json | undefined;

@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 
 import type { EmojiProps as EmojiPrimitiveProps } from "../../primitives/internal/Emoji.jsx";
 import { Emoji as EmojiPrimitive } from "../../primitives/internal/Emoji.jsx";
-import { classNames } from "../../utils/class-names.js";
+import { classNames } from "../../utils/class-names";
 
 export const Emoji = forwardRef<HTMLSpanElement, EmojiPrimitiveProps>(
   ({ className, ...props }, forwardedRef) => {

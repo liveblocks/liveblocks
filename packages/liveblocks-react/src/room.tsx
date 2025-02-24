@@ -60,19 +60,19 @@ import {
   version as reactVersion,
 } from "react";
 
-import { config } from "./config.js";
-import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts.js";
-import { ensureNotServerSide } from "./lib/ssr.js";
-import { useInitial } from "./lib/use-initial.js";
-import { useLatest } from "./lib/use-latest.js";
-import { use } from "./lib/use-polyfill.js";
+import { config } from "./config";
+import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
+import { ensureNotServerSide } from "./lib/ssr";
+import { useInitial } from "./lib/use-initial";
+import { useLatest } from "./lib/use-latest";
+import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
   useClient,
   useClientOrNull,
-} from "./liveblocks.js";
+} from "./liveblocks";
 import type {
   AttachmentUrlAsyncResult,
   CommentReactionOptions,
@@ -96,12 +96,12 @@ import type {
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
-} from "./types/index.js";
-import type { UmbrellaStore } from "./umbrella-store.js";
-import { makeRoomThreadsQueryKey } from "./umbrella-store.js";
-import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect.js";
-import { useSignal } from "./use-signal.js";
-import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector.js";
+} from "./types";
+import type { UmbrellaStore } from "./umbrella-store";
+import { makeRoomThreadsQueryKey } from "./umbrella-store";
+import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+import { useSignal } from "./use-signal";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;

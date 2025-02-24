@@ -1,4 +1,4 @@
-import type { ActivityData } from "./InboxNotifications.js";
+import type { ActivityData } from "./InboxNotifications";
 
 export type BaseActivitiesData = {
   [key: `$${string}`]: ActivityData;

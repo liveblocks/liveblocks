@@ -1,22 +1,22 @@
-import { LiveList } from "../crdts/LiveList.js";
-import { LiveMap } from "../crdts/LiveMap.js";
-import { LiveObject } from "../crdts/LiveObject.js";
-import type { LsonObject, ToJson } from "../crdts/Lson.js";
-import type { StorageUpdate } from "../crdts/StorageUpdates.js";
+import { LiveList } from "../crdts/LiveList";
+import { LiveMap } from "../crdts/LiveMap";
+import { LiveObject } from "../crdts/LiveObject";
+import type { LsonObject, ToJson } from "../crdts/Lson";
+import type { StorageUpdate } from "../crdts/StorageUpdates";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObject,
   patchLiveObjectKey,
-} from "../immutable.js";
-import { kInternal } from "../internal.js";
-import * as console from "../lib/fancy-console.js";
-import type { Json, JsonObject } from "../lib/Json.js";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
-import { ClientMsgCode } from "../protocol/ClientMsg.js";
-import type { BaseMetadata } from "../protocol/Comments.js";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt.js";
-import { ServerMsgCode } from "../protocol/ServerMsg.js";
+} from "../immutable";
+import { kInternal } from "../internal";
+import * as console from "../lib/fancy-console";
+import type { Json, JsonObject } from "../lib/Json";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { BaseMetadata } from "../protocol/Comments";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
   createSerializedList,
   createSerializedObject,
@@ -28,7 +28,7 @@ import {
   SECOND_POSITION,
   serverMessage,
   THIRD_POSITION,
-} from "./_utils.js";
+} from "./_utils";
 
 export async function prepareStorageImmutableTest<
   S extends LsonObject,

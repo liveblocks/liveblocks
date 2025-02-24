@@ -1,7 +1,7 @@
-import * as console from "./fancy-console.js";
-import { isPlainObject } from "./guards.js";
-import type { JsonObject } from "./Json.js";
-import { tryParseJson, wait } from "./utils.js";
+import * as console from "./fancy-console";
+import { isPlainObject } from "./guards";
+import type { JsonObject } from "./Json";
+import { tryParseJson, wait } from "./utils";
 
 export class HttpError extends Error {
   public response: Response;

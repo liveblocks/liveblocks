@@ -1,7 +1,7 @@
 import type { ThreadData, ThreadDeleteInfo } from "@liveblocks/core";
 
-import { ThreadDB } from "../../ThreadDB.js";
-import { dummyThreadData } from "../_dummies.js";
+import { ThreadDB } from "../../ThreadDB";
+import { dummyThreadData } from "../_dummies";
 
 describe("applyThreadDeltaUpdates", () => {
   const thread1 = dummyThreadData({

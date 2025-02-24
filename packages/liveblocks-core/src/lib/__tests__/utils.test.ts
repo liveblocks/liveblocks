@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 
-import { isPlainObject } from "../guards.js";
+import { isPlainObject } from "../guards";
 import {
   b64decode,
   compact,
@@ -11,7 +11,7 @@ import {
   remove,
   tryParseJson,
   values,
-} from "../utils.js";
+} from "../utils";
 
 /**
  * This Arbitrary generator ensures that the generated object won't include

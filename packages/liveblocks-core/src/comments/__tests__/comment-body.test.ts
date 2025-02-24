@@ -1,9 +1,9 @@
-import type { ResolveUsersArgs } from "../../client.js";
-import type { CommentBody } from "../../protocol/Comments.js";
+import type { ResolveUsersArgs } from "../../client";
+import type { CommentBody } from "../../protocol/Comments";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
-} from "../comment-body.js";
+} from "../comment-body";
 
 function capitalize(string: string) {
   return string.charAt(0).toUpperCase() + string.slice(1);

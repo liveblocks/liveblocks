@@ -1,7 +1,7 @@
-import type { Status } from "../connection.js";
-import type { UpdateYDocClientMsg } from "../protocol/ClientMsg.js";
-import type { YDocUpdateServerMsg } from "../protocol/ServerMsg.js";
-import type * as DevTools from "../types/DevToolsTreeNode.js";
+import type { Status } from "../connection";
+import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
+import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
+import type * as DevTools from "../types/DevToolsTreeNode";
 
 /**
  * Definition of all messages the Panel can send to the Client.

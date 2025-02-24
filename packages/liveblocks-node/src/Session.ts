@@ -6,8 +6,8 @@ import type {
 } from "@liveblocks/core";
 import { url } from "@liveblocks/core";
 
-import type { AuthResponse } from "./client.js";
-import { assertNonEmpty, normalizeStatusCode } from "./utils.js";
+import type { AuthResponse } from "./client";
+import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts

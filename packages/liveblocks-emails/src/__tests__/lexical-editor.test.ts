@@ -1,10 +1,10 @@
-import type { SerializedLexicalRootNode } from "../lexical-editor.js";
+import type { SerializedLexicalRootNode } from "../lexical-editor";
 import {
   findLexicalMentionNodeWithContext,
   flattenLexicalTree,
   getSerializedLexicalState,
-} from "../lexical-editor.js";
-import { generateInboxNotificationId } from "./_helpers.js";
+} from "../lexical-editor";
+import { generateInboxNotificationId } from "./_helpers";
 import {
   createLexicalMentionNodeWithContext,
   docStateRoot,
@@ -12,7 +12,7 @@ import {
   docUpdateBuffer,
   MENTION_ID,
   MENTIONED_USER_ID,
-} from "./_lexical-helpers.js";
+} from "./_lexical-helpers";
 
 describe("Lexical editor", () => {
   describe("get serialized state", () => {

@@ -1,5 +1,5 @@
-import type { Json, JsonObject } from "../lib/Json.js";
-import type { Op } from "./Op.js";
+import type { Json, JsonObject } from "../lib/Json";
+import type { Op } from "./Op";
 
 export enum ClientMsgCode {
   // For Presence

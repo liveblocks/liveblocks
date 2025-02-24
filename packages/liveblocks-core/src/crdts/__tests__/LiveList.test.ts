@@ -3,7 +3,7 @@ import {
   listUpdateDelete,
   listUpdateInsert,
   listUpdateMove,
-} from "../../__tests__/_updatesUtils.js";
+} from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
@@ -17,20 +17,20 @@ import {
   replaceRemoteStorageAndReconnect,
   SECOND_POSITION,
   THIRD_POSITION,
-} from "../../__tests__/_utils.js";
+} from "../../__tests__/_utils";
 import {
   waitUntilStatus,
   waitUntilStorageUpdate,
-} from "../../__tests__/_waitUtils.js";
-import { kInternal } from "../../internal.js";
-import { Permission } from "../../protocol/AuthToken.js";
-import { OpCode } from "../../protocol/Op.js";
-import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt.js";
-import { CrdtType } from "../../protocol/SerializedCrdt.js";
-import { WebsocketCloseCodes } from "../../types/IWebSocket.js";
-import { LiveList } from "../LiveList.js";
-import { LiveMap } from "../LiveMap.js";
-import { LiveObject } from "../LiveObject.js";
+} from "../../__tests__/_waitUtils";
+import { kInternal } from "../../internal";
+import { Permission } from "../../protocol/AuthToken";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import { CrdtType } from "../../protocol/SerializedCrdt";
+import { WebsocketCloseCodes } from "../../types/IWebSocket";
+import { LiveList } from "../LiveList";
+import { LiveMap } from "../LiveMap";
+import { LiveObject } from "../LiveObject";
 
 describe("LiveList", () => {
   describe("not attached", () => {

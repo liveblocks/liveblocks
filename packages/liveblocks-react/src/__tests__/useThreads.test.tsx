@@ -26,17 +26,14 @@ import type { ReactNode } from "react";
 import { createContext, Suspense, useContext, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import {
-  dummyThreadData,
-  dummyThreadInboxNotificationData,
-} from "./_dummies.js";
-import MockWebSocket, { websocketSimulator } from "./_MockWebSocket.js";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
   mockGetThread,
   mockGetThreads,
-} from "./_restMocks.js";
-import { createContextsForTest, makeThreadFilter } from "./_utils.js";
+} from "./_restMocks";
+import { createContextsForTest, makeThreadFilter } from "./_utils";
 
 const SECONDS = 1000;
 const MINUTES = 60 * SECONDS;

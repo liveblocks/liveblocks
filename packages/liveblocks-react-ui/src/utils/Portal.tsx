@@ -4,7 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { forwardRef } from "react";
 import { createPortal } from "react-dom";
 
-import type { ComponentPropsWithSlot } from "../types.js";
+import type { ComponentPropsWithSlot } from "../types";
 
 const PORTAL_NAME = "Portal";
 

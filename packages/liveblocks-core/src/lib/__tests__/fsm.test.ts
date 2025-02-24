@@ -1,5 +1,5 @@
-import { distance, FSM, patterns } from "../fsm.js";
-import { wait } from "../utils.js";
+import { distance, FSM, patterns } from "../fsm";
+import { wait } from "../utils";
 
 async function failAfter(ms: number): Promise<void> {
   return new Promise((_, reject) => {

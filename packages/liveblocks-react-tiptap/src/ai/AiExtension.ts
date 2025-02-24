@@ -31,8 +31,8 @@ import {
   type LiveblocksExtensionStorage,
   type ResolveContextualPromptResponse,
   type YSyncPluginState,
-} from "../types.js";
-import { getContextualPromptContext } from "../utils.js";
+} from "../types";
+import { getContextualPromptContext } from "../utils";
 
 const DEFAULT_AI_NAME = "AI";
 export const DEFAULT_STATE: AiToolbarState = { phase: "closed" };

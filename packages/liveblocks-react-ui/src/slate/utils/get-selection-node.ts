@@ -3,7 +3,7 @@ import { Editor, Element } from "slate";
 import type {
   ComposerBodyBlockElement,
   ComposerBodyInlineNonTextElement,
-} from "../../types.js";
+} from "../../types";
 
 export function getSelectionInline(
   editor: Editor

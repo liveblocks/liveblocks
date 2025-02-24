@@ -34,19 +34,19 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Avatar } from "./avatar.js";
+import { Avatar } from "./avatar";
 import {
   $createMentionNode,
   $isMentionNode,
   MentionNode,
-} from "./mention-node.js";
-import * as Suggestions from "./suggestions.js";
+} from "./mention-node";
+import * as Suggestions from "./suggestions";
 import {
   OnResetMatchCallbackContext,
   OnValueSelectCallbackContext,
   SuggestionsContext,
-} from "./suggestions.js";
-import { User } from "./user.js";
+} from "./suggestions";
+import { User } from "./user";
 
 const MENTION_TRIGGER = "@";
 

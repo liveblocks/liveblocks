@@ -2,7 +2,7 @@ import { useUser } from "@liveblocks/react";
 import type { HTMLAttributes } from "react";
 import { forwardRef } from "react";
 
-import { classNames } from "../classnames.js";
+import { classNames } from "../classnames";
 
 export interface AvatarProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {

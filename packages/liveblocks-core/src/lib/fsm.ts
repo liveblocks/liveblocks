@@ -5,8 +5,8 @@
  * put this in a separate NPM package if we wanted to make this more reusable.
  */
 
-import type { EventSource, Observable } from "./EventSource.js";
-import { makeEventSource } from "./EventSource.js";
+import type { EventSource, Observable } from "./EventSource";
+import { makeEventSource } from "./EventSource";
 
 /**
  * Built-in event sent by .addTimedTransition().

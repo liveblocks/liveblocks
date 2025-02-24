@@ -1,13 +1,13 @@
-import type { CheckedDocument } from "./checker/index.js";
-import { check } from "./checker/index.js";
-import type { Diagnostic } from "./lib/error-reporting.js";
-import { DiagnosticError, ErrorReporter } from "./lib/error-reporting.js";
-import type { ParserOptions } from "./parser/index.js";
-import { parseDocument } from "./parser/index.js";
+import type { CheckedDocument } from "./checker";
+import { check } from "./checker";
+import type { Diagnostic } from "./lib/error-reporting";
+import { DiagnosticError, ErrorReporter } from "./lib/error-reporting";
+import type { ParserOptions } from "./parser";
+import { parseDocument } from "./parser";
 
 // Export all AST nodes and helpers
-export * as AST from "./ast/index.js";
-export type { CheckedDocument } from "./checker/index.js";
+export * as AST from "./ast";
+export type { CheckedDocument } from "./checker";
 
 export type { Diagnostic, ParserOptions };
 
@@ -56,4 +56,4 @@ export function parse(
   return check(parseDocument(reporter, options), reporter);
 }
 
-export { prettify } from "./prettify/index.js";
+export { prettify } from "./prettify";

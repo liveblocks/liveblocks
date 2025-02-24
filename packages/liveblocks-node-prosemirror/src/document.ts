@@ -10,8 +10,8 @@ import { defaultMarkdownSerializer } from "prosemirror-markdown";
 import { initProseMirrorDoc, updateYFragment } from "y-prosemirror";
 import { applyUpdate, Doc, encodeStateAsUpdate, encodeStateVector } from "yjs";
 
-import { CommentExtension } from "./comment.js";
-import { MentionExtension } from "./mention.js";
+import { CommentExtension } from "./comment";
+import { MentionExtension } from "./mention";
 
 export type LiveblocksProsemirrorOptions = {
   roomId: string;

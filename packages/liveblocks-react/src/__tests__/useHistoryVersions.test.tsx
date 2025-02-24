@@ -13,8 +13,8 @@ import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import MockWebSocket from "./_MockWebSocket.js";
-import { createContextsForTest } from "./_utils.js";
+import MockWebSocket from "./_MockWebSocket";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 

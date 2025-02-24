@@ -12,7 +12,7 @@ import type {
   RenderElementSpecificProps,
 } from "slate-react";
 
-import type { MentionDraft } from "../../slate/plugins/mentions.js";
+import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
   ComposerBodyAutoLink,
@@ -20,7 +20,7 @@ import type {
   ComposerBodyMark,
   ComposerBodyMention,
   Direction,
-} from "../../types.js";
+} from "../../types";
 
 export interface ComposerEditorMentionProps {
   /**

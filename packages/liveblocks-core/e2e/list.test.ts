@@ -1,7 +1,7 @@
-import { lsonToJson } from "../src/immutable.js";
-import { LiveList } from "../src/crdts/LiveList.js";
-import type { Json } from "../src/lib/Json.js";
-import { prepareSingleClientTest, prepareTestsConflicts } from "./utils.js";
+import { lsonToJson } from "../src/immutable";
+import { LiveList } from "../src/crdts/LiveList";
+import type { Json } from "../src/lib/Json";
+import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe.skip("LiveList conflicts", () => {
   describe("insert conflicts", () => {

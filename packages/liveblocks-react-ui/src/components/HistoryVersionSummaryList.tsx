@@ -3,7 +3,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { Children, forwardRef } from "react";
 
-import { classNames } from "../utils/class-names.js";
+import { classNames } from "../utils/class-names";
 
 export type HistoryVersionSummaryListProps = ComponentPropsWithoutRef<"ol">;
 

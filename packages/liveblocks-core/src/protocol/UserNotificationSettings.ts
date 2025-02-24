@@ -1,5 +1,5 @@
-import type { DAD } from "../globals/augmentation.js";
-import { values } from "../lib/utils.js";
+import type { DAD } from "../globals/augmentation";
+import { values } from "../lib/utils";
 
 /**
  * Pre-defined notification channels support list.

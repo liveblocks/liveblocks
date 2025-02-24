@@ -1,8 +1,8 @@
-import type { AsyncResult } from "./AsyncResult.js";
-import { Promise_withResolvers } from "./controlledPromise.js";
-import type { Callback, UnsubscribeCallback } from "./EventSource.js";
-import { MutableSignal } from "./signals.js";
-import { stableStringify } from "./stringify.js";
+import type { AsyncResult } from "./AsyncResult";
+import { Promise_withResolvers } from "./controlledPromise";
+import type { Callback, UnsubscribeCallback } from "./EventSource";
+import { MutableSignal } from "./signals";
+import { stableStringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
 

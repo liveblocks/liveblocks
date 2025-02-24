@@ -1,6 +1,6 @@
 {
   "tspegjs": {
-    "customHeader": "import * as ast from \"../ast/index.js\";\n"
+    "customHeader": "import * as ast from \"../ast\";\n"
   },
   "returnTypes": {
     "ArrayType": "ast.ArrayType",

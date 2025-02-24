@@ -4,8 +4,8 @@ import { useUser } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { classNames } from "../../utils/class-names.js";
-import { getInitials } from "../../utils/get-initials.js";
+import { classNames } from "../../utils/class-names";
+import { getInitials } from "../../utils/get-initials";
 
 export interface AvatarProps extends ComponentProps<"div"> {
   /**

@@ -1,6 +1,6 @@
-import type { Range } from "../ast/index.js";
-import { prettify } from "../prettify/index.js";
-import { indent } from "./indent.js";
+import type { Range } from "../ast";
+import { prettify } from "../prettify";
+import { indent } from "./indent";
 
 const WHITESPACE_ONLY_RE = /^\s*$/;
 

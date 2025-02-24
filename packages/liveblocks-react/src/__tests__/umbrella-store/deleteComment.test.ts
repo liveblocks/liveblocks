@@ -1,5 +1,5 @@
-import { applyDeleteComment } from "../../umbrella-store.js";
-import { createAttachment, createComment, createThread } from "./_dummies.js";
+import { applyDeleteComment } from "../../umbrella-store";
+import { createAttachment, createComment, createThread } from "./_dummies";
 
 describe("deleteComment", () => {
   it("should mark a comment as deleted in a thread", () => {

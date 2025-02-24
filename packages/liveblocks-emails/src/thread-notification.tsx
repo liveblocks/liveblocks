@@ -19,16 +19,16 @@ import type { ReactNode } from "react";
 import type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
-} from "./comment-body.js";
+} from "./comment-body";
 import {
   convertCommentBodyAsHtml,
   convertCommentBodyAsReact,
-} from "./comment-body.js";
-import type { CommentDataWithBody } from "./comment-with-body.js";
-import { filterCommentsWithBody } from "./comment-with-body.js";
-import { resolveAuthorsInfo } from "./lib/authors.js";
-import { createBatchUsersResolver } from "./lib/batch-users-resolver.js";
-import type { ResolveRoomInfoArgs } from "./lib/types.js";
+} from "./comment-body";
+import type { CommentDataWithBody } from "./comment-with-body";
+import { filterCommentsWithBody } from "./comment-with-body";
+import { resolveAuthorsInfo } from "./lib/authors";
+import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import type { ResolveRoomInfoArgs } from "./lib/types";
 
 /** @internal */
 export const getUnreadComments = ({

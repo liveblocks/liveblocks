@@ -1,5 +1,5 @@
-import type { Node } from "../ast/index.js";
-import { assertNever } from "../lib/assert.js";
+import type { Node } from "../ast";
+import { assertNever } from "../lib/assert";
 
 // function escape(value: string, chars: RegExp): string {
 //   return value.replace(chars, "\\$1");

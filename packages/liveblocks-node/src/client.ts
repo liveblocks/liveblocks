@@ -46,14 +46,14 @@ import {
   urljoin,
 } from "@liveblocks/core";
 
-import { Session } from "./Session.js";
+import { Session } from "./Session";
 import {
   assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
   getBaseUrl,
   normalizeStatusCode,
-} from "./utils.js";
+} from "./utils";
 
 type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
   ? JsonObject

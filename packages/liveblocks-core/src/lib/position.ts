@@ -44,7 +44,7 @@
  * - '!O' < '!~'  (like how .5  < .9)
  *
  */
-import type { Brand } from "./utils.js";
+import type { Brand } from "./utils";
 
 /**
  * A valid/verified "position" string. These values are used as "parentKey"s by

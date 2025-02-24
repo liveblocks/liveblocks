@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-import { LiveblocksSchema } from "../../dist/index.js";
+import { LiveblocksSchema } from "../../dist";
 
 const ERROR_CHARACTER = "⚠";
 

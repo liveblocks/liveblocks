@@ -1,5 +1,5 @@
-import { ThreadDB } from "../ThreadDB.js";
-import { dummyThreadData } from "./_dummies.js";
+import { ThreadDB } from "../ThreadDB";
+import { dummyThreadData } from "./_dummies";
 
 describe("ThreadDB", () => {
   test("empty db", () => {

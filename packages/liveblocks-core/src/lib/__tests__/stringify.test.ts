@@ -1,4 +1,4 @@
-import { stableStringify } from "../stringify.js";
+import { stableStringify } from "../stringify";
 
 describe("stable stringify", () => {
   it("returns the same result as JSON.stringify", () => {

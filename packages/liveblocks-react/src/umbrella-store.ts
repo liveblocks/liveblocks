@@ -40,12 +40,12 @@ import {
   stableStringify,
 } from "@liveblocks/core";
 
-import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult.js";
-import { autobind } from "./lib/autobind.js";
-import { find } from "./lib/itertools.js";
-import { shallow2 } from "./lib/shallow2.js";
-import type { ReadonlyThreadDB } from "./ThreadDB.js";
-import { ThreadDB } from "./ThreadDB.js";
+import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
+import { autobind } from "./lib/autobind";
+import { find } from "./lib/itertools";
+import { shallow2 } from "./lib/shallow2";
+import type { ReadonlyThreadDB } from "./ThreadDB";
+import { ThreadDB } from "./ThreadDB";
 import type {
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
@@ -53,7 +53,7 @@ import type {
   ThreadsAsyncResult,
   ThreadsQuery,
   UserNotificationSettingsAsyncResult,
-} from "./types/index.js";
+} from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>

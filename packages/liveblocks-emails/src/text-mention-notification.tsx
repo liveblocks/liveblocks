@@ -11,29 +11,29 @@ import type {
 } from "@liveblocks/node";
 import type { ReactNode } from "react";
 
-import type { LexicalMentionNodeWithContext } from "./lexical-editor.js";
+import type { LexicalMentionNodeWithContext } from "./lexical-editor";
 import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
-} from "./lexical-editor.js";
-import { resolveAuthorsInfo } from "./lib/authors.js";
-import { createBatchUsersResolver } from "./lib/batch-users-resolver.js";
-import type { ResolveRoomInfoArgs } from "./lib/types.js";
+} from "./lexical-editor";
+import { resolveAuthorsInfo } from "./lib/authors";
+import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import type { ResolveRoomInfoArgs } from "./lib/types";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
-} from "./liveblocks-text-editor.js";
+} from "./liveblocks-text-editor";
 import {
   convertTextEditorNodesAsHtml,
   convertTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
-} from "./liveblocks-text-editor.js";
-import type { TiptapMentionNodeWithContext } from "./tiptap-editor.js";
+} from "./liveblocks-text-editor";
+import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
   getSerializedTiptapState,
-} from "./tiptap-editor.js";
+} from "./tiptap-editor";
 
 /** @internal hidden types */
 type RoomTextEditor = {

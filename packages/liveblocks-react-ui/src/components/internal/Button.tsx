@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { forwardRef } from "react";
 
 import { ChevronDownIcon } from "../../icons/ChevronDown.jsx";
-import { classNames } from "../../utils/class-names.js";
+import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {
   variant?: "default" | "toolbar" | "outline" | "primary" | "secondary";

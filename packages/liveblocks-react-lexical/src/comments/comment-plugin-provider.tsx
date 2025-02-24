@@ -26,13 +26,13 @@ import {
   useState,
 } from "react";
 
-import $getThreadMarkIds from "./get-thread-mark-ids.js";
+import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
   $createThreadMarkNode,
   $isThreadMarkNode,
   ThreadMarkNode,
-} from "./thread-mark-node.js";
-import $unwrapThreadMarkNode from "./unwrap-thread-mark-node.js";
+} from "./thread-mark-node";
+import $unwrapThreadMarkNode from "./unwrap-thread-mark-node";
 
 export const OnDeleteThreadCallback = createContext<
   ((threadId: string) => void) | null

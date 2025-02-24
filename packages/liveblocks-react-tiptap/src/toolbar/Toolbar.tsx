@@ -33,10 +33,10 @@ import type {
 } from "react";
 import { forwardRef, useCallback, useContext, useMemo } from "react";
 
-import { classNames } from "../classnames.js";
-import { EditorProvider, useCurrentEditor } from "../context.js";
-import type { AiExtensionStorage, ExtendedChainedCommands } from "../types.js";
-import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared.js";
+import { classNames } from "../classnames";
+import { EditorProvider, useCurrentEditor } from "../context";
+import type { AiExtensionStorage, ExtendedChainedCommands } from "../types";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
 
 export const BLOCK_SELECT_SIDE_OFFSET = 10;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;

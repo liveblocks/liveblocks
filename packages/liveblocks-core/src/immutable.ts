@@ -2,17 +2,17 @@ import {
   findNonSerializableValue,
   isLiveList,
   isLiveObject,
-} from "./crdts/liveblocks-helpers.js";
-import { LiveList } from "./crdts/LiveList.js";
-import { LiveMap } from "./crdts/LiveMap.js";
-import { LiveObject } from "./crdts/LiveObject.js";
-import { LiveRegister } from "./crdts/LiveRegister.js";
-import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson.js";
-import type { StorageUpdate } from "./crdts/StorageUpdates.js";
-import * as console from "./lib/fancy-console.js";
-import { isPlainObject } from "./lib/guards.js";
-import type { Json, JsonObject } from "./lib/Json.js";
-import { isJsonObject } from "./lib/Json.js";
+} from "./crdts/liveblocks-helpers";
+import { LiveList } from "./crdts/LiveList";
+import { LiveMap } from "./crdts/LiveMap";
+import { LiveObject } from "./crdts/LiveObject";
+import { LiveRegister } from "./crdts/LiveRegister";
+import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
+import type { StorageUpdate } from "./crdts/StorageUpdates";
+import * as console from "./lib/fancy-console";
+import { isPlainObject } from "./lib/guards";
+import type { Json, JsonObject } from "./lib/Json";
+import { isJsonObject } from "./lib/Json";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O

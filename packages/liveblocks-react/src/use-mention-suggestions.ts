@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   useMentionSuggestionsCache,
   useResolveMentionSuggestions,
-} from "./room.js";
+} from "./room";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 

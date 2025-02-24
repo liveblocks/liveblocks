@@ -38,11 +38,11 @@ import {
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
-} from "../../constants.js";
-import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links.js";
-import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links.js";
-import { isComposerBodyMention } from "../../slate/plugins/mentions.js";
-import { isText } from "../../slate/utils/is-text.js";
+} from "../../constants";
+import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
+import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
+import { isComposerBodyMention } from "../../slate/plugins/mentions";
+import { isText } from "../../slate/utils/is-text";
 import type {
   ComposerBody,
   ComposerBodyAutoLink,
@@ -50,18 +50,18 @@ import type {
   ComposerBodyMention,
   ComposerBodyText,
   Direction,
-} from "../../types.js";
-import { getFiles } from "../../utils/data-transfer.js";
-import { exists } from "../../utils/exists.js";
-import { useInitial } from "../../utils/use-initial.js";
-import { useLatest } from "../../utils/use-latest.js";
+} from "../../types";
+import { getFiles } from "../../utils/data-transfer";
+import { exists } from "../../utils/exists";
+import { useInitial } from "../../utils/use-initial";
+import { useLatest } from "../../utils/use-latest";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
-} from "../Comment/utils.js";
-import { useComposer, useComposerAttachmentsContext } from "./contexts.js";
-import type { FloatingAlignment, FloatingPosition } from "./types.js";
+} from "../Comment/utils";
+import { useComposer, useComposerAttachmentsContext } from "./contexts";
+import type { FloatingAlignment, FloatingPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention

@@ -4,7 +4,7 @@ import { useRoomInfo } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { classNames } from "../../utils/class-names.js";
+import { classNames } from "../../utils/class-names";
 
 export interface RoomProps extends ComponentProps<"span"> {
   roomId: string;

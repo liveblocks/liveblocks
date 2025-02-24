@@ -8,9 +8,9 @@ import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { classNames } from "../classnames.js";
-import { THREADS_PLUGIN_KEY } from "../types.js";
-import { getRectFromCoords } from "../utils.js";
+import { classNames } from "../classnames";
+import { THREADS_PLUGIN_KEY } from "../types";
+import { getRectFromCoords } from "../utils";
 
 const DEFAULT_GAP = 20;
 const DEFAULT_ACTIVE_THREAD_OFFSET = -12;

@@ -2,14 +2,14 @@ import * as PopoverPrimitive from "@radix-ui/react-popover";
 import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 
-import { useLiveblocksUIConfig } from "../../config.js";
+import { useLiveblocksUIConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
-} from "../../constants.js";
+} from "../../constants";
 import { SearchIcon } from "../../icons/Search.jsx";
 import { SpinnerIcon } from "../../icons/Spinner.jsx";
-import { useOverrides } from "../../overrides.js";
+import { useOverrides } from "../../overrides";
 import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker/index.jsx";
 import type {
   EmojiPickerContentCategoryHeaderProps,
@@ -19,8 +19,8 @@ import type {
   EmojiPickerContentGridProps,
   EmojiPickerContentLoadingProps,
   EmojiPickerContentRowProps,
-} from "../../primitives/EmojiPicker/types.js";
-import { classNames } from "../../utils/class-names.js";
+} from "../../primitives/EmojiPicker/types";
+import { classNames } from "../../utils/class-names";
 import { Emoji } from "./Emoji.jsx";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {

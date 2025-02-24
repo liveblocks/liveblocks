@@ -4,19 +4,19 @@ import { http, HttpResponse } from "msw";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
-} from "../liveblocks-text-editor.js";
+} from "../liveblocks-text-editor";
 import type {
   TextMentionNotificationData,
   TextMentionNotificationEmailBaseData,
   TextMentionNotificationEmailDataAsHtml,
   TextMentionNotificationEmailDataAsReact,
-} from "../text-mention-notification.js";
+} from "../text-mention-notification";
 import {
   extractTextMentionNotificationData,
   prepareTextMentionNotificationEmailAsHtml,
   prepareTextMentionNotificationEmailAsReact,
   prepareTextMentionNotificationEmailBaseData,
-} from "../text-mention-notification.js";
+} from "../text-mention-notification";
 import {
   generateInboxNotificationId,
   generateThreadId,
@@ -32,13 +32,13 @@ import {
   server,
   SERVER_BASE_URL,
   textMentionContentAsReactToStaticMarkup,
-} from "./_helpers.js";
+} from "./_helpers";
 import {
   createTipTapMentionNodeWithContext,
   docUpdateBuffer as docUpdateBufferTiptap,
   MENTION_ID as MENTION_ID_TIPTAP,
   MENTIONED_USER_ID as MENTIONED_USER_ID_TIPTAP,
-} from "./_tiptap-helpers.js";
+} from "./_tiptap-helpers";
 
 describe("text mention notification", () => {
   beforeAll(() => server.listen());

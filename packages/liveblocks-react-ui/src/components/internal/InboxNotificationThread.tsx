@@ -11,9 +11,9 @@ import {
   type CommentOverrides,
   type GlobalOverrides,
   useOverrides,
-} from "../../overrides.js";
+} from "../../overrides";
 import * as CommentPrimitive from "../../primitives/Comment/index.jsx";
-import { classNames } from "../../utils/class-names.js";
+import { classNames } from "../../utils/class-names";
 import {
   CommentMention,
   CommentNonInteractiveFileAttachment,

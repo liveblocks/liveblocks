@@ -15,11 +15,11 @@ import type { MutableRefObject, ReactNode } from "react";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { Doc } from "yjs";
 
-import { CommentPluginProvider } from "./comments/comment-plugin-provider.js";
-import { ThreadMarkNode } from "./comments/thread-mark-node.js";
-import { MentionNode } from "./mentions/mention-node.js";
-import { MentionPlugin } from "./mentions/mention-plugin.js";
-import { useRootElement } from "./use-root-element.js";
+import { CommentPluginProvider } from "./comments/comment-plugin-provider";
+import { ThreadMarkNode } from "./comments/thread-mark-node";
+import { MentionNode } from "./mentions/mention-node";
+import { MentionPlugin } from "./mentions/mention-plugin";
+import { useRootElement } from "./use-root-element";
 
 export type EditorStatus =
   /* The editor state is not loaded and has not been requested. */

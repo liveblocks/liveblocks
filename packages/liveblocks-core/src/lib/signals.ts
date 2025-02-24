@@ -3,11 +3,11 @@ import type {
   EventSource,
   Observable,
   UnsubscribeCallback,
-} from "../lib/EventSource.js";
-import { makeEventSource } from "../lib/EventSource.js";
-import { freeze } from "../lib/freeze.js";
-import type { JsonObject } from "../lib/Json.js";
-import { compactObject, raise } from "../lib/utils.js";
+} from "../lib/EventSource";
+import { makeEventSource } from "../lib/EventSource";
+import { freeze } from "../lib/freeze";
+import type { JsonObject } from "../lib/Json";
+import { compactObject, raise } from "../lib/utils";
 
 const kSinks = Symbol("kSinks");
 const kTrigger = Symbol("kTrigger");

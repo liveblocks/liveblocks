@@ -1,7 +1,7 @@
 import type {
   SerializedTiptapRootNode,
   TiptapMentionNodeWithContext,
-} from "../tiptap-editor.js";
+} from "../tiptap-editor";
 
 /**
  * A simple `Uint8Array` representing a tiptap document

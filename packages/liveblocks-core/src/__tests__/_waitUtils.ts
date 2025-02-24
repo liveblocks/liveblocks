@@ -1,6 +1,6 @@
-import type { Status } from "../connection.js";
-import { wait, withTimeout } from "../lib/utils.js";
-import type { OpaqueRoom } from "../room.js";
+import type { Status } from "../connection";
+import { wait, withTimeout } from "../lib/utils";
+import type { OpaqueRoom } from "../room";
 
 export async function waitFor(predicate: () => boolean): Promise<void> {
   const result = predicate();

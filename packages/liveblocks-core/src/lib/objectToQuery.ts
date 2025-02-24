@@ -1,4 +1,4 @@
-import { isPlainObject, isStartsWithOperator } from "./guards.js";
+import { isPlainObject, isStartsWithOperator } from "./guards";
 
 /**
  * Converts an object to a query string

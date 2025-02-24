@@ -1,6 +1,6 @@
-import type { Document, Node } from "../../ast/index.js";
-import type { ParserOptions } from "../index.js";
-import { parseDocument as originalParseDocument } from "../index.js";
+import type { Document, Node } from "../../ast";
+import type { ParserOptions } from "..";
+import { parseDocument as originalParseDocument } from "..";
 
 type Value = string | number | boolean | null | undefined | Node | Value[];
 

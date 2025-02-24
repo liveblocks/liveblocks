@@ -1,5 +1,5 @@
-import { Batch } from "../batch.js";
-import { wait } from "../utils.js";
+import { Batch } from "../batch";
+import { wait } from "../utils";
 
 const SOME_TIME = 5;
 const ERROR_MESSAGE = "error";

@@ -2,7 +2,7 @@ import type { SyncSource } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import { useEffect, useState } from "react";
 
-import { useClient } from "./liveblocks.js";
+import { useClient } from "./liveblocks";
 
 /**
  * @private For internal use only. Do not rely on this hook.

@@ -18,19 +18,19 @@ import type {
   LexicalMentionNodeWithContext,
   SerializedLexicalNode,
   SerializedLexicalTextNode,
-} from "./lexical-editor.js";
-import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor.js";
-import { MENTION_CHARACTER } from "./lib/constants.js";
-import type { CSSProperties } from "./lib/css-properties.js";
-import { toInlineCSSString } from "./lib/css-properties.js";
+} from "./lexical-editor";
+import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor";
+import { MENTION_CHARACTER } from "./lib/constants";
+import type { CSSProperties } from "./lib/css-properties";
+import { toInlineCSSString } from "./lib/css-properties";
 import type {
   SerializedTiptapMark,
   SerializedTiptapMarkType,
   SerializedTiptapNode,
   SerializedTiptapTextNode,
   TiptapMentionNodeWithContext,
-} from "./tiptap-editor.js";
-import { isSerializedMentionNode as isSerializedTiptapMentionNode } from "./tiptap-editor.js";
+} from "./tiptap-editor";
+import { isSerializedMentionNode as isSerializedTiptapMentionNode } from "./tiptap-editor";
 
 type LiveblocksTextEditorTextFormat = {
   bold: boolean;

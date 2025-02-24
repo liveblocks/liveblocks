@@ -59,4 +59,4 @@ export function liveblocksSchema(): LanguageSupport {
   return new LanguageSupport(LiveblocksSchema);
 }
 
-export { linter } from "./linter.js";
+export { linter } from "./linter";

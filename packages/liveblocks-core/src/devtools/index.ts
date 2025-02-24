@@ -1,11 +1,11 @@
-import { kInternal } from "../internal.js";
-import type { Json, JsonObject } from "../lib/Json.js";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
-import type { UpdateYDocClientMsg } from "../protocol/ClientMsg.js";
-import type { YDocUpdateServerMsg } from "../protocol/ServerMsg.js";
-import type { OpaqueRoom, RoomEventMessage } from "../room.js";
-import { PKG_VERSION } from "../version.js";
-import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge.js";
+import { kInternal } from "../internal";
+import type { Json, JsonObject } from "../lib/Json";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { UpdateYDocClientMsg } from "../protocol/ClientMsg";
+import type { YDocUpdateServerMsg } from "../protocol/ServerMsg";
+import type { OpaqueRoom, RoomEventMessage } from "../room";
+import { PKG_VERSION } from "../version";
+import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 
 const VERSION = PKG_VERSION || "dev";
 let _devtoolsSetupHasRun = false;

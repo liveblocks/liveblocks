@@ -1,6 +1,6 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 
-import { isApple } from "./is-apple.js";
+import { isApple } from "./is-apple";
 
 const MODIFIERS = {
   alt: () => "altKey" as const,

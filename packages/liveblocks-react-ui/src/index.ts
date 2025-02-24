@@ -1,6 +1,6 @@
 import { detectDupes } from "@liveblocks/core";
 
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
@@ -28,8 +28,8 @@ export type { InboxNotificationListProps } from "./components/InboxNotificationL
 export { InboxNotificationList } from "./components/InboxNotificationList.jsx";
 export type { ThreadProps } from "./components/Thread.jsx";
 export { Thread } from "./components/Thread.jsx";
-export { LiveblocksUIConfig } from "./config.js";
-export * as Icon from "./icon.js";
+export { LiveblocksUIConfig } from "./config";
+export * as Icon from "./icon";
 export type {
   CommentOverrides,
   ComposerOverrides,
@@ -38,11 +38,11 @@ export type {
   LocalizationOverrides,
   Overrides,
   ThreadOverrides,
-} from "./overrides.js";
-export { useOverrides } from "./overrides.js";
-export type { ComposerSubmitComment } from "./primitives/index.js";
+} from "./overrides";
+export { useOverrides } from "./overrides";
+export type { ComposerSubmitComment } from "./primitives";
 export type {
   CommentAttachmentArgs,
   ComposerBodyMark,
   ComposerBodyMarks,
-} from "./types.js";
+} from "./types";

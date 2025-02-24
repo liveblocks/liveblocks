@@ -1,8 +1,8 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { LIVEBLOCKS_MENTION_TYPE } from "../types.js";
-import { Mention } from "./Mention.js";
+import { LIVEBLOCKS_MENTION_TYPE } from "../types";
+import { Mention } from "./Mention";
 
 export const MentionNode = Node.create<never, never>({
   name: LIVEBLOCKS_MENTION_TYPE,

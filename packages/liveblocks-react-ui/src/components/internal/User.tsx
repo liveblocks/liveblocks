@@ -4,9 +4,9 @@ import { useUser } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { useOverrides } from "../../overrides.js";
-import { useCurrentUserId } from "../../shared.js";
-import { classNames } from "../../utils/class-names.js";
+import { useOverrides } from "../../overrides";
+import { useCurrentUserId } from "../../shared";
+import { classNames } from "../../utils/class-names";
 
 export interface UserProps extends ComponentProps<"span"> {
   /**

@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 
-import { SortedList } from "../SortedList.js";
+import { SortedList } from "../SortedList";
 
 const asc = <T>(a: T, b: T) => a < b;
 const desc = <T>(a: T, b: T) => b < a;

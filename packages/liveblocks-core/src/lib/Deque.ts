@@ -1,4 +1,4 @@
-import { raise } from "./utils.js";
+import { raise } from "./utils";
 
 /**
  * A Deque (= Double Ended Queue) is like a stack, but where elements can be

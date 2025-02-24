@@ -2,13 +2,10 @@ import { nanoid, Permission } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import {
-  dummyThreadData,
-  dummyThreadInboxNotificationData,
-} from "./_dummies.js";
-import MockWebSocket from "./_MockWebSocket.js";
-import { mockGetThreads } from "./_restMocks.js";
-import { createContextsForTest } from "./_utils.js";
+import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import MockWebSocket from "./_MockWebSocket";
+import { mockGetThreads } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 

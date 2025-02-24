@@ -1,6 +1,6 @@
 import { shallow } from "@liveblocks/core";
 
-import { shallow2 } from "../shallow2.js";
+import { shallow2 } from "../shallow2";
 
 const THING1 = { a: 1 };
 const THING2 = { a: 2 };

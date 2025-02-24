@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 
-import type { Pos } from "../position.js";
+import type { Pos } from "../position";
 import {
   __after as after,
   __before as before,
@@ -10,7 +10,7 @@ import {
   __NUM_DIGITS as NUM_DIGITS,
   asPos,
   makePosition,
-} from "../position.js";
+} from "../position";
 
 const ZERO = nthDigit(0); // " "
 const ONE = nthDigit(1); // "!"

@@ -15,10 +15,10 @@ import type { JSXElementConstructor, ReactElement, ReactNode } from "react";
 import {
   createLiveblocksContext,
   getLiveblocksExtrasForClient,
-} from "../liveblocks.js";
-import { createRoomContext } from "../room.js";
-import { RoomProvider } from "./_liveblocks.config.js";
-import MockWebSocket from "./_MockWebSocket.js";
+} from "../liveblocks";
+import { createRoomContext } from "../room";
+import { RoomProvider } from "./_liveblocks.config";
+import MockWebSocket from "./_MockWebSocket";
 
 /**
  * Testing context for all tests. Sets up a default RoomProvider to wrap all

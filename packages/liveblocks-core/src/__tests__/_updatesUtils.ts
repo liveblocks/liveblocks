@@ -1,16 +1,10 @@
-import type { LiveListUpdates } from "../crdts/LiveList.js";
-import type { LiveObjectUpdateDelta } from "../crdts/LiveObject.js";
-import type { ToJson } from "../crdts/Lson.js";
-import type { UpdateDelta } from "../crdts/UpdateDelta.js";
-import { lsonToJson } from "../immutable.js";
-import type {
-  Json,
-  LiveMap,
-  Lson,
-  LsonObject,
-  StorageUpdate,
-} from "../index.js";
-import { assertNever } from "../lib/assert.js";
+import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "..";
+import type { LiveListUpdates } from "../crdts/LiveList";
+import type { LiveObjectUpdateDelta } from "../crdts/LiveObject";
+import type { ToJson } from "../crdts/Lson";
+import type { UpdateDelta } from "../crdts/UpdateDelta";
+import { lsonToJson } from "../immutable";
+import { assertNever } from "../lib/assert";
 
 export type JsonStorageUpdate =
   | JsonLiveListUpdate<Lson>

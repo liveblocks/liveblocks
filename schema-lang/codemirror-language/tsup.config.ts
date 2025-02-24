@@ -1,5 +1,5 @@
 import { defineConfig } from "tsup";
-import { lezer } from "./plugins/esbuild-plugin-lezer.js";
+import { lezer } from "./plugins/esbuild-plugin-lezer";
 
 export default defineConfig({
   entry: ["src/index.ts"],

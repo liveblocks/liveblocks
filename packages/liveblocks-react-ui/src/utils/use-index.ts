@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { clamp } from "./clamp.js";
-import { wrap } from "./wrap.js";
+import { clamp } from "./clamp";
+import { wrap } from "./wrap";
 
 type Options = {
   wrap: boolean;

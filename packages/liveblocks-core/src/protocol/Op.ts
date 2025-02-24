@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "../lib/Json.js";
+import type { Json, JsonObject } from "../lib/Json";
 
 export enum OpCode {
   INIT = 0,

@@ -1,4 +1,4 @@
-import { makePoller } from "../lib/Poller.js";
+import { makePoller } from "../lib/Poller";
 
 describe("Poller", () => {
   beforeEach(() => {

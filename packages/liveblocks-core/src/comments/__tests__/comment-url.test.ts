@@ -1,5 +1,5 @@
-import { nanoid } from "../../lib/nanoid.js";
-import { generateCommentUrl } from "../comment-url.js";
+import { nanoid } from "../../lib/nanoid";
+import { generateCommentUrl } from "../comment-url";
 
 const generateCommentId = (): string => "cm_" + nanoid();
 

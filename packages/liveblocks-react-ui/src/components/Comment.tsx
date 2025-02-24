@@ -42,26 +42,26 @@ import type {
   CommentOverrides,
   ComposerOverrides,
   GlobalOverrides,
-} from "../overrides.js";
-import { useOverrides } from "../overrides.js";
+} from "../overrides";
+import { useOverrides } from "../overrides";
+import type { ComposerSubmitComment } from "../primitives";
 import * as CommentPrimitive from "../primitives/Comment/index.jsx";
 import type {
   CommentBodyLinkProps,
   CommentBodyMentionProps,
   CommentLinkProps,
   CommentMentionProps,
-} from "../primitives/Comment/types.js";
+} from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer/index.jsx";
-import type { ComposerSubmitComment } from "../primitives/index.js";
 import { Timestamp } from "../primitives/Timestamp.jsx";
-import { useCurrentUserId } from "../shared.js";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions.js";
-import type { CommentAttachmentArgs } from "../types.js";
-import { classNames } from "../utils/class-names.js";
-import { download } from "../utils/download.js";
-import { useRefs } from "../utils/use-refs.js";
-import { useVisibleCallback } from "../utils/use-visible.js";
-import { useWindowFocus } from "../utils/use-window-focus.js";
+import { useCurrentUserId } from "../shared";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { CommentAttachmentArgs } from "../types";
+import { classNames } from "../utils/class-names";
+import { download } from "../utils/download";
+import { useRefs } from "../utils/use-refs";
+import { useVisibleCallback } from "../utils/use-visible";
+import { useWindowFocus } from "../utils/use-window-focus";
 import type { ComposerProps } from "./Composer.jsx";
 import { Composer } from "./Composer.jsx";
 import {

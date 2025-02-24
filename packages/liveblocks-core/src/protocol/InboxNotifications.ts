@@ -1,5 +1,5 @@
-import type { DAD } from "../globals/augmentation.js";
-import type { DateToString } from "../lib/DateToString.js";
+import type { DAD } from "../globals/augmentation";
+import type { DateToString } from "../lib/DateToString";
 
 export type InboxNotificationThreadData = {
   kind: "thread";

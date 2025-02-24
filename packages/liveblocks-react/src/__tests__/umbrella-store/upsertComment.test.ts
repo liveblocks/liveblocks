@@ -1,5 +1,5 @@
-import { applyUpsertComment } from "../../umbrella-store.js";
-import { createComment, createThread } from "./_dummies.js";
+import { applyUpsertComment } from "../../umbrella-store";
+import { createComment, createThread } from "./_dummies";
 
 describe("upsertComment", () => {
   it("should add a new comment to an empty thread", () => {

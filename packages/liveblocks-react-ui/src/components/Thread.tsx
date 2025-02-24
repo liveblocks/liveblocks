@@ -35,10 +35,10 @@ import type {
   ComposerOverrides,
   GlobalOverrides,
   ThreadOverrides,
-} from "../overrides.js";
-import { useOverrides } from "../overrides.js";
-import { classNames } from "../utils/class-names.js";
-import { findLastIndex } from "../utils/find-last-index.js";
+} from "../overrides";
+import { useOverrides } from "../overrides";
+import { classNames } from "../utils/class-names";
+import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment.jsx";
 import { Comment } from "./Comment.jsx";
 import type { ComposerProps } from "./Composer.jsx";

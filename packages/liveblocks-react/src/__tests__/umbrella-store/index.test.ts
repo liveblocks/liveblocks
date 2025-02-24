@@ -1,7 +1,7 @@
 import { kInternal } from "@liveblocks/core";
 
-import { ThreadDB } from "../../ThreadDB.js";
-import { UmbrellaStore } from "../../umbrella-store.js";
+import { ThreadDB } from "../../ThreadDB";
+import { UmbrellaStore } from "../../umbrella-store";
 
 const empty1n = {
   sortedNotifications: [],

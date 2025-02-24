@@ -24,11 +24,8 @@
 import type { LexicalNode, RangeSelection } from "lexical";
 import { $isElementNode, $isTextNode } from "lexical";
 
-import type { ThreadMarkNode } from "./thread-mark-node.js";
-import {
-  $createThreadMarkNode,
-  $isThreadMarkNode,
-} from "./thread-mark-node.js";
+import type { ThreadMarkNode } from "./thread-mark-node";
+import { $createThreadMarkNode, $isThreadMarkNode } from "./thread-mark-node";
 
 export default function $wrapSelectionInThreadMarkNode(
   selection: RangeSelection,

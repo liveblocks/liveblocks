@@ -1,4 +1,4 @@
-import { memoize } from "./memoize.js";
+import { memoize } from "./memoize";
 
 // Avoid creating Intl formatters on every invocation.
 

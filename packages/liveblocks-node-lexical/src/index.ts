@@ -15,13 +15,10 @@ import type {
 import { $getRoot } from "lexical";
 import { applyUpdate, Doc, encodeStateAsUpdate, encodeStateVector } from "yjs";
 
-import {
-  createNoOpProvider,
-  registerCollaborationListeners,
-} from "./collab.js";
-import { MentionNode } from "./MentionNodeLite.js";
-import { ThreadMarkNode } from "./ThreadNodeLite.js";
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
+import { createNoOpProvider, registerCollaborationListeners } from "./collab";
+import { MentionNode } from "./MentionNodeLite";
+import { ThreadMarkNode } from "./ThreadNodeLite";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 

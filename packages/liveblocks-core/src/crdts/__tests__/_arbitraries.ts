@@ -1,10 +1,10 @@
 import * as fc from "fast-check";
 
-import type { Json } from "../../lib/Json.js";
-import { LiveList } from "../LiveList.js";
-import { LiveMap } from "../LiveMap.js";
-import { LiveObject } from "../LiveObject.js";
-import type { LiveStructure, Lson } from "../Lson.js";
+import type { Json } from "../../lib/Json";
+import { LiveList } from "../LiveList";
+import { LiveMap } from "../LiveMap";
+import { LiveObject } from "../LiveObject";
+import type { LiveStructure, Lson } from "../Lson";
 
 // NOTE: Ignoring __proto__ keys for now, there may be an issue there?
 export const key = fc.string().filter((s) => s !== "__proto__");

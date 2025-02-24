@@ -1,10 +1,10 @@
 import type { Editor } from "slate";
 import { Element, Node, Range, Transforms } from "slate";
 
-import type { ComposerBodyCustomLink } from "../../types.js";
-import { isPlainText, isText } from "../utils/is-text.js";
-import { filterActiveMarks } from "../utils/marks.js";
-import { selectionContainsInlines } from "../utils/selection-contains-inlines.js";
+import type { ComposerBodyCustomLink } from "../../types";
+import { isPlainText, isText } from "../utils/is-text";
+import { filterActiveMarks } from "../utils/marks";
+import { selectionContainsInlines } from "../utils/selection-contains-inlines";
 
 function isUrl(string: string) {
   try {

@@ -27,7 +27,7 @@ for (const type of types) {
 
 const config = {
   tspegjs: {
-    customHeader: 'import * as ast from "../ast/index.js";\n',
+    customHeader: 'import * as ast from "../ast";\n',
   },
   returnTypes,
 };

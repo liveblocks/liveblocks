@@ -8,20 +8,20 @@
  *   const { wss, delegates } = defineBehavior(ALWAYS_AUTH_AS(2), SOCKET_AUTO_OPEN);
  */
 
-import type { AuthValue } from "../auth-manager.js";
-import type { Delegates } from "../connection.js";
-import { StopRetrying } from "../connection.js";
-import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken.js";
-import { ServerMsgCode } from "../protocol/ServerMsg.js";
-import type { WebsocketCloseCodes } from "../types/IWebSocket.js";
-import type { MockWebSocket } from "./_MockWebSocketServer.js";
-import { MockWebSocketServer } from "./_MockWebSocketServer.js";
+import type { AuthValue } from "../auth-manager";
+import type { Delegates } from "../connection";
+import { StopRetrying } from "../connection";
+import type { AuthToken, ParsedAuthToken } from "../protocol/AuthToken";
+import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { WebsocketCloseCodes } from "../types/IWebSocket";
+import type { MockWebSocket } from "./_MockWebSocketServer";
+import { MockWebSocketServer } from "./_MockWebSocketServer";
 import {
   makeAccessToken,
   makeIDToken,
   makeSecretLegacyToken,
   serverMessage,
-} from "./_utils.js";
+} from "./_utils";
 
 type AuthBehavior = () => AuthValue;
 type SocketBehavior = (wss: MockWebSocketServer) => MockWebSocket;

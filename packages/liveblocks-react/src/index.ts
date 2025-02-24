@@ -1,15 +1,15 @@
 /* eslint-disable simple-import-sort/exports */
 import { detectDupes } from "@liveblocks/core";
 
-import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version.js";
+import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-export { ClientSideSuspense } from "./ClientSideSuspense.js";
+export { ClientSideSuspense } from "./ClientSideSuspense";
 export type {
   MutationContext,
   UseStorageStatusOptions,
   UseThreadsOptions,
-} from "./types/index.js";
+} from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";
@@ -28,7 +28,7 @@ export {
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
   useSyncStatus,
-} from "./liveblocks.js";
+} from "./liveblocks";
 export {
   createRoomContext,
   RoomContext,
@@ -64,7 +64,7 @@ export {
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
   useHistoryVersionData,
-} from "./room.js";
+} from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
@@ -80,7 +80,7 @@ export {
   useAttachmentUrl,
   useHistoryVersions,
   useRoomNotificationSettings,
-} from "./room.js";
+} from "./room";
 export {
   useInboxNotifications,
   useNotificationSettings,
@@ -89,4 +89,4 @@ export {
   useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,
-} from "./liveblocks.js";
+} from "./liveblocks";

@@ -1,7 +1,7 @@
-import type { LiveListUpdates } from "../crdts/LiveList.js";
-import type { LiveMapUpdates } from "../crdts/LiveMap.js";
-import type { LiveObjectUpdates } from "../crdts/LiveObject.js";
-import type { Lson, LsonObject } from "../crdts/Lson.js";
+import type { LiveListUpdates } from "../crdts/LiveList";
+import type { LiveMapUpdates } from "../crdts/LiveMap";
+import type { LiveObjectUpdates } from "../crdts/LiveObject";
+import type { Lson, LsonObject } from "../crdts/Lson";
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 

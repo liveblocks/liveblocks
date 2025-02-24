@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 
-import { parse as parseAndCheck } from "../index.js";
-import { parseDocument as parseOnly } from "../parser/index.js";
+import { parse as parseAndCheck } from "..";
+import { parseDocument as parseOnly } from "../parser";
 
 function* readFiles(dirpath: string): IterableIterator<string> {
   const files = fs.readdirSync(dirpath);

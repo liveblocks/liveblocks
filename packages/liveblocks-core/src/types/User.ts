@@ -1,6 +1,6 @@
-import type { DP, DU } from "../globals/augmentation.js";
-import type { JsonObject } from "../lib/Json.js";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta.js";
+import type { DP, DU } from "../globals/augmentation";
+import type { JsonObject } from "../lib/Json";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 
 /**
  * Represents a user connected in a room. Treated as immutable.

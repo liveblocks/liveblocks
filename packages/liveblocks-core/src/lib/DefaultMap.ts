@@ -1,4 +1,4 @@
-import { raise } from "./utils.js";
+import { raise } from "./utils";
 
 /**
  * Like ES6 map, but takes a default (factory) function which will be used

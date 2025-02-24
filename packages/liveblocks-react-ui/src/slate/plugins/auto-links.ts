@@ -1,10 +1,10 @@
 import type { NodeEntry, Text } from "slate";
 import { Editor, Element, Node, Path, Range, Transforms } from "slate";
 
-import type { ComposerBodyAutoLink } from "../../types.js";
-import { isPlainText, isText } from "../utils/is-text.js";
-import { filterActiveMarks } from "../utils/marks.js";
-import { isComposerBodyCustomLink } from "./custom-links.js";
+import type { ComposerBodyAutoLink } from "../../types";
+import { isPlainText, isText } from "../utils/is-text";
+import { filterActiveMarks } from "../utils/marks";
+import { isComposerBodyCustomLink } from "./custom-links";
 
 /**
  * This implementation is inspired by Lexical's AutoLink plugin.

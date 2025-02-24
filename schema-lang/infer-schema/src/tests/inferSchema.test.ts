@@ -2,8 +2,8 @@ import type { PlainLsonObject } from "@liveblocks/core";
 import { parse } from "@liveblocks/schema";
 import fc from "fast-check";
 
-import { inferSchema } from "../index.js";
-import { plainLsonArbitraries } from "./arbitraries.js";
+import { inferSchema } from "..";
+import { plainLsonArbitraries } from "./arbitraries";
 import {
   BASIC_LIVE_OBJECT,
   BASIC_MERGE,
@@ -14,7 +14,7 @@ import {
   EMPTY_KEY,
   KEY_WITH_WHITESPACE,
   RESERVED_KEY,
-} from "./testData.js";
+} from "./testData";
 
 describe("inferSchema", () => {
   const testCases = {

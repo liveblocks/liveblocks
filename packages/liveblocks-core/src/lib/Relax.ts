@@ -1,4 +1,4 @@
-import type { Resolve } from "./Resolve.js";
+import type { Resolve } from "./Resolve";
 
 /**
  * Relaxes a discriminated union type definition, by explicitly adding

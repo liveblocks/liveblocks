@@ -1,4 +1,4 @@
-import * as _ from "../index.js";
+import * as _ from "..";
 
 test.todo("Write test for _.FloatingComposer");
 test.todo("Write test for _.FloatingThreads");

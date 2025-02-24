@@ -26,8 +26,8 @@ import type {
 } from "react";
 import { forwardRef, useCallback, useMemo, useState } from "react";
 
-import type { GlobalComponents } from "../components.js";
-import { useComponents } from "../components.js";
+import type { GlobalComponents } from "../components";
+import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check.jsx";
 import { DeleteIcon } from "../icons/Delete.jsx";
 import { EllipsisIcon } from "../icons/Ellipsis.jsx";
@@ -36,13 +36,13 @@ import type {
   CommentOverrides,
   GlobalOverrides,
   InboxNotificationOverrides,
-} from "../overrides.js";
-import { useOverrides } from "../overrides.js";
+} from "../overrides";
+import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives/Timestamp.jsx";
-import { useCurrentUserId } from "../shared.js";
-import type { SlotProp } from "../types.js";
-import { classNames } from "../utils/class-names.js";
-import { generateURL } from "../utils/url.js";
+import { useCurrentUserId } from "../shared";
+import type { SlotProp } from "../types";
+import { classNames } from "../utils/class-names";
+import { generateURL } from "../utils/url";
 import { Avatar, type AvatarProps } from "./internal/Avatar.jsx";
 import { Button } from "./internal/Button.jsx";
 import {

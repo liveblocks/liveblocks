@@ -3,7 +3,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { applyUpdate, Doc, encodeStateAsUpdate } from "yjs";
 
-import { withProsemirrorDocument } from "../document.js";
+import { withProsemirrorDocument } from "../document";
 
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 

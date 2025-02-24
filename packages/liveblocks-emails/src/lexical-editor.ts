@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "@liveblocks/core";
 import * as Y from "yjs";
 
-import { isMentionNodeAttributeId, isString } from "./lib/utils.js";
+import { isMentionNodeAttributeId, isString } from "./lib/utils";
 
 export interface SerializedBaseLexicalNode {
   type: string;

@@ -2,10 +2,10 @@ import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
-import { useOverrides } from "../../overrides.js";
-import type { ComponentPropsWithSlot } from "../../types.js";
-import { classNames } from "../../utils/class-names.js";
-import { listFormat } from "../../utils/intl.js";
+import { useOverrides } from "../../overrides";
+import type { ComponentPropsWithSlot } from "../../types";
+import { classNames } from "../../utils/class-names";
+import { listFormat } from "../../utils/intl";
 
 export interface ListProps extends ComponentPropsWithSlot<"span"> {
   values: ReactNode[];

@@ -9,8 +9,8 @@ import type {
   ComposerBodyInlineElement,
   ComposerBodyParagraph,
   ComposerBodyText,
-} from "../../types.js";
-import { getFiles } from "../../utils/data-transfer.js";
+} from "../../types";
+import { getFiles } from "../../utils/data-transfer";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 

@@ -37,8 +37,8 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { useLiveblocksUIConfig } from "../config.js";
-import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants.js";
+import { useLiveblocksUIConfig } from "../config";
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment.jsx";
 import { BoldIcon } from "../icons/Bold.jsx";
 import { CodeIcon } from "../icons/Code.jsx";
@@ -47,13 +47,13 @@ import { ItalicIcon } from "../icons/Italic.jsx";
 import { MentionIcon } from "../icons/Mention.jsx";
 import { SendIcon } from "../icons/Send.jsx";
 import { StrikethroughIcon } from "../icons/Strikethrough.jsx";
-import type { ComposerOverrides, GlobalOverrides } from "../overrides.js";
-import { useOverrides } from "../overrides.js";
+import type { ComposerOverrides, GlobalOverrides } from "../overrides";
+import { useOverrides } from "../overrides";
 import {
   useComposer,
   useComposerAttachmentsContext,
   useComposerEditorContext,
-} from "../primitives/Composer/contexts.js";
+} from "../primitives/Composer/contexts";
 import * as ComposerPrimitive from "../primitives/Composer/index.jsx";
 import type {
   ComposerEditorComponents,
@@ -64,12 +64,12 @@ import type {
   ComposerFormProps,
   ComposerMarkToggleProps,
   ComposerSubmitComment,
-} from "../primitives/Composer/types.js";
-import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils.js";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions.js";
-import type { ComposerBodyMark } from "../types.js";
-import { classNames } from "../utils/class-names.js";
-import { useControllableState } from "../utils/use-controllable-state.js";
+} from "../primitives/Composer/types";
+import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
+import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { ComposerBodyMark } from "../types";
+import { classNames } from "../utils/class-names";
+import { useControllableState } from "../utils/use-controllable-state";
 import { FileAttachment } from "./internal/Attachment.jsx";
 import { Attribution } from "./internal/Attribution.jsx";
 import { Avatar } from "./internal/Avatar.jsx";

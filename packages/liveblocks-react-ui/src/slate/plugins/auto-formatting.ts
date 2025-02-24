@@ -5,9 +5,9 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 
-import { getCharacterBefore } from "../utils/get-character.js";
-import { getMatchRange } from "../utils/get-match-range.js";
-import { isEmptyString } from "../utils/is-empty-string.js";
+import { getCharacterBefore } from "../utils/get-character";
+import { getMatchRange } from "../utils/get-match-range";
+import { isEmptyString } from "../utils/is-empty-string";
 
 interface MarkFormatter {
   type: "mark";

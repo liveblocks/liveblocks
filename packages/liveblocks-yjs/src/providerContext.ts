@@ -1,7 +1,7 @@
 import type { OpaqueRoom } from "@liveblocks/core";
 import { Doc } from "yjs";
 
-import { LiveblocksYjsProvider, type ProviderOptions } from "./provider.js";
+import { LiveblocksYjsProvider, type ProviderOptions } from "./provider";
 
 /* NOTE:
       the purpose of the providersMap is to keep the same provider alive across renders

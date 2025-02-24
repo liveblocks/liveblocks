@@ -17,14 +17,14 @@ import {
   useState,
 } from "react";
 
-import { classNames } from "../classnames.js";
-import { useRootElement } from "../use-root-element.js";
+import { classNames } from "../classnames";
+import { useRootElement } from "../use-root-element";
 import {
   ActiveThreadsContext,
   type ThreadToNodesMap,
-} from "./comment-plugin-provider.js";
-import { ThreadToNodesContext } from "./comment-plugin-provider.js";
-import { $isThreadMarkNode } from "./thread-mark-node.js";
+} from "./comment-plugin-provider";
+import { ThreadToNodesContext } from "./comment-plugin-provider";
+import { $isThreadMarkNode } from "./thread-mark-node";
 
 const DEFAULT_GAP = 20;
 const DEFAULT_ACTIVE_THREAD_OFFSET = -12;

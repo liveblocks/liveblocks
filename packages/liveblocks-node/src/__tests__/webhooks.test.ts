@@ -6,7 +6,7 @@ import {
   isThreadNotificationEvent,
   type WebhookEvent,
   WebhookHandler,
-} from "../webhooks.js";
+} from "../webhooks";
 
 describe("WebhookHandler", () => {
   const secret = "whsec_sFOoBaR78ZZNyOl0TxbObFZWeo3rLg+dA";

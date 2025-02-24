@@ -1,7 +1,7 @@
-import { isPlainObject } from "../lib/guards.js";
-import type { Json } from "../lib/Json.js";
-import { b64decode, tryParseJson } from "../lib/utils.js";
-import type { IUserInfo } from "./BaseUserMeta.js";
+import { isPlainObject } from "../lib/guards";
+import type { Json } from "../lib/Json";
+import { b64decode, tryParseJson } from "../lib/utils";
+import type { IUserInfo } from "./BaseUserMeta";
 
 export enum Permission {
   Read = "room:read",

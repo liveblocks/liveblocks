@@ -10,8 +10,8 @@ import type {
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
-import { Mention } from "./mention-component.js";
-import { User } from "./user.js";
+import { Mention } from "./mention-component";
+import { User } from "./user";
 
 const MENTION_CHARACTER = "@";
 

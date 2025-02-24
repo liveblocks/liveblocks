@@ -4,9 +4,9 @@ import type { HistoryVersion } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef } from "react";
 
-import { useOverrides } from "../overrides.js";
-import { Timestamp } from "../primitives/index.js";
-import { classNames } from "../utils/class-names.js";
+import { useOverrides } from "../overrides";
+import { Timestamp } from "../primitives";
+import { classNames } from "../utils/class-names";
 import { List } from "./internal/List.jsx";
 import { User } from "./internal/User.jsx";
 

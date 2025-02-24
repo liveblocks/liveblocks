@@ -1,13 +1,13 @@
-import { assertNever } from "../lib/assert.js";
-import type { Pos } from "../lib/position.js";
-import { asPos } from "../lib/position.js";
-import type { CreateOp, Op } from "../protocol/Op.js";
-import { OpCode } from "../protocol/Op.js";
-import type { SerializedCrdt } from "../protocol/SerializedCrdt.js";
-import type * as DevTools from "../types/DevToolsTreeNode.js";
-import type { Immutable } from "../types/Immutable.js";
-import type { LiveNode, Lson } from "./Lson.js";
-import type { StorageUpdate } from "./StorageUpdates.js";
+import { assertNever } from "../lib/assert";
+import type { Pos } from "../lib/position";
+import { asPos } from "../lib/position";
+import type { CreateOp, Op } from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
+import type { SerializedCrdt } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
+import type { Immutable } from "../types/Immutable";
+import type { LiveNode, Lson } from "./Lson";
+import type { StorageUpdate } from "./StorageUpdates";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }

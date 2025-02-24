@@ -12,8 +12,8 @@ import { setupServer } from "msw/node";
 import { Comment } from "../components/Comment.jsx";
 import { Composer } from "../components/Composer.jsx";
 import { Thread } from "../components/Thread.jsx";
-import { Timestamp } from "../primitives/index.js";
-import { render } from "./_utils.js"; // Basically re-exports from @testing-library/react
+import { Timestamp } from "../primitives";
+import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {

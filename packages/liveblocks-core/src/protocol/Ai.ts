@@ -1,4 +1,4 @@
-import type { Relax } from "../lib/Relax.js";
+import type { Relax } from "../lib/Relax";
 
 export type ContextualPromptResponse = Relax<
   // This is typed as a union to allow narrowing between "insert", "replace", and "other"

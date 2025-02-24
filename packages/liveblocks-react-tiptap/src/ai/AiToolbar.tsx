@@ -50,19 +50,16 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames.js";
-import { EditorProvider, useCurrentEditor } from "../context.js";
+import { classNames } from "../classnames";
+import { EditorProvider, useCurrentEditor } from "../context";
 import type {
   AiCommands,
   AiExtensionStorage,
   AiToolbarState,
   ChainedAiCommands,
-} from "../types.js";
-import { getDomRangeFromSelection } from "../utils.js";
-import {
-  DEFAULT_STATE,
-  isContextualPromptDiffResponse,
-} from "./AiExtension.js";
+} from "../types";
+import { getDomRangeFromSelection } from "../utils";
+import { DEFAULT_STATE, isContextualPromptDiffResponse } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
