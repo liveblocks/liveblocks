@@ -10,7 +10,13 @@ import { useState } from "react";
 import { getRoomFromUrl } from "../../utils";
 import Button from "../../utils/Button";
 import { createLiveblocksClientOptions } from "../../utils/createClient";
-import { FAKE_USERS } from "../api/_utils";
+import { FAKE_USERS as DEFAULT_FAKE_USERS } from "../api/_utils";
+
+const FAKE_USERS = [
+  ...DEFAULT_FAKE_USERS,
+  "email@liveblocks.io",
+  "#!?_1234$%&*()",
+];
 
 const clientOptions = createLiveblocksClientOptions();
 

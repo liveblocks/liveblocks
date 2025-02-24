@@ -175,6 +175,34 @@ export const commentBody7: CommentBody = {
   ],
 };
 
+export const commentBodyWithHtml: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Trying with <b>inject html</b> !" }],
+    },
+  ],
+};
+
+export const commentBodyWithHtml2: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Trying with " },
+        {
+          type: "link",
+          url: "https://www.liveblocks.io",
+          text: "<script>injected script</script>",
+        },
+        { text: " !" },
+      ],
+    },
+  ],
+};
+
 export const makeComment = ({
   userId,
   threadId,

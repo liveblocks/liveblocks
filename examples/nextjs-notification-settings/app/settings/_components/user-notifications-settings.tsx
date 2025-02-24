@@ -21,12 +21,18 @@ export function UserNotificationsSettings() {
   if (isLoading) return <Loading />;
   if (error) throw error; // or throw/capture error
 
-  const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
-  const isSlackChannelEnabled = isNotificationChannelEnabled(settings.slack);
-  const isTeamsChannelEnabled = isNotificationChannelEnabled(settings.teams);
-  const isWebPushChannelEnabled = isNotificationChannelEnabled(
-    settings.webPush
-  );
+  // TODO put the others back when package updated
+  const isEmailChannelEnabled = "email" in settings;
+  const isSlackChannelEnabled = "slack" in settings;
+  const isTeamsChannelEnabled = "teams" in settings;
+  const isWebPushChannelEnabled = "webPush" in settings;
+
+  // const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
+  // const isSlackChannelEnabled = isNotificationChannelEnabled(settings.slack);
+  // const isTeamsChannelEnabled = isNotificationChannelEnabled(settings.teams);
+  // const isWebPushChannelEnabled = isNotificationChannelEnabled(
+  //   settings.webPush
+  // );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
     updateNotificationSettings({

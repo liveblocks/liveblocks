@@ -11,10 +11,9 @@
  *
  */
 
-const fs = require("fs");
+import { readFileSync, writeFileSync } from "node:fs";
 
-const types = fs
-  .readFileSync("src/ast/generated-ast.ts", "utf-8")
+const types = readFileSync("src/ast/generated-ast.ts", "utf-8")
   .split("\n")
   .filter((line) => line.includes(" extends Semantics"))
   .map((line) => line.split(" ")[2])
@@ -33,4 +32,4 @@ const config = {
   returnTypes,
 };
 
-fs.writeFileSync("pegconfig.json", JSON.stringify(config, null, 2) + "\n");
+writeFileSync("pegconfig.json", JSON.stringify(config, null, 2) + "\n");

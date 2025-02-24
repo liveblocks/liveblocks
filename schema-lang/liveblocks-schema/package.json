@@ -2,8 +2,22 @@
   "name": "@liveblocks/schema",
   "version": "0.0.13-beta1",
   "description": "The Liveblocks schema language",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
   "files": [
     "dist/**",
     "README.md"

@@ -5,7 +5,7 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
-  format: ["cjs"],
+  format: ["esm", "cjs"],
 
   // Perhaps enable later?
   // "minify": true,

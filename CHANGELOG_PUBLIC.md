@@ -8,10 +8,71 @@ https://liveblocks.io/changelog
 - Add each contributor's GitHub username.
 
 TEAM MEMBERS
-adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
-nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+adigau, ctnicholas, flowflorent, jrowny, marcbouchenoire, nimeshnayaju,
+nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+
+OTHER USERS
+If outside users have made contributions, add them to the Contributors
+list and feel free to give them credit at the end of a line, e.g.:
+- ... Thank you [@username](https://github.com/username)!
 
 -->
+
+# Week 8 (2025-02-21)
+
+## v2.18.3
+
+### `@liveblocks/node`
+
+- Fix HTML escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/client`
+
+- Log more details in specific error cases to help debugging
+- Fix HTML escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/react`
+
+- Increases the allowed stale time for polled user threads data. Only affects
+  the `useUserThreads_experimental` hook.
+
+### `@liveblocks/react-ui`
+
+- Allow spaces and more non-alphanumeric characters when creating mentions in
+  Comments composers.
+
+### `@liveblocks/emails`
+
+- Fix HTML escaping in prepare as HTML functions. Thank you [@huy-cove](https://github.com/huy-cove)!
+- Revert deduplication logic introduced in `v2.18.0` as it provided no
+  measurable benefits while increasing complexity.
+
+## v2.18.2
+
+### `@liveblocks/client`
+
+- Improve performance of undo/redo operations on large documents. Thank you [@rudi-c](https://github.com/rudi-c)!
+
+### `@liveblocks/react-tiptap`
+
+- Fix a performance regression introduced in 2.18.1.
+
+## Documentation
+
+- Added info on how data storage is calculated.
+- Fixed a number of broken links on various pages.
+
+## Dashboard
+
+- Internal refactoring and code clean up.
+
+## Website
+
+- New blog post: [Why collaborative features will define your product’s success](https://liveblocks.io/blog/why-collaborative-features-will-define-your-products-success).
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius, huy-cove, rudi-c
 
 # Week 7 (2025-02-14)
 

@@ -1,4 +1,3 @@
-// Duplicated from https://github.com/liveblocks/liveblocks/blob/main/shared/tsconfig.common.json
 {
   "compilerOptions": {
     // Default compilation target for any code that runs in the browser
@@ -7,15 +6,22 @@
 
     // For all packages, let TypeScript use the following standardized way to
     // resolve modules
-    "moduleResolution": "node",
+    "module": "esnext",
+    "moduleResolution": "bundler",
 
     // Don't produce *.js files when running TypeScript. We use `tsup` to
     // build our output files.
     "noEmit": true,
 
+    // Transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
+    "jsx": "react-jsx",
+
     // Settings with an effect on the generated code
     "esModuleInterop": true, // Emit safer code for packages that use namespace/default imports
     "stripInternal": true, // Don't emit public types for things annotated with @internal
+
+    // Allow importing JSON files
+    "resolveJsonModule": true,
 
     // Use better type checking
     "strict": true,

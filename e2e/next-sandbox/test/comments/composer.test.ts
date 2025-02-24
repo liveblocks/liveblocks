@@ -3,7 +3,7 @@ import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
 import type { TestVariant as ComposerTestVariant } from "../../pages/comments/composer";
-import { getJson, preparePage, selectText } from "../utils";
+import { getJson, preparePage, selectText, sleep } from "../utils";
 
 const TEST_URL = "http://localhost:3007/comments/composer";
 const TEST_ROOM = "e2e-comments-composer";
@@ -513,6 +513,42 @@ test.describe("Composer", () => {
         { type: "mention", id: "user-2" },
         { text: " " },
       ]);
+    });
+
+    test("should support non-alphanumeric characters in mentions but not leading or consecutive whitespace", async () => {
+      const { editor } = getComposer(page);
+
+      // Mentions can contain whitespace
+      await editor.pressSequentially("Hello @Alicia H");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toContainText("Alicia H.");
+
+      // Mentions can contain @ and .
+      await editor.pressSequentially(" and @email@liveblocks.");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toContainText("email@liveblocks.io");
+
+      // Mentions can contain other non-alphanumeric characters
+      await editor.pressSequentially(" and @#!?_1234$%&*()");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toContainText("#!?_1234$%&*()");
+
+      // Mentions cannot start with whitespace
+      await editor.pressSequentially(" and @ ");
+      await sleep(100);
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).not.toBeVisible();
+
+      // Mentions cannot contain consecutive whitespace
+      await editor.pressSequentially(" and @li      ");
+      await sleep(100);
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).not.toBeVisible();
     });
 
     test("should insert emojis via the emoji picker", async () => {

@@ -18,10 +18,10 @@ const run = async () => {
     sourcemap,
     logLevel: "info",
     entryPoints: ["./src/extension.ts"],
-    outfile: "./dist/main.js",
+    outfile: "./dist/index.js",
     external: ["vscode"],
     bundle: true,
-    format: "cjs",
+    format: "esm",
     platform: "node",
     plugins: [
       // Copy the grammar file into the dist folder so we can reference it in the package.json

@@ -1,5 +1,38 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/*`
+
+- Output ES modules by default (but CJS builds are still included)
+- Modernize internal build tool settings
+
+## v2.18.3
+
+### `@liveblocks/node`
+
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/client`
+
+- Log more details in specific error cases to help debugging
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/react`
+
+- Increases the allowed stale time for polled user threads data. Only affects
+  the `useUserThreads_experimental` hook.
+
+### `@liveblocks/react-ui`
+
+- Allow spaces and more non-alphanumeric characters when creating mentions in
+  Comments composers.
+
+### `@liveblocks/emails`
+
+- Fix html escaping in prepare as html functions (thanks to @huy-cove for
+  reporting the issue and helping us improving our product 🙏🏻).
+- Revert deduplication logic introduced in `v2.18.0` as it provided no
+  measurable benefits while increasing complexity.
+
 ## v2.18.2
 
 ### `@liveblocks/client`

@@ -3,7 +3,7 @@ export function pluralize<
   S extends string,
   P extends string = `${S}s`,
 >(count: C, singular: S, plural?: P): C extends 1 ? S : P {
-  return (count === 1 ? singular : plural ?? `${singular}s`) as C extends 1
+  return (count === 1 ? singular : (plural ?? `${singular}s`)) as C extends 1
     ? S
     : P;
 }

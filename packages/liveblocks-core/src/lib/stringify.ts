@@ -15,9 +15,25 @@ function replacer(_key: string, value: unknown) {
 }
 
 /**
- * Like JSON.stringify(), but returns the same value no matter how keys in any
- * nested objects are ordered.
+ * Like JSON.stringify(), but using stable (sorted) object key order, so that
+ * it returns the same value for the same keys, no matter their order.
  */
-export function stringify(value: unknown): string {
+export function stableStringify(value: unknown): string {
   return JSON.stringify(value, replacer);
+}
+
+/**
+ * Drop-in replacement for JSON.stringify(), which will log any payload to the
+ * console if it could not be stringified somehow.
+ */
+export function stringifyOrLog(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch (err) {
+    /* eslint-disable rulesdir/console-must-be-fancy */
+    console.error(`Could not stringify: ${(err as Error).message}`);
+    console.error(value);
+    /* eslint-enable rulesdir/console-must-be-fancy */
+    throw err;
+  }
 }
