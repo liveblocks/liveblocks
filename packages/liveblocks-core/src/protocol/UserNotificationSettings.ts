@@ -183,6 +183,16 @@ export function patchUserNotificationSettings(
  *
  * Utility to check if a notification channel settings
  * is enabled for every notification kinds.
+ *
+ * Usage:
+ * ```ts
+ * const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
+ * ```
+ *
+ * ⚠️ Warning: when using this function, you should be aware
+ * you need to ensure you have notification kinds enabled in the dashboard
+ * for the channel you're checking. Otherwise, it will raise an error at runtime because
+ * the backend don't send the settings for a not enabled channel (e.g. no notification kinds enabled in a channel).
  */
 export function isNotificationChannelEnabled(
   settings: NotificationChannelSettings
