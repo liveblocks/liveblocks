@@ -20,7 +20,19 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 9 (2025-02-28)
 
+## Documentation
+
+- New guide: [How to create a notification settings panel](https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel).
+- Improved [Notifications overview](https://liveblocks.io/docs/ready-made-features/notifications) pages, adding info on user notification settings.
+- Improved existing webhooks guides, adding more context about notification channels, and how to create a settings panel.
+
+## Examples
+
+- Improved notification settings panel in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+
 ## Contributors
+
+ctnicholas
 
 # Week 8 (2025-02-21)
 
