@@ -4,10 +4,6 @@ import {
 } from "../UserNotificationSettings";
 
 describe("UserNotificationSettings protocol", () => {
-  const noop = (value: any) => {
-    // eslint-disable-next-line rulesdir/console-must-be-fancy
-    console.log(value);
-  };
   it("should create an object with getters for each known notification channel", () => {
     const initial: UserNotificationSettingsPlain = {
       email: {
@@ -18,7 +14,6 @@ describe("UserNotificationSettings protocol", () => {
         thread: false,
         textMention: true,
       },
-      // omitted "teams" + "webPush" to test lazy setup
     };
 
     const settings = createUserNotificationSettings(initial);
@@ -39,31 +34,20 @@ describe("UserNotificationSettings protocol", () => {
     };
     const settings = createUserNotificationSettings(initial);
 
-    // "teams" is not defined in initial, so we expect an error
-    expect(() => {
-      // Accessing teams getter
-      const teams = settings.teams;
-      noop(teams);
-    }).toThrow(/please set up your project first/i);
-
-    // "webPush" is not defined in initial, so we expect an error
-    expect(() => {
-      const webPush = settings.webPush;
-      noop(webPush);
-    }).toThrow(/please set up your project first/i);
+    expect(() => settings.teams).toThrow(/please set up your project first/i);
+    expect(() => settings.webPush).toThrow(/please set up your project first/i);
   });
 
   it("should return valid channel settings if all channels are defined", () => {
-    const allChannels: UserNotificationSettingsPlain = {
+    const initial: UserNotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: false, textMention: true },
       teams: { thread: true, textMention: false },
       webPush: { thread: false, textMention: false },
     };
 
-    const settings = createUserNotificationSettings(allChannels);
+    const settings = createUserNotificationSettings(initial);
 
-    // We expect no throws for any channel
     expect(() => settings.email).not.toThrow();
     expect(() => settings.slack).not.toThrow();
     expect(() => settings.teams).not.toThrow();
@@ -73,7 +57,7 @@ describe("UserNotificationSettings protocol", () => {
     expect(settings.teams.textMention).toBe(false);
   });
 
-  it("should return an object whose properties are enumerable (except kInternal)", () => {
+  it("should return an object where properties are enumerable except `[kInternal]`", () => {
     const initial: UserNotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: true, textMention: true },
