@@ -7,7 +7,10 @@ export default defineConfig({
   splitting: true,
   clean: true,
   format: ["esm", "cjs"],
-  esbuildPlugins: [lezer as any],
+  esbuildPlugins: [
+    // @ts-expect-error Should work but doesn't because we have multiple versions of esbuild in our dep tree that conflict
+    lezer,
+  ],
 
   // Perhaps enable later?
   // "minify": true,
