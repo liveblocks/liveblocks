@@ -6,7 +6,10 @@
   "engines": {
     "vscode": "^1.75.0"
   },
-  "main": "./dist/main.js",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "files": [
     "dist/**",
     "README.md"
@@ -16,7 +19,7 @@
   ],
   "scripts": {
     "vscode:prepublish": "npm run esbuild:base -- --minify",
-    "esbuild": "node ./esbuild.config.js",
+    "esbuild": "node ./esbuild.config.cjs",
     "test-compile": "tsc -p ./",
     "build": "npm run esbuild -- --sourcemap",
     "dev": "npm run esbuild -- --sourcemap --watch",
