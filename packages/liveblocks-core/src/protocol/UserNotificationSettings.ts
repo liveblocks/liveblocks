@@ -101,7 +101,8 @@ export function createUserNotificationSettings(
     "teams",
     "webPush",
   ];
-  const descriptors: PropertyDescriptorMap = {
+  const descriptors: PropertyDescriptorMap &
+    ThisType<UserNotificationSettings> = {
     [kInternal]: {
       value: {
         __plain__: plain,
@@ -113,7 +114,7 @@ export function createUserNotificationSettings(
   for (const channel of channels) {
     descriptors[channel] = {
       enumerable: true,
-      get(this: UserNotificationSettings) {
+      get(this: UserNotificationSettings): NotificationChannelSettings {
         const value = this[kInternal].__plain__[channel];
         if (!value) {
           raise(
