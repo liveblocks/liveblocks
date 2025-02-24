@@ -1,7 +1,7 @@
 import {
   createUserNotificationSettings,
   type UserNotificationSettingsPlain,
-} from "../protocol/UserNotificationSettings";
+} from "../UserNotificationSettings";
 
 describe("UserNotificationSettings protocol", () => {
   const noop = (value: any) => {
