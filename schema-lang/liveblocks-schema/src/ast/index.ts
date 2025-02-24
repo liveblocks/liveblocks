@@ -1,1 +1,1 @@
-export * from "./generated-ast";
+export * from "./generated-ast.js";

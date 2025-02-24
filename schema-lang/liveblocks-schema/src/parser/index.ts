@@ -1,7 +1,7 @@
-import type { Document, Node } from "../ast";
-import type { Source } from "../lib/error-reporting";
-import { ErrorReporter } from "../lib/error-reporting";
-import * as generatedParser from "./generated-parser";
+import type { Document, Node } from "../ast/index.js";
+import type { Source } from "../lib/error-reporting.js";
+import { ErrorReporter } from "../lib/error-reporting.js";
+import * as generatedParser from "./generated-parser.js";
 
 export type StartRule =
   // See the PEG grammar. These are the valid start rule to kick off the

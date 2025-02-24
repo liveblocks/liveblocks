@@ -1,4 +1,4 @@
-import { getDiagnostics } from "..";
+import { getDiagnostics } from "../index.js";
 
 describe("diagnostic error reporting", () => {
   it("getDiagnostics returns empty list on valid schema", () => {

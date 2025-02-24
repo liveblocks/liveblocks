@@ -1,8 +1,8 @@
 import * as fc from "fast-check";
 
-import * as ast from "../../ast";
-import { parseDocument as parse } from "..";
-import { expectDocument, expectLegacyDocument } from "./helpers";
+import * as ast from "../../ast/index.js";
+import { parseDocument as parse } from "../index.js";
+import { expectDocument, expectLegacyDocument } from "./helpers.js";
 
 describe("syntactic parser", () => {
   it("fails on all non-valid inputs", () => {

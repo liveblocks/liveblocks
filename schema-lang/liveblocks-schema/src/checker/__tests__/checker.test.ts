@@ -1,9 +1,9 @@
 import * as fc from "fast-check";
 
-import type * as AST from "../../ast";
-import { ErrorReporter } from "../../lib/error-reporting";
-import { parseDocument } from "../../parser";
-import { check } from "..";
+import type * as AST from "../../ast/index.js";
+import { ErrorReporter } from "../../lib/error-reporting.js";
+import { parseDocument } from "../../parser/index.js";
+import { check } from "../index.js";
 
 describe("checker", () => {
   it("type checking a full document", () => {

@@ -1,5 +1,5 @@
-import { parseDocument } from "../../parser";
-import { prettify } from "../";
+import { parseDocument } from "../../parser/index.js";
+import { prettify } from "../index.js";
 
 describe("prettify", () => {
   it("minimal schema", () => {

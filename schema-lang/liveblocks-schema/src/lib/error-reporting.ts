@@ -1,6 +1,6 @@
-import type { Range } from "../ast";
-import { prettify } from "../prettify";
-import { indent } from "./indent";
+import type { Range } from "../ast/index.js";
+import { prettify } from "../prettify/index.js";
+import { indent } from "./indent.js";
 
 const WHITESPACE_ONLY_RE = /^\s*$/;
 
@@ -237,7 +237,7 @@ export class ErrorReporter {
 
   formatHeading(left: string, right: string): string {
     const twidth: number | null =
-      typeof process !== "undefined" ? process.stdout.columns ?? null : null;
+      typeof process !== "undefined" ? (process.stdout.columns ?? null) : null;
 
     // If we have access to the terminal's width, use it to spread out the
     // left and right part, otherwise just stick 'em together

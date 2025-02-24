@@ -18,14 +18,14 @@ import type {
   TypeName,
   TypeRef,
   UnionType,
-} from "../ast";
-import { defineMethod, isLiveType, isScalarType } from "../ast";
-import { assertNever } from "../lib/assert";
-import { didyoumean as dym } from "../lib/didyoumean";
-import type { ErrorReporter, Suggestion } from "../lib/error-reporting";
-import { prettify } from "../prettify";
+} from "../ast/index.js";
+import { defineMethod, isLiveType, isScalarType } from "../ast/index.js";
+import { assertNever } from "../lib/assert.js";
+import { didyoumean as dym } from "../lib/didyoumean.js";
+import type { ErrorReporter, Suggestion } from "../lib/error-reporting.js";
+import { prettify } from "../prettify/index.js";
 
-declare module "../ast" {
+declare module "../ast/index.js" {
   interface Semantics {
     check(context: Context): void;
   }
