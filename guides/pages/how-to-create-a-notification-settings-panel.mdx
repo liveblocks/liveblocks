@@ -124,8 +124,9 @@ function NotificationSettings() {
 }
 ```
 
-If you extend this further, you can create a whole notifications settings panel,
-with settings for each channel. You can also use
+### Custom notification kinds
+
+You can also use
 [custom notification kinds](/docs/ready-made-features/notifications/concepts#Custom-notifications)
 as highlighted below, where we’re using a custom `$documentInvite` kind.
 
@@ -164,6 +165,71 @@ function NotificationSettings() {
           }
         />
       </label>
+    </>
+  );
+}
+```
+
+Note that you can
+[type your app](/docs/api-reference/liveblocks-react#Typing-your-data) to
+receive hints for custom notifications.
+
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // Custom activities data for custom notification kinds
+    ActivitiesData: {
+      // +++
+      $documentInvite: {
+        documentId: string; // Example
+      };
+      // +++
+    };
+
+    // ...
+  }
+}
+```
+
+### Extend it further
+
+If you extend this further, you can create a whole notifications settings panel,
+with settings for each notification kind on channel. Below we’ve created an
+interface with three kinds of two channels.
+
+```tsx
+import { useNotificationSettings } from "@liveblocks/react";
+
+function NotificationSettings() {
+  const [{ isLoading, error, settings }, updateSettings] =
+    useNotificationSettings();
+
+  if (isLoading || error) {
+    return null;
+  }
+
+  return (
+    <>
+      <label>
+        Receive document invites notifications by email
+        <input
+          type="checkbox"
+          checked={settings.email.$documentInvite}
+          onChange={(e) =>
+            updateSettings({ email: { $documentInvite: e.target.checked } })
+          }
+        />
+      </label>
+      <label>
+        Receive thread notifications by email
+        <input
+          type="checkbox"
+          checked={settings.email.thread}
+          onChange={(e) =>
+            updateSettings({ email: { thread: e.target.checked } })
+          }
+        />
+      </label>
       <label>
         Receive text mentions notifications by email
         <input
@@ -184,10 +250,26 @@ function NotificationSettings() {
           }
         />
       </label>
-      {/*
-        More inputs for each channel and kind here
-        ...
-      */}
+      <label>
+        Receive thread notifications on Slack
+        <input
+          type="checkbox"
+          checked={settings.slack.thread}
+          onChange={(e) =>
+            updateSettings({ slack: { thread: e.target.checked } })
+          }
+        />
+      </label>
+      <label>
+        Receive text mentions notifications on Slack
+        <input
+          type="checkbox"
+          checked={settings.slack.textMention}
+          onChange={(e) =>
+            updateSettings({ slack: { textMention: e.target.checked } })
+          }
+        />
+      </label>
     </>
   );
 }
