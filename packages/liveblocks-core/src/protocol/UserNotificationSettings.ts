@@ -1,6 +1,6 @@
 import type { DAD } from "../globals/augmentation";
 import { kInternal } from "../internal";
-import { entries, keys, raise, values } from "../lib/utils";
+import { create, entries, keys, raise, values } from "../lib/utils";
 
 /**
  * Pre-defined notification channels support list.
@@ -125,7 +125,7 @@ export function createUserNotificationSettings(
     };
   }
 
-  return Object.create({}, descriptors) as UserNotificationSettings;
+  return create<UserNotificationSettings>(null, descriptors);
 }
 
 /**
