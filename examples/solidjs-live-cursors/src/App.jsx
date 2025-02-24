@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 import { Key } from "@solid-primitives/keyed";
-import Cursor from "./components/Cursor.jsx";
+import Cursor from "./components/Cursor";
 import styles from "./App.module.css";
 
 const COLORS = [

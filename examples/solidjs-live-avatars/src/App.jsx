@@ -1,5 +1,5 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
-import Avatar from "./components/Avatar.jsx";
+import Avatar from "./components/Avatar";
 import styles from "./App.module.css";
 
 function App({ room }) {

@@ -39,22 +39,22 @@ import {
 
 import { useLiveblocksUIConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
-import { AttachmentIcon } from "../icons/Attachment.jsx";
-import { BoldIcon } from "../icons/Bold.jsx";
-import { CodeIcon } from "../icons/Code.jsx";
-import { EmojiIcon } from "../icons/Emoji.jsx";
-import { ItalicIcon } from "../icons/Italic.jsx";
-import { MentionIcon } from "../icons/Mention.jsx";
-import { SendIcon } from "../icons/Send.jsx";
-import { StrikethroughIcon } from "../icons/Strikethrough.jsx";
+import { AttachmentIcon } from "../icons/Attachment";
+import { BoldIcon } from "../icons/Bold";
+import { CodeIcon } from "../icons/Code";
+import { EmojiIcon } from "../icons/Emoji";
+import { ItalicIcon } from "../icons/Italic";
+import { MentionIcon } from "../icons/Mention";
+import { SendIcon } from "../icons/Send";
+import { StrikethroughIcon } from "../icons/Strikethrough";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
+import * as ComposerPrimitive from "../primitives/Composer";
 import {
   useComposer,
   useComposerAttachmentsContext,
   useComposerEditorContext,
 } from "../primitives/Composer/contexts";
-import * as ComposerPrimitive from "../primitives/Composer/index.jsx";
 import type {
   ComposerEditorComponents,
   ComposerEditorLinkProps,
@@ -70,18 +70,14 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
-import { FileAttachment } from "./internal/Attachment.jsx";
-import { Attribution } from "./internal/Attribution.jsx";
-import { Avatar } from "./internal/Avatar.jsx";
-import { Button } from "./internal/Button.jsx";
-import type { EmojiPickerProps } from "./internal/EmojiPicker.jsx";
-import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker.jsx";
-import {
-  ShortcutTooltip,
-  Tooltip,
-  TooltipProvider,
-} from "./internal/Tooltip.jsx";
-import { User } from "./internal/User.jsx";
+import { FileAttachment } from "./internal/Attachment";
+import { Attribution } from "./internal/Attribution";
+import { Avatar } from "./internal/Avatar";
+import { Button } from "./internal/Button";
+import type { EmojiPickerProps } from "./internal/EmojiPicker";
+import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
+import { User } from "./internal/User";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;

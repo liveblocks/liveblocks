@@ -7,8 +7,8 @@ import { forwardRef } from "react";
 import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives";
 import { classNames } from "../utils/class-names";
-import { List } from "./internal/List.jsx";
-import { User } from "./internal/User.jsx";
+import { List } from "./internal/List";
+import { User } from "./internal/User";
 
 const AUTHORS_TRUNCATE = 3;
 

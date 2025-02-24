@@ -27,7 +27,7 @@ import {
   requestIdleCallback,
 } from "../../utils/request-idle-callback";
 import { visuallyHidden } from "../../utils/visually-hidden";
-import { Emoji as EmojiPrimitive } from "../internal/Emoji.jsx";
+import { Emoji as EmojiPrimitive } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";
 import type {
   EmojiData,

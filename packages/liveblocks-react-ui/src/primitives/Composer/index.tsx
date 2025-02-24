@@ -96,12 +96,8 @@ import type {
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
-import {
-  Persist,
-  useAnimationPersist,
-  usePersist,
-} from "../../utils/Persist.jsx";
-import { Portal } from "../../utils/Portal.jsx";
+import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
+import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";

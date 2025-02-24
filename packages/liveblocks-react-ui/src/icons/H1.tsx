@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { Icon } from "../components/internal/Icon.jsx";
+import { Icon } from "../components/internal/Icon";
 
 export function H1Icon(props: ComponentProps<"svg">) {
   return (

@@ -3,7 +3,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { forwardRef } from "react";
 
-import { ChevronDownIcon } from "../../icons/ChevronDown.jsx";
+import { ChevronDownIcon } from "../../icons/ChevronDown";
 import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {

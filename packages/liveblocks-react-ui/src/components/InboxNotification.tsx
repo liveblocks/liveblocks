@@ -28,37 +28,33 @@ import { forwardRef, useCallback, useMemo, useState } from "react";
 
 import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";
-import { CheckIcon } from "../icons/Check.jsx";
-import { DeleteIcon } from "../icons/Delete.jsx";
-import { EllipsisIcon } from "../icons/Ellipsis.jsx";
-import { WarningIcon } from "../icons/Warning.jsx";
+import { CheckIcon } from "../icons/Check";
+import { DeleteIcon } from "../icons/Delete";
+import { EllipsisIcon } from "../icons/Ellipsis";
+import { WarningIcon } from "../icons/Warning";
 import type {
   CommentOverrides,
   GlobalOverrides,
   InboxNotificationOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
-import { Timestamp } from "../primitives/Timestamp.jsx";
+import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { generateURL } from "../utils/url";
-import { Avatar, type AvatarProps } from "./internal/Avatar.jsx";
-import { Button } from "./internal/Button.jsx";
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownTrigger,
-} from "./internal/Dropdown.jsx";
+import { Avatar, type AvatarProps } from "./internal/Avatar";
+import { Button } from "./internal/Button";
+import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
   generateInboxNotificationThreadContents,
   INBOX_NOTIFICATION_THREAD_MAX_COMMENTS,
   InboxNotificationComment,
-} from "./internal/InboxNotificationThread.jsx";
-import { List } from "./internal/List.jsx";
-import { Room } from "./internal/Room.jsx";
-import { Tooltip } from "./internal/Tooltip.jsx";
-import { User } from "./internal/User.jsx";
+} from "./internal/InboxNotificationThread";
+import { List } from "./internal/List";
+import { Room } from "./internal/Room";
+import { Tooltip } from "./internal/Tooltip";
+import { User } from "./internal/User";
 
 type ComponentTypeWithRef<
   T extends keyof JSX.IntrinsicElements,

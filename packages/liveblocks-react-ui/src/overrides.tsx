@@ -4,7 +4,7 @@ import { assertNever } from "@liveblocks/core";
 import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 
-import { Emoji } from "./components/internal/Emoji.jsx";
+import { Emoji } from "./components/internal/Emoji";
 import type { ComposerBodyMark, Direction } from "./types";
 import { pluralize } from "./utils/pluralize";
 

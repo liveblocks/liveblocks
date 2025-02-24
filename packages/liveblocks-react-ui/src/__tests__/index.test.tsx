@@ -9,9 +9,9 @@ import { ServerMsgCode } from "@liveblocks/core";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { Comment } from "../components/Comment.jsx";
-import { Composer } from "../components/Composer.jsx";
-import { Thread } from "../components/Thread.jsx";
+import { Comment } from "../components/Comment";
+import { Composer } from "../components/Composer";
+import { Thread } from "../components/Thread";
 import { Timestamp } from "../primitives";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
