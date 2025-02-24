@@ -161,6 +161,7 @@ export function makeCreateSocketDelegateForAi(
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
     url.pathname = "/v7"; // Do we need this?
+    url.searchParams.set("ai", "true");
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
