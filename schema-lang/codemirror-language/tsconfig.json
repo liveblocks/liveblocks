@@ -1,14 +1,12 @@
 {
   // Use the same settings for all packages
   "extends": "../../shared/tsconfig.common.json",
-
   "compilerOptions": {
-    "module": "es2015",
-    "lib": ["dom", "es2015"],
+    // To enable the custom loader for `syntax.grammar` files
+    "allowArbitraryExtensions": true,
 
-    "downlevelIteration": true,
-    "esModuleInterop": true,
+    // To work around Jest issues. Consider removing this setting again after switching to Vitest.
     "allowJs": true
   },
-  "include": ["src/**/*", "plugins/**/*"]
+  "include": ["src", "plugins"]
 }

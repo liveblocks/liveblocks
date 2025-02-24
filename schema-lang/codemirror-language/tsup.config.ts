@@ -1,5 +1,5 @@
 import { defineConfig } from "tsup";
-import { lezer } from "./plugins/esbuild-plugin-lezer";
+import { lezer } from "./plugins/esbuild-plugin-lezer.js";
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -7,7 +7,7 @@ export default defineConfig({
   splitting: true,
   clean: true,
   format: ["esm", "cjs"],
-  esbuildPlugins: [lezer],
+  esbuildPlugins: [lezer as any],
 
   // Perhaps enable later?
   // "minify": true,
