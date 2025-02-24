@@ -1,18 +1,18 @@
 import { AST } from "@liveblocks/schema";
 
-import type { InferredType, MergeContext } from "./inference";
-import { isAtomic } from "./inference";
-import { orderedRootTypeNames } from "./naming";
-import type { InferredObjectType } from "./object";
+import type { InferredType, MergeContext } from "./inference.js";
+import { isAtomic } from "./inference.js";
+import { orderedRootTypeNames } from "./naming.js";
+import type { InferredObjectType } from "./object.js";
 import {
   inferredObjectTypeToAst,
   isInferredObjectType,
   mergeInferredObjectTypes,
-} from "./object";
-import type { InferredTypeReference } from "./typeReference";
-import { BidirectionalMap } from "./utils/bidirectionalMap";
-import { invariant } from "./utils/invariant";
-import { isNotUndefined } from "./utils/typeGuards";
+} from "./object.js";
+import type { InferredTypeReference } from "./typeReference.js";
+import { BidirectionalMap } from "./utils/bidirectionalMap.js";
+import { invariant } from "./utils/invariant.js";
+import { isNotUndefined } from "./utils/typeGuards.js";
 
 type RootTypes = Set<InferredObjectType>;
 type RootNames = BidirectionalMap<string, InferredObjectType>;

@@ -1,10 +1,10 @@
 import type { JsonScalar } from "@liveblocks/core";
 import { AST } from "@liveblocks/schema";
 
-import type { ChildContext, InferredType } from "./inference";
-import type { ScoredNames } from "./naming";
-import { generateNames, mergeScoredNames } from "./naming";
-import type { InferredSchema } from "./schema";
+import type { ChildContext, InferredType } from "./inference.js";
+import type { ScoredNames } from "./naming.js";
+import { generateNames, mergeScoredNames } from "./naming.js";
+import type { InferredSchema } from "./schema.js";
 
 export type InferredStringType = {
   type: "String";

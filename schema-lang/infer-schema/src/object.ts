@@ -1,20 +1,20 @@
 import type { PlainLsonObject } from "@liveblocks/core";
 import { AST } from "@liveblocks/schema";
 
-import type { InferredFields } from "./field";
+import type { InferredFields } from "./field.js";
 import {
   inferLsonFields,
   inferredFieldsToAst,
   mergeInferredFields,
-} from "./field";
-import type { ChildContext, InferredType, MergeContext } from "./inference";
-import type { ScoredNames } from "./naming";
-import { generateNames, mergeScoredNames } from "./naming";
-import type { NonLiveJsonObject } from "./plainLson";
-import type { InferredSchema } from "./schema";
-import { invariant } from "./utils/invariant";
-import { isNotUndefined } from "./utils/typeGuards";
-import type { PartialBy } from "./utils/types";
+} from "./field.js";
+import type { ChildContext, InferredType, MergeContext } from "./inference.js";
+import type { ScoredNames } from "./naming.js";
+import { generateNames, mergeScoredNames } from "./naming.js";
+import type { NonLiveJsonObject } from "./plainLson.js";
+import type { InferredSchema } from "./schema.js";
+import { invariant } from "./utils/invariant.js";
+import { isNotUndefined } from "./utils/typeGuards.js";
+import type { PartialBy } from "./utils/types.js";
 
 export type InferredObjectType = {
   type: "Object";

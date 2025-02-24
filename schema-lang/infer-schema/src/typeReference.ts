@@ -1,13 +1,13 @@
 import type { PlainLson } from "@liveblocks/core";
 import { AST } from "@liveblocks/schema";
 
-import type { ChildContext, InferredType, MergeContext } from "./inference";
-import { inferType, mergeInferredTypes } from "./inference";
-import { isInferredObjectType } from "./object";
-import { inferredScalarTypeToAst, isInferredScalarType } from "./scalar";
-import type { InferredSchema } from "./schema";
-import { invariant } from "./utils/invariant";
-import { isNotUndefined } from "./utils/typeGuards";
+import type { ChildContext, InferredType, MergeContext } from "./inference.js";
+import { inferType, mergeInferredTypes } from "./inference.js";
+import { isInferredObjectType } from "./object.js";
+import { inferredScalarTypeToAst, isInferredScalarType } from "./scalar.js";
+import type { InferredSchema } from "./schema.js";
+import { invariant } from "./utils/invariant.js";
+import { isNotUndefined } from "./utils/typeGuards.js";
 
 export type InferredTypeReference = {
   value: InferredType;

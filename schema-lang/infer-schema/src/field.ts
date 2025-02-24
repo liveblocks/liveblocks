@@ -2,20 +2,20 @@ import type { PlainLsonFields } from "@liveblocks/core";
 import { AST } from "@liveblocks/schema";
 import { string } from "decoders";
 
-import type { ChildContext, MergeContext } from "./inference";
-import { invalidFieldName } from "./naming";
-import type { NonLiveJsonObject } from "./plainLson";
-import type { InferredSchema } from "./schema";
-import type { InferredTypeReference } from "./typeReference";
+import type { ChildContext, MergeContext } from "./inference.js";
+import { invalidFieldName } from "./naming.js";
+import type { NonLiveJsonObject } from "./plainLson.js";
+import type { InferredSchema } from "./schema.js";
+import type { InferredTypeReference } from "./typeReference.js";
 import {
   inferredTypeReferenceToAst,
   inferTypeReference,
   mergeInferredTypeReferences,
-} from "./typeReference";
-import { invariant } from "./utils/invariant";
-import { get } from "./utils/object";
-import { escapeNewlines, naiveQuote } from "./utils/strings";
-import { isNotUndefined } from "./utils/typeGuards";
+} from "./typeReference.js";
+import { invariant } from "./utils/invariant.js";
+import { get } from "./utils/object.js";
+import { escapeNewlines, naiveQuote } from "./utils/strings.js";
+import { isNotUndefined } from "./utils/typeGuards.js";
 
 export type InferredFields = Record<string, InferredTypeReference>;
 

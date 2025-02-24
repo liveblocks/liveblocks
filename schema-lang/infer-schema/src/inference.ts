@@ -1,20 +1,20 @@
 import type { JsonScalar, PlainLson, PlainLsonObject } from "@liveblocks/core";
 
-import { inferLsonFields } from "./field";
-import type { InferredObjectType } from "./object";
+import { inferLsonFields } from "./field.js";
+import type { InferredObjectType } from "./object.js";
 import {
   inferObjectType,
   isInferredObjectType,
   mergeInferredObjectTypes,
-} from "./object";
-import type { InferredScalarType } from "./scalar";
+} from "./object.js";
+import type { InferredScalarType } from "./scalar.js";
 import {
   inferScalarType,
   isInferredScalarType,
   mergeInferredScalarTypes,
-} from "./scalar";
-import { once } from "./utils/once";
-import type { PartialBy } from "./utils/types";
+} from "./scalar.js";
+import { once } from "./utils/once.js";
+import type { PartialBy } from "./utils/types.js";
 
 type FieldChildContext = {
   parent: PartialBy<InferredObjectType, "fields">;

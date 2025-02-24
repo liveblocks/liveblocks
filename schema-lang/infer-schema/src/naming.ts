@@ -1,5 +1,5 @@
-import type { ChildContext } from "./inference";
-import { capitalize, singular, ucFirst, words } from "./utils/strings";
+import type { ChildContext } from "./inference.js";
+import { capitalize, singular, ucFirst, words } from "./utils/strings.js";
 
 export type ScoredNames = Record<string, number>;
 
