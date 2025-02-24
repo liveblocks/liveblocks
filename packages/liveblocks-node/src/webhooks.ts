@@ -214,7 +214,6 @@ type WebhookRequest = {
 };
 
 /**
- * @internal
  * When receiving an event we cannot define the `kind`
  * as member of the augmentation
  */

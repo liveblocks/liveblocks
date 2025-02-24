@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/*`
+
+- Output ES modules by default (but CJS builds are still included)
+- Modernize internal build tool settings
+
 ## v2.18.3
 
 ### `@liveblocks/node`

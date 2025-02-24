@@ -25,7 +25,7 @@ import { didyoumean as dym } from "../lib/didyoumean";
 import type { ErrorReporter, Suggestion } from "../lib/error-reporting";
 import { prettify } from "../prettify";
 
-declare module "../ast" {
+declare module "../ast/index.js" {
   interface Semantics {
     check(context: Context): void;
   }

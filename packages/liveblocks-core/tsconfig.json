@@ -3,11 +3,8 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "module": "es2020",
-    "lib": ["dom"],
-
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
-  "include": ["src/**/*", "e2e/**/*"]
+  "include": ["src", "e2e"]
 }

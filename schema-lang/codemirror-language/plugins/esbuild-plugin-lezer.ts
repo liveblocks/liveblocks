@@ -5,7 +5,7 @@ import path from "path";
 
 const PLUGIN = "esbuild-plugin-lezer";
 
-// https://github.com/lezer-parser/generator/blob/main/src/rollup-plugin-lezer.js.
+// https://github.com/lezer-parser/generator/blob/main/src/rollup-plugin-lezer.js
 export const lezer: Plugin = {
   name: PLUGIN,
   setup: (build) => {

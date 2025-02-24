@@ -12,12 +12,7 @@ import {
 } from "@liveblocks/react/_private";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { MutableRefObject, ReactNode } from "react";
-import {
-  useCallback,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -54,7 +49,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => { };
+      if (provider === undefined) return () => {};
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -87,7 +82,7 @@ export function useIsEditorReady(): boolean {
 
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (yjsProvider === undefined) return () => { };
+      if (yjsProvider === undefined) return () => {};
       yjsProvider.on("status", callback);
       return () => {
         yjsProvider.off("status", callback);

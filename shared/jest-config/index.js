@@ -28,6 +28,14 @@ module.exports = {
   testPathIgnorePatterns: ["__tests__/_.*", "__tests__/(.+/)*_.*"],
   roots: ["<rootDir>/src"],
 
+  // Jest by default still assumes CJS imports, even if the package uses `type:
+  // "module"`. These two settings tell Jest that, yes, really, we want to use
+  // ESM imports. But really, we should switch to Vitest everywhere.
+  extensionsToTreatAsEsm: [".ts", ".tsx"],
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.jsx?$": "$1",
+  },
+
   // Ensure `window.fetch` is polyfilled if it isn't available in the runtime
   setupFiles: ["@liveblocks/jest-config/fetch-polyfill"],
 };
