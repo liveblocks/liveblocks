@@ -1,6 +1,7 @@
 {
   "name": "@liveblocks/next-sandbox",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "next build",
     "lint": "eslint pages/ utils/ test/",
