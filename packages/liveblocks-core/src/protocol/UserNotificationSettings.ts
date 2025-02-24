@@ -30,10 +30,11 @@ export type NotificationChannelSettings = {
  * @private
  *
  * Base definition of user notification settings.
+ * Plain means it's a simple object coming from the remote backend.
  *
- * Plain means it's a simple object with no methods or private properties coming
- * from the remote backend. It's the raw settings object where channels cannot exists
+ * It's the raw settings object where somme channels cannot exists
  * because there are no notification kinds enabled on the dashboard.
+ * And this object isn't yet proxied by the creator factory `createUserNotificationSettings`.
  */
 export type UserNotificationSettingsPlain = {
   [C in NotificationChannel]?: NotificationChannelSettings;
@@ -43,10 +44,10 @@ export type UserNotificationSettingsPlain = {
  * @private
  *
  * Private properties and methods internal to `UserNotificationSettings`.
- * As a user of Liveblocks, you should nNEVER USE ANY OF THESE DIRECTLY,
+ * As a user of Liveblocks, you should NEVER USE ANY OF THESE DIRECTLY,
  * because bad things will happen.
  */
-export type PrivateNotificationChannelSettingsApi = {
+export type PrivateUserNotificationSettingsApi = {
   __plain__: UserNotificationSettingsPlain;
 };
 
@@ -59,10 +60,10 @@ export type UserNotificationSettings =
     /**
      * @private
      *
-     * `UserNotificationSettings` with private internal properties to store the raw settings
-     * and methods to mutate the object
+     * `UserNotificationSettings` with private internal properties
+     * to store the plain settings and methods.
      */
-    [kInternal]: PrivateNotificationChannelSettingsApi;
+    [kInternal]: PrivateUserNotificationSettingsApi;
   };
 
 /**
@@ -79,8 +80,9 @@ type DeepPartialWithAugmentation<T> = T extends object
   : T;
 
 /**
- * Partial user notification settings
- * with augmentation preserved gracefully
+ * Partial user notification settings with augmentation preserved gracefully.
+ * It means you can update the settings without being forced to define every keys.
+ * Useful when implementing update functions.
  */
 export type PartialUserNotificationSettings =
   DeepPartialWithAugmentation<UserNotificationSettingsPlain>;
@@ -88,9 +90,14 @@ export type PartialUserNotificationSettings =
 /**
  * @private
  *
- * Creates a `UserNotificationSettings` object with the given initial settings.
- * It defines getters for each channel to access the settings and throws and error
+ * Creates a `UserNotificationSettings` object with the given initial plain settings.
+ * It defines a getter for each channel to access the settings and throws and error
  * in case the required channel isn't enabled in the dashboard.
+ *
+ * You can see this function as `Proxy` like around `UserNotificationSettingsPlain` type.
+ * We can't predict what will be enabled on the dashboard or not, so it's important
+ * provide a good DX to developers by throwing an error when they try to access a channel
+ * that isn't enabled in the dashboard.
  */
 export function createUserNotificationSettings(
   plain: UserNotificationSettingsPlain
@@ -143,7 +150,7 @@ export function createUserNotificationSettings(
 /**
  * @private
  *
- * Patch a `UserNotificationSettings` object by applying kind updates
+ * Patch a `UserNotificationSettings` object by applying notification kind updates
  * coming from a `PartialUserNotificationSettings` object.
  */
 export function patchUserNotificationSettings(
