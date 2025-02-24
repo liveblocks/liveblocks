@@ -13,13 +13,13 @@ import UnreadTextMention from "../../../../emails/UnreadTextMention";
 import { company } from "../_shared/metadata";
 import { resolveUsers, resolveRoomInfo } from "../_shared/resolvers";
 
-// Add your Resend API key from https://resend.com/api-keys
-const resend = new Resend(process.env.RESEND_API_KEY as string);
-
 export async function sendTextMentionNotificationEmail(
   liveblocks: Liveblocks,
   event: TextMentionNotificationEvent
 ): Promise<Response> {
+  // Add your Resend API key from https://resend.com/api-keys
+  const resend = new Resend(process.env.RESEND_API_KEY as string);
+
   let emailData;
 
   try {

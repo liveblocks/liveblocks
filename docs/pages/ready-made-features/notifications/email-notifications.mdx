@@ -55,15 +55,20 @@ occurs. The webhook event built for creating these unread notification emails is
 called `"notification"`, and by default is sent up to every 30 minutes to each
 user, though this can be customized in the webhooks dashboard.
 
-`"notification"` webhooks can be enabled and disabled on certain channels.
-Channels are used to represent different places your users may receive
-notifications, such as on `email`, `slack`, `teams`, and `webPush`.
+### Notification channels
+
+`"notification"` webhooks can be enabled and disabled on certain channels in the
+notifications dashboard page. Channels are used to represent different places
+your users may receive notifications, such as on `email`, `slack`, `teams`, and
+`webPush`.
 
 <Figure>
   <video width={1512} height={982} autoPlay loop muted playsInline>
     <source src="/assets/webhooks/notification-settings.mp4" type="video/mp4" />
   </video>
 </Figure>
+
+### Event object
 
 Here’s an example of an event object that’s sent when a user receives a new (or
 updated) inbox notification. Note that this is custom notification sent on the
@@ -215,6 +220,49 @@ between a user and a group. At present, you need to verify user access before
 sending an email. We do, however, plan to include full permissions info in
 Liveblocks in our future updates. If you're interested in learning more about
 this feature, please feel free to reach out to us.
+
+## User settings
+
+It’s possible to allow users to choose their own notification settings for each
+channel in your application.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-settings.jpg"
+    alt="Notification settings"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+To implement this, import
+[`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
+into your component, and create a list of toggles. Here’s an example of a
+checkbox that toggles thread notification emails.
+
+```tsx highlight="4,8-17"
+import { useNotificationSettings } from "@liveblocks/react/suspense";
+
+function NotificationSettings() {
+  const [{ settings }, updateSettings] = useNotificationSettings();
+
+  return (
+    <>
+      <label>
+        Receive thread notifications by email:
+        <input
+          type="checkbox"
+          checked={settings.email.thread}
+          onChange={(e) =>
+            updateSettings({ email: { thread: e.target.checked } })
+          }
+        />
+      </label>
+      {/* Other checkboxes */}
+    </>
+  );
+}
+```
 
 ## Retrieving and modifying Comments data
 
