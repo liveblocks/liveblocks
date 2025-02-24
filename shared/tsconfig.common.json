@@ -6,8 +6,8 @@
 
     // For all packages, let TypeScript use the following standardized way to
     // resolve modules
-    "module": "node16",
-    "moduleResolution": "node16",
+    "module": "esnext",
+    "moduleResolution": "bundler",
 
     // Don't produce *.js files when running TypeScript. We use `tsup` to
     // build our output files.
