@@ -3066,6 +3066,18 @@ updateSettings({
 });
 ```
 
+A user’s initial settings are set in the dashboard, and different kinds should
+be enabled there. If no kind is enabled on the current channel, `null` will be
+returned. For example, with the email channel:
+
+```ts
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+
+// { email: null, ... }
+console.log(settings);
+```
+
 #### Updating notification settings [#useNotificationSettings-updating-notification-settings]
 
 The `updateSettings` function can be used to update the current user’s
