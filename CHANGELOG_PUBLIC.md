@@ -30,9 +30,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - Improved notification settings panel in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
 
+## Upkeep
+
+- Ship all Liveblocks packages as ESM by default (but CJS builds are still included)
+- Modernized internal build tool settings
+
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie
 
 # Week 8 (2025-02-21)
 
