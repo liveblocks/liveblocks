@@ -3045,7 +3045,8 @@ Returns the user’s notification settings in the current project, in other word
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
 will be sent for the current user. User notification settings are project-based,
 which means that `settings` and `updateSettings` are for the current user’s
-settings in every room.
+settings in every room. Useful for creating a
+[notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
 
 ```tsx
 import { useNotificationSettings } from "@liveblocks/react";
@@ -3124,6 +3125,8 @@ if (error) {
 }
 ```
 
+####
+
 👉🏻 A [Suspense version][] of this hook is also available, which will never return
 a loading state and will throw and error to the nearest `ErrorBoundary` if initial
 load failed.
@@ -3141,7 +3144,8 @@ which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
 will be sent for the current user. User notification settings are project-based,
 which means that `updateSettings` modifies the current user’s settings in every
 room. Each notification `kind` must first be enabled on your project’s
-notification dashboard page before settings can be used.
+notification dashboard page before settings can be used. Useful for creating a
+[notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
 
 ```tsx
 import { useUpdateNotificationSettings } from "@liveblocks/react";
