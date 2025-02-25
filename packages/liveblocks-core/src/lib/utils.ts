@@ -47,6 +47,20 @@ export function values<O extends Record<string, unknown>>(
 }
 
 /**
+ * Drop-in replacement for Object.create() that retains better types.
+ */
+export function create<O extends Record<string, unknown>>(
+  obj: O | null,
+  descriptors?: PropertyDescriptorMap & ThisType<O>
+): O {
+  if (typeof descriptors !== "undefined") {
+    return Object.create(obj, descriptors) as O;
+  }
+
+  return Object.create(obj) as O;
+}
+
+/**
  * Creates a new object by mapping a function over all values. Keys remain the
  * same. Think Array.prototype.map(), but for values in an object.
  */

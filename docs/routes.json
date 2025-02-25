@@ -483,6 +483,10 @@
       {
         "title": "At least one of the custom notification kinds you provided for 'ActivitiesData' does not match its requirements",
         "path": "/errors/ActivitiesData"
+      },
+      {
+        "title": "In order to use this channel, please set up your project first",
+        "path": "/errors/enable-a-notification-channel"
       }
     ]
   },

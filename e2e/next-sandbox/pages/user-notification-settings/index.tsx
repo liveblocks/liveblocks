@@ -112,58 +112,74 @@ function Settings() {
           <Row id="error" name="error" value={JSON.stringify(error)} />
         </tbody>
       </table>
-      <Channel
-        name="email"
-        thread={settings?.email.thread}
-        textMention={settings?.email.textMention}
-        onUpdate={() =>
-          updateSettings({
-            email: {
-              thread: settings ? !settings.email.thread : false,
-              textMention: settings ? !settings.email.textMention : false,
-            },
-          })
-        }
-      />
-      <Channel
-        name="slack"
-        thread={settings?.slack.thread}
-        textMention={settings?.slack.textMention}
-        onUpdate={() =>
-          updateSettings({
-            slack: {
-              thread: settings ? !settings.slack.thread : false,
-              textMention: settings ? !settings.slack.textMention : false,
-            },
-          })
-        }
-      />
-      <Channel
-        name="teams"
-        thread={settings?.teams.thread}
-        textMention={settings?.teams.textMention}
-        onUpdate={() =>
-          updateSettings({
-            teams: {
-              thread: settings ? !settings.teams.thread : false,
-              textMention: settings ? !settings.teams.textMention : false,
-            },
-          })
-        }
-      />
-      <Channel
-        name="webPush"
-        thread={settings?.webPush.thread}
-        textMention={settings?.webPush.textMention}
-        onUpdate={() =>
-          updateSettings({
-            webPush: {
-              thread: settings ? !settings.webPush.thread : false,
-              textMention: settings ? !settings.webPush.textMention : false,
-            },
-          })
-        }
-      />
+      {settings !== undefined && settings.email !== null ? (
+        <Channel
+          name="email"
+          thread={settings.email.thread}
+          textMention={settings.email.textMention}
+          onUpdate={() =>
+            updateSettings({
+              email: {
+                thread:
+                  settings.email !== null ? !settings.email.thread : false,
+                textMention:
+                  settings.email !== null ? !settings.email.textMention : false,
+              },
+            })
+          }
+        />
+      ) : null}
+      {settings !== undefined && settings.slack !== null ? (
+        <Channel
+          name="slack"
+          thread={settings.slack.thread}
+          textMention={settings.slack.textMention}
+          onUpdate={() =>
+            updateSettings({
+              slack: {
+                thread:
+                  settings.slack !== null ? !settings.slack.thread : false,
+                textMention:
+                  settings.slack !== null ? !settings.slack.textMention : false,
+              },
+            })
+          }
+        />
+      ) : null}
+      {settings !== undefined && settings.teams !== null ? (
+        <Channel
+          name="teams"
+          thread={settings.teams.thread}
+          textMention={settings.teams.textMention}
+          onUpdate={() =>
+            updateSettings({
+              teams: {
+                thread: settings.teams ? !settings.teams.thread : false,
+                textMention: settings.teams
+                  ? !settings.teams.textMention
+                  : false,
+              },
+            })
+          }
+        />
+      ) : null}
+      {settings !== undefined && settings.webPush !== null ? (
+        <Channel
+          name="webPush"
+          thread={settings.webPush.thread}
+          textMention={settings.webPush.textMention}
+          onUpdate={() =>
+            updateSettings({
+              webPush: {
+                thread: settings.webPush ? !settings.webPush.thread : false,
+                textMention: settings.webPush
+                  ? !settings.webPush.textMention
+                  : false,
+              },
+            })
+          }
+        />
+      ) : null}
     </div>
   );
 }

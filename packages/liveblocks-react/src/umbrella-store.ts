@@ -27,14 +27,14 @@ import {
   batch,
   compactObject,
   console,
+  createUserNotificationSettings,
   DefaultMap,
   DerivedSignal,
-  entries,
-  keys,
   kInternal,
   MutableSignal,
   nanoid,
   nn,
+  patchUserNotificationSettings,
   shallow,
   Signal,
   stableStringify,
@@ -564,27 +564,6 @@ export type CleanThreads<M extends BaseMetadata> = {
   threadsDB: ReadonlyThreadDB<M>;
 };
 
-/**
- * User notification settings
- * e.g.
- *  {
- *    email: {
- *      thread: true,
- *      textMention: false,
- *      $customKind: true | false,
- *    }
- *    slack: {
- *      thread: true,
- *      textMention: false,
- *      $customKind: true | false,
- *    }
- *  }
- * e.g. {} when before the first successful fetch.
- */
-export type BaseUserNotificationSettings =
-  | UserNotificationSettings
-  | Record<string, never>;
-
 export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
@@ -774,18 +753,32 @@ function createStore_forPermissionHints() {
   };
 }
 
+/**
+ * User notification settings
+ * e.g.
+ *  {
+ *    email: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *    slack: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *  }
+ * e.g. {} when before the first successful fetch.
+ */
 function createStore_forUserNotificationSettings(
   updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
 ) {
-  const signal = new Signal<BaseUserNotificationSettings>({});
+  const signal = new Signal<UserNotificationSettings>(
+    createUserNotificationSettings({})
+  );
 
   function update(settings: UserNotificationSettings) {
-    signal.set((prevSettings) => {
-      return {
-        ...prevSettings,
-        ...settings,
-      };
-    });
+    signal.set(settings);
   }
 
   return {
@@ -1858,43 +1851,18 @@ function applyOptimisticUpdates_forSettings(
  * exported for unit tests only.
  */
 export function applyOptimisticUpdates_forUserNotificationSettings(
-  baseSettings: BaseUserNotificationSettings,
+  settings: UserNotificationSettings,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
 ): UserNotificationSettings {
-  const outcomingSettings = { ...baseSettings };
+  let outcoming: UserNotificationSettings = settings;
 
-  for (const optimisticUpdate of optimisticUpdates) {
-    switch (optimisticUpdate.type) {
-      case "update-user-notification-settings": {
-        const incomingSettings = optimisticUpdate.settings;
-
-        for (const channelKey of keys(incomingSettings)) {
-          const key = channelKey;
-          const channelUpdates = incomingSettings[key];
-
-          if (channelUpdates) {
-            const realChannelUpdates = Object.fromEntries(
-              entries(channelUpdates).filter(
-                ([_, value]) => value !== undefined
-              )
-            );
-
-            outcomingSettings[key] = {
-              ...outcomingSettings[key],
-              ...realChannelUpdates,
-            };
-          }
-        }
-        break;
-      }
+  for (const update of optimisticUpdates) {
+    if (update.type === "update-user-notification-settings") {
+      outcoming = patchUserNotificationSettings(outcoming, update.settings);
     }
   }
 
-  /**
-   * Casting to `UserNotificationSettings` because we have removed potential `undefined` properties
-   * And we return a stable object of type `UserNotificationSettings` in the derived signal.
-   */
-  return outcomingSettings as UserNotificationSettings;
+  return outcoming;
 }
 
 /**
