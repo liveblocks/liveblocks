@@ -1,5 +1,6 @@
 import type { DAD } from "../globals/augmentation";
-import { create, entries, keys, raise, values } from "../lib/utils";
+import * as console from "../lib/fancy-console";
+import { create, entries, keys, values } from "../lib/utils";
 
 /**
  * Pre-defined notification channels support list.
@@ -62,16 +63,17 @@ export type PrivateUserNotificationSettingsApi = {
  * User notification settings.
  * One channel for one set of settings.
  */
-export type UserNotificationSettings =
-  Required<UserNotificationSettingsPlain> & {
-    /**
-     * @private
-     *
-     * `UserNotificationSettings` with private internal properties
-     * to store the plain settings and methods.
-     */
-    [kPrivate]: PrivateUserNotificationSettingsApi;
-  };
+export type UserNotificationSettings = {
+  [C in NotificationChannel]: NotificationChannelSettings | null;
+} & {
+  /**
+   * @private
+   *
+   * `UserNotificationSettings` with private internal properties
+   * to store the plain settings and methods.
+   */
+  [kPrivate]: PrivateUserNotificationSettingsApi;
+};
 
 /**
  * It creates a deep partial specific for `UserNotificationSettings`
@@ -98,13 +100,13 @@ export type PartialUserNotificationSettings =
  * @private
  *
  * Creates a `UserNotificationSettings` object with the given initial plain settings.
- * It defines a getter for each channel to access the settings and throws and error
+ * It defines a getter for each channel to access the settings and returns `null` with an error log
  * in case the required channel isn't enabled in the dashboard.
  *
  * You can see this function as `Proxy` like around `UserNotificationSettingsPlain` type.
  * We can't predict what will be enabled on the dashboard or not, so it's important
- * provide a good DX to developers by throwing an error when they try to access a channel
- * that isn't enabled in the dashboard.
+ * provide a good DX to developers by returning `null` completed by an error log
+ * when they try to access a channel that isn't enabled in the dashboard.
  */
 export function createUserNotificationSettings(
   plain: UserNotificationSettingsPlain
@@ -139,12 +141,13 @@ export function createUserNotificationSettings(
        * So we can safely tells that this getter is typed as `this: UserNotificationSettings` because we're
        * creating a well known shaped object → `UserNotificationSettings`.
        */
-      get(this: UserNotificationSettings): NotificationChannelSettings {
+      get(this: UserNotificationSettings): NotificationChannelSettings | null {
         const value = this[kPrivate].__plain__[channel];
-        if (!value) {
-          raise(
+        if (typeof value === "undefined") {
+          console.error(
             `In order to use the '${channel}' channel, please set up your project first. See <link to docs>`
           );
+          return null;
         }
         return value;
       },
@@ -195,14 +198,11 @@ export function patchUserNotificationSettings(
  * ```ts
  * const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
  * ```
- *
- * ⚠️ Warning: when using this function, you should be aware
- * you need to ensure you have notification kinds enabled in the dashboard
- * for the channel you're checking. Otherwise, it will raise an error at runtime because
- * the backend don't send the settings for a not enabled channel (e.g. no notification kinds enabled in a channel).
  */
 export function isNotificationChannelEnabled(
-  settings: NotificationChannelSettings
+  settings: NotificationChannelSettings | null
 ): boolean {
-  return values(settings).every((enabled) => enabled === true);
+  return settings !== null
+    ? values(settings).every((enabled) => enabled === true)
+    : false;
 }
