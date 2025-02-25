@@ -9,18 +9,19 @@ import {
 import { Loading } from "@/components/loading";
 import { SettingSwitch } from "./setting-switch";
 
-const getAvailableKinds = (settings: NotificationChannelSettings): string => {
-  const kinds = Object.keys(settings);
-  return kinds.join(", ");
-};
+// Settings that allow users to choose which notifications are received
+// https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel
 
 export function UserNotificationsSettings() {
+  // Each user has their own notification settings that affects which webhooks
+  // are sent for them. This hook allows you to retrieve and edit their settings
   const [{ isLoading, error, settings }, updateNotificationSettings] =
     useNotificationSettings();
 
   if (isLoading) return <Loading />;
   if (error) throw error; // or throw/capture error
 
+  // Each returns `true` if the current user has at least one notification kind enabled on that channel
   const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
   const isSlackChannelEnabled = isNotificationChannelEnabled(settings.slack);
   const isTeamsChannelEnabled = isNotificationChannelEnabled(settings.teams);
@@ -28,73 +29,13 @@ export function UserNotificationsSettings() {
     settings.webPush
   );
 
-  const handleChangeEmailChannel = (checked: boolean): void => {
-    updateNotificationSettings({
-      email: {
-        thread: checked,
-        textMention: checked,
-        $fileUploaded: checked,
-      },
-    });
-  };
-
-  const handleChangeSlackChannel = (checked: boolean): void => {
-    updateNotificationSettings({
-      slack: {
-        thread: checked,
-        textMention: checked,
-        $fileUploaded: checked,
-      },
-    });
-  };
-
-  const handleChangeTeamsChannel = (checked: boolean): void => {
-    updateNotificationSettings({
-      teams: {
-        thread: checked,
-        textMention: checked,
-        $fileUploaded: checked,
-      },
-    });
-  };
-
-  const handleChangeWebPushChannel = (checked: boolean): void => {
-    updateNotificationSettings({
-      webPush: {
-        thread: checked,
-        textMention: checked,
-        $fileUploaded: checked,
-      },
-    });
-  };
-
-  const handleChangeEmailChannelThreadKind = (checked: boolean): void => {
-    updateNotificationSettings({
-      email: { thread: checked },
-    });
-  };
-
-  const handleChangeEmailChannelTextMentionKind = (checked: boolean): void => {
-    updateNotificationSettings({
-      email: {
-        textMention: checked,
-      },
-    });
-  };
-
-  const handleChangeEmailChannel$fileUploadedKind = (
-    checked: boolean
-  ): void => {
-    updateNotificationSettings({
-      email: {
-        $fileUploaded: checked,
-      },
-    });
-  };
-
+  // Each notification kind must first be enabled in the notifications dashboard
+  // For example, `settings.email` will be `null` unless at least one Email
+  // notification kind is enabled
+  // https://liveblocks.io/docs/errors/enable-a-notification-channel
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-[600px]">
-      {settings.email !== null ? (
+      {settings.email ? (
         <>
           <div className="mb-6">
             <h2 className="text-2xl font-bold mb-2">Email Notifications</h2>
@@ -106,7 +47,15 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="emailNotifications"
               checked={isEmailChannelEnabled}
-              onChange={handleChangeEmailChannel}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  email: {
+                    thread: checked,
+                    textMention: checked,
+                    $fileUploaded: checked,
+                  },
+                });
+              }}
             >
               Receive Email notifications (all kinds:{" "}
               {getAvailableKinds(settings.email)})
@@ -114,7 +63,11 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="threadNotifications"
               checked={settings.email.thread}
-              onChange={handleChangeEmailChannelThreadKind}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  email: { thread: checked },
+                });
+              }}
             >
               Receive thread kind email notifications
             </SettingSwitch>
@@ -122,7 +75,13 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="textMentionNotifications"
               checked={settings.email.textMention}
-              onChange={handleChangeEmailChannelTextMentionKind}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  email: {
+                    textMention: checked,
+                  },
+                });
+              }}
             >
               Receive text mention kind email notifications
             </SettingSwitch>
@@ -130,7 +89,13 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="$customNotifications"
               checked={settings.email.$fileUploaded}
-              onChange={handleChangeEmailChannel$fileUploadedKind}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  email: {
+                    $fileUploaded: checked,
+                  },
+                });
+              }}
             >
               Receive $fileUploaded (custom) kind email notifications
             </SettingSwitch>
@@ -138,7 +103,7 @@ export function UserNotificationsSettings() {
         </>
       ) : null}
 
-      {settings.slack !== null ? (
+      {settings.slack ? (
         <>
           <hr />
 
@@ -153,7 +118,15 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="slackNotifications"
               checked={isSlackChannelEnabled}
-              onChange={handleChangeSlackChannel}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  slack: {
+                    thread: checked,
+                    textMention: checked,
+                    $fileUploaded: checked,
+                  },
+                });
+              }}
             >
               Receive Slack notifications (all kinds:{" "}
               {getAvailableKinds(settings.slack)})
@@ -162,7 +135,7 @@ export function UserNotificationsSettings() {
         </>
       ) : null}
 
-      {settings.teams !== null ? (
+      {settings.teams ? (
         <>
           <hr />
 
@@ -179,7 +152,15 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="teamsNotifications"
               checked={isTeamsChannelEnabled}
-              onChange={handleChangeTeamsChannel}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  teams: {
+                    thread: checked,
+                    textMention: checked,
+                    $fileUploaded: checked,
+                  },
+                });
+              }}
             >
               Receive Teams notifications (all kinds:{" "}
               {getAvailableKinds(settings.teams)})
@@ -188,7 +169,7 @@ export function UserNotificationsSettings() {
         </>
       ) : null}
 
-      {settings.webPush !== null ? (
+      {settings.webPush ? (
         <>
           <hr />
 
@@ -203,7 +184,15 @@ export function UserNotificationsSettings() {
             <SettingSwitch
               id="webPushNotifications"
               checked={isWebPushChannelEnabled}
-              onChange={handleChangeWebPushChannel}
+              onChange={(checked: boolean): void => {
+                updateNotificationSettings({
+                  webPush: {
+                    thread: checked,
+                    textMention: checked,
+                    $fileUploaded: checked,
+                  },
+                });
+              }}
             >
               Receive web push notifications (all kinds:{" "}
               {getAvailableKinds(settings.webPush)})
@@ -214,3 +203,8 @@ export function UserNotificationsSettings() {
     </div>
   );
 }
+
+const getAvailableKinds = (settings: NotificationChannelSettings): string => {
+  const kinds = Object.keys(settings);
+  return kinds.join(", ");
+};
