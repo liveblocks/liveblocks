@@ -94,114 +94,123 @@ export function UserNotificationsSettings() {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-[600px]">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Email Notifications</h2>
-        <p className="text-gray-600 text-sm">
-          Choose how you want to receive email notifications.
-        </p>
-      </div>
-      <div className="mb-6">
-        <SettingSwitch
-          id="emailNotifications"
-          checked={isEmailChannelEnabled}
-          onChange={handleChangeEmailChannel}
-        >
-          Receive Email notifications (all kinds:{" "}
-          {getAvailableKinds(settings.email)})
-        </SettingSwitch>
-      </div>
+      {settings.email !== null ? (
+        <>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Email Notifications</h2>
+            <p className="text-gray-600 text-sm">
+              Choose how you want to receive email notifications.
+            </p>
+          </div>
+          <div className="space-y-6 mb-6">
+            <SettingSwitch
+              id="emailNotifications"
+              checked={isEmailChannelEnabled}
+              onChange={handleChangeEmailChannel}
+            >
+              Receive Email notifications (all kinds:{" "}
+              {getAvailableKinds(settings.email)})
+            </SettingSwitch>
+            <SettingSwitch
+              id="threadNotifications"
+              checked={settings.email.thread}
+              onChange={handleChangeEmailChannelThreadKind}
+            >
+              Receive thread kind email notifications
+            </SettingSwitch>
 
-      <div className="mb-6">
-        <SettingSwitch
-          id="threadNotifications"
-          checked={settings.email.thread}
-          onChange={handleChangeEmailChannelThreadKind}
-        >
-          Receive thread kind email notifications
-        </SettingSwitch>
-      </div>
+            <SettingSwitch
+              id="textMentionNotifications"
+              checked={settings.email.textMention}
+              onChange={handleChangeEmailChannelTextMentionKind}
+            >
+              Receive text mention kind email notifications
+            </SettingSwitch>
 
-      <div className="mb-6">
-        <SettingSwitch
-          id="textMentionNotifications"
-          checked={settings.email.textMention}
-          onChange={handleChangeEmailChannelTextMentionKind}
-        >
-          Receive text mention kind email notifications
-        </SettingSwitch>
-      </div>
+            <SettingSwitch
+              id="$customNotifications"
+              checked={settings.email.$fileUploaded}
+              onChange={handleChangeEmailChannel$fileUploadedKind}
+            >
+              Receive $fileUploaded (custom) kind email notifications
+            </SettingSwitch>
+          </div>
+        </>
+      ) : null}
 
-      <div className="mb-6">
-        <SettingSwitch
-          id="$customNotifications"
-          checked={settings.email.$fileUploaded}
-          onChange={handleChangeEmailChannel$fileUploadedKind}
-        >
-          Receive $fileUploaded (custom) kind email notifications
-        </SettingSwitch>
-      </div>
+      {settings.slack !== null ? (
+        <>
+          <hr />
 
-      <hr />
+          <div className="mb-6 mt-6">
+            <h2 className="text-2xl font-bold mb-2">Slack Notifications</h2>
+            <p className="text-gray-600 text-sm">
+              Choose how you want to receive Slack notifications.
+            </p>
+          </div>
 
-      <div className="mb-6 mt-6">
-        <h2 className="text-2xl font-bold mb-2">Slack Notifications</h2>
-        <p className="text-gray-600 text-sm">
-          Choose how you want to receive Slack notifications.
-        </p>
-      </div>
+          <div className="mb-6">
+            <SettingSwitch
+              id="slackNotifications"
+              checked={isSlackChannelEnabled}
+              onChange={handleChangeSlackChannel}
+            >
+              Receive Slack notifications (all kinds:{" "}
+              {getAvailableKinds(settings.slack)})
+            </SettingSwitch>
+          </div>
+        </>
+      ) : null}
 
-      <div className="mb-6">
-        <SettingSwitch
-          id="slackNotifications"
-          checked={isSlackChannelEnabled}
-          onChange={handleChangeSlackChannel}
-        >
-          Receive Slack notifications (all kinds:{" "}
-          {getAvailableKinds(settings.email)})
-        </SettingSwitch>
-      </div>
+      {settings.teams !== null ? (
+        <>
+          <hr />
 
-      <hr />
+          <div className="mb-6 mt-6">
+            <h2 className="text-2xl font-bold mb-2">
+              Microsoft Teams Notifications
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Choose how you want to receive Microsoft Teams notifications.
+            </p>
+          </div>
 
-      <div className="mb-6 mt-6">
-        <h2 className="text-2xl font-bold mb-2">
-          Microsoft Teams Notifications
-        </h2>
-        <p className="text-gray-600 text-sm">
-          Choose how you want to receive Microsoft Teams notifications.
-        </p>
-      </div>
+          <div className="mb-6">
+            <SettingSwitch
+              id="teamsNotifications"
+              checked={isTeamsChannelEnabled}
+              onChange={handleChangeTeamsChannel}
+            >
+              Receive Teams notifications (all kinds:{" "}
+              {getAvailableKinds(settings.teams)})
+            </SettingSwitch>
+          </div>
+        </>
+      ) : null}
 
-      <div className="mb-6">
-        <SettingSwitch
-          id="teamsNotifications"
-          checked={isTeamsChannelEnabled}
-          onChange={handleChangeTeamsChannel}
-        >
-          Receive Teams notifications (all kinds:{" "}
-          {getAvailableKinds(settings.email)})
-        </SettingSwitch>
-      </div>
+      {settings.webPush !== null ? (
+        <>
+          <hr />
 
-      <hr />
+          <div className="mb-6 mt-6">
+            <h2 className="text-2xl font-bold mb-2">Web Push Notifications</h2>
+            <p className="text-gray-600 text-sm">
+              Choose how you want to receive Web Push notifications.
+            </p>
+          </div>
 
-      <div className="mb-6 mt-6">
-        <h2 className="text-2xl font-bold mb-2">Web Push Notifications</h2>
-        <p className="text-gray-600 text-sm">
-          Choose how you want to receive Web Push notifications.
-        </p>
-      </div>
-
-      <div className="mb-6 mt-6">
-        <SettingSwitch
-          id="webPushNotifications"
-          checked={isWebPushChannelEnabled}
-          onChange={handleChangeWebPushChannel}
-        >
-          Receive web push notifications (all kinds:{" "}
-          {getAvailableKinds(settings.email)})
-        </SettingSwitch>
-      </div>
+          <div className="mb-6 mt-6">
+            <SettingSwitch
+              id="webPushNotifications"
+              checked={isWebPushChannelEnabled}
+              onChange={handleChangeWebPushChannel}
+            >
+              Receive web push notifications (all kinds:{" "}
+              {getAvailableKinds(settings.webPush)})
+            </SettingSwitch>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
