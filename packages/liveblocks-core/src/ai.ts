@@ -33,6 +33,11 @@ export type Ai = {
   connect: () => void;
   reconnect: () => void;
   disconnect: () => void;
+  listChats: () => void;
+  newChat: (id?: string) => void;
+  getMessages: (chatId: string) => void;
+  sendMessage: (chatId: string, message: string) => void;
+  getStatus: () => Status;
 };
 
 /** @internal */
@@ -47,10 +52,45 @@ export type AiConfig = {
   enableDebugLogging?: boolean;
 };
 
+// TODO: define these better
+export enum AiMsgCode {
+  LIST_CHATS = 100,
+  NEW_CHAT = 200,
+  GET_MESSAGES = 300,
+  SEND_MESSAGE = 400,
+}
+
+export type ListChatClientMsg = {
+  readonly type: AiMsgCode.LIST_CHATS;
+};
+
+export type NewChatClientMsg = {
+  readonly type: AiMsgCode.NEW_CHAT;
+  chatId?: string;
+};
+
+export type GetMessagesClientMsg = {
+  readonly type: AiMsgCode.GET_MESSAGES;
+  chatId: string;
+};
+
+export type SendMessageClientMsg = {
+  readonly type: AiMsgCode.SEND_MESSAGE;
+  chatId: string;
+  message: string;
+};
+
+export type AiMsg =
+  | ListChatClientMsg
+  | NewChatClientMsg
+  | GetMessagesClientMsg
+  | SendMessageClientMsg;
+
 export function createAi(config: AiConfig): Ai {
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     config.delegates,
-    config.enableDebugLogging
+    config.enableDebugLogging,
+    false // AI doesn't have actors
   );
 
   const context: AiContext = {
@@ -61,6 +101,7 @@ export function createAi(config: AiConfig): Ai {
 
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
+    console.warn("onStatusDidChange", newStatus);
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
       const tokenKey = getBearerTokenFromAuthValue(authValue);
@@ -129,6 +170,10 @@ export function createAi(config: AiConfig): Ai {
     }
   });
 
+  function sendClientMsg(msg: AiMsg) {
+    managedSocket.send(JSON.stringify(msg));
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -137,6 +182,30 @@ export function createAi(config: AiConfig): Ai {
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
+      listChats: () => {
+        sendClientMsg({
+          type: AiMsgCode.LIST_CHATS,
+        });
+      },
+      newChat: (id?: string) => {
+        sendClientMsg({
+          type: AiMsgCode.NEW_CHAT,
+        });
+      },
+      getMessages: (chatId: string) => {
+        sendClientMsg({
+          type: AiMsgCode.GET_MESSAGES,
+          chatId,
+        });
+      },
+      sendMessage: (chatId: string, message: string) => {
+        sendClientMsg({
+          type: AiMsgCode.SEND_MESSAGE,
+          chatId,
+          message,
+        });
+      },
+      getStatus: () => managedSocket.getStatus(),
     },
     kInternal,
     { enumerable: false }
