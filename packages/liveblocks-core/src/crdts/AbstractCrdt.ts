@@ -19,13 +19,13 @@ export type ApplyResult =
  * to live nodes before and after they are inter-connected.
  */
 export interface ManagedPool {
-  roomId: string;
-  generateId: () => string;
-  generateOpId: () => string;
+  readonly roomId: string;
+  readonly generateId: () => string;
+  readonly generateOpId: () => string;
 
-  getNode: (id: string) => LiveNode | undefined;
-  addNode: (id: string, node: LiveNode) => void;
-  deleteNode: (id: string) => void;
+  readonly getNode: (id: string) => LiveNode | undefined;
+  readonly addNode: (id: string, node: LiveNode) => void;
+  readonly deleteNode: (id: string) => void;
 
   /**
    * Dispatching has three responsibilities:
