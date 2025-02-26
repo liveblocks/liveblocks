@@ -16,6 +16,7 @@ import type {
   DM,
   DS,
   DU,
+  IdTuple,
   InboxNotificationData,
   InboxNotificationDataPlain,
   Json,
@@ -30,6 +31,7 @@ import type {
   QueryMetadata,
   QueryParams,
   RoomNotificationSettings,
+  SerializedCrdt,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
@@ -58,6 +60,10 @@ import {
 type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
   ? JsonObject
   : ToImmutable<S>;
+
+type RawNodeMap = {
+  nodes: IdTuple<SerializedCrdt>[];
+};
 
 export type LiveblocksOptions = {
   /**
@@ -683,12 +689,26 @@ export class Liveblocks {
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
   ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/storage`, { format });
+    return (await this.getStorageDocument_internal(roomId, format)) as
+      | PlainLsonObject
+      | ToSimplifiedJson<S>;
+  }
+
+  private async getStorageDocument_internal(
+    roomId: string,
+    format: "plain-lson" | "json" | "internal"
+  ): Promise<PlainLsonObject | ToSimplifiedJson<S> | RawNodeMap> {
+    const res = await this.#get(url`/v2/rooms/${roomId}/storage`, {
+      format,
+    });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
-    return (await res.json()) as Promise<PlainLsonObject | ToSimplifiedJson<S>>;
+    return (await res.json()) as
+      | PlainLsonObject
+      | ToSimplifiedJson<S>
+      | RawNodeMap;
   }
 
   /**
@@ -1701,6 +1721,33 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  /**
+   * Downloads the current Storage contents and calls the provided callback
+   * function, in which you can mutate the Storage contents arbitrarily.
+   *
+   * The provided callback function is a synchronous function. If you need to
+   * make multiple async updates, see XXX.
+   */
+  public async mutateStorage(
+    roomId: string,
+    callback: (root: unknown) => void
+  ): Promise<void> {
+    const nodemap = new Map(
+      (
+        (await this.getStorageDocument_internal(
+          roomId,
+          "internal"
+        )) as RawNodeMap
+      ).nodes
+    );
+
+    // 1. Create a new pool
+    // 2. Run the callback
+    // 3. Capture all the changes to the pool
+    // 4. Send the resulting ops to the server
+    callback(nodemap);
   }
 }
 
