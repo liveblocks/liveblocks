@@ -6,6 +6,7 @@
 import type {
   BaseMetadata,
   BaseUserMeta,
+  ClientMsg,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -23,6 +24,7 @@ import type {
   JsonObject,
   KDAD,
   LsonObject,
+  Op,
   OptionalTupleUnless,
   PartialUnless,
   PartialUserNotificationSettings,
@@ -32,6 +34,7 @@ import type {
   QueryParams,
   RoomNotificationSettings,
   SerializedCrdt,
+  StorageUpdate,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
@@ -40,11 +43,15 @@ import type {
   UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import {
+  ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  createManagedPool,
   createUserNotificationSettings,
+  LiveObject,
+  nanoid,
   objectToQuery,
   tryParseJson,
   url,
@@ -1920,22 +1927,67 @@ export class Liveblocks {
    */
   public async mutateStorage(
     roomId: string,
-    callback: (root: unknown) => void
+    callback: (root: LiveObject<LsonObject>) => void
   ): Promise<void> {
-    const nodemap = new Map(
-      (
-        (await this.getStorageDocument_internal(
-          roomId,
-          "internal"
-        )) as RawNodeMap
-      ).nodes
-    );
+    // 1. Create a new pool
+    // 2. Download the storage contents
+    // 3. Construct the Live tree
+    // 4. Run the callback
+    // 5. Capture all the changes to the pool
+    // 6. Send the resulting ops to the server
+
+    const opsBuffer: Op[] = [];
 
     // 1. Create a new pool
-    // 2. Run the callback
-    // 3. Capture all the changes to the pool
-    // 4. Send the resulting ops to the server
-    callback(nodemap);
+    const pool = createManagedPool(roomId, {
+      getCurrentConnectionId: () =>
+        // XXX Think about this uniq ID generation. Ideally it would not be
+        // _random_ but instead claimed from the server first. Maybe by adding
+        // a param to the `/storage` endpoint, and returned in the same response?
+        // This would be better for security and generally less error-prone.
+        ("s:" + nanoid(5)) as unknown as number,
+      onDispatch: (
+        ops: Op[],
+        _reverse: Op[],
+        _storageUpdates: Map<string, StorageUpdate>
+      ) => {
+        // 5. Capture all the changes to the pool
+        for (const op of ops) {
+          opsBuffer.push(op);
+        }
+      },
+    });
+
+    // 2. Download the storage contents
+    const nodemap = (
+      (await this.getStorageDocument_internal(roomId, "internal")) as RawNodeMap
+    ).nodes;
+
+    // 3. Construct the Live tree
+    const root = LiveObject._fromItems(nodemap, pool);
+
+    // 4. Run the callback
+    callback(root);
+
+    // 6. Send the resulting ops to the server
+    await this.sendMessage(roomId, [
+      { type: ClientMsgCode.UPDATE_STORAGE, ops: opsBuffer },
+    ]);
+  }
+
+  private async sendMessage(
+    roomId: string,
+    messages: ClientMsg<JsonObject, Json>[]
+  ) {
+    const res = await this.#post(url`/v2/rooms/${roomId}/send-message`, {
+      messages,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    // If res.ok, it will be a 204 response, without content
   }
 }
 
