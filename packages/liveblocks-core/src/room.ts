@@ -4,7 +4,7 @@ import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
-import { OpSource } from "./crdts/AbstractCrdt";
+import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
   getTreesDiffOperations,
@@ -14,7 +14,7 @@ import {
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
-import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
+import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
@@ -1154,9 +1154,7 @@ type RoomState<
   yjsProvider: IYjsProvider | undefined;
   readonly yjsProviderDidChange: EventSource<void>;
 
-  clock: number;
-  opClock: number;
-  readonly nodes: Map<string, LiveNode>;
+  pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
   readonly undoStack: HistoryOp<P>[][];
@@ -1390,9 +1388,11 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    clock: 0,
-    opClock: 0,
-    nodes: new Map<string, LiveNode>(),
+    pool: createManagedPool(roomId, {
+      getCurrentConnectionId,
+      onDispatch,
+      isStorageWritable,
+    }),
     root: undefined,
 
     undoStack: [],
@@ -1518,71 +1518,49 @@ export function createRoom<
     }
   });
 
-  const pool: ManagedPool = {
-    roomId: config.roomId,
-
-    getNode: (id: string) => context.nodes.get(id),
-    addNode: (id: string, node: LiveNode) => void context.nodes.set(id, node),
-    deleteNode: (id: string) => void context.nodes.delete(id),
-
-    generateId: () => `${getConnectionId()}:${context.clock++}`,
-    generateOpId: () => `${getConnectionId()}:${context.opClock++}`,
-
-    dispatch(
-      ops: Op[],
-      reverse: Op[],
-      storageUpdates: Map<string, StorageUpdate>
-    ) {
-      const activeBatch = context.activeBatch;
-
-      if (process.env.NODE_ENV !== "production") {
-        const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
-        if (stackTrace) {
-          for (const op of ops) {
-            if (op.opId) {
-              nn(context.opStackTraces).set(op.opId, stackTrace);
-            }
+  function onDispatch(
+    ops: Op[],
+    reverse: Op[],
+    storageUpdates: Map<string, StorageUpdate>
+  ): void {
+    if (process.env.NODE_ENV !== "production") {
+      const stackTrace = captureStackTrace("Storage mutation", onDispatch);
+      if (stackTrace) {
+        for (const op of ops) {
+          if (op.opId) {
+            nn(context.opStackTraces).set(op.opId, stackTrace);
           }
         }
       }
+    }
 
-      if (activeBatch) {
-        for (const op of ops) {
-          activeBatch.ops.push(op);
-        }
-        for (const [key, value] of storageUpdates) {
-          activeBatch.updates.storageUpdates.set(
-            key,
-            mergeStorageUpdates(
-              activeBatch.updates.storageUpdates.get(key),
-              value
-            )
-          );
-        }
-        activeBatch.reverseOps.pushLeft(reverse);
-      } else {
-        addToUndoStack(reverse);
-        context.redoStack.length = 0;
-        dispatchOps(ops);
-        notify({ storageUpdates });
+    if (context.activeBatch) {
+      for (const op of ops) {
+        context.activeBatch.ops.push(op);
       }
-    },
-
-    assertStorageIsWritable: () => {
-      const scopes = context.dynamicSessionInfoSig.get()?.scopes;
-      if (scopes === undefined) {
-        // If we aren't connected yet, assume we can write
-        return;
-      }
-
-      const canWrite = canWriteStorage(scopes);
-      if (!canWrite) {
-        throw new Error(
-          "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      for (const [key, value] of storageUpdates) {
+        context.activeBatch.updates.storageUpdates.set(
+          key,
+          mergeStorageUpdates(
+            context.activeBatch.updates.storageUpdates.get(key),
+            value
+          )
         );
       }
-    },
-  };
+      context.activeBatch.reverseOps.pushLeft(reverse);
+    } else {
+      addToUndoStack(reverse);
+      context.redoStack.length = 0;
+      dispatchOps(ops);
+      notify({ storageUpdates });
+    }
+  }
+
+  function isStorageWritable(): boolean {
+    const scopes = context.dynamicSessionInfoSig.get()?.scopes;
+    // If we aren't connected yet, assume we can write
+    return scopes !== undefined ? canWriteStorage(scopes) : true;
+  }
 
   const eventHub = {
     status: makeEventSource<Status>(), // New/recommended API
@@ -1807,7 +1785,7 @@ export function createRoom<
     if (context.root !== undefined) {
       updateRoot(message.items);
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, pool);
+      context.root = LiveObject._fromItems<S>(message.items, context.pool);
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1837,7 +1815,7 @@ export function createRoom<
     }
 
     const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.nodes) {
+    for (const [id, node] of context.pool.nodes) {
       currentItems.set(id, node._serialize());
     }
 
@@ -1896,7 +1874,7 @@ export function createRoom<
     notifyStorageStatus();
   }
 
-  function getConnectionId() {
+  function getCurrentConnectionId() {
     const info = context.dynamicSessionInfoSig.get();
     if (info) {
       return info.actor;
@@ -1931,7 +1909,7 @@ export function createRoom<
     // that right now first.
     const ops = rawOps.map((op) => {
       if (op.type !== "presence" && !op.opId) {
-        return { ...op, opId: pool.generateOpId() };
+        return { ...op, opId: context.pool.generateOpId() };
       } else {
         return op;
       }
@@ -2026,7 +2004,7 @@ export function createRoom<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const node = context.nodes.get(op.id);
+        const node = context.pool.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -2035,7 +2013,7 @@ export function createRoom<
       }
 
       case OpCode.SET_PARENT_KEY: {
-        const node = context.nodes.get(op.id);
+        const node = context.pool.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -2057,7 +2035,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        const parentNode = context.nodes.get(op.parentId);
+        const parentNode = context.pool.nodes.get(op.parentId);
         if (parentNode === undefined) {
           return { modified: false };
         }
@@ -3038,7 +3016,7 @@ export function createRoom<
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
-        get nodeCount() { return context.nodes.size }, // prettier-ignore
+        get nodeCount() { return context.pool.nodes.size }, // prettier-ignore
 
         getYjsProvider() {
           return context.yjsProvider;
