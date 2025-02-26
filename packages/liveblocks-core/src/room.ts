@@ -1326,6 +1326,7 @@ export function createRoom<
   options: { initialPresence: P; initialStorage: S },
   config: RoomConfig<M>
 ): Room<P, S, U, E, M> {
+  const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
 
@@ -1600,8 +1601,6 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
     roomWillDestroy: makeEventSource<void>(),
   };
-
-  const roomId = config.roomId;
 
   async function createTextMention(userId: string, mentionId: string) {
     return httpClient.createTextMention({ roomId, userId, mentionId });
@@ -3088,9 +3087,9 @@ export function createRoom<
         attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
       },
 
-      id: config.roomId,
+      id: roomId,
       subscribe: makeClassicSubscribeFn(
-        config.roomId,
+        roomId,
         events,
         config.errorEventSource
       ),
