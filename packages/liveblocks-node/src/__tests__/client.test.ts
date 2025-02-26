@@ -1,10 +1,13 @@
 import type {
   CommentData,
   CommentUserReaction,
+  IdTuple,
   RoomNotificationSettings,
+  SerializedCrdt,
   ThreadData,
   UserNotificationSettings,
 } from "@liveblocks/core";
+import { LiveList } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -1596,7 +1599,6 @@ describe("client", () => {
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
-
     await expect(
       client.deleteNotificationSettings({ userId })
     ).resolves.toBeUndefined();
@@ -1637,5 +1639,44 @@ describe("client", () => {
         expect(err.name).toBe("LiveblocksError");
       }
     }
+  });
+
+  describe.only("Vincent's hackathon", () => {
+    test("should read room's storage from the server and construct a Live tree", async () => {
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/storage?format=internal`,
+          () => {
+            return HttpResponse.json({
+              // prettier-ignore
+              nodes: [
+                ["root", { type: 0, data: {} }],
+                ["0:1", { type: 1, parentId: "root", parentKey: "a" }],
+                ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
+                ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 } }],
+                ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 } }],
+              ] satisfies IdTuple<SerializedCrdt>[],
+            });
+          }
+        ),
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/send-message`, () => {
+          // Accept anything for this test
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await expect(
+        client.mutateStorage("my-room", (root) => {
+          expect(root.toImmutable() as unknown).toEqual({
+            a: [{ abc: 123 }, { xyz: 3.14 }],
+            b: new Map(),
+          });
+
+          // Mutate it!
+          root.set("z", new LiveList([1, 2, 3]));
+        })
+      ).resolves.toBeUndefined();
+    });
   });
 });
