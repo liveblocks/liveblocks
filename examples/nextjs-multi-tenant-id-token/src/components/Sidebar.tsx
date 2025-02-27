@@ -1,28 +1,28 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { ComponentProps, Suspense } from "react";
 import { Link } from "./Link";
 import clsx from "clsx";
+import { usePathParams } from "../hooks/usePathParams";
 
 interface SidebarProps extends ComponentProps<"aside"> {
   rooms: Liveblocks["RoomInfo"][];
 }
 
 export function Sidebar({ rooms, className, ...props }: SidebarProps) {
-  const pathname = usePathname();
+  const { tenant, pathname } = usePathParams();
 
   return (
     <aside className={clsx(className, "sidebar")} {...props}>
       <ul>
         {rooms.map((room) => {
-          const isActive = pathname === room.url;
-
+          const roomPath = `/${tenant}/${room.slug}`;
+          const isActive = pathname === roomPath;
           return (
             <li key={room.id}>
               <Suspense fallback={null}>
                 <Link
-                  href={isActive ? "/" : room.url}
+                  href={roomPath}
                   className="sidebar-room"
                   data-active={isActive ? "" : undefined}
                 >

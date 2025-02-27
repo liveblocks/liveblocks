@@ -159,7 +159,7 @@ body {
 }
 
 .button.destructive:hover,
-.button.destructive:focus-visible{
+.button.destructive:focus-visible {
   background: #ffd6d6;
 }
 
@@ -270,4 +270,28 @@ body {
   min-width: 1rem;
   padding: 0 0.25rem;
   border-radius: 9999px;
+}
+
+.tenant-select {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tenant-select select {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(0 0 0 / 10%);
+}
+
+.tenant-select select:focus-visible {
+  outline: none;
+}
+
+.tenant-select select option {
+  padding: 0.5rem 0.75rem;
+  color: rgb(0 0 0 / 50%);
+}
+
+.tenant-select select option:disabled {
+  color: #555;
 }

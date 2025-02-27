@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { getRooms } from "../../database";
+import { getRooms } from "../../../database";
 
 /**
  * Generate dynamic routes for each room.

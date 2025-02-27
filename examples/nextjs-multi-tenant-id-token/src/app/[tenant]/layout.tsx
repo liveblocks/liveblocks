@@ -1,7 +1,8 @@
-import { TenantHeader } from "../components/TenantHeader";
-import { getRooms } from "../database";
-import "../styles/globals.css";
-import { Providers } from "./Providers";
+import { Sidebar } from "../../components/Sidebar";
+import { TenantHeader } from "../../components/TenantHeader";
+import { getRooms } from "../../database";
+import "../../styles/globals.css";
+import { Providers } from "../Providers";
 
 export default async function Layout({
   children,
@@ -30,9 +31,9 @@ export default async function Layout({
         />
       </head>
       <body>
-        <Providers>
-          <main className="content">{children}</main>
-        </Providers>
+        <main className="content">{children}</main>
+        <Sidebar rooms={rooms} />
+        <TenantHeader />
       </body>
     </html>
   );

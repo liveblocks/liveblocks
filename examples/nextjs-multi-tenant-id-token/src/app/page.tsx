@@ -1,7 +1,10 @@
+"use client";
+import { TenantSelect } from "../components/TenantSelect";
+
 export default function Page() {
   return (
     <div className="home">
-      <p>Select a room in the sidebar.</p>
+      <TenantSelect />
     </div>
   );
 }

@@ -38,17 +38,18 @@ export function setExampleId(url: string) {
 export function authWithExampleId(endpoint: string) {
   return async (room?: string) => {
     const params = new URLSearchParams(window.location.search);
+    const tenantId = window.location.pathname.split("/")[1];
     const exampleId = params.get("exampleId") ?? undefined;
     const examplePreview = Number(params.get("examplePreview"));
 
     const userId = createExampleUserId(examplePreview, exampleId);
-
+    console.log("tenantId", tenantId);
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ room, userId }),
+      body: JSON.stringify({ room, userId, tenantId }),
     });
     return await response.json();
   };

@@ -17,10 +17,22 @@ const USERS: Liveblocks["UserMeta"][] = [
   },
 ];
 
+const TENANTS: { id: string; name: string }[] = [
+  {
+    id: "acme",
+    name: "Acme",
+  },
+  {
+    id: "lumon",
+    name: "Lumon",
+  },
+];
+
 const ROOMS: Liveblocks["RoomInfo"][] = [
   "general",
   "engineering",
   "design",
+  // TODO: add private rooms
 ].map((room) => ({
   id: createExampleRoomId(room),
   slug: room,
@@ -46,4 +58,14 @@ export async function getRoom(id: string) {
 // Simulate getting a list of rooms from a database.
 export async function getRooms() {
   return ROOMS;
+}
+
+// Simulate getting a tenant from a database.
+export async function getTenant(id: string) {
+  return TENANTS.find((tenant) => tenant.id === id || id.startsWith(tenant.id));
+}
+
+// Simulate getting a list of tenants from a database.
+export async function getTenants() {
+  return TENANTS;
 }
