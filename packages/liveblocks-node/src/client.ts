@@ -4,6 +4,7 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  Awaitable,
   BaseMetadata,
   BaseUserMeta,
   ClientMsg,
@@ -63,7 +64,6 @@ import {
   getBaseUrl,
   normalizeStatusCode,
 } from "./utils";
-
 type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
   ? JsonObject
   : ToImmutable<S>;
@@ -1797,7 +1797,7 @@ export class Liveblocks {
    */
   public async mutateStorage(
     roomId: string,
-    callback: (root: LiveObject<LsonObject>) => void
+    callback: (root: LiveObject<S>, flush: () => void) => Awaitable<void>
   ): Promise<void> {
     // 1. Create a new pool
     // 2. Download the storage contents
@@ -1808,14 +1808,15 @@ export class Liveblocks {
 
     const opsBuffer: Op[] = [];
 
+    // XXX Think about this uniq ID generation. Ideally it would not be
+    // _random_ but instead claimed from the server first. Maybe by adding
+    // a param to the `/storage` endpoint, and returned in the same response?
+    // This would be better for security and generally less error-prone.
+    const connectionId = ("s:" + nanoid(5)) as unknown as number;
+
     // 1. Create a new pool
     const pool = createManagedPool(roomId, {
-      getCurrentConnectionId: () =>
-        // XXX Think about this uniq ID generation. Ideally it would not be
-        // _random_ but instead claimed from the server first. Maybe by adding
-        // a param to the `/storage` endpoint, and returned in the same response?
-        // This would be better for security and generally less error-prone.
-        ("s:" + nanoid(5)) as unknown as number,
+      getCurrentConnectionId: () => connectionId,
       onDispatch: (
         ops: Op[],
         _reverse: Op[],
@@ -1828,30 +1829,56 @@ export class Liveblocks {
       },
     });
 
+    const ctl = new AbortController();
+    const signal = ctl.signal;
+
+    const promises: Promise<void>[] = [];
+
     // 2. Download the storage contents
-    const nodemap = (
-      (await this.getStorageDocument_internal(roomId, "internal")) as RawNodeMap
-    ).nodes;
+    try {
+      const nodemap = (
+        (await this.getStorageDocument_internal(roomId, "internal", {
+          signal,
+        })) as RawNodeMap
+      ).nodes;
 
-    // 3. Construct the Live tree
-    const root = LiveObject._fromItems(nodemap, pool);
+      // 3. Construct the Live tree
+      const root = LiveObject._fromItems(nodemap, pool);
 
-    // 4. Run the callback
-    callback(root);
+      // XXX Batch super-quick flush calls together (like the throttling we do in the browser client)
+      const flushSync = () => {
+        promises.push(
+          this.sendMessage(
+            roomId,
+            [{ type: ClientMsgCode.UPDATE_STORAGE, ops: opsBuffer }],
+            { signal }
+          )
+        );
+      };
 
-    // 6. Send the resulting ops to the server
-    await this.sendMessage(roomId, [
-      { type: ClientMsgCode.UPDATE_STORAGE, ops: opsBuffer },
-    ]);
+      // 4. Run the callback
+      await callback(root as LiveObject<S>, flushSync);
+
+      // 6. Send the resulting ops to the server
+      flushSync();
+    } catch (e) {
+      ctl.abort();
+      throw e;
+    } finally {
+      await Promise.allSettled(promises);
+    }
   }
 
   private async sendMessage(
     roomId: string,
-    messages: ClientMsg<JsonObject, Json>[]
+    messages: ClientMsg<JsonObject, Json>[],
+    options?: RequestOptions
   ) {
-    const res = await this.#post(url`/v2/rooms/${roomId}/send-message`, {
-      messages,
-    });
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/send-message`,
+      { messages },
+      { signal: options?.signal }
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
