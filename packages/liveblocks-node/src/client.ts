@@ -166,6 +166,10 @@ type M = DM;
 type S = DS;
 type U = DU;
 
+export type RequestOptions = {
+  signal?: AbortSignal;
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -184,7 +188,11 @@ export class Liveblocks {
     this.#baseUrl = new URL(getBaseUrl(options.baseUrl));
   }
 
-  async #post(path: URLSafeString, json: Json): Promise<Response> {
+  async #post(
+    path: URLSafeString,
+    json: Json,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
@@ -195,11 +203,16 @@ export class Liveblocks {
       method: "POST",
       headers,
       body: JSON.stringify(json),
+      signal: options?.signal,
     });
     return res;
   }
 
-  async #put(path: URLSafeString, json: Json): Promise<Response> {
+  async #put(
+    path: URLSafeString,
+    json: Json,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
@@ -210,13 +223,15 @@ export class Liveblocks {
       method: "PUT",
       headers,
       body: JSON.stringify(json),
+      signal: options?.signal,
     });
   }
 
   async #putBinary(
     path: URLSafeString,
     body: Uint8Array,
-    params?: QueryParams
+    params?: QueryParams,
+    options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path, params);
     const headers = {
@@ -224,26 +239,46 @@ export class Liveblocks {
       "Content-Type": "application/octet-stream",
     };
     const fetch = await fetchPolyfill();
-    return await fetch(url, { method: "PUT", headers, body });
+    return await fetch(url, {
+      method: "PUT",
+      headers,
+      body,
+      signal: options?.signal,
+    });
   }
 
-  async #delete(path: URLSafeString): Promise<Response> {
+  async #delete(
+    path: URLSafeString,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
     };
     const fetch = await fetchPolyfill();
-    const res = await fetch(url, { method: "DELETE", headers });
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers,
+      signal: options?.signal,
+    });
     return res;
   }
 
-  async #get(path: URLSafeString, params?: QueryParams): Promise<Response> {
+  async #get(
+    path: URLSafeString,
+    params?: QueryParams,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
     };
     const fetch = await fetchPolyfill();
-    const res = await fetch(url, { method: "GET", headers });
+    const res = await fetch(url, {
+      method: "GET",
+      headers,
+      signal: options?.signal,
+    });
     return res;
   }
 
@@ -367,6 +402,7 @@ export class Liveblocks {
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
    */
   public async getRooms(
@@ -410,7 +446,8 @@ export class Liveblocks {
               startsWith: string;
             };
           };
-    } = {}
+    } = {},
+    options?: RequestOptions
   ): Promise<{
     nextPage: string | null;
     nextCursor: string | null;
@@ -441,7 +478,7 @@ export class Liveblocks {
       query,
     };
 
-    const res = await this.#get(path, queryParams);
+    const res = await this.#get(path, queryParams, options);
 
     if (!res.ok) {
       const text = await res.text();
@@ -481,6 +518,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created room.
    */
   public async createRoom(
@@ -490,17 +528,22 @@ export class Liveblocks {
       groupsAccesses?: RoomAccesses;
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
-    }
+    },
+    options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
-    const res = await this.#post(url`/v2/rooms`, {
-      id: roomId,
-      defaultAccesses,
-      groupsAccesses,
-      usersAccesses,
-      metadata,
-    });
+    const res = await this.#post(
+      url`/v2/rooms`,
+      {
+        id: roomId,
+        defaultAccesses,
+        groupsAccesses,
+        usersAccesses,
+        metadata,
+      },
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -671,36 +714,43 @@ export class Liveblocks {
    *
    * @param roomId The id of the room to get the storage from.
    * @param format (optional) Set to return `plan-lson` representation by default. If set to `json`, the output will be formatted as a simplified JSON representation of the Storage tree.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
    */
   public getStorageDocument(
     roomId: string,
-    format: "plain-lson"
+    format: "plain-lson",
+    options?: RequestOptions
   ): Promise<PlainLsonObject>;
 
   public getStorageDocument(roomId: string): Promise<PlainLsonObject>; // Default to 'plain-lson' when no format is provided
 
   public getStorageDocument(
     roomId: string,
-    format: "json"
+    format: "json",
+    options?: RequestOptions
   ): Promise<ToSimplifiedJson<S>>;
 
   public async getStorageDocument(
     roomId: string,
-    format: "plain-lson" | "json" = "plain-lson"
+    format: "plain-lson" | "json" = "plain-lson",
+    options?: RequestOptions
   ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
-    return (await this.getStorageDocument_internal(roomId, format)) as
+    return (await this.getStorageDocument_internal(roomId, format, options)) as
       | PlainLsonObject
       | ToSimplifiedJson<S>;
   }
 
   private async getStorageDocument_internal(
     roomId: string,
-    format: "plain-lson" | "json" | "internal"
+    format: "plain-lson" | "json" | "internal",
+    options?: RequestOptions
   ): Promise<PlainLsonObject | ToSimplifiedJson<S> | RawNodeMap> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/storage`, {
-      format,
-    });
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/storage`,
+      { format },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -717,13 +767,19 @@ export class Liveblocks {
    *
    * @param roomId The id of the room to initialize the storage from.
    * @param document The document to initialize the storage with.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The initialized storage document. It is of the same format as the one passed in.
    */
   public async initializeStorageDocument(
     roomId: string,
-    document: PlainLsonObject
+    document: PlainLsonObject,
+    options?: RequestOptions
   ): Promise<PlainLsonObject> {
-    const res = await this.#post(url`/v2/rooms/${roomId}/storage`, document);
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/storage`,
+      document,
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -753,6 +809,7 @@ export class Liveblocks {
    * @param params.format (optional) If true, YText will return formatting.
    * @param params.key (optional) If provided, returns only a single key’s value, e.g. doc.get(key).toJSON().
    * @param params.type (optional) Used with key to override the inferred type, i.e. "ymap" will return doc.get(key, Y.Map).
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A JSON representation of the room’s Yjs document.
    */
   public async getYjsDocument(
@@ -761,17 +818,18 @@ export class Liveblocks {
       format?: boolean;
       key?: string;
       type?: string;
-    } = {}
+    } = {},
+    options?: RequestOptions
   ): Promise<JsonObject> {
     const { format, key, type } = params;
 
     const path = url`v2/rooms/${roomId}/ydoc`;
 
-    const res = await this.#get(path, {
-      formatting: format ? "true" : undefined,
-      key,
-      type,
-    });
+    const res = await this.#get(
+      path,
+      { formatting: format ? "true" : undefined, key, type },
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -786,17 +844,22 @@ export class Liveblocks {
    * @param roomId The id of the room to send the Yjs binary update to.
    * @param update The Yjs update to send. Typically the result of calling `Yjs.encodeStateAsUpdate(doc)`. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
    * @param params.guid (optional) If provided, the binary update will be applied to the Yjs subdocument with the given guid. If not provided, the binary update will be applied to the root Yjs document.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
     update: Uint8Array,
     params: {
       guid?: string;
-    } = {}
+    } = {},
+    options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#putBinary(url`/v2/rooms/${roomId}/ydoc`, update, {
-      guid: params.guid,
-    });
+    const res = await this.#putBinary(
+      url`/v2/rooms/${roomId}/ydoc`,
+      update,
+      { guid: params.guid },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -808,17 +871,21 @@ export class Liveblocks {
    * See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.
    * @param roomId The id of the room to get the Yjs document from.
    * @param params.guid (optional) If provided, returns the binary update of the Yjs subdocument with the given guid. If not provided, returns the binary update of the root Yjs document.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room’s Yjs document encoded as a single binary update.
    */
   public async getYjsDocumentAsBinaryUpdate(
     roomId: string,
     params: {
       guid?: string;
-    } = {}
+    } = {},
+    options?: RequestOptions
   ): Promise<ArrayBuffer> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/ydoc-binary`, {
-      guid: params.guid,
-    });
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/ydoc-binary`,
+      { guid: params.guid },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -837,10 +904,7 @@ export class Liveblocks {
    * @returns The created schema.
    */
   public async createSchema(name: string, body: string): Promise<Schema> {
-    const res = await this.#post(url`/v2/schemas`, {
-      name,
-      body,
-    });
+    const res = await this.#post(url`/v2/schemas`, { name, body });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -850,7 +914,6 @@ export class Liveblocks {
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
     const updatedAt = new Date(data.updatedAt);
-
     return {
       ...data,
       createdAt,
@@ -889,9 +952,7 @@ export class Liveblocks {
    * @returns The updated schema. The version of the schema will be incremented.
    */
   public async updateSchema(schemaId: string, body: string): Promise<Schema> {
-    const res = await this.#put(url`/v2/schemas/${schemaId}`, {
-      body,
-    });
+    const res = await this.#put(url`/v2/schemas/${schemaId}`, { body });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1178,10 +1239,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      {
-        ...data,
-        editedAt: data.editedAt?.toISOString(),
-      }
+      { ...data, editedAt: data.editedAt?.toISOString() }
     );
     if (!res.ok) {
       const text = await res.text();

@@ -5,6 +5,10 @@
 - Output ES modules by default (but CJS builds are still included)
 - Modernize internal build tool settings
 
+### `@liveblocks/node`
+
+- Allow passing AbortSignal to many client methods
+
 ## v2.18.3
 
 ### `@liveblocks/node`
