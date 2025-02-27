@@ -160,6 +160,10 @@ type M = DM;
 type S = DS;
 type U = DU;
 
+export type RequestOptions = {
+  signal?: AbortSignal;
+};
+
 /**
  * Interact with the Liveblocks API from your Node.js backend.
  */
@@ -178,7 +182,11 @@ export class Liveblocks {
     this.#baseUrl = new URL(getBaseUrl(options.baseUrl));
   }
 
-  async #post(path: URLSafeString, json: Json): Promise<Response> {
+  async #post(
+    path: URLSafeString,
+    json: Json,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
@@ -189,11 +197,16 @@ export class Liveblocks {
       method: "POST",
       headers,
       body: JSON.stringify(json),
+      signal: options?.signal,
     });
     return res;
   }
 
-  async #put(path: URLSafeString, json: Json): Promise<Response> {
+  async #put(
+    path: URLSafeString,
+    json: Json,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
@@ -204,13 +217,15 @@ export class Liveblocks {
       method: "PUT",
       headers,
       body: JSON.stringify(json),
+      signal: options?.signal,
     });
   }
 
   async #putBinary(
     path: URLSafeString,
     body: Uint8Array,
-    params?: QueryParams
+    params?: QueryParams,
+    options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path, params);
     const headers = {
@@ -218,26 +233,46 @@ export class Liveblocks {
       "Content-Type": "application/octet-stream",
     };
     const fetch = await fetchPolyfill();
-    return await fetch(url, { method: "PUT", headers, body });
+    return await fetch(url, {
+      method: "PUT",
+      headers,
+      body,
+      signal: options?.signal,
+    });
   }
 
-  async #delete(path: URLSafeString): Promise<Response> {
+  async #delete(
+    path: URLSafeString,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
     };
     const fetch = await fetchPolyfill();
-    const res = await fetch(url, { method: "DELETE", headers });
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers,
+      signal: options?.signal,
+    });
     return res;
   }
 
-  async #get(path: URLSafeString, params?: QueryParams): Promise<Response> {
+  async #get(
+    path: URLSafeString,
+    params: QueryParams,
+    options?: RequestOptions
+  ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
     };
     const fetch = await fetchPolyfill();
-    const res = await fetch(url, { method: "GET", headers });
+    const res = await fetch(url, {
+      method: "GET",
+      headers,
+      signal: options?.signal,
+    });
     return res;
   }
 
@@ -361,6 +396,7 @@ export class Liveblocks {
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
    * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
    */
   public async getRooms(
@@ -404,7 +440,8 @@ export class Liveblocks {
               startsWith: string;
             };
           };
-    } = {}
+    } = {},
+    options?: RequestOptions
   ): Promise<{
     nextPage: string | null;
     nextCursor: string | null;
@@ -435,7 +472,7 @@ export class Liveblocks {
       query,
     };
 
-    const res = await this.#get(path, queryParams);
+    const res = await this.#get(path, queryParams, options);
 
     if (!res.ok) {
       const text = await res.text();
@@ -475,6 +512,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created room.
    */
   public async createRoom(
@@ -484,17 +522,22 @@ export class Liveblocks {
       groupsAccesses?: RoomAccesses;
       usersAccesses?: RoomAccesses;
       metadata?: RoomMetadata;
-    }
+    },
+    options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
-    const res = await this.#post(url`/v2/rooms`, {
-      id: roomId,
-      defaultAccesses,
-      groupsAccesses,
-      usersAccesses,
-      metadata,
-    });
+    const res = await this.#post(
+      url`/v2/rooms`,
+      {
+        id: roomId,
+        defaultAccesses,
+        groupsAccesses,
+        usersAccesses,
+        metadata,
+      },
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -520,9 +563,13 @@ export class Liveblocks {
    * Returns a room with the given id.
    * @param roomId The id of the room to return.
    * @returns The room with the given id.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async getRoom(roomId: string): Promise<RoomData> {
-    const res = await this.#get(url`/v2/rooms/${roomId}`);
+  public async getRoom(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    const res = await this.#get(url`/v2/rooms/${roomId}`, {}, options);
 
     if (!res.ok) {
       const text = await res.text();
@@ -552,6 +599,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated room.
    */
   public async updateRoom(
@@ -567,16 +615,21 @@ export class Liveblocks {
         ["room:write"] | ["room:read", "room:presence:write"] | null
       >;
       metadata?: Record<string, string | string[] | null>;
-    }
+    },
+    options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
-    const res = await this.#post(url`/v2/rooms/${roomId}`, {
-      defaultAccesses,
-      groupsAccesses,
-      usersAccesses,
-      metadata,
-    });
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}`,
+      {
+        defaultAccesses,
+        groupsAccesses,
+        usersAccesses,
+        metadata,
+      },
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -601,9 +654,13 @@ export class Liveblocks {
   /**
    * Deletes a room with the given id. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored.
    * @param roomId The id of the room to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteRoom(roomId: string): Promise<void> {
-    const res = await this.#delete(url`/v2/rooms/${roomId}`);
+  public async deleteRoom(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(url`/v2/rooms/${roomId}`, options);
 
     if (!res.ok) {
       const text = await res.text();
@@ -614,12 +671,18 @@ export class Liveblocks {
   /**
    * Returns a list of users currently present in the requested room. For better performance, we recommand to call this endpoint every 10 seconds maximum. Duplicates can happen if a user is in the requested room with multiple browser tabs opened.
    * @param roomId The id of the room to get the users from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of users currently present in the requested room.
    */
   public async getActiveUsers(
-    roomId: string
+    roomId: string,
+    options?: RequestOptions
   ): Promise<{ data: RoomUser<U>[] }> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/active_users`);
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/active_users`,
+      {},
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -633,11 +696,17 @@ export class Liveblocks {
    * Boadcasts an event to a room without having to connect to it via the client from @liveblocks/client. The connectionId passed to event listeners is -1 when using this API.
    * @param roomId The id of the room to broadcast the event to.
    * @param message The message to broadcast. It can be any JSON serializable value.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async broadcastEvent(roomId: string, message: E): Promise<void> {
+  public async broadcastEvent(
+    roomId: string,
+    message: E,
+    options?: RequestOptions
+  ): Promise<void> {
     const res = await this.#post(
       url`/v2/rooms/${roomId}/broadcast_event`,
-      message
+      message,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -665,25 +734,33 @@ export class Liveblocks {
    *
    * @param roomId The id of the room to get the storage from.
    * @param format (optional) Set to return `plan-lson` representation by default. If set to `json`, the output will be formatted as a simplified JSON representation of the Storage tree.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.
    */
   public getStorageDocument(
     roomId: string,
-    format: "plain-lson"
+    format: "plain-lson",
+    options?: RequestOptions
   ): Promise<PlainLsonObject>;
 
   public getStorageDocument(roomId: string): Promise<PlainLsonObject>; // Default to 'plain-lson' when no format is provided
 
   public getStorageDocument(
     roomId: string,
-    format: "json"
+    format: "json",
+    options?: RequestOptions
   ): Promise<ToSimplifiedJson<S>>;
 
   public async getStorageDocument(
     roomId: string,
-    format: "plain-lson" | "json" = "plain-lson"
+    format: "plain-lson" | "json" = "plain-lson",
+    options?: RequestOptions
   ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/storage`, { format });
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/storage`,
+      { format },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -697,13 +774,19 @@ export class Liveblocks {
    *
    * @param roomId The id of the room to initialize the storage from.
    * @param document The document to initialize the storage with.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The initialized storage document. It is of the same format as the one passed in.
    */
   public async initializeStorageDocument(
     roomId: string,
-    document: PlainLsonObject
+    document: PlainLsonObject,
+    options?: RequestOptions
   ): Promise<PlainLsonObject> {
-    const res = await this.#post(url`/v2/rooms/${roomId}/storage`, document);
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/storage`,
+      document,
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -714,9 +797,13 @@ export class Liveblocks {
   /**
    * Deletes all of the room’s Storage data and disconnect all users from the room if there are any. Note that this does not delete the Yjs document in the room if one exists.
    * @param roomId The id of the room to delete the storage from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteStorageDocument(roomId: string): Promise<void> {
-    const res = await this.#delete(url`/v2/rooms/${roomId}/storage`);
+  public async deleteStorageDocument(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(url`/v2/rooms/${roomId}/storage`, options);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -733,25 +820,23 @@ export class Liveblocks {
    * @param params.format (optional) If true, YText will return formatting.
    * @param params.key (optional) If provided, returns only a single key’s value, e.g. doc.get(key).toJSON().
    * @param params.type (optional) Used with key to override the inferred type, i.e. "ymap" will return doc.get(key, Y.Map).
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A JSON representation of the room’s Yjs document.
    */
   public async getYjsDocument(
     roomId: string,
-    params: {
-      format?: boolean;
-      key?: string;
-      type?: string;
-    } = {}
+    params: { format?: boolean; key?: string; type?: string } = {},
+    options?: RequestOptions
   ): Promise<JsonObject> {
     const { format, key, type } = params;
 
     const path = url`v2/rooms/${roomId}/ydoc`;
 
-    const res = await this.#get(path, {
-      formatting: format ? "true" : undefined,
-      key,
-      type,
-    });
+    const res = await this.#get(
+      path,
+      { formatting: format ? "true" : undefined, key, type },
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -766,17 +851,20 @@ export class Liveblocks {
    * @param roomId The id of the room to send the Yjs binary update to.
    * @param update The Yjs update to send. Typically the result of calling `Yjs.encodeStateAsUpdate(doc)`. Read the [Yjs documentation](https://docs.yjs.dev/api/document-updates) to learn how to create a binary update.
    * @param params.guid (optional) If provided, the binary update will be applied to the Yjs subdocument with the given guid. If not provided, the binary update will be applied to the root Yjs document.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async sendYjsBinaryUpdate(
     roomId: string,
     update: Uint8Array,
-    params: {
-      guid?: string;
-    } = {}
+    params: { guid?: string } = {},
+    options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#putBinary(url`/v2/rooms/${roomId}/ydoc`, update, {
-      guid: params.guid,
-    });
+    const res = await this.#putBinary(
+      url`/v2/rooms/${roomId}/ydoc`,
+      update,
+      { guid: params.guid },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -788,17 +876,19 @@ export class Liveblocks {
    * See [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more information on working with updates.
    * @param roomId The id of the room to get the Yjs document from.
    * @param params.guid (optional) If provided, returns the binary update of the Yjs subdocument with the given guid. If not provided, returns the binary update of the root Yjs document.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room’s Yjs document encoded as a single binary update.
    */
   public async getYjsDocumentAsBinaryUpdate(
     roomId: string,
-    params: {
-      guid?: string;
-    } = {}
+    params: { guid?: string } = {},
+    options?: RequestOptions
   ): Promise<ArrayBuffer> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/ydoc-binary`, {
-      guid: params.guid,
-    });
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/ydoc-binary`,
+      { guid: params.guid },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -814,13 +904,15 @@ export class Liveblocks {
    * Creates a new schema which can be referenced later to enforce a room’s Storage data structure.
    * @param name The name used to reference the schema. Must be a non-empty string with less than 65 characters and only contain lowercase letters, numbers and dashes
    * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created schema.
    */
-  public async createSchema(name: string, body: string): Promise<Schema> {
-    const res = await this.#post(url`/v2/schemas`, {
-      name,
-      body,
-    });
+  public async createSchema(
+    name: string,
+    body: string,
+    options?: RequestOptions
+  ): Promise<Schema> {
+    const res = await this.#post(url`/v2/schemas`, { name, body }, options);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -830,7 +922,6 @@ export class Liveblocks {
     // Convert createdAt and updatedAt from ISO date strings to Date objects
     const createdAt = new Date(data.createdAt);
     const updatedAt = new Date(data.updatedAt);
-
     return {
       ...data,
       createdAt,
@@ -841,10 +932,14 @@ export class Liveblocks {
   /**
    * Returns a schema by its id.
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The schema with the given id.
    */
-  public async getSchema(schemaId: string): Promise<Schema> {
-    const res = await this.#get(url`/v2/schemas/${schemaId}`);
+  public async getSchema(
+    schemaId: string,
+    options?: RequestOptions
+  ): Promise<Schema> {
+    const res = await this.#get(url`/v2/schemas/${schemaId}`, {}, options);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -866,12 +961,19 @@ export class Liveblocks {
    * Updates the body for the schema. A schema can only be updated if it is not used by any room.
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    * @param body The exact allowed shape of data in the room. It is a multi-line string written in the [Liveblocks schema syntax](https://liveblocks.io/docs/platform/schema-validation/syntax).
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated schema. The version of the schema will be incremented.
    */
-  public async updateSchema(schemaId: string, body: string): Promise<Schema> {
-    const res = await this.#put(url`/v2/schemas/${schemaId}`, {
-      body,
-    });
+  public async updateSchema(
+    schemaId: string,
+    body: string,
+    options?: RequestOptions
+  ): Promise<Schema> {
+    const res = await this.#put(
+      url`/v2/schemas/${schemaId}`,
+      { body },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -893,9 +995,13 @@ export class Liveblocks {
   /**
    * Deletes a schema by its id. A schema can only be deleted if it is not used by any room.
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteSchema(schemaId: string): Promise<void> {
-    const res = await this.#delete(url`/v2/schemas/${schemaId}`);
+  public async deleteSchema(
+    schemaId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(url`/v2/schemas/${schemaId}`, options);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -905,10 +1011,14 @@ export class Liveblocks {
   /**
    * Returns the schema attached to a room.
    * @param roomId The id of the room to get the schema from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns
    */
-  public async getSchemaByRoomId(roomId: string): Promise<Schema> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/schema`);
+  public async getSchemaByRoomId(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<Schema> {
+    const res = await this.#get(url`/v2/rooms/${roomId}/schema`, {}, options);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -932,15 +1042,19 @@ export class Liveblocks {
    * If the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.
    * @param roomId The id of the room to attach the schema to.
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The schema id as JSON.
    */
   public async attachSchemaToRoom(
     roomId: string,
-    schemaId: string
+    schemaId: string,
+    options?: RequestOptions
   ): Promise<{ schema: string }> {
-    const res = await this.#post(url`/v2/rooms/${roomId}/schema`, {
-      schema: schemaId,
-    });
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/schema`,
+      { schema: schemaId },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -951,9 +1065,13 @@ export class Liveblocks {
   /**
    * Detaches a schema from a room, and disables runtime schema validation for the room.
    * @param roomId The id of the room to detach the schema from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async detachSchemaFromRoom(roomId: string): Promise<void> {
-    const res = await this.#delete(url`/v2/rooms/${roomId}/schema`);
+  public async detachSchemaFromRoom(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(url`/v2/rooms/${roomId}/schema`, options);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -969,43 +1087,47 @@ export class Liveblocks {
    *
    * @param params.roomId The room ID to get the threads from.
    * @param params.query The query to filter threads by. It is based on our query language and can filter by metadata.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of threads.
    */
-  public async getThreads(params: {
-    roomId: string;
-    /**
-     * The query to filter threads by. It is based on our query language.
-     *
-     * @example
-     * ```
-     * {
-     *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3 AND resolved:true"
-     * }
-     * ```
-     * @example
-     * ```
-     * {
-     *   query: {
-     *     metadata: {
-     *       status: "open",
-     *       pinned: false,
-     *       priority: 3,
-     *       organization: {
-     *         startsWith: "liveblocks:"
-     *       }
-     *     },
-     *     resolved: true
-     *   }
-     * }
-     * ```
-     */
-    query?:
-      | string
-      | {
-          metadata?: Partial<QueryMetadata<M>>;
-          resolved?: boolean;
-        };
-  }): Promise<{ data: ThreadData<M>[] }> {
+  public async getThreads(
+    params: {
+      roomId: string;
+      /**
+       * The query to filter threads by. It is based on our query language.
+       *
+       * @example
+       * ```
+       * {
+       *   query: "metadata['organization']^'liveblocks:' AND metadata['status']:'open' AND metadata['pinned']:false AND metadata['priority']:3 AND resolved:true"
+       * }
+       * ```
+       * @example
+       * ```
+       * {
+       *   query: {
+       *     metadata: {
+       *       status: "open",
+       *       pinned: false,
+       *       priority: 3,
+       *       organization: {
+       *         startsWith: "liveblocks:"
+       *       }
+       *     },
+       *     resolved: true
+       *   }
+       * }
+       * ```
+       */
+      query?:
+        | string
+        | {
+            metadata?: Partial<QueryMetadata<M>>;
+            resolved?: boolean;
+          };
+    },
+    options?: RequestOptions
+  ): Promise<{ data: ThreadData<M>[] }> {
     const { roomId } = params;
 
     let query: string | undefined;
@@ -1016,9 +1138,11 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
-    const res = await this.#get(url`/v2/rooms/${roomId}/threads`, {
-      query,
-    });
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/threads`,
+      { query },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1034,15 +1158,20 @@ export class Liveblocks {
    *
    * @param params.roomId The room ID to get the thread from.
    * @param params.threadId The thread ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A thread.
    */
-  public async getThread(params: {
-    roomId: string;
-    threadId: string;
-  }): Promise<ThreadData<M>> {
+  public async getThread(
+    params: { roomId: string; threadId: string },
+    options?: RequestOptions
+  ): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
-    const res = await this.#get(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/threads/${threadId}`,
+      {},
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1058,16 +1187,19 @@ export class Liveblocks {
    *
    * @param params.roomId The room ID to get the thread participants from.
    * @param params.threadId The thread ID to get the participants from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns An object containing an array of participant IDs.
    */
-  public async getThreadParticipants(params: {
-    roomId: string;
-    threadId: string;
-  }): Promise<ThreadParticipants> {
+  public async getThreadParticipants(
+    params: { roomId: string; threadId: string },
+    options?: RequestOptions
+  ): Promise<ThreadParticipants> {
     const { roomId, threadId } = params;
 
     const res = await this.#get(
-      url`/v2/rooms/${roomId}/threads/${threadId}/participants`
+      url`/v2/rooms/${roomId}/threads/${threadId}/participants`,
+      {},
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1082,17 +1214,19 @@ export class Liveblocks {
    * @param params.roomId The room ID to get the comment from.
    * @param params.threadId The thread ID to get the comment from.
    * @param params.commentId The comment ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A comment.
    */
-  public async getComment(params: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-  }): Promise<CommentData> {
+  public async getComment(
+    params: { roomId: string; threadId: string; commentId: string },
+    options?: RequestOptions
+  ): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.#get(
-      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+      {},
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1109,17 +1243,17 @@ export class Liveblocks {
    * @param params.data.userId The user ID of the user who is set to create the comment.
    * @param params.data.createdAt (optional) The date the comment is set to be created.
    * @param params.data.body The body of the comment.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created comment.
    */
-  public async createComment(params: {
-    roomId: string;
-    threadId: string;
-    data: {
-      userId: string;
-      createdAt?: Date;
-      body: CommentBody;
-    };
-  }): Promise<CommentData> {
+  public async createComment(
+    params: {
+      roomId: string;
+      threadId: string;
+      data: { userId: string; createdAt?: Date; body: CommentBody };
+    },
+    options?: RequestOptions
+  ): Promise<CommentData> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1127,7 +1261,8 @@ export class Liveblocks {
       {
         ...data,
         createdAt: data.createdAt?.toISOString(),
-      }
+      },
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1143,25 +1278,24 @@ export class Liveblocks {
    * @param params.commentId The comment ID to edit.
    * @param params.data.body The body of the comment.
    * @param params.data.editedAt (optional) The date the comment was edited.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The edited comment.
    */
-  public async editComment(params: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-    data: {
-      body: CommentBody;
-      editedAt?: Date;
-    };
-  }): Promise<CommentData> {
+  public async editComment(
+    params: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      data: { body: CommentBody; editedAt?: Date };
+    },
+    options?: RequestOptions
+  ): Promise<CommentData> {
     const { roomId, threadId, commentId, data } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      {
-        ...data,
-        editedAt: data.editedAt?.toISOString(),
-      }
+      { ...data, editedAt: data.editedAt?.toISOString() },
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1176,16 +1310,17 @@ export class Liveblocks {
    * @param params.roomId The room ID to delete the comment in.
    * @param params.threadId The thread ID to delete the comment in.
    * @param params.commentId The comment ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteComment(params: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-  }): Promise<void> {
+  public async deleteComment(
+    params: { roomId: string; threadId: string; commentId: string },
+    options?: RequestOptions
+  ): Promise<void> {
     const { roomId, threadId, commentId } = params;
 
     const res = await this.#delete(
-      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
+      url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1201,20 +1336,26 @@ export class Liveblocks {
    * @param params.thread.comment.userId The user ID of the user who created the comment.
    * @param params.thread.comment.createdAt (optional) The date the comment was created.
    * @param params.thread.comment.body The body of the comment.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created thread. The thread will be created with the specified comment as its first comment.
    */
   public async createThread(
-    params: CreateThreadOptions<M>
+    params: CreateThreadOptions<M>,
+    options?: RequestOptions
   ): Promise<ThreadData<M>> {
     const { roomId, data } = params;
 
-    const res = await this.#post(url`/v2/rooms/${roomId}/threads`, {
-      ...data,
-      comment: {
-        ...data.comment,
-        createdAt: data.comment.createdAt?.toISOString(),
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads`,
+      {
+        ...data,
+        comment: {
+          ...data.comment,
+          createdAt: data.comment.createdAt?.toISOString(),
+        },
       },
-    });
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -1228,15 +1369,17 @@ export class Liveblocks {
    * Deletes a thread and all of its comments.
    * @param params.roomId The room ID to delete the thread in.
    * @param params.threadId The thread ID to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteThread(params: {
-    roomId: string;
-    threadId: string;
-  }): Promise<void> {
+  public async deleteThread(
+    params: { roomId: string; threadId: string },
+    options?: RequestOptions
+  ): Promise<void> {
     const { roomId, threadId } = params;
 
     const res = await this.#delete(
-      url`/v2/rooms/${roomId}/threads/${threadId}`
+      url`/v2/rooms/${roomId}/threads/${threadId}`,
+      options
     );
 
     if (!res.ok) {
@@ -1250,20 +1393,19 @@ export class Liveblocks {
    * @param params.roomId The room ID of the thread.
    * @param params.threadId The thread ID to mark as resolved.
    * @param params.data.userId The user ID of the user who marked the thread as resolved.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The thread marked as resolved.
    */
-  public async markThreadAsResolved(params: {
-    roomId: string;
-    threadId: string;
-    data: {
-      userId: string;
-    };
-  }): Promise<ThreadData<M>> {
+  public async markThreadAsResolved(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
-      {}
+      {},
+      options
     );
 
     if (!res.ok) {
@@ -1279,20 +1421,19 @@ export class Liveblocks {
    * @param params.roomId The room ID of the thread.
    * @param params.threadId The thread ID to mark as unresolved.
    * @param params.data.userId The user ID of the user who marked the thread as unresolved.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The thread marked as unresolved.
    */
-  public async markThreadAsUnresolved(params: {
-    roomId: string;
-    threadId: string;
-    data: {
-      userId: string;
-    };
-  }): Promise<ThreadData<M>> {
+  public async markThreadAsUnresolved(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
-      {}
+      {},
+      options
     );
 
     if (!res.ok) {
@@ -1310,17 +1451,17 @@ export class Liveblocks {
    * @param params.data.metadata The metadata for the thread. Value must be a string, boolean or number
    * @param params.data.userId The user ID of the user who updated the thread.
    * @param params.data.updatedAt (optional) The date the thread is set to be updated.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The updated thread metadata.
    */
-  public async editThreadMetadata(params: {
-    roomId: string;
-    threadId: string;
-    data: {
-      metadata: Patchable<M>;
-      userId: string;
-      updatedAt?: Date;
-    };
-  }): Promise<M> {
+  public async editThreadMetadata(
+    params: {
+      roomId: string;
+      threadId: string;
+      data: { metadata: Patchable<M>; userId: string; updatedAt?: Date };
+    },
+    options?: RequestOptions
+  ): Promise<M> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1328,7 +1469,8 @@ export class Liveblocks {
       {
         ...data,
         updatedAt: data.updatedAt?.toISOString(),
-      }
+      },
+      options
     );
 
     if (!res.ok) {
@@ -1347,25 +1489,26 @@ export class Liveblocks {
    * @param params.data.emoji The (emoji) reaction to add.
    * @param params.data.userId The user ID of the user associated with the reaction.
    * @param params.data.createdAt (optional) The date the reaction is set to be created.
+   * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created comment reaction.
    */
-  public async addCommentReaction(params: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-    data: {
-      emoji: string;
-      userId: string;
-      createdAt?: Date;
-    };
-  }): Promise<CommentUserReaction> {
+  public async addCommentReaction(
+    params: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      data: { emoji: string; userId: string; createdAt?: Date };
+    },
+    options?: RequestOptions
+  ): Promise<CommentUserReaction> {
     const { roomId, threadId, commentId, data } = params;
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/add-reaction`,
       {
         ...data,
         createdAt: data.createdAt?.toISOString(),
-      }
+      },
+      options
     );
 
     if (!res.ok) {
@@ -1385,17 +1528,21 @@ export class Liveblocks {
    * @param params.data.emoji The (emoji) reaction to remove.
    * @param params.data.userId The user ID of the user associated with the reaction.
    * @param params.data.removedAt (optional) The date the reaction is set to be removed.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async removeCommentReaction(params: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-    data: {
-      emoji: string;
-      userId: string;
-      removedAt?: Date;
-    };
-  }): Promise<void> {
+  public async removeCommentReaction(
+    params: {
+      roomId: string;
+      threadId: string;
+      commentId: string;
+      data: {
+        emoji: string;
+        userId: string;
+        removedAt?: Date;
+      };
+    },
+    options?: RequestOptions
+  ): Promise<void> {
     const { roomId, threadId, data } = params;
 
     const res = await this.#post(
@@ -1403,7 +1550,8 @@ export class Liveblocks {
       {
         ...data,
         removedAt: data.removedAt?.toISOString(),
-      }
+      },
+      options
     );
 
     if (!res.ok) {
@@ -1416,15 +1564,21 @@ export class Liveblocks {
    * Returns the inbox notifications for a user.
    * @param params.userId The user ID to get the inbox notifications from.
    * @param params.inboxNotificationId The ID of the inbox notification to get.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async getInboxNotification(params: {
-    userId: string;
-    inboxNotificationId: string;
-  }): Promise<InboxNotificationData> {
+  public async getInboxNotification(
+    params: {
+      userId: string;
+      inboxNotificationId: string;
+    },
+    options?: RequestOptions
+  ): Promise<InboxNotificationData> {
     const { userId, inboxNotificationId } = params;
 
     const res = await this.#get(
-      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`,
+      {},
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1440,31 +1594,35 @@ export class Liveblocks {
    * Returns the inbox notifications for a user.
    * @param params.userId The user ID to get the inbox notifications from.
    * @param params.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async getInboxNotifications(params: {
-    userId: string;
-    /**
-     * The query to filter inbox notifications by. It is based on our query language.
-     *
-     * @example
-     * ```
-     * {
-     *  query: "unread:true"
-     * }
-     * ```
-     *
-     * @example
-     * ```
-     * {
-     *   query: {
-     *     unread: true
-     *   }
-     * }
-     * ```
-     *
-     */
-    query?: string | { unread: boolean };
-  }): Promise<{ data: InboxNotificationData[] }> {
+  public async getInboxNotifications(
+    params: {
+      userId: string;
+      /**
+       * The query to filter inbox notifications by. It is based on our query language.
+       *
+       * @example
+       * ```
+       * {
+       *  query: "unread:true"
+       * }
+       * ```
+       *
+       * @example
+       * ```
+       * {
+       *   query: {
+       *     unread: true
+       *   }
+       * }
+       * ```
+       *
+       */
+      query?: string | { unread: boolean };
+    },
+    options?: RequestOptions
+  ): Promise<{ data: InboxNotificationData[] }> {
     const { userId } = params;
 
     let query: string | undefined;
@@ -1475,9 +1633,11 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
-    const res = await this.#get(url`/v2/users/${userId}/inbox-notifications`, {
-      query,
-    });
+    const res = await this.#get(
+      url`/v2/users/${userId}/inbox-notifications`,
+      { query },
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1496,15 +1656,21 @@ export class Liveblocks {
    * Gets the user's room notification settings.
    * @param params.userId The user ID to get the room notifications from.
    * @param params.roomId The room ID to get the room notification settings from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async getRoomNotificationSettings(params: {
-    userId: string;
-    roomId: string;
-  }): Promise<RoomNotificationSettings> {
+  public async getRoomNotificationSettings(
+    params: {
+      userId: string;
+      roomId: string;
+    },
+    options?: RequestOptions
+  ): Promise<RoomNotificationSettings> {
     const { userId, roomId } = params;
 
     const res = await this.#get(
-      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`
+      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
+      {},
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1519,17 +1685,22 @@ export class Liveblocks {
    * @param params.userId The user ID to update the room notification settings for.
    * @param params.roomId The room ID to update the room notification settings for.
    * @param params.data The new room notification settings for the user.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async updateRoomNotificationSettings(params: {
-    userId: string;
-    roomId: string;
-    data: RoomNotificationSettings;
-  }): Promise<RoomNotificationSettings> {
+  public async updateRoomNotificationSettings(
+    params: {
+      userId: string;
+      roomId: string;
+      data: RoomNotificationSettings;
+    },
+    options?: RequestOptions
+  ): Promise<RoomNotificationSettings> {
     const { userId, roomId, data } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
-      data
+      data,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1543,15 +1714,20 @@ export class Liveblocks {
    * Delete the user's room notification settings.
    * @param params.userId The user ID to delete the room notification settings from.
    * @param params.roomId The room ID to delete the room notification settings from.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteRoomNotificationSettings(params: {
-    userId: string;
-    roomId: string;
-  }): Promise<void> {
+  public async deleteRoomNotificationSettings(
+    params: {
+      userId: string;
+      roomId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
     const { userId, roomId } = params;
 
     const res = await this.#delete(
-      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`
+      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1563,18 +1739,21 @@ export class Liveblocks {
    * Update a room ID.
    * @param params.roomId The current ID of the room.
    * @param params.newRoomId The new room ID.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async updateRoomId(params: {
-    currentRoomId: string;
-    newRoomId: string;
-  }): Promise<RoomData> {
+  public async updateRoomId(
+    params: {
+      currentRoomId: string;
+      newRoomId: string;
+    },
+    options?: RequestOptions
+  ): Promise<RoomData> {
     const { currentRoomId, newRoomId } = params;
 
     const res = await this.#post(
       url`/v2/rooms/${currentRoomId}/update-room-id`,
-      {
-        newRoomId,
-      }
+      { newRoomId },
+      options
     );
 
     if (!res.ok) {
@@ -1591,14 +1770,21 @@ export class Liveblocks {
     };
   }
 
-  public async triggerInboxNotification<K extends KDAD>(params: {
-    userId: string;
-    kind: K;
-    roomId?: string;
-    subjectId: string;
-    activityData: DAD[K];
-  }): Promise<void> {
-    const res = await this.#post(url`/v2/inbox-notifications/trigger`, params);
+  public async triggerInboxNotification<K extends KDAD>(
+    params: {
+      userId: string;
+      kind: K;
+      roomId?: string;
+      subjectId: string;
+      activityData: DAD[K];
+    },
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#post(
+      url`/v2/inbox-notifications/trigger`,
+      params,
+      options
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -1610,15 +1796,20 @@ export class Liveblocks {
    * Deletes an inbox notification for a user.
    * @param params.userId The user ID for which to delete the inbox notification.
    * @param params.inboxNotificationId The ID of the inbox notification to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteInboxNotification(params: {
-    userId: string;
-    inboxNotificationId: string;
-  }): Promise<void> {
+  public async deleteInboxNotification(
+    params: {
+      userId: string;
+      inboxNotificationId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
     const { userId, inboxNotificationId } = params;
 
     const res = await this.#delete(
-      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
+      url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1629,14 +1820,17 @@ export class Liveblocks {
   /**
    * Deletes all inbox notifications for a user.
    * @param params.userId The user ID for which to delete all the inbox notifications.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteAllInboxNotifications(params: {
-    userId: string;
-  }): Promise<void> {
+  public async deleteAllInboxNotifications(
+    params: { userId: string },
+    options?: RequestOptions
+  ): Promise<void> {
     const { userId } = params;
 
     const res = await this.#delete(
-      url`/v2/users/${userId}/inbox-notifications`
+      url`/v2/users/${userId}/inbox-notifications`,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
@@ -1647,13 +1841,19 @@ export class Liveblocks {
   /**
    * Get notification settings for a user for a project.
    * @param params.userId The user ID to get the notifications settings for.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async getNotificationSettings(params: {
-    userId: string;
-  }): Promise<UserNotificationSettings> {
+  public async getNotificationSettings(
+    params: { userId: string },
+    options?: RequestOptions
+  ): Promise<UserNotificationSettings> {
     const { userId } = params;
 
-    const res = await this.#get(url`/v2/users/${userId}/notification-settings`);
+    const res = await this.#get(
+      url`/v2/users/${userId}/notification-settings`,
+      {},
+      options
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1666,16 +1866,18 @@ export class Liveblocks {
    * Update the user's notification settings.
    * @param params.userId The user ID to update the notification settings for.
    * @param params.data The new notification settings for the user.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async updateNotificationSettings(params: {
-    userId: string;
-    data: PartialUserNotificationSettings;
-  }): Promise<UserNotificationSettings> {
+  public async updateNotificationSettings(
+    params: { userId: string; data: PartialUserNotificationSettings },
+    options?: RequestOptions
+  ): Promise<UserNotificationSettings> {
     const { userId, data } = params;
 
     const res = await this.#post(
       url`/v2/users/${userId}/notification-settings`,
-      data
+      data,
+      options
     );
 
     if (!res.ok) {
@@ -1689,13 +1891,16 @@ export class Liveblocks {
   /**
    * Delete the user's notification settings
    * @param params.userId The user ID to update the notification settings for.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async deleteNotificationSettings(params: {
-    userId: string;
-  }): Promise<void> {
+  public async deleteNotificationSettings(
+    params: { userId: string },
+    options?: RequestOptions
+  ): Promise<void> {
     const { userId } = params;
     const res = await this.#delete(
-      url`/v2/users/${userId}/notification-settings`
+      url`/v2/users/${userId}/notification-settings`,
+      options
     );
     if (!res.ok) {
       const text = await res.text();
