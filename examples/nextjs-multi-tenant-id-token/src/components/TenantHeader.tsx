@@ -11,7 +11,6 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { usePathParams } from "../hooks/usePathParams";
 import { TenantSelect } from "./TenantSelect";
 import { useTenants } from "../hooks/useTenants";
-
 interface TitleRoomProps extends ComponentProps<"div"> {
   room: string;
 }
@@ -35,7 +34,10 @@ export function TenantHeader({
       <header className={clsx(className, "header")} {...props}>
         <User />
         <div className="header-title">{activeTenant?.name}</div>
-        <TenantSelect />
+        <div className="header-right">
+          <InboxPopover />
+          <TenantSelect />
+        </div>
       </header>
     );
   }
@@ -52,7 +54,7 @@ export function TenantHeader({
       ) : (
         <div className="header-title">{tenant}</div>
       )}
-      <div className="header-buttons">
+      <div className="header-right">
         <InboxPopover />
         <TenantSelect />
       </div>

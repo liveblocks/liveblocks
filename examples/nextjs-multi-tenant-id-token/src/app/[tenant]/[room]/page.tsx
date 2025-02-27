@@ -1,27 +1,38 @@
 "use client";
 
-import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
+import { RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "../../../components/Loading";
-import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../../example.client";
 import { Suspense } from "react";
+import { useManageRoom } from "../../../hooks/useManageRoom";
+import { usePathParams } from "../../../hooks/usePathParams";
 
-/**
- * Displays a list of threads, along with a composer for creating
- * new threads.
- */
+function RoomManagement({ roomId }: { roomId: string }) {
+  const { inviteUser, room } = useManageRoom(roomId);
+  const { tenant } = usePathParams();
 
-function Example() {
-  const { threads } = useThreads();
+  // TODO: Invite users, toggle private, remove user
+  // TODO: display who has access and if it's private
+
+  if (!room) {
+    return <Loading />;
+  }
 
   return (
-    <div className="threads">
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
-      ))}
-      <Composer className="composer" />
+    <div className="room-management">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target as HTMLFormElement);
+          const email = formData.get("email") as string;
+          inviteUser({ roomId, userId: email, tenantId: tenant });
+        }}
+      >
+        <input type="text" name="email" />
+        <button type="submit">Invite User</button>
+      </form>
     </div>
   );
 }
@@ -37,7 +48,8 @@ function Room({ room }: { room: string }) {
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <Example />
+          <RoomManagement roomId={roomId} />
+          {/* <Example /> */}
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>

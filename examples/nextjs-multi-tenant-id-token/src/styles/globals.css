@@ -74,6 +74,11 @@ body {
   font-weight: 500;
 }
 
+.header-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .sidebar {
   position: fixed;
   top: 0;
@@ -118,6 +123,20 @@ body {
 
 .sidebar-room svg {
   margin-right: 0.375rem;
+}
+
+/* Footer should be at bottom of sidebar */
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0.5rem;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 8px 26px rgb(0 0 0 / 6%);
 }
 
 .content {
