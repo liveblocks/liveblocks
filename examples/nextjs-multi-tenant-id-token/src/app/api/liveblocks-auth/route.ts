@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  const { userId: providedUserId } = await request.json();
+  const { userId: providedUserId, tenantId } = await request.json();
 
   const userId = providedUserId ?? `user-${Math.round(Math.random())}`;
   const user = await getUser(userId);
@@ -26,14 +26,20 @@ export async function POST(request: NextRequest) {
   }
 
   // Create a session for the current user (access token auth), either with a provided user ID or a random one
-  const session = liveblocks.prepareSession(userId, {
-    userInfo: user.info,
-  });
+  const res = await liveblocks.identifyUser(
+    {
+      userId,
+      groupIds: [
+        // This groupId is set on all public rooms for this tenant
+        `${tenantId}:all`,
+        // This groupId is set on private rooms the user has access to for this tenant
+        `${tenantId}:${userId}`,
+      ],
+    },
+    {
+      userInfo: user.info,
+    }
+  );
 
-  // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
-
-  // Authorize the user and return the result
-  const { status, body } = await session.authorize();
-  return new NextResponse(body, { status });
+  return new NextResponse(res.body, { status: res.status });
 }
