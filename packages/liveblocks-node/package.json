@@ -44,6 +44,7 @@
     "@liveblocks/jest-config": "*",
     "@types/node-fetch": "^2.6.6",
     "msw": "^2.7.0",
+    "sharp": "^0.33.5",
     "svix": "^0.75.0"
   },
   "bugs": {
