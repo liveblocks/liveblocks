@@ -1,5 +1,7 @@
 import { RoomData } from "@liveblocks/node";
 
+const path = (path: string) => `/api/rooms/${encodeURIComponent(path)}`;
+
 export function useManageRoom() {
   const createRoom = async (
     roomId: string,
@@ -7,7 +9,7 @@ export function useManageRoom() {
     tenantId: string,
     userId: string
   ) => {
-    const response = await fetch(`/api/rooms/${roomId}`, {
+    const response = await fetch(path(roomId), {
       method: "POST",
       body: JSON.stringify({
         tenantId,
@@ -20,7 +22,7 @@ export function useManageRoom() {
   };
 
   const getRoom = async (roomId: string) => {
-    const response = await fetch(`/api/rooms/${roomId}`);
+    const response = await fetch(path(roomId));
     return response.json() as Promise<RoomData>;
   };
 
@@ -29,7 +31,7 @@ export function useManageRoom() {
     userId: string,
     tenantId: string
   ) => {
-    const response = await fetch(`/api/rooms/${roomId}/invite-user`, {
+    const response = await fetch(path(`${roomId}/invite-user`), {
       method: "POST",
       body: JSON.stringify({
         tenantId,
@@ -45,7 +47,7 @@ export function useManageRoom() {
     userId: string,
     tenantId: string
   ) => {
-    const response = await fetch(`/api/rooms/${roomId}/remove-user`, {
+    const response = await fetch(path(`${roomId}/remove-user`), {
       method: "POST",
       body: JSON.stringify({
         tenantId,
@@ -61,7 +63,7 @@ export function useManageRoom() {
     isPrivate: boolean,
     tenantId: string
   ) => {
-    const response = await fetch(`/api/rooms/${roomId}/toggle-private`, {
+    const response = await fetch(path(`${roomId}/toggle-private`), {
       method: "POST",
       body: JSON.stringify({
         isPrivate,
