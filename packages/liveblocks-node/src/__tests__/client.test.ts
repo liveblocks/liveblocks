@@ -134,9 +134,6 @@ describe("client", () => {
           expect(err.message).toBe(
             "An error happened without an error message"
           );
-          expect(err.errorId).toBe(undefined);
-          expect(err.reason).toBe(undefined);
-          expect(err.suggestion).toBe(undefined);
         }
       }
     });
@@ -162,9 +159,6 @@ describe("client", () => {
           expect(err.message).toBe(
             "An error happened without an error message"
           );
-          expect(err.errorId).toBe(undefined);
-          expect(err.reason).toBe(undefined);
-          expect(err.suggestion).toBe(undefined);
         }
       }
     });
@@ -188,9 +182,12 @@ describe("client", () => {
           expect(err.name).toBe("LiveblocksError");
           expect(err.status).toBe(499);
           expect(err.message).toBe("I'm not a JSON response");
-          expect(err.errorId).toBe(undefined);
-          expect(err.reason).toBe(undefined);
-          expect(err.suggestion).toBe(undefined);
+          expect(String(err)).toBe(
+            "LiveblocksError: I'm not a JSON response (status 499)"
+          );
+          expect(err.toString()).toBe(
+            "LiveblocksError: I'm not a JSON response (status 499)"
+          );
         }
       }
     });
@@ -219,9 +216,6 @@ describe("client", () => {
           expect(err.message).toBe(
             "An error happened without an error message"
           );
-          expect(err.errorId).toBe(undefined);
-          expect(err.reason).toBe(undefined);
-          expect(err.suggestion).toBe(undefined);
         }
       }
     });
@@ -392,7 +386,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Invalid secret key");
-        expect(err.errorId).toBe("INVALID_SECRET_KEY");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -482,7 +475,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Comment not found");
-        expect(err.errorId).toBe("RESOURCE_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -577,7 +569,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(409);
         expect(err.message).toBe("Thread already exists");
-        expect(err.errorId).toBe("RESOURCE_ALREADY_EXISTS");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -634,7 +625,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Thread not found");
-        expect(err.errorId).toBe("THREAD_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -668,9 +658,8 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Room not found");
-        expect(err.errorId).toBe("ROOM_NOT_FOUND");
-        expect(err.suggestion).toBe(
-          "Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms"
+        expect(String(err)).toBe(
+          "LiveblocksError: Room not found (status 404)\nSuggestion: Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms\nSee also: https://liveblocks.io/docs/api-reference/rest-api-endpoints"
         );
         expect(err.name).toBe("LiveblocksError");
       }
@@ -1005,7 +994,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Inbox notification not found");
-        expect(err.errorId).toBe("INBOX_NOTIFICATION_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1132,7 +1120,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("User not found");
-        expect(err.errorId).toBe("USER_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1199,7 +1186,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Room not found");
-        expect(err.errorId).toBe("ROOM_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1282,7 +1268,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Room not found");
-        expect(err.errorId).toBe("ROOM_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1345,7 +1330,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Room not found");
-        expect(err.errorId).toBe("ROOM_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1395,7 +1379,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Room not found");
-        expect(err.errorId).toBe("ROOM_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1479,7 +1462,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("Inbox notification frobbed");
-        expect(err.errorId).toBe("RESOURCE_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1574,7 +1556,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("User not found");
-        expect(err.errorId).toBe("USER_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1710,7 +1691,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("User not found");
-        expect(err.errorId).toBe("USER_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1767,7 +1747,6 @@ describe("client", () => {
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
         expect(err.message).toBe("User not found");
-        expect(err.errorId).toBe("USER_NOT_FOUND");
         expect(err.name).toBe("LiveblocksError");
       }
     }

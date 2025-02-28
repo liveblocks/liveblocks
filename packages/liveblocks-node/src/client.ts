@@ -1887,23 +1887,21 @@ export class Liveblocks {
 
 export class LiveblocksError extends Error {
   readonly status: number;
-  readonly reason?: string;
-  readonly suggestion?: string;
-  readonly errorId?: string;
+  readonly details?: string;
 
-  private constructor(
-    message: string,
-    status: number,
-    reason?: string,
-    suggestion?: string,
-    errorId?: string
-  ) {
+  private constructor(message: string, status: number, details?: string) {
     super(message);
     this.name = "LiveblocksError";
     this.status = status;
-    this.reason = reason;
-    this.suggestion = suggestion;
-    this.errorId = errorId;
+    this.details = details;
+  }
+
+  public toString(): string {
+    let msg = `${this.name}: ${this.message} (status ${this.status})`;
+    if (this.details) {
+      msg += `\n${this.details}`;
+    }
+    return msg;
   }
 
   static async from(res: Response): Promise<LiveblocksError> {
@@ -1915,12 +1913,16 @@ export class LiveblocksError extends Error {
       text = FALLBACK;
     }
     const obj = (tryParseJson(text) ?? { message: text }) as JsonObject;
-    return new LiveblocksError(
-      (obj.message || FALLBACK) as string,
-      res.status,
-      obj.reason as string | undefined,
-      obj.suggestion as string | undefined,
-      obj.error as string | undefined
-    );
+
+    const message = (obj.message || FALLBACK) as string;
+    const details =
+      [
+        obj.suggestion ? `Suggestion: ${String(obj.suggestion)}` : undefined,
+        obj.docs ? `See also: ${String(obj.docs)}` : undefined,
+      ]
+        .filter(Boolean)
+        .join("\n") || undefined;
+
+    return new LiveblocksError(message, res.status, details);
   }
 }
