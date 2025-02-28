@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.19.0
+
 ### `@liveblocks/*`
 
 - Output ES modules by default (but CJS builds are still included)
