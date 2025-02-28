@@ -2,9 +2,9 @@ import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
-import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
+import { getBaseUrl } from "./env";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
@@ -96,7 +96,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
   Resolve<
   {
     /**
-     * Whether or not the room automatically connects to Liveblock servers.
+     * Whether or not the room automatically connects to Liveblocks servers.
      * Default is true.
      *
      * Usually set to false when the client is used from the server to not call
@@ -480,17 +480,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   /** @internal */
   enableDebugLogging?: boolean;
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
-
-function getBaseUrl(baseUrl?: string | undefined): string {
-  if (
-    typeof baseUrl === "string" &&
-    baseUrl.startsWith("http") // Must be http or https URL
-  ) {
-    return baseUrl;
-  } else {
-    return DEFAULT_BASE_URL;
-  }
-}
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.

@@ -1,18 +1,5 @@
-const DEFAULT_BASE_URL = "https://api.liveblocks.io";
-
 // Valid alphabet for secret/public keys
 const VALID_KEY_CHARS_REGEX = /^[\w-]+$/;
-
-export function getBaseUrl(baseUrl?: string | undefined): string {
-  if (
-    typeof baseUrl === "string" &&
-    baseUrl.startsWith("http") // Must be http or https URL
-  ) {
-    return baseUrl;
-  } else {
-    return DEFAULT_BASE_URL;
-  }
-}
 
 export async function fetchPolyfill(): Promise<typeof fetch> {
   return typeof globalThis.fetch !== "undefined"

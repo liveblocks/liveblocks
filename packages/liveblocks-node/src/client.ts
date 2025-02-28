@@ -41,6 +41,7 @@ import {
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  getBaseUrl,
   objectToQuery,
   tryParseJson,
   url,
@@ -52,7 +53,6 @@ import {
   assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
-  getBaseUrl,
   normalizeStatusCode,
 } from "./utils";
 

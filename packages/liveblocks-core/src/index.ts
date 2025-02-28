@@ -75,6 +75,7 @@ export type {
 } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/utils";
 export { toPlainLson } from "./crdts/utils";
+export { getBaseUrl } from "./env";
 export type {
   DAD,
   DE,
