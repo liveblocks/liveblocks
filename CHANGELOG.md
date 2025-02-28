@@ -9,7 +9,7 @@
 
 - Allow passing optional AbortSignal to all client methods
 - Fix bug in encoding of error information in the LiveblocksError when an API
-  call fails
+  call fails (thanks for reporting, @robcresswell!)
 
 ## v2.18.3
 
