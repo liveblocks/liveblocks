@@ -111,6 +111,116 @@ describe("client", () => {
   afterEach(() => server.resetHandlers());
   afterAll(() => server.close());
 
+  describe("LiveblocksError message formatting", () => {
+    test("should throw a LiveblocksError when response is missing a body", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return new HttpResponse(null, { status: 499 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe(
+            "An error happened without an error message"
+          );
+        }
+      }
+    });
+    test("should throw a LiveblocksError when response has empty body", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return HttpResponse.text("", { status: 499 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe(
+            "An error happened without an error message"
+          );
+        }
+      }
+    });
+    test("should throw a LiveblocksError when response has non-JSON body", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return HttpResponse.text("I'm not a JSON response", { status: 499 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe("I'm not a JSON response");
+          expect(String(err)).toBe(
+            "LiveblocksError: I'm not a JSON response (status 499)"
+          );
+          expect(err.toString()).toBe(
+            "LiveblocksError: I'm not a JSON response (status 499)"
+          );
+        }
+      }
+    });
+    test("should throw a LiveblocksError when response has JSON body without a message field", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return HttpResponse.json(
+            { messsag: 'Misspelled "message" field' },
+            { status: 499 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe(
+            "An error happened without an error message"
+          );
+        }
+      }
+    });
+  });
+
   test("should return a list of room when getRooms receives a successful response", async () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
     await expect(client.getRooms()).resolves.toEqual({
@@ -248,7 +358,7 @@ describe("client", () => {
 
   test("should throw a LiveblocksError when getRooms receives an error response", async () => {
     const error = {
-      error: "InvalidSecretKey",
+      error: "INVALID_SECRET_KEY",
       message: "Invalid secret key",
     };
 
@@ -275,7 +385,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Invalid secret key");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -364,7 +474,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Comment not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -425,7 +535,7 @@ describe("client", () => {
     };
 
     const error = {
-      error: "RESOURCE_ALREADY_EXISTES",
+      error: "RESOURCE_ALREADY_EXISTS",
       message: "Thread already exists",
     };
 
@@ -458,7 +568,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(409);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Thread already exists");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -514,7 +624,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Thread not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -547,7 +657,10 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Room not found");
+        expect(String(err)).toBe(
+          "LiveblocksError: Room not found (status 404)\nSuggestion: Please use a valid room ID, room IDs are available in the dashboard: https://liveblocks.io/dashboard/rooms\nSee also: https://liveblocks.io/docs/api-reference/rest-api-endpoints"
+        );
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -880,7 +993,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Inbox notification not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1006,7 +1119,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("User not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1072,7 +1185,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Room not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1154,7 +1267,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Room not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1216,7 +1329,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Room not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1265,7 +1378,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Room not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1321,7 +1434,7 @@ describe("client", () => {
 
     const error = {
       error: "RESOURCE_NOT_FOUND",
-      message: "Inbox notification",
+      message: "Inbox notification frobbed",
     };
 
     server.use(
@@ -1348,7 +1461,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("Inbox notification frobbed");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1442,7 +1555,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("User not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1577,7 +1690,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("User not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
@@ -1633,7 +1746,7 @@ describe("client", () => {
       expect(err instanceof LiveblocksError).toBe(true);
       if (err instanceof LiveblocksError) {
         expect(err.status).toBe(404);
-        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.message).toBe("User not found");
         expect(err.name).toBe("LiveblocksError");
       }
     }
