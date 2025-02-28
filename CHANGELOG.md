@@ -10,6 +10,8 @@
 - Allow passing optional AbortSignal to all client methods
 - Fix bug in encoding of error information in the LiveblocksError when an API
   call fails (thanks for reporting, @robcresswell!)
+- Fix `getStorageDocument("my-room", "json")` typing in its output `LiveMap`
+  instances as `ReadonlyMap` instead of serialized plain objects.
 
 ## v2.18.3
 

@@ -55,9 +55,22 @@ import {
   normalizeStatusCode,
 } from "./utils";
 
+// Recursively convert ReadonlyMap<K, V> to { [key: K]: V }
+type SerializeMaps<T> =
+  T extends ReadonlyMap<infer K, infer V>
+    ? K extends string
+      ? { readonly [P in K]: SerializeMaps<V> }
+      : { readonly [key: string]: SerializeMaps<V> }
+    : T extends object
+      ? { readonly [P in keyof T]: SerializeMaps<T[P]> }
+      : T;
+
 type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
   ? JsonObject
-  : ToImmutable<S>;
+  : // ToImmutable converts LiveMap instances to ReadonlyMap versions, but
+    // the "simplified JSON" format actually requires (because of serialization)
+    // and converts the maps to plain objects.
+    SerializeMaps<ToImmutable<S>>;
 
 export type LiveblocksOptions = {
   /**
