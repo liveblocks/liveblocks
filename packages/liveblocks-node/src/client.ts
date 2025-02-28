@@ -274,7 +274,7 @@ export class Liveblocks {
 
   async #get(
     path: URLSafeString,
-    params: QueryParams,
+    params?: QueryParams,
     options?: RequestOptions
   ): Promise<Response> {
     const url = urljoin(this.#baseUrl, path, params);
@@ -581,7 +581,7 @@ export class Liveblocks {
     roomId: string,
     options?: RequestOptions
   ): Promise<RoomData> {
-    const res = await this.#get(url`/v2/rooms/${roomId}`, {}, options);
+    const res = await this.#get(url`/v2/rooms/${roomId}`, undefined, options);
 
     if (!res.ok) {
       throw await LiveblocksError.from(res);
@@ -689,7 +689,7 @@ export class Liveblocks {
   ): Promise<{ data: RoomUser<U>[] }> {
     const res = await this.#get(
       url`/v2/rooms/${roomId}/active_users`,
-      {},
+      undefined,
       options
     );
 
@@ -939,7 +939,11 @@ export class Liveblocks {
     schemaId: string,
     options?: RequestOptions
   ): Promise<Schema> {
-    const res = await this.#get(url`/v2/schemas/${schemaId}`, {}, options);
+    const res = await this.#get(
+      url`/v2/schemas/${schemaId}`,
+      undefined,
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -1015,7 +1019,11 @@ export class Liveblocks {
     roomId: string,
     options?: RequestOptions
   ): Promise<Schema> {
-    const res = await this.#get(url`/v2/rooms/${roomId}/schema`, {}, options);
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/schema`,
+      undefined,
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -1162,7 +1170,7 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/rooms/${roomId}/threads/${threadId}`,
-      {},
+      undefined,
       options
     );
     if (!res.ok) {
@@ -1190,7 +1198,7 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/rooms/${roomId}/threads/${threadId}/participants`,
-      {},
+      undefined,
       options
     );
     if (!res.ok) {
@@ -1216,7 +1224,7 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
-      {},
+      undefined,
       options
     );
     if (!res.ok) {
@@ -1389,7 +1397,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
-      {},
+      undefined,
       options
     );
 
@@ -1416,7 +1424,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
-      {},
+      undefined,
       options
     );
 
@@ -1557,7 +1565,7 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`,
-      {},
+      undefined,
       options
     );
     if (!res.ok) {
@@ -1647,7 +1655,7 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
-      {},
+      undefined,
       options
     );
     if (!res.ok) {
@@ -1822,7 +1830,7 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/users/${userId}/notification-settings`,
-      {},
+      undefined,
       options
     );
     if (!res.ok) {
