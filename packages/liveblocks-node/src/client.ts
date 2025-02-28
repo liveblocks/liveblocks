@@ -475,8 +475,7 @@ export class Liveblocks {
     const res = await this.#get(path, queryParams, options);
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const data = (await res.json()) as {
@@ -540,8 +539,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const data = (await res.json()) as RoomDataPlain;
@@ -572,8 +570,7 @@ export class Liveblocks {
     const res = await this.#get(url`/v2/rooms/${roomId}`, {}, options);
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const data = (await res.json()) as RoomDataPlain;
@@ -632,8 +629,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const data = (await res.json()) as RoomDataPlain;
@@ -663,8 +659,7 @@ export class Liveblocks {
     const res = await this.#delete(url`/v2/rooms/${roomId}`, options);
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -685,8 +680,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as Promise<{ data: RoomUser<U>[] }>;
@@ -709,8 +703,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -762,8 +755,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return (await res.json()) as Promise<PlainLsonObject | ToSimplifiedJson<S>>;
   }
@@ -788,8 +780,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return (await res.json()) as Promise<PlainLsonObject>;
   }
@@ -805,8 +796,7 @@ export class Liveblocks {
   ): Promise<void> {
     const res = await this.#delete(url`/v2/rooms/${roomId}/storage`, options);
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -839,8 +829,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as Promise<JsonObject>;
@@ -866,8 +855,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -890,8 +878,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return res.arrayBuffer();
   }
@@ -914,8 +901,7 @@ export class Liveblocks {
   ): Promise<Schema> {
     const res = await this.#post(url`/v2/schemas`, { name, body }, options);
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     const data = (await res.json()) as SchemaPlain;
 
@@ -941,8 +927,7 @@ export class Liveblocks {
   ): Promise<Schema> {
     const res = await this.#get(url`/v2/schemas/${schemaId}`, {}, options);
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     const data = (await res.json()) as SchemaPlain;
 
@@ -975,8 +960,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const data = (await res.json()) as SchemaPlain;
@@ -1003,8 +987,7 @@ export class Liveblocks {
   ): Promise<void> {
     const res = await this.#delete(url`/v2/schemas/${schemaId}`, options);
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1020,8 +1003,7 @@ export class Liveblocks {
   ): Promise<Schema> {
     const res = await this.#get(url`/v2/rooms/${roomId}/schema`, {}, options);
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const data = (await res.json()) as SchemaPlain;
@@ -1056,8 +1038,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return (await res.json()) as Promise<{ schema: string }>;
   }
@@ -1073,8 +1054,7 @@ export class Liveblocks {
   ): Promise<void> {
     const res = await this.#delete(url`/v2/rooms/${roomId}/schema`, options);
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1144,8 +1124,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     const { data } = (await res.json()) as { data: ThreadDataPlain<M>[] };
     return {
@@ -1173,8 +1152,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
   }
@@ -1202,8 +1180,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return (await res.json()) as Promise<ThreadParticipants>;
   }
@@ -1229,8 +1206,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return convertToCommentData((await res.json()) as CommentDataPlain);
   }
@@ -1265,8 +1241,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     return convertToCommentData((await res.json()) as CommentDataPlain);
   }
@@ -1298,8 +1273,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return convertToCommentData((await res.json()) as CommentDataPlain);
@@ -1323,8 +1297,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1358,8 +1331,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
@@ -1383,8 +1355,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1409,8 +1380,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
@@ -1437,8 +1407,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
@@ -1474,8 +1443,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as M;
@@ -1512,8 +1480,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const reaction = (await res.json()) as CommentUserReactionPlain;
@@ -1555,8 +1522,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1581,8 +1547,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return convertToInboxNotificationData(
@@ -1639,8 +1604,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     const { data } = (await res.json()) as {
@@ -1673,8 +1637,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as RoomNotificationSettings;
@@ -1703,8 +1666,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as RoomNotificationSettings;
@@ -1730,8 +1692,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1757,8 +1718,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
     const data = (await res.json()) as RoomDataPlain;
     return {
@@ -1787,8 +1747,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1812,8 +1771,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1833,8 +1791,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 
@@ -1855,8 +1812,7 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as UserNotificationSettings;
@@ -1881,8 +1837,7 @@ export class Liveblocks {
     );
 
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
 
     return (await res.json()) as UserNotificationSettings;
@@ -1903,18 +1858,42 @@ export class Liveblocks {
       options
     );
     if (!res.ok) {
-      const text = await res.text();
-      throw new LiveblocksError(res.status, text);
+      throw await LiveblocksError.from(res);
     }
   }
 }
 
 export class LiveblocksError extends Error {
-  status: number;
+  readonly status: number;
+  readonly reason?: string;
+  readonly suggestion?: string;
+  readonly errorId?: string;
 
-  constructor(status: number, message = "") {
+  private constructor(
+    status: number,
+    message: string,
+    reason?: string,
+    suggestion?: string,
+    errorId?: string
+  ) {
     super(message);
     this.name = "LiveblocksError";
     this.status = status;
+    this.reason = reason;
+    this.suggestion = suggestion;
+    this.errorId = errorId;
+  }
+
+  static async from(res: Response): Promise<LiveblocksError> {
+    const text = await res.text();
+    const obj = JSON.parse(text) as JsonObject;
+    const err = new LiveblocksError(
+      res.status,
+      obj.message as string,
+      obj.reason as string | undefined,
+      obj.suggestion as string | undefined,
+      obj.error as string | undefined
+    );
+    return err;
   }
 }
