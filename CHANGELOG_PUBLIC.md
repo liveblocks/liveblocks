@@ -20,6 +20,19 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 9 (2025-02-28)
 
+## v2.19.0
+
+### `@liveblocks/*`
+
+- Output ES modules by default (but CJS builds are still included)
+- Modernize internal build tool settings
+
+### `@liveblocks/node`
+
+- Allow passing optional AbortSignal to all client methods
+- Fix bug in encoding of error information in the LiveblocksError when an API call fails (thanks for reporting, @robcresswell!)
+- Fix `getStorageDocument("my-room", "json")` typing in its output `LiveMap` instances as `ReadonlyMap` instead of serialized plain objects.
+
 ## Documentation
 
 - New guide: [How to create a notification settings panel](https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel).
@@ -37,7 +50,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas, nvie
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju
 
 # Week 8 (2025-02-21)
 
