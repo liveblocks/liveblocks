@@ -1870,8 +1870,8 @@ export class LiveblocksError extends Error {
   readonly errorId?: string;
 
   private constructor(
-    status: number,
     message: string,
+    status: number,
     reason?: string,
     suggestion?: string,
     errorId?: string
@@ -1885,15 +1885,25 @@ export class LiveblocksError extends Error {
   }
 
   static async from(res: Response): Promise<LiveblocksError> {
-    const text = await res.text();
-    const obj = JSON.parse(text) as JsonObject;
-    const err = new LiveblocksError(
+    const FALLBACK = "An error happened without an error message";
+    let text: string;
+    try {
+      text = await res.text();
+    } catch {
+      text = FALLBACK;
+    }
+    let obj: JsonObject;
+    try {
+      obj = JSON.parse(text) as JsonObject;
+    } catch {
+      obj = { message: text };
+    }
+    return new LiveblocksError(
+      (obj.message || FALLBACK) as string,
       res.status,
-      obj.message as string,
       obj.reason as string | undefined,
       obj.suggestion as string | undefined,
       obj.error as string | undefined
     );
-    return err;
   }
 }

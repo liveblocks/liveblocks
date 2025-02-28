@@ -111,6 +111,122 @@ describe("client", () => {
   afterEach(() => server.resetHandlers());
   afterAll(() => server.close());
 
+  describe("LiveblocksError message formatting", () => {
+    test("should throw a LiveblocksError when response is missing a body", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return new HttpResponse(null, { status: 499 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe(
+            "An error happened without an error message"
+          );
+          expect(err.errorId).toBe(undefined);
+          expect(err.reason).toBe(undefined);
+          expect(err.suggestion).toBe(undefined);
+        }
+      }
+    });
+    test("should throw a LiveblocksError when response has empty body", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return HttpResponse.text("", { status: 499 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe(
+            "An error happened without an error message"
+          );
+          expect(err.errorId).toBe(undefined);
+          expect(err.reason).toBe(undefined);
+          expect(err.suggestion).toBe(undefined);
+        }
+      }
+    });
+    test("should throw a LiveblocksError when response has non-JSON body", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return HttpResponse.text("I'm not a JSON response", { status: 499 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe("I'm not a JSON response");
+          expect(err.errorId).toBe(undefined);
+          expect(err.reason).toBe(undefined);
+          expect(err.suggestion).toBe(undefined);
+        }
+      }
+    });
+    test("should throw a LiveblocksError when response has JSON body without a message field", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
+          return HttpResponse.json(
+            { messsag: 'Misspelled "message" field' },
+            { status: 499 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getRooms();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err).toBeInstanceOf(LiveblocksError);
+        if (err instanceof LiveblocksError) {
+          expect(err.name).toBe("LiveblocksError");
+          expect(err.status).toBe(499);
+          expect(err.message).toBe(
+            "An error happened without an error message"
+          );
+          expect(err.errorId).toBe(undefined);
+          expect(err.reason).toBe(undefined);
+          expect(err.suggestion).toBe(undefined);
+        }
+      }
+    });
+  });
+
   test("should return a list of room when getRooms receives a successful response", async () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
     await expect(client.getRooms()).resolves.toEqual({
