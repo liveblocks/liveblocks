@@ -42,6 +42,7 @@ import {
   convertToInboxNotificationData,
   convertToThreadData,
   objectToQuery,
+  tryParseJson,
   url,
   urljoin,
 } from "@liveblocks/core";
@@ -1905,12 +1906,7 @@ export class LiveblocksError extends Error {
     } catch {
       text = FALLBACK;
     }
-    let obj: JsonObject;
-    try {
-      obj = JSON.parse(text) as JsonObject;
-    } catch {
-      obj = { message: text };
-    }
+    const obj = (tryParseJson(text) ?? { message: text }) as JsonObject;
     return new LiveblocksError(
       (obj.message || FALLBACK) as string,
       res.status,
