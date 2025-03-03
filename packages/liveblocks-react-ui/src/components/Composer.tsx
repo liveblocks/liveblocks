@@ -7,6 +7,7 @@ import type {
   DM,
 } from "@liveblocks/core";
 import { Permission } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
@@ -15,7 +16,6 @@ import {
   useResolveMentionSuggestions,
   useRoomPermissions,
 } from "@liveblocks/react/_private";
-import { useRoom } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,

@@ -8,6 +8,7 @@ import {
   type EventSource,
   makeEventSource,
 } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
 import {
   useClientOrNull,
   useLayoutEffect,
@@ -15,7 +16,6 @@ import {
   useResolveMentionSuggestions,
   useSyncSource,
 } from "@liveblocks/react/_private";
-import { useRoom } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
