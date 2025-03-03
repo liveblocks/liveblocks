@@ -145,7 +145,7 @@ export function createUserNotificationSettings(
         const value = this[kPrivate].__plain__[channel];
         if (typeof value === "undefined") {
           console.error(
-            `In order to use the '${channel}' channel, please set up your project first. For more information https://liveblocks.io/docs/errors/enable-a-notification-channel`
+            `In order to use the '${channel}' channel, please set up your project first. For more information: https://liveblocks.io/docs/errors/enable-a-notification-channel`
           );
           return null;
         }
