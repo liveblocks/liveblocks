@@ -102,8 +102,14 @@ export function getMatchRange(
 
   if (include) {
     return {
-      anchor: SlateEditor.before(editor, start, { unit: "offset" }) ?? start,
-      focus: SlateEditor.after(editor, end, { unit: "offset" }) ?? end,
+      anchor:
+        direction === "before" || direction === "both"
+          ? (SlateEditor.before(editor, start, { unit: "offset" }) ?? start)
+          : start,
+      focus:
+        direction === "after" || direction === "both"
+          ? (SlateEditor.after(editor, end, { unit: "offset" }) ?? end)
+          : end,
     };
   }
 

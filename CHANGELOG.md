@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Improve mentions behavior around whitespace, fixing a regression introduced in
+  `v2.18.3` when we added support for whitespace within mentions.
+
 ## v2.19.0
 
 ### `@liveblocks/*`
