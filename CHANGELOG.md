@@ -25,17 +25,17 @@ create a breakage into your app if someone is disabling channels by mistake.
 
 ### `@liveblocks/client`
 
-- Implement a proxy factory around user notification settings object to return
+- Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
 
 ### `@liveblocks/react`
 
-- Implement a proxy factory around user notification settings object to return
+- Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
 
 ### `@liveblocks/node`
 
-- Implement a proxy factory around user notification settings object to return
+- Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
 
 ## v2.19.0
