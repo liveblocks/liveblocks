@@ -76,7 +76,7 @@ describe("UserNotificationSettings protocol", () => {
     );
   });
 
-  it("should return an object where properties are enumerable except `[kPrivate]`", () => {
+  it("should return an object where properties are enumerable except `[kPlain]`", () => {
     const plain: UserNotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: true, textMention: true },

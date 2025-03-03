@@ -46,7 +46,7 @@ export type UserNotificationSettingsPlain = {
  * Symbol to brand some properties and methods
  * as internal and private in `UserNotificationSettings`
  */
-const kPrivate = Symbol("user-notification-settings-private");
+const kPlain = Symbol("user-notification-settings-plain");
 
 /**
  * @private
@@ -72,7 +72,7 @@ export type UserNotificationSettings = {
    * `UserNotificationSettings` with private internal properties
    * to store the plain settings and methods.
    */
-  [kPrivate]: PrivateUserNotificationSettingsApi;
+  [kPlain]: PrivateUserNotificationSettingsApi;
 };
 
 /**
@@ -119,7 +119,7 @@ export function createUserNotificationSettings(
   ];
   const descriptors: PropertyDescriptorMap &
     ThisType<UserNotificationSettings> = {
-    [kPrivate]: {
+    [kPlain]: {
       value: {
         __plain__: plain,
       },
@@ -142,7 +142,7 @@ export function createUserNotificationSettings(
        * creating a well known shaped object → `UserNotificationSettings`.
        */
       get(this: UserNotificationSettings): NotificationChannelSettings | null {
-        const value = this[kPrivate].__plain__[channel];
+        const value = this[kPlain].__plain__[channel];
         if (typeof value === "undefined") {
           console.error(
             `In order to use the '${channel}' channel, please set up your project first. For more information: https://liveblocks.io/docs/errors/enable-a-notification-channel`
@@ -169,7 +169,7 @@ export function patchUserNotificationSettings(
 ): UserNotificationSettings {
   // Create a copy of the settings object to mutate
   const outcoming = createUserNotificationSettings({
-    ...existing[kPrivate].__plain__,
+    ...existing[kPlain].__plain__,
   });
 
   for (const channel of keys(patch)) {
@@ -179,8 +179,8 @@ export function patchUserNotificationSettings(
         entries(updates).filter(([, value]) => value !== undefined)
       ) as NotificationChannelSettings; // Fine to type cast here because we've filtered out undefined values
 
-      outcoming[kPrivate].__plain__[channel] = {
-        ...outcoming[kPrivate].__plain__[channel],
+      outcoming[kPlain].__plain__[channel] = {
+        ...outcoming[kPlain].__plain__[channel],
         ...kindUpdates,
       };
     }
