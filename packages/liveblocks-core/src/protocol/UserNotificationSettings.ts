@@ -41,23 +41,18 @@ export type UserNotificationSettingsPlain = {
 };
 
 /**
- * @private
+ * @internal
  *
- * Symbol to brand some properties and methods
- * as internal and private in `UserNotificationSettings`
+ * Symbol to branch plain value of user notification settings
+ * inside  the UserNotificationSettings object.
  */
 const kPlain = Symbol("user-notification-settings-plain");
 
 /**
- * @private
- *
- * Private properties and methods internal to `UserNotificationSettings`.
- * As a user of Liveblocks, you should NEVER USE ANY OF THESE DIRECTLY,
- * because bad things will happen.
+ * @internal
+ * Proxied `UserNotificationSettingsPlain` object.
  */
-export type PrivateUserNotificationSettingsApi = {
-  __plain__: UserNotificationSettingsPlain;
-};
+type ProxiedUserNotificationSettings = UserNotificationSettingsPlain;
 
 /**
  * User notification settings.
@@ -65,14 +60,6 @@ export type PrivateUserNotificationSettingsApi = {
  */
 export type UserNotificationSettings = {
   [C in NotificationChannel]: NotificationChannelSettings | null;
-} & {
-  /**
-   * @private
-   *
-   * `UserNotificationSettings` with private internal properties
-   * to store the plain settings and methods.
-   */
-  [kPlain]: PrivateUserNotificationSettingsApi;
 };
 
 /**
@@ -118,11 +105,11 @@ export function createUserNotificationSettings(
     "webPush",
   ];
   const descriptors: PropertyDescriptorMap &
-    ThisType<UserNotificationSettings> = {
+    ThisType<
+      UserNotificationSettings & { [kPlain]: ProxiedUserNotificationSettings }
+    > = {
     [kPlain]: {
-      value: {
-        __plain__: plain,
-      },
+      value: plain,
       enumerable: false,
     },
   };
@@ -141,8 +128,12 @@ export function createUserNotificationSettings(
        * So we can safely tells that this getter is typed as `this: UserNotificationSettings` because we're
        * creating a well known shaped object → `UserNotificationSettings`.
        */
-      get(this: UserNotificationSettings): NotificationChannelSettings | null {
-        const value = this[kPlain].__plain__[channel];
+      get(
+        this: UserNotificationSettings & {
+          [kPlain]: ProxiedUserNotificationSettings;
+        }
+      ): NotificationChannelSettings | null {
+        const value = this[kPlain][channel];
         if (typeof value === "undefined") {
           console.error(
             `In order to use the '${channel}' channel, please set up your project first. For more information: https://liveblocks.io/docs/errors/enable-a-notification-channel`
@@ -169,7 +160,11 @@ export function patchUserNotificationSettings(
 ): UserNotificationSettings {
   // Create a copy of the settings object to mutate
   const outcoming = createUserNotificationSettings({
-    ...existing[kPlain].__plain__,
+    ...(
+      existing as UserNotificationSettings & {
+        [kPlain]: ProxiedUserNotificationSettings;
+      }
+    )[kPlain],
   });
 
   for (const channel of keys(patch)) {
@@ -179,8 +174,16 @@ export function patchUserNotificationSettings(
         entries(updates).filter(([, value]) => value !== undefined)
       ) as NotificationChannelSettings; // Fine to type cast here because we've filtered out undefined values
 
-      outcoming[kPlain].__plain__[channel] = {
-        ...outcoming[kPlain].__plain__[channel],
+      (
+        outcoming as UserNotificationSettings & {
+          [kPlain]: ProxiedUserNotificationSettings;
+        }
+      )[kPlain][channel] = {
+        ...(
+          outcoming as UserNotificationSettings & {
+            [kPlain]: ProxiedUserNotificationSettings;
+          }
+        )[kPlain][channel],
         ...kindUpdates,
       };
     }
