@@ -4,6 +4,8 @@
 
 - Improve mentions behavior around whitespace, fixing a regression introduced in
   `v2.18.3` when we added support for whitespace within mentions.
+- Prevent mention suggestions from scrolling instead of flipping when there’s
+  enough space on the other side (e.g. moving from top to bottom).
 
 ## v2.19.0
 
