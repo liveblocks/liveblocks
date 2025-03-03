@@ -21,7 +21,7 @@ export function UserNotificationsSettings() {
   if (isLoading) return <Loading />;
   if (error) throw error; // or throw/capture error
 
-  // Each returns `true` if the current user has at least one notification kind enabled on that channel
+  // Each returns `true` if the current user has every notification kinds enabled on that channel
   const isEmailChannelEnabled = isNotificationChannelEnabled(settings.email);
   const isSlackChannelEnabled = isNotificationChannelEnabled(settings.slack);
   const isTeamsChannelEnabled = isNotificationChannelEnabled(settings.teams);
