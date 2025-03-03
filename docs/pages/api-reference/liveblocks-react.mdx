@@ -1380,6 +1380,17 @@ import { useRoom } from "@liveblocks/react/suspense";
 const room = useRoom();
 ```
 
+Will throw when used outside of a [`RoomProvider`][]. If you don’t want this
+hook to throw when used outside of a Room context (for example to write
+components in a way that they can be used both inside and outside of a
+Liveblocks room), you can use the `{ allowOutsideRoom }` option:
+
+```ts
+import { useRoom } from "@liveblocks/react/suspense";
+
+const room = useRoom({ allowOutsideRoom: true }); // Possibly `null`
+```
+
 ### useIsInsideRoom [@badge=Both]
 
 Returns a boolean, `true` if the hook was called inside a

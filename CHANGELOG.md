@@ -27,15 +27,25 @@ create a breakage into your app if someone is disabling channels by mistake.
 - Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
 
-### `@liveblocks/react`
-
-- Implement a proxy factory for `UserNotificationSettings` object to return
-  `null` to prevent any errors when accessing a disabled notification channel.
-
 ### `@liveblocks/node`
 
 - Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/react`
+
+- Add optional `useRoom({ allowOutsideRoom: true })` option. When this option is
+  set, the hook will return `null` when used outside of a room, whereas the
+  default behavior of the hook is be to throw.
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/react-ui`
+
+- Improve mentions behavior around whitespace, fixing a regression introduced in
+  `v2.18.3` when we added support for whitespace within mentions.
+- Prevent mention suggestions from scrolling instead of flipping when there’s
+  enough space on the other side (e.g. moving from top to bottom).
 
 ## v2.19.0
 

@@ -102,6 +102,22 @@ describe("useRoom", () => {
   });
 });
 
+describe("useRoom({ allowOutsideRoom })", () => {
+  test("useRoom({ allowOutsideRoom }) should not return null when inside room", () => {
+    const { result } = renderHook(() => useRoom({ allowOutsideRoom: true }));
+    const room = result.current;
+    expect(room).not.toBe(null);
+  });
+
+  test("useRoom({ allowOutsideRoom }) should return null when outside room", () => {
+    const { result } = renderHook(() => useRoom({ allowOutsideRoom: true }), {
+      wrapper: undefined, // Skip using RoomProvider wrapper
+    });
+    const room = result.current;
+    expect(room).toBe(null);
+  });
+});
+
 describe("useIsInsideRoom", () => {
   test("useIsInsideRoom should return true inside a room", () => {
     const { result } = renderHook(() => useIsInsideRoom());
