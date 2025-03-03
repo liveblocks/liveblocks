@@ -265,7 +265,7 @@ declare global {
     classic.useRoom({ allowOutsideRoom: true })?.id
   );
   expectType<string | undefined>(
-    classic.useRoom({ allowOutsideRoom: !Math.random() })?.id
+    classic.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
   );
 }
 
@@ -281,7 +281,7 @@ declare global {
     suspense.useRoom({ allowOutsideRoom: true })?.id
   );
   expectType<string | undefined>(
-    suspense.useRoom({ allowOutsideRoom: !Math.random() })?.id
+    suspense.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
   );
 }
 
