@@ -13,11 +13,10 @@ dashboard.
 // email channel enabled ✅
 // webPush channel disabled ❌
 
-// Proxy creation
 const [{ settings }] = useNotificationSettings();
 
 console.log(settings.emails); // ✅ 👉🏻 { thread: true, textMention: true, $fileUploaded: true }
-console.log(settings.webPush); // ✅  👉🏻 `null` with an error log "In order to use the 'webPush' channel, please set up your project first. For more information https://liveblocks.io/docs/errors/enable-a-notification-channel"
+console.log(settings.webPush); // ✅  👉🏻 `null` with an error log "In order to use the 'webPush' channel, please set up your project first. For more information: https://liveblocks.io/docs/errors/enable-a-notification-channel"
 ```
 
 The main benefits are your code will become more predictable and will avoid to
