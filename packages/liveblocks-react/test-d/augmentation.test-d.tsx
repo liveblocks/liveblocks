@@ -259,6 +259,14 @@ declare global {
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
   expectError(room.getPresence().nonexisting);
+
+  expectType<string>(classic.useRoom({ allowOutsideRoom: false }).id);
+  expectType<string | undefined>(
+    classic.useRoom({ allowOutsideRoom: true })?.id
+  );
+  expectType<string | undefined>(
+    classic.useRoom({ allowOutsideRoom: !Math.random() })?.id
+  );
 }
 
 // useRoom() (suspense)
@@ -267,6 +275,14 @@ declare global {
   expectType<number>(room.getPresence().cursor.x);
   expectType<number>(room.getPresence().cursor.y);
   expectError(room.getPresence().nonexisting);
+
+  expectType<string>(suspense.useRoom({ allowOutsideRoom: false }).id);
+  expectType<string | undefined>(
+    suspense.useRoom({ allowOutsideRoom: true })?.id
+  );
+  expectType<string | undefined>(
+    suspense.useRoom({ allowOutsideRoom: !Math.random() })?.id
+  );
 }
 
 // ---------------------------------------------------------

@@ -162,6 +162,14 @@ import { expectAssignable, expectError, expectType } from "tsd";
   const room = classic.useRoom();
   expectType<Json | undefined>(room.getPresence().cursor);
   expectType<Json | undefined>(room.getPresence().nonexisting);
+
+  expectType<string>(classic.useRoom({ allowOutsideRoom: false }).id);
+  expectType<string | undefined>(
+    classic.useRoom({ allowOutsideRoom: true })?.id
+  );
+  expectType<string | undefined>(
+    classic.useRoom({ allowOutsideRoom: !Math.random() })?.id
+  );
 }
 
 // useRoom() (suspense)
@@ -169,6 +177,14 @@ import { expectAssignable, expectError, expectType } from "tsd";
   const room = suspense.useRoom();
   expectType<Json | undefined>(room.getPresence().cursor);
   expectType<Json | undefined>(room.getPresence().nonexisting);
+
+  expectType<string>(suspense.useRoom({ allowOutsideRoom: false }).id);
+  expectType<string | undefined>(
+    suspense.useRoom({ allowOutsideRoom: true })?.id
+  );
+  expectType<string | undefined>(
+    suspense.useRoom({ allowOutsideRoom: !Math.random() })?.id
+  );
 }
 
 // ---------------------------------------------------------
