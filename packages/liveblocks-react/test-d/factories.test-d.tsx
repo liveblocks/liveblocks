@@ -252,6 +252,11 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
 
 // The useRoom() hook
 expectType<Room<P, S, U, E, M>>(ctx.useRoom());
+expectType<Room<P, S, U, E, M>>(ctx.useRoom({ allowOutsideRoom: false }));
+expectType<Room<P, S, U, E, M> | null>(
+  ctx.useRoom({ allowOutsideRoom: Math.random() < 0.5 })
+);
+expectType<Room<P, S, U, E, M> | null>(ctx.useRoom({ allowOutsideRoom: true }));
 
 // useIsInsideRoom()
 expectType<boolean>(ctx.useIsInsideRoom());

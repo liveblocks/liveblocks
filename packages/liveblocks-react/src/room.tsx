@@ -689,9 +689,23 @@ function useRoom<
   U extends BaseUserMeta = DU,
   E extends Json = DE,
   M extends BaseMetadata = DM,
->(): Room<P, S, U, E, M> {
+>(options?: { allowOutsideRoom: false }): Room<P, S, U, E, M>;
+function useRoom<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
+>(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null;
+function useRoom<
+  P extends JsonObject = DP,
+  S extends LsonObject = DS,
+  U extends BaseUserMeta = DU,
+  E extends Json = DE,
+  M extends BaseMetadata = DM,
+>(options?: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null {
   const room = useRoomOrNull<P, S, U, E, M>();
-  if (room === null) {
+  if (room === null && !options?.allowOutsideRoom) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
   return room;

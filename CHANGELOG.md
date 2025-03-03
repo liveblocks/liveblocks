@@ -1,5 +1,11 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react`
+
+- Add optional `useRoom({ allowOutsideRoom: true })` option. When this option is
+  set, the hook will return `null` when used outside of a room, whereas the
+  default behavior of the hook is be to throw.
+
 ### `@liveblocks/react-ui`
 
 - Improve mentions behavior around whitespace, fixing a regression introduced in
