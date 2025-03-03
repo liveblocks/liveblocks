@@ -13,9 +13,9 @@ import {
   useEditRoomComment,
   useLayoutEffect,
   useResolveMentionSuggestions,
-  useRoomOrNull,
   useRoomPermissions,
 } from "@liveblocks/react/_private";
+import { useRoom } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
@@ -650,7 +650,7 @@ export const Composer = forwardRef(
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const room = useRoomOrNull();
+    const room = useRoom({ allowOutsideRoom: true });
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
     if (roomId === undefined) {

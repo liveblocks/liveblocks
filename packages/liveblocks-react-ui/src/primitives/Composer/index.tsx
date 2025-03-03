@@ -13,9 +13,9 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
   useResolveMentionSuggestions,
-  useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
+import { useRoom } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -1208,7 +1208,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
-    const room = useRoomOrNull();
+    const room = useRoom({ allowOutsideRoom: true });
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
     if (roomId === undefined) {
