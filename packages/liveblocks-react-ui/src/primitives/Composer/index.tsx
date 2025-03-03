@@ -8,12 +8,12 @@ import {
   type EventSource,
   makeEventSource,
 } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
 import {
   useClientOrNull,
   useLayoutEffect,
   useMentionSuggestions,
   useResolveMentionSuggestions,
-  useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
@@ -1208,7 +1208,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
-    const room = useRoomOrNull();
+    const room = useRoom({ allowOutsideRoom: true });
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
     if (roomId === undefined) {

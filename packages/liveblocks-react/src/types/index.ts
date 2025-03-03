@@ -400,7 +400,8 @@ type RoomContextBundleCommon<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  useRoom(): Room<P, S, U, E, M>;
+  useRoom(options?: { allowOutsideRoom: false }): Room<P, S, U, E, M>;
+  useRoom(options: { allowOutsideRoom: boolean }): Room<P, S, U, E, M> | null;
 
   /**
    * Returns the current connection status for the Room, and triggers
