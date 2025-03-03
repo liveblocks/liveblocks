@@ -302,11 +302,15 @@ function ComposerEditorMentionSuggestionsWrapper({
     update();
 
     // Reset the mention suggestions after the placement update
-    requestAnimationFrame(() => {
+    const animationFrame = requestAnimationFrame(() => {
       mentionSuggestions.style.overflowY = "auto";
       mentionSuggestions.style.maxHeight =
         "var(--lb-composer-floating-available-height)";
     });
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
   }, [userIds?.length, isOpen, elements.floating, update]);
 
   return (
