@@ -536,12 +536,18 @@ test.describe("Composer", () => {
         page.locator(".lb-composer-suggestions-list-item").first()
       ).toContainText("#!?_1234$%&*()");
 
-      // Mentions cannot start with whitespace
+      // Mentions cannot start with whitespace…
       await editor.pressSequentially(" and @ ");
       await sleep(100);
       await expect(
         page.locator(".lb-composer-mention-suggestions-list")
       ).not.toBeVisible();
+
+      // …but mention suggestions should still open when the cursor is just after the @
+      await editor.press("ArrowLeft");
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).toBeVisible();
 
       // Mentions cannot contain consecutive whitespace
       await editor.pressSequentially(" and @li      ");

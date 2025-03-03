@@ -257,6 +257,8 @@ function ComposerEditorMentionSuggestionsWrapper({
     placement,
     x,
     y,
+    update,
+    elements,
   } = useFloatingWithOptions({
     position,
     dir,
@@ -278,6 +280,38 @@ function ComposerEditorMentionSuggestionsWrapper({
     const domRange = getDOMRange(editor, mentionDraft.range);
     setReference(domRange ?? null);
   }, [setReference, editor, mentionDraft]);
+
+  // Manually update the placement when the number of suggestions changes
+  // This can prevent the list of suggestions from scrolling instead of moving to the other placement
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const mentionSuggestions = elements.floating?.firstChild as
+      | HTMLElement
+      | undefined;
+
+    if (!mentionSuggestions) {
+      return;
+    }
+
+    // Force the mention suggestions to grow instead of scrolling
+    mentionSuggestions.style.overflowY = "visible";
+    mentionSuggestions.style.maxHeight = "none";
+
+    // Trigger a placement update
+    update();
+
+    // Reset the mention suggestions after the placement update
+    const animationFrame = requestAnimationFrame(() => {
+      mentionSuggestions.style.overflowY = "auto";
+      mentionSuggestions.style.maxHeight =
+        "var(--lb-composer-floating-available-height)";
+    });
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [userIds?.length, isOpen, elements.floating, update]);
 
   return (
     <Persist>
