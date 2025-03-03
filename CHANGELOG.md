@@ -1,27 +1,5 @@
 ## vNEXT (not yet published)
 
-### User notification settings - DX improvement
-
-We're improving our DX on user notification settings. Now instead of getting
-ugly errors when you're accessing on a channel which don't have any enabled
-kinds on it we've implemented a getter which will return `null` accompanied by
-an error log to tell you that you need to enabled it on your project's
-dashboard.
-
-```tsx
-// Project Notification Settings
-// email channel enabled ✅
-// webPush channel disabled ❌
-
-const [{ settings }] = useNotificationSettings();
-
-console.log(settings.emails); // ✅ 👉🏻 { thread: true, textMention: true, $fileUploaded: true }
-console.log(settings.webPush); // ✅  👉🏻 `null` with an error log "In order to use the 'webPush' channel, please set up your project first. For more information: https://liveblocks.io/docs/errors/enable-a-notification-channel"
-```
-
-The main benefits are your code will become more predictable and will avoid to
-create a breakage into your app if someone is disabling channels by mistake.
-
 ### `@liveblocks/client`
 
 - Implement a proxy factory for `UserNotificationSettings` object to return
