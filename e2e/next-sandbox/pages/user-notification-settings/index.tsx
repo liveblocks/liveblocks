@@ -112,7 +112,7 @@ function Settings() {
           <Row id="error" name="error" value={JSON.stringify(error)} />
         </tbody>
       </table>
-      {settings !== undefined && settings.email !== null ? (
+      {settings?.email ? (
         <Channel
           name="email"
           thread={settings.email.thread}
@@ -129,7 +129,7 @@ function Settings() {
           }
         />
       ) : null}
-      {settings !== undefined && settings.slack !== null ? (
+      {settings?.slack ? (
         <Channel
           name="slack"
           thread={settings.slack.thread}
@@ -146,7 +146,7 @@ function Settings() {
           }
         />
       ) : null}
-      {settings !== undefined && settings.teams !== null ? (
+      {settings?.teams ? (
         <Channel
           name="teams"
           thread={settings.teams.thread}
@@ -163,7 +163,7 @@ function Settings() {
           }
         />
       ) : null}
-      {settings !== undefined && settings.webPush !== null ? (
+      {settings?.webPush ? (
         <Channel
           name="webPush"
           thread={settings.webPush.thread}
