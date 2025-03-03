@@ -23,11 +23,6 @@ console.log(settings.webPush); // ✅  👉🏻 `null` with an error log "In ord
 The main benefits are your code will become more predictable and will avoid to
 create a breakage into your app if someone is disabling channels by mistake.
 
-### `@liveblocks/*`
-
-- Output ES modules by default (but CJS builds are still included)
-- Modernize internal build tool settings
-
 ### `@liveblocks/client`
 
 - Implement a proxy factory around user notification settings object to return
@@ -42,6 +37,21 @@ create a breakage into your app if someone is disabling channels by mistake.
 
 - Implement a proxy factory around user notification settings object to return
   `null` to prevent any errors when accessing a disabled notification channel.
+
+## v2.19.0
+
+### `@liveblocks/*`
+
+- Output ES modules by default (but CJS builds are still included)
+- Modernize internal build tool settings
+
+### `@liveblocks/node`
+
+- Allow passing optional AbortSignal to all client methods
+- Fix bug in encoding of error information in the LiveblocksError when an API
+  call fails (thanks for reporting, @robcresswell!)
+- Fix `getStorageDocument("my-room", "json")` typing in its output `LiveMap`
+  instances as `ReadonlyMap` instead of serialized plain objects.
 
 ## v2.18.3
 
