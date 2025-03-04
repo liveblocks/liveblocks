@@ -1,10 +1,24 @@
 ## vNEXT (not yet published)
 
+## v2.20.0
+
+### `@liveblocks/client`
+
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/node`
+
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
 ### `@liveblocks/react`
 
 - Add optional `useRoom({ allowOutsideRoom: true })` option. When this option is
   set, the hook will return `null` when used outside of a room, whereas the
   default behavior of the hook is be to throw.
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
 
 ### `@liveblocks/react-ui`
 

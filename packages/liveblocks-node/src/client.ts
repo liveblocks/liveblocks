@@ -35,12 +35,14 @@ import type {
   ToImmutable,
   URLSafeString,
   UserNotificationSettings,
+  UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  createUserNotificationSettings,
   objectToQuery,
   tryParseJson,
   url,
@@ -1837,7 +1839,10 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as UserNotificationSettings;
+    const plainSettings = (await res.json()) as UserNotificationSettingsPlain;
+    const settings = createUserNotificationSettings(plainSettings);
+
+    return settings;
   }
 
   /**
@@ -1862,7 +1867,10 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as UserNotificationSettings;
+    const plainSettings = (await res.json()) as UserNotificationSettingsPlain;
+    const settings = createUserNotificationSettings(plainSettings);
+
+    return settings;
   }
 
   /**

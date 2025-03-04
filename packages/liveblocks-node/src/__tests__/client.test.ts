@@ -1,9 +1,10 @@
-import type {
-  CommentData,
-  CommentUserReaction,
-  RoomNotificationSettings,
-  ThreadData,
-  UserNotificationSettings,
+import {
+  type CommentData,
+  type CommentUserReaction,
+  createUserNotificationSettings,
+  type RoomNotificationSettings,
+  type ThreadData,
+  type UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -1491,7 +1492,7 @@ describe("client", () => {
   test("should get user's notification settings", async () => {
     const userId = "florent";
 
-    const settings: UserNotificationSettings = {
+    const settings: UserNotificationSettingsPlain = {
       email: {
         thread: true,
         textMention: false,
@@ -1521,8 +1522,9 @@ describe("client", () => {
 
     const client = new Liveblocks({ secret: "sk_xxx" });
 
+    const expected = createUserNotificationSettings(settings);
     await expect(client.getNotificationSettings({ userId })).resolves.toEqual(
-      settings
+      expected
     );
   });
 
@@ -1563,7 +1565,7 @@ describe("client", () => {
 
   test("should update user's notification settings", async () => {
     const userId = "nimesh";
-    const settings: UserNotificationSettings = {
+    const settings: UserNotificationSettingsPlain = {
       email: {
         textMention: false,
         thread: false,
@@ -1592,15 +1594,35 @@ describe("client", () => {
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
-
+    const expected = createUserNotificationSettings(settings);
     await expect(
-      client.updateNotificationSettings({ userId, data: settings })
-    ).resolves.toEqual(settings);
+      client.updateNotificationSettings({
+        userId,
+        data: {
+          email: {
+            textMention: false,
+            thread: false,
+          },
+          slack: {
+            thread: false,
+            textMention: false,
+          },
+          teams: {
+            thread: false,
+            textMention: false,
+          },
+          webPush: {
+            thread: false,
+            textMention: false,
+          },
+        },
+      })
+    ).resolves.toEqual(expected);
   });
 
   test("should update user's notification settings partially", async () => {
     const userId = "adri";
-    const settings: UserNotificationSettings = {
+    const settings: UserNotificationSettingsPlain = {
       email: {
         textMention: true,
         thread: true,
@@ -1629,7 +1651,7 @@ describe("client", () => {
     );
 
     const client = new Liveblocks({ secret: "sk_xxx" });
-
+    const expected = createUserNotificationSettings(settings);
     await expect(
       client.updateNotificationSettings({
         userId,
@@ -1637,29 +1659,11 @@ describe("client", () => {
           email: { textMention: true },
         },
       })
-    ).resolves.toEqual(settings);
+    ).resolves.toEqual(expected);
   });
 
   test("should throw a LiveblocksError when updateNotificationSettings receives an error response", async () => {
     const userId = "mina";
-    const settings: UserNotificationSettings = {
-      email: {
-        textMention: false,
-        thread: false,
-      },
-      slack: {
-        textMention: false,
-        thread: false,
-      },
-      teams: {
-        textMention: false,
-        thread: false,
-      },
-      webPush: {
-        thread: false,
-        textMention: false,
-      },
-    };
     const error = {
       error: "USER_NOT_FOUND",
       message: "User not found",
@@ -1681,7 +1685,24 @@ describe("client", () => {
       // Attempt to get, which should fail and throw an error.
       await client.updateNotificationSettings({
         userId,
-        data: settings,
+        data: {
+          email: {
+            textMention: false,
+            thread: false,
+          },
+          slack: {
+            textMention: false,
+            thread: false,
+          },
+          teams: {
+            textMention: false,
+            thread: false,
+          },
+          webPush: {
+            thread: false,
+            textMention: false,
+          },
+        },
       });
 
       // If it doesn't throw, fail the test.
