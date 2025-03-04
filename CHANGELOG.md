@@ -11,6 +11,8 @@
 
 - Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user id correctly to the corresponding backend endpoints.
 
 ### `@liveblocks/react`
 
