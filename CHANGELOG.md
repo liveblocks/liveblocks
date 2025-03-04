@@ -21,9 +21,10 @@
 ### `@liveblocks/react-ui`
 
 - Improve mentions behavior around whitespace, fixing a regression introduced in
-  `v2.18.3` when we added support for whitespace within mentions.
+  `v2.18.3` when we added support for whitespace _within_ mentions.
 - Prevent mention suggestions from scrolling instead of flipping when there’s
   enough space on the other side (e.g. moving from top to bottom).
+- Improve event propagation in the formatting toolbar of `Composer`.
 
 ## v2.19.0
 
