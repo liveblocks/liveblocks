@@ -29,19 +29,6 @@ With [Liveblocks Notifications](https://liveblocks.io/notifications), each user 
 
 ## Getting started
 
-Set up this project manually:
-
-- Install all dependencies with `npm install`
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
-- Run `npx auth secret` to create a [NextAuth secret](https://next-auth.js.org/configuration/options#nextauth_secret).
-- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
-
-<!-- TODO: use this getting started guide after example merged to website
-
-## Getting started
-
 Run the following command to try this example locally:
 
 ```bash
@@ -102,5 +89,3 @@ After forking [this example](https://codesandbox.io/s/github/liveblocks/livebloc
 Make sure to generate a [NextAuth secret](https://next-auth.js.org/configuration/options#nextauth_secret) and add it to the `AUTH_SECRET` environment variable.
 
 </details>
-
--->
