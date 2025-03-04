@@ -27,7 +27,7 @@ export function User({ userId, replaceSelf, className, ...props }: UserProps) {
   const resolvedUserName = useMemo(() => {
     return replaceSelf && currentId === userId
       ? $.USER_SELF
-      : user?.name ?? $.USER_UNKNOWN;
+      : (user?.name ?? $.USER_UNKNOWN);
   }, [replaceSelf, currentId, userId, $.USER_SELF, $.USER_UNKNOWN, user?.name]);
 
   return (

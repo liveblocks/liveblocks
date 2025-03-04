@@ -1,4 +1,9 @@
-import type { BaseMetadata, Json, Lson } from "@liveblocks/client";
+import type {
+  BaseMetadata,
+  UserNotificationSettings,
+  Json,
+  Lson,
+} from "@liveblocks/client";
 import { LiveObject, LiveList } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
@@ -157,6 +162,14 @@ import { expectAssignable, expectError, expectType } from "tsd";
   const room = classic.useRoom();
   expectType<Json | undefined>(room.getPresence().cursor);
   expectType<Json | undefined>(room.getPresence().nonexisting);
+
+  expectType<string>(classic.useRoom({ allowOutsideRoom: false }).id);
+  expectType<string | undefined>(
+    classic.useRoom({ allowOutsideRoom: true })?.id
+  );
+  expectType<string | undefined>(
+    classic.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
+  );
 }
 
 // useRoom() (suspense)
@@ -164,6 +177,14 @@ import { expectAssignable, expectError, expectType } from "tsd";
   const room = suspense.useRoom();
   expectType<Json | undefined>(room.getPresence().cursor);
   expectType<Json | undefined>(room.getPresence().nonexisting);
+
+  expectType<string>(suspense.useRoom({ allowOutsideRoom: false }).id);
+  expectType<string | undefined>(
+    suspense.useRoom({ allowOutsideRoom: true })?.id
+  );
+  expectType<string | undefined>(
+    suspense.useRoom({ allowOutsideRoom: Math.random() < 0.5 })?.id
+  );
 }
 
 // ---------------------------------------------------------
@@ -191,6 +212,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -214,6 +236,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -875,3 +898,24 @@ import { expectAssignable, expectError, expectType } from "tsd";
   const status = suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
+
+// ---------------------------------------------------------
+// the useNotificationSettings() hook
+{
+  const [{ isLoading, error, settings }, update] =
+    classic.useNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// the useNotificationSettings() hook suspense
+{
+  const [{ isLoading, error, settings }, update] =
+    suspense.useNotificationSettings();
+  expectType<false>(isLoading);
+  expectType<undefined>(error);
+  expectType<UserNotificationSettings>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// ---------------------------------------------------------

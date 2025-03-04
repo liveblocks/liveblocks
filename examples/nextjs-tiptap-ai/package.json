@@ -1,0 +1,42 @@
+{
+  "name": "@liveblocks-examples/nextjs-tiptap-ai",
+  "description": "This example shows how to build a collaborative text editor with AI features using Liveblocks, TipTap, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.5",
+    "@ai-sdk/openai-compatible": "^0.1.6",
+    "@liveblocks/client": "2.16.1-ai5",
+    "@liveblocks/node": "2.16.1-ai5",
+    "@liveblocks/react": "2.16.1-ai5",
+    "@liveblocks/react-tiptap": "2.16.1-ai5",
+    "@liveblocks/react-ui": "2.16.1-ai5",
+    "@liveblocks/yjs": "2.16.1-ai5",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "ai": "^4.1.11",
+    "next": "^14.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.2.2",
+    "zod": "^3.24.1",
+    "zod-to-json-schema": "^3.24.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
+  }
+}

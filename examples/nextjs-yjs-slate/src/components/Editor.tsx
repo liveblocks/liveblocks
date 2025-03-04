@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom, LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";
@@ -17,26 +17,17 @@ import { Avatars } from "./Avatars";
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 export default function CollaborativeEditor() {
   const room = useRoom();
+  const provider = getYjsProviderForRoom(room);
+  const sharedType = provider.getYDoc().get("slate", Y.XmlText) as Y.XmlText;
   const [connected, setConnected] = useState(false);
-  const [sharedType, setSharedType] = useState<Y.XmlText>();
-  const [provider, setProvider] = useState<LiveblocksYjsProvider>();
 
-  // Set up Liveblocks Yjs provider
+  // Set up sync listener
   useEffect(() => {
-    const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksYjsProvider(room, yDoc);
-    const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
-    yProvider.on("sync", setConnected);
-
-    setSharedType(sharedDoc);
-    setProvider(yProvider);
-
+    provider.on("sync", setConnected);
     return () => {
-      yDoc?.destroy();
-      yProvider?.off("sync", setConnected);
-      yProvider?.destroy();
+      provider.off("sync", setConnected);
     };
-  }, [room]);
+  }, []);
 
   if (!connected || !sharedType || !provider) {
     return <Loading />;

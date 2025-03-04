@@ -1,43 +1,43 @@
 {
   "name": "@liveblocks/react",
-  "version": "2.16.0",
+  "version": "2.20.0",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
-  "type": "commonjs",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
-        "module": "./dist/index.mjs",
-        "default": "./dist/index.js"
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
       }
     },
     "./suspense": {
       "import": {
-        "types": "./dist/suspense.d.mts",
-        "default": "./dist/suspense.mjs"
+        "types": "./dist/suspense.d.ts",
+        "default": "./dist/suspense.js"
       },
       "require": {
-        "types": "./dist/suspense.d.ts",
-        "module": "./dist/suspense.mjs",
-        "default": "./dist/suspense.js"
+        "types": "./dist/suspense.d.cts",
+        "module": "./dist/suspense.js",
+        "default": "./dist/suspense.cjs"
       }
     },
     "./_private": {
       "import": {
-        "types": "./dist/_private.d.mts",
-        "default": "./dist/_private.mjs"
+        "types": "./dist/_private.d.ts",
+        "default": "./dist/_private.js"
       },
       "require": {
-        "types": "./dist/_private.d.ts",
-        "module": "./dist/_private.mjs",
-        "default": "./dist/_private.js"
+        "types": "./dist/_private.d.cts",
+        "module": "./dist/_private.js",
+        "default": "./dist/_private.cjs"
       }
     }
   },
@@ -61,8 +61,8 @@
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
   "dependencies": {
-    "@liveblocks/client": "2.16.0",
-    "@liveblocks/core": "2.16.0"
+    "@liveblocks/client": "2.20.0",
+    "@liveblocks/core": "2.20.0"
   },
   "peerDependencies": {
     "react": "^18 || ^19 || ^19.0.0-rc"

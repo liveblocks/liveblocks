@@ -48,7 +48,7 @@ collaboration to your Svelte application using the APIs from the
       <script>
       import { onMount, onDestroy } from "svelte";
       import { createClient } from "@liveblocks/client";
-      import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+      import { getYjsProviderForRoom } from "@liveblocks/yjs";
       import * as Y from "yjs";
       import * as monaco from "monaco-editor";
       import { MonacoBinding } from "y-monaco";
@@ -66,9 +66,9 @@ collaboration to your Svelte application using the APIs from the
         const { room, leave } = client.enterRoom(roomId);
 
         // Set up Yjs document, shared text, and Liveblocks Yjs provider
-        const yDoc = new Y.Doc();
+        const yProvider = getYjsProviderForRoom(room);
+        const yDoc = yProvider.getYDoc();
         const yText = yDoc.getText("monaco");
-        const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
         // Set up the Monaco editor
         const editor = monaco.editor.create(element, {

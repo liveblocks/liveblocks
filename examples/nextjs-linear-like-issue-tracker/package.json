@@ -10,8 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.0",
-    "@lexical/react": "^0.16.1",
+    "@lexical/react": "^0.24.0",
     "@liveblocks/client": "^2.16.0",
     "@liveblocks/node": "^2.16.0",
     "@liveblocks/node-lexical": "^2.16.0",
@@ -23,7 +22,7 @@
     "@types/react-dom": "18.2.5",
     "autoprefixer": "^10.4.17",
     "classnames": "^2.5.1",
-    "lexical": "^0.16.1",
+    "lexical": "^0.24.0",
     "marked": "^14.1.2",
     "next": "^14.2.5",
     "node-html-parser": "^6.1.13",

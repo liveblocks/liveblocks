@@ -3,18 +3,10 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "module": "es2020",
-    "lib": ["dom", "es2021"],
-    "skipLibCheck": true,
-
-    // Allow importing JSON files
-    "resolveJsonModule": true,
-
-    // Transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
-    "jsx": "react-jsx",
+    "lib": ["dom", "es2022"],
 
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
-  "include": ["**/*.ts", "**/*.tsx", "rollup.config.mjs"]
+  "include": ["src", "rollup.config.js"]
 }

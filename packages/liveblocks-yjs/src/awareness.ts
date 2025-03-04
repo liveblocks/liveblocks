@@ -2,15 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  Json,
-  JsonObject,
-  LsonObject,
-  Room,
-  User,
-} from "@liveblocks/client";
+import type { BaseUserMeta, JsonObject, User } from "@liveblocks/client";
+import type { OpaqueRoom } from "@liveblocks/core";
 import { Observable } from "lib0/observable";
 import type * as Y from "yjs";
 
@@ -28,14 +21,8 @@ type MetaClientState = {
  * to their respective documents. To avoid mapping Yjs clientIds to liveblock's connectionId,
  * we simply set the clientId of the doc to the connectionId. Then no further mapping is required
  */
-export class Awareness<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  M extends BaseMetadata,
-> extends Observable<unknown> {
-  private room: Room<P, S, U, E, M>;
+export class Awareness extends Observable<unknown> {
+  private room: OpaqueRoom;
   public doc: Y.Doc;
   public states: Map<number, unknown> = new Map();
   // used to map liveblock's ActorId to Yjs ClientID, both unique numbers representing a client
@@ -48,14 +35,14 @@ export class Awareness<
   public _checkInterval: number = 0;
 
   private othersUnsub: () => void;
-  constructor(doc: Y.Doc, room: Room<P, S, U, E, M>) {
+  constructor(doc: Y.Doc, room: OpaqueRoom) {
     super();
     this.doc = doc;
     this.room = room;
     // Add the clientId to presence so we can map it to connectionId later
     this.room.updatePresence({
       [Y_PRESENCE_ID_KEY]: this.doc.clientID,
-    } as unknown as Partial<P>);
+    });
     this.othersUnsub = this.room.events.others.subscribe((event) => {
       let updates:
         | { added: number[]; updated: number[]; removed: number[] }
@@ -150,7 +137,7 @@ export class Awareness<
         ...((yPresence as JsonObject) || {}),
         ...(state || {}),
       },
-    } as unknown as Partial<P>);
+    });
     this.emit("update", [{ added, updated, removed: [] }, "local"]);
   }
 
@@ -159,7 +146,7 @@ export class Awareness<
     const update = { [field]: value } as Partial<JsonObject>;
     this.room.updatePresence({
       [Y_PRESENCE_KEY]: { ...((presence as JsonObject) || {}), ...update },
-    } as unknown as Partial<P>);
+    });
   }
 
   // Translate liveblocks presence to yjs awareness

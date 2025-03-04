@@ -16,9 +16,14 @@ import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
+import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
@@ -43,6 +48,10 @@ import type {
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type {
+  PartialUserNotificationSettings,
+  UserNotificationSettingsPlain,
+} from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -324,6 +333,22 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
   }): Promise<Response>;
+
+  executeContextualPrompt({
+    roomId,
+    prompt,
+    context,
+    signal,
+  }: {
+    roomId: string;
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }): Promise<string>;
 }
 
 export interface NotificationHttpApi<M extends BaseMetadata> {
@@ -358,6 +383,22 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   deleteAllInboxNotifications(): Promise<void>;
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  // Note: Using term `user` on this following method
+  // to avoid confusion with the same methods used in the `RoomHttpApi`.
+  // Let's wait the room subscription renaming to be here.
+  // It returns a `UserNotificationSettingsPlain` as the back-end does.
+  getUserNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettingsPlain>;
+
+  // Note: Using term `user` on this following method
+  // to avoid confusion with the same methods used in the `RoomHttpApi`.
+  // Let's wait the room subscription renaming to be here.
+  // It returns a `UserNotificationSettingsPlain` as the back-end does.
+  updateUserNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettingsPlain>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1111,6 +1152,41 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  async function executeContextualPrompt(options: {
+    roomId: string;
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }): Promise<string> {
+    const result = await httpClient.post<{
+      content: { type: "text"; text: string }[];
+    }>(
+      url`/v2/c/rooms/${options.roomId}/ai/contextual-prompt`,
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: options.roomId,
+      }),
+      {
+        prompt: options.prompt,
+        context: {
+          beforeSelection: options.context.beforeSelection,
+          selection: options.context.selection,
+          afterSelection: options.context.afterSelection,
+        },
+        previous: options.previous,
+      },
+      { signal: options.signal }
+    );
+    if (!result || result.content.length === 0) {
+      throw new Error("No content returned from server");
+    }
+    return result.content[0].text;
+  }
+
   async function listTextVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
       versions: DateToString<HistoryVersion>[];
@@ -1318,6 +1394,40 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * User notifications settings (Project level)
+   * -------------------------------------------------------------------------------------------------
+   *
+   * Note: Using term `user` on those two following methods
+   * to avoid confusion with the same methods used in the `RoomHttpApi`.
+   *
+   * Let's wait the room subscription renaming to be here.
+   */
+  async function getUserNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettingsPlain> {
+    return httpClient.get<UserNotificationSettingsPlain>(
+      url`/v2/c/notification-settings`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      undefined,
+      { signal: options?.signal }
+    );
+  }
+
+  async function updateUserNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettingsPlain> {
+    return httpClient.post<UserNotificationSettingsPlain>(
+      url`/v2/c/notification-settings`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      settings
+    );
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * User threads
+   * -------------------------------------------------------------------------------------------------
+   */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -1414,10 +1524,10 @@ export function createApiClient<M extends BaseMetadata>({
     removeReaction,
     markThreadAsResolved,
     markThreadAsUnresolved,
-    // Room notifications
     markRoomInboxNotificationAsRead,
-    updateNotificationSettings,
+    // Room notifications
     getNotificationSettings,
+    updateNotificationSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1441,9 +1551,13 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getUserNotificationSettings,
+    updateUserNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
+    // AI
+    executeContextualPrompt,
   };
 }
 
@@ -1580,7 +1694,7 @@ class HttpClient {
   ): Promise<Response> {
     return await this.#rawFetch(endpoint, authValue, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: stringify(body),
     });
   }
 
@@ -1626,7 +1740,7 @@ class HttpClient {
       {
         ...options,
         method: "POST",
-        body: JSON.stringify(body),
+        body: stringify(body),
       },
       params
     );

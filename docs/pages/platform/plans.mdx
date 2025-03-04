@@ -17,198 +17,170 @@ Liveblocks. Key features include:
 - Up to <Limits.StarterMauMax /> monthly active users
 - Up to <Limits.StarterMaxConnectionsPerRoom /> simultaneous connections per
   room
+- Pre-built components
+- Realtime infrastructure
 - <Limits.StarterTeamMembersPerAccount /> team members per account
 - Community support
 
+{/* This file is ignoring prettier at some points because it's splitting paragraphs in two */}
+
 #### Comments
 
-Comments is free up to <Limits.StarterMauMax /> monthly active users and
+{/* prettier-ignore */}
+Comments is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterMaxComments /> comments per month.
 
-<Limits.StarterMaxComments /> comments per month.
-
-| Comments                      | Included                      |
-| ----------------------------- | ----------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />      |
-| Monthly active users cap      | <Limits.StarterMauMax />      |
-| MAU overage rate              | —                             |
-| Monthly comments cap          | <Limits.StarterMaxComments /> |
+| Comments             | Included                      |
+| -------------------- | ----------------------------- |
+| Monthly active users | <Limits.StarterMauMax />      |
+| MAU overage rate     | —                             |
+| Monthly comments     | <Limits.StarterMaxComments /> |
 
 #### Notifications
 
-Notifications is free up to <Limits.StarterMauMax /> monthly active users and
+{/* prettier-ignore */}
+Notifications is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterMaxNotifications /> comments per month.
 
-<Limits.StarterMaxNotifications /> comments per month.
+| Notifications         | Included                           |
+| --------------------- | ---------------------------------- |
+| Monthly active users  | <Limits.StarterMauMax />           |
+| MAU overage rate      | —                                  |
+| Monthly notifications | <Limits.StarterMaxNotifications /> |
 
-| Notifications                 | Included                           |
-| ----------------------------- | ---------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />           |
-| Monthly active users cap      | <Limits.StarterMauMax />           |
-| MAU overage rate              | —                                  |
-| Monthly notifications cap     | <Limits.StarterMaxNotifications /> |
+#### Text Editor
 
-#### Text editor
+{/* prettier-ignore */}
+Text Editor is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalTextEditorStored /> data stored.
 
-Text editor is free up to <Limits.StarterMauMax /> monthly active users and
+| Text Editor          | Included                                |
+| -------------------- | --------------------------------------- |
+| Monthly active users | <Limits.StarterMauMax />                |
+| MAU overage rate     | —                                       |
+| Total GB stored      | <Limits.StarterTotalTextEditorStored /> |
 
-<Limits.StarterTotalTextEditorStored /> data stored.
+#### Sync Datastore
 
-| Text editor                   | Included                                |
-| ----------------------------- | --------------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />                |
-| Monthly active users cap      | <Limits.StarterMauMax />                |
-| MAU overage rate              | —                                       |
-| Total GB stored               | <Limits.StarterTotalTextEditorStored /> |
+{/* prettier-ignore */}
+Sync Datastore is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalCustomAppStored /> data stored.
 
-#### Sync Datstore
-
-Sync Datstore is free up to <Limits.StarterMauMax /> monthly active users and
-
-<Limits.StarterTotalCustomAppStored /> data stored.
-
-| Sync Datstore                 | Included                               |
-| ----------------------------- | -------------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />               |
-| Monthly active users cap      | <Limits.StarterMauMax />               |
-| MAU overage rate              | —                                      |
-| Total GB stored               | <Limits.StarterTotalCustomAppStored /> |
+| Sync Datastore       | Included                               |
+| -------------------- | -------------------------------------- |
+| Monthly active users | <Limits.StarterMauMax />               |
+| MAU overage rate     | —                                      |
+| Total GB stored      | <Limits.StarterTotalCustomAppStored /> |
 
 ## Pro plan
 
 The Pro plan starts at **<Limits.ProStartingPrice />** and is designed for
 companies adding collaboration in production. Key features include:
 
-- <Limits.ProMauIncluded /> monthly active users included,
-  then <Limits.ProPAYGPrice /> for each additional MAU
-- Up to <Limits.ProMauMax /> monthly active users cap
+- Up to <Limits.ProMauIncluded /> monthly active users
 - Up to <Limits.ProMaxConnectionsPerRoom /> simultaneous connections per room
 - <Limits.ProTeamMembersPerAccount /> team members per account
+- More simultaneous connections
+- Products priced separately
 - Email support
 
 #### Comments
 
-Comments is free up to <Limits.StarterMauMax /> monthly active users and
+{/* prettier-ignore */}
+Comments is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterMaxComments /> comments per month. You can get higher limits with a paid add-on.
 
-<Limits.StarterMaxComments /> comments per month. You can get higher limits for
-an additional <Limits.ProStartingPriceComments />.
-
-| Comments                      | Included                      | <Limits.ProStartingPriceComments />                      |
-| ----------------------------- | ----------------------------- | -------------------------------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />      | <Limits.ProMauIncluded />                                |
-| Monthly active users cap      | <Limits.StarterMauMax />      | <Limits.ProMauMax />                                     |
-| MAU overage rate              | —                             | <Limits.ProPAYGPriceComments /> per each additional user |
-| Monthly comments cap          | <Limits.StarterMaxComments /> | <Limits.ProMaxComments />                                |
+| Comments             | Included                      | Paid add-on               |
+| -------------------- | ----------------------------- | ------------------------- |
+| Monthly active users | <Limits.StarterMauMax />      | <Limits.ProMauIncluded /> |
+| Monthly comments     | <Limits.StarterMaxComments /> | <Limits.ProMaxComments /> |
 
 #### Notifications
 
-Notifications is free up to <Limits.StarterMauMax /> monthly active users and
+{/* prettier-ignore */}
+Notifications is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterMaxNotifications /> notifications per month. You can get higher limits with a paid add-on.
 
-<Limits.StarterMaxNotifications /> notifications per month. You can get higher
-limits for an additional <Limits.ProStartingPriceNotifications />.
+| Notifications         | Included                           | Paid add-on                    |
+| --------------------- | ---------------------------------- | ------------------------------ |
+| Monthly active users  | <Limits.StarterMauMax />           | <Limits.ProMauIncluded />      |
+| Monthly notifications | <Limits.StarterMaxNotifications /> | <Limits.ProMaxNotifications /> |
 
-| Notifications                 | Included                           | <Limits.ProStartingPriceNotifications />                      |
-| ----------------------------- | ---------------------------------- | ------------------------------------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />           | <Limits.ProMauIncluded />                                     |
-| Monthly active users cap      | <Limits.StarterMauMax />           | <Limits.ProMauMax />                                          |
-| MAU overage rate              | —                                  | <Limits.ProPAYGPriceNotifications /> per each additional user |
-| Monthly notifications cap     | <Limits.StarterMaxNotifications /> | <Limits.ProMaxNotifications />                                |
+#### Text Editor
 
-#### Text editor
+{/* prettier-ignore */}
+Text Editor is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalTextEditorStored /> data stored. You can get higher limits with a paid add-on.
 
-Text editor is free up to <Limits.StarterMauMax /> monthly active users and
+| Text Editor          | Included                                | Paid add-on                         |
+| -------------------- | --------------------------------------- | ----------------------------------- |
+| Monthly active users | <Limits.StarterMauMax />                | <Limits.ProMauIncluded />           |
+| Total GB stored      | <Limits.StarterTotalTextEditorStored /> | <Limits.ProTotalTextEditorStored /> |
 
-<Limits.StarterTotalTextEditorStored /> data stored. You can get higher limits
-for an additional <Limits.ProStartingPriceTextEditor />.
+#### Sync Datastore
 
-| Text editor                   | Included                                | <Limits.ProStartingPriceTextEditor />                      |
-| ----------------------------- | --------------------------------------- | ---------------------------------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />                | <Limits.ProMauIncluded />                                  |
-| Monthly active users cap      | <Limits.StarterMauMax />                | <Limits.ProMauMax />                                       |
-| MAU overage rate              | —                                       | <Limits.ProPAYGPriceTextEditor /> per each additional user |
-| Total GB stored               | <Limits.StarterTotalTextEditorStored /> | <Limits.ProTotalTextEditorStored />                        |
+{/* prettier-ignore */}
+Sync Datastore is free up to <Limits.StarterMauMax /> monthly active users and <Limits.StarterTotalCustomAppStored /> data stored. You can get higher limits with a paid add-on.
 
-#### Sync Datstore
-
-Sync Datstore is free up to <Limits.StarterMauMax /> monthly active users and
-
-<Limits.StarterTotalCustomAppStored /> data stored. You can get higher limits
-for an additional <Limits.ProStartingPriceCustomApp />.
-
-| Sync Datstore                 | Included                               | <Limits.ProStartingPriceCustomApp />                      |
-| ----------------------------- | -------------------------------------- | --------------------------------------------------------- |
-| Monthly active users included | <Limits.StarterMauMax />               | <Limits.ProMauIncluded />                                 |
-| Monthly active users cap      | <Limits.StarterMauMax />               | <Limits.ProMauMax />                                      |
-| MAU overage rate              | —                                      | <Limits.ProPAYGPriceCustomApp /> per each additional user |
-| Total GB stored               | <Limits.StarterTotalCustomAppStored /> | <Limits.ProTotalCustomAppStored />                        |
+| Sync Datastore       | Included                               | Paid add-on                        |
+| -------------------- | -------------------------------------- | ---------------------------------- |
+| Monthly active users | <Limits.StarterMauMax />               | <Limits.ProMauIncluded />          |
+| Total GB stored      | <Limits.StarterTotalCustomAppStored /> | <Limits.ProTotalCustomAppStored /> |
 
 ## Enterprise plan
 
 The Enterprise plan is tailored for organizations with custom needs and advanced
 security. Key features include:
 
-- Custom monthly active users
-- Custom simultaneous connections per room
-- Custom team members per account
-- Premium support
-- Dedicated shared Slack channel
-- Volume discounts
-- SOC 2 Report
+- Up to 100M monthly active users
+- Tiered usage pricing
 - 99.9% Uptime SLA
+- SOC 2 Type 2 report
+- HIPAA compliance with BAA
+- Support Slack
+- Implementation support
+- Dedicated Slack support
 
 #### Comments
 
-Comments can be included in the enterpise plan.
+Comments can be included in the enterprise plan.
 
-| Comments                      |           |
-| ----------------------------- | --------- |
-| Monthly active users included | Custom    |
-| Monthly active users cap      | Custom    |
-| MAU overage rate              | Custom    |
-| Monthly comments cap          | Unlimited |
+| Comments             |        |
+| -------------------- | ------ |
+| Monthly active users | Custom |
+| Monthly comments     | Custom |
 
 #### Notifications
 
 Notifications can be included in the enterprise plan.
 
-| Notifications                 |           |
-| ----------------------------- | --------- |
-| Monthly active users included | Custom    |
-| Monthly active users cap      | Custom    |
-| MAU overage rate              | Custom    |
-| Monthly notifications cap     | Unlimited |
+| Notifications         |        |
+| --------------------- | ------ |
+| Monthly active users  | Custom |
+| Monthly notifications | Custom |
 
-#### Text editor
+#### Text Editor
 
-Text editor can be included in the enterprise plan.
+Text Editor can be included in the enterprise plan.
 
-| Text editor                   |        |
-| ----------------------------- | ------ |
-| Monthly active users included | Custom |
-| Monthly active users cap      | Custom |
-| MAU overage rate              | Custom |
-| Total GB stored               | Custom |
+| Text Editor          |        |
+| -------------------- | ------ |
+| Monthly active users | Custom |
+| Total GB stored      | Custom |
 
-#### Sync Datstore
+#### Sync Datastore
 
-Sync Datstore can be included in the enterprise plan.
+Sync Datastore can be included in the enterprise plan.
 
-| Sync Datstore                 |        |
-| ----------------------------- | ------ |
-| Monthly active users included | Custom |
-| Monthly active users cap      | Custom |
-| MAU overage rate              | Custom |
-| Total GB stored               | Custom |
+| Sync Datastore       |        |
+| -------------------- | ------ |
+| Monthly active users | Custom |
+| Total GB stored      | Custom |
 
 ## General billing information
 
-### What is a monthly active user?
+### What is a monthly active user (MAU)?
 
-Monthly active users (MAU) is the number of users that connect to Liveblocks in
-a given month.
+Monthly active users (MAU) represents the number of users that have used one or
+more Liveblocks features within a given month.
 
 Users are identified by the `userId` property provided in your
 [authentication endpoint](/docs/authentication).
 
-This `userId` generally comes from your database or your authentification
+This `userId` generally comes from your database or your authentication
 provider. One unique `userId` corresponds to one user, whether they connected to
 a room 1 day for 5 minutes or kept coming back every day for 8 hours.
 
@@ -222,6 +194,13 @@ our [Fair Use Policy](/docs/platform/limits/fair-use-policy).
   update your packages to 1.0. See the [upgrade
   guide](/docs/platform/upgrading/1.0) for more information.
 </Banner>
+
+### How is data storage calculated?
+
+Storage for Text Editor and Sync Datastore is a cumulative calculation that
+represents all data that is currently stored. It does not reset monthly, and the
+total usage will continue to accrue over time as you add more content and data.
+You can monitor your usage at any time in the [dashboard](/dashboard).
 
 ### Do you count monthly active users during testing?
 

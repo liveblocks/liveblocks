@@ -23,6 +23,7 @@ import type { BatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
+import { Deque } from "./lib/Deque";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -30,16 +31,26 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
 import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
+import { stringifyOrLog as stringify } from "./lib/stringify";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  raise,
   tryParseJson,
 } from "./lib/utils";
+import type {
+  ContextualPromptContext,
+  ContextualPromptResponse,
+} from "./protocol/Ai";
 import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
-import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
+import type {
+  ClientMsg,
+  UpdateStorageClientMsg,
+  UpdateYDocClientMsg,
+} from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -652,6 +663,13 @@ export type Room<
     readonly storageStatus: Observable<StorageStatus>;
     readonly ydoc: Observable<YDocUpdateServerMsg | UpdateYDocClientMsg>;
     readonly comments: Observable<CommentsEventServerMsg>;
+
+    /**
+     * Called right before the room is destroyed. The event cannot be used to
+     * prevent the room from being destroyed, only to be informed that this is
+     * imminent.
+     */
+    readonly roomWillDestroy: Observable<void>;
   };
 
   /**
@@ -1040,6 +1058,16 @@ export type PrivateRoomApi = {
   getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<void>;
 
+  executeContextualPrompt(options: {
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }): Promise<string>;
+
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
@@ -1049,11 +1077,13 @@ export type PrivateRoomApi = {
   attachmentUrlsStore: BatchStore<string, string>;
 };
 
-// The maximum message size on websockets is 1MB. We'll set the threshold
-// slightly lower (1kB) to trigger sending over HTTP, to account for messaging
-// overhead, so we're not right at the limit.
-// NOTE: this only works with the unstable_fallbackToHTTP option enabled
-const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 1024;
+//
+// The maximum message size on websockets is 1MB. If a message larger than this
+// threshold is attempted to be sent, the strategy picked via the
+// `largeMessageStrategy` option will be used.
+//
+// In practice, we'll set threshold to slightly less than 1 MB.
+const MAX_SOCKET_MESSAGE_SIZE = 1024 * 1024 - 512;
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -1136,7 +1166,7 @@ type RoomState<
    * When history is paused, all operations will get queued up here. When
    * history is resumed, these operations get "committed" to the undo stack.
    */
-  pausedHistory: null | HistoryOp<P>[];
+  pausedHistory: null | Deque<HistoryOp<P>>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -1144,7 +1174,7 @@ type RoomState<
    */
   activeBatch: {
     ops: Op[];
-    reverseOps: HistoryOp<P>[];
+    reverseOps: Deque<HistoryOp<P>>;
     updates: {
       others: [];
       presence: boolean;
@@ -1201,6 +1231,11 @@ export type OptionalTupleUnless<C, T extends any[]> =
 
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
+export type LargeMessageStrategy =
+  | "default"
+  | "split"
+  | "experimental-fallback-to-http";
+
 /** @internal */
 export type RoomConfig<M extends BaseMetadata> = {
   delegates: RoomDelegates;
@@ -1209,8 +1244,8 @@ export type RoomConfig<M extends BaseMetadata> = {
   throttleDelay: number;
   lostConnectionTimeout: number;
   backgroundKeepAliveTimeout?: number;
+  largeMessageStrategy?: LargeMessageStrategy;
 
-  unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
 
   polyfills?: Polyfills;
@@ -1523,7 +1558,7 @@ export function createRoom<
             )
           );
         }
-        activeBatch.reverseOps.unshift(...reverse);
+        activeBatch.reverseOps.pushLeft(reverse);
       } else {
         addToUndoStack(reverse);
         context.redoStack.length = 0;
@@ -1563,6 +1598,7 @@ export function createRoom<
     ydoc: makeEventSource<YDocUpdateServerMsg | UpdateYDocClientMsg>(),
 
     comments: makeEventSource<CommentsEventServerMsg>(),
+    roomWillDestroy: makeEventSource<void>(),
   };
 
   const roomId = config.roomId;
@@ -1599,14 +1635,122 @@ export function createRoom<
     return httpClient.createTextVersion({ roomId });
   }
 
+  async function executeContextualPrompt(options: {
+    prompt: string;
+    context: ContextualPromptContext;
+    previous?: {
+      prompt: string;
+      response: ContextualPromptResponse;
+    };
+    signal: AbortSignal;
+  }) {
+    return httpClient.executeContextualPrompt({
+      roomId,
+      ...options,
+    });
+  }
+
+  /**
+   * Split a single large UPDATE_STORAGE message into smaller chunks, by
+   * splitting the ops list recursively in half.
+   */
+  function* chunkOps(msg: UpdateStorageClientMsg): IterableIterator<string> {
+    const { ops, ...rest } = msg;
+    if (ops.length < 2) {
+      throw new Error("Cannot split ops into smaller chunks");
+    }
+
+    const mid = Math.floor(ops.length / 2);
+    const firstHalf = ops.slice(0, mid);
+    const secondHalf = ops.slice(mid);
+
+    for (const halfOps of [firstHalf, secondHalf]) {
+      const half: UpdateStorageClientMsg = { ops: halfOps, ...rest };
+      const text = stringify([half]);
+      if (!isTooBigForWebSocket(text)) {
+        yield text;
+      } else {
+        yield* chunkOps(half);
+      }
+    }
+  }
+
+  /**
+   * Split the message array in half (two chunks), and try to send each chunk
+   * separately. If the chunk is still too big, repeat the process. If a chunk
+   * can no longer be split up (i.e. is 1 message), then error.
+   */
+  function* chunkMessages(
+    messages: ClientMsg<P, E>[]
+  ): IterableIterator<string> {
+    if (messages.length < 2) {
+      if (messages[0].type === ClientMsgCode.UPDATE_STORAGE) {
+        yield* chunkOps(messages[0]);
+        return;
+      } else {
+        throw new Error(
+          "Cannot split into chunks smaller than the allowed message size"
+        );
+      }
+    }
+
+    const mid = Math.floor(messages.length / 2);
+    const firstHalf = messages.slice(0, mid);
+    const secondHalf = messages.slice(mid);
+
+    for (const half of [firstHalf, secondHalf]) {
+      const text = stringify(half);
+      if (!isTooBigForWebSocket(text)) {
+        yield text;
+      } else {
+        yield* chunkMessages(half);
+      }
+    }
+  }
+
+  function isTooBigForWebSocket(text: string): boolean {
+    // The theoretical worst case is that each character in the string is
+    // a 4-byte UTF-8 character. String.prototype.length is an O(1) operation,
+    // so we can spare ourselves the TextEncoder() measurement overhead with
+    // this heuristic.
+    if (text.length * 4 < MAX_SOCKET_MESSAGE_SIZE) {
+      return false;
+    }
+
+    // Otherwise we need to measure to be sure
+    return new TextEncoder().encode(text).length >= MAX_SOCKET_MESSAGE_SIZE;
+  }
+
   function sendMessages(messages: ClientMsg<P, E>[]) {
-    const serializedPayload = JSON.stringify(messages);
-    const nonce = context.dynamicSessionInfoSig.get()?.nonce;
-    if (config.unstable_fallbackToHTTP && nonce) {
-      // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
-      // if this turns out to be expensive, we could just guess with a lower value.
-      const size = new TextEncoder().encode(serializedPayload).length;
-      if (size > MAX_SOCKET_MESSAGE_SIZE) {
+    const strategy = config.largeMessageStrategy ?? "default";
+
+    const text = stringify(messages);
+    if (!isTooBigForWebSocket(text)) {
+      return managedSocket.send(text); // Happy path
+    }
+
+    // If message is too big for WebSockets, we need to follow a strategy
+    switch (strategy) {
+      case "default": {
+        console.error("Message is too large for websockets, not sending. Configure largeMessageStrategy option to deal with this."); // prettier-ignore
+        // Don't send the message
+        return;
+      }
+
+      case "split": {
+        console.warn("Message is too large for websockets, splitting into smaller chunks"); // prettier-ignore
+        for (const chunk of chunkMessages(messages)) {
+          managedSocket.send(chunk);
+        }
+        return;
+      }
+
+      case "experimental-fallback-to-http": {
+        console.warn("Message is too large for websockets, so sending over HTTP instead"); // prettier-ignore
+        const nonce =
+          context.dynamicSessionInfoSig.get()?.nonce ??
+          raise("Session is not authorized to send message over HTTP");
+
         void httpClient
           .sendMessages<P, E>({ roomId, nonce, messages })
           .then((resp) => {
@@ -1614,13 +1758,9 @@ export function createRoom<
               managedSocket.reconnect();
             }
           });
-        console.warn(
-          "Message was too large for websockets and sent over HTTP instead"
-        );
         return;
       }
     }
-    managedSocket.send(serializedPayload);
   }
 
   const self = DerivedSignal.from(
@@ -1722,7 +1862,7 @@ export function createRoom<
 
   function addToUndoStack(historyOps: HistoryOp<P>[]) {
     if (context.pausedHistory !== null) {
-      context.pausedHistory.unshift(...historyOps);
+      context.pausedHistory.pushLeft(historyOps);
     } else {
       _addToRealUndoStack(historyOps);
     }
@@ -1781,7 +1921,7 @@ export function createRoom<
     };
   } {
     const output = {
-      reverse: [] as O[],
+      reverse: new Deque<O>(),
       storageUpdates: new Map<string, StorageUpdate>(),
       presence: false,
     };
@@ -1821,7 +1961,7 @@ export function createRoom<
           }
         }
 
-        output.reverse.unshift(reverse as O);
+        output.reverse.pushLeft(reverse as O);
         output.presence = true;
       } else {
         let source: OpSource;
@@ -1852,7 +1992,7 @@ export function createRoom<
                 applyOpResult.modified
               )
             );
-            output.reverse.unshift(...(applyOpResult.reverse as O[]));
+            output.reverse.pushLeft(applyOpResult.reverse as O[]);
           }
 
           if (
@@ -1868,7 +2008,7 @@ export function createRoom<
 
     return {
       ops,
-      reverse: output.reverse,
+      reverse: Array.from(output.reverse),
       updates: {
         storageUpdates: output.storageUpdates,
         presence: output.presence,
@@ -1960,7 +2100,7 @@ export function createRoom<
 
     if (context.activeBatch) {
       if (options?.addToHistory) {
-        context.activeBatch.reverseOps.unshift({
+        context.activeBatch.reverseOps.pushLeft({
           type: "presence",
           data: oldValues,
         });
@@ -2115,9 +2255,9 @@ export function createRoom<
 
     const messages: ClientMsg<P, E>[] = [];
 
-    const ops = Array.from(offlineOps.values());
+    const inOps = Array.from(offlineOps.values());
 
-    const result = applyOps(ops, true);
+    const result = applyOps(inOps, true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
@@ -2568,7 +2708,7 @@ export function createRoom<
         presence: false,
         others: [],
       },
-      reverseOps: [],
+      reverseOps: new Deque(),
     };
     try {
       returnValue = callback();
@@ -2579,7 +2719,7 @@ export function createRoom<
       context.activeBatch = null;
 
       if (currentBatch.reverseOps.length > 0) {
-        addToUndoStack(currentBatch.reverseOps);
+        addToUndoStack(Array.from(currentBatch.reverseOps));
       }
 
       if (currentBatch.ops.length > 0) {
@@ -2601,7 +2741,7 @@ export function createRoom<
 
   function pauseHistory() {
     if (context.pausedHistory === null) {
-      context.pausedHistory = [];
+      context.pausedHistory = new Deque();
     }
   }
 
@@ -2609,7 +2749,7 @@ export function createRoom<
     const historyOps = context.pausedHistory;
     context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(Array.from(historyOps));
     }
   }
 
@@ -2698,6 +2838,7 @@ export function createRoom<
     ydoc: eventHub.ydoc.observable,
 
     comments: eventHub.comments.observable,
+    roomWillDestroy: eventHub.roomWillDestroy.observable,
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
@@ -2929,6 +3070,8 @@ export function createRoom<
         getTextVersion,
         // create a version
         createTextVersion,
+        // execute a contextual prompt
+        executeContextualPrompt,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.get(),
@@ -2956,11 +3099,21 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
-        syncSourceForStorage.destroy();
+        // remove the roomWillDestroy event from the event hub
+        const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
+        // Unregister all registered callbacks
+        for (const source of Object.values(eventsExceptDestroy)) {
+          source[Symbol.dispose]();
+        }
+        eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
+        syncSourceForStorage.destroy();
         syncSourceForYjs.destroy();
         uninstallBgTabSpy();
         managedSocket.destroy();
+
+        // cleanup will destroy listener
+        roomWillDestroy[Symbol.dispose]();
       },
 
       // Presence

@@ -2,16 +2,30 @@
   "name": "@liveblocks/schema",
   "version": "0.0.13-beta1",
   "description": "The Liveblocks schema language",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
   "files": [
     "dist/**",
     "README.md"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
-    "build:parser": "peggy --plugin ../../node_modules/ts-pegjs/src/tspegjs.js --extra-options-file pegconfig.json --allowed-start-rules Document --cache -o src/parser/generated-parser.ts src/parser/schema-lang.pegjs && tsc --noEmit src/parser/generated-parser.ts",
+    "build": "tsc && tsup",
+    "build:ast": "generate-ast src/ast/ast.grammar src/ast/generated-ast.ts && node bin/update-returntypes.js",
+    "build:parser": "peggy --plugin ../../node_modules/ts-pegjs/src/tspegjs.js --extra-options-file pegconfig.json --allowed-start-rules Document --cache -o src/parser/generated-parser.ts src/parser/schema-lang.pegjs",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "format": "(eslint --fix src/ || true) && prettier --write src/",
@@ -32,7 +46,7 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@types/didyoumean": "^1.2.0",
-    "ast-generator": "^0.2.3",
+    "ast-generator": "^0.4.0",
     "peggy": "^2.0.1",
     "pkg": "^4.4.9",
     "ts-node": "^10.9.1",

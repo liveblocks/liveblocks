@@ -1,38 +1,39 @@
 {
   "name": "@liveblocks/react-lexical",
-  "version": "2.16.0",
+  "version": "2.20.0",
   "description": "A lexical react plugin to enable collaboration, comments, live cursors, and more.",
   "license": "Apache-2.0",
-  "type": "commonjs",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
-        "module": "./dist/index.mjs",
-        "default": "./dist/index.js"
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
       }
     },
     "./styles.css": {
-      "types": "./styles.css.d.ts",
+      "types": "./styles.css.d.cts",
       "default": "./styles.css"
     }
   },
   "files": [
     "dist/**",
     "**/*.css",
+    "**/*.css.d.cts",
     "**/*.css.d.ts",
     "**/*.css.map",
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.mjs --watch",
-    "build": "rollup --config rollup.config.mjs",
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
@@ -42,22 +43,22 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.1",
-    "@liveblocks/client": "2.16.0",
-    "@liveblocks/core": "2.16.0",
-    "@liveblocks/react": "2.16.0",
-    "@liveblocks/react-ui": "2.16.0",
-    "@liveblocks/yjs": "2.16.0",
+    "@liveblocks/client": "2.20.0",
+    "@liveblocks/core": "2.20.0",
+    "@liveblocks/react": "2.20.0",
+    "@liveblocks/react-ui": "2.20.0",
+    "@liveblocks/yjs": "2.20.0",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-toggle": "^1.1.0",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
-    "@lexical/react": "0.16.1",
-    "@lexical/rich-text": "0.16.1",
-    "@lexical/selection": "0.16.1",
-    "@lexical/utils": "0.16.1",
-    "@lexical/yjs": "0.16.1",
-    "lexical": "0.16.1",
+    "@lexical/react": "0.24.0",
+    "@lexical/rich-text": "0.24.0",
+    "@lexical/selection": "0.24.0",
+    "@lexical/utils": "0.24.0",
+    "@lexical/yjs": "0.24.0",
+    "lexical": "0.24.0",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },

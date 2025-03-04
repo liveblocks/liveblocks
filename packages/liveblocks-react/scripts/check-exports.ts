@@ -30,7 +30,11 @@ const ALLOW_NO_FACTORY = [
   "ClientSideSuspense",
   "createLiveblocksContext", // the factories themselves, obviously
   "createRoomContext", // the factories themselves, obviously
+
+  // Re-exported from `@liveblocks/client` so they cannot be returned by
+  // the factories. So it makes no sense to warn about these.
   "shallow",
+  "isNotificationChannelEnabled",
 
   // TODO: These are all exported types, which cannot be returned by the
   // factories, so it makes no sense to warn about these. We should auto-detect
@@ -178,9 +182,9 @@ function warn(...args: unknown[]) {
   return console.warn(...args);
 }
 
-const classicExports = listExports("dist/index.d.mts");
-const suspenseExports = listExports("dist/suspense.d.mts");
-const factoryExports = listFactoryExports("../dist/index.mjs");
+const classicExports = listExports("dist/index.d.ts");
+const suspenseExports = listExports("dist/suspense.d.ts");
+const factoryExports = listFactoryExports("../dist/index.js");
 
 function blue(text: string | number): string {
   return `\x1b[34m${text}\x1b[0m`;

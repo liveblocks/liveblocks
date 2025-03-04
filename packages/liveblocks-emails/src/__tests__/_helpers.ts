@@ -1,14 +1,13 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   CommentBody,
   CommentData,
   DRI,
   DU,
-  InboxNotificationData,
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
-  OptionalPromise,
   ResolveUsersArgs,
   ThreadData,
 } from "@liveblocks/core";
@@ -176,6 +175,34 @@ export const commentBody7: CommentBody = {
   ],
 };
 
+export const commentBodyWithHtml: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Trying with <b>inject html</b> !" }],
+    },
+  ],
+};
+
+export const commentBodyWithHtml2: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Trying with " },
+        {
+          type: "link",
+          url: "https://www.liveblocks.io",
+          text: "<script>injected script</script>",
+        },
+        { text: " !" },
+      ],
+    },
+  ],
+};
+
 export const makeComment = ({
   userId,
   threadId,
@@ -275,9 +302,7 @@ export const makeThreadNotificationEvent = ({
 
 export const resolveUsers = <U extends BaseUserMeta = DU>({
   userIds,
-}: ResolveUsersArgs): OptionalPromise<
-  (U["info"] | undefined)[] | undefined
-> => {
+}: ResolveUsersArgs): Awaitable<(U["info"] | undefined)[] | undefined> => {
   const users: (U["info"] | undefined)[] = [];
 
   for (const userId of userIds) {
@@ -296,7 +321,7 @@ export const RESOLVED_ROOM_INFO_TEST: DRI = {
 };
 export const getResolvedCommentUrl = (commentId: string): string =>
   `https://resend.com/#${commentId}`;
-export const resolveRoomInfo = (): OptionalPromise<DRI | undefined> => {
+export const resolveRoomInfo = (): Awaitable<DRI | undefined> => {
   return RESOLVED_ROOM_INFO_TEST;
 };
 
@@ -319,7 +344,7 @@ export const makeUnreadMentionDataset = (): {
   threadId: string;
   comment: CommentData;
   thread: ThreadData;
-  inboxNotification: InboxNotificationData;
+  inboxNotification: InboxNotificationThreadData;
   event: ThreadNotificationEvent;
 } => {
   const threadId = generateThreadId();
@@ -348,7 +373,7 @@ export const makeUnreadRepliesDataset = (): {
   comment1: CommentData;
   comment2: CommentData;
   thread: ThreadData;
-  inboxNotification: InboxNotificationData;
+  inboxNotification: InboxNotificationThreadData;
   event: ThreadNotificationEvent;
 } => {
   const threadId = generateThreadId();

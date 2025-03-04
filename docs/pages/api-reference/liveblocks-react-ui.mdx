@@ -1876,15 +1876,19 @@ Displays a custom notification kind.
     $myCustomNotificationKind: (props) => {
       const activityData = props.inboxNotification.activities[0].data;
 
-      return(
+      return (
         <InboxNotification.Custom
-          title={<>User <strong>{activityData.file}</strong></>}
+          title={
+            <>
+              User <strong>{activityData.file}</strong>
+            </>
+          }
           aside={<InboxNotification.Icon>❌</InboxNotification.Icon>}
           {...props}
         >
           {activityData.errorDescription}
-        </InboxNotification>
-      )
+        </InboxNotification.Custom>
+      );
     },
   }}
 />
@@ -2029,7 +2033,22 @@ and dates.
 
 ## Utilities
 
-### Components
+### Components [#utilities-components]
+
+#### Icon
+
+Most icons used in the default components can be exported via `<Icon.* />`.
+They’re stroke-based and designed for use at 20×20 pixels.
+
+```tsx
+import { Icon } from "@liveblocks/react-ui";
+
+<Icon.QuestionMark />
+<Icon.Mention  />
+```
+
+Find a full list of available icons in
+[our GitHub repo](https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-ui/src/icon.ts).
 
 #### LiveblocksUIConfig
 

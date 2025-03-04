@@ -10,7 +10,7 @@ type RoomConnectionErrorContext = {
   roomId: string;
 };
 
-// All possible errors originating from using Comments or Notifications
+// All possible errors originating from using Comments or Notifications or UserNotificationSettings
 type CommentsOrNotificationsErrorContext =
   | {
       type: "CREATE_THREAD_ERROR";
@@ -73,18 +73,20 @@ type CommentsOrNotificationsErrorContext =
   | {
       type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
       roomId: string;
+    }
+  | {
+      type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR";
     };
 
 export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
-  | CommentsOrNotificationsErrorContext // from Comments or Notifications
+  | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
 >;
 
 export class LiveblocksError extends Error {
   public readonly context: LiveblocksErrorContext;
 
   constructor(message: string, context: LiveblocksErrorContext, cause?: Error) {
-    // @ts-expect-error This can be removed once we use lib: ["es2022"] in tsconfig
     super(message, { cause });
     this.context = context;
     this.name = "LiveblocksError";
@@ -143,6 +145,7 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR": return "Could not mark all inbox notifications as read";
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
+    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update user notification settings";
 
     default:
       return assertNever(context, "Unhandled case");

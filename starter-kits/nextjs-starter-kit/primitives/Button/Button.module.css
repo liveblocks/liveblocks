@@ -31,10 +31,10 @@
   color: var(--color-surface-elevated);
 }
 
-.buttonPrimary:hover,
-.buttonPrimary:focus-visible,
-.buttonDestructive:hover,
-.buttonDestructive:focus-visible {
+.buttonPrimary:not(:disabled):hover,
+.buttonPrimary:not(:disabled):focus-visible,
+.buttonDestructive:not(:disabled):hover,
+.buttonDestructive:not(:disabled):focus-visible {
   opacity: var(--opacity-hover);
 }
 
@@ -43,8 +43,8 @@
   color: var(--color-text-light);
 }
 
-.buttonSecondary:hover,
-.buttonSecondary:focus-visible {
+.buttonSecondary:not(:disabled):hover,
+.buttonSecondary:not(:disabled):focus-visible {
   background: var(--color-surface-hover);
   color: var(--color-text);
 }

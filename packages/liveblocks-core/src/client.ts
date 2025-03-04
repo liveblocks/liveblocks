@@ -30,6 +30,12 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
+  PartialUserNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/UserNotificationSettings";
+import { createUserNotificationSettings } from "./protocol/UserNotificationSettings";
+import type {
+  LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -43,9 +49,9 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -259,6 +265,32 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * await client.deleteInboxNotification("in_xxx");
    */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * Gets notifications settings for a user for a project.
+   *
+   * @example
+   * const notificationSettings = await client.getNotificationSettings();
+   */
+  getNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettings>;
+
+  /**
+   * Update notifications settings for a user for a project.
+   *
+   * @example
+   * await client.updateNotificationSettings({
+   *  email: {
+   *    thread: true,
+   *    textMention: false,
+   *    $customKind1: true,
+   *  }
+   * })
+   */
+  updateNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings>;
 };
 
 /**
@@ -403,15 +435,16 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   lostConnectionTimeout?: number; // in milliseconds
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
+  largeMessageStrategy?: LargeMessageStrategy;
+  /** @deprecated Use `largeMessageStrategy="experimental-fallback-to-http"` instead. */
   unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
-
   /**
    * A function that returns a list of user IDs matching a string.
    */
   resolveMentionSuggestions?: (
     args: ResolveMentionSuggestionsArgs
-  ) => OptionalPromise<string[]>;
+  ) => Awaitable<string[]>;
 
   /**
    * A function that returns user info from user IDs.
@@ -419,7 +452,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
   /**
    * A function that returns room info from room IDs.
@@ -427,7 +460,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
-  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
+  ) => Awaitable<(DRI | undefined)[] | undefined>;
 
   /**
    * Prevent the current browser tab from being closed if there are any locally
@@ -614,7 +647,11 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
+        largeMessageStrategy:
+          clientOptions.largeMessageStrategy ??
+          (clientOptions.unstable_fallbackToHTTP
+            ? "experimental-fallback-to-http"
+            : undefined),
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
@@ -799,6 +836,25 @@ export function createClient<U extends BaseUserMeta = DU>(
     win?.addEventListener("beforeunload", maybePreventClose);
   }
 
+  async function getNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettings> {
+    const plainSettings = await httpClient.getUserNotificationSettings(options);
+    const settings = createUserNotificationSettings(plainSettings);
+
+    return settings;
+  }
+
+  async function updateNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings> {
+    const plainSettings =
+      await httpClient.updateUserNotificationSettings(settings);
+    const settingsObject = createUserNotificationSettings(plainSettings);
+
+    return settingsObject;
+  }
+
   const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
@@ -816,6 +872,10 @@ export function createClient<U extends BaseUserMeta = DU>(
       markInboxNotificationAsRead: httpClient.markInboxNotificationAsRead,
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
+
+      // Public user notification settings API
+      getNotificationSettings,
+      updateNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {

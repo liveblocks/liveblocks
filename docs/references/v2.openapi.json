@@ -743,6 +743,26 @@
           },
           "404": {
             "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "description": "Storage already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "CANNOT_UPDATE_EXISTING_STORAGE": {
+                    "value": {
+                      "error": "CANNOT_UPDATE_EXISTING_STORAGE",
+                      "message": "The room already has storage data. It's only possible to initialize the storage for an empty room.",
+                      "suggestion": "Create another room or clear this room storage first.",
+                      "docs": ""
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
@@ -2781,6 +2801,196 @@
         }
       }
     },
+    "/users/{userId}/notification-settings": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get notification settings",
+        "tags": ["Notifications"],
+        "operationId": "get-users-userId-notification-settings",
+        "description": "This endpoint returns a user's notification settings for the project. Corresponds to [`liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserNotificationSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "email": {
+                        "thread": true,
+                        "textMention": false,
+                        "$customNotification": true
+                      },
+                      "slack": {
+                        "thread": true,
+                        "textMention": true,
+                        "$customNotification": false
+                      },
+                      "teams": {
+                        "thread": false,
+                        "textMention": true,
+                        "$customNotification": true
+                      },
+                      "webPush": {
+                        "thread": true,
+                        "textMention": true,
+                        "$customNotification": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update notification settings",
+        "tags": ["Notifications"],
+        "operationId": "post-users-userId-notification-settings",
+        "description": "This endpoint updates a user's notification settings for the project. Corresponds to [`liveblocks.updateNotificationSettings`](/docs/api-reference/liveblocks-node#post-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartialUserNotificationSettings"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "email": {
+                      "thread": true,
+                      "textMention": false
+                    },
+                    "slack": {
+                      "textMention": false
+                    },
+                    "webPush": {
+                      "thread": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserNotificationSettings"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "email": {
+                        "thread": true,
+                        "textMention": false,
+                        "$customNotification": true
+                      },
+                      "slack": {
+                        "thread": true,
+                        "textMention": true,
+                        "$customNotification": false
+                      },
+                      "teams": {
+                        "thread": false,
+                        "textMention": true,
+                        "$customNotification": true
+                      },
+                      "webPush": {
+                        "thread": true,
+                        "textMention": true,
+                        "$customNotification": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete notification settings",
+        "tags": ["Notifications"],
+        "operationId": "delete-users-userId-notification-settings",
+        "description": "This endpoint deletes a user's notification settings for the project. Corresponds to [`liveblocks.deleteNotificationSettings`](/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      }
+    },
     "/rooms/{roomId}/users/{userId}/notification-settings": {
       "parameters": [
         {
@@ -3713,6 +3923,57 @@
           }
         }
       },
+      "NotificationChannelSettings": {
+        "type": "object",
+        "properties": {
+          "thread": {
+            "type": "boolean"
+          },
+          "textMention": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": {
+          "type": "boolean",
+          "description": "Custom notification kinds prefixed by a '$'"
+        }
+      },
+      "UserNotificationSettings": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          },
+          "slack": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          },
+          "teams": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          },
+          "webPush": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          }
+        },
+        "description": "User notification settings for each supported channel"
+      },
+      "PartialUserNotificationSettings": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          },
+          "slack": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          },
+          "teams": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          },
+          "webPush": {
+            "$ref": "#/components/schemas/NotificationChannelSettings"
+          }
+        },
+        "description": "Partial user notification settings - all properties are optional"
+      },
       "UserRoomNotificationSettings": {
         "title": "UserRoomNotificationSettings",
         "type": "object",
@@ -3828,7 +4089,7 @@
         }
       },
       "404": {
-        "description": "Room not found.",
+        "description": "Resource not found.",
         "content": {
           "application/json": {
             "schema": {

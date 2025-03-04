@@ -8,10 +8,330 @@ https://liveblocks.io/changelog
 - Add each contributor's GitHub username.
 
 TEAM MEMBERS
-adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
-nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+adigau, ctnicholas, flowflorent, jrowny, marcbouchenoire, nimeshnayaju,
+nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+
+OTHER USERS
+If outside users have made contributions, add them to the Contributors
+list and feel free to give them credit at the end of a line, e.g.:
+- ... Thank you [@username](https://github.com/username)!
 
 -->
+
+# Week 8 (2025-02-21)
+
+## v2.18.3
+
+### `@liveblocks/node`
+
+- Fix HTML escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/client`
+
+- Log more details in specific error cases to help debugging
+- Fix HTML escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/react`
+
+- Increases the allowed stale time for polled user threads data. Only affects
+  the `useUserThreads_experimental` hook.
+
+### `@liveblocks/react-ui`
+
+- Allow spaces and more non-alphanumeric characters when creating mentions in
+  Comments composers.
+
+### `@liveblocks/emails`
+
+- Fix HTML escaping in prepare as HTML functions. Thank you [@huy-cove](https://github.com/huy-cove)!
+- Revert deduplication logic introduced in `v2.18.0` as it provided no
+  measurable benefits while increasing complexity.
+
+## v2.18.2
+
+### `@liveblocks/client`
+
+- Improve performance of undo/redo operations on large documents. Thank you [@rudi-c](https://github.com/rudi-c)!
+
+### `@liveblocks/react-tiptap`
+
+- Fix a performance regression introduced in 2.18.1.
+
+## Documentation
+
+- Added info on how data storage is calculated.
+- Fixed a number of broken links on various pages.
+
+## Dashboard
+
+- Internal refactoring and code clean up.
+
+## Website
+
+- New blog post: [Why collaborative features will define your product’s success](https://liveblocks.io/blog/why-collaborative-features-will-define-your-products-success).
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius, huy-cove, rudi-c
+
+# Week 7 (2025-02-14)
+
+## v2.18.1
+
+### `@liveblocks/react-ui`
+
+- Fix `<Composer />` and `<Comment />` [overrides](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Overrides) not working when set on
+  `<Thread />`.
+
+### `@liveblocks/yjs`
+
+- Added a factory function [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom) to grab an instance of Yjs
+  provider that will be automatically cleaned up when the room is
+  disconnected/changed. This is now [the recommended way to set up your Yjs app](https://liveblocks.io/docs/api-reference/liveblocks-yjs#Setup).
+- Simplified types for [`LiveblocksYjsProvider`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#LiveblocksYjsProvider).
+
+### `@liveblocks/react-tiptap`
+
+- Fixed a bug where documents would no longer sync after room the ID changed.
+
+## v2.18.0
+
+Introducing user notification settings. You can now create beautiful user
+notification settings pages in your app.
+
+### User notification settings (public beta)
+
+Our packages `@liveblocks/client`, `@liveblocks/react` and `@liveblocks/node`
+are now exposing functions to manage user notification settings on different
+notification channels and kinds.
+
+You can support `thread`, `textMention` and custom notification kinds (starting
+by a `$`) on `email`, `Slack`, `Microsoft Teams` and `Web Push` channels.
+
+#### Notification settings in the dashboard
+
+You can choose from our new notifications dashboard page to enable or disable
+notification kinds on every channels you want to use in your app. It means our
+internal notification system on our infrastructure will decide to send or not an
+event on your webhook.
+
+### `@liveblocks/client`
+
+We're adding two new methods in our client to get and update user notification
+settings:
+
+```tsx
+import { createClient } from '@liveblocks/client'
+const client = createClient({ ... })
+
+const settings = await client.getNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await client.updateNotificationSettings({
+  email: {
+    thread: false,
+  }
+});
+```
+
+### `@liveblocks/react`
+
+We're adding a new set of hooks to manage user notification settings.
+
+You can either choose [`useNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useNotificationSettings) 
+if you need to get the current user notification settings and update 
+them at the same time:
+
+```tsx
+// A suspense version of this hook is available
+import { useNotificationSettings } from "@liveblocks/react";
+
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const onSave = () => {
+  updateSettings({
+    slack: {
+      textMention: true,
+    },
+  });
+};
+```
+
+Or you can choose [`useUpdateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateNotificationSettings)
+if you just need to update the current user notification settings
+(e.g an unsubscribe button):
+
+```tsx
+// A suspense version of this hook is available
+import { useUpdateNotificationSettings } from "@liveblocks/react";
+
+const updateSettings = useUpdateNotificationSettings();
+
+const onUnsubscribe = () => {
+  updateSettings({
+    slack: {
+      thread: false,
+    },
+  });
+};
+```
+
+### `@liveblocks/node`
+
+Our Node.js client now exposes [three new methods](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings)
+to manage user notification settings:
+
+```tsx
+import { Liveblocks } from "@liveblocks/node";
+const liveblocks = new Liveblocks({ secret: "sk_xxx" });
+
+const settings = await liveblocks.getNotificationSettings({ userId });
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await liveblocks.updateNotificationSettings({
+  userId,
+  data: {
+    teams: {
+      $fileUploaded: true,
+    },
+  },
+});
+await liveblocks.deleteNotificationSettings({ userId });
+```
+
+### `@liveblocks/emails`
+
+- Update the behavior of [`prepareThreadNotificationEmailAsHtml`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-html) and
+  [`prepareThreadNotificationEmailAsReact`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react): the contents of previous emails data
+  are now taken into account to avoid repeating mentions and replies that are
+  still unread but have already been extracted in another email data.
+
+## Examples
+
+- Added user notification settings to the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+- Updated all Yjs examples to use [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
+
+## Documentation
+
+- New guide: [What to check before enabling a new notification kind](https://liveblocks.io/docs/guides/what-to-check-before-enabling-a-new-notification-kind).
+- Added info for new methods and hooks:
+  - React: [`useNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useNotificationSettings), [`useUpdateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateNotificationSettings). 
+  - JavaScript: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getNotificationSettings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.updateNotificationSettings).
+  - Node.js: [`getNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-notification-settings), [`updateNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-users-userId-notification-settings), [`deleteNotificationSettings`](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-users-userId-notification-settings).
+- Rewrote email notification overview pages for [Comments](https://liveblocks.io/docs/ready-made-features/comments/email-notifications) and [Notifications](https://liveblocks.io/docs/ready-made-features/notifications/email-notifications).
+- Adjusted existing notification guides to work with new dashboard settings.
+- Improved information structure for [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
+- Improved [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs) API reference.
+- Added info for new API [`getYjsProviderForRoom`](https://liveblocks.io/docs/api-reference/liveblocks-yjs#getYjsProviderForRoom).
+- Updated all Yjs [get started guides](https://liveblocks.io/docs/get-started) to use the new API.
+
+## Website
+
+- We now have [`llms.txt`](https://liveblocks.io/llms.txt) and [`llms-full.txt`](https://liveblocks.io/llms-full.txt) files on our website, used to help AI understand our product.
+
+## Dashboard
+
+- Added new Notifications page to projects, allowing you to enable/disable webhooks events for different notification kinds, on different channels.
+
+## Infrastructure
+
+- Preparing foundation in the backend to make Storage more efficient in the future.
+
+## Contributors
+
+ctnicholas, pierrelevaillant, flowflorent, sugardarius, jrowny, marcbouchenoire, nvie
+
+# Week 6 (2025-02-07)
+
+## v2.17.0
+
+### `@liveblocks/client`
+
+- Report a console error when a client attempts to send a WebSocket message that is >1 MB (which is not supported). Previously the client would silently fail in this scenario.
+- Added a new client config option `largeMessageStrategy` to allow specifying the preferred strategy for dealing with messages that are too large to send over WebSockets. There now is a choice between:
+  - `default` Don’t send anything, but log the error to the console.
+  - `split` Split the large message up into smaller chunks (at the cost of sacrificing atomicity). Thank you [@adam-subframe](https://github.com/adam-subframe)!
+  - `experimental-fallback-to-http` Send the message over HTTP instead of WebSocket.
+- Deprecated the `unstable_fallbackToHTTP` experimental flag (please set `largeMessageStrategy="experimental-fallback-to-http"` instead).
+
+### `@liveblocks/react`
+
+- Added `<LiveblocksProvider largeMessageStrategy="..." />` prop to LiveblocksProvider. See above for possible options.
+
+### `@liveblocks/react-ui`
+
+- Fix crash when a `Composer` is unmounted during its `onComposerSubmit` callback.
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/react-tiptap`
+
+### AI Toolbar (private beta)
+
+This release adds components and utilities to add an AI toolbar to your text editor, available in private beta.
+
+- Add `ai` option to `useLiveblocksExtension` to enable (and configure) it.
+- Add `<AiToolbar />` component. (with `<AiToolbar.Suggestion />`, `<AiToolbar.SuggestionsSeparator />`, etc)
+- Add default AI buttons in `Toolbar` and `FloatingToolbar` when the `ai` option is enabled.
+- Add `askAi` Tiptap command to manually open the toolbar, it can also be invoked with a prompt to directly start the request when opening the toolbar. (e.g. `editor.commands.askAi("Explain this text")`)
+
+## Documentation
+
+- [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror) documentation has been published. Use this package for editing Tiptap and ProseMirror documents on the server.
+- [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical) documentation has been improved to match the ProseMirror docs.
+
+## Website
+
+- New blog post: [Which rich text editor framework should you choose in 2025?](https://liveblocks.io/blog/which-rich-text-editor-framework-should-you-choose-in-2025).
+
+## Contributors
+
+jrowny, ctnicholas, nvie, marcbouchenoire, sugardarius, adam-subframe
+
+# Week 5 (2025-01-31)
+
+## v2.16.2
+
+### `@liveblocks/react`
+
+- Improve error message if hooks are accidentally called server side.
+
+### `@liveblocks/zustand`
+
+- Fix bug in Zustand typing in case the multi-argument form of `set()` is used. Thank you [@hans-lizihan](https://github.com/hans-lizihan)!
+
+## Website
+
+- New blog post: [Great agent experience starts with great collaboration](https://liveblocks.io/blog/great-agent-experience-great-collaboration).
+
+## Documentation
+
+- Better info on `initialStorage` values.
+
+## Contributors
+
+ctnicholas, stevenfabre, sugardarius, nvie, hans-lizihan
+
+# Week 4 (2025-01-24)
+
+## v2.16.1
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- `<Toolbar.Button />` and `<Toolbar.Toggle />` now display their `name` visually if `children` and `icon` aren’t set.
+
+## Documentation
+
+- Added missing 409 response to Initialize Storage REST API.
+- Typo fixed in custom notification snippet.
+
+## Contributors
+
+jltimm, ctnicholas, marcbouchenoire
 
 # Week 3 (2025-01-17)
 

@@ -1,6 +1,7 @@
 import { assertNever, nn } from "../lib/assert";
 import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
+import { stringifyOrLog as stringify } from "../lib/stringify";
 import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
@@ -172,7 +173,7 @@ export function getTreesDiffOperations(
       if (crdt.type === CrdtType.OBJECT) {
         if (
           currentCrdt.type !== CrdtType.OBJECT ||
-          JSON.stringify(crdt.data) !== JSON.stringify(currentCrdt.data)
+          stringify(crdt.data) !== stringify(currentCrdt.data)
         ) {
           ops.push({
             type: OpCode.UPDATE_OBJECT,

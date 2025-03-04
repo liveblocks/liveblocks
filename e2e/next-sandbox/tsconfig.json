@@ -1,22 +1,20 @@
 {
   // Use the same settings for all packages
   "extends": "../../shared/tsconfig.common.json",
-
   "compilerOptions": {
-    "target": "es2022",
+    // Use settings recommended for building an app
     "module": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "downlevelIteration": true,
+    "moduleResolution": "bundler",
 
     // Overrides from default TS config
-    "noUncheckedIndexedAccess": false
-  },
+    "incremental": true,
+    "noUncheckedIndexedAccess": false,
 
+    // Required by Next.js
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "jsx": "preserve"
+  },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
 }

@@ -38,14 +38,16 @@ that if there are 4 new comments in a thread you’re participating in, you will
 have a single inbox notification for it, instead of 4 “normal” notifications.
 
 Learn more about Notifications for Comments in the
-[overview page](/docs/ready-made-features/comments/notifications).
+[overview page](/docs/ready-made-features/comments/email-notifications).
 
 ## Sending email notifications with webhooks
 
 Using [Liveblocks webhooks](/docs/platform/webhooks#Liveblocks-events) you can
 listen to a range of events such as comments being deleted, or comment reactions
 being added. On [your dashboard](https://liveblocks.io/dashboard) you can create
-a webhook for a project, and select which events you’d like to listen to.
+a webhook for a project, and select which events you’d like to listen to. You
+only need to select the `"notification"` webhook event for our recommended
+solution.
 
 <Figure>
   <video width={1512} height={982} autoPlay loop muted playsInline>
@@ -56,16 +58,27 @@ a webhook for a project, and select which events you’d like to listen to.
 The endpoint URL you pass will receive request with relevant data when the event
 occurs. The webhook event built for creating these unread notification emails is
 called `"notification"`, and by default is sent up to every 30 minutes to each
-user, though this can be customized in the webhooks dashboard. Here’s an example
-of an event object that’s sent when a user receives a new (or updated) inbox
-notification.
+user, though this can be customized in the webhooks dashboard.
+
+`"notification"` webhooks can be enabled and disabled on certain channels.
+Channels are used to represent different places your users may receive
+notifications, such as on `email`, `slack`, `teams`, and `webPush`.
+
+<Figure>
+  <video width={1512} height={982} autoPlay loop muted playsInline>
+    <source src="/assets/webhooks/notification-settings.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+Here’s an example of an event object that’s sent when a user receives a new (or
+updated) inbox notification.
 
 ```ts
 const event = {
   type: "notification",
   data: {
     channel: "email",
-    type: "thread",
+    kind: "thread",
     projectId: "my-project-id",
     roomId: "my-room-id",
     threadId: "th_d75sF3...",

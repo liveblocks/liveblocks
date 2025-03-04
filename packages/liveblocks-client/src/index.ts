@@ -5,6 +5,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
+  Awaitable,
   BaseActivitiesData,
   BaseMetadata,
   BaseUserMeta,
@@ -38,6 +39,7 @@ export type {
   JsonArray,
   JsonObject,
   JsonScalar,
+  LargeMessageStrategy,
   LiveblocksErrorContext,
   LiveListUpdate,
   LiveMapUpdate,
@@ -46,6 +48,9 @@ export type {
   LostConnectionEvent,
   Lson,
   LsonObject,
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
   OthersEvent,
   PlainLsonObject,
   ResolveMentionSuggestionsArgs,
@@ -62,10 +67,12 @@ export type {
   ToImmutable,
   UploadAttachmentOptions,
   User,
+  UserNotificationSettings,
 } from "@liveblocks/core";
 export {
   createClient,
   getMentionedIdsFromCommentBody,
+  isNotificationChannelEnabled,
   LiveblocksError,
   LiveList,
   LiveMap,

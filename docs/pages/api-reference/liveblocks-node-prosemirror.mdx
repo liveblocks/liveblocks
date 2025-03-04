@@ -1,0 +1,330 @@
+---
+meta:
+  title: "@liveblocks/node-prosemirror"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/node-prosemirror package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/node-prosemirror` provides a Node.js package to export and modify
+[ProseMirror](https://prosemirror.net/). Because Tiptap uses ProseMirror under
+the hood, this package can be used to modify
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap) documents as well.
+
+## withProsemirrorDocument
+
+`withProsemirrorDocument` is the main entry point to modifying a document on the
+server. It takes a room ID and a
+[Liveblocks Node client](/docs/api-reference/liveblocks-node#Liveblocks-client),
+and returns a callback used to work with ProseMirror documents stored in
+Liveblocks.
+
+```ts highlight="8-14"
+import { Liveblocks } from "@liveblocks/node";
+import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+await withProsemirrorDocument(
+  { roomId: "your-room-id", client: liveblocks },
+  (api) => {
+    // Modify your document with the api
+    // ...
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="returns" type="T">
+    Returns the value you return from the `api` callback.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="roomId" type="string" required>
+    The ID of the room to use.
+  </PropertiesListItem>
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    The [Liveblocks
+    client](/docs/api-reference/liveblocks-node#Liveblocks-client) to use.
+  </PropertiesListItem>
+  <PropertiesListItem name="schema" type="Schema">
+    Optional. The ProseMirror schema to use for the document. If no schema is
+    provided, the default schema is [Tiptap
+    StarterKit](https://tiptap.dev/docs/editor/extensions/functionality/starterkit),
+    Liveblocks mentions, and Liveblocks comments.
+  </PropertiesListItem>
+  <PropertiesListItem name="field" type="string">
+    Optional. The
+    [field](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors) to use
+    for the document. Defaults to `default`.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Returning data
+
+Get your editor’s text content by returning `api.getText()` inside the callback.
+
+```ts
+const textContent = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  (api) => api.getText()
+);
+
+// "My content"
+console.log(textContent);
+```
+
+### ProseMirror document API
+
+You can easily modify your document with the ProseMirror document API.
+
+#### api.update
+
+Liveblocks provides `api.update` which is a callback that provides the current
+document and a ProseMirror transaction. This makes it easy to use ProseMirror’s
+built in functions. When you've finished, return the transaction and any changes
+will be persisted, and appear in realtime to connected users as soon as the
+`update` promise resolves.
+
+```ts
+await withProsemirrorDocument(
+  {
+    client,
+    roomId: "test-room",
+  },
+  async (api) => {
+    // +++
+    await api.update((doc, tr) => {
+      return tr.insertText("Hello world");
+    });
+    // +++
+  }
+);
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem
+    name="callback"
+    type="(doc: Node, tr: Transaction) => Transaction"
+  >
+    `doc` is the ProseMirror document. `tr` is an editor state transaction.
+    Transaction is a subclass of ProseMirror’s Transforms. On the ProseMirror
+    website you can find a full list of
+    [transforms](https://prosemirror.net/docs/ref/#transform.Document_transforms)
+    and [transactions
+    functions](https://prosemirror.net/docs/ref/#state.Transaction).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### api.getText
+
+Returns the text content of the document.: This api uses Tiptap’s getText
+internally. TextSerializers are a concept from
+[Tiptap](https://github.com/ueberdosis/tiptap/blob/3e59097b34ce8bc8c39e1def67eb31a1d9f9e5c2/packages/core/src/types.ts#L357).
+If you are having trouble with a ProseMirror document, you may want to use
+`api.getEditorState().doc.textBetween()` instead.
+
+```ts
+const textContent = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    // +++
+    return api.getText({
+      // Options
+      // ...
+    });
+    // +++
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="content" type="string">
+    Returns the text retrieved from the document.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options.blockSeparator" type="string">
+    Optional. The separator to use for blocks, e.g. `<br />
+    `. Defaults to `\n\n`.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.textSerializers" type="string">
+    Optional. The serializers to use for text. Defaults to `{}`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### api.setContent
+
+For convenience, some methods such as `setContent` are provided at the API
+level. Here’s an example that sets a document and returns the JSON content after
+it has been updated.
+
+```ts
+const exampleDoc = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Example Text",
+        },
+      ],
+    },
+  ],
+};
+
+const json = await withProsemirrorDocument<string>(
+  {
+    client,
+    roomId: "test-room",
+  },
+  async (api) => {
+    // +++
+    await api.setContent(exampleDoc);
+    // +++
+    return JSON.stringify(api.toJSON());
+  }
+);
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="content" type="null | object | string" required>
+    The content to replace your document.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### doc.getEditorState
+
+Returns the current ProseMirror state.
+
+```ts
+const editorState = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    // +++
+    return api.getEditorState();
+    // +++
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="editorState" type="EditorState">
+    Your editor’s ProseMirror state.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+#### api.toJSON
+
+Returns a serialized JSON object representation of your document. See
+ProseMirror’s
+[.toJSON](https://prosemirror.net/docs/ref/#state.EditorState.toJSON)
+documentation for more information.
+
+```ts
+const docAsJSON = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    // +++
+    return api.toJSON();
+    // +++
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="editorState" type="string">
+    Your editor’s serialized JSON state.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+#### api.clearContent
+
+Clears the content of the document.
+
+```ts
+await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    // +++
+    return api.clearContent();
+    // +++
+  }
+);
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+#### api.toMarkdown
+
+Returns a markdown `string` of your document.
+
+```ts
+const markdown = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    // +++
+    return api.toMarkdown();
+    // +++
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="markdown" type="string">
+    Returns the markdown string.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="serializer" type="MarkdownSerializer">
+    Optional. A markdown serializer to use. By default it uses the
+    `defaultMarkdownSerializer` from
+    [prosemirror-markdown](https://github.com/prosemirror/prosemirror-markdown).
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Custom markdown serializer
+
+You can use a custom markdown serializer.
+
+```ts
+import { defaultMarkdownSerializer } from "prosemirror-markdown";
+
+const mySerializer = new MarkdownSerializer({
+  marks: {
+    ...defaultMarkdownSerializer.marks,
+    em: {
+      open: "*",
+      close: "*",
+      mixable: true,
+      expelEnclosingWhitespace: true,
+    },
+  },
+});
+
+const markdown = await withProsemirrorDocument(
+  { roomId: "my-room-id", client: liveblocks },
+  async (api) => {
+    // +++
+    return api.toMarkdown(mySerializer);
+    // +++
+  }
+);
+```

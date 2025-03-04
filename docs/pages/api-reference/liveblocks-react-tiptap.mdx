@@ -10,7 +10,9 @@ alwaysShowAllNavigationLevels: false
 plugin that adds collaboration to any [Tiptap](https://tiptap.dev/) text editor.
 It also adds realtime cursors, document persistence on the cloud, comments, and
 mentions. Read our [get started guides](/docs/get-started/text-editor/tiptap) to
-learn more.
+learn more. Use
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+for server-side editing.
 
 ## Setup
 
@@ -80,6 +82,773 @@ Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 
 ## Default components
 
+### Toolbar
+
+Displays a toolbar, allowing you to change the styles of selected text. You can
+add content [before or after](#toolbar-extending-the-defaults), or the toolbar’s
+options can be [customized](#creating-a-custom-toolbar). A
+[floating toolbar](#FloatingToolbar) also exists.
+
+```tsx
+<Toolbar editor={editor} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/toolbar.png"
+    alt="Toolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Pass your Tiptap `editor` to use the component. By default, one of the toolbar
+buttons can create comment threads—to enable this add [`FloatingComposer`][] and
+display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  Toolbar,
+  // +++
+  FloatingComposer,
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      // +++
+      <Toolbar editor={editor} />
+      // +++
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
+  );
+}
+```
+
+#### Extending the defaults [#toolbar-extending-the-defaults]
+
+You can insert content `before` the first button and `after` the last button
+using `before` and `after`. Components such as [`Toolbar.Button`][] and
+[`Toolbar.Toggle`][] can be used to create new buttons.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+<Toolbar
+  editor={editor}
+  // +++
+  before={<>I'm at the start</>}
+  after={
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+  }
+  // +++
+/>;
+```
+
+For more complex customization, instead read
+[creating a custom floating toolbar](#creating-a-custom-toolbar).
+
+#### Creating a custom toolbar [#creating-a-custom-toolbar]
+
+By passing elements as children, it’s possible to create a fully custom toolbar.
+
+```tsx highlight="7"
+import { Toolbar } from "@liveblocks/react-lexical";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      Hello <strong>world</strong>
+    </Toolbar>
+  );
+}
+```
+
+Each part of our default toolbar is available as blocks which can be slotted
+together. This is how the default toolbar is constructed:
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+You can mix these default components with any custom ones of your own. Below the
+[`Toolbar.SectionHistory`][] component is added alongside some custom buttons
+created with [`Toolbar.Button`][], [`Toolbar.Toggle`][], and [`Icon`][]. The
+highlight toggle button requires a
+[Tiptap extension](https://tiptap.dev/docs/editor/extensions/marks/highlight).
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <Toolbar editor={editor}>
+      // +++
+      <Toolbar.SectionHistory />
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Help"
+        icon={<Icon.QuestionMark />}
+        shortcut="CMD-H"
+        onClick={() => console.log("help")}
+      />
+      <Toolbar.Toggle
+        name="Highlight"
+        icon={<div>🖊️</div>}
+        active={editor?.isActive("highlight") ?? false}
+        onClick={() => editor?.chain().focus().toggleHighlight().run()}
+        disabled={!editor?.can().chain().focus().toggleHighlight().run()}
+      />
+      // +++
+    </Toolbar>
+  );
+}
+```
+
+To learn more about the different components, read more below.
+
+#### Props [#Toolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null" required>
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content of the toolbar, overriding the default content. Use the `before`
+    and `after` props if you want to keep and extend the default content. Any
+    `ReactNode` or `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="before" type="ReactNode">
+    The content to display at the start of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="after" type="ReactNode">
+    The content to display at the end of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.Button
+
+A button for triggering actions. The `name` is displayed in a tooltip. Props
+such as `onClick` will be passed to the underlying `button` element.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  <Toolbar.Button name="Question" onClick={(e) => console.log("Clicked")} />
+</Toolbar>;
+```
+
+Optionally takes an icon which will visually replace the `name`. Also optionally
+accepts a shortcut, which is displayed in the tooltip. Comment key names are
+converted to symbols. Here are various examples.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// Button says "Question"
+<Toolbar.Toggle name="Question" onClick={/* ... */} />
+
+// Tooltip says "Question [⌘+Q]"
+<Toolbar.Button name="Question" shortcut="CMD+Q" onClick={/* ... */} />
+
+// Custom icon, replaces the name in the button
+<Toolbar.Button name="Question" icon={<div>?</div>} onClick={/* ... */} />
+
+// Using a Liveblocks icon, replaces the name in the button
+<Toolbar.Button name="Question" icon={<Icon.QuestionMark />} onClick={/* ... */} />
+
+// Passing children visually replaces the `name` and `icon`
+<Toolbar.Button name="Question" onClick={/* ... */}>
+  ? Ask a question
+</Toolbar.Button>
+
+// Props are passed to the inner `button`
+<Toolbar.Button
+  name="Question"
+  style={{ marginLeft: 10 }}
+  className="custom-button"
+  onMouseOver={() => console.log("Hovered")}
+/>
+```
+
+##### Props [#ToolbarButton-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" required>
+    The name of this button displayed in its tooltip. Will also be displayed in
+    the button if no `icon` or `children` are passed.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this button.
+  </PropertiesListItem>
+  <PropertiesListItem name="shortcut" type="string">
+    An optional keyboard shortcut displayed in this button’s tooltip. Common
+    shortcuts such will be replaced by their symbols, for example `CMD` → `⌘`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.Toggle
+
+A toggle button for values that can be active or inactive. Best used with text
+editor commands. The `name` is displayed in a tooltip. Props will be passed to
+the underlying `button` element.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  <Toolbar.Toggle
+    name="Highlight"
+    active={editor?.isActive("highlight") ?? false}
+    onClick={() => editor?.chain().focus().toggleHighlight().run()}
+  />
+</Toolbar>;
+```
+
+The snippet above shows how to use the Toggle with the
+[Tiptap highlight extension](https://tiptap.dev/docs/editor/extensions/marks/highlight).
+The toggle button can also be toggled with `useState`.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+import { useState } from "react";
+
+function CustomToggle({ editor }: { editor: Editor | null }) {
+  const [active, setActive] = useState(false);
+
+  return (
+    <Toolbar.Toggle
+      name="Toggle options"
+      active={active}
+      onClick={() => setActive(!active)}
+    />
+  );
+}
+```
+
+`Toolbar.Toggle` optionally takes an icon which will visually replace the
+`name`. Also optionally accepts a shortcut, which is displayed in the tooltip.
+Comment key names are converted to symbols. Here are various examples.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// Button says "Highlight"
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Tooltip says "Highlight [⌘+H]"
+<Toolbar.Toggle
+  name="Highlight"
+  shortcut="CMD+H"
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Custom icon, replaces the name in the button
+<Toolbar.Toggle
+  name="Highlight"
+  icon={<div>🖊</div>}
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Using a Liveblocks icon, replaces the name in the button
+<Toolbar.Toggle
+  name="Highlight"
+  icon={<Icon.QuestionMark />}
+  active={/* ... */}
+  onClick={/* ... */}
+/>
+
+// Passing children visually replaces the `name` and `icon`
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+>
+  🖊️Highlight
+</Toolbar.Toggle>
+
+// Props are passed to the inner `button`
+<Toolbar.Toggle
+  name="Highlight"
+  active={/* ... */}
+  onClick={/* ... */}
+  style={{ marginLeft: 10 }}
+  className="custom-toggle"
+  onMouseOver={() => console.log("Hovered")}
+/>
+```
+
+##### Props [#ToolbarToggle-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" required>
+    The name of this button displayed in its tooltip. Will also be displayed in
+    the button if no `icon` or `children` are passed.
+  </PropertiesListItem>
+  <PropertiesListItem name="active" type="boolean" required>
+    Whether the button is toggled.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed in this button.
+  </PropertiesListItem>
+  <PropertiesListItem name="shortcut" type="string">
+    An optional keyboard shortcut displayed in this button’s tooltip. Common
+    shortcuts such will be replaced by their symbols, for example `CMD` → `⌘`.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.BlockSelector
+
+Adds a dropdown selector for switching between different block types, such as
+_text_, _heading 1_, _blockquote_. Props will be passed to the inner `button`
+element. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  <Toolbar.BlockSelector />
+</Toolbar>;
+```
+
+##### Use custom item options
+
+If you’d like to change the items shown in the dropdown menu, you can pass a
+custom `items` array. Below a code block item
+([Tiptap extension](https://tiptap.dev/docs/editor/extensions/nodes/code-block))
+is added after the default options.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  <Toolbar.BlockSelector
+    items={(defaultItems) => [
+      ...defaultItems,
+      {
+        name: "Code block",
+        icon: <div>❮ ❯</div>, // Optional
+        isActive: (editor) => editor.isActive("codeBlock"),
+        setActive: (editor) =>
+          editor.chain().focus().clearNodes().toggleCodeBlock().run(),
+      },
+    ]}
+  />
+</Toolbar>;
+```
+
+##### Customize item styles
+
+By passing a `label` property, you can overwrite the styles of the dropdown
+items. The toolbar button will still display the `name`, but in the dropdown,
+the `label` will be used instead of the `name` and `icon`. Below, a new item is
+added and its `label` is customized.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  <Toolbar.BlockSelector
+    items={(defaultItems) => [
+      ...defaultItems,
+      {
+        name: "Code block",
+        // +++
+        label: <div className="font-mono">Code</div>, // Optional, overwrites `icon` + `name`
+        // +++
+        isActive: (editor) => editor.isActive("codeBlock"),
+        setActive: (editor) =>
+          editor.chain().focus().clearNodes().toggleCodeBlock().run(),
+      },
+    ]}
+  />
+</Toolbar>;
+```
+
+You can also customize the default items. Below each item is styled to represent
+the effect each block applies to the document.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar.BlockSelector
+  items={(defaultItems) =>
+    defaultItems.map((item) => {
+      let label;
+
+      if (item.name === "Text") {
+        label = <span>Regular text</span>;
+      }
+
+      if (item.name === "Heading 1") {
+        label = (
+          <span style={{ fontSize: 18, fontWeight: "bold" }}>Heading 1</span>
+        );
+      }
+
+      if (item.name === "Heading 2") {
+        label = (
+          <span style={{ fontSize: 16, fontWeight: "bold" }}>Heading 2</span>
+        );
+      }
+
+      if (item.name === "Heading 3") {
+        label = (
+          <span style={{ fontSize: 15, fontWeight: "bold" }}>Heading 3</span>
+        );
+      }
+
+      if (item.name === "Blockquote") {
+        label = (
+          <span style={{ borderLeft: "3px solid gray", paddingLeft: 8 }}>
+            Blockquote
+          </span>
+        );
+      }
+
+      return {
+        ...item,
+        label,
+        icon: null, // Hide all icons
+      };
+    })
+  }
+/>;
+```
+
+##### Props [#ToolbarBlockSelector-props]
+
+<PropertiesList>
+  <PropertiesListItem
+    name="items"
+    type="array | function"
+    detailedType="ToolbarBlockSelectorItem[] | (defaultItems: ToolbarBlockSelectorItem[]) => ToolbarBlockSelectorItem[]"
+  >
+    The items displayed in this block selector. When provided as an array, the
+    default items are overridden. To avoid this, a function can be provided
+    instead and it will receive the default items.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Toolbar.Separator
+
+Adds a visual, and accessible, separator used to separate sections in the
+toolbar. Props will be passed to the inner `div` element. Can also be placed
+inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  // +++
+  <Toolbar.SectionHistory />
+  // +++
+</Toolbar>;
+```
+
+#### Toolbar.SectionHistory
+
+Adds a section containing _undo_ and _redo_ buttons. Can also be placed inside
+[`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  // +++
+  <Toolbar.SectionHistory />
+  // +++
+</Toolbar>;
+```
+
+#### Toolbar.SectionInline
+
+Adds a section containing inline formatting actions such as _bold_, _italic_,
+_underline_. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  // +++
+  <Toolbar.SectionInline />
+  // +++
+</Toolbar>;
+```
+
+#### Toolbar.SectionCollaboration
+
+Adds a section containing an _add comment_ button. Can also be placed inside
+[`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor}>
+  // +++
+  <Toolbar.SectionCollaboration />
+  // +++
+</Toolbar>;
+```
+
+### FloatingToolbar
+
+Displays a floating toolbar near the current Tiptap selection, allowing you to
+change styles. You can add content
+[before or after](#floating-toolbar-extending-the-defaults), or the toolbar’s
+options can be [customized](#creating-a-custom-floating-toolbar). A
+[static toolbar](#Toolbar) also exists.
+
+```tsx
+<FloatingToolbar editor={editor} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-toolbar.png"
+    alt="FloatingToolbar"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Pass your Tiptap `editor` to use the component. By default, one of the toolbar
+buttons can create comment threads—to enable this add [`FloatingComposer`][] and
+display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  FloatingToolbar,
+  // +++
+  FloatingComposer,
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingToolbar editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
+  );
+}
+```
+
+#### Changing float position
+
+Using `position` and `offset` you can reposition the toolbar relative to the
+current selection. `position` can be set to `"top"` or `"bottom"`, and `offset`
+defines the vertical distance in pixels from the selection.
+
+```tsx
+<FloatingToolbar
+  editor={editor}
+  // +++
+  position="bottom" // Position can be `top` or `bottom`
+  offset={12} // Distance in px from selection
+  // +++
+/>
+```
+
+#### Extending the defaults [#floating-toolbar-extending-the-default]
+
+You can insert custom content `before` the first button and `after` the last
+button using `before` and `after`. Components such as [`Toolbar.Button`][] and
+[`Toolbar.Toggle`][] can be used to create new buttons.
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+<FloatingToolbar
+  editor={editor}
+  // +++
+  before={<>I'm at the start</>}
+  after={
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+  }
+  // +++
+/>;
+```
+
+For more complex customization, instead read
+[creating a custom floating toolbar](#creating-a-custom-floating-toolbar).
+
+#### Creating a custom floating toolbar [#creating-a-custom-floating-toolbar]
+
+By passing elements as children, it’s possible to create a fully custom floating
+toolbar.
+
+```tsx highlight="7"
+import { FloatingToolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <FloatingToolbar editor={editor}>
+      Hello <strong>world</strong>
+    </FloatingToolbar>
+  );
+}
+```
+
+Each part of our default toolbar is available as blocks which can be slotted
+together. This is how the default floating toolbar is constructed:
+
+```tsx
+import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <FloatingToolbar editor={editor}>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </FloatingToolbar>
+  );
+}
+```
+
+You can mix these default components with any custom ones of your own. Below the
+[`Toolbar.SectionHistory`][] component is added alongside some custom buttons
+created with [`Toolbar.Button`][], [`Toolbar.Toggle`][], and [`Icon`][]. The
+highlight toggle button requires a
+[Tiptap extension](https://tiptap.dev/docs/editor/extensions/marks/highlight).
+
+```tsx
+import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <FloatingToolbar editor={editor}>
+      // +++
+      <Toolbar.SectionHistory />
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Help"
+        icon={<Icon.QuestionMark />}
+        shortcut="CMD-H"
+        onClick={() => console.log("help")}
+      />
+      <Toolbar.Toggle
+        name="Highlight"
+        icon={<div>🖊️</div>}
+        active={editor?.isActive("highlight") ?? false}
+        onClick={() => editor?.chain().focus().toggleHighlight().run()}
+        disabled={!editor?.can().chain().focus().toggleHighlight().run()}
+      />
+      // +++
+    </FloatingToolbar>
+  );
+}
+```
+
+To learn more about the different components, read more under [`Toolbar`][].
+
+#### Props [#FloatingToolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null" required>
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="position" type={`"top" | "bottom"`}>
+    The vertical position of the floating toolbar.
+  </PropertiesListItem>
+  <PropertiesListItem name="offset" type="number">
+    The vertical offset of the floating toolbar from the selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content of the toolbar, overriding the default content. Use the `before`
+    and `after` props if you want to keep and extend the default content. Any
+    `ReactNode` or `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="before" type="ReactNode">
+    The content to display at the start of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+  <PropertiesListItem name="after" type="ReactNode">
+    The content to display at the end of the toolbar. Any `ReactNode` or
+    `Toolbar.*` components work inside.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### FloatingComposer
 
 Displays a [`Composer`][] near the current Tiptap selection, allowing you to
@@ -134,8 +903,6 @@ function TextEditor() {
   );
 }
 ```
-
-Display created threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
 
 #### Opening the composer
 
@@ -749,7 +1516,7 @@ offset that’s added when a thread is selected.
   </PropertiesListItem>
 </PropertiesList>
 
-### HistoryVersionPreview
+### HistoryVersionPreview [@badge=beta]
 
 <Banner title="Private beta">
 
@@ -765,7 +1532,7 @@ logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
 render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
 
-#### Usage
+#### Usage [#HistoryVersionPreview-usage]
 
 ```tsx
 import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
@@ -780,7 +1547,7 @@ function VersionPreview({ selectedVersion, onVersionRestore }) {
 }
 ```
 
-#### Props
+#### Props [#HistoryVersionPreview-props]
 
 <PropertiesList>
   <PropertiesListItem name="version" type="HistoryVersion" required>
@@ -797,6 +1564,261 @@ function VersionPreview({ selectedVersion, onVersionRestore }) {
 The `HistoryVersionPreview` component renders a read-only view of the specified
 version of the editor content. It also provides a button for users to restore
 the displayed version.
+
+### AiToolbar [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+Displays a floating AI toolbar near the current Tiptap selection, allowing you
+to use AI to apply changes to the document or ask questions about it.
+
+```tsx
+<AiToolbar editor={editor} />
+```
+
+Pass your Tiptap `editor` to use the component, and enable (or customize) the AI
+option in [`useLiveblocksExtension`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  AiToolbar,
+  // +++
+  FloatingToolbar,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    // +++
+    ai: true,
+    // +++
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <AiToolbar editor={editor} />
+      // +++
+      <FloatingToolbar editor={editor} />
+    </div>
+  );
+}
+```
+
+#### Opening the toolbar [#AiToolbar-opening]
+
+To open the `AiToolbar`, you need to call the `askAi`
+[command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks.
+
+```tsx
+import { Editor } from "@tiptap/react";
+
+function Toolbar({ editor }: { editor: Editor | null }) {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={() => {
+        // +++
+        editor.chain().focus().askAi().run();
+        // +++
+      }}
+    >
+      ✨ Ask AI
+    </button>
+  );
+}
+```
+
+You can also pass a prompt to the `askAi` command and it will directly request
+it when opening the toolbar.
+
+```tsx
+<button
+  onClick={() => {
+    // +++
+    editor.chain().focus().askAi("Add emojis to the text").run();
+    // +++
+  }}
+>
+  😃 Emojify
+</button>
+```
+
+#### Customizing suggestions [#AiToolbar-suggestions]
+
+By default, the AI toolbar displays a list of suggestions (e.g. “Fix mistakes”,
+“Explain”, etc). These can be customized via the `suggestions` prop and the
+[`AiToolbar.Suggestion`][] component.
+
+```tsx
+<AiToolbar
+  editor={editor}
+  // +++
+  suggestions={
+    <>
+      <AiToolbar.SuggestionsLabel>Suggested</AiToolbar.SuggestionsLabel>
+      <AiToolbar.Suggestion>Fix mistakes</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion prompt="Add emojis to the text">
+        Emojify
+      </AiToolbar.Suggestion>
+      <AiToolbar.SuggestionsSeparator />
+      <AiToolbar.Suggestion icon={<Icon.Sparkles />}>
+        Continue writing
+      </AiToolbar.Suggestion>
+    </>
+  }
+  // +++
+/>
+```
+
+Doing so will override the default suggestions, instead you can use a function
+to keep them while adding your own.
+
+```tsx
+<AiToolbar
+  editor={editor}
+  // +++
+  suggestions={({ children }) => (
+    <>
+      {children}
+      // +++
+      <AiToolbar.SuggestionsSeparator />
+      <AiToolbar.SuggestionsLabel>Custom</AiToolbar.SuggestionsLabel>
+      <AiToolbar.Suggestion>Custom suggestion</AiToolbar.Suggestion>
+    </>
+  )}
+/>
+```
+
+#### Props [#AiToolbar-props]
+
+<PropertiesList>
+  <PropertiesListItem name="editor" type="Editor | null" required>
+    The Tiptap editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="offset" type="number">
+    The vertical offset of the AI toolbar from the selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="suggestions" type="ReactNode">
+    The prompt suggestions to display below the AI toolbar.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### AiToolbar.Suggestion
+
+A prompt suggestion displayed below the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      // +++
+      <AiToolbar.Suggestion>Fix mistakes</AiToolbar.Suggestion>
+      // +++
+    </>
+  }
+/>;
+```
+
+By default, selecting a suggestion will use its label from the `children` as the
+prompt, this can be overridden with the `prompt` prop. Also optionally takes an
+icon.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+import { Icon } from "@liveblocks/react-ui";
+
+// "Translate to French" is displayed in the suggestion and used as the prompt
+<AiToolbar.Suggestion>Translate to French</AiToolbar.Suggestion>
+
+// "Emojify" is displayed in the suggestion but "Add emojis to the text" is used as the prompt
+<AiToolbar.Suggestion prompt="Add emojis to the text">Emojify</AiToolbar.Suggestion>
+
+// Custom icon
+<AiToolbar.Suggestion icon={<div>?</div>}>Explain</AiToolbar.Suggestion>
+
+// Using a Liveblocks icon
+<AiToolbar.Suggestion icon={<Icon.QuestionMark />}>Explain</AiToolbar.Suggestion>
+```
+
+##### Props [#AiToolbarSuggestion-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The suggestion’s label, used as the prompt if the `prompt` prop is not set.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed before the label.
+  </PropertiesListItem>
+  <PropertiesListItem name="prompt" type="string">
+    The prompt to use instead of the label.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### AiToolbar.SuggestionsLabel
+
+A label to describe a group of prompt suggestions displayed in the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      // +++
+      <AiToolbar.SuggestionsLabel>Translation</AiToolbar.SuggestionsLabel>
+      // +++
+      <AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion>Translate in English</AiToolbar.Suggestion>
+    </>
+  }
+/>;
+```
+
+#### AiToolbar.SuggestionsSeparator
+
+A separator between groups of prompt suggestions displayed in the AI toolbar.
+
+```tsx
+import { AiToolbar } from "@liveblocks/react-tiptap";
+
+<AiToolbar
+  editor={editor}
+  suggestions={
+    <>
+      <AiToolbar.Suggestion>Translate in French</AiToolbar.Suggestion>
+      <AiToolbar.Suggestion>Translate in English</AiToolbar.Suggestion>
+      // +++
+      <AiToolbar.SuggestionsSeparator />
+      // +++
+      <AiToolbar.Suggestion>Custom suggestion</AiToolbar.Suggestion>
+    </>
+  }
+/>;
+```
 
 ## Hooks
 
@@ -854,7 +1876,14 @@ function TextEditor() {
     Enable comments in the editor.
   </PropertiesListItem>
   <PropertiesListItem name="mentions" defaultValue="true" type="boolean">
-    Enabled mentions in the editor.
+    Enable mentions in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="ai"
+    defaultValue="false"
+    type="boolean | AiConfiguration"
+  >
+    Enable AI in the editor and optionally customize configuration options.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1006,6 +2035,101 @@ function Threads({ editor }: { editor: Editor }) {
 // +++
 ```
 
+#### Customizing AI components [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+By default, AI components like [`AiToolbar`][] use the term `"AI"`. This can be
+customized with the `ai.name` option in [`useLiveblocksExtension`][]. This value
+will be used throughout the AI components: `"Ask {name}"` in the [`Toolbar`][]/
+[`FloatingToolbar`][] default buttons, `"{name} is thinking…"` in the
+[`AiToolbar`][], etc.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    ai: {
+      // +++
+      // "Ask Liveblocks anything…", "Liveblocks is thinking…", etc
+      name: "Liveblocks",
+      // +++
+    },
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // ...
+}
+```
+
+If you’re after visual customization, AI components like [`AiToolbar`][]
+integrate with the rest of Liveblocks' styles, heavily using tokens like
+`--lb-accent` for example. Learn more about [styling](#Stylesheets).
+
+#### Generating AI toolbar responses [@badge=beta]
+
+<Banner title="Private beta">
+
+AI Copilots is currently in private beta. If you would like access to the beta,
+please [contact us](https://liveblocks.io/contact/sales). We’d love to hear from
+you.
+
+</Banner>
+
+By default, the [`AiToolbar`][] component sends its requests to Liveblocks to
+generate its responses. This can be customized via the
+`ai.resolveContextualPrompt` option in [`useLiveblocksExtension`][]. This option
+accepts an async function which will be called by the AI toolbar whenever a
+prompt is requested, it will receive the prompt and some context (the document’s
+and selection’s text, the previous request if it’s a follow-up, etc) and is
+expected to return the type of response and the text to use.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    ai: {
+      // +++
+      resolveContextualPrompt: async ({ prompt, context, signal }) => {
+        const response = await fetch("/api/contextual-prompt", {
+          method: "POST",
+          body: JSON.stringify({ prompt, context }),
+          signal,
+        });
+
+        return response.json();
+      },
+      // +++
+    },
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // ...
+}
+```
+
 ### useIsEditorReady
 
 Used to check if the editor content has been loaded or not, helpful for
@@ -1068,10 +2192,25 @@ learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
+[`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`Icon`]: /docs/api-reference/liveblocks-react-ui#Icon
+[`Toolbar`]: #Toolbar
+[`Toolbar.Button`]: #Toolbar.Button
+[`Toolbar.Toggle`]: #Toolbar.Toggle
+[`Toolbar.BlockSelector`]: #Toolbar.BlockSelector
+[`Toolbar.Separator`]: #Toolbar.Separator
+[`Toolbar.SectionHistory`]: #Toolbar.SectionHistory
+[`Toolbar.SectionInline`]: #Toolbar.SectionInline
+[`Toolbar.SectionCollaboration`]: #Toolbar.SectionCollaboration
+[`FloatingToolbar`]: #FloatingToolbar
 [`FloatingComposer`]: #FloatingComposer
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
+[`AiToolbar`]: #AiToolbar
+[`AiToolbar.Suggestion`]: #AiToolbar.Suggestion
+[`AiToolbar.SuggestionsLabel`]: #AiToolbar.SuggestionsLabel
+[`AiToolbar.SuggestionsSeparator`]: #AiToolbar.SuggestionsSeparator
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense

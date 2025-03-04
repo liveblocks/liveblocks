@@ -19,11 +19,11 @@
     "format": "turbo run format"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.15.3",
+    "@arethetypeswrong/cli": "^0.17.3",
     "@types/node": "^18.19.70",
     "dependency-cruiser": "^16.9.0",
     "prettier": "^3.4.2",
-    "publint": "^0.2.8",
+    "publint": "^0.3.6",
     "ts-morph": "^22.0.0",
     "tsd": "^0.31.1",
     "tsup": "^8.3.5",

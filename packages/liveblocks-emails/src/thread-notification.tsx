@@ -1,4 +1,5 @@
 import type {
+  Awaitable,
   BaseRoomInfo,
   BaseUserMeta,
   CommentBody,
@@ -6,7 +7,6 @@ import type {
   DRI,
   DU,
   InboxNotificationData,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -41,15 +41,28 @@ export const getUnreadComments = ({
   userId: string;
 }): CommentDataWithBody[] => {
   const commentsWithBody = filterCommentsWithBody(comments);
+  const otherUserComments = commentsWithBody.filter((c) => c.userId !== userId);
+
   const readAt = inboxNotification.readAt;
 
-  return commentsWithBody
-    .filter((c) => c.userId !== userId)
-    .filter((c) =>
-      readAt
-        ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
-        : c.createdAt <= inboxNotification.notifiedAt
-    );
+  return otherUserComments.filter((c) => {
+    // If the notification was read, we only want to comments created after the readAt date
+    // and before (or equal) the notifiedAt date of the inbox notification.
+    //
+    // Same behavior as in the `InboxNotificationThread` component.
+    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+    if (readAt !== null) {
+      return (
+        c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
+      );
+    }
+
+    // Otherwise takes every comments created before (or equal) the notifiedAt date of the inbox notification.
+    //
+    // Same behavior as in the `InboxNotificationThread` component.
+    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+    return c.createdAt <= inboxNotification.notifiedAt;
+  });
 };
 
 /** @internal */
@@ -127,9 +140,7 @@ type PrepareThreadNotificationEmailBaseDataOptions = {
   /**
    * A function that returns room info from room IDs.
    */
-  resolveRoomInfo?: (
-    args: ResolveRoomInfoArgs
-  ) => OptionalPromise<DRI | undefined>;
+  resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 };
 
 export type ThreadNotificationEmailBaseData = (
@@ -259,7 +270,7 @@ export type PrepareThreadNotificationEmailAsHtmlOptions<
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   /**
    * The styles used to customize the html elements in the resulting html safe string inside a comment body.
    * Each styles has priority over the base styles inherited.
@@ -410,7 +421,7 @@ export type PrepareThreadNotificationEmailAsReactOptions<
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   /**
    * The components used to customize the resulting React nodes inside a comment body.
    * Each components has priority over the base components inherited internally defined.

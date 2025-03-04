@@ -1,11 +1,11 @@
 import type {
+  Awaitable,
   BaseUserMeta,
   CommentBody,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyText,
   DU,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -147,7 +147,7 @@ export type ConvertCommentBodyAsReactOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 /**
@@ -281,7 +281,7 @@ export type ConvertCommentBodyAsHtmlOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 /**
@@ -308,7 +308,7 @@ export async function convertCommentBodyAsHtml(
         let children = element.text;
 
         if (!children) {
-          return children;
+          return html`${children}`;
         }
 
         if (element.bold) {
@@ -331,15 +331,15 @@ export async function convertCommentBodyAsHtml(
           children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
         }
 
-        return children;
+        return html`${children}`;
       },
       link: ({ element, href }) => {
         // prettier-ignore
-        return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ?? element.url}</a>`;
+        return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ? html`${element.text}` : element.url}</a>`;
       },
       mention: ({ element, user }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ?? element.id}</span>`;
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
       },
     },
   });

@@ -1,4 +1,4 @@
-import { stringify } from "@liveblocks/core";
+import { stableStringify } from "@liveblocks/core";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -27,7 +27,9 @@ export function useMentionSuggestions(roomId: string, search?: string) {
     }
 
     const resolveMentionSuggestionsArgs = { text: search, roomId };
-    const mentionSuggestionsCacheKey = stringify(resolveMentionSuggestionsArgs);
+    const mentionSuggestionsCacheKey = stableStringify(
+      resolveMentionSuggestionsArgs
+    );
     let debounceTimeout: number | undefined;
     let isCanceled = false;
 

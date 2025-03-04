@@ -69,7 +69,7 @@ that if there are 4 new comments in a thread you’re participating in, you will
 have a single inbox notification for it, instead of 4 “normal” notifications.
 
 Learn more about Notifications for Comments in the
-[overview page](/docs/ready-made-features/comments/notifications).
+[overview page](/docs/ready-made-features/comments/email-notifications).
 
 ## Using webhooks
 
@@ -82,6 +82,15 @@ after activity has occurred, and this can be used to send emails to your users.
 The information it returns allows you to retrieve comments that have not yet
 been read by the user, making it possible to aggregate multiple unread comments
 into a single notification email. Let’s take a look at how to set this up.
+
+### Notification channels
+
+You can send notifications via different channels, such as email, Slack,
+Microsoft Teams, and Web Push. In our dashboard, you can enable notifications on
+certain channels, and in this case, we’ll be using the email channel. You must
+always enable the correct channel to ensure your
+[`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook events
+are triggered, and this guide will take you through setting it up.
 
 ## Create an endpoint in your project
 
@@ -165,6 +174,37 @@ has been created.
       </Figure>
     </StepContent>
   </Step>
+
+<Step>
+  <StepTitle>Go to the notifications dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Notifications”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-notifications.png"
+        alt="Click notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Enable the thread notification type</StepTitle>
+  <StepContent>
+    Click on **“Edit”** at the top right, enable `thread` notifications on the
+    email channel, and publish your changes.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-enable-thread-notification.png"
+        alt="Enable thread notifications"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
 
 <Step>
   <StepTitle>Go to the webhooks dashboard</StepTitle>
@@ -285,10 +325,12 @@ export async function POST(request: Request) {
 ## Check the event and notification permissions
 
 After verifying the request, we can then check we’re receiving the correct type
-of event. There are different `notification` events, and in this case we’d like
-to check for [thread notification](/docs/platform/webhooks#Thread-notification),
-as we’re specifically listening for new comments. We can do this using
-[`ThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent).
+of event, on the correct channel. There are different `notification` events, and
+in this case we’d like to check for
+[thread notification](/docs/platform/webhooks#Thread-notification), as we’re
+specifically listening for new comments. We can do this using
+[`ThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent),
+making sure to check for the `email` channel.
 
 ```ts
 import { WebhookHandler, isThreadNotificationEvent } from "@liveblocks/node";
@@ -314,8 +356,8 @@ export async function POST(request: Request) {
   }
 
   // +++
-  // When an inbox notification has been created
-  if (isThreadNotificationEvent(event)) {
+  // When an inbox notification has been created on the email channel
+  if (isThreadNotificationEvent(event) && event.data.channel === "email") {
     // Check if user has access to room
     if (!__hasRoomAccess__(event.userId, event.roomId)) {
       return new Response(null, { status: 200 });
@@ -406,8 +448,8 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When an inbox notification has been created
-  if (isThreadNotificationEvent(event)) {
+  // When an inbox notification has been created on the email channel
+  if (isThreadNotificationEvent(event) && event.data.channel === "email") {
     // Check if user has access to room
     if (!__hasRoomAccess__(event.userId, event.roomId)) {
       return new Response(null, { status: 200 });
@@ -485,8 +527,8 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When an inbox notification has been created
-  if (isThreadNotificationEvent(event)) {
+  // When an inbox notification has been created on the email channel
+  if (isThreadNotificationEvent(event) && event.data.channel === "email") {
     // Check if user has access to room
     if (!__hasRoomAccess__(event.userId, event.roomId)) {
       return new Response(null, { status: 200 });
@@ -699,8 +741,8 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When an inbox notification has been created
-  if (isThreadNotificationEvent(event)) {
+  // When an inbox notification has been created on the email channel
+  if (isThreadNotificationEvent(event) && event.data.channel === "email") {
     // Check if user has access to room
     if (!__hasRoomAccess__(event.userId, event.roomId)) {
       return new Response(null, { status: 200 });
@@ -812,6 +854,24 @@ export async function POST(request: Request) {
   return new Response(null, { status: 200 });
 }
 ```
+
+## Allow users to toggle notifications
+
+Using Liveblocks hooks and methods, it’s possible to create a notifications
+settings interface, allowing end users to choose which notifications they’d like
+to receive, and on which channels, saving their preferences.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-settings.jpg"
+    alt="Notification settings"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+Learn more in our guide on
+[creating a notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
 
 ## Recap
 

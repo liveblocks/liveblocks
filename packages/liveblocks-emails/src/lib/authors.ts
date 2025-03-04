@@ -1,6 +1,6 @@
 import type {
+  Awaitable,
   BaseUserMeta,
-  OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 
@@ -12,7 +12,7 @@ export const resolveAuthorsInfo = async <U extends BaseUserMeta>({
   userIds: string[];
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 }): Promise<Map<string, U["info"]>> => {
   const resolvedUsers = new Map<string, U["info"]>();
   if (!resolveUsers) {

@@ -1784,6 +1784,106 @@ await liveblocks.deleteAllInboxNotifications({
 });
 ```
 
+#### Liveblocks.getNotificationSettings [#get-users-userId-notification-settings] [@badge=Beta]
+
+Returns a user’s notification settings in the current project, in other words
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the user. User notification settings are project-based, which
+means that this returns the user’s settings for every room. This a wrapper
+around the
+[Get User Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
+
+```ts
+const settings = await liveblocks.getNotificationSettings({
+  userId: "guillaume@liveblocks.io",
+});
+
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+```
+
+A user’s initial settings are set in the dashboard, and different kinds should
+be enabled there. If no kind is enabled on the current channel, `null` will be
+returned. For example, with the email channel:
+
+```ts
+const settings = await liveblocks.getNotificationSettings({
+  userId: "guillaume@liveblocks.io",
+});
+
+// { email: null, ... }
+console.log(settings);
+```
+
+#### Liveblocks.updateNotificationSettings [#post-users-userId-notification-settings] [@badge=Beta]
+
+Updates a user’s notification settings, which affects which
+[notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
+sent for the user. User notification settings are project-based, which means
+that this modifies the user’s settings in every room. Each notification `kind`
+must first be enabled on your project’s notification dashboard page before
+settings can be used. This a wrapper around the
+[Update User Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
+
+```ts
+const updatedSettings = await liveblocks.updateNotificationSettings({
+  userId: "steven@example.com",
+  data: {
+    email: { thread: false },
+    slack: { textMention: true },
+  },
+});
+
+// { email: { thread: false, ... }, slack: { textMention: true, ... }, ... }
+console.log(updatedSettings);
+```
+
+You can pass a partial object, or many settings at once.
+
+```ts
+// You only need to pass partials
+await liveblocks.updateNotificationSettings({
+  userId: "steven@example.com",
+  email: { thread: true },
+});
+
+// Enabling a custom notification on the slack channel
+await liveblocks.updateNotificationSettings({
+  userId: "steven@example.com",
+  slack: { $myCustomNotification: true },
+});
+
+// Setting complex settings
+await liveblocks.updateNotificationSettings({
+  userId: "steven@example.com",
+  email: {
+    thread: true,
+    textMention: false,
+    $newDocument: true,
+  },
+  slack: {
+    thread: false,
+    $fileUpload: false,
+  },
+  teams: {
+    thread: true,
+  },
+});
+```
+
+#### Liveblocks.deleteNotificationSettings [#delete-users-userId-notification-settings] [@badge=Beta]
+
+Deletes the user’s notification settings, resetting them to the default values.
+The default values can be adjusted in a project’s notification dashboard page.
+This a wrapper around the
+[Delete User Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
+
+```ts
+await liveblocks.deleteNotificationSettings({
+  userId: "adri@example.com",
+});
+```
+
 ### Error handling [#error-handling]
 
 Errors in our API methods, such as network failures, invalid arguments, or
@@ -1814,8 +1914,6 @@ try {
   }
 }
 ```
-
----
 
 ## Utilities
 
@@ -2144,6 +2242,30 @@ const event = webhookHandler.verifyRequest({
 // +++
 if (isTextMentionNotificationEvent(event)) {
   // Handle `TextMentionNotificationEvent`
+}
+// +++
+```
+
+### isCustomNotificationEvent [#isCustomNotificationEvent]
+
+Type guard to check if a received webhook event is a
+[`CustomNotificationEvent`](/docs/platform/webhooks#Custom-notification) sent
+from
+[`triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+Particularly helpful for identifying custom notifications when sending email
+notifications.
+
+```js
+import { isCustomNotificationEvent } from "@liveblocks/node";
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+
+// +++
+if (isCustomNotificationEvent(event)) {
+  // Handle `CustomNotificationEvent`
 }
 // +++
 ```

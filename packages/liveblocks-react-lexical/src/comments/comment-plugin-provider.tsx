@@ -5,7 +5,7 @@ import {
   removeClassNamesFromElement,
 } from "@lexical/utils";
 import { shallow } from "@liveblocks/client";
-import { useClient, useRoom, useErrorListener } from "@liveblocks/react";
+import { useClient, useErrorListener, useRoom } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
   useSignal,

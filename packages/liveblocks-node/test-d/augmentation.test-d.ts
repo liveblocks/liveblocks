@@ -176,7 +176,7 @@ async () => {
     expectType<readonly string[]>(root.animals);
     expectType<string>(root.person.name);
     expectType<number>(root.person.age);
-    expectType<number | undefined>(root.scores.get("foo"));
+    expectType<number | undefined>(root.scores["foo"]);
   }
 
   // .getComment()

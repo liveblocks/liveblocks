@@ -12,7 +12,7 @@ import type {
   CommentBodyParagraph,
   CommentBodyText,
 } from "../protocol/Comments";
-import type { OptionalPromise } from "../types/OptionalPromise";
+import type { Awaitable } from "../types/Awaitable";
 
 type CommentBodyBlockElementName = Exclude<
   CommentBodyBlockElement,
@@ -131,7 +131,7 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
    */
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 };
 
 export function isCommentBodyParagraph(
@@ -238,7 +238,7 @@ export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>
 ): Promise<Map<string, U["info"]>> {
   const resolvedUsers = new Map<string, U["info"]>();
 
@@ -472,7 +472,7 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMet
       let children = element.text;
 
       if (!children) {
-        return children;
+        return html`${children}`;
       }
 
       if (element.bold) {
@@ -495,15 +495,15 @@ const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMet
         children = html`<code>${children}</code>`;
       }
 
-      return children;
+      return html`${children}`;
     },
     link: ({ element, href }) => {
       // prettier-ignore
-      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ?? element.url}</a>`;
+      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
     },
     mention: ({ element, user }) => {
       // prettier-ignore
-      return html`<span data-mention>@${user?.name ?? element.id}</span>`;
+      return html`<span data-mention>@${user?.name ? html`${user?.name}` : element.id}</span>`;
     },
   };
 

@@ -1,5 +1,283 @@
 ## vNEXT (not yet published)
 
+## v2.20.0
+
+### `@liveblocks/client`
+
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/node`
+
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/react`
+
+- Add optional `useRoom({ allowOutsideRoom: true })` option. When this option is
+  set, the hook will return `null` when used outside of a room, whereas the
+  default behavior of the hook is be to throw.
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/react-ui`
+
+- Improve mentions behavior around whitespace, fixing a regression introduced in
+  `v2.18.3` when we added support for whitespace _within_ mentions.
+- Prevent mention suggestions from scrolling instead of flipping when there’s
+  enough space on the other side (e.g. moving from top to bottom).
+- Improve event propagation in the formatting toolbar of `Composer`.
+
+## v2.19.0
+
+### `@liveblocks/*`
+
+- Output ES modules by default (but CJS builds are still included)
+- Modernize internal build tool settings
+
+### `@liveblocks/node`
+
+- Allow passing optional AbortSignal to all client methods
+- Fix bug in encoding of error information in the LiveblocksError when an API
+  call fails (thanks for reporting, @robcresswell!)
+- Fix `getStorageDocument("my-room", "json")` typing in its output `LiveMap`
+  instances as `ReadonlyMap` instead of serialized plain objects.
+
+## v2.18.3
+
+### `@liveblocks/node`
+
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/client`
+
+- Log more details in specific error cases to help debugging
+- Fix html escaping in `stringifyCommentBody` utility.
+
+### `@liveblocks/react`
+
+- Increases the allowed stale time for polled user threads data. Only affects
+  the `useUserThreads_experimental` hook.
+
+### `@liveblocks/react-ui`
+
+- Allow spaces and more non-alphanumeric characters when creating mentions in
+  Comments composers.
+
+### `@liveblocks/emails`
+
+- Fix html escaping in prepare as html functions (thanks to @huy-cove for
+  reporting the issue and helping us improving our product 🙏🏻).
+- Revert deduplication logic introduced in `v2.18.0` as it provided no
+  measurable benefits while increasing complexity.
+
+## v2.18.2
+
+### `@liveblocks/client`
+
+- Improve performance of undo/redo operations on large documents (thanks for the
+  contribution @rudi-c!)
+
+### `@liveblocks/react-tiptap`
+
+- Fix a performance regression introduced in 2.18.1
+
+## v2.18.1
+
+### `@liveblocks/react-ui`
+
+- Fix `<Composer />` and `<Comment />` overrides not working when set on
+  `<Thread />`.
+
+### `@liveblocks/yjs`
+
+- Added a factory function `getYjsProviderForRoom` to grab an instance of yjs
+  provider that will be automatically cleaned up when the room is
+  disconnected/changed
+- Simplified types for `LiveblocksYjsProvider`
+
+### `@liveblocks/react-tiptap`
+
+- Fixed a bug where documents would no longer sync after room the ID changed
+
+## v2.18.0
+
+Introducing user notification settings. You can now create beautiful user
+notification settings pages into your app.
+
+### User notification settings (public beta)
+
+Our packages `@liveblocks/client`, `@liveblocks/react` and `@liveblocks/node`
+are now exposing functions to manage user notification settings on different
+notification channels and kinds.
+
+You can support `thread`, `textMention` and custom notification kinds (starting
+by a `$`) on `email`, `Slack`, `Microsoft Teams` and `Web Push` channels.
+
+#### Notification settings in the dashboard
+
+You can choose from our new notifications dashboard page to enable or disable
+notification kinds on every channels you want to use in your app. It means our
+internal notification system on our infrastructure will decide to send or not an
+event on your webhook.
+
+### `@liveblocks/client`
+
+We're adding two new methods in our client to get and update user notification
+settings:
+
+```tsx
+import { createClient } from '@liveblocks/client'
+const client = createClient({ ... })
+
+const settings = await client.getNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await client.updateNotificationSettings({
+  email: {
+    thread: false,
+  }
+});
+```
+
+### `@liveblocks/react`
+
+We're adding a new set of hooks to manage user notification settings.
+
+You can either choose `useNotificationSettings` is your need to get the current
+user notification settings and update them at the same time:
+
+```tsx
+// A suspense version of this hook is available
+import { useNotificationSettings } from "@liveblocks/react";
+
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const onSave = () => {
+  updateSettings({
+    slack: {
+      textMention: true,
+    },
+  });
+};
+```
+
+Or you can choose `useUpdateNotificationSettings` if you just need to update the
+current user notification settings (e.g an unsubscribe button):
+
+```tsx
+// A suspense version of this hook is available
+import { useUpdateNotificationSettings } from "@liveblocks/react";
+
+const updateSettings = useUpdateNotificationSettings();
+
+const onUnsubscribe = () => {
+  updateSettings({
+    slack: {
+      thread: false,
+    },
+  });
+};
+```
+
+### `@liveblocks/node`
+
+Our Node.js client are now exposing three new methods to manage user
+notification settings:
+
+```tsx
+import { Liveblocks } from "@liveblocks/node";
+const liveblocks = new Liveblocks({ secret: "sk_xxx" });
+
+const settings = await liveblocks.getNotificationSettings({ userId });
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+
+const updatedSettings = await liveblocks.updateNotificationSettings({
+  userId,
+  data: {
+    teams: {
+      $fileUploaded: true,
+    },
+  },
+});
+await liveblocks.deleteNotificationSettings({ userId });
+```
+
+### `@liveblocks/emails`
+
+- Update the behavior of `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact`: the contents of previous emails data
+  are now taken into account to avoid repeating mentions and replies that are
+  still unread but have already been extracted in another email data.
+
+## v2.17.0
+
+### `@liveblocks/client`
+
+- Report a console error when a client attempts to send a WebSocket message that
+  is >1 MB (which is not supported). Previously the client would silently fail
+  in this scenario.
+- Added a new client config option `largeMessageStrategy` to allow specifying
+  the preferred strategy for dealing with messages that are too large to send
+  over WebSockets. There now is a choice between:
+  - `default` Don’t send anything, but log the error to the console.
+  - `split` Split the large message up into smaller chunks (at the cost of
+    sacrificing atomicity). Thanks @adam-subframe for the contribution!
+  - `experimental-fallback-to-http` Send the message over HTTP instead of
+    WebSocket.
+- Deprecated the `unstable_fallbackToHTTP` experimental flag (please set
+  `largeMessageStrategy="experimental-fallback-to-http"` instead).
+
+### `@liveblocks/react`
+
+- Added `<LiveblocksProvider largeMessageStrategy="..." />` prop to
+  LiveblocksProvider. See above for possible options.
+
+### `@liveblocks/react-ui`
+
+- Fix crash when a `Composer` is unmounted during its `onComposerSubmit`
+  callback.
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/react-tiptap`
+
+### AI Toolbar (private beta)
+
+This release adds components and utilities to add an AI toolbar to your text
+editor, available in private beta.
+
+- Add `ai` option to `useLiveblocksExtension` to enable (and configure) it.
+- Add `<AiToolbar />` component. (with `<AiToolbar.Suggestion />`,
+  `<AiToolbar.SuggestionsSeparator />`, etc)
+- Add default AI buttons in `Toolbar` and `FloatingToolbar` when the `ai` option
+  is enabled.
+- Add `askAi` Tiptap command to manually open the toolbar, it can also be
+  invoked with a prompt to directly start the request when opening the toolbar.
+  (e.g. `editor.commands.askAi("Explain this text")`)
+
+## v2.16.2
+
+### `@liveblocks/react`
+
+- Improve error message if hooks are accidentally called server side
+
+### `@liveblocks/zustand`
+
+- Fix bug in Zustand typing in case the multi-argument form of `set()` is used
+  (thanks [@hans-lizihan](https://github.com/hans-lizihan))
+
+## v2.16.1
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- `<Toolbar.Button />` and `<Toolbar.Toggle />` now display their `name`
+  visually if `children` and `icon` aren’t set.
+
 ## v2.16.0
 
 Our error listener APIs will now receive more errors in general, including

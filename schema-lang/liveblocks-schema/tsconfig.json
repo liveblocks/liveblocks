@@ -1,20 +1,12 @@
 {
   // Use the same settings for all packages
   "extends": "../../shared/tsconfig.common.json",
-
   "compilerOptions": {
-    "target": "es2015",
-    "module": "es2015",
-    "lib": ["dom", "es2015"],
-
     // Relax the strict defaults a bit. They don't play super well with the
     // generated parser in particular.
     "noUncheckedIndexedAccess": false,
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
-
-    "downlevelIteration": true,
-    "esModuleInterop": true
+    "noUnusedParameters": false
   },
-  "include": ["bin/**/*", "src/**/*"]
+  "include": ["bin", "src"]
 }

@@ -388,12 +388,19 @@ function App() {
     Native](#LiveblocksProviderReactNative).
   </PropertiesListItem>
   <PropertiesListItem
-    name="unstable_fallbackToHTTP"
-    type="boolean"
-    defaultValue="false"
+    name="largeMessageStrategy"
+    detailedType='"default" | "split" | "experimental-fallback-to-http"'
+    defaultValue={`"default"`}
   >
-    Experimental. Automatically fall back to HTTP when a message is too large
-    for WebSockets.
+    <div className="-mb-3">
+      How to handle WebSocket messages that are larger than the maximum message size. Can be set to one of these values:
+    </div>
+
+    - `"default"` Don’t send anything, but log the error to the console.
+    - `"split"` Break the message up into chunks each of which is smaller than the maximum message size.
+      Beware that using `"split"` will sacrifice atomicity of changes! Depending on your use case, this may or may not be problematic.
+    - `"experimental-fallback-to-http"` Try sending the update over HTTP instead of WebSockets (experimental).
+
   </PropertiesListItem>
   <PropertiesListItem
     name="unstable_streamData"
@@ -471,9 +478,9 @@ function App() {
 ```
 
 `room` is the room ID that the user is connecting to. When using
-[Notifications](/docs/ready-made-features/comments/notifications), `room` can be
-`undefined`, as the client is requesting a token that grants access to multiple
-rooms, rather than a specific room.
+[Notifications](/docs/ready-made-features/comments/email-notifications), `room`
+can be `undefined`, as the client is requesting a token that grants access to
+multiple rooms, rather than a specific room.
 
 ##### Fetch your endpoint
 
@@ -780,8 +787,9 @@ function Component() {
 
 #### resolveRoomsInfo [#LiveblocksProviderResolveRoomsInfo]
 
-When using [Notifications](/docs/ready-made-features/comments/notifications)
-with [Comments](/docs/ready-made-features/comments), room IDs will be used to
+When using
+[Notifications](/docs/ready-made-features/comments/email-notifications) with
+[Comments](/docs/ready-made-features/comments), room IDs will be used to
 contextualize notifications (e.g. “Chris mentioned you in _room-id_”) in the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
@@ -1179,8 +1187,9 @@ type).
 
 Storage is used to store permanent data that’s used in your application, such as
 shapes on a whiteboard, nodes on a flowchart, or text in a form. The first time
-a room is entered, you can set an initial value by using `initialStorage`. Note
-that this value is only read a single time.
+a room is entered, you can set an initial value by using `initialStorage`.
+`initialStorage` is only read and set a single time, unless a new top-level
+property is added.
 
 ```tsx
 import { LiveList, LiveObject, LiveMap } from "@liveblocks/client";
@@ -1208,6 +1217,8 @@ function App() {
 }
 ```
 
+If a new top-level property is added to `initialStorage`, the next time a user
+connects, the new property will be created. Other properties will be unaffected.
 Any
 [conflict-free live structures](/docs/api-reference/liveblocks-client#Storage)
 and JSON-serializable objects are allowed (the `LsonObject` type).
@@ -1367,6 +1378,17 @@ component tree.
 import { useRoom } from "@liveblocks/react/suspense";
 
 const room = useRoom();
+```
+
+Will throw when used outside of a [`RoomProvider`][]. If you don’t want this
+hook to throw when used outside of a Room context (for example to write
+components in a way that they can be used both inside and outside of a
+Liveblocks room), you can use the `{ allowOutsideRoom }` option:
+
+```ts
+import { useRoom } from "@liveblocks/react/suspense";
+
+const room = useRoom({ allowOutsideRoom: true }); // Possibly `null`
 ```
 
 ### useIsInsideRoom [@badge=Both]
@@ -1737,8 +1759,8 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 ### useOthers [@badge=RoomProvider]
 
@@ -1765,8 +1787,8 @@ const typingUsers = useOthers(
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -1805,8 +1827,7 @@ arguments.
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
-all changes to the selected data. A [Suspense version][] of this hook is also
-available.
+all changes to the selected data. A [Suspense version][] of this hook is also available.
 
 The key difference with [`useOthers`][] is that the selector (and the optional
 comparison function) work at the _item_ level, like doing a `.map()` over the
@@ -1876,8 +1897,8 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this
-hook is also available.
+subscribe to all changes to the selected data. A [Suspense version][] of this hook
+is also available.
 
 ```tsx
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
@@ -1928,8 +1949,8 @@ function Cursor({ connectionId }) {
 3. Makes sure each cursor remains associated to the same connection.
 4. Makes sure each cursor rerenders whenever _its_ data changes only.
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 ## Broadcast
 
@@ -2589,9 +2610,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw error to the nearest ErrorBoundary if initial load
+failed.
 
 ### useThreadSubscription [@badge=RoomProvider]
 
@@ -2753,14 +2774,16 @@ import { useAttachmentUrl } from "@liveblocks/react/suspense";
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ## Notifications
 
 ### useInboxNotifications [@badge=LiveblocksProvider]
 
-Returns the inbox notifications for the current user.
+Returns the inbox notifications for the current user. Inbox notifications are
+[project-based](/docs/ready-made-features/notifications/concepts#Project-based),
+meaning notifications from outside the current room are received.
 
 ```tsx
 import { useInboxNotifications } from "@liveblocks/react/suspense";
@@ -2768,12 +2791,9 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
-Inbox notifications are
-[project-based](/docs/ready-made-features/notifications/concepts#Project-based),
-meaning notifications from outside the current room are received. By default,
-the `useInboxNotifications` hook returns up to 50 notifications. To fetch more,
-the hook (along with [`useThreads`][]) provides additional fields for
-pagination.
+By default, the `useInboxNotifications` hook returns up to 50 notifications. To
+fetch more, the hook provides additional fields for pagination, similar to
+[`useThreads`][].
 
 ```tsx
 import { useInboxNotifications } from "@liveblocks/react";
@@ -2784,41 +2804,54 @@ const {
   error,
 
   +++
-  // Available in Liveblocks 2.9
+  hasFetchedAll,
   fetchMore,
   isFetchingMore,
-  hasFetchedAll,
   fetchMoreError,
   +++
 } = useInboxNotifications();
 ```
 
-The `hasFetchedAll` field indicates whether all available inbox notifications
-have been fetched since the initial load. To load more inbox notifications, you
-can call the `fetchMore` function. This function is safe to call even if no more
-inbox notifications are available or a fetch is already in progress—it simply
-won't do anything in that case. Therefore, you don't need to check
-`hasFetchedAll` or `isFetchingMore` before calling `fetchMore`.
+- `hasFetchedAll` indicates whether all available inbox notifications have been
+  fetched.
+- `fetchMore` loads up to 50 more notifications, and is always safe to call.
+- `isFetchingMore` indicates whether more notifications are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+#### Pagination [#useInboxNotifications-pagination]
 
 The following example demonstrates how to use the `fetchMore` function to
-implement a "Load More" button, which fetches additional inbox notifications
+implement a “Load More” button, which fetches additional inbox notifications
 when clicked. The button is disabled while fetching is in progress.
 
 ```tsx
-<div>
-  {inboxNotifications.map((notification) => (
-    <InboxNotification key={notification.id}>...</InboxNotification>
-  ))}
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
 
-  {hasFetchedAll ? (
-    <div>🎉 You're all caught up!</div>
-  ) : (
-    <button disabled={isFetchingMore} onClick={fetchMore}>
-      Load more
-    </button>
-  )}
-</div>
+function Inbox() {
+  const { inboxNotifications, hasFetchedAll, fetchMore, isFetchingMore } =
+    useInboxNotifications();
+
+  return (
+    <div>
+      {inboxNotifications.map((notification) => (
+        <InboxNotification key={notification.id}>...</InboxNotification>
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 You're all caught up!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
 ```
+
+#### Error handling [#useInboxNotifications-error-handling]
 
 Error handling is another important aspect to consider when using the
 `useInboxNotifications` hook. The `error` and `fetchMoreError` fields provide
@@ -2830,40 +2863,47 @@ The following example shows how to display error messages for both initial
 loading errors and errors that occur when fetching more inbox notifications.
 
 ```tsx
-import { useInboxNotifications } from "@liveblocks/react";
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
 
-const { inboxNotifications, error, fetchMore, fetchMoreError } =
-  useInboxNotifications();
+function Inbox() {
+  const { inboxNotifications, error, fetchMore, fetchMoreError } =
+    useInboxNotifications();
 
-// Handle error if the initial load failed.
-// The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
-if (error) {
+  // Handle error if the initial load failed.
+  // The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+  // +++
+  if (error) {
+    return (
+      <div>
+        <p>Error loading inbox notifications: {error.message}</p>
+      </div>
+    );
+  }
+  // +++
+
   return (
     <div>
-      <p>Error loading inbox notifications: {error.message}</p>
+      {inboxNotifications.map((notification) => (
+        <InboxNotification key={notification.id}>...</InboxNotification>
+      ))}
+
+      {fetchMoreError && (
+        <div>
+          <p>
+            Error loading more inbox notifications: {fetchMoreError.message}
+          </p>
+          <button onClick={fetchMore}>Retry</button>
+        </div>
+      )}
     </div>
   );
 }
-
-return (
-  <div>
-    {inboxNotifications.map((notification) => (
-      <InboxNotification key={notification.id}>...</InboxNotification>
-    ))}
-
-    {fetchMoreError && (
-      <div>
-        <p>Error loading more inbox notifications: {fetchMoreError.message}</p>
-        <button onClick={fetchMore}>Retry</button>
-      </div>
-    )}
-  </div>
-);
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw error to the nearest ErrorBoundary if initial load
+failed.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -2875,8 +2915,8 @@ import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -2951,27 +2991,226 @@ notification ID you passed to it, without any fetching or waterfalls.
 ### useRoomNotificationSettings [@badge=RoomProvider]
 
 Returns the user’s notification settings for the current room and a function to
-update them.
+update them. Updating this setting will change which
+[`inboxNotifications`](#useInboxNotifications) the current user receives in the
+current room.
 
 ```tsx
 import { useRoomNotificationSettings } from "@liveblocks/react/suspense";
 
 const [{ settings }, updateSettings] = useRoomNotificationSettings();
+
+// { threads: "replies_and_mentions" }
+console.log(settings);
+
+// No longer receive thread notifications in this room
+updateSettings({
+  threads: "none",
+});
 ```
+
+These are the three possible values that can be set:
+
+- `"all"` Receive notifications for every activity.
+- `"replies_and_mentions"` Receive notifications for mentions and thread you’re
+  participating in.
+- `"none"` No notifications are received.
 
 ### useUpdateRoomNotificationSettings [@badge=RoomProvider]
 
 Returns a function that updates the user’s notification settings for the current
-room.
-
-Use this if you don’t need the current user’s notification settings in your
-component, but you need to update them (e.g. an unsubscribe button).
+room. Updating this setting will change which
+[`inboxNotifications`](#useInboxNotifications) the current user receives in the
+current room.
 
 ```tsx
 import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
 
 const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-updateRoomNotificationSettings({ threads: "all" });
+
+// No longer receive thread notifications in this room
+updateSettings({
+  threads: "none",
+});
+```
+
+These are the three possible values that can be set:
+
+- `"all"` Receive notifications for every activity.
+- `"replies_and_mentions"` Receive notifications for mentions and thread you’re
+  participating in.
+- `"none"` No notifications are received.
+
+Works the same as `updateSettings` in
+[`useRoomNotificationSettings`](#useRoomNotificationSettings).
+
+### useNotificationSettings [@badge=LiveblocksProvider]
+
+<Banner>
+
+User notification settings is currently in beta.
+
+</Banner>
+
+Returns the user’s notification settings in the current project, in other words
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the current user. User notification settings are project-based,
+which means that `settings` and `updateSettings` are for the current user’s
+settings in every room. Useful for creating a
+[notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
+
+```tsx
+import { useNotificationSettings } from "@liveblocks/react";
+
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+
+// Current user receives thread notifications on the email channel
+// { email: { thread: true, ... }, ... }
+console.log(settings);
+
+// Disabling thread notifications on the email channel
+updateSettings({
+  email: {
+    thread: false,
+  },
+});
+```
+
+A user’s initial settings are set in the dashboard, and different kinds should
+be enabled there. If no kind is enabled on the current channel, `null` will be
+returned. For example, with the email channel:
+
+```ts
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+
+// { email: null, ... }
+console.log(settings);
+```
+
+#### Updating notification settings [#useNotificationSettings-updating-notification-settings]
+
+The `updateSettings` function can be used to update the current user’s
+notification settings, changing their settings for every room in the project.
+Each notification `kind` must first be enabled on your project’s notification
+dashboard page before settings can be used.
+
+```tsx
+// You only need to pass partials
+updateSettings({
+  email: { thread: true },
+});
+
+// Enabling a custom notification on the slack channel
+updateSettings({
+  slack: { $myCustomNotification: true },
+});
+
+// Setting complex settings
+updateSettings({
+  email: {
+    thread: true,
+    textMention: false,
+    $newDocument: true,
+  },
+  slack: {
+    thread: false,
+    $fileUpload: false,
+  },
+  teams: {
+    thread: true,
+  },
+});
+```
+
+#### Error handling [#useNotificationSettings-error-handling]
+
+Error handling is an important aspect to consider when using the
+`useNotificationSettings` hook. The `error` fields provides information about
+any error that occurred during the fetch operation.
+
+The following example shows how to display error messages for both initial
+loading errors and errors that occur when fetching more inbox notifications.
+
+```tsx
+import { useNotificationSettings } from "@liveblocks/react";
+
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+
+if (error) {
+  return (
+    <div>
+      <p>Error loading user notification settings: {error.message}</p>
+    </div>
+  );
+}
+```
+
+####
+
+👉🏻 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw and error to the nearest `ErrorBoundary` if initial
+load failed.
+
+### useUpdateNotificationSettings [@badge=LiveblocksProvider]
+
+<Banner>
+
+User notification settings is currently in beta.
+
+</Banner>
+
+Returns a function that updates user’s notification settings, which affects
+which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
+will be sent for the current user. User notification settings are project-based,
+which means that `updateSettings` modifies the current user’s settings in every
+room. Each notification `kind` must first be enabled on your project’s
+notification dashboard page before settings can be used. Useful for creating a
+[notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
+
+```tsx
+import { useUpdateNotificationSettings } from "@liveblocks/react";
+
+const updateSettings = useUpdateNotificationSettings();
+
+// Disabling thread notifications on the email channel
+updateSettings({
+  email: { thread: false },
+});
+```
+
+Works the same as `updateSettings` in
+[`useNotificationSettings`](#useNotificationSettings). You can pass a partial
+object, or many settings at once.
+
+```tsx
+// You only need to pass partials
+updateSettings({
+  email: { thread: true },
+});
+
+// Enabling a custom notification on the slack channel
+updateSettings({
+  slack: { $myCustomNotification: true },
+});
+
+// Setting complex settings
+updateSettings({
+  email: {
+    thread: true,
+    textMention: false,
+    $newDocument: true,
+  },
+  slack: {
+    thread: false,
+    $fileUpload: false,
+  },
+  teams: {
+    thread: true,
+  },
+});
 ```
 
 ## Version History
@@ -3008,8 +3247,8 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -3028,8 +3267,8 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 

@@ -25,6 +25,8 @@
 .sectionLabelIcon {
   margin-right: var(--space-4);
   color: var(--color-text);
+  width: 16px;
+  height: 16px;
 }
 
 .sectionAction {

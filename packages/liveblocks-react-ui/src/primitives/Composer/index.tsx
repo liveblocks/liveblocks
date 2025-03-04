@@ -8,12 +8,12 @@ import {
   type EventSource,
   makeEventSource,
 } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
 import {
   useClientOrNull,
   useLayoutEffect,
   useMentionSuggestions,
   useResolveMentionSuggestions,
-  useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
@@ -257,6 +257,8 @@ function ComposerEditorMentionSuggestionsWrapper({
     placement,
     x,
     y,
+    update,
+    elements,
   } = useFloatingWithOptions({
     position,
     dir,
@@ -278,6 +280,38 @@ function ComposerEditorMentionSuggestionsWrapper({
     const domRange = getDOMRange(editor, mentionDraft.range);
     setReference(domRange ?? null);
   }, [setReference, editor, mentionDraft]);
+
+  // Manually update the placement when the number of suggestions changes
+  // This can prevent the list of suggestions from scrolling instead of moving to the other placement
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const mentionSuggestions = elements.floating?.firstChild as
+      | HTMLElement
+      | undefined;
+
+    if (!mentionSuggestions) {
+      return;
+    }
+
+    // Force the mention suggestions to grow instead of scrolling
+    mentionSuggestions.style.overflowY = "visible";
+    mentionSuggestions.style.maxHeight = "none";
+
+    // Trigger a placement update
+    update();
+
+    // Reset the mention suggestions after the placement update
+    const animationFrame = requestAnimationFrame(() => {
+      mentionSuggestions.style.overflowY = "auto";
+      mentionSuggestions.style.maxHeight =
+        "var(--lb-composer-floating-available-height)";
+    });
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [userIds?.length, isOpen, elements.floating, update]);
 
   return (
     <Persist>
@@ -1208,7 +1242,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
-    const room = useRoomOrNull();
+    const room = useRoom({ allowOutsideRoom: true });
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
     if (roomId === undefined) {
@@ -1331,21 +1365,33 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const focus = useCallback(
       (resetSelection = true) => {
-        if (!ReactEditor.isFocused(editor)) {
-          SlateTransforms.select(
-            editor,
-            resetSelection || !editor.selection
-              ? SlateEditor.end(editor, [])
-              : editor.selection
-          );
-          ReactEditor.focus(editor);
+        try {
+          if (!ReactEditor.isFocused(editor)) {
+            SlateTransforms.select(
+              editor,
+              resetSelection || !editor.selection
+                ? SlateEditor.end(editor, [])
+                : editor.selection
+            );
+            ReactEditor.focus(editor);
+          }
+        } catch {
+          // Slate's DOM-specific methods will throw if the editor's DOM
+          // node no longer exists. This action doesn't make sense on an
+          // unmounted editor so we can safely ignore it.
         }
       },
       [editor]
     );
 
     const blur = useCallback(() => {
-      ReactEditor.blur(editor);
+      try {
+        ReactEditor.blur(editor);
+      } catch {
+        // Slate's DOM-specific methods will throw if the editor's DOM
+        // node no longer exists. This action doesn't make sense on an
+        // unmounted editor so we can safely ignore it.
+      }
     }, [editor]);
 
     const createMention = useCallback(() => {
@@ -1662,17 +1708,38 @@ const ComposerMarkToggle = forwardRef<
   ComposerMarkToggleProps
 >(
   (
-    { children, mark, onValueChange, onClick, asChild, ...props },
+    {
+      children,
+      mark,
+      onValueChange,
+      onClick,
+      onPointerDown,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "button";
     const { marks, toggleMark } = useComposer();
+
+    const handlePointerDown = useCallback(
+      (event: PointerEvent<HTMLButtonElement>) => {
+        onPointerDown?.(event);
+
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
 
     const handleClick = useCallback(
       (event: MouseEvent<HTMLButtonElement>) => {
         onClick?.(event);
 
         if (!event.isDefaultPrevented()) {
+          event.preventDefault();
+          event.stopPropagation();
+
           toggleMark(mark);
           onValueChange?.(mark);
         }
@@ -1685,6 +1752,7 @@ const ComposerMarkToggle = forwardRef<
         asChild
         pressed={marks[mark]}
         onClick={handleClick}
+        onPointerDown={handlePointerDown}
         {...props}
       >
         <Component {...props} ref={forwardedRef}>

@@ -5,7 +5,7 @@ import ReactQuill from "react-quill";
 import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
 import * as Y from "yjs";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Toolbar } from "./Toolbar";
@@ -18,21 +18,14 @@ Quill.register("modules/cursors", QuillCursors);
 // Collaborative text editor with simple rich text, live cursors, and live avatars
 export function CollaborativeEditor() {
   const room = useRoom();
+  const provider = getYjsProviderForRoom(room);
   const [text, setText] = useState<Y.Text>();
-  const [provider, setProvider] = useState<any>();
 
   // Set up Liveblocks Yjs provider
   useEffect(() => {
-    const yDoc = new Y.Doc();
+    const yDoc = provider.getYDoc();
     const yText = yDoc.getText("quill");
-    const yProvider = new LiveblocksYjsProvider(room, yDoc);
     setText(yText);
-    setProvider(yProvider);
-
-    return () => {
-      yDoc?.destroy();
-      yProvider?.destroy();
-    };
   }, [room]);
 
   if (!text || !provider) {

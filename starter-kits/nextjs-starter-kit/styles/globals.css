@@ -85,6 +85,7 @@
   --color-alternative-accent: rgb(29, 78, 216);
   --color-surface: rgb(var(--color-gray-100));
   --color-surface-hover: rgb(var(--color-gray-150));
+  --color-surface-active: rgb(var(--color-gray-200));
   --color-surface-elevated: rgb(var(--color-white));
   --color-border: rgb(var(--color-gray-150));
   --color-border-contrasted: rgb(var(--color-gray-250));
@@ -111,6 +112,7 @@
     --color-alternative-accent: rgb(96, 165, 250);
     --color-surface: rgb(var(--color-gray-850));
     --color-surface-hover: rgb(var(--color-gray-800));
+    --color-surface-active: rgb(var(--color-gray-700));
     --color-surface-elevated: rgb(var(--color-gray-950));
     --color-border: rgb(var(--color-gray-750));
     --color-border-contrasted: rgb(var(--color-gray-650));
@@ -166,4 +168,16 @@ html.grabbing * {
 /* Give the text editor mentions/marks a blue accent color */
 .lb-root[class^="lb-tiptap-"], .lb-root[class*=" lb-tiptap-"] {
   --lb-accent: var(--color-alternative-accent);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
