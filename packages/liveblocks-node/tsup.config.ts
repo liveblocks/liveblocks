@@ -8,7 +8,7 @@ export default defineConfig({
   format: ["esm", "cjs"],
   sourcemap: true,
 
-  esbuildOptions(options, _context) {
+  esbuildOptions(options) {
     // Replace __VERSION__ globals with concrete version
     const pkg = require("./package.json");
     options.define.__VERSION__ = JSON.stringify(pkg.version);

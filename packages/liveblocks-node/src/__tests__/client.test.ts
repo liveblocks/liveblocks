@@ -5,11 +5,11 @@ import type {
   ThreadData,
   UserNotificationSettings,
 } from "@liveblocks/core";
+import { getBaseUrl } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
 import { Liveblocks, LiveblocksError } from "../client";
-import { getBaseUrl } from "../utils";
 
 const DEFAULT_BASE_URL = getBaseUrl();
 
