@@ -1708,17 +1708,38 @@ const ComposerMarkToggle = forwardRef<
   ComposerMarkToggleProps
 >(
   (
-    { children, mark, onValueChange, onClick, asChild, ...props },
+    {
+      children,
+      mark,
+      onValueChange,
+      onClick,
+      onPointerDown,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "button";
     const { marks, toggleMark } = useComposer();
+
+    const handlePointerDown = useCallback(
+      (event: PointerEvent<HTMLButtonElement>) => {
+        onPointerDown?.(event);
+
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
 
     const handleClick = useCallback(
       (event: MouseEvent<HTMLButtonElement>) => {
         onClick?.(event);
 
         if (!event.isDefaultPrevented()) {
+          event.preventDefault();
+          event.stopPropagation();
+
           toggleMark(mark);
           onValueChange?.(mark);
         }
@@ -1731,6 +1752,7 @@ const ComposerMarkToggle = forwardRef<
         asChild
         pressed={marks[mark]}
         onClick={handleClick}
+        onPointerDown={handlePointerDown}
         {...props}
       >
         <Component {...props} ref={forwardedRef}>
