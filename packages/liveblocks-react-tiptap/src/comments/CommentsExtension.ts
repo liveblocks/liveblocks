@@ -28,6 +28,15 @@ const Comment = Mark.create({
   excludes: "",
   inclusive: false,
   keepOnSplit: true,
+  parseHTML: () => {
+    return [
+      {
+        tag: "span",
+        getAttrs: (node) =>
+          node.getAttribute("data-lb-thread-id") !== null && null,
+      },
+    ];
+  },
   addAttributes() {
     // Return an object with attribute configuration
     return {
