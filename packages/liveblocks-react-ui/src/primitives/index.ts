@@ -31,20 +31,6 @@ export type {
   ComposerSuggestionsListProps,
 } from "./Composer/types";
 export { AttachmentTooLargeError } from "./Composer/utils";
-export * as EmojiPicker from "./EmojiPicker";
-export type {
-  EmojiPickerContentCategoryHeaderProps,
-  EmojiPickerContentComponents,
-  EmojiPickerContentEmojiProps,
-  EmojiPickerContentEmptyProps,
-  EmojiPickerContentErrorProps,
-  EmojiPickerContentGridProps,
-  EmojiPickerContentLoadingProps,
-  EmojiPickerContentProps,
-  EmojiPickerContentRowProps,
-  EmojiPickerRootProps,
-  EmojiPickerSearchProps,
-} from "./EmojiPicker/types";
 export type { FileSizeProps } from "./FileSize";
 export { FileSize } from "./FileSize";
 export type { TimestampProps } from "./Timestamp";
