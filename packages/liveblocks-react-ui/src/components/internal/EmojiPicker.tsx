@@ -117,6 +117,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
             <EmojiPickerPrimitive.Root
               onEmojiSelect={handleEmojiSelect}
               locale={$.locale as Locale}
+              emojiVersion={15.1}
             >
               <div className="lb-emoji-picker-header">
                 <div className="lb-emoji-picker-search-container">
