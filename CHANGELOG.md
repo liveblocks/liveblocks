@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.20.0
+
 ### `@liveblocks/client`
 
 - Implement a proxy factory for `UserNotificationSettings` object to return
