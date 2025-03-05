@@ -9,7 +9,8 @@ import { addedToDocumentEmail } from "./addedToDocumentEmail";
 import { textMentionEmail } from "./textMentionEmail";
 import { threadEmail } from "./threadEmail";
 
-// TODO add link to guide and more info
+// Learn more
+// https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel
 
 // Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
 const liveblocks = new Liveblocks({
