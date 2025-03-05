@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.16.0",
-    "@liveblocks/node": "^2.16.0",
-    "@liveblocks/react": "^2.16.0",
-    "@liveblocks/yjs": "^2.16.0",
+    "@liveblocks/client": "^2.20.0",
+    "@liveblocks/node": "^2.20.0",
+    "@liveblocks/react": "^2.20.0",
+    "@liveblocks/yjs": "^2.20.0",
     "@tiptap/extension-collaboration": "^2.0.4",
     "@tiptap/extension-collaboration-cursor": "^2.0.4",
     "@tiptap/pm": "^2.0.4",
