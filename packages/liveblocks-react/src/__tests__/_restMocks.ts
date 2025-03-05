@@ -127,6 +127,26 @@ export function mockMarkThreadAsUnresolved(
   );
 }
 
+export function mockSubscribeToThread(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/subscribe`,
+    resolver
+  );
+}
+
+export function mockUnsubscribeFromThread(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/unsubscribe`,
+    resolver
+  );
+}
+
 export function mockMarkInboxNotificationsAsRead(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {
