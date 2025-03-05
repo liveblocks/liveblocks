@@ -34,7 +34,7 @@ export function UserNotificationsSettings() {
   // notification kind is enabled
   // https://liveblocks.io/docs/errors/enable-a-notification-channel
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 w-[600px]">
+    <div className="bg-white rounded-lg shadow-md p-6 w-[600px] border">
       {settings.email ? (
         <>
           <div className="mb-6">
@@ -60,6 +60,7 @@ export function UserNotificationsSettings() {
               Receive Email notifications (all kinds:{" "}
               {getAvailableKinds(settings.email)})
             </SettingSwitch>
+
             <SettingSwitch
               id="threadNotifications"
               checked={settings.email.thread}
