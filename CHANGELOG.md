@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user id correctly to the corresponding backend endpoints.
+
 ## v2.20.0
 
 ### `@liveblocks/client`
@@ -11,8 +16,6 @@
 
 - Implement a proxy factory for `UserNotificationSettings` object to return
   `null` to prevent any errors when accessing a disabled notification channel.
-- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
-  user id correctly to the corresponding backend endpoints.
 
 ### `@liveblocks/react`
 
