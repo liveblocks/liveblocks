@@ -32,7 +32,11 @@ type CommentsOrNotificationsErrorContext =
       metadata: Patchable<BaseMetadata>;
     }
   | {
-      type: "MARK_THREAD_AS_RESOLVED_ERROR" | "MARK_THREAD_AS_UNRESOLVED_ERROR";
+      type:
+        | "MARK_THREAD_AS_RESOLVED_ERROR"
+        | "MARK_THREAD_AS_UNRESOLVED_ERROR"
+        | "SUBSCRIBE_TO_THREAD_ERROR"
+        | "UNSUBSCRIBE_FROM_THREAD_ERROR";
       roomId: string;
       threadId: string;
     }
@@ -135,6 +139,8 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "EDIT_THREAD_METADATA_ERROR": return "Could not edit thread metadata";
     case "MARK_THREAD_AS_RESOLVED_ERROR": return "Could not mark thread as resolved";
     case "MARK_THREAD_AS_UNRESOLVED_ERROR": return "Could not mark thread as unresolved";
+    case "SUBSCRIBE_TO_THREAD_ERROR": return "Could not subscribe to thread";
+    case "UNSUBSCRIBE_FROM_THREAD_ERROR": return "Could not unsubscribe from thread";
     case "CREATE_COMMENT_ERROR": return "Could not create new comment";
     case "EDIT_COMMENT_ERROR": return "Could not edit comment";
     case "DELETE_COMMENT_ERROR": return "Could not delete comment";

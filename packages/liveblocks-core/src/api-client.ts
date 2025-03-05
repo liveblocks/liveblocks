@@ -208,6 +208,22 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     threadId: string;
   }): Promise<void>;
 
+  subscribeToThread({
+    roomId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void>;
+
+  unsubscribeFromThread({
+    roomId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void>;
+
   // Notifications
   markRoomInboxNotificationAsRead({
     roomId,
@@ -765,6 +781,32 @@ export function createApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+  }
+
+  async function subscribeToThread(options: {
+    roomId: string;
+    threadId: string;
+  }) {
+    await httpClient.post(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+  }
+
+  async function unsubscribeFromThread(options: {
+    roomId: string;
+    threadId: string;
+  }) {
+    await httpClient.post(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1524,6 +1566,8 @@ export function createApiClient<M extends BaseMetadata>({
     removeReaction,
     markThreadAsResolved,
     markThreadAsUnresolved,
+    subscribeToThread,
+    unsubscribeFromThread,
     markRoomInboxNotificationAsRead,
     // Room notifications
     getNotificationSettings,
@@ -1543,7 +1587,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room storage
     streamStorage,
     sendMessages,
-    // Notification
+    // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,

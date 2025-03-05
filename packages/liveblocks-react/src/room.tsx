@@ -388,6 +388,8 @@ function makeRoomContextBundle<
     useEditThreadMetadata,
     useMarkThreadAsResolved,
     useMarkThreadAsUnresolved,
+    useSubscribeToThread,
+    useUnsubscribeFromThread,
     useCreateComment,
     useEditComment,
     useDeleteComment,
@@ -451,6 +453,8 @@ function makeRoomContextBundle<
       useEditThreadMetadata,
       useMarkThreadAsResolved,
       useMarkThreadAsUnresolved,
+      useSubscribeToThread,
+      useUnsubscribeFromThread,
       useCreateComment,
       useEditComment,
       useDeleteComment,
@@ -1966,6 +1970,107 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
 }
 
 /**
+ * Returns a function that subscribes the user to a thread.
+ *
+ * @example
+ * const subscribeToThread = useSubscribeToThread();
+ * subscribeToThread("th_xxx");
+ */
+function useSubscribeToThread() {
+  return useSubscribeToRoomThread(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useSubscribeToRoomThread(roomId: string) {
+  const client = useClient();
+
+  return useCallback(
+    (threadId: string) => {
+      // TODO: Optimistically create an inbox notification for the thread (if not already present),
+      //       createComment, createThread, updateRoomNotificationSettings etc, don't do this at the moment?
+
+      client[kInternal].httpClient.subscribeToThread({ roomId, threadId }).then(
+        () => {
+          // TODO: Apply result of subscribeToThread
+        },
+        (err: Error) => {
+          console.error("SUBSCRIBE_TO_THREAD_ERROR", err);
+          // onMutationFailure(optimisticId, { type: "SUBSCRIBE_TO_THREAD_ERROR", roomId, threadId }, err);
+        }
+      );
+    },
+    [client, roomId]
+  );
+}
+
+/**
+ * Returns a function that unsubscribes the user from a thread.
+ *
+ * @example
+ * const unsubscribeFromThread = useUnsubscribeFromThread();
+ * unsubscribeFromThread("th_xxx");
+ */
+function useUnsubscribeFromThread() {
+  return useUnsubscribeFromRoomThread(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useUnsubscribeFromRoomThread(roomId: string) {
+  const client = useClient();
+  return useCallback(
+    (threadId: string) => {
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      const inboxNotification = Object.values(
+        store.outputs.notifications.get().notificationsById
+      ).find(
+        (inboxNotification) =>
+          inboxNotification.kind === "thread" &&
+          inboxNotification.threadId === threadId
+      );
+
+      if (!inboxNotification) return;
+
+      const now = new Date();
+
+      const optimisticId = store.optimisticUpdates.add({
+        type: "delete-inbox-notification",
+        inboxNotificationId: inboxNotification.id,
+        deletedAt: now,
+      });
+
+      client[kInternal].httpClient
+        .unsubscribeFromThread({
+          roomId,
+          threadId,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteInboxNotification(inboxNotification.id, optimisticId);
+          },
+          (err: Error) => {
+            onMutationFailure(
+              optimisticId,
+              {
+                type: "UNSUBSCRIBE_FROM_THREAD_ERROR",
+                roomId,
+                threadId,
+              },
+              err
+            );
+            return;
+          }
+        );
+    },
+    [client, roomId]
+  );
+}
+
+/**
  * Returns the subscription status of a thread.
  *
  * @example
@@ -3126,10 +3231,14 @@ export {
   useStorageStatus,
   useStorageStatusSuspense,
   _useStorageSuspense as useStorageSuspense,
+  useSubscribeToRoomThread,
+  useSubscribeToThread,
   _useThreads as useThreads,
   _useThreadsSuspense as useThreadsSuspense,
   useThreadSubscription,
   useUndo,
+  useUnsubscribeFromRoomThread,
+  useUnsubscribeFromThread,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
   useYjsProvider,

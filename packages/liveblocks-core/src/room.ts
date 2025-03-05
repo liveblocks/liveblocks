@@ -859,6 +859,22 @@ export type Room<
   markThreadAsUnresolved(threadId: string): Promise<void>;
 
   /**
+   * Subscribes the user to a thread.
+   *
+   * @example
+   * await room.subscribeToThread("th_xxx");
+   */
+  subscribeToThread(threadId: string): Promise<void>;
+
+  /**
+   * Unsubscribes the user from a thread.
+   *
+   * @example
+   * await room.unsubscribeFromThread("th_xxx");
+   */
+  unsubscribeFromThread(threadId: string): Promise<void>;
+
+  /**
    * Creates a comment.
    *
    * @example
@@ -2905,6 +2921,14 @@ export function createRoom<
     });
   }
 
+  async function subscribeToThread(threadId: string) {
+    return httpClient.subscribeToThread({ roomId, threadId });
+  }
+
+  async function unsubscribeFromThread(threadId: string) {
+    return httpClient.unsubscribeFromThread({ roomId, threadId });
+  }
+
   async function createComment(options: {
     threadId: string;
     commentId?: string;
@@ -3162,6 +3186,8 @@ export function createRoom<
       editThreadMetadata,
       markThreadAsResolved,
       markThreadAsUnresolved,
+      subscribeToThread,
+      unsubscribeFromThread,
       createComment,
       editComment,
       deleteComment,

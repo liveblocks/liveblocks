@@ -46,6 +46,8 @@ export {
   useEditThreadMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
+  useSubscribeToThread,
+  useUnsubscribeFromThread,
   useEventListener,
   useHistory,
   useIsInsideRoom,

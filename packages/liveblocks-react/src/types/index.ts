@@ -760,6 +760,24 @@ type RoomContextBundleCommon<
   useMarkThreadAsUnresolved(): (threadId: string) => void;
 
   /**
+   * Returns a function that subscribes the user to a thread.
+   *
+   * @example
+   * const subscribeToThread = useSubscribeToThread();
+   * subscribeToThread("th_xxx");
+   */
+  useSubscribeToThread(): (threadId: string) => void;
+
+  /**
+   * Returns a function that unsubscribes the user from a thread.
+   *
+   * @example
+   * const unsubscribeFromThread = useUnsubscribeFromThread();
+   * unsubscribeFromThread("th_xxx");
+   */
+  useUnsubscribeFromThread(): (threadId: string) => void;
+
+  /**
    * Returns a function that adds a comment to a thread.
    *
    * @example

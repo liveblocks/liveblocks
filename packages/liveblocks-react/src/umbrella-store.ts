@@ -1827,7 +1827,7 @@ function applyOptimisticUpdates_forSettings(
       case "update-notification-settings": {
         const settings = settingsByRoomId[optimisticUpdate.roomId];
 
-        // If the inbox notification doesn't exist, we do not apply the update
+        // If the settings don't exist, we do not apply the update
         if (settings === undefined) {
           break;
         }
