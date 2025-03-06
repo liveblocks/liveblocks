@@ -8,7 +8,7 @@ import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
-export default function TiptapEditor() {
+export default function TextEditor() {
 
   const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
 

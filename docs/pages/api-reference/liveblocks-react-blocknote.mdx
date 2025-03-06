@@ -1,0 +1,39 @@
+---
+meta:
+  title: "@liveblocks/react-blocknote"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-blocknote package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/react-blocknote` provides you with a [React](https://react.dev/)
+plugin that adds collaboration to any [BlockNote](https://www.blocknotejs.org/)
+text editor. It also adds realtime cursors, document persistence on the cloud,
+comments, and mentions. Use
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+for server-side editing.
+
+## Setup
+
+To set up your collaborative Blocknote editor, grab an instance of the editor
+with [`useCreateBlockNoteWithLiveblocks`](#useCreateBlockNoteWithLiveblocks) and
+pass it into the `BlockNoteView` component provided by `@blocknote/mantine`.
+
+```tsx
+import { BlockNoteView } from "@blocknote/mantine";
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  // +++
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  // +++
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+    </div>
+  );
+}
+```
+
+## Default components
