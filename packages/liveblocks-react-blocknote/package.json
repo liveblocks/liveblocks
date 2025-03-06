@@ -38,8 +38,8 @@
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
     "start": "npm run dev",
-    "test": "jest --silent --verbose --color=always",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@liveblocks/client": "2.20.0",
@@ -48,7 +48,8 @@
     "@liveblocks/react-tiptap": "2.20.0",
     "@liveblocks/react-ui": "2.20.0",
     "@liveblocks/yjs": "2.20.0",
-    "@tiptap/core": "^2.7.2"
+    "@tiptap/core": "^2.7.2",
+    "vitest-tsconfig-paths": "^3.4.1"
   },
   "peerDependencies": {
     "@blocknote/core": "^0.25.1",
