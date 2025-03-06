@@ -33,6 +33,7 @@ import type {
   PartialUserNotificationSettings,
   UserNotificationSettings,
 } from "./protocol/UserNotificationSettings";
+import { createUserNotificationSettings } from "./protocol/UserNotificationSettings";
 import type {
   LargeMessageStrategy,
   OpaqueRoom,
@@ -835,6 +836,25 @@ export function createClient<U extends BaseUserMeta = DU>(
     win?.addEventListener("beforeunload", maybePreventClose);
   }
 
+  async function getNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<UserNotificationSettings> {
+    const plainSettings = await httpClient.getUserNotificationSettings(options);
+    const settings = createUserNotificationSettings(plainSettings);
+
+    return settings;
+  }
+
+  async function updateNotificationSettings(
+    settings: PartialUserNotificationSettings
+  ): Promise<UserNotificationSettings> {
+    const plainSettings =
+      await httpClient.updateUserNotificationSettings(settings);
+    const settingsObject = createUserNotificationSettings(plainSettings);
+
+    return settingsObject;
+  }
+
   const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
@@ -853,9 +873,9 @@ export function createClient<U extends BaseUserMeta = DU>(
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
 
-      // Public channel notification settings API
-      getNotificationSettings: httpClient.getUserNotificationSettings,
-      updateNotificationSettings: httpClient.updateUserNotificationSettings,
+      // Public user notification settings API
+      getNotificationSettings,
+      updateNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {
