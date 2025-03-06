@@ -2,11 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { createConfig } from "@liveblocks/rollup-config";
-import { createRequire } from "module";
 
-const require = createRequire(import.meta.url);
-/** @type {import('@liveblocks/rollup-config').Pkg} */
-const pkg = require("./package.json");
+import pkg from "./package.json" with { type: "json" };
 
 export default createConfig({
   pkg,

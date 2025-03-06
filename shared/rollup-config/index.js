@@ -240,6 +240,8 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       format === "cjs"
         ? {
             dir: "dist",
+            entryFileNames:
+              pkg.type === "commonjs" ? "[name].js" : "[name].cjs",
             preserveModules: true,
             preserveModulesRoot: "src",
             format: "cjs",
@@ -247,7 +249,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           }
         : {
             dir: "dist",
-            entryFileNames: "[name].mjs",
+            entryFileNames: pkg.type === "module" ? "[name].js" : "[name].mjs",
             preserveModules: true,
             preserveModulesRoot: "src",
             format: "esm",
@@ -271,6 +273,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
         esbuild({
           target: "es2022",
           sourceMap: true,
+          jsx: "automatic",
         }),
         preserveUseClient(),
         replace({
@@ -307,10 +310,14 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       input,
       output: [
         {
-          file: input.replace("src/", "dist/").replace(/\.ts$/, ".d.ts"),
+          file: input
+            .replace("src/", "dist/")
+            .replace(/\.ts$/, pkg.type === "module" ? ".d.ts" : ".d.mts"),
         },
         {
-          file: input.replace("src/", "dist/").replace(/\.ts$/, ".d.mts"),
+          file: input
+            .replace("src/", "dist/")
+            .replace(/\.ts$/, pkg.type === "module" ? ".d.cts" : ".d.ts"),
         },
       ],
       plugins: [dts()],

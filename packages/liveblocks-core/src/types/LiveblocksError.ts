@@ -94,7 +94,6 @@ export class LiveblocksError extends Error {
   public readonly context: LiveblocksErrorContext;
 
   constructor(message: string, context: LiveblocksErrorContext, cause?: Error) {
-    // @ts-expect-error This can be removed once we use lib: ["es2022"] in tsconfig
     super(message, { cause });
     this.context = context;
     this.name = "LiveblocksError";

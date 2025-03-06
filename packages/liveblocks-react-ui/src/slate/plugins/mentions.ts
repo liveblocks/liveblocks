@@ -41,17 +41,6 @@ export function getMentionDraftAtSelection(
         return true;
       }
 
-      const after = SlateEditor.after(editor, point, { unit: "character" });
-
-      if (after) {
-        const characterAfter = getCharacterAfter(editor, after);
-
-        // Ignore "@" if it's followed by a whitespace character
-        if (isWhitespaceCharacter(characterAfter?.text)) {
-          return true;
-        }
-      }
-
       return false;
     },
   });
@@ -65,7 +54,7 @@ export function getMentionDraftAtSelection(
   // Check if the match starts with the mention character (not followed by a whitespace character)
   if (
     !matchText.startsWith(MENTION_CHARACTER) ||
-    isWhitespaceCharacter(matchText[1])
+    (matchText.length > 1 && isWhitespaceCharacter(matchText[1]))
   ) {
     return;
   }

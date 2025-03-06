@@ -7,13 +7,13 @@ import type {
   DM,
 } from "@liveblocks/core";
 import { Permission } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
   useLayoutEffect,
   useResolveMentionSuggestions,
-  useRoomOrNull,
   useRoomPermissions,
 } from "@liveblocks/react/_private";
 import type {
@@ -650,7 +650,7 @@ export const Composer = forwardRef(
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const room = useRoomOrNull();
+    const room = useRoom({ allowOutsideRoom: true });
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
     if (roomId === undefined) {

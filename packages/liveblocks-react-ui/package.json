@@ -1,55 +1,55 @@
 {
   "name": "@liveblocks/react-ui",
-  "version": "2.18.3",
+  "version": "2.20.0",
   "description": "A set of React pre-built components for the Liveblocks products. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
-  "type": "commonjs",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/index.d.ts",
-        "module": "./dist/index.mjs",
-        "default": "./dist/index.js"
+        "types": "./dist/index.d.cts",
+        "module": "./dist/index.js",
+        "default": "./dist/index.cjs"
       }
     },
     "./primitives": {
       "import": {
-        "types": "./dist/primitives/index.d.mts",
-        "default": "./dist/primitives/index.mjs"
+        "types": "./dist/primitives/index.d.ts",
+        "default": "./dist/primitives/index.js"
       },
       "require": {
-        "types": "./dist/primitives/index.d.ts",
-        "module": "./dist/primitives/index.mjs",
-        "default": "./dist/primitives/index.js"
+        "types": "./dist/primitives/index.d.cts",
+        "module": "./dist/primitives/index.js",
+        "default": "./dist/primitives/index.cjs"
       }
     },
     "./_private": {
       "import": {
-        "types": "./dist/_private/index.d.mts",
-        "default": "./dist/_private/index.mjs"
+        "types": "./dist/_private/index.d.ts",
+        "default": "./dist/_private/index.js"
       },
       "require": {
-        "types": "./dist/_private/index.d.ts",
-        "module": "./dist/_private/index.mjs",
-        "default": "./dist/_private/index.js"
+        "types": "./dist/_private/index.d.cts",
+        "module": "./dist/_private/index.js",
+        "default": "./dist/_private/index.cjs"
       }
     },
     "./styles.css": {
-      "types": "./styles.css.d.ts",
+      "types": "./styles.css.d.cts",
       "default": "./styles.css"
     },
     "./styles/dark/media-query.css": {
-      "types": "./styles/dark/media-query.css.d.ts",
+      "types": "./styles/dark/media-query.css.d.cts",
       "default": "./styles/dark/media-query.css"
     },
     "./styles/dark/attributes.css": {
-      "types": "./styles/dark/attributes.css.d.ts",
+      "types": "./styles/dark/attributes.css.d.cts",
       "default": "./styles/dark/attributes.css"
     }
   },
@@ -58,13 +58,14 @@
     "primitives/**",
     "_private/**",
     "**/*.css",
+    "**/*.css.d.cts",
     "**/*.css.d.ts",
     "**/*.css.map",
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.mjs --watch",
-    "build": "rollup --config rollup.config.mjs",
+    "dev": "rollup --config rollup.config.js --watch",
+    "build": "rollup --config rollup.config.js",
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
@@ -75,9 +76,9 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
-    "@liveblocks/client": "2.18.3",
-    "@liveblocks/core": "2.18.3",
-    "@liveblocks/react": "2.18.3",
+    "@liveblocks/client": "2.20.0",
+    "@liveblocks/core": "2.20.0",
+    "@liveblocks/react": "2.20.0",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.0",

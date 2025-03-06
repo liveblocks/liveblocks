@@ -182,9 +182,9 @@ function warn(...args: unknown[]) {
   return console.warn(...args);
 }
 
-const classicExports = listExports("dist/index.d.mts");
-const suspenseExports = listExports("dist/suspense.d.mts");
-const factoryExports = listFactoryExports("../dist/index.mjs");
+const classicExports = listExports("dist/index.d.ts");
+const suspenseExports = listExports("dist/suspense.d.ts");
+const factoryExports = listFactoryExports("../dist/index.js");
 
 function blue(text: string | number): string {
   return `\x1b[34m${text}\x1b[0m`;

@@ -3,8 +3,7 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "module": "es2020",
     "lib": ["dom"]
   },
-  "include": ["src/**/*"]
+  "include": ["src"]
 }

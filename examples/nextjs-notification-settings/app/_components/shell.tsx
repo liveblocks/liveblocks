@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, Suspense } from "react";
+import Link from "next/link";
 
 import { getInitials } from "@/utils/get-initials";
 import {
@@ -27,11 +28,29 @@ export function Shell({ children }: { children?: React.ReactNode }) {
     signOut();
   }, []);
 
+  // For liveblocks.io/examples, open in new tab because auth doesn't work in iframes
+  if (typeof window !== "undefined" && window.self !== window.top) {
+    return (
+      <div className="bg-white flex justify-center items-center absolute inset-0">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+        >
+          Open in new tab
+        </a>
+      </div>
+    );
+  }
+
   return (
     <main className="text-base bg-background/95 text-foreground flex flex-col w-full min-h-screen">
       <div className="flex flex-row w-full items-center justify-between h-[60px] flex-none px-4 border-b border-border/80 bg-background">
         <div className="flex items-center">
-          <h3 className="text-xl font-bold">Liveblocks</h3>
+          <h3 className="text-xl font-bold">
+            <Link href="/">Liveblocks</Link>
+          </h3>
         </div>
         {session ? (
           <div className="flex items-center justify-end gap-0.5">

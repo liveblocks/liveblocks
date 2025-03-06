@@ -1380,6 +1380,17 @@ import { useRoom } from "@liveblocks/react/suspense";
 const room = useRoom();
 ```
 
+Will throw when used outside of a [`RoomProvider`][]. If you don’t want this
+hook to throw when used outside of a Room context (for example to write
+components in a way that they can be used both inside and outside of a
+Liveblocks room), you can use the `{ allowOutsideRoom }` option:
+
+```ts
+import { useRoom } from "@liveblocks/react/suspense";
+
+const room = useRoom({ allowOutsideRoom: true }); // Possibly `null`
+```
+
 ### useIsInsideRoom [@badge=Both]
 
 Returns a boolean, `true` if the hook was called inside a
@@ -3045,7 +3056,8 @@ Returns the user’s notification settings in the current project, in other word
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
 will be sent for the current user. User notification settings are project-based,
 which means that `settings` and `updateSettings` are for the current user’s
-settings in every room.
+settings in every room. Useful for creating a
+[notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
 
 ```tsx
 import { useNotificationSettings } from "@liveblocks/react";
@@ -3063,6 +3075,18 @@ updateSettings({
     thread: false,
   },
 });
+```
+
+A user’s initial settings are set in the dashboard, and different kinds should
+be enabled there. If no kind is enabled on the current channel, `null` will be
+returned. For example, with the email channel:
+
+```ts
+const [{ isLoading, error, settings }, updateSettings] =
+  useNotificationSettings();
+
+// { email: null, ... }
+console.log(settings);
 ```
 
 #### Updating notification settings [#useNotificationSettings-updating-notification-settings]
@@ -3124,6 +3148,8 @@ if (error) {
 }
 ```
 
+####
+
 👉🏻 A [Suspense version][] of this hook is also available, which will never return
 a loading state and will throw and error to the nearest `ErrorBoundary` if initial
 load failed.
@@ -3141,7 +3167,8 @@ which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
 will be sent for the current user. User notification settings are project-based,
 which means that `updateSettings` modifies the current user’s settings in every
 room. Each notification `kind` must first be enabled on your project’s
-notification dashboard page before settings can be used.
+notification dashboard page before settings can be used. Useful for creating a
+[notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
 
 ```tsx
 import { useUpdateNotificationSettings } from "@liveblocks/react";
