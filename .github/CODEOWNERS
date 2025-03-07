@@ -6,6 +6,7 @@
 /packages/liveblocks-react-ui/	@marcbouchenoire @jrowny
 /packages/liveblocks-react-lexical/	@jrowny @nimeshnayaju
 /packages/liveblocks-react-tiptap/	@jrowny @nimeshnayaju
+/packages/liveblocks-react-blocknote/	@jrowny @nimeshnayaju
 /packages/liveblocks-emails/	@sugardarius
 /packages/liveblocks-node/	@nvie @ofoucherot @FlowFlorent
 /packages/liveblocks-node-lexical/	@jrowny
