@@ -85,7 +85,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius, stevenfabre, pierrelevaillant
 
 # Week 8 (2025-02-21)
 
