@@ -70,8 +70,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Examples
 
-- New [Notification settings example](https://liveblocks.io/examples/notification-settings).
+- New example: [Notification settings example](https://liveblocks.io/examples/notification-settings).
 - Improved notification settings panel in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+
+## Website
+
+- New blog post: [Configure each user’s notification settings for email, Slack, and more](https://liveblocks.io/blog/configure-each-users-notifications-settings-for-slack-email-and-more).
+- New blog post: [Liveblocks is now SOC 2 Type 2 and HIPAA compliant](https://liveblocks.io/blog/liveblocks-is-soc2-type-2-hipaa-compliant).
 
 ## Upkeep
 
