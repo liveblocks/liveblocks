@@ -24,6 +24,7 @@ import type { ComponentType, ReactNode } from "react";
 import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
+import { exists } from "./lib/utils";
 
 export type CommentBodyContainerElementArgs<T> = {
   /**
@@ -160,7 +161,7 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
 
               return null;
             })
-            .filter((b) => b !== null);
+            .filter(exists);
 
           return options.elements.paragraph(
             { element: block, children },
@@ -174,7 +175,7 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
           return null;
       }
     })
-    .filter((b) => b !== null);
+    .filter(exists);
 
   return options.elements.container({ children: blocks });
 }
