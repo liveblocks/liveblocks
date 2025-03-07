@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+## `@liveblocks/emails`
+
+- Implement new abstraction protocol to convert comment bodies.
+
 ## v2.20.0
 
 ### `@liveblocks/client`
