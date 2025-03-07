@@ -70,6 +70,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Examples
 
+- New [Notification settings example](https://liveblocks.io/examples/notification-settings).
 - Improved notification settings panel in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
 
 ## Upkeep
