@@ -66,6 +66,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 - New guide: [How to create a notification settings panel](https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel).
 - Improved [Notifications overview](https://liveblocks.io/docs/ready-made-features/notifications) pages, adding info on user notification settings.
 - Improved existing webhooks guides, adding more context about notification channels, and how to create a settings panel.
+- More info about how Text Editor permanently stores documents, and how it's different to Yjs.
 
 ## Examples
 
