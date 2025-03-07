@@ -12,6 +12,14 @@ text editors such as Notion and Google Docs. Liveblocks permanently stores Yjs
 data in each [room](/docs/concepts/how-liveblocks-works#Rooms), handling scaling
 and maintenance for you.
 
+## Text Editor vs Sync Datastore
+
+If you’re using Tiptap or Lexical, we recommend using
+[Text Editor](/docs/ready-made-features/text-editor) instead. This is an
+alternative to Sync Datastore, with extra features specifically created for
+those editors. Sync Datastore, powered by Liveblocks Yjs and Liveblocks Storage,
+is intended for use in other editors, or for completely custom solutions.
+
 ## Yjs API Reference
 
 <ListGrid columns={2}>
@@ -43,8 +51,8 @@ and maintenance for you.
 <ListGrid columns={2}>
   <ExampleCard
     example={{
-      title: "Collaborative Text Editor",
-      slug: "collaborative-text-editor",
+      title: "Collaborative Text Editor (Slate)",
+      slug: "collaborative-text-editor/nextjs-yjs-slate",
       image: "/images/examples/thumbnails/text-editor.jpg",
     }}
     technologies={["nextjs"]}
@@ -52,10 +60,9 @@ and maintenance for you.
   />
   <ExampleCard
     example={{
-      title: "Collaborative Text Editor",
-      slug: "collaborative-text-editor-advanced",
-      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
-      advanced: true,
+      title: "Collaborative Text Editor (Quill)",
+      slug: "collaborative-text-editor/nextjs-yjs-quill",
+      image: "/images/examples/thumbnails/text-editor.jpg",
     }}
     technologies={["nextjs"]}
     openInNewWindow
