@@ -178,11 +178,11 @@ export type ThreadNotificationEmailBaseData = (
 export const prepareThreadNotificationEmailBaseData = async ({
   client,
   event,
-  options = {},
+  options,
 }: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-  options?: PrepareThreadNotificationEmailBaseDataOptions;
+  options: PrepareThreadNotificationEmailBaseDataOptions;
 }): Promise<ThreadNotificationEmailBaseData | null> => {
   const { roomId } = event.data;
 
