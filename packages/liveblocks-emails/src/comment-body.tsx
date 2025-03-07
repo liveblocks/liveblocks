@@ -16,7 +16,6 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
   resolveUsersInCommentBody,
-  stringifyCommentBody,
   toAbsoluteUrl,
 } from "@liveblocks/core";
 import type { ComponentType, ReactNode } from "react";
@@ -317,7 +316,7 @@ export async function convertCommentBodyAsReact(
     ...baseComponents,
     ...options?.components,
   };
-  return await convertCommentBody<ReactNode, BaseUserMeta>(body, {
+  const reactBody = await convertCommentBody<ReactNode, BaseUserMeta>(body, {
     resolveUsers: options?.resolveUsers,
     elements: {
       container: ({ children }) => (
@@ -353,6 +352,8 @@ export async function convertCommentBodyAsReact(
         ) : null,
     },
   });
+
+  return reactBody;
 }
 
 export type ConvertCommentBodyAsHtmlStyles = {
@@ -425,14 +426,16 @@ export async function convertCommentBodyAsHtml(
 ): Promise<string> {
   const styles = { ...baseStyles, ...options?.styles };
 
-  const htmlBody = await stringifyCommentBody(body, {
-    format: "html",
+  const htmlBody = await convertCommentBody<string, BaseUserMeta>(body, {
     resolveUsers: options?.resolveUsers,
+    // NOTE: using prettier-ignore to preserve template strings
     elements: {
-      // NOTE: using prettier-ignore to preserve template strings
-      paragraph: ({ children }) =>
+      container: ({ children }) => children.join("\n"),
+      paragraph: ({ children }) => {
+        const unsafe = children.join("");
         // prettier-ignore
-        children ? html`<p style="${toInlineCSSString(styles.paragraph)}">${htmlSafe(children)}</p>` : children,
+        return unsafe ? html`<p style="${toInlineCSSString(styles.paragraph)}">${htmlSafe(unsafe)}</p>` : unsafe;
+      },
       text: ({ element }) => {
         // Note: construction following the schema 👇
         // <code><s><em><strong>{element.text}</strong></s></em></code>
