@@ -136,18 +136,6 @@ export type CommentEmailBaseData = {
   rawBody: CommentBody;
 };
 
-type PrepareThreadNotificationEmailBaseDataOptions = {
-  /**
-   * A function that returns room info from room IDs.
-   */
-  resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
-};
-
-export type ThreadNotificationEmailBaseData = (
-  | { type: "unreadMention"; comment: CommentEmailBaseData }
-  | { type: "unreadReplies"; comments: CommentEmailBaseData[] }
-) & { roomInfo: DRI };
-
 /** @internal */
 export const makeCommentEmailBaseData = ({
   roomInfo,
@@ -173,6 +161,18 @@ export const makeCommentEmailBaseData = ({
     rawBody: comment.body,
   };
 };
+
+type PrepareThreadNotificationEmailBaseDataOptions = {
+  /**
+   * A function that returns room info from room IDs.
+   */
+  resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
+};
+
+export type ThreadNotificationEmailBaseData = (
+  | { type: "unreadMention"; comment: CommentEmailBaseData }
+  | { type: "unreadReplies"; comments: CommentEmailBaseData[] }
+) & { roomInfo: DRI };
 
 /** @internal */
 export const prepareThreadNotificationEmailBaseData = async ({
