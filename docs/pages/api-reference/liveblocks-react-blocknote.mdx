@@ -769,6 +769,277 @@ the displayed version.
 
 {/* TODO add AiToolbar when it's supported */}
 
+## Hooks
+
+### useCreateBlockNoteWithLiveblocks
+
+Creates a Liveblocks collaborative BlockNote editor. Use this hook instead of
+[`useCreateBlockNote`](https://www.blocknotejs.org/docs/editor-basics/setup#usecreateblocknote-hook).
+`editor` should be passed to
+[`BlockNoteView`](https://www.blocknotejs.org/docs/editor-basics/setup#rendering-the-editor-with-blocknoteview).
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  // +++
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <BlockNoteView editor={editor} />
+      // +++
+    </div>
+  );
+}
+```
+
+A number of options can be applied to BlockNote and Liveblocks.
+
+```tsx
+const editor = useCreateBlockNoteWithLiveblocks(
+  {
+    // +++
+    animations: false,
+    trailingBlock: false,
+    // +++
+
+    // Other BlockNote options
+    // ...
+  },
+  {
+    mentions: true,
+    // +++
+    initialContent: "<p>Hello world</p>",
+    field: "editor-one",
+    // +++
+
+    // Other Liveblocks options
+    // ...
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="liveblocks" type="Extension">
+    Returns a [BlockNote
+    editor](https://www.blocknotejs.org/docs/editor-basics/setup) with
+    collaborative Liveblocks features.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="blockNoteOptions" type="BlockNoteEditorOptions">
+    Options to apply to BlockNote. [Learn
+    more](https://www.blocknotejs.org/docs/editor-basics/setup#usecreateblocknote-hook).
+  </PropertiesListItem>
+  <PropertiesListItem name="liveblocksOptions" type="object">
+    Options to apply to Liveblocks.
+  </PropertiesListItem>
+  <PropertiesListItem name="liveblocksOptions.initialContent" type="Content">
+    The initial content for the editor, if it’s never been set. [Learn
+    more](#Setting-initial-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="liveblocksOptions.field" type="string">
+    The name of this text editor’s field. Allows you to use multiple editors on
+    one page, if each has a separate field value. [Learn
+    more](#Multiple-editors).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.offlineSupport_experimental"
+    defaultValue="false"
+    type="boolean"
+  >
+    Experimental. Enable offline support using IndexedDB. This means the after
+    the first load, documents will be stored locally and load instantly. [Learn
+    more](#Offline-support).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.comments"
+    defaultValue="true"
+    type="boolean"
+  >
+    Enable comments in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.mentions"
+    defaultValue="false"
+    type="boolean"
+  >
+    Enable mentions in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.ai"
+    defaultValue="false"
+    type="boolean | AiConfiguration"
+  >
+    Enable AI in the editor and optionally customize configuration options.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting initial content
+
+Initial content for the editor can be set with `initialContent`. This content
+will only be used if the current editor has never been edited by any users, and
+is ignored otherwise.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      initialContent: "<p>Hello world</p>",
+      // +++
+    }
+  );
+
+  // ...
+}
+```
+
+#### Multiple editors
+
+It’s possible to use multiple editors on one page by passing values to the
+`field` property. Think of it like an ID for the current editor.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      field: "editor-one",
+      // +++
+    }
+  );
+
+  // ...
+}
+```
+
+Here’s an example of how multiple editors may be set up.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditors() {
+  return (
+    <div>
+      // +++
+      <TextEditor field="one" />
+      <TextEditor field="two" />
+      // +++
+    </div>
+  );
+}
+
+function TextEditor({ field }: { field: string }) {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      field,
+      // +++
+    }
+  );
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+    </div>
+  );
+}
+```
+
+#### Offline support [@badge=experimental]
+
+It’s possible to enable offline support in your editor with an experimental
+option. This means that once a document has been opened, it’s saved locally on
+the browser, and can be shown instantly without a loading screen. As soon as
+Liveblocks connects, any remote changes will be synchronized, without any load
+spinner. Enable this by passing a `offlineSupport_experimental ` value.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      offlineSupport_experimental: true,
+      // +++
+    }
+  );
+
+  // ...
+}
+```
+
+To make sure that your editor loads instantly, you must structure your app
+carefully to avoid any Liveblocks hooks and [`ClientSideSuspense`][] components
+from triggering a loading screen. For example, if you’re displaying threads in
+your editor with [`useThreads`][], you must place this inside a separate
+component and wrap it in [`ClientSideSuspense`][].
+
+```tsx
+"use client";
+
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
+import {
+  useCreateBlockNoteWithLiveblocks,
+  AnchoredThreads,
+  FloatingComposer,
+} from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+import { BlockNoteEditor } from "@blocknote/core";
+
+export function TiptapEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      offlineSupport_experimental: true,
+      // +++
+    }
+  );
+
+  return (
+    <>
+      <BlockNoteView editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: 350 }} />
+      // +++
+      <ClientSideSuspense fallback={null}>
+        <Threads editor={editor} />
+      </ClientSideSuspense>
+      // +++
+    </>
+  );
+}
+
+// +++
+function Threads({ editor }: { editor: BlockNoteEditor }) {
+  const { threads } = useThreads();
+
+  return <AnchoredThreads editor={editor} threads={threads} />;
+}
+// +++
+```
+
 [`LiveblocksPlugin`]: #LiveblocksPlugin
 [`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
