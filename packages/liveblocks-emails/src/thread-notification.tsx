@@ -1,7 +1,6 @@
 import type {
   Awaitable,
   BaseUserMeta,
-  CommentBody,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyText,
@@ -136,16 +135,6 @@ export type CommentEmailData<BodyType, U extends BaseUserMeta = DU> = {
   url?: string;
   author: U;
   body: BodyType;
-};
-
-export type CommentEmailBaseData = {
-  id: string;
-  threadId: string;
-  roomId: string;
-  userId: string;
-  createdAt: Date;
-  url?: string;
-  rawBody: CommentBody;
 };
 
 export type ThreadNotificationEmailData<
