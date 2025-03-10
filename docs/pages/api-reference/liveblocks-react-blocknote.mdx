@@ -119,8 +119,6 @@ function TextEditor() {
 
 #### Opening the composer
 
-{/* TODO improve this when I have more info */}
-
 To open the `FloatingComposer`, you need to click the comment button in the
 BlockNote toolbar, or call the `addPendingComment`
 [command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
@@ -138,11 +136,13 @@ function Toolbar({ editor }: { editor: BlockNoteEditor | null }) {
     <button
       onClick={() => {
         // +++
-        editor.chain().focus().addPendingComment().run();
+        (editor._tiptapEditor as any).chain().focus().addPendingComment().run();
         // +++
       }}
       // +++
-      data-active={editor.isActive("liveblocksCommentMark")}
+      data-active={(editor._tiptapEditor as any).isActive(
+        "liveblocksCommentMark"
+      )}
       // +++
     >
       💬 New comment
@@ -1040,6 +1040,56 @@ function Threads({ editor }: { editor: BlockNoteEditor }) {
 // +++
 ```
 
+Here’s how it can be used in the context of your editor.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+// +++
+import { useIsEditorReady, useEditor, EditorContent } from "@tiptap/react";
+// +++
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+  // +++
+  const ready = useIsEditorReady();
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      // +++
+      {!ready ? <div>Loading...</div> : <EditorContent editor={editor} />}
+      // +++
+    </div>
+  );
+}
+```
+
+## Stylesheets
+
+React BlockNote comes with default styles, and these can be imported into the
+root of your app or directly into a CSS file with `@import`. Note that you must
+also install and import a stylesheet from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) to use these
+styles.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-blocknote/styles.css";
+```
+
+### Customizing your styles
+
+Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
+learn how to do this under
+[styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
+
 [`LiveblocksPlugin`]: #LiveblocksPlugin
 [`useLiveblocksExtension`]: #useLiveblocksExtension
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
@@ -1050,8 +1100,4 @@ function Threads({ editor }: { editor: BlockNoteEditor }) {
 [`FloatingComposer`]: #FloatingComposer
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
-[`AiToolbar`]: #AiToolbar
-[`AiToolbar.Suggestion`]: #AiToolbar.Suggestion
-[`AiToolbar.SuggestionsLabel`]: #AiToolbar.SuggestionsLabel
-[`AiToolbar.SuggestionsSeparator`]: #AiToolbar.SuggestionsSeparator
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense
