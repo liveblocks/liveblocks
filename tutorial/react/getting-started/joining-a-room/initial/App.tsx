@@ -9,8 +9,6 @@ export default function App() {
   const roomId = "{% ROOM_ID %}";
   const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
-  // vite pls
-
   return (
     <LiveblocksProvider publicApiKey={publicApiKey}>
       <div>Not in a room</div>
