@@ -286,7 +286,7 @@ export async function prepareThreadNotificationEmail<
         type: "unreadReplies",
         comments: comments.map((comment, index) => {
           const authorInfo = authorsInfo.get(comment.userId);
-          const commentBody = commentBodies[index];
+          const commentBody = commentBodies[index] as BodyType;
 
           const url = roomInfo?.url
             ? generateCommentUrl({
@@ -305,7 +305,7 @@ export async function prepareThreadNotificationEmail<
             } as U,
             createdAt: comment.createdAt,
             url,
-            body: commentBody as BodyType,
+            body: commentBody,
           };
         }),
         roomInfo: resolvedRoomInfo,
