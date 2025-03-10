@@ -523,6 +523,10 @@
         "path": "/api-reference/liveblocks-react-tiptap"
       },
       {
+        "title": "@liveblocks/react-blocknote",
+        "path": "/api-reference/liveblocks-react-blocknote"
+      },
+      {
         "title": "@liveblocks/node-prosemirror",
         "path": "/api-reference/liveblocks-node-prosemirror"
       },

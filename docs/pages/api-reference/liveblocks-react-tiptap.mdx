@@ -906,7 +906,8 @@ function TextEditor() {
 
 #### Opening the composer
 
-To open the `FloatingComposer`, you need to call the `addPendingComment`
+To open the `FloatingComposer`, you need to click the “Comment” button in the
+[`Toolbar`][] or call the `addPendingComment`
 [command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
 can use `liveblocksCommentMark` to check if the current selection is a comment.
 
@@ -1527,7 +1528,7 @@ hear from you.
 </Banner>
 
 The `HistoryVersionPreview` component allows you to display a preview of a
-specific version of your Tiptap editor's content. It also contains a button and
+specific version of your Tiptap editor’s content. It also contains a button and
 logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
 render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
