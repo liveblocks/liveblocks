@@ -1,33 +1,35 @@
 import type {
   Awaitable,
-  BaseRoomInfo,
   BaseUserMeta,
   CommentBody,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentBodyText,
   CommentData,
   DRI,
   DU,
   InboxNotificationData,
+  Relax,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
   generateCommentUrl,
   getMentionedIdsFromCommentBody,
+  html,
+  htmlSafe,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
-import type {
-  ConvertCommentBodyAsHtmlStyles,
-  ConvertCommentBodyAsReactComponents,
-} from "./comment-body";
-import {
-  convertCommentBodyAsHtml,
-  convertCommentBodyAsReact,
-} from "./comment-body";
+import type { ConvertCommentBodyElements } from "./comment-body";
+import { convertCommentBody } from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
 import { resolveAuthorsInfo } from "./lib/authors";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import { MENTION_CHARACTER } from "./lib/constants";
+import type { CSSProperties } from "./lib/css-properties";
+import { toInlineCSSString } from "./lib/css-properties";
 import type { ResolveRoomInfoArgs } from "./lib/types";
 
 /** @internal */
@@ -126,6 +128,16 @@ export const extractThreadNotificationData = async ({
   };
 };
 
+export type CommentEmailData<BodyType, U extends BaseUserMeta = DU> = {
+  id: string;
+  threadId: string;
+  roomId: string;
+  createdAt: Date;
+  url?: string;
+  author: U;
+  body: BodyType;
+};
+
 export type CommentEmailBaseData = {
   id: string;
   threadId: string;
@@ -136,141 +148,236 @@ export type CommentEmailBaseData = {
   rawBody: CommentBody;
 };
 
+export type ThreadNotificationEmailData<
+  BodyType,
+  U extends BaseUserMeta = DU,
+> = Relax<
+  | {
+      type: "unreadReplies";
+      comments: CommentEmailData<BodyType, U>[];
+    }
+  | {
+      type: "unreadMention";
+      comment: CommentEmailData<BodyType, U>;
+    }
+> & { roomInfo: DRI };
+
+export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> =
+  CommentEmailData<string, U>;
+export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
+  CommentEmailData<ReactNode, U>;
+
 /** @internal */
-export const makeCommentEmailBaseData = ({
-  roomInfo,
-  comment,
-}: {
-  roomInfo: BaseRoomInfo | undefined;
-  comment: CommentDataWithBody;
-}): CommentEmailBaseData => {
-  const url = roomInfo?.url
-    ? generateCommentUrl({
-        roomUrl: roomInfo?.url,
-        commentId: comment.id,
-      })
-    : undefined;
-
-  return {
-    id: comment.id,
-    userId: comment.userId,
-    threadId: comment.threadId,
-    roomId: comment.roomId,
-    createdAt: comment.createdAt,
-    url,
-    rawBody: comment.body,
-  };
-};
-
-type PrepareThreadNotificationEmailBaseDataOptions = {
+type PrepareThreadNotificationEmailOptions<
+  BodyType,
+  U extends BaseUserMeta = DU,
+> = {
   /**
    * A function that returns room info from room IDs.
    */
   resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
-};
 
-export type ThreadNotificationEmailBaseData = (
-  | { type: "unreadMention"; comment: CommentEmailBaseData }
-  | { type: "unreadReplies"; comments: CommentEmailBaseData[] }
-) & { roomInfo: DRI };
-
-/** @internal */
-export const prepareThreadNotificationEmailBaseData = async ({
-  client,
-  event,
-  options,
-}: {
-  client: Liveblocks;
-  event: ThreadNotificationEvent;
-  options: PrepareThreadNotificationEmailBaseDataOptions;
-}): Promise<ThreadNotificationEmailBaseData | null> => {
-  const { roomId } = event.data;
-
-  const roomInfo = options.resolveRoomInfo
-    ? await options.resolveRoomInfo({ roomId })
-    : undefined;
-  const resolvedRoomInfo: DRI = {
-    ...roomInfo,
-    name: roomInfo?.name ?? roomId,
-  };
-
-  const data = await extractThreadNotificationData({ client, event });
-  if (data === null) {
-    return null;
-  }
-
-  switch (data.type) {
-    case "unreadMention":
-      return {
-        type: "unreadMention",
-        comment: makeCommentEmailBaseData({
-          roomInfo,
-          comment: data.comment,
-        }),
-        roomInfo: resolvedRoomInfo,
-      };
-    case "unreadReplies": {
-      return {
-        type: "unreadReplies",
-        comments: data.comments.map((comment) =>
-          makeCommentEmailBaseData({ roomInfo, comment })
-        ),
-        roomInfo: resolvedRoomInfo,
-      };
-    }
-  }
-};
-
-export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
-  CommentEmailBaseData,
-  "userId" | "rawBody"
-> & {
-  author: U;
-  htmlBody: string;
-};
-
-export type CommentEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
-  CommentEmailBaseData,
-  "userId" | "rawBody"
-> & {
-  author: U;
-  reactBody: ReactNode;
-};
-
-type ThreadNotificationEmailUnreadRepliesData<
-  U extends BaseUserMeta,
-  C extends CommentEmailAsHtmlData<U> | CommentEmailAsReactData<U>,
-> = {
-  type: "unreadReplies";
-  comments: C[];
-};
-
-type ThreadNotificationEmailUnreadMentionsData<
-  U extends BaseUserMeta,
-  C extends CommentEmailAsHtmlData<U> | CommentEmailAsReactData<U>,
-> = {
-  type: "unreadMention";
-  comment: C;
-};
-
-// Note: export for testing helpers
-export type ThreadNotificationEmailData<
-  U extends BaseUserMeta,
-  C extends CommentEmailAsHtmlData<U> | CommentEmailAsReactData<U>,
-> = (
-  | ThreadNotificationEmailUnreadRepliesData<U, C>
-  | ThreadNotificationEmailUnreadMentionsData<U, C>
-) & { roomInfo: DRI };
-
-export type PrepareThreadNotificationEmailAsHtmlOptions<
-  U extends BaseUserMeta = DU,
-> = PrepareThreadNotificationEmailBaseDataOptions & {
   /**
    * A function that returns info from user IDs.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * Comments body elements customizations.
+   */
+  elements: ConvertCommentBodyElements<BodyType, U>;
+};
+
+/**
+ * @internal
+ * exported for testing purposes.
+ *
+ * We might want to export this function public in the future,
+ * to allow customers to prepare the email data with their own formats
+ * for rendering comments bodies
+ */
+export async function prepareThreadNotificationEmail<
+  BodyType,
+  U extends BaseUserMeta = DU,
+>(
+  client: Liveblocks,
+  event: ThreadNotificationEvent,
+  options: PrepareThreadNotificationEmailOptions<BodyType, U>
+): Promise<ThreadNotificationEmailData<BodyType, U> | null> {
+  const data = await extractThreadNotificationData({ client, event });
+  if (data === null) {
+    return null;
+  }
+
+  const roomInfo = options.resolveRoomInfo
+    ? await options.resolveRoomInfo({ roomId: event.data.roomId })
+    : undefined;
+
+  const resolvedRoomInfo: DRI = {
+    ...roomInfo,
+    name: roomInfo?.name ?? event.data.roomId,
+  };
+
+  const batchUsersResolver = createBatchUsersResolver<U>({
+    resolveUsers: options.resolveUsers,
+    callerName: "prepareThreadNotificationEmail",
+  });
+
+  switch (data.type) {
+    case "unreadMention": {
+      const { comment } = data;
+
+      const authorsInfoPromise = resolveAuthorsInfo({
+        userIds: [comment.userId],
+        resolveUsers: batchUsersResolver.resolveUsers,
+      });
+
+      const commentBodyPromise = convertCommentBody<BodyType, U>(comment.body, {
+        resolveUsers: batchUsersResolver.resolveUsers,
+        elements: options.elements,
+      });
+
+      await batchUsersResolver.resolve();
+
+      const [authorsInfo, commentBody] = await Promise.all([
+        authorsInfoPromise,
+        commentBodyPromise,
+      ]);
+
+      const authorInfo = authorsInfo.get(comment.userId);
+      const url = roomInfo?.url
+        ? generateCommentUrl({
+            roomUrl: roomInfo?.url,
+            commentId: comment.id,
+          })
+        : undefined;
+
+      return {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: comment.threadId,
+          roomId: comment.roomId,
+          author: {
+            id: comment.userId,
+            info: authorInfo ?? { name: comment.userId },
+          } as U,
+          createdAt: comment.createdAt,
+          url,
+          body: commentBody as BodyType,
+        },
+        roomInfo: resolvedRoomInfo,
+      };
+    }
+    case "unreadReplies": {
+      const { comments } = data;
+
+      const authorsInfoPromise = resolveAuthorsInfo({
+        userIds: comments.map((c) => c.userId),
+        resolveUsers: batchUsersResolver.resolveUsers,
+      });
+
+      const commentBodiesPromises = comments.map((c) =>
+        convertCommentBody<BodyType, U>(c.body, {
+          resolveUsers: batchUsersResolver.resolveUsers,
+          elements: options.elements,
+        })
+      );
+
+      await batchUsersResolver.resolve();
+
+      const [authorsInfo, ...commentBodies] = await Promise.all([
+        authorsInfoPromise,
+        ...commentBodiesPromises,
+      ]);
+
+      return {
+        type: "unreadReplies",
+        comments: comments.map((comment, index) => {
+          const authorInfo = authorsInfo.get(comment.userId);
+          const commentBody = commentBodies[index];
+
+          const url = roomInfo?.url
+            ? generateCommentUrl({
+                roomUrl: roomInfo?.url,
+                commentId: comment.id,
+              })
+            : undefined;
+
+          return {
+            id: comment.id,
+            threadId: comment.threadId,
+            roomId: comment.roomId,
+            author: {
+              id: comment.userId,
+              info: authorInfo ?? { name: comment.userId },
+            } as U,
+            createdAt: comment.createdAt,
+            url,
+            body: commentBody as BodyType,
+          };
+        }),
+        roomInfo: resolvedRoomInfo,
+      };
+    }
+  }
+}
+
+/**
+ * The styles used to customize the html elements in the resulting html safe string.
+ * Each styles has priority over the base styles inherited.
+ */
+export type ConvertCommentBodyAsHtmlStyles = {
+  /**
+   * The default inline CSS styles used to display paragraphs.
+   */
+  paragraph: CSSProperties;
+  /**
+   * The default inline CSS styles used to display text `<strong />` elements.
+   */
+  strong: CSSProperties;
+  /**
+   * The default inline CSS styles used to display text `<code />` elements.
+   */
+  code: CSSProperties;
+  /**
+   * The default inline CSS styles used to display links.
+   */
+  mention: CSSProperties;
+  /**
+   * The default inline CSS styles used to display mentions.
+   */
+  link: CSSProperties;
+};
+
+const baseStyles: ConvertCommentBodyAsHtmlStyles = {
+  paragraph: {
+    fontSize: "14px",
+  },
+  strong: {
+    fontWeight: 500,
+  },
+  code: {
+    fontFamily:
+      'ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace',
+    backgroundColor: "rgba(0,0,0,0.05)",
+    border: "solid 1px rgba(0,0,0,0.1)",
+    borderRadius: "4px",
+  },
+  mention: {
+    color: "blue",
+  },
+  link: {
+    textDecoration: "underline",
+  },
+};
+
+export type PrepareThreadNotificationEmailAsHtmlOptions<
+  BodyType,
+  U extends BaseUserMeta = DU,
+> = Omit<PrepareThreadNotificationEmailOptions<BodyType, U>, "elements"> & {
   /**
    * The styles used to customize the html elements in the resulting html safe string inside a comment body.
    * Each styles has priority over the base styles inherited.
@@ -278,10 +385,8 @@ export type PrepareThreadNotificationEmailAsHtmlOptions<
   styles?: Partial<ConvertCommentBodyAsHtmlStyles>;
 };
 
-export type ThreadNotificationEmailDataAsHtml = ThreadNotificationEmailData<
-  BaseUserMeta,
-  CommentEmailAsHtmlData
->;
+export type ThreadNotificationEmailDataAsHtml<U extends BaseUserMeta = DU> =
+  ThreadNotificationEmailData<string, U>;
 
 /**
  * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as an html safe string.
@@ -312,110 +417,186 @@ export type ThreadNotificationEmailDataAsHtml = ThreadNotificationEmailData<
 export async function prepareThreadNotificationEmailAsHtml(
   client: Liveblocks,
   event: ThreadNotificationEvent,
-  options: PrepareThreadNotificationEmailAsHtmlOptions<BaseUserMeta> = {}
+  options: PrepareThreadNotificationEmailAsHtmlOptions<
+    string,
+    BaseUserMeta
+  > = {}
 ): Promise<ThreadNotificationEmailDataAsHtml | null> {
-  const data = await prepareThreadNotificationEmailBaseData({
+  const styles = { ...baseStyles, ...options?.styles };
+  const data = await prepareThreadNotificationEmail<string, BaseUserMeta>(
     client,
     event,
-    options: { resolveRoomInfo: options.resolveRoomInfo },
-  });
-
-  if (data === null) {
-    return null;
-  }
-
-  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
-    resolveUsers: options.resolveUsers,
-    callerName: "prepareThreadNotificationEmailAsHtml",
-  });
-
-  switch (data.type) {
-    case "unreadMention": {
-      const { comment } = data;
-
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: [comment.userId],
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
-      const commentBodyPromise = convertCommentBodyAsHtml(comment.rawBody, {
-        resolveUsers: batchUsersResolver.resolveUsers,
-        styles: options.styles,
-      });
-
-      await batchUsersResolver.resolve();
-
-      const [authorsInfo, commentBodyHtml] = await Promise.all([
-        authorsInfoPromise,
-        commentBodyPromise,
-      ]);
-      const authorInfo = authorsInfo.get(comment.userId);
-
-      return {
-        type: "unreadMention",
-        comment: {
-          id: comment.id,
-          threadId: comment.threadId,
-          roomId: comment.roomId,
-          author: {
-            id: comment.userId,
-            info: authorInfo ?? { name: comment.userId },
-          },
-          createdAt: comment.createdAt,
-          url: comment.url,
-          htmlBody: commentBodyHtml,
+    {
+      resolveUsers: options.resolveUsers,
+      resolveRoomInfo: options.resolveRoomInfo,
+      elements: {
+        container: ({ children }) => children.join("\n"),
+        paragraph: ({ children }) => {
+          const unsafe = children.join("");
+          // prettier-ignore
+          return unsafe ? html`<p style="${toInlineCSSString(styles.paragraph)}">${htmlSafe(unsafe)}</p>` : unsafe;
         },
-        roomInfo: data.roomInfo,
-      };
+        text: ({ element }) => {
+          // Note: construction following the schema 👇
+          // <code><s><em><strong>{element.text}</strong></s></em></code>
+          let children = element.text;
+
+          if (!children) {
+            return html`${children}`;
+          }
+
+          if (element.bold) {
+            // prettier-ignore
+            children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
+          }
+
+          if (element.italic) {
+            // prettier-ignore
+            children = html`<em>${children}</em>`;
+          }
+
+          if (element.strikethrough) {
+            // prettier-ignore
+            children = html`<s>${children}</s>`;
+          }
+
+          if (element.code) {
+            // prettier-ignore
+            children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
+          }
+
+          return html`${children}`;
+        },
+        link: ({ element, href }) => {
+          // prettier-ignore
+          return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ? html`${element.text}` : element.url}</a>`;
+        },
+        mention: ({ element, user }) => {
+          // prettier-ignore
+          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
+        },
+      },
     }
-    case "unreadReplies": {
-      const { comments } = data;
+  );
 
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: comments.map((c) => c.userId),
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
-      const commentBodiesPromises = comments.map((c) =>
-        convertCommentBodyAsHtml(c.rawBody, {
-          resolveUsers: batchUsersResolver.resolveUsers,
-          styles: options.styles,
-        })
-      );
-
-      await batchUsersResolver.resolve();
-
-      const [authorsInfo, ...commentBodies] = await Promise.all([
-        authorsInfoPromise,
-        ...commentBodiesPromises,
-      ]);
-
-      return {
-        type: "unreadReplies",
-        comments: comments.map((comment, index) => {
-          const authorInfo = authorsInfo.get(comment.userId);
-          const commentBodyHtml = commentBodies[index];
-
-          return {
-            id: comment.id,
-            threadId: comment.threadId,
-            roomId: comment.roomId,
-            author: {
-              id: comment.userId,
-              info: authorInfo ?? { name: comment.userId },
-            },
-            createdAt: comment.createdAt,
-            url: comment.url,
-            htmlBody: commentBodyHtml ?? "",
-          };
-        }),
-        roomInfo: data.roomInfo,
-      };
-    }
-  }
+  return data;
 }
 
+export type CommentBodyContainerComponentProps = {
+  /**
+   * The blocks of the comment body
+   */
+  children: ReactNode;
+};
+
+export type CommentBodyParagraphComponentProps = {
+  /**
+   * The text content of the paragraph.
+   */
+  children: ReactNode;
+};
+
+export type CommentBodyTextComponentProps = {
+  /**
+   * The text element.
+   */
+  element: CommentBodyText;
+};
+
+export type CommentBodyLinkComponentProps = {
+  /**
+   * The link element.
+   */
+  element: CommentBodyLink;
+
+  /**
+   * The absolute URL of the link.
+   */
+  href: string;
+};
+
+export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
+  /**
+   * The mention element.
+   */
+  element: CommentBodyMention;
+
+  /**
+   * The mention's user info, if the `resolvedUsers` option was provided.
+   */
+  user?: U["info"];
+};
+
+export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
+  /**
+   *
+   * The component used to act as a container to wrap comment body blocks,
+   */
+  Container: ComponentType<CommentBodyContainerComponentProps>;
+  /**
+   * The component used to display paragraphs.
+   */
+  Paragraph: ComponentType<CommentBodyParagraphComponentProps>;
+
+  /**
+   * The component used to display text elements.
+   */
+  Text: ComponentType<CommentBodyTextComponentProps>;
+
+  /**
+   * The component used to display links.
+   */
+  Link: ComponentType<CommentBodyLinkComponentProps>;
+
+  /**
+   * The component used to display mentions.
+   */
+  Mention: ComponentType<CommentBodyMentionComponentProps<U>>;
+};
+
+const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
+  Container: ({ children }) => <div>{children}</div>,
+  Paragraph: ({ children }) => <p>{children}</p>,
+  Text: ({ element }) => {
+    // Note: construction following the schema 👇
+    // <code><s><em><strong>{element.text}</strong></s></em></code>
+    let children: ReactNode = element.text;
+
+    if (element.bold) {
+      children = <strong>{children}</strong>;
+    }
+
+    if (element.italic) {
+      children = <em>{children}</em>;
+    }
+
+    if (element.strikethrough) {
+      children = <s>{children}</s>;
+    }
+
+    if (element.code) {
+      children = <code>{children}</code>;
+    }
+
+    return <span>{children}</span>;
+  },
+  Link: ({ element, href }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {element.text ?? element.url}
+    </a>
+  ),
+  Mention: ({ element, user }) => (
+    <span data-mention>
+      {MENTION_CHARACTER}
+      {user?.name ?? element.id}
+    </span>
+  ),
+};
+
 export type PrepareThreadNotificationEmailAsReactOptions<
+  BodyType,
   U extends BaseUserMeta = DU,
-> = PrepareThreadNotificationEmailBaseDataOptions & {
+> = Omit<PrepareThreadNotificationEmailOptions<BodyType, U>, "elements"> & {
   /**
    * A function that returns info from user IDs.
    */
@@ -429,10 +610,8 @@ export type PrepareThreadNotificationEmailAsReactOptions<
   components?: Partial<ConvertCommentBodyAsReactComponents<U>>;
 };
 
-export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
-  BaseUserMeta,
-  CommentEmailAsReactData
->;
+export type ThreadNotificationEmailDataAsReact<U extends BaseUserMeta = DU> =
+  ThreadNotificationEmailData<ReactNode, U>;
 
 /**
  * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as React nodes.
@@ -464,102 +643,48 @@ export async function prepareThreadNotificationEmailAsReact(
   event: ThreadNotificationEvent,
   options: PrepareThreadNotificationEmailAsReactOptions<BaseUserMeta> = {}
 ): Promise<ThreadNotificationEmailDataAsReact | null> {
-  const data = await prepareThreadNotificationEmailBaseData({
+  const Components = { ...baseComponents, ...options?.components };
+  const data = await prepareThreadNotificationEmail<ReactNode, BaseUserMeta>(
     client,
     event,
-    options: { resolveRoomInfo: options.resolveRoomInfo },
-  });
-
-  if (data === null) {
-    return null;
-  }
-
-  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
-    resolveUsers: options.resolveUsers,
-    callerName: "prepareThreadNotificationEmailAsReact",
-  });
-
-  switch (data.type) {
-    case "unreadMention": {
-      const { comment } = data;
-
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: [comment.userId],
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
-
-      const commentBodyPromise = convertCommentBodyAsReact(comment.rawBody, {
-        resolveUsers: batchUsersResolver.resolveUsers,
-        components: options.components,
-      });
-
-      await batchUsersResolver.resolve();
-
-      const [authorsInfo, commentBodyReact] = await Promise.all([
-        authorsInfoPromise,
-        commentBodyPromise,
-      ]);
-      const authorInfo = authorsInfo.get(comment.userId);
-
-      return {
-        type: "unreadMention",
-        comment: {
-          id: comment.id,
-          threadId: comment.threadId,
-          roomId: comment.roomId,
-          author: {
-            id: comment.userId,
-            info: authorInfo ?? { name: comment.userId },
-          },
-          createdAt: comment.createdAt,
-          url: comment.url,
-          reactBody: commentBodyReact,
-        },
-        roomInfo: data.roomInfo,
-      };
+    {
+      resolveUsers: options.resolveUsers,
+      resolveRoomInfo: options.resolveRoomInfo,
+      elements: {
+        container: ({ children }) => (
+          <Components.Container key={"lb-comment-body-container"}>
+            {children}
+          </Components.Container>
+        ),
+        paragraph: ({ children }, index) => (
+          <Components.Paragraph key={`lb-comment-body-paragraph-${index}`}>
+            {children}
+          </Components.Paragraph>
+        ),
+        text: ({ element }, index) => (
+          <Components.Text
+            key={`lb-comment-body-text-${index}`}
+            element={element}
+          />
+        ),
+        link: ({ element, href }, index) => (
+          <Components.Link
+            key={`lb-comment-body-link-${index}`}
+            element={element}
+            href={href}
+          />
+        ),
+        mention: ({ element, user }, index) =>
+          element.id ? (
+            <Components.Mention
+              key={`lb-comment-body-mention-${index}`}
+              element={element}
+              user={user}
+            />
+          ) : null,
+      },
     }
-    case "unreadReplies": {
-      const { comments } = data;
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: comments.map((c) => c.userId),
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
+  );
 
-      const commentBodiesPromises = comments.map((c) =>
-        convertCommentBodyAsReact(c.rawBody, {
-          resolveUsers: batchUsersResolver.resolveUsers,
-          components: options.components,
-        })
-      );
-
-      await batchUsersResolver.resolve();
-
-      const [authorsInfo, ...commentBodies] = await Promise.all([
-        authorsInfoPromise,
-        ...commentBodiesPromises,
-      ]);
-
-      return {
-        type: "unreadReplies",
-        comments: comments.map((comment, index) => {
-          const authorInfo = authorsInfo.get(comment.userId);
-          const commentBodyReact = commentBodies[index];
-
-          return {
-            id: comment.id,
-            threadId: comment.threadId,
-            roomId: comment.roomId,
-            author: {
-              id: comment.userId,
-              info: authorInfo ?? { name: comment.userId },
-            },
-            createdAt: comment.createdAt,
-            url: comment.url,
-            reactBody: commentBodyReact ?? null,
-          };
-        }),
-        roomInfo: data.roomInfo,
-      };
-    }
-  }
+  return data;
 }

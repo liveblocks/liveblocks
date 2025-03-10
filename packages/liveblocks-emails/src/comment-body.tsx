@@ -77,8 +77,6 @@ export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
 /**
  * Protocol:
  * Comment body elements to be converted to a custom format `T`
- *
- * Fallback to plain text as a `string`.
  */
 export type ConvertCommentBodyElements<T, U extends BaseUserMeta = DU> = {
   /**
