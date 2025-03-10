@@ -3,13 +3,17 @@
 import NotificationsPopover from "../notifications-popover";
 import { BlockNoteView } from "@blocknote/mantine";
 import type { BlockNoteEditor } from "@blocknote/core";
-import { useCreateBlockNoteWithLiveblocks, FloatingComposer, AnchoredThreads, FloatingThreads } from "@liveblocks/react-blocknote";
+import {
+  useCreateBlockNoteWithLiveblocks,
+  FloatingComposer,
+  AnchoredThreads,
+  FloatingThreads,
+} from "@liveblocks/react-blocknote";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
 export default function TextEditor() {
-
   const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
 
   return (
@@ -19,8 +23,7 @@ export default function TextEditor() {
 
         <NotificationsPopover />
       </div>
-      <div className="border-b border-border/80 bg-background">
-      </div>
+      <div className="border-b border-border/80 bg-background" />
       <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
         <div className="relative flex flex-1 flex-col gap-2">
           <BlockNoteView editor={editor} />
