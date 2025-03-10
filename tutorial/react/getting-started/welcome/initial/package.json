@@ -10,6 +10,7 @@
   "dependencies": {
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "react-error-boundary": "5.0.0",
     "@liveblocks/client": "latest",
     "@liveblocks/react": "latest"
   },
