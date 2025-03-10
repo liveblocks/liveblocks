@@ -1,16 +1,18 @@
-import type { InboxNotificationThreadData } from "@liveblocks/core";
+import type {
+  BaseUserMeta,
+  InboxNotificationThreadData,
+} from "@liveblocks/core";
 import type { ThreadData } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
+import type { ConvertCommentBodyElements } from "../comment-body";
+import { MENTION_CHARACTER } from "../lib/constants";
 import type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
-} from "../comment-body";
-import type {
-  CommentEmailBaseData,
   ThreadNotificationData,
-  ThreadNotificationEmailBaseData,
+  ThreadNotificationEmailData,
   ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
 } from "../thread-notification";
@@ -18,10 +20,9 @@ import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
   getUnreadComments,
-  makeCommentEmailBaseData,
+  prepareThreadNotificationEmail,
   prepareThreadNotificationEmailAsHtml,
   prepareThreadNotificationEmailAsReact,
-  prepareThreadNotificationEmailBaseData,
 } from "../thread-notification";
 import {
   buildCommentBodyWithMention,
@@ -32,6 +33,7 @@ import {
   generateThreadId,
   getResolvedCommentUrl,
   makeComment,
+  makeCommentEmailData,
   makeCommentWithBody,
   makeThread,
   makeThreadInboxNotification,
@@ -253,51 +255,19 @@ describe("thread notification", () => {
       };
       expect(extracted).toEqual(expected);
     });
-
-    it("should make a comment email base data", () => {
-      const threadId = generateThreadId();
-      const comment = makeComment({
-        userId: "user-0",
-        threadId,
-        body: commentBody1,
-      });
-
-      const commentWithBody = makeCommentWithBody({ comment });
-      const commentEmailBaseData1 = makeCommentEmailBaseData({
-        roomInfo: undefined,
-        comment: commentWithBody,
-      });
-      const commentEmailBaseData2 = makeCommentEmailBaseData({
-        roomInfo: RESOLVED_ROOM_INFO_TEST,
-        comment: commentWithBody,
-      });
-
-      const expected1: CommentEmailBaseData = {
-        id: commentWithBody.id,
-        userId: commentWithBody.userId,
-        threadId: commentWithBody.threadId,
-        roomId: commentWithBody.roomId,
-        createdAt: commentWithBody.createdAt,
-        url: undefined,
-        rawBody: commentWithBody.body,
-      };
-
-      const expected2: CommentEmailBaseData = {
-        id: commentWithBody.id,
-        userId: commentWithBody.userId,
-        threadId: commentWithBody.threadId,
-        roomId: commentWithBody.roomId,
-        createdAt: commentWithBody.createdAt,
-        url: getResolvedCommentUrl(commentWithBody.id),
-        rawBody: commentWithBody.body,
-      };
-
-      expect(commentEmailBaseData1).toEqual(expected1);
-      expect(commentEmailBaseData2).toEqual(expected2);
-    });
   });
 
-  describe("prepare thread notification email base data", () => {
+  describe("prepare thread notification email", () => {
+    // As plain text
+    const elements: ConvertCommentBodyElements<string, BaseUserMeta> = {
+      container: ({ children }) => children.join("\n"),
+      paragraph: ({ children }) => children.join(""),
+      text: ({ element }) => element.text,
+      link: ({ element }) => element.text ?? element.url,
+      mention: ({ element, user }) =>
+        `${MENTION_CHARACTER}${user?.name ?? element.id}`,
+    };
+
     it("should prepare for last unread comment with mention", async () => {
       const threadId = generateThreadId();
       const comment = makeComment({
@@ -322,32 +292,38 @@ describe("thread notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareThreadNotificationEmailBaseData({ client, event }),
-          prepareThreadNotificationEmailBaseData({
-            client,
-            event,
-            options: { resolveRoomInfo },
+          prepareThreadNotificationEmail(client, event, { elements }),
+          prepareThreadNotificationEmail(client, event, {
+            resolveRoomInfo,
+            elements,
           }),
         ]);
-      const expectedComment = makeCommentWithBody({ comment });
-      const expected1: ThreadNotificationEmailBaseData = {
+
+      const expectedComment1 = makeCommentEmailData<string>(
+        comment,
+        "Hello @user-1 !",
+        false
+      );
+
+      const expectedComment2 = makeCommentEmailData<string>(
+        comment,
+        "Hello @user-1 !",
+        true
+      );
+
+      const expected1: ThreadNotificationEmailData<string> = {
         type: "unreadMention",
-        comment: makeCommentEmailBaseData({
-          roomInfo: undefined,
-          comment: expectedComment,
-        }),
+        comment: expectedComment1,
         roomInfo: {
           name: ROOM_ID_TEST,
         },
       };
-      const expected2: ThreadNotificationEmailBaseData = {
+      const expected2: ThreadNotificationEmailData<string> = {
         type: "unreadMention",
-        comment: makeCommentEmailBaseData({
-          roomInfo: RESOLVED_ROOM_INFO_TEST,
-          comment: expectedComment,
-        }),
+        comment: expectedComment2,
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
+
       expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
       expect(preparedWithResolvedRoomInfo).toEqual(expected2);
     });
@@ -391,36 +367,49 @@ describe("thread notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareThreadNotificationEmailBaseData({ client, event }),
-          prepareThreadNotificationEmailBaseData({
-            client,
-            event,
-            options: { resolveRoomInfo },
+          prepareThreadNotificationEmail(client, event, { elements }),
+          prepareThreadNotificationEmail(client, event, {
+            resolveRoomInfo,
+            elements,
           }),
         ]);
-      const expectedComments = [
-        makeCommentWithBody({ comment: comment2 }),
-        makeCommentWithBody({ comment: comment3 }),
+      const expectedComments1 = [
+        makeCommentEmailData<string>(
+          comment2,
+          "I think it's really neat mate 👌",
+          false
+        ),
+        makeCommentEmailData<string>(
+          comment3,
+          "Yeah dude let's ship it right away 🚀",
+          false
+        ),
       ];
 
-      const expected1: ThreadNotificationEmailBaseData = {
+      const expected1: ThreadNotificationEmailData<string> = {
         type: "unreadReplies",
-        comments: expectedComments.map((c) =>
-          makeCommentEmailBaseData({ roomInfo: undefined, comment: c })
-        ),
+        comments: expectedComments1,
         roomInfo: {
           name: ROOM_ID_TEST,
         },
       };
 
-      const expected2: ThreadNotificationEmailBaseData = {
-        type: "unreadReplies",
-        comments: expectedComments.map((c) =>
-          makeCommentEmailBaseData({
-            roomInfo: RESOLVED_ROOM_INFO_TEST,
-            comment: c,
-          })
+      const expectedComments2 = [
+        makeCommentEmailData<string>(
+          comment2,
+          "I think it's really neat mate 👌",
+          true
         ),
+        makeCommentEmailData<string>(
+          comment3,
+          "Yeah dude let's ship it right away 🚀",
+          true
+        ),
+      ];
+
+      const expected2: ThreadNotificationEmailData<string> = {
+        type: "unreadReplies",
+        comments: expectedComments2,
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
@@ -447,8 +436,7 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          htmlBody:
-            '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-1</span> !</p>',
+          body: '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-1</span> !</p>',
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
@@ -467,8 +455,7 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          htmlBody:
-            '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@Mislav Abha</span> !</p>',
+          body: '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@Mislav Abha</span> !</p>',
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -532,8 +519,7 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          htmlBody:
-            '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@user-1</span> !</p>',
+          body: '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@user-1</span> !</p>',
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
@@ -552,8 +538,7 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          htmlBody:
-            '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@Mislav Abha</span> !</p>',
+          body: '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@Mislav Abha</span> !</p>',
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -614,8 +599,7 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            htmlBody:
-              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
+            body: '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
             url: undefined,
           },
         ],
@@ -634,8 +618,7 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            htmlBody:
-              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
+            body: '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
             url: getResolvedCommentUrl(comment2.id),
           },
         ],
@@ -702,8 +685,7 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            htmlBody:
-              '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
+            body: '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
             url: undefined,
           },
         ],
@@ -722,8 +704,7 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            htmlBody:
-              '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
+            body: '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
             url: getResolvedCommentUrl(comment2.id),
           },
         ],
@@ -786,7 +767,7 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          reactBody: (
+          body: (
             <div>
               <p>
                 <span>Hello</span>
@@ -815,7 +796,7 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          reactBody: (
+          body: (
             <div>
               <p>
                 <span>Hello</span>
@@ -895,7 +876,7 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          reactBody: (
+          body: (
             <main>
               <p>
                 <span>Hello</span>
@@ -924,7 +905,7 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          reactBody: (
+          body: (
             <main>
               <p>
                 <span>Hello</span>
@@ -1002,7 +983,7 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            reactBody: (
+            body: (
               <div>
                 <p>
                   <span>I agree 😍 it completes well this guide: </span>
@@ -1034,7 +1015,7 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            reactBody: (
+            body: (
               <div>
                 <p>
                   <span>I agree 😍 it completes well this guide: </span>
@@ -1121,7 +1102,7 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            reactBody: (
+            body: (
               <main>
                 <p>
                   <span>I agree 😍 it completes well this guide: </span>
@@ -1149,7 +1130,7 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            reactBody: (
+            body: (
               <main>
                 <p>
                   <span>I agree 😍 it completes well this guide: </span>
