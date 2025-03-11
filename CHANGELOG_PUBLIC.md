@@ -20,7 +20,19 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 11 (2025-03-14)
 
+## Documentation
+
+- Fixed a bug in the [interactive React tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome#/start.tsx) and updated all pages to use Vite instead of Create React App.
+- Improved guide on [How to modify Liveblocks Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+- Add more info about text editor data being permanently stored.
+
+## Website
+
+- New blog post: [How to build notifications that encourage collaboration](https://liveblocks.io/blog/how-to-build-notifications-that-encourage-collaboration).
+
 ## Contributors
+
+ctnicholas, marcbouchenoire, pierrelevaillant
 
 # Week 10 (2025-03-07)
 
