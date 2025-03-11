@@ -22,7 +22,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Documentation
 
-- Fixed a bug in the [interactive React tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome#/start.tsx) and updated all pages to use Vite instead of Create React App.
+- Fixed a bug in the [interactive React tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome#/start.tsx) and updated all demos to use Vite instead of Create React App.
 - Improved guide on [How to modify Liveblocks Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
 - Add more info about text editor data being permanently stored.
 
