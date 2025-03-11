@@ -13,6 +13,7 @@ import type {
   StaticSessionInfo,
   TimeoutID,
 } from "./room";
+import { type ClientAiMsg, ClientAiMsgCode } from "./types/ai";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -23,7 +24,6 @@ import { PKG_VERSION } from "./version";
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
-  chats: [];
 };
 
 export type Ai = {
@@ -52,40 +52,6 @@ export type AiConfig = {
   enableDebugLogging?: boolean;
 };
 
-// TODO: define these better
-export enum AiMsgCode {
-  LIST_CHATS = 100,
-  NEW_CHAT = 200,
-  GET_MESSAGES = 300,
-  SEND_MESSAGE = 400,
-}
-
-export type ListChatClientMsg = {
-  readonly type: AiMsgCode.LIST_CHATS;
-};
-
-export type NewChatClientMsg = {
-  readonly type: AiMsgCode.NEW_CHAT;
-  chatId?: string;
-};
-
-export type GetMessagesClientMsg = {
-  readonly type: AiMsgCode.GET_MESSAGES;
-  chatId: string;
-};
-
-export type SendMessageClientMsg = {
-  readonly type: AiMsgCode.SEND_MESSAGE;
-  chatId: string;
-  message: string;
-};
-
-export type AiMsg =
-  | ListChatClientMsg
-  | NewChatClientMsg
-  | GetMessagesClientMsg
-  | SendMessageClientMsg;
-
 export function createAi(config: AiConfig): Ai {
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     config.delegates,
@@ -96,7 +62,6 @@ export function createAi(config: AiConfig): Ai {
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
-    chats: [],
   };
 
   let lastTokenKey: string | undefined;
@@ -170,7 +135,7 @@ export function createAi(config: AiConfig): Ai {
     }
   });
 
-  function sendClientMsg(msg: AiMsg) {
+  function sendClientMsg(msg: ClientAiMsg) {
     managedSocket.send(JSON.stringify(msg));
   }
 
@@ -184,23 +149,23 @@ export function createAi(config: AiConfig): Ai {
       disconnect: () => managedSocket.disconnect(),
       listChats: () => {
         sendClientMsg({
-          type: AiMsgCode.LIST_CHATS,
+          type: ClientAiMsgCode.LIST_CHATS,
         });
       },
       newChat: (id?: string) => {
         sendClientMsg({
-          type: AiMsgCode.NEW_CHAT,
+          type: ClientAiMsgCode.NEW_CHAT,
         });
       },
       getMessages: (chatId: string) => {
         sendClientMsg({
-          type: AiMsgCode.GET_MESSAGES,
+          type: ClientAiMsgCode.GET_MESSAGES,
           chatId,
         });
       },
       sendMessage: (chatId: string, message: string) => {
         sendClientMsg({
-          type: AiMsgCode.SEND_MESSAGE,
+          type: ClientAiMsgCode.ADD_MESSAGE,
           chatId,
           message,
         });
