@@ -618,12 +618,6 @@ export type PrepareThreadNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
 > = Omit<PrepareThreadNotificationEmailOptions<BodyType, U>, "elements"> & {
   /**
-   * A function that returns info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
-  /**
    * The components used to customize the resulting React nodes inside a comment body.
    * Each components has priority over the base components inherited internally defined.
    */
