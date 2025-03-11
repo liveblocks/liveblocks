@@ -8,7 +8,6 @@ import type {
   DRI,
   DU,
   InboxNotificationData,
-  Relax,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -143,7 +142,7 @@ export type ThreadNotificationEmailData<
   // Keeping backward compatibility with the `reactBody` and `htmlBody` properties
   // that was used in the previous versions.
   C extends CommentEmailData<BodyType, U> = CommentEmailData<BodyType, U>,
-> = Relax<
+> = (
   | {
       type: "unreadReplies";
       comments: C[];
@@ -152,10 +151,13 @@ export type ThreadNotificationEmailData<
       type: "unreadMention";
       comment: C;
     }
-> & { roomInfo: DRI };
+) & { roomInfo: DRI };
 
 export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> =
-  CommentEmailData<string, U>;
+  CommentEmailData<string, U> & {
+    /** @deprecated Use `body` property instead. */
+    htmlBody: string;
+  };
 
 export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
   CommentEmailData<ReactNode, U> & {
@@ -382,7 +384,7 @@ export type PrepareThreadNotificationEmailAsHtmlOptions<
 };
 
 export type ThreadNotificationEmailDataAsHtml<U extends BaseUserMeta = DU> =
-  ThreadNotificationEmailData<string, U>;
+  ThreadNotificationEmailData<string, U, CommentEmailAsHtmlData<U>>;
 
 /**
  * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as an html safe string.
@@ -475,7 +477,29 @@ export async function prepareThreadNotificationEmailAsHtml(
     }
   );
 
-  return data;
+  // Keeping backward compatibility with the `htmlBody` property
+  // that was used in the previous versions.
+  if (data === null) {
+    return null;
+  }
+
+  switch (data.type) {
+    case "unreadMention": {
+      return {
+        ...data,
+        comment: { ...data.comment, htmlBody: data.comment.body },
+      };
+    }
+    case "unreadReplies": {
+      return {
+        ...data,
+        comments: data.comments.map((comment) => ({
+          ...comment,
+          htmlBody: comment.body,
+        })),
+      };
+    }
+  }
 }
 
 export type CommentBodyContainerComponentProps = {
@@ -688,18 +712,21 @@ export async function prepareThreadNotificationEmailAsReact(
     return null;
   }
 
-  if (data.type === "unreadMention") {
-    return {
-      ...data,
-      comment: { ...data.comment, reactBody: data.comment.body },
-    };
+  switch (data.type) {
+    case "unreadMention": {
+      return {
+        ...data,
+        comment: { ...data.comment, reactBody: data.comment.body },
+      };
+    }
+    case "unreadReplies": {
+      return {
+        ...data,
+        comments: data.comments.map((comment) => ({
+          ...comment,
+          reactBody: comment.body,
+        })),
+      };
+    }
   }
-
-  return {
-    ...data,
-    comments: data.comments.map((comment) => ({
-      ...comment,
-      reactBody: comment.body,
-    })),
-  };
 }

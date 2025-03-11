@@ -423,6 +423,8 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
+      const body1 =
+        '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-1</span> !</p>';
       const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
@@ -436,12 +438,15 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          body: '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-1</span> !</p>',
+          body: body1,
+          htmlBody: body1,
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 =
+        '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@Mislav Abha</span> !</p>';
       const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
@@ -455,7 +460,8 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          body: '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@Mislav Abha</span> !</p>',
+          body: body2,
+          htmlBody: body2,
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -506,6 +512,8 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
+      const body1 =
+        '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@user-1</span> !</p>';
       const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
@@ -519,12 +527,15 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          body: '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@user-1</span> !</p>',
+          body: body1,
+          htmlBody: body1,
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 =
+        '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@Mislav Abha</span> !</p>';
       const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
@@ -538,7 +549,8 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          body: '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@Mislav Abha</span> !</p>',
+          body: body2,
+          htmlBody: body2,
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -585,6 +597,8 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
+      const body1 =
+        '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>';
       const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
@@ -599,13 +613,16 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            body: '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
+            body: body1,
+            htmlBody: body1,
             url: undefined,
           },
         ],
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 =
+        '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>';
       const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
@@ -618,7 +635,8 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            body: '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
+            body: body2,
+            htmlBody: body2,
             url: getResolvedCommentUrl(comment2.id),
           },
         ],
@@ -671,6 +689,8 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
+      const body1 =
+        '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>';
       const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
@@ -685,13 +705,16 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            body: '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
+            body: body1,
+            htmlBody: body1,
             url: undefined,
           },
         ],
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 =
+        '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>';
       const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
@@ -704,7 +727,8 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            body: '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
+            body: body2,
+            htmlBody: body2,
             url: getResolvedCommentUrl(comment2.id),
           },
         ],
