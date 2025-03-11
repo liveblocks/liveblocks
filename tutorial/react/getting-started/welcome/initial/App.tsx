@@ -1,5 +1,3 @@
-import { LiveblocksProvider } from "@liveblocks/react/suspense";
-import { CollaborativeApplication } from "./CollaborativeApplication";
 import { ready } from "/start";
 
 export default function App() {
