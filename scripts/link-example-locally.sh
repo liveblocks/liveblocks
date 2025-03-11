@@ -10,7 +10,7 @@ err () {
 }
 
 usage () {
-    err "usage: link-example-locally.sh [-ch]"
+    err "usage: link-example-locally.sh [-cfhn]"
     err
     err "Run this script from within an example directory. It will turn that example"
     err "from an standalone NPM project into a workspace, so that it will use the"
@@ -20,14 +20,17 @@ usage () {
     err "-c    Create Git commit with these changes (intended to be removed later)"
     err "-f    Proceed even if there are uncommitted Git changes"
     err "-h    Show this help"
+    err "-n    No-modify mode: reset all changes after linking (prevents accidental commits)"
 }
 
 commit=0
 force=0
-while getopts cfh flag; do
+no_modify=0
+while getopts cfhn flag; do
     case "$flag" in
         c) commit=1 ;;
         f) force=1 ;;
+        n) no_modify=1 ;;
         *) usage; exit 2;;
     esac
 done
@@ -63,6 +66,14 @@ fi
 ( cd ../../ && npm i > /dev/null )
 
 npm i
+
+# Reset all changes if no-modify mode is enabled
+if [ "$no_modify" -eq 1 ]; then
+    git reset --hard HEAD
+    err "No-modify mode: All changes have been reset after linking."
+    err "Local packages are linked for this session but no files were modified permanently."
+    exit 0
+fi
 
 err "All good! Current example is now a local NPM workspace."
 
