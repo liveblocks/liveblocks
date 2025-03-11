@@ -140,21 +140,28 @@ export type CommentEmailData<BodyType, U extends BaseUserMeta = DU> = {
 export type ThreadNotificationEmailData<
   BodyType,
   U extends BaseUserMeta = DU,
+  // Keeping backward compatibility with the `reactBody` and `htmlBody` properties
+  // that was used in the previous versions.
+  C extends CommentEmailData<BodyType, U> = CommentEmailData<BodyType, U>,
 > = Relax<
   | {
       type: "unreadReplies";
-      comments: CommentEmailData<BodyType, U>[];
+      comments: C[];
     }
   | {
       type: "unreadMention";
-      comment: CommentEmailData<BodyType, U>;
+      comment: C;
     }
 > & { roomInfo: DRI };
 
 export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> =
   CommentEmailData<string, U>;
+
 export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
-  CommentEmailData<ReactNode, U>;
+  CommentEmailData<ReactNode, U> & {
+    /** @deprecated Use `body` property instead. */
+    reactBody: ReactNode;
+  };
 
 /** @internal */
 type PrepareThreadNotificationEmailOptions<
@@ -600,7 +607,7 @@ export type PrepareThreadNotificationEmailAsReactOptions<
 };
 
 export type ThreadNotificationEmailDataAsReact<U extends BaseUserMeta = DU> =
-  ThreadNotificationEmailData<ReactNode, U>;
+  ThreadNotificationEmailData<ReactNode, U, CommentEmailAsReactData<U>>;
 
 /**
  * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as React nodes.
@@ -675,5 +682,24 @@ export async function prepareThreadNotificationEmailAsReact(
     }
   );
 
-  return data;
+  // Keeping backward compatibility with the `reactBody` property
+  // that was used in the previous versions.
+  if (data === null) {
+    return null;
+  }
+
+  if (data.type === "unreadMention") {
+    return {
+      ...data,
+      comment: { ...data.comment, reactBody: data.comment.body },
+    };
+  }
+
+  return {
+    ...data,
+    comments: data.comments.map((comment) => ({
+      ...comment,
+      reactBody: comment.body,
+    })),
+  };
 }

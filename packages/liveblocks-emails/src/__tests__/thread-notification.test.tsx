@@ -754,6 +754,17 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
+      const body1 = (
+        <div>
+          <p>
+            <span>Hello</span>
+            <span> </span>
+            <span data-mention>@user-1</span>
+            <span> </span>
+            <span>!</span>
+          </p>
+        </div>
+      );
       const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
@@ -767,22 +778,24 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          body: (
-            <div>
-              <p>
-                <span>Hello</span>
-                <span> </span>
-                <span data-mention>@user-1</span>
-                <span> </span>
-                <span>!</span>
-              </p>
-            </div>
-          ),
+          body: body1,
+          reactBody: body1,
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 = (
+        <div>
+          <p>
+            <span>Hello</span>
+            <span> </span>
+            <span data-mention>@Mislav Abha</span>
+            <span> </span>
+            <span>!</span>
+          </p>
+        </div>
+      );
       const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
@@ -796,17 +809,8 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          body: (
-            <div>
-              <p>
-                <span>Hello</span>
-                <span> </span>
-                <span data-mention>@Mislav Abha</span>
-                <span> </span>
-                <span>!</span>
-              </p>
-            </div>
-          ),
+          body: body2,
+          reactBody: body2,
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -863,6 +867,18 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
+      const body1 = (
+        <main>
+          <p>
+            <span>Hello</span>
+            <span> </span>
+            <span>u#user-1</span>
+            <span> </span>
+            <span>!</span>
+          </p>
+        </main>
+      );
+
       const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
@@ -876,21 +892,24 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          body: (
-            <main>
-              <p>
-                <span>Hello</span>
-                <span> </span>
-                <span>u#user-1</span>
-                <span> </span>
-                <span>!</span>
-              </p>
-            </main>
-          ),
+          body: body1,
+          reactBody: body1,
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
       };
+
+      const body2 = (
+        <main>
+          <p>
+            <span>Hello</span>
+            <span> </span>
+            <span>u#Mislav Abha</span>
+            <span> </span>
+            <span>!</span>
+          </p>
+        </main>
+      );
 
       const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
@@ -905,17 +924,8 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          body: (
-            <main>
-              <p>
-                <span>Hello</span>
-                <span> </span>
-                <span>u#Mislav Abha</span>
-                <span> </span>
-                <span>!</span>
-              </p>
-            </main>
-          ),
+          body: body2,
+          reactBody: body2,
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -969,6 +979,20 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
+      const body1 = (
+        <div>
+          <p>
+            <span>I agree 😍 it completes well this guide: </span>
+            <a
+              href="https://www.liveblocks.io"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://www.liveblocks.io
+            </a>
+          </p>
+        </div>
+      );
       const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
@@ -983,26 +1007,28 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            body: (
-              <div>
-                <p>
-                  <span>I agree 😍 it completes well this guide: </span>
-                  <a
-                    href="https://www.liveblocks.io"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    https://www.liveblocks.io
-                  </a>
-                </p>
-              </div>
-            ),
+            body: body1,
+            reactBody: body1,
             url: undefined,
           },
         ],
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 = (
+        <div>
+          <p>
+            <span>I agree 😍 it completes well this guide: </span>
+            <a
+              href="https://www.liveblocks.io"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              https://www.liveblocks.io
+            </a>
+          </p>
+        </div>
+      );
       const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
@@ -1015,20 +1041,8 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            body: (
-              <div>
-                <p>
-                  <span>I agree 😍 it completes well this guide: </span>
-                  <a
-                    href="https://www.liveblocks.io"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    https://www.liveblocks.io
-                  </a>
-                </p>
-              </div>
-            ),
+            body: body2,
+            reactBody: body2,
             url: getResolvedCommentUrl(comment2.id),
           },
         ],
@@ -1088,6 +1102,16 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
+      const body1 = (
+        <main>
+          <p>
+            <span>I agree 😍 it completes well this guide: </span>
+            <a href="https://www.liveblocks.io" data-link>
+              https://www.liveblocks.io
+            </a>
+          </p>
+        </main>
+      );
       const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
@@ -1102,22 +1126,24 @@ describe("thread notification", () => {
                 name: comment2.userId,
               },
             },
-            body: (
-              <main>
-                <p>
-                  <span>I agree 😍 it completes well this guide: </span>
-                  <a href="https://www.liveblocks.io" data-link>
-                    https://www.liveblocks.io
-                  </a>
-                </p>
-              </main>
-            ),
+            body: body1,
+            reactBody: body1,
             url: undefined,
           },
         ],
         roomInfo: { name: ROOM_ID_TEST },
       };
 
+      const body2 = (
+        <main>
+          <p>
+            <span>I agree 😍 it completes well this guide: </span>
+            <a href="https://www.liveblocks.io" data-link>
+              https://www.liveblocks.io
+            </a>
+          </p>
+        </main>
+      );
       const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
@@ -1130,16 +1156,8 @@ describe("thread notification", () => {
               id: comment2.userId,
               info: { name: "Mislav Abha" },
             },
-            body: (
-              <main>
-                <p>
-                  <span>I agree 😍 it completes well this guide: </span>
-                  <a href="https://www.liveblocks.io" data-link>
-                    https://www.liveblocks.io
-                  </a>
-                </p>
-              </main>
-            ),
+            body: body2,
+            reactBody: body2,
             url: getResolvedCommentUrl(comment2.id),
           },
         ],

@@ -432,7 +432,13 @@ export const renderToStaticMarkup = (reactNode: ReactNode): string =>
 // to ease testing and avoid unnecessary operations.
 type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
   string,
-  BaseUserMeta
+  BaseUserMeta,
+  // Keeping backward compatibility with the `reactBody` property
+  // that was used in the previous versions.
+  CommentEmailData<string, BaseUserMeta> & {
+    /** @deprecated */
+    reactBody: string;
+  }
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
@@ -445,11 +451,13 @@ export const commentBodiesAsReactToStaticMarkup = (
     case "unreadMention": {
       const { comment, ...rest } = threadNotificationEmailDataAsReact;
 
+      const body = renderToStaticMarkup(comment.body);
       return {
         ...rest,
         comment: {
           ...comment,
-          body: renderToStaticMarkup(comment.body),
+          body,
+          reactBody: body,
         },
       };
     }
@@ -457,10 +465,14 @@ export const commentBodiesAsReactToStaticMarkup = (
       const { comments, ...rest } = threadNotificationEmailDataAsReact;
       return {
         ...rest,
-        comments: comments.map((comment) => ({
-          ...comment,
-          body: renderToStaticMarkup(comment.body),
-        })),
+        comments: comments.map((comment) => {
+          const body = renderToStaticMarkup(comment.body);
+          return {
+            ...comment,
+            body,
+            reactBody: body,
+          };
+        }),
       };
     }
     default:
