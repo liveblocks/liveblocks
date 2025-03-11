@@ -165,7 +165,6 @@ export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
     reactBody: ReactNode;
   };
 
-/** @internal */
 type PrepareThreadNotificationEmailOptions<
   BodyType,
   U extends BaseUserMeta = DU,
