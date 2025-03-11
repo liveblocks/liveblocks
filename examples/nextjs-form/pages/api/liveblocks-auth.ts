@@ -9,6 +9,9 @@ import { NAMES } from "../../constants";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  // TODO: revert this after we're done
+  // @ts-expect-error it's ok to use a local baseUrl
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
 });
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
