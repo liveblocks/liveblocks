@@ -36,6 +36,13 @@ while getopts cfhn flag; do
 done
 shift $(($OPTIND - 1))
 
+# Don't allow no-modify mode with force mode
+if [ "$no_modify" -eq 1 ] && [ "$force" -eq 1 ]; then
+    err "Error: Cannot use -n (no-modify) and -f (force) options together."
+    err "The -n option does a reset so using it could cause you to lose your work."
+    exit 2
+fi
+
 if [[ "$reldir" != "examples/"* || ! -f ../../package.json ]]; then
     echo "Must run this script in one of our example directories" >&2
     exit 2
