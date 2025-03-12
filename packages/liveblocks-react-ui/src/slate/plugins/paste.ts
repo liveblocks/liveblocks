@@ -102,7 +102,9 @@ function jsxTextChildren(
 
 function deserialize(node: Node): DeserializedNode {
   if (node.nodeType === 3) {
-    return node.textContent;
+    const text = node.textContent;
+
+    return text ? { text } : null;
   } else if (node.nodeType !== 1) {
     return null;
   } else if (node.nodeName === "BR") {
