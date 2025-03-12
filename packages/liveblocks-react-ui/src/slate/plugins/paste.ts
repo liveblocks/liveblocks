@@ -14,7 +14,7 @@ import { getFiles } from "../../utils/data-transfer";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 
-const NEWLINE_REGEX = /\r\n|\r|\n/g;
+const NEWLINE_REGEX = /[\r\n]/g;
 const WHITESPACE_REGEX = /\s+/g;
 
 type OmitTextChildren<T> = Omit<T, "text" | "children">;
@@ -106,7 +106,7 @@ function jsxTextChildren(
 function deserialize(node: Node): DeserializedNode {
   if (node.nodeType === 3) {
     let text = node.textContent;
-    const isMultiLine = text?.match(NEWLINE_REGEX);
+    const isMultiLine = text && NEWLINE_REGEX.test(text);
 
     if (text && isMultiLine) {
       text = text.replace(WHITESPACE_REGEX, " ").trim();
