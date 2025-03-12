@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting HTML into the composer.
+
 ## v2.20.0
 
 ### `@liveblocks/client`
