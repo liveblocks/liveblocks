@@ -13,6 +13,10 @@
 - Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
   user id correctly to the corresponding backend endpoints.
 
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting HTML into the composer.
+
 ## v2.20.0
 
 ### `@liveblocks/client`
