@@ -292,11 +292,22 @@ describe("thread notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareThreadNotificationEmail(client, event, { elements }),
-          prepareThreadNotificationEmail(client, event, {
-            resolveRoomInfo,
+          prepareThreadNotificationEmail(
+            client,
+            event,
+            {},
             elements,
-          }),
+            "test-suite"
+          ),
+          prepareThreadNotificationEmail(
+            client,
+            event,
+            {
+              resolveRoomInfo,
+            },
+            elements,
+            "test-suite"
+          ),
         ]);
 
       const expectedComment1 = makeCommentEmailData<string>(
@@ -367,11 +378,22 @@ describe("thread notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareThreadNotificationEmail(client, event, { elements }),
-          prepareThreadNotificationEmail(client, event, {
-            resolveRoomInfo,
+          prepareThreadNotificationEmail(
+            client,
+            event,
+            {},
             elements,
-          }),
+            "test-suite"
+          ),
+          prepareThreadNotificationEmail(
+            client,
+            event,
+            {
+              resolveRoomInfo,
+            },
+            elements,
+            "test-suite"
+          ),
         ]);
       const expectedComments1 = [
         makeCommentEmailData<string>(

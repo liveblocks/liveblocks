@@ -165,10 +165,7 @@ export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
     reactBody: ReactNode;
   };
 
-type PrepareThreadNotificationEmailOptions<
-  BodyType,
-  U extends BaseUserMeta = DU,
-> = {
+type PrepareThreadNotificationEmailOptions<U extends BaseUserMeta = DU> = {
   /**
    * A function that returns room info from room IDs.
    */
@@ -180,11 +177,6 @@ type PrepareThreadNotificationEmailOptions<
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
-
-  /**
-   * Comments body elements customizations.
-   */
-  elements: ConvertCommentBodyElements<BodyType, U>;
 };
 
 /**
@@ -197,7 +189,9 @@ export async function prepareThreadNotificationEmail<
 >(
   client: Liveblocks,
   event: ThreadNotificationEvent,
-  options: PrepareThreadNotificationEmailOptions<BodyType, U>
+  options: PrepareThreadNotificationEmailOptions<U>,
+  elements: ConvertCommentBodyElements<BodyType, U>,
+  callerName: string
 ): Promise<ThreadNotificationEmailData<BodyType, U> | null> {
   const data = await extractThreadNotificationData({ client, event });
   if (data === null) {
@@ -215,7 +209,7 @@ export async function prepareThreadNotificationEmail<
 
   const batchUsersResolver = createBatchUsersResolver<U>({
     resolveUsers: options.resolveUsers,
-    callerName: "prepareThreadNotificationEmail",
+    callerName,
   });
 
   switch (data.type) {
@@ -229,7 +223,7 @@ export async function prepareThreadNotificationEmail<
 
       const commentBodyPromise = convertCommentBody<BodyType, U>(comment.body, {
         resolveUsers: batchUsersResolver.resolveUsers,
-        elements: options.elements,
+        elements,
       });
 
       await batchUsersResolver.resolve();
@@ -275,7 +269,7 @@ export async function prepareThreadNotificationEmail<
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBody<BodyType, U>(c.body, {
           resolveUsers: batchUsersResolver.resolveUsers,
-          elements: options.elements,
+          elements,
         })
       );
 
@@ -368,9 +362,8 @@ const baseStyles: ConvertCommentBodyAsHtmlStyles = {
 };
 
 export type PrepareThreadNotificationEmailAsHtmlOptions<
-  BodyType,
   U extends BaseUserMeta = DU,
-> = Omit<PrepareThreadNotificationEmailOptions<BodyType, U>, "elements"> & {
+> = PrepareThreadNotificationEmailOptions<U> & {
   /**
    * The styles used to customize the html elements in the resulting html safe string inside a comment body.
    * Each styles has priority over the base styles inherited.
@@ -410,10 +403,7 @@ export type ThreadNotificationEmailDataAsHtml<U extends BaseUserMeta = DU> =
 export async function prepareThreadNotificationEmailAsHtml(
   client: Liveblocks,
   event: ThreadNotificationEvent,
-  options: PrepareThreadNotificationEmailAsHtmlOptions<
-    string,
-    BaseUserMeta
-  > = {}
+  options: PrepareThreadNotificationEmailAsHtmlOptions<BaseUserMeta> = {}
 ): Promise<ThreadNotificationEmailDataAsHtml | null> {
   const styles = { ...baseStyles, ...options?.styles };
   const data = await prepareThreadNotificationEmail<string, BaseUserMeta>(
@@ -422,54 +412,55 @@ export async function prepareThreadNotificationEmailAsHtml(
     {
       resolveUsers: options.resolveUsers,
       resolveRoomInfo: options.resolveRoomInfo,
-      elements: {
-        container: ({ children }) => children.join("\n"),
-        paragraph: ({ children }) => {
-          const unsafe = children.join("");
-          // prettier-ignore
-          return unsafe ? html`<p style="${toInlineCSSString(styles.paragraph)}">${htmlSafe(unsafe)}</p>` : unsafe;
-        },
-        text: ({ element }) => {
-          // Note: construction following the schema 👇
-          // <code><s><em><strong>{element.text}</strong></s></em></code>
-          let children = element.text;
-
-          if (!children) {
-            return html`${children}`;
-          }
-
-          if (element.bold) {
-            // prettier-ignore
-            children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
-          }
-
-          if (element.italic) {
-            // prettier-ignore
-            children = html`<em>${children}</em>`;
-          }
-
-          if (element.strikethrough) {
-            // prettier-ignore
-            children = html`<s>${children}</s>`;
-          }
-
-          if (element.code) {
-            // prettier-ignore
-            children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
-          }
-
-          return html`${children}`;
-        },
-        link: ({ element, href }) => {
-          // prettier-ignore
-          return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ? html`${element.text}` : element.url}</a>`;
-        },
-        mention: ({ element, user }) => {
-          // prettier-ignore
-          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
-        },
+    },
+    {
+      container: ({ children }) => children.join("\n"),
+      paragraph: ({ children }) => {
+        const unsafe = children.join("");
+        // prettier-ignore
+        return unsafe ? html`<p style="${toInlineCSSString(styles.paragraph)}">${htmlSafe(unsafe)}</p>` : unsafe;
       },
-    }
+      text: ({ element }) => {
+        // Note: construction following the schema 👇
+        // <code><s><em><strong>{element.text}</strong></s></em></code>
+        let children = element.text;
+
+        if (!children) {
+          return html`${children}`;
+        }
+
+        if (element.bold) {
+          // prettier-ignore
+          children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
+        }
+
+        if (element.italic) {
+          // prettier-ignore
+          children = html`<em>${children}</em>`;
+        }
+
+        if (element.strikethrough) {
+          // prettier-ignore
+          children = html`<s>${children}</s>`;
+        }
+
+        if (element.code) {
+          // prettier-ignore
+          children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
+        }
+
+        return html`${children}`;
+      },
+      link: ({ element, href }) => {
+        // prettier-ignore
+        return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ? html`${element.text}` : element.url}</a>`;
+      },
+      mention: ({ element, user }) => {
+        // prettier-ignore
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
+      },
+    },
+    "prepareThreadNotificationEmailAsHtml"
   );
 
   // Keeping backward compatibility with the `htmlBody` property
@@ -609,9 +600,8 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
 };
 
 export type PrepareThreadNotificationEmailAsReactOptions<
-  BodyType,
   U extends BaseUserMeta = DU,
-> = Omit<PrepareThreadNotificationEmailOptions<BodyType, U>, "elements"> & {
+> = PrepareThreadNotificationEmailOptions<U> & {
   /**
    * The components used to customize the resulting React nodes inside a comment body.
    * Each components has priority over the base components inherited internally defined.
@@ -659,40 +649,41 @@ export async function prepareThreadNotificationEmailAsReact(
     {
       resolveUsers: options.resolveUsers,
       resolveRoomInfo: options.resolveRoomInfo,
-      elements: {
-        container: ({ children }) => (
-          <Components.Container key={"lb-comment-body-container"}>
-            {children}
-          </Components.Container>
-        ),
-        paragraph: ({ children }, index) => (
-          <Components.Paragraph key={`lb-comment-body-paragraph-${index}`}>
-            {children}
-          </Components.Paragraph>
-        ),
-        text: ({ element }, index) => (
-          <Components.Text
-            key={`lb-comment-body-text-${index}`}
+    },
+    {
+      container: ({ children }) => (
+        <Components.Container key={"lb-comment-body-container"}>
+          {children}
+        </Components.Container>
+      ),
+      paragraph: ({ children }, index) => (
+        <Components.Paragraph key={`lb-comment-body-paragraph-${index}`}>
+          {children}
+        </Components.Paragraph>
+      ),
+      text: ({ element }, index) => (
+        <Components.Text
+          key={`lb-comment-body-text-${index}`}
+          element={element}
+        />
+      ),
+      link: ({ element, href }, index) => (
+        <Components.Link
+          key={`lb-comment-body-link-${index}`}
+          element={element}
+          href={href}
+        />
+      ),
+      mention: ({ element, user }, index) =>
+        element.id ? (
+          <Components.Mention
+            key={`lb-comment-body-mention-${index}`}
             element={element}
+            user={user}
           />
-        ),
-        link: ({ element, href }, index) => (
-          <Components.Link
-            key={`lb-comment-body-link-${index}`}
-            element={element}
-            href={href}
-          />
-        ),
-        mention: ({ element, user }, index) =>
-          element.id ? (
-            <Components.Mention
-              key={`lb-comment-body-mention-${index}`}
-              element={element}
-              user={user}
-            />
-          ) : null,
-      },
-    }
+        ) : null,
+    },
+    "prepareThreadNotificationEmailAsReact"
   );
 
   // Keeping backward compatibility with the `reactBody` property
