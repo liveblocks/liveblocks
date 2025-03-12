@@ -408,6 +408,10 @@
             "path": "/ready-made-features/text-editor/tiptap"
           },
           {
+            "title": "BlockNote",
+            "path": "/ready-made-features/text-editor/blocknote"
+          },
+          {
             "title": "Lexical",
             "path": "/ready-made-features/text-editor/lexical"
           }
