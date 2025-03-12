@@ -163,6 +163,24 @@ replies mentions the user. A single comment with the latest mention is returned.
 }
 ```
 
+### Limitations
+
+Before you get started, there are some limitations with thread notifications
+that you should be aware of.
+
+#### Duplicated emails for unread mentions
+
+Due to the nature of our current architecture. If a user is mentioned in a
+thread and receive multiple notifications without reading them then this user
+will receive each time an `unreadMention` email data regardless notifications's
+actual context.
+
+Our system currently maintains a 1:1 relationship between inbox notifications
+and threads. The Inbox Notification database resource lacks information about
+which specific activities triggered each notification.
+
+We're investigating solutions to get rid of this limitation.
+
 ### prepareThreadNotificationEmailAsReact [#prepare-thread-notification-email-as-react]
 
 Takes a
