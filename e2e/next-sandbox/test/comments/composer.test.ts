@@ -653,6 +653,38 @@ test.describe("Composer", () => {
 
       await resetPage(page);
 
+      await setClipboard(page, "<body><p>paragraph</p></body>", "text/html");
+      await editor.focus();
+      await page.keyboard.press("ControlOrMeta+V");
+
+      await editor.press("Enter");
+
+      // ➡️ The submitted comment contains the formatted text based on the pasted HTML
+      const outputWithBody = await getOutputJson(page);
+      expect(outputWithBody?.body.content[0].children).toEqual([
+        { text: "paragraph" },
+      ]);
+
+      await resetPage(page);
+
+      await setClipboard(
+        page,
+        "<p>paragraph</p><br class='Apple-interchange-newline' >",
+        "text/html"
+      );
+      await editor.focus();
+      await page.keyboard.press("ControlOrMeta+V");
+
+      await editor.press("Enter");
+
+      // ➡️ The submitted comment contains the formatted text based on the pasted HTML
+      const outputWithTrailingBr = await getOutputJson(page);
+      expect(outputWithTrailingBr?.body.content[0].children).toEqual([
+        { text: "paragraph" },
+      ]);
+
+      await resetPage(page);
+
       await setClipboard(
         page,
         "<p>Hello, <a href='https://liveblocks.io/'>world!</a></p>",
