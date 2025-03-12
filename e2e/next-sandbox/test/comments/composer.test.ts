@@ -626,14 +626,16 @@ test.describe("Composer", () => {
       await editor.press("Enter");
 
       // ➡️ The submitted comment contains the formatted text based on the pasted HTML
-      const output = await getOutputJson(page);
-      expect(output?.body.content[0].children).toEqual([{ text: "paragraph" }]);
-      expect(output?.body.content[1].children).toEqual([
+      const outputWithRichText = await getOutputJson(page);
+      expect(outputWithRichText?.body.content[0].children).toEqual([
+        { text: "paragraph" },
+      ]);
+      expect(outputWithRichText?.body.content[1].children).toEqual([
         { text: "plain, " },
         { text: "bold", bold: true },
         { text: " " },
       ]);
-      expect(output?.body.content[2].children).toEqual([
+      expect(outputWithRichText?.body.content[2].children).toEqual([
         { text: "code ", code: true },
         { text: " /italic", italic: true },
         { text: "  " },
@@ -649,7 +651,56 @@ test.describe("Composer", () => {
         { text: " " },
       ]);
 
-      // TODO: Pasting links
+      await resetPage(page);
+
+      await setClipboard(
+        page,
+        "<p>Hello, <a href='https://liveblocks.io/'>world!</a></p>",
+        "text/html"
+      );
+      await editor.focus();
+      await page.keyboard.press("ControlOrMeta+V");
+
+      await editor.press("Enter");
+
+      // ➡️ The submitted comment contains the formatted text based on the pasted HTML
+      const outputWithLinks = await getOutputJson(page);
+      expect(outputWithLinks?.body.content[0].children).toEqual([
+        { text: "Hello, " },
+        { text: "world!", type: "link", url: "https://liveblocks.io/" },
+        { text: "" },
+      ]);
+
+      await resetPage(page);
+
+      await setClipboard(
+        page,
+        `<div>
+                <div class="tw-flex tw-flex-col tw-gap-3">Hello,
+                world!<a
+                class="tw-text-blue-600 hover:tw-cursor-pointer hover:tw-underline tw-contents" data-testid="page-link"
+                href="https://liveblocks.io"><span
+                  class="tw-contents"> (Page 1)</span></a><a
+                class="tw-text-blue-600 hover:tw-cursor-pointer hover:tw-underline tw-contents" data-testid="page-link"
+                href="https://liveblocks.io"><span
+                  class="tw-contents"> (Page 2)</span></a></div>
+              </div>`,
+        "text/html"
+      );
+      await editor.focus();
+      await page.keyboard.press("ControlOrMeta+V");
+
+      await editor.press("Enter");
+
+      // ➡️ The submitted comment contains the formatted text based on the pasted HTML
+      const outputWithDivs = await getOutputJson(page);
+      expect(outputWithDivs?.body.content[0].children).toEqual([
+        { text: "Hello, world!" },
+        { text: " (Page 1)", type: "link", url: "https://liveblocks.io/" },
+        { text: "" },
+        { text: " (Page 2)", type: "link", url: "https://liveblocks.io/" },
+        { text: "" },
+      ]);
     });
   });
 
