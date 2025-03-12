@@ -8,6 +8,11 @@
   from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
   property instead.
 
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user id correctly to the corresponding backend endpoints.
+
 ## v2.20.0
 
 ### `@liveblocks/client`
