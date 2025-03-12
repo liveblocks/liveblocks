@@ -190,10 +190,6 @@ type PrepareThreadNotificationEmailOptions<
 /**
  * @internal
  * exported for testing purposes.
- *
- * We might want to export this function public in the future,
- * to allow customers to prepare the email data with their own formats
- * for rendering comments bodies
  */
 export async function prepareThreadNotificationEmail<
   BodyType,
