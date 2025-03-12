@@ -170,16 +170,15 @@ that you should be aware of.
 
 #### Duplicated emails for unread mentions
 
-Due to the nature of our current architecture. If a user is mentioned in a
-thread and receive multiple notifications without reading them then this user
-will receive each time an `unreadMention` email data regardless notifications's
-actual context.
+If a user is mentioned (e.g `@username`) in a thread, all further notifications
+received for this thread will be `unreadMention` types, _until the user reads
+the thread again_. This means that you will receive duplicated `unreadMention`
+notifications, even if a notification should be an `unreadReplies` type. After
+the thread has been read by the user, `unreadReplies` will be sent for the
+thread again.
 
-Our system currently maintains a 1:1 relationship between inbox notifications
-and threads. The Inbox Notification database resource lacks information about
-which specific activities triggered each notification.
-
-We're investigating solutions to get rid of this limitation.
+This is due to the architecture of our notifications database, and we’re
+investigating solutions to move past this limitation.
 
 ### prepareThreadNotificationEmailAsReact [#prepare-thread-notification-email-as-react]
 
