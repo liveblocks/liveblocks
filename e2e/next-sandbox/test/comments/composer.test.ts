@@ -669,6 +669,24 @@ test.describe("Composer", () => {
 
       await setClipboard(
         page,
+        "<body><b><p>paragraph</p></b></body>",
+        "text/html"
+      );
+      await editor.focus();
+      await page.keyboard.press("ControlOrMeta+V");
+
+      await editor.press("Enter");
+
+      // ➡️ The submitted comment contains the formatted text based on the pasted HTML
+      const outputWithB = await getOutputJson(page);
+      expect(outputWithB?.body.content[0].children).toEqual([
+        { text: "paragraph" },
+      ]);
+
+      await resetPage(page);
+
+      await setClipboard(
+        page,
         "<p>paragraph</p><br class='Apple-interchange-newline' >",
         "text/html"
       );
