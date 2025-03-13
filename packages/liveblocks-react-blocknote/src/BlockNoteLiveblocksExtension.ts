@@ -8,10 +8,7 @@ export type LiveblocksExtensionOptions = Parameters<
 export const useLiveblocksExtension = (
   options: LiveblocksExtensionOptions = {}
 ) => {
-  const extension = useTipTapLiveblocksExtension({
-    mentions: false,
-    ...options,
-  });
+  const extension = useTipTapLiveblocksExtension(options);
 
   extension.config.extendMarkSchema = (mark: Mark) => {
     if (mark.name === "liveblocksCommentMark") {

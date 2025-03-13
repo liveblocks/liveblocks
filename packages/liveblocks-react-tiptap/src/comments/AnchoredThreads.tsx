@@ -69,7 +69,7 @@ export function AnchoredThreads({
       if (!prev || !next) return false;
       return (
         prev.pluginState?.selectedThreadId ===
-          next.pluginState?.selectedThreadId &&
+        next.pluginState?.selectedThreadId &&
         prev.pluginState?.threadPositions === next.pluginState?.threadPositions
       ); // new map is made each time threadPos updates so shallow equality is fine
     },
@@ -78,7 +78,7 @@ export function AnchoredThreads({
   // TODO: lexical supoprts multiple threads being active, should probably do that here as well
   const handlePositionThreads = useCallback(() => {
     const container = containerRef.current;
-    if (container === null || !editor) return;
+    if (container === null || !editor || !editor.view) return;
 
     const activeIndex = orderedThreads.findIndex(
       ({ thread }) => thread.id === pluginState?.selectedThreadId
@@ -161,7 +161,7 @@ export function AnchoredThreads({
 
   useEffect(() => {
     const observer = new ResizeObserver(handlePositionThreads);
-    const container = editor?.view.dom;
+    const container = editor?.view?.dom;
     if (container) {
       observer.observe(container);
     }
