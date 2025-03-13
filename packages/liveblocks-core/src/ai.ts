@@ -117,7 +117,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
-    console.warn("handleServerMessage", event);
+    console.warn("handleServerMessage", event.data);
   }
 
   managedSocket.events.onMessage.subscribe(handleServerMessage);
@@ -168,6 +168,12 @@ export function createAi(config: AiConfig): Ai {
           type: ClientAiMsgCode.ADD_MESSAGE,
           chatId,
           message,
+        });
+      },
+      abortResponse: (chatId: string) => {
+        sendClientMsg({
+          type: ClientAiMsgCode.ABORT_RESPONSE,
+          chatId,
         });
       },
       getStatus: () => managedSocket.getStatus(),
