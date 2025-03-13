@@ -52,6 +52,16 @@
             "hidden": true
           },
           {
+            "title": "BlockNote",
+            "path": "/get-started/react-blocknote",
+            "hidden": true
+          },
+          {
+            "title": "BlockNote",
+            "path": "/get-started/nextjs-blocknote",
+            "hidden": true
+          },
+          {
             "title": "Lexical",
             "path": "/get-started/react-lexical",
             "hidden": true

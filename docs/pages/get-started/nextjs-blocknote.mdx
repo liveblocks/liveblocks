@@ -1,27 +1,28 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Tiptap, and Next.js"
+  title: "Get started with Liveblocks, BlockNote, and Next.js"
   parentTitle: "Get started"
-  description: "Learn how to get started with Liveblocks, Tiptap, and Next.js."
+  description:
+    "Learn how to get started with Liveblocks, BlockNote, and Next.js."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
 collaboration to your Next.js application using the APIs from the
-[`@liveblocks/react-tiptap`](/docs/api-reference/liveblocks-react-tiptap)
+[`@liveblocks/react-blocknote`](/docs/api-reference/liveblocks-react-blocknote)
 package.
 
 ## Quickstart
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks and Tiptap</StepTitle>
+    <StepTitle>Install Liveblocks and BlockNote</StepTitle>
     <StepContent>
 
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-tiptap @tiptap/react @tiptap/starter-kit
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-blocknote @blocknote/core @blocknote/react @blocknote/mantine
       ```
 
     </StepContent>
@@ -107,42 +108,28 @@ package.
 
 </Step>
 <Step>
-  <StepTitle>Set up the collaborative Tiptap text editor</StepTitle>
+  <StepTitle>Set up the collaborative BlockNote text editor</StepTitle>
   <StepContent>
 
-    Now that we set up Liveblocks, we can start integrating Tiptap and Liveblocks in the `Editor.tsx` file.
+    Now that we set up Liveblocks, we can start integrating BlockNote and Liveblocks in the `Editor.tsx` file.
     To make the editor collaborative, we can add
-    [`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
-    from `@liveblocks/react-tiptap`. [`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar)
-    adds a text selection toolbar.
+    [`useLiveblocksExtension`](/docs/api-reference/liveblocks-react-blocknote#useLiveblocksExtension)
+    from `@liveblocks/react-blocknote`.
 
     ```tsx file="app/Editor.tsx"
     "use client";
 
-    import { useLiveblocksExtension, FloatingToolbar } from "@liveblocks/react-tiptap";
-    import { useEditor, EditorContent } from "@tiptap/react";
-    import StarterKit from "@tiptap/starter-kit";
+    import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+    import { BlockNoteView } from "@blocknote/mantine";
     import { Threads } from "./Threads";
 
     export function Editor() {
-      const liveblocks = useLiveblocksExtension();
-
-      const editor = useEditor({
-        extensions: [
-          liveblocks,
-          StarterKit.configure({
-            // The Liveblocks extension comes with its own history handling
-            history: false,
-          }),
-        ],
-        immediatelyRender: false,
-      });
+      const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
 
       return (
         <div>
-          <EditorContent editor={editor} className="editor" />
+          <BlockNoteView editor={editor} />
           <Threads editor={editor} />
-          <FloatingToolbar editor={editor} />
         </div>
       );
     }
@@ -156,8 +143,8 @@ package.
   <StepContent>
 
     To add [Comments](/docs/ready-made-features/comments) to your text editor, we need to import a thread composer
-    and list each thread on the page. Create a `Threads.tsx` file that uses [`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer)
-    for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads) for displaying threads on desktop and mobile.
+    and list each thread on the page. Create a `Threads.tsx` file that uses [`FloatingComposer`](/docs/api-reference/liveblocks-react-blocknote#FloatingComposer)
+    for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-blocknote#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-blocknote#FloatingThreads) for displaying threads on desktop and mobile.
 
     ```tsx file="app/Threads.tsx"
     import { useThreads } from "@liveblocks/react/suspense";
@@ -165,10 +152,10 @@ package.
       AnchoredThreads,
       FloatingComposer,
       FloatingThreads,
-    } from "@liveblocks/react-tiptap";
-    import { Editor } from "@tiptap/react";
+    } from "@liveblocks/react-blocknote";
+    import { BlockNoteEditor } from "@blocknote/core";
 
-    export function Threads({ editor }: { editor: Editor | null }) {
+    export function Threads({ editor }: { editor: BlockNoteEditor | null }) {
       const { threads } = useThreads({ query: { resolved: false } });
 
       return (
@@ -194,7 +181,9 @@ package.
   <StepTitle>Style your editor</StepTitle>
   <StepContent>
 
-    Tiptap text editor is unstyled by default, so we can create some custom styles for it in a `globals.css` file. Import `globals.css`, alongside the default Liveblocks styles. You can import them into the
+    {/* TODO check if step needed after package release */}
+
+    BlockNote text editor is unstyled by default, so we can create some custom styles for it in a `globals.css` file. Import `globals.css`, alongside the default Liveblocks styles. You can import them into the
     root layout of your app or directly into a CSS file with `@import`.
 
     ```css file="app/globals.css" isCollapsed isCollapsable
@@ -263,11 +252,12 @@ package.
 <Step lastStep>
   <StepTitle>Optional: add more features</StepTitle>
   <StepContent>
-    BlockNote is easy to extend, and a number of extensions are already available, making it possible to quickly create complex rich-text applications. Any additional features you add will be supported using Liveblocks.
+    BlockNote is easy to extend, and a number of extensions are already available, making it possibly to quickly create complex rich-text applications. For example you can enable features
+    such as tables, text highlights, embedded images, and more. This is all supported using Liveblocks.
 
     <Button asChild  className="not-markdown">
-      <a href="https://www.blocknotejs.org/docs">
-        Read the BlockNote docs
+      <a href="https://tiptap.dev/docs/editor/extensions/overview">
+        Find more extensions
       </a>
     </Button>
 
@@ -279,22 +269,31 @@ package.
 ## What to read next
 
 Congratulations! You now have set up the foundation for your collaborative
-BlockNote text editor inside your Next.js application.
+Tiptap text editor inside your Next.js application.
 
-- [@liveblocks/react-blocknote API Reference](/docs/api-reference/liveblocks-react-blocknote)
-- [BlockNote guides](/docs/guides?technologies=blocknote)
-- [BlockNote website](https://www.blocknotejs.org/)
+- [@liveblocks/react-tiptap API Reference](/docs/api-reference/liveblocks-react-tiptap)
+- [Tiptap guides](/docs/guides?technologies=tiptap)
+- [Tiptap website](https://tiptap.dev)
 
 ---
 
-## Examples using BlockNote
+## Examples using Tiptap
 
 <ListGrid columns={2}>
   <ExampleCard
     example={{
       title: "Collaborative Text Editor",
-      slug: "collaborative-text-editor/nextjs-blocknote",
+      slug: "collaborative-text-editor/nextjs-tiptap",
       image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Advanced Collaborative Text Editor",
+      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
     }}
     technologies={["nextjs"]}
     openInNewWindow
