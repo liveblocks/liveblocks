@@ -1,0 +1,9 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+  "compilerOptions": {
+    // TODO: Try to get rid of these overrides
+    "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
+  },
+  "include": ["src", "rollup.config.js"]
+}

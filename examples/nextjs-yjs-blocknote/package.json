@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-yjs-blocknote",
-  "description": "This example shows how to build a collaborative text editor with Liveblocks, Yjs, BlockNote, and Next.js.",
+  "name": "@liveblocks-examples/nextjs-blocknote",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, BlockNote, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
