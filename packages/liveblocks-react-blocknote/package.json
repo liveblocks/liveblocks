@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/react-blocknote",
   "version": "2.20.0",
-  "description": "A BlockNote react plugin to enable collaboration, comments, live cursors, and more.",
+  "description": "An integration of BlockNote + React to enable collaboration, comments, live cursors, and more with Liveblocks.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.cjs",
