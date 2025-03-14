@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import { Room } from "./_components/room";
 import Editor from "./_editor/editor";
 
-// Learn how to structure your collaborative Next.js app
-// https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
+// Learn how to implement notification settings in this file:
+// /app/settings/_components/user-notifications-settings.tsx
+
 export default function Page() {
   return (
     <Suspense fallback={null}>

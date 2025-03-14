@@ -2,19 +2,24 @@
   "name": "learn-liveblocks",
   "version": "0.1.0",
   "private": true,
-  "main": "/index.tsx",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-scripts": "4.0.0",
-    "react-error-boundary": "4.0.13",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-error-boundary": "5.0.0",
     "@liveblocks/client": "latest",
     "@liveblocks/react": "latest"
   },
   "devDependencies": {
-    "@types/react": "18.2.0",
-    "@types/react-dom": "18.2.0",
-    "typescript": "4.9.5"
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^4.9.5",
+    "vite": "4.2.0",
+    "esbuild-wasm": "^0.17.12"
   }
 }
-

@@ -107,22 +107,31 @@ function NotificationSettings() {
 
   return (
     <>
-      // +++
-      <label>
-        Receive thread notifications by email
-        <input
-          type="checkbox"
-          checked={settings.email.thread}
-          onChange={(e) =>
-            updateSettings({ email: { thread: e.target.checked } })
-          }
-        />
-      </label>
-      // +++
+      {settings.email ? (
+        <>
+          // +++
+          <label>
+            Receive thread notifications by email
+            <input
+              type="checkbox"
+              checked={settings.email.thread}
+              onChange={(e) =>
+                updateSettings({ email: { thread: e.target.checked } })
+              }
+            />
+          </label>
+          // +++
+        </>
+      ) : null}
     </>
   );
 }
 ```
+
+Also make sure to check if the notification kind is enabled before creating the
+UI. This way, if it’s toggled in the dashboard, it will gracefully
+disappear/reappear. We’re doing this above by checking if `settings.email`
+exists before displaying the `input`.
 
 ### Custom notification kinds
 
@@ -143,28 +152,32 @@ function NotificationSettings() {
 
   return (
     <>
-      // +++
-      <label>
-        Receive document invites notifications by email
-        <input
-          type="checkbox"
-          checked={settings.email.$documentInvite}
-          onChange={(e) =>
-            updateSettings({ email: { $documentInvite: e.target.checked } })
-          }
-        />
-      </label>
-      // +++
-      <label>
-        Receive thread notifications by email
-        <input
-          type="checkbox"
-          checked={settings.email.thread}
-          onChange={(e) =>
-            updateSettings({ email: { thread: e.target.checked } })
-          }
-        />
-      </label>
+      {settings.email ? (
+        <>
+          // +++
+          <label>
+            Receive document invites notifications by email
+            <input
+              type="checkbox"
+              checked={settings.email.$documentInvite}
+              onChange={(e) =>
+                updateSettings({ email: { $documentInvite: e.target.checked } })
+              }
+            />
+          </label>
+          // +++
+          <label>
+            Receive thread notifications by email
+            <input
+              type="checkbox"
+              checked={settings.email.thread}
+              onChange={(e) =>
+                updateSettings({ email: { thread: e.target.checked } })
+              }
+            />
+          </label>
+        </>
+      ) : null}
     </>
   );
 }
@@ -195,7 +208,9 @@ declare global {
 
 If you extend this further, you can create a whole notifications settings panel,
 with settings for each notification kind on channel. Below we’ve created an
-interface with three kinds of two channels.
+interface with three kinds of two channels, email and Slack. Like with
+`settings.email`, we’re also checking if `settings.slack` exists before using
+it.
 
 ```tsx
 import { useNotificationSettings } from "@liveblocks/react";
@@ -210,66 +225,75 @@ function NotificationSettings() {
 
   return (
     <>
-      <label>
-        Receive document invites notifications by email
-        <input
-          type="checkbox"
-          checked={settings.email.$documentInvite}
-          onChange={(e) =>
-            updateSettings({ email: { $documentInvite: e.target.checked } })
-          }
-        />
-      </label>
-      <label>
-        Receive thread notifications by email
-        <input
-          type="checkbox"
-          checked={settings.email.thread}
-          onChange={(e) =>
-            updateSettings({ email: { thread: e.target.checked } })
-          }
-        />
-      </label>
-      <label>
-        Receive text mentions notifications by email
-        <input
-          type="checkbox"
-          checked={settings.email.textMention}
-          onChange={(e) =>
-            updateSettings({ email: { textMention: e.target.checked } })
-          }
-        />
-      </label>
-      <label>
-        Receive document invites notifications on Slack
-        <input
-          type="checkbox"
-          checked={settings.slack.$documentInvite}
-          onChange={(e) =>
-            updateSettings({ slack: { $documentInvite: e.target.checked } })
-          }
-        />
-      </label>
-      <label>
-        Receive thread notifications on Slack
-        <input
-          type="checkbox"
-          checked={settings.slack.thread}
-          onChange={(e) =>
-            updateSettings({ slack: { thread: e.target.checked } })
-          }
-        />
-      </label>
-      <label>
-        Receive text mentions notifications on Slack
-        <input
-          type="checkbox"
-          checked={settings.slack.textMention}
-          onChange={(e) =>
-            updateSettings({ slack: { textMention: e.target.checked } })
-          }
-        />
-      </label>
+      {settings.email ? (
+        <>
+          <label>
+            Receive document invites notifications by email
+            <input
+              type="checkbox"
+              checked={settings.email.$documentInvite}
+              onChange={(e) =>
+                updateSettings({ email: { $documentInvite: e.target.checked } })
+              }
+            />
+          </label>
+          <label>
+            Receive thread notifications by email
+            <input
+              type="checkbox"
+              checked={settings.email.thread}
+              onChange={(e) =>
+                updateSettings({ email: { thread: e.target.checked } })
+              }
+            />
+          </label>
+          <label>
+            Receive text mentions notifications by email
+            <input
+              type="checkbox"
+              checked={settings.email.textMention}
+              onChange={(e) =>
+                updateSettings({ email: { textMention: e.target.checked } })
+              }
+            />
+          </label>
+        </>
+      ) : null}
+
+      {settings.thread ? (
+        <>
+          <label>
+            Receive document invites notifications on Slack
+            <input
+              type="checkbox"
+              checked={settings.slack.$documentInvite}
+              onChange={(e) =>
+                updateSettings({ slack: { $documentInvite: e.target.checked } })
+              }
+            />
+          </label>
+          <label>
+            Receive thread notifications on Slack
+            <input
+              type="checkbox"
+              checked={settings.slack.thread}
+              onChange={(e) =>
+                updateSettings({ slack: { thread: e.target.checked } })
+              }
+            />
+          </label>
+          <label>
+            Receive text mentions notifications on Slack
+            <input
+              type="checkbox"
+              checked={settings.slack.textMention}
+              onChange={(e) =>
+                updateSettings({ slack: { textMention: e.target.checked } })
+              }
+            />
+          </label>
+        </>
+      ) : null}
     </>
   );
 }

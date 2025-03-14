@@ -2,33 +2,34 @@ import type {
   PartialUserNotificationSettings,
   UserNotificationSettings,
 } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import { createUserNotificationSettings, nanoid } from "@liveblocks/core";
 
 import { applyOptimisticUpdates_forUserNotificationSettings } from "../../umbrella-store";
 
 describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
-  const defaultSettings: UserNotificationSettings = {
-    email: {
-      thread: false,
-      textMention: false,
-      $fileUploaded: true,
-    },
-    webPush: {
-      thread: true,
-      textMention: true,
-      $fileUploaded: true,
-    },
-    slack: {
-      thread: true,
-      textMention: true,
-      $fileUploaded: true,
-    },
-    teams: {
-      thread: true,
-      textMention: true,
-      $fileUploaded: true,
-    },
-  };
+  const defaultSettings: UserNotificationSettings =
+    createUserNotificationSettings({
+      email: {
+        thread: false,
+        textMention: false,
+        $fileUploaded: true,
+      },
+      webPush: {
+        thread: true,
+        textMention: true,
+        $fileUploaded: true,
+      },
+      slack: {
+        thread: true,
+        textMention: true,
+        $fileUploaded: true,
+      },
+      teams: {
+        thread: true,
+        textMention: true,
+        $fileUploaded: true,
+      },
+    });
 
   it("should return the same object when no updates are provided", () => {
     const result = applyOptimisticUpdates_forUserNotificationSettings(

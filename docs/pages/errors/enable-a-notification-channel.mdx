@@ -1,0 +1,60 @@
+---
+meta:
+  title: "In order to use this channel, please set up your project first"
+  parentTitle: "Error"
+  description:
+    "A notification channel hasn’t been set up, you need to enable it in your
+    dashboard."
+---
+
+## Why this error occurred
+
+You tried to access a notification channel, such as `settings.email`, but it’s
+disabled in your Liveblocks dashboard.
+
+## How to fix it
+
+You first need to navigate to your project in the [dashboard](/dashboard).
+
+<Figure>
+  <Image
+    src="/assets/tutorials/webhooks/liveblocks-click-notifications.png"
+    alt="Notifications dashboard page"
+    width={712}
+    height={445}
+  />
+</Figure>
+
+Then, enable a notification kind on the channel you’re trying to access. For
+example, if you’re trying to access `settings.email`, navigate to the _Email_
+tab and enable a notification kind.
+
+<Banner type="warning">
+
+If you’re working with a production app, make sure you
+[read our guide on enabling notification kinds](/docs/guides/what-to-check-before-enabling-a-new-notification-kind)
+before publishing your changes, as your app may be affected.
+
+</Banner>
+
+<Figure>
+  <Image
+    src="/assets/tutorials/webhooks/liveblocks-toggle-custom-notification.png"
+    alt="Toggle a custom notification kind"
+    width={712}
+    height={445}
+  />
+</Figure>
+
+Once a notification kind is enabled on the channel you’re accessing, the error
+will disappear.
+
+## Learn more
+
+Learn more in our documentation.
+
+- [What to check before enabling a new notification kind](/docs/guides/what-to-check-before-enabling-a-new-notification-kind).
+- [How to create a notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
+- [`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
+- [`client.getNotificationSettings`](/docs/api-reference/liveblocks-client#Client.getNotificationSettings)
+- [`Liveblocks.getNotificationSettings`](/docs/api-reference/liveblocks-node#get-users-userId-notification-settings)

@@ -11,7 +11,10 @@ export default function App() {
   const publicApiKey = "{% LIVEBLOCKS_PUBLIC_KEY %}";
 
   return (
-    <LiveblocksProvider publicApiKey={publicApiKey}>
+    <LiveblocksProvider
+      publicApiKey={publicApiKey}
+      key={Math.random() /* Fixes a tutorial bug, don't do this */}
+    >
       <RoomProvider
         id={roomId}
         initialStorage={{
