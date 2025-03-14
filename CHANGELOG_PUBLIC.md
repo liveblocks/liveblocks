@@ -29,6 +29,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Website
 
 - New blog post: [How to build notifications that encourage collaboration](https://liveblocks.io/blog/how-to-build-notifications-that-encourage-collaboration).
+- New blog post: [What’s new in Liveblocks: February 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2025).
 
 ## Contributors
 
