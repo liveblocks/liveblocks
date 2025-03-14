@@ -52,13 +52,13 @@ import {
   createManagedPool,
   createUserNotificationSettings,
   LiveObject,
-  nanoid,
   objectToQuery,
   tryParseJson,
   url,
   urljoin,
 } from "@liveblocks/core";
 
+import { asyncConsume, asyncFilter, asyncIter } from "./itertools";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -85,7 +85,9 @@ type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
     // and converts the maps to plain objects.
     SerializeMaps<ToImmutable<S>>;
 
+// XXX Rename to endpoint RESPONSE type
 type RawNodeMap = {
+  actor: number;
   nodes: IdTuple<SerializedCrdt>[];
 };
 
@@ -189,6 +191,52 @@ type E = DE;
 type M = DM;
 type S = DS;
 type U = DU;
+
+export type RoomQueryCriteria = {
+  userId?: string;
+  groupIds?: string[];
+  /**
+   * The query to filter rooms by. It is based on our query language.
+   * @example
+   * ```
+   * {
+   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
+   * }
+   * ```
+   * @example
+   * ```
+   * {
+   *   query: {
+   *     metadata: {
+   *       status: "open",
+   *     },
+   *     roomId: {
+   *       startsWith: "liveblocks:"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  query?:
+    | string
+    | {
+        metadata?: QueryRoomMetadata;
+        roomId?: {
+          startsWith: string;
+        };
+      };
+};
+
+export type GetRoomsOptions = RoomQueryCriteria & {
+  limit?: number;
+  startingAfter?: string;
+
+  /**
+   * deprecated Use `query` property instead. Support for the `metadata`
+   * field will be removed in a future version.
+   */
+  metadata?: QueryRoomMetadata;
+};
 
 export type RequestOptions = {
   signal?: AbortSignal;
@@ -430,47 +478,7 @@ export class Liveblocks {
    * @returns A list of rooms.
    */
   public async getRooms(
-    params: {
-      limit?: number;
-      startingAfter?: string;
-      /**
-       * @deprecated Use `query` property instead. Support for the `metadata`
-       * field will be removed in a future version.
-       */
-      metadata?: QueryRoomMetadata;
-      userId?: string;
-      groupIds?: string[];
-      /**
-       * The query to filter rooms by. It is based on our query language.
-       * @example
-       * ```
-       * {
-       *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
-       * }
-       * ```
-       * @example
-       * ```
-       * {
-       *   query: {
-       *     metadata: {
-       *       status: "open",
-       *     },
-       *     roomId: {
-       *       startsWith: "liveblocks:"
-       *     }
-       *   }
-       * }
-       * ```
-       */
-      query?:
-        | string
-        | {
-            metadata?: QueryRoomMetadata;
-            roomId?: {
-              startsWith: string;
-            };
-          };
-    } = {},
+    params: GetRoomsOptions = {},
     options?: RequestOptions
   ): Promise<{
     nextPage: string | null;
@@ -779,16 +787,6 @@ export class Liveblocks {
     format: "plain-lson" | "json" = "plain-lson",
     options?: RequestOptions
   ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
-    return (await this.getStorageDocument_internal(roomId, format, options)) as
-      | PlainLsonObject
-      | ToSimplifiedJson<S>;
-  }
-
-  private async getStorageDocument_internal(
-    roomId: string,
-    format: "plain-lson" | "json" | "internal",
-    options?: RequestOptions
-  ): Promise<PlainLsonObject | ToSimplifiedJson<S> | RawNodeMap> {
     const res = await this.#get(
       url`/v2/rooms/${roomId}/storage`,
       { format },
@@ -797,10 +795,22 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as
-      | PlainLsonObject
-      | ToSimplifiedJson<S>
-      | RawNodeMap;
+    return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
+  }
+
+  private async startStorageMutation(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<RawNodeMap> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/start-storage-mutation`,
+      {},
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as RawNodeMap;
   }
 
   /**
@@ -1928,7 +1938,83 @@ export class Liveblocks {
    */
   public async mutateStorage(
     roomId: string,
-    callback: (root: LiveObject<S>, flush: () => void) => Awaitable<void>
+    callback: (context: { root: LiveObject<S> }) => Awaitable<void>,
+    // XXX Implement options
+    _options?: {
+      flush?: number;
+      signal?: AbortSignal;
+    }
+  ): Promise<void> {
+    return this.#_mutateOneRoom(roomId, undefined, callback);
+  }
+
+  /**
+   * Downloads the current Storage contents and calls the provided callback
+   * function, in which you can mutate the Storage contents arbitrarily.
+   *
+   * The provided callback function is a synchronous function. If you need to
+   * make multiple async updates, see XXX.
+   */
+  public async massMutateStorage(
+    criteria: RoomQueryCriteria,
+    callback: (context: {
+      room: RoomData;
+      root: LiveObject<S>;
+    }) => Awaitable<void>,
+    // XXX Implement options
+    _options?: {
+      concurrency?: number;
+      flush?: number;
+      signal?: AbortSignal;
+    }
+  ): Promise<void> {
+    const pageSize = 20; // XXX Make dependent on concurrency value, i.e. options.concurrency * 4?
+    const collectRoomIds = this._iterAllRoomIds(criteria, pageSize);
+
+    // XXX Chunk and run these by a fixed "concurrency" pool at a time
+    await Promise.all(
+      (await asyncConsume(collectRoomIds)).map((roomData) =>
+        this.#_mutateOneRoom(roomData.id, roomData, callback)
+      )
+    );
+  }
+
+  private async *_iterAllRoomIds(
+    criteria: RoomQueryCriteria,
+    pageSize: number,
+    // XXX Implement options
+    options?: {
+      signal: AbortSignal;
+    }
+  ): AsyncGenerator<RoomData> {
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getRooms({
+        ...criteria,
+        startingAfter: cursor,
+        limit: pageSize,
+      });
+      for (const room of data) {
+        yield room;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
+  }
+
+  async #_mutateOneRoom(
+    roomId: string,
+    room: RoomData | undefined,
+    callback: (context: {
+      room: RoomData | undefined;
+      root: LiveObject<S>;
+    }) => Awaitable<void>,
+    // XXX Deal with signal!
+    options?: {
+      signal: AbortSignal;
+    }
   ): Promise<void> {
     // 1. Create a new pool
     // 2. Download the storage contents
@@ -1939,27 +2025,6 @@ export class Liveblocks {
 
     const opsBuffer: Op[] = [];
 
-    // XXX Think about this uniq ID generation. Ideally it would not be
-    // _random_ but instead claimed from the server first. Maybe by adding
-    // a param to the `/storage` endpoint, and returned in the same response?
-    // This would be better for security and generally less error-prone.
-    const connectionId = ("s:" + nanoid(5)) as unknown as number;
-
-    // 1. Create a new pool
-    const pool = createManagedPool(roomId, {
-      getCurrentConnectionId: () => connectionId,
-      onDispatch: (
-        ops: Op[],
-        _reverse: Op[],
-        _storageUpdates: Map<string, StorageUpdate>
-      ) => {
-        // 5. Capture all the changes to the pool
-        for (const op of ops) {
-          opsBuffer.push(op);
-        }
-      },
-    });
-
     const ctl = new AbortController();
     const signal = ctl.signal;
 
@@ -1967,14 +2032,27 @@ export class Liveblocks {
 
     // 2. Download the storage contents
     try {
-      const nodemap = (
-        (await this.getStorageDocument_internal(roomId, "internal", {
-          signal,
-        })) as RawNodeMap
-      ).nodes;
+      const { actor, nodes } = await this.startStorageMutation(roomId, {
+        signal,
+      });
+
+      // 1. Create a new pool
+      const pool = createManagedPool(roomId, {
+        getCurrentConnectionId: () => actor,
+        onDispatch: (
+          ops: Op[],
+          _reverse: Op[],
+          _storageUpdates: Map<string, StorageUpdate>
+        ) => {
+          // 5. Capture all the changes to the pool
+          for (const op of ops) {
+            opsBuffer.push(op);
+          }
+        },
+      });
 
       // 3. Construct the Live tree
-      const root = LiveObject._fromItems(nodemap, pool);
+      const root = LiveObject._fromItems(nodes, pool);
 
       // XXX Batch super-quick flush calls together (like the throttling we do in the browser client)
       const flushSync = () => {
@@ -1992,7 +2070,7 @@ export class Liveblocks {
       };
 
       // 4. Run the callback
-      await callback(root as LiveObject<S>, flushSync);
+      await callback({ room, root: root as LiveObject<S> });
 
       // 6. Send the resulting ops to the server
       flushSync();
@@ -2018,7 +2096,10 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    // If res.ok, it will be a 204 response, without content
+    // TODO: If res.ok, it will be a 200 response containing all returned Ops.
+    // These may include fix ops, which should get applied back to the managed
+    // pool.
+    // XXX Implement the handling of fix-ops.
   }
 }
 
