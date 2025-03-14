@@ -1,16 +1,18 @@
 import type { Descendant, Editor, Node as SlateNode } from "slate";
-import { Transforms } from "slate";
+import { Range as SlateRange, Transforms } from "slate";
 import { jsx } from "slate-hyperscript";
 
 import type {
-  ComposerBodyAutoLink,
   ComposerBodyBlockElement,
-  ComposerBodyCustomLink,
   ComposerBodyInlineElement,
+  ComposerBodyLink,
   ComposerBodyParagraph,
   ComposerBodyText,
 } from "../../types";
 import { getFiles } from "../../utils/data-transfer";
+import { isPlainText, isText } from "../utils/is-text";
+import { selectionContainsInlines } from "../utils/selection-contains-inlines";
+import { isUrl, URL_REGEX_GLOBAL } from "./links";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 
@@ -31,30 +33,16 @@ type DeserializedNode =
   | Descendant[]
   | DeserializedNode[];
 
-function areUrlsEqual(a: string, b: string) {
-  try {
-    const urlA = new URL(a);
-    const urlB = new URL(b);
-
-    return urlA.origin === urlB.origin && urlA.pathname === urlB.pathname;
-  } catch {
-    return false;
-  }
-}
-
 const createParagraphElement = (): OmitTextChildren<ComposerBodyParagraph> => ({
   type: "paragraph",
 });
 
 const ELEMENT_TAGS = {
-  A: (
-    element
-  ): OmitTextChildren<ComposerBodyCustomLink | ComposerBodyAutoLink> => {
+  A: (element): OmitTextChildren<ComposerBodyLink> => {
     const href = element.getAttribute("href");
-    const innerText = element.innerText;
 
     return {
-      type: href && areUrlsEqual(href, innerText) ? "auto-link" : "custom-link",
+      type: "link",
       url: href ?? "",
     };
   },
@@ -214,7 +202,10 @@ export function withPaste(
   const { insertData } = editor;
 
   editor.insertData = (data) => {
-    // Create attachments from files when pasting
+    const { selection } = editor;
+    const plainText = data.getData("text/plain");
+
+    // 1. If there are files, create attachments from them
     if (data.types.includes("Files") && pasteFilesAsAttachments) {
       const files = getFiles(data);
 
@@ -225,11 +216,44 @@ export function withPaste(
       }
     }
 
-    // Deserialize rich text from HTML when pasting (unless there's also Slate data)
-    if (
-      data.types.includes("text/html") &&
-      !data.types.includes("application/x-slate-fragment")
-    ) {
+    // 2. If a URL is being pasted on a plain text selection, create a link with the selection
+    if (selection && !SlateRange.isCollapsed(selection)) {
+      // Check if the selection is contained in a single block
+      if (selection.anchor.path[0] === selection.focus.path[0]) {
+        // Check if the pasted text is a valid URL
+        if (isUrl(plainText)) {
+          // Check if the selection only contains (rich and/or plain) text nodes
+          if (!selectionContainsInlines(editor, (node) => !isText(node))) {
+            // If all conditions are met, wrap the selected nodes in a link
+            Transforms.wrapNodes<ComposerBodyLink>(
+              editor,
+              {
+                type: "link",
+                url: plainText,
+                children: [],
+              },
+              {
+                at: selection,
+                split: true,
+                match: isPlainText,
+              }
+            );
+
+            return;
+          }
+        }
+      }
+    }
+
+    // 3. If there's Slate data, immediately let Slate handle it
+    if (data.types.includes("application/x-slate-fragment")) {
+      insertData(data);
+
+      return;
+    }
+
+    // 4. If there's HTML, deserialize rich text from it
+    if (data.types.includes("text/html")) {
       const html = data.getData("text/html");
 
       try {
@@ -258,11 +282,77 @@ export function withPaste(
           return;
         }
       } catch {
-        // Fallback to default `insertData` behavior
+        // Go back to the list of conditions if something went wrong
       }
     }
 
-    // Default `insertData` behavior
+    // 5. If the pasted plain text contains URLs, create links for them
+    if (plainText.match(URL_REGEX_GLOBAL)) {
+      try {
+        // Split lines into paragraphs
+        const paragraphs = plainText.split(/\r\n|\r|\n/);
+
+        const nodes: ComposerBodyParagraph[] = paragraphs.map((paragraph) => {
+          // Find all URLs and their positions in the paragraph
+          const matches = [...paragraph.matchAll(URL_REGEX_GLOBAL)];
+          const children: ComposerBodyInlineElement[] = [];
+          let lastIndex = 0;
+
+          // Interleave text and link nodes
+          for (const match of matches) {
+            const url = match[0]!;
+            const startIndex = match.index!;
+
+            // Add the text before the URL (if any)
+            if (startIndex > lastIndex) {
+              children.push({
+                text: paragraph.slice(lastIndex, startIndex),
+              });
+            }
+
+            // Add the URL as a link
+            children.push({
+              type: "link",
+              url,
+              children: [{ text: url }],
+            });
+
+            lastIndex = startIndex + url.length;
+          }
+
+          // Add the remaining text after the last URL (if any)
+          if (lastIndex < paragraph.length) {
+            children.push({
+              text: paragraph.slice(lastIndex),
+            });
+          }
+
+          // If no URLs were found, create a plain text node
+          if (children.length === 0) {
+            children.push({ text: paragraph });
+          }
+
+          return {
+            type: "paragraph",
+            children,
+          };
+        });
+
+        // If there's a range selection, delete its content before inserting the new nodes
+        if (selection && !SlateRange.isCollapsed(selection)) {
+          Transforms.delete(editor, { at: selection });
+        }
+
+        // Insert the new nodes
+        Transforms.insertFragment(editor, nodes);
+
+        return;
+      } catch {
+        // Go back to the list of conditions if something went wrong
+      }
+    }
+
+    // 6. If none of the conditions were met, we let Slate decide what to do
     insertData(data);
   };
 
