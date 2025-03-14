@@ -1,5 +1,6 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import {
+  type Emoji as FrimousseEmoji,
   EmojiPicker as EmojiPickerPrimitive,
   type EmojiPickerListCategoryHeaderProps,
   type EmojiPickerListEmojiProps,
@@ -90,7 +91,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     );
 
     const handleEmojiSelect = useCallback(
-      (emoji: string) => {
+      ({ emoji }: FrimousseEmoji) => {
         setOpen(false);
         onEmojiSelect?.(emoji);
       },
@@ -118,6 +119,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
               onEmojiSelect={handleEmojiSelect}
               locale={$.locale as Locale}
               emojiVersion={15.1}
+              columns={10}
             >
               <div className="lb-emoji-picker-header">
                 <div className="lb-emoji-picker-search-container">
@@ -130,15 +132,11 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
                 </div>
               </div>
               <EmojiPickerPrimitive.Viewport className="lb-emoji-picker-content">
-                <EmojiPickerPrimitive.Loading>
-                  <div className="lb-loading lb-emoji-picker-loading">
-                    <SpinnerIcon />
-                  </div>
+                <EmojiPickerPrimitive.Loading className="lb-loading lb-emoji-picker-loading">
+                  <SpinnerIcon />
                 </EmojiPickerPrimitive.Loading>
-                <EmojiPickerPrimitive.Empty>
-                  <div className="lb-empty lb-emoji-picker-empty">
-                    {$.EMOJI_PICKER_EMPTY}
-                  </div>
+                <EmojiPickerPrimitive.Empty className="lb-empty lb-emoji-picker-empty">
+                  {$.EMOJI_PICKER_EMPTY}
                 </EmojiPickerPrimitive.Empty>
                 <EmojiPickerPrimitive.List
                   className="lb-emoji-picker-list"
