@@ -16,7 +16,7 @@ import {
 type UnreadRepliesEmailProps = {
   company: CompanyInfo;
   room: RoomInfo;
-  comments: CommentEmailAsReactData[];
+  comments: Omit<CommentEmailAsReactData, "reactBody">[];
 };
 
 const previewProps: UnreadRepliesEmailProps = {
@@ -42,7 +42,7 @@ const previewProps: UnreadRepliesEmailProps = {
           avatar: "https://liveblocks.io/avatars/avatar-3.png",
         },
       },
-      reactBody: (
+      body: (
         <Text className="text-sm m-0 text-black">
           <span>
             I've reviewed this section and think we need a more detailed
@@ -67,7 +67,7 @@ const previewProps: UnreadRepliesEmailProps = {
           avatar: "https://liveblocks.io/avatars/avatar-4.png",
         },
       },
-      reactBody: (
+      body: (
         <Text className="text-sm text-black m-0">
           <span>Looks good overall. Just a quick note on the timeline.</span>
         </Text>

@@ -2,7 +2,7 @@ import { CommentEmailAsReactData } from "@liveblocks/emails";
 import { Section, Row, Column, Img, Button } from "@react-email/components";
 import { cn } from "../_utils/cn";
 
-type CommentProps = CommentEmailAsReactData & {
+type CommentProps = Omit<CommentEmailAsReactData, "reactBody"> & {
   isHighlighted?: boolean;
   className?: string;
 };
@@ -11,7 +11,7 @@ export function Comment({
   id,
   author,
   createdAt,
-  reactBody,
+  body,
   url,
   isHighlighted,
   className,
@@ -52,7 +52,7 @@ export function Comment({
       <Row>
         <Column className="w-10" />
         <Column>
-          {reactBody}
+          {body}
           <Button
             className={cn(
               "rounded px-3.5 py-2 text-sm font-medium w-max mt-4",

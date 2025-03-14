@@ -1,5 +1,13 @@
 ## vNEXT (not yet published)
 
+## `@liveblocks/emails`
+
+- Implement new abstraction protocol to convert comment bodies.
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
 ### `@liveblocks/node`
 
 - Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
