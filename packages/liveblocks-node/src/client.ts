@@ -52,7 +52,6 @@ import {
   createManagedPool,
   createUserNotificationSettings,
   LiveObject,
-  nanoid,
   objectToQuery,
   tryParseJson,
   url,
@@ -84,10 +83,6 @@ type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
     // the "simplified JSON" format actually requires (because of serialization)
     // and converts the maps to plain objects.
     SerializeMaps<ToImmutable<S>>;
-
-type RawNodeMap = {
-  nodes: IdTuple<SerializedCrdt>[];
-};
 
 export type LiveblocksOptions = {
   /**
@@ -179,6 +174,11 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
+type StartStorageMutationResponse = {
+  actor: number;
+  nodes: IdTuple<SerializedCrdt>[];
+};
+
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
 // inside the Liveblocks implementation. We should only rely on the type
 // "params" (S, U, E, ...) instead, where the concrete type is bound to the
@@ -189,6 +189,52 @@ type E = DE;
 type M = DM;
 type S = DS;
 type U = DU;
+
+export type RoomQueryCriteria = {
+  userId?: string;
+  groupIds?: string[];
+  /**
+   * The query to filter rooms by. It is based on our query language.
+   * @example
+   * ```
+   * {
+   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
+   * }
+   * ```
+   * @example
+   * ```
+   * {
+   *   query: {
+   *     metadata: {
+   *       status: "open",
+   *     },
+   *     roomId: {
+   *       startsWith: "liveblocks:"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  query?:
+    | string
+    | {
+        metadata?: QueryRoomMetadata;
+        roomId?: {
+          startsWith: string;
+        };
+      };
+};
+
+export type GetRoomsOptions = RoomQueryCriteria & {
+  limit?: number;
+  startingAfter?: string;
+
+  /**
+   * deprecated Use `query` property instead. Support for the `metadata`
+   * field will be removed in a future version.
+   */
+  metadata?: QueryRoomMetadata;
+};
 
 export type RequestOptions = {
   signal?: AbortSignal;
@@ -430,47 +476,7 @@ export class Liveblocks {
    * @returns A list of rooms.
    */
   public async getRooms(
-    params: {
-      limit?: number;
-      startingAfter?: string;
-      /**
-       * @deprecated Use `query` property instead. Support for the `metadata`
-       * field will be removed in a future version.
-       */
-      metadata?: QueryRoomMetadata;
-      userId?: string;
-      groupIds?: string[];
-      /**
-       * The query to filter rooms by. It is based on our query language.
-       * @example
-       * ```
-       * {
-       *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
-       * }
-       * ```
-       * @example
-       * ```
-       * {
-       *   query: {
-       *     metadata: {
-       *       status: "open",
-       *     },
-       *     roomId: {
-       *       startsWith: "liveblocks:"
-       *     }
-       *   }
-       * }
-       * ```
-       */
-      query?:
-        | string
-        | {
-            metadata?: QueryRoomMetadata;
-            roomId?: {
-              startsWith: string;
-            };
-          };
-    } = {},
+    params: GetRoomsOptions = {},
     options?: RequestOptions
   ): Promise<{
     nextPage: string | null;
@@ -779,16 +785,6 @@ export class Liveblocks {
     format: "plain-lson" | "json" = "plain-lson",
     options?: RequestOptions
   ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
-    return (await this.getStorageDocument_internal(roomId, format, options)) as
-      | PlainLsonObject
-      | ToSimplifiedJson<S>;
-  }
-
-  private async getStorageDocument_internal(
-    roomId: string,
-    format: "plain-lson" | "json" | "internal",
-    options?: RequestOptions
-  ): Promise<PlainLsonObject | ToSimplifiedJson<S> | RawNodeMap> {
     const res = await this.#get(
       url`/v2/rooms/${roomId}/storage`,
       { format },
@@ -797,10 +793,22 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as
-      | PlainLsonObject
-      | ToSimplifiedJson<S>
-      | RawNodeMap;
+    return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
+  }
+
+  private async startStorageMutation(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<StartStorageMutationResponse> {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/start-storage-mutation`,
+      {},
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    return (await res.json()) as StartStorageMutationResponse;
   }
 
   /**
