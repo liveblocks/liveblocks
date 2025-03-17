@@ -162,10 +162,10 @@ describe("useRoomNotificationSettings: error", () => {
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
     const roomId = nanoid();
 
-    let getRoomNotificationsSettingsCount = 0;
+    let getRoomNotificationSettingsCount = 0;
     server.use(
       mockGetRoomNotificationSettings((_req, res, ctx) => {
-        getRoomNotificationsSettingsCount++;
+        getRoomNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -187,24 +187,24 @@ describe("useRoomNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch room notification settings
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(1));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(2));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(4));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(5));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -218,11 +218,11 @@ describe("useRoomNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(6));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(6));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(7));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(7));
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // and so on...
@@ -234,10 +234,10 @@ describe("useRoomNotificationSettings: error", () => {
     const roomId = nanoid();
 
     let shouldReturnErrorResponse = true;
-    let getRoomNotificationsSettingsCount = 0;
+    let getRoomNotificationSettingsCount = 0;
     server.use(
       mockGetRoomNotificationSettings((_req, res, ctx) => {
-        getRoomNotificationsSettingsCount++;
+        getRoomNotificationSettingsCount++;
         if (shouldReturnErrorResponse) {
           // Mock an error response from the server for the initial fetch
           return res(ctx.status(500));
@@ -267,24 +267,24 @@ describe("useRoomNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch room notification settings
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(1));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(2));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(4));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(5));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -298,7 +298,7 @@ describe("useRoomNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(6));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(6));
 
     // Switch the mock endpoint to return a successful response after 4 seconds
     shouldReturnErrorResponse = false;
@@ -314,7 +314,7 @@ describe("useRoomNotificationSettings: error", () => {
         },
       })
     );
-    expect(getRoomNotificationsSettingsCount).toBe(7);
+    expect(getRoomNotificationSettingsCount).toBe(7);
 
     unmount();
   });
@@ -322,17 +322,17 @@ describe("useRoomNotificationSettings: error", () => {
   test("should poll room notification settings every x seconds", async () => {
     const roomId = nanoid();
 
-    let getRoomNotificationsSettingsCount = 0;
+    let getRoomNotificationSettingsCount = 0;
     server.use(
       mockGetRoomNotificationSettings((_req, res, ctx) => {
-        getRoomNotificationsSettingsCount++;
-        if (getRoomNotificationsSettingsCount === 1) {
+        getRoomNotificationSettingsCount++;
+        if (getRoomNotificationSettingsCount === 1) {
           return res(
             ctx.json({
               threads: "all",
             })
           );
-        } else if (getRoomNotificationsSettingsCount === 2) {
+        } else if (getRoomNotificationSettingsCount === 2) {
           return res(
             ctx.json({
               threads: "none",
@@ -372,7 +372,7 @@ describe("useRoomNotificationSettings: error", () => {
         },
       })
     );
-    expect(getRoomNotificationsSettingsCount).toBe(1);
+    expect(getRoomNotificationSettingsCount).toBe(1);
 
     // Advance by 1 minute so that and verify that the first poll is triggered
     jest.advanceTimersByTime(60_000);
@@ -384,7 +384,7 @@ describe("useRoomNotificationSettings: error", () => {
         },
       })
     );
-    expect(getRoomNotificationsSettingsCount).toBe(2);
+    expect(getRoomNotificationSettingsCount).toBe(2);
 
     // Advance by another 1 minute so that and verify that the second poll is triggered
     jest.advanceTimersByTime(60_000);
@@ -396,11 +396,11 @@ describe("useRoomNotificationSettings: error", () => {
         },
       })
     );
-    expect(getRoomNotificationsSettingsCount).toBe(3);
+    expect(getRoomNotificationSettingsCount).toBe(3);
 
     // Advance by another 1 minute so that and verify that the third poll is triggered
     jest.advanceTimersByTime(60_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(3));
     expect(result.current[0]).toEqual({
       isLoading: false,
       settings: {
@@ -475,10 +475,10 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
-    let getRoomNotificationsSettingsCount = 0;
+    let getRoomNotificationSettingsCount = 0;
     server.use(
       mockGetRoomNotificationSettings((_req, res, ctx) => {
-        getRoomNotificationsSettingsCount++;
+        getRoomNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -518,24 +518,24 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch room notification settings
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(1));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(2));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(4));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(5));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       // Check if the error boundary's fallback is displayed
@@ -550,10 +550,10 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
   });
 
   test("should retry with exponential backoff on error and clear error boundary", async () => {
-    let getRoomNotificationsSettingsCount = 0;
+    let getRoomNotificationSettingsCount = 0;
     server.use(
       mockGetRoomNotificationSettings((_req, res, ctx) => {
-        getRoomNotificationsSettingsCount++;
+        getRoomNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -593,24 +593,24 @@ describe("useRoomNotificationSettingsSuspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch room notification settings
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(1));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(2));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(4));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(5));
+    await waitFor(() => expect(getRoomNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       // Check if the error boundary's fallback is displayed

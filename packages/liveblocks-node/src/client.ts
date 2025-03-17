@@ -1678,7 +1678,7 @@ export class Liveblocks {
     params: {
       userId: string;
       roomId: string;
-      data: RoomNotificationSettings;
+      data: Partial<RoomNotificationSettings>;
     },
     options?: RequestOptions
   ): Promise<RoomNotificationSettings> {
