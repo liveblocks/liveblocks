@@ -1,13 +1,13 @@
 "use client";
 
-import { ReactNode, useMemo } from "react";
-import { RoomProvider } from "@liveblocks/react/suspense";
+import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
+import Loading from "./loading";
 import { useSearchParams } from "next/navigation";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { Loading } from "@/components/Loading";
+import { ReactNode } from "react";
 
+// Room needs to be in a client component, and one should be used in each document page
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-yjs-blocknote");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-blocknote");
 
   return (
     <RoomProvider
@@ -28,10 +28,5 @@ export function Room({ children }: { children: ReactNode }) {
 function useExampleRoomId(roomId: string) {
   const params = useSearchParams();
   const exampleId = params?.get("exampleId");
-
-  const exampleRoomId = useMemo(() => {
-    return exampleId ? `${roomId}-${exampleId}` : roomId;
-  }, [roomId, exampleId]);
-
-  return exampleRoomId;
+  return exampleId ? `${roomId}-${exampleId}` : roomId;
 }

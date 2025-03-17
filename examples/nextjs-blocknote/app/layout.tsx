@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
+import { Providers } from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,9 +29,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className={inter.className}>
-        <main className="text-base bg-background/95 text-foreground">
-          {children}
-        </main>
+        <Providers>
+          <main className="text-base bg-background/95 text-foreground">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );
