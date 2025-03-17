@@ -767,8 +767,6 @@ The `HistoryVersionPreview` component renders a read-only view of the specified
 version of the editor content. It also provides a button for users to restore
 the displayed version.
 
-{/* TODO add AiToolbar when it's supported */}
-
 ## Hooks
 
 ### useCreateBlockNoteWithLiveblocks
@@ -870,13 +868,6 @@ const editor = useCreateBlockNoteWithLiveblocks(
     type="boolean"
   >
     Enable mentions in the editor.
-  </PropertiesListItem>
-  <PropertiesListItem
-    name="liveblocksOptions.ai"
-    defaultValue="false"
-    type="boolean | AiConfiguration"
-  >
-    Enable AI in the editor and optionally customize configuration options.
   </PropertiesListItem>
 </PropertiesList>
 
