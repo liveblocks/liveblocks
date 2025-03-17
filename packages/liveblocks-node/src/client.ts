@@ -44,6 +44,7 @@ import type {
   UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import {
+  checkBounds,
   ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
@@ -187,13 +188,13 @@ export type MassMutateStorageCallback = (context: {
 }) => Awaitable<void>;
 export type MassMutateStorageOptions = RequestOptions & {
   concurrency?: number;
-  throttle?: number;
+  flushInterval?: number;
 };
 export type MutateStorageCallback = (context: {
   root: LiveObject<S>;
 }) => Awaitable<void>;
 export type MutateStorageOptions = RequestOptions & {
-  throttle?: number;
+  flushInterval?: number;
 };
 
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
@@ -561,7 +562,7 @@ export class Liveblocks {
    * Like .getRooms(), but will return a continuous stream of all rooms that
    * match the criteria.
    */
-  // XXX Maybe consider making this API public and supported?
+  // TODO Consider making this API public and supported?
   async *#iterRooms(
     criteria: RoomQueryCriteria,
     options?: RequestOptions & { pageSize?: number }
@@ -1972,11 +1973,12 @@ export class Liveblocks {
   }
 
   /**
-   * Downloads the current Storage contents and calls the provided callback
-   * function, in which you can mutate the Storage contents arbitrarily.
+   * Retrieves the current Storage contents for the given room ID and calls the
+   * provided callback function, in which you can mutate the Storage contents
+   * at will.
    *
-   * The provided callback function is a synchronous function. If you need to
-   * make multiple async updates, see XXX.
+   * If you need to run the same mutation across multiple rooms, prefer using
+   * `.massMutateStorage()` instead of looping over room IDs yourself.
    */
   public async mutateStorage(
     roomId: string,
@@ -1987,28 +1989,42 @@ export class Liveblocks {
   }
 
   /**
-   * Downloads the current Storage contents and calls the provided callback
-   * function, in which you can mutate the Storage contents arbitrarily.
+   * Retrieves the Storage contents for each room that matches the given
+   * criteria and calls the provided callback function, in which you can mutate
+   * the Storage contents at will.
    *
-   * The provided callback function is a synchronous function. If you need to
-   * make multiple async updates, see XXX.
+   * You can use the `criteria` parameter to select which rooms to process by
+   * their metadata. If you pass `{}` (empty object), all rooms will be
+   * selected and processed.
+   *
+   * This method will execute mutations in parallel, using the specified
+   * `concurrency` value. If you which to run the mutations serially, set
+   * `concurrency` to 1.
    */
   public async massMutateStorage(
     criteria: RoomQueryCriteria,
     callback: MassMutateStorageCallback,
     massOptions?: MassMutateStorageOptions
-    // XXX Implement options
   ): Promise<void> {
-    const pageSize = 20; // XXX Make dependent on concurrency?
-    const { throttle, concurrency, signal } = massOptions ?? {};
+    const concurrency = checkBounds(
+      "concurrency",
+      massOptions?.concurrency ?? 8,
+      1,
+      20
+    );
+
+    // Try to select a reasonable page size based on the concurrency level, but
+    // at least never less than 20.
+    const pageSize = Math.max(20, concurrency * 4);
+    const { flushInterval, signal } = massOptions ?? {};
     const rooms = this.#iterRooms(criteria, { pageSize, signal });
 
-    const options = { throttle, signal };
+    const options = { flushInterval, signal };
     await runConcurrently(
       rooms,
       (roomData) =>
         this.#_mutateOneRoom(roomData.id, roomData, callback, options),
-      concurrency ?? 8
+      concurrency
     );
   }
 
@@ -2017,8 +2033,13 @@ export class Liveblocks {
     room: RD,
     callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
     options?: MutateStorageOptions
-    // XXX Implement options
   ): Promise<void> {
+    const flushInterval = checkBounds(
+      "flushInterval",
+      options?.flushInterval ?? 1000,
+      100
+    );
+
     // The plan:
     // 1. Create a new pool
     // 2. Download the storage contents
@@ -2027,29 +2048,45 @@ export class Liveblocks {
     // 5. Capture all the changes to the pool
     // 6. Send the resulting ops to the server at a throttled interval
 
-    // XXX Implement throttling
-    // XXX Make sure when throttling that the _order_ is preserved
-
-    const opsBuffer: Op[] = [];
-
     const { signal, abort } = makeAbortController(options?.signal);
 
-    // XXX Batch super-quick throttle calls together (like the throttling we do in the browser client)
-    const flushSync = () => {
+    // Set up a "debouncer": we'll flush the buffered ops to the server if
+    // there hasn't been an update to the buffered ops for a while. This
+    // behavior is slightly different from the browser client, which will emit
+    // ops as soon as they are available (= throttling)
+    let opsBuffer: Op[] = [];
+    let outstandingFlush$: Promise<void> | undefined = undefined;
+    let lastFlush = performance.now();
+
+    const flushIfNeeded = (force: boolean) => {
       if (opsBuffer.length === 0)
-        // Nothing to send
+        // Nothing to do
         return;
 
-      promises.push(
-        this.#sendMessage(
-          roomId,
-          [{ type: ClientMsgCode.UPDATE_STORAGE, ops: opsBuffer }],
-          { signal }
-        )
-      );
-    };
+      if (outstandingFlush$) {
+        // There already is an outstanding flush, wait for it to complete
+        return;
+      }
 
-    const promises: Promise<void>[] = [];
+      const now = performance.now();
+      if (!(force || now - lastFlush > flushInterval)) {
+        // We're still within the debounce window, do nothing right now
+        return;
+      }
+
+      // All good, flush right now
+      lastFlush = now;
+      const ops = opsBuffer;
+      opsBuffer = [];
+
+      outstandingFlush$ = this.#sendMessage(
+        roomId,
+        [{ type: ClientMsgCode.UPDATE_STORAGE, ops }],
+        { signal }
+      ).finally(() => {
+        outstandingFlush$ = undefined;
+      });
+    };
 
     // Download the storage contents
     try {
@@ -2070,7 +2107,7 @@ export class Liveblocks {
           for (const op of ops) {
             opsBuffer.push(op);
           }
-          // flushSync();
+          flushIfNeeded(/* force */ false);
         },
       });
 
@@ -2079,14 +2116,14 @@ export class Liveblocks {
 
       // Run the callback
       await callback({ room, root: root as LiveObject<S> });
-
-      // Send the resulting ops to the server
-      flushSync();
     } catch (e) {
       abort();
       throw e;
     } finally {
-      await Promise.allSettled(promises);
+      // Await any outstanding flushes, and then flush one last time
+      await outstandingFlush$; // eslint-disable-line @typescript-eslint/await-thenable
+      flushIfNeeded(/* force */ true);
+      await outstandingFlush$; // eslint-disable-line @typescript-eslint/await-thenable
     }
   }
 
@@ -2107,7 +2144,14 @@ export class Liveblocks {
     // TODO: If res.ok, it will be a 200 response containing all returned Ops.
     // These may include fix ops, which should get applied back to the managed
     // pool.
-    // XXX Implement the handling of fix-ops.
+    // TODO Implement the handling of fix-ops:
+    // const data = (await res.json()) as {
+    //   messages: readonly (
+    //     | ServerMsg<JsonObject, BaseUserMeta, Json>
+    //     | readonly ServerMsg<JsonObject, BaseUserMeta, Json>[]
+    //   )[];
+    // };
+    // return data;
   }
 }
 

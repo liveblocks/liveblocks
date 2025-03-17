@@ -27,7 +27,7 @@ export type {
   ResolveUsersArgs,
   SyncStatus,
 } from "./client";
-export { createClient } from "./client";
+export { checkBounds, createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
