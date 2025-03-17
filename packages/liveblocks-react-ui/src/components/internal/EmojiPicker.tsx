@@ -29,14 +29,12 @@ export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
 
 function EmojiPickerListEmoji({
   emoji,
-  isActive: _,
   className,
   ...props
 }: EmojiPickerListEmojiProps) {
   return (
     <button
       className={classNames("lb-emoji-picker-emoji", className)}
-      aria-label={emoji.label}
       {...props}
     >
       <Emoji emoji={emoji.emoji} />

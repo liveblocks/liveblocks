@@ -530,7 +530,7 @@
   flex-direction: column;
   inline-size: 100%;
   max-inline-size: var(--frimousse-viewport-width);
-  block-size: 402px;
+  block-size: 374px;
   color: var(--lb-foreground);
 }
 
