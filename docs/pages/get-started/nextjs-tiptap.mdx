@@ -263,11 +263,12 @@ package.
 <Step lastStep>
   <StepTitle>Optional: add more features</StepTitle>
   <StepContent>
-    BlockNote is easy to extend, and a number of extensions are already available, making it possible to quickly create complex rich-text applications. Any additional features you add will be supported using Liveblocks.
+   Tiptap is easy to extend, and a number of extensions are already available, making it possible to quickly create complex rich-text applications. For example you can enable features
+    such as tables, text highlights, embedded images, and more. This is all supported using Liveblocks.
 
     <Button asChild  className="not-markdown">
-      <a href="https://www.blocknotejs.org/docs">
-        Read the BlockNote docs
+      <a href="https://tiptap.dev/docs/editor/extensions/overview">
+        Find more extensions
       </a>
     </Button>
 
@@ -279,22 +280,31 @@ package.
 ## What to read next
 
 Congratulations! You now have set up the foundation for your collaborative
-BlockNote text editor inside your Next.js application.
+Tiptap text editor inside your React application.
 
-- [@liveblocks/react-blocknote API Reference](/docs/api-reference/liveblocks-react-blocknote)
-- [BlockNote guides](/docs/guides?technologies=blocknote)
-- [BlockNote website](https://www.blocknotejs.org/)
+- [@liveblocks/react-tiptap API Reference](/docs/api-reference/liveblocks-react-tiptap)
+- [Tiptap guides](/docs/guides?technologies=tiptap)
+- [Tiptap website](https://tiptap.dev)
 
 ---
 
-## Examples using BlockNote
+## Examples using Tiptap
 
 <ListGrid columns={2}>
   <ExampleCard
     example={{
       title: "Collaborative Text Editor",
-      slug: "collaborative-text-editor/nextjs-blocknote",
+      slug: "collaborative-text-editor/nextjs-tiptap",
       image: "/images/examples/thumbnails/text-editor.jpg",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Advanced Collaborative Text Editor",
+      slug: "collaborative-text-editor-advanced/nextjs-tiptap-advanced",
+      image: "/images/examples/thumbnails/text-editor-advanced.jpg",
     }}
     technologies={["nextjs"]}
     openInNewWindow
