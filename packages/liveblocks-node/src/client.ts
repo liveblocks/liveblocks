@@ -52,12 +52,14 @@ import {
   createManagedPool,
   createUserNotificationSettings,
   LiveObject,
+  makeAbortController,
   objectToQuery,
   tryParseJson,
   url,
   urljoin,
 } from "@liveblocks/core";
 
+import { runConcurrently } from "./lib/itertools";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -177,6 +179,21 @@ type SchemaPlain = DateToString<Schema>;
 type StartStorageMutationResponse = {
   actor: number;
   nodes: IdTuple<SerializedCrdt>[];
+};
+
+export type MassMutateStorageCallback = (context: {
+  room: RoomData;
+  root: LiveObject<S>;
+}) => Awaitable<void>;
+export type MassMutateStorageOptions = RequestOptions & {
+  concurrency?: number;
+  flush?: number;
+};
+export type MutateStorageCallback = (context: {
+  root: LiveObject<S>;
+}) => Awaitable<void>;
+export type MutateStorageOptions = RequestOptions & {
+  flush?: number;
 };
 
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
@@ -1936,53 +1953,107 @@ export class Liveblocks {
    */
   public async mutateStorage(
     roomId: string,
-    callback: (root: LiveObject<S>, flush: () => void) => Awaitable<void>
+    callback: MutateStorageCallback,
+    options?: MutateStorageOptions
   ): Promise<void> {
+    return this.#_mutateOneRoom(roomId, undefined, callback, options);
+  }
+
+  /**
+   * Downloads the current Storage contents and calls the provided callback
+   * function, in which you can mutate the Storage contents arbitrarily.
+   *
+   * The provided callback function is a synchronous function. If you need to
+   * make multiple async updates, see XXX.
+   */
+  public async massMutateStorage(
+    criteria: RoomQueryCriteria,
+    callback: MassMutateStorageCallback,
+    massOptions?: MassMutateStorageOptions
+    // XXX Implement options
+  ): Promise<void> {
+    const pageSize = 20;
+    const { flush, concurrency, signal } = massOptions ?? {};
+    const rooms = this._iterAllRooms(criteria, pageSize, { signal });
+
+    const options = { flush, signal };
+    let i = 1;
+    await runConcurrently(
+      rooms,
+      (roomData) => {
+        console.log("Invoking callback " + i++);
+        return this.#_mutateOneRoom(roomData.id, roomData, callback, options);
+      },
+      concurrency ?? 8
+    );
+  }
+
+  private async *_iterAllRooms(
+    criteria: RoomQueryCriteria,
+    pageSize: number,
+    options?: RequestOptions
+    // XXX Implement options
+  ): AsyncGenerator<RoomData> {
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getRooms(
+        { ...criteria, startingAfter: cursor, limit: pageSize },
+        options
+      );
+      for (const room of data) {
+        yield room;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
+  }
+
+  async #_mutateOneRoom<RD extends RoomData | undefined>(
+    roomId: string,
+    room: RD,
+    callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
+    options?: MutateStorageOptions
+    // XXX Implement options
+  ): Promise<void> {
+    // The plan:
     // 1. Create a new pool
     // 2. Download the storage contents
     // 3. Construct the Live tree
     // 4. Run the callback
     // 5. Capture all the changes to the pool
-    // 6. Send the resulting ops to the server
+    // 6. Send the resulting ops to the server at a throttled interval
+    // XXX Make sure when throttling that the _order_ is preserved
 
     const opsBuffer: Op[] = [];
 
-    // XXX Think about this uniq ID generation. Ideally it would not be
-    // _random_ but instead claimed from the server first. Maybe by adding
-    // a param to the `/storage` endpoint, and returned in the same response?
-    // This would be better for security and generally less error-prone.
-    const connectionId = ("s:" + nanoid(5)) as unknown as number;
-
-    // 1. Create a new pool
-    const pool = createManagedPool(roomId, {
-      getCurrentConnectionId: () => connectionId,
-      onDispatch: (
-        ops: Op[],
-        _reverse: Op[],
-        _storageUpdates: Map<string, StorageUpdate>
-      ) => {
-        // 5. Capture all the changes to the pool
-        for (const op of ops) {
-          opsBuffer.push(op);
-        }
-      },
-    });
-
-    const ctl = new AbortController();
-    const signal = ctl.signal;
+    const { signal, abort } = makeAbortController(options?.signal);
 
     const promises: Promise<void>[] = [];
 
-    // 2. Download the storage contents
+    // Download the storage contents
     try {
-      const nodemap = (
-        (await this.getStorageDocument_internal(roomId, "internal", {
-          signal,
-        })) as RawNodeMap
-      ).nodes;
+      const resp = await this.startStorageMutation(roomId, { signal });
+      const { actor, nodes } = resp;
 
-      // 3. Construct the Live tree
-      const root = LiveObject._fromItems(nodemap, pool);
+      // Create a new pool
+      const pool = createManagedPool(roomId, {
+        getCurrentConnectionId: () => actor,
+        onDispatch: (
+          ops: Op[],
+          _reverse: Op[],
+          _storageUpdates: Map<string, StorageUpdate>
+        ) => {
+          // Capture all the changes to the pool
+          for (const op of ops) {
+            opsBuffer.push(op);
+          }
+        },
+      });
+
+      // Construct the Live tree
+      const root = LiveObject._fromItems(nodes, pool);
 
       // XXX Batch super-quick flush calls together (like the throttling we do in the browser client)
       const flushSync = () => {
@@ -1999,13 +2070,13 @@ export class Liveblocks {
         );
       };
 
-      // 4. Run the callback
-      await callback(root as LiveObject<S>, flushSync);
+      // Run the callback
+      await callback({ room, root: root as LiveObject<S> });
 
-      // 6. Send the resulting ops to the server
+      // Send the resulting ops to the server
       flushSync();
     } catch (e) {
-      ctl.abort();
+      abort();
       throw e;
     } finally {
       await Promise.allSettled(promises);
@@ -2026,7 +2097,10 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    // If res.ok, it will be a 204 response, without content
+    // TODO: If res.ok, it will be a 200 response containing all returned Ops.
+    // These may include fix ops, which should get applied back to the managed
+    // pool.
+    // XXX Implement the handling of fix-ops.
   }
 }
 

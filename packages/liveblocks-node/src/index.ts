@@ -8,6 +8,10 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export type {
   GetRoomsOptions,
   LiveblocksOptions,
+  MassMutateStorageCallback,
+  MassMutateStorageOptions,
+  MutateStorageCallback,
+  MutateStorageOptions,
   RoomAccesses,
   RoomData,
   RoomPermission,
