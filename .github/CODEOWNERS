@@ -3,7 +3,7 @@
 /packages/liveblocks-core/	@nvie @sugardarius @marcbouchenoire
 /packages/liveblocks-client/	@nvie @sugardarius @marcbouchenoire
 /packages/liveblocks-react/	@nvie @sugardarius @marcbouchenoire
-/packages/liveblocks-react-ui/	@marcbouchenoire @jrowny
+/packages/liveblocks-react-ui/	@marcbouchenoire
 /packages/liveblocks-react-lexical/	@jrowny @nimeshnayaju
 /packages/liveblocks-react-tiptap/	@jrowny @nimeshnayaju
 /packages/liveblocks-react-blocknote/	@jrowny @nimeshnayaju
