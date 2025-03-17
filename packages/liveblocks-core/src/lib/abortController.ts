@@ -1,6 +1,6 @@
 /**
  * Like `new AbortController()`, but where the result can be unpacked
- * safely, i.e. `const { signal, abort } = makeAnortController()`.
+ * safely, i.e. `const { signal, abort } = makeAbortController()`.
  *
  * This unpacking is unsafe to do with a regular `AbortController` because
  * the `abort` method is not bound to the controller instance.
