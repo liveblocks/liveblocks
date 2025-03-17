@@ -187,13 +187,13 @@ export type MassMutateStorageCallback = (context: {
 }) => Awaitable<void>;
 export type MassMutateStorageOptions = RequestOptions & {
   concurrency?: number;
-  flush?: number;
+  throttle?: number;
 };
 export type MutateStorageCallback = (context: {
   root: LiveObject<S>;
 }) => Awaitable<void>;
 export type MutateStorageOptions = RequestOptions & {
-  flush?: number;
+  throttle?: number;
 };
 
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
@@ -558,6 +558,33 @@ export class Liveblocks {
   }
 
   /**
+   * Like .getRooms(), but will return a continuous stream of all rooms that
+   * match the criteria.
+   */
+  // XXX Maybe consider making this API public and supported?
+  async *#iterRooms(
+    criteria: RoomQueryCriteria,
+    options?: RequestOptions & { pageSize?: number }
+  ): AsyncGenerator<RoomData> {
+    const { pageSize, signal } = options ?? {};
+
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getRooms(
+        { ...criteria, startingAfter: cursor, limit: pageSize },
+        { signal }
+      );
+      for (const room of data) {
+        yield room;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
+  }
+
+  /**
    * Creates a new room with the given id.
    * @param roomId The id of the room to create.
    * @param params.defaultAccesses The default accesses for the room.
@@ -813,7 +840,7 @@ export class Liveblocks {
     return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
   }
 
-  private async startStorageMutation(
+  async #startStorageMutation(
     roomId: string,
     options?: RequestOptions
   ): Promise<StartStorageMutationResponse> {
@@ -1972,42 +1999,17 @@ export class Liveblocks {
     massOptions?: MassMutateStorageOptions
     // XXX Implement options
   ): Promise<void> {
-    const pageSize = 20;
-    const { flush, concurrency, signal } = massOptions ?? {};
-    const rooms = this._iterAllRooms(criteria, pageSize, { signal });
+    const pageSize = 20; // XXX Make dependent on concurrency?
+    const { throttle, concurrency, signal } = massOptions ?? {};
+    const rooms = this.#iterRooms(criteria, { pageSize, signal });
 
-    const options = { flush, signal };
-    let i = 1;
+    const options = { throttle, signal };
     await runConcurrently(
       rooms,
-      (roomData) => {
-        console.log("Invoking callback " + i++);
-        return this.#_mutateOneRoom(roomData.id, roomData, callback, options);
-      },
+      (roomData) =>
+        this.#_mutateOneRoom(roomData.id, roomData, callback, options),
       concurrency ?? 8
     );
-  }
-
-  private async *_iterAllRooms(
-    criteria: RoomQueryCriteria,
-    pageSize: number,
-    options?: RequestOptions
-    // XXX Implement options
-  ): AsyncGenerator<RoomData> {
-    let cursor: string | undefined = undefined;
-    while (true) {
-      const { nextCursor, data } = await this.getRooms(
-        { ...criteria, startingAfter: cursor, limit: pageSize },
-        options
-      );
-      for (const room of data) {
-        yield room;
-      }
-      if (!nextCursor) {
-        break;
-      }
-      cursor = nextCursor;
-    }
   }
 
   async #_mutateOneRoom<RD extends RoomData | undefined>(
@@ -2024,17 +2026,34 @@ export class Liveblocks {
     // 4. Run the callback
     // 5. Capture all the changes to the pool
     // 6. Send the resulting ops to the server at a throttled interval
+
+    // XXX Implement throttling
     // XXX Make sure when throttling that the _order_ is preserved
 
     const opsBuffer: Op[] = [];
 
     const { signal, abort } = makeAbortController(options?.signal);
 
+    // XXX Batch super-quick throttle calls together (like the throttling we do in the browser client)
+    const flushSync = () => {
+      if (opsBuffer.length === 0)
+        // Nothing to send
+        return;
+
+      promises.push(
+        this.#sendMessage(
+          roomId,
+          [{ type: ClientMsgCode.UPDATE_STORAGE, ops: opsBuffer }],
+          { signal }
+        )
+      );
+    };
+
     const promises: Promise<void>[] = [];
 
     // Download the storage contents
     try {
-      const resp = await this.startStorageMutation(roomId, { signal });
+      const resp = await this.#startStorageMutation(roomId, { signal });
       const { actor, nodes } = resp;
 
       // Create a new pool
@@ -2045,30 +2064,18 @@ export class Liveblocks {
           _reverse: Op[],
           _storageUpdates: Map<string, StorageUpdate>
         ) => {
+          if (ops.length === 0) return;
+
           // Capture all the changes to the pool
           for (const op of ops) {
             opsBuffer.push(op);
           }
+          // flushSync();
         },
       });
 
       // Construct the Live tree
       const root = LiveObject._fromItems(nodes, pool);
-
-      // XXX Batch super-quick flush calls together (like the throttling we do in the browser client)
-      const flushSync = () => {
-        if (opsBuffer.length === 0)
-          // Nothing to send
-          return;
-
-        promises.push(
-          this.sendMessage(
-            roomId,
-            [{ type: ClientMsgCode.UPDATE_STORAGE, ops: opsBuffer }],
-            { signal }
-          )
-        );
-      };
 
       // Run the callback
       await callback({ room, root: root as LiveObject<S> });
@@ -2083,7 +2090,7 @@ export class Liveblocks {
     }
   }
 
-  private async sendMessage(
+  async #sendMessage(
     roomId: string,
     messages: ClientMsg<JsonObject, Json>[],
     options?: RequestOptions

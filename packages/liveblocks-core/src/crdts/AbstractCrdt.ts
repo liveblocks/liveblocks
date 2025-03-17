@@ -76,6 +76,9 @@ export type CreateManagedPoolOptions = {
   isStorageWritable?: () => boolean;
 };
 
+/**
+ * @private Private API, never use this API directly.
+ */
 export function createManagedPool(
   roomId: string,
   options: CreateManagedPoolOptions
