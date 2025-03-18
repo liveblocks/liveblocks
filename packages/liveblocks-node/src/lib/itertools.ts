@@ -1,3 +1,13 @@
+export async function asyncConsume<T>(
+  iterable: AsyncIterable<T>
+): Promise<T[]> {
+  const result: T[] = [];
+  for await (const item of iterable) {
+    result.push(item);
+  }
+  return result;
+}
+
 /**
  * Iterates an async iterable, invoking a side-effect on every element. Will
  * run at most `concurrency` callbacks simultaneously.

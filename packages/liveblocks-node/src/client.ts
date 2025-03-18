@@ -60,7 +60,8 @@ import {
   urljoin,
 } from "@liveblocks/core";
 
-import { runConcurrently } from "./lib/itertools";
+import { asyncConsume, runConcurrently } from "./lib/itertools";
+import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -855,20 +856,34 @@ export class Liveblocks {
     roomId: string,
     options?: RequestOptions
   ): Promise<RequestStorageMutationResponse> {
-    const res = await this.#post(
+    const resp = await this.#post(
       url`/v2/rooms/${roomId}/request-storage-mutation`,
       {},
       options
     );
-    if (!res.ok) {
-      throw await LiveblocksError.from(res);
+    if (!resp.ok) {
+      throw await LiveblocksError.from(resp);
     }
 
-    if (res.headers.get("content-type") !== "application/x-ndjson") {
+    if (resp.headers.get("content-type") !== "application/x-ndjson") {
       throw new Error("Unexpected response content type");
     }
+    if (resp.body === null) {
+      throw new Error("Unexpected null body in response");
+    }
 
-    return (await res.json()) as RequestStorageMutationResponse;
+    const stream = resp.body
+      .pipeThrough(new TextDecoderStream()) // stream-decode all bytes to utf8 chunks
+      .pipeThrough(new LineStream()) // stream those strings by lines
+      .pipeThrough(new NdJsonStream()); // parse each line as JSON
+
+    // Read the first element from the NDJson stream and interpret it as the response data
+    const iter = stream[Symbol.asyncIterator]();
+    const { actor } = (await iter.next()) as unknown as { actor: number };
+
+    // The rest of the stream are all the Storage nodes
+    const nodes = (await asyncConsume(iter)) as IdTuple<SerializedCrdt>[];
+    return { actor, nodes };
   }
 
   /**
