@@ -31,6 +31,7 @@ export { Thread } from "./components/Thread";
 export { LiveblocksUIConfig } from "./config";
 export * as Icon from "./icon";
 export type {
+  ChatComposerOverrides,
   CommentOverrides,
   ComposerOverrides,
   GlobalOverrides,

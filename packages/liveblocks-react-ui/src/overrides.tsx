@@ -56,6 +56,12 @@ export interface ComposerOverrides {
   COMPOSER_TOGGLE_MARK: (mark: ComposerBodyMark) => string;
 }
 
+export interface ChatComposerOverrides {
+  CHAT_COMPOSER_PLACEHOLDER: string;
+  CHAT_COMPOSER_SEND: string;
+  CHAT_COMPOSER_ATTACH_FILES: string;
+}
+
 export interface ThreadOverrides {
   THREAD_RESOLVE: string;
   THREAD_UNRESOLVE: string;
@@ -97,7 +103,8 @@ export type Overrides = LocalizationOverrides &
   CommentOverrides &
   ThreadOverrides &
   InboxNotificationOverrides &
-  HistoryVersionPreviewOverrides;
+  HistoryVersionPreviewOverrides &
+  ChatComposerOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -192,6 +199,9 @@ export const defaultOverrides: Overrides = {
   HISTORY_VERSION_PREVIEW_EMPTY: "No content.",
   HISTORY_VERSION_PREVIEW_ERROR: () =>
     "There was an error while getting this version.",
+  CHAT_COMPOSER_PLACEHOLDER: "Write a message…",
+  CHAT_COMPOSER_SEND: "Send",
+  CHAT_COMPOSER_ATTACH_FILES: "Attach files",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);
