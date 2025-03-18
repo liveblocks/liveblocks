@@ -15,6 +15,12 @@
 
 ### `@liveblocks/react-ui`
 
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://github.com/liveblocks/frimousse) and improving it
+    in the process. You can also combine this package with the primitives to
+    build your own reaction picker for example.
 - Improve and fix pasting HTML into the composer.
 
 ## v2.20.0
