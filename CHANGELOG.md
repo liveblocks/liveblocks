@@ -15,6 +15,11 @@
     build your own reaction picker for example.
 - Improve and fix pasting HTML into the composer.
 
+### `@liveblocks/react-blocknote`
+
+- New package to support using Blocknote with Liveblock's comments, mentions,
+  and realtime collaboration out of the box.
+
 ## v2.20.0
 
 ### `@liveblocks/client`
