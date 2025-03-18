@@ -2046,7 +2046,7 @@ export class Liveblocks {
   ): Promise<void> {
     const flushInterval = checkBounds(
       "flushInterval",
-      options?.flushInterval ?? 1000,
+      options?.flushInterval ?? Number.POSITIVE_INFINITY,
       100
     );
 
