@@ -22,6 +22,7 @@ export interface GlobalOverrides {
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
   EMOJI_PICKER_EMPTY: ReactNode;
   EMOJI_PICKER_ERROR: (error: Error) => ReactNode;
+  EMOJI_PICKER_CHANGE_SKIN_TONE: string;
   ATTACHMENT_TOO_LARGE: (maxSize?: string) => string;
   ATTACHMENT_ERROR: (error: Error) => string;
 }
@@ -115,6 +116,7 @@ export const defaultOverrides: Overrides = {
   EMOJI_PICKER_EMPTY: "No emoji found.",
   EMOJI_PICKER_ERROR: () =>
     "There was an error while getting the list of emoji.",
+  EMOJI_PICKER_CHANGE_SKIN_TONE: "Change skin tone",
   ATTACHMENT_TOO_LARGE: (maxSize) =>
     maxSize ? `The file is larger than ${maxSize}` : "The file is too large",
   ATTACHMENT_ERROR: () => "The file couldn’t be uploaded.",
