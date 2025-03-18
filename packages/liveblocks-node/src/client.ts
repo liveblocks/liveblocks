@@ -177,7 +177,7 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
-type StartStorageMutationResponse = {
+type RequestStorageMutationResponse = {
   actor: number;
   nodes: IdTuple<SerializedCrdt>[];
 };
@@ -851,19 +851,20 @@ export class Liveblocks {
     return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
   }
 
-  async #startStorageMutation(
+  async #requestStorageMutation(
     roomId: string,
     options?: RequestOptions
-  ): Promise<StartStorageMutationResponse> {
+  ): Promise<RequestStorageMutationResponse> {
     const res = await this.#post(
-      url`/v2/rooms/${roomId}/start-storage-mutation`,
+      url`/v2/rooms/${roomId}/request-storage-mutation`,
       {},
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as StartStorageMutationResponse;
+
+    return (await res.json()) as RequestStorageMutationResponse;
   }
 
   /**
@@ -2100,7 +2101,7 @@ export class Liveblocks {
 
     // Download the storage contents
     try {
-      const resp = await this.#startStorageMutation(roomId, { signal });
+      const resp = await this.#requestStorageMutation(roomId, { signal });
       const { actor, nodes } = resp;
 
       // Create a new pool
