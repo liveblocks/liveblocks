@@ -559,15 +559,25 @@ export class Liveblocks {
   }
 
   /**
-   * Like .getRooms(), but will return a continuous stream of all rooms that
-   * match the criteria.
+   * Iterates over all rooms that match the given criteria.
+   *
+   * The difference with .getRooms() is that pagination will happen
+   * automatically under the hood, using the given `pageSize`.
+   *
+   * @param criteria.userId (optional) A filter on users accesses.
+   * @param criteria.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
+   * @param criteria.query.roomId (optional) A filter by room ID.
+   * @param criteria.query.metadata (optional) A filter by metadata.
+   *
+   * @param options.pageSize (optional) The page size to use for each request.
+   * @param options.signal (optional) An abort signal to cancel the request.
    */
-  // TODO Consider making this API public and supported?
-  async *#iterRooms(
+  async *iterRooms(
     criteria: RoomQueryCriteria,
     options?: RequestOptions & { pageSize?: number }
   ): AsyncGenerator<RoomData> {
-    const { pageSize, signal } = options ?? {};
+    const { signal } = options ?? {};
+    const pageSize = checkBounds("pageSize", options?.pageSize ?? 40, 20);
 
     let cursor: string | undefined = undefined;
     while (true) {
@@ -2017,7 +2027,7 @@ export class Liveblocks {
     // at least never less than 20.
     const pageSize = Math.max(20, concurrency * 4);
     const { flushInterval, signal } = massOptions ?? {};
-    const rooms = this.#iterRooms(criteria, { pageSize, signal });
+    const rooms = this.iterRooms(criteria, { pageSize, signal });
 
     const options = { flushInterval, signal };
     await runConcurrently(

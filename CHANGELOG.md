@@ -2,6 +2,8 @@
 
 ### `@liveblocks/node`
 
+- Add new API `.iterRooms()` which is like `.getRooms()` except pagination
+  happens for you automatically.
 - Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
   user id correctly to the corresponding backend endpoints.
 
