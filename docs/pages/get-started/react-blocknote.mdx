@@ -126,7 +126,7 @@ package.
 
       return (
         <div>
-          <BlockNoteView editor={editor} />
+          <BlockNoteView editor={editor} className="editor" />
           <Threads editor={editor} />
         </div>
       );
@@ -156,6 +156,10 @@ package.
     export function Threads({ editor }: { editor: BlockNoteEditor | null }) {
       const { threads } = useThreads({ query: { resolved: false } });
 
+      if (!editor) {
+        return null;
+      }
+
       return (
         <>
           <div className="anchored-threads">
@@ -179,23 +183,32 @@ package.
     <StepTitle>Style your editor</StepTitle>
     <StepContent>
 
-      {/* TODO check if step needed after package release  */}
-
-      BlockNote text editor is unstyled by default, so we can create some custom styles for it in a `globals.css` file. Import `globals.css`, alongside the default Liveblocks styles. You can import them into the
+      We can create some custom styles to position the editor and threads—import `globals.css`, alongside the default Liveblocks styles. You can import them into the
     root layout of your app or directly into a CSS file with `@import`.
 
     ```css file="app/globals.css" isCollapsed isCollapsable
-    .editor {
-      position: relative;
-      display: flex;
-      width: 100%;
-      height: 100%;
+    html {
+      font-family: Inter, sans-serif;
+      background: #f9f9f9;
     }
 
-    .tiptap {
-      padding: 2px 12px;
-      outline: none;
-      width: 100%;
+    @media (prefers-color-scheme: dark) {
+      html {
+        background: #0c0c0c;
+      }
+    }
+
+    .editor {
+      position: absolute;
+      inset: 0;
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 48px 0;
+    }
+
+    .bn-editor {
+      padding: 36px 52px;
+      min-height: 100%;
     }
 
     /* For mobile */
@@ -224,7 +237,10 @@ package.
     ```
 
     ```tsx file="app/layout.tsx"
+    import "@blocknote/core/fonts/inter.css";
+    import "@blocknote/mantine/style.css";
     import "@liveblocks/react-ui/styles.css";
+    import "@liveblocks/react-ui/styles/dark/media-query.css";
     import "@liveblocks/react-tiptap/styles.css";
     import "./globals.css";
     ```
