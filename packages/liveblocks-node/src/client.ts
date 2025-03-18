@@ -864,6 +864,10 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
+    if (res.headers.get("content-type") !== "application/x-ndjson") {
+      throw new Error("Unexpected response content type");
+    }
+
     return (await res.json()) as RequestStorageMutationResponse;
   }
 
