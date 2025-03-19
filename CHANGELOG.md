@@ -1,5 +1,14 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/node`
+
+- Add new API `.mutateStorage()` which can be used to make changes to Storage
+  from your backend.
+- Add new API `.massMutateStorage()` which can be used to make the same changes
+  to a Storage document on multiple rooms simultaneously.
+- Add new API `.iterRooms()` which is like `.getRooms()` except pagination
+  happens for you automatically.
+
 ## v2.21.0
 
 ### `@liveblocks/react-blocknote`
@@ -9,12 +18,6 @@
 
 ### `@liveblocks/node`
 
-- Add new API `.mutateStorage()` which can be used to make changes to Storage
-  from your backend.
-- Add new API `.massMutateStorage()` which can be used to make the same changes
-  to a Storage document on multiple rooms simultaneously.
-- Add new API `.iterRooms()` which is like `.getRooms()` except pagination
-  happens for you automatically.
 - Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
   user ID correctly to the corresponding backend endpoints.
 
