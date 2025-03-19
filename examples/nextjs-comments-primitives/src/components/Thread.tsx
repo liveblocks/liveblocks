@@ -18,7 +18,7 @@ import { Timestamp } from "@liveblocks/react-ui/primitives";
  * be marked as resolved.
  */
 
-interface ThreadProps extends ComponentProps {
+interface ThreadProps extends ComponentProps<"div"> {
   thread: ThreadData;
 }
 

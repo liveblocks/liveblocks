@@ -18,11 +18,11 @@ import { Icon } from "@liveblocks/react-ui";
  * Custom comment component.
  */
 
-interface CommentProps extends ComponentProps {
+interface CommentProps extends ComponentProps<"div"> {
   comment: CommentData;
 }
 
-interface OpenAttachmentButtonProps extends ComponentProps {
+interface OpenAttachmentButtonProps extends ComponentProps<"div"> {
   attachment: CommentAttachment;
 }
 

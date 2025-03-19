@@ -1,10 +1,8 @@
 import { useState, ReactNode } from "react";
 import * as Popover from "@radix-ui/react-popover";
-import { Button } from "./Button";
-import { Icon } from "@liveblocks/react-ui";
-import { EmojiPicker } from "frimousse";
 import { useAddReaction } from "@liveblocks/react/suspense";
 import { CommentData } from "@liveblocks/client";
+import { EmojiPicker } from "frimousse";
 
 export function AddReaction({
   comment,
