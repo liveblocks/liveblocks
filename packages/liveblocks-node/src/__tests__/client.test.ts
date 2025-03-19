@@ -458,6 +458,7 @@ describe("client", () => {
       }
     });
   });
+
   describe("get active users", () => {
     test("should return active users when getActiveUsers receives a successful response", async () => {
       const client = new Liveblocks({ secret: "sk_xxx" });

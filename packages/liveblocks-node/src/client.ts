@@ -253,6 +253,13 @@ export type GetRoomsOptions = RoomQueryCriteria & {
   metadata?: QueryRoomMetadata;
 };
 
+export type CreateRoomOptions = {
+  defaultAccesses: RoomPermission;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
+  metadata?: RoomMetadata;
+};
+
 export type RequestOptions = {
   signal?: AbortSignal;
 };
@@ -606,12 +613,7 @@ export class Liveblocks {
    */
   public async createRoom(
     roomId: string,
-    params: {
-      defaultAccesses: RoomPermission;
-      groupsAccesses?: RoomAccesses;
-      usersAccesses?: RoomAccesses;
-      metadata?: RoomMetadata;
-    },
+    params: CreateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
@@ -645,6 +647,38 @@ export class Liveblocks {
       lastConnectionAt,
       createdAt,
     };
+  }
+
+  /**
+   * Returns a room with the given id, or creates one with the given creation
+   * options if it doesn't exist yet.
+   *
+   * @param roomId The id of the room.
+   * @param params.defaultAccesses The default accesses for the room if the room will be created.
+   * @param params.groupsAccesses (optional) The group accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room if the room will be created. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The room.
+   */
+  public async getOrCreateRoom(
+    roomId: string,
+    params: CreateRoomOptions,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    // TODO In the future, this method will be optimized to make a single round-trip instead of two
+    try {
+      return await this.createRoom(roomId, params, options);
+    } catch (err) {
+      if (
+        err instanceof LiveblocksError &&
+        err.status === 409 // Room already exists
+      ) {
+        return await this.getRoom(roomId, options);
+      } else {
+        throw err;
+      }
+    }
   }
 
   /**
