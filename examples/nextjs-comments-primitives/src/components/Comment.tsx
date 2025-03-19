@@ -47,7 +47,7 @@ export function Comment({ comment, className, ...props }: CommentProps) {
   }
 
   return (
-    <div className={clsx(className, "p-4 pt-5")} {...props}>
+    <div className={clsx(className, "p-4")} {...props}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <Suspense
@@ -82,7 +82,7 @@ export function Comment({ comment, className, ...props }: CommentProps) {
       </div>
       <CommentPrimitive.Body
         body={comment.body}
-        className="prose mt-2"
+        className="prose mt-1.5"
         components={{
           Mention: ({ userId }) => {
             return (
