@@ -1,24 +1,26 @@
 ## vNEXT (not yet published)
 
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
 ### `@liveblocks/node`
 
 - Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
-  user id correctly to the corresponding backend endpoints.
+  user ID correctly to the corresponding backend endpoints.
 
 ### `@liveblocks/react-ui`
 
 - Improve emoji picker’s performance, bundle size, and add a preview of the
   currently selected emoji.
   - This is the result of us moving the emoji picker to
-    [its own package](https://github.com/liveblocks/frimousse) and improving it
+    [its own package](https://www.npmjs.com/package/frimousse) and improving it
     in the process. You can also combine this package with the primitives to
     build your own reaction picker for example.
 - Improve and fix pasting HTML into the composer.
-
-### `@liveblocks/react-blocknote`
-
-- New package to support using Blocknote with Liveblock's comments, mentions,
-  and realtime collaboration out of the box.
 
 ## v2.20.0
 
