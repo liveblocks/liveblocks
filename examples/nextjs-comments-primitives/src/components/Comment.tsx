@@ -124,11 +124,13 @@ export function Comment({ comment, className, ...props }: CommentProps) {
           ))}
         </div>
       ) : null}
-      {comment.reactions.length > 0 ? (
-        <div className="mt-2 flex items-center gap-1.5">
-          <Reactions comment={comment} />
-        </div>
-      ) : null}
+      <Suspense>
+        {comment.reactions.length > 0 ? (
+          <div className="mt-2 flex items-center gap-1.5">
+            <Reactions comment={comment} />
+          </div>
+        ) : null}
+      </Suspense>
     </div>
   );
 }
