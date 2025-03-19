@@ -12,6 +12,7 @@ import { useAttachmentUrl } from "@liveblocks/react";
 import { LinkButton } from "./Button";
 import { AddReaction } from "./AddReaction";
 import { Reactions } from "./Reactions";
+import { Icon } from "@liveblocks/react-ui";
 
 /**
  * Custom comment component.
@@ -72,7 +73,11 @@ export function Comment({ comment, className, ...props }: CommentProps) {
           </div>
         </div>
         <div>
-          <AddReaction comment={comment} />
+          <AddReaction comment={comment}>
+            <div className="-mr-1 rounded p-1 hover:bg-gray-100">
+              <Icon.Emoji className="h-[22px] w-[22px] text-gray-400" />
+            </div>
+          </AddReaction>
         </div>
       </div>
       <CommentPrimitive.Body

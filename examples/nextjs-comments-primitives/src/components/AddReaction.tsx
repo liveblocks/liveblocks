@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { Button } from "./Button";
 import { Icon } from "@liveblocks/react-ui";
@@ -6,14 +6,19 @@ import { EmojiPicker } from "frimousse";
 import { useAddReaction } from "@liveblocks/react/suspense";
 import { CommentData } from "@liveblocks/client";
 
-export function AddReaction({ comment }: { comment: CommentData }) {
+export function AddReaction({
+  comment,
+  children,
+}: {
+  comment: CommentData;
+  children: ReactNode;
+}) {
   const addReaction = useAddReaction();
+  const [open, setOpen] = useState(false);
 
   return (
-    <Popover.Root>
-      <Popover.Trigger className="-mr-1 rounded p-1 hover:bg-gray-100">
-        <Icon.Emoji className="h-[22px] w-[22px] text-gray-400" />
-      </Popover.Trigger>
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger>{children}</Popover.Trigger>
       <Popover.Anchor />
       <Popover.Portal>
         <Popover.Content>
@@ -24,6 +29,7 @@ export function AddReaction({ comment }: { comment: CommentData }) {
                 commentId: comment.id,
                 emoji,
               });
+              setOpen(false);
             }}
             className="isolate flex h-[368px] w-fit flex-col overflow-hidden rounded-lg bg-white shadow-xl"
           >
