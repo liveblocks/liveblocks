@@ -1,0 +1,1094 @@
+---
+meta:
+  title: "@liveblocks/react-blocknote"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-blocknote package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/react-blocknote` provides you with a [React](https://react.dev/)
+plugin that adds collaboration to any [BlockNote](https://www.blocknotejs.org/)
+text editor. It also adds realtime cursors, document persistence on the cloud,
+comments, and mentions. Use
+[`@liveblocks/node-prosemirror`](/docs/api-reference/liveblocks-node-prosemirror)
+for server-side editing.
+
+## Setup
+
+To set up your collaborative BlockNote editor, create an editor with
+[`useCreateBlockNoteWithLiveblocks`](#useCreateBlockNoteWithLiveblocks) and pass
+it into the
+[`BlockNoteView`](https://www.blocknotejs.org/docs/editor-basics/setup#rendering-the-editor-with-blocknoteview)
+component provided by `@blocknote/mantine`.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  // +++
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <BlockNoteView editor={editor} />
+      // +++
+    </div>
+  );
+}
+```
+
+Liveblocks BlockNote components should be passed `editor` to enable them.
+
+```tsx
+import {
+  useCreateBlockNoteWithLiveblocks,
+  // +++
+  FloatingComposer,
+  // +++
+} from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+    </div>
+  );
+}
+```
+
+Learn more in our [get started guides](/docs/get-started/text-editor/blocknote).
+
+## Default components
+
+### FloatingComposer
+
+Displays a [`Composer`][] near the current BlockNote selection, allowing you to
+create threads.
+
+```tsx highlight="3"
+<FloatingComposer editor={editor} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-composer.jpg"
+    alt="FloatingComposer"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Submitting a comment will attach an annotation thread at the current selection.
+Should be passed your BlockNote `editor`, and it’s recommended you set a width
+value. Display created threads with [`AnchoredThreads`][] or
+[`FloatingThreads`][].
+
+```tsx
+import {
+  // +++
+  FloatingComposer,
+  // +++
+  FloatingThreads,
+  useCreateBlockNoteWithLiveblocks,
+} from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
+  );
+}
+```
+
+#### Opening the composer
+
+To open the `FloatingComposer`, you need to click the comment button in the
+BlockNote toolbar, or call the `addPendingComment`
+[command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
+can use `liveblocksCommentMark` to check if the current selection is a comment.
+
+```tsx
+import { BlockNoteEditor } from "@blocknote/core";
+
+function Toolbar({ editor }: { editor: BlockNoteEditor | null }) {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={() => {
+        // +++
+        (editor._tiptapEditor as any).chain().focus().addPendingComment().run();
+        // +++
+      }}
+      // +++
+      data-active={(editor._tiptapEditor as any).isActive(
+        "liveblocksCommentMark"
+      )}
+      // +++
+    >
+      💬 New comment
+    </button>
+  );
+}
+```
+
+#### Props [#FloatingComposer-props]
+
+<PropertiesList>
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
+    The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
+    The composer’s initial value.
+  </PropertiesListItem>
+  <PropertiesListItem name="collapsed" type="boolean">
+    Whether the composer is collapsed. Setting a value will make the composer
+    controlled.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCollapsedChange"
+    type="function"
+    detailedType="(collapsed: boolean) => void"
+  >
+    The event handler called when the collapsed state of the composer changes.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultCollapsed" type="boolean">
+    Whether the composer is initially collapsed. Setting a value will make the
+    composer uncontrolled.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
+    Whether the composer is disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the composer on mount.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+### FloatingThreads
+
+Displays floating [`Thread`][] components below text highlights in the editor.
+
+```tsx highlight="3"
+<FloatingThreads editor={editor} threads={threads} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-threads.jpg"
+    alt="FloatingThreads"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Takes a list of threads retrieved from [`useThreads`][] and renders them to the
+page. Each thread is opened by clicking on its corresponding text highlight.
+Should be passed your BlockNote `editor`, and it’s recommended you set a width
+value.
+
+```tsx
+// +++
+import { useThreads } from "@liveblocks/react/suspense";
+// +++
+import {
+  FloatingComposer,
+  // +++
+  FloatingThreads,
+  // +++
+  useCreateBlockNoteWithLiveblocks,
+} from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+      // +++
+    </div>
+  );
+}
+```
+
+<Banner title="Resolved threads">
+
+The `FloatingThreads` component automatically excludes resolved threads from
+display. Any resolved threads passed in the threads list will not be shown.
+
+</Banner>
+
+#### Recommended usage [#FloatingThreads-recommended-usage]
+
+[`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
+together to provide the optimal experience on mobile and desktop. We generally
+recommend using both components, hiding one on smaller screens, as we are below
+with Tailwind classes. Most apps also don’t need to display resolved threads, so
+we can filter those out with a [`useThreads`][] option.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-blocknote";
+import { BlockNoteEditor } from "@blocknote/core";
+
+function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+
+  return (
+    <>
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        className="w-[350px] block md:hidden"
+      />
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        className="w-[350px] hidden sm:block"
+      />
+    </>
+  );
+}
+```
+
+```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
+import { useSyncExternalStore } from "react";
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-blocknote";
+import { BlockNoteEditor } from "@blocknote/core";
+
+function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+  const isMobile = useIsMobile();
+  // +++
+
+  // +++
+  if (isMobile) {
+    return (
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+    );
+  }
+  // +++
+
+  // +++
+  return (
+    <AnchoredThreads
+      editor={editor}
+      threads={threads}
+      style={{ width: "350px" }}
+    />
+  );
+  //+++
+}
+
+export function useIsMobile() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+function subscribe(callback: () => void) {
+  const query = window.matchMedia("(max-width: 1024px)");
+
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  const query = window.matchMedia("(max-width: 1024px)");
+  return query.matches;
+}
+```
+
+We can place this component inside [`ClientSideSuspense`][] to prevent it
+rendering until threads have loaded.
+
+```tsx
+<div>
+  <BlockNoteView editor={editor} />
+  <FloatingComposer editor={editor} style={{ width: "350px" }} />
+  // +++
+  <ClientSideSuspense fallback={null}>
+    <ThreadOverlay editor={editor} />
+  </ClientSideSuspense>
+  // +++
+</div>
+```
+
+#### Customization [#FloatingThreads-customization]
+
+The `FloatingThreads` component acts as a wrapper around each individual
+[`Thread`][]. You can treat the component like you would a `div`, using classes,
+listeners, and more.
+
+```tsx
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+/>
+```
+
+To apply styling to each [`Thread`][], you can pass a custom `Thread` property
+to `components` and modify this in any way. This is the best way to modify a
+thread’s width.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+  // +++
+  components={{
+    Thread: (props) => (
+      <Thread {...props} className="border shadow" style={{ width: "300px" }} />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Thread`, up to a full custom `Thread` component built using our
+[Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+  components={{
+    Thread: (props) => (
+      // +++
+      <div>
+        {props.thread.comments.map((comment) => (
+          <Comment.Body
+            key={comment.id}
+            body={comment.body}
+            components={/* ... */}
+          />
+        ))}
+      </div>
+      // +++
+    ),
+  }}
+/>;
+```
+
+#### Props [#FloatingThreads-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threads" type="ThreadData[]" required>
+    The threads to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<AnchoredThreadsComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Thread"
+    type="(props: ThreadProps) => ReactNode"
+  >
+    Override the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+    component.
+  </PropertiesListItem>
+</PropertiesList>
+
+### AnchoredThreads
+
+Displays a list of [`Thread`][] components vertically alongside the editor.
+
+```tsx highlight="3"
+<AnchoredThreads editor={editor} threads={threads} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/anchored-threads.jpg"
+    alt="AnchoredThreads"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Takes a list of threads retrieved from [`useThreads`][] and renders them to the
+page. Each thread is displayed at the same vertical coordinates as its
+corresponding text highlight. If multiple highlights are in the same location,
+each thread is placed in order below the previous thread.
+
+```tsx
+// +++
+import { useThreads } from "@liveblocks/react/suspense";
+// +++
+import {
+  FloatingComposer,
+  // +++
+  AnchoredThreads,
+  // +++
+  useCreateBlockNoteWithLiveblocks,
+} from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+      // +++
+    </div>
+  );
+}
+```
+
+<Banner title="Resolved threads">
+
+The `AnchoredThreads` component automatically excludes resolved threads from
+display. Any resolved threads passed in the threads list will not be shown.
+
+</Banner>
+
+#### Recommended usage [#AnchoredThreads-recommended-usage]
+
+[`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
+together to provide the optimal experience on mobile and desktop. We generally
+recommend using both components, hiding one on smaller screens, as we are below
+with Tailwind classes. Most apps also don’t need to display resolved threads, so
+we can filter those out with a [`useThreads`][] option.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-blocknote";
+import { BlockNoteEditor } from "@blocknote/core";
+
+function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+
+  return (
+    <>
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        className="w-[350px] block md:hidden"
+      />
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        className="w-[350px] hidden sm:block"
+      />
+    </>
+  );
+}
+```
+
+```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
+import { useSyncExternalStore } from "react";
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-blocknote";
+import { BlockNoteEditor } from "@blocknote/core";
+
+function ThreadOverlay({ editor }: { editor: BlockNoteEditor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+  const isMobile = useIsMobile();
+  // +++
+
+  // +++
+  if (isMobile) {
+    return (
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+    );
+  }
+  // +++
+
+  // +++
+  return (
+    <AnchoredThreads
+      editor={editor}
+      threads={threads}
+      style={{ width: "350px" }}
+    />
+  );
+  //+++
+}
+
+export function useIsMobile() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+function subscribe(callback: () => void) {
+  const query = window.matchMedia("(max-width: 1024px)");
+
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  const query = window.matchMedia("(max-width: 1024px)");
+  return query.matches;
+}
+```
+
+We can place this component inside [`ClientSideSuspense`][] to prevent it
+rendering until threads have loaded.
+
+```tsx
+<div>
+  <BlockNoteView editor={editor} />
+  <FloatingComposer editor={editor} style={{ width: "350px" }} />
+  // +++
+  <ClientSideSuspense fallback={null}>
+    <ThreadOverlay editor={editor} />
+  </ClientSideSuspense>
+  // +++
+</div>
+```
+
+#### Customization [#AnchoredThreads-customization]
+
+The `AnchoredThreads` component acts as a wrapper around each [`Thread`][]. It
+has no width, so setting this is required, and each thread will take on the
+width of the wrapper. You can treat the component like you would a `div`, using
+classes, listeners, and more.
+
+```tsx
+<AnchoredThreads
+  editor={editor}
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+/>
+```
+
+To apply styling to each [`Thread`][], you can pass a custom `Thread` property
+to `components` and modify this in any way.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+
+<AnchoredThreads
+  editor={editor}
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+  // +++
+  components={{
+    Thread: (props) => (
+      <Thread
+        {...props}
+        className="border shadow"
+        style={{ background: "white" }}
+      />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Thread`, up to a full custom `Thread` component built using our
+[Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+<AnchoredThreads
+  editor={editor}
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+  components={{
+    Thread: (props) => (
+      // +++
+      <div>
+        {props.thread.comments.map((comment) => (
+          <Comment.Body
+            key={comment.id}
+            body={comment.body}
+            components={/* ... */}
+          />
+        ))}
+      </div>
+      // +++
+    ),
+  }}
+/>;
+```
+
+##### Modifying thread floating positions
+
+Using CSS variables you can modify the gap between threads, and the horizontal
+offset that’s added when a thread is selected.
+
+```css
+.lb-tiptap-anchored-threads {
+  /* Minimum gap between threads */
+  --lb-tiptap-anchored-threads-gap: 8px;
+
+  /* How far the active thread is offset to the left */
+  --lb-tiptap-anchored-threads-active-thread-offset: 12px;
+}
+```
+
+#### Props [#AnchoredThreads-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threads" type="ThreadData[]" required>
+    The threads to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<AnchoredThreadsComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Thread"
+    type="(props: ThreadProps) => ReactNode"
+  >
+    Override the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+    component.
+  </PropertiesListItem>
+</PropertiesList>
+
+### HistoryVersionPreview [@badge=beta]
+
+<Banner title="Private beta">
+
+Version history is currently in private beta. If you would like access to the
+beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
+hear from you.
+
+</Banner>
+
+The `HistoryVersionPreview` component allows you to display a preview of a
+specific version of your BlockNote editor’s content. It also contains a button
+and logic for restoring. It must be used inside the `<LiveblocksPlugin>`
+context. To render a list of versions, see
+[`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
+
+#### Usage [#HistoryVersionPreview-usage]
+
+```tsx
+import { HistoryVersionPreview } from "@liveblocks/react-blocknote";
+
+function VersionPreview({ selectedVersion, onVersionRestore }) {
+  return (
+    <HistoryVersionPreview
+      version={selectedVersion}
+      onVersionRestore={onVersionRestore}
+    />
+  );
+}
+```
+
+#### Props [#HistoryVersionPreview-props]
+
+<PropertiesList>
+  <PropertiesListItem name="version" type="HistoryVersion" required>
+    The version of the editor content to preview.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onVersionRestore"
+    type="(version: HistoryVersion) => void"
+  >
+    Callback function called when the user chooses to restore this version.
+  </PropertiesListItem>
+</PropertiesList>
+
+The `HistoryVersionPreview` component renders a read-only view of the specified
+version of the editor content. It also provides a button for users to restore
+the displayed version.
+
+## Hooks
+
+### useCreateBlockNoteWithLiveblocks
+
+Creates a Liveblocks collaborative BlockNote editor. Use this hook instead of
+[`useCreateBlockNote`](https://www.blocknotejs.org/docs/editor-basics/setup#usecreateblocknote-hook).
+`editor` should be passed to
+[`BlockNoteView`](https://www.blocknotejs.org/docs/editor-basics/setup#rendering-the-editor-with-blocknoteview).
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditor() {
+  // +++
+  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <BlockNoteView editor={editor} />
+      // +++
+    </div>
+  );
+}
+```
+
+A number of options can be applied to BlockNote and Liveblocks.
+
+```tsx
+const editor = useCreateBlockNoteWithLiveblocks(
+  {
+    // +++
+    animations: false,
+    trailingBlock: false,
+    // +++
+
+    // Other BlockNote options
+    // ...
+  },
+  {
+    mentions: true,
+    // +++
+    initialContent: "<p>Hello world</p>",
+    field: "editor-one",
+    // +++
+
+    // Other Liveblocks options
+    // ...
+  }
+);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="liveblocks" type="Extension">
+    Returns a [BlockNote
+    editor](https://www.blocknotejs.org/docs/editor-basics/setup) with
+    collaborative Liveblocks features.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="blockNoteOptions" type="BlockNoteEditorOptions">
+    Options to apply to BlockNote. [Learn
+    more](https://www.blocknotejs.org/docs/editor-basics/setup#usecreateblocknote-hook).
+  </PropertiesListItem>
+  <PropertiesListItem name="liveblocksOptions" type="object">
+    Options to apply to Liveblocks.
+  </PropertiesListItem>
+  <PropertiesListItem name="liveblocksOptions.initialContent" type="Content">
+    The initial content for the editor, if it’s never been set. [Learn
+    more](#Setting-initial-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="liveblocksOptions.field" type="string">
+    The name of this text editor’s field. Allows you to use multiple editors on
+    one page, if each has a separate field value. [Learn
+    more](#Multiple-editors).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.offlineSupport_experimental"
+    defaultValue="false"
+    type="boolean"
+  >
+    Experimental. Enable offline support using IndexedDB. This means the after
+    the first load, documents will be stored locally and load instantly. [Learn
+    more](#Offline-support).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.comments"
+    defaultValue="true"
+    type="boolean"
+  >
+    Enable comments in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="liveblocksOptions.mentions"
+    defaultValue="false"
+    type="boolean"
+  >
+    Enable mentions in the editor.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting initial content
+
+Initial content for the editor can be set with `initialContent`. This content
+will only be used if the current editor has never been edited by any users, and
+is ignored otherwise.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      initialContent: "<p>Hello world</p>",
+      // +++
+    }
+  );
+
+  // ...
+}
+```
+
+#### Multiple editors
+
+It’s possible to use multiple editors on one page by passing values to the
+`field` property. Think of it like an ID for the current editor.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      field: "editor-one",
+      // +++
+    }
+  );
+
+  // ...
+}
+```
+
+Here’s an example of how multiple editors may be set up.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function TextEditors() {
+  return (
+    <div>
+      // +++
+      <TextEditor field="one" />
+      <TextEditor field="two" />
+      // +++
+    </div>
+  );
+}
+
+function TextEditor({ field }: { field: string }) {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      field,
+      // +++
+    }
+  );
+
+  return (
+    <div>
+      <BlockNoteView editor={editor} />
+    </div>
+  );
+}
+```
+
+#### Offline support [@badge=experimental]
+
+It’s possible to enable offline support in your editor with an experimental
+option. This means that once a document has been opened, it’s saved locally on
+the browser, and can be shown instantly without a loading screen. As soon as
+Liveblocks connects, any remote changes will be synchronized, without any load
+spinner. Enable this by passing a `offlineSupport_experimental ` value.
+
+```tsx
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+
+function TextEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      offlineSupport_experimental: true,
+      // +++
+    }
+  );
+
+  // ...
+}
+```
+
+To make sure that your editor loads instantly, you must structure your app
+carefully to avoid any Liveblocks hooks and [`ClientSideSuspense`][] components
+from triggering a loading screen. For example, if you’re displaying threads in
+your editor with [`useThreads`][], you must place this inside a separate
+component and wrap it in [`ClientSideSuspense`][].
+
+```tsx
+"use client";
+
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
+import {
+  useCreateBlockNoteWithLiveblocks,
+  AnchoredThreads,
+  FloatingComposer,
+} from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+import { BlockNoteEditor } from "@blocknote/core";
+
+export function TiptapEditor() {
+  const editor = useCreateBlockNoteWithLiveblocks(
+    {},
+    {
+      mentions: true,
+      // +++
+      offlineSupport_experimental: true,
+      // +++
+    }
+  );
+
+  return (
+    <>
+      <BlockNoteView editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: 350 }} />
+      // +++
+      <ClientSideSuspense fallback={null}>
+        <Threads editor={editor} />
+      </ClientSideSuspense>
+      // +++
+    </>
+  );
+}
+
+// +++
+function Threads({ editor }: { editor: BlockNoteEditor }) {
+  const { threads } = useThreads();
+
+  return <AnchoredThreads editor={editor} threads={threads} />;
+}
+// +++
+```
+
+Here’s how it can be used in the context of your editor.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+// +++
+import { useIsEditorReady, useEditor, EditorContent } from "@tiptap/react";
+// +++
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+  // +++
+  const ready = useIsEditorReady();
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      // +++
+      {!ready ? <div>Loading...</div> : <EditorContent editor={editor} />}
+      // +++
+    </div>
+  );
+}
+```
+
+## Stylesheets
+
+React BlockNote comes with default styles, and these can be imported into the
+root of your app or directly into a CSS file with `@import`. Note that you must
+also install and import a stylesheet from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) to use these
+styles.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-blocknote/styles.css";
+```
+
+### Customizing your styles
+
+Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
+learn how to do this under
+[styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
+
+[`LiveblocksPlugin`]: #LiveblocksPlugin
+[`useLiveblocksExtension`]: #useLiveblocksExtension
+[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
+[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
+[`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`Icon`]: /docs/api-reference/liveblocks-react-ui#Icon
+[`FloatingToolbar`]: #FloatingToolbar
+[`FloatingComposer`]: #FloatingComposer
+[`FloatingThreads`]: #FloatingThreads
+[`AnchoredThreads`]: #AnchoredThreads
+[`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense
