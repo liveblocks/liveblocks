@@ -260,6 +260,19 @@ export type CreateRoomOptions = {
   metadata?: RoomMetadata;
 };
 
+export type UpdateRoomOptions = {
+  defaultAccesses?: RoomPermission | null;
+  groupsAccesses?: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  >;
+  usersAccesses?: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  >;
+  metadata?: Record<string, string | string[] | null>;
+};
+
 export type RequestOptions = {
   signal?: AbortSignal;
 };
@@ -682,6 +695,37 @@ export class Liveblocks {
   }
 
   /**
+   * Updates or creates a new room with the given properties.
+   *
+   * @param roomId The id of the room to update or create.
+   * @param params.defaultAccesses The default accesses for the room.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The room.
+   */
+  public async upsertRoom(
+    roomId: string,
+    params: CreateRoomOptions & UpdateRoomOptions,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    // TODO In the future, this method will be optimized to make a single round-trip instead of two
+    try {
+      return await this.createRoom(roomId, params, options);
+    } catch (err) {
+      if (
+        err instanceof LiveblocksError &&
+        err.status === 409 // Room already exists
+      ) {
+        return await this.updateRoom(roomId, params, options);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  /**
    * Returns a room with the given id.
    * @param roomId The id of the room to return.
    * @returns The room with the given id.
@@ -725,18 +769,7 @@ export class Liveblocks {
    */
   public async updateRoom(
     roomId: string,
-    params: {
-      defaultAccesses?: RoomPermission | null;
-      groupsAccesses?: Record<
-        string,
-        ["room:write"] | ["room:read", "room:presence:write"] | null
-      >;
-      usersAccesses?: Record<
-        string,
-        ["room:write"] | ["room:read", "room:presence:write"] | null
-      >;
-      metadata?: Record<string, string | string[] | null>;
-    },
+    params: UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;

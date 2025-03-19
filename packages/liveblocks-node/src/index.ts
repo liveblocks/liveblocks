@@ -20,6 +20,7 @@ export type {
   RoomUser,
   Schema,
   ThreadParticipants,
+  UpdateRoomOptions,
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export type {
