@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
 ### `@liveblocks/node`
 
 - Add new API `.mutateStorage()` which can be used to make changes to Storage
@@ -9,10 +16,16 @@
 - Add new API `.iterRooms()` which is like `.getRooms()` except pagination
   happens for you automatically.
 - Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
-  user id correctly to the corresponding backend endpoints.
+  user ID correctly to the corresponding backend endpoints.
 
 ### `@liveblocks/react-ui`
 
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://www.npmjs.com/package/frimousse) and improving it
+    in the process. You can also combine this package with the primitives to
+    build your own reaction picker for example.
 - Improve and fix pasting HTML into the composer.
 
 ## v2.20.0

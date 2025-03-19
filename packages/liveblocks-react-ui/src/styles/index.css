@@ -401,7 +401,8 @@
 .lb-dropdown-item:where(
     :is(
       [data-highlighted]:not([data-highlighted="false"]),
-      [data-selected]:not([data-selected="false"])
+      [data-selected]:not([data-selected="false"]),
+      [data-active]:not([data-active="false"])
     )
   ) {
   :where(.lb-icon-container) {
@@ -527,13 +528,59 @@
 
   display: flex;
   flex-direction: column;
-  block-size: 360px;
+  inline-size: 100%;
+  max-inline-size: var(--frimousse-viewport-width);
+  block-size: 374px;
   color: var(--lb-foreground);
 }
 
 .lb-emoji-picker-header {
   flex: none;
   border-block-end: 1px solid var(--lb-foreground-subtle);
+}
+
+.lb-emoji-picker-footer {
+  display: flex;
+  flex: none;
+  gap: calc(0.5 * var(--lb-spacing));
+  align-items: center;
+  inline-size: 100%;
+  padding: calc(0.5 * var(--lb-spacing));
+  border-block-start: 1px solid var(--lb-foreground-subtle);
+}
+
+.lb-emoji-picker-active-emoji {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  font-size: 1.25em;
+}
+
+.lb-emoji-picker-active-emoji-label {
+  @include truncate;
+
+  flex: 1;
+  color: var(--lb-foreground-secondary);
+  font-weight: 500;
+  font-size: 0.8125em;
+}
+
+.lb-emoji-picker-active-emoji-label-placeholder {
+  margin-inline-start: calc(0.5 * var(--lb-spacing));
+  color: var(--lb-foreground-moderate);
+}
+
+.lb-emoji-picker-skin-tone-selector {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  inline-size: calc(1.75 * var(--lb-spacing));
+  block-size: calc(1.75 * var(--lb-spacing));
+  margin-inline-start: auto;
 }
 
 .lb-emoji-picker-search-container {
@@ -574,6 +621,7 @@
 .lb-emoji-picker-content {
   position: relative;
   flex: 1;
+  outline: none;
 }
 
 .lb-emoji-picker-category-header {
@@ -588,9 +636,8 @@
   text-transform: uppercase;
 }
 
-.lb-emoji-picker-grid {
-  position: absolute;
-  inset: 0;
+.lb-emoji-picker-list {
+  padding-block-end: var(--lb-emoji-picker-padding);
   animation: lb-animation-appear var(--lb-transition-duration)
     var(--lb-transition-easing) both;
 }
@@ -599,10 +646,6 @@
   display: flex;
   padding-inline: var(--lb-emoji-picker-padding);
   scroll-margin-block-end: var(--lb-emoji-picker-padding);
-
-  &:where([data-last]) {
-    padding-block-end: var(--lb-emoji-picker-padding);
-  }
 }
 
 .lb-emoji-picker-emoji {
@@ -1937,7 +1980,8 @@
 ) {
   &:where(
       [data-highlighted]:not([data-highlighted="false"]),
-      [data-selected]:not([data-selected="false"])
+      [data-selected]:not([data-selected="false"]),
+      [data-active]:not([data-active="false"])
     ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
