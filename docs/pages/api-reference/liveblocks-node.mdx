@@ -363,6 +363,54 @@ async function getNextPage() {
 }
 ```
 
+If you want to iterate over all your rooms, it’s most convenient to use the
+`.iterRooms()` method instead. This method will automatically paginate your API
+requests.
+
+#### Liveblocks.iterRooms [#iter-rooms]
+
+List `.getRooms()`, but returns an asynchronous iterator, which will help you
+iterate over all (matching) rooms in your project, without having to manually
+paginate over those results.
+
+```ts
+const query = {
+  /* options */
+};
+for await (const room of liveblocks.iterRooms(query)) {
+  console.log(room.id, room.metadata);
+}
+```
+
+A number of options are also available, enabling you to filter for certain
+rooms.
+
+```ts
+const roomsIterator = await liveblocks.iterRooms({
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
+  groupIds: ["engineering", "design"],
+
+  // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+  userId: "my-user-id",
+
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for rooms with an ID that starts with specific string
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      roomType: "whiteboard",
+    },
+  },
+});
+```
+
+The `query` option also allows you to pass a
+[query language](/docs/guides/how-to-filter-rooms-using-query-language) string
+instead of a `query` object.
+
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
@@ -723,6 +771,96 @@ const storage = await liveblocks.initializeStorageDocument("my-room-id", {
     },
   },
 });
+```
+
+#### Liveblocks.mutateStorage [#mutate-storage]
+
+Mutates the storage contents of a room arbitrarily.
+
+```ts
+// Mutate a single room
+await liveblocks.mutateStorage(
+  "my-room",
+
+  ({ root }) => {
+    root.get("list").push("item3");
+  }
+);
+```
+
+The callback can be asynchronous, in which case a stream of mutations can happen
+over time.
+
+```ts
+// Mutate a single room
+await liveblocks.mutateStorage(
+  "my-room",
+
+  async ({ root }) => {
+    const animals = root.get("animals");
+    animals.clear();
+    animals.push("Thinking...");
+
+    await thinkForAWhile();
+    animals.clear();
+    animals.push("🐶");
+    animals.push("🦘");
+  }
+);
+```
+
+#### Liveblocks.massMutateStorage [#mass-mutate-storage]
+
+Mutates storage contents for multiple rooms simultaneously:
+
+```ts
+const query = {
+  /* options */
+};
+
+// Mutate a single room
+await liveblocks.massMutateStorage(
+  query,
+
+  ({ room, root }) => {
+    // Available here:
+    // room.id
+    // room.metadata
+    // etc
+
+    root.get("animals").push("🦍");
+  },
+
+  // Optional
+  {
+    concurrency: 10, // Optional: process at most 10 rooms simultaneously
+    signal, // Optional: provide an abort signal if you want to cancel the mutations mid-way
+  }
+);
+```
+
+The provided query will determine which rooms are selected for mutation:
+
+```ts
+const query = {
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
+  groupIds: ["engineering", "design"],
+
+  // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+  userId: "my-user-id",
+
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for rooms with an ID that starts with specific string
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      roomType: "whiteboard",
+    },
+  },
+};
 ```
 
 #### Liveblocks.deleteStorageDocument [#delete-rooms-roomId-storage]
