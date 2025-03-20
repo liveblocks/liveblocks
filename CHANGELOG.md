@@ -2,12 +2,12 @@
 
 ### `@liveblocks/node`
 
-- Add new API `.mutateStorage()` which can be used to make changes to Storage
+- New method `.mutateStorage()` which can be used to make changes to Storage
   from your backend.
-- Add new API `.massMutateStorage()` which can be used to make the same changes
-  to a Storage document on multiple rooms simultaneously.
-- Add new API `.iterRooms()` which is like `.getRooms()` except pagination
-  happens for you automatically.
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously.
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically.
 
 ## v2.21.0
 
