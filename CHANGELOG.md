@@ -1,5 +1,14 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/node`
+
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend.
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously.
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically.
+
 ## v2.21.0
 
 ### `@liveblocks/react-blocknote`
