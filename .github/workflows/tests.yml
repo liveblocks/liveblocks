@@ -21,6 +21,7 @@ jobs:
             "@liveblocks/react-ui",
             "@liveblocks/react-lexical",
             "@liveblocks/react-tiptap",
+            "@liveblocks/react-blocknote",
             "@liveblocks/node-lexical",
             "@liveblocks/node-prosemirror",
             "@liveblocks/codemod",
