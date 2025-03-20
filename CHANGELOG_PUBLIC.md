@@ -20,7 +20,35 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 12 (2025-03-21)
 
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user ID correctly to the corresponding backend endpoints.
+
+### `@liveblocks/react-ui`
+
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://frimousse.liveblocks.io) and improving it in the
+    process. You can also combine this package with the primitives to build your
+    own reaction picker for example.
+- Improve and fix pasting HTML into the composer.
+
+## Website
+
+- New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
+
 ## Contributors
+
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas
 
 # Week 11 (2025-03-14)
 
