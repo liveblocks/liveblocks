@@ -1954,19 +1954,23 @@ describe("client", () => {
     test("should read room's storage from the server and construct a Live tree", async () => {
       server.use(
         http.post(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/start-storage-mutation`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/request-storage-mutation`,
           () => {
-            return HttpResponse.json({
-              actor: 123,
-              // prettier-ignore
-              nodes: [
-                ["root", { type: 0, data: {} }],
-                ["0:1", { type: 1, parentId: "root", parentKey: "a" }],
-                ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
-                ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 } }],
-                ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 } }],
-              ] satisfies IdTuple<SerializedCrdt>[],
-            });
+            // prettier-ignore
+            const nodes = [
+              ["root", { type: 0, data: {} }],
+              ["0:1", { type: 1, parentId: "root", parentKey: "a" }],
+              ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
+              ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 }}],
+              ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 }}],
+            ] satisfies IdTuple<SerializedCrdt>[];
+
+            return HttpResponse.text(
+              [{ actor: 123 }, ...nodes]
+                .map((n) => JSON.stringify(n))
+                .join("\n"),
+              { headers: { "Content-Type": "application/x-ndjson" } }
+            );
           }
         ),
         http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/send-message`, () => {
