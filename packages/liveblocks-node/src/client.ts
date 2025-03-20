@@ -1399,7 +1399,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
-      {},
+      { userId: params.data.userId },
       options
     );
 
@@ -1426,7 +1426,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
-      {},
+      { userId: params.data.userId },
       options
     );
 
