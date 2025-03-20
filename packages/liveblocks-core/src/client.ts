@@ -1,7 +1,8 @@
+import { createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
-import { isIdle } from "./connection";
+import { isIdle, type Status } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
@@ -165,6 +166,8 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
+  aiConnect(): void;
+  aiDisconnect(): void;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -413,6 +416,12 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    */
   getSyncStatus(): SyncStatus;
 
+  listChats(): void;
+  newChat(id?: string): void;
+  getMessages(chatId: string): void;
+  sendMessage(chatId: string, message: string): void;
+  getAiStatus(): Status;
+
   /**
    * All possible client events, subscribable from a single place.
    */
@@ -555,6 +564,23 @@ export function createClient<U extends BaseUserMeta = DU>(
   };
 
   const roomsById = new Map<string, RoomDetails>();
+
+  const ai = createAi({
+    userId: currentUserId.get(),
+    lostConnectionTimeout,
+    backgroundKeepAliveTimeout: getBackgroundKeepAliveTimeout(
+      clientOptions.backgroundKeepAliveTimeout
+    ),
+    polyfills: clientOptions.polyfills,
+    delegates: {
+      createSocket: makeCreateSocketDelegateForAi(
+        baseUrl,
+        clientOptions.polyfills?.WebSocket
+      ),
+      authenticate: makeAuthDelegateForRoom("default", authManager),
+      canZombie: () => true,
+    },
+  });
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -699,6 +725,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   function logout() {
+    console.warn("CALLING LOGOUT");
     authManager.reset();
 
     // Reset the current user id store when the client is logged out
@@ -891,10 +918,32 @@ export function createClient<U extends BaseUserMeta = DU>(
         syncStatus: syncStatusSignal,
       },
 
+      listChats: () => {
+        ai.listChats();
+      },
+      newChat: (id?: string) => {
+        ai.newChat(id);
+      },
+      getMessages: (chatId: string) => {
+        ai.getMessages(chatId);
+      },
+      sendMessage: (chatId: string, message: string) => {
+        ai.sendMessage(chatId, message);
+      },
+      getAiStatus: () => {
+        return ai.getStatus();
+      },
+
       // Internal
       [kInternal]: {
         currentUserId,
         mentionSuggestionsCache,
+        aiConnect: () => {
+          ai.connect();
+        },
+        aiDisconnect: () => {
+          ai.disconnect();
+        },
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,

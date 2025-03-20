@@ -689,9 +689,9 @@ function useUpdateNotificationSettings_withClient(
 function useNotificationSettings_withClient(
   client: OpaqueClient
 ): [
-  UserNotificationSettingsAsyncResult,
-  (settings: PartialUserNotificationSettings) => void,
-] {
+    UserNotificationSettingsAsyncResult,
+    (settings: PartialUserNotificationSettings) => void,
+  ] {
   const updateNotificationSettings =
     useUpdateNotificationSettings_withClient(client);
 
@@ -728,9 +728,9 @@ function useNotificationSettings_withClient(
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-  UserNotificationSettingsAsyncSuccess,
-  (settings: PartialUserNotificationSettings) => void,
-] {
+    UserNotificationSettingsAsyncSuccess,
+    (settings: PartialUserNotificationSettings) => void,
+  ] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -1043,6 +1043,15 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   // to recreate a client instance after the first render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => createClient<U>(options), []);
+
+  // TODO: only do this if ai feature enabled
+  useEffect(() => {
+    client[kInternal].aiConnect();
+    return () => {
+      client[kInternal].aiDisconnect();
+    };
+  }, [client]);
+
   return (
     <LiveblocksProviderWithClient client={client}>
       {children}

@@ -11,7 +11,11 @@ function App({ Component, pageProps }: AppProps) {
   const roomId = useExampleRoomId("liveblocks:examples:nextjs-form");
 
   return (
-    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+    <LiveblocksProvider
+      authEndpoint="/api/liveblocks-auth"
+      // @ts-expect-error it's ok to use a local baseUrl
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!}
+    >
       <RoomProvider
         id={roomId}
         initialPresence={{ focusedId: null }}
