@@ -2062,7 +2062,7 @@ export class Liveblocks {
     callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
     options?: MutateStorageOptions
   ): Promise<void> {
-    // Hard-coded for now, see XXX
+    // Hard-coded for now, see https://github.com/liveblocks/liveblocks/pull/2293#issuecomment-2740067249
     const debounceInterval = 200;
 
     // The plan:
