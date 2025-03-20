@@ -545,6 +545,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const httpClient = createApiClient({
     baseUrl,
     fetchPolyfill,
+    currentUserId,
     authManager,
   });
 

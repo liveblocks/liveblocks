@@ -16,6 +16,7 @@ import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
+import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
@@ -251,6 +252,20 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 
   getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
+  uploadUserAttachment({
+    attachment,
+    signal,
+  }: {
+    attachment: File;
+    signal?: AbortSignal;
+  }): Promise<{
+    type: "attachment";
+    id: string;
+    name: string;
+    size: number;
+    mimeType: string;
+  }>;
+
   // Text editor
   createTextMention({
     roomId,
@@ -438,10 +453,12 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
 export function createApiClient<M extends BaseMetadata>({
   baseUrl,
   authManager,
+  currentUserId,
   fetchPolyfill,
 }: {
   baseUrl: string;
   authManager: AuthManager;
+  currentUserId: Signal<string | undefined>;
   fetchPolyfill: typeof fetch;
 }): LiveblocksHttpApi<M> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
@@ -1011,6 +1028,112 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
+   * Attachments (User level)
+   * -----------------------------------------------------------------------------------------------*/
+  async function uploadUserAttachment(options: {
+    attachment: File;
+    signal?: AbortSignal;
+  }): Promise<{
+    type: "attachment";
+    id: string;
+    name: string;
+    size: number;
+    mimeType: string;
+  }> {
+    const { attachment, signal } = options;
+    const userId = currentUserId.get();
+    if (userId === undefined) {
+      // @nimesh - Handle current user not defined
+      throw new Error("User is not authenticated.");
+    }
+    const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+
+    if (options.attachment.size <= ATTACHMENT_PART_SIZE) {
+      return await httpClient.putBlob<{
+        type: "attachment";
+        id: string;
+        name: string;
+        size: number;
+        mimeType: string;
+      }>(
+        url`/v2/c/users/${userId}/attachments/upload/${encodeURIComponent(attachment.name)}`,
+        await authManager.getAuthValue({ requestedScope: "comments:read" }),
+        attachment,
+        { fileSize: attachment.size },
+        { signal }
+      );
+    } else {
+      const multipartUpload = await httpClient.post<{
+        uploadId: string;
+        key: string;
+      }>(
+        url`/v2/c/users/${userId}/attachments/multipart/${encodeURIComponent(attachment.name)}`,
+        await authManager.getAuthValue({ requestedScope: "comments:read" }),
+        undefined,
+        { signal },
+        { fileSize: attachment.size }
+      );
+
+      try {
+        const uploadedParts: { etag: string; number: number }[] = [];
+
+        const parts: { number: number; part: Blob }[] = [];
+        let start = 0;
+        while (start < attachment.size) {
+          const end = Math.min(start + ATTACHMENT_PART_SIZE, attachment.size);
+          parts.push({
+            number: parts.length + 1,
+            part: attachment.slice(start, end),
+          });
+          start = end;
+        }
+
+        uploadedParts.push(
+          ...(await Promise.all(
+            parts.map(async ({ number, part }) => {
+              return await httpClient.putBlob<{
+                etag: string;
+                number: number;
+              }>(
+                url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}/${String(number)}`,
+                await authManager.getAuthValue({
+                  requestedScope: "comments:read",
+                }),
+                part,
+                undefined,
+                { signal }
+              );
+            })
+          ))
+        );
+
+        return await httpClient.post<{
+          type: "attachment";
+          id: string;
+          name: string;
+          size: number;
+          mimeType: string;
+        }>(
+          url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}/complete`,
+          await authManager.getAuthValue({ requestedScope: "comments:read" }),
+          { parts: uploadedParts.sort((a, b) => a.number - b.number) },
+          { signal }
+        );
+      } catch (err) {
+        try {
+          await httpClient.delete(
+            url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}`,
+            await authManager.getAuthValue({ requestedScope: "comments:read" })
+          );
+        } catch (err) {
+          // @nimesh - Ignore the error
+        }
+        throw err;
+      }
+    }
+  }
+
+  /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
   async function getNotificationSettings(options: {
@@ -1540,6 +1663,8 @@ export function createApiClient<M extends BaseMetadata>({
     getAttachmentUrl,
     uploadAttachment,
     getOrCreateAttachmentUrlsStore,
+    // User attachments
+    uploadUserAttachment,
     // Room storage
     streamStorage,
     sendMessages,

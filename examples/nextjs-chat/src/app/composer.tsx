@@ -1,3 +1,5 @@
+import { HttpError, kInternal, nanoid } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
 import { ChatComposerOverrides, useOverrides } from "@liveblocks/react-ui";
 import {
   ShortcutTooltip,
@@ -19,6 +21,7 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
+  useEffect,
 } from "react";
 import {
   BaseEditor,
@@ -33,6 +36,9 @@ import {
 import { HistoryEditor, withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 
+/* -------------------------------------------------------------------------------------------------
+ * Composer
+ * -----------------------------------------------------------------------------------------------*/
 type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The composer's initial value.
@@ -59,6 +65,7 @@ type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
    */
   overrides?: Partial<ChatComposerOverrides>;
 };
+
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
   (
     {
@@ -81,7 +88,6 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         onComposerSubmit?.(message, event);
         if (event.isDefaultPrevented()) return;
 
-        console.log(message);
         /* send(message.text) */
       },
       []
@@ -108,10 +114,15 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
               defaultValue={defaultValue}
             />
 
+            <Attachments />
+
             <div className="lb-chat-composer-footer">
               <div className="lb-chat-composer-editor-actions">
                 <Tooltip content={$.CHAT_COMPOSER_ATTACH_FILES}>
-                  <button type="button" className="lb-button">
+                  <AttachFiles
+                    className="lb-button"
+                    aria-label={$.CHAT_COMPOSER_ATTACH_FILES}
+                  >
                     <span className="lb-icon-container">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -129,7 +140,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                         <path d="m14.077 11.737-3.723 3.62c-1.55 1.507-4.128 1.507-5.678 0-1.543-1.5-1.543-4.02 0-5.52l5.731-5.573c1.034-1.006 2.754-1.007 3.789-.003 1.03 1 1.032 2.682.003 3.684l-5.744 5.572a1.377 1.377 0 0 1-1.893 0 1.283 1.283 0 0 1-.392-.92c0-.345.14-.676.392-.92L10.348 8" />
                       </svg>
                     </span>
-                  </button>
+                  </AttachFiles>
                 </Tooltip>
               </div>
 
@@ -197,10 +208,33 @@ export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
 const ComposerContext = createContext<{
   editor: SlateEditor;
   onEditorValueChange: (value: Descendant[]) => void;
+
+  attachments: ({
+    id: string;
+    file: File;
+    name: string;
+    size: number;
+    mimeType: string;
+  } & (
+    | {
+        status: "uploading" | "uploaded";
+      }
+    | {
+        status: "error";
+        error: Error;
+      }
+  ))[];
+  onAttachFiles: () => void;
+  onRemoveAttachment: (id: string) => void;
+  numOfAttachments: number;
+
   isEditorEmpty: boolean;
   requestFormSubmit: () => void;
   disabled: boolean;
 } | null>(null);
+
+const MAX_ATTACHMENTS = 10;
+const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 1024; // 1 GB
 
 /**
  * Surrounds the chat composer's content and handles submissions.
@@ -214,6 +248,7 @@ const ComposerContext = createContext<{
 export const Form = forwardRef<HTMLFormElement, FormProps>(
   ({ onComposerSubmit, onSubmit, disabled, ...props }, forwardedRef) => {
     const formRef = useRef<HTMLFormElement | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const editorRef = useRef<(BaseEditor & ReactEditor & HistoryEditor) | null>(
       null
@@ -269,11 +304,57 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
       setIsEditorEmpty(isEmpty(editor, editor.children));
     }, []);
 
+    const requestFormSubmit = useCallback(() => {
+      if (isEmpty(editor, editor.children)) return;
+
+      if (formRef.current === null) return;
+      if (typeof formRef.current.requestSubmit === "function") {
+        return formRef.current.requestSubmit();
+      }
+      const submitter = document.createElement("input");
+      submitter.type = "submit";
+      submitter.hidden = true;
+      formRef.current.appendChild(submitter);
+      submitter.click();
+      formRef.current.removeChild(submitter);
+    }, [editor]);
+
+    const [attachments, setAttachments] = useState<
+      ({
+        id: string;
+        name: string;
+        size: number;
+        mimeType: string;
+        file: File;
+      } & (
+        | {
+            status: "uploading" | "uploaded";
+          }
+        | {
+            status: "error";
+            error: Error;
+          }
+      ))[]
+    >([]);
+
+    const handleAttachFiles = useCallback(() => {
+      if (disabled) return;
+      fileInputRef.current?.click();
+    }, [disabled]);
+
+    const handleRemoveAttachment = useCallback((id: string) => {
+      setAttachments((attachments) =>
+        attachments.filter((attachment) => attachment.id !== id)
+      );
+    }, []);
+
     useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
       forwardedRef,
       () => formRef.current,
       []
     );
+
+    const client = useClient();
 
     return (
       <ComposerContext.Provider
@@ -281,24 +362,113 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
           editor,
           onEditorValueChange: handleEditorValueChange,
           isEditorEmpty,
-          requestFormSubmit: function () {
-            if (isEmpty(editor, editor.children)) return;
-
-            if (formRef.current === null) return;
-            if (typeof formRef.current.requestSubmit === "function") {
-              return formRef.current.requestSubmit();
-            }
-            const submitter = document.createElement("input");
-            submitter.type = "submit";
-            submitter.hidden = true;
-            formRef.current.appendChild(submitter);
-            submitter.click();
-            formRef.current.removeChild(submitter);
-          },
+          requestFormSubmit,
           disabled: disabled || false,
+          attachments,
+          onAttachFiles: handleAttachFiles,
+          onRemoveAttachment: handleRemoveAttachment,
+          numOfAttachments: attachments.length,
         }}
       >
         <form onSubmit={handleSubmit} {...props} ref={formRef} />
+        <input
+          type="file"
+          multiple
+          accept="image/png, image/jpeg"
+          ref={fileInputRef}
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          onChange={function (event) {
+            if (disabled) return;
+
+            if (event.target.files === null) return;
+            if (event.target.files.length === 0) return;
+
+            for (const file of Array.from(event.target.files).slice(
+              0,
+              MAX_ATTACHMENTS - attachments.length
+            )) {
+              const id = `at_${nanoid()}`;
+              if (file.size > MAX_ATTACHMENT_SIZE) {
+                setAttachments((attachments) => [
+                  ...attachments,
+                  {
+                    id,
+                    file,
+                    name: file.name,
+                    size: file.size,
+                    mimeType: file.type,
+                    status: "error",
+                    error: new AttachmentTooLargeError("File is too large."),
+                  },
+                ]);
+                continue;
+              }
+
+              setAttachments((attachments) => [
+                ...attachments,
+                {
+                  id,
+                  file,
+                  name: file.name,
+                  size: file.size,
+                  mimeType: file.type,
+                  status: "uploading",
+                },
+              ]);
+
+              client[kInternal].httpClient
+                .uploadAttachment({
+                  // @nimesh - Replace this with `uploadUserAttachment`, that identifies an attachment to a user instead of a room.
+                  roomId: "liveblocks:examples:ai",
+                  attachment: {
+                    id,
+                    name: file.name,
+                    size: file.size,
+                    mimeType: file.type,
+                    file,
+                    type: "localAttachment",
+                    status: "uploading",
+                  },
+                })
+                .then(() => {
+                  setAttachments((attachments) =>
+                    attachments.map((attachment) =>
+                      attachment.id === id
+                        ? { ...attachment, status: "uploaded" }
+                        : attachment
+                    )
+                  );
+                })
+                .catch((error) => {
+                  if (error instanceof Error) {
+                    setAttachments((attachments) =>
+                      attachments.map((attachment) =>
+                        attachment.id === id
+                          ? {
+                              ...attachment,
+                              status: "error",
+                              error:
+                                error instanceof HttpError &&
+                                error.status === 413
+                                  ? new AttachmentTooLargeError(
+                                      "File is too large"
+                                    )
+                                  : error,
+                            }
+                          : attachment
+                      )
+                    );
+                  }
+                });
+            }
+
+            event.target.value = "";
+          }}
+          tabIndex={-1}
+          style={{ display: "none" }}
+        />
       </ComposerContext.Provider>
     );
   }
@@ -452,6 +622,326 @@ export const Submit = forwardRef<HTMLButtonElement, SubmitProps>(
   }
 );
 
+/* -------------------------------------------------------------------------------------------------
+ * AttachFiles
+ * -----------------------------------------------------------------------------------------------*/
+/**
+ * A button which opens a file picker to create attachments.
+ *
+ * @example
+ * <Composer.AttachFiles>Attach files</Composer.AttachFiles>
+ */
+const AttachFiles = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement>
+>(({ onClick, disabled, ...props }, forwardedRef) => {
+  const context = useContext(ComposerContext);
+  if (context === null) {
+    throw new Error("AttachFiles must be a descendant of Form.");
+  }
+
+  const { disabled: isFormDisabled, onAttachFiles, numOfAttachments } = context;
+
+  return (
+    <button
+      type="button"
+      {...props}
+      onClick={function (event) {
+        onClick?.(event);
+        if (event.isDefaultPrevented()) return;
+        onAttachFiles();
+      }}
+      onPointerDown={(event) => event.preventDefault()}
+      ref={forwardedRef}
+      disabled={
+        isFormDisabled || disabled || numOfAttachments >= MAX_ATTACHMENTS
+      }
+    />
+  );
+});
+
+/* -------------------------------------------------------------------------------------------------
+ * Attachment
+ * -----------------------------------------------------------------------------------------------*/
+type AttachmentsProps = HTMLAttributes<HTMLDivElement>;
+export const Attachments = forwardRef<HTMLDivElement, AttachmentsProps>(
+  ({ className, ...props }, forwardedRef) => {
+    const context = useContext(ComposerContext);
+    if (context === null) {
+      throw new Error("Attachments must be a descendant of Form.");
+    }
+
+    const { attachments } = context;
+
+    return (
+      <div
+        {...props}
+        ref={forwardedRef}
+        className={classNames("lb-chat-composer-attachments", className)}
+      >
+        <div className="lb-attachments">
+          {attachments.map((attachment) => (
+            <Attachment key={attachment.id} {...attachment} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+);
+
+function Attachment(
+  props: {
+    id: string;
+    name: string;
+    size: number;
+    file: File;
+    mimeType: string;
+  } & (
+    | {
+        status: "uploading" | "uploaded";
+      }
+    | {
+        status: "error";
+        error: Error;
+      }
+  )
+) {
+  if (!props.mimeType.startsWith("image/")) {
+    throw new Error("Attachment must be an image.");
+  }
+
+  const context = useContext(ComposerContext);
+  if (context === null) {
+    throw new Error("Attachment must be a descendant of Form.");
+  }
+
+  const { onRemoveAttachment } = context;
+
+  function AttachmentPreview({
+    id,
+    name,
+    size,
+    mimeType,
+    file,
+    status,
+  }: {
+    id: string;
+    name: string;
+    size: number;
+    mimeType: string;
+    file: File;
+    status: "uploading" | "uploaded";
+  }) {
+    const [preview, setPreview] = useState<string | null>(null);
+
+    useEffect(() => {
+      function handleLoad() {
+        setPreview(reader.result as string);
+      }
+
+      const reader = new FileReader();
+      reader.addEventListener("loadend", handleLoad);
+      reader.readAsDataURL(file);
+
+      return () => {
+        reader.removeEventListener("loadend", handleLoad);
+        reader.abort();
+      };
+    }, []);
+
+    if (preview === null) {
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width={20}
+          height={20}
+          viewBox={`0 0 ${20} ${20}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          role="presentation"
+          className="lb-icon"
+        >
+          <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
+        </svg>
+      );
+    }
+
+    return (
+      <div className="lb-attachment-preview-media">
+        <img src={preview} loading="lazy" />
+      </div>
+    );
+  }
+
+  function splitFileName(name: string) {
+    const match = name.match(/^(.+?)(\.[^.]+)?$/);
+    return { base: match?.[1] ?? name, extension: match?.[2] };
+  }
+
+  const { base, extension } = splitFileName(props.name);
+  const $ = useOverrides();
+
+  let description: string;
+  if (props.status === "error") {
+    if (props.error instanceof AttachmentTooLargeError) {
+      description = $.ATTACHMENT_TOO_LARGE(
+        MAX_ATTACHMENT_SIZE
+          ? formatFileSize(MAX_ATTACHMENT_SIZE, $.locale)
+          : undefined
+      );
+    } else {
+      description = $.ATTACHMENT_ERROR(props.error);
+    }
+  } else {
+    description = formatFileSize(props.size, $.locale);
+  }
+
+  return (
+    <div
+      className="lb-attachment lb-file-attachment lb-composer-attachment"
+      data-error={props.status === "error" ? "" : undefined}
+    >
+      <div className="lb-attachment-preview">
+        {props.status === "uploading" ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={20}
+            height={20}
+            viewBox={`0 0 ${20} ${20}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="presentation"
+            className="lb-icon"
+          >
+            <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
+          </svg>
+        ) : props.status === "error" ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={20}
+            height={20}
+            viewBox={`0 0 ${20} ${20}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="presentation"
+            className="lb-icon"
+          >
+            <path d="m3.794 13.526 5.326-9.89a1 1 0 0 1 1.76 0l5.326 9.89a1 1 0 0 1-.88 1.474H4.674a1 1 0 0 1-.88-1.474ZM10 7.5v2m0 2.5h.007" />
+            <circle cx={10} cy={12} r={0.25} />
+          </svg>
+        ) : (
+          <AttachmentPreview {...props} />
+        )}
+      </div>
+
+      <div className="lb-attachment-details">
+        <span className="lb-attachment-name" title={props.name}>
+          <span className="lb-attachment-name-base">{base}</span>
+          {extension && (
+            <span className="lb-attachment-name-extension">{extension}</span>
+          )}
+        </span>
+
+        <span className="lb-attachment-description" title={description}>
+          {description}
+        </span>
+      </div>
+      <Tooltip content={$.CHAT_COMPOSER_REMOVE_ATTACHMENT}>
+        <button
+          type="button"
+          className="lb-attachment-delete"
+          onClick={() => onRemoveAttachment(props.id)}
+          aria-label={$.CHAT_COMPOSER_REMOVE_ATTACHMENT}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={20}
+            height={20}
+            viewBox={`0 0 ${20} ${20}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="presentation"
+            className="lb-icon"
+          >
+            <path d="M15 5L5 15" />
+            <path d="M5 5L15 15" />
+          </svg>
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+class AttachmentTooLargeError extends Error {
+  name = "AttachmentTooLargeError";
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+const BASE = 1000;
+const UNITS = ["B", "KB", "MB", "GB"] as const;
+
+function formatFileSize(bytes: number, locale?: string) {
+  if (bytes === 0) {
+    return `0 ${UNITS[1]}`;
+  }
+
+  let unit: number;
+
+  if (bytes === 0) {
+    unit = 1;
+  } else {
+    unit = Math.max(
+      1,
+      Math.min(
+        Math.floor(Math.log(Math.abs(bytes)) / Math.log(BASE)),
+        UNITS.length - 1
+      )
+    );
+  }
+
+  let value = bytes / BASE ** unit;
+  let maximumDecimals = 1;
+
+  if (unit === 1) {
+    // Hide decimals for KB values above 10
+    if (value >= 10) {
+      maximumDecimals = 0;
+    }
+
+    // Allow 2 decimals instead of 1 for KB values below 0.1
+    if (value < 0.1 && value > 0) {
+      maximumDecimals = 2;
+    }
+
+    // Display tiny KB values as 0.01 KB instead of 0 KB
+    if (value < 0.01) {
+      value = 0.01;
+    }
+  }
+
+  const formattedUnit = UNITS[unit];
+  const formattedValue = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maximumDecimals,
+  }).format(value);
+
+  return `${formattedValue} ${formattedUnit}`;
+}
+
 /**
  * Accepts a message id and returns the submission status of the message. The status can be one of the following:
  * - "submitted": The message has been submitted and is awaiting a response.
@@ -534,9 +1024,7 @@ declare module "slate" {
   }
 }
 
-export function withNormalize(
-  editor: BaseEditor & ReactEditor & HistoryEditor
-) {
+function withNormalize(editor: BaseEditor & ReactEditor & HistoryEditor) {
   const { normalizeNode } = editor;
 
   editor.normalizeNode = (entry) => {

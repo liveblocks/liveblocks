@@ -60,6 +60,7 @@ export interface ChatComposerOverrides {
   CHAT_COMPOSER_PLACEHOLDER: string;
   CHAT_COMPOSER_SEND: string;
   CHAT_COMPOSER_ATTACH_FILES: string;
+  CHAT_COMPOSER_REMOVE_ATTACHMENT: string;
 }
 
 export interface ThreadOverrides {
@@ -202,6 +203,7 @@ export const defaultOverrides: Overrides = {
   CHAT_COMPOSER_PLACEHOLDER: "Write a message…",
   CHAT_COMPOSER_SEND: "Send",
   CHAT_COMPOSER_ATTACH_FILES: "Attach files",
+  CHAT_COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);
