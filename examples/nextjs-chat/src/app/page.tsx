@@ -20,7 +20,11 @@ export default function Page() {
 
   return (
     <main>
-      <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <LiveblocksProvider
+        authEndpoint="/api/liveblocks-auth"
+        // @ts-expect-error
+        baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+      >
         <ChatMessages messages={messages} ref={messagesContainerRef} />
 
         <div className="composer-container">
@@ -36,13 +40,13 @@ function useChatMessages(): {
   messages: (
     | { role: "user"; id: string; content: { text: string } }
     | {
-        role: "assistant";
-        id: string;
-        content: (
-          | { id: string; type: "text"; data: string }
-          | { type: "tool-call"; id: string; name: string; arguments: unknown }
-        )[];
-      }
+      role: "assistant";
+      id: string;
+      content: (
+        | { id: string; type: "text"; data: string }
+        | { type: "tool-call"; id: string; name: string; arguments: unknown }
+      )[];
+    }
   )[];
   fetchMore: () => void;
   isFetchingMore: boolean;
@@ -186,7 +190,7 @@ function useChatMessages(): {
         ],
       },
     ],
-    fetchMore: () => {},
+    fetchMore: () => { },
     isFetchingMore: false,
     hasFetchedAll: false,
     fetchMoreError: null,

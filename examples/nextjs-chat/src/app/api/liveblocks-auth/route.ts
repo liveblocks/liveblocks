@@ -9,6 +9,8 @@ import { getUsers } from "../../../database";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  // @ts-expect-error
+  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
 });
 
 export async function POST(request: NextRequest) {
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest) {
 
   const users = await getUsers();
   // Get a random user from the database (for demo purposes)
-  const user = users[Math.floor(Math.random() * users.length)];
+  const user = users[0];
 
   // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`${user.id}`, {
