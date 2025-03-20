@@ -4,8 +4,10 @@ import type { Delegates, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
+import { type EventSource, makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import { Signal } from "./lib/signals";
+import { tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -14,10 +16,13 @@ import type {
   TimeoutID,
 } from "./room";
 import {
+  type AiChat,
   type AiTextContent,
   type ClientAiMsg,
   ClientAiMsgCode,
   MessageContentType,
+  type ServerAiMsg,
+  ServerAiMsgCode,
 } from "./types/ai";
 import type {
   IWebSocket,
@@ -34,6 +39,12 @@ type AiContext = {
 export type Ai = {
   [kInternal]: {
     debugContext: () => AiContext;
+  };
+  events: {
+    chats: EventSource<{
+      chats: AiChat[];
+      cursor: { chatId: string; lastMessageAt: string } | null;
+    }>;
   };
   connect: () => void;
   reconnect: () => void;
@@ -58,6 +69,13 @@ export type AiConfig = {
 };
 
 export function createAi(config: AiConfig): Ai {
+  const eventHub = {
+    chats: makeEventSource<{
+      chats: AiChat[];
+      cursor: { chatId: string; lastMessageAt: string } | null;
+    }>(),
+  };
+
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     config.delegates,
     config.enableDebugLogging,
@@ -123,6 +141,14 @@ export function createAi(config: AiConfig): Ai {
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
     console.warn("handleServerMessage", event.data);
+    if (typeof event.data === "string") {
+      const msg = tryParseJson(event.data) as ServerAiMsg;
+      if (msg.type === ServerAiMsgCode.LIST_CHATS) {
+        const { chats, cursor } = msg;
+        console.warn("chats", chats, cursor);
+        eventHub.chats.notify({ chats, cursor });
+      }
+    }
   }
 
   managedSocket.events.onMessage.subscribe(handleServerMessage);
@@ -149,6 +175,7 @@ export function createAi(config: AiConfig): Ai {
       [kInternal]: {
         debugContext: () => context,
       },
+      events: eventHub,
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),

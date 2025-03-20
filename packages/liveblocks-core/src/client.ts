@@ -50,6 +50,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { AiChat } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
@@ -428,6 +429,12 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
   readonly events: {
     readonly error: Observable<LiveblocksError>;
     readonly syncStatus: Observable<void>;
+    readonly ai: {
+      readonly chats: Observable<{
+        chats: AiChat[];
+        cursor: { chatId: string; lastMessageAt: string } | null;
+      }>;
+    };
   };
 } & NotificationsApi<M>;
 
@@ -725,7 +732,6 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   function logout() {
-    console.warn("CALLING LOGOUT");
     authManager.reset();
 
     // Reset the current user id store when the client is logged out
@@ -916,6 +922,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       events: {
         error: liveblocksErrorSource,
         syncStatus: syncStatusSignal,
+        ai: ai.events,
       },
 
       listChats: () => {

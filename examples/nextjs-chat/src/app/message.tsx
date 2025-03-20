@@ -1,3 +1,4 @@
+import { useClient } from "@liveblocks/react";
 import { HTMLAttributes, forwardRef } from "react";
 /* -------------------------------------------------------------------------------------------------
  * ChatMessages
@@ -9,18 +10,23 @@ export type ChatMessagesProps = Omit<
   messages: (
     | { role: "user"; id: string; content: { text: string } }
     | {
-        role: "assistant";
-        id: string;
-        content: (
-          | { id: string; type: "text"; data: string }
-          | { type: "tool-call"; id: string; name: string; arguments: unknown }
-        )[];
-      }
+      role: "assistant";
+      id: string;
+      content: (
+        | { id: string; type: "text"; data: string }
+        | { type: "tool-call"; id: string; name: string; arguments: unknown }
+      )[];
+    }
   )[];
 };
 
 export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
   ({ messages, className }, forwardedRef) => {
+
+    const client = useClient();
+    (window as any).lbClient = client;
+
+
     return (
       <div
         ref={forwardedRef}
@@ -190,7 +196,7 @@ export const AssistantChatMessage = forwardRef<
 /* -------------------------------------------------------------------------------------------------
  * MediaAttachment
  * -----------------------------------------------------------------------------------------------*/
-export function MediaAttachment({}: { attachment: { id: string } }) {}
+export function MediaAttachment({ }: { attachment: { id: string } }) { }
 
 function classNames(...args: (string | number | boolean | undefined | null)[]) {
   return args
