@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.22 (not yet published)
+
 ### `@liveblocks/node`
 
 - New method `.mutateStorage()` which can be used to make changes to Storage
