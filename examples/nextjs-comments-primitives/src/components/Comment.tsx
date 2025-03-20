@@ -9,7 +9,7 @@ import {
   Timestamp,
 } from "@liveblocks/react-ui/primitives";
 import { useAttachmentUrl } from "@liveblocks/react";
-import { LinkButton } from "./Button";
+import { Button, LinkButton } from "./Button";
 import { AddReaction } from "./AddReaction";
 import { Reactions } from "./Reactions";
 import { Icon } from "@liveblocks/react-ui";
@@ -55,7 +55,7 @@ export function Comment({ comment, className, ...props }: CommentProps) {
               <div className="relative aspect-square w-8 flex-none animate-pulse rounded-full bg-gray-100" />
             }
           >
-            <Avatar userId={comment.userId} className="w-[30px] flex-none" />
+            <Avatar userId={comment.userId} className="w-8 flex-none" />
           </Suspense>
           <div className="flex min-w-0 items-center justify-between gap-2">
             <div className="flex items-baseline gap-2">
@@ -74,9 +74,9 @@ export function Comment({ comment, className, ...props }: CommentProps) {
         </div>
         <div>
           <AddReaction comment={comment}>
-            <div className="-mr-1 rounded p-1 hover:bg-gray-100">
-              <Icon.Emoji className="h-[22px] w-[22px] text-gray-400" />
-            </div>
+            <Button variant="ghost" className="w-9 !p-0">
+              <Icon.Emoji />
+            </Button>
           </AddReaction>
         </div>
       </div>

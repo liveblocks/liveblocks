@@ -25,7 +25,7 @@ export function Reactions({ comment }: { comment: CommentData }) {
         return (
           <button
             key={reaction.emoji}
-            className="flex h-[30px] items-center gap-1.5 rounded-full border border-gray-200 px-1.5 py-0.5 text-gray-400 hover:bg-gray-100 data-[picked]:border-blue-200 data-[picked]:bg-blue-100 data-[picked]:text-blue-600"
+            className="flex h-8 items-center gap-1.5 rounded-full border border-gray-200 py-0.5 pl-1.5 pr-2 text-gray-400 hover:bg-gray-100 data-[picked]:border-blue-200 data-[picked]:bg-blue-100 data-[picked]:text-blue-600"
             data-picked={hasPicked || undefined}
             onClick={() =>
               hasPicked
@@ -41,9 +41,9 @@ export function Reactions({ comment }: { comment: CommentData }) {
         );
       })}
       <AddReaction comment={comment}>
-        <div className="flex h-[30px] items-center gap-1.5 rounded-full border border-gray-200 px-1.5 py-0.5 text-gray-400 hover:bg-gray-100">
-          <Icon.Emoji className="h-[22px] w-[22px] text-gray-400" />
-        </div>
+        <button className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:bg-gray-100">
+          <Icon.Emoji />
+        </button>
       </AddReaction>
     </>
   );

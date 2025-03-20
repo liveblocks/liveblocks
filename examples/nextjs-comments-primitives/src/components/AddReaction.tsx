@@ -16,10 +16,10 @@ export function AddReaction({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger>{children}</Popover.Trigger>
+      <Popover.Trigger asChild>{children}</Popover.Trigger>
       <Popover.Anchor />
       <Popover.Portal>
-        <Popover.Content>
+        <Popover.Content sideOffset={8}>
           <EmojiPicker.Root
             onEmojiSelect={({ emoji }) => {
               addReaction({
@@ -29,22 +29,23 @@ export function AddReaction({
               });
               setOpen(false);
             }}
-            className="isolate flex h-[368px] w-fit flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+            columns={10}
+            className="isolate flex h-[368px] w-fit flex-col overflow-hidden rounded-xl bg-white shadow-xl"
           >
-            <EmojiPicker.Search className="ring-0.5 z-10 mx-2 mt-2 appearance-none rounded-md bg-neutral-100 px-2.5 py-2 text-sm outline-0 ring-blue-500 focus:ring" />
+            <EmojiPicker.Search className="ring-0.5 z-10 mx-2 mt-2 appearance-none rounded-md bg-gray-100 px-2.5 py-2 text-sm outline-0 ring-blue-500 focus:ring" />
             <EmojiPicker.Viewport className="outline-hidden relative flex-1">
-              <EmojiPicker.Loading className="absolute inset-0 flex items-center justify-center text-sm text-neutral-400">
+              <EmojiPicker.Loading className="absolute inset-0 flex items-center justify-center text-sm text-gray-400">
                 Loading…
               </EmojiPicker.Loading>
-              <EmojiPicker.Empty className="absolute inset-0 flex items-center justify-center text-sm text-neutral-400">
+              <EmojiPicker.Empty className="absolute inset-0 flex items-center justify-center text-sm text-gray-400">
                 No emoji found.
               </EmojiPicker.Empty>
               <EmojiPicker.List
-                className="select-none pb-1.5"
+                className="select-none pb-1"
                 components={{
                   CategoryHeader: ({ category, ...props }) => (
                     <div
-                      className="bg-white px-3 pb-1.5 pt-3 text-xs font-medium text-neutral-600"
+                      className="bg-white px-3 pb-1.5 pt-3 text-xs font-medium text-gray-600"
                       {...props}
                     >
                       {category.label}
@@ -57,7 +58,7 @@ export function AddReaction({
                   ),
                   Emoji: ({ emoji, ...props }) => (
                     <button
-                      className="flex h-7 w-7 items-center justify-center rounded text-base data-[active]:bg-blue-200"
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-base data-[active]:bg-gray-100"
                       {...props}
                     >
                       {emoji.emoji}
