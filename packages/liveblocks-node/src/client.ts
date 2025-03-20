@@ -2110,8 +2110,8 @@ export class Liveblocks {
         { signal }
       )
         .catch((err) => {
-          // TODO For now, if any error happens during one of the flushes,
-          // abort the entire thing
+          // For now, if any error happens during one of the flushes, abort the entire thing
+          // TODO Think about more error handling control options here later (auto-retry, etc)
           abort(err);
         })
         .finally(() => {
