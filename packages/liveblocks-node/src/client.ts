@@ -2142,10 +2142,10 @@ export class Liveblocks {
       });
 
       // Construct the Live tree
-      const root = LiveObject._fromItems(nodes, pool);
+      const root = LiveObject._fromItems<S>(nodes, pool);
 
       // Run the callback
-      const callback$ = callback({ room, root: root as LiveObject<S> });
+      const callback$ = callback({ room, root });
 
       // If the callback synchronously makes changes, we'll want to flush those as soon as possible, then flush on an interval for the remainder of the async callback.
       flushIfNeeded(/* force */ true);
