@@ -11,6 +11,16 @@ try add a default value, this would instead be sent as an append command,
 meaning that it would be added to any existing data in the document, instead of
 working as a default value.
 
+<Banner title="This guide is for Yjs, not Text Editor" type="warning">
+
+If you’re using our [Text Editor](/docs/ready-made-features/text-editor)
+BlockNote product, there’s an
+[option to set the initial value](/docs/api-reference/liveblocks-react-blocknote#Setting-initial-content),
+and you should use this method. This guide is only
+[Sync Datastore and Yjs](/docs/platform/sync-datastore).
+
+</Banner>
+
 ## Setting content in BlockNote
 
 BlockNote allows you to set a default value by setting `initialContent` in
@@ -72,6 +82,3 @@ function Editor({ doc, provider }: EditorProps) {
   return <BlockNoteView editor={editor} />;
 }
 ```
-
-Note that we’re assuming your BlockNote application is set up as recommended in
-our [getting started guide](/docs/get-started/yjs-blocknote-react).

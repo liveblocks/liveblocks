@@ -906,7 +906,8 @@ function TextEditor() {
 
 #### Opening the composer
 
-To open the `FloatingComposer`, you need to call the `addPendingComment`
+To open the `FloatingComposer`, you need to click the “Comment” button in the
+[`Toolbar`][] or call the `addPendingComment`
 [command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
 can use `liveblocksCommentMark` to check if the current selection is a comment.
 
@@ -1527,7 +1528,7 @@ hear from you.
 </Banner>
 
 The `HistoryVersionPreview` component allows you to display a preview of a
-specific version of your Tiptap editor's content. It also contains a button and
+specific version of your Tiptap editor’s content. It also contains a button and
 logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
 render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
@@ -1853,18 +1854,39 @@ function TextEditor() {
 }
 ```
 
-<PropertiesList>
-  <PropertiesListItem name="initialContent" type="Content">
+A number of options can be applied.
+
+```tsx
+const liveblocks = useLiveblocksExtension({
+  // +++
+  initialContent: "Hello world",
+  field: "editor-one",
+  // +++
+
+  // Other options
+  // ...
+});
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="liveblocks" type="Extension">
+    Returns a Liveblocks [Tiptap
+    extension](https://tiptap.dev/docs/editor/core-concepts/extensions#create-a-new-extension).
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="options.initialContent" type="Content">
     The initial content for the editor, if it’s never been set. [Learn
     more](#Setting-initial-content).
   </PropertiesListItem>
-  <PropertiesListItem name="field" type="string">
+  <PropertiesListItem name="options.field" type="string">
     The name of this text editor’s field. Allows you to use multiple editors on
     one page, if each has a separate field value. [Learn
     more](#Multiple-editors).
   </PropertiesListItem>
   <PropertiesListItem
-    name="offlineSupport_experimental"
+    name="options.offlineSupport_experimental"
     defaultValue="false"
     type="boolean"
   >
@@ -1872,14 +1894,22 @@ function TextEditor() {
     the first load, documents will be stored locally and load instantly. [Learn
     more](#Offline-support).
   </PropertiesListItem>
-  <PropertiesListItem name="comments" defaultValue="true" type="boolean">
+  <PropertiesListItem
+    name="options.comments"
+    defaultValue="true"
+    type="boolean"
+  >
     Enable comments in the editor.
   </PropertiesListItem>
-  <PropertiesListItem name="mentions" defaultValue="true" type="boolean">
+  <PropertiesListItem
+    name="options.mentions"
+    defaultValue="true"
+    type="boolean"
+  >
     Enable mentions in the editor.
   </PropertiesListItem>
   <PropertiesListItem
-    name="ai"
+    name="options.ai"
     defaultValue="false"
     type="boolean | AiConfiguration"
   >
