@@ -1,6 +1,14 @@
 import * as PopoverPrimitive from "@radix-ui/react-popover";
+import {
+  type Emoji as FrimousseEmoji,
+  EmojiPicker as EmojiPickerPrimitive,
+  type EmojiPickerListCategoryHeaderProps,
+  type EmojiPickerListEmojiProps,
+  type EmojiPickerListRowProps,
+  type Locale,
+} from "frimousse";
 import type { ComponentPropsWithoutRef } from "react";
-import { forwardRef, useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useState } from "react";
 
 import { useLiveblocksUIConfig } from "../../config";
 import {
@@ -10,137 +18,56 @@ import {
 import { SearchIcon } from "../../icons/Search";
 import { SpinnerIcon } from "../../icons/Spinner";
 import { useOverrides } from "../../overrides";
-import * as EmojiPickerPrimitive from "../../primitives/EmojiPicker";
-import type {
-  EmojiPickerContentCategoryHeaderProps,
-  EmojiPickerContentEmojiProps,
-  EmojiPickerContentEmptyProps,
-  EmojiPickerContentErrorProps,
-  EmojiPickerContentGridProps,
-  EmojiPickerContentLoadingProps,
-  EmojiPickerContentRowProps,
-} from "../../primitives/EmojiPicker/types";
 import { classNames } from "../../utils/class-names";
 import { Emoji } from "./Emoji";
+import { Tooltip } from "./Tooltip";
 
 export interface EmojiPickerProps extends ComponentPropsWithoutRef<"div"> {
   onOpenChange?: (open: boolean) => void;
   onEmojiSelect?: (emoji: string) => void;
 }
 
-function EmojiPickerLoading({
-  className,
-  ...props
-}: EmojiPickerContentLoadingProps) {
-  return (
-    <div
-      className={classNames("lb-loading lb-emoji-picker-loading", className)}
-      {...props}
-    >
-      <SpinnerIcon />
-    </div>
-  );
-}
-
-function EmojiPickerEmpty({
-  className,
-  ...props
-}: EmojiPickerContentEmptyProps) {
-  const $ = useOverrides();
-
-  return (
-    <div
-      className={classNames("lb-empty lb-emoji-picker-empty", className)}
-      {...props}
-    >
-      {$.EMOJI_PICKER_EMPTY}
-    </div>
-  );
-}
-
-function EmojiPickerError({
-  error,
-  className,
-  ...props
-}: EmojiPickerContentErrorProps) {
-  const $ = useOverrides();
-
-  return (
-    <div
-      className={classNames("lb-error lb-emoji-picker-error", className)}
-      {...props}
-    >
-      {$.EMOJI_PICKER_ERROR(error)}
-    </div>
-  );
-}
-
-function EmojiPickerCategoryHeader({
-  category,
-  className,
-  ...props
-}: EmojiPickerContentCategoryHeaderProps) {
-  return (
-    <div
-      className={classNames("lb-emoji-picker-category-header", className)}
-      {...props}
-    >
-      <span className="lb-emoji-picker-category-header-title">{category}</span>
-    </div>
-  );
-}
-
-function EmojiPickerGrid({
-  children,
-  className,
-  ...props
-}: EmojiPickerContentGridProps) {
-  return (
-    <div className={classNames("lb-emoji-picker-grid", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-function EmojiPickerRow({
-  attributes,
-  children,
-  className,
-  ...props
-}: EmojiPickerContentRowProps) {
-  const isFirstRow = useMemo(
-    () => attributes.categoryRowIndex === 0,
-    [attributes.categoryRowIndex]
-  );
-  const isLastRow = useMemo(
-    () => attributes.categoryRowIndex === attributes.categoryRowsCount - 1,
-    [attributes.categoryRowIndex, attributes.categoryRowsCount]
-  );
-
-  return (
-    <div
-      className={classNames("lb-emoji-picker-row", className)}
-      data-first={isFirstRow ? "" : undefined}
-      data-last={isLastRow ? "" : undefined}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-function EmojiPickerEmoji({
+function EmojiPickerListEmoji({
   emoji,
   className,
   ...props
-}: EmojiPickerContentEmojiProps) {
+}: EmojiPickerListEmojiProps) {
   return (
     <button
       className={classNames("lb-emoji-picker-emoji", className)}
       {...props}
     >
-      <Emoji emoji={emoji} />
+      <Emoji emoji={emoji.emoji} />
     </button>
+  );
+}
+
+function EmojiPickerListRow({
+  children,
+  className,
+  ...props
+}: EmojiPickerListRowProps) {
+  return (
+    <div className={classNames("lb-emoji-picker-row", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function EmojiPickerListCategoryHeader({
+  category,
+  className,
+  ...props
+}: EmojiPickerListCategoryHeaderProps) {
+  return (
+    <div
+      className={classNames("lb-emoji-picker-category-header", className)}
+      {...props}
+    >
+      <span className="lb-emoji-picker-category-header-title">
+        {category.label}
+      </span>
+    </div>
   );
 }
 
@@ -162,7 +89,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     );
 
     const handleEmojiSelect = useCallback(
-      (emoji: string) => {
+      ({ emoji }: FrimousseEmoji) => {
         setOpen(false);
         onEmojiSelect?.(emoji);
       },
@@ -184,10 +111,13 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
             )}
             {...props}
             ref={forwardedRef}
+            asChild
           >
             <EmojiPickerPrimitive.Root
               onEmojiSelect={handleEmojiSelect}
-              locale={$.locale}
+              locale={$.locale as Locale}
+              emojiVersion={15.1}
+              columns={10}
             >
               <div className="lb-emoji-picker-header">
                 <div className="lb-emoji-picker-search-container">
@@ -199,18 +129,45 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
                   <SearchIcon />
                 </div>
               </div>
-              <EmojiPickerPrimitive.Content
-                className="lb-emoji-picker-content"
-                components={{
-                  Loading: EmojiPickerLoading,
-                  Empty: EmojiPickerEmpty,
-                  Error: EmojiPickerError,
-                  CategoryHeader: EmojiPickerCategoryHeader,
-                  Grid: EmojiPickerGrid,
-                  Row: EmojiPickerRow,
-                  Emoji: EmojiPickerEmoji,
-                }}
-              />
+              <EmojiPickerPrimitive.Viewport className="lb-emoji-picker-content">
+                <EmojiPickerPrimitive.Loading className="lb-loading lb-emoji-picker-loading">
+                  <SpinnerIcon />
+                </EmojiPickerPrimitive.Loading>
+                <EmojiPickerPrimitive.Empty className="lb-empty lb-emoji-picker-empty">
+                  {$.EMOJI_PICKER_EMPTY}
+                </EmojiPickerPrimitive.Empty>
+                <EmojiPickerPrimitive.List
+                  className="lb-emoji-picker-list"
+                  components={{
+                    CategoryHeader: EmojiPickerListCategoryHeader,
+                    Row: EmojiPickerListRow,
+                    Emoji: EmojiPickerListEmoji,
+                  }}
+                />
+              </EmojiPickerPrimitive.Viewport>
+              <div className="lb-emoji-picker-footer">
+                <EmojiPickerPrimitive.ActiveEmoji>
+                  {({ emoji }) =>
+                    emoji ? (
+                      <>
+                        <div className="lb-emoji-picker-active-emoji">
+                          {emoji.emoji}
+                        </div>
+                        <span className="lb-emoji-picker-active-emoji-label">
+                          {emoji.label}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="lb-emoji-picker-active-emoji-label lb-emoji-picker-active-emoji-label-placeholder">
+                        Select an emoji…
+                      </span>
+                    )
+                  }
+                </EmojiPickerPrimitive.ActiveEmoji>
+                <Tooltip content={$.EMOJI_PICKER_CHANGE_SKIN_TONE}>
+                  <EmojiPickerPrimitive.SkinToneSelector className="lb-button lb-emoji-picker-skin-tone-selector" />
+                </Tooltip>
+              </div>
             </EmojiPickerPrimitive.Root>
           </PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>

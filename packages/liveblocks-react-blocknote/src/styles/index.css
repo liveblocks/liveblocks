@@ -1,0 +1,8 @@
+@import "@liveblocks/react-tiptap/styles.css";
+
+/*
+* blocknote uses z-index of 1000, so we must use 1001.
+*/
+.lb-portal {
+  z-index: 1001 !important;
+}
