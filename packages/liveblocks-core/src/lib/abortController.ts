@@ -12,7 +12,7 @@
  */
 export function makeAbortController(externalSignal?: AbortSignal): {
   signal: AbortSignal;
-  abort: () => void;
+  abort: (reason?: unknown) => void;
 } {
   const ctl = new AbortController();
   return {

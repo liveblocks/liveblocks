@@ -183,19 +183,17 @@ type RequestStorageMutationResponse = {
   nodes: IdTuple<SerializedCrdt>[];
 };
 
+export type MutateStorageCallback = (context: {
+  root: LiveObject<S>;
+}) => Awaitable<void>;
+export type MutateStorageOptions = RequestOptions;
+
 export type MassMutateStorageCallback = (context: {
   room: RoomData;
   root: LiveObject<S>;
 }) => Awaitable<void>;
-export type MassMutateStorageOptions = RequestOptions & {
+export type MassMutateStorageOptions = MutateStorageOptions & {
   concurrency?: number;
-  flushInterval?: number;
-};
-export type MutateStorageCallback = (context: {
-  root: LiveObject<S>;
-}) => Awaitable<void>;
-export type MutateStorageOptions = RequestOptions & {
-  flushInterval?: number;
 };
 
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
@@ -2046,10 +2044,10 @@ export class Liveblocks {
     // Try to select a reasonable page size based on the concurrency level, but
     // at least never less than 20.
     const pageSize = Math.max(20, concurrency * 4);
-    const { flushInterval, signal } = massOptions ?? {};
+    const { signal } = massOptions ?? {};
     const rooms = this.iterRooms(criteria, { pageSize, signal });
 
-    const options = { flushInterval, signal };
+    const options = { signal };
     await runConcurrently(
       rooms,
       (roomData) =>
@@ -2064,11 +2062,8 @@ export class Liveblocks {
     callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
     options?: MutateStorageOptions
   ): Promise<void> {
-    const flushInterval = checkBounds(
-      "flushInterval",
-      options?.flushInterval ?? Number.POSITIVE_INFINITY,
-      100
-    );
+    // Hard-coded for now, see XXX
+    const debounceInterval = 200;
 
     // The plan:
     // 1. Create a new pool
@@ -2099,7 +2094,7 @@ export class Liveblocks {
       }
 
       const now = performance.now();
-      if (!(force || now - lastFlush > flushInterval)) {
+      if (!(force || now - lastFlush > debounceInterval)) {
         // We're still within the debounce window, do nothing right now
         return;
       }
@@ -2113,9 +2108,15 @@ export class Liveblocks {
         roomId,
         [{ type: ClientMsgCode.UPDATE_STORAGE, ops }],
         { signal }
-      ).finally(() => {
-        outstandingFlush$ = undefined;
-      });
+      )
+        .catch((err) => {
+          // TODO For now, if any error happens during one of the flushes,
+          // abort the entire thing
+          abort(err);
+        })
+        .finally(() => {
+          outstandingFlush$ = undefined;
+        });
     };
 
     // Download the storage contents
