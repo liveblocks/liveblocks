@@ -1,4 +1,3 @@
-// TODO: define these better
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,
   NEW_CHAT = 200,
@@ -58,6 +57,7 @@ export type ErrorServerMsg = {
 export type ListChatServerMsg = {
   type: ServerAiMsgCode.LIST_CHATS;
   chats: AiChat[];
+  cursor: { chatId: string; lastMessageAt: string } | null;
 };
 
 export type ChatCreatedServerMsg = {
@@ -81,11 +81,15 @@ export type GetMessagesServerMsg = {
 
 export type ListChatClientMsg = {
   readonly type: ClientAiMsgCode.LIST_CHATS;
+  cursor?: { chatId: string; lastMessageAt: string };
+  pageSize?: number;
 };
 
 export type NewChatClientMsg = {
   readonly type: ClientAiMsgCode.NEW_CHAT;
   chatId?: string;
+  name?: string;
+  metadata?: Record<string, string | string[]>;
 };
 
 export type GetMessagesClientMsg = {
@@ -98,9 +102,10 @@ export type GetMessagesClientMsg = {
 export type AddMessageClientMsg = {
   readonly type: ClientAiMsgCode.ADD_MESSAGE;
   chatId: string;
-  content: AiTextContent;
+  content: AiTextContent | string;
   role?: AiRole;
   status?: AiStatus;
+  execute?: boolean;
 };
 
 export type AbortResponseClientMsg = {
@@ -134,6 +139,7 @@ export type AiState = {
 export type AiChat = {
   id: string;
   name: string;
+  metadata: Record<string, string | string[]>;
   createdAt: string; // Sqlite dates are strings
   lastMessageAt?: string; // Optional since some chats might have no messages
 };
@@ -171,6 +177,7 @@ export type AiToolContent = AiContentBase & {
   name: string;
   type: MessageContentType.TOOL_CALL;
 };
+
 export type AiTextContent = AiContentBase & {
   data: string;
   type: MessageContentType.TEXT;
