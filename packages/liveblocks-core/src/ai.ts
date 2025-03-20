@@ -13,7 +13,12 @@ import type {
   StaticSessionInfo,
   TimeoutID,
 } from "./room";
-import { type ClientAiMsg, ClientAiMsgCode } from "./types/ai";
+import {
+  type AiTextContent,
+  type ClientAiMsg,
+  ClientAiMsgCode,
+  MessageContentType,
+} from "./types/ai";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -164,10 +169,14 @@ export function createAi(config: AiConfig): Ai {
         });
       },
       sendMessage: (chatId: string, message: string) => {
+        const content: AiTextContent = {
+          type: MessageContentType.TEXT,
+          data: message,
+        };
         sendClientMsg({
           type: ClientAiMsgCode.ADD_MESSAGE,
           chatId,
-          message,
+          content,
         });
       },
       abortResponse: (chatId: string) => {

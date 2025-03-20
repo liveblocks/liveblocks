@@ -21,7 +21,11 @@ export enum ServerAiMsgCode {
 
 export type StreamMessagePartServerMsg = {
   type: ServerAiMsgCode.STREAM_MESSAGE_PART;
-  text: string;
+  content: {
+    id: string;
+    delta: string;
+    type: MessageContentType;
+  };
   chatId: string;
   messageId: string;
 };
@@ -41,7 +45,7 @@ export type StreamMessageAbortedServerMsg = {
 
 export type StreamMessageCompleteServerMsg = {
   type: ServerAiMsgCode.STREAM_MESSAGE_COMPLETE;
-  text: string;
+  content: AiMessageContent[];
   chatId: string;
   messageId: string;
 };
@@ -94,7 +98,7 @@ export type GetMessagesClientMsg = {
 export type AddMessageClientMsg = {
   readonly type: ClientAiMsgCode.ADD_MESSAGE;
   chatId: string;
-  message: string;
+  content: AiTextContent;
   role?: AiRole;
   status?: AiStatus;
 };
@@ -154,18 +158,55 @@ export enum AiRole {
   ASSISTANT = "assistant",
 }
 
-export type AiChatMessage = {
+export enum MessageContentType {
+  TEXT = "text",
+  TOOL_CALL = "tool-call",
+}
+
+export interface AiContentBase {
+  id?: string;
+}
+export type AiToolContent = AiContentBase & {
+  args?: unknown;
+  name: string;
+  type: MessageContentType.TOOL_CALL;
+};
+export type AiTextContent = AiContentBase & {
+  data: string;
+  type: MessageContentType.TEXT;
+};
+
+export type AiMessageContent = AiTextContent | AiToolContent;
+
+export type AiMessageBase = {
   id: string;
   status: AiStatus;
-  message: string;
+  content: AiMessageContent[];
   role: AiRole;
   createdAt: string; // Sqlite dates are strings
 };
 
+export type UserMessage = AiMessageBase & {
+  content: AiTextContent[];
+  role: AiRole.USER;
+};
+
+export type AssistantMessage = AiMessageBase & {
+  role: AiRole.ASSISTANT;
+};
+
+export type AiChatMessage = UserMessage | AssistantMessage;
+
 export type AiProviderStreamParams = {
+  messageId: string;
   messages: AiChatMessage[];
-  onStream: (text: string, textSnapshot: string) => void;
-  onComplete: (finalText: string) => void;
+  onStream: (
+    type: MessageContentType, // for now only streaming text
+    delta: string,
+    index: number, // the index in the content array
+    contentSnapshot: AiMessageContent[]
+  ) => void;
+  onComplete: (content: AiMessageContent[]) => void;
   onError: (error: Error) => void;
   onAbort: () => void;
 };
