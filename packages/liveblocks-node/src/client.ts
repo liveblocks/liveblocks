@@ -816,7 +816,11 @@ export class Liveblocks {
     const res = await this.#delete(url`/v2/rooms/${roomId}`, options);
 
     if (!res.ok) {
-      throw await LiveblocksError.from(res);
+      // TODO In a future version, the backend will return a 200 response in
+      // this case, and this 404 check will no longer be necessary
+      if (res.status !== 404) {
+        throw await LiveblocksError.from(res);
+      }
     }
   }
 
