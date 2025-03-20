@@ -2145,7 +2145,12 @@ export class Liveblocks {
       const root = LiveObject._fromItems(nodes, pool);
 
       // Run the callback
-      await callback({ room, root: root as LiveObject<S> });
+      const callback$ = callback({ room, root: root as LiveObject<S> });
+
+      // If the callback synchronously makes changes, we'll want to flush those as soon as possible, then flush on an interval for the remainder of the async callback.
+      flushIfNeeded(/* force */ true);
+
+      await callback$;
     } catch (e) {
       abort();
       throw e;
