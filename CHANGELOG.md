@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-## v2.22
+## v2.22.0
 
 ### `@liveblocks/node`
 
@@ -31,7 +31,7 @@
 
 - Add new icons to `<Icon.* />`.
 
-## `@liveblocks/emails`
+### `@liveblocks/emails`
 
 - Implement a new core logic for thread notification event.
 - Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
