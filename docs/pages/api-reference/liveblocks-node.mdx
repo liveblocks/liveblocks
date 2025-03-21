@@ -473,6 +473,55 @@ const room = await liveblocks.getRoom("my-room-id");
 console.log(room);
 ```
 
+#### Liveblocks.getOrCreateRoom [#get-or-create-rooms-roomId]
+
+Get a room by its ID. If the room doesn’t exist, create it instead. The
+`defaultAccesses` option is required. Setting `defaultAccesses` to
+`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+private room that needs
+[ID token permission to enter](/docs/authentication/id-token). Returns the same
+response as the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
+
+```ts
+const room = await liveblocks.getOrCreateRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.getOrCreateRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupsAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  usersAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about [managing permission with ID tokens](/docs/authentication/id-token).
+
 #### Liveblocks.updateRoom [#post-rooms-roomId]
 
 Updates properties on a room. Throws an error if the room isn’t found. This is a
@@ -521,10 +570,59 @@ Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about [managing permission with ID tokens](/docs/authentication/id-token).
 
+#### Liveblocks.upsertRoom [#upsert-rooms-roomId]
+
+Update a room’s properties by its ID. If the room doesn’t exist, create it
+instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
+`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+private room that needs
+[ID token permission to enter](/docs/authentication/id-token). Returns the same
+response as the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
+
+```ts
+const room = await liveblocks.upsertRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.upsertRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupsAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  usersAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about [managing permission with ID tokens](/docs/authentication/id-token).
+
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. Throws an error if the room isn’t found. This is a wrapper
-around the
+Deletes a room. If the room doesn’t exist, or has already been deleted, no error
+will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
 
