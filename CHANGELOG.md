@@ -8,6 +8,8 @@
 - New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
 - New method `.iterRooms()` which is like `.getRooms()` except pagination
   happens automatically.
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically.
 - New method `.mutateStorage()` which can be used to make changes to Storage
   from your backend.
 - New method `.massMutateStorage()` which can be used to make changes to Storage
