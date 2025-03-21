@@ -192,9 +192,11 @@ export type MassMutateStorageCallback = (context: {
   room: RoomData;
   root: LiveObject<S>;
 }) => Awaitable<void>;
-export type MassMutateStorageOptions = MutateStorageOptions & {
-  concurrency?: number;
-};
+
+// prettier-ignore
+export type MassMutateStorageOptions =
+  & MutateStorageOptions
+  & { concurrency?: number };
 
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
 // inside the Liveblocks implementation. We should only rely on the type
@@ -207,7 +209,7 @@ type M = DM;
 type S = DS;
 type U = DU;
 
-export type RoomQueryCriteria = {
+export type RoomsQueryCriteria = {
   userId?: string;
   groupIds?: string[];
   /**
@@ -242,15 +244,79 @@ export type RoomQueryCriteria = {
       };
 };
 
-export type GetRoomsOptions = RoomQueryCriteria & {
+export type InboxNotificationsQueryCriteria = {
+  userId: string;
+  /**
+   * The query to filter inbox notifications by. It is based on our query language.
+   *
+   * @example
+   * ```
+   * {
+   *  query: "unread:true"
+   * }
+   * ```
+   *
+   * @example
+   * ```
+   * {
+   *   query: {
+   *     unread: true
+   *   }
+   * }
+   * ```
+   *
+   */
+  query?: string | { unread: boolean };
+};
+
+export type PaginationOptions = {
   limit?: number;
   startingAfter?: string;
+};
 
-  /**
-   * deprecated Use `query` property instead. Support for the `metadata`
-   * field will be removed in a future version.
-   */
-  metadata?: QueryRoomMetadata;
+export type Page<T> = {
+  /** @deprecated Prefer to rely on `nextCursor` instead. */
+  nextPage?: string | null;
+  nextCursor: string | null;
+  data: T[];
+};
+
+// prettier-ignore
+export type GetRoomsOptions =
+  & RoomsQueryCriteria
+  & PaginationOptions
+  & {
+    // Legacy options
+    /**
+     * @deprecated Use `query` property instead. Support for the `metadata`
+     * field will be removed in a future version.
+     */
+    metadata?: QueryRoomMetadata;
+  };
+
+// prettier-ignore
+export type GetInboxNotificationsOptions =
+  & InboxNotificationsQueryCriteria
+  & PaginationOptions;
+
+export type CreateRoomOptions = {
+  defaultAccesses: RoomPermission;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
+  metadata?: RoomMetadata;
+};
+
+export type UpdateRoomOptions = {
+  defaultAccesses?: RoomPermission | null;
+  groupsAccesses?: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  >;
+  usersAccesses?: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  >;
+  metadata?: Record<string, string | string[] | null>;
 };
 
 export type RequestOptions = {
@@ -495,11 +561,7 @@ export class Liveblocks {
   public async getRooms(
     params: GetRoomsOptions = {},
     options?: RequestOptions
-  ): Promise<{
-    nextPage: string | null;
-    nextCursor: string | null;
-    data: RoomData[];
-  }> {
+  ): Promise<Page<RoomData>> {
     const path = url`/v2/rooms`;
 
     let query: string | undefined;
@@ -526,18 +588,12 @@ export class Liveblocks {
     };
 
     const res = await this.#get(path, queryParams, options);
-
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    const data = (await res.json()) as {
-      nextPage: string | null;
-      nextCursor: string | null;
-      data: RoomDataPlain[];
-    };
-
-    const rooms = data.data.map((room) => {
+    const page = (await res.json()) as Page<RoomDataPlain>;
+    const rooms: RoomData[] = page.data.map((room) => {
       // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
       const lastConnectionAt = room.lastConnectionAt
         ? new Date(room.lastConnectionAt)
@@ -552,7 +608,7 @@ export class Liveblocks {
     });
 
     return {
-      ...data,
+      ...page,
       data: rooms,
     };
   }
@@ -572,9 +628,10 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   async *iterRooms(
-    criteria: RoomQueryCriteria,
+    criteria: RoomsQueryCriteria,
     options?: RequestOptions & { pageSize?: number }
   ): AsyncGenerator<RoomData> {
+    // TODO Dry up this async iterable implementation for pagination
     const { signal } = options ?? {};
     const pageSize = checkBounds("pageSize", options?.pageSize ?? 40, 20);
 
@@ -584,8 +641,8 @@ export class Liveblocks {
         { ...criteria, startingAfter: cursor, limit: pageSize },
         { signal }
       );
-      for (const room of data) {
-        yield room;
+      for (const item of data) {
+        yield item;
       }
       if (!nextCursor) {
         break;
@@ -606,12 +663,7 @@ export class Liveblocks {
    */
   public async createRoom(
     roomId: string,
-    params: {
-      defaultAccesses: RoomPermission;
-      groupsAccesses?: RoomAccesses;
-      usersAccesses?: RoomAccesses;
-      metadata?: RoomMetadata;
-    },
+    params: CreateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
@@ -645,6 +697,69 @@ export class Liveblocks {
       lastConnectionAt,
       createdAt,
     };
+  }
+
+  /**
+   * Returns a room with the given id, or creates one with the given creation
+   * options if it doesn't exist yet.
+   *
+   * @param roomId The id of the room.
+   * @param params.defaultAccesses The default accesses for the room if the room will be created.
+   * @param params.groupsAccesses (optional) The group accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room if the room will be created. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The room.
+   */
+  public async getOrCreateRoom(
+    roomId: string,
+    params: CreateRoomOptions,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    // TODO In the future, this method will be optimized to make a single round-trip instead of two
+    try {
+      return await this.createRoom(roomId, params, options);
+    } catch (err) {
+      if (
+        err instanceof LiveblocksError &&
+        err.status === 409 // Room already exists
+      ) {
+        return await this.getRoom(roomId, options);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Updates or creates a new room with the given properties.
+   *
+   * @param roomId The id of the room to update or create.
+   * @param params.defaultAccesses The default accesses for the room.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The room.
+   */
+  public async upsertRoom(
+    roomId: string,
+    params: CreateRoomOptions & UpdateRoomOptions,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    // TODO In the future, this method will be optimized to make a single round-trip instead of two
+    try {
+      return await this.createRoom(roomId, params, options);
+    } catch (err) {
+      if (
+        err instanceof LiveblocksError &&
+        err.status === 409 // Room already exists
+      ) {
+        return await this.updateRoom(roomId, params, options);
+      } else {
+        throw err;
+      }
+    }
   }
 
   /**
@@ -691,18 +806,7 @@ export class Liveblocks {
    */
   public async updateRoom(
     roomId: string,
-    params: {
-      defaultAccesses?: RoomPermission | null;
-      groupsAccesses?: Record<
-        string,
-        ["room:write"] | ["room:read", "room:presence:write"] | null
-      >;
-      usersAccesses?: Record<
-        string,
-        ["room:write"] | ["room:read", "room:presence:write"] | null
-      >;
-      metadata?: Record<string, string | string[] | null>;
-    },
+    params: UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
@@ -1694,32 +1798,9 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getInboxNotifications(
-    params: {
-      userId: string;
-      /**
-       * The query to filter inbox notifications by. It is based on our query language.
-       *
-       * @example
-       * ```
-       * {
-       *  query: "unread:true"
-       * }
-       * ```
-       *
-       * @example
-       * ```
-       * {
-       *   query: {
-       *     unread: true
-       *   }
-       * }
-       * ```
-       *
-       */
-      query?: string | { unread: boolean };
-    },
+    params: GetInboxNotificationsOptions,
     options?: RequestOptions
-  ): Promise<{ data: InboxNotificationData[] }> {
+  ): Promise<Page<InboxNotificationData>> {
     const { userId } = params;
 
     let query: string | undefined;
@@ -1732,20 +1813,57 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications`,
-      { query },
+      {
+        query,
+        limit: params?.limit,
+        startingAfter: params?.startingAfter,
+      },
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    const { data } = (await res.json()) as {
-      data: InboxNotificationDataPlain[];
-    };
-
+    const page = (await res.json()) as Page<InboxNotificationDataPlain>;
     return {
-      data: data.map(convertToInboxNotificationData),
+      ...page,
+      data: page.data.map(convertToInboxNotificationData),
     };
+  }
+
+  /**
+   * Iterates over all inbox notifications for a user.
+   *
+   * The difference with .getInboxNotifications() is that pagination will
+   * happen automatically under the hood, using the given `pageSize`.
+   *
+   * @param criteria.userId The user ID to get the inbox notifications from.
+   * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param options.pageSize (optional) The page size to use for each request.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  async *iterInboxNotifications(
+    criteria: InboxNotificationsQueryCriteria,
+    options?: RequestOptions & { pageSize?: number }
+  ): AsyncGenerator<InboxNotificationData> {
+    // TODO Dry up this async iterable implementation for pagination
+    const { signal } = options ?? {};
+    const pageSize = checkBounds("pageSize", options?.pageSize ?? 50, 10);
+
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getInboxNotifications(
+        { ...criteria, startingAfter: cursor, limit: pageSize },
+        { signal }
+      );
+      for (const item of data) {
+        yield item;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
   }
 
   /**
@@ -2030,7 +2148,7 @@ export class Liveblocks {
    * `concurrency` to 1.
    */
   public async massMutateStorage(
-    criteria: RoomQueryCriteria,
+    criteria: RoomsQueryCriteria,
     callback: MassMutateStorageCallback,
     massOptions?: MassMutateStorageOptions
   ): Promise<void> {

@@ -4,12 +4,19 @@
 
 ### `@liveblocks/node`
 
+- Added pagination support to `.getInboxNotifications()`
+- New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+- New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically.
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically.
 - New method `.mutateStorage()` which can be used to make changes to Storage
   from your backend.
 - New method `.massMutateStorage()` which can be used to make changes to Storage
   for multiple rooms simultaneously.
-- New method `.iterRooms()` which is like `.getRooms()` except pagination
-  happens automatically.
+- Updated method `.deleteRoom()` to no longer throw when the room already does
+  not exist.
 
 ### `@liveblocks/react-ui`
 

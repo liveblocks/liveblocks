@@ -369,7 +369,12 @@ paginates your API requests.
 
 #### Liveblocks.iterRooms [#iter-rooms]
 
-Returns a list of rooms that are in the current project. Works similarly to
+Like `.getRooms()`, but returns an asynchronous iterator, which will help you
+iterate over all (matching) rooms in your project, without having to manually
+paginate over those results. List `.getRooms()`, but returns an asynchronous
+iterator, which will help you iterate over all (matching) rooms in your project,
+without having to manually paginate over those results. Returns a list of rooms
+that are in the current project. Works similarly to
 [`liveblocks.getRooms`](#get-rooms), but instead returns an asynchronous
 iterator, which helps you iterate over all selected rooms in your project,
 without having to manually paginate through the results.
@@ -479,6 +484,55 @@ const room = await liveblocks.getRoom("my-room-id");
 console.log(room);
 ```
 
+#### Liveblocks.getOrCreateRoom [#get-or-create-rooms-roomId]
+
+Get a room by its ID. If the room doesn’t exist, create it instead. The
+`defaultAccesses` option is required. Setting `defaultAccesses` to
+`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+private room that needs
+[ID token permission to enter](/docs/authentication/id-token). Returns the same
+response as the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
+
+```ts
+const room = await liveblocks.getOrCreateRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.getOrCreateRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupsAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  usersAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about [managing permission with ID tokens](/docs/authentication/id-token).
+
 #### Liveblocks.updateRoom [#post-rooms-roomId]
 
 Updates properties on a room. Throws an error if the room isn’t found. This is a
@@ -527,10 +581,59 @@ Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about [managing permission with ID tokens](/docs/authentication/id-token).
 
+#### Liveblocks.upsertRoom [#upsert-rooms-roomId]
+
+Update a room’s properties by its ID. If the room doesn’t exist, create it
+instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
+`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+private room that needs
+[ID token permission to enter](/docs/authentication/id-token). Returns the same
+response as the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
+
+```ts
+const room = await liveblocks.upsertRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.upsertRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupsAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  usersAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about [managing permission with ID tokens](/docs/authentication/id-token).
+
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. Throws an error if the room isn’t found. This is a wrapper
-around the
+Deletes a room. If the room doesn’t exist, or has already been deleted, no error
+will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
 
@@ -1838,21 +1941,64 @@ Returns a list of a user’s inbox notifications. This is a wrapper around the
 It also provides an unread query parameter to filter unread notifications.
 
 ```ts
-const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
-  userId: "steven@example.com",
-});
+const { data: inboxNotifications, nextCursor } =
+  await liveblocks.getInboxNotifications({ userId: "steven@example.com" });
 
 // [{ id: "in_3dH7sF3...", kind: "thread", ... }, { id: "in_3dH7sF3...", kind: "textMention", ... }, ...]
 console.log(inboxNotifications);
 
 // Filter unread notifications
-const { data: unreadInboxNotifications } =
+const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
-    query: {
-      unread: true,
-    },
+    query: { unread: true },
   });
+```
+
+##### Pagination
+
+You can use `nextCursor` to paginate inbox notifications. In this example, when
+`getNextPage` is called, the next page of inbox notifications is added to
+`pages`.
+
+```ts
+import { InboxNotificationData } from "@liveblocks/node";
+
+// An array of pages, each containing a list of retrieved inbox notifications
+const pages: InboxNotificationData[][] = [];
+
+// Holds the pagination cursor for the next set of inbox notifications
+let startingAfter;
+
+// Call to get the next page of inbox notifications
+async function getNextPage() {
+  const { data, nextCursor } = await liveblocks.getInboxNotifications({
+    startingAfter,
+  });
+  pages.push(data);
+  startingAfter = nextCursor;
+}
+```
+
+If you’d like to iterate over all your inbox notifications, it’s most convenient
+to use
+[`liveblocks.iterInboxNotifications`](#iter-users-userId-inboxNotifications)
+instead. This method automatically paginates your API requests.
+
+#### Liveblocks.iterInboxNotifications [#iter-users-userId-inboxNotifications]
+
+Returns a list of inbox notifications for the given user. Works similarly to
+[`liveblocks.getInboxNotifications`](#get-users-userId-inboxNotifications), but
+instead returns an asynchronous iterator, which helps you iterate over all the
+inbox notifications, without having to manually paginate through the results.
+
+```ts
+const userId = "steven@example.com";
+
+for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+  console.log(item.id); // in_3dH7sF3...
+  console.log(item.kind); // "thread", "textMention", ...
+}
 ```
 
 #### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId]
