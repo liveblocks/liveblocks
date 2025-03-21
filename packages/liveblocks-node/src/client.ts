@@ -192,9 +192,11 @@ export type MassMutateStorageCallback = (context: {
   room: RoomData;
   root: LiveObject<S>;
 }) => Awaitable<void>;
-export type MassMutateStorageOptions = MutateStorageOptions & {
-  concurrency?: number;
-};
+
+// prettier-ignore
+export type MassMutateStorageOptions =
+  & MutateStorageOptions
+  & { concurrency?: number };
 
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
 // inside the Liveblocks implementation. We should only rely on the type
@@ -242,16 +244,20 @@ export type RoomsQueryCriteria = {
       };
 };
 
-export type GetRoomsOptions = RoomsQueryCriteria & {
-  limit?: number;
-  startingAfter?: string;
-
-  /**
-   * deprecated Use `query` property instead. Support for the `metadata`
-   * field will be removed in a future version.
-   */
-  metadata?: QueryRoomMetadata;
-};
+// prettier-ignore
+export type GetRoomsOptions =
+  & RoomsQueryCriteria
+  & { 
+    limit?: number;
+    startingAfter?: string;
+  }
+  & {
+    /**
+     * @deprecated Use `query` property instead. Support for the `metadata`
+     * field will be removed in a future version.
+     */
+    metadata?: QueryRoomMetadata;
+  };
 
 export type CreateRoomOptions = {
   defaultAccesses: RoomPermission;
