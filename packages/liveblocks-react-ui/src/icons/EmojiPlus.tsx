@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 
 import { Icon } from "../components/internal/Icon";
 
-export function EmojiAddIcon(props: ComponentProps<"svg">) {
+export function EmojiPlusIcon(props: ComponentProps<"svg">) {
   return (
     <Icon {...props}>
       <path d="M11 3.07A7 7 0 1 0 16.93 9" />
