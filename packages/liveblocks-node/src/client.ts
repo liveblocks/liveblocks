@@ -244,14 +244,23 @@ export type RoomsQueryCriteria = {
       };
 };
 
+export type PaginationOptions = {
+  limit?: number;
+  startingAfter?: string;
+};
+
+export type Page<T> = {
+  nextPage: string | null;
+  nextCursor: string | null;
+  data: T[];
+};
+
 // prettier-ignore
 export type GetRoomsOptions =
   & RoomsQueryCriteria
-  & { 
-    limit?: number;
-    startingAfter?: string;
-  }
+  & PaginationOptions
   & {
+    // Legacy options
     /**
      * @deprecated Use `query` property instead. Support for the `metadata`
      * field will be removed in a future version.
@@ -521,11 +530,7 @@ export class Liveblocks {
   public async getRooms(
     params: GetRoomsOptions = {},
     options?: RequestOptions
-  ): Promise<{
-    nextPage: string | null;
-    nextCursor: string | null;
-    data: RoomData[];
-  }> {
+  ): Promise<Page<RoomData>> {
     const path = url`/v2/rooms`;
 
     let query: string | undefined;
@@ -552,18 +557,12 @@ export class Liveblocks {
     };
 
     const res = await this.#get(path, queryParams, options);
-
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    const data = (await res.json()) as {
-      nextPage: string | null;
-      nextCursor: string | null;
-      data: RoomDataPlain[];
-    };
-
-    const rooms = data.data.map((room) => {
+    const page = (await res.json()) as Page<RoomDataPlain>;
+    const rooms: RoomData[] = page.data.map((room) => {
       // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
       const lastConnectionAt = room.lastConnectionAt
         ? new Date(room.lastConnectionAt)
@@ -578,7 +577,7 @@ export class Liveblocks {
     });
 
     return {
-      ...data,
+      ...page,
       data: rooms,
     };
   }

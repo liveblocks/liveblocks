@@ -13,6 +13,8 @@ export type {
   MassMutateStorageOptions,
   MutateStorageCallback,
   MutateStorageOptions,
+  Page,
+  PaginationOptions,
   RoomAccesses,
   RoomData,
   RoomPermission,
