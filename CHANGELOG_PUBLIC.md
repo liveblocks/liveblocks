@@ -42,13 +42,19 @@ list and feel free to give them credit at the end of a line, e.g.:
     own reaction picker for example.
 - Improve and fix pasting HTML into the composer.
 
+## REST API
+
+- The
+  [Delete Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
+  endpoint will no longer return a 404 when a room already did not exist before.
+
 ## Website
 
 - New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
 
 ## Contributors
 
-jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas, nvie
 
 # Week 11 (2025-03-14)
 
