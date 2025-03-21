@@ -86,6 +86,21 @@ list and feel free to give them credit at the end of a line, e.g.:
   [Delete Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
   endpoint will no longer return a 404 when a room already did not exist before.
 
+## Examples
+
+- Updated [Comments primitives example](https://liveblocks.io/examples/comments-primitives) to use [Frimousse](https://frimousse.liveblocks.io).
+- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-blocknote) to use our new package.
+
+## Documentation
+
+- Mention our latest package, [Frimousse](https://frimousse.liveblocks.io).
+- Detail building a primitive [emoji picker](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-picker) and [emoji reactions](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-reactions).
+- API reference for all new [Node.js methods](https://liveblocks.io/docs/api-reference/liveblocks-node).
+- API reference for [`@liveblocks/react-blocknoite`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote).
+- Updated [get started guides for BlockNote](https://liveblocks.io/docs/get-started/text-editor/blocknote).
+- New [BlockNote overview](https://liveblocks.io/docs/ready-made-features/text-editor/blocknote) page.
+- Updated guide on [modifying Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+
 ## Website
 
 - New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
