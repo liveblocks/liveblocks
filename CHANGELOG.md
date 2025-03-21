@@ -4,19 +4,28 @@
 
 ### `@liveblocks/node`
 
-- Added pagination support to `.getInboxNotifications()`
+- Added pagination support to `.getInboxNotifications()`. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
 - New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).
 - New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
 - New method `.iterRooms()` which is like `.getRooms()` except pagination
-  happens automatically.
+  happens automatically. See [docs](https://liveblocks.io).
 - New method `.iterInboxNotifications()` which is like
-  `.getInboxNotifications()` except pagination happens automatically.
+  `.getInboxNotifications()` except pagination happens automatically. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#iter-users-userId-inboxNotifications).
 - New method `.mutateStorage()` which can be used to make changes to Storage
-  from your backend.
+  from your backend. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mutate-storage).
 - New method `.massMutateStorage()` which can be used to make changes to Storage
-  for multiple rooms simultaneously.
+  for multiple rooms simultaneously. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mass-mutate-storage).
 - Updated method `.deleteRoom()` to no longer throw when the room already does
-  not exist.
+  not exist. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId).
 
 ### `@liveblocks/react-ui`
 
