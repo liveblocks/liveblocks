@@ -11,6 +11,10 @@
 - New method `.iterRooms()` which is like `.getRooms()` except pagination
   happens automatically.
 
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
 ## v2.21.0
 
 ### `@liveblocks/react-blocknote`
