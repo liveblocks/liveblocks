@@ -9,7 +9,10 @@ import {
   Timestamp,
 } from "@liveblocks/react-ui/primitives";
 import { useAttachmentUrl } from "@liveblocks/react";
-import { LinkButton } from "./Button";
+import { Button, LinkButton } from "./Button";
+import { AddReaction } from "./AddReaction";
+import { Reactions } from "./Reactions";
+import { Icon } from "@liveblocks/react-ui";
 
 /**
  * Custom comment component.
@@ -19,7 +22,7 @@ interface CommentProps extends ComponentProps<"div"> {
   comment: CommentData;
 }
 
-interface OpenAttachmentButtonProps extends ComponentProps<"a"> {
+interface OpenAttachmentButtonProps extends ComponentProps<"div"> {
   attachment: CommentAttachment;
 }
 
@@ -45,27 +48,41 @@ export function Comment({ comment, className, ...props }: CommentProps) {
 
   return (
     <div className={clsx(className, "p-4")} {...props}>
-      <div className="flex items-center gap-3">
-        <Suspense
-          fallback={
-            <div className="relative aspect-square w-8 flex-none animate-pulse rounded-full bg-gray-100" />
-          }
-        >
-          <Avatar userId={comment.userId} className="w-8 flex-none" />
-        </Suspense>
-        <div className="flex min-w-0 items-baseline gap-2">
-          <Suspense fallback={comment.userId}>
-            <User userId={comment.userId} className="truncate font-semibold" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Suspense
+            fallback={
+              <div className="relative aspect-square w-8 flex-none animate-pulse rounded-full bg-gray-100" />
+            }
+          >
+            <Avatar userId={comment.userId} className="w-8 flex-none" />
           </Suspense>
-          <Timestamp
-            date={comment.createdAt}
-            className="truncate text-sm text-gray-500"
-          />
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <div className="flex items-baseline gap-2">
+              <Suspense fallback={comment.userId}>
+                <User
+                  userId={comment.userId}
+                  className="truncate font-medium"
+                />
+              </Suspense>
+              <Timestamp
+                date={comment.createdAt}
+                className="truncate text-sm text-gray-500"
+              />
+            </div>
+          </div>
+        </div>
+        <div>
+          <AddReaction comment={comment}>
+            <Button variant="ghost" className="w-9 !p-0">
+              <Icon.Emoji />
+            </Button>
+          </AddReaction>
         </div>
       </div>
       <CommentPrimitive.Body
         body={comment.body}
-        className="prose mt-3"
+        className="prose mt-1.5"
         components={{
           Mention: ({ userId }) => {
             return (
@@ -107,6 +124,13 @@ export function Comment({ comment, className, ...props }: CommentProps) {
           ))}
         </div>
       ) : null}
+      <Suspense>
+        {comment.reactions.length > 0 ? (
+          <div className="mt-2 flex items-center gap-1.5">
+            <Reactions comment={comment} />
+          </div>
+        ) : null}
+      </Suspense>
     </div>
   );
 }
