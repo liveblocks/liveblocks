@@ -572,6 +572,10 @@
         "href": "/api-reference/rest-api-endpoints"
       },
       {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
+      },
+      {
         "title": "API v1 Endpoints",
         "hidden": true,
         "path": "/api-reference/rest-api-endpoints-v1"
