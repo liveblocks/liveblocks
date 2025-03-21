@@ -244,6 +244,31 @@ export type RoomsQueryCriteria = {
       };
 };
 
+export type InboxNotificationsQueryCriteria = {
+  userId: string;
+  /**
+   * The query to filter inbox notifications by. It is based on our query language.
+   *
+   * @example
+   * ```
+   * {
+   *  query: "unread:true"
+   * }
+   * ```
+   *
+   * @example
+   * ```
+   * {
+   *   query: {
+   *     unread: true
+   *   }
+   * }
+   * ```
+   *
+   */
+  query?: string | { unread: boolean };
+};
+
 export type PaginationOptions = {
   limit?: number;
   startingAfter?: string;
@@ -267,6 +292,11 @@ export type GetRoomsOptions =
      */
     metadata?: QueryRoomMetadata;
   };
+
+// prettier-ignore
+export type GetInboxNotificationsOptions =
+  & InboxNotificationsQueryCriteria
+  & PaginationOptions;
 
 export type CreateRoomOptions = {
   defaultAccesses: RoomPermission;
@@ -1767,32 +1797,9 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getInboxNotifications(
-    params: {
-      userId: string;
-      /**
-       * The query to filter inbox notifications by. It is based on our query language.
-       *
-       * @example
-       * ```
-       * {
-       *  query: "unread:true"
-       * }
-       * ```
-       *
-       * @example
-       * ```
-       * {
-       *   query: {
-       *     unread: true
-       *   }
-       * }
-       * ```
-       *
-       */
-      query?: string | { unread: boolean };
-    },
+    params: GetInboxNotificationsOptions,
     options?: RequestOptions
-  ): Promise<{ data: InboxNotificationData[] }> {
+  ): Promise<Page<InboxNotificationData>> {
     const { userId } = params;
 
     let query: string | undefined;
@@ -1805,20 +1812,57 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications`,
-      { query },
+      {
+        query,
+        limit: params?.limit,
+        startingAfter: params?.startingAfter,
+      },
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    const { data } = (await res.json()) as {
-      data: InboxNotificationDataPlain[];
-    };
-
+    const page = (await res.json()) as Page<InboxNotificationDataPlain>;
     return {
-      data: data.map(convertToInboxNotificationData),
+      ...page,
+      data: page.data.map(convertToInboxNotificationData),
     };
+  }
+
+  /**
+   * Iterates over all inbox notifications for a user.
+   *
+   * The difference with .getInboxNotifications() is that pagination will
+   * happen automatically under the hood, using the given `pageSize`.
+   *
+   * @param criteria.userId The user ID to get the inbox notifications from.
+   * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param options.pageSize (optional) The page size to use for each request.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  async *iterInboxNotifications(
+    criteria: InboxNotificationsQueryCriteria,
+    options?: RequestOptions & { pageSize?: number }
+  ): AsyncGenerator<InboxNotificationData> {
+    // TODO Dry up this async iterable implementation for pagination
+    const { signal } = options ?? {};
+    const pageSize = checkBounds("pageSize", options?.pageSize ?? 50, 10);
+
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getInboxNotifications(
+        { ...criteria, startingAfter: cursor, limit: pageSize },
+        { signal }
+      );
+      for (const item of data) {
+        yield item;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
   }
 
   /**

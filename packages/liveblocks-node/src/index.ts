@@ -7,7 +7,9 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
   CreateRoomOptions,
+  GetInboxNotificationsOptions,
   GetRoomsOptions,
+  InboxNotificationsQueryCriteria,
   LiveblocksOptions,
   MassMutateStorageCallback,
   MassMutateStorageOptions,

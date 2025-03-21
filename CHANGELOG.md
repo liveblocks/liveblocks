@@ -4,6 +4,7 @@
 
 ### `@liveblocks/node`
 
+- Added pagination support to `.getInboxNotifications()`
 - New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
 - New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
 - New method `.iterRooms()` which is like `.getRooms()` except pagination
