@@ -15,6 +15,13 @@
 
 - Add new icons to `<Icon.* />`.
 
+## `@liveblocks/emails`
+
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
 ## v2.21.0
 
 ### `@liveblocks/react-blocknote`

@@ -7,3 +7,7 @@ export const isMentionNodeAttributeId = (
 ): value is `in_${string}` => {
   return isString(value) && value.startsWith("in_");
 };
+
+export const exists = <T>(input: null | undefined | T): input is T => {
+  return input !== null && input !== undefined;
+};
