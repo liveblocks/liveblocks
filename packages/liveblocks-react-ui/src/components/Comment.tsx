@@ -37,7 +37,7 @@ import { CrossIcon } from "../icons/Cross";
 import { DeleteIcon } from "../icons/Delete";
 import { EditIcon } from "../icons/Edit";
 import { EllipsisIcon } from "../icons/Ellipsis";
-import { EmojiAddIcon } from "../icons/EmojiAdd";
+import { EmojiPlusIcon } from "../icons/EmojiPlus";
 import type {
   CommentOverrides,
   ComposerOverrides,
@@ -729,7 +729,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           className="lb-comment-action"
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_ADD_REACTION}
-                          icon={<EmojiAddIcon />}
+                          icon={<EmojiPlusIcon />}
                         />
                       </EmojiPickerTrigger>
                     </Tooltip>
@@ -883,7 +883,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             variant="outline"
                             onClick={stopPropagation}
                             aria-label={$.COMMENT_ADD_REACTION}
-                            icon={<EmojiAddIcon />}
+                            icon={<EmojiPlusIcon />}
                           />
                         </EmojiPickerTrigger>
                       </Tooltip>
