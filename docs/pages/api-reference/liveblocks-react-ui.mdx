@@ -1394,11 +1394,12 @@ function MyComment({ comment }: { comment: CommentData }) {
   </PropertiesListItem>
 </PropertiesList>
 
-#### Emoji picker
+#### Emoji picker [#emoji-picker]
 
-Using [Frimousse](https://frimousse.liveblocks.io), a package originally
-designed for Comments, you can easily add an emoji picker to your primitive
-Comments components.
+Using [Frimousse](https://frimousse.liveblocks.io) alongside
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction), a
+package originally designed for Comments, you can easily add an emoji picker to
+your primitive Comments components.
 
 ```tsx
 import { EmojiPicker } from "frimousse";
@@ -1431,6 +1432,55 @@ export function MyEmojiPicker({ comment }: { comment: CommentData }) {
 
 Find a full code snippet of this in our
 [Comments primitives example](/examples/comments-primitives/nextjs-comments-primitives).
+
+#### Emoji reactions [#emoji-reactions]
+
+A list of clickable emoji reactions can be created using the
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction),
+[`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction),
+and [`useSelf`](/docs/api-reference/liveblocks-react#useSelf) hooks.
+
+```tsx
+import { CommentData } from "@liveblocks/client";
+import {
+  useAddReaction,
+  useRemoveReaction,
+  useSelf,
+} from "@liveblocks/react/suspense";
+
+export function MyEmojiReactions({ comment }: { comment: CommentData }) {
+  const userId = useSelf().id;
+  const addReaction = useAddReaction();
+  const removeReaction = useRemoveReaction();
+
+  return (
+    <>
+      {comment.reactions.map((reaction) => {
+        const hasPicked = reaction.users.some((user) => user.id === userId);
+        const reactionObject = {
+          threadId: comment.threadId,
+          commentId: comment.id,
+          emoji: reaction.emoji,
+        };
+
+        return (
+          <button
+            key={reaction.emoji}
+            onClick={() =>
+              hasPicked
+                ? removeReaction(reactionObject)
+                : addReaction(reactionObject)
+            }
+            data-picked={hasPicked || undefined /* Use for CSS styling */}
+          >
+            {reaction.emoji} {reaction.users.length}
+          </button>
+        );
+      })}
+    </>
+  );
+}
+```
 
 ### Hooks
 
