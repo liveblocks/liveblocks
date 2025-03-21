@@ -207,7 +207,7 @@ type M = DM;
 type S = DS;
 type U = DU;
 
-export type RoomQueryCriteria = {
+export type RoomsQueryCriteria = {
   userId?: string;
   groupIds?: string[];
   /**
@@ -242,7 +242,7 @@ export type RoomQueryCriteria = {
       };
 };
 
-export type GetRoomsOptions = RoomQueryCriteria & {
+export type GetRoomsOptions = RoomsQueryCriteria & {
   limit?: number;
   startingAfter?: string;
 
@@ -592,7 +592,7 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   async *iterRooms(
-    criteria: RoomQueryCriteria,
+    criteria: RoomsQueryCriteria,
     options?: RequestOptions & { pageSize?: number }
   ): AsyncGenerator<RoomData> {
     const { signal } = options ?? {};
@@ -2097,7 +2097,7 @@ export class Liveblocks {
    * `concurrency` to 1.
    */
   public async massMutateStorage(
-    criteria: RoomQueryCriteria,
+    criteria: RoomsQueryCriteria,
     callback: MassMutateStorageCallback,
     massOptions?: MassMutateStorageOptions
   ): Promise<void> {

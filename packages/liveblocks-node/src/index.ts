@@ -16,7 +16,7 @@ export type {
   RoomAccesses,
   RoomData,
   RoomPermission,
-  RoomQueryCriteria,
+  RoomsQueryCriteria,
   RoomUser,
   Schema,
   ThreadParticipants,
