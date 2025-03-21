@@ -600,6 +600,7 @@ export class Liveblocks {
     criteria: RoomsQueryCriteria,
     options?: RequestOptions & { pageSize?: number }
   ): AsyncGenerator<RoomData> {
+    // TODO Dry up this async iterable implementation for pagination
     const { signal } = options ?? {};
     const pageSize = checkBounds("pageSize", options?.pageSize ?? 40, 20);
 
@@ -609,8 +610,8 @@ export class Liveblocks {
         { ...criteria, startingAfter: cursor, limit: pageSize },
         { signal }
       );
-      for (const room of data) {
-        yield room;
+      for (const item of data) {
+        yield item;
       }
       if (!nextCursor) {
         break;
