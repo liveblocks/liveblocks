@@ -363,22 +363,23 @@ async function getNextPage() {
 }
 ```
 
-If you want to iterate over all your rooms, it’s most convenient to use the
-`.iterRooms()` method instead. This method will automatically paginate your API
-requests.
+If you’d like to iterate over all your rooms, it’s most convenient to use
+[`liveblocks.iterRooms`](#iter-rooms) instead. This method automatically
+paginates your API requests.
 
 #### Liveblocks.iterRooms [#iter-rooms]
 
-List `.getRooms()`, but returns an asynchronous iterator, which will help you
-iterate over all (matching) rooms in your project, without having to manually
-paginate over those results.
+Returns a list of rooms that are in the current project. Works similarly to
+[`liveblocks.getRooms`](#get-rooms), but instead returns an asynchronous
+iterator, which helps you iterate over all selected rooms in your project,
+without having to manually paginate through the results.
 
 ```ts
-const query = {
-  /* options */
-};
-for await (const room of liveblocks.iterRooms(query)) {
-  console.log(room.id, room.metadata);
+const roomsIterator = liveblocks.iterRooms();
+
+for await (const room of roomsIterator) {
+  // { type: "room", id: "my-room-id", metadata: {...}, ... }
+  console.log(room);
 }
 ```
 
@@ -405,6 +406,11 @@ const roomsIterator = await liveblocks.iterRooms({
     },
   },
 });
+
+for await (const room of roomsIterator) {
+  // { type: "room", id: "my-room-id", metadata: {...}, ... }
+  console.log(room);
+}
 ```
 
 The `query` option also allows you to pass a
@@ -425,7 +431,7 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: ["room:write"],
 });
 
-// { type: "room", id: "my-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -469,7 +475,7 @@ returns the same response.
 ```ts
 const room = await liveblocks.getRoom("my-room-id");
 
-// { type: "room", id: "my-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -486,7 +492,7 @@ const room = await liveblocks.updateRoom("my-room-id", {
   // ...
 });
 
-// { type: "room", id: "my-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -546,7 +552,7 @@ const room = await liveblocks.updateRoomId({
   newRoomId: "new-room-id",
 });
 
-// { type: "room", id: "new-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -775,12 +781,13 @@ const storage = await liveblocks.initializeStorageDocument("my-room-id", {
 
 #### Liveblocks.mutateStorage [#mutate-storage]
 
-Mutates the storage contents of a room arbitrarily.
+Modify Storage contents from the server. No presence will be shown when you make
+changes.
 
 ```ts
 // Mutate a single room
 await liveblocks.mutateStorage(
-  "my-room",
+  "my-room-id",
 
   ({ root }) => {
     root.get("list").push("item3");
@@ -794,14 +801,17 @@ over time.
 ```ts
 // Mutate a single room
 await liveblocks.mutateStorage(
-  "my-room",
+  "my-room-id",
 
   async ({ root }) => {
+    // These changes happen immediately
     const animals = root.get("animals");
     animals.clear();
     animals.push("Thinking...");
 
     await thinkForAWhile();
+
+    // These changes happen after `await` has run
     animals.clear();
     animals.push("🐶");
     animals.push("🦘");
@@ -809,59 +819,77 @@ await liveblocks.mutateStorage(
 );
 ```
 
+Learn how to
+[type your Storage](/docs/api-reference/liveblocks-react#Typing-your-data).
+
 #### Liveblocks.massMutateStorage [#mass-mutate-storage]
 
-Mutates storage contents for multiple rooms simultaneously:
+Modify Storage contents for multiple rooms simultaneously. With the default
+query value `{}` it will loop through every room in your project.
 
 ```ts
-const query = {
-  /* options */
-};
-
-// Mutate a single room
+// Mutate a number of rooms
 await liveblocks.massMutateStorage(
-  query,
+  {},
+
+  // Callback runs on every selected room
+  ({ room, root }) => {
+    // { type: "room", id: "my-room-id", metadata: {...}, ... }
+    console.log(room);
+
+    root.get("animals").push("🦍");
+  }
+);
+```
+
+A number of options are also available, enabling you to filter for certain
+rooms. Additionally, you can set options for concurrency and provide an abort
+signal to cancel the mutations.
+
+```ts
+// Mutate a number of rooms
+await liveblocks.massMutateStorage(
+  {
+    // +++
+    // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
+    groupIds: ["engineering", "design"],
+
+    // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+    userId: "my-user-id",
+
+    // Optional, use advanced filtering
+    query: {
+      // Optional, filter for rooms with an ID that starts with specific string
+      roomId: {
+        startsWith: "liveblocks:",
+      },
+      // Optional, filter for rooms with custom metadata in `metadata`
+      metadata: {
+        roomType: "whiteboard",
+      },
+    },
+    // +++
+  },
 
   ({ room, root }) => {
-    // Available here:
-    // room.id
-    // room.metadata
-    // etc
+    // { type: "room", id: "my-room-id", metadata: {...}, ... }
+    console.log(room);
 
     root.get("animals").push("🦍");
   },
 
   // Optional
+  // +++
   {
-    concurrency: 10, // Optional: process at most 10 rooms simultaneously
-    signal, // Optional: provide an abort signal if you want to cancel the mutations mid-way
+    concurrency: 10, // Optional, process at most 10 rooms simultaneously
+    signal, // Optional, provide an abort signal to cancel mutations mid-way
   }
+  // +++
 );
 ```
 
-The provided query will determine which rooms are selected for mutation:
-
-```ts
-const query = {
-  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
-  groupIds: ["engineering", "design"],
-
-  // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
-  userId: "my-user-id",
-
-  // Optional, use advanced filtering
-  query: {
-    // Optional, filter for rooms with an ID that starts with specific string
-    roomId: {
-      startsWith: "liveblocks:",
-    },
-    // Optional, filter for rooms with custom metadata in `metadata`
-    metadata: {
-      roomType: "whiteboard",
-    },
-  },
-};
-```
+Learn how to
+[type your Storage](/docs/api-reference/liveblocks-react#Typing-your-data).
 
 #### Liveblocks.deleteStorageDocument [#delete-rooms-roomId-storage]
 
