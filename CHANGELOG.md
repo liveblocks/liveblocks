@@ -1,5 +1,20 @@
 ## vNEXT (not yet published)
 
+## v2.22 (not yet published)
+
+### `@liveblocks/node`
+
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend.
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously.
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically.
+
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
 ## `@liveblocks/emails`
 
 - Implement a new core logic for thread notification event.

@@ -83,7 +83,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return [root, parentToChildren];
   }
 
-  /** @internal */
+  /** @private Do not use this API directly */
   static _fromItems<O extends LsonObject>(
     items: IdTuple<SerializedCrdt>[],
     pool: ManagedPool

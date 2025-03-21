@@ -6,10 +6,16 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
+  GetRoomsOptions,
   LiveblocksOptions,
+  MassMutateStorageCallback,
+  MassMutateStorageOptions,
+  MutateStorageCallback,
+  MutateStorageOptions,
   RoomAccesses,
   RoomData,
   RoomPermission,
+  RoomQueryCriteria,
   RoomUser,
   Schema,
   ThreadParticipants,
