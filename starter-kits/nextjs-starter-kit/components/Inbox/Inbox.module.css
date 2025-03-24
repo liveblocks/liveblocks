@@ -12,7 +12,7 @@
 
 .inboxHeaderButtons {
   display: flex;
-  gap: var(--space-6);
+  gap: var(--space-3);
 }
 
 .inboxHeader h2 {
