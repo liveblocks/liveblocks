@@ -70,11 +70,14 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
                 <Switch
                   label="Document invites"
                   id="email-invited-to-document"
-                  checked={settings.email.$addedToDocument}
+                  disabled={!settings.email}
+                  checked={settings.email?.$addedToDocument}
                   onCheckedChange={() =>
                     updateSettings({
                       email: {
-                        $addedToDocument: !settings.email.$addedToDocument,
+                        $addedToDocument: settings.email
+                          ? !settings.email.$addedToDocument
+                          : false,
                       },
                     })
                   }
@@ -83,10 +86,13 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
                 <Switch
                   label="New comments in threads"
                   id="email-thread"
-                  checked={settings.email.thread}
+                  disabled={!settings.email}
+                  checked={settings.email?.thread}
                   onCheckedChange={() =>
                     updateSettings({
-                      email: { thread: !settings.email.thread },
+                      email: {
+                        thread: settings.email ? !settings.email.thread : false,
+                      },
                     })
                   }
                   justifyBetween
@@ -94,10 +100,15 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
                 <Switch
                   label="New mentions in text documents"
                   id="email-text-mention"
-                  checked={settings.email.textMention}
+                  disabled={!settings.email}
+                  checked={settings.email?.textMention}
                   onCheckedChange={() =>
                     updateSettings({
-                      email: { textMention: !settings.email.textMention },
+                      email: {
+                        textMention: settings.email
+                          ? !settings.email.textMention
+                          : false,
+                      },
                     })
                   }
                   justifyBetween
