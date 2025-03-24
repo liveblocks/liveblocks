@@ -27,7 +27,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
   // +++
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({});
   // +++
 
   return (
@@ -52,7 +52,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({});
 
   return (
     <div>
@@ -103,7 +103,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({});
 
   return (
     <div>
@@ -232,7 +232,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({});
 
   // +++
   const { threads } = useThreads();
@@ -482,7 +482,7 @@ import {
 import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({});
 
   // +++
   const { threads } = useThreads();
@@ -782,7 +782,7 @@ import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
   // +++
-  const editor = useCreateBlockNoteWithLiveblocks({}, { mentions: true });
+  const editor = useCreateBlockNoteWithLiveblocks({});
   // +++
 
   return (
@@ -809,7 +809,6 @@ const editor = useCreateBlockNoteWithLiveblocks(
     // ...
   },
   {
-    mentions: true,
     // +++
     initialContent: "<p>Hello world</p>",
     field: "editor-one",
@@ -864,7 +863,7 @@ const editor = useCreateBlockNoteWithLiveblocks(
   </PropertiesListItem>
   <PropertiesListItem
     name="liveblocksOptions.mentions"
-    defaultValue="false"
+    defaultValue="true"
     type="boolean"
   >
     Enable mentions in the editor.
@@ -884,7 +883,6 @@ function TextEditor() {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
-      mentions: true,
       // +++
       initialContent: "<p>Hello world</p>",
       // +++
@@ -907,7 +905,6 @@ function TextEditor() {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
-      mentions: true,
       // +++
       field: "editor-one",
       // +++
@@ -939,7 +936,6 @@ function TextEditor({ field }: { field: string }) {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
-      mentions: true,
       // +++
       field,
       // +++
@@ -969,7 +965,6 @@ function TextEditor() {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
-      mentions: true,
       // +++
       offlineSupport_experimental: true,
       // +++
@@ -1002,7 +997,6 @@ export function TiptapEditor() {
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     {
-      mentions: true,
       // +++
       offlineSupport_experimental: true,
       // +++
