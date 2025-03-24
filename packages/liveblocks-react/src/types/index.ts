@@ -23,6 +23,7 @@ import type {
   CommentAttachment,
   CommentBody,
   CommentData,
+  CopilotChatMessage,
   DRI,
   HistoryVersion,
   InboxNotificationData,
@@ -180,6 +181,9 @@ export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
+
+export type CopiloChatMessagesAsyncSuccess = PagedAsyncSuccess<CopilotChatMessage[], "messages">; // prettier-ignore
+export type CopiloChatMessagesAsyncResult = PagedAsyncResult<CopilotChatMessage[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1209,6 +1213,14 @@ export type LiveblocksContextBundle<
         options?: UseUserThreadsOptions<M>
       ): ThreadsAsyncResult<M>;
 
+      /**
+       * (Private beta)  Returns the messages in the given chat.
+       *
+       * @example
+       * const { messages, error, isLoading } = useCopilotChatMessages();
+       */
+      useCopilotChatMessages(chatId: string): CopiloChatMessagesAsyncResult;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1248,6 +1260,16 @@ export type LiveblocksContextBundle<
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
             ): ThreadsAsyncSuccess<M>;
+
+            /**
+             * (Private beta)  Returns the messages in the given chat.
+             *
+             * @example
+             * const { messages } = useCopilotChatMessages();
+             */
+            useCopilotChatMessages(
+              chatId: string
+            ): CopiloChatMessagesAsyncSuccess;
           }
       >;
     }

@@ -7,6 +7,7 @@ import type {
   CommentData,
   CommentReaction,
   CommentUserReaction,
+  CopilotChatMessage,
   DistributiveOmit,
   HistoryVersion,
   InboxNotificationData,
@@ -48,6 +49,7 @@ import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  CopiloChatMessagesAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -733,14 +735,46 @@ function createStore_forHistoryVersions() {
   };
 }
 
+function createStore_forCopilotChatMessages() {
+  const baseSignal = new MutableSignal(
+    new DefaultMap(() => new Map()) as DefaultMap<
+      string,
+      Map<string, CopilotChatMessage>
+    >
+  );
+
+  function update(chatId: string, messages: CopilotChatMessage[]): void {
+    baseSignal.mutate((lut) => {
+      const messagesByChatId = lut.getOrCreate(chatId);
+      for (const message of messages) {
+        messagesByChatId.set(message.id, message);
+      }
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (hv) =>
+      Object.fromEntries(
+        [...hv].map(([chatId, messages]) => [
+          chatId,
+          Object.fromEntries(messages),
+        ])
+      )
+    ),
+
+    // Mutations
+    update,
+  };
+}
+
 function createStore_forUserAiChats() {
   const baseSignal = new MutableSignal(new Map() as AiChatsLUT);
 
-  function update(chats: AiChat[]) {
-    baseSignal.mutate((lut) => {
-      for (const chat of chats) {
-        lut.set(chat.id, chat);
-      }
+  function update(_chats: AiChat[]) {
+    baseSignal.mutate((_lut) => {
+      // for (const chat of chats) {
+      //   lut.set(chat.id, chat);
+      // }
     });
   }
 
@@ -896,6 +930,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly userNotificationSettings: ReturnType<
     typeof createStore_forUserNotificationSettings
   >;
+  readonly copilotChatMessages: ReturnType<
+    typeof createStore_forCopilotChatMessages
+  >;
   readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
   readonly userAiChats: ReturnType<typeof createStore_forUserAiChats>;
 
@@ -930,6 +967,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<HistoryVersionsAsyncResult>
     >;
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
+    readonly messagesByCopilotChatId: DefaultMap<
+      RoomId,
+      LoadableResource<CopiloChatMessagesAsyncResult>
+    >;
   };
 
   // Notifications
@@ -948,8 +989,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // User Notification Settings
   #userNotificationSettings: SinglePageResource;
 
+  // Copilot chats
+  #copilotChatsLastRequestedAtByChatId = new Map<RoomId, Date>();
+
   // User AI Chats
-  #userAiChats: PaginatedResource;
+  // #userAiChats: PaginatedResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -973,21 +1017,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
-    this.#userAiChats = new PaginatedResource(async (cursor?: string) => {
-      // Create a promise that resolves when we get the chats data
-      const chatsResult = await new Promise<{
-        chats: any[];
-        cursor: string | null;
-      }>((resolve) => {
-        this.#client.listChats();
-        this.#client.events.ai.chats.subscribeOnce(({ chats, cursor }) => {
-          console.warn("chats", chats, cursor);
-          resolve({ chats, cursor: null });
-        });
-      });
+    // this.#userAiChats = new PaginatedResource(async (_cursor?: string) => {
+    //   // Create a promise that resolves when we get the chats data
+    //   const chatsResult = await new Promise<{
+    //     chats: any[];
+    //     cursor: string | null;
+    //   }>((resolve) => {
+    //     this.#client.listChats();
+    //     this.#client.events.ai.chats.subscribeOnce(({ chats, cursor }) => {
+    //       console.warn("chats", chats, cursor);
+    //       resolve({ chats, cursor: null });
+    //     });
+    //   });
 
-      return chatsResult.cursor;
-    });
+    //   return chatsResult.cursor;
+    // });
 
     const userNotificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getNotificationSettings();
@@ -1009,6 +1053,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.optimisticUpdates.signal
     );
     this.historyVersions = createStore_forHistoryVersions();
+    this.copilotChatMessages = createStore_forCopilotChatMessages();
     this.userAiChats = createStore_forUserAiChats();
 
     const threadifications = DerivedSignal.from(
@@ -1257,6 +1302,54 @@ export class UmbrellaStore<M extends BaseMetadata> {
         waitUntilLoaded: this.#userNotificationSettings.waitUntilLoaded,
       };
 
+    const messagesByCopilotChatId = new DefaultMap(
+      (chatId: string): LoadableResource<CopiloChatMessagesAsyncResult> => {
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client[
+            kInternal
+          ].httpClient.getCopilotChatMessages(chatId, { cursor });
+          this.copilotChatMessages.update(chatId, result.messages);
+
+          const lastRequestedAt =
+            this.#copilotChatsLastRequestedAtByChatId.get(chatId);
+
+          if (
+            lastRequestedAt === undefined ||
+            lastRequestedAt > result.requestedAt
+          ) {
+            this.#copilotChatsLastRequestedAtByChatId.set(
+              chatId,
+              result.requestedAt
+            );
+          }
+
+          const nextCursor = result.nextCursor;
+          return nextCursor;
+        });
+
+        const signal = DerivedSignal.from((): CopiloChatMessagesAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          const page = result.data;
+          return {
+            isLoading: false,
+            messages: Object.values(
+              this.copilotChatMessages.signal.get()[chatId] ?? {}
+            ),
+            hasFetchedAll: page.hasFetchedAll,
+            isFetchingMore: page.isFetchingMore,
+            fetchMoreError: page.fetchMoreError,
+            fetchMore: page.fetchMore,
+          };
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1267,6 +1360,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId,
       versionsByRoomId,
       userNotificationSettings,
+      messagesByCopilotChatId,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable

@@ -35,6 +35,51 @@ main {
   height: 100vh;
 }
 
+.button {
+  all: unset;
+  position: relative;
+  display: flex;
+  place-items: center;
+  place-content: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  background: #f3f3f3;
+  color: #555;
+}
+
+.button.square {
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+}
+
+.button.destructive {
+  background: #fde5e5;
+  color: #953939;
+}
+
+.button:hover,
+.button:focus-visible {
+  background: #e8e8e8;
+  cursor: pointer;
+}
+
+.button.destructive:hover,
+.button.destructive:focus-visible {
+  background: #ffd6d6;
+}
+
+.loading,
+.error {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+}
+
 .composer-container {
   padding: 0 1rem 1rem;
 }
@@ -97,6 +142,7 @@ main {
 :is(.lb-user-chat-message, .lb-assistant-chat-message) {
   display: flex;
   flex-direction: column;
+  gap: var(--lb-spacing);
   width: 100%;
   max-width: 896px;
   margin: 0 auto;
@@ -138,11 +184,15 @@ main {
 }
 
 .lb-user-chat-message-content {
+  border-radius: 0.75rem;
+  max-width: 80%;
+}
+
+.lb-user-chat-message-body {
   background: var(--lb-background-foreground-faint);
   padding: calc(0.75 * var(--lb-spacing));
   color: var(--lb-foreground);
   border-radius: 0.75rem;
-  max-width: 80%;
 }
 
 .lb-assistant-chat-message-content {
@@ -228,7 +278,7 @@ main {
 }
 
 /*************************************
- *            Attachments            *
+ *      Composer attachments         *
  *************************************/
 .lb-chat-composer-attachments {
   display: flex;
@@ -243,4 +293,21 @@ main {
 
 .lb-chat-composer-editor-container:where([data-drop]) * {
   pointer-events: none;
+}
+
+/*************************************
+ *        Message attachments        *
+ *************************************/
+.lb-user-chat-message-attachments {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: calc(0.75 * var(--lb-spacing));
+  width: 80%;
+}
+
+.lb-user-chat-message-attachment {
+  flex-shrink: 1;
+  flex-basis: min(100%, 300px);
 }
