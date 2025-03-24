@@ -1,5 +1,14 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-blocknote`
+
+- Fix report text editor function's call. Now we report correctly `blocknote` as
+  text editor type.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactoring.
+
 ## v2.22.0
 
 ### `@liveblocks/node`
