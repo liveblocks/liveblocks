@@ -31,4 +31,5 @@ export type OthersEvent<
 export enum TextEditorType {
   Lexical = "lexical",
   TipTap = "tiptap",
+  BlockNote = "blocknote",
 }
