@@ -1,4 +1,4 @@
-import { ClientSideSuspense, useIsInsideRoom } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react";
 import {
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
@@ -19,7 +19,6 @@ export function Inbox({ className, ...props }: ComponentProps<"div">) {
   // Count unread notifications to tell if "mark all" button should be disabled
   const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
   const { count } = useUnreadInboxNotificationsCount();
-  const isInsideRoom = useIsInsideRoom();
 
   return (
     <div className={clsx(className, styles.inbox)} {...props}>
@@ -33,14 +32,12 @@ export function Inbox({ className, ...props }: ComponentProps<"div">) {
           >
             Mark all as read
           </Button>
-          {isInsideRoom ? (
-            <InboxSettingsDialog>
-              <Button variant="secondary" iconButton>
-                <span className="sr-only">Notification channels</span>
-                <SettingsIcon />
-              </Button>
-            </InboxSettingsDialog>
-          ) : null}
+          <InboxSettingsDialog>
+            <Button variant="secondary" iconButton>
+              <span className="sr-only">Notification channels</span>
+              <SettingsIcon />
+            </Button>
+          </InboxSettingsDialog>
         </div>
       </div>
       <ClientSideSuspense

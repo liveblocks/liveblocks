@@ -37,6 +37,13 @@
   gap: var(--space-7);
 }
 
+.loading {
+  display: flex;
+  place-items: center;
+  place-content: center;
+  min-height: 100px;
+}
+
 .selectBox {
   margin: 0 var(--space-8);
   display: flex;
