@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/node`
+
+- Fix: improve stack traces of REST API errors to include the original error
+  location.
+
 ## v2.22.0
 
 ### `@liveblocks/node`
