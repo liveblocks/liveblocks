@@ -252,7 +252,7 @@ function NotificationSettings() {
         Receive thread notifications by email:
         <input
           type="checkbox"
-          checked={settings.email.thread}
+          checked={settings.email?.thread}
           onChange={(e) =>
             updateSettings({ email: { thread: e.target.checked } })
           }

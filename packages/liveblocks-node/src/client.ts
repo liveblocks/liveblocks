@@ -2329,6 +2329,10 @@ export class LiveblocksError extends Error {
   }
 
   static async from(res: Response): Promise<LiveblocksError> {
+    // Retain the stack trace of the original error location, not the async return point
+    const origErrLocation = new Error();
+    Error.captureStackTrace(origErrLocation, LiveblocksError.from); // eslint-disable-line
+
     const FALLBACK = "An error happened without an error message";
     let text: string;
     try {
@@ -2347,6 +2351,8 @@ export class LiveblocksError extends Error {
         .filter(Boolean)
         .join("\n") || undefined;
 
-    return new LiveblocksError(message, res.status, details);
+    const err = new LiveblocksError(message, res.status, details);
+    err.stack = origErrLocation.stack;
+    return err;
   }
 }
