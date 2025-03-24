@@ -10,7 +10,7 @@ In realtime applications, Liveblocks Storage is generally modified from the
 browser with [`useMutation`](/docs/api-reference/liveblocks-react#useMutation)
 or through
 [conflict-free data methods](/docs/api-reference/liveblocks-client#Storage).
-However, it can be useful to modify your realtime storage from server-side
+However, it can also be useful to modify your realtime storage from server-side
 Node.js too.
 
 ## What we’re doing
@@ -26,10 +26,10 @@ We’ll do this using `@liveblocks/node`.
 
 ## Start modifying storage
 
-We can now start modify storage from the server!
+We can now start modifying storage from the server!
 
 ```ts file="route.ts"
-// 1. Creating a node client (centrally)
+// Creating a node client (centrally)
 const liveblocks = new Liveblocks({
   secret: "{{SECRET_KEY}}",
 });
@@ -37,7 +37,8 @@ const liveblocks = new Liveblocks({
 export async function POST() {
   console.log("Updating storage");
 
-  // 2. Mutate storage
+  // Mutate storage
+  +++
   await liveblocks.mutateStorage(
     "my-room",
 
@@ -45,13 +46,8 @@ export async function POST() {
       root.get("list").push("item3");
     }
   );
+  +++
 
   console.log("Storage update complete!");
 }
 ```
-
-## Account for the service user in your app
-
-Using this method, there will not be a user showing up in your connected
-client’s “others” list, so there is nothing special you need to do to filter
-those out.
