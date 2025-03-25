@@ -18,6 +18,97 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 12 (2025-03-21)
+
+## v2.22.0
+
+### `@liveblocks/node`
+
+- Added pagination support to `.getInboxNotifications()`. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
+- New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).
+- New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically. See [docs](https://liveblocks.io).
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#iter-users-userId-inboxNotifications).
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mutate-storage).
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mass-mutate-storage).
+- Updated method `.deleteRoom()` to no longer throw when the room already does
+  not exist. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId).
+
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/emails`
+
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user ID correctly to the corresponding backend endpoints.
+
+### `@liveblocks/react-ui`
+
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://frimousse.liveblocks.io) and improving it in the
+    process. You can also combine this package with the primitives to build your
+    own reaction picker for example.
+- Improve and fix pasting HTML into the composer.
+
+## REST API
+
+- The
+  [Delete Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
+  endpoint will no longer return a 404 when a room already did not exist before.
+
+## Examples
+
+- Updated [Comments primitives example](https://liveblocks.io/examples/comments-primitives) to use [Frimousse](https://frimousse.liveblocks.io).
+- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-blocknote) to use our new package.
+
+## Documentation
+
+- Mention our latest package, [Frimousse](https://frimousse.liveblocks.io).
+- Detail building a primitive [emoji picker](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-picker) and [emoji reactions](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-reactions).
+- API reference for all new [Node.js methods](https://liveblocks.io/docs/api-reference/liveblocks-node).
+- API reference for [`@liveblocks/react-blocknoite`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote).
+- Updated [get started guides for BlockNote](https://liveblocks.io/docs/get-started/text-editor/blocknote).
+- New [BlockNote overview](https://liveblocks.io/docs/ready-made-features/text-editor/blocknote) page.
+- Updated guide on [modifying Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+
+## Website
+
+- New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
+
+## Contributors
+
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas, nvie, sugardarius
+
 # Week 11 (2025-03-14)
 
 ## Documentation

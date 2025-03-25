@@ -922,7 +922,10 @@ export function createClient<U extends BaseUserMeta = DU>(
   return client;
 }
 
-function checkBounds(
+/**
+ * @private Private API, don't use this directly.
+ */
+export function checkBounds(
   option: string,
   value: unknown,
   min: number,

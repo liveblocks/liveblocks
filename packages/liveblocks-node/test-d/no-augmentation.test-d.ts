@@ -1,5 +1,5 @@
 import { expectError, expectType } from "tsd";
-import { Liveblocks } from "../src/client";
+import { Liveblocks } from "@liveblocks/node";
 import type {
   CommentReaction,
   CommentBody,

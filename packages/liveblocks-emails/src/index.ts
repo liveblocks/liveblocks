@@ -4,15 +4,6 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-export type {
-  CommentBodyContainerComponentProps,
-  CommentBodyLinkComponentProps,
-  CommentBodyMentionComponentProps,
-  CommentBodyParagraphComponentProps,
-  CommentBodyTextComponentProps,
-  ConvertCommentBodyAsHtmlStyles,
-  ConvertCommentBodyAsReactComponents,
-} from "./comment-body";
 export type { ResolveRoomInfoArgs } from "./lib/types";
 export type {
   ConvertTextEditorNodesAsHtmlStyles,
@@ -34,8 +25,15 @@ export {
   prepareTextMentionNotificationEmailAsReact,
 } from "./text-mention-notification";
 export type {
+  CommentBodyContainerComponentProps,
+  CommentBodyLinkComponentProps,
+  CommentBodyMentionComponentProps,
+  CommentBodyParagraphComponentProps,
+  CommentBodyTextComponentProps,
   CommentEmailAsHtmlData,
   CommentEmailAsReactData,
+  ConvertCommentBodyAsHtmlStyles,
+  ConvertCommentBodyAsReactComponents,
   PrepareThreadNotificationEmailAsHtmlOptions,
   PrepareThreadNotificationEmailAsReactOptions,
   ThreadNotificationEmailDataAsHtml,

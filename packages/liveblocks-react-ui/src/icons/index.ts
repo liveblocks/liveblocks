@@ -17,7 +17,7 @@ export { DeleteIcon } from "./Delete";
 export { EditIcon } from "./Edit";
 export { EllipsisIcon } from "./Ellipsis";
 export { EmojiIcon } from "./Emoji";
-export { EmojiAddIcon } from "./EmojiAdd";
+export { EmojiPlusIcon } from "./EmojiPlus";
 export { H1Icon } from "./H1";
 export { H2Icon } from "./H2";
 export { H3Icon } from "./H3";
