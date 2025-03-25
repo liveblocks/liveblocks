@@ -757,19 +757,24 @@ export class Liveblocks {
     params: CreateRoomOptions & UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    // TODO In the future, this method will be optimized to make a single round-trip instead of two
-    try {
-      return await this.createRoom(roomId, params, options);
-    } catch (err) {
-      if (
-        err instanceof LiveblocksError &&
-        err.status === 409 // Room already exists
-      ) {
-        return await this.updateRoom(roomId, params, options);
-      } else {
-        throw err;
-      }
+    const res = await this.#patch(url`/v2/rooms/${roomId}`, params, options);
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
     }
+
+    const data = (await res.json()) as RoomDataPlain;
+
+    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
+    const lastConnectionAt = data.lastConnectionAt
+      ? new Date(data.lastConnectionAt)
+      : undefined;
+
+    const createdAt = new Date(data.createdAt);
+    return {
+      ...data,
+      lastConnectionAt,
+      createdAt,
+    };
   }
 
   /**
