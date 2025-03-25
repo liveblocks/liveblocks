@@ -235,6 +235,10 @@ export type {
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
 export type {
+  RoomNotificationSettings,
+  RoomSubscriptionSettings,
+} from "./protocol/RoomSubscriptionSettings";
+export type {
   IdTuple,
   SerializedChild,
   SerializedCrdt,
@@ -315,10 +319,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type {
-  RoomNotificationSettings,
-  RoomSubscriptionSettings,
-} from "./protocol/RoomSubscriptionSettings";
 export type { User } from "./types/User";
 export { detectDupes };
 
