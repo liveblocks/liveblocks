@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-## v.2.22.1
+## v2.22.1
 
 ### `@liveblocks/react-blocknote`
 
