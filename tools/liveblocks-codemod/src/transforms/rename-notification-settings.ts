@@ -74,7 +74,9 @@ export default function transformer(
     if (hasLiveblocksRelatedImport) {
       /**
        * Before: room.getNotificationSettings()
+       *         room.updateNotificationSettings({})
        *  After: room.getSubscriptionSettings()
+       *         room.updateSubscriptionSettings({})
        */
       root
         .find(j.CallExpression)
@@ -83,7 +85,8 @@ export default function transformer(
           return (
             callee.type === "MemberExpression" &&
             callee.property.type === "Identifier" &&
-            callee.property.name === "getNotificationSettings"
+            (callee.property.name === "getNotificationSettings" ||
+              callee.property.name === "updateNotificationSettings")
           );
         })
         .forEach((path) => {
@@ -92,33 +95,10 @@ export default function transformer(
             callee.type === "MemberExpression" &&
             callee.property.type === "Identifier"
           ) {
-            callee.property.name = "getSubscriptionSettings";
-
-            isDirty = true;
-          }
-        });
-
-      /**
-       * Before: room.updateNotificationSettings({})
-       *  After: room.updateSubscriptionSettings({})
-       */
-      root
-        .find(j.CallExpression)
-        .filter((path) => {
-          const callee = path.node.callee;
-          return (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier" &&
-            callee.property.name === "updateNotificationSettings"
-          );
-        })
-        .forEach((path) => {
-          const callee = path.node.callee;
-          if (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier"
-          ) {
-            callee.property.name = "updateSubscriptionSettings";
+            callee.property.name = callee.property.name.replace(
+              "NotificationSettings",
+              "SubscriptionSettings"
+            );
 
             isDirty = true;
           }
@@ -135,13 +115,12 @@ export default function transformer(
 
     /**
      * Before: import { useRoomNotificationSettings, useUpdateRoomNotificationSettings } from "@liveblocks/react"
+     *         import { useRoomNotificationSettings, useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense"
+     *         import { useRoomNotificationSettings, useUpdateRoomNotificationSettings } from "liveblocks.config"
+     *
      *  After: import { useRoomSubscriptionSettings, useUpdateRoomSubscriptionSettings } from "@liveblocks/react"
-     *
-     * Before: import { useRoomNotificationSettings, useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense"
-     *  After: import { useRoomSubscriptionSettings, useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense"
-     *
-     * Before: import { useRoomNotificationSettings, useUpdateRoomNotificationSettings } from "liveblocks.config"
-     *  After: import { useRoomSubscriptionSettings, useUpdateRoomNotificationSettings } from "liveblocks.config"
+     *         import { useRoomSubscriptionSettings, useUpdateRoomSubscriptionSettings } from "@liveblocks/react/suspense"
+     *         import { useRoomSubscriptionSettings, useUpdateRoomSubscriptionSettings } from "liveblocks.config"
      */
     root.find(j.ImportDeclaration).forEach((path) => {
       if (
@@ -215,12 +194,14 @@ export default function transformer(
      */
     if (isConfig) {
       root.find(j.Identifier).forEach((path) => {
-        if (path.node.name === "useRoomNotificationSettings") {
-          path.node.name = "useRoomSubscriptionSettings";
-
-          isDirty = true;
-        } else if (path.node.name === "useUpdateRoomNotificationSettings") {
-          path.node.name = "useUpdateRoomSubscriptionSettings";
+        if (
+          path.node.name === "useRoomNotificationSettings" ||
+          path.node.name === "useUpdateRoomNotificationSettings"
+        ) {
+          path.node.name = path.node.name.replace(
+            "NotificationSettings",
+            "SubscriptionSettings"
+          );
 
           isDirty = true;
         }
@@ -235,7 +216,11 @@ export default function transformer(
     if (hasLiveblocksRelatedImport) {
       /**
        * Before: liveblocks.getRoomNotificationSettings({})
+       *         liveblocks.updateRoomNotificationSettings({})
+       *         liveblocks.deleteRoomNotificationSettings({})
        *  After: liveblocks.getRoomSubscriptionSettings({})
+       *         liveblocks.updateRoomSubscriptionSettings({})
+       *         liveblocks.deleteRoomSubscriptionSettings({})
        */
       root
         .find(j.CallExpression)
@@ -244,7 +229,11 @@ export default function transformer(
           return (
             callee.type === "MemberExpression" &&
             callee.property.type === "Identifier" &&
-            callee.property.name === "getRoomNotificationSettings"
+            [
+              "getRoomNotificationSettings",
+              "updateRoomNotificationSettings",
+              "deleteRoomNotificationSettings",
+            ].includes(callee.property.name)
           );
         })
         .forEach((path) => {
@@ -253,59 +242,10 @@ export default function transformer(
             callee.type === "MemberExpression" &&
             callee.property.type === "Identifier"
           ) {
-            callee.property.name = "getRoomSubscriptionSettings";
-
-            isDirty = true;
-          }
-        });
-
-      /**
-       * Before: liveblocks.updateRoomNotificationSettings({})
-       *  After: liveblocks.updateRoomSubscriptionSettings({})
-       */
-      root
-        .find(j.CallExpression)
-        .filter((path) => {
-          const callee = path.node.callee;
-          return (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier" &&
-            callee.property.name === "updateRoomNotificationSettings"
-          );
-        })
-        .forEach((path) => {
-          const callee = path.node.callee;
-          if (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier"
-          ) {
-            callee.property.name = "updateRoomSubscriptionSettings";
-
-            isDirty = true;
-          }
-        });
-
-      /**
-       * Before: liveblocks.deleteRoomNotificationSettings({})
-       *  After: liveblocks.deleteRoomSubscriptionSettings({})
-       */
-      root
-        .find(j.CallExpression)
-        .filter((path) => {
-          const callee = path.node.callee;
-          return (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier" &&
-            callee.property.name === "deleteRoomNotificationSettings"
-          );
-        })
-        .forEach((path) => {
-          const callee = path.node.callee;
-          if (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier"
-          ) {
-            callee.property.name = "deleteRoomSubscriptionSettings";
+            callee.property.name = callee.property.name.replace(
+              "NotificationSettings",
+              "SubscriptionSettings"
+            );
 
             isDirty = true;
           }
