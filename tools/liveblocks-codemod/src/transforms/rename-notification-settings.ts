@@ -124,6 +124,75 @@ export default function transformer(
   }
 
   /**
+   * @liveblocks/react
+   */
+  {
+    let isUseRoomNotificationSettingsImported = false;
+    let isUseUpdateRoomNotificationSettingsImported = false;
+
+    /**
+     * Before: import { useRoomNotificationSettings } from "@liveblocks/react"
+     *  After: import { useRoomSubscriptionSettings } from "@liveblocks/react"
+     *
+     * Before: import { useRoomNotificationSettings } from "@liveblocks/react/suspense"
+     *  After: import { useRoomSubscriptionSettings } from "@liveblocks/react/suspense"
+     *
+     * Before: import { useUpdateRoomNotificationSettings } from "@liveblocks/react"
+     *  After: import { useUpdateRoomSubscriptionSettings } from "@liveblocks/react"
+     *
+     * Before: import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense"
+     *  After: import { useUpdateRoomSubscriptionSettings } from "@liveblocks/react/suspense"
+     */
+    root.find(j.ImportDeclaration).forEach((path) => {
+      if (
+        path.node.source.value === "@liveblocks/react" ||
+        path.node.source.value === "@liveblocks/react/suspense"
+      ) {
+        path.node.specifiers.forEach((specifier) => {
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.name === "useRoomNotificationSettings"
+          ) {
+            specifier.imported.name = "useRoomSubscriptionSettings";
+
+            isUseRoomNotificationSettingsImported = true;
+            isDirty = true;
+          }
+
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.name === "useUpdateRoomNotificationSettings"
+          ) {
+            specifier.imported.name = "useUpdateRoomSubscriptionSettings";
+
+            isUseUpdateRoomNotificationSettingsImported = true;
+            isDirty = true;
+          }
+        });
+      }
+    });
+
+    if (
+      isUseRoomNotificationSettingsImported ||
+      isUseUpdateRoomNotificationSettingsImported
+    ) {
+      root.find(j.Identifier).forEach((path) => {
+        if (path.node.name === "useRoomNotificationSettings") {
+          path.node.name = "useRoomSubscriptionSettings";
+
+          isDirty = true;
+        }
+
+        if (path.node.name === "useUpdateRoomNotificationSettings") {
+          path.node.name = "useUpdateRoomSubscriptionSettings";
+
+          isDirty = true;
+        }
+      });
+    }
+  }
+
+  /**
    * @liveblocks/node
    */
   {
