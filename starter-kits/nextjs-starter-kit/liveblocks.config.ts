@@ -22,6 +22,8 @@ declare global {
     Storage: {
       notes: Notes; // Whiteboard
       records: LiveMap<string, any>; // Canvas
+      cover: string | null; // Note
+      title: string;
     };
     // Custom user info set when authenticating with a secret key
     UserMeta: {
@@ -55,5 +57,7 @@ export function createInitialStorage(): Liveblocks["Storage"] {
   return {
     notes: new LiveMap(), // Whiteboard
     records: new LiveMap(), // Canvas
+    cover: null, // Note
+    title: "", // Note
   };
 }
