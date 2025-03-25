@@ -380,6 +380,25 @@ export class Liveblocks {
     });
   }
 
+  async #patch(
+    path: URLSafeString,
+    json: Json,
+    options?: RequestOptions
+  ): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path);
+    const headers = {
+      Authorization: `Bearer ${this.#secret}`,
+      "Content-Type": "application/json",
+    };
+    const fetch = await fetchPolyfill();
+    return await fetch(url, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(json),
+      signal: options?.signal,
+    });
+  }
+
   async #putBinary(
     path: URLSafeString,
     body: Uint8Array,
