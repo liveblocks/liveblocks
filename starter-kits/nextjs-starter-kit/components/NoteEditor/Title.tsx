@@ -1,5 +1,5 @@
 import { BlockNoteEditor } from "@blocknote/core";
-import { useMutation, useStorage } from "@liveblocks/react/suspense";
+import { useMutation, useStorage } from "@liveblocks/react";
 import {
   ChangeEvent,
   KeyboardEvent,
@@ -55,7 +55,7 @@ export function Title({ editor }: { editor: BlockNoteEditor | null }) {
 
   return (
     <TextareaAutosize
-      value={title}
+      value={title ?? initialDocument.name}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       className={styles.title}

@@ -8,6 +8,6 @@
   outline: none;
   margin: 0 auto;
   max-width: var(--note-editor-width);
-  padding: 12px 54px;
+  padding: 12px var(--note-editor-horizontal-padding);
   background: transparent;
 }

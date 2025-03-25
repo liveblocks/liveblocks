@@ -7,8 +7,7 @@ import {
   useCreateBlockNoteWithLiveblocks,
 } from "@liveblocks/react-blocknote";
 import { DocumentSpinner } from "@/primitives/Spinner";
-import { Cover } from "./Cover";
-import { Title } from "./Title";
+import { NoteHeader } from "./NoteHeader";
 import styles from "./NoteEditor.module.css";
 
 export function NoteEditor() {
@@ -27,8 +26,9 @@ function BlockTextEditor() {
 
   return (
     <div className={styles.wrapper}>
-      <Cover />
-      <Title editor={editor} />
+      <div className={styles.editorHeader}>
+        <NoteHeader editor={editor} />
+      </div>
       <div className={styles.editorWrapper}>
         <BlockNoteView editor={editor} />
         <ClientSideSuspense fallback={null}>

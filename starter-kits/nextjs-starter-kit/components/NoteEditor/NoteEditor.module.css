@@ -4,8 +4,14 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  --note-editor-width: 900px;
   background: var(--color-surface-elevated);
+
+  --note-editor-width: 900px;
+  --note-editor-horizontal-padding: 54px;
+}
+
+.editorHeader {
+
 }
 
 .editorWrapper {

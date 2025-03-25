@@ -1,0 +1,37 @@
+.buttonRow {
+  margin: 0 auto;
+  max-width: var(--note-editor-width);
+  padding: 0 var(--note-editor-horizontal-padding);
+  display: flex;
+  padding-top: var(--space-8);
+}
+
+.buttonRow > :first-child {
+  margin-left: -12px;
+}
+
+.coverPopover {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+.coverPopoverItem {
+  cursor: pointer;
+  height: var(--space-12);
+  width: var(--space-12);
+  border-radius: 4px;
+  background-color: var(--color-surface);
+  opacity: 0.5;
+}
+
+.coverPopoverItem[data-active="true"] {
+  opacity: 1;
+}
+
+.coverPopoverItem svg {
+  height: 100%;
+  width: 100%;
+  color: var(--color-text-primary);
+}
