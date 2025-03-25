@@ -69,6 +69,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
+import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
@@ -98,7 +99,6 @@ import type {
   TextEditorType,
 } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 

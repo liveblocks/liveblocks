@@ -47,6 +47,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   PartialUserNotificationSettings,
@@ -55,7 +56,6 @@ import type {
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import { PKG_VERSION } from "./version";
 
 export interface RoomHttpApi<M extends BaseMetadata> {
