@@ -1,6 +1,6 @@
 /* eslint-disable */
 // @ts-nocheck
-import { useRoomNotificationSettings } from "my-lib";
+import { createRoomContext, useRoomNotificationSettings } from "my-lib";
 import { useUpdateRoomNotificationSettings } from "my-lib/suspense";
 
 function App() {
@@ -18,3 +18,8 @@ function App() {
     </div>
   );
 }
+
+export const {
+  useRoomSubscriptionSettings,
+  useUpdateRoomSubscriptionSettings,
+} = createRoomContext();
