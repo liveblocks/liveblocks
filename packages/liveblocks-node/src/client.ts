@@ -683,12 +683,12 @@ export class Liveblocks {
   public async createRoom(
     roomId: string,
     params: CreateRoomOptions,
-    options?: RequestOptions
+    options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.#post(
-      url`/v2/rooms`,
+      options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
       {
         id: roomId,
         defaultAccesses,
@@ -735,19 +735,10 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    // TODO In the future, this method will be optimized to make a single round-trip instead of two
-    try {
-      return await this.createRoom(roomId, params, options);
-    } catch (err) {
-      if (
-        err instanceof LiveblocksError &&
-        err.status === 409 // Room already exists
-      ) {
-        return await this.getRoom(roomId, options);
-      } else {
-        throw err;
-      }
-    }
+    return await this.createRoom(roomId, params, {
+      ...options,
+      idempotent: true,
+    });
   }
 
   /**
