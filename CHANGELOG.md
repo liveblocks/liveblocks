@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v.2.22.1
+
 ### `@liveblocks/react-blocknote`
 
 - Fix report text editor function's call. Now we report correctly `blocknote` as
