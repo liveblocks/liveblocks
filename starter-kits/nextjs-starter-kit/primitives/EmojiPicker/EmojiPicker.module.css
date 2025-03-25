@@ -1,0 +1,68 @@
+.root[frimousse-root] {
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  height: 352px;
+  background: light-dark(#fff, #171717);
+  isolation: isolate;
+}
+
+.root [frimousse-search] {
+  position: relative;
+  z-index: 10;
+  appearance: none;
+  margin-block-start: 8px;
+  margin-inline: 8px;
+  padding: 8px 10px;
+  background: light-dark(#f5f5f5, #262626);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.root [frimousse-viewport] {
+  position: relative;
+  flex: 1;
+  outline: none;
+}
+.root [frimousse-loading] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: light-dark(#a1a1a1, #737373);
+  font-size: 14px;
+}
+
+.root [frimousse-list] {
+  padding-block-end: 12px;
+  user-select: none;
+}
+
+.root [frimousse-category-header] {
+  padding: 12px 12px 6px;
+  background: light-dark(#fff, #171717);
+  color: light-dark(#525252, #a1a1a1);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.root [frimousse-row] {
+  padding-inline: 12px;
+  scroll-margin-block: 12px;
+}
+
+.root [frimousse-emoji] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 18px;
+}
+
+.root [frimousse-emoji][data-active] {
+  background: light-dark(#f5f5f5, #262626);
+}

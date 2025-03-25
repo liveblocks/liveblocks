@@ -2,49 +2,87 @@
   position: relative;
 }
 
-.noteHeader:hover .buttonRow {
+.buttonRow {
+  position: relative;
+  max-width: var(--note-editor-width);
   display: flex;
+  margin: 0 auto;
+  padding: var(--space-8) var(--note-editor-horizontal-padding) 0;
+}
+
+.buttonRow[data-icon="true"] {
+  padding-top: 100px;
+  margin-top: -60px;
+}
+
+.buttonRow > button {
+  margin-left: -12px;
+  margin-right: 12px;
+}
+
+.buttonRowButton {
+  transition: opacity 0.1s ease-in-out;
+  opacity: 0;
+}
+
+.buttonRow[data-popover-open="true"] .buttonRowButton,
+.noteHeader:hover .buttonRowButton {
   opacity: 1;
 }
 
-.buttonRow {
-  display: none;
-  opacity: 0;
-  transition: opacity 0.1s ease-in-out;
+.iconButton {
+  height: var(--space-13);
+  width: var(--space-18);
+  position: absolute;
+  bottom: var(--space-14);
+  left: var(--note-editor-horizontal-padding);
 }
 
-.buttonRow {
-  margin: 0 auto;
-  max-width: var(--note-editor-width);
-  padding: 0 var(--note-editor-horizontal-padding);
-  display: flex;
-  padding-top: var(--space-8);
+.iconButtonIcon {
+  isolation: isolate;
+  font-size: 64px;
+  line-height: 1;
+  aspect-ratio: 1 / 1;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  transition: background-color 0.1s ease-in-out;
 }
 
-.buttonRow > :first-child {
-  margin-left: -12px;
+.iconButtonIcon:hover:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #86868622;
+  border-radius: var(--radius-sm);
+  z-index: -1;
 }
 
 .coverPopover {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   padding: var(--space-4);
   gap: var(--space-3);
 }
 
 .coverPopoverItem {
-  height: var(--space-14);
-  width: var(--space-16);
+  height: var(--space-12);
+  width: var(--space-12);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background-color: var(--color-surface);
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: pointer;
+  transition: opacity 0.1s ease-in-out;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.coverPopoverItem[data-active="true"] {
+.coverPopoverItem[data-active],
+.coverPopoverItem:hover {
   opacity: 1;
 }
 
