@@ -8,7 +8,11 @@ export type LiveblocksExtensionOptions = Parameters<
 export const useLiveblocksExtension = (
   options: LiveblocksExtensionOptions = {}
 ) => {
-  const extension = useTipTapLiveblocksExtension(options);
+  const extension = useTipTapLiveblocksExtension({
+    ...options,
+    // @ts-expect-error - Hidden config option
+    textEditorType: "blocknote",
+  });
 
   extension.config.extendMarkSchema = (mark: Mark) => {
     if (mark.name === "liveblocksCommentMark") {
