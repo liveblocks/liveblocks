@@ -10,12 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.16.0",
-    "@liveblocks/node": "^2.16.0",
-    "@liveblocks/react": "^2.16.0",
-    "@liveblocks/react-tiptap": "^2.16.0",
-    "@liveblocks/react-ui": "^2.16.0",
-    "@liveblocks/yjs": "^2.16.0",
+    "@liveblocks/client": "^2.22.1",
+    "@liveblocks/node": "^2.22.1",
+    "@liveblocks/react": "^2.22.1",
+    "@liveblocks/react-tiptap": "^2.22.1",
+    "@liveblocks/react-ui": "^2.22.1",
+    "@liveblocks/yjs": "^2.22.1",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.0.7",
     "@tiptap/pm": "^2.6.6",

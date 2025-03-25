@@ -9,12 +9,14 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.16.0",
-    "@liveblocks/node": "^2.16.0",
-    "@liveblocks/react": "^2.16.0",
-    "@liveblocks/react-ui": "^2.16.0",
+    "@liveblocks/client": "^2.22.1",
+    "@liveblocks/node": "^2.22.1",
+    "@liveblocks/react": "^2.22.1",
+    "@liveblocks/react-ui": "^2.22.1",
+    "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-toggle": "^1.1.0",
     "clsx": "^2.0.0",
+    "frimousse": "^0.1.0",
     "next": "^13.5.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

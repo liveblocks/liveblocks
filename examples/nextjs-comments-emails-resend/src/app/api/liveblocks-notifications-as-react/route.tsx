@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         {
           resolveUsers: async ({ userIds }) => {
             const users = getUsers(userIds);
-            return users.map((user) => user?.info || {});
+            return users.map((user) => user?.info || undefined);
           },
           resolveRoomInfo: ({ roomId }) => {
             return {

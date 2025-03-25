@@ -72,7 +72,7 @@ export async function POST(request: Request) {
           <div>
             @{emailData.comment.author.id} at {emailData.comment.createdAt}
           </div>
-          <div>{emailData.comment.reactBody}</div>
+          <div>{emailData.comment.body}</div>
         </div>
       );
 
@@ -163,6 +163,23 @@ replies mentions the user. A single comment with the latest mention is returned.
 }
 ```
 
+### Limitations
+
+Before you get started, there are some limitations with thread notifications
+that you should be aware of.
+
+#### Duplicated emails for unread mentions
+
+If a user is mentioned (e.g `@username`) in a thread, all further notifications
+received for this thread will be `unreadMention` types, _until the user reads
+the thread again_. This means that you will receive duplicated `unreadMention`
+notifications, even if a notification should be an `unreadReplies` type. After
+the thread has been read by the user, `unreadReplies` will be sent for the
+thread again if the user isn’t mentioned another time in the thread.
+
+This is due to the architecture of our notifications database, and we’re
+investigating solutions to move past this limitation.
+
 ### prepareThreadNotificationEmailAsReact [#prepare-thread-notification-email-as-react]
 
 Takes a
@@ -198,7 +215,7 @@ if (isThreadNotificationEvent(event)) {
           <div>
             @{emailData.comment.author.id} at {emailData.comment.createdAt}
           </div>
-          <div>{emailData.comment.reactBody}</div>
+          <div>{emailData.comment.body}</div>
         </div>
       );
       break;
@@ -212,7 +229,7 @@ if (isThreadNotificationEvent(event)) {
               <div>
                 @{comment.author.id} at {comment.createdAt}
               </div>
-              <div>{comment.reactBody}</div>
+              <div>{comment.body}</div>
             </div>
           ))}
         </div>
@@ -280,7 +297,7 @@ export async function POST(request: Request) {
             <div>
               @{emailData.comment.author.id} at {emailData.comment.createdAt}
             </div>
-            <div>{emailData.comment.reactBody}</div>
+            <div>{emailData.comment.body}</div>
           </div>
         );
         break;
@@ -294,7 +311,7 @@ export async function POST(request: Request) {
                 <div>
                   @{comment.author.id} at {comment.createdAt}
                 </div>
-                <div>{comment.reactBody}</div>
+                <div>{comment.body}</div>
               </div>
             ))}
           </div>
@@ -331,6 +348,9 @@ export async function POST(request: Request) {
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
         // The formatted comment, pass it to React `children`
+        body: { /* ... */},
+
+        // Deprecated: the formatted comment, pass it to React `children` (use `body` instead)
         reactBody: { /* ... */ },
 
         author: {
@@ -356,6 +376,9 @@ export async function POST(request: Request) {
           createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
           // The formatted comment, pass it to React `children`
+          body: { /* ... */},
+
+          // Deprecated: the formatted comment, pass it to React `children` (use `body` instead)
           reactBody: { /* ... */ },
 
           author: {
@@ -564,7 +587,7 @@ if (isThreadNotificationEvent(event)) {
           <div>
             @${emailData.comment.author.id} at ${emailData.comment.createdAt}
           </div>
-          <div>${emailData.comment.htmlBody}</div>
+          <div>${emailData.comment.body}</div>
         </div>
       `;
       break;
@@ -580,7 +603,7 @@ if (isThreadNotificationEvent(event)) {
                   <div>
                     @${comment.author.id} at ${comment.createdAt}
                   </div>
-                  <div>${comment.htmlBody}</div>
+                  <div>${comment.body}</div>
                 </div>
               `
             )
@@ -650,7 +673,7 @@ export async function POST(request: Request) {
           <div>
             @${emailData.comment.author.id} at ${emailData.comment.createdAt}
           </div>
-          <div>${emailData.comment.htmlBody}</div>
+          <div>${emailData.comment.body}</div>
         </div>
       `;
         break;
@@ -666,7 +689,7 @@ export async function POST(request: Request) {
                   <div>
                     @${comment.author.id} at ${comment.createdAt}
                   </div>
-                  <div>${comment.htmlBody}</div>
+                  <div>${comment.body}</div>
                 </div>
               `
             )
@@ -705,6 +728,9 @@ export async function POST(request: Request) {
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
         // The formatted comment, as an HTML string
+        body: "<div>...</div>",
+
+        // Deprecated: the formatted comment, as an HTML string (use `body` instead)
         htmlBody: "<div>...</div>",
 
         author: {
@@ -730,6 +756,9 @@ export async function POST(request: Request) {
             createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
             // The formatted comment, as an HTML string
+            body: "<div>...</div>",
+
+            // Deprecated: the formatted comment, as an HTML string (use `body` instead)
             htmlBody: "<div>...</div>",
 
             author: {
@@ -884,7 +913,7 @@ const emailData = await prepareThreadNotificationEmailAsHtml(
 console.log(emailData);
 
 // The elements in the comment body are now styled
-console.log(emailData.comment.htmlBody);
+console.log(emailData.comment.body);
 ```
 
 ## Text Mention notification emails [#text-mention-notification-emails]

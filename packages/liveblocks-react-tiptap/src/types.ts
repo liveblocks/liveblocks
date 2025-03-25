@@ -2,6 +2,7 @@ import type {
   ContextualPromptContext,
   ContextualPromptResponse,
   Relax,
+  TextEditorType,
 } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content, Range } from "@tiptap/core";
@@ -89,6 +90,14 @@ export type LiveblocksExtensionOptions = {
   offlineSupport_experimental?: boolean;
   initialContent?: Content;
   enablePermanentUserData?: boolean;
+  /**
+   * @internal
+   * For reporting another text editor type from a
+   * text editor extended from `TipTap` such as our `BlockNote` integration.
+   *
+   * Only useful for Liveblocks developers, not for end users.
+   */
+  textEditorType?: TextEditorType;
 };
 
 export type LiveblocksExtensionStorage = {

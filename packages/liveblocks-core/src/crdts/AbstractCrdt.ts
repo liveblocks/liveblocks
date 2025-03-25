@@ -19,13 +19,14 @@ export type ApplyResult =
  * to live nodes before and after they are inter-connected.
  */
 export interface ManagedPool {
-  roomId: string;
-  generateId: () => string;
-  generateOpId: () => string;
+  readonly roomId: string;
+  readonly nodes: ReadonlyMap<string, LiveNode>;
+  readonly generateId: () => string;
+  readonly generateOpId: () => string;
 
-  getNode: (id: string) => LiveNode | undefined;
-  addNode: (id: string, node: LiveNode) => void;
-  deleteNode: (id: string) => void;
+  readonly getNode: (id: string) => LiveNode | undefined;
+  readonly addNode: (id: string, node: LiveNode) => void;
+  readonly deleteNode: (id: string) => void;
 
   /**
    * Dispatching has three responsibilities:
@@ -47,6 +48,78 @@ export interface ManagedPool {
    * @returns {void}
    */
   assertStorageIsWritable: () => void;
+}
+
+export type CreateManagedPoolOptions = {
+  /**
+   * Returns the current connection ID. This is used to generate unique
+   * prefixes for nodes created by this client. This number is allowed to
+   * change over time (for example, when the client reconnects).
+   */
+  getCurrentConnectionId(): number;
+
+  /**
+   * Will get invoked when any Live structure calls .dispatch() on the pool.
+   */
+  onDispatch?: (
+    ops: Op[],
+    reverse: Op[],
+    storageUpdates: Map<string, StorageUpdate>
+  ) => void;
+
+  /**
+   * Will get invoked when any Live structure calls .assertStorageIsWritable()
+   * on the pool. Defaults to true when not provided. Return false if you want
+   * to prevent writes to the pool locally early, because you know they won't
+   * have an effect upstream.
+   */
+  isStorageWritable?: () => boolean;
+};
+
+/**
+ * @private Private API, never use this API directly.
+ */
+export function createManagedPool(
+  roomId: string,
+  options: CreateManagedPoolOptions
+): ManagedPool {
+  const {
+    getCurrentConnectionId,
+    onDispatch,
+    isStorageWritable = () => true,
+  } = options;
+
+  let clock = 0;
+  let opClock = 0;
+  const nodes = new Map<string, LiveNode>();
+
+  return {
+    roomId,
+    nodes,
+
+    getNode: (id: string) => nodes.get(id),
+    addNode: (id: string, node: LiveNode) => void nodes.set(id, node),
+    deleteNode: (id: string) => void nodes.delete(id),
+
+    generateId: () => `${getCurrentConnectionId()}:${clock++}`,
+    generateOpId: () => `${getCurrentConnectionId()}:${opClock++}`,
+
+    dispatch(
+      ops: Op[],
+      reverse: Op[],
+      storageUpdates: Map<string, StorageUpdate>
+    ) {
+      onDispatch?.(ops, reverse, storageUpdates);
+    },
+
+    assertStorageIsWritable: () => {
+      if (!isStorageWritable()) {
+        throw new Error(
+          "Cannot write to storage with a read only user, please ensure the user has write permissions"
+        );
+      }
+    },
+  };
 }
 
 export enum OpSource {

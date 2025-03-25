@@ -18,6 +18,183 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 12 (2025-03-21)
+
+## v2.22.0
+
+### `@liveblocks/node`
+
+- Added pagination support to `.getInboxNotifications()`. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
+- New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).
+- New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically. See [docs](https://liveblocks.io).
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#iter-users-userId-inboxNotifications).
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mutate-storage).
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mass-mutate-storage).
+- Updated method `.deleteRoom()` to no longer throw when the room already does
+  not exist. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId).
+
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/emails`
+
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user ID correctly to the corresponding backend endpoints.
+
+### `@liveblocks/react-ui`
+
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://frimousse.liveblocks.io) and improving it in the
+    process. You can also combine this package with the primitives to build your
+    own reaction picker for example.
+- Improve and fix pasting HTML into the composer.
+
+## REST API
+
+- The
+  [Delete Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
+  endpoint will no longer return a 404 when a room already did not exist before.
+
+## Examples
+
+- Updated [Comments primitives example](https://liveblocks.io/examples/comments-primitives) to use [Frimousse](https://frimousse.liveblocks.io).
+- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-blocknote) to use our new package.
+
+## Documentation
+
+- Mention our latest package, [Frimousse](https://frimousse.liveblocks.io).
+- Detail building a primitive [emoji picker](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-picker) and [emoji reactions](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-reactions).
+- API reference for all new [Node.js methods](https://liveblocks.io/docs/api-reference/liveblocks-node).
+- API reference for [`@liveblocks/react-blocknoite`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote).
+- Updated [get started guides for BlockNote](https://liveblocks.io/docs/get-started/text-editor/blocknote).
+- New [BlockNote overview](https://liveblocks.io/docs/ready-made-features/text-editor/blocknote) page.
+- Updated guide on [modifying Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+
+## Website
+
+- New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
+
+## Contributors
+
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas, nvie, sugardarius
+
+# Week 11 (2025-03-14)
+
+## Documentation
+
+- Fixed a bug in the [interactive React tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome#/start.tsx) and updated all demos to use Vite instead of Create React App.
+- Improved guide on [How to modify Liveblocks Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+- Add more info about text editor data being permanently stored.
+
+## Website
+
+- New blog post: [How to build notifications that encourage collaboration](https://liveblocks.io/blog/how-to-build-notifications-that-encourage-collaboration).
+- New blog post: [What’s new in Liveblocks: February 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-february-2025).
+
+## Contributors
+
+ctnicholas, marcbouchenoire, pierrelevaillant
+
+# Week 10 (2025-03-07)
+
+## v2.20.0
+
+### `@liveblocks/client`
+
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/node`
+
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/react`
+
+- Add optional `useRoom({ allowOutsideRoom: true })` option. When this option is
+  set, the hook will return `null` when used outside of a room, whereas the
+  default behavior of the hook is be to throw.
+- Implement a proxy factory for `UserNotificationSettings` object to return
+  `null` to prevent any errors when accessing a disabled notification channel.
+
+### `@liveblocks/react-ui`
+
+- Improve mentions behavior around whitespace, fixing a regression introduced in
+  `v2.18.3` when we added support for whitespace _within_ mentions.
+- Prevent mention suggestions from scrolling instead of flipping when there’s
+  enough space on the other side (e.g. moving from top to bottom).
+- Improve event propagation in the formatting toolbar of `Composer`.
+
+## v2.19.0
+
+### `@liveblocks/*`
+
+- Output ES modules by default (but CJS builds are still included)
+- Modernize internal build tool settings
+
+### `@liveblocks/node`
+
+- Allow passing optional AbortSignal to all client methods
+- Fix bug in encoding of error information in the LiveblocksError when an API call fails (thanks for reporting, [@robcresswell](https://github.com/robcresswell)!)
+- Fix `getStorageDocument("my-room", "json")` typing in its output `LiveMap` instances as `ReadonlyMap` instead of serialized plain objects.
+
+## Documentation
+
+- New guide: [How to create a notification settings panel](https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel).
+- Improved [Notifications overview](https://liveblocks.io/docs/ready-made-features/notifications) pages, adding info on user notification settings.
+- Improved existing webhooks guides, adding more context about notification channels, and how to create a settings panel.
+- More info about how Text Editor permanently stores documents, and how it's different to Yjs.
+
+## Examples
+
+- New example: [Notification settings example](https://liveblocks.io/examples/notification-settings).
+- Improved notification settings panel in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+
+## Website
+
+- New blog post: [Configure each user’s notification settings for email, Slack, and more](https://liveblocks.io/blog/configure-each-users-notifications-settings-for-slack-email-and-more).
+- New blog post: [Liveblocks is now SOC 2 Type 2 and HIPAA compliant](https://liveblocks.io/blog/liveblocks-is-soc2-type-2-hipaa-compliant).
+
+## Upkeep
+
+- Ship all Liveblocks packages as ESM by default (but CJS builds are still included)
+- Modernized internal build tool settings
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius, stevenfabre, pierrelevaillant
+
 # Week 8 (2025-02-21)
 
 ## v2.18.3

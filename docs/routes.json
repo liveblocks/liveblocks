@@ -52,6 +52,16 @@
             "hidden": true
           },
           {
+            "title": "BlockNote",
+            "path": "/get-started/react-blocknote",
+            "hidden": true
+          },
+          {
+            "title": "BlockNote",
+            "path": "/get-started/nextjs-blocknote",
+            "hidden": true
+          },
+          {
             "title": "Lexical",
             "path": "/get-started/react-lexical",
             "hidden": true
@@ -154,11 +164,6 @@
           {
             "title": "Yjs Slate React",
             "path": "/get-started/yjs-slate-react",
-            "hidden": true
-          },
-          {
-            "title": "Yjs BlockNote React",
-            "path": "/get-started/yjs-blocknote-react",
             "hidden": true
           },
           {
@@ -408,6 +413,10 @@
             "path": "/ready-made-features/text-editor/tiptap"
           },
           {
+            "title": "BlockNote",
+            "path": "/ready-made-features/text-editor/blocknote"
+          },
+          {
             "title": "Lexical",
             "path": "/ready-made-features/text-editor/lexical"
           }
@@ -523,6 +532,10 @@
         "path": "/api-reference/liveblocks-react-tiptap"
       },
       {
+        "title": "@liveblocks/react-blocknote",
+        "path": "/api-reference/liveblocks-react-blocknote"
+      },
+      {
         "title": "@liveblocks/node-prosemirror",
         "path": "/api-reference/liveblocks-node-prosemirror"
       },
@@ -557,6 +570,10 @@
       {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
       },
       {
         "title": "API v1 Endpoints",

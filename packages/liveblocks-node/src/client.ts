@@ -4,8 +4,10 @@
  * @liveblocks/core has browser-specific code.
  */
 import type {
+  Awaitable,
   BaseMetadata,
   BaseUserMeta,
+  ClientMsg,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -16,12 +18,14 @@ import type {
   DM,
   DS,
   DU,
+  IdTuple,
   InboxNotificationData,
   InboxNotificationDataPlain,
   Json,
   JsonObject,
   KDAD,
   LsonObject,
+  Op,
   OptionalTupleUnless,
   PartialUnless,
   PartialUserNotificationSettings,
@@ -30,6 +34,8 @@ import type {
   QueryMetadata,
   QueryParams,
   RoomNotificationSettings,
+  SerializedCrdt,
+  StorageUpdate,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
@@ -38,17 +44,24 @@ import type {
   UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import {
+  checkBounds,
+  ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToThreadData,
+  createManagedPool,
   createUserNotificationSettings,
+  LiveObject,
+  makeAbortController,
   objectToQuery,
   tryParseJson,
   url,
   urljoin,
 } from "@liveblocks/core";
 
+import { asyncConsume, runConcurrently } from "./lib/itertools";
+import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { Session } from "./Session";
 import {
   assertNonEmpty,
@@ -165,6 +178,26 @@ export type Schema = {
 
 type SchemaPlain = DateToString<Schema>;
 
+type RequestStorageMutationResponse = {
+  actor: number;
+  nodes: IdTuple<SerializedCrdt>[];
+};
+
+export type MutateStorageCallback = (context: {
+  root: LiveObject<S>;
+}) => Awaitable<void>;
+export type MutateStorageOptions = RequestOptions;
+
+export type MassMutateStorageCallback = (context: {
+  room: RoomData;
+  root: LiveObject<S>;
+}) => Awaitable<void>;
+
+// prettier-ignore
+export type MassMutateStorageOptions =
+  & MutateStorageOptions
+  & { concurrency?: number };
+
 // NOTE: We should _never_ rely on using the default types (DS, DU, DE, ...)
 // inside the Liveblocks implementation. We should only rely on the type
 // "params" (S, U, E, ...) instead, where the concrete type is bound to the
@@ -175,6 +208,116 @@ type E = DE;
 type M = DM;
 type S = DS;
 type U = DU;
+
+export type RoomsQueryCriteria = {
+  userId?: string;
+  groupIds?: string[];
+  /**
+   * The query to filter rooms by. It is based on our query language.
+   * @example
+   * ```
+   * {
+   *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
+   * }
+   * ```
+   * @example
+   * ```
+   * {
+   *   query: {
+   *     metadata: {
+   *       status: "open",
+   *     },
+   *     roomId: {
+   *       startsWith: "liveblocks:"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  query?:
+    | string
+    | {
+        metadata?: QueryRoomMetadata;
+        roomId?: {
+          startsWith: string;
+        };
+      };
+};
+
+export type InboxNotificationsQueryCriteria = {
+  userId: string;
+  /**
+   * The query to filter inbox notifications by. It is based on our query language.
+   *
+   * @example
+   * ```
+   * {
+   *  query: "unread:true"
+   * }
+   * ```
+   *
+   * @example
+   * ```
+   * {
+   *   query: {
+   *     unread: true
+   *   }
+   * }
+   * ```
+   *
+   */
+  query?: string | { unread: boolean };
+};
+
+export type PaginationOptions = {
+  limit?: number;
+  startingAfter?: string;
+};
+
+export type Page<T> = {
+  /** @deprecated Prefer to rely on `nextCursor` instead. */
+  nextPage?: string | null;
+  nextCursor: string | null;
+  data: T[];
+};
+
+// prettier-ignore
+export type GetRoomsOptions =
+  & RoomsQueryCriteria
+  & PaginationOptions
+  & {
+    // Legacy options
+    /**
+     * @deprecated Use `query` property instead. Support for the `metadata`
+     * field will be removed in a future version.
+     */
+    metadata?: QueryRoomMetadata;
+  };
+
+// prettier-ignore
+export type GetInboxNotificationsOptions =
+  & InboxNotificationsQueryCriteria
+  & PaginationOptions;
+
+export type CreateRoomOptions = {
+  defaultAccesses: RoomPermission;
+  groupsAccesses?: RoomAccesses;
+  usersAccesses?: RoomAccesses;
+  metadata?: RoomMetadata;
+};
+
+export type UpdateRoomOptions = {
+  defaultAccesses?: RoomPermission | null;
+  groupsAccesses?: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  >;
+  usersAccesses?: Record<
+    string,
+    ["room:write"] | ["room:read", "room:presence:write"] | null
+  >;
+  metadata?: Record<string, string | string[] | null>;
+};
 
 export type RequestOptions = {
   signal?: AbortSignal;
@@ -416,53 +559,9 @@ export class Liveblocks {
    * @returns A list of rooms.
    */
   public async getRooms(
-    params: {
-      limit?: number;
-      startingAfter?: string;
-      /**
-       * @deprecated Use `query` property instead. Support for the `metadata`
-       * field will be removed in a future version.
-       */
-      metadata?: QueryRoomMetadata;
-      userId?: string;
-      groupIds?: string[];
-      /**
-       * The query to filter rooms by. It is based on our query language.
-       * @example
-       * ```
-       * {
-       *   query: 'metadata["status"]:"open" AND roomId^"liveblocks:"'
-       * }
-       * ```
-       * @example
-       * ```
-       * {
-       *   query: {
-       *     metadata: {
-       *       status: "open",
-       *     },
-       *     roomId: {
-       *       startsWith: "liveblocks:"
-       *     }
-       *   }
-       * }
-       * ```
-       */
-      query?:
-        | string
-        | {
-            metadata?: QueryRoomMetadata;
-            roomId?: {
-              startsWith: string;
-            };
-          };
-    } = {},
+    params: GetRoomsOptions = {},
     options?: RequestOptions
-  ): Promise<{
-    nextPage: string | null;
-    nextCursor: string | null;
-    data: RoomData[];
-  }> {
+  ): Promise<Page<RoomData>> {
     const path = url`/v2/rooms`;
 
     let query: string | undefined;
@@ -489,18 +588,12 @@ export class Liveblocks {
     };
 
     const res = await this.#get(path, queryParams, options);
-
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    const data = (await res.json()) as {
-      nextPage: string | null;
-      nextCursor: string | null;
-      data: RoomDataPlain[];
-    };
-
-    const rooms = data.data.map((room) => {
+    const page = (await res.json()) as Page<RoomDataPlain>;
+    const rooms: RoomData[] = page.data.map((room) => {
       // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
       const lastConnectionAt = room.lastConnectionAt
         ? new Date(room.lastConnectionAt)
@@ -515,9 +608,47 @@ export class Liveblocks {
     });
 
     return {
-      ...data,
+      ...page,
       data: rooms,
     };
+  }
+
+  /**
+   * Iterates over all rooms that match the given criteria.
+   *
+   * The difference with .getRooms() is that pagination will happen
+   * automatically under the hood, using the given `pageSize`.
+   *
+   * @param criteria.userId (optional) A filter on users accesses.
+   * @param criteria.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
+   * @param criteria.query.roomId (optional) A filter by room ID.
+   * @param criteria.query.metadata (optional) A filter by metadata.
+   *
+   * @param options.pageSize (optional) The page size to use for each request.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  async *iterRooms(
+    criteria: RoomsQueryCriteria,
+    options?: RequestOptions & { pageSize?: number }
+  ): AsyncGenerator<RoomData> {
+    // TODO Dry up this async iterable implementation for pagination
+    const { signal } = options ?? {};
+    const pageSize = checkBounds("pageSize", options?.pageSize ?? 40, 20);
+
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getRooms(
+        { ...criteria, startingAfter: cursor, limit: pageSize },
+        { signal }
+      );
+      for (const item of data) {
+        yield item;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
   }
 
   /**
@@ -532,12 +663,7 @@ export class Liveblocks {
    */
   public async createRoom(
     roomId: string,
-    params: {
-      defaultAccesses: RoomPermission;
-      groupsAccesses?: RoomAccesses;
-      usersAccesses?: RoomAccesses;
-      metadata?: RoomMetadata;
-    },
+    params: CreateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
@@ -571,6 +697,69 @@ export class Liveblocks {
       lastConnectionAt,
       createdAt,
     };
+  }
+
+  /**
+   * Returns a room with the given id, or creates one with the given creation
+   * options if it doesn't exist yet.
+   *
+   * @param roomId The id of the room.
+   * @param params.defaultAccesses The default accesses for the room if the room will be created.
+   * @param params.groupsAccesses (optional) The group accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room if the room will be created. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The room.
+   */
+  public async getOrCreateRoom(
+    roomId: string,
+    params: CreateRoomOptions,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    // TODO In the future, this method will be optimized to make a single round-trip instead of two
+    try {
+      return await this.createRoom(roomId, params, options);
+    } catch (err) {
+      if (
+        err instanceof LiveblocksError &&
+        err.status === 409 // Room already exists
+      ) {
+        return await this.getRoom(roomId, options);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  /**
+   * Updates or creates a new room with the given properties.
+   *
+   * @param roomId The id of the room to update or create.
+   * @param params.defaultAccesses The default accesses for the room.
+   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
+   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The room.
+   */
+  public async upsertRoom(
+    roomId: string,
+    params: CreateRoomOptions & UpdateRoomOptions,
+    options?: RequestOptions
+  ): Promise<RoomData> {
+    // TODO In the future, this method will be optimized to make a single round-trip instead of two
+    try {
+      return await this.createRoom(roomId, params, options);
+    } catch (err) {
+      if (
+        err instanceof LiveblocksError &&
+        err.status === 409 // Room already exists
+      ) {
+        return await this.updateRoom(roomId, params, options);
+      } else {
+        throw err;
+      }
+    }
   }
 
   /**
@@ -617,18 +806,7 @@ export class Liveblocks {
    */
   public async updateRoom(
     roomId: string,
-    params: {
-      defaultAccesses?: RoomPermission | null;
-      groupsAccesses?: Record<
-        string,
-        ["room:write"] | ["room:read", "room:presence:write"] | null
-      >;
-      usersAccesses?: Record<
-        string,
-        ["room:write"] | ["room:read", "room:presence:write"] | null
-      >;
-      metadata?: Record<string, string | string[] | null>;
-    },
+    params: UpdateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
@@ -773,7 +951,41 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
-    return (await res.json()) as Promise<PlainLsonObject | ToSimplifiedJson<S>>;
+    return (await res.json()) as PlainLsonObject | ToSimplifiedJson<S>;
+  }
+
+  async #requestStorageMutation(
+    roomId: string,
+    options?: RequestOptions
+  ): Promise<RequestStorageMutationResponse> {
+    const resp = await this.#post(
+      url`/v2/rooms/${roomId}/request-storage-mutation`,
+      {},
+      options
+    );
+    if (!resp.ok) {
+      throw await LiveblocksError.from(resp);
+    }
+
+    if (resp.headers.get("content-type") !== "application/x-ndjson") {
+      throw new Error("Unexpected response content type");
+    }
+    if (resp.body === null) {
+      throw new Error("Unexpected null body in response");
+    }
+
+    const stream = resp.body
+      .pipeThrough(new TextDecoderStream()) // stream-decode all bytes to utf8 chunks
+      .pipeThrough(new LineStream()) // stream those strings by lines
+      .pipeThrough(new NdJsonStream()); // parse each line as JSON
+
+    // Read the first element from the NDJson stream and interpret it as the response data
+    const iter = stream[Symbol.asyncIterator]();
+    const { actor } = (await iter.next()) as unknown as { actor: number };
+
+    // The rest of the stream are all the Storage nodes
+    const nodes = (await asyncConsume(iter)) as IdTuple<SerializedCrdt>[];
+    return { actor, nodes };
   }
 
   /**
@@ -1399,7 +1611,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
-      {},
+      { userId: params.data.userId },
       options
     );
 
@@ -1426,7 +1638,7 @@ export class Liveblocks {
 
     const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
-      {},
+      { userId: params.data.userId },
       options
     );
 
@@ -1586,32 +1798,9 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getInboxNotifications(
-    params: {
-      userId: string;
-      /**
-       * The query to filter inbox notifications by. It is based on our query language.
-       *
-       * @example
-       * ```
-       * {
-       *  query: "unread:true"
-       * }
-       * ```
-       *
-       * @example
-       * ```
-       * {
-       *   query: {
-       *     unread: true
-       *   }
-       * }
-       * ```
-       *
-       */
-      query?: string | { unread: boolean };
-    },
+    params: GetInboxNotificationsOptions,
     options?: RequestOptions
-  ): Promise<{ data: InboxNotificationData[] }> {
+  ): Promise<Page<InboxNotificationData>> {
     const { userId } = params;
 
     let query: string | undefined;
@@ -1624,20 +1813,57 @@ export class Liveblocks {
 
     const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications`,
-      { query },
+      {
+        query,
+        limit: params?.limit,
+        startingAfter: params?.startingAfter,
+      },
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
 
-    const { data } = (await res.json()) as {
-      data: InboxNotificationDataPlain[];
-    };
-
+    const page = (await res.json()) as Page<InboxNotificationDataPlain>;
     return {
-      data: data.map(convertToInboxNotificationData),
+      ...page,
+      data: page.data.map(convertToInboxNotificationData),
     };
+  }
+
+  /**
+   * Iterates over all inbox notifications for a user.
+   *
+   * The difference with .getInboxNotifications() is that pagination will
+   * happen automatically under the hood, using the given `pageSize`.
+   *
+   * @param criteria.userId The user ID to get the inbox notifications from.
+   * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param options.pageSize (optional) The page size to use for each request.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  async *iterInboxNotifications(
+    criteria: InboxNotificationsQueryCriteria,
+    options?: RequestOptions & { pageSize?: number }
+  ): AsyncGenerator<InboxNotificationData> {
+    // TODO Dry up this async iterable implementation for pagination
+    const { signal } = options ?? {};
+    const pageSize = checkBounds("pageSize", options?.pageSize ?? 50, 10);
+
+    let cursor: string | undefined = undefined;
+    while (true) {
+      const { nextCursor, data } = await this.getInboxNotifications(
+        { ...criteria, startingAfter: cursor, limit: pageSize },
+        { signal }
+      );
+      for (const item of data) {
+        yield item;
+      }
+      if (!nextCursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
   }
 
   /**
@@ -1891,6 +2117,196 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
   }
+
+  /**
+   * Retrieves the current Storage contents for the given room ID and calls the
+   * provided callback function, in which you can mutate the Storage contents
+   * at will.
+   *
+   * If you need to run the same mutation across multiple rooms, prefer using
+   * `.massMutateStorage()` instead of looping over room IDs yourself.
+   */
+  public async mutateStorage(
+    roomId: string,
+    callback: MutateStorageCallback,
+    options?: MutateStorageOptions
+  ): Promise<void> {
+    return this.#_mutateOneRoom(roomId, undefined, callback, options);
+  }
+
+  /**
+   * Retrieves the Storage contents for each room that matches the given
+   * criteria and calls the provided callback function, in which you can mutate
+   * the Storage contents at will.
+   *
+   * You can use the `criteria` parameter to select which rooms to process by
+   * their metadata. If you pass `{}` (empty object), all rooms will be
+   * selected and processed.
+   *
+   * This method will execute mutations in parallel, using the specified
+   * `concurrency` value. If you which to run the mutations serially, set
+   * `concurrency` to 1.
+   */
+  public async massMutateStorage(
+    criteria: RoomsQueryCriteria,
+    callback: MassMutateStorageCallback,
+    massOptions?: MassMutateStorageOptions
+  ): Promise<void> {
+    const concurrency = checkBounds(
+      "concurrency",
+      massOptions?.concurrency ?? 8,
+      1,
+      20
+    );
+
+    // Try to select a reasonable page size based on the concurrency level, but
+    // at least never less than 20.
+    const pageSize = Math.max(20, concurrency * 4);
+    const { signal } = massOptions ?? {};
+    const rooms = this.iterRooms(criteria, { pageSize, signal });
+
+    const options = { signal };
+    await runConcurrently(
+      rooms,
+      (roomData) =>
+        this.#_mutateOneRoom(roomData.id, roomData, callback, options),
+      concurrency
+    );
+  }
+
+  async #_mutateOneRoom<RD extends RoomData | undefined>(
+    roomId: string,
+    room: RD,
+    callback: (context: { room: RD; root: LiveObject<S> }) => Awaitable<void>,
+    options?: MutateStorageOptions
+  ): Promise<void> {
+    // Hard-coded for now, see https://github.com/liveblocks/liveblocks/pull/2293#issuecomment-2740067249
+    const debounceInterval = 200;
+
+    // The plan:
+    // 1. Create a new pool
+    // 2. Download the storage contents
+    // 3. Construct the Live tree
+    // 4. Run the callback
+    // 5. Capture all the changes to the pool
+    // 6. Send the resulting ops to the server at a throttled interval
+
+    const { signal, abort } = makeAbortController(options?.signal);
+
+    // Set up a "debouncer": we'll flush the buffered ops to the server if
+    // there hasn't been an update to the buffered ops for a while. This
+    // behavior is slightly different from the browser client, which will emit
+    // ops as soon as they are available (= throttling)
+    let opsBuffer: Op[] = [];
+    let outstandingFlush$: Promise<void> | undefined = undefined;
+    let lastFlush = performance.now();
+
+    const flushIfNeeded = (force: boolean) => {
+      if (opsBuffer.length === 0)
+        // Nothing to do
+        return;
+
+      if (outstandingFlush$) {
+        // There already is an outstanding flush, wait for it to complete
+        return;
+      }
+
+      const now = performance.now();
+      if (!(force || now - lastFlush > debounceInterval)) {
+        // We're still within the debounce window, do nothing right now
+        return;
+      }
+
+      // All good, flush right now
+      lastFlush = now;
+      const ops = opsBuffer;
+      opsBuffer = [];
+
+      outstandingFlush$ = this.#sendMessage(
+        roomId,
+        [{ type: ClientMsgCode.UPDATE_STORAGE, ops }],
+        { signal }
+      )
+        .catch((err) => {
+          // For now, if any error happens during one of the flushes, abort the entire thing
+          // TODO Think about more error handling control options here later (auto-retry, etc)
+          abort(err);
+        })
+        .finally(() => {
+          outstandingFlush$ = undefined;
+        });
+    };
+
+    // Download the storage contents
+    try {
+      const resp = await this.#requestStorageMutation(roomId, { signal });
+      const { actor, nodes } = resp;
+
+      // Create a new pool
+      const pool = createManagedPool(roomId, {
+        getCurrentConnectionId: () => actor,
+        onDispatch: (
+          ops: Op[],
+          _reverse: Op[],
+          _storageUpdates: Map<string, StorageUpdate>
+        ) => {
+          if (ops.length === 0) return;
+
+          // Capture all the changes to the pool
+          for (const op of ops) {
+            opsBuffer.push(op);
+          }
+          flushIfNeeded(/* force */ false);
+        },
+      });
+
+      // Construct the Live tree
+      const root = LiveObject._fromItems<S>(nodes, pool);
+
+      // Run the callback
+      const callback$ = callback({ room, root });
+
+      // If the callback synchronously makes changes, we'll want to flush those as soon as possible, then flush on an interval for the remainder of the async callback.
+      flushIfNeeded(/* force */ true);
+
+      await callback$;
+    } catch (e) {
+      abort();
+      throw e;
+    } finally {
+      // Await any outstanding flushes, and then flush one last time
+      await outstandingFlush$; // eslint-disable-line @typescript-eslint/await-thenable
+      flushIfNeeded(/* force */ true);
+      await outstandingFlush$; // eslint-disable-line @typescript-eslint/await-thenable
+    }
+  }
+
+  async #sendMessage(
+    roomId: string,
+    messages: ClientMsg<JsonObject, Json>[],
+    options?: RequestOptions
+  ) {
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/send-message`,
+      { messages },
+      { signal: options?.signal }
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    // TODO: If res.ok, it will be a 200 response containing all returned Ops.
+    // These may include fix ops, which should get applied back to the managed
+    // pool.
+    // TODO Implement the handling of fix-ops:
+    // const data = (await res.json()) as {
+    //   messages: readonly (
+    //     | ServerMsg<JsonObject, BaseUserMeta, Json>
+    //     | readonly ServerMsg<JsonObject, BaseUserMeta, Json>[]
+    //   )[];
+    // };
+    // return data;
+  }
 }
 
 export class LiveblocksError extends Error {
@@ -1913,6 +2329,10 @@ export class LiveblocksError extends Error {
   }
 
   static async from(res: Response): Promise<LiveblocksError> {
+    // Retain the stack trace of the original error location, not the async return point
+    const origErrLocation = new Error();
+    Error.captureStackTrace(origErrLocation, LiveblocksError.from); // eslint-disable-line
+
     const FALLBACK = "An error happened without an error message";
     let text: string;
     try {
@@ -1931,6 +2351,8 @@ export class LiveblocksError extends Error {
         .filter(Boolean)
         .join("\n") || undefined;
 
-    return new LiveblocksError(message, res.status, details);
+    const err = new LiveblocksError(message, res.status, details);
+    err.stack = origErrLocation.stack;
+    return err;
   }
 }

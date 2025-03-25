@@ -9,8 +9,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.16.0",
-    "@liveblocks/react": "^2.16.0",
+    "@liveblocks/client": "^2.22.1",
+    "@liveblocks/react": "^2.22.1",
     "next": "^13.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

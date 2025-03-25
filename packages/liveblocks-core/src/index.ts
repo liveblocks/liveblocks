@@ -27,7 +27,7 @@ export type {
   ResolveUsersArgs,
   SyncStatus,
 } from "./client";
-export { createClient } from "./client";
+export { checkBounds, createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -56,6 +56,11 @@ export {
   convertToInboxNotificationData,
   convertToThreadData,
 } from "./convert-plain-data";
+export type {
+  CreateManagedPoolOptions,
+  ManagedPool,
+} from "./crdts/AbstractCrdt";
+export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
@@ -91,6 +96,7 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { kInternal } from "./internal";
+export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
   AsyncError,

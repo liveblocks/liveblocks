@@ -1,5 +1,81 @@
 ## vNEXT (not yet published)
 
+## v2.22.1
+
+### `@liveblocks/react-blocknote`
+
+- Fix report text editor function's call. Now we report correctly `blocknote` as
+  text editor type.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactoring.
+
+### `@liveblocks/node`
+
+- Fix: improve stack traces of REST API errors to include the original error
+  location.
+
+## v2.22.0
+
+### `@liveblocks/node`
+
+- Added pagination support to `.getInboxNotifications()`. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
+- New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).
+- New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically. See [docs](https://liveblocks.io).
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#iter-users-userId-inboxNotifications).
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mutate-storage).
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mass-mutate-storage).
+- Updated method `.deleteRoom()` to no longer throw when the room already does
+  not exist. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId).
+
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/emails`
+
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user ID correctly to the corresponding backend endpoints.
+
+### `@liveblocks/react-ui`
+
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://frimousse.liveblocks.io) and improving it in the
+    process. You can also combine this package with the primitives to build your
+    own reaction picker for example.
+- Improve and fix pasting HTML into the composer.
+
 ## v2.20.0
 
 ### `@liveblocks/client`

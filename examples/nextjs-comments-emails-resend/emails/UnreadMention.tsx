@@ -16,7 +16,7 @@ import {
 type UnreadMentionEmailProps = {
   company: CompanyInfo;
   room: RoomInfo;
-  comment: CommentEmailAsReactData;
+  comment: Omit<CommentEmailAsReactData, "reactBody">;
 };
 
 const previewProps: UnreadMentionEmailProps = {
@@ -41,7 +41,7 @@ const previewProps: UnreadMentionEmailProps = {
         avatar: "https://liveblocks.io/avatars/avatar-6.png",
       },
     },
-    reactBody: (
+    body: (
       <Text className="text-sm m-0 text-black">
         <span>
           For the user research phase, we'll need{" "}

@@ -2,7 +2,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/global.css";
 import App from "./App";
-import { ToastProvider } from "@/useToast";
+import { ToastProvider } from "./useToast";
 
 {% DEFAULT_SCRIPTS %}
 
