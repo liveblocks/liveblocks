@@ -20,7 +20,7 @@ export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
 }
 
 const COLORS = [
-  "oklch(0.586 0.253 17.585)",
+  "oklch(0.645 0.246 16.439)",
   "oklch(0.705 0.213 47.604)",
   "oklch(0.795 0.184 86.047)",
   "oklch(0.723 0.219 149.579)",
@@ -60,6 +60,17 @@ function EmojiAndButtons() {
               setIcon(emoji);
               setIsEmojiPopoverOpen(false);
             }}
+            buttonSlot={
+              <Button
+                variant="subtle"
+                onClick={() => {
+                  setIcon(null);
+                  setIsEmojiPopoverOpen(false);
+                }}
+              >
+                Remove
+              </Button>
+            }
           />
         }
       >
@@ -99,7 +110,10 @@ function EmojiAndButtons() {
             ))}
             <button
               className={styles.coverPopoverItem}
-              onClick={() => setCover(null)}
+              onClick={() => {
+                setCover(null);
+                setIsCoverPopoverOpen(false);
+              }}
               data-active={cover === null || undefined}
             >
               <CrossIcon style={{ width: 24, height: 24 }} />

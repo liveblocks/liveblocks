@@ -11,12 +11,15 @@
   position: relative;
   z-index: 10;
   appearance: none;
-  margin-block-start: 8px;
-  margin-inline: 8px;
   padding: 8px 10px;
   background: light-dark(#f5f5f5, #262626);
   border-radius: 6px;
   font-size: 14px;
+  height: var(--space-13);
+}
+
+.root [frimousse-search]:focus {
+  outline-color: var(--color-accent);
 }
 
 .root [frimousse-viewport] {
@@ -24,6 +27,7 @@
   flex: 1;
   outline: none;
 }
+
 .root [frimousse-loading] {
   position: absolute;
   inset: 0;
@@ -35,34 +39,48 @@
 }
 
 .root [frimousse-list] {
-  padding-block-end: 12px;
+  padding-block-end: var(--space-3);
   user-select: none;
 }
 
 .root [frimousse-category-header] {
-  padding: 12px 12px 6px;
+  padding: var(--space-4) var(--space-4) var(--space-3);
   background: light-dark(#fff, #171717);
-  color: light-dark(#525252, #a1a1a1);
-  font-size: 12px;
-  font-weight: 500;
+  color: light-dark(#8b8b8b, #a1a1a1);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .root [frimousse-row] {
-  padding-inline: 12px;
-  scroll-margin-block: 12px;
+  padding-inline: var(--space-4);
+  scroll-margin-block: var(--space-3);
 }
 
 .root [frimousse-emoji] {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--space-11);
+  height: var(--space-11);
   border-radius: 6px;
   background: transparent;
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .root [frimousse-emoji][data-active] {
   background: light-dark(#f5f5f5, #262626);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-4);
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.search {
+  flex-grow: 1;
 }
