@@ -1,3 +1,18 @@
+.noteHeader {
+  position: relative;
+}
+
+.noteHeader:hover .buttonRow {
+  display: flex;
+  opacity: 1;
+}
+
+.buttonRow {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
 .buttonRow {
   margin: 0 auto;
   max-width: var(--note-editor-width);
@@ -13,17 +28,20 @@
 .coverPopover {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 8px;
+  padding: var(--space-4);
+  gap: var(--space-3);
 }
 
 .coverPopoverItem {
-  cursor: pointer;
-  height: var(--space-12);
-  width: var(--space-12);
+  height: var(--space-14);
+  width: var(--space-16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
   background-color: var(--color-surface);
   opacity: 0.5;
+  cursor: pointer;
 }
 
 .coverPopoverItem[data-active="true"] {

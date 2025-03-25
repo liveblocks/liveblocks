@@ -5,16 +5,16 @@ import styles from "./NoteHeader.module.css";
 import { Button } from "@/primitives/Button";
 import { useState } from "react";
 import { Popover } from "@/primitives/Popover";
-import { CrossIcon, HighlightIcon, ImageIcon } from "@/icons";
+import { CrossIcon, ImageIcon } from "@/icons";
 import { Icon } from "@liveblocks/react-ui";
 
 export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
   return (
-    <>
+    <div className={styles.noteHeader}>
       <Cover />
       <EmojiAndButtons />
       <Title editor={editor} />
-    </>
+    </div>
   );
 }
 
@@ -37,7 +37,10 @@ function EmojiAndButtons() {
   }, []);
 
   return (
-    <div className={styles.buttonRow}>
+    <div
+      className={styles.buttonRow}
+      style={{ opacity: isCoverPopoverOpen ? 1 : undefined }}
+    >
       <Button
         variant="subtle"
         icon={<Icon.Emoji style={{ marginRight: -2 }} />}
@@ -65,7 +68,7 @@ function EmojiAndButtons() {
               onClick={() => setCover(null)}
               data-active={cover === null}
             >
-              <CrossIcon />
+              <CrossIcon style={{ width: 24, height: 24 }} />
               <span className="sr-only">Remove cover</span>
             </button>
           </div>

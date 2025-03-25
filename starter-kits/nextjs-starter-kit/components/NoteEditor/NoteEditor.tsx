@@ -26,9 +26,7 @@ function BlockTextEditor() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.editorHeader}>
-        <NoteHeader editor={editor} />
-      </div>
+      <NoteHeader editor={editor} />
       <div className={styles.editorWrapper}>
         <BlockNoteView editor={editor} />
         <ClientSideSuspense fallback={null}>

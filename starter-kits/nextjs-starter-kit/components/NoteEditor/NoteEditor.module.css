@@ -10,10 +10,6 @@
   --note-editor-horizontal-padding: 54px;
 }
 
-.editorHeader {
-
-}
-
 .editorWrapper {
   position: relative;
   flex-grow: 1;
