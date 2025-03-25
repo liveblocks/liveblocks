@@ -3,6 +3,7 @@
 import {
   LiveblocksProvider,
   useRoomSubscriptionSettings,
+  useErrorListener,
 } from "@liveblocks/react";
 import { useUpdateRoomSubscriptionSettings } from "@liveblocks/react/suspense";
 
@@ -11,6 +12,12 @@ function App() {
   const updateRoomNotificationSettings = useUpdateRoomSubscriptionSettings();
 
   console.log(settings);
+
+  useErrorListener((error) => {
+    if (error.context.type === "UPDATE_SUBSCRIPTION_SETTINGS_ERROR") {
+      console.error(error);
+    }
+  });
 
   return (
     <div>

@@ -112,6 +112,7 @@ export default function transformer(
   {
     let isUseRoomNotificationSettingsImported = false;
     let isUseUpdateRoomNotificationSettingsImported = false;
+    let isUseErrorListenerImported = false;
 
     /**
      * Before: import { useRoomNotificationSettings, useUpdateRoomNotificationSettings } from "@liveblocks/react"
@@ -149,6 +150,14 @@ export default function transformer(
             isUseUpdateRoomNotificationSettingsImported = true;
             isDirty = true;
           }
+
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.name === "useErrorListener"
+          ) {
+            // No transform here, we're just checking if the import is present
+            isUseErrorListenerImported = true;
+          }
         });
       }
     });
@@ -185,6 +194,22 @@ export default function transformer(
 
             isDirty = true;
           }
+        });
+    }
+
+    /**
+     * Before: useErrorListener((error) => console.log(error.context.type === "UPDATE_NOTIFICATION_SETTINGS_ERROR"))
+     *  After: useErrorListener((error) => console.log(error.context.type === "UPDATE_SUBSCRIPTION_SETTINGS_ERROR"))
+     */
+    if (isUseErrorListenerImported) {
+      root
+        .find(j.Literal, {
+          value: "UPDATE_NOTIFICATION_SETTINGS_ERROR",
+        })
+        .forEach((path) => {
+          j(path).replaceWith(j.literal("UPDATE_SUBSCRIPTION_SETTINGS_ERROR"));
+
+          isDirty = true;
         });
     }
 

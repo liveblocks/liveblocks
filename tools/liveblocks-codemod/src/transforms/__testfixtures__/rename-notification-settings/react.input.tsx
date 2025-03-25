@@ -3,6 +3,7 @@
 import {
   LiveblocksProvider,
   useRoomNotificationSettings,
+  useErrorListener,
 } from "@liveblocks/react";
 import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
 
@@ -11,6 +12,12 @@ function App() {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
   console.log(settings);
+
+  useErrorListener((error) => {
+    if (error.context.type === "UPDATE_NOTIFICATION_SETTINGS_ERROR") {
+      console.error(error);
+    }
+  });
 
   return (
     <div>
