@@ -11,6 +11,15 @@ export default function transformer(
   const root = j(file.source);
   let isDirty = false;
 
+  // Can be used to reduce false positives
+  const hasLiveblocksRelatedImport = root
+    .find(j.ImportDeclaration)
+    .some((path) => {
+      const value = path.node.source.value;
+
+      return typeof value === "string" && value.includes("liveblocks");
+    });
+
   /**
    * @liveblocks/client
    */
@@ -59,43 +68,63 @@ export default function transformer(
       isDirty = true;
     }
 
-    /**
-     * Before: room.getNotificationSettings()
-     *  After: room.getSubscriptionSettings()
-     */
-    root
-      .find(j.MemberExpression)
-      .filter(
-        (path) =>
-          path.node.property.type === "Identifier" &&
-          path.node.property.name === "getNotificationSettings"
-      )
-      .forEach((path) => {
-        if (path.node.property.type === "Identifier") {
-          path.node.property.name = "getSubscriptionSettings";
+    if (hasLiveblocksRelatedImport) {
+      /**
+       * Before: room.getNotificationSettings()
+       *  After: room.getSubscriptionSettings()
+       */
+      root
+        .find(j.CallExpression)
+        .filter((path) => {
+          const callee = path.node.callee;
+          return (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier" &&
+            callee.property.name === "getNotificationSettings" &&
+            // Reduce false positives by checking for zero arguments
+            path.node.arguments.length === 0
+          );
+        })
+        .forEach((path) => {
+          const callee = path.node.callee;
+          if (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier"
+          ) {
+            callee.property.name = "getSubscriptionSettings";
 
-          isDirty = true;
-        }
-      });
+            isDirty = true;
+          }
+        });
 
-    /**
-     * Before: room.updateNotificationSettings({})
-     *  After: room.updateSubscriptionSettings({})
-     */
-    root
-      .find(j.MemberExpression)
-      .filter(
-        (path) =>
-          path.node.property.type === "Identifier" &&
-          path.node.property.name === "updateNotificationSettings"
-      )
-      .forEach((path) => {
-        if (path.node.property.type === "Identifier") {
-          path.node.property.name = "updateSubscriptionSettings";
+      /**
+       * Before: room.updateNotificationSettings({})
+       *  After: room.updateSubscriptionSettings({})
+       */
+      root
+        .find(j.CallExpression)
+        .filter((path) => {
+          const callee = path.node.callee;
+          return (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier" &&
+            callee.property.name === "updateNotificationSettings" &&
+            // Reduce false positives by checking for exactly one argument
+            path.node.arguments.length === 1
+          );
+        })
+        .forEach((path) => {
+          const callee = path.node.callee;
+          if (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier"
+          ) {
+            callee.property.name = "updateSubscriptionSettings";
 
-          isDirty = true;
-        }
-      });
+            isDirty = true;
+          }
+        });
+    }
   }
 
   return isDirty ? root.toSource(options) : file.source;
