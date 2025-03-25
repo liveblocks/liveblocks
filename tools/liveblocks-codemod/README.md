@@ -50,6 +50,15 @@ Removes any function-style body from `<ClientSideSuspense>`’s `children` prop.
 npx @liveblocks/codemod@latest simplify-client-side-suspense-children
 ```
 
+#### `rename-notification-settings`
+
+Renames "room notification settings" (types, hooks, methods, etc.) to "room
+subscription settings" and updates all imports and usages accordingly.
+
+```shell
+npx @liveblocks/codemod@latest rename-notification-settings
+```
+
 ### 2.0 (breaking changes)
 
 Liveblocks 2.0 comes with a number of breaking changes and most are covered by
