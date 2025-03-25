@@ -228,6 +228,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -268,6 +269,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
