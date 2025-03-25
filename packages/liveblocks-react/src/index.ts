@@ -65,6 +65,7 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
 } from "./room";
 
@@ -82,6 +83,7 @@ export {
   useAttachmentUrl,
   useHistoryVersions,
   useRoomNotificationSettings,
+  useRoomSubscriptionSettings,
 } from "./room";
 export {
   useInboxNotifications,

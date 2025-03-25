@@ -16,7 +16,7 @@ import type {
   Patchable,
   Permission,
   Resolve,
-  RoomNotificationSettings,
+  RoomSubscriptionSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -49,7 +49,7 @@ import { ThreadDB } from "./ThreadDB";
 import type {
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
-  RoomNotificationSettingsAsyncResult,
+  RoomSubscriptionSettingsAsyncResult,
   ThreadsAsyncResult,
   ThreadsQuery,
   UserNotificationSettingsAsyncResult,
@@ -70,7 +70,7 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | DeleteInboxNotificationOptimisticUpdate
   | DeleteAllInboxNotificationsOptimisticUpdate
-  | UpdateNotificationSettingsOptimisticUpdate
+  | UpdateSubscriptionSettingsOptimisticUpdate
   | UpdateUserNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
@@ -175,11 +175,11 @@ type DeleteAllInboxNotificationsOptimisticUpdate = {
   deletedAt: Date;
 };
 
-type UpdateNotificationSettingsOptimisticUpdate = {
-  type: "update-notification-settings";
+type UpdateSubscriptionSettingsOptimisticUpdate = {
+  type: "update-subscription-settings";
   id: string;
   roomId: string;
-  settings: Partial<RoomNotificationSettings>;
+  settings: Partial<RoomSubscriptionSettings>;
 };
 
 // Note: Using term `user` to differentiate from `room` notification settings
@@ -534,18 +534,18 @@ type VersionsLUT = DefaultMap<RoomId, Map<string, HistoryVersion>>;
 type NotificationsLUT = Map<string, InboxNotificationData>;
 
 /**
- * A lookup table (LUT) for all the room notification settings.
+ * A lookup table (LUT) for all the room subscription settings.
  */
-type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
+type SubscriptionSettingsLUT = Map<RoomId, RoomSubscriptionSettings>;
 
 /**
- * Notification settings by room ID.
+ * Subscription settings by room ID.
  * e.g. { 'room-abc': { threads: "all" },
  *        'room-def': { threads: "replies_and_mentions" },
  *        'room-xyz': { threads: "none" },
  *      }
  */
-type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
+type SubscriptionSettingsByRoomId = Record<RoomId, RoomSubscriptionSettings>;
 
 type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
 
@@ -677,12 +677,12 @@ function createStore_forNotifications() {
   };
 }
 
-function createStore_forRoomNotificationSettings(
+function createStore_forRoomSubscriptionSettings(
   updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
 ) {
-  const baseSignal = new MutableSignal<SettingsLUT>(new Map());
+  const baseSignal = new MutableSignal<SubscriptionSettingsLUT>(new Map());
 
-  function update(roomId: string, settings: RoomNotificationSettings): void {
+  function update(roomId: string, settings: RoomSubscriptionSettings): void {
     baseSignal.mutate((lut) => {
       lut.set(roomId, settings);
     });
@@ -690,7 +690,7 @@ function createStore_forRoomNotificationSettings(
 
   return {
     signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
-      applyOptimisticUpdates_forSettings(base, updates)
+      applyOptimisticUpdates_forSubscriptionSettings(base, updates)
     ),
 
     // Mutations
@@ -841,7 +841,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications           (Part 1)
   //          \                          | |                 | |    & notifications by ID
   //         | \                         | |      Apply      | |
-  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Room Notification Settings   (Part 2)
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Room Subscription Settings   (Part 2)
   //          \                          |        Updates    |  |
   //           `------- etc etc ---------+                   |  +--> History Versions             (Part 3)
   //                       ^                                 |
@@ -863,7 +863,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // well. It almost works like that already anyway!
   readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly notifications: ReturnType<typeof createStore_forNotifications>;
-  readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
+  readonly roomSubscriptionSettings: ReturnType<typeof createStore_forRoomSubscriptionSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
   readonly userNotificationSettings: ReturnType<
@@ -893,9 +893,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly notifications: DerivedSignal<CleanNotifications>;
 
     readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
-    readonly settingsByRoomId: DefaultMap<
+    readonly subscriptionSettingsByRoomId: DefaultMap<
       RoomId,
-      LoadableResource<RoomNotificationSettingsAsyncResult>
+      LoadableResource<RoomSubscriptionSettingsAsyncResult>
     >;
     readonly versionsByRoomId: DefaultMap<
       RoomId,
@@ -958,7 +958,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.threads = new ThreadDB();
 
     this.notifications = createStore_forNotifications();
-    this.roomNotificationSettings = createStore_forRoomNotificationSettings(
+    this.roomSubscriptionSettings = createStore_forRoomSubscriptionSettings(
       this.optimisticUpdates.signal
     );
     this.historyVersions = createStore_forHistoryVersions();
@@ -1126,15 +1126,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#notificationsPaginationState.waitUntilLoaded,
     };
 
-    const settingsByRoomId = new DefaultMap((roomId: RoomId) => {
+    const subscriptionSettingsByRoomId = new DefaultMap((roomId: RoomId) => {
       const resource = new SinglePageResource(async () => {
         const room = this.#client.getRoom(roomId);
         if (room === null) {
           throw new Error(`Room '${roomId}' is not available on client`);
         }
 
-        const result = await room.getNotificationSettings();
-        this.roomNotificationSettings.update(roomId, result);
+        const result = await room.getSubscriptionSettings();
+        this.roomSubscriptionSettings.update(roomId, result);
       });
 
       const signal = DerivedSignal.from(() => {
@@ -1144,7 +1144,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         } else {
           return ASYNC_OK(
             "settings",
-            nn(this.roomNotificationSettings.signal.get()[roomId])
+            nn(this.roomSubscriptionSettings.signal.get()[roomId])
           );
         }
       }, shallow);
@@ -1216,7 +1216,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingUserThreads,
       notifications,
       loadingNotifications,
-      settingsByRoomId,
+      subscriptionSettingsByRoomId,
       versionsByRoomId,
       userNotificationSettings,
     };
@@ -1451,17 +1451,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Updates existing notification setting for a room with a new value,
+   * Updates existing subscription settings for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  public updateRoomNotificationSettings(
+  public updateRoomSubscriptionSettings(
     roomId: string,
     optimisticId: string,
-    settings: Readonly<RoomNotificationSettings>
+    settings: Readonly<RoomSubscriptionSettings>
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
-      this.roomNotificationSettings.update(roomId, settings);
+      this.roomSubscriptionSettings.update(roomId, settings);
     });
   }
 
@@ -1572,7 +1572,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
   }
 
-  public async refreshRoomNotificationSettings(
+  public async refreshRoomSubscriptionSettings(
     roomId: string,
     signal: AbortSignal
   ) {
@@ -1580,8 +1580,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
-    const result = await room.getNotificationSettings({ signal });
-    this.roomNotificationSettings.update(roomId, result);
+    const result = await room.getSubscriptionSettings({ signal });
+    this.roomSubscriptionSettings.update(roomId, result);
   }
 
   /**
@@ -1813,33 +1813,32 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
 }
 
 /**
- * Applies optimistic updates, removes deleted threads, sorts results in
- * a stable way, removes internal fields that should not be exposed publicly.
+ * Applies optimistic updates to subscription settings in a stable way.
  */
-function applyOptimisticUpdates_forSettings(
-  settingsLUT: SettingsLUT,
+function applyOptimisticUpdates_forSubscriptionSettings(
+  settingsLUT: SubscriptionSettingsLUT,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
-): SettingsByRoomId {
-  const settingsByRoomId = Object.fromEntries(settingsLUT);
+): SubscriptionSettingsByRoomId {
+  const subscriptionSettingsByRoomId = Object.fromEntries(settingsLUT);
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
-      case "update-notification-settings": {
-        const settings = settingsByRoomId[optimisticUpdate.roomId];
+      case "update-subscription-settings": {
+        const settings = subscriptionSettingsByRoomId[optimisticUpdate.roomId];
 
         // If the settings don't exist, we do not apply the update
         if (settings === undefined) {
           break;
         }
 
-        settingsByRoomId[optimisticUpdate.roomId] = {
+        subscriptionSettingsByRoomId[optimisticUpdate.roomId] = {
           ...settings,
           ...optimisticUpdate.settings,
         };
       }
     }
   }
-  return settingsByRoomId;
+  return subscriptionSettingsByRoomId;
 }
 
 /**

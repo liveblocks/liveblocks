@@ -55,7 +55,7 @@ import type {
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+import type { RoomSubscriptionSettings } from "./types/RoomSubscriptionSettings";
 import { PKG_VERSION } from "./version";
 
 export interface RoomHttpApi<M extends BaseMetadata> {
@@ -233,21 +233,21 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     inboxNotificationId: string;
   }): Promise<string>;
 
-  getNotificationSettings({
+  getSubscriptionSettings({
     roomId,
     signal,
   }: {
     roomId: string;
     signal?: AbortSignal;
-  }): Promise<RoomNotificationSettings>;
+  }): Promise<RoomSubscriptionSettings>;
 
-  updateNotificationSettings({
+  updateSubscriptionSettings({
     roomId,
     settings,
   }: {
     roomId: string;
-    settings: Partial<RoomNotificationSettings>;
-  }): Promise<RoomNotificationSettings>;
+    settings: Partial<RoomSubscriptionSettings>;
+  }): Promise<RoomSubscriptionSettings>;
 
   // Attachments
   getAttachmentUrl(options: {
@@ -1055,12 +1055,12 @@ export function createApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getNotificationSettings(options: {
+  async function getSubscriptionSettings(options: {
     roomId: string;
     signal?: AbortSignal;
-  }): Promise<RoomNotificationSettings> {
-    return httpClient.get<RoomNotificationSettings>(
-      url`/v2/c/rooms/${options.roomId}/notification-settings`,
+  }): Promise<RoomSubscriptionSettings> {
+    return httpClient.get<RoomSubscriptionSettings>(
+      url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1072,12 +1072,12 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  async function updateNotificationSettings(options: {
+  async function updateSubscriptionSettings(options: {
     roomId: string;
-    settings: Partial<RoomNotificationSettings>;
-  }): Promise<RoomNotificationSettings> {
-    return httpClient.post<RoomNotificationSettings>(
-      url`/v2/c/rooms/${options.roomId}/notification-settings`,
+    settings: Partial<RoomSubscriptionSettings>;
+  }): Promise<RoomSubscriptionSettings> {
+    return httpClient.post<RoomSubscriptionSettings>(
+      url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1569,9 +1569,9 @@ export function createApiClient<M extends BaseMetadata>({
     subscribeToThread,
     unsubscribeFromThread,
     markRoomInboxNotificationAsRead,
-    // Room notifications
-    getNotificationSettings,
-    updateNotificationSettings,
+    // Room subscription settings
+    getSubscriptionSettings,
+    updateSubscriptionSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,

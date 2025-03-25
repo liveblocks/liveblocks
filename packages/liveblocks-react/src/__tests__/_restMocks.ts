@@ -4,7 +4,7 @@ import type {
   InboxNotificationData,
   PartialUserNotificationSettings,
   Permission,
-  RoomNotificationSettings,
+  RoomSubscriptionSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
   UserNotificationSettingsPlain,
@@ -225,28 +225,28 @@ export function mockDeleteInboxNotification(
   );
 }
 
-export function mockGetRoomNotificationSettings(
+export function mockGetRoomSubscriptionSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    RoomNotificationSettings
+    RoomSubscriptionSettings
   >
 ) {
   return rest.get(
-    "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/subscription-settings",
     resolver
   );
 }
 
-export function mockUpdateRoomNotificationSettings(
+export function mockUpdateRoomSubscriptionSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    RoomNotificationSettings
+    RoomSubscriptionSettings
   >
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/subscription-settings",
     resolver
   );
 }

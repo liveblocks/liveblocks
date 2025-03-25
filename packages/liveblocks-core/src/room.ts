@@ -98,7 +98,7 @@ import type {
   TextEditorType,
 } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+import type { RoomSubscriptionSettings } from "./types/RoomSubscriptionSettings";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -485,7 +485,7 @@ type ListTextVersionsSinceOptions = {
   signal?: AbortSignal;
 };
 
-type GetNotificationSettingsOptions = {
+type GetSubscriptionSettingsOptions = {
   signal?: AbortSignal;
 };
 
@@ -981,26 +981,46 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
-   * Gets the user's notification settings for the current room.
+   * @deprecated Renamed to `getSubscriptionSettings`
    *
-   * @example
-   * const settings = await room.getNotificationSettings();
+   * Gets the user's subscription settings for the current room.
    */
   getNotificationSettings(
-    options?: GetNotificationSettingsOptions
-  ): Promise<RoomNotificationSettings>;
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings>;
 
   /**
-   * Updates the user's notification settings for the current room.
+   * Gets the user's subscription settings for the current room.
    *
    * @example
-   * await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+   * const settings = await room.getSubscriptionSettings();
    */
-  updateNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings>;
+  getSubscriptionSettings(
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings>;
 
   /**
+   * @deprecated Renamed to `getSubscriptionSettings`
+   *
+   * Updates the user's subscription settings for the current room.
+   */
+  updateNotificationSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * Updates the user's subscription settings for the current room.
+   *
+   * @example
+   * await room.updateSubscriptionSettings({ threads: "replies_and_mentions" });
+   */
+  updateSubscriptionSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * @private
+   *
    * Internal use only. Signature might change in the future.
    */
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
@@ -3003,19 +3023,19 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
-  function getNotificationSettings(
-    options?: GetNotificationSettingsOptions
-  ): Promise<RoomNotificationSettings> {
-    return httpClient.getNotificationSettings({
+  function getSubscriptionSettings(
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings> {
+    return httpClient.getSubscriptionSettings({
       roomId,
       signal: options?.signal,
     });
   }
 
-  function updateNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings> {
-    return httpClient.updateNotificationSettings({ roomId, settings });
+  function updateSubscriptionSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings> {
+    return httpClient.updateSubscriptionSettings({ roomId, settings });
   }
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
@@ -3175,8 +3195,10 @@ export function createRoom<
       getAttachmentUrl,
 
       // Notifications
-      getNotificationSettings,
-      updateNotificationSettings,
+      getNotificationSettings: getSubscriptionSettings,
+      getSubscriptionSettings,
+      updateNotificationSettings: updateSubscriptionSettings,
+      updateSubscriptionSettings,
       markInboxNotificationAsRead,
     },
 

@@ -33,7 +33,7 @@ import type {
   PlainLsonObject,
   QueryMetadata,
   QueryParams,
-  RoomNotificationSettings,
+  RoomSubscriptionSettings,
   SerializedCrdt,
   StorageUpdate,
   ThreadData,
@@ -1867,9 +1867,11 @@ export class Liveblocks {
   }
 
   /**
-   * Gets the user's room notification settings.
-   * @param params.userId The user ID to get the room notifications from.
-   * @param params.roomId The room ID to get the room notification settings from.
+   * @deprecated Renamed to `getRoomSubscriptionSettings`
+   *
+   * Gets the user's room subscription settings.
+   * @param params.userId The user ID to get the room subscription settings from.
+   * @param params.roomId The room ID to get the room subscription settings from.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getRoomNotificationSettings(
@@ -1878,11 +1880,27 @@ export class Liveblocks {
       roomId: string;
     },
     options?: RequestOptions
-  ): Promise<RoomNotificationSettings> {
+  ): Promise<RoomSubscriptionSettings> {
+    return this.getRoomSubscriptionSettings(params, options);
+  }
+
+  /**
+   * Gets the user's room subscription settings.
+   * @param params.userId The user ID to get the room subscription settings from.
+   * @param params.roomId The room ID to get the room subscription settings from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getRoomSubscriptionSettings(
+    params: {
+      userId: string;
+      roomId: string;
+    },
+    options?: RequestOptions
+  ): Promise<RoomSubscriptionSettings> {
     const { userId, roomId } = params;
 
     const res = await this.#get(
-      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
+      url`/v2/rooms/${roomId}/users/${userId}/subscription-settings`,
       undefined,
       options
     );
@@ -1890,28 +1908,48 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as RoomNotificationSettings;
+    return (await res.json()) as RoomSubscriptionSettings;
   }
 
   /**
-   * Updates the user's room notification settings.
-   * @param params.userId The user ID to update the room notification settings for.
-   * @param params.roomId The room ID to update the room notification settings for.
-   * @param params.data The new room notification settings for the user.
+   * @deprecated Renamed to `updateRoomSubscriptionSettings`
+   *
+   * Updates the user's room subscription settings.
+   * @param params.userId The user ID to update the room subscription settings for.
+   * @param params.roomId The room ID to update the room subscription settings for.
+   * @param params.data The new room subscription settings for the user.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async updateRoomNotificationSettings(
     params: {
       userId: string;
       roomId: string;
-      data: Partial<RoomNotificationSettings>;
+      data: Partial<RoomSubscriptionSettings>;
     },
     options?: RequestOptions
-  ): Promise<RoomNotificationSettings> {
+  ): Promise<RoomSubscriptionSettings> {
+    return this.updateRoomSubscriptionSettings(params, options);
+  }
+
+  /**
+   * Updates the user's room subscription settings.
+   * @param params.userId The user ID to update the room subscription settings for.
+   * @param params.roomId The room ID to update the room subscription settings for.
+   * @param params.data The new room subscription settings for the user.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async updateRoomSubscriptionSettings(
+    params: {
+      userId: string;
+      roomId: string;
+      data: Partial<RoomSubscriptionSettings>;
+    },
+    options?: RequestOptions
+  ): Promise<RoomSubscriptionSettings> {
     const { userId, roomId, data } = params;
 
     const res = await this.#post(
-      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
+      url`/v2/rooms/${roomId}/users/${userId}/subscription-settings`,
       data,
       options
     );
@@ -1919,13 +1957,15 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as RoomNotificationSettings;
+    return (await res.json()) as RoomSubscriptionSettings;
   }
 
   /**
-   * Delete the user's room notification settings.
-   * @param params.userId The user ID to delete the room notification settings from.
-   * @param params.roomId The room ID to delete the room notification settings from.
+   * @deprecated Renamed to `deleteRoomSubscriptionSettings`
+   *
+   * Delete the user's room subscription settings.
+   * @param params.userId The user ID to delete the room subscription settings from.
+   * @param params.roomId The room ID to delete the room subscription settings from.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async deleteRoomNotificationSettings(
@@ -1935,10 +1975,26 @@ export class Liveblocks {
     },
     options?: RequestOptions
   ): Promise<void> {
+    return this.deleteRoomSubscriptionSettings(params, options);
+  }
+
+  /**
+   * Delete the user's room subscription settings.
+   * @param params.userId The user ID to delete the room subscription settings from.
+   * @param params.roomId The room ID to delete the room subscription settings from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteRoomSubscriptionSettings(
+    params: {
+      userId: string;
+      roomId: string;
+    },
+    options?: RequestOptions
+  ): Promise<void> {
     const { userId, roomId } = params;
 
     const res = await this.#delete(
-      url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
+      url`/v2/rooms/${roomId}/users/${userId}/subscription-settings`,
       options
     );
     if (!res.ok) {

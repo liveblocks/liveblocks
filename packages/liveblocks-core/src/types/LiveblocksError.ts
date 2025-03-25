@@ -74,8 +74,13 @@ type CommentsOrNotificationsErrorContext =
         | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
         | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR";
     }
+  // TODO: Deprecated, remove this once "room notification settings" hooks are removed
   | {
       type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
+      roomId: string;
+    }
+  | {
+      type: "UPDATE_SUBSCRIPTION_SETTINGS_ERROR";
       roomId: string;
     }
   | {
@@ -151,6 +156,7 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR": return "Could not mark all inbox notifications as read";
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
+    case "UPDATE_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update subscription settings";
     case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update user notification settings";
 
     default:

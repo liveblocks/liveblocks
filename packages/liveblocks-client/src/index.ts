@@ -58,6 +58,7 @@ export type {
   ResolveUsersArgs,
   Room,
   RoomNotificationSettings,
+  RoomSubscriptionSettings,
   Status,
   StorageStatus,
   StorageUpdate,

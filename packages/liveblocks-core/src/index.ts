@@ -315,7 +315,10 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+export type {
+  RoomNotificationSettings,
+  RoomSubscriptionSettings,
+} from "./types/RoomSubscriptionSettings";
 export type { User } from "./types/User";
 export { detectDupes };
 
