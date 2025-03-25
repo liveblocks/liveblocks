@@ -20,7 +20,29 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 13 (2025-03-28)
 
+## v2.22.1
+
+### `@liveblocks/react-blocknote`
+
+- Fix report text editor function's call. Now we report correctly `blocknote` as
+  text editor type.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactoring.
+
+### `@liveblocks/node`
+
+- Fix: improve stack traces of REST API errors to include the original error
+  location.
+
+## Dashboard
+
+- BlockNote editors are now supported in a room's Text Editor view.
+
 ## Contributors
+
+nvie, sugardarius
 
 # Week 12 (2025-03-21)
 
