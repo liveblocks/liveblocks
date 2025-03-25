@@ -318,7 +318,7 @@ export type {
 export type {
   RoomNotificationSettings,
   RoomSubscriptionSettings,
-} from "./types/RoomSubscriptionSettings";
+} from "./protocol/RoomSubscriptionSettings";
 export type { User } from "./types/User";
 export { detectDupes };
 
