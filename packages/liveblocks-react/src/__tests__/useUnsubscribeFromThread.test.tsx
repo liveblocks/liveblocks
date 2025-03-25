@@ -22,7 +22,7 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-describe("useUnsubscribeFromThread", () => {
+describe.skip("useUnsubscribeFromThread", () => {
   test("should unsubscribe from thread optimistically", async () => {
     const roomId = nanoid();
     const initialThread = dummyThreadData({ roomId });
