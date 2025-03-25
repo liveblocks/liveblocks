@@ -80,9 +80,7 @@ export default function transformer(
           return (
             callee.type === "MemberExpression" &&
             callee.property.type === "Identifier" &&
-            callee.property.name === "getNotificationSettings" &&
-            // Reduce false positives by checking for zero arguments
-            path.node.arguments.length === 0
+            callee.property.name === "getNotificationSettings"
           );
         })
         .forEach((path) => {
@@ -108,9 +106,7 @@ export default function transformer(
           return (
             callee.type === "MemberExpression" &&
             callee.property.type === "Identifier" &&
-            callee.property.name === "updateNotificationSettings" &&
-            // Reduce false positives by checking for exactly one argument
-            path.node.arguments.length === 1
+            callee.property.name === "updateNotificationSettings"
           );
         })
         .forEach((path) => {
@@ -120,6 +116,91 @@ export default function transformer(
             callee.property.type === "Identifier"
           ) {
             callee.property.name = "updateSubscriptionSettings";
+
+            isDirty = true;
+          }
+        });
+    }
+  }
+
+  /**
+   * @liveblocks/node
+   */
+  {
+    if (hasLiveblocksRelatedImport) {
+      /**
+       * Before: liveblocks.getRoomNotificationSettings({})
+       *  After: liveblocks.getRoomSubscriptionSettings({})
+       */
+      root
+        .find(j.CallExpression)
+        .filter((path) => {
+          const callee = path.node.callee;
+          return (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier" &&
+            callee.property.name === "getRoomNotificationSettings"
+          );
+        })
+        .forEach((path) => {
+          const callee = path.node.callee;
+          if (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier"
+          ) {
+            callee.property.name = "getRoomSubscriptionSettings";
+
+            isDirty = true;
+          }
+        });
+
+      /**
+       * Before: liveblocks.updateRoomNotificationSettings({})
+       *  After: liveblocks.updateRoomSubscriptionSettings({})
+       */
+      root
+        .find(j.CallExpression)
+        .filter((path) => {
+          const callee = path.node.callee;
+          return (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier" &&
+            callee.property.name === "updateRoomNotificationSettings"
+          );
+        })
+        .forEach((path) => {
+          const callee = path.node.callee;
+          if (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier"
+          ) {
+            callee.property.name = "updateRoomSubscriptionSettings";
+
+            isDirty = true;
+          }
+        });
+
+      /**
+       * Before: liveblocks.deleteRoomNotificationSettings({})
+       *  After: liveblocks.deleteRoomSubscriptionSettings({})
+       */
+      root
+        .find(j.CallExpression)
+        .filter((path) => {
+          const callee = path.node.callee;
+          return (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier" &&
+            callee.property.name === "deleteRoomNotificationSettings"
+          );
+        })
+        .forEach((path) => {
+          const callee = path.node.callee;
+          if (
+            callee.type === "MemberExpression" &&
+            callee.property.type === "Identifier"
+          ) {
+            callee.property.name = "deleteRoomSubscriptionSettings";
 
             isDirty = true;
           }
