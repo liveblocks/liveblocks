@@ -5142,6 +5142,29 @@ const { room, leave } = client.enterRoom("my-room" /* options */);
 leave();
 ```
 
+### Room.getNotificationSettings [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This method was renamed to [`room.getSubscriptionSettings`][] in 2.23, read
+  more in our [migration guide](/docs/platform/upgrading/2.23).
+</Banner>
+
+Gets the user’s subscription settings for the current room. This notates which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
+
+### Room.updateNotificationSettings [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This method was renamed to [`room.updateSubscriptionSettings`][] in 2.23, read
+  more in our [migration guide](/docs/platform/upgrading/2.23).
+</Banner>
+
+Updates the user’s subscription settings for the current room. Updating this
+setting will change which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
+
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
 [`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
@@ -5162,6 +5185,10 @@ leave();
 [`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
 [`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [`room.getStorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.getSubscriptionSettings`]:
+  /docs/api-reference/liveblocks-client#Room.getSubscriptionSettings
+[`room.updateSubscriptionSettings`]:
+  /docs/api-reference/liveblocks-client#Room.updateSubscriptionSettings
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event
