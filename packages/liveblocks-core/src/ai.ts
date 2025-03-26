@@ -8,7 +8,7 @@ import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
 import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
-import { tryParseJson } from "./lib/utils";
+import { type DistributiveOmit, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -187,11 +187,6 @@ export type AiConfig = {
   enableDebugLogging?: boolean;
 };
 
-// UnionOmit is a type that removes a key from a union of objects
-type UnionOmit<T, K extends keyof T> = {
-  [P in keyof T as P extends K ? never : P]: T[P];
-};
-
 export function createAi(config: AiConfig): Ai {
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     config.delegates,
@@ -340,7 +335,7 @@ export function createAi(config: AiConfig): Ai {
   });
 
   function sendClientMsgWithResponse<T>(
-    msg: UnionOmit<ClientAiMsg, "requestId">,
+    msg: DistributiveOmit<ClientAiMsg, "requestId">,
     requestTimeout: number = REQUEST_TIMEOUT
   ): Promise<T> {
     // TODO: we can probably retry or something here
