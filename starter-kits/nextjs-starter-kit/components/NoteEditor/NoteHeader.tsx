@@ -19,6 +19,7 @@ export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
   );
 }
 
+// Use Liveblocks Storage to set/read real-time properties for cover colours and emoji icons
 function EmojiAndButtons() {
   const cover = useStorage((root) => root.cover);
   const icon = useStorage((root) => root.icon);

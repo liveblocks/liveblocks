@@ -12,6 +12,7 @@ import { renameDocument } from "@/lib/actions";
 import { useInitialDocument } from "@/lib/hooks";
 import styles from "./Title.module.css";
 
+// Use Liveblocks Storage to set/read real-time title
 export function Title({ editor }: { editor: BlockNoteEditor | null }) {
   const initialDocument = useInitialDocument();
   const title = useStorage((root) => root.title);
