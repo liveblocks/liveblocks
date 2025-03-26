@@ -17,7 +17,7 @@ import styles from "./DocumentHeader.module.css";
 
 interface Props extends ComponentProps<"header"> {
   documentId: Document["id"];
-  showTitle: boolean;
+  showTitle?: boolean;
 }
 
 export function DocumentHeader({

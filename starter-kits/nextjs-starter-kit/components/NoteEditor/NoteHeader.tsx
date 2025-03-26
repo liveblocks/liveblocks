@@ -1,12 +1,12 @@
 import { BlockNoteEditor } from "@blocknote/core";
 import { useMutation, useSelf, useStorage } from "@liveblocks/react";
-import { Title } from "@/components/NoteEditor/Title";
-import { Button } from "@/primitives/Button";
-import { useState } from "react";
-import { Popover } from "@/primitives/Popover";
-import { CrossIcon, ImageIcon } from "@/icons";
 import { Icon } from "@liveblocks/react-ui";
+import { useState } from "react";
+import { Title } from "@/components/NoteEditor/Title";
+import { CrossIcon, ImageIcon } from "@/icons";
+import { Button } from "@/primitives/Button";
 import { MyEmojiPicker } from "@/primitives/EmojiPicker";
+import { Popover } from "@/primitives/Popover";
 import styles from "./NoteHeader.module.css";
 
 export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
