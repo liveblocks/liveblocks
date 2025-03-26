@@ -8,6 +8,7 @@
   display: flex;
   margin: 0 auto;
   padding: var(--space-8) var(--note-editor-horizontal-padding) 0;
+  min-height: 70px;
 }
 
 .buttonRow[data-icon="true"] {
@@ -38,7 +39,8 @@
   left: var(--note-editor-horizontal-padding);
 }
 
-.iconButtonIcon {
+.iconButtonIcon,
+.readOnlyIcon {
   isolation: isolate;
   font-size: 64px;
   line-height: 1;
@@ -49,6 +51,11 @@
   padding: var(--space-2);
   border-radius: var(--radius-sm);
   transition: background-color 0.1s ease-in-out;
+}
+
+.readOnlyIcon {
+  left: var(--note-editor-horizontal-padding);
+  bottom: var(--space-14);
 }
 
 .iconButtonIcon:hover:after {

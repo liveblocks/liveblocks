@@ -1,5 +1,5 @@
 import { BlockNoteEditor } from "@blocknote/core";
-import { useMutation, useStorage } from "@liveblocks/react";
+import { useMutation, useSelf, useStorage } from "@liveblocks/react";
 import { Title } from "@/components/NoteEditor/Title";
 import styles from "./NoteHeader.module.css";
 import { Button } from "@/primitives/Button";
@@ -32,6 +32,7 @@ const COLORS = [
 function EmojiAndButtons() {
   const cover = useStorage((root) => root.cover);
   const icon = useStorage((root) => root.icon);
+  const canWrite = useSelf()?.canWrite;
 
   const [isCoverPopoverOpen, setIsCoverPopoverOpen] = useState(false);
   const [isEmojiPopoverOpen, setIsEmojiPopoverOpen] = useState(false);
@@ -44,6 +45,14 @@ function EmojiAndButtons() {
   const setIcon = useMutation(({ storage }, newIcon: string | null) => {
     storage.set("icon", newIcon);
   }, []);
+
+  if (!canWrite) {
+    return (
+      <div className={styles.buttonRow}>
+        {icon ? <div className={styles.readOnlyIcon}>{icon}</div> : null}
+      </div>
+    );
+  }
 
   return (
     <div

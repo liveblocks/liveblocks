@@ -56,6 +56,7 @@ export function Title({ editor }: { editor: BlockNoteEditor | null }) {
   return (
     <TextareaAutosize
       value={title ?? initialDocument.name}
+      placeholder="Untitled"
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       className={styles.title}

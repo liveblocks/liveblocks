@@ -16,6 +16,7 @@
   border-radius: 6px;
   font-size: 14px;
   height: var(--space-13);
+  max-width: 175px;
 }
 
 .root [frimousse-search]:focus {
