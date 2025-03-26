@@ -14,7 +14,7 @@ function App() {
   console.log(settings);
 
   useErrorListener((error) => {
-    if (error.context.type === "UPDATE_SUBSCRIPTION_SETTINGS_ERROR") {
+    if (error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
       console.error(error);
     }
   });

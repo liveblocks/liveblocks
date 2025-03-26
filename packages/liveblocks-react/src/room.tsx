@@ -288,8 +288,8 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
             throw err;
           }
         },
-        config.SUBSCRIPTION_SETTINGS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.SUBSCRIPTION_SETTINGS_MAX_STALE_TIME }
+        config.ROOM_SUBSCRIPTION_SETTINGS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.ROOM_SUBSCRIPTION_SETTINGS_MAX_STALE_TIME }
       )
   );
 
@@ -2133,7 +2133,7 @@ function useRoomNotificationSettings(): [
 
   useEffect(
     () =>
-      void store.outputs.subscriptionSettingsByRoomId
+      void store.outputs.roomSubscriptionSettingsByRoomId
         .getOrCreate(room.id)
         .waitUntilLoaded()
 
@@ -2156,7 +2156,7 @@ function useRoomNotificationSettings(): [
   }, [poller]);
 
   const settings = useSignal(
-    store.outputs.subscriptionSettingsByRoomId.getOrCreate(room.id).signal
+    store.outputs.roomSubscriptionSettingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2185,7 +2185,7 @@ function useRoomSubscriptionSettings(): [
 
   useEffect(
     () =>
-      void store.outputs.subscriptionSettingsByRoomId
+      void store.outputs.roomSubscriptionSettingsByRoomId
         .getOrCreate(room.id)
         .waitUntilLoaded()
 
@@ -2208,7 +2208,7 @@ function useRoomSubscriptionSettings(): [
   }, [poller]);
 
   const settings = useSignal(
-    store.outputs.subscriptionSettingsByRoomId.getOrCreate(room.id).signal
+    store.outputs.roomSubscriptionSettingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2239,7 +2239,7 @@ function useRoomNotificationSettingsSuspense(): [
 
   // Suspend until there are at least some inbox notifications
   use(
-    store.outputs.subscriptionSettingsByRoomId
+    store.outputs.roomSubscriptionSettingsByRoomId
       .getOrCreate(room.id)
       .waitUntilLoaded()
   );
@@ -2276,7 +2276,7 @@ function useRoomSubscriptionSettingsSuspense(): [
 
   // Suspend until there are at least some inbox notifications
   use(
-    store.outputs.subscriptionSettingsByRoomId
+    store.outputs.roomSubscriptionSettingsByRoomId
       .getOrCreate(room.id)
       .waitUntilLoaded()
   );
@@ -2409,7 +2409,7 @@ function useUpdateRoomNotificationSettings() {
     (settings: Partial<RoomSubscriptionSettings>) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticId = store.optimisticUpdates.add({
-        type: "update-subscription-settings",
+        type: "update-room-subscription-settings",
         roomId: room.id,
         settings,
       });
@@ -2446,7 +2446,7 @@ function useUpdateRoomSubscriptionSettings() {
     (settings: Partial<RoomSubscriptionSettings>) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticId = store.optimisticUpdates.add({
-        type: "update-subscription-settings",
+        type: "update-room-subscription-settings",
         roomId: room.id,
         settings,
       });
@@ -2459,7 +2459,10 @@ function useUpdateRoomSubscriptionSettings() {
         (err: Error) =>
           onMutationFailure(
             optimisticId,
-            { type: "UPDATE_SUBSCRIPTION_SETTINGS_ERROR", roomId: room.id },
+            {
+              type: "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR",
+              roomId: room.id,
+            },
             err
           )
       );

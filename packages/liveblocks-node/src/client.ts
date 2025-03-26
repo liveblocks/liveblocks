@@ -25,10 +25,12 @@ import type {
   JsonObject,
   KDAD,
   LsonObject,
+  NotificationSettings,
+  NotificationSettingsPlain,
   Op,
   OptionalTupleUnless,
+  PartialNotificationSettings,
   PartialUnless,
-  PartialUserNotificationSettings,
   Patchable,
   PlainLsonObject,
   QueryMetadata,
@@ -40,8 +42,6 @@ import type {
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
-  UserNotificationSettings,
-  UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import {
   checkBounds,
@@ -51,7 +51,7 @@ import {
   convertToInboxNotificationData,
   convertToThreadData,
   createManagedPool,
-  createUserNotificationSettings,
+  createNotificationSettings,
   LiveObject,
   makeAbortController,
   objectToQuery,
@@ -2109,7 +2109,7 @@ export class Liveblocks {
   public async getNotificationSettings(
     params: { userId: string },
     options?: RequestOptions
-  ): Promise<UserNotificationSettings> {
+  ): Promise<NotificationSettings> {
     const { userId } = params;
 
     const res = await this.#get(
@@ -2121,8 +2121,8 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    const plainSettings = (await res.json()) as UserNotificationSettingsPlain;
-    const settings = createUserNotificationSettings(plainSettings);
+    const plainSettings = (await res.json()) as NotificationSettingsPlain;
+    const settings = createNotificationSettings(plainSettings);
 
     return settings;
   }
@@ -2134,9 +2134,9 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async updateNotificationSettings(
-    params: { userId: string; data: PartialUserNotificationSettings },
+    params: { userId: string; data: PartialNotificationSettings },
     options?: RequestOptions
-  ): Promise<UserNotificationSettings> {
+  ): Promise<NotificationSettings> {
     const { userId, data } = params;
 
     const res = await this.#post(
@@ -2149,8 +2149,8 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    const plainSettings = (await res.json()) as UserNotificationSettingsPlain;
-    const settings = createUserNotificationSettings(plainSettings);
+    const plainSettings = (await res.json()) as NotificationSettingsPlain;
+    const settings = createNotificationSettings(plainSettings);
 
     return settings;
   }

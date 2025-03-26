@@ -11,8 +11,9 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
+  NotificationSettings,
   OpaqueClient,
-  PartialUserNotificationSettings,
+  PartialNotificationSettings,
   Patchable,
   Permission,
   Resolve,
@@ -20,21 +21,20 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
-  UserNotificationSettings,
 } from "@liveblocks/core";
 import {
   autoRetry,
   batch,
   compactObject,
   console,
-  createUserNotificationSettings,
+  createNotificationSettings,
   DefaultMap,
   DerivedSignal,
   kInternal,
   MutableSignal,
   nanoid,
   nn,
-  patchUserNotificationSettings,
+  patchNotificationSettings,
   shallow,
   Signal,
   stableStringify,
@@ -49,10 +49,10 @@ import { ThreadDB } from "./ThreadDB";
 import type {
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
+  NotificationSettingsAsyncResult,
   RoomSubscriptionSettingsAsyncResult,
   ThreadsAsyncResult,
   ThreadsQuery,
-  UserNotificationSettingsAsyncResult,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -70,8 +70,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | DeleteInboxNotificationOptimisticUpdate
   | DeleteAllInboxNotificationsOptimisticUpdate
-  | UpdateSubscriptionSettingsOptimisticUpdate
-  | UpdateUserNotificationSettingsOptimisticUpdate;
+  | UpdateRoomSubscriptionSettingsOptimisticUpdate
+  | UpdateNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
@@ -175,18 +175,17 @@ type DeleteAllInboxNotificationsOptimisticUpdate = {
   deletedAt: Date;
 };
 
-type UpdateSubscriptionSettingsOptimisticUpdate = {
-  type: "update-subscription-settings";
+type UpdateRoomSubscriptionSettingsOptimisticUpdate = {
+  type: "update-room-subscription-settings";
   id: string;
   roomId: string;
   settings: Partial<RoomSubscriptionSettings>;
 };
 
-// Note: Using term `user` to differentiate from `room` notification settings
-type UpdateUserNotificationSettingsOptimisticUpdate = {
-  type: "update-user-notification-settings";
+type UpdateNotificationSettingsOptimisticUpdate = {
+  type: "update-notification-settings";
   id: string;
-  settings: PartialUserNotificationSettings;
+  settings: PartialNotificationSettings;
 };
 
 type PaginationState = {
@@ -536,16 +535,19 @@ type NotificationsLUT = Map<string, InboxNotificationData>;
 /**
  * A lookup table (LUT) for all the room subscription settings.
  */
-type SubscriptionSettingsLUT = Map<RoomId, RoomSubscriptionSettings>;
+type RoomSubscriptionSettingsLUT = Map<RoomId, RoomSubscriptionSettings>;
 
 /**
- * Subscription settings by room ID.
+ * Room subscription settings by room ID.
  * e.g. { 'room-abc': { threads: "all" },
  *        'room-def': { threads: "replies_and_mentions" },
  *        'room-xyz': { threads: "none" },
  *      }
  */
-type SubscriptionSettingsByRoomId = Record<RoomId, RoomSubscriptionSettings>;
+type RoomSubscriptionSettingsByRoomId = Record<
+  RoomId,
+  RoomSubscriptionSettings
+>;
 
 type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
 
@@ -680,7 +682,7 @@ function createStore_forNotifications() {
 function createStore_forRoomSubscriptionSettings(
   updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
 ) {
-  const baseSignal = new MutableSignal<SubscriptionSettingsLUT>(new Map());
+  const baseSignal = new MutableSignal<RoomSubscriptionSettingsLUT>(new Map());
 
   function update(roomId: string, settings: RoomSubscriptionSettings): void {
     baseSignal.mutate((lut) => {
@@ -690,7 +692,7 @@ function createStore_forRoomSubscriptionSettings(
 
   return {
     signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
-      applyOptimisticUpdates_forSubscriptionSettings(base, updates)
+      applyOptimisticUpdates_forRoomSubscriptionSettings(base, updates)
     ),
 
     // Mutations
@@ -754,7 +756,8 @@ function createStore_forPermissionHints() {
 }
 
 /**
- * User notification settings
+ * Notification settings
+ *
  * e.g.
  *  {
  *    email: {
@@ -770,20 +773,20 @@ function createStore_forPermissionHints() {
  *  }
  * e.g. {} when before the first successful fetch.
  */
-function createStore_forUserNotificationSettings(
+function createStore_forNotificationSettings(
   updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
 ) {
-  const signal = new Signal<UserNotificationSettings>(
-    createUserNotificationSettings({})
+  const signal = new Signal<NotificationSettings>(
+    createNotificationSettings({})
   );
 
-  function update(settings: UserNotificationSettings) {
+  function update(settings: NotificationSettings) {
     signal.set(settings);
   }
 
   return {
     signal: DerivedSignal.from(signal, updates, (base, updates) =>
-      applyOptimisticUpdates_forUserNotificationSettings(base, updates)
+      applyOptimisticUpdates_forNotificationSettings(base, updates)
     ),
     // Mutations
     update,
@@ -845,7 +848,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //          \                          |        Updates    |  |
   //           `------- etc etc ---------+                   |  +--> History Versions             (Part 3)
   //                       ^                                 |
-  //                       |                                 +-----> User Notification Settings   (Part 4)
+  //                       |                                 +-----> Notification Settings        (Part 4)
   //                       |
   //                       |
   //                       |                        ^                  ^
@@ -866,8 +869,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly roomSubscriptionSettings: ReturnType<typeof createStore_forRoomSubscriptionSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
-  readonly userNotificationSettings: ReturnType<
-    typeof createStore_forUserNotificationSettings
+  readonly notificationSettings: ReturnType<
+    typeof createStore_forNotificationSettings
   >;
   readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
 
@@ -893,7 +896,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly notifications: DerivedSignal<CleanNotifications>;
 
     readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
-    readonly subscriptionSettingsByRoomId: DefaultMap<
+    readonly roomSubscriptionSettingsByRoomId: DefaultMap<
       RoomId,
       LoadableResource<RoomSubscriptionSettingsAsyncResult>
     >;
@@ -901,7 +904,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       RoomId,
       LoadableResource<HistoryVersionsAsyncResult>
     >;
-    readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
+    readonly notificationSettings: LoadableResource<NotificationSettingsAsyncResult>;
   };
 
   // Notifications
@@ -917,8 +920,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Room versions
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
 
-  // User Notification Settings
-  #userNotificationSettings: SinglePageResource;
+  // Notification Settings
+  #notificationSettings: SinglePageResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -942,17 +945,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
-    const userNotificationSettingsFetcher = async (): Promise<void> => {
+    const notificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getNotificationSettings();
-      this.userNotificationSettings.update(result);
+      this.notificationSettings.update(result);
     };
 
-    this.userNotificationSettings = createStore_forUserNotificationSettings(
+    this.notificationSettings = createStore_forNotificationSettings(
       this.optimisticUpdates.signal
     );
 
-    this.#userNotificationSettings = new SinglePageResource(
-      userNotificationSettingsFetcher
+    this.#notificationSettings = new SinglePageResource(
+      notificationSettingsFetcher
     );
 
     this.threads = new ThreadDB();
@@ -1126,31 +1129,33 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#notificationsPaginationState.waitUntilLoaded,
     };
 
-    const subscriptionSettingsByRoomId = new DefaultMap((roomId: RoomId) => {
-      const resource = new SinglePageResource(async () => {
-        const room = this.#client.getRoom(roomId);
-        if (room === null) {
-          throw new Error(`Room '${roomId}' is not available on client`);
-        }
+    const roomSubscriptionSettingsByRoomId = new DefaultMap(
+      (roomId: RoomId) => {
+        const resource = new SinglePageResource(async () => {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
+            throw new Error(`Room '${roomId}' is not available on client`);
+          }
 
-        const result = await room.getSubscriptionSettings();
-        this.roomSubscriptionSettings.update(roomId, result);
-      });
+          const result = await room.getSubscriptionSettings();
+          this.roomSubscriptionSettings.update(roomId, result);
+        });
 
-      const signal = DerivedSignal.from(() => {
-        const result = resource.get();
-        if (result.isLoading || result.error) {
-          return result;
-        } else {
-          return ASYNC_OK(
-            "settings",
-            nn(this.roomSubscriptionSettings.signal.get()[roomId])
-          );
-        }
-      }, shallow);
+        const signal = DerivedSignal.from(() => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          } else {
+            return ASYNC_OK(
+              "settings",
+              nn(this.roomSubscriptionSettings.signal.get()[roomId])
+            );
+          }
+        }, shallow);
 
-      return { signal, waitUntilLoaded: resource.waitUntilLoaded };
-    });
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
 
     const versionsByRoomId = new DefaultMap(
       (roomId: RoomId): LoadableResource<HistoryVersionsAsyncResult> => {
@@ -1193,20 +1198,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
-    const userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult> =
+    const notificationSettings: LoadableResource<NotificationSettingsAsyncResult> =
       {
-        signal: DerivedSignal.from((): UserNotificationSettingsAsyncResult => {
-          const result = this.#userNotificationSettings.get();
+        signal: DerivedSignal.from((): NotificationSettingsAsyncResult => {
+          const result = this.#notificationSettings.get();
           if (result.isLoading || result.error) {
             return result;
           }
 
           return ASYNC_OK(
             "settings",
-            nn(this.userNotificationSettings.signal.get())
+            nn(this.notificationSettings.signal.get())
           );
         }, shallow),
-        waitUntilLoaded: this.#userNotificationSettings.waitUntilLoaded,
+        waitUntilLoaded: this.#notificationSettings.waitUntilLoaded,
       };
 
     this.outputs = {
@@ -1216,9 +1221,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingUserThreads,
       notifications,
       loadingNotifications,
-      subscriptionSettingsByRoomId,
+      roomSubscriptionSettingsByRoomId,
       versionsByRoomId,
-      userNotificationSettings,
+      notificationSettings,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1585,27 +1590,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Refresh User Notification Settings from poller
+   * Refresh notification settings from poller
    */
-  public async refreshUserNotificationSettings(signal: AbortSignal) {
+  public async refreshNotificationSettings(signal: AbortSignal) {
     const result = await this.#client.getNotificationSettings({
       signal,
     });
-    this.userNotificationSettings.update(result);
+    this.notificationSettings.update(result);
   }
 
   /**
-   * Updates user notification settings with a new value, replacing the
+   * Updates notification settings with a new value, replacing the
    * corresponding optimistic update.
    */
-  public updateUserNotificationSettings_confirmOptimisticUpdate(
-    settings: UserNotificationSettings,
+  public updateNotificationSettings_confirmOptimisticUpdate(
+    settings: NotificationSettings,
     optimisticUpdateId: string
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
-      this.userNotificationSettings.update(settings); // 2️⃣
+      this.notificationSettings.update(settings); // 2️⃣
     });
   }
 }
@@ -1813,51 +1818,51 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
 }
 
 /**
- * Applies optimistic updates to subscription settings in a stable way.
+ * Applies optimistic updates to room subscription settings in a stable way.
  */
-function applyOptimisticUpdates_forSubscriptionSettings(
-  settingsLUT: SubscriptionSettingsLUT,
+function applyOptimisticUpdates_forRoomSubscriptionSettings(
+  settingsLUT: RoomSubscriptionSettingsLUT,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
-): SubscriptionSettingsByRoomId {
-  const subscriptionSettingsByRoomId = Object.fromEntries(settingsLUT);
+): RoomSubscriptionSettingsByRoomId {
+  const roomSubscriptionSettingsByRoomId = Object.fromEntries(settingsLUT);
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
-      case "update-subscription-settings": {
-        const settings = subscriptionSettingsByRoomId[optimisticUpdate.roomId];
+      case "update-room-subscription-settings": {
+        const settings =
+          roomSubscriptionSettingsByRoomId[optimisticUpdate.roomId];
 
         // If the settings don't exist, we do not apply the update
         if (settings === undefined) {
           break;
         }
 
-        subscriptionSettingsByRoomId[optimisticUpdate.roomId] = {
+        roomSubscriptionSettingsByRoomId[optimisticUpdate.roomId] = {
           ...settings,
           ...optimisticUpdate.settings,
         };
       }
     }
   }
-  return subscriptionSettingsByRoomId;
+  return roomSubscriptionSettingsByRoomId;
 }
 
 /**
+ * Applies optimistic update to notification settings in a stable way.
+ * It's a deep update, and remove potential `undefined` properties from the final
+ * output object because we update with a deep partial of `NotificationSettings`.
  *
- * Applies optimistic update to user notification settings
- * in a stable way. It's a deep update, and remove potential `undefined` properties
- * from the final output object because we update with a deep partial of `UserNotificationSettings`.
- *
- * exported for unit tests only.
+ * Exported for unit tests only.
  */
-export function applyOptimisticUpdates_forUserNotificationSettings(
-  settings: UserNotificationSettings,
+export function applyOptimisticUpdates_forNotificationSettings(
+  settings: NotificationSettings,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
-): UserNotificationSettings {
-  let outcoming: UserNotificationSettings = settings;
+): NotificationSettings {
+  let outcoming: NotificationSettings = settings;
 
   for (const update of optimisticUpdates) {
-    if (update.type === "update-user-notification-settings") {
-      outcoming = patchUserNotificationSettings(outcoming, update.settings);
+    if (update.type === "update-notification-settings") {
+      outcoming = patchNotificationSettings(outcoming, update.settings);
     }
   }
 

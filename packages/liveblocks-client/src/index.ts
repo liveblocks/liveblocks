@@ -51,6 +51,7 @@ export type {
   NotificationChannel,
   NotificationChannelSettings,
   NotificationKind,
+  NotificationSettings,
   OthersEvent,
   PlainLsonObject,
   ResolveMentionSuggestionsArgs,

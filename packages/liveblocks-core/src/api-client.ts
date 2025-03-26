@@ -47,12 +47,12 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type {
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+} from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
-import type {
-  PartialUserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -400,21 +400,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  // Note: Using term `user` on this following method
-  // to avoid confusion with the same methods used in the `RoomHttpApi`.
-  // Let's wait the room subscription renaming to be here.
-  // It returns a `UserNotificationSettingsPlain` as the back-end does.
-  getUserNotificationSettings(options?: {
+  getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettingsPlain>;
+  }): Promise<NotificationSettingsPlain>;
 
-  // Note: Using term `user` on this following method
-  // to avoid confusion with the same methods used in the `RoomHttpApi`.
-  // Let's wait the room subscription renaming to be here.
-  // It returns a `UserNotificationSettingsPlain` as the back-end does.
-  updateUserNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettingsPlain>;
+  updateNotificationSettings(
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettingsPlain>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1437,18 +1429,13 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * User notifications settings (Project level)
+   * Notifications settings (Project level)
    * -------------------------------------------------------------------------------------------------
-   *
-   * Note: Using term `user` on those two following methods
-   * to avoid confusion with the same methods used in the `RoomHttpApi`.
-   *
-   * Let's wait the room subscription renaming to be here.
    */
-  async function getUserNotificationSettings(options?: {
+  async function getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettingsPlain> {
-    return httpClient.get<UserNotificationSettingsPlain>(
+  }): Promise<NotificationSettingsPlain> {
+    return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
@@ -1456,10 +1443,10 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  async function updateUserNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettingsPlain> {
-    return httpClient.post<UserNotificationSettingsPlain>(
+  async function updateNotificationSettings(
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettingsPlain> {
+    return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
@@ -1595,8 +1582,8 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getUserNotificationSettings,
-    updateUserNotificationSettings,
+    getNotificationSettings,
+    updateNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

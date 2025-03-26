@@ -2,12 +2,12 @@ import type {
   CommentData,
   CommentUserReaction,
   IdTuple,
+  NotificationSettingsPlain,
   RoomSubscriptionSettings,
   SerializedCrdt,
   ThreadData,
-  UserNotificationSettingsPlain,
 } from "@liveblocks/core";
-import { createUserNotificationSettings, LiveList } from "@liveblocks/core";
+import { createNotificationSettings, LiveList } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -1690,7 +1690,7 @@ describe("client", () => {
     test("should get user's notification settings", async () => {
       const userId = "florent";
 
-      const settings: UserNotificationSettingsPlain = {
+      const settings: NotificationSettingsPlain = {
         email: {
           thread: true,
           textMention: false,
@@ -1720,7 +1720,7 @@ describe("client", () => {
 
       const client = new Liveblocks({ secret: "sk_xxx" });
 
-      const expected = createUserNotificationSettings(settings);
+      const expected = createNotificationSettings(settings);
       await expect(client.getNotificationSettings({ userId })).resolves.toEqual(
         expected
       );
@@ -1765,7 +1765,7 @@ describe("client", () => {
   describe("update user's notification settings", () => {
     test("should update user's notification settings", async () => {
       const userId = "nimesh";
-      const settings: UserNotificationSettingsPlain = {
+      const settings: NotificationSettingsPlain = {
         email: {
           textMention: false,
           thread: false,
@@ -1794,7 +1794,7 @@ describe("client", () => {
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
-      const expected = createUserNotificationSettings(settings);
+      const expected = createNotificationSettings(settings);
       await expect(
         client.updateNotificationSettings({
           userId,
@@ -1822,7 +1822,7 @@ describe("client", () => {
 
     test("should update user's notification settings partially", async () => {
       const userId = "adri";
-      const settings: UserNotificationSettingsPlain = {
+      const settings: NotificationSettingsPlain = {
         email: {
           textMention: true,
           thread: true,
@@ -1851,7 +1851,7 @@ describe("client", () => {
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
-      const expected = createUserNotificationSettings(settings);
+      const expected = createNotificationSettings(settings);
       await expect(
         client.updateNotificationSettings({
           userId,

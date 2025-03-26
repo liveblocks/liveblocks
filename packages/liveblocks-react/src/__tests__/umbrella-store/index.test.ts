@@ -34,7 +34,7 @@ describe("Umbrella Store", () => {
     expect(store.outputs.threads.get()).toEqual(expect.any(ThreadDB));
     expect(store.outputs.notifications.get()).toEqual(empty1n);
     expect(
-      store.outputs.subscriptionSettingsByRoomId
+      store.outputs.roomSubscriptionSettingsByRoomId
         .getOrCreate("room-a")
         .signal.get()
     ).toEqual(LOADING); // settings by room ID
@@ -44,11 +44,9 @@ describe("Umbrella Store", () => {
 
     // Sync async-results getters
     expect(store.outputs.loadingNotifications.signal.get()).toEqual(LOADING);
-    expect(store.outputs.userNotificationSettings.signal.get()).toEqual(
-      LOADING
-    );
+    expect(store.outputs.notificationSettings.signal.get()).toEqual(LOADING);
     expect(
-      store.outputs.subscriptionSettingsByRoomId
+      store.outputs.roomSubscriptionSettingsByRoomId
         .getOrCreate("room-c")
         .signal.get()
     ).toEqual(LOADING);
@@ -72,17 +70,17 @@ describe("Umbrella Store", () => {
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(
-      store.outputs.subscriptionSettingsByRoomId
+      store.outputs.roomSubscriptionSettingsByRoomId
         .getOrCreate("room-abc")
         .signal.get()
     ).toBe(
-      store.outputs.subscriptionSettingsByRoomId
+      store.outputs.roomSubscriptionSettingsByRoomId
         .getOrCreate("room-abc")
         .signal.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.outputs.userNotificationSettings.signal.get()).toBe(
-      store.outputs.userNotificationSettings.signal.get()
+    expect(store.outputs.notificationSettings.signal.get()).toBe(
+      store.outputs.notificationSettings.signal.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(

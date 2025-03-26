@@ -53,7 +53,8 @@ npx @liveblocks/codemod@latest simplify-client-side-suspense-children
 #### `rename-notification-settings`
 
 Renames "room notification settings" (types, hooks, methods, etc.) to "room
-subscription settings" and updates all imports and usages accordingly.
+subscription settings" and "user notification settings" to "notification
+settings", and updates all imports and usages accordingly.
 
 ```shell
 npx @liveblocks/codemod@latest rename-notification-settings

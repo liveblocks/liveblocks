@@ -1,6 +1,6 @@
 import type {
   BaseMetadata,
-  UserNotificationSettings,
+  NotificationSettings,
   Json,
   Lson,
 } from "@liveblocks/client";
@@ -228,7 +228,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
-      | "UPDATE_SUBSCRIPTION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -269,7 +269,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
-      | "UPDATE_SUBSCRIPTION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -940,7 +940,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
     classic.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // the useNotificationSettings() hook suspense
@@ -949,7 +949,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
     suspense.useNotificationSettings();
   expectType<false>(isLoading);
   expectType<undefined>(error);
-  expectType<UserNotificationSettings>(settings);
+  expectType<NotificationSettings>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------

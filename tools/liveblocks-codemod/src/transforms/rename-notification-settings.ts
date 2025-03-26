@@ -28,6 +28,7 @@ export default function transformer(
    */
   {
     let isRoomNotificationSettingsImported = false;
+    let isUserNotificationSettingsImported = false;
 
     /**
      * Before: import { RoomNotificationSettings } from "@liveblocks/client"
@@ -71,6 +72,48 @@ export default function transformer(
       isDirty = true;
     }
 
+    /**
+     * Before: import { UserNotificationSettings } from "@liveblocks/client"
+     *  After: import { NotificationSettings } from "@liveblocks/client"
+     */
+    root.find(j.ImportDeclaration).forEach((path) => {
+      if (path.node.source.value === "@liveblocks/client") {
+        path.node.specifiers.forEach((specifier) => {
+          if (
+            specifier.type === "ImportSpecifier" &&
+            specifier.imported.name === "UserNotificationSettings"
+          ) {
+            specifier.imported.name = "NotificationSettings";
+
+            isUserNotificationSettingsImported = true;
+            isDirty = true;
+          }
+        });
+      }
+    });
+
+    /**
+     * Before: const settings: UserNotificationSettings = {}
+     *  After: const settings: NotificationSettings = {}
+     */
+    if (isUserNotificationSettingsImported) {
+      root
+        .find(j.TSTypeReference)
+        .filter(
+          (path) =>
+            path.node.typeName.type !== "TSQualifiedName" &&
+            path.node.typeName.name === "UserNotificationSettings"
+        )
+        .replaceWith((path) =>
+          j.tsTypeReference(
+            j.identifier("NotificationSettings"),
+            path.node.typeParameters
+          )
+        );
+
+      isDirty = true;
+    }
+
     if (hasLiveblocksRelatedImport) {
       /**
        * Before: room.getNotificationSettings()
@@ -82,12 +125,29 @@ export default function transformer(
         .find(j.CallExpression)
         .filter((path) => {
           const callee = path.node.callee;
-          return (
-            callee.type === "MemberExpression" &&
-            callee.property.type === "Identifier" &&
-            (callee.property.name === "getNotificationSettings" ||
-              callee.property.name === "updateNotificationSettings")
-          );
+          if (
+            callee.type !== "MemberExpression" ||
+            callee.property.type !== "Identifier" ||
+            !(
+              callee.property.name === "getNotificationSettings" ||
+              callee.property.name === "updateNotificationSettings"
+            )
+          ) {
+            return false;
+          }
+
+          // Even with the restriction of having Liveblocks-related imports,
+          // there are still false positives like the Notification Settings APIs
+          // on the client (e.g. `client.updateNotificationSettings`), to avoid them
+          // we check that the method comes from something with "room" in its name.
+          if (
+            callee.object.type === "Identifier" &&
+            callee.object.name.toLowerCase().includes("room")
+          ) {
+            return true;
+          }
+
+          return false;
         })
         .forEach((path) => {
           const callee = path.node.callee;
@@ -199,7 +259,7 @@ export default function transformer(
 
     /**
      * Before: useErrorListener((error) => console.log(error.context.type === "UPDATE_NOTIFICATION_SETTINGS_ERROR"))
-     *  After: useErrorListener((error) => console.log(error.context.type === "UPDATE_SUBSCRIPTION_SETTINGS_ERROR"))
+     *  After: useErrorListener((error) => console.log(error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"))
      */
     if (isUseErrorListenerImported) {
       root
@@ -207,7 +267,9 @@ export default function transformer(
           value: "UPDATE_NOTIFICATION_SETTINGS_ERROR",
         })
         .forEach((path) => {
-          j(path).replaceWith(j.literal("UPDATE_SUBSCRIPTION_SETTINGS_ERROR"));
+          j(path).replaceWith(
+            j.literal("UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR")
+          );
 
           isDirty = true;
         });

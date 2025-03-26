@@ -27,8 +27,9 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  NotificationSettings,
+  PartialNotificationSettings,
   PartialUnless,
-  PartialUserNotificationSettings,
   Patchable,
   QueryMetadata,
   Relax,
@@ -38,7 +39,6 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
-  UserNotificationSettings,
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
 
@@ -170,8 +170,8 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
-export type UserNotificationSettingsAsyncResult = AsyncResult<UserNotificationSettings, "settings"> // prettier-ignore
-export type UserNotificationSettingsAsyncSuccess = AsyncSuccess<UserNotificationSettings, "settings">; // prettier-ignore
+export type NotificationSettingsAsyncResult = AsyncResult<NotificationSettings, "settings"> // prettier-ignore
+export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings, "settings">; // prettier-ignore
 
 export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
 export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
@@ -1199,8 +1199,8 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
    */
   useNotificationSettings(): [
-    UserNotificationSettingsAsyncResult,
-    (settings: PartialUserNotificationSettings) => void,
+    NotificationSettingsAsyncResult,
+    (settings: PartialNotificationSettings) => void,
   ];
 
   /**
@@ -1211,7 +1211,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const updateNotificationSettings = useUpdateNotificationSettings()
    */
   useUpdateNotificationSettings(): (
-    settings: PartialUserNotificationSettings
+    settings: PartialNotificationSettings
   ) => void;
 
   /**
@@ -1285,8 +1285,8 @@ export type LiveblocksContextBundle<
              * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
              */
             useNotificationSettings(): [
-              UserNotificationSettingsAsyncResult,
-              (settings: PartialUserNotificationSettings) => void,
+              NotificationSettingsAsyncResult,
+              (settings: PartialNotificationSettings) => void,
             ];
 
             /**

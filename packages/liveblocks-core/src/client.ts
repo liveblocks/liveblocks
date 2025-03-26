@@ -30,10 +30,10 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
-  PartialUserNotificationSettings,
-  UserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
-import { createUserNotificationSettings } from "./protocol/UserNotificationSettings";
+  NotificationSettings,
+  PartialNotificationSettings,
+} from "./protocol/NotificationSettings";
+import { createNotificationSettings } from "./protocol/NotificationSettings";
 import type {
   LargeMessageStrategy,
   OpaqueRoom,
@@ -274,7 +274,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettings>;
+  }): Promise<NotificationSettings>;
 
   /**
    * Update notifications settings for a user for a project.
@@ -289,8 +289,8 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * })
    */
   updateNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettings>;
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettings>;
 };
 
 /**
@@ -838,19 +838,18 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   async function getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettings> {
-    const plainSettings = await httpClient.getUserNotificationSettings(options);
-    const settings = createUserNotificationSettings(plainSettings);
+  }): Promise<NotificationSettings> {
+    const plainSettings = await httpClient.getNotificationSettings(options);
+    const settings = createNotificationSettings(plainSettings);
 
     return settings;
   }
 
   async function updateNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettings> {
-    const plainSettings =
-      await httpClient.updateUserNotificationSettings(settings);
-    const settingsObject = createUserNotificationSettings(plainSettings);
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettings> {
+    const plainSettings = await httpClient.updateNotificationSettings(settings);
+    const settingsObject = createNotificationSettings(plainSettings);
 
     return settingsObject;
   }
@@ -873,7 +872,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
 
-      // Public user notification settings API
+      // Public notification settings API
       getNotificationSettings,
       updateNotificationSettings,
 

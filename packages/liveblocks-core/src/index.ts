@@ -221,6 +221,20 @@ export type {
 } from "./protocol/InboxNotifications";
 export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
+  NotificationSettings,
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/NotificationSettings";
+export {
+  createNotificationSettings,
+  isNotificationChannelEnabled,
+  patchNotificationSettings,
+} from "./protocol/NotificationSettings";
+export type {
   AckOp,
   CreateListOp,
   CreateMapOp,
@@ -264,19 +278,6 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
-export type {
-  NotificationChannel,
-  NotificationChannelSettings,
-  NotificationKind,
-  PartialUserNotificationSettings,
-  UserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
-export {
-  createUserNotificationSettings,
-  isNotificationChannelEnabled,
-  patchUserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,

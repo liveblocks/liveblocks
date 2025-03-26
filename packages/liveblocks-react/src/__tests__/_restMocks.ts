@@ -2,12 +2,12 @@ import type {
   BaseMetadata,
   CommentData,
   InboxNotificationData,
-  PartialUserNotificationSettings,
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
   Permission,
   RoomSubscriptionSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
-  UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -251,11 +251,11 @@ export function mockUpdateRoomSubscriptionSettings(
   );
 }
 
-export function mockGetUserNotificationSettings(
+export function mockGetNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    UserNotificationSettingsPlain
+    NotificationSettingsPlain
   >
 ) {
   return rest.get(
@@ -264,11 +264,11 @@ export function mockGetUserNotificationSettings(
   );
 }
 
-export function mockUpdateUserNotificationSettings(
+export function mockUpdateNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    PartialUserNotificationSettings
+    PartialNotificationSettings
   >
 ) {
   return rest.post(

@@ -7,7 +7,7 @@ function App() {
   const [{ settings }] = useRoomNotificationSettings();
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
-  console.log(settings, "UPDATE_SUBSCRIPTION_SETTINGS_ERROR");
+  console.log(settings, "UPDATE_NOTIFICATION_SETTINGS_ERROR");
 
   return (
     <div>
