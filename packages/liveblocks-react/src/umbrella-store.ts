@@ -1,5 +1,4 @@
 import type {
-  AiChat,
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
@@ -540,11 +539,6 @@ type NotificationsLUT = Map<string, InboxNotificationData>;
 type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
 
 /**
- * A lookup table (LUT) for all the user AI chats.
- */
-type AiChatsLUT = Map<string, AiChat>;
-
-/**
  * Notification settings by room ID.
  * e.g. { 'room-abc': { threads: "all" },
  *        'room-def': { threads: "replies_and_mentions" },
@@ -733,27 +727,6 @@ function createStore_forHistoryVersions() {
   };
 }
 
-function createStore_forUserAiChats() {
-  const baseSignal = new MutableSignal(new Map() as AiChatsLUT);
-
-  function update(chats: AiChat[]) {
-    baseSignal.mutate((lut) => {
-      for (const chat of chats) {
-        lut.set(chat.id, chat);
-      }
-    });
-  }
-
-  return {
-    signal: DerivedSignal.from(baseSignal, (chats) => {
-      return Object.fromEntries(chats);
-    }),
-
-    // Mutations
-    update,
-  };
-}
-
 function createStore_forPermissionHints() {
   const signal = new MutableSignal<PermissionHintsLUT>(
     new DefaultMap(() => new Set())
@@ -897,7 +870,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     typeof createStore_forUserNotificationSettings
   >;
   readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
-  readonly userAiChats: ReturnType<typeof createStore_forUserAiChats>;
 
   //
   // Output signals.
@@ -948,9 +920,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // User Notification Settings
   #userNotificationSettings: SinglePageResource;
 
-  // User AI Chats
-  #userAiChats: PaginatedResource;
-
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
 
@@ -973,22 +942,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
-    this.#userAiChats = new PaginatedResource(async (cursor?: string) => {
-      // Create a promise that resolves when we get the chats data
-      const chatsResult = await new Promise<{
-        chats: any[];
-        cursor: string | null;
-      }>((resolve) => {
-        this.#client.listChats();
-        this.#client.events.ai.chats.subscribeOnce(({ chats, cursor }) => {
-          console.warn("chats", chats, cursor);
-          resolve({ chats, cursor: null });
-        });
-      });
-
-      return chatsResult.cursor;
-    });
-
     const userNotificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getNotificationSettings();
       this.userNotificationSettings.update(result);
@@ -1009,7 +962,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.optimisticUpdates.signal
     );
     this.historyVersions = createStore_forHistoryVersions();
-    this.userAiChats = createStore_forUserAiChats();
 
     const threadifications = DerivedSignal.from(
       this.threads.signal,
@@ -1534,12 +1486,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
-  }
-
-  public updateAiChats(chats: AiChat[]): void {
-    batch(() => {
-      this.userAiChats.update(chats);
-    });
   }
 
   public async fetchRoomThreadsDeltaUpdate(

@@ -1,3 +1,5 @@
+import type { Brand } from "@liveblocks/core";
+
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,
   NEW_CHAT = 200,
@@ -18,7 +20,14 @@ export enum ServerAiMsgCode {
   ERROR = 600,
 }
 
-export type StreamMessagePartServerMsg = {
+export type AiRequestId = Brand<string, "aiRequestId">;
+
+// Base interface with requestId (shared by both client and server messages)
+export interface AiMsgBase {
+  readonly requestId: AiRequestId;
+}
+
+export type StreamMessagePartServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_PART;
   content: {
     id: string;
@@ -29,20 +38,20 @@ export type StreamMessagePartServerMsg = {
   messageId: string;
 };
 
-export type StreamMessageFailedServerMsg = {
+export type StreamMessageFailedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_FAILED;
   error: string;
   chatId: string;
   messageId: string;
 };
 
-export type StreamMessageAbortedServerMsg = {
+export type StreamMessageAbortedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_ABORTED;
   chatId: string;
   messageId: string;
 };
 
-export type StreamMessageCompleteServerMsg = {
+export type StreamMessageCompleteServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_COMPLETE;
   content: AiMessageContent[];
   chatId: string;
@@ -52,54 +61,55 @@ export type StreamMessageCompleteServerMsg = {
 export type ErrorServerMsg = {
   type: ServerAiMsgCode.ERROR;
   error: string;
+  requestId?: AiRequestId;
 };
 
-export type ListChatServerMsg = {
+export type ListChatServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.LIST_CHATS;
   chats: AiChat[];
   cursor: { chatId: string; lastMessageAt: string } | null;
 };
 
-export type ChatCreatedServerMsg = {
+export type ChatCreatedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.CHAT_CREATED;
-  chatId: string;
-  createdAt: string;
+  chat: AiChat;
 };
 
-export type MessageAddedServerMsg = {
+export type MessageAddedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.MESSAGE_ADDED;
   chatId: string;
   messageId: string;
   createdAt: string;
 };
 
-export type GetMessagesServerMsg = {
+export type GetMessagesServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.GET_MESSAGES;
+  chatId: string;
   messages: AiChatMessage[];
   cursor: { messageId: string; createdAt: string } | null;
 };
 
-export type ListChatClientMsg = {
+export type ListChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.LIST_CHATS;
   cursor?: { chatId: string; lastMessageAt: string };
   pageSize?: number;
 };
 
-export type NewChatClientMsg = {
+export type NewChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.NEW_CHAT;
   chatId?: string;
   name?: string;
   metadata?: Record<string, string | string[]>;
 };
 
-export type GetMessagesClientMsg = {
+export type GetMessagesClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.GET_MESSAGES;
   cursor?: { messageId: string; createdAt: string };
   pageSize?: number;
   chatId: string;
 };
 
-export type AddMessageClientMsg = {
+export type AddMessageClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.ADD_MESSAGE;
   chatId: string;
   content: AiTextContent | string;
@@ -108,11 +118,12 @@ export type AddMessageClientMsg = {
   execute?: boolean;
 };
 
-export type AbortResponseClientMsg = {
+export type AbortResponseClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.ABORT_RESPONSE;
   chatId: string;
 };
 
+// Union type of all server messages
 export type ServerAiMsg =
   | ListChatServerMsg
   | ChatCreatedServerMsg
@@ -124,6 +135,7 @@ export type ServerAiMsg =
   | StreamMessageAbortedServerMsg
   | ErrorServerMsg;
 
+// Union type of all client messages
 export type ClientAiMsg =
   | ListChatClientMsg
   | NewChatClientMsg

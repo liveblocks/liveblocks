@@ -4,9 +4,10 @@ import type { Delegates, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
-import { type EventSource, makeEventSource } from "./lib/EventSource";
+import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
-import { Signal } from "./lib/signals";
+import { nanoid } from "./lib/nanoid";
+import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -17,6 +18,9 @@ import type {
 } from "./room";
 import {
   type AiChat,
+  type AiChatMessage,
+  type AiRequestId,
+  AiStatus,
   type AiTextContent,
   type ClientAiMsg,
   ClientAiMsgCode,
@@ -31,29 +35,144 @@ import type {
 } from "./types/IWebSocket";
 import { PKG_VERSION } from "./version";
 
+const REQUEST_TIMEOUT = 10_000;
+
+/**
+ * A lookup table (LUT) for all the user AI chats.
+ */
+type AiChatsLUT = Map<string, AiChat>;
+
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
+  requests: Map<
+    AiRequestId,
+    {
+      resolve: (value: unknown) => void;
+      reject: (reason?: unknown) => void;
+      timeout: NodeJS.Timeout;
+    }
+  >;
+  chats: ReturnType<typeof createStore_forUserAiChats>;
+  messages: ReturnType<typeof createStore_forChatMessages>;
+};
+
+function createStore_forChatMessages() {
+  const baseSignal = new MutableSignal(
+    new DefaultMap(() => new Map()) as DefaultMap<
+      string,
+      Map<string, AiChatMessage>
+    >
+  );
+
+  function update(chatId: string, messages: AiChatMessage[]): void {
+    baseSignal.mutate((lut) => {
+      const messagesByChatId = lut.getOrCreate(chatId);
+      for (const message of messages) {
+        messagesByChatId.set(message.id, message);
+      }
+    });
+  }
+
+  // TODO: do we want to fail or throw or return something if the message doesn't exist?
+  function updateMessage(
+    chatId: string,
+    messageId: string,
+    messageUpdate: Partial<AiChatMessage>
+  ): void {
+    baseSignal.mutate((lut) => {
+      const messagesByChatId = lut.get(chatId);
+      if (!messagesByChatId) {
+        return;
+      }
+      const message = messagesByChatId.get(messageId);
+      if (!message) {
+        return;
+      }
+      messagesByChatId.set(messageId, {
+        ...message,
+        ...messageUpdate,
+      } as AiChatMessage);
+    });
+  }
+
+  return {
+    messages: DerivedSignal.from(baseSignal, (chats) =>
+      Object.fromEntries(
+        [...chats].map(([chatId, messages]) => [
+          chatId,
+          Object.fromEntries(messages),
+        ])
+      )
+    ),
+
+    sortedMessages: DerivedSignal.from(baseSignal, (chats) =>
+      Object.fromEntries(
+        [...chats].map(([chatId, messages]) => [
+          chatId,
+          Array.from(messages.values()).sort((a, b) => {
+            return Date.parse(a.createdAt) - Date.parse(b.createdAt);
+          }),
+        ])
+      )
+    ),
+
+    // Mutations
+    updateMessage,
+    update,
+  };
+}
+
+function createStore_forUserAiChats() {
+  const baseSignal = new MutableSignal(new Map() as AiChatsLUT);
+
+  function update(chats: AiChat[]) {
+    baseSignal.mutate((lut) => {
+      for (const chat of chats) {
+        lut.set(chat.id, chat);
+      }
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (chats) => {
+      return Array.from(chats.values());
+    }),
+
+    // Mutations
+    update,
+  };
+}
+
+const makeRequestId = () => {
+  return nanoid() as AiRequestId;
 };
 
 export type Ai = {
   [kInternal]: {
     debugContext: () => AiContext;
   };
-  events: {
-    chats: EventSource<{
-      chats: AiChat[];
-      cursor: { chatId: string; lastMessageAt: string } | null;
-    }>;
-  };
   connect: () => void;
   reconnect: () => void;
   disconnect: () => void;
-  listChats: () => void;
-  newChat: (id?: string) => void;
-  getMessages: (chatId: string) => void;
-  sendMessage: (chatId: string, message: string) => void;
   getStatus: () => Status;
+  listChats: () => Promise<{
+    chats: AiChat[];
+    cursor: { lastMessageAt: string; chatId: string };
+  }>;
+  newChat: (id?: string) => Promise<AiChat>;
+  getMessages: (chatId: string) => Promise<{
+    messages: AiChatMessage[];
+    cursor: { messageId: string; createdAt: string };
+  }>;
+  sendMessage: (chatId: string, message: string) => Promise<AiChatMessage>;
+  abortResponse: (
+    chatId: string
+  ) => Promise<{ chatId: string; messageId: string }>;
+  signals: {
+    chats: DerivedSignal<AiChat[]>;
+    messages: DerivedSignal<Record<string, AiChatMessage[]>>;
+  };
 };
 
 /** @internal */
@@ -68,23 +187,24 @@ export type AiConfig = {
   enableDebugLogging?: boolean;
 };
 
-export function createAi(config: AiConfig): Ai {
-  const eventHub = {
-    chats: makeEventSource<{
-      chats: AiChat[];
-      cursor: { chatId: string; lastMessageAt: string } | null;
-    }>(),
-  };
+// UnionOmit is a type that removes a key from a union of objects
+type UnionOmit<T, K extends keyof T> = {
+  [P in keyof T as P extends K ? never : P]: T[P];
+};
 
+export function createAi(config: AiConfig): Ai {
   const managedSocket: ManagedSocket<AuthValue> = new ManagedSocket(
     config.delegates,
     config.enableDebugLogging,
-    false // AI doesn't have actors
+    false // AI doesn't have actors (yet, but it will)
   );
 
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
+    requests: new Map(),
+    chats: createStore_forUserAiChats(),
+    messages: createStore_forChatMessages(),
   };
 
   let lastTokenKey: string | undefined;
@@ -132,7 +252,7 @@ export function createAi(config: AiConfig): Ai {
 
   function onDidConnect() {
     console.warn("onDidConnect");
-    // NoOp for now, but we shoudl fetch messages
+    // NoOp for now, but we should maybe fetch messages or something?
   }
 
   function onDidDisconnect() {
@@ -143,10 +263,63 @@ export function createAi(config: AiConfig): Ai {
     console.warn("handleServerMessage", event.data);
     if (typeof event.data === "string") {
       const msg = tryParseJson(event.data) as ServerAiMsg;
-      if (msg.type === ServerAiMsgCode.LIST_CHATS) {
-        const { chats, cursor } = msg;
-        console.warn("chats", chats, cursor);
-        eventHub.chats.notify({ chats, cursor });
+
+      switch (msg.type) {
+        case ServerAiMsgCode.ERROR:
+          if (msg.requestId) {
+            // Not all errors have request Ids
+            context.requests.get(msg.requestId)?.reject(new Error(msg.error));
+          }
+          break;
+
+        case ServerAiMsgCode.STREAM_MESSAGE_COMPLETE:
+          context.messages.updateMessage(msg.chatId, msg.messageId, {
+            content: msg.content,
+            status: AiStatus.COMPLETE,
+          });
+          context.requests.get(msg.requestId)?.resolve({
+            content: msg.content,
+            messageId: msg.messageId,
+            chatId: msg.chatId,
+          });
+          break;
+
+        case ServerAiMsgCode.STREAM_MESSAGE_FAILED:
+          context.messages.updateMessage(msg.chatId, msg.messageId, {
+            status: AiStatus.FAILED,
+          });
+          context.requests.get(msg.requestId)?.reject(new Error(msg.error));
+          break;
+
+        case ServerAiMsgCode.STREAM_MESSAGE_ABORTED:
+          context.messages.updateMessage(msg.chatId, msg.messageId, {
+            status: AiStatus.ABORTED,
+          });
+          context.requests
+            .get(msg.requestId)
+            ?.reject(new Error("Message aborted")); // Alternatively we could resolve with the current message
+          break;
+
+        case ServerAiMsgCode.CHAT_CREATED:
+          context.chats.update([msg.chat]);
+          context.requests.get(msg.requestId)?.resolve(msg.chat);
+          break;
+
+        case ServerAiMsgCode.GET_MESSAGES:
+          context.messages.update(msg.chatId, msg.messages);
+          context.requests.get(msg.requestId)?.resolve({
+            messages: msg.messages,
+            cursor: msg.cursor,
+          });
+          break;
+
+        case ServerAiMsgCode.LIST_CHATS:
+          context.chats.update(msg.chats);
+          context.requests.get(msg.requestId)?.resolve({
+            chats: msg.chats,
+            cursor: msg.cursor,
+          });
+          break;
       }
     }
   }
@@ -166,8 +339,55 @@ export function createAi(config: AiConfig): Ai {
     }
   });
 
+  function sendClientMsgWithResponse<T>(
+    msg: UnionOmit<ClientAiMsg, "requestId">,
+    requestTimeout: number = REQUEST_TIMEOUT
+  ): Promise<T> {
+    // TODO: we can probably retry or something here
+    if (managedSocket.getStatus() !== "connected") {
+      return Promise.reject(new Error("Not connected"));
+    }
+
+    const requestId = makeRequestId();
+    const promise = new Promise<T>((resolve, reject) => {
+      const cleanup = () => {
+        const request = context.requests.get(requestId);
+        if (request) {
+          clearTimeout(request.timeout); // it's a noop if it already timed
+          context.requests.delete(requestId);
+        }
+      };
+
+      // This is a map of requests that should hopefully clean itself up.
+      // TODO: ask Vincent if we can make this a WeakMap ;)
+      context.requests.set(requestId, {
+        resolve: (value) => {
+          cleanup();
+          resolve(value as T);
+        },
+        reject: (reason) => {
+          cleanup();
+          reject(reason);
+        },
+        timeout: setTimeout(() => {
+          cleanup();
+          reject(new Error("Request timed out"));
+        }, requestTimeout),
+      });
+    });
+    sendClientMsg({
+      ...msg,
+      requestId,
+    });
+    return promise;
+  }
+
   function sendClientMsg(msg: ClientAiMsg) {
-    managedSocket.send(JSON.stringify(msg));
+    managedSocket.send(
+      JSON.stringify({
+        ...msg,
+      })
+    );
   }
 
   return Object.defineProperty(
@@ -175,22 +395,31 @@ export function createAi(config: AiConfig): Ai {
       [kInternal]: {
         debugContext: () => context,
       },
-      events: eventHub,
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
-      listChats: () => {
-        sendClientMsg({
+      listChats: (strCursor?: string) => {
+        const cursor = strCursor
+          ? (tryParseJson(strCursor) as
+              | {
+                  lastMessageAt: string;
+                  chatId: string;
+                }
+              | undefined)
+          : undefined;
+        return sendClientMsgWithResponse({
           type: ClientAiMsgCode.LIST_CHATS,
+          cursor,
         });
       },
       newChat: (id?: string) => {
-        sendClientMsg({
+        return sendClientMsgWithResponse({
           type: ClientAiMsgCode.NEW_CHAT,
+          chatId: id,
         });
       },
       getMessages: (chatId: string) => {
-        sendClientMsg({
+        return sendClientMsgWithResponse({
           type: ClientAiMsgCode.GET_MESSAGES,
           chatId,
         });
@@ -200,19 +429,26 @@ export function createAi(config: AiConfig): Ai {
           type: MessageContentType.TEXT,
           data: message,
         };
-        sendClientMsg({
-          type: ClientAiMsgCode.ADD_MESSAGE,
-          chatId,
-          content,
-        });
+        return sendClientMsgWithResponse(
+          {
+            type: ClientAiMsgCode.ADD_MESSAGE,
+            chatId,
+            content,
+          },
+          60_000 // todo: not sure if we even want to leave a promise hanging here. some requests can be pretty long, although we do need to have some bounds
+        );
       },
       abortResponse: (chatId: string) => {
-        sendClientMsg({
+        return sendClientMsgWithResponse({
           type: ClientAiMsgCode.ABORT_RESPONSE,
           chatId,
         });
       },
       getStatus: () => managedSocket.getStatus(),
+      signals: {
+        chats: context.chats.signal,
+        messages: context.messages.sortedMessages,
+      },
     },
     kInternal,
     { enumerable: false }
