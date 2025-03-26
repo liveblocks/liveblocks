@@ -1,4 +1,4 @@
-import type { UserNotificationSettings } from "@liveblocks/core";
+import type { NotificationSettings } from "@liveblocks/core";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
@@ -326,6 +326,7 @@ declare global {
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -366,6 +367,7 @@ declare global {
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -1050,7 +1052,7 @@ declare global {
     classic.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // the useNotificationSettings() hook suspense
@@ -1059,7 +1061,7 @@ declare global {
     suspense.useNotificationSettings();
   expectType<false>(isLoading);
   expectType<undefined>(error);
-  expectType<UserNotificationSettings>(settings);
+  expectType<NotificationSettings>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------

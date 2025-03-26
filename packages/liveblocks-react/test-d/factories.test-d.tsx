@@ -1,5 +1,5 @@
 import type {
-  UserNotificationSettings,
+  NotificationSettings,
   Json,
   Room,
   User,
@@ -385,6 +385,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -422,43 +423,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
-      | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
-    >(err.context.type);
-    if (err.context.type === "ROOM_CONNECTION_ERROR") {
-      expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.code);
-    } else if (err.context.type === "CREATE_THREAD_ERROR") {
-      expectType<string>(err.context.roomId);
-      expectType<string>(err.context.threadId);
-      expectType<string>(err.context.commentId);
-    } else {
-      // Not going to list them all...
-    }
-  });
-
-  ctx.suspense.useErrorListener((err) => {
-    expectType<string>(err.message);
-    expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
-    expectAssignable<
-      | "ROOM_CONNECTION_ERROR"
-      | "CREATE_THREAD_ERROR"
-      | "DELETE_THREAD_ERROR"
-      | "EDIT_THREAD_METADATA_ERROR"
-      | "MARK_THREAD_AS_RESOLVED_ERROR"
-      | "MARK_THREAD_AS_UNRESOLVED_ERROR"
-      | "SUBSCRIBE_TO_THREAD_ERROR"
-      | "UNSUBSCRIBE_FROM_THREAD_ERROR"
-      | "CREATE_COMMENT_ERROR"
-      | "EDIT_COMMENT_ERROR"
-      | "DELETE_COMMENT_ERROR"
-      | "ADD_REACTION_ERROR"
-      | "REMOVE_REACTION_ERROR"
-      | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
-      | "DELETE_INBOX_NOTIFICATION_ERROR"
-      | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
-      | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
-      | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -496,6 +461,7 @@ ctx.useOthersListener(({ user, type }) => {
       | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -1231,7 +1197,7 @@ ctx.useOthersListener(({ user, type }) => {
     lbctx.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // the useNotificationSettings() hook suspense
@@ -1240,7 +1206,7 @@ ctx.useOthersListener(({ user, type }) => {
     lbctx.suspense.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------

@@ -10,7 +10,7 @@ type RoomConnectionErrorContext = {
   roomId: string;
 };
 
-// All possible errors originating from using Comments or Notifications or UserNotificationSettings
+// All possible errors originating from using Comments or Notifications
 type CommentsOrNotificationsErrorContext =
   | {
       type: "CREATE_THREAD_ERROR";
@@ -74,17 +74,23 @@ type CommentsOrNotificationsErrorContext =
         | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
         | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR";
     }
+  // TODO: Deprecated, remove this once "room notification settings" hooks are removed
   | {
       type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
       roomId: string;
     }
+  | {
+      type: "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR";
+      roomId: string;
+    }
+  // TODO: Rename this to "UPDATE_NOTIFICATION_SETTINGS_ERROR" once the current "UPDATE_NOTIFICATION_SETTINGS_ERROR" is removed
   | {
       type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR";
     };
 
 export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
-  | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
+  | CommentsOrNotificationsErrorContext // from Comments or Notifications
 >;
 
 export class LiveblocksError extends Error {
@@ -151,7 +157,8 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR": return "Could not mark all inbox notifications as read";
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
-    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update user notification settings";
+    case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
+    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
 
     default:
       return assertNever(context, "Unhandled case");

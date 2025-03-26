@@ -12,7 +12,6 @@ import type {
   LsonObject,
   OthersEvent,
   Room,
-  RoomNotificationSettings,
   Status,
   StorageStatus,
   ThreadData,
@@ -32,6 +31,7 @@ import type {
   LiveblocksErrorContext,
   OpaqueClient,
   RoomEventMessage,
+  RoomSubscriptionSettings,
   SignalType,
   TextEditorType,
   ToImmutable,
@@ -87,9 +87,9 @@ import type {
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
-  RoomNotificationSettingsAsyncResult,
-  RoomNotificationSettingsAsyncSuccess,
   RoomProviderProps,
+  RoomSubscriptionSettingsAsyncResult,
+  RoomSubscriptionSettingsAsyncSuccess,
   StorageStatusSuccess,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
@@ -277,19 +277,19 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
     )
   );
 
-  const roomNotificationSettingsPollersByRoomId = new DefaultMap(
+  const roomSubscriptionSettingsPollersByRoomId = new DefaultMap(
     (roomId: string) =>
       makePoller(
         async (signal) => {
           try {
-            return await store.refreshRoomNotificationSettings(roomId, signal);
+            return await store.refreshRoomSubscriptionSettings(roomId, signal);
           } catch (err) {
-            console.warn(`Polling notification settings for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            console.warn(`Polling subscription settings for '${roomId}' failed: ${String(err)}`); // prettier-ignore
             throw err;
           }
         },
-        config.NOTIFICATION_SETTINGS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.NOTIFICATION_SETTINGS_MAX_STALE_TIME }
+        config.ROOM_SUBSCRIPTION_SETTINGS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.ROOM_SUBSCRIPTION_SETTINGS_MAX_STALE_TIME }
       )
   );
 
@@ -301,9 +301,9 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
     ),
     getOrCreateVersionsPollerForRoomId:
       versionsPollersByRoomId.getOrCreate.bind(versionsPollersByRoomId),
-    getOrCreateNotificationsSettingsPollerForRoomId:
-      roomNotificationSettingsPollersByRoomId.getOrCreate.bind(
-        roomNotificationSettingsPollersByRoomId
+    getOrCreateSubscriptionSettingsPollerForRoomId:
+      roomSubscriptionSettingsPollersByRoomId.getOrCreate.bind(
+        roomSubscriptionSettingsPollersByRoomId
       ),
   };
 }
@@ -403,7 +403,9 @@ function makeRoomContextBundle<
     useHistoryVersionData,
 
     useRoomNotificationSettings,
+    useRoomSubscriptionSettings,
     useUpdateRoomNotificationSettings,
+    useUpdateRoomSubscriptionSettings,
 
     ...shared.classic,
 
@@ -468,7 +470,9 @@ function makeRoomContextBundle<
       useHistoryVersions: useHistoryVersionsSuspense,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
+      useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
       useUpdateRoomNotificationSettings,
+      useUpdateRoomSubscriptionSettings,
 
       ...shared.suspense,
     },
@@ -1989,7 +1993,7 @@ function useSubscribeToRoomThread(roomId: string) {
   return useCallback(
     (threadId: string) => {
       // TODO: Optimistically create an inbox notification for the thread (if not already present),
-      //       createComment, createThread, updateRoomNotificationSettings etc, don't do this at the moment?
+      //       createComment, createThread, updateRoomSubscriptionSettings etc, don't do this at the moment?
 
       client[kInternal].httpClient.subscribeToThread({ roomId, threadId }).then(
         () => {
@@ -2107,27 +2111,31 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 }
 
 /**
- * Returns the user's notification settings for the current room
- * and a function to update them.
+ * @deprecated Renamed to `useRoomSubscriptionSettings`
  *
- * @example
- * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
  */
 function useRoomNotificationSettings(): [
-  RoomNotificationSettingsAsyncResult,
-  (settings: Partial<RoomNotificationSettings>) => void,
+  RoomSubscriptionSettingsAsyncResult,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
+  // We're keeping this deprecated implementation separate instead of aliasing it
+  // because `useUpdateRoomNotificationSettings` triggers a specific error type and changing it
+  // would be a breaking change
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
   const client = useClient();
   const room = useRoom();
-  const { store, getOrCreateNotificationsSettingsPollerForRoomId } =
+  const { store, getOrCreateSubscriptionSettingsPollerForRoomId } =
     getRoomExtrasForClient(client);
 
-  const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
+  const poller = getOrCreateSubscriptionSettingsPollerForRoomId(room.id);
 
   useEffect(
     () =>
-      void store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+      void store.outputs.roomSubscriptionSettingsByRoomId
+        .getOrCreate(room.id)
+        .waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -2148,7 +2156,7 @@ function useRoomNotificationSettings(): [
   }, [poller]);
 
   const settings = useSignal(
-    store.outputs.settingsByRoomId.getOrCreate(room.id).signal
+    store.outputs.roomSubscriptionSettingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2157,16 +2165,71 @@ function useRoomNotificationSettings(): [
 }
 
 /**
- * Returns the user's notification settings for the current room
+ * Returns the user's subscription settings for the current room
  * and a function to update them.
  *
  * @example
- * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+ */
+function useRoomSubscriptionSettings(): [
+  RoomSubscriptionSettingsAsyncResult,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
+  const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+  const client = useClient();
+  const room = useRoom();
+  const { store, getOrCreateSubscriptionSettingsPollerForRoomId } =
+    getRoomExtrasForClient(client);
+
+  const poller = getOrCreateSubscriptionSettingsPollerForRoomId(room.id);
+
+  useEffect(
+    () =>
+      void store.outputs.roomSubscriptionSettingsByRoomId
+        .getOrCreate(room.id)
+        .waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  const settings = useSignal(
+    store.outputs.roomSubscriptionSettingsByRoomId.getOrCreate(room.id).signal
+  );
+
+  return useMemo(() => {
+    return [settings, updateRoomSubscriptionSettings];
+  }, [settings, updateRoomSubscriptionSettings]);
+}
+
+/**
+ * @deprecated Renamed to `useRoomSubscriptionSettings`
+ *
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
  */
 function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsAsyncSuccess,
-  (settings: Partial<RoomNotificationSettings>) => void,
+  RoomSubscriptionSettingsAsyncSuccess,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
 ] {
+  // We're keeping this deprecated implementation separate instead of aliasing it
+  // because `useUpdateRoomNotificationSettings` triggers a specific error type and changing it
+  // would be a breaking change
+
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -2175,7 +2238,11 @@ function useRoomNotificationSettingsSuspense(): [
   const room = useRoom();
 
   // Suspend until there are at least some inbox notifications
-  use(store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded());
+  use(
+    store.outputs.roomSubscriptionSettingsByRoomId
+      .getOrCreate(room.id)
+      .waitUntilLoaded()
+  );
 
   // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
   // hook is expected to only return success results when we're here.
@@ -2187,6 +2254,43 @@ function useRoomNotificationSettingsSuspense(): [
   return useMemo(() => {
     return [settings, updateRoomNotificationSettings];
   }, [settings, updateRoomNotificationSettings]);
+}
+
+/**
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+ */
+function useRoomSubscriptionSettingsSuspense(): [
+  RoomSubscriptionSettingsAsyncSuccess,
+  (settings: Partial<RoomSubscriptionSettings>) => void,
+] {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getRoomExtrasForClient(client).store;
+  const room = useRoom();
+
+  // Suspend until there are at least some inbox notifications
+  use(
+    store.outputs.roomSubscriptionSettingsByRoomId
+      .getOrCreate(room.id)
+      .waitUntilLoaded()
+  );
+
+  // We're in a Suspense world here, and as such, the useRoomSubscriptionSettings()
+  // hook is expected to only return success results when we're here.
+  const [settings, updateRoomSubscriptionSettings] =
+    useRoomSubscriptionSettings();
+  assert(!settings.error, "Did not expect error");
+  assert(!settings.isLoading, "Did not expect loading");
+
+  return useMemo(() => {
+    return [settings, updateRoomSubscriptionSettings];
+  }, [settings, updateRoomSubscriptionSettings]);
 }
 
 /**
@@ -2291,34 +2395,74 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
 }
 
 /**
- * Returns a function that updates the user's notification settings
- * for the current room.
+ * @deprecated Renamed to `useUpdateRoomSubscriptionSettings`
  *
- * @example
- * const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
- * updateRoomNotificationSettings({ threads: "all" });
+ * Returns a function that updates the user's subscription settings
+ * for the current room.
  */
 function useUpdateRoomNotificationSettings() {
+  // We're keeping this deprecated implementation separate instead of aliasing it
+  // because changing the error type would be a breaking change
   const client = useClient();
   const room = useRoom();
   return useCallback(
-    (settings: Partial<RoomNotificationSettings>) => {
+    (settings: Partial<RoomSubscriptionSettings>) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticId = store.optimisticUpdates.add({
-        type: "update-notification-settings",
+        type: "update-room-subscription-settings",
         roomId: room.id,
         settings,
       });
 
-      room.updateNotificationSettings(settings).then(
+      room.updateSubscriptionSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomNotificationSettings(room.id, optimisticId, settings);
+          store.updateRoomSubscriptionSettings(room.id, optimisticId, settings);
         },
         (err: Error) =>
           onMutationFailure(
             optimisticId,
             { type: "UPDATE_NOTIFICATION_SETTINGS_ERROR", roomId: room.id },
+            err
+          )
+      );
+    },
+    [client, room]
+  );
+}
+
+/**
+ * Returns a function that updates the user's subscription settings
+ * for the current room.
+ *
+ * @example
+ * const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+ * updateRoomSubscriptionSettings({ threads: "all" });
+ */
+function useUpdateRoomSubscriptionSettings() {
+  const client = useClient();
+  const room = useRoom();
+  return useCallback(
+    (settings: Partial<RoomSubscriptionSettings>) => {
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      const optimisticId = store.optimisticUpdates.add({
+        type: "update-room-subscription-settings",
+        roomId: room.id,
+        settings,
+      });
+
+      room.updateSubscriptionSettings(settings).then(
+        (settings) => {
+          // Replace the optimistic update by the real thing
+          store.updateRoomSubscriptionSettings(room.id, optimisticId, settings);
+        },
+        (err: Error) =>
+          onMutationFailure(
+            optimisticId,
+            {
+              type: "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR",
+              roomId: room.id,
+            },
             err
           )
       );
@@ -2864,24 +3008,42 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
 /**
- * Returns the user's notification settings for the current room
- * and a function to update them.
+ * @deprecated Renamed to `useRoomSubscriptionSettings`
  *
- * @example
- * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
  */
 const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
   useRoomNotificationSettings;
 
 /**
- * Returns the user's notification settings for the current room
+ * Returns the user's subscription settings for the current room
  * and a function to update them.
  *
  * @example
- * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+ */
+const _useRoomSubscriptionSettings: TypedBundle["useRoomSubscriptionSettings"] =
+  useRoomSubscriptionSettings;
+
+/**
+ * @deprecated Renamed to `useRoomSubscriptionSettings`
+ *
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
  */
 const _useRoomNotificationSettingsSuspense: TypedBundle["suspense"]["useRoomNotificationSettings"] =
   useRoomNotificationSettingsSuspense;
+
+/**
+ * Returns the user's subscription settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+ */
+const _useRoomSubscriptionSettingsSuspense: TypedBundle["suspense"]["useRoomSubscriptionSettings"] =
+  useRoomSubscriptionSettingsSuspense;
 
 /**
  * (Private beta) Returns a history of versions of the current room.
@@ -3223,6 +3385,8 @@ export {
   _useRoomNotificationSettings as useRoomNotificationSettings,
   _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
   useRoomPermissions,
+  _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
+  _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,
@@ -3241,5 +3405,6 @@ export {
   useUnsubscribeFromThread,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useUpdateRoomSubscriptionSettings,
   useYjsProvider,
 };
