@@ -2831,7 +2831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserNotificationSettings"
+                  "$ref": "#/components/schemas/NotificationSettings"
                 },
                 "examples": {
                   "example": {
@@ -2890,7 +2890,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PartialUserNotificationSettings"
+                "$ref": "#/components/schemas/PartialNotificationSettings"
               },
               "examples": {
                 "example": {
@@ -2917,7 +2917,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserNotificationSettings"
+                  "$ref": "#/components/schemas/NotificationSettings"
                 },
                 "examples": {
                   "example": {
@@ -2988,7 +2988,7 @@
         }
       }
     },
-    "/rooms/{roomId}/users/{userId}/notification-settings": {
+    "/rooms/{roomId}/users/{userId}/subscription-settings": {
       "parameters": [
         {
           "schema": {
@@ -3008,10 +3008,10 @@
         }
       ],
       "get": {
-        "summary": "Get room notification settings",
+        "summary": "Get room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "get-rooms-roomId-users-userId-notification-settings",
-        "description": "This endpoint returns a user’s notification settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "operationId": "get-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3038,7 +3038,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                  "$ref": "#/components/schemas/RoomSubscriptionSettings"
                 }
               }
             }
@@ -3055,10 +3055,10 @@
         }
       },
       "post": {
-        "summary": "Update room notification settings",
+        "summary": "Update room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "post-rooms-roomId-users-userId-notification-settings",
-        "description": "This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "operationId": "post-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3085,7 +3085,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                  "$ref": "#/components/schemas/RoomSubscriptionSettings"
                 }
               }
             }
@@ -3107,17 +3107,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                "$ref": "#/components/schemas/RoomSubscriptionSettings"
               }
             }
           }
         }
       },
       "delete": {
-        "summary": "Delete room notification settings",
+        "summary": "Delete room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "delete-rooms-roomId-users-userId-notification-settings",
-        "description": "This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
+        "operationId": "delete-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3935,7 +3935,7 @@
           "description": "Custom notification kinds prefixed by a '$'"
         }
       },
-      "UserNotificationSettings": {
+      "NotificationSettings": {
         "type": "object",
         "properties": {
           "email": {
@@ -3951,9 +3951,9 @@
             "$ref": "#/components/schemas/NotificationChannelSettings"
           }
         },
-        "description": "User notification settings for each supported channel"
+        "description": "Notification settings for each supported channel"
       },
-      "PartialUserNotificationSettings": {
+      "PartialNotificationSettings": {
         "type": "object",
         "properties": {
           "email": {
@@ -3969,14 +3969,17 @@
             "$ref": "#/components/schemas/NotificationChannelSettings"
           }
         },
-        "description": "Partial user notification settings - all properties are optional"
+        "description": "Partial notification settings - all properties are optional"
       },
-      "UserRoomNotificationSettings": {
-        "title": "UserRoomNotificationSettings",
+      "RoomSubscriptionSettings": {
+        "title": "RoomSubscriptionSettings",
         "type": "object",
         "properties": {
           "threads": {
             "enum": ["all", "replies_and_mentions", "none"]
+          },
+          "textMentions": {
+            "enum": ["mine", "none"]
           }
         }
       },

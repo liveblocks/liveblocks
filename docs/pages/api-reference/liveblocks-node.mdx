@@ -1883,31 +1883,31 @@ await liveblocks.removeCommentReaction({
 });
 ```
 
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.getRoomSubscriptionSettings [#get-rooms-roomId-users-userId-subscription-settings]
 
-Returns a user’s notification settings for a specific room. This is a wrapper
+Returns a user’s subscription settings for a specific room. This is a wrapper
 around the
-[Get Room Notification Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-notification-settings).
+[Get Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-const notificationSettings = await liveblocks.getRoomNotificationSettings({
+const subscriptionSettings = await liveblocks.getRoomSubscriptionSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
 });
 
 // { threads: "all", ... }
-console.log(notificationSettings);
+console.log(subscriptionSettings);
 ```
 
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.updateRoomSubscriptionSettings [#post-rooms-roomId-users-userId-subscription-settings]
 
-Updates a user’s notification settings for a specific room. This is a wrapper
+Updates a user’s subscription settings for a specific room. This is a wrapper
 around the
-[Update Room Notification Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-notification-settings).
+[Update Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-const updatedNotificationSettings =
-  await liveblocks.updateRoomNotificationSettings({
+const updatedSubscriptionSettings =
+  await liveblocks.updateRoomSubscriptionSettings({
     roomId: "my-room-id",
     userId: "steven@example.com",
     data: {
@@ -1916,17 +1916,17 @@ const updatedNotificationSettings =
   });
 
 // { threads: "replies_and_mentions", ... }
-console.log(updatedNotificationSettings);
+console.log(updatedSubscriptionSettings);
 ```
 
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.deleteRoomSubscriptionSettings [#delete-rooms-roomId-users-userId-subscription-settings]
 
-Deletes a user’s notification settings for a specific room. This is a wrapper
+Deletes a user’s subscription settings for a specific room. This is a wrapper
 around the
-[Delete Room Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-notification-settings).
+[Delete Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-await liveblocks.deleteRoomNotificationSettings({
+await liveblocks.deleteRoomSubscriptionSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
 });
@@ -2100,10 +2100,9 @@ await liveblocks.deleteAllInboxNotifications({
 
 Returns a user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the user. User notification settings are project-based, which
-means that this returns the user’s settings for every room. This a wrapper
-around the
-[Get User Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
+will be sent for the user. Notification settings are project-based, which means
+that this returns the user’s settings for every room. This a wrapper around the
+[Get Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
 
 ```ts
 const settings = await liveblocks.getNotificationSettings({
@@ -2131,11 +2130,11 @@ console.log(settings);
 
 Updates a user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the user. User notification settings are project-based, which means
-that this modifies the user’s settings in every room. Each notification `kind`
-must first be enabled on your project’s notification dashboard page before
-settings can be used. This a wrapper around the
-[Update User Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
+sent for the user. Notification settings are project-based, which means that
+this modifies the user’s settings in every room. Each notification `kind` must
+first be enabled on your project’s notification dashboard page before settings
+can be used. This a wrapper around the
+[Update Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
 
 ```ts
 const updatedSettings = await liveblocks.updateNotificationSettings({
@@ -2188,7 +2187,7 @@ await liveblocks.updateNotificationSettings({
 Deletes the user’s notification settings, resetting them to the default values.
 The default values can be adjusted in a project’s notification dashboard page.
 This a wrapper around the
-[Delete User Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
+[Delete Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
 
 ```ts
 await liveblocks.deleteNotificationSettings({

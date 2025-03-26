@@ -3139,33 +3139,45 @@ await client.deleteInboxNotification("in_xxx");
   </PropertiesListItem>
 </PropertiesList>
 
-### Room.getNotificationSettings
+### Room.getSubscriptionSettings
 
-Gets the user’s notification settings for the current room. This notates which
+Gets the user’s subscription settings for the current room. This notates which
 [`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
 the current user receives in the current room.
 
 ```ts
-const settings = await room.getNotificationSettings();
+const settings = await room.getSubscriptionSettings();
 ```
 
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="settings"
-    type="{ threads }"
+    type="{ threads, textMentions }"
   >
-    Notification settings for Liveblocks products.
+    Subscription settings for Liveblocks products.
   </PropertiesListItem>
   <PropertiesListItem
     name="settings.threads"
     type={`"all" | "replies_and_mentions" | "none"`}
   >
     <div className="-mb-3">
-      Returns the current room’s notification settings for threads. It can return one of three values:
+      Returns the current room’s subscription settings for threads. It can return one of three values:
     </div>
 
-    - `"all"` Receive notifications for every activity.
-    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"all"` Receive notifications for every activity in every thread.
+    - `"replies_and_mentions"` Receive notifications for mentions and threads you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+    <PropertiesListItem
+    name="settings.textMentions"
+    type={`"mine" | "none"`}
+  >
+    <div className="-mb-3">
+      Returns the current room’s subscription settings for text mentions. It can be one of two values:
+    </div>
+
+    - `"mine"` Receive notifications for mentions of you.
     - `"none"` No notifications are received.
 
   </PropertiesListItem>
@@ -3173,15 +3185,15 @@ const settings = await room.getNotificationSettings();
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-### Room.updateNotificationSettings
+### Room.updateSubscriptionSettings
 
-Updates the user’s notification settings for the current room. Updating this
+Updates the user’s subscription settings for the current room. Updating this
 setting will change which
 [`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
 the current user receives in the current room.
 
 ```ts
-const settings = await room.updateNotificationSettings({
+const settings = await room.updateSubscriptionSettings({
   threads: "replies_and_mentions",
 });
 ```
@@ -3189,36 +3201,60 @@ const settings = await room.updateNotificationSettings({
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="settings"
-    type="{ threads }"
+    type="{ threads, textMentions }"
   >
-    Notification settings for Liveblocks products.
+    Subscription settings for Liveblocks products.
   </PropertiesListItem>
   <PropertiesListItem
     name="settings.threads"
     type={`"all" | "replies_and_mentions" | "none"`}
   >
     <div className="-mb-3">
-      Returns the current room’s notification settings for threads. It can return one of three values:
+      Returns the current room’s subscription settings for threads. It can return one of three values:
     </div>
 
-    - `"all"` Receive notifications for every activity.
-    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"all"` Receive notifications for every activity in every thread.
+    - `"replies_and_mentions"` Receive notifications for mentions and threads you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+    <PropertiesListItem
+    name="settings.textMentions"
+    type={`"mine" | "none"`}
+  >
+    <div className="-mb-3">
+      Returns the current room’s subscription settings for text mentions. It can be one of two values:
+    </div>
+
+    - `"mine"` Receive notifications for mentions of you.
     - `"none"` No notifications are received.
 
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem
+    <PropertiesListItem
     name="threads"
     type={`"all" | "replies_and_mentions" | "none"`}
   >
     <div className="-mb-3">
-      Sets the current room’s notification settings for threads. It can be one of three values:
+      Sets the current room’s subscription settings for threads. It can be one of three values:
     </div>
 
-    - `"all"` Receive notifications for every activity.
-    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"all"` Receive notifications for every activity in every thread.
+    - `"replies_and_mentions"` Receive notifications for mentions and threads you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="textMentions"
+    type={`"mine" | "none"`}
+  >
+    <div className="-mb-3">
+      Sets the current room’s subscription settings for text mentions. It can be one of two values:
+    </div>
+
+    - `"mine"` Receive notifications for mentions of you.
     - `"none"` No notifications are received.
 
   </PropertiesListItem>
@@ -3228,7 +3264,7 @@ const settings = await room.updateNotificationSettings({
 
 Returns the user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the current user. User notification settings are project-based,
+will be sent for the current user. Notification settings are project-based,
 which means that this returns the current user’s settings for every room.
 
 ```ts
@@ -3250,7 +3286,7 @@ console.log(settings);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="UserNotificationSettings">
+  <PropertiesListItem name="settings" type="NotificationSettings">
     Current user’s notification settings.
   </PropertiesListItem>
 </PropertiesList>
@@ -3261,10 +3297,10 @@ console.log(settings);
 
 Updates the current user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the current user. User notification settings are project-based, which
-means that this modifies the current user’s settings in every room. Each
-notification `kind` must first be enabled on your project’s notification
-dashboard page before settings can be used.
+sent for the current user. Notification settings are project-based, which means
+that this modifies the current user’s settings in every room. Each notification
+`kind` must first be enabled on your project’s notification dashboard page
+before settings can be used.
 
 ```ts
 const settings = await client.updateNotificationSettings({
@@ -3277,14 +3313,14 @@ console.log(settings);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="UserNotificationSettings">
+  <PropertiesListItem name="settings" type="NotificationSettings">
     Current user’s notification settings.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="settings" type="object" required>
-    A deep partial object containing the user notification settings to
+    A deep partial object containing the notification settings to
     update. Custom notifications can be set too.
 
     <div className="-mt-2">
