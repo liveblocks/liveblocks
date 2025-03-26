@@ -1,4 +1,4 @@
-import type { Brand } from "@liveblocks/core";
+import type { Brand } from "../lib/utils";
 
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,

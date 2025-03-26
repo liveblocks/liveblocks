@@ -1,4 +1,4 @@
-import { createAi, makeCreateSocketDelegateForAi } from "./ai";
+import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
@@ -50,7 +50,6 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { AiChat } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
@@ -417,11 +416,9 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    */
   getSyncStatus(): SyncStatus;
 
-  listChats(): void;
-  newChat(id?: string): void;
-  getMessages(chatId: string): void;
-  sendMessage(chatId: string, message: string): void;
   getAiStatus(): Status;
+
+  ai: Ai;
 
   /**
    * All possible client events, subscribable from a single place.
@@ -429,12 +426,6 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
   readonly events: {
     readonly error: Observable<LiveblocksError>;
     readonly syncStatus: Observable<void>;
-    readonly ai: {
-      readonly chats: Observable<{
-        chats: AiChat[];
-        cursor: { chatId: string; lastMessageAt: string } | null;
-      }>;
-    };
   };
 } & NotificationsApi<M>;
 
@@ -922,21 +913,9 @@ export function createClient<U extends BaseUserMeta = DU>(
       events: {
         error: liveblocksErrorSource,
         syncStatus: syncStatusSignal,
-        ai: ai.events,
       },
 
-      listChats: () => {
-        ai.listChats();
-      },
-      newChat: (id?: string) => {
-        ai.newChat(id);
-      },
-      getMessages: (chatId: string) => {
-        ai.getMessages(chatId);
-      },
-      sendMessage: (chatId: string, message: string) => {
-        ai.sendMessage(chatId, message);
-      },
+      ai,
       getAiStatus: () => {
         return ai.getStatus();
       },
