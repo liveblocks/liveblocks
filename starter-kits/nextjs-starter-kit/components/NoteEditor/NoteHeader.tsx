@@ -1,13 +1,13 @@
 import { BlockNoteEditor } from "@blocknote/core";
 import { useMutation, useSelf, useStorage } from "@liveblocks/react";
 import { Title } from "@/components/NoteEditor/Title";
-import styles from "./NoteHeader.module.css";
 import { Button } from "@/primitives/Button";
 import { useState } from "react";
 import { Popover } from "@/primitives/Popover";
 import { CrossIcon, ImageIcon } from "@/icons";
 import { Icon } from "@liveblocks/react-ui";
 import { MyEmojiPicker } from "@/primitives/EmojiPicker";
+import styles from "./NoteHeader.module.css";
 
 export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
   return (
@@ -19,24 +19,14 @@ export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
   );
 }
 
-const COLORS = [
-  "oklch(0.645 0.246 16.439)",
-  "oklch(0.705 0.213 47.604)",
-  "oklch(0.795 0.184 86.047)",
-  "oklch(0.723 0.219 149.579)",
-  "oklch(0.685 0.169 237.323)",
-  "oklch(0.606 0.25 292.717)",
-  "oklch(0.554 0.046 257.417)",
-];
-
 function EmojiAndButtons() {
   const cover = useStorage((root) => root.cover);
   const icon = useStorage((root) => root.icon);
   const canWrite = useSelf()?.canWrite;
 
-  const [isCoverPopoverOpen, setIsCoverPopoverOpen] = useState(false);
-  const [isEmojiPopoverOpen, setIsEmojiPopoverOpen] = useState(false);
-  const isPopoverOpen = isCoverPopoverOpen || isEmojiPopoverOpen;
+  const [coverPopoverOpen, setCoverPopoverOpen] = useState(false);
+  const [emojiPopoverOpen, setEmojiPopoverOpen] = useState(false);
+  const isPopoverOpen = coverPopoverOpen || emojiPopoverOpen;
 
   const setCover = useMutation(({ storage }, newColor: string | null) => {
     storage.set("cover", newColor);
@@ -61,20 +51,20 @@ function EmojiAndButtons() {
       data-popover-open={isPopoverOpen || undefined}
     >
       <Popover
-        open={isEmojiPopoverOpen}
-        onOpenChange={setIsEmojiPopoverOpen}
+        open={emojiPopoverOpen}
+        onOpenChange={setEmojiPopoverOpen}
         content={
           <MyEmojiPicker
             onEmojiSelect={(emoji) => {
               setIcon(emoji);
-              setIsEmojiPopoverOpen(false);
+              setEmojiPopoverOpen(false);
             }}
             buttonSlot={
               <Button
                 variant="subtle"
                 onClick={() => {
                   setIcon(null);
-                  setIsEmojiPopoverOpen(false);
+                  setEmojiPopoverOpen(false);
                 }}
               >
                 Remove
@@ -92,7 +82,7 @@ function EmojiAndButtons() {
           <Button
             variant="subtle"
             icon={<Icon.Emoji style={{ marginRight: -2 }} />}
-            onClick={() => setIsEmojiPopoverOpen(true)}
+            onClick={() => setEmojiPopoverOpen(true)}
             className={styles.buttonRowButton}
           >
             Add icon
@@ -100,11 +90,11 @@ function EmojiAndButtons() {
         )}
       </Popover>
       <Popover
-        open={isCoverPopoverOpen}
-        onOpenChange={setIsCoverPopoverOpen}
+        open={coverPopoverOpen}
+        onOpenChange={setCoverPopoverOpen}
         content={
           <div className={styles.coverPopover}>
-            {COLORS.map((color) => (
+            {COVER_COLORS.map((color) => (
               <button
                 key={color}
                 className={styles.coverPopoverItem}
@@ -121,7 +111,7 @@ function EmojiAndButtons() {
               className={styles.coverPopoverItem}
               onClick={() => {
                 setCover(null);
-                setIsCoverPopoverOpen(false);
+                setCoverPopoverOpen(false);
               }}
               data-active={cover === null || undefined}
             >
@@ -133,7 +123,7 @@ function EmojiAndButtons() {
       >
         <Button
           variant="subtle"
-          onClick={() => setIsCoverPopoverOpen(true)}
+          onClick={() => setCoverPopoverOpen(true)}
           icon={<ImageIcon style={{ width: 18, height: 18 }} />}
           className={styles.buttonRowButton}
         >
@@ -153,3 +143,13 @@ function Cover() {
 
   return <div style={{ backgroundColor: cover, height: 200 }} />;
 }
+
+const COVER_COLORS = [
+  "oklch(0.645 0.246 16.439)",
+  "oklch(0.705 0.213 47.604)",
+  "oklch(0.795 0.184 86.047)",
+  "oklch(0.723 0.219 149.579)",
+  "oklch(0.685 0.169 237.323)",
+  "oklch(0.606 0.25 292.717)",
+  "oklch(0.554 0.046 257.417)",
+];
