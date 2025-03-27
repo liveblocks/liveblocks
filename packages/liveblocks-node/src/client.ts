@@ -329,6 +329,23 @@ export type RequestOptions = {
 };
 
 /**
+ * Converts ISO-formatted date strings to Date instances on RoomDataPlain
+ * values.
+ */
+function inflateRoomData(room: RoomDataPlain): RoomData {
+  const createdAt = new Date(room.createdAt);
+  const lastConnectionAt = room.lastConnectionAt
+    ? new Date(room.lastConnectionAt)
+    : undefined;
+
+  return {
+    ...room,
+    createdAt,
+    lastConnectionAt,
+  };
+}
+
+/**
  * Interact with the Liveblocks API from your Node.js backend.
  */
 export class Liveblocks {
@@ -598,20 +615,7 @@ export class Liveblocks {
     }
 
     const page = (await res.json()) as Page<RoomDataPlain>;
-    const rooms: RoomData[] = page.data.map((room) => {
-      // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-      const lastConnectionAt = room.lastConnectionAt
-        ? new Date(room.lastConnectionAt)
-        : undefined;
-
-      const createdAt = new Date(room.createdAt);
-      return {
-        ...room,
-        createdAt,
-        lastConnectionAt,
-      };
-    });
-
+    const rooms: RoomData[] = page.data.map(inflateRoomData);
     return {
       ...page,
       data: rooms,
@@ -690,18 +694,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      lastConnectionAt,
-      createdAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -751,18 +744,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      lastConnectionAt,
-      createdAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -782,18 +764,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      createdAt,
-      lastConnectionAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -830,18 +801,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      lastConnectionAt,
-      createdAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -1973,14 +1933,9 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+
     const data = (await res.json()) as RoomDataPlain;
-    return {
-      ...data,
-      createdAt: new Date(data.createdAt),
-      lastConnectionAt: data.lastConnectionAt
-        ? new Date(data.lastConnectionAt)
-        : undefined,
-    };
+    return inflateRoomData(data);
   }
 
   public async triggerInboxNotification<K extends KDAD>(
