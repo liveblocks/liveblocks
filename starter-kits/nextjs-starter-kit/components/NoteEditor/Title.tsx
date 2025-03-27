@@ -43,11 +43,10 @@ export function Title({ editor }: { editor: BlockNoteEditor | null }) {
       // Prevent multi-line with enter
       if (e.key === "Enter") {
         e.preventDefault();
-        return;
       }
 
-      // Go to editor when down arrow pressed
-      if (e.key === "ArrowDown" && editor) {
+      // Go to editor when down arrow or enter pressed
+      if (editor && (e.key === "ArrowDown" || e.key === "Enter")) {
         editor._tiptapEditor.commands.focus("start");
       }
     },

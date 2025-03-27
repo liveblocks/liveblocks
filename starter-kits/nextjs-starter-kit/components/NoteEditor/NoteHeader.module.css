@@ -2,6 +2,10 @@
   position: relative;
 }
 
+.cover {
+  height: 200px;
+}
+
 .buttonRow {
   position: relative;
   max-width: var(--note-editor-width);

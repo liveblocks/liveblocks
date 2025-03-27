@@ -139,10 +139,10 @@ function Cover() {
   const cover = useStorage((root) => root.cover);
 
   if (!cover) {
-    return <div style={{ height: 80 }} />;
+    return null;
   }
 
-  return <div style={{ backgroundColor: cover, height: 200 }} />;
+  return <div style={{ backgroundColor: cover }} className={styles.cover} />;
 }
 
 const COVER_COLORS = [
