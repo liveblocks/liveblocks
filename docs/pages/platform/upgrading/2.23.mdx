@@ -39,17 +39,16 @@ ones where they participate).
 
 With 2.18, we introduced the concept of “**user** notification settings”, which
 are **project-level** settings that control the notifications (
-[`"notification" webhook events](/docs/platform/webhooks#NotificationEvent), not
-"inbox notifications") received by a user (e.g. setting
-`email.$myCustomNotification` to `false` would disable
-`"notification" webhook events for the `$myCustomNotification`kind and the`email`
-channel).
+[`"notification"` webhook events](/docs/platform/webhooks#NotificationEvent),
+not "inbox notifications") received by a user (e.g. setting
+`email.$myCustomNotification` to `false` would disable `"notification"` webhook
+events for the `$myCustomNotification` kind and the `email` channel).
 
 To improve clarity, we’re renaming these concepts:
 
-- “**room** notification settings” → “**room** subscription settings”, they
+- “**room** notification settings” → “**room** subscription settings”: they
   control which things a user is subscribed to in a room
-- “**user** notification settings” → “notification settings”, they control which
+- “**user** notification settings” → “notification settings”: they control which
   notifications a user receives
 
 ### What changed
