@@ -52,8 +52,8 @@
     "vitest-tsconfig-paths": "^3.4.1"
   },
   "peerDependencies": {
-    "@blocknote/core": "0.25.1-1",
-    "@blocknote/react": "0.25.1-1",
+    "@blocknote/core": "0.25.1 - 1.0.0",
+    "@blocknote/react": "0.25.1 - 1.0.0",
     "@tiptap/core": "^2.7.2",
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
