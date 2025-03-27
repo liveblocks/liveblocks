@@ -319,6 +319,11 @@ export type UpdateRoomOptions = {
   metadata?: Record<string, string | string[] | null>;
 };
 
+export type UpsertRoomOptions = {
+  update: UpdateRoomOptions;
+  create?: CreateRoomOptions;
+};
+
 export type RequestOptions = {
   signal?: AbortSignal;
 };
@@ -733,13 +738,12 @@ export class Liveblocks {
    */
   public async upsertRoom(
     roomId: string,
-    update: UpdateRoomOptions,
-    create?: CreateRoomOptions,
+    params: UpsertRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
     const res = await this.#post(
       url`/v2/rooms/${roomId}/upsert`,
-      { update, create },
+      params,
       options
     );
     if (!res.ok) {

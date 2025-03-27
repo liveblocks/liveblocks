@@ -25,6 +25,7 @@ export type {
   Schema,
   ThreadParticipants,
   UpdateRoomOptions,
+  UpsertRoomOptions,
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export type {
