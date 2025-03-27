@@ -675,7 +675,8 @@
           { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" },
           { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" },
           { "title": "Upgrading to 2.15", "path": "/platform/upgrading/2.15" },
-          { "title": "Upgrading to 2.16", "path": "/platform/upgrading/2.16" }
+          { "title": "Upgrading to 2.16", "path": "/platform/upgrading/2.16" },
+          { "title": "Upgrading to 2.23", "path": "/platform/upgrading/2.23" }
         ]
       },
       {

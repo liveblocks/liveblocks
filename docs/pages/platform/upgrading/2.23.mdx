@@ -1,0 +1,182 @@
+---
+meta:
+  title: "Upgrading to 2.23"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.23"
+---
+
+We’ve renamed some of the concepts around notifications and notification
+settings to improve clarity.
+
+## How to upgrade
+
+Upgrade to 2.23 by downloading the latest version of each Liveblocks package
+you’re using. The easiest way to do this is to run the following command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## Does this affect you? [#does-this-affect-you]
+
+If you are using notification settings in any way—with [`@liveblocks/client`][],
+[`@liveblocks/react`][], [`@liveblocks/node`][], or
+[the REST API](/docs/api-reference/rest-api-endpoints)—continue reading to see
+the changes. The naming changes are **backwards compatible**.
+
+Otherwise, no changes will affect you.
+
+## Naming changes
+
+### Rationale
+
+Historically, we used the term “notification settings” to refer to
+**room-level** settings that control the
+[inbox notifications](/docs/ready-made-features/notifications/concepts#Inbox-Notifications)
+received by a user (e.g. setting `"threads"` to `"all"` would make the user
+receive inbox notifications for any threads activity in the room, not just the
+ones where they participate).
+
+With 2.18, we introduced the concept of “**user** notification settings”, which
+are **project-level** settings that control the notifications (
+[`"notification" webhook events](/docs/platform/webhooks#NotificationEvent), not
+"inbox notifications") received by a user (e.g. setting
+`email.$myCustomNotification` to `false` would disable
+`"notification" webhook events for the `$myCustomNotification`kind and the`email`
+channel).
+
+To improve clarity, we’re renaming these concepts:
+
+- “**room** notification settings” → “**room** subscription settings”, they
+  control which things a user is subscribed to in a room
+- “**user** notification settings” → “notification settings”, they control which
+  notifications a user receives
+
+### What changed
+
+All methods, hooks, types, and REST API endpoints that were using these terms
+have been renamed to use the new naming, see the examples below.
+
+We provide a codemod to automatically update your codebase to the new naming.
+
+```bash
+npx @liveblocks/codemod@latest rename-notification-settings
+```
+
+#### `@liveblocks/react`
+
+```tsx
+// ❌ Before
+import {
+  // +++
+  useRoomNotificationSettings,
+  useUpdateRoomNotificationSettings,
+  // +++
+} from "@liveblocks/react";
+
+// ✅ After
+import {
+  // +++
+  useRoomSubscriptionSettings,
+  useUpdateRoomSubscriptionSettings,
+  // +++
+} from "@liveblocks/react";
+```
+
+```tsx
+// ❌ Before
+useErrorListener((error) =>
+  // +++
+  if (error.context.type === "UPDATE_NOTIFICATION_SETTINGS_ERROR") {
+    // +++
+    /* ... */
+  }
+);
+
+// ✅ After
+useErrorListener((error) =>
+  // +++
+  if (error.context.type === "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR") {
+    // +++
+    /* ... */
+  }
+);
+```
+
+#### `@liveblocks/client`
+
+```tsx
+// ❌ Before
+import type { RoomNotificationSettings } from "@liveblocks/client";
+
+// ✅ After
+import type { RoomSubscriptionSettings } from "@liveblocks/client";
+```
+
+```tsx
+// ❌ Before
+const { room, leave } = client.enterRoom("my-room-id");
+
+// +++
+room.getNotificationSettings();
+room.updateNotificationSettings(/* ... */);
+// +++
+
+// ✅ After
+const { room, leave } = client.enterRoom("my-room-id");
+
+// +++
+room.getSubscriptionSettings();
+room.updateSubscriptionSettings(/* ... */);
+// +++
+```
+
+```tsx
+// ❌ Before
+import type { UserNotificationSettings } from "@liveblocks/client";
+
+// ✅ After
+import type { NotificationSettings } from "@liveblocks/client";
+```
+
+#### `@liveblocks/node`
+
+```tsx
+// ❌ Before
+const liveblocks = new Liveblocks({
+  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+});
+
+// +++
+await liveblocks.getRoomNotificationSettings(/* ... */);
+await liveblocks.updateRoomNotificationSettings(/* ... */);
+await liveblocks.deleteRoomNotificationSettings(/* ... */);
+// +++
+
+// ✅ After
+const liveblocks = new Liveblocks({
+  secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+});
+
+// +++
+await liveblocks.getRoomSubscriptionSettings(/* ... */);
+await liveblocks.updateRoomSubscriptionSettings(/* ... */);
+await liveblocks.deleteRoomSubscriptionSettings(/* ... */);
+// +++
+```
+
+#### REST API
+
+```bash
+# ❌ Before
+https://api.liveblocks.io/v2/rooms/:roomId/users/:userId/notification-settings
+
+# ✅ After
+https://api.liveblocks.io/v2/rooms/:roomId/users/:userId/subscription-settings
+```
+
+That’s it for 2.23!
+
+[`@liveblocks/client`]: /docs/api-reference/liveblocks-client
+[`@liveblocks/react`]: /docs/api-reference/liveblocks-react
+[`@liveblocks/node`]: /docs/api-reference/liveblocks-node
