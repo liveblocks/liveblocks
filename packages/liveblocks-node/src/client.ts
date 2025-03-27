@@ -380,25 +380,6 @@ export class Liveblocks {
     });
   }
 
-  async #patch(
-    path: URLSafeString,
-    json: Json,
-    options?: RequestOptions
-  ): Promise<Response> {
-    const url = urljoin(this.#baseUrl, path);
-    const headers = {
-      Authorization: `Bearer ${this.#secret}`,
-      "Content-Type": "application/json",
-    };
-    const fetch = await fetchPolyfill();
-    return await fetch(url, {
-      method: "PATCH",
-      headers,
-      body: JSON.stringify(json),
-      signal: options?.signal,
-    });
-  }
-
   async #putBinary(
     path: URLSafeString,
     body: Uint8Array,
@@ -745,19 +726,22 @@ export class Liveblocks {
    * Updates or creates a new room with the given properties.
    *
    * @param roomId The id of the room to update or create.
-   * @param params.defaultAccesses The default accesses for the room.
-   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param update The fields to update. These values will be updated when the room exists, or set when the room does not exist and gets created. Must specify at least one key.
+   * @param create (optional) The fields to only use when the room does not exist and will be created. When the room already exists, these values are ignored.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room.
    */
   public async upsertRoom(
     roomId: string,
-    params: CreateRoomOptions & UpdateRoomOptions,
+    update: UpdateRoomOptions,
+    create?: CreateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    const res = await this.#patch(url`/v2/rooms/${roomId}`, params, options);
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/upsert`,
+      { update, create },
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
