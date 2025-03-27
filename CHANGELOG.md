@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/node`
+
+- Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
+- Optimize `.upsertRoom()` to only make a single round-trip to the server.
+
 ## v2.22.1
 
 ### `@liveblocks/react-blocknote`
