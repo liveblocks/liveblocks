@@ -3399,15 +3399,15 @@
               },
               "usersAccesses": {
                 "type": ["object"],
-                "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
+                "description": "A map of user identifiers to permissions list."
               },
               "groupsAccesses": {
                 "type": ["object"],
-                "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
+                "description": "A map of group identifiers to permissions list."
               },
               "metadata": {
                 "type": ["object"],
-                "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
+                "description": "A map of metadata keys to their values (`string` or `string[]`)."
               }
             },
             "required": ["defaultAccesses"]
