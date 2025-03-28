@@ -5,6 +5,7 @@ import { DocumentSpinner } from "@/primitives/Spinner";
 import { NoteHeader } from "./NoteHeader";
 import { NoteThreads } from "./NoteTheads";
 import styles from "./NoteEditor.module.css";
+import { useSelf } from "@liveblocks/react";
 
 export function NoteEditor() {
   return (
@@ -15,6 +16,8 @@ export function NoteEditor() {
 }
 
 function BlockTextEditor() {
+  const canWrite = useSelf((me) => me.canWrite);
+
   const editor = useCreateBlockNoteWithLiveblocks(
     {},
     { offlineSupport_experimental: true }
@@ -24,7 +27,7 @@ function BlockTextEditor() {
     <div className={styles.wrapper}>
       <NoteHeader editor={editor} />
       <div className={styles.editorWrapper}>
-        <BlockNoteView editor={editor} />
+        <BlockNoteView editor={editor} editable={canWrite ?? false} />
         <ClientSideSuspense fallback={null}>
           <NoteThreads editor={editor} />
         </ClientSideSuspense>

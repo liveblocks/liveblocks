@@ -23,7 +23,7 @@ export function NoteHeader({ editor }: { editor: BlockNoteEditor | null }) {
 function EmojiAndButtons() {
   const cover = useStorage((root) => root.cover);
   const icon = useStorage((root) => root.icon);
-  const canWrite = useSelf()?.canWrite;
+  const canWrite = useSelf((me) => me.canWrite);
 
   const [coverPopoverOpen, setCoverPopoverOpen] = useState(false);
   const [emojiPopoverOpen, setEmojiPopoverOpen] = useState(false);
@@ -137,9 +137,10 @@ function EmojiAndButtons() {
 
 function Cover() {
   const cover = useStorage((root) => root.cover);
+  const icon = useStorage((root) => root.icon);
 
   if (!cover) {
-    return null;
+    return icon ? <div className={styles.justIcon} /> : null;
   }
 
   return <div style={{ backgroundColor: cover }} className={styles.cover} />;

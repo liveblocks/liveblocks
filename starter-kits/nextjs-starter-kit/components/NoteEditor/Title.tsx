@@ -1,5 +1,5 @@
 import { BlockNoteEditor } from "@blocknote/core";
-import { useMutation, useStorage } from "@liveblocks/react";
+import { useMutation, useSelf, useStorage } from "@liveblocks/react";
 import {
   ChangeEvent,
   KeyboardEvent,
@@ -17,6 +17,7 @@ export function Title({ editor }: { editor: BlockNoteEditor | null }) {
   const initialDocument = useInitialDocument();
   const title = useStorage((root) => root.title);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const canWrite = useSelf((me) => me.canWrite);
 
   // Update title and update page links 0.4s after final change
   const handleChange = useMutation(
@@ -55,11 +56,12 @@ export function Title({ editor }: { editor: BlockNoteEditor | null }) {
 
   return (
     <TextareaAutosize
-      value={title ?? initialDocument.name}
+      className={styles.title}
       placeholder="Untitled"
+      value={title ?? initialDocument.name}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
-      className={styles.title}
+      disabled={!canWrite}
     />
   );
 }

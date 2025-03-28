@@ -6,6 +6,10 @@
   height: 200px;
 }
 
+.justIcon {
+  height: 80px;
+}
+
 .buttonRow {
   position: relative;
   max-width: var(--note-editor-width);
