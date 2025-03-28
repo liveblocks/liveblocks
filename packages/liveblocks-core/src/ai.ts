@@ -472,7 +472,7 @@ export function makeCreateSocketDelegateForAi(
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
     } else if (authValue.type === "public") {
-      url.searchParams.set("pubkey", authValue.publicApiKey);
+      throw new Error("Public key not supported with AI Copilots");
     } else {
       return assertNever(authValue, "Unhandled case");
     }
