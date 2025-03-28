@@ -12,7 +12,7 @@ import { SettingSwitch } from "./setting-switch";
 // Settings that allow users to choose which notifications are received
 // https://liveblocks.io/docs/guides/how-to-create-a-notification-settings-panel
 
-export function UserNotificationsSettings() {
+export function NotificationsSettings() {
   // Each user has their own notification settings that affects which webhooks
   // are sent for them. This hook allows you to retrieve and edit their settings
   const [{ isLoading, error, settings }, updateNotificationSettings] =

@@ -29,10 +29,10 @@ To make the user notification settings e2e tests running locally you need to
 ensure you have setup your project notification settings first. It can be done
 by doing either:
 
-- 👉🏻 Go to the project notification page on the dashboard locally (e.g
+- 👉 Go to the project notification page on the dashboard locally (e.g
   `http://localhost:3001/dashboard/<account_id>/projects/<project_id>/notifications`)
   → It will automatically do the job just by visiting this page.
-- 👉🏻 Run the following CURL request:
+- 👉 Run the following CURL request:
   ```sh
   curl -X POST \
     'https://<dev_worker_url>/dashboard/projects/<project_id>/notification-settings/setup' \
