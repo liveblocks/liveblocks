@@ -47,15 +47,15 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
-import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
-  PartialUserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+} from "./protocol/NotificationSettings";
+import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import { PKG_VERSION } from "./version";
 
 export interface RoomHttpApi<M extends BaseMetadata> {
@@ -208,6 +208,22 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     threadId: string;
   }): Promise<void>;
 
+  subscribeToThread({
+    roomId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void>;
+
+  unsubscribeFromThread({
+    roomId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void>;
+
   // Notifications
   markRoomInboxNotificationAsRead({
     roomId,
@@ -217,21 +233,21 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     inboxNotificationId: string;
   }): Promise<string>;
 
-  getNotificationSettings({
+  getSubscriptionSettings({
     roomId,
     signal,
   }: {
     roomId: string;
     signal?: AbortSignal;
-  }): Promise<RoomNotificationSettings>;
+  }): Promise<RoomSubscriptionSettings>;
 
-  updateNotificationSettings({
+  updateSubscriptionSettings({
     roomId,
     settings,
   }: {
     roomId: string;
-    settings: Partial<RoomNotificationSettings>;
-  }): Promise<RoomNotificationSettings>;
+    settings: Partial<RoomSubscriptionSettings>;
+  }): Promise<RoomSubscriptionSettings>;
 
   // Attachments
   getAttachmentUrl(options: {
@@ -384,21 +400,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  // Note: Using term `user` on this following method
-  // to avoid confusion with the same methods used in the `RoomHttpApi`.
-  // Let's wait the room subscription renaming to be here.
-  // It returns a `UserNotificationSettingsPlain` as the back-end does.
-  getUserNotificationSettings(options?: {
+  getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettingsPlain>;
+  }): Promise<NotificationSettingsPlain>;
 
-  // Note: Using term `user` on this following method
-  // to avoid confusion with the same methods used in the `RoomHttpApi`.
-  // Let's wait the room subscription renaming to be here.
-  // It returns a `UserNotificationSettingsPlain` as the back-end does.
-  updateUserNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettingsPlain>;
+  updateNotificationSettings(
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettingsPlain>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -772,6 +780,32 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  async function subscribeToThread(options: {
+    roomId: string;
+    threadId: string;
+  }) {
+    await httpClient.post(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+  }
+
+  async function unsubscribeFromThread(options: {
+    roomId: string;
+    threadId: string;
+  }) {
+    await httpClient.post(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * Attachments (Room level)
    * -----------------------------------------------------------------------------------------------*/
@@ -1013,12 +1047,12 @@ export function createApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getNotificationSettings(options: {
+  async function getSubscriptionSettings(options: {
     roomId: string;
     signal?: AbortSignal;
-  }): Promise<RoomNotificationSettings> {
-    return httpClient.get<RoomNotificationSettings>(
-      url`/v2/c/rooms/${options.roomId}/notification-settings`,
+  }): Promise<RoomSubscriptionSettings> {
+    return httpClient.get<RoomSubscriptionSettings>(
+      url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1030,12 +1064,12 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  async function updateNotificationSettings(options: {
+  async function updateSubscriptionSettings(options: {
     roomId: string;
-    settings: Partial<RoomNotificationSettings>;
-  }): Promise<RoomNotificationSettings> {
-    return httpClient.post<RoomNotificationSettings>(
-      url`/v2/c/rooms/${options.roomId}/notification-settings`,
+    settings: Partial<RoomSubscriptionSettings>;
+  }): Promise<RoomSubscriptionSettings> {
+    return httpClient.post<RoomSubscriptionSettings>(
+      url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1395,18 +1429,13 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * User notifications settings (Project level)
+   * Notifications settings (Project level)
    * -------------------------------------------------------------------------------------------------
-   *
-   * Note: Using term `user` on those two following methods
-   * to avoid confusion with the same methods used in the `RoomHttpApi`.
-   *
-   * Let's wait the room subscription renaming to be here.
    */
-  async function getUserNotificationSettings(options?: {
+  async function getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettingsPlain> {
-    return httpClient.get<UserNotificationSettingsPlain>(
+  }): Promise<NotificationSettingsPlain> {
+    return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
@@ -1414,10 +1443,10 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  async function updateUserNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettingsPlain> {
-    return httpClient.post<UserNotificationSettingsPlain>(
+  async function updateNotificationSettings(
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettingsPlain> {
+    return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
@@ -1524,10 +1553,12 @@ export function createApiClient<M extends BaseMetadata>({
     removeReaction,
     markThreadAsResolved,
     markThreadAsUnresolved,
+    subscribeToThread,
+    unsubscribeFromThread,
     markRoomInboxNotificationAsRead,
-    // Room notifications
-    getNotificationSettings,
-    updateNotificationSettings,
+    // Room subscription settings
+    getSubscriptionSettings,
+    updateSubscriptionSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1543,7 +1574,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room storage
     streamStorage,
     sendMessages,
-    // Notification
+    // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
@@ -1551,8 +1582,8 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getUserNotificationSettings,
-    updateUserNotificationSettings,
+    getNotificationSettings,
+    updateNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

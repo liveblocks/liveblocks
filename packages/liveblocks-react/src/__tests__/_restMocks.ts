@@ -2,12 +2,12 @@ import type {
   BaseMetadata,
   CommentData,
   InboxNotificationData,
-  PartialUserNotificationSettings,
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
   Permission,
-  RoomNotificationSettings,
+  RoomSubscriptionSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
-  UserNotificationSettingsPlain,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -127,6 +127,26 @@ export function mockMarkThreadAsUnresolved(
   );
 }
 
+export function mockSubscribeToThread(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/subscribe`,
+    resolver
+  );
+}
+
+export function mockUnsubscribeFromThread(
+  params: { threadId: string },
+  resolver: ResponseResolver<RestRequest<never, never>, RestContext>
+) {
+  return rest.post(
+    `https://api.liveblocks.io/v2/c/rooms/:roomId/threads/${params.threadId}/unsubscribe`,
+    resolver
+  );
+}
+
 export function mockMarkInboxNotificationsAsRead(
   resolver: ResponseResolver<RestRequest<never, never>, RestContext, any>
 ) {
@@ -205,37 +225,37 @@ export function mockDeleteInboxNotification(
   );
 }
 
-export function mockGetRoomNotificationSettings(
+export function mockGetRoomSubscriptionSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    RoomNotificationSettings
+    RoomSubscriptionSettings
   >
 ) {
   return rest.get(
-    "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/subscription-settings",
     resolver
   );
 }
 
-export function mockUpdateRoomNotificationSettings(
+export function mockUpdateRoomSubscriptionSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    RoomNotificationSettings
+    RoomSubscriptionSettings
   >
 ) {
   return rest.post(
-    "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/subscription-settings",
     resolver
   );
 }
 
-export function mockGetUserNotificationSettings(
+export function mockGetNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    UserNotificationSettingsPlain
+    NotificationSettingsPlain
   >
 ) {
   return rest.get(
@@ -244,11 +264,11 @@ export function mockGetUserNotificationSettings(
   );
 }
 
-export function mockUpdateUserNotificationSettings(
+export function mockUpdateNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    PartialUserNotificationSettings
+    PartialNotificationSettings
   >
 ) {
   return rest.post(

@@ -48,6 +48,10 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     name: "simplify-client-side-suspense-children: Removes any function-style body from `<ClientSideSuspense>`’s `children` prop.",
     value: "simplify-client-side-suspense-children",
   },
+  {
+    name: 'rename-notification-settings: Renames "room notification settings" (types, hooks, methods, etc.) to "room subscription settings" and "user notification settings" to "notification settings", and updates all imports and usages accordingly.',
+    value: "rename-notification-settings",
+  },
 ];
 
 export const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");
