@@ -1,4 +1,4 @@
-import type { Brand } from "../lib/utils";
+import type { Brand } from "@liveblocks/core";
 
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,
@@ -6,6 +6,7 @@ export enum ClientAiMsgCode {
   GET_MESSAGES = 300,
   ADD_MESSAGE = 400,
   ABORT_RESPONSE = 500,
+  STATELESS_RUN = 600,
 }
 
 export enum ServerAiMsgCode {
@@ -17,7 +18,8 @@ export enum ServerAiMsgCode {
   STREAM_MESSAGE_COMPLETE = 502,
   STREAM_MESSAGE_FAILED = 503,
   STREAM_MESSAGE_ABORTED = 504,
-  ERROR = 600,
+  STATELESS_RUN_RESULT = 601,
+  ERROR = 900,
 }
 
 export type AiRequestId = Brand<string, "aiRequestId">;
@@ -26,6 +28,13 @@ export type AiRequestId = Brand<string, "aiRequestId">;
 export interface AiMsgBase {
   readonly requestId: AiRequestId;
 }
+
+export type ToolChoice =
+  | { type: "auto" | "any" }
+  | { type: "tool"; name: string };
+/**
+ * Server messages
+ */
 
 export type StreamMessagePartServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_PART;
@@ -89,6 +98,15 @@ export type GetMessagesServerMsg = AiMsgBase & {
   cursor: { messageId: string; createdAt: string } | null;
 };
 
+export type StatelessRunResultServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.STATELESS_RUN_RESULT;
+  result: AiMessageContent[];
+};
+
+/**
+ * Client messages
+ */
+
 export type ListChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.LIST_CHATS;
   cursor?: { chatId: string; lastMessageAt: string };
@@ -123,6 +141,13 @@ export type AbortResponseClientMsg = AiMsgBase & {
   chatId: string;
 };
 
+export type StatelessRunClientMsg = AiMsgBase & {
+  readonly type: ClientAiMsgCode.STATELESS_RUN;
+  prompt: string;
+  tools?: AiTool[];
+  tool_choice?: ToolChoice;
+};
+
 // Union type of all server messages
 export type ServerAiMsg =
   | ListChatServerMsg
@@ -133,6 +158,7 @@ export type ServerAiMsg =
   | StreamMessageCompleteServerMsg
   | StreamMessageFailedServerMsg
   | StreamMessageAbortedServerMsg
+  | StatelessRunResultServerMsg
   | ErrorServerMsg;
 
 // Union type of all client messages
@@ -141,7 +167,8 @@ export type ClientAiMsg =
   | NewChatClientMsg
   | GetMessagesClientMsg
   | AddMessageClientMsg
-  | AbortResponseClientMsg;
+  | AbortResponseClientMsg
+  | StatelessRunClientMsg;
 
 export type AiState = {
   // TODO: this will probably get more complicated, supporting multiple requests, etc.
@@ -179,6 +206,16 @@ export enum AiRole {
 export enum MessageContentType {
   TEXT = "text",
   TOOL_CALL = "tool-call",
+}
+
+export interface AiTool {
+  name: string;
+  description: string;
+  parameter_schema: {
+    type: "object";
+    properties: Record<string, { type: string; description: string }>;
+    required: string[];
+  };
 }
 
 export interface AiContentBase {
@@ -219,6 +256,8 @@ export type AiChatMessage = UserMessage | AssistantMessage;
 export type AiProviderStreamParams = {
   messageId: string;
   messages: AiChatMessage[];
+  tools?: AiTool[];
+  tool_choice?: ToolChoice;
   onStream: (
     type: MessageContentType, // for now only streaming text
     delta: string,
@@ -230,7 +269,14 @@ export type AiProviderStreamParams = {
   onAbort: () => void;
 };
 
+export type AiProviderRunParams = {
+  prompt: string;
+  tools?: AiTool[];
+  tool_choice?: ToolChoice;
+};
+
 export interface AiProvider {
   abort: () => void;
   stream: (params: AiProviderStreamParams) => Promise<void>;
+  run: (params: AiProviderRunParams) => Promise<AiMessageContent[]>;
 }

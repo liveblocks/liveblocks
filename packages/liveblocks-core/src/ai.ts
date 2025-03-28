@@ -16,16 +16,19 @@ import type {
   StaticSessionInfo,
   TimeoutID,
 } from "./room";
+import type {
+  AiChat,
+  AiChatMessage,
+  AiRequestId,
+  AiTextContent,
+  AiTool,
+  ClientAiMsg,
+  ServerAiMsg,
+} from "./types/ai";
 import {
-  type AiChat,
-  type AiChatMessage,
-  type AiRequestId,
   AiStatus,
-  type AiTextContent,
-  type ClientAiMsg,
   ClientAiMsgCode,
   MessageContentType,
-  type ServerAiMsg,
   ServerAiMsgCode,
 } from "./types/ai";
 import type {
@@ -315,6 +318,10 @@ export function createAi(config: AiConfig): Ai {
             cursor: msg.cursor,
           });
           break;
+
+        case ServerAiMsgCode.STATELESS_RUN_RESULT:
+          context.requests.get(msg.requestId)?.resolve(msg.result);
+          break;
       }
     }
   }
@@ -432,6 +439,17 @@ export function createAi(config: AiConfig): Ai {
           },
           60_000 // todo: not sure if we even want to leave a promise hanging here. some requests can be pretty long, although we do need to have some bounds
         );
+      },
+      statelessAction: (prompt: string, tool: AiTool) => {
+        return sendClientMsgWithResponse({
+          type: ClientAiMsgCode.STATELESS_RUN,
+          prompt,
+          tools: [tool],
+          tool_choice: {
+            type: "tool",
+            name: tool.name,
+          },
+        });
       },
       abortResponse: (chatId: string) => {
         return sendClientMsgWithResponse({
