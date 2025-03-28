@@ -1,0 +1,173 @@
+.job-application-form {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h2 {
+  color: #444;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+section {
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button {
+  background-color: #4caf50;
+  color: white;
+  margin-top: 10px;
+}
+
+.add-button:hover {
+  background-color: #45a049;
+}
+
+.remove-button {
+  background-color: #f44336;
+  color: white;
+  margin-top: 10px;
+}
+
+.remove-button:hover {
+  background-color: #d32f2f;
+}
+
+.submit-button {
+  background-color: #2196f3;
+  color: white;
+  font-size: 18px;
+  padding: 12px 20px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.submit-button:hover {
+  background-color: #0b7dda;
+}
+
+.experience-entry {
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .job-application-form {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+  }
+
+  h1 {
+    color: #f0f0f0;
+  }
+
+  h2 {
+    color: #d0d0d0;
+    border-bottom-color: #444;
+  }
+
+  section {
+    background-color: #2a2a2a;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  label {
+    color: #c0c0c0;
+  }
+
+  input,
+  textarea {
+    background-color: #333;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+
+  .experience-entry {
+    background-color: #2c2c2c;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .add-button {
+    background-color: #3d8b40;
+  }
+
+  .add-button:hover {
+    background-color: #2d6a30;
+  }
+
+  .remove-button {
+    background-color: #c62828;
+  }
+
+  .remove-button:hover {
+    background-color: #b71c1c;
+  }
+
+  .submit-button {
+    background-color: #1976d2;
+  }
+
+  .submit-button:hover {
+    background-color: #0d5aa7;
+  }
+}
