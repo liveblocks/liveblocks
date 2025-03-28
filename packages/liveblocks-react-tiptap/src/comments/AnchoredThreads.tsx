@@ -205,6 +205,10 @@ export function AnchoredThreads({
       }}
     >
       {orderedThreads.map(({ thread, position }) => {
+        // In blocknote, it's possible for this to be undefined
+        if (!editor.view) {
+          return null;
+        }
         const coords = editor.view.coordsAtPos(
           Math.min(position.from, editor.state.doc.content.size - 1)
         );
