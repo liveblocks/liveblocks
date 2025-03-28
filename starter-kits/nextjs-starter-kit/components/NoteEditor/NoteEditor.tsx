@@ -1,11 +1,11 @@
 import { BlockNoteView } from "@blocknote/mantine";
+import { useSelf } from "@liveblocks/react";
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { NoteHeader } from "./NoteHeader";
 import { NoteThreads } from "./NoteTheads";
 import styles from "./NoteEditor.module.css";
-import { useSelf } from "@liveblocks/react";
 
 export function NoteEditor() {
   return (
