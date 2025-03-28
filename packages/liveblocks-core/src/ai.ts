@@ -8,7 +8,7 @@ import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
 import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
-import { type DistributiveOmit, raise, tryParseJson } from "./lib/utils";
+import { type DistributiveOmit, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -297,11 +297,11 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case ServerAiMsgCode.STREAM_MESSAGE_ABORTED:
-          context.messages.updateMessage(
-            msg.chatId,
-            msg.messageId ?? raise("Must provide a message ID"),
-            { status: AiStatus.ABORTED }
-          );
+          if (msg.messageId !== undefined) {
+            context.messages.updateMessage(msg.chatId, msg.messageId, {
+              status: AiStatus.ABORTED,
+            });
+          }
           context.requests
             .get(msg.requestId)
             ?.reject(new Error("Message aborted")); // Alternatively we could resolve with the current message
