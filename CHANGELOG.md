@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.22.2
+
 ### `@liveblocks/node`
 
 - Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
