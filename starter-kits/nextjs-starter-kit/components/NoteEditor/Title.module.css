@@ -1,0 +1,13 @@
+.title {
+  font-size: var(--size-3xl);
+  font-weight: 700;
+  display: block;
+  width: 100%;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  margin: 0 auto;
+  max-width: var(--note-editor-width);
+  padding: var(--space-2) var(--note-editor-horizontal-padding) var(--space-6);
+  background: transparent;
+}

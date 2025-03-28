@@ -1,0 +1,12 @@
+.bn-container {
+  position: absolute;
+  inset: 0;
+}
+
+.bn-editor {
+  min-height: 100%;
+  padding-bottom: 300px;
+  --bn-colors-editor-background: var(--color-surface-elevated);
+  padding-left: var(--note-editor-horizontal-padding);
+  padding-right: var(--note-editor-horizontal-padding);
+}

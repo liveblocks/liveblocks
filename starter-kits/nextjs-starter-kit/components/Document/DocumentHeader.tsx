@@ -17,9 +17,15 @@ import styles from "./DocumentHeader.module.css";
 
 interface Props extends ComponentProps<"header"> {
   documentId: Document["id"];
+  showTitle?: boolean;
 }
 
-export function DocumentHeader({ documentId, className, ...props }: Props) {
+export function DocumentHeader({
+  documentId,
+  showTitle = true,
+  className,
+  ...props
+}: Props) {
   const initialDocument = useInitialDocument();
 
   return (
@@ -30,17 +36,19 @@ export function DocumentHeader({ documentId, className, ...props }: Props) {
         </Link>
       </div>
       <div className={styles.document}>
-        <ClientSideSuspense
-          fallback={
-            <span className={styles.documentNameFallback}>
-              {initialDocument.name}
-            </span>
-          }
-        >
-          <DocumentHeaderName
-            onDocumentRename={(name) => renameDocument({ documentId, name })}
-          />
-        </ClientSideSuspense>
+        {showTitle ? (
+          <ClientSideSuspense
+            fallback={
+              <span className={styles.documentNameFallback}>
+                {initialDocument.name}
+              </span>
+            }
+          >
+            <DocumentHeaderName
+              onDocumentRename={(name) => renameDocument({ documentId, name })}
+            />
+          </ClientSideSuspense>
+        ) : null}
       </div>
       <div className={styles.collaboration}>
         <div className={styles.presence}>

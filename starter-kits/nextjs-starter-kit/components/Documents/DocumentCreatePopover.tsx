@@ -73,8 +73,19 @@ export function DocumentCreatePopover({
               createNewDocument("Untitled", "canvas");
             }}
             variant="subtle"
+            disabled={disableButtons}
           >
             Canvas
+          </Button>
+          <Button
+            icon={<PlusIcon />}
+            onClick={() => {
+              createNewDocument("Untitled", "note");
+            }}
+            variant="subtle"
+            disabled={disableButtons}
+          >
+            Note
           </Button>
         </div>
       }
