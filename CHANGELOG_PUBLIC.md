@@ -48,9 +48,19 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - BlockNote editors are now supported in a room's Text Editor view.
 
+## Documentation
+
+- Improve guide on [how to modify Liveblocks Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+- Fix BlockNote code snippets and add info about it in the email package.
+
+## Examples
+
+- Improve notification settings in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+- Update [notifications settings example](https://liveblocks.io/examples/notification-settings) to use the latest APIs.
+
 ## Contributors
 
-nvie, sugardarius
+nvie, sugardarius, ctnicholas, marcbouchenoire
 
 # Week 12 (2025-03-21)
 
