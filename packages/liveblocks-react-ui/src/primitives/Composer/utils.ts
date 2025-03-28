@@ -39,14 +39,12 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
-import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
+import { isComposerBodyLink } from "../../slate/plugins/links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
 import { isText } from "../../slate/utils/is-text";
 import type {
   ComposerBody,
-  ComposerBodyAutoLink,
-  ComposerBodyCustomLink,
+  ComposerBodyLink,
   ComposerBodyMention,
   ComposerBodyText,
   Direction,
@@ -72,17 +70,8 @@ export function composerBodyMentionToCommentBodyMention(
   };
 }
 
-export function composerBodyAutoLinkToCommentBodyLink(
-  link: ComposerBodyAutoLink
-): CommentBodyLink {
-  return {
-    type: "link",
-    url: link.url,
-  };
-}
-
-export function composerBodyCustomLinkToCommentBodyLink(
-  link: ComposerBodyCustomLink
+export function composerBodyLinkToCommentBodyLink(
+  link: ComposerBodyLink
 ): CommentBodyLink {
   return {
     type: "link",
@@ -103,20 +92,13 @@ export function commentBodyMentionToComposerBodyMention(
 
 export function commentBodyLinkToComposerBodyLink(
   link: CommentBodyLink
-): ComposerBodyAutoLink | ComposerBodyCustomLink {
-  if (link.text) {
-    return {
-      type: "custom-link",
-      url: link.url,
-      children: [{ text: link.text }],
-    };
-  } else {
-    return {
-      type: "auto-link",
-      url: link.url,
-      children: [{ text: link.url }],
-    };
-  }
+): ComposerBodyLink {
+  return {
+    type: "link",
+    url: link.url,
+    // TODO: Historically, text was optional because of how auto-links worked
+    children: [{ text: link.text ?? link.url }],
+  };
 }
 
 export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
@@ -135,12 +117,8 @@ export function composerBodyToCommentBody(body: ComposerBody): CommentBody {
               return composerBodyMentionToCommentBodyMention(inline);
             }
 
-            if (isComposerBodyAutoLink(inline)) {
-              return composerBodyAutoLinkToCommentBodyLink(inline);
-            }
-
-            if (isComposerBodyCustomLink(inline)) {
-              return composerBodyCustomLinkToCommentBodyLink(inline);
+            if (isComposerBodyLink(inline)) {
+              return composerBodyLinkToCommentBodyLink(inline);
             }
 
             if (isText(inline)) {
