@@ -493,13 +493,12 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/v7"; // Do we need this?
-    url.searchParams.set("ai", "true");
+    url.pathname = "/ai/v1"; // Do we need this?
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
     } else if (authValue.type === "public") {
-      url.searchParams.set("pubkey", authValue.publicApiKey);
+      throw new Error("Public key not supported with AI Copilots");
     } else {
       return assertNever(authValue, "Unhandled case");
     }
