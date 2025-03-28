@@ -1,4 +1,5 @@
-import type { Brand } from "@liveblocks/core";
+import type { Json } from "../lib/Json";
+import type { Brand } from "../lib/utils";
 
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,
@@ -211,11 +212,7 @@ export enum MessageContentType {
 export interface AiTool {
   name: string;
   description: string;
-  parameter_schema: {
-    type: "object";
-    properties: Record<string, { type: string; description: string }>;
-    required: string[];
-  };
+  parameter_schema: Json;
 }
 
 export interface AiContentBase {

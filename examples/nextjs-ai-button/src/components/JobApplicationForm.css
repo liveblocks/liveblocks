@@ -79,6 +79,18 @@ button {
   background-color: #45a049;
 }
 
+.magic-button {
+  background-color: #a500bb;
+  color: rgb(255, 255, 255);
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.magic-button:hover {
+  background-color: #800099;
+}
+
 .remove-button {
   background-color: #f44336;
   color: white;

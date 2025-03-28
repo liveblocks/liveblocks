@@ -19,6 +19,7 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
+  AiMessageContent,
   AiRequestId,
   AiTextContent,
   AiTool,
@@ -169,6 +170,10 @@ export type Ai = {
     cursor: { messageId: string; createdAt: string };
   }>;
   sendMessage: (chatId: string, message: string) => Promise<AiChatMessage>;
+  statelessAction: (
+    prompt: string,
+    tool: AiTool
+  ) => Promise<AiMessageContent[]>;
   abortResponse: (
     chatId: string
   ) => Promise<{ chatId: string; messageId: string }>;
@@ -441,15 +446,18 @@ export function createAi(config: AiConfig): Ai {
         );
       },
       statelessAction: (prompt: string, tool: AiTool) => {
-        return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.STATELESS_RUN,
-          prompt,
-          tools: [tool],
-          tool_choice: {
-            type: "tool",
-            name: tool.name,
+        return sendClientMsgWithResponse(
+          {
+            type: ClientAiMsgCode.STATELESS_RUN,
+            prompt,
+            tools: [tool],
+            tool_choice: {
+              type: "tool",
+              name: tool.name,
+            },
           },
-        });
+          60_000
+        );
       },
       abortResponse: (chatId: string) => {
         return sendClientMsgWithResponse({
