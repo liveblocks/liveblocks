@@ -6,6 +6,7 @@
 
 - Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
 - Optimize `.upsertRoom()` to only make a single round-trip to the server.
+- Also expose `LiveObject`, `LiveMap`, and `LiveList` in `@liveblocks/node`.
 
 ## v2.22.1
 

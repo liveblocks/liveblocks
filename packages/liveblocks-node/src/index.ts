@@ -78,6 +78,7 @@ export type {
   JsonArray,
   JsonObject,
   JsonScalar,
+  LiveStructure,
   Lson,
   LsonObject,
   PlainLsonObject,
@@ -90,6 +91,9 @@ export type {
 export {
   getMentionedIdsFromCommentBody,
   isNotificationChannelEnabled,
+  LiveList,
+  LiveMap,
+  LiveObject,
   stringifyCommentBody,
 } from "@liveblocks/core";
 
