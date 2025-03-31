@@ -2045,6 +2045,107 @@
 }
 
 /*************************************
+ *          Chat Composer            *
+ *************************************/
+.lb-chat-composer:where(:has(.lb-chat-composer-editor:not(:focus-visible))) {
+  :where(.lb-button[data-variant="primary"]) {
+    --lb-button-background: var(--lb-foreground-subtle);
+
+    color: var(--lb-foreground-tertiary);
+
+    &:where(:enabled:hover, :enabled:focus-visible) {
+      --lb-button-background: var(--lb-accent);
+
+      color: var(--lb-accent-foreground);
+    }
+  }
+}
+
+.lb-chat-composer {
+  position: relative;
+  background: var(--lb-dynamic-background);
+  color: var(--lb-foreground);
+  transition-property: background;
+}
+
+.lb-chat-composer-editor {
+  max-block-size: 15rem;
+  padding: var(--lb-spacing) var(--lb-spacing) 0;
+  color: var(--lb-foreground-secondary);
+  outline: none;
+  resize: none;
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
+
+  &,
+  * {
+    line-height: var(--lb-line-height);
+  }
+
+  :where(p) {
+    --lb-line-height-crop: calc(1lh - 1em) / -2;
+
+    margin-block-start: 0.25em;
+    margin-block-end: 0.25em;
+
+    /* Cancel out the impact of line-height on margins/paddings */
+    &:where(:first-of-type) {
+      margin-block-start: calc(0.125em + var(--lb-line-height-crop));
+    }
+
+    /* Cancel out the impact of line-height on margins/paddings */
+    &:where(:last-of-type) {
+      margin-block-end: calc(0.125em + var(--lb-line-height-crop));
+    }
+  }
+
+  &:where([data-disabled]:not([data-disabled="false"])) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  :where([data-placeholder]) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-chat-composer-footer {
+  display: flex;
+  gap: calc(0.75 * var(--lb-spacing));
+  align-items: center;
+  margin-block-start: calc(-0.125 * var(--lb-spacing));
+  padding: var(--lb-spacing);
+}
+
+.lb-chat-composer-actions,
+.lb-chat-composer-editor-actions {
+  display: flex;
+  gap: calc(0.125 * var(--lb-spacing));
+  align-items: center;
+}
+
+.lb-chat-composer-editor-actions {
+  margin-inline-end: auto;
+}
+
+/*************************************
+ *     Chat composer attachments     *
+ *************************************/
+.lb-chat-composer-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.75 * var(--lb-spacing));
+  padding-inline: var(--lb-spacing);
+  padding-block-start: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-chat-composer-editor-container:where([data-drop]) * {
+  pointer-events: none;
+}
+
+/*************************************
  *            Animations             *
  *************************************/
 

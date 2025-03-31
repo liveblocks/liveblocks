@@ -1,4 +1,14 @@
 export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
+export {
+  AttachFiles as ChatComposerAttachFiles,
+  type AttachFilesProps as ChatComposerAttachFilesProps,
+  Editor as ChatComposerEditor,
+  type EditorProps as ChatComposerEditorProps,
+  Form as ChatComposerForm,
+  type FormProps as ChatComposerFormProps,
+  Submit as ChatComposerSubmit,
+  type SubmitProps as ChatComposerSubmitProps,
+} from "./Chat/Composer";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,

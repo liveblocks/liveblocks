@@ -260,6 +260,9 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     signal?: AbortSignal;
   }): Promise<void>;
 
+  userAttachmentUrlsBatchStore: BatchStore<string, string>;
+  getUserAttachmentUrl(options: { attachmentId: string }): Promise<string>;
+
   // Text editor
   createTextMention({
     roomId,
@@ -1114,6 +1117,32 @@ export function createApiClient<M extends BaseMetadata>({
     }
   }
 
+  const userAttachmentUrlsBatchStore = createBatchStore(
+    new Batch<string, string>(
+      async (batchedAttachmentIds) => {
+        const attachmentIds = batchedAttachmentIds.flat();
+        const { urls } = await httpClient.post<{
+          urls: (string | null)[];
+        }>(
+          url`/v2/c/attachments/presigned-urls`,
+          await authManager.getAuthValue({ requestedScope: "comments:read" }),
+          { attachmentIds }
+        );
+
+        return urls.map(
+          (url) =>
+            url ??
+            new Error("There was an error while getting this attachment's URL")
+        );
+      },
+      { delay: 50 }
+    )
+  );
+
+  function getUserAttachmentUrl(options: { attachmentId: string }) {
+    return userAttachmentUrlsBatchStore.batch.get(options.attachmentId);
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
@@ -1646,6 +1675,8 @@ export function createApiClient<M extends BaseMetadata>({
     getOrCreateAttachmentUrlsStore,
     // User attachments
     uploadUserAttachment,
+    userAttachmentUrlsBatchStore,
+    getUserAttachmentUrl,
     // Room storage
     streamStorage,
     sendMessages,
