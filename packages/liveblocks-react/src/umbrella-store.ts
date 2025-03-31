@@ -590,6 +590,14 @@ export type CleanNotifications = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
+export type CleanThreadSubscriptions = {
+  /**
+   * Thread subscriptions by key (kind + subject ID).
+   * e.g. `thread:${string}`, `$custom:${string}`, etc
+   */
+  subscriptions: SubscriptionsByKey;
+} & CleanNotifications;
+
 function createStore_forNotifications() {
   const signal = new MutableSignal<NotificationsLUT>(new Map());
 
@@ -901,8 +909,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //                       |                                 +-------> Notification Settings       (Part 5)
   //                       |
   //                       |
-  //                       |
-  //                       |
   //                       |                        ^                  ^
   //                    Signal                      |                  |
   //                      or                   DerivedSignal      DerivedSignals
@@ -947,6 +953,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<ThreadsAsyncResult<M>>
     >;
     readonly notifications: DerivedSignal<CleanNotifications>;
+    readonly threadSubscriptions: DerivedSignal<CleanThreadSubscriptions>;
 
     readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
     readonly roomSubscriptionSettingsByRoomId: DefaultMap<
@@ -1045,6 +1052,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
         notificationsById: s.notificationsById,
       }),
       shallow
+    );
+
+    const threadSubscriptions = DerivedSignal.from(
+      threadifications,
+      this.subscriptions.signal,
+      (t, s) => ({
+        subscriptions: s,
+        ...t,
+      })
     );
 
     const loadingUserThreads = new DefaultMap(
@@ -1288,6 +1304,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       roomSubscriptionSettingsByRoomId,
       versionsByRoomId,
       notificationSettings,
+      threadSubscriptions,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable

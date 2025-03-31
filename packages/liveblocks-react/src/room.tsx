@@ -44,6 +44,7 @@ import {
   createThreadId,
   DefaultMap,
   errorIf,
+  getSubscriptionKey,
   HttpError,
   kInternal,
   makePoller,
@@ -2089,28 +2090,32 @@ function useUnsubscribeFromRoomThread(roomId: string) {
 function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
+  const subscriptionKey = useMemo(
+    () => getSubscriptionKey("thread", threadId),
+    [threadId]
+  );
 
-  const signal = store.outputs.threadifications;
+  const signal = store.outputs.threadSubscriptions;
 
   const selector = useCallback(
     (state: SignalType<typeof signal>): ThreadSubscription => {
+      const subscription = state.subscriptions[subscriptionKey];
       const notification = state.sortedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threadsDB.get(threadId);
-      if (notification === undefined || thread === undefined) {
+      if (subscription === undefined) {
         return { status: "not-subscribed" };
       }
 
       return {
         status: "subscribed",
-        unreadSince: notification.readAt,
+        unreadSince: notification?.readAt ?? null,
       };
     },
-    [threadId]
+    [subscriptionKey, threadId]
   );
 
   return useSignal(signal, selector, shallow);
