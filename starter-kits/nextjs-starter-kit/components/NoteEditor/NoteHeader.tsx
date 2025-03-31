@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Title } from "@/components/NoteEditor/Title";
 import { CrossIcon, ImageIcon } from "@/icons";
 import { Button } from "@/primitives/Button";
-import { MyEmojiPicker } from "@/primitives/EmojiPicker";
+import { EmojiPicker } from "@/primitives/EmojiPicker";
 import { Popover } from "@/primitives/Popover";
 import styles from "./NoteHeader.module.css";
 
@@ -55,7 +55,7 @@ function EmojiAndButtons() {
         open={emojiPopoverOpen}
         onOpenChange={setEmojiPopoverOpen}
         content={
-          <MyEmojiPicker
+          <EmojiPicker
             onEmojiSelect={(emoji) => {
               setIcon(emoji);
               setEmojiPopoverOpen(false);

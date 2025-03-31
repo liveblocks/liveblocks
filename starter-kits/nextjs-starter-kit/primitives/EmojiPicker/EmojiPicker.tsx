@@ -1,8 +1,8 @@
 import { EmojiPicker as EmojiPickerPrimitive } from "frimousse";
-import styles from "./EmojiPicker.module.css";
 import { ReactNode } from "react";
+import styles from "./EmojiPicker.module.css";
 
-export function MyEmojiPicker({
+export function EmojiPicker({
   onEmojiSelect,
   buttonSlot,
 }: {
@@ -12,7 +12,7 @@ export function MyEmojiPicker({
   return (
     <EmojiPickerPrimitive.Root
       className={styles.root}
-      onEmojiSelect={(emojiData) => onEmojiSelect(emojiData.emoji)}
+      onEmojiSelect={({ emoji }) => onEmojiSelect(emoji)}
     >
       <div className={styles.header}>
         <EmojiPickerPrimitive.Search className={styles.search} />

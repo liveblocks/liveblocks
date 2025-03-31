@@ -16,7 +16,6 @@
   border-radius: 6px;
   font-size: 14px;
   height: var(--space-13);
-  max-width: 175px;
 }
 
 .root [frimousse-search]:focus {
@@ -29,7 +28,8 @@
   outline: none;
 }
 
-.root [frimousse-loading] {
+.root [frimousse-loading],
+.root [frimousse-empty] {
   position: absolute;
   inset: 0;
   display: flex;
@@ -80,8 +80,10 @@
   padding: var(--space-4) var(--space-4);
   gap: var(--space-4);
   border-bottom: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .search {
   flex-grow: 1;
+  flex-shrink: 1;
 }

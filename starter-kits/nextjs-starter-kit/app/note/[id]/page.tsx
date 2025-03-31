@@ -3,7 +3,7 @@ import { NoteDocumentView } from "./NoteDocumentView";
 import "@blocknote/mantine/style.css";
 import "@/components/NoteEditor/blocknote.css";
 
-export default async function Whiteboard({
+export default async function Note({
   params: { id },
 }: {
   params: { id: string };
