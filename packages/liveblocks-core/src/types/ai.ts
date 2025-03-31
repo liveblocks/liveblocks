@@ -62,7 +62,7 @@ export type StreamMessageFailedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_FAILED;
   error: string;
   chatId: string;
-  messageId?: string;
+  messageId: string;
 };
 
 export type StreamMessageAbortedServerMsg = AiMsgBase & {
