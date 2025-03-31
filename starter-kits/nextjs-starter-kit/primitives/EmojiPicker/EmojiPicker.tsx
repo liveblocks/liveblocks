@@ -15,7 +15,9 @@ export function EmojiPicker({
       onEmojiSelect={({ emoji }) => onEmojiSelect(emoji)}
     >
       <div className={styles.header}>
-        <EmojiPickerPrimitive.Search className={styles.search} />
+        <div className={styles.searchWrapper}>
+          <EmojiPickerPrimitive.Search className={styles.search} />
+        </div>
         {buttonSlot}
       </div>
       <EmojiPickerPrimitive.Viewport className={styles.viewport}>

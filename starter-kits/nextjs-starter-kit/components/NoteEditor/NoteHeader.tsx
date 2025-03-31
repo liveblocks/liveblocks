@@ -61,15 +61,16 @@ function EmojiAndButtons() {
               setEmojiPopoverOpen(false);
             }}
             buttonSlot={
-              <Button
-                variant="subtle"
+              <button
+                className={styles.buttonRemove}
                 onClick={() => {
                   setIcon(null);
                   setEmojiPopoverOpen(false);
                 }}
               >
-                Remove
-              </Button>
+                <CrossIcon style={{ width: 24, height: 24 }} />
+                <span className="sr-only">Remove icon</span>
+              </button>
             }
           />
         }
@@ -102,14 +103,17 @@ function EmojiAndButtons() {
                 style={{
                   backgroundColor: color,
                 }}
-                onClick={() => setCover(color)}
+                onClick={() => {
+                  setCover(color);
+                  setCoverPopoverOpen(false);
+                }}
                 data-active={cover === color || undefined}
               >
                 <span className="sr-only">Change colour to {color}</span>
               </button>
             ))}
             <button
-              className={styles.coverPopoverItem}
+              className={styles.buttonRemove}
               onClick={() => {
                 setCover(null);
                 setCoverPopoverOpen(false);

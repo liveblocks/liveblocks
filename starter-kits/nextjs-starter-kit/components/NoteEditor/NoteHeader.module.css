@@ -82,17 +82,20 @@
   gap: var(--space-3);
 }
 
-.coverPopoverItem {
-  height: var(--space-12);
-  width: var(--space-12);
+.coverPopoverItem,
+.buttonRemove {
+  height: var(--space-13);
+  width: var(--space-13);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-xs);
-  background-color: var(--color-surface);
   opacity: 0.6;
   cursor: pointer;
-  transition: opacity 0.1s ease-in-out;
+  transition: all 0.1s ease-in-out;
+}
+
+.coverPopoverItem {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -101,7 +104,12 @@
   opacity: 1;
 }
 
-.coverPopoverItem svg {
+.buttonRemove:hover {
+  background-color: var(--color-surface-hover);
+  opacity: 1;
+}
+
+.buttonRemove svg {
   height: 100%;
   width: 100%;
   color: var(--color-text-primary);
