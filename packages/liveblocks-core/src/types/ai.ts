@@ -3,7 +3,7 @@ import type { Brand } from "../lib/utils";
 
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,
-  NEW_CHAT = 200,
+  CREATE_CHAT = 200,
   GET_MESSAGES = 300,
   ADD_MESSAGE = 400,
   ABORT_RESPONSE = 500,
@@ -11,10 +11,10 @@ export enum ClientAiMsgCode {
 }
 
 export enum ServerAiMsgCode {
-  LIST_CHATS = 101,
-  CHAT_CREATED = 201,
-  MESSAGE_ADDED = 301,
-  GET_MESSAGES = 401,
+  LIST_CHATS_OK = 101,
+  CREATE_CHAT_OK = 201,
+  GET_MESSAGES_OK = 301,
+  ADD_MESSAGE_OK = 401,
   STREAM_MESSAGE_START = 501,
   STREAM_MESSAGE_PART = 502,
   STREAM_MESSAGE_COMPLETE = 503,
@@ -85,25 +85,25 @@ export type ErrorServerMsg = {
 };
 
 export type ListChatServerMsg = AiMsgBase & {
-  type: ServerAiMsgCode.LIST_CHATS;
+  type: ServerAiMsgCode.LIST_CHATS_OK;
   chats: AiChat[];
-  cursor: { chatId: string; lastMessageAt: string } | null;
+  nextCursor: { chatId: string; lastMessageAt: string } | null;
 };
 
 export type ChatCreatedServerMsg = AiMsgBase & {
-  type: ServerAiMsgCode.CHAT_CREATED;
+  type: ServerAiMsgCode.CREATE_CHAT_OK;
   chat: AiChat;
 };
 
 export type MessageAddedServerMsg = AiMsgBase & {
-  type: ServerAiMsgCode.MESSAGE_ADDED;
+  type: ServerAiMsgCode.ADD_MESSAGE_OK;
   chatId: string;
   messageId: string;
   createdAt: string;
 };
 
 export type GetMessagesServerMsg = AiMsgBase & {
-  type: ServerAiMsgCode.GET_MESSAGES;
+  type: ServerAiMsgCode.GET_MESSAGES_OK;
   chatId: string;
   messages: AiChatMessage[];
   cursor: { messageId: string; createdAt: string } | null;
@@ -125,7 +125,7 @@ export type ListChatClientMsg = AiMsgBase & {
 };
 
 export type NewChatClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.NEW_CHAT;
+  readonly type: ClientAiMsgCode.CREATE_CHAT;
   chatId?: string;
   name?: string;
   metadata?: Record<string, string | string[]>;

@@ -307,12 +307,12 @@ export function createAi(config: AiConfig): Ai {
             ?.reject(new Error("Message aborted")); // Alternatively we could resolve with the current message
           break;
 
-        case ServerAiMsgCode.CHAT_CREATED:
+        case ServerAiMsgCode.CREATE_CHAT_OK:
           context.chats.update([msg.chat]);
           context.requests.get(msg.requestId)?.resolve(msg.chat);
           break;
 
-        case ServerAiMsgCode.GET_MESSAGES:
+        case ServerAiMsgCode.GET_MESSAGES_OK:
           context.messages.update(msg.chatId, msg.messages);
           context.requests.get(msg.requestId)?.resolve({
             messages: msg.messages,
@@ -320,11 +320,11 @@ export function createAi(config: AiConfig): Ai {
           });
           break;
 
-        case ServerAiMsgCode.LIST_CHATS:
+        case ServerAiMsgCode.LIST_CHATS_OK:
           context.chats.update(msg.chats);
           context.requests.get(msg.requestId)?.resolve({
             chats: msg.chats,
-            cursor: msg.cursor,
+            cursor: msg.nextCursor,
           });
           break;
 
@@ -428,7 +428,7 @@ export function createAi(config: AiConfig): Ai {
 
       newChat: (id?: string) => {
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.NEW_CHAT,
+          type: ClientAiMsgCode.CREATE_CHAT,
           chatId: id,
         });
       },
