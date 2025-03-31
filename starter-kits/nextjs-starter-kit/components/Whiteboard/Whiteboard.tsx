@@ -76,7 +76,7 @@ function LiveblocksWhiteboard({
     element: Element;
     noteId: string;
     offset: { x: number; y: number };
-  } | null>();
+  } | null>(undefined);
 
   // Insert a new note onto the canvas
   const insertNote = useMutation(({ storage, self }) => {

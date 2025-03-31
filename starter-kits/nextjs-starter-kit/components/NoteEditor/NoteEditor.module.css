@@ -1,0 +1,19 @@
+.wrapper {
+  height: 100%;
+  overflow-y: scroll;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-elevated);
+
+  --note-editor-width: 900px;
+  --note-editor-horizontal-padding: 54px;
+}
+
+.editorWrapper {
+  position: relative;
+  flex-grow: 1;
+  margin: 0 auto;
+  max-width: var(--note-editor-width);
+  width: 100%;
+}

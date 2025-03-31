@@ -1,5 +1,5 @@
 import { useRoom } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DocumentRecordType,
   IndexKey,
@@ -19,19 +19,7 @@ import {
   react,
 } from "tldraw";
 
-export function useStorageStore({
-  shapeUtils = [],
-  user,
-}: Partial<{
-  hostUrl: string;
-  version: number;
-  shapeUtils: TLAnyShapeUtilConstructor[];
-  user: {
-    id: string;
-    color: string;
-    name: string;
-  };
-}>) {
+export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
   // Get Liveblocks room
   const room = useRoom();
 
@@ -47,17 +35,32 @@ export function useStorageStore({
     status: "loading",
   });
 
+  // Use a ref to ensure it works in callbacks after strict mode double render
+  const liveRecordsRef = useRef<Liveblocks["Storage"]["records"] | null>(null);
+
   useEffect(() => {
     const unsubs: (() => void)[] = [];
     setStoreWithStatus({ status: "loading" });
 
     async function setup() {
+      const self = room.getSelf();
+
+      if (!self) {
+        return;
+      }
+
+      // Getting authenticated user info
+      const canWrite = self?.canWrite || false;
+      const user = {
+        id: self?.id,
+        name: self?.info.name,
+        color: self?.info.color,
+      };
+
       // Get Liveblocks Storage values
       const { root } = await room.getStorage();
       const liveRecords = root.get("records");
-
-      // Check if user has write access
-      const canWrite = room.getSelf()?.canWrite || false;
+      liveRecordsRef.current = liveRecords;
 
       // Initialize tldraw with records from Storage
       store.clear();
@@ -81,6 +84,12 @@ export function useStorageStore({
         unsubs.push(
           store.listen(
             ({ changes }: TLStoreEventInfo) => {
+              const liveRecords = liveRecordsRef.current;
+
+              if (!liveRecords) {
+                return;
+              }
+
               room.batch(() => {
                 Object.values(changes.added).forEach((record) => {
                   liveRecords.set(record.id, record);

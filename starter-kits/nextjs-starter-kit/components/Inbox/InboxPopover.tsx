@@ -1,5 +1,7 @@
-import { ClientSideSuspense } from "@liveblocks/react";
-import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
+import {
+  ClientSideSuspense,
+  useUnreadInboxNotificationsCount,
+} from "@liveblocks/react";
 import { usePathname } from "next/navigation";
 import { ComponentProps, useEffect, useState } from "react";
 import { InboxIcon } from "@/icons";
