@@ -21,16 +21,10 @@ import {
 
 export function useStorageStore({
   shapeUtils = [],
-  user,
 }: Partial<{
   hostUrl: string;
   version: number;
-  shapeUtils: TLAnyShapeUtilConstructor[];
-  user: {
-    id: string;
-    color: string;
-    name: string;
-  };
+  shapeUtils?: TLAnyShapeUtilConstructor[];
 }>) {
   // Get Liveblocks room
   const room = useRoom();
@@ -52,12 +46,23 @@ export function useStorageStore({
     setStoreWithStatus({ status: "loading" });
 
     async function setup() {
+      const self = room.getSelf();
+
+      if (!self) {
+        return;
+      }
+
+      // Getting authenticated user info
+      const canWrite = self?.canWrite || false;
+      const user = {
+        id: self?.id,
+        name: self?.info.name,
+        color: self?.info.color,
+      };
+
       // Get Liveblocks Storage values
       const { root } = await room.getStorage();
       const liveRecords = root.get("records");
-
-      // Check if user has write access
-      const canWrite = room.getSelf()?.canWrite || false;
 
       // Initialize tldraw with records from Storage
       store.clear();
@@ -282,7 +287,7 @@ export function useStorageStore({
       unsubs.forEach((fn) => fn());
       unsubs.length = 0;
     };
-  }, [room, store, user]);
+  }, [room, store]);
 
   return storeWithStatus;
 }
