@@ -627,7 +627,11 @@ function RoomProviderInner<
         store.deleteThread(message.threadId, null);
         return;
       }
-      const { thread, inboxNotification: maybeNotification } = info;
+      const {
+        thread,
+        inboxNotification: maybeNotification,
+        subscription: maybeSubscription,
+      } = info;
 
       const existingThread = store.outputs.threads
         .get()
@@ -645,14 +649,16 @@ function RoomProviderInner<
 
           store.updateThreadifications(
             [thread],
-            maybeNotification ? [maybeNotification] : []
+            maybeNotification ? [maybeNotification] : [],
+            maybeSubscription ? [maybeSubscription] : []
           );
           break;
 
         case ServerMsgCode.COMMENT_CREATED:
           store.updateThreadifications(
             [thread],
-            maybeNotification ? [maybeNotification] : []
+            maybeNotification ? [maybeNotification] : [],
+            maybeSubscription ? [maybeSubscription] : []
           );
           break;
         default:

@@ -82,6 +82,10 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  SubscriptionData,
+  SubscriptionDeleteInfo,
+} from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import { ManagedOthers } from "./refs/ManagedOthers";
 import type * as DevTools from "./types/DevToolsTreeNode";
@@ -760,19 +764,21 @@ export type Room<
    * const {
    *   threads,
    *   inboxNotifications,
+   *   subscriptions,
    *   requestedAt
    * } = await room.getThreads({ query: { resolved: false }});
    */
   getThreads(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
     permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
-   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
+   * Returns the updated and deleted threads and their associated inbox notifications and subscriptions since the requested date.
    *
    * @example
    * const result = await room.getThreads();
@@ -788,19 +794,24 @@ export type Room<
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
     };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
+    };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
-   * Returns a thread and the associated inbox notification if it exists.
+   * Returns a thread and the associated inbox notification and subscription if it exists.
    *
    * @example
-   * const { thread, inboxNotification } = await room.getThread("th_xxx");
+   * const { thread, inboxNotification, subscription } = await room.getThread("th_xxx");
    */
   getThread(threadId: string): Promise<{
     thread?: ThreadData<M>;
     inboxNotification?: InboxNotificationData;
+    subscription?: SubscriptionData;
   }>;
 
   /**
