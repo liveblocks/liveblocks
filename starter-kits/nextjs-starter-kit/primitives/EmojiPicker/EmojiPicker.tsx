@@ -18,10 +18,33 @@ export function EmojiPicker({
         <EmojiPickerPrimitive.Search className={styles.search} />
         {buttonSlot}
       </div>
-      <EmojiPickerPrimitive.Viewport>
-        <EmojiPickerPrimitive.Loading>Loading…</EmojiPickerPrimitive.Loading>
-        <EmojiPickerPrimitive.Empty>No emoji found.</EmojiPickerPrimitive.Empty>
-        <EmojiPickerPrimitive.List />
+      <EmojiPickerPrimitive.Viewport className={styles.viewport}>
+        <EmojiPickerPrimitive.Loading className={styles.loading}>
+          Loading…
+        </EmojiPickerPrimitive.Loading>
+        <EmojiPickerPrimitive.Empty className={styles.empty}>
+          No emoji found.
+        </EmojiPickerPrimitive.Empty>
+        <EmojiPickerPrimitive.List
+          className={styles.list}
+          components={{
+            CategoryHeader: ({ category, ...props }) => (
+              <div className={styles.categoryHeader} {...props}>
+                {category.label}
+              </div>
+            ),
+            Row: ({ children, ...props }) => (
+              <div className={styles.row} {...props}>
+                {children}
+              </div>
+            ),
+            Emoji: ({ emoji, ...props }) => (
+              <button className={styles.emoji} {...props}>
+                {emoji.emoji}
+              </button>
+            ),
+          }}
+        />
       </EmojiPickerPrimitive.Viewport>
     </EmojiPickerPrimitive.Root>
   );
