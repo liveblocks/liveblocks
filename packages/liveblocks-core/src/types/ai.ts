@@ -108,7 +108,7 @@ export type GetMessagesServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.GET_MESSAGES_OK;
   chatId: string;
   messages: AiChatMessage[];
-  cursor: Cursor | null;
+  nextCursor: Cursor | null;
 };
 
 export type StatelessRunResultServerMsg = AiMsgBase & {

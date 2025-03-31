@@ -317,7 +317,7 @@ export function createAi(config: AiConfig): Ai {
           context.messages.update(msg.chatId, msg.messages);
           context.requests.get(msg.requestId)?.resolve({
             messages: msg.messages,
-            cursor: msg.cursor,
+            cursor: msg.nextCursor,
           });
           break;
 
