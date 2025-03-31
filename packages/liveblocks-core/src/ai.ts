@@ -288,9 +288,11 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case ServerAiMsgCode.STREAM_MESSAGE_FAILED:
-          context.messages.updateMessage(msg.chatId, msg.messageId, {
-            status: AiStatus.FAILED,
-          });
+          if (msg.messageId !== undefined) {
+            context.messages.updateMessage(msg.chatId, msg.messageId, {
+              status: AiStatus.FAILED,
+            });
+          }
           context.requests.get(msg.requestId)?.reject(new Error(msg.error));
           break;
 
