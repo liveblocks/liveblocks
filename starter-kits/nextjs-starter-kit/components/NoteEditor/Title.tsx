@@ -16,7 +16,7 @@ import styles from "./Title.module.css";
 export function Title({ editor }: { editor: BlockNoteEditor | null }) {
   const initialDocument = useInitialDocument();
   const title = useStorage((root) => root.title);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout>(undefined);
   const canWrite = useSelf((me) => me.canWrite);
 
   // Update title and update page links 0.4s after final change
