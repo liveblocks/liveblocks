@@ -7,7 +7,6 @@
 }
 
 .header {
-  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -31,8 +30,8 @@
   z-index: 10;
   padding: 8px 10px;
   background: var(--color-surface-hover);
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: var(--radius-xs);
+  font-size: var(--size-sm);
   height: var(--space-13);
   appearance: none;
 }
@@ -62,7 +61,7 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-lightest);
-  font-size: 14px;
+  font-size: var(--size-sm);
 }
 
 .list {
@@ -74,10 +73,10 @@
   padding: var(--space-4) var(--space-4) var(--space-3);
   background: var(--color-surface-elevated);
   color: light-dark(#8b8b8b, #a1a1a1);
-  font-size: 11px;
+  font-size: var(--size-2xs);
   font-weight: 600;
   text-transform: uppercase;
-  height: 32px;
+  height: var(--space-12);
 }
 
 .row {
