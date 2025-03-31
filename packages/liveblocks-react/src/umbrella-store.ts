@@ -558,6 +558,8 @@ type RoomSubscriptionSettingsByRoomId = Record<
   RoomSubscriptionSettings
 >;
 
+type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
+
 type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
 
 export type CleanThreadifications<M extends BaseMetadata> =
@@ -689,7 +691,8 @@ function createStore_forNotifications() {
 }
 
 function createStore_forSubscriptions(
-  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>,
+  threads: ReadonlyThreadDB<BaseMetadata>
 ) {
   const baseSignal = new MutableSignal<SubscriptionsLUT>(new Map());
 
@@ -716,7 +719,7 @@ function createStore_forSubscriptions(
 
   return {
     signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
-      applyOptimisticUpdates_forSubscriptions(base, updates)
+      applyOptimisticUpdates_forSubscriptions(base, threads, updates)
     ),
 
     // Mutations
@@ -884,16 +887,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   //   Mutate inputs...                                             ...observe clean/consistent output!
   //
-  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID           (Part 1)
+  //            .-> Base ThreadDB ---------+                 +-------> Clean threads by ID         (Part 1)
   //           /                           |                 |
-  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications           (Part 1)
-  //          \                          | |                 | |    & notifications by ID
+  //   mutate ----> Base Notifications --+ |                 | +-----> Clean notifications         (Part 1)
+  //          \                          | |                 | |       & notifications by ID
   //         | \                         | |      Apply      | |
-  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Room Subscription Settings   (Part 2)
-  //          \                          |        Updates    |  |
-  //           `------- etc etc ---------+                   |  +--> History Versions             (Part 3)
-  //                       ^                                 |
-  //                       |                                 +-----> Notification Settings        (Part 4)
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic -+-+-+-+-> Subscriptions               (Part 2)
+  //          \                          |        Updates    |   | |
+  //           `------- etc etc ---------+                   |   | +-> History Versions            (Part 3)
+  //                       ^                                 |   |
+  //                       |                                 |   +---> Room Subscription Settings  (Part 4)
+  //                       |                                 |
+  //                       |                                 +-------> Notification Settings       (Part 5)
+  //                       |
+  //                       |
   //                       |
   //                       |
   //                       |                        ^                  ^
@@ -974,9 +981,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
     this.permissionHints = createStore_forPermissionHints();
-    this.subscriptions = createStore_forSubscriptions(
-      this.optimisticUpdates.signal
-    );
 
     this.#notificationsPaginationState = new PaginatedResource(
       async (cursor?: string) => {
@@ -1012,6 +1016,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.threads = new ThreadDB();
+
+    this.subscriptions = createStore_forSubscriptions(
+      this.optimisticUpdates.signal,
+      this.threads
+    );
 
     this.notifications = createStore_forNotifications();
     this.roomSubscriptionSettings = createStore_forRoomSubscriptionSettings(
@@ -1916,27 +1925,48 @@ function applyOptimisticUpdates_forRoomSubscriptionSettings(
  */
 function applyOptimisticUpdates_forSubscriptions(
   subscriptionsLUT: SubscriptionsLUT,
+  threads: ReadonlyThreadDB<BaseMetadata>,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
-): SubscriptionsLUT {
-  const outcoming = subscriptionsLUT;
+): SubscriptionsByKey {
+  const subscriptions = Object.fromEntries(subscriptionsLUT);
 
   for (const update of optimisticUpdates) {
-    // TODO: When subscribing/unsubscribing to a thread, apply the update optimistically
+    // TODO: For "create-comment"/"create-thread", we could apply the update optimistically but we need the room subscription settings
+    // to know if the user has disabled thread notifications. Currently, we only have the room subscription settings locally if the user
+    // uses `useRoomSubscriptionSettings`.
 
-    if (update.type === "create-comment" || update.type === "create-thread") {
-      // TODO: We could apply this update optimistically but we need the room subscription settings to know if the user has disabled thread notifications
-    } else if (update.type === "update-room-subscription-settings") {
-      if (update.settings.threads === "all") {
-        // TODO: get all threads in the DB for this room and add subscriptions for them
-      } else if (update.settings.threads === "none") {
-        // TODO: remove all subscriptions for this room
-      } else if (update.settings.threads === "replies_and_mentions") {
-        // TODO: We could check the room's threads to see if you participated but that feels too expensive for an optimistic update (we need to walk through all comment bodies to detect mentions)
+    if (update.type === "update-room-subscription-settings") {
+      if (
+        update.settings.threads === "all" ||
+        update.settings.threads === "none"
+      ) {
+        const threadIds = threads
+          .findMany(update.roomId, undefined, "desc")
+          .map((t) => t.id);
+
+        for (const threadId of threadIds) {
+          const subscriptionKey = getSubscriptionKey("thread", threadId);
+
+          if (update.settings.threads === "all") {
+            // Create subscriptions for all existing threads in the room
+            subscriptions[subscriptionKey] = {
+              kind: "thread",
+              subjectId: threadId,
+              createdAt: new Date(),
+            };
+          } else if (update.settings.threads === "none") {
+            // Delete subscriptions for all existing threads in the room
+            delete subscriptions[subscriptionKey];
+          }
+        }
       }
+
+      // TODO: For "replies_and_mentions", we could check the room's threads to see if you participated but that feels
+      // too expensive for an optimistic update (we need to walk through all comment bodies to detect mentions)
     }
   }
 
-  return outcoming;
+  return subscriptions;
 }
 
 /**
