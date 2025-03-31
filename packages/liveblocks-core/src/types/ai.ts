@@ -15,10 +15,11 @@ export enum ServerAiMsgCode {
   CHAT_CREATED = 201,
   MESSAGE_ADDED = 301,
   GET_MESSAGES = 401,
-  STREAM_MESSAGE_PART = 501,
-  STREAM_MESSAGE_COMPLETE = 502,
-  STREAM_MESSAGE_FAILED = 503,
-  STREAM_MESSAGE_ABORTED = 504,
+  STREAM_MESSAGE_START = 501,
+  STREAM_MESSAGE_PART = 502,
+  STREAM_MESSAGE_COMPLETE = 503,
+  STREAM_MESSAGE_FAILED = 504,
+  STREAM_MESSAGE_ABORTED = 505,
   STATELESS_RUN_RESULT = 601,
   ERROR = 900,
 }
@@ -31,11 +32,20 @@ export interface AiMsgBase {
 }
 
 export type ToolChoice =
-  | { type: "auto" | "any" }
-  | { type: "tool"; name: string };
+  | "auto"
+  | "required"
+  | "none"
+  | { type: "tool"; toolName: string };
+
 /**
  * Server messages
  */
+
+export type StreamMessageStartServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.STREAM_MESSAGE_START;
+  chatId: string;
+  messageId: string;
+};
 
 export type StreamMessagePartServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_PART;
@@ -52,13 +62,13 @@ export type StreamMessageFailedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_FAILED;
   error: string;
   chatId: string;
-  messageId: string;
+  messageId?: string;
 };
 
 export type StreamMessageAbortedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_ABORTED;
   chatId: string;
-  messageId: string;
+  messageId?: string;
 };
 
 export type StreamMessageCompleteServerMsg = AiMsgBase & {
@@ -155,6 +165,7 @@ export type ServerAiMsg =
   | ChatCreatedServerMsg
   | MessageAddedServerMsg
   | GetMessagesServerMsg
+  | StreamMessageStartServerMsg
   | StreamMessagePartServerMsg
   | StreamMessageCompleteServerMsg
   | StreamMessageFailedServerMsg
@@ -173,7 +184,7 @@ export type ClientAiMsg =
 
 export type AiState = {
   // TODO: this will probably get more complicated, supporting multiple requests, etc.
-  isThinking: Map<string, boolean>;
+  runs: Map<string, AbortController>;
 };
 
 export type AiChat = {
@@ -255,6 +266,7 @@ export type AiProviderStreamParams = {
   messages: AiChatMessage[];
   tools?: AiTool[];
   tool_choice?: ToolChoice;
+  abortSignal?: AbortSignal;
   onStream: (
     type: MessageContentType, // for now only streaming text
     delta: string,
@@ -263,17 +275,16 @@ export type AiProviderStreamParams = {
   ) => void;
   onComplete: (content: AiMessageContent[]) => void;
   onError: (error: Error) => void;
-  onAbort: () => void;
 };
 
 export type AiProviderRunParams = {
   prompt: string;
   tools?: AiTool[];
   tool_choice?: ToolChoice;
+  abortSignal?: AbortSignal;
 };
 
 export interface AiProvider {
-  abort: () => void;
-  stream: (params: AiProviderStreamParams) => Promise<void>;
+  stream: (params: AiProviderStreamParams) => void;
   run: (params: AiProviderRunParams) => Promise<AiMessageContent[]>;
 }
