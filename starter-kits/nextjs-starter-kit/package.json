@@ -51,7 +51,7 @@
     "react-dom": "^18.2.0",
     "react-textarea-autosize": "^8.5.8",
     "swr": "^2.2.5",
-    "tldraw": "^3.4.1"
+    "tldraw": "^3.11.0"
   },
   "devDependencies": {
     "@types/base-64": "^1.0.0",

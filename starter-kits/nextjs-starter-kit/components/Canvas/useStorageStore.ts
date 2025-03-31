@@ -1,5 +1,5 @@
 import { useRoom } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DocumentRecordType,
   IndexKey,
@@ -19,13 +19,7 @@ import {
   react,
 } from "tldraw";
 
-export function useStorageStore({
-  shapeUtils = [],
-}: Partial<{
-  hostUrl: string;
-  version: number;
-  shapeUtils?: TLAnyShapeUtilConstructor[];
-}>) {
+export function useStorageStore(shapeUtils: TLAnyShapeUtilConstructor[] = []) {
   // Get Liveblocks room
   const room = useRoom();
 
@@ -40,6 +34,9 @@ export function useStorageStore({
   const [storeWithStatus, setStoreWithStatus] = useState<TLStoreWithStatus>({
     status: "loading",
   });
+
+  // Use a ref to ensure it works in callbacks after strict mode double render
+  const liveRecordsRef = useRef<Liveblocks["Storage"]["records"] | null>(null);
 
   useEffect(() => {
     const unsubs: (() => void)[] = [];
@@ -63,6 +60,7 @@ export function useStorageStore({
       // Get Liveblocks Storage values
       const { root } = await room.getStorage();
       const liveRecords = root.get("records");
+      liveRecordsRef.current = liveRecords;
 
       // Initialize tldraw with records from Storage
       store.clear();
@@ -86,6 +84,12 @@ export function useStorageStore({
         unsubs.push(
           store.listen(
             ({ changes }: TLStoreEventInfo) => {
+              const liveRecords = liveRecordsRef.current;
+
+              if (!liveRecords) {
+                return;
+              }
+
               room.batch(() => {
                 Object.values(changes.added).forEach((record) => {
                   liveRecords.set(record.id, record);

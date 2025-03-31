@@ -1,34 +1,18 @@
 "use client";
 
-import "tldraw/tldraw.css";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { useSelf } from "@liveblocks/react/suspense";
-import { Tldraw } from "tldraw";
+import dynamic from "next/dynamic";
 import { DocumentSpinner } from "@/primitives/Spinner";
-import { useStorageStore } from "./useStorageStore";
+
+// Dynamically import the Canvas component
+// This ensures TLDraw and its dependencies are only loaded client-side
+const CanvasComponent = dynamic(
+  () => import("./TldrawCanvas").then((mod) => mod.TldrawCanvas),
+  {
+    ssr: false,
+    loading: () => <DocumentSpinner />,
+  }
+);
 
 export function Canvas() {
-  return (
-    <ClientSideSuspense fallback={<DocumentSpinner />}>
-      <LiveblocksCanvas />
-    </ClientSideSuspense>
-  );
-}
-
-function LiveblocksCanvas() {
-  const canWrite = useSelf((me) => me.canWrite);
-  const store = useStorageStore({});
-
-  return (
-    <div style={{ height: "100%", width: "100%" }}>
-      <Tldraw
-        store={store}
-        onMount={(editor) => {
-          editor.updateInstanceState({ isReadonly: !canWrite });
-        }}
-        autoFocus
-        inferDarkMode
-      />
-    </div>
-  );
+  return <CanvasComponent />;
 }
