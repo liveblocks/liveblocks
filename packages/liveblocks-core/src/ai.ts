@@ -79,6 +79,25 @@ function createStore_forChatMessages() {
     });
   }
 
+  function remove(chatId: string, messageId: string): void {
+    baseSignal.mutate((lut) => {
+      const messagesByChatId = lut.get(chatId);
+      messagesByChatId?.delete(messageId);
+    });
+  }
+
+  function removeByChatId(chatId: string): void {
+    baseSignal.mutate((lut) => {
+      const messagesByChatId = lut.get(chatId);
+      if (!messagesByChatId) {
+        return;
+      }
+      for (const message of messagesByChatId.values()) {
+        messagesByChatId.delete(message.id);
+      }
+    });
+  }
+
   // TODO: do we want to fail or throw or return something if the message doesn't exist?
   function updateMessage(
     chatId: string,
@@ -125,6 +144,8 @@ function createStore_forChatMessages() {
     // Mutations
     updateMessage,
     update,
+    remove,
+    removeByChatId,
   };
 }
 
@@ -139,6 +160,12 @@ function createStore_forUserAiChats() {
     });
   }
 
+  function remove(chatId: string) {
+    baseSignal.mutate((lut) => {
+      lut.delete(chatId);
+    });
+  }
+
   return {
     signal: DerivedSignal.from(baseSignal, (chats) => {
       return Array.from(chats.values());
@@ -146,6 +173,7 @@ function createStore_forUserAiChats() {
 
     // Mutations
     update,
+    remove,
   };
 }
 
@@ -321,6 +349,22 @@ export function createAi(config: AiConfig): Ai {
           });
           break;
 
+        case ServerAiMsgCode.DELETE_CHAT_OK:
+          context.chats.remove(msg.chatId);
+          context.messages.removeByChatId(msg.chatId);
+          context.requests.get(msg.requestId)?.resolve(msg.chatId);
+          break;
+
+        case ServerAiMsgCode.DELETE_MESSAGE_OK:
+          context.messages.remove(msg.chatId, msg.messageId);
+          context.requests.get(msg.requestId)?.resolve(msg.messageId);
+          break;
+
+        case ServerAiMsgCode.CLEAR_CHAT_MESSAGES_OK:
+          context.messages.removeByChatId(msg.chatId);
+          context.requests.get(msg.requestId)?.resolve(msg.chatId);
+          break;
+
         case ServerAiMsgCode.LIST_CHATS_OK:
           context.chats.update(msg.chats);
           context.requests.get(msg.requestId)?.resolve({
@@ -426,10 +470,32 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
+      deleteChat: (chatId: string) => {
+        return sendClientMsgWithResponse({
+          type: ClientAiMsgCode.DELETE_CHAT,
+          chatId,
+        });
+      },
+
       getMessages: (chatId: string) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.GET_MESSAGES,
           chatId,
+        });
+      },
+
+      clearChat: (chatId: string) => {
+        return sendClientMsgWithResponse({
+          type: ClientAiMsgCode.CLEAR_CHAT_MESSAGES,
+          chatId,
+        });
+      },
+
+      deleteMessage: (chatId: string, messageId: string) => {
+        return sendClientMsgWithResponse({
+          type: ClientAiMsgCode.DELETE_MESSAGE,
+          chatId,
+          messageId,
         });
       },
 

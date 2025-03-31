@@ -12,6 +12,9 @@ export enum ClientAiMsgCode {
   ADD_MESSAGE = 400,
   ABORT_RESPONSE = 500,
   STATELESS_RUN = 600,
+  DELETE_CHAT = 700,
+  DELETE_MESSAGE = 800,
+  CLEAR_CHAT_MESSAGES = 900,
 }
 
 export enum ServerAiMsgCode {
@@ -25,7 +28,10 @@ export enum ServerAiMsgCode {
   STREAM_MESSAGE_FAILED = 504,
   STREAM_MESSAGE_ABORTED = 505,
   STATELESS_RUN_RESULT = 601,
-  ERROR = 900,
+  DELETE_CHAT_OK = 701,
+  DELETE_MESSAGE_OK = 801,
+  CLEAR_CHAT_MESSAGES_OK = 901,
+  ERROR = 999,
 }
 
 // Base interface with requestId (shared by both client and server messages)
@@ -116,6 +122,23 @@ export type StatelessRunResultServerMsg = AiMsgBase & {
   result: AiMessageContent[];
 };
 
+export type DeleteChatServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.DELETE_CHAT_OK;
+  chatId: string;
+};
+
+export type DeleteMessageServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.DELETE_MESSAGE_OK;
+  chatId: string;
+  messageId: string;
+};
+
+export type ClearChatMessagesServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.CLEAR_CHAT_MESSAGES_OK;
+  chatId: string;
+  messagesCount: number;
+};
+
 /**
  * Client messages
  */
@@ -161,6 +184,22 @@ export type StatelessRunClientMsg = AiMsgBase & {
   tool_choice?: ToolChoice;
 };
 
+export type DeleteChatClientMsg = AiMsgBase & {
+  readonly type: ClientAiMsgCode.DELETE_CHAT;
+  chatId: string;
+};
+
+export type DeleteMessageClientMsg = AiMsgBase & {
+  readonly type: ClientAiMsgCode.DELETE_MESSAGE;
+  chatId: string;
+  messageId: string;
+};
+
+export type ClearChatMessagesClientMsg = AiMsgBase & {
+  readonly type: ClientAiMsgCode.CLEAR_CHAT_MESSAGES;
+  chatId: string;
+};
+
 // Union type of all server messages
 export type ServerAiMsg =
   | ListChatServerMsg
@@ -173,6 +212,9 @@ export type ServerAiMsg =
   | StreamMessageFailedServerMsg
   | StreamMessageAbortedServerMsg
   | StatelessRunResultServerMsg
+  | DeleteChatServerMsg
+  | DeleteMessageServerMsg
+  | ClearChatMessagesServerMsg
   | ErrorServerMsg;
 
 // Union type of all client messages
@@ -182,7 +224,10 @@ export type ClientAiMsg =
   | GetMessagesClientMsg
   | AddMessageClientMsg
   | AbortResponseClientMsg
-  | StatelessRunClientMsg;
+  | StatelessRunClientMsg
+  | DeleteChatClientMsg
+  | DeleteMessageClientMsg
+  | ClearChatMessagesClientMsg;
 
 export type AiState = {
   // TODO: this will probably get more complicated, supporting multiple requests, etc.
@@ -195,6 +240,7 @@ export type AiChat = {
   metadata: Record<string, string | string[]>;
   createdAt: ISODateString;
   lastMessageAt?: ISODateString; // Optional since some chats might have no messages
+  deletedAt?: ISODateString; // Optional for soft-deleted chats
 };
 
 /**
@@ -244,12 +290,29 @@ export type AiTextContent = AiContentBase & {
 
 export type AiMessageContent = AiTextContent | AiToolContent;
 
+export type AiUsage = {
+  id: string;
+  messageId?: string;
+  inputTokens: number;
+  outputTokens: number;
+  model: string;
+  type: "chat" | "stateless";
+  createdAt: ISODateString;
+};
+
+export type UsageMetadata = {
+  inputTokens: number;
+  outputTokens: number;
+  model: string;
+};
+
 export type AiMessageBase = {
   id: string;
   status: AiStatus;
   content: AiMessageContent[];
   role: AiRole;
   createdAt: ISODateString;
+  deletedAt?: ISODateString;
 };
 
 export type UserMessage = AiMessageBase & {
@@ -275,7 +338,7 @@ export type AiProviderStreamParams = {
     index: number, // the index in the content array
     contentSnapshot: AiMessageContent[]
   ) => void;
-  onComplete: (content: AiMessageContent[]) => void;
+  onComplete: (content: AiMessageContent[], usage?: UsageMetadata) => void;
   onError: (error: Error) => void;
 };
 
@@ -286,7 +349,12 @@ export type AiProviderRunParams = {
   abortSignal?: AbortSignal;
 };
 
+export type AiProviderRunResult = {
+  content: AiMessageContent[];
+  usage?: UsageMetadata;
+};
+
 export interface AiProvider {
   stream: (params: AiProviderStreamParams) => void;
-  run: (params: AiProviderRunParams) => Promise<AiMessageContent[]>;
+  run: (params: AiProviderRunParams) => Promise<AiProviderRunResult>;
 }
