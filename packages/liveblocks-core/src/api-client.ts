@@ -256,15 +256,9 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     attachment,
     signal,
   }: {
-    attachment: File;
+    attachment: { id: string; file: File };
     signal?: AbortSignal;
-  }): Promise<{
-    type: "attachment";
-    id: string;
-    name: string;
-    size: number;
-    mimeType: string;
-  }>;
+  }): Promise<void>;
 
   // Text editor
   createTextMention({
@@ -1031,35 +1025,25 @@ export function createApiClient<M extends BaseMetadata>({
    * Attachments (User level)
    * -----------------------------------------------------------------------------------------------*/
   async function uploadUserAttachment(options: {
-    attachment: File;
+    attachment: {
+      id: string;
+      file: File;
+    };
     signal?: AbortSignal;
-  }): Promise<{
-    type: "attachment";
-    id: string;
-    name: string;
-    size: number;
-    mimeType: string;
-  }> {
+  }): Promise<void> {
     const { attachment, signal } = options;
     const userId = currentUserId.get();
     if (userId === undefined) {
-      // @nimesh - Handle current user not defined
-      throw new Error("User is not authenticated.");
+      throw new Error("Attachment upload requires an authenticated user.");
     }
     const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 
-    if (options.attachment.size <= ATTACHMENT_PART_SIZE) {
-      return await httpClient.putBlob<{
-        type: "attachment";
-        id: string;
-        name: string;
-        size: number;
-        mimeType: string;
-      }>(
-        url`/v2/c/users/${userId}/attachments/upload/${encodeURIComponent(attachment.name)}`,
+    if (options.attachment.file.size <= ATTACHMENT_PART_SIZE) {
+      await httpClient.putBlob(
+        url`/v2/c/users/${userId}/attachments/upload/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({ requestedScope: "comments:read" }),
-        attachment,
-        { fileSize: attachment.size },
+        attachment.file,
+        { fileSize: attachment.file.size },
         { signal }
       );
     } else {
@@ -1067,11 +1051,11 @@ export function createApiClient<M extends BaseMetadata>({
         uploadId: string;
         key: string;
       }>(
-        url`/v2/c/users/${userId}/attachments/multipart/${encodeURIComponent(attachment.name)}`,
+        url`/v2/c/users/${userId}/attachments/multipart/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({ requestedScope: "comments:read" }),
         undefined,
         { signal },
-        { fileSize: attachment.size }
+        { fileSize: attachment.file.size }
       );
 
       try {
@@ -1079,11 +1063,14 @@ export function createApiClient<M extends BaseMetadata>({
 
         const parts: { number: number; part: Blob }[] = [];
         let start = 0;
-        while (start < attachment.size) {
-          const end = Math.min(start + ATTACHMENT_PART_SIZE, attachment.size);
+        while (start < attachment.file.size) {
+          const end = Math.min(
+            start + ATTACHMENT_PART_SIZE,
+            attachment.file.size
+          );
           parts.push({
             number: parts.length + 1,
-            part: attachment.slice(start, end),
+            part: attachment.file.slice(start, end),
           });
           start = end;
         }
@@ -1107,13 +1094,7 @@ export function createApiClient<M extends BaseMetadata>({
           ))
         );
 
-        return await httpClient.post<{
-          type: "attachment";
-          id: string;
-          name: string;
-          size: number;
-          mimeType: string;
-        }>(
+        await httpClient.post(
           url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}/complete`,
           await authManager.getAuthValue({ requestedScope: "comments:read" }),
           { parts: uploadedParts.sort((a, b) => a.number - b.number) },
@@ -1126,7 +1107,7 @@ export function createApiClient<M extends BaseMetadata>({
             await authManager.getAuthValue({ requestedScope: "comments:read" })
           );
         } catch (err) {
-          // @nimesh - Ignore the error
+          // Ignore the error, we are probably offline
         }
         throw err;
       }
