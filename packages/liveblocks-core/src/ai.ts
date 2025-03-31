@@ -404,9 +404,11 @@ export function createAi(config: AiConfig): Ai {
       [kInternal]: {
         debugContext: () => context,
       },
+
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
+
       listChats: (strCursor?: string) => {
         const cursor = strCursor
           ? (tryParseJson(strCursor) as
@@ -421,18 +423,21 @@ export function createAi(config: AiConfig): Ai {
           cursor,
         });
       },
+
       newChat: (id?: string) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.NEW_CHAT,
           chatId: id,
         });
       },
+
       getMessages: (chatId: string) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.GET_MESSAGES,
           chatId,
         });
       },
+
       sendMessage: (chatId: string, message: string) => {
         const content: AiTextContent = {
           type: MessageContentType.TEXT,
@@ -447,6 +452,7 @@ export function createAi(config: AiConfig): Ai {
           60_000 // todo: not sure if we even want to leave a promise hanging here. some requests can be pretty long, although we do need to have some bounds
         );
       },
+
       statelessAction: (prompt: string, tool: AiTool) => {
         return sendClientMsgWithResponse(
           {
