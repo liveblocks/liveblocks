@@ -24,6 +24,7 @@ import type {
   AiTextContent,
   AiTool,
   ClientAiMsg,
+  Cursor,
   ServerAiMsg,
 } from "./types/ai";
 import {
@@ -411,15 +412,7 @@ export function createAi(config: AiConfig): Ai {
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
 
-      listChats: (strCursor?: string) => {
-        const cursor = strCursor
-          ? (tryParseJson(strCursor) as
-              | {
-                  lastMessageAt: string;
-                  chatId: string;
-                }
-              | undefined)
-          : undefined;
+      listChats: (cursor?: Cursor) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.LIST_CHATS,
           cursor,

@@ -1,6 +1,10 @@
 import type { Json } from "../lib/Json";
 import type { Brand } from "../lib/utils";
 
+export type AiRequestId = Brand<string, "AiRequestId">;
+export type Cursor = Brand<string, "Cursor">;
+export type ISODateString = Brand<string, "ISODateString">;
+
 export enum ClientAiMsgCode {
   LIST_CHATS = 100,
   CREATE_CHAT = 200,
@@ -23,8 +27,6 @@ export enum ServerAiMsgCode {
   STATELESS_RUN_RESULT = 601,
   ERROR = 900,
 }
-
-export type AiRequestId = Brand<string, "aiRequestId">;
 
 // Base interface with requestId (shared by both client and server messages)
 export interface AiMsgBase {
@@ -87,7 +89,7 @@ export type ErrorServerMsg = {
 export type ListChatServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.LIST_CHATS_OK;
   chats: AiChat[];
-  nextCursor: { chatId: string; lastMessageAt: string } | null;
+  nextCursor: Cursor | null;
 };
 
 export type ChatCreatedServerMsg = AiMsgBase & {
@@ -99,14 +101,14 @@ export type MessageAddedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.ADD_MESSAGE_OK;
   chatId: string;
   messageId: string;
-  createdAt: string;
+  createdAt: ISODateString;
 };
 
 export type GetMessagesServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.GET_MESSAGES_OK;
   chatId: string;
   messages: AiChatMessage[];
-  cursor: { messageId: string; createdAt: string } | null;
+  cursor: Cursor | null;
 };
 
 export type StatelessRunResultServerMsg = AiMsgBase & {
@@ -120,7 +122,7 @@ export type StatelessRunResultServerMsg = AiMsgBase & {
 
 export type ListChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.LIST_CHATS;
-  cursor?: { chatId: string; lastMessageAt: string };
+  cursor?: Cursor;
   pageSize?: number;
 };
 
@@ -133,7 +135,7 @@ export type NewChatClientMsg = AiMsgBase & {
 
 export type GetMessagesClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.GET_MESSAGES;
-  cursor?: { messageId: string; createdAt: string };
+  cursor?: Cursor;
   pageSize?: number;
   chatId: string;
 };
@@ -191,8 +193,8 @@ export type AiChat = {
   id: string;
   name: string;
   metadata: Record<string, string | string[]>;
-  createdAt: string; // Sqlite dates are strings
-  lastMessageAt?: string; // Optional since some chats might have no messages
+  createdAt: ISODateString;
+  lastMessageAt?: ISODateString; // Optional since some chats might have no messages
 };
 
 /**
@@ -247,7 +249,7 @@ export type AiMessageBase = {
   status: AiStatus;
   content: AiMessageContent[];
   role: AiRole;
-  createdAt: string; // Sqlite dates are strings
+  createdAt: ISODateString;
 };
 
 export type UserMessage = AiMessageBase & {
