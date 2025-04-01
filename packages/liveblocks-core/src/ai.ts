@@ -27,11 +27,12 @@ import type {
   ClientAiMsg,
   Cursor,
   ErrorServerMsg,
+  GenerateAnswerResultServerMsg,
   GetMessagesServerMsg,
   ListChatServerMsg,
   MessageAddedServerMsg,
   ServerAiMsg,
-  StatelessRunResultServerMsg,
+  StreamMessageCompleteServerMsg,
 } from "./types/ai";
 import {
   AiStatus,
@@ -198,14 +199,23 @@ export type Ai = {
   listChats: () => Promise<ListChatServerMsg>;
   newChat: (id?: string) => Promise<ChatCreatedServerMsg>;
   getMessages: (chatId: string) => Promise<GetMessagesServerMsg>;
-  sendMessage: (
+  addUserMessage: (
     chatId: string,
     message: string
   ) => Promise<MessageAddedServerMsg>;
+  streamAnswer: (
+    // TODO: support stateless
+    chatId: string
+  ) => Promise<StreamMessageCompleteServerMsg>;
+  generateAnswer: (
+    // TODO: support stateless
+    chatId: string
+  ) => Promise<GenerateAnswerResultServerMsg>;
+  // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (
     prompt: string,
     tool: AiTool
-  ) => Promise<StatelessRunResultServerMsg>;
+  ) => Promise<GenerateAnswerResultServerMsg>;
   abortResponse: (chatId: string) => Promise<ErrorServerMsg>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
@@ -321,14 +331,16 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case ServerAiMsgCode.STREAM_MESSAGE_COMPLETE:
-          context.messages.updateMessage(msg.chatId, msg.messageId, {
-            content: msg.content,
-            status: AiStatus.COMPLETE,
-          });
+          if (msg.messageId !== undefined && msg.chatId !== undefined) {
+            context.messages.updateMessage(msg.chatId, msg.messageId, {
+              content: msg.content,
+              status: AiStatus.COMPLETE,
+            });
+          }
           break;
 
         case ServerAiMsgCode.STREAM_MESSAGE_FAILED:
-          if (msg.messageId !== undefined) {
+          if (msg.messageId !== undefined && msg.chatId !== undefined) {
             context.messages.updateMessage(msg.chatId, msg.messageId, {
               status: AiStatus.FAILED,
             });
@@ -337,7 +349,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case ServerAiMsgCode.STREAM_MESSAGE_ABORTED:
-          if (msg.messageId !== undefined) {
+          if (msg.messageId !== undefined && msg.chatId !== undefined) {
             context.messages.updateMessage(msg.chatId, msg.messageId, {
               status: AiStatus.ABORTED,
             });
@@ -371,7 +383,13 @@ export function createAi(config: AiConfig): Ai {
           context.chats.update(msg.chats);
           break;
 
-        case ServerAiMsgCode.STATELESS_RUN_RESULT:
+        case ServerAiMsgCode.GENERATE_ANSWER_RESULT:
+          if (msg.messageId !== undefined && msg.chatId !== undefined) {
+            context.messages.updateMessage(msg.chatId, msg.messageId, {
+              content: msg.content,
+              status: AiStatus.COMPLETE,
+            });
+          }
           break;
       }
 
@@ -496,14 +514,14 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      sendMessage: (chatId: string, message: string) => {
+      addUserMessage: (chatId: string, message: string) => {
         const content: AiTextContent = {
           type: MessageContentType.TEXT,
-          data: message,
+          text: message,
         };
         return sendClientMsgWithResponse(
           {
-            type: ClientAiMsgCode.ADD_MESSAGE,
+            type: ClientAiMsgCode.ADD_USER_MESSAGE,
             chatId,
             content,
           },
@@ -511,10 +529,24 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
+      streamAnswer: (chatId: string) => {
+        return sendClientMsgWithResponse({
+          type: ClientAiMsgCode.STREAM_ANSWER,
+          chatId,
+        });
+      },
+
+      generateAnswer: (chatId: string) => {
+        return sendClientMsgWithResponse({
+          type: ClientAiMsgCode.GENERATE_ANSWER,
+          chatId,
+        });
+      },
+
       statelessAction: (prompt: string, tool: AiTool) => {
         return sendClientMsgWithResponse(
           {
-            type: ClientAiMsgCode.STATELESS_RUN,
+            type: ClientAiMsgCode.GENERATE_ANSWER,
             prompt,
             tools: [tool],
             toolChoice: {

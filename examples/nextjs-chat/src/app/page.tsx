@@ -1,7 +1,8 @@
 "use client";
 
-import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
+import { LiveblocksProvider, RoomProvider, useClient } from "@liveblocks/react";
 import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
+import { DebugClient } from "../DebugClient";
 
 export default function Page() {
   const { messages } = useChatMessages();
@@ -13,6 +14,7 @@ export default function Page() {
         // @ts-expect-error
         baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       >
+        <DebugClient />
         <RoomProvider id="liveblocks:examples:ai">
           <ChatMessages messages={messages} className="messages" />
 
@@ -29,34 +31,34 @@ function useChatMessages(): {
   isLoading: boolean;
   messages: (
     | {
-        role: "user";
-        id: string;
-        chatId: string;
-        content: (
-          | { type: "text"; data: string }
-          | {
-              type: "image";
-              id: string;
-              name: string;
-              size: number;
-              mimeType: string;
-            }
-        )[];
-      }
+      role: "user";
+      id: string;
+      chatId: string;
+      content: (
+        | { type: "text"; data: string }
+        | {
+          type: "image";
+          id: string;
+          name: string;
+          size: number;
+          mimeType: string;
+        }
+      )[];
+    }
     | {
-        role: "assistant";
-        id: string;
-        chatId: string;
-        content: (
-          | { type: "text"; id: string; data: string }
-          | {
-              type: "tool-call";
-              id: string;
-              name: string;
-              args?: unknown;
-            }
-        )[];
-      }
+      role: "assistant";
+      id: string;
+      chatId: string;
+      content: (
+        | { type: "text"; id: string; data: string }
+        | {
+          type: "tool-call";
+          id: string;
+          name: string;
+          args?: unknown;
+        }
+      )[];
+    }
   )[];
   fetchMore: () => void;
   isFetchingMore: boolean;
@@ -147,7 +149,7 @@ function useChatMessages(): {
         ],
       },
     ],
-    fetchMore: () => {},
+    fetchMore: () => { },
     isFetchingMore: false,
     hasFetchedAll: false,
     fetchMoreError: null,

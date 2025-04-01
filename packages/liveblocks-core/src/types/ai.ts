@@ -6,38 +6,63 @@ export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
 
 export enum ClientAiMsgCode {
+  // chat management
   LIST_CHATS = 100,
   CREATE_CHAT = 200,
-  GET_MESSAGES = 300,
-  ADD_MESSAGE = 400,
-  ABORT_RESPONSE = 500,
-  STATELESS_RUN = 600,
   DELETE_CHAT = 700,
+
+  // message management
+  GET_MESSAGES = 300,
+  ADD_USER_MESSAGE = 400,
   DELETE_MESSAGE = 800,
   CLEAR_CHAT_MESSAGES = 900,
+
+  // answers
+  STREAM_ANSWER = 1000,
+  GENERATE_ANSWER = 2000,
+  ABORT_RESPONSE = 500,
 }
 
 export enum ServerAiMsgCode {
+  // chat management
   LIST_CHATS_OK = 101,
   CREATE_CHAT_OK = 201,
+  DELETE_CHAT_OK = 701,
+
+  // message management
   GET_MESSAGES_OK = 301,
   ADD_MESSAGE_OK = 401,
-  STREAM_MESSAGE_START = 501,
-  STREAM_MESSAGE_PART = 502,
-  STREAM_MESSAGE_COMPLETE = 503,
-  STREAM_MESSAGE_FAILED = 504,
-  STREAM_MESSAGE_ABORTED = 505,
-  STATELESS_RUN_RESULT = 601,
-  DELETE_CHAT_OK = 701,
   DELETE_MESSAGE_OK = 801,
   CLEAR_CHAT_MESSAGES_OK = 901,
+
+  // oh no
   ERROR = 999,
+
+  // answers
+  STREAM_MESSAGE_START = 1001,
+  STREAM_MESSAGE_PART = 1002,
+  STREAM_MESSAGE_COMPLETE = 1003,
+  STREAM_MESSAGE_FAILED = 1004,
+  STREAM_MESSAGE_ABORTED = 1005,
+  GENERATE_ANSWER_RESULT = 2001,
 }
 
 // Base interface with requestId (shared by both client and server messages)
 export interface AiMsgBase {
   readonly requestId: AiRequestId;
 }
+export interface BaseAnswerMsg extends AiMsgBase {
+  tools?: AiTool[];
+  toolChoice?: ToolChoice;
+}
+export interface StatefullMsg {
+  chatId: string;
+}
+export interface StatelessMsg {
+  prompt: string;
+}
+
+export type AnswerClientMsg = BaseAnswerMsg & (StatefullMsg | StatelessMsg);
 
 export type ToolChoice =
   | "auto"
@@ -51,8 +76,8 @@ export type ToolChoice =
 
 export type StreamMessageStartServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_START;
-  chatId: string;
-  messageId: string;
+  chatId?: string;
+  messageId?: string;
 };
 
 export type StreamMessagePartServerMsg = AiMsgBase & {
@@ -62,28 +87,28 @@ export type StreamMessagePartServerMsg = AiMsgBase & {
     delta: string;
     type: MessageContentType;
   };
-  chatId: string;
-  messageId: string;
+  chatId?: string;
+  messageId?: string;
 };
 
 export type StreamMessageFailedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_FAILED;
   error: string;
-  chatId: string;
-  messageId: string;
+  chatId?: string;
+  messageId?: string;
 };
 
 export type StreamMessageAbortedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_ABORTED;
-  chatId: string;
+  chatId?: string;
   messageId?: string;
 };
 
 export type StreamMessageCompleteServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_COMPLETE;
   content: AiMessageContent[];
-  chatId: string;
-  messageId: string;
+  chatId?: string;
+  messageId?: string;
 };
 
 export type ErrorServerMsg = {
@@ -117,9 +142,11 @@ export type GetMessagesServerMsg = AiMsgBase & {
   nextCursor: Cursor | null;
 };
 
-export type StatelessRunResultServerMsg = AiMsgBase & {
-  type: ServerAiMsgCode.STATELESS_RUN_RESULT;
-  result: AiMessageContent[];
+export type GenerateAnswerResultServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.GENERATE_ANSWER_RESULT;
+  content: AiMessageContent[];
+  chatId?: string;
+  messageId?: string;
 };
 
 export type DeleteChatServerMsg = AiMsgBase & {
@@ -164,26 +191,16 @@ export type GetMessagesClientMsg = AiMsgBase & {
 };
 
 export type AddMessageClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.ADD_MESSAGE;
+  readonly type: ClientAiMsgCode.ADD_USER_MESSAGE;
   chatId: string;
   content: AiTextContent | string;
-  role?: AiRole;
   status?: AiStatus;
-  execute?: boolean;
 };
 
 export type AbortResponseClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.ABORT_RESPONSE;
   chatId: string;
 };
-
-export type StatelessRunClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.STATELESS_RUN;
-  prompt: string;
-  tools?: AiTool[];
-  toolChoice?: ToolChoice;
-};
-
 export type DeleteChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.DELETE_CHAT;
   chatId: string;
@@ -200,6 +217,14 @@ export type ClearChatMessagesClientMsg = AiMsgBase & {
   chatId: string;
 };
 
+export type StreamAnswerClientMsg = AnswerClientMsg & {
+  readonly type: ClientAiMsgCode.STREAM_ANSWER;
+};
+
+export type GenerateAnswerClientMsg = AnswerClientMsg & {
+  readonly type: ClientAiMsgCode.GENERATE_ANSWER;
+};
+
 // Union type of all server messages
 export type ServerAiMsg =
   | ListChatServerMsg
@@ -211,7 +236,7 @@ export type ServerAiMsg =
   | StreamMessageCompleteServerMsg
   | StreamMessageFailedServerMsg
   | StreamMessageAbortedServerMsg
-  | StatelessRunResultServerMsg
+  | GenerateAnswerResultServerMsg
   | DeleteChatServerMsg
   | DeleteMessageServerMsg
   | ClearChatMessagesServerMsg
@@ -224,10 +249,11 @@ export type ClientAiMsg =
   | GetMessagesClientMsg
   | AddMessageClientMsg
   | AbortResponseClientMsg
-  | StatelessRunClientMsg
+  | GenerateAnswerClientMsg
   | DeleteChatClientMsg
   | DeleteMessageClientMsg
-  | ClearChatMessagesClientMsg;
+  | ClearChatMessagesClientMsg
+  | StreamAnswerClientMsg;
 
 export type AiState = {
   // TODO: this will probably get more complicated, supporting multiple requests, etc.
@@ -284,7 +310,7 @@ export type AiToolContent = AiContentBase & {
 };
 
 export type AiTextContent = AiContentBase & {
-  data: string;
+  text: string;
   type: MessageContentType.TEXT;
 };
 
@@ -325,36 +351,3 @@ export type AssistantMessage = AiMessageBase & {
 };
 
 export type AiChatMessage = UserMessage | AssistantMessage;
-
-export type AiProviderStreamParams = {
-  messageId: string;
-  messages: AiChatMessage[];
-  tools?: AiTool[];
-  tool_choice?: ToolChoice;
-  abortSignal?: AbortSignal;
-  onStream: (
-    type: MessageContentType, // for now only streaming text
-    delta: string,
-    index: number, // the index in the content array
-    contentSnapshot: AiMessageContent[]
-  ) => void;
-  onComplete: (content: AiMessageContent[], usage?: UsageMetadata) => void;
-  onError: (error: Error) => void;
-};
-
-export type AiProviderRunParams = {
-  prompt: string;
-  tools?: AiTool[];
-  tool_choice?: ToolChoice;
-  abortSignal?: AbortSignal;
-};
-
-export type AiProviderRunResult = {
-  content: AiMessageContent[];
-  usage?: UsageMetadata;
-};
-
-export interface AiProvider {
-  stream: (params: AiProviderStreamParams) => Promise<string>;
-  run: (params: AiProviderRunParams) => Promise<AiProviderRunResult>;
-}
