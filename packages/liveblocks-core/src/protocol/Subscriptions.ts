@@ -32,8 +32,9 @@ export function getSubscriptionKey(
   subscription: SubscriptionData | SubscriptionDeleteInfo | NotificationKind,
   subjectId?: string
 ): SubscriptionKey {
-  const kind =
-    typeof subscription === "string" ? subscription : subscription.kind;
+  if (typeof subscription === "string") {
+    return `${subscription}:${subjectId}`;
+  }
 
-  return `${kind}:${subjectId}`;
+  return `${subscription.kind}:${subscription.subjectId}`;
 }
