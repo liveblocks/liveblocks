@@ -4,7 +4,22 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-export { Composer as ChatComposer } from "./components/Chat/Composer";
+export {
+  Composer as ChatComposer,
+  type ComposerProps as ChatComposerProps,
+} from "./components/Chat/Composer";
+export {
+  DefaultAssistantChatMessage as AssistantChatMessage,
+  type AssistantChatMessageProps,
+  DefaultAssistantMessageTextContent as AssistantMessageTextContent,
+  type AssistantMessageTextContentProps,
+  DefaultAssistantMessageToolCallContent as AssistantMessageToolCallContent,
+  type AssistantMessageToolCallContentProps,
+  ChatMessages,
+  type ChatMessagesProps,
+  DefaultUserChatMessage as UserChatMessage,
+  type UserChatMessageProps,
+} from "./components/Chat/Messages";
 export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";

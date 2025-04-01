@@ -20,7 +20,11 @@ import {
   TooltipProvider,
   WarningIcon,
 } from "../../_private";
-import { type ChatComposerOverrides, useOverrides } from "../../overrides";
+import {
+  type ChatComposerOverrides,
+  type GlobalOverrides,
+  useOverrides,
+} from "../../overrides";
 import { AttachmentTooLargeError } from "../../primitives";
 import * as ComposerPrimitive from "../../primitives/Chat/Composer";
 import { classNames } from "../../utils/class-names";
@@ -29,7 +33,7 @@ import { formatFileSize } from "../../utils/format-file-size";
 /* -------------------------------------------------------------------------------------------------
  * Composer
  * -----------------------------------------------------------------------------------------------*/
-type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
+export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The composer's initial value.
    */
@@ -53,7 +57,11 @@ type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<ChatComposerOverrides>;
+  overrides?: Partial<GlobalOverrides & ChatComposerOverrides>;
+  /**
+   * The id of the chat the composer belongs to.
+   */
+  chatId: string;
 };
 
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
@@ -64,6 +72,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       disabled,
       overrides,
       className,
+      chatId,
       ...props
     },
     forwardedRef
@@ -87,6 +96,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
             "lb-root lb-chat-composer lb-chat-composer-form",
             className
           )}
+          chatId={chatId}
           dir={$.dir}
           {...props}
           disabled={disabled}
@@ -141,6 +151,8 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                     data-variant="primary"
                     data-size="default"
                     aria-label={$.CHAT_COMPOSER_SEND}
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={(event) => event.stopPropagation()}
                   >
                     <span className="lb-icon-container">
                       <svg
@@ -173,10 +185,12 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 /* -------------------------------------------------------------------------------------------------
  * Attachments
  * -----------------------------------------------------------------------------------------------*/
-type AttachmentsProps = HTMLAttributes<HTMLDivElement>;
+type AttachmentsProps = HTMLAttributes<HTMLDivElement> & {
+  overrides?: Partial<GlobalOverrides & ChatComposerOverrides>;
+};
 
 export const Attachments = forwardRef<HTMLDivElement, AttachmentsProps>(
-  ({ className, ...props }, forwardedRef) => {
+  ({ className, overrides, ...props }, forwardedRef) => {
     const context = useContext(ComposerPrimitive.ComposerContext);
     if (context === null) {
       throw new Error("Attachments must be a descendant of Form.");
@@ -195,7 +209,11 @@ export const Attachments = forwardRef<HTMLDivElement, AttachmentsProps>(
       >
         <div className="lb-attachments">
           {attachments.map((attachment) => (
-            <Attachment key={attachment.id} {...attachment} />
+            <Attachment
+              key={attachment.id}
+              attachment={attachment}
+              overrides={overrides}
+            />
           ))}
         </div>
       </div>
@@ -203,8 +221,11 @@ export const Attachments = forwardRef<HTMLDivElement, AttachmentsProps>(
   }
 );
 
-function Attachment(
-  props: {
+function Attachment({
+  attachment,
+  overrides,
+}: {
+  attachment: {
     id: string;
     file: File;
   } & (
@@ -215,9 +236,10 @@ function Attachment(
         status: "error";
         error: Error;
       }
-  )
-) {
-  if (!props.file.type.startsWith("image/")) {
+  );
+  overrides?: Partial<GlobalOverrides & ChatComposerOverrides>;
+}) {
+  if (!attachment.file.type.startsWith("image/")) {
     throw new Error("Only image attachments are supported.");
   }
 
@@ -226,43 +248,43 @@ function Attachment(
     throw new Error("Attachment must be a descendant of Form.");
   }
 
-  const { onRemoveAttachment } = context;
+  const { chatId, onRemoveAttachment } = context;
 
-  const { base, extension } = splitFileName(props.file.name);
-  const $ = useOverrides();
+  const { base, extension } = splitFileName(attachment.file.name);
+  const $ = useOverrides(overrides);
 
   let description: string;
-  if (props.status === "error") {
-    if (props.error instanceof AttachmentTooLargeError) {
+  if (attachment.status === "error") {
+    if (attachment.error instanceof AttachmentTooLargeError) {
       description = $.ATTACHMENT_TOO_LARGE(
         ComposerPrimitive.MAX_ATTACHMENT_SIZE
           ? formatFileSize(ComposerPrimitive.MAX_ATTACHMENT_SIZE, $.locale)
           : undefined
       );
     } else {
-      description = $.ATTACHMENT_ERROR(props.error);
+      description = $.ATTACHMENT_ERROR(attachment.error);
     }
   } else {
-    description = formatFileSize(props.file.size, $.locale);
+    description = formatFileSize(attachment.file.size, $.locale);
   }
 
   return (
     <div
       className="lb-attachment lb-file-attachment lb-chat-composer-attachment"
-      data-error={props.status === "error" ? "" : undefined}
+      data-error={attachment.status === "error" ? "" : undefined}
     >
       <div className="lb-attachment-preview">
-        {props.status === "uploading" ? (
+        {attachment.status === "uploading" ? (
           <SpinnerIcon />
-        ) : props.status === "error" ? (
+        ) : attachment.status === "error" ? (
           <WarningIcon />
         ) : (
-          <ImageAttachmentPreview {...props} />
+          <ImageAttachmentPreview chatId={chatId} {...attachment} />
         )}
       </div>
 
       <div className="lb-attachment-details">
-        <span className="lb-attachment-name" title={props.file.name}>
+        <span className="lb-attachment-name" title={attachment.file.name}>
           <span className="lb-attachment-name-base">{base}</span>
           {extension && (
             <span className="lb-attachment-name-extension">{extension}</span>
@@ -278,7 +300,7 @@ function Attachment(
         <button
           type="button"
           className="lb-attachment-delete"
-          onClick={() => onRemoveAttachment(props.id)}
+          onClick={() => onRemoveAttachment(attachment.id)}
           onPointerDown={(event) => event.preventDefault()}
           aria-label={$.CHAT_COMPOSER_REMOVE_ATTACHMENT}
         >
@@ -289,27 +311,37 @@ function Attachment(
   );
 }
 
-const MAX_DISPLAYED_MEDIA_SIZE = 60 * 1024 * 1024; // 60 MB
+export const MAX_DISPLAYED_MEDIA_SIZE = 60 * 1024 * 1024; // 60 MB
 
-function ImageAttachmentPreview({ id, file }: { id: string; file: File }) {
+function ImageAttachmentPreview({
+  chatId,
+  id,
+  file,
+}: {
+  chatId: string;
+  id: string;
+  file: File;
+}) {
   const [isUnsupportedPreview, setUnsupportedPreview] = useState(false);
-  const { url } = useAttachmentUrl(id);
+  const { url } = useChatAttachmentUrl(chatId, id);
   const [isLoaded, setLoaded] = useState(false);
-
-  if (!isLoaded) {
-    return <SpinnerIcon />;
-  }
 
   if (!isUnsupportedPreview && file.size <= MAX_DISPLAYED_MEDIA_SIZE) {
     return (
-      <div className="lb-attachment-preview-media">
-        <img
-          src={url}
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-          onError={() => setUnsupportedPreview(true)}
-        />
-      </div>
+      <>
+        {!isLoaded ? <SpinnerIcon /> : null}
+
+        {url ? (
+          <div className="lb-attachment-preview-media">
+            <img
+              src={url}
+              loading="lazy"
+              onLoad={() => setLoaded(true)}
+              onError={() => setUnsupportedPreview(true)}
+            />
+          </div>
+        ) : null}
+      </>
     );
   }
 
@@ -344,14 +376,18 @@ function ImageAttachmentPreview({ id, file }: { id: string; file: File }) {
   );
 }
 
-function splitFileName(name: string) {
+export function splitFileName(name: string) {
   const match = name.match(/^(.+?)(\.[^.]+)?$/);
   return { base: match?.[1] ?? name, extension: match?.[2] };
 }
 
-function useAttachmentUrl(attachmentId: string): AsyncResult<string, "url"> {
+export function useChatAttachmentUrl(
+  chatId: string,
+  attachmentId: string
+): AsyncResult<string, "url"> {
   const client = useClient();
-  const store = client[kInternal].httpClient.userAttachmentUrlsBatchStore;
+  const store =
+    client[kInternal].httpClient.getOrCreateChatAttachmentUrlsStore(chatId);
 
   const getAttachmentUrlState = useCallback(
     () => store.getItemState(attachmentId),

@@ -252,16 +252,20 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 
   getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
-  uploadUserAttachment({
+  uploadChatAttachment({
+    chatId,
     attachment,
     signal,
   }: {
+    chatId: string;
     attachment: { id: string; file: File };
     signal?: AbortSignal;
   }): Promise<void>;
 
-  userAttachmentUrlsBatchStore: BatchStore<string, string>;
-  getUserAttachmentUrl(options: { attachmentId: string }): Promise<string>;
+  getOrCreateChatAttachmentUrlsStore(
+    chatId: string
+  ): BatchStore<string, string>;
+  getChatAttachmentUrl(options: { attachmentId: string }): Promise<string>;
 
   // Text editor
   createTextMention({
@@ -1025,16 +1029,17 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * Attachments (User level)
+   * Attachments (Chat level)
    * -----------------------------------------------------------------------------------------------*/
-  async function uploadUserAttachment(options: {
+  async function uploadChatAttachment(options: {
+    chatId: string;
     attachment: {
       id: string;
       file: File;
     };
     signal?: AbortSignal;
   }): Promise<void> {
-    const { attachment, signal } = options;
+    const { chatId, attachment, signal } = options;
     const userId = currentUserId.get();
     if (userId === undefined) {
       throw new Error("Attachment upload requires an authenticated user.");
@@ -1043,7 +1048,7 @@ export function createApiClient<M extends BaseMetadata>({
 
     if (options.attachment.file.size <= ATTACHMENT_PART_SIZE) {
       await httpClient.putBlob(
-        url`/v2/c/users/${userId}/attachments/upload/${encodeURIComponent(attachment.file.name)}`,
+        url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({ requestedScope: "comments:read" }),
         attachment.file,
         { fileSize: attachment.file.size },
@@ -1054,7 +1059,7 @@ export function createApiClient<M extends BaseMetadata>({
         uploadId: string;
         key: string;
       }>(
-        url`/v2/c/users/${userId}/attachments/multipart/${encodeURIComponent(attachment.file.name)}`,
+        url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
         await authManager.getAuthValue({ requestedScope: "comments:read" }),
         undefined,
         { signal },
@@ -1085,7 +1090,7 @@ export function createApiClient<M extends BaseMetadata>({
                 etag: string;
                 number: number;
               }>(
-                url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}/${String(number)}`,
+                url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
                 await authManager.getAuthValue({
                   requestedScope: "comments:read",
                 }),
@@ -1098,7 +1103,7 @@ export function createApiClient<M extends BaseMetadata>({
         );
 
         await httpClient.post(
-          url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}/complete`,
+          url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
           await authManager.getAuthValue({ requestedScope: "comments:read" }),
           { parts: uploadedParts.sort((a, b) => a.number - b.number) },
           { signal }
@@ -1106,7 +1111,7 @@ export function createApiClient<M extends BaseMetadata>({
       } catch (err) {
         try {
           await httpClient.delete(
-            url`/v2/c/users/${userId}/attachments/multipart/${multipartUpload.uploadId}`,
+            url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
             await authManager.getAuthValue({ requestedScope: "comments:read" })
           );
         } catch (err) {
@@ -1117,15 +1122,20 @@ export function createApiClient<M extends BaseMetadata>({
     }
   }
 
-  const userAttachmentUrlsBatchStore = createBatchStore(
-    new Batch<string, string>(
+  const attachmentUrlsBatchStoresByChat = new DefaultMap<
+    string,
+    BatchStore<string, string>
+  >((chatId) => {
+    const batch = new Batch<string, string>(
       async (batchedAttachmentIds) => {
         const attachmentIds = batchedAttachmentIds.flat();
         const { urls } = await httpClient.post<{
           urls: (string | null)[];
         }>(
-          url`/v2/c/attachments/presigned-urls`,
-          await authManager.getAuthValue({ requestedScope: "comments:read" }),
+          url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
+          await authManager.getAuthValue({
+            requestedScope: "comments:read",
+          }),
           { attachmentIds }
         );
 
@@ -1136,11 +1146,22 @@ export function createApiClient<M extends BaseMetadata>({
         );
       },
       { delay: 50 }
-    )
-  );
+    );
+    return createBatchStore(batch);
+  });
 
-  function getUserAttachmentUrl(options: { attachmentId: string }) {
-    return userAttachmentUrlsBatchStore.batch.get(options.attachmentId);
+  function getOrCreateChatAttachmentUrlsStore(
+    chatId: string
+  ): BatchStore<string, string> {
+    return attachmentUrlsBatchStoresByChat.getOrCreate(chatId);
+  }
+
+  function getChatAttachmentUrl(options: {
+    chatId: string;
+    attachmentId: string;
+  }) {
+    const batch = getOrCreateChatAttachmentUrlsStore(options.chatId).batch;
+    return batch.get(options.attachmentId);
   }
 
   /* -------------------------------------------------------------------------------------------------
@@ -1674,9 +1695,9 @@ export function createApiClient<M extends BaseMetadata>({
     uploadAttachment,
     getOrCreateAttachmentUrlsStore,
     // User attachments
-    uploadUserAttachment,
-    userAttachmentUrlsBatchStore,
-    getUserAttachmentUrl,
+    uploadChatAttachment,
+    getOrCreateChatAttachmentUrlsStore,
+    getChatAttachmentUrl,
     // Room storage
     streamStorage,
     sendMessages,

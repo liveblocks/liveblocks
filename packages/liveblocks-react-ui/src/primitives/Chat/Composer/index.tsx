@@ -35,6 +35,8 @@ import { AttachmentTooLargeError } from "../../Composer/utils";
  * Form
  * -----------------------------------------------------------------------------------------------*/
 export const ComposerContext = createContext<{
+  chatId: string;
+
   editor: SlateEditor;
   onEditorValueChange: (value: Descendant[]) => void;
   isEditorEmpty: boolean;
@@ -79,6 +81,10 @@ export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
    * Whether the composer is disabled.
    */
   disabled?: boolean;
+  /**
+   * The id of the chat the composer belongs to.
+   */
+  chatId: string;
 };
 
 /**
@@ -91,7 +97,10 @@ export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
  * </Form>
  */
 export const Form = forwardRef<HTMLFormElement, FormProps>(
-  ({ onComposerSubmit, onSubmit, disabled, ...props }, forwardedRef) => {
+  (
+    { onComposerSubmit, onSubmit, disabled, chatId, ...props },
+    forwardedRef
+  ) => {
     const formRef = useRef<HTMLFormElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -104,6 +113,21 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     const editor = editorRef.current;
 
     const [isEditorEmpty, setIsEditorEmpty] = useState(true);
+
+    const [attachments, setAttachments] = useState<
+      ({
+        id: string;
+        file: File;
+      } & (
+        | {
+            status: "uploading" | "uploaded";
+          }
+        | {
+            status: "error";
+            error: Error;
+          }
+      ))[]
+    >([]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
@@ -136,8 +160,6 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
 
         event.preventDefault();
 
-        /* send(message) */
-
         // Clear the editor after dispatching the message.
         Transforms.delete(editor, {
           at: {
@@ -160,32 +182,25 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     const requestFormSubmit = useCallback(() => {
       if (isEmpty(editor, editor.children)) return;
 
-      if (formRef.current === null) return;
-      if (typeof formRef.current.requestSubmit === "function") {
-        return formRef.current.requestSubmit();
+      if (attachments.some((attachment) => attachment.status === "uploading")) {
+        return;
       }
-      const submitter = document.createElement("input");
-      submitter.type = "submit";
-      submitter.hidden = true;
-      formRef.current.appendChild(submitter);
-      submitter.click();
-      formRef.current.removeChild(submitter);
-    }, [editor]);
 
-    const [attachments, setAttachments] = useState<
-      ({
-        id: string;
-        file: File;
-      } & (
-        | {
-            status: "uploading" | "uploaded";
-          }
-        | {
-            status: "error";
-            error: Error;
-          }
-      ))[]
-    >([]);
+      // We need to wait for the next frame in some cases like when composing diacritics,
+      // we want any native handling to be done first while still being handled on `keydown`.
+      requestAnimationFrame(() => {
+        if (formRef.current === null) return;
+        if (typeof formRef.current.requestSubmit === "function") {
+          return formRef.current.requestSubmit();
+        }
+        const submitter = document.createElement("input");
+        submitter.type = "submit";
+        submitter.hidden = true;
+        formRef.current.appendChild(submitter);
+        submitter.click();
+        formRef.current.removeChild(submitter);
+      });
+    }, [editor, attachments]);
 
     const handleAttachFiles = useCallback(() => {
       if (disabled) return;
@@ -209,6 +224,7 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     return (
       <ComposerContext.Provider
         value={{
+          chatId,
           editor,
           onEditorValueChange: handleEditorValueChange,
           isEditorEmpty,
@@ -263,7 +279,8 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
               ]);
 
               client[kInternal].httpClient
-                .uploadUserAttachment({
+                .uploadChatAttachment({
+                  chatId,
                   attachment: {
                     id,
                     file,
@@ -446,14 +463,19 @@ export const Submit = forwardRef<HTMLButtonElement, SubmitProps>(
       throw new Error("Submit must be a descendant of Form.");
     }
 
-    const { disabled: isFormDisabled, isEditorEmpty } = context;
+    const { disabled: isFormDisabled, isEditorEmpty, attachments } = context;
 
     return (
       <button
         type="submit"
         {...props}
         ref={forwardedRef}
-        disabled={disabled || isFormDisabled || isEditorEmpty}
+        disabled={
+          disabled ||
+          isFormDisabled ||
+          isEditorEmpty ||
+          attachments.some((attachment) => attachment.status === "uploading")
+        }
       />
     );
   }
