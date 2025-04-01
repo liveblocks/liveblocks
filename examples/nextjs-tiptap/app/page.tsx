@@ -13,7 +13,7 @@ import Editor from "./tiptap/editor";
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap-2");
 
   return (
     <LiveblocksProvider

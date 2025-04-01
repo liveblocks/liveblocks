@@ -14,6 +14,7 @@
     "@blocknote/mantine": "^0.25.1",
     "@liveblocks/client": "^2.22.1",
     "@liveblocks/node": "^2.22.1",
+    "@liveblocks/node-prosemirror": "^2.22.2",
     "@liveblocks/react": "^2.22.1",
     "@liveblocks/react-blocknote": "^2.22.1",
     "@liveblocks/react-ui": "^2.22.1",

@@ -11,6 +11,7 @@ import {
   FloatingToolbar,
 } from "@liveblocks/react-tiptap";
 import StarterKit from "@tiptap/starter-kit";
+import Youtube from "@tiptap/extension-youtube";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
@@ -28,6 +29,10 @@ export default function TiptapEditor() {
     extensions: [
       StarterKit.configure({
         history: false,
+      }),
+      Youtube.configure({
+        controls: false,
+        nocookie: true,
       }),
       liveblocks,
     ],
