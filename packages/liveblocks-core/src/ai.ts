@@ -517,7 +517,7 @@ export function createAi(config: AiConfig): Ai {
             type: ClientAiMsgCode.STATELESS_RUN,
             prompt,
             tools: [tool],
-            tool_choice: {
+            toolChoice: {
               type: "tool",
               toolName: tool.name,
             },

@@ -181,7 +181,7 @@ export type StatelessRunClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.STATELESS_RUN;
   prompt: string;
   tools?: AiTool[];
-  tool_choice?: ToolChoice;
+  toolChoice?: ToolChoice;
 };
 
 export type DeleteChatClientMsg = AiMsgBase & {
