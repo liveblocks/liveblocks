@@ -4,6 +4,7 @@ import type { Delegates, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
+import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
@@ -19,13 +20,18 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
-  AiMessageContent,
   AiRequestId,
   AiTextContent,
   AiTool,
+  ChatCreatedServerMsg,
   ClientAiMsg,
   Cursor,
+  ErrorServerMsg,
+  GetMessagesServerMsg,
+  ListChatServerMsg,
+  MessageAddedServerMsg,
   ServerAiMsg,
+  StatelessRunResultServerMsg,
 } from "./types/ai";
 import {
   AiStatus,
@@ -40,7 +46,8 @@ import type {
 } from "./types/IWebSocket";
 import { PKG_VERSION } from "./version";
 
-const REQUEST_TIMEOUT = 10_000;
+// Allow server to take up to 10 seconds to respond to any WebSocket RPC request
+const DEFAULT_REQUEST_TIMEOUT = 10_000;
 
 /**
  * A lookup table (LUT) for all the user AI chats.
@@ -50,12 +57,11 @@ type AiChatsLUT = Map<string, AiChat>;
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
-  requests: Map<
+  pendingRequests: Map<
     AiRequestId,
     {
-      resolve: (value: unknown) => void;
-      reject: (reason?: unknown) => void;
-      timeout: NodeJS.Timeout;
+      resolve: (value: ServerAiMsg) => void;
+      reject: (reason: unknown) => void;
     }
   >;
   chats: ReturnType<typeof createStore_forUserAiChats>;
@@ -189,23 +195,18 @@ export type Ai = {
   reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
-  listChats: () => Promise<{
-    chats: AiChat[];
-    cursor: { lastMessageAt: string; chatId: string };
-  }>;
-  newChat: (id?: string) => Promise<AiChat>;
-  getMessages: (chatId: string) => Promise<{
-    messages: AiChatMessage[];
-    cursor: { messageId: string; createdAt: string };
-  }>;
-  sendMessage: (chatId: string, message: string) => Promise<AiChatMessage>;
+  listChats: () => Promise<ListChatServerMsg>;
+  newChat: (id?: string) => Promise<ChatCreatedServerMsg>;
+  getMessages: (chatId: string) => Promise<GetMessagesServerMsg>;
+  sendMessage: (
+    chatId: string,
+    message: string
+  ) => Promise<MessageAddedServerMsg>;
   statelessAction: (
     prompt: string,
     tool: AiTool
-  ) => Promise<AiMessageContent[]>;
-  abortResponse: (
-    chatId: string
-  ) => Promise<{ chatId: string; messageId: string }>;
+  ) => Promise<StatelessRunResultServerMsg>;
+  abortResponse: (chatId: string) => Promise<ErrorServerMsg>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<Record<string, AiChatMessage[]>>;
@@ -234,7 +235,7 @@ export function createAi(config: AiConfig): Ai {
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
-    requests: new Map(),
+    pendingRequests: new Map(),
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
   };
@@ -296,11 +297,26 @@ export function createAi(config: AiConfig): Ai {
     if (typeof event.data === "string") {
       const msg = tryParseJson(event.data) as ServerAiMsg;
 
+      // If the current msg carries a requestId, check to see if it's a known
+      // one, and if it's still exists in our pendingRequest administration. If
+      // not, it may have timed out already, or it wasn't intended for us.
+      const pendingReq = msg.requestId
+        ? context.pendingRequests.get(msg.requestId)
+        : undefined;
+
+      if (msg.requestId && !pendingReq) {
+        console.warn(
+          "Ignoring unrecognized server message (already timed out, or not for us)",
+          event.data
+        );
+        return;
+      }
+
       switch (msg.type) {
         case ServerAiMsgCode.ERROR:
           if (msg.requestId) {
             // Not all errors have request Ids
-            context.requests.get(msg.requestId)?.reject(new Error(msg.error));
+            pendingReq?.reject(new Error(msg.error));
           }
           break;
 
@@ -308,11 +324,6 @@ export function createAi(config: AiConfig): Ai {
           context.messages.updateMessage(msg.chatId, msg.messageId, {
             content: msg.content,
             status: AiStatus.COMPLETE,
-          });
-          context.requests.get(msg.requestId)?.resolve({
-            content: msg.content,
-            messageId: msg.messageId,
-            chatId: msg.chatId,
           });
           break;
 
@@ -322,7 +333,7 @@ export function createAi(config: AiConfig): Ai {
               status: AiStatus.FAILED,
             });
           }
-          context.requests.get(msg.requestId)?.reject(new Error(msg.error));
+          pendingReq?.reject(new Error(msg.error));
           break;
 
         case ServerAiMsgCode.STREAM_MESSAGE_ABORTED:
@@ -331,52 +342,41 @@ export function createAi(config: AiConfig): Ai {
               status: AiStatus.ABORTED,
             });
           }
-          context.requests
-            .get(msg.requestId)
-            ?.reject(new Error("Message aborted")); // Alternatively we could resolve with the current message
+          // TODO Alternatively we could resolve with the current message
+          pendingReq?.reject(new Error("Message aborted"));
           break;
 
         case ServerAiMsgCode.CREATE_CHAT_OK:
           context.chats.update([msg.chat]);
-          context.requests.get(msg.requestId)?.resolve(msg.chat);
           break;
 
         case ServerAiMsgCode.GET_MESSAGES_OK:
           context.messages.update(msg.chatId, msg.messages);
-          context.requests.get(msg.requestId)?.resolve({
-            messages: msg.messages,
-            cursor: msg.nextCursor,
-          });
           break;
 
         case ServerAiMsgCode.DELETE_CHAT_OK:
           context.chats.remove(msg.chatId);
           context.messages.removeByChatId(msg.chatId);
-          context.requests.get(msg.requestId)?.resolve(msg.chatId);
           break;
 
         case ServerAiMsgCode.DELETE_MESSAGE_OK:
           context.messages.remove(msg.chatId, msg.messageId);
-          context.requests.get(msg.requestId)?.resolve(msg.messageId);
           break;
 
         case ServerAiMsgCode.CLEAR_CHAT_MESSAGES_OK:
           context.messages.removeByChatId(msg.chatId);
-          context.requests.get(msg.requestId)?.resolve(msg.chatId);
           break;
 
         case ServerAiMsgCode.LIST_CHATS_OK:
           context.chats.update(msg.chats);
-          context.requests.get(msg.requestId)?.resolve({
-            chats: msg.chats,
-            cursor: msg.nextCursor,
-          });
           break;
 
         case ServerAiMsgCode.STATELESS_RUN_RESULT:
-          context.requests.get(msg.requestId)?.resolve(msg.result);
           break;
       }
+
+      // After handling the side-effects above, we can resolve the promise
+      pendingReq?.resolve(msg);
     }
   }
 
@@ -395,47 +395,40 @@ export function createAi(config: AiConfig): Ai {
     }
   });
 
-  function sendClientMsgWithResponse<T>(
+  function sendClientMsgWithResponse<T extends ServerAiMsg>(
     msg: DistributiveOmit<ClientAiMsg, "requestId">,
-    requestTimeout: number = REQUEST_TIMEOUT
+    timeout: number = DEFAULT_REQUEST_TIMEOUT
   ): Promise<T> {
     // TODO: we can probably retry or something here
     if (managedSocket.getStatus() !== "connected") {
       return Promise.reject(new Error("Not connected"));
     }
 
-    const requestId = makeRequestId();
-    const promise = new Promise<T>((resolve, reject) => {
-      const cleanup = () => {
-        const request = context.requests.get(requestId);
-        if (request) {
-          clearTimeout(request.timeout); // it's a noop if it already timed
-          context.requests.delete(requestId);
-        }
-      };
+    const { promise, resolve, reject } = Promise_withResolvers<ServerAiMsg>();
 
-      // This is a map of requests that should hopefully clean itself up.
-      // TODO: ask Vincent if we can make this a WeakMap ;)
-      context.requests.set(requestId, {
-        resolve: (value) => {
-          cleanup();
-          resolve(value as T);
-        },
-        reject: (reason) => {
-          cleanup();
-          reject(reason);
-        },
-        timeout: setTimeout(() => {
-          cleanup();
-          reject(new Error("Request timed out"));
-        }, requestTimeout),
-      });
+    // Automatically calls reject() when signal is aborted
+    const abortSignal = AbortSignal.timeout(timeout);
+    abortSignal.addEventListener("abort", () => reject(abortSignal.reason), {
+      once: true,
     });
-    sendClientMsg({
-      ...msg,
-      requestId,
-    });
-    return promise;
+
+    const requestId = makeRequestId();
+    context.pendingRequests.set(requestId, { resolve, reject });
+
+    sendClientMsg({ ...msg, requestId });
+    return (
+      (promise as Promise<T>)
+        .finally(() => {
+          // Always cleanup
+          context.pendingRequests.delete(requestId);
+        })
+        // Make sure these promises don't go uncaught (in contrast to the
+        // promise instance we return to the caller)
+        .catch((err: Error) => {
+          console.error(err.message);
+          throw err;
+        })
+    );
   }
 
   function sendClientMsg(msg: ClientAiMsg) {
@@ -471,14 +464,18 @@ export function createAi(config: AiConfig): Ai {
       },
 
       deleteChat: (chatId: string) => {
-        return sendClientMsgWithResponse({
+        return sendClientMsgWithResponse<
+          ServerAiMsg & { type: ServerAiMsgCode.DELETE_CHAT_OK }
+        >({
           type: ClientAiMsgCode.DELETE_CHAT,
           chatId,
         });
       },
 
       getMessages: (chatId: string) => {
-        return sendClientMsgWithResponse({
+        return sendClientMsgWithResponse<
+          ServerAiMsg & { type: ServerAiMsgCode.GET_MESSAGES_OK }
+        >({
           type: ClientAiMsgCode.GET_MESSAGES,
           chatId,
         });
