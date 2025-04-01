@@ -355,6 +355,6 @@ export type AiProviderRunResult = {
 };
 
 export interface AiProvider {
-  stream: (params: AiProviderStreamParams) => void;
+  stream: (params: AiProviderStreamParams) => Promise<string>;
   run: (params: AiProviderRunParams) => Promise<AiProviderRunResult>;
 }
