@@ -1,4 +1,5 @@
 import type { Json } from "../lib/Json";
+import type { Relax } from "../lib/Relax";
 import type { Brand } from "../lib/utils";
 
 export type AiRequestId = Brand<string, "AiRequestId">;
@@ -62,7 +63,8 @@ export interface StatelessMsg {
   prompt: string;
 }
 
-export type AnswerClientMsg = BaseAnswerMsg & (StatefullMsg | StatelessMsg);
+export type AnswerClientMsg = BaseAnswerMsg &
+  Relax<StatefullMsg | StatelessMsg>;
 
 export type ToolChoice =
   | "auto"
