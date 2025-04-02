@@ -1,5 +1,21 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- The `InboxNotification` component now uses `resolveRoomsInfo` for
+  `textMention` notifications to make them link to the mentions’ room
+  automatically if `href` isn’t set.
+- Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
+  tooltips)
+
+## v2.22.2
+
+### `@liveblocks/node`
+
+- Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
+- Optimize `.upsertRoom()` to only make a single round-trip to the server.
+- Also expose `LiveObject`, `LiveMap`, and `LiveList` in `@liveblocks/node`.
+
 ## v2.22.1
 
 ### `@liveblocks/react-blocknote`
