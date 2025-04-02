@@ -286,7 +286,7 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
-export type * from "./types/ai";
+export type * from "./types/ai"; // XXX Before launching, make sure to be deliberate about all re-exports here!
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
 export type {

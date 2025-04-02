@@ -1,14 +1,17 @@
+import type { ChatId } from "@liveblocks/core";
 import { HttpError, kInternal, nanoid } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
+import type {
+  ButtonHTMLAttributes,
+  FormEvent,
+  FormHTMLAttributes,
+  HTMLAttributes,
+  KeyboardEvent,
+} from "react";
 import {
-  type ButtonHTMLAttributes,
   createContext,
-  type FormEvent,
-  type FormHTMLAttributes,
   forwardRef,
-  type HTMLAttributes,
-  type KeyboardEvent,
   useCallback,
   useContext,
   useImperativeHandle,
@@ -16,13 +19,8 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  type BaseEditor,
-  createEditor,
-  type Descendant,
-  Editor as SlateEditor,
-  Transforms,
-} from "slate";
+import type { BaseEditor, Descendant } from "slate";
+import { createEditor, Editor as SlateEditor, Transforms } from "slate";
 import type { HistoryEditor } from "slate-history";
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
@@ -35,7 +33,7 @@ import { AttachmentTooLargeError } from "../../Composer/utils";
  * Form
  * -----------------------------------------------------------------------------------------------*/
 export const ComposerContext = createContext<{
-  chatId: string;
+  chatId: ChatId;
 
   editor: SlateEditor;
   onEditorValueChange: (value: Descendant[]) => void;
@@ -84,7 +82,7 @@ export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The id of the chat the composer belongs to.
    */
-  chatId: string;
+  chatId: ChatId;
 };
 
 /**

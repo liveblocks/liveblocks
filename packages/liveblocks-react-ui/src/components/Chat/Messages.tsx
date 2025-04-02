@@ -1,12 +1,10 @@
-import {
-  type ComponentType,
-  forwardRef,
-  type HTMLAttributes,
-  useState,
-} from "react";
+import type { ChatId, MessageId } from "@liveblocks/core";
+import type { ComponentType, HTMLAttributes } from "react";
+import { forwardRef, useState } from "react";
 
 import { SpinnerIcon } from "../../icons";
-import { type GlobalOverrides, useOverrides } from "../../overrides";
+import type { GlobalOverrides } from "../../overrides";
+import { useOverrides } from "../../overrides";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import {
@@ -28,8 +26,8 @@ export type ChatMessagesProps = Omit<
   messages: (
     | {
         role: "user";
-        id: string;
-        chatId: string;
+        id: MessageId;
+        chatId: ChatId;
         content: (
           | { type: "text"; data: string }
           | {
@@ -43,8 +41,8 @@ export type ChatMessagesProps = Omit<
       }
     | {
         role: "assistant";
-        id: string;
-        chatId: string;
+        id: MessageId;
+        chatId: ChatId;
         content: (
           | { type: "text"; id: string; data: string }
           | {
@@ -123,7 +121,7 @@ export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
     /**
      * The id of the chat the message belongs to.
      */
-    chatId: string;
+    chatId: ChatId;
     /**
      * The content of the message (a list of text and media attachments).
      */
@@ -186,7 +184,7 @@ export const DefaultUserChatMessage = forwardRef<
 });
 
 type UserChatMessageMediaAttachmentProps = HTMLAttributes<HTMLDivElement> & {
-  chatId: string;
+  chatId: ChatId;
   attachment: {
     id: string;
     name: string;

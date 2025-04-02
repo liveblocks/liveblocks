@@ -2,9 +2,14 @@ import type { Json } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
 import type { Brand } from "../lib/utils";
 
-export type AiRequestId = Brand<string, "AiRequestId">;
 export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
+
+// --------------------------------------------------------------
+
+export type ChatId = Brand<`ch_${string}`, "ChatId">;
+export type MessageId = Brand<`msg_${string}`, "MessageId">;
+export type AiRequestId = Brand<string, "AiRequestId">;
 
 export enum ClientAiMsgCode {
   // chat management
@@ -57,7 +62,7 @@ export interface BaseAnswerMsg extends AiMsgBase {
   toolChoice?: ToolChoice;
 }
 export interface StatefullMsg {
-  chatId: string;
+  chatId: ChatId;
 }
 export interface StatelessMsg {
   prompt: string;
@@ -78,8 +83,8 @@ export type ToolChoice =
 
 export type StreamMessageStartServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_START;
-  chatId?: string;
-  messageId?: string;
+  chatId?: ChatId;
+  messageId?: MessageId;
 };
 
 export type StreamMessagePartServerMsg = AiMsgBase & {
@@ -89,28 +94,28 @@ export type StreamMessagePartServerMsg = AiMsgBase & {
     delta: string;
     type: MessageContentType;
   };
-  chatId?: string;
-  messageId?: string;
+  chatId?: ChatId;
+  messageId?: MessageId;
 };
 
 export type StreamMessageFailedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_FAILED;
   error: string;
-  chatId?: string;
-  messageId?: string;
+  chatId?: ChatId;
+  messageId?: MessageId;
 };
 
 export type StreamMessageAbortedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_ABORTED;
-  chatId?: string;
-  messageId?: string;
+  chatId?: ChatId;
+  messageId?: MessageId;
 };
 
 export type StreamMessageCompleteServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_COMPLETE;
   content: AiMessageContent[];
-  chatId?: string;
-  messageId?: string;
+  chatId?: ChatId;
+  messageId?: MessageId;
 };
 
 export type ErrorServerMsg = {
@@ -132,14 +137,14 @@ export type ChatCreatedServerMsg = AiMsgBase & {
 
 export type MessageAddedServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.ADD_MESSAGE_OK;
-  chatId: string;
-  messageId: string;
+  chatId: ChatId;
+  messageId: MessageId;
   createdAt: ISODateString;
 };
 
 export type GetMessagesServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.GET_MESSAGES_OK;
-  chatId: string;
+  chatId: ChatId;
   messages: AiChatMessage[];
   nextCursor: Cursor | null;
 };
@@ -147,24 +152,24 @@ export type GetMessagesServerMsg = AiMsgBase & {
 export type GenerateAnswerResultServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.GENERATE_ANSWER_RESULT;
   content: AiMessageContent[];
-  chatId?: string;
-  messageId?: string;
+  chatId?: ChatId;
+  messageId?: MessageId;
 };
 
 export type DeleteChatServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.DELETE_CHAT_OK;
-  chatId: string;
+  chatId: ChatId;
 };
 
 export type DeleteMessageServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.DELETE_MESSAGE_OK;
-  chatId: string;
-  messageId: string;
+  chatId: ChatId;
+  messageId: MessageId;
 };
 
 export type ClearChatMessagesServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.CLEAR_CHAT_MESSAGES_OK;
-  chatId: string;
+  chatId: ChatId;
   messagesCount: number;
 };
 
@@ -180,7 +185,7 @@ export type ListChatClientMsg = AiMsgBase & {
 
 export type NewChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.CREATE_CHAT;
-  chatId?: string;
+  chatId?: ChatId;
   name?: string;
   metadata?: Record<string, string | string[]>;
 };
@@ -189,34 +194,34 @@ export type GetMessagesClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.GET_MESSAGES;
   cursor?: Cursor;
   pageSize?: number;
-  chatId: string;
+  chatId: ChatId;
 };
 
 export type AddMessageClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.ADD_USER_MESSAGE;
-  chatId: string;
+  chatId: ChatId;
   content: AiTextContent | string;
   status?: AiStatus;
 };
 
 export type AbortResponseClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.ABORT_RESPONSE;
-  chatId: string;
+  chatId: ChatId;
 };
 export type DeleteChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.DELETE_CHAT;
-  chatId: string;
+  chatId: ChatId;
 };
 
 export type DeleteMessageClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.DELETE_MESSAGE;
-  chatId: string;
-  messageId: string;
+  chatId: ChatId;
+  messageId: MessageId;
 };
 
 export type ClearChatMessagesClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.CLEAR_CHAT_MESSAGES;
-  chatId: string;
+  chatId: ChatId;
 };
 
 export type StreamAnswerClientMsg = AnswerClientMsg & {
@@ -263,7 +268,7 @@ export type AiState = {
 };
 
 export type AiChat = {
-  id: string;
+  id: ChatId;
   name: string;
   metadata: Record<string, string | string[]>;
   createdAt: ISODateString;
@@ -320,7 +325,7 @@ export type AiMessageContent = AiTextContent | AiToolContent;
 
 export type AiUsage = {
   id: string;
-  messageId?: string;
+  messageId?: MessageId;
   inputTokens: number;
   outputTokens: number;
   model: string;
@@ -335,7 +340,7 @@ export type UsageMetadata = {
 };
 
 export type AiMessageBase = {
-  id: string;
+  id: MessageId;
   status: AiStatus;
   content: AiMessageContent[];
   role: AiRole;

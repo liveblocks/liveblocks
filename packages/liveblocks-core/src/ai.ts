@@ -24,6 +24,7 @@ import type {
   AiTextContent,
   AiTool,
   ChatCreatedServerMsg,
+  ChatId,
   ClientAiMsg,
   Cursor,
   ErrorServerMsg,
@@ -31,6 +32,7 @@ import type {
   GetMessagesServerMsg,
   ListChatServerMsg,
   MessageAddedServerMsg,
+  MessageId,
   ServerAiMsg,
   StreamMessageCompleteServerMsg,
 } from "./types/ai";
@@ -77,7 +79,7 @@ function createStore_forChatMessages() {
     >
   );
 
-  function update(chatId: string, messages: AiChatMessage[]): void {
+  function update(chatId: ChatId, messages: AiChatMessage[]): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.getOrCreate(chatId);
       for (const message of messages) {
@@ -86,14 +88,14 @@ function createStore_forChatMessages() {
     });
   }
 
-  function remove(chatId: string, messageId: string): void {
+  function remove(chatId: ChatId, messageId: MessageId): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
       messagesByChatId?.delete(messageId);
     });
   }
 
-  function removeByChatId(chatId: string): void {
+  function removeByChatId(chatId: ChatId): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
       if (!messagesByChatId) {
@@ -107,8 +109,8 @@ function createStore_forChatMessages() {
 
   // TODO: do we want to fail or throw or return something if the message doesn't exist?
   function updateMessage(
-    chatId: string,
-    messageId: string,
+    chatId: ChatId,
+    messageId: MessageId,
     messageUpdate: Partial<AiChatMessage>
   ): void {
     baseSignal.mutate((lut) => {
@@ -167,7 +169,7 @@ function createStore_forUserAiChats() {
     });
   }
 
-  function remove(chatId: string) {
+  function remove(chatId: ChatId) {
     baseSignal.mutate((lut) => {
       lut.delete(chatId);
     });
@@ -197,26 +199,26 @@ export type Ai = {
   disconnect: () => void;
   getStatus: () => Status;
   listChats: () => Promise<ListChatServerMsg>;
-  newChat: (id?: string) => Promise<ChatCreatedServerMsg>;
-  getMessages: (chatId: string) => Promise<GetMessagesServerMsg>;
+  newChat: (id?: ChatId) => Promise<ChatCreatedServerMsg>;
+  getMessages: (chatId: ChatId) => Promise<GetMessagesServerMsg>;
   addUserMessage: (
-    chatId: string,
+    chatId: ChatId,
     message: string
   ) => Promise<MessageAddedServerMsg>;
   streamAnswer: (
     // TODO: support stateless
-    chatId: string
+    chatId: ChatId
   ) => Promise<StreamMessageCompleteServerMsg>;
   generateAnswer: (
     // TODO: support stateless
-    chatId: string
+    chatId: ChatId
   ) => Promise<GenerateAnswerResultServerMsg>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (
     prompt: string,
     tool: AiTool
   ) => Promise<GenerateAnswerResultServerMsg>;
-  abortResponse: (chatId: string) => Promise<ErrorServerMsg>;
+  abortResponse: (chatId: ChatId) => Promise<ErrorServerMsg>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<Record<string, AiChatMessage[]>>;
@@ -477,14 +479,14 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      newChat: (id?: string) => {
+      newChat: (id?: ChatId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.CREATE_CHAT,
           chatId: id,
         });
       },
 
-      deleteChat: (chatId: string) => {
+      deleteChat: (chatId: ChatId) => {
         return sendClientMsgWithResponse<
           ServerAiMsg & { type: ServerAiMsgCode.DELETE_CHAT_OK }
         >({
@@ -493,7 +495,7 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      getMessages: (chatId: string) => {
+      getMessages: (chatId: ChatId) => {
         return sendClientMsgWithResponse<
           ServerAiMsg & { type: ServerAiMsgCode.GET_MESSAGES_OK }
         >({
@@ -502,14 +504,14 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      clearChat: (chatId: string) => {
+      clearChat: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.CLEAR_CHAT_MESSAGES,
           chatId,
         });
       },
 
-      deleteMessage: (chatId: string, messageId: string) => {
+      deleteMessage: (chatId: ChatId, messageId: MessageId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.DELETE_MESSAGE,
           chatId,
@@ -517,7 +519,7 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      addUserMessage: (chatId: string, message: string) => {
+      addUserMessage: (chatId: ChatId, message: string) => {
         const content: AiTextContent = {
           type: MessageContentType.TEXT,
           text: message,
@@ -532,14 +534,14 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
-      streamAnswer: (chatId: string) => {
+      streamAnswer: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.STREAM_ANSWER,
           chatId,
         });
       },
 
-      generateAnswer: (chatId: string) => {
+      generateAnswer: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.GENERATE_ANSWER,
           chatId,
@@ -561,7 +563,7 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
-      abortResponse: (chatId: string) => {
+      abortResponse: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.ABORT_RESPONSE,
           chatId,

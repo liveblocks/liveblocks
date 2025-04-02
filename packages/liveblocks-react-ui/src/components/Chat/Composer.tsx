@@ -1,4 +1,5 @@
-import { assert, type AsyncResult, kInternal, shallow } from "@liveblocks/core";
+import type { AsyncResult, ChatId } from "@liveblocks/core";
+import { assert, kInternal, shallow } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSyncExternalStoreWithSelector } from "@liveblocks/react/_private";
 import {
@@ -61,7 +62,7 @@ export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The id of the chat the composer belongs to.
    */
-  chatId: string;
+  chatId: ChatId;
 };
 
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
@@ -318,7 +319,7 @@ function ImageAttachmentPreview({
   id,
   file,
 }: {
-  chatId: string;
+  chatId: ChatId;
   id: string;
   file: File;
 }) {
@@ -382,7 +383,7 @@ export function splitFileName(name: string) {
 }
 
 export function useChatAttachmentUrl(
-  chatId: string,
+  chatId: ChatId,
   attachmentId: string
 ): AsyncResult<string, "url"> {
   const client = useClient();
