@@ -110,6 +110,7 @@ function ChatWindow(props: { chatId: ChatId }) {
                   props.chatId,
                   ev.currentTarget.textContent.trim()
                 );
+                forceRerender();
                 await client.ai.generateAnswer(props.chatId);
               } finally {
                 forceRerender();
@@ -136,7 +137,7 @@ function useChats_UNPOLISHED(invalidator: number): {
   // TODO This is not the best way to get the chats, but for now it helps to speed up iteration
   useEffect(() => {
     client.ai.listChats().then((resp) => {
-      setChats([...resp.chats, EXAMPLE_CHAT]);
+      setChats([EXAMPLE_CHAT, ...resp.chats]);
     });
   }, [invalidator]);
 
