@@ -67,10 +67,8 @@ select {
   text-transform: none;
 }
 
-button,
-[type="button"],
-[type="reset"],
-[type="submit"] {
+/* `:where()` prevents overriding Liveblocks button styles */
+:where(button, [type="button"], [type="reset"], [type="submit"]) {
   appearance: button;
   background-color: transparent;
   background-image: none;

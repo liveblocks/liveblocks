@@ -425,10 +425,6 @@ const InboxNotificationThread = forwardRef<
     const $ = useOverrides(overrides);
     const thread = useInboxNotificationThread(inboxNotification.id);
     const currentUserId = useCurrentUserId();
-    // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.
-    //       Because of batching and the fact that the same hook will be called within <Room /> in the notification's title,
-    //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
-    //       `href` AND disables room names in the title via `showRoomName={false}`.
     const { info } = useRoomInfo(inboxNotification.roomId);
     const contents = useMemo(() => {
       const contents = generateInboxNotificationThreadContents(
@@ -582,12 +578,20 @@ const InboxNotificationTextMention = forwardRef<
       inboxNotification,
       showActions = "hover",
       showRoomName = true,
+      href,
       overrides,
       ...props
     },
     ref
   ) => {
     const $ = useOverrides(overrides);
+    const { info } = useRoomInfo(inboxNotification.roomId);
+    // Use URL from `resolveRoomsInfo` if `href` isn't set.
+    const resolvedHref = useMemo(() => {
+      const resolvedHref = href ?? info?.url;
+
+      return resolvedHref ? generateURL(resolvedHref) : undefined;
+    }, [href, info?.url]);
 
     const unread = useMemo(() => {
       return (
@@ -611,6 +615,7 @@ const InboxNotificationTextMention = forwardRef<
         unread={unread}
         overrides={overrides}
         showActions={showActions}
+        href={resolvedHref}
         {...props}
         ref={ref}
       />

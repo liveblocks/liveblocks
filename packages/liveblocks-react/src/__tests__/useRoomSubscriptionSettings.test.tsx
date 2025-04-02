@@ -43,6 +43,7 @@ describe("useRoomSubscriptionSettings", () => {
         return res(
           ctx.json({
             threads: "all",
+            textMentions: "mine",
           })
         );
       })
@@ -68,6 +69,7 @@ describe("useRoomSubscriptionSettings", () => {
         isLoading: false,
         settings: {
           threads: "all",
+          textMentions: "mine",
         },
       })
     );
@@ -89,6 +91,7 @@ describe("useRoomSubscriptionSettings", () => {
         return res(
           ctx.json({
             threads: "all",
+            textMentions: "mine",
           })
         );
       }),
@@ -117,6 +120,7 @@ describe("useRoomSubscriptionSettings", () => {
         isLoading: false,
         settings: {
           threads: "all",
+          textMentions: "mine",
         },
       })
     );
@@ -132,6 +136,7 @@ describe("useRoomSubscriptionSettings", () => {
       isLoading: false,
       settings: {
         threads: "none",
+        textMentions: "mine",
       },
     });
 
@@ -141,6 +146,7 @@ describe("useRoomSubscriptionSettings", () => {
         isLoading: false,
         settings: {
           threads: "all",
+          textMentions: "mine",
         },
       });
     });
@@ -245,6 +251,7 @@ describe("useRoomSubscriptionSettings: error", () => {
           return res(
             ctx.json({
               threads: "all",
+              textMentions: "mine",
             })
           );
         }
@@ -311,6 +318,7 @@ describe("useRoomSubscriptionSettings: error", () => {
         isLoading: false,
         settings: {
           threads: "all",
+          textMentions: "mine",
         },
       })
     );
@@ -330,18 +338,21 @@ describe("useRoomSubscriptionSettings: error", () => {
           return res(
             ctx.json({
               threads: "all",
+              textMentions: "mine",
             })
           );
         } else if (getRoomSubscriptionSettingsCount === 2) {
           return res(
             ctx.json({
               threads: "none",
+              textMentions: "none",
             })
           );
         } else {
           return res(
             ctx.json({
               threads: "replies_and_mentions",
+              textMentions: "mine",
             })
           );
         }
@@ -369,6 +380,7 @@ describe("useRoomSubscriptionSettings: error", () => {
         isLoading: false,
         settings: {
           threads: "all",
+          textMentions: "mine",
         },
       })
     );
@@ -381,6 +393,7 @@ describe("useRoomSubscriptionSettings: error", () => {
         isLoading: false,
         settings: {
           threads: "none",
+          textMentions: "none",
         },
       })
     );
@@ -393,6 +406,7 @@ describe("useRoomSubscriptionSettings: error", () => {
         isLoading: false,
         settings: {
           threads: "replies_and_mentions",
+          textMentions: "mine",
         },
       })
     );
@@ -405,6 +419,7 @@ describe("useRoomSubscriptionSettings: error", () => {
       isLoading: false,
       settings: {
         threads: "replies_and_mentions",
+        textMentions: "mine",
       },
     });
 
@@ -421,6 +436,7 @@ describe("useRoomSubscriptionSettings suspense", () => {
         return res(
           ctx.json({
             threads: "all",
+            textMentions: "mine",
           })
         );
       })
@@ -448,6 +464,7 @@ describe("useRoomSubscriptionSettings suspense", () => {
         isLoading: false,
         settings: {
           threads: "all",
+          textMentions: "mine",
         },
       })
     );

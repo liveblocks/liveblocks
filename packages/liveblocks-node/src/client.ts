@@ -319,9 +319,31 @@ export type UpdateRoomOptions = {
   metadata?: Record<string, string | string[] | null>;
 };
 
+export type UpsertRoomOptions = {
+  update: UpdateRoomOptions;
+  create?: CreateRoomOptions;
+};
+
 export type RequestOptions = {
   signal?: AbortSignal;
 };
+
+/**
+ * Converts ISO-formatted date strings to Date instances on RoomDataPlain
+ * values.
+ */
+function inflateRoomData(room: RoomDataPlain): RoomData {
+  const createdAt = new Date(room.createdAt);
+  const lastConnectionAt = room.lastConnectionAt
+    ? new Date(room.lastConnectionAt)
+    : undefined;
+
+  return {
+    ...room,
+    createdAt,
+    lastConnectionAt,
+  };
+}
 
 /**
  * Interact with the Liveblocks API from your Node.js backend.
@@ -593,20 +615,7 @@ export class Liveblocks {
     }
 
     const page = (await res.json()) as Page<RoomDataPlain>;
-    const rooms: RoomData[] = page.data.map((room) => {
-      // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-      const lastConnectionAt = room.lastConnectionAt
-        ? new Date(room.lastConnectionAt)
-        : undefined;
-
-      const createdAt = new Date(room.createdAt);
-      return {
-        ...room,
-        createdAt,
-        lastConnectionAt,
-      };
-    });
-
+    const rooms: RoomData[] = page.data.map(inflateRoomData);
     return {
       ...page,
       data: rooms,
@@ -664,12 +673,12 @@ export class Liveblocks {
   public async createRoom(
     roomId: string,
     params: CreateRoomOptions,
-    options?: RequestOptions
+    options?: RequestOptions & { idempotent?: boolean }
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
     const res = await this.#post(
-      url`/v2/rooms`,
+      options?.idempotent ? url`/v2/rooms?idempotent` : url`/v2/rooms`,
       {
         id: roomId,
         defaultAccesses,
@@ -685,18 +694,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      lastConnectionAt,
-      createdAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -716,50 +714,37 @@ export class Liveblocks {
     params: CreateRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    // TODO In the future, this method will be optimized to make a single round-trip instead of two
-    try {
-      return await this.createRoom(roomId, params, options);
-    } catch (err) {
-      if (
-        err instanceof LiveblocksError &&
-        err.status === 409 // Room already exists
-      ) {
-        return await this.getRoom(roomId, options);
-      } else {
-        throw err;
-      }
-    }
+    return await this.createRoom(roomId, params, {
+      ...options,
+      idempotent: true,
+    });
   }
 
   /**
    * Updates or creates a new room with the given properties.
    *
    * @param roomId The id of the room to update or create.
-   * @param params.defaultAccesses The default accesses for the room.
-   * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
-   * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param update The fields to update. These values will be updated when the room exists, or set when the room does not exist and gets created. Must specify at least one key.
+   * @param create (optional) The fields to only use when the room does not exist and will be created. When the room already exists, these values are ignored.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room.
    */
   public async upsertRoom(
     roomId: string,
-    params: CreateRoomOptions & UpdateRoomOptions,
+    params: UpsertRoomOptions,
     options?: RequestOptions
   ): Promise<RoomData> {
-    // TODO In the future, this method will be optimized to make a single round-trip instead of two
-    try {
-      return await this.createRoom(roomId, params, options);
-    } catch (err) {
-      if (
-        err instanceof LiveblocksError &&
-        err.status === 409 // Room already exists
-      ) {
-        return await this.updateRoom(roomId, params, options);
-      } else {
-        throw err;
-      }
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/upsert`,
+      params,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
     }
+
+    const data = (await res.json()) as RoomDataPlain;
+    return inflateRoomData(data);
   }
 
   /**
@@ -779,18 +764,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      createdAt,
-      lastConnectionAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -827,18 +801,7 @@ export class Liveblocks {
     }
 
     const data = (await res.json()) as RoomDataPlain;
-
-    // Convert lastConnectionAt and createdAt from ISO date strings to Date objects
-    const lastConnectionAt = data.lastConnectionAt
-      ? new Date(data.lastConnectionAt)
-      : undefined;
-
-    const createdAt = new Date(data.createdAt);
-    return {
-      ...data,
-      lastConnectionAt,
-      createdAt,
-    };
+    return inflateRoomData(data);
   }
 
   /**
@@ -2026,14 +1989,9 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+
     const data = (await res.json()) as RoomDataPlain;
-    return {
-      ...data,
-      createdAt: new Date(data.createdAt),
-      lastConnectionAt: data.lastConnectionAt
-        ? new Date(data.lastConnectionAt)
-        : undefined,
-    };
+    return inflateRoomData(data);
   }
 
   public async triggerInboxNotification<K extends KDAD>(
