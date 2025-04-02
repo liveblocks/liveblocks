@@ -12,6 +12,7 @@ import {
   ISODateString,
   MessageId,
 } from "@liveblocks/core";
+import { useForceRerender } from "./debugTools";
 
 export default function Page() {
   return (
@@ -31,7 +32,10 @@ export default function Page() {
 }
 
 function ChatPicker() {
-  const { chats } = useChats_UNPOLISHED();
+  const [renderCount, forceRerender] = useForceRerender();
+
+  const client = useClient();
+  const { chats } = useChats_UNPOLISHED(renderCount);
   const [selectedChatId, setSelectedChatId] = useState<ChatId | undefined>(
     undefined
   );
@@ -56,6 +60,20 @@ function ChatPicker() {
           ))}
         </ul>
         <b>{selectedChat?.id}</b>
+        <div>
+          <button
+            onClick={() => {
+              const name = prompt("Enter a name for this chat?", "New chat");
+              if (name !== null) {
+                client.ai.newChat({ name }).finally(() => {
+                  forceRerender();
+                });
+              }
+            }}
+          >
+            Create new chat
+          </button>
+        </div>
       </div>
       {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : null}
     </div>
@@ -63,8 +81,10 @@ function ChatPicker() {
 }
 
 function ChatWindow(props: { chatId: ChatId }) {
+  const [renderCount, forceRerender] = useForceRerender();
+
   const client = useClient();
-  const { messages } = useChatMessages_UNPOLISHED(props.chatId);
+  const { messages } = useChatMessages_UNPOLISHED(props.chatId, renderCount);
   return (
     <div>
       <ChatMessages
@@ -83,13 +103,26 @@ function ChatWindow(props: { chatId: ChatId }) {
                 ? "Reply to your AI friend…"
                 : "How can I help you today?",
           }}
+          onSubmit={async (ev) => {
+            if (ev.currentTarget.textContent?.trim()) {
+              try {
+                await client.ai.addUserMessage(
+                  props.chatId,
+                  ev.currentTarget.textContent.trim()
+                );
+                await client.ai.generateAnswer(props.chatId);
+              } finally {
+                forceRerender();
+              }
+            }
+          }}
         />
       </div>
     </div>
   );
 }
 
-function useChats_UNPOLISHED(): {
+function useChats_UNPOLISHED(invalidator: number): {
   isLoading: boolean;
   chats: AiChat[];
   fetchMore: () => void;
@@ -105,7 +138,7 @@ function useChats_UNPOLISHED(): {
     client.ai.listChats().then((resp) => {
       setChats([...resp.chats, EXAMPLE_CHAT]);
     });
-  }, []);
+  }, [invalidator]);
 
   return {
     isLoading: false,
@@ -223,10 +256,25 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   },
 ];
 
-function useChatMessages_UNPOLISHED(chatId: ChatId) {
-  const messages = chatId === EXAMPLE_CHAT_ID ? HARDCODED_EXAMPLE_MESSAGES : [];
+function useChatMessages_UNPOLISHED(chatId: ChatId, invalidator: number) {
+  const client = useClient();
+  const [isLoading, setIsLoading] = useState(true);
+  const [messages, setMessages] = useState<AiChatMessage[]>([]);
+
+  useEffect(() => {
+    if (chatId === EXAMPLE_CHAT_ID) {
+      setMessages([...HARDCODED_EXAMPLE_MESSAGES]);
+    } else {
+      // Get the answers for real
+      client.ai.getMessages(chatId).then((resp) => {
+        setMessages([...resp.messages]);
+      });
+    }
+    setIsLoading(false);
+  }, [invalidator, client, chatId]);
+
   return {
-    isLoading: false,
+    isLoading,
     messages,
     fetchMore: () => {},
     isFetchingMore: false,
