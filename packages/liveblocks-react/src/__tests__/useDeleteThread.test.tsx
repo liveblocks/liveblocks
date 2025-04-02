@@ -50,8 +50,10 @@ describe("useDeleteThread", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -112,8 +114,10 @@ describe("useDeleteThread", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -182,8 +186,10 @@ describe("useDeleteThread", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

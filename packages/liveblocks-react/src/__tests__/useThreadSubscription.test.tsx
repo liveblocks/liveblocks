@@ -34,7 +34,7 @@ describe("useThreadSubscription", () => {
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
     const subscriptions = [
-      dummySubscriptionData({ kind: "thread", subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
     ];
 
     server.use(
@@ -105,7 +105,7 @@ describe("useThreadSubscription", () => {
       }),
     ];
     const subscriptions = [
-      dummySubscriptionData({ kind: "thread", subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
     ];
 
     server.use(
@@ -297,7 +297,7 @@ describe("useThreadSubscription", () => {
       }),
     ];
     const subscriptions = [
-      dummySubscriptionData({ kind: "thread", subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
     ];
 
     server.use(

@@ -4,6 +4,7 @@ import { setupServer } from "msw/node";
 
 import {
   dummyCommentData,
+  dummySubscriptionData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
 } from "./_dummies";
@@ -41,6 +42,10 @@ describe("useDeleteAllInboxNotifications", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -49,6 +54,7 @@ describe("useDeleteAllInboxNotifications", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -114,6 +120,10 @@ describe("useDeleteAllInboxNotifications", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -122,6 +132,7 @@ describe("useDeleteAllInboxNotifications", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -192,6 +203,10 @@ describe("useDeleteAllInboxNotifications", () => {
         notifiedAt: new Date(2024, 3, 5),
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -200,6 +215,7 @@ describe("useDeleteAllInboxNotifications", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -275,6 +291,10 @@ describe("useDeleteAllInboxNotifications", () => {
       threadId: thread2.id,
       readAt: null,
     });
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
     const inboxNotifications = [notification1, notification2];
     let hasCalledDeleteThread = false;
 
@@ -285,6 +305,7 @@ describe("useDeleteAllInboxNotifications", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -368,6 +389,7 @@ describe("useDeleteAllInboxNotifications", () => {
       readAt: null,
     });
     const inboxNotifications = [notification];
+    const subscriptions = [dummySubscriptionData({ subjectId: thread.id })];
     let hasCalledDeleteComment = false;
 
     server.use(
@@ -377,6 +399,7 @@ describe("useDeleteAllInboxNotifications", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
