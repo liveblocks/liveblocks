@@ -77,7 +77,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
-    const { portalContainer } = useLiveblocksUIConfig();
+    const { portalContainer, emojibaseUrl } = useLiveblocksUIConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(
@@ -116,8 +116,9 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
             <EmojiPickerPrimitive.Root
               onEmojiSelect={handleEmojiSelect}
               locale={$.locale as Locale}
-              emojiVersion={15.1}
               columns={10}
+              emojiVersion={15.1}
+              emojibaseUrl={emojibaseUrl}
             >
               <div className="lb-emoji-picker-header">
                 <div className="lb-emoji-picker-search-container">

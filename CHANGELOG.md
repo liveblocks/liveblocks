@@ -7,6 +7,9 @@
   automatically if `href` isn’t set.
 - Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
   tooltips)
+- Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
+  choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
+  from: another CDN, self-hosted files, etc.
 
 ## v2.22.2
 
