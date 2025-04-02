@@ -303,7 +303,10 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
-    console.warn("handleServerMessage", event.data);
+    window.console.info(
+      "Incoming message in handleServerMessage: ",
+      event.data
+    );
     if (typeof event.data === "string") {
       const msg = tryParseJson(event.data) as ServerAiMsg;
 
