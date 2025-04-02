@@ -90,9 +90,9 @@ export type StreamMessageStartServerMsg = AiMsgBase & {
 export type StreamMessagePartServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_PART;
   content: {
+    type: "text";
     id: string;
     delta: string;
-    type: MessageContentType;
   };
   chatId?: ChatId;
   messageId?: MessageId;
@@ -113,7 +113,7 @@ export type StreamMessageAbortedServerMsg = AiMsgBase & {
 
 export type StreamMessageCompleteServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.STREAM_MESSAGE_COMPLETE;
-  content: AiMessageContent[];
+  content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;
 };
@@ -151,7 +151,7 @@ export type GetMessagesServerMsg = AiMsgBase & {
 
 export type GenerateAnswerResultServerMsg = AiMsgBase & {
   type: ServerAiMsgCode.GENERATE_ANSWER_RESULT;
-  content: AiMessageContent[];
+  content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;
 };
@@ -283,23 +283,12 @@ export type AiChat = {
  * 4. failed, AI failed to respond
  * 5. aborted, user aborted the response
  */
-export enum AiStatus {
-  THINKING = "thinking",
-  RESPONDING = "responding",
-  COMPLETE = "complete",
-  FAILED = "failed",
-  ABORTED = "aborted",
-}
-
-export enum AiRole {
-  USER = "user",
-  ASSISTANT = "assistant",
-}
-
-export enum MessageContentType {
-  TEXT = "text",
-  TOOL_CALL = "tool-call",
-}
+export type AiStatus =
+  | "thinking"
+  | "responding"
+  | "complete"
+  | "failed"
+  | "aborted";
 
 export interface AiTool {
   name: string;
@@ -307,21 +296,29 @@ export interface AiTool {
   parameter_schema: Json;
 }
 
-export interface AiContentBase {
-  id?: string;
-}
-export type AiToolContent = AiContentBase & {
-  args?: unknown;
+export type AiToolContent = {
+  id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
+  type: "tool-call";
   name: string;
-  type: MessageContentType.TOOL_CALL;
+  args?: unknown;
 };
 
-export type AiTextContent = AiContentBase & {
+export type AiTextContent = {
+  id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
+  type: "text";
   text: string;
-  type: MessageContentType.TEXT;
 };
 
-export type AiMessageContent = AiTextContent | AiToolContent;
+export type AiUploadedImageContent = {
+  type: "image";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+};
+
+export type AiUserContent = AiTextContent | AiUploadedImageContent;
+export type AiAssistantContent = AiTextContent | AiToolContent;
 
 export type AiUsage = {
   id: string;
@@ -339,22 +336,21 @@ export type UsageMetadata = {
   model: string;
 };
 
-export type AiMessageBase = {
+export type AiUserMessageBase = {
   id: MessageId;
-  status: AiStatus;
-  content: AiMessageContent[];
-  role: AiRole;
+  status: AiStatus; // I think this should only live on Assistent messages, not on User messages
   createdAt: ISODateString;
   deletedAt?: ISODateString;
 };
 
-export type UserMessage = AiMessageBase & {
-  content: AiTextContent[];
-  role: AiRole.USER;
+export type AiUserMessage = AiUserMessageBase & {
+  role: "user";
+  content: AiUserContent[];
 };
 
-export type AssistantMessage = AiMessageBase & {
-  role: AiRole.ASSISTANT;
+export type AiAssistantMessage = AiUserMessageBase & {
+  role: "assistant";
+  content: AiAssistantContent[];
 };
 
-export type AiChatMessage = UserMessage | AssistantMessage;
+export type AiChatMessage = AiUserMessage | AiAssistantMessage;

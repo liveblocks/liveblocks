@@ -36,12 +36,7 @@ import type {
   ServerAiMsg,
   StreamMessageCompleteServerMsg,
 } from "./types/ai";
-import {
-  AiStatus,
-  ClientAiMsgCode,
-  MessageContentType,
-  ServerAiMsgCode,
-} from "./types/ai";
+import { ClientAiMsgCode, ServerAiMsgCode } from "./types/ai";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -339,7 +334,7 @@ export function createAi(config: AiConfig): Ai {
           if (msg.messageId !== undefined && msg.chatId !== undefined) {
             context.messages.updateMessage(msg.chatId, msg.messageId, {
               content: msg.content,
-              status: AiStatus.COMPLETE,
+              status: "complete",
             });
           }
           break;
@@ -347,7 +342,7 @@ export function createAi(config: AiConfig): Ai {
         case ServerAiMsgCode.STREAM_MESSAGE_FAILED:
           if (msg.messageId !== undefined && msg.chatId !== undefined) {
             context.messages.updateMessage(msg.chatId, msg.messageId, {
-              status: AiStatus.FAILED,
+              status: "failed",
             });
           }
           pendingReq?.reject(new Error(msg.error));
@@ -356,7 +351,7 @@ export function createAi(config: AiConfig): Ai {
         case ServerAiMsgCode.STREAM_MESSAGE_ABORTED:
           if (msg.messageId !== undefined && msg.chatId !== undefined) {
             context.messages.updateMessage(msg.chatId, msg.messageId, {
-              status: AiStatus.ABORTED,
+              status: "aborted",
             });
           }
           // TODO Alternatively we could resolve with the current message
@@ -392,7 +387,7 @@ export function createAi(config: AiConfig): Ai {
           if (msg.messageId !== undefined && msg.chatId !== undefined) {
             context.messages.updateMessage(msg.chatId, msg.messageId, {
               content: msg.content,
-              status: AiStatus.COMPLETE,
+              status: "complete",
             });
           }
           break;
@@ -520,7 +515,7 @@ export function createAi(config: AiConfig): Ai {
 
       addUserMessage: (chatId: ChatId, message: string) => {
         const content: AiTextContent = {
-          type: MessageContentType.TEXT,
+          type: "text",
           text: message,
         };
         return sendClientMsgWithResponse(
