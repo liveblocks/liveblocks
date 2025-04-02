@@ -418,13 +418,12 @@ export function createAi(config: AiConfig): Ai {
     }
   });
 
-  function sendClientMsgWithResponse<T extends ServerAiMsg>(
+  async function sendClientMsgWithResponse<T extends ServerAiMsg>(
     msg: DistributiveOmit<ClientAiMsg, "requestId">,
     timeout: number = DEFAULT_REQUEST_TIMEOUT
   ): Promise<T> {
-    // TODO: we can probably retry or something here
     if (managedSocket.getStatus() !== "connected") {
-      return Promise.reject(new Error("Not connected"));
+      await managedSocket.events.didConnect.waitUntil();
     }
 
     const { promise, resolve, reject } = Promise_withResolvers<ServerAiMsg>();
