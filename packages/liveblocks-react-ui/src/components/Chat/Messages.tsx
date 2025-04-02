@@ -1,4 +1,9 @@
-import type { ChatId, MessageId } from "@liveblocks/core";
+import type {
+  AiAssistantMessage,
+  AiChatMessage,
+  AiUserMessage,
+  ChatId,
+} from "@liveblocks/core";
 import type { ComponentType, HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -21,39 +26,13 @@ export type ChatMessagesProps = Omit<
   "children"
 > & {
   /**
+   * The current chat ID (needed to know where to attach file uploads to).
+   */
+  chatId: ChatId;
+  /**
    * The messages to display.
    */
-  messages: (
-    | {
-        role: "user";
-        id: MessageId;
-        chatId: ChatId;
-        content: (
-          | { type: "text"; data: string }
-          | {
-              type: "image";
-              id: string;
-              name: string;
-              size: number;
-              mimeType: string;
-            }
-        )[];
-      }
-    | {
-        role: "assistant";
-        id: MessageId;
-        chatId: ChatId;
-        content: (
-          | { type: "text"; id: string; data: string }
-          | {
-              type: "tool-call";
-              id: string;
-              name: string;
-              args?: unknown;
-            }
-        )[];
-      }
-  )[];
+  messages: AiChatMessage[];
   /**
    * The components displayed in the chat messages.
    */
@@ -74,7 +53,10 @@ export type ChatMessagesProps = Omit<
 };
 
 export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
-  ({ messages, className, components, overrides, ...props }, forwardedRef) => {
+  (
+    { chatId, messages, className, components, overrides, ...props },
+    forwardedRef
+  ) => {
     const UserChatMessage =
       components?.UserChatMessage ?? DefaultUserChatMessage;
     const AssistantChatMessage =
@@ -91,6 +73,7 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
             return (
               <UserChatMessage
                 key={message.id}
+                chatId={chatId}
                 message={message}
                 overrides={overrides}
               />
@@ -111,34 +94,13 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
  * -----------------------------------------------------------------------------------------------*/
 export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
+   * The current chat ID (needed to know where to attach file uploads to).
+   */
+  chatId: ChatId;
+  /**
    * The message to display.
    */
-  message: {
-    /**
-     * The id of the message.
-     */
-    id: string;
-    /**
-     * The id of the chat the message belongs to.
-     */
-    chatId: ChatId;
-    /**
-     * The content of the message (a list of text and media attachments).
-     */
-    content: (
-      | {
-          type: "text";
-          data: string;
-        }
-      | {
-          type: "image";
-          id: string;
-          name: string;
-          size: number;
-          mimeType: string;
-        }
-    )[];
-  };
+  message: AiUserMessage;
   /**
    * Override the component's strings.
    */
@@ -148,10 +110,10 @@ export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
 export const DefaultUserChatMessage = forwardRef<
   HTMLDivElement,
   UserChatMessageProps
->(({ message, className }, forwardedRef) => {
+>(({ chatId, message, className }, forwardedRef) => {
   const text = message.content
     .filter((c) => c.type === "text")
-    .map((c) => c.data)
+    .map((c) => c.text)
     .join("\n");
 
   const images = message.content.filter((c) => c.type === "image");
@@ -167,7 +129,7 @@ export const DefaultUserChatMessage = forwardRef<
             {images.map((image) => (
               <UserChatMessageMediaAttachment
                 key={image.id}
-                chatId={message.chatId}
+                chatId={chatId}
                 attachment={image}
                 className="lb-user-chat-message-attachment"
               />
@@ -330,32 +292,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: {
-    /**
-     * The id of the message.
-     */
-    id: string;
-    /**
-     * The id of the chat the message belongs to.
-     */
-    chatId: string;
-    /**
-     * The content of the message (a list of text and media attachments).
-     */
-    content: (
-      | {
-          type: "text";
-          id: string;
-          data: string;
-        }
-      | {
-          type: "tool-call";
-          id: string;
-          name: string;
-          args?: unknown;
-        }
-    )[];
-  };
+  message: AiAssistantMessage;
   /**
    * Override the component's strings.
    */
@@ -393,7 +330,7 @@ export const DefaultAssistantChatMessage = forwardRef<
         {message.content.map((block) => {
           switch (block.type) {
             case "text":
-              return <TextMessage key={block.id} data={block.data} />;
+              return <TextMessage key={block.id} data={block.text} />;
             case "tool-call":
               return (
                 <ToolCallMessage

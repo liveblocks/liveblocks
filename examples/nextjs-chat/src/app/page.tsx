@@ -5,7 +5,13 @@ import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
 import { useEffect, useState } from "react";
 
 import { DebugClient } from "../DebugClient";
-import { AiChat, ChatId, ISODateString, MessageId } from "@liveblocks/core";
+import {
+  AiChat,
+  AiChatMessage,
+  ChatId,
+  ISODateString,
+  MessageId,
+} from "@liveblocks/core";
 
 export default function Page() {
   return (
@@ -57,10 +63,15 @@ function ChatPicker() {
 }
 
 function ChatWindow(props: { chatId: ChatId }) {
+  const client = useClient();
   const { messages } = useChatMessages_UNPOLISHED(props.chatId);
   return (
     <div>
-      <ChatMessages messages={messages} className="messages" />
+      <ChatMessages
+        chatId={props.chatId}
+        messages={messages}
+        className="messages"
+      />
 
       <div className="composer-container">
         <ChatComposer
@@ -108,37 +119,7 @@ function useChats_UNPOLISHED(): {
 
 type UseChatMessagesResult = {
   isLoading: boolean;
-  messages: (
-    | {
-        role: "user";
-        id: MessageId;
-        chatId: ChatId;
-        content: (
-          | { type: "text"; data: string }
-          | {
-              type: "image";
-              id: string;
-              name: string;
-              size: number;
-              mimeType: string;
-            }
-        )[];
-      }
-    | {
-        role: "assistant";
-        id: MessageId;
-        chatId: ChatId;
-        content: (
-          | { type: "text"; id: string; data: string }
-          | {
-              type: "tool-call";
-              id: string;
-              name: string;
-              args?: unknown;
-            }
-        )[];
-      }
-  )[];
+  messages: AiChatMessage[];
   fetchMore: () => void;
   isFetchingMore: boolean;
   hasFetchedAll: boolean;
@@ -153,38 +134,40 @@ const EXAMPLE_CHAT: AiChat = {
   createdAt: "2025-05-01T00:00:00Z" as ISODateString,
 };
 
-const HARDCODED_EXAMPLE_MESSAGES = [
+const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_1" as MessageId,
     role: "user",
-    chatId: EXAMPLE_CHAT_ID,
+    status: "complete",
     content: [
       {
         type: "text",
-        data: "Hello, what is the weather like in Bhaktapur, Nepal?",
+        text: "Hello, what is the weather like in Bhaktapur, Nepal?",
       },
     ],
+    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
   {
     id: "msg_2" as MessageId,
     role: "assistant",
-    chatId: EXAMPLE_CHAT_ID,
+    status: "complete",
     content: [
       {
-        type: "text",
         id: "2.1",
-        data: "The weather in Bhaktapur, Nepal is 25°C and sunny. Would you like me to look up the weather in another location?",
+        type: "text",
+        text: "The weather in Bhaktapur, Nepal is 25°C and sunny. Would you like me to look up the weather in another location?",
       },
     ],
+    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
   {
     id: "msg_3" as MessageId,
     role: "user",
-    chatId: EXAMPLE_CHAT_ID,
+    status: "complete",
     content: [
       {
         type: "text",
-        data: "Yes, what is the weather like in Kathmandu, Nepal?",
+        text: "Yes, what is the weather like in Kathmandu, Nepal?",
       },
       {
         type: "image",
@@ -194,34 +177,37 @@ const HARDCODED_EXAMPLE_MESSAGES = [
         size: 12345,
       },
     ],
+    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
   {
     id: "msg_4" as MessageId,
     role: "assistant",
-    chatId: EXAMPLE_CHAT_ID,
+    status: "complete",
     content: [
       {
         id: "4.1",
         type: "text",
-        data: "The weather in Kathmandu, Nepal is 27°C and sunny. Would you like me to look up the weather in another location?",
+        text: "The weather in Kathmandu, Nepal is 27°C and sunny. Would you like me to look up the weather in another location?",
       },
     ],
+    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
   {
     id: "msg_5" as MessageId,
     role: "user",
-    chatId: EXAMPLE_CHAT_ID,
+    status: "complete",
     content: [
       {
         type: "text",
-        data: "Can you describe what the current weather is like in Lalitpur, Nepal? Also, what time is it in Bhaktapur, Nepal? And what are the top news in Nepal? Thank you!",
+        text: "Can you describe what the current weather is like in Lalitpur, Nepal? Also, what time is it in Bhaktapur, Nepal? And what are the top news in Nepal? Thank you!",
       },
     ],
+    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
   {
     id: "msg_6" as MessageId,
     role: "assistant",
-    chatId: EXAMPLE_CHAT_ID,
+    status: "complete",
     content: [
       {
         id: "6.1",
@@ -233,8 +219,9 @@ const HARDCODED_EXAMPLE_MESSAGES = [
         },
       },
     ],
+    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
-] satisfies UseChatMessagesResult["messages"];
+];
 
 function useChatMessages_UNPOLISHED(chatId: ChatId) {
   const messages = chatId === EXAMPLE_CHAT_ID ? HARDCODED_EXAMPLE_MESSAGES : [];
