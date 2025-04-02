@@ -6,6 +6,7 @@ import { setupServer } from "msw/node";
 
 import {
   dummyCommentData,
+  dummySubscriptionData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
 } from "./_dummies";
@@ -40,8 +41,10 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -120,6 +123,9 @@ describe("useCreateComment", () => {
       roomId,
       threadId: initialThread.id,
     });
+    const initialSubscription = dummySubscriptionData({
+      subjectId: initialThread.id,
+    });
     const fakeCreatedAt = addMinutes(new Date(), 5);
 
     server.use(
@@ -128,8 +134,10 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [initialInboxNotification],
+            subscriptions: [initialSubscription],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -221,8 +229,10 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

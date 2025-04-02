@@ -18,6 +18,9 @@ import type {
   Permission,
   Resolve,
   RoomSubscriptionSettings,
+  SubscriptionData,
+  SubscriptionDeleteInfo,
+  SubscriptionKey,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -30,6 +33,7 @@ import {
   createNotificationSettings,
   DefaultMap,
   DerivedSignal,
+  getSubscriptionKey,
   kInternal,
   MutableSignal,
   nanoid,
@@ -533,6 +537,11 @@ type VersionsLUT = DefaultMap<RoomId, Map<string, HistoryVersion>>;
 type NotificationsLUT = Map<string, InboxNotificationData>;
 
 /**
+ * A lookup table (LUT) for all the subscriptions.
+ */
+type SubscriptionsLUT = Map<SubscriptionKey, SubscriptionData>;
+
+/**
  * A lookup table (LUT) for all the room subscription settings.
  */
 type RoomSubscriptionSettingsLUT = Map<RoomId, RoomSubscriptionSettings>;
@@ -548,6 +557,8 @@ type RoomSubscriptionSettingsByRoomId = Record<
   RoomId,
   RoomSubscriptionSettings
 >;
+
+type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
 
 type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
 
@@ -578,6 +589,14 @@ export type CleanNotifications = {
    */
   notificationsById: Record<string, InboxNotificationData>;
 };
+
+export type CleanThreadSubscriptions = {
+  /**
+   * Thread subscriptions by key (kind + subject ID).
+   * e.g. `thread:${string}`, `$custom:${string}`, etc
+   */
+  subscriptions: SubscriptionsByKey;
+} & CleanNotifications;
 
 function createStore_forNotifications() {
   const signal = new MutableSignal<NotificationsLUT>(new Map());
@@ -676,6 +695,43 @@ function createStore_forNotifications() {
     clear,
     updateAssociatedNotification,
     upsert,
+  };
+}
+
+function createStore_forSubscriptions(
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>,
+  threads: ReadonlyThreadDB<BaseMetadata>
+) {
+  const baseSignal = new MutableSignal<SubscriptionsLUT>(new Map());
+
+  function applyDelta(
+    newSubscriptions: SubscriptionData[],
+    deletedSubscriptions: SubscriptionDeleteInfo[]
+  ) {
+    baseSignal.mutate((lut) => {
+      let mutated = false;
+
+      for (const s of newSubscriptions) {
+        lut.set(getSubscriptionKey(s), s);
+        mutated = true;
+      }
+
+      for (const s of deletedSubscriptions) {
+        lut.delete(getSubscriptionKey(s));
+        mutated = true;
+      }
+
+      return mutated;
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
+      applyOptimisticUpdates_forSubscriptions(base, threads, updates)
+    ),
+
+    // Mutations
+    applyDelta,
   };
 }
 
@@ -839,16 +895,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   //   Mutate inputs...                                             ...observe clean/consistent output!
   //
-  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID           (Part 1)
+  //            .-> Base ThreadDB ---------+                 +-------> Clean threads by ID         (Part 1)
   //           /                           |                 |
-  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications           (Part 1)
-  //          \                          | |                 | |    & notifications by ID
+  //   mutate ----> Base Notifications --+ |                 | +-----> Clean notifications         (Part 1)
+  //          \                          | |                 | |       & notifications by ID
   //         | \                         | |      Apply      | |
-  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Room Subscription Settings   (Part 2)
-  //          \                          |        Updates    |  |
-  //           `------- etc etc ---------+                   |  +--> History Versions             (Part 3)
-  //                       ^                                 |
-  //                       |                                 +-----> Notification Settings        (Part 4)
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic -+-+-+-+-> Subscriptions               (Part 2)
+  //          \                          |        Updates    |   | |
+  //           `------- etc etc ---------+                   |   | +-> History Versions            (Part 3)
+  //                       ^                                 |   |
+  //                       |                                 |   +---> Room Subscription Settings  (Part 4)
+  //                       |                                 |
+  //                       |                                 +-------> Notification Settings       (Part 5)
   //                       |
   //                       |
   //                       |                        ^                  ^
@@ -866,6 +924,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // well. It almost works like that already anyway!
   readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly notifications: ReturnType<typeof createStore_forNotifications>;
+  readonly subscriptions: ReturnType<typeof createStore_forSubscriptions>;
   readonly roomSubscriptionSettings: ReturnType<typeof createStore_forRoomSubscriptionSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
@@ -894,6 +953,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<ThreadsAsyncResult<M>>
     >;
     readonly notifications: DerivedSignal<CleanNotifications>;
+    readonly threadSubscriptions: DerivedSignal<CleanThreadSubscriptions>;
 
     readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
     readonly roomSubscriptionSettingsByRoomId: DefaultMap<
@@ -933,7 +993,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       async (cursor?: string) => {
         const result = await this.#client.getInboxNotifications({ cursor });
 
-        this.updateThreadifications(result.threads, result.inboxNotifications);
+        this.updateThreadifications(
+          result.threads,
+          result.inboxNotifications,
+          result.subscriptions
+        );
 
         // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
         if (this.#notificationsLastRequestedAt === null) {
@@ -960,6 +1024,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.threads = new ThreadDB();
 
+    this.subscriptions = createStore_forSubscriptions(
+      this.optimisticUpdates.signal,
+      this.threads
+    );
+
     this.notifications = createStore_forNotifications();
     this.roomSubscriptionSettings = createStore_forRoomSubscriptionSettings(
       this.optimisticUpdates.signal
@@ -985,6 +1054,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       shallow
     );
 
+    const threadSubscriptions = DerivedSignal.from(
+      threadifications,
+      this.subscriptions.signal,
+      (t, s) => ({
+        subscriptions: s,
+        ...t,
+      })
+    );
+
     const loadingUserThreads = new DefaultMap(
       (queryKey: UserQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
         const query = JSON.parse(queryKey) as ThreadsQuery<M>;
@@ -998,7 +1076,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
           });
           this.updateThreadifications(
             result.threads,
-            result.inboxNotifications
+            result.inboxNotifications,
+            result.subscriptions
           );
 
           this.permissionHints.update(result.permissionHints);
@@ -1053,7 +1132,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
           });
           this.updateThreadifications(
             result.threads,
-            result.inboxNotifications
+            result.inboxNotifications,
+            result.subscriptions
           );
 
           this.permissionHints.update(result.permissionHints);
@@ -1224,6 +1304,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       roomSubscriptionSettingsByRoomId,
       versionsByRoomId,
       notificationSettings,
+      threadSubscriptions,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1446,12 +1527,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public updateThreadifications(
     threads: ThreadData<M>[],
     notifications: InboxNotificationData[],
+    subscriptions: SubscriptionData[],
     deletedThreads: ThreadDeleteInfo[] = [],
-    deletedNotifications: InboxNotificationDeleteInfo[] = []
+    deletedNotifications: InboxNotificationDeleteInfo[] = [],
+    deletedSubscriptions: SubscriptionDeleteInfo[] = []
   ): void {
     batch(() => {
       this.threads.applyDelta(threads, deletedThreads);
       this.notifications.applyDelta(notifications, deletedNotifications);
+      this.subscriptions.applyDelta(subscriptions, deletedSubscriptions);
     });
   }
 
@@ -1488,8 +1572,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
+      result.subscriptions.updated,
       result.threads.deleted,
-      result.inboxNotifications.deleted
+      result.inboxNotifications.deleted,
+      result.subscriptions.deleted
     );
   }
 
@@ -1511,8 +1597,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.updateThreadifications(
       updates.threads.updated,
       updates.inboxNotifications.updated,
+      updates.subscriptions.updated,
       updates.threads.deleted,
-      updates.inboxNotifications.deleted
+      updates.inboxNotifications.deleted,
+      updates.subscriptions.deleted
     );
 
     this.permissionHints.update(updates.permissionHints);
@@ -1543,8 +1631,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
+      result.subscriptions.updated,
       result.threads.deleted,
-      result.inboxNotifications.deleted
+      result.inboxNotifications.deleted,
+      result.subscriptions.deleted
     );
 
     this.permissionHints.update(result.permissionHints);
@@ -1845,6 +1935,55 @@ function applyOptimisticUpdates_forRoomSubscriptionSettings(
     }
   }
   return roomSubscriptionSettingsByRoomId;
+}
+
+/**
+ * Applies optimistic updates to subscriptions in a stable way.
+ */
+function applyOptimisticUpdates_forSubscriptions(
+  subscriptionsLUT: SubscriptionsLUT,
+  threads: ReadonlyThreadDB<BaseMetadata>,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+): SubscriptionsByKey {
+  const subscriptions = Object.fromEntries(subscriptionsLUT);
+
+  for (const update of optimisticUpdates) {
+    // TODO: For "create-comment"/"create-thread", we could apply the update optimistically but we need the room subscription settings
+    // to know if the user has disabled thread notifications. Currently, we only have the room subscription settings locally if the user
+    // uses `useRoomSubscriptionSettings`.
+
+    if (update.type === "update-room-subscription-settings") {
+      if (
+        update.settings.threads === "all" ||
+        update.settings.threads === "none"
+      ) {
+        const threadIds = threads
+          .findMany(update.roomId, undefined, "desc")
+          .map((t) => t.id);
+
+        for (const threadId of threadIds) {
+          const subscriptionKey = getSubscriptionKey("thread", threadId);
+
+          if (update.settings.threads === "all") {
+            // Create subscriptions for all existing threads in the room
+            subscriptions[subscriptionKey] = {
+              kind: "thread",
+              subjectId: threadId,
+              createdAt: new Date(),
+            };
+          } else if (update.settings.threads === "none") {
+            // Delete subscriptions for all existing threads in the room
+            delete subscriptions[subscriptionKey];
+          }
+        }
+      }
+
+      // TODO: For "replies_and_mentions", we could check the room's threads to see if you participated but that feels
+      // too expensive for an optimistic update (we need to walk through all comment bodies to detect mentions)
+    }
+  }
+
+  return subscriptions;
 }
 
 /**

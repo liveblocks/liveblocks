@@ -6,6 +6,7 @@ import type {
   PartialNotificationSettings,
   Permission,
   RoomSubscriptionSettings,
+  SubscriptionData,
   ThreadData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
@@ -19,6 +20,7 @@ export function mockGetThreads(
     {
       data: ThreadData<any>[];
       inboxNotifications: InboxNotificationData[];
+      subscriptions: SubscriptionData[];
       meta: {
         nextCursor: string | null;
         requestedAt: string;
@@ -41,6 +43,7 @@ export function mockGetThread(
     {
       thread: ThreadData<any>;
       inboxNotification?: InboxNotificationData;
+      subscription?: SubscriptionData;
     }
   >
 ) {
@@ -172,6 +175,7 @@ export function mockGetInboxNotifications(
     {
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
+      subscriptions: SubscriptionData[];
       meta: {
         requestedAt: string; // ISO date
         nextCursor: string | null;
@@ -192,8 +196,10 @@ export function mockGetInboxNotificationsDelta(
     {
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
+      subscriptions: SubscriptionData[];
       deletedInboxNotifications: InboxNotificationData[];
       deletedThreads: ThreadDataWithDeleteInfo[];
+      deletedSubscriptions: SubscriptionData[];
       meta: {
         requestedAt: string; // ISO date
       };

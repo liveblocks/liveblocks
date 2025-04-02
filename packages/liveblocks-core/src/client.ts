@@ -35,6 +35,10 @@ import type {
 } from "./protocol/NotificationSettings";
 import { createNotificationSettings } from "./protocol/NotificationSettings";
 import type {
+  SubscriptionData,
+  SubscriptionDeleteInfo,
+} from "./protocol/Subscriptions";
+import type {
   LargeMessageStrategy,
   OpaqueRoom,
   OptionalTupleUnless,
@@ -170,7 +174,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
    * Gets a page (or the initial page) for user inbox notifications and their
-   * associated threads.
+   * associated threads and thread subscriptions.
    *
    * This function should NOT be used for delta updates, only for pagination
    * (including the first page fetch). For delta updates (done during the
@@ -180,6 +184,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const {
    *   inboxNotifications,
    *   threads,
+   *   subscriptions,
    *   nextCursor,
    * } = await client.getInboxNotifications();
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
@@ -188,6 +193,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
+    subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
@@ -207,7 +213,11 @@ export type NotificationsApi<M extends BaseMetadata> = {
    *   threads: {
    *     updated,
    *     deleted,
-   *    },
+   *   },
+   *   subscriptions: {
+   *     updated,
+   *     deleted,
+   *   },
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
@@ -222,6 +232,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
   }>;

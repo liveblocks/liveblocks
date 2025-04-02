@@ -4,6 +4,8 @@ import {
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
+  convertToSubscriptionData,
+  convertToSubscriptionDeleteInfo,
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
@@ -53,6 +55,12 @@ import type {
 } from "./protocol/NotificationSettings";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import type {
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+} from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
@@ -69,6 +77,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   }): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
     permissionHints: Record<string, Permission[]>;
@@ -86,6 +95,10 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
@@ -110,6 +123,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   getThread(options: { roomId: string; threadId: string }): Promise<{
     thread?: ThreadData<M>;
     inboxNotification?: InboxNotificationData;
+    subscription?: SubscriptionData;
   }>;
 
   deleteThread({
@@ -371,6 +385,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
+    subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
@@ -386,6 +401,10 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
   }>;
@@ -421,6 +440,7 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
   }): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
@@ -437,6 +457,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
@@ -465,8 +489,10 @@ export function createApiClient<M extends BaseMetadata>({
     const result = await httpClient.get<{
       data: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
         permissionHints: Record<string, Permission[]>;
@@ -494,6 +520,12 @@ export function createApiClient<M extends BaseMetadata>({
           convertToInboxNotificationDeleteInfo
         ),
       },
+      subscriptions: {
+        updated: result.subscriptions.map(convertToSubscriptionData),
+        deleted: result.deletedSubscriptions.map(
+          convertToSubscriptionDeleteInfo
+        ),
+      },
       requestedAt: new Date(result.meta.requestedAt),
       permissionHints: result.meta.permissionHints,
     };
@@ -519,8 +551,10 @@ export function createApiClient<M extends BaseMetadata>({
       const result = await httpClient.get<{
         data: ThreadDataPlain<M>[];
         inboxNotifications: InboxNotificationDataPlain[];
+        subscriptions: SubscriptionDataPlain[];
         deletedThreads: ThreadDeleteInfoPlain[];
         deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        deletedSubscriptions: SubscriptionDeleteInfoPlain[];
         meta: {
           requestedAt: string;
           nextCursor: string | null;
@@ -544,6 +578,7 @@ export function createApiClient<M extends BaseMetadata>({
         inboxNotifications: result.inboxNotifications.map(
           convertToInboxNotificationData
         ),
+        subscriptions: result.subscriptions.map(convertToSubscriptionData),
         nextCursor: result.meta.nextCursor,
         requestedAt: new Date(result.meta.requestedAt),
         permissionHints: result.meta.permissionHints,
@@ -555,6 +590,7 @@ export function createApiClient<M extends BaseMetadata>({
         return {
           threads: [],
           inboxNotifications: [],
+          subscriptions: [],
           nextCursor: null,
           //
           // HACK
@@ -627,6 +663,7 @@ export function createApiClient<M extends BaseMetadata>({
       const json = (await response.json()) as {
         thread: ThreadDataPlain<M>;
         inboxNotification?: InboxNotificationDataPlain;
+        subscription?: SubscriptionDataPlain;
       };
 
       return {
@@ -634,11 +671,15 @@ export function createApiClient<M extends BaseMetadata>({
         inboxNotification: json.inboxNotification
           ? convertToInboxNotificationData(json.inboxNotification)
           : undefined,
+        subscription: json.subscription
+          ? convertToSubscriptionData(json.subscription)
+          : undefined,
       };
     } else if (response.status === 404) {
       return {
         thread: undefined,
         inboxNotification: undefined,
+        subscription: undefined,
       };
     } else {
       throw new Error(
@@ -1315,6 +1356,7 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
@@ -1333,6 +1375,7 @@ export function createApiClient<M extends BaseMetadata>({
         convertToInboxNotificationData
       ),
       threads: json.threads.map(convertToThreadData),
+      subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -1345,8 +1388,10 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
       };
@@ -1366,6 +1411,10 @@ export function createApiClient<M extends BaseMetadata>({
       threads: {
         updated: json.threads.map(convertToThreadData),
         deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      subscriptions: {
+        updated: json.subscriptions.map(convertToSubscriptionData),
+        deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -1475,8 +1524,10 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
@@ -1497,6 +1548,7 @@ export function createApiClient<M extends BaseMetadata>({
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
+      subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
       permissionHints: json.meta.permissionHints,
@@ -1509,8 +1561,10 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
         permissionHints: Record<string, Permission[]>;
@@ -1532,6 +1586,10 @@ export function createApiClient<M extends BaseMetadata>({
         deleted: json.deletedInboxNotifications.map(
           convertToInboxNotificationDeleteInfo
         ),
+      },
+      subscriptions: {
+        updated: json.subscriptions.map(convertToSubscriptionData),
+        deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
       permissionHints: json.meta.permissionHints,
