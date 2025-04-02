@@ -61,9 +61,9 @@ describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
       ]
     );
 
-    expect(result.email.thread).toBe(true);
-    expect(result.email.textMention).toBe(false);
-    expect(result.email.$fileUploaded).toBe(true);
+    expect(result.email!.thread).toBe(true);
+    expect(result.email!.textMention).toBe(false);
+    expect(result.email!.$fileUploaded).toBe(true);
     expect(result).not.toBe(defaultSettings); // Check immutability
   });
 
