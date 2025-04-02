@@ -45,6 +45,8 @@ export {
   useEditThreadMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
+  useSubscribeToThread,
+  useUnsubscribeFromThread,
   useEventListener,
   useHistory,
   useIsInsideRoom,
@@ -62,6 +64,7 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useUpdateRoomSubscriptionSettings,
 } from "./room";
 
 // Export the Suspense versions of our hooks
@@ -78,6 +81,7 @@ export {
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
   useRoomNotificationSettingsSuspense as useRoomNotificationSettings,
+  useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettings,
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,

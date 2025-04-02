@@ -46,6 +46,8 @@ export {
   useEditThreadMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
+  useSubscribeToThread,
+  useUnsubscribeFromThread,
   useEventListener,
   useHistory,
   useIsInsideRoom,
@@ -63,6 +65,7 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
 } from "./room";
 
@@ -80,6 +83,7 @@ export {
   useAttachmentUrl,
   useHistoryVersions,
   useRoomNotificationSettings,
+  useRoomSubscriptionSettings,
 } from "./room";
 export {
   useInboxNotifications,
