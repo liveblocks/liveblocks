@@ -2177,6 +2177,21 @@ Set configuration options for all `@liveblocks/react-ui` components, such as
     not submitted yet. If you want to prevent unsaved changes with Liveblocks,
     but not for composers, you can opt-out by setting this option to `false`.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="emojibaseUrl"
+    type="string"
+    defaultValue={`"https://cdn.jsdelivr.net/npm/emojibase-data"`}
+  >
+    The Liveblocks emoji picker (visible when adding reactions in `Comment`) is built with
+    [Frimousse](https://github.com/liveblocks/frimousse), which fetches its data
+    from [Emojibase](https://emojibase.dev/docs/datasets/).
+
+    This option allows you to change the base URL of where the
+    [`emojibase-data`](https://www.npmjs.com/package/emojibase-data) files
+    should be fetched from, used as follows: `${emojibaseUrl}/${locale}/${file}.json`.
+    (e.g. `${emojibaseUrl}/en/data.json`).
+
+  </PropertiesListItem>
 </PropertiesList>
 
 ### Hooks [#Version-History-hooks]
