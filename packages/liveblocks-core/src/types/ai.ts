@@ -152,7 +152,6 @@ export type ErrorServerEvent = {
 
 // XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
 export type StreamMessagePartServerEvent = {
-  cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
   event: 1002; // STREAM_MESSAGE_PART
   content: {
@@ -166,7 +165,6 @@ export type StreamMessagePartServerEvent = {
 
 // XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
 export type StreamMessageFailedServerEvent = {
-  cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
   event: 1004; // STREAM_MESSAGE_FAILED
   error: string;
@@ -176,7 +174,6 @@ export type StreamMessageFailedServerEvent = {
 
 // XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
 export type StreamMessageAbortedServerEvent = {
-  cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
   event: 1005; // STREAM_MESSAGE_ABORTED
   chatId?: ChatId;
@@ -185,7 +182,6 @@ export type StreamMessageAbortedServerEvent = {
 
 // XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
 export type StreamMessageCompleteServerEvent = {
-  cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
   event: 1003; // STREAM_MESSAGE_COMPLETE
   content: AiAssistantContent[];
