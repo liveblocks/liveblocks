@@ -81,7 +81,7 @@ type CreateChatPair = DefineCmd<
 type DeleteChatPair = DefineCmd<
   "delete-chat",
   { chatId: ChatId },
-  { chatId: ChatId } // XXX YAGNI?
+  { chatId: ChatId }
 >;
 
 type GetMessagesPair = DefineCmd<
@@ -104,13 +104,13 @@ type AttachUserMessagePair = DefineCmd<
 type DeleteMessagePair = DefineCmd<
   "delete-message",
   { chatId: ChatId; messageId: MessageId },
-  { chatId: ChatId; messageId: MessageId } // XXX YAGNI?
+  { chatId: ChatId; messageId: MessageId }
 >;
 
 type ClearChatPair = DefineCmd<
   "clear-chat",
   { chatId: ChatId },
-  { chatId: ChatId; messagesCount: number } // XXX YAGNI???
+  { chatId: ChatId }
 >;
 
 type GenerateAnswerPair = DefineCmd<
