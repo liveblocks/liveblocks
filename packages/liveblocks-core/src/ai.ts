@@ -21,24 +21,23 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
-  AiCmdId,
   AiTextContent,
   AiTool,
-  ChatCreatedServerMsg,
+  AttachUserMessageResponse,
   ChatId,
   ClientAiMsg,
+  CmdId,
+  CreateChatResponse,
   Cursor,
-  ErrorServerMsg,
-  GenerateAnswerResultServerMsg,
-  GetMessagesServerMsg,
+  ErrorServerEvent,
+  GenerateAnswerResponse,
+  GetChatsResponse,
+  GetMessagesResponse,
   ISODateString,
-  ListChatServerMsg,
-  MessageAttachedServerMsg,
   MessageId,
   ServerAiMsg,
-  StreamMessageCompleteServerMsg,
+  StreamMessageCompleteServerEvent,
 } from "./types/ai";
-import { ServerAiMsgCode } from "./types/ai";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -58,7 +57,7 @@ type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
   pendingRequests: Map<
-    AiCmdId,
+    CmdId,
     {
       resolve: (value: ServerAiMsg) => void;
       reject: (reason: unknown) => void;
@@ -202,36 +201,36 @@ export type Ai = {
   reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
-  listChats: (options?: { cursor?: Cursor }) => Promise<ListChatServerMsg>;
+  listChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
   newChat: (
     name: string,
     metadata?: AiChat["metadata"]
-  ) => Promise<ChatCreatedServerMsg>;
+  ) => Promise<CreateChatResponse>;
   getMessages: (
     chatId: ChatId,
     options?: {
       cursor?: Cursor;
     }
-  ) => Promise<GetMessagesServerMsg>;
+  ) => Promise<GetMessagesResponse>;
   attachUserMessage: (
     chatId: ChatId,
     parentMessageId: MessageId | null,
     message: string
-  ) => Promise<MessageAttachedServerMsg>;
+  ) => Promise<AttachUserMessageResponse>;
   streamAnswer: (
     chatId: ChatId,
     messageId: MessageId
-  ) => Promise<StreamMessageCompleteServerMsg>;
+  ) => Promise<StreamMessageCompleteServerEvent>;
   generateAnswer: (
     chatId: ChatId,
     messageId: MessageId
-  ) => Promise<GenerateAnswerResultServerMsg>;
+  ) => Promise<GenerateAnswerResponse>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (
     prompt: string,
     tool: AiTool
-  ) => Promise<GenerateAnswerResultServerMsg>;
-  abortResponse: (chatId: ChatId) => Promise<ErrorServerMsg>;
+  ) => Promise<GenerateAnswerResponse>;
+  abortResponse: (chatId: ChatId) => Promise<ErrorServerEvent>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<Record<string, AiChatMessage[]>>;
@@ -340,79 +339,99 @@ export function createAi(config: AiConfig): Ai {
         return;
       }
 
-      switch (msg.type) {
-        case ServerAiMsgCode.ERROR:
-          if (msg.cmdId) {
-            // Not all errors have request Ids
+      if ("type" in msg) {
+        // XXX Remove these cryptic "type" codes in the next pass!
+        switch (msg.type) {
+          case 999: // ERROR
+            if (msg.cmdId) {
+              // Not all errors have request Ids
+              pendingReq?.reject(new Error(msg.error));
+            }
+            break;
+
+          case 1003: // STREAM_MESSAGE_COMPLETE
+            if (msg.messageId !== undefined && msg.chatId !== undefined) {
+              context.messages.updateMessage(msg.chatId, msg.messageId, {
+                content: msg.content,
+                status: "complete",
+              });
+            }
+            break;
+
+          case 1004: // STREAM_MESSAGE_FAILED
+            if (msg.messageId !== undefined && msg.chatId !== undefined) {
+              context.messages.updateMessage(msg.chatId, msg.messageId, {
+                status: "failed",
+              });
+            }
             pendingReq?.reject(new Error(msg.error));
-          }
-          break;
+            break;
 
-        case ServerAiMsgCode.STREAM_MESSAGE_COMPLETE:
-          if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            context.messages.updateMessage(msg.chatId, msg.messageId, {
-              content: msg.content,
-              status: "complete",
-            });
-          }
-          break;
+          case 1005: // STREAM_MESSAGE_ABORTED
+            if (msg.messageId !== undefined && msg.chatId !== undefined) {
+              context.messages.updateMessage(msg.chatId, msg.messageId, {
+                status: "aborted",
+              });
+            }
+            // TODO Alternatively we could resolve with the current message
+            pendingReq?.reject(new Error("Message aborted"));
+            break;
 
-        case ServerAiMsgCode.STREAM_MESSAGE_FAILED:
-          if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            context.messages.updateMessage(msg.chatId, msg.messageId, {
-              status: "failed",
-            });
-          }
-          pendingReq?.reject(new Error(msg.error));
-          break;
+          case 1002: // STREAM_MESSAGE_PART
+            // TODO Not implemented yet!
+            break;
 
-        case ServerAiMsgCode.STREAM_MESSAGE_ABORTED:
-          if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            context.messages.updateMessage(msg.chatId, msg.messageId, {
-              status: "aborted",
-            });
-          }
-          // TODO Alternatively we could resolve with the current message
-          pendingReq?.reject(new Error("Message aborted"));
-          break;
+          default:
+            return assertNever(msg, "Unhandled case");
+        }
+      } else {
+        switch (msg.cmd) {
+          case "get-chats":
+            context.chats.update(msg.chats);
+            break;
 
-        case ServerAiMsgCode.CREATE_CHAT_OK:
-          context.chats.update([msg.chat]);
-          break;
+          case "create-chat":
+            context.chats.update([msg.chat]);
+            break;
 
-        case ServerAiMsgCode.GET_MESSAGES_OK:
-          context.messages.update(msg.chatId, msg.messages);
-          break;
+          case "delete-chat":
+            context.chats.remove(msg.chatId);
+            context.messages.removeByChatId(msg.chatId);
+            break;
 
-        case ServerAiMsgCode.DELETE_CHAT_OK:
-          context.chats.remove(msg.chatId);
-          context.messages.removeByChatId(msg.chatId);
-          break;
+          case "get-messages":
+            context.messages.update(msg.chatId, msg.messages);
+            break;
 
-        case ServerAiMsgCode.DELETE_MESSAGE_OK:
-          context.messages.remove(msg.chatId, msg.messageId);
-          break;
+          case "delete-message":
+            context.messages.remove(msg.chatId, msg.messageId);
+            break;
 
-        case ServerAiMsgCode.CLEAR_CHAT_MESSAGES_OK:
-          context.messages.removeByChatId(msg.chatId);
-          break;
+          case "clear-chat":
+            context.messages.removeByChatId(msg.chatId);
+            break;
 
-        case ServerAiMsgCode.LIST_CHATS_OK:
-          context.chats.update(msg.chats);
-          break;
+          case "generate-answer":
+            if (msg.messageId !== undefined && msg.chatId !== undefined) {
+              // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+              context.messages.addMessage(msg.chatId, {
+                id: msg.messageId,
+                role: "assistant",
+                content: msg.content,
+                status: "complete",
+                createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
+              });
+            }
+            break;
 
-        case ServerAiMsgCode.GENERATE_ANSWER_RESULT:
-          if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-            context.messages.addMessage(msg.chatId, {
-              id: msg.messageId,
-              role: "assistant",
-              content: msg.content,
-              status: "complete",
-              createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
-            });
-          }
-          break;
+          case "attach-user-message":
+          case "stream-answer":
+            // TODO Not handled yet
+            break;
+
+          default:
+            return assertNever(msg, "Unhandled case");
+        }
       }
 
       // After handling the side-effects above, we can resolve the promise
@@ -451,7 +470,7 @@ export function createAi(config: AiConfig): Ai {
       once: true,
     });
 
-    const cmdId = nanoid() as AiCmdId;
+    const cmdId = nanoid() as CmdId;
     context.pendingRequests.set(cmdId, { resolve, reject });
 
     sendClientMsg({ ...msg, cmdId });
@@ -479,7 +498,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function listChats(options: { cursor?: Cursor } = {}) {
-    return sendClientMsgWithResponse<ListChatServerMsg>({
+    return sendClientMsgWithResponse<GetChatsResponse>({
       cmd: "get-chats",
       cursor: options.cursor,
       pageSize: 2, // TODO: Set a more sensible default page size
@@ -487,7 +506,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function getMessages(chatId: ChatId, options: { cursor?: Cursor } = {}) {
-    return sendClientMsgWithResponse<GetMessagesServerMsg>({
+    return sendClientMsgWithResponse<GetMessagesResponse>({
       cmd: "get-messages",
       chatId,
       cursor: options.cursor,
@@ -517,9 +536,7 @@ export function createAi(config: AiConfig): Ai {
       },
 
       deleteChat: (chatId: ChatId) => {
-        return sendClientMsgWithResponse<
-          ServerAiMsg & { type: ServerAiMsgCode.DELETE_CHAT_OK }
-        >({
+        return sendClientMsgWithResponse({
           cmd: "delete-chat",
           chatId,
         });
