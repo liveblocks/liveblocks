@@ -74,7 +74,7 @@ describe("thread notification", () => {
   };
 
   describe("internals utils", () => {
-    it("should get unread comments ", () => {
+    it("should get unread comments - all comments", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -104,11 +104,47 @@ describe("thread notification", () => {
         comments: [comment1, comment2, comment3],
         inboxNotification,
         userId: "user-dracula",
+        notificationTriggerAt: comment1.createdAt,
       });
       expect(unreadComments).toEqual(expected);
     });
 
-    it("should get last unread comment with mention", () => {
+    it("should get unread comments - only two comments", () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-dracula",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-mina",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const comment3 = makeComment({
+        userId: "user-carmilla",
+        threadId,
+        body: commentBody3,
+        createdAt: new Date("2024-09-10T08:16:00.000Z"),
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+
+      const expected = [comment2, comment3];
+      const unreadComments = getUnreadComments({
+        comments: [comment1, comment2, comment3],
+        inboxNotification,
+        userId: "user-dracula",
+        notificationTriggerAt: comment2.createdAt,
+      });
+      expect(unreadComments).toEqual(expected);
+    });
+
+    it("should get last unread comment with mention - first comment is a mention", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -128,28 +164,60 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      const unreadComments1 = getUnreadComments({
+      const unreadComments = getUnreadComments({
         comments: [comment1, comment2],
         inboxNotification,
         userId: "user-mina",
-      });
-      const unreadComments2 = getUnreadComments({
-        comments: [comment1, comment2],
-        inboxNotification,
-        userId: "user-dracula",
+        notificationTriggerAt: comment1.createdAt,
       });
 
       const lastCommentWithMention1 = getLastUnreadCommentWithMention({
-        comments: unreadComments1,
+        comments: unreadComments,
         mentionedUserId: "user-mina",
-      });
-      const lastCommentWithMention2 = getLastUnreadCommentWithMention({
-        comments: unreadComments2,
-        mentionedUserId: "user-dracula",
       });
 
       expect(lastCommentWithMention1).toEqual(comment1);
-      expect(lastCommentWithMention2).toBe(null);
+    });
+
+    it("should get last unread comment with mention - last comment is a mention", () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-dracula",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-carmilla",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:12:00.000Z"),
+      });
+      const comment3 = makeComment({
+        userId: "user-carmilla",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        createdAt: new Date("2024-09-10T08:16:00.000Z"),
+      });
+
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+
+      const unreadComments = getUnreadComments({
+        comments: [comment1, comment2, comment3],
+        inboxNotification,
+        userId: "user-mina",
+        notificationTriggerAt: comment1.createdAt,
+      });
+
+      const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
+        comments: unreadComments,
+        mentionedUserId: "user-mina",
+      });
+
+      expect(lastUnreadCommentWithMention).toEqual(comment3);
     });
 
     it("should extract null (no last unread comment with a mention nor unread replies) from a thread notification", async () => {
@@ -163,7 +231,7 @@ describe("thread notification", () => {
       const thread = makeThread({ threadId, comments: [comment] });
       const inboxNotification = makeThreadInboxNotification({
         threadId,
-        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+        notifiedAt: new Date("2024-09-10T08:04:00.000Z"),
         readAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
@@ -173,6 +241,7 @@ describe("thread notification", () => {
         threadId,
         userId: "user-1",
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: new Date("2024-09-10T08:04:00.000Z"),
       });
 
       const extracted = await extractThreadNotificationData({ client, event });
@@ -181,13 +250,19 @@ describe("thread notification", () => {
 
     it("should extract last unread comment with a mention from a thread notification", async () => {
       const threadId = generateThreadId();
-      const comment = makeComment({
+      const comment1 = makeComment({
         userId: "user-0",
         threadId,
         body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
-      const thread = makeThread({ threadId, comments: [comment] });
+      const comment2 = makeComment({
+        userId: "user-1",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment1, comment2] });
       const inboxNotification = makeThreadInboxNotification({
         threadId,
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
@@ -199,12 +274,13 @@ describe("thread notification", () => {
         threadId,
         userId: "user-1",
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: comment1.createdAt,
       });
 
       const extracted = await extractThreadNotificationData({ client, event });
       const expected: ThreadNotificationData = {
         type: "unreadMention",
-        comment: makeCommentWithBody({ comment }),
+        comment: makeCommentWithBody({ comment: comment1 }),
       };
       expect(extracted).toEqual(expected);
     });
@@ -244,7 +320,58 @@ describe("thread notification", () => {
         threadId,
         userId: "user-dracula",
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: comment1.createdAt,
       });
+      const extracted = await extractThreadNotificationData({ client, event });
+      const expected: ThreadNotificationData = {
+        type: "unreadReplies",
+        comments: [
+          makeCommentWithBody({ comment: comment2 }),
+          makeCommentWithBody({ comment: comment3 }),
+        ],
+      };
+      expect(extracted).toEqual(expected);
+    });
+
+    it("should extract only unread replies from a thread notification - no mentions", async () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-dante" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-1",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment3 = makeComment({
+        userId: "user-2",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:12:00.000Z"),
+      });
+
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2, comment3],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:12:00.000Z"),
+      });
+
+      setServerHandlers({ thread, inboxNotification });
+
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-dante",
+        inboxNotificationId: inboxNotification.id,
+        triggeredAt: comment2.createdAt,
+      });
+
       const extracted = await extractThreadNotificationData({ client, event });
       const expected: ThreadNotificationData = {
         type: "unreadReplies",
@@ -288,6 +415,7 @@ describe("thread notification", () => {
         threadId,
         userId: "user-1",
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: comment.createdAt,
       });
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
@@ -374,6 +502,7 @@ describe("thread notification", () => {
         threadId,
         userId: "user-dracula",
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: comment1.createdAt,
       });
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
