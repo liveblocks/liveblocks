@@ -207,16 +207,11 @@ export type Ai = {
   disconnect: () => void;
   getStatus: () => Status;
   listChats: (options?: { cursor?: Cursor }) => Promise<ListChatServerMsg>;
-  newChat: (options?: {
-    id?: ChatId;
-    name?: string;
-  }) => Promise<ChatCreatedServerMsg>;
-  getMessages: (
-    chatId: ChatId,
-    options?: {
-      cursor?: Cursor;
-    }
-  ) => Promise<GetMessagesServerMsg>;
+  newChat: (
+    name: string,
+    metadata?: AiChat["metadata"]
+  ) => Promise<ChatCreatedServerMsg>;
+  getMessages: (chatId: ChatId) => Promise<GetMessagesServerMsg>;
   addUserMessage: (
     chatId: ChatId,
     message: string
@@ -509,11 +504,13 @@ export function createAi(config: AiConfig): Ai {
 
       listChats,
 
-      newChat: (options?: { id?: ChatId; name?: string }) => {
+      newChat: (name: string, metadata?: AiChat["metadata"]) => {
+        const id = `ch_${nanoid()}` as ChatId;
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.CREATE_CHAT,
-          chatId: options?.id,
-          name: options?.name,
+          id,
+          name,
+          metadata: metadata ?? {},
         });
       },
 

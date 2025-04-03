@@ -185,9 +185,9 @@ export type ListChatClientMsg = AiMsgBase & {
 
 export type NewChatClientMsg = AiMsgBase & {
   readonly type: ClientAiMsgCode.CREATE_CHAT;
-  chatId?: ChatId;
-  name?: string;
-  metadata?: Record<string, string | string[]>;
+  id: ChatId;
+  name: string;
+  metadata: Record<string, string | string[]>;
 };
 
 export type GetMessagesClientMsg = AiMsgBase & {
