@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.22.3
+
 ### `@liveblocks/react-ui`
 
 - The `InboxNotification` component now uses `resolveRoomsInfo` for
