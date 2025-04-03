@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       {
         roomId: "liveblocks:examples:nextjs-tiptap-2",
         client: liveblocks,
-        schema: getSchema([Youtube, StarterKit, CommentExtension]),
+        schema: getSchema([Youtube, StarterKit]),
       },
       async (api) => {
         await api.update((doc, tr) => {

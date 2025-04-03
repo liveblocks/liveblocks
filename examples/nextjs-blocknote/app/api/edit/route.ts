@@ -1,7 +1,11 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
 import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
-import { BlockNoteSchema } from "@blocknote/core";
+import { BlockNoteEditor } from "@blocknote/core";
+
+const editor = BlockNoteEditor.create({
+  _headless: true,
+});
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -11,15 +15,14 @@ export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const blockNoteSchema = new BlockNoteSchema();
-
+  console.log(editor.pmSchema);
   console.log("IT STARTED");
   try {
     await withProsemirrorDocument(
       {
         roomId: "liveblocks:examples:nextjs-blocknote",
         client: liveblocks,
-        schema: { nodes: blockNoteSchema.blockSchema },
+        schema: editor.pmSchema,
       },
       async (api) => {
         // First clear any existing content
