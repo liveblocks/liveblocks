@@ -19,7 +19,7 @@ export enum ClientAiMsgCode {
 
   // message management
   GET_MESSAGES = 300,
-  ADD_USER_MESSAGE = 400,
+  ATTACH_USER_MESSAGE = 400,
   DELETE_MESSAGE = 800,
   CLEAR_CHAT_MESSAGES = 900,
 
@@ -37,7 +37,7 @@ export enum ServerAiMsgCode {
 
   // message management
   GET_MESSAGES_OK = 301,
-  ADD_MESSAGE_OK = 401,
+  ATTACH_MESSAGE_OK = 401,
   DELETE_MESSAGE_OK = 801,
   CLEAR_CHAT_MESSAGES_OK = 901,
 
@@ -57,19 +57,21 @@ export enum ServerAiMsgCode {
 export interface AiMsgBase {
   readonly requestId: AiRequestId;
 }
-export interface BaseAnswerMsg extends AiMsgBase {
+
+export type AiInputSource = Relax<StatefullMsg | StatelessMsg>;
+
+export interface AnswerClientMsg extends AiMsgBase {
+  inputSource: AiInputSource;
   tools?: AiTool[];
   toolChoice?: ToolChoice;
 }
 export interface StatefullMsg {
   chatId: ChatId;
+  messageId: MessageId;
 }
 export interface StatelessMsg {
   prompt: string;
 }
-
-export type AnswerClientMsg = BaseAnswerMsg &
-  Relax<StatefullMsg | StatelessMsg>;
 
 export type ToolChoice =
   | "auto"
@@ -135,8 +137,8 @@ export type ChatCreatedServerMsg = AiMsgBase & {
   chat: AiChat;
 };
 
-export type MessageAddedServerMsg = AiMsgBase & {
-  type: ServerAiMsgCode.ADD_MESSAGE_OK;
+export type MessageAttachedServerMsg = AiMsgBase & {
+  type: ServerAiMsgCode.ATTACH_MESSAGE_OK;
   chatId: ChatId;
   messageId: MessageId;
   createdAt: ISODateString;
@@ -197,9 +199,10 @@ export type GetMessagesClientMsg = AiMsgBase & {
   chatId: ChatId;
 };
 
-export type AddMessageClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.ADD_USER_MESSAGE;
+export type AttachMessageClientMsg = AiMsgBase & {
+  readonly type: ClientAiMsgCode.ATTACH_USER_MESSAGE;
   chatId: ChatId;
+  parentMessageId: MessageId | null;
   content: AiTextContent | string;
   status?: AiStatus;
 };
@@ -236,7 +239,7 @@ export type GenerateAnswerClientMsg = AnswerClientMsg & {
 export type ServerAiMsg =
   | ListChatServerMsg
   | ChatCreatedServerMsg
-  | MessageAddedServerMsg
+  | MessageAttachedServerMsg
   | GetMessagesServerMsg
   | StreamMessageStartServerMsg
   | StreamMessagePartServerMsg
@@ -254,7 +257,7 @@ export type ClientAiMsg =
   | ListChatClientMsg
   | NewChatClientMsg
   | GetMessagesClientMsg
-  | AddMessageClientMsg
+  | AttachMessageClientMsg
   | AbortResponseClientMsg
   | GenerateAnswerClientMsg
   | DeleteChatClientMsg

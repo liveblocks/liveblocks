@@ -33,7 +33,7 @@ import type {
   GetMessagesServerMsg,
   ISODateString,
   ListChatServerMsg,
-  MessageAddedServerMsg,
+  MessageAttachedServerMsg,
   MessageId,
   ServerAiMsg,
   StreamMessageCompleteServerMsg,
@@ -217,17 +217,18 @@ export type Ai = {
       cursor?: Cursor;
     }
   ) => Promise<GetMessagesServerMsg>;
-  addUserMessage: (
+  attachUserMessage: (
     chatId: ChatId,
+    parentMessageId: MessageId | null,
     message: string
-  ) => Promise<MessageAddedServerMsg>;
+  ) => Promise<MessageAttachedServerMsg>;
   streamAnswer: (
-    // TODO: support stateless
-    chatId: ChatId
+    chatId: ChatId,
+    messageId: MessageId
   ) => Promise<StreamMessageCompleteServerMsg>;
   generateAnswer: (
-    // TODO: support stateless
-    chatId: ChatId
+    chatId: ChatId,
+    messageId: MessageId
   ) => Promise<GenerateAnswerResultServerMsg>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (
@@ -545,7 +546,11 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      addUserMessage: (chatId: ChatId, message: string) => {
+      attachUserMessage: (
+        chatId: ChatId,
+        parentMessageId: MessageId | null,
+        message: string
+      ) => {
         const content: AiTextContent = {
           type: "text",
           text: message,
@@ -562,25 +567,26 @@ export function createAi(config: AiConfig): Ai {
 
         return sendClientMsgWithResponse(
           {
-            type: ClientAiMsgCode.ADD_USER_MESSAGE,
+            type: ClientAiMsgCode.ATTACH_USER_MESSAGE,
             chatId,
+            parentMessageId,
             content,
           },
           60_000 // todo: not sure if we even want to leave a promise hanging here. some requests can be pretty long, although we do need to have some bounds
         );
       },
 
-      streamAnswer: (chatId: ChatId) => {
+      streamAnswer: (chatId: ChatId, messageId: MessageId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.STREAM_ANSWER,
-          chatId,
+          inputSource: { chatId, messageId },
         });
       },
 
-      generateAnswer: (chatId: ChatId) => {
+      generateAnswer: (chatId: ChatId, messageId: MessageId) => {
         return sendClientMsgWithResponse({
           type: ClientAiMsgCode.GENERATE_ANSWER,
-          chatId,
+          inputSource: { chatId, messageId },
         });
       },
 
@@ -588,7 +594,7 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse(
           {
             type: ClientAiMsgCode.GENERATE_ANSWER,
-            prompt,
+            inputSource: { prompt },
             tools: [tool],
             toolChoice: {
               type: "tool",
