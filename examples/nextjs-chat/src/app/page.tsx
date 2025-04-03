@@ -65,7 +65,7 @@ function ChatPicker() {
             onClick={() => {
               const name = prompt("Enter a name for this chat?", "New chat");
               if (name !== null) {
-                client.ai.newChat({ name }).finally(() => {
+                client.ai.newChat(name).finally(() => {
                   forceRerender();
                 });
               }
