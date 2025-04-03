@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.22.3
+
 ### `@liveblocks/react-ui`
 
 - The `InboxNotification` component now uses `resolveRoomsInfo` for
@@ -10,6 +12,12 @@
 - Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
   choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
   from: another CDN, self-hosted files, etc.
+
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
 
 ## v2.22.2
 
