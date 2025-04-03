@@ -131,18 +131,22 @@ type StreamAnswerPair = DefineCmd<
 // -------------------------------------------------------------------------------------------------
 
 export type ServerEvent =
+  | CmdFailedEvent
   | ErrorServerEvent
   | StreamMessagePartServerEvent
   | StreamMessageFailedServerEvent
   | StreamMessageAbortedServerEvent
   | StreamMessageCompleteServerEvent;
 
-// XXX Have a "command error" (an error in response to a client-sent "command")
-// XXX Have a "generic error event" (a server-side error happened, but not in response to a command)
+export type CmdFailedEvent = {
+  event: "cmd-failed";
+  failedCmd: CommandPair[0]["cmd"];
+  failedCmdId: CmdId;
+  error: string;
+};
+
 export type ErrorServerEvent = {
-  cmd?: never;
-  cmdId?: CmdId; // TODO Check why optional here? Should we maybe have a separate error types for errors sent that aren't the response to a request?
-  type: 999; // ERROR
+  event: "error";
   error: string;
 };
 
@@ -150,7 +154,7 @@ export type ErrorServerEvent = {
 export type StreamMessagePartServerEvent = {
   cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  type: 1002; // STREAM_MESSAGE_PART
+  event: 1002; // STREAM_MESSAGE_PART
   content: {
     type: "text";
     id: string;
@@ -164,7 +168,7 @@ export type StreamMessagePartServerEvent = {
 export type StreamMessageFailedServerEvent = {
   cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  type: 1004; // STREAM_MESSAGE_FAILED
+  event: 1004; // STREAM_MESSAGE_FAILED
   error: string;
   chatId?: ChatId;
   messageId?: MessageId;
@@ -174,7 +178,7 @@ export type StreamMessageFailedServerEvent = {
 export type StreamMessageAbortedServerEvent = {
   cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  type: 1005; // STREAM_MESSAGE_ABORTED
+  event: 1005; // STREAM_MESSAGE_ABORTED
   chatId?: ChatId;
   messageId?: MessageId;
 };
@@ -183,7 +187,7 @@ export type StreamMessageAbortedServerEvent = {
 export type StreamMessageCompleteServerEvent = {
   cmd?: never;
   cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  type: 1003; // STREAM_MESSAGE_COMPLETE
+  event: 1003; // STREAM_MESSAGE_COMPLETE
   content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;

@@ -327,11 +327,15 @@ export function createAi(config: AiConfig): Ai {
       // If the current msg carries a requestId, check to see if it's a known
       // one, and if it's still exists in our pendingRequest administration. If
       // not, it may have timed out already, or it wasn't intended for us.
-      const pendingReq = msg.cmdId
-        ? context.pendingRequests.get(msg.cmdId)
-        : undefined;
+      const cmdId =
+        "cmdId" in msg
+          ? msg.cmdId
+          : msg.event === "cmd-failed"
+            ? msg.failedCmdId
+            : undefined;
+      const pendingReq = context.pendingRequests.get(cmdId!); // eslint-disable-line no-restricted-syntax
 
-      if (msg.cmdId && !pendingReq) {
+      if (cmdId && !pendingReq) {
         console.warn(
           "Ignoring unrecognized server message (already timed out, or not for us)",
           event.data
@@ -339,16 +343,17 @@ export function createAi(config: AiConfig): Ai {
         return;
       }
 
-      if ("type" in msg) {
-        // XXX Remove these cryptic "type" codes in the next pass!
-        switch (msg.type) {
-          case 999: // ERROR
-            if (msg.cmdId) {
-              // Not all errors have request Ids
-              pendingReq?.reject(new Error(msg.error));
-            }
+      if ("event" in msg) {
+        switch (msg.event) {
+          case "cmd-failed":
+            pendingReq?.reject(new Error(msg.error));
             break;
 
+          case "error":
+            // TODO Handle generic server error
+            break;
+
+          // XXX Remove these cryptic "type" codes in the next pass!
           case 1003: // STREAM_MESSAGE_COMPLETE
             if (msg.messageId !== undefined && msg.chatId !== undefined) {
               context.messages.updateMessage(msg.chatId, msg.messageId, {
