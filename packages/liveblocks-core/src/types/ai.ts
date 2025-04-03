@@ -85,7 +85,7 @@ type DeleteChatPair = DefineCmd<
 >;
 
 type GetMessagesPair = DefineCmd<
-  "get-messages", // XXX consider naming it get-message-branch already?
+  "get-messages",
   { cursor?: Cursor; pageSize?: number; chatId: ChatId },
   { chatId: ChatId; messages: AiChatMessage[]; nextCursor: Cursor | null }
 >;
