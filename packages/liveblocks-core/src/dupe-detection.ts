@@ -39,7 +39,7 @@ export function detectDupes(
 
   if (!g[pkgId]) {
     g[pkgId] = pkgBuildInfo;
-  } else if (g[pkgId] === pkgBuildInfo) {
+  } else if (process.env.NODE_ENV === "test" && g[pkgId] === pkgBuildInfo) {
     // Allow it, see https://github.com/liveblocks/liveblocks/pull/1004
   } else {
     const msg = [
