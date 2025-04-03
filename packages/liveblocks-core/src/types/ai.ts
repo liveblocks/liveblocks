@@ -9,25 +9,7 @@ export type ISODateString = Brand<string, "ISODateString">;
 
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`msg_${string}`, "MessageId">;
-export type AiRequestId = Brand<string, "AiRequestId">;
-
-export enum ClientAiMsgCode {
-  // chat management
-  LIST_CHATS = 100,
-  CREATE_CHAT = 200,
-  DELETE_CHAT = 700,
-
-  // message management
-  GET_MESSAGES = 300,
-  ATTACH_USER_MESSAGE = 400,
-  DELETE_MESSAGE = 800,
-  CLEAR_CHAT_MESSAGES = 900,
-
-  // answers
-  STREAM_ANSWER = 1000,
-  GENERATE_ANSWER = 2000,
-  ABORT_RESPONSE = 500,
-}
+export type AiCmdId = Brand<string, "AiCmdId">;
 
 export enum ServerAiMsgCode {
   // chat management
@@ -53,18 +35,8 @@ export enum ServerAiMsgCode {
   GENERATE_ANSWER_RESULT = 2001,
 }
 
-// Base interface with requestId (shared by both client and server messages)
-export interface AiMsgBase {
-  readonly requestId: AiRequestId;
-}
-
 export type AiInputSource = Relax<StatefullMsg | StatelessMsg>;
 
-export interface AnswerClientMsg extends AiMsgBase {
-  inputSource: AiInputSource;
-  tools?: AiTool[];
-  toolChoice?: ToolChoice;
-}
 export interface StatefullMsg {
   chatId: ChatId;
   messageId: MessageId;
@@ -83,13 +55,17 @@ export type ToolChoice =
  * Server messages
  */
 
-export type StreamMessageStartServerMsg = AiMsgBase & {
+export type StreamMessageStartServerMsg = {
+  // XXX Not really a response to a "command" ??????????
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.STREAM_MESSAGE_START;
   chatId?: ChatId;
   messageId?: MessageId;
 };
 
-export type StreamMessagePartServerMsg = AiMsgBase & {
+export type StreamMessagePartServerMsg = {
+  // XXX Not really a response to a "command"
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.STREAM_MESSAGE_PART;
   content: {
     type: "text";
@@ -100,76 +76,92 @@ export type StreamMessagePartServerMsg = AiMsgBase & {
   messageId?: MessageId;
 };
 
-export type StreamMessageFailedServerMsg = AiMsgBase & {
+export type StreamMessageFailedServerMsg = {
+  // XXX Not really a response to a "command"
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.STREAM_MESSAGE_FAILED;
   error: string;
   chatId?: ChatId;
   messageId?: MessageId;
 };
 
-export type StreamMessageAbortedServerMsg = AiMsgBase & {
+export type StreamMessageAbortedServerMsg = {
+  // XXX Not really a response to a "command"
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.STREAM_MESSAGE_ABORTED;
   chatId?: ChatId;
   messageId?: MessageId;
 };
 
-export type StreamMessageCompleteServerMsg = AiMsgBase & {
+export type StreamMessageCompleteServerMsg = {
+  // XXX Not really a response to a "command"
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.STREAM_MESSAGE_COMPLETE;
   content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;
 };
 
+// XXX Have a "command error" (an error in response to a client-sent "command")
+// XXX Have a "generic error event" (a server-side error happened, but not in response to a command)
 export type ErrorServerMsg = {
   type: ServerAiMsgCode.ERROR;
   error: string;
-  requestId?: AiRequestId;
+  cmdId?: AiCmdId; // TODO Check why optional here? Should we maybe have a separate error types for errors sent that aren't the response to a request?
 };
 
-export type ListChatServerMsg = AiMsgBase & {
+export type ListChatServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.LIST_CHATS_OK;
   chats: AiChat[];
   nextCursor: Cursor | null;
 };
 
-export type ChatCreatedServerMsg = AiMsgBase & {
+export type ChatCreatedServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.CREATE_CHAT_OK;
   chat: AiChat;
 };
 
-export type MessageAttachedServerMsg = AiMsgBase & {
+export type MessageAttachedServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.ATTACH_MESSAGE_OK;
   chatId: ChatId;
   messageId: MessageId;
   createdAt: ISODateString;
 };
 
-export type GetMessagesServerMsg = AiMsgBase & {
+export type GetMessagesServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.GET_MESSAGES_OK;
   chatId: ChatId;
   messages: AiChatMessage[];
   nextCursor: Cursor | null;
 };
 
-export type GenerateAnswerResultServerMsg = AiMsgBase & {
+export type GenerateAnswerResultServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.GENERATE_ANSWER_RESULT;
   content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;
 };
 
-export type DeleteChatServerMsg = AiMsgBase & {
+export type DeleteChatServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.DELETE_CHAT_OK;
   chatId: ChatId;
 };
 
-export type DeleteMessageServerMsg = AiMsgBase & {
+export type DeleteMessageServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.DELETE_MESSAGE_OK;
   chatId: ChatId;
   messageId: MessageId;
 };
 
-export type ClearChatMessagesServerMsg = AiMsgBase & {
+export type ClearChatMessagesServerMsg = {
+  cmdId: AiCmdId;
   type: ServerAiMsgCode.CLEAR_CHAT_MESSAGES_OK;
   chatId: ChatId;
   messagesCount: number;
@@ -179,60 +171,77 @@ export type ClearChatMessagesServerMsg = AiMsgBase & {
  * Client messages
  */
 
-export type ListChatClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.LIST_CHATS;
+export type GetChatsCmd = {
+  cmd: "get-chats";
+  cmdId: AiCmdId;
   cursor?: Cursor;
   pageSize?: number;
 };
 
-export type NewChatClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.CREATE_CHAT;
+export type CreateChatCmd = {
+  cmd: "create-chat";
+  cmdId: AiCmdId;
   id: ChatId;
   name: string;
   metadata: Record<string, string | string[]>;
 };
 
-export type GetMessagesClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.GET_MESSAGES;
+export type GetMessagesCmd = {
+  cmd: "get-messages"; // XXX consider naming it get-message-branch already?
+  cmdId: AiCmdId;
   cursor?: Cursor;
   pageSize?: number;
   chatId: ChatId;
 };
 
-export type AttachMessageClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.ATTACH_USER_MESSAGE;
+export type AttachUserMessageCmd = {
+  cmd: "attach-user-message";
+  cmdId: AiCmdId;
   chatId: ChatId;
   parentMessageId: MessageId | null;
   content: AiTextContent | string;
   status?: AiStatus;
 };
 
-export type AbortResponseClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.ABORT_RESPONSE;
-  chatId: ChatId;
-};
-export type DeleteChatClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.DELETE_CHAT;
+export type AbortSomethingCmd = {
+  cmd: "abort-something"; // XXX rename to the thing that will actually get aborted, need to first find the best name for that, will fix later
+  cmdId: AiCmdId;
   chatId: ChatId;
 };
 
-export type DeleteMessageClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.DELETE_MESSAGE;
+export type DeleteChatCmd = {
+  cmd: "delete-chat";
+  cmdId: AiCmdId;
+  chatId: ChatId;
+};
+
+export type DeleteMessageCmd = {
+  cmd: "delete-message";
+  cmdId: AiCmdId;
   chatId: ChatId;
   messageId: MessageId;
 };
 
-export type ClearChatMessagesClientMsg = AiMsgBase & {
-  readonly type: ClientAiMsgCode.CLEAR_CHAT_MESSAGES;
+export type ClearChatCmd = {
+  cmd: "clear-chat";
+  cmdId: AiCmdId;
   chatId: ChatId;
 };
 
-export type StreamAnswerClientMsg = AnswerClientMsg & {
-  readonly type: ClientAiMsgCode.STREAM_ANSWER;
+export type StreamAnswerCmd = {
+  cmd: "stream-answer"; // XXX Should this be "generate-answer" with a "stream?: boolean" option maybe?
+  cmdId: AiCmdId;
+  inputSource: AiInputSource;
+  tools?: AiTool[];
+  toolChoice?: ToolChoice;
 };
 
-export type GenerateAnswerClientMsg = AnswerClientMsg & {
-  readonly type: ClientAiMsgCode.GENERATE_ANSWER;
+export type GenerateAnswerCmd = {
+  cmd: "generate-answer";
+  cmdId: AiCmdId;
+  inputSource: AiInputSource;
+  tools?: AiTool[];
+  toolChoice?: ToolChoice;
 };
 
 // Union type of all server messages
@@ -252,18 +261,18 @@ export type ServerAiMsg =
   | ClearChatMessagesServerMsg
   | ErrorServerMsg;
 
-// Union type of all client messages
+// A client message is always a command to the server
 export type ClientAiMsg =
-  | ListChatClientMsg
-  | NewChatClientMsg
-  | GetMessagesClientMsg
-  | AttachMessageClientMsg
-  | AbortResponseClientMsg
-  | GenerateAnswerClientMsg
-  | DeleteChatClientMsg
-  | DeleteMessageClientMsg
-  | ClearChatMessagesClientMsg
-  | StreamAnswerClientMsg;
+  | GetChatsCmd
+  | CreateChatCmd
+  | GetMessagesCmd
+  | AttachUserMessageCmd
+  | AbortSomethingCmd
+  | DeleteChatCmd
+  | DeleteMessageCmd
+  | ClearChatCmd
+  | GenerateAnswerCmd
+  | StreamAnswerCmd;
 
 export type AiState = {
   // TODO: this will probably get more complicated, supporting multiple requests, etc.

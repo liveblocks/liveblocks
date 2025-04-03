@@ -21,7 +21,7 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
-  AiRequestId,
+  AiCmdId,
   AiTextContent,
   AiTool,
   ChatCreatedServerMsg,
@@ -38,7 +38,7 @@ import type {
   ServerAiMsg,
   StreamMessageCompleteServerMsg,
 } from "./types/ai";
-import { ClientAiMsgCode, ServerAiMsgCode } from "./types/ai";
+import { ServerAiMsgCode } from "./types/ai";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -58,7 +58,7 @@ type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
   pendingRequests: Map<
-    AiRequestId,
+    AiCmdId,
     {
       resolve: (value: ServerAiMsg) => void;
       reject: (reason: unknown) => void;
@@ -194,10 +194,6 @@ function createStore_forUserAiChats() {
   };
 }
 
-const makeRequestId = () => {
-  return nanoid() as AiRequestId;
-};
-
 export type Ai = {
   [kInternal]: {
     debugContext: () => AiContext;
@@ -332,11 +328,11 @@ export function createAi(config: AiConfig): Ai {
       // If the current msg carries a requestId, check to see if it's a known
       // one, and if it's still exists in our pendingRequest administration. If
       // not, it may have timed out already, or it wasn't intended for us.
-      const pendingReq = msg.requestId
-        ? context.pendingRequests.get(msg.requestId)
+      const pendingReq = msg.cmdId
+        ? context.pendingRequests.get(msg.cmdId)
         : undefined;
 
-      if (msg.requestId && !pendingReq) {
+      if (msg.cmdId && !pendingReq) {
         console.warn(
           "Ignoring unrecognized server message (already timed out, or not for us)",
           event.data
@@ -346,7 +342,7 @@ export function createAi(config: AiConfig): Ai {
 
       switch (msg.type) {
         case ServerAiMsgCode.ERROR:
-          if (msg.requestId) {
+          if (msg.cmdId) {
             // Not all errors have request Ids
             pendingReq?.reject(new Error(msg.error));
           }
@@ -440,7 +436,7 @@ export function createAi(config: AiConfig): Ai {
   });
 
   async function sendClientMsgWithResponse<T extends ServerAiMsg>(
-    msg: DistributiveOmit<ClientAiMsg, "requestId">,
+    msg: DistributiveOmit<ClientAiMsg, "cmdId">,
     timeout: number = DEFAULT_REQUEST_TIMEOUT
   ): Promise<T> {
     if (managedSocket.getStatus() !== "connected") {
@@ -455,15 +451,15 @@ export function createAi(config: AiConfig): Ai {
       once: true,
     });
 
-    const requestId = makeRequestId();
-    context.pendingRequests.set(requestId, { resolve, reject });
+    const cmdId = nanoid() as AiCmdId;
+    context.pendingRequests.set(cmdId, { resolve, reject });
 
-    sendClientMsg({ ...msg, requestId });
+    sendClientMsg({ ...msg, cmdId });
     return (
       (promise as Promise<T>)
         .finally(() => {
           // Always cleanup
-          context.pendingRequests.delete(requestId);
+          context.pendingRequests.delete(cmdId);
         })
         // Make sure these promises don't go uncaught (in contrast to the
         // promise instance we return to the caller)
@@ -484,7 +480,7 @@ export function createAi(config: AiConfig): Ai {
 
   function listChats(options: { cursor?: Cursor } = {}) {
     return sendClientMsgWithResponse<ListChatServerMsg>({
-      type: ClientAiMsgCode.LIST_CHATS,
+      cmd: "get-chats",
       cursor: options.cursor,
       pageSize: 2, // TODO: Set a more sensible default page size
     });
@@ -492,7 +488,7 @@ export function createAi(config: AiConfig): Ai {
 
   function getMessages(chatId: ChatId, options: { cursor?: Cursor } = {}) {
     return sendClientMsgWithResponse<GetMessagesServerMsg>({
-      type: ClientAiMsgCode.GET_MESSAGES,
+      cmd: "get-messages",
       chatId,
       cursor: options.cursor,
     });
@@ -513,7 +509,7 @@ export function createAi(config: AiConfig): Ai {
       newChat: (name: string, metadata?: AiChat["metadata"]) => {
         const id = `ch_${nanoid()}` as ChatId;
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.CREATE_CHAT,
+          cmd: "create-chat",
           id,
           name,
           metadata: metadata ?? {},
@@ -524,7 +520,7 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse<
           ServerAiMsg & { type: ServerAiMsgCode.DELETE_CHAT_OK }
         >({
-          type: ClientAiMsgCode.DELETE_CHAT,
+          cmd: "delete-chat",
           chatId,
         });
       },
@@ -533,14 +529,14 @@ export function createAi(config: AiConfig): Ai {
 
       clearChat: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.CLEAR_CHAT_MESSAGES,
+          cmd: "clear-chat",
           chatId,
         });
       },
 
       deleteMessage: (chatId: ChatId, messageId: MessageId) => {
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.DELETE_MESSAGE,
+          cmd: "delete-message",
           chatId,
           messageId,
         });
@@ -567,7 +563,7 @@ export function createAi(config: AiConfig): Ai {
 
         return sendClientMsgWithResponse(
           {
-            type: ClientAiMsgCode.ATTACH_USER_MESSAGE,
+            cmd: "attach-user-message",
             chatId,
             parentMessageId,
             content,
@@ -578,14 +574,14 @@ export function createAi(config: AiConfig): Ai {
 
       streamAnswer: (chatId: ChatId, messageId: MessageId) => {
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.STREAM_ANSWER,
+          cmd: "stream-answer",
           inputSource: { chatId, messageId },
         });
       },
 
       generateAnswer: (chatId: ChatId, messageId: MessageId) => {
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.GENERATE_ANSWER,
+          cmd: "generate-answer",
           inputSource: { chatId, messageId },
         });
       },
@@ -593,7 +589,7 @@ export function createAi(config: AiConfig): Ai {
       statelessAction: (prompt: string, tool: AiTool) => {
         return sendClientMsgWithResponse(
           {
-            type: ClientAiMsgCode.GENERATE_ANSWER,
+            cmd: "generate-answer",
             inputSource: { prompt },
             tools: [tool],
             toolChoice: {
@@ -607,7 +603,7 @@ export function createAi(config: AiConfig): Ai {
 
       abortResponse: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.ABORT_RESPONSE,
+          cmd: "abort-something",
           chatId,
         });
       },
