@@ -11,6 +11,12 @@
   choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
   from: another CDN, self-hosted files, etc.
 
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
+
 ## v2.22.2
 
 ### `@liveblocks/node`
