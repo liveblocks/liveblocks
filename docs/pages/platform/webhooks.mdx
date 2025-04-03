@@ -972,7 +972,10 @@ type ThreadNotificationEvent = {
     userId: string;
     threadId: string;
     inboxNotificationId: string;
+    // Date representing the time when the webhook event was created.
     createdAt: string;
+    // Date representing the  time when the notification was created.
+    triggeredAt: string;
   };
 };
 
@@ -988,6 +991,7 @@ const threadNotificationEvent = {
     threadId: "my-thread-id",
     inboxNotificationId: "my-inbox-notification-id",
     createdAt: "2021-10-06T01:45:56.558Z",
+    triggeredAt: "2021-10-06T01:50:56.558Z",
   },
 };
 ```
@@ -1014,7 +1018,10 @@ type TextMentionNotificationEvent = {
     userId: string;
     mentionId: string;
     inboxNotificationId: string;
+    // Date representing the time when the webhook event was created.
     createdAt: string;
+    // Date representing the  time when the notification was created.
+    triggeredAt: string;
   };
 };
 
@@ -1030,6 +1037,7 @@ const textMentionNotificationEvent = {
     mentionId: "my-mention-id",
     inboxNotificationId: "my-inbox-notification-id",
     createdAt: "2021-10-06T01:45:56.558Z",
+    triggeredAt: "2021-10-06T01:50:56.558Z",
   },
 };
 ```
@@ -1056,7 +1064,10 @@ type CustomNotificationEvent = {
     roomId: string | null;
     userId: string;
     inboxNotificationId: string;
+    // Date representing the time when the webhook event was created.
     createdAt: string;
+    // Date representing the  time when the notification was created.
+    triggeredAt: string;
   };
 };
 
@@ -1071,6 +1082,7 @@ const customNotificationEvent = {
     userId: "my-user-id",
     inboxNotificationId: "my-inbox-notification-id",
     createdAt: "2021-10-06T01:45:56.558Z",
+    triggeredAt: "2021-10-06T01:50:56.558Z",
   },
 };
 ```
