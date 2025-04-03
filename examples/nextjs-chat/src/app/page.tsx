@@ -6,6 +6,7 @@ import {
   RoomProvider,
   useClient,
   useCopilotChats,
+  useCopilotChatMessages,
 } from "@liveblocks/react/suspense";
 import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
 import { useEffect, useState } from "react";
@@ -58,8 +59,16 @@ function ChatPicker() {
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
   const [selectedChatId, setSelectedChatId] = useState<ChatId | undefined>(
-    undefined
+    chats[0]?.id
   );
+
+  if (selectedChatId === undefined && chats.length > 0) {
+    setSelectedChatId(chats[0].id);
+  }
+
+  if (chats.length === 0) {
+    setSelectedChatId(undefined);
+  }
 
   // Make sure the selected chat ID actually exists!
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
@@ -145,22 +154,18 @@ function ChatPicker() {
   );
 }
 
-function ChatWindow(props: { chatId: ChatId }) {
+function ChatWindow({ chatId }: { chatId: ChatId }) {
   const [renderCount, forceRerender] = useForceRerender();
-
   const client = useClient();
-  const { messages } = useChatMessages_UNPOLISHED(props.chatId, renderCount);
+  const { messages } = useCopilotChatMessages(chatId);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-      <ChatMessages
-        chatId={props.chatId}
-        messages={messages}
-        className="messages"
-      />
+      <ChatMessages chatId={chatId} messages={messages} className="messages" />
 
       <div className="composer-container">
         <ChatComposer
-          chatId={props.chatId}
+          chatId={chatId}
           className="composer"
           overrides={{
             CHAT_COMPOSER_PLACEHOLDER:
@@ -172,13 +177,12 @@ function ChatWindow(props: { chatId: ChatId }) {
             if (ev.currentTarget.textContent?.trim()) {
               try {
                 await client.ai.addUserMessage(
-                  props.chatId,
+                  chatId,
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
-                await client.ai.generateAnswer(props.chatId);
+                await client.ai.generateAnswer(chatId);
               } finally {
-                forceRerender();
               }
             }
           }}
@@ -293,30 +297,3 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     createdAt: "2025-05-01T00:00:00Z" as ISODateString,
   },
 ];
-
-function useChatMessages_UNPOLISHED(chatId: ChatId, invalidator: number) {
-  const client = useClient();
-  const [isLoading, setIsLoading] = useState(true);
-  const [messages, setMessages] = useState<AiChatMessage[]>([]);
-
-  useEffect(() => {
-    if (chatId === EXAMPLE_CHAT_ID) {
-      setMessages([...HARDCODED_EXAMPLE_MESSAGES]);
-    } else {
-      // Get the answers for real
-      client.ai.getMessages(chatId).then((resp) => {
-        setMessages([...resp.messages]);
-      });
-    }
-    setIsLoading(false);
-  }, [invalidator, client, chatId]);
-
-  return {
-    isLoading,
-    messages,
-    fetchMore: () => {},
-    isFetchingMore: false,
-    hasFetchedAll: false,
-    fetchMoreError: null,
-  } satisfies UseChatMessagesResult;
-}

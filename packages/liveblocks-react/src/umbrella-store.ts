@@ -2,6 +2,7 @@ import type {
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
+  ChatId,
   Client,
   CommentData,
   CommentReaction,
@@ -48,6 +49,7 @@ import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  CopilotChatMessagesAsyncResult,
   CopilotChatsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
@@ -905,6 +907,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     >;
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
     readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
+    readonly messagesByCopilotChatId: DefaultMap<
+      ChatId,
+      LoadableResource<CopilotChatMessagesAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1231,7 +1237,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
         return {
           isLoading: false,
-          chats: this.#client.ai.signals.chats.get(),
+          chats: this.#client.ai.signals.chats
+            .get()
+            // TODO: @nimesh Really think about the sort order.
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            ),
           hasFetchedAll: result.data.hasFetchedAll,
           isFetchingMore: result.data.isFetchingMore,
           fetchMore: result.data.fetchMore,
@@ -1240,6 +1253,48 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }, shallow),
       waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
     };
+
+    const messagesByCopilotChatId = new DefaultMap(
+      (chatId: ChatId): LoadableResource<CopilotChatMessagesAsyncResult> => {
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client.ai.getMessages(chatId, {
+            cursor: cursor as Cursor,
+          });
+          const nextCursor = result.nextCursor;
+          return nextCursor;
+        });
+
+        const signal = DerivedSignal.from(
+          (): CopilotChatMessagesAsyncResult => {
+            const result = resource.get();
+            if (result.isLoading || result.error) {
+              return result;
+            }
+
+            const page = result.data;
+            return {
+              isLoading: false,
+              messages: Object.values(
+                this.#client.ai.signals.messages.get()[chatId] ?? {}
+              )
+                // TODO: @nimesh Really think about the sort order.
+                .sort(
+                  (a, b) =>
+                    new Date(a.createdAt).getTime() -
+                    new Date(b.createdAt).getTime()
+                ),
+              hasFetchedAll: page.hasFetchedAll,
+              isFetchingMore: page.isFetchingMore,
+              fetchMoreError: page.fetchMoreError,
+              fetchMore: page.fetchMore,
+            };
+          },
+          shallow
+        );
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
 
     this.outputs = {
       threadifications,
@@ -1252,6 +1307,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versionsByRoomId,
       userNotificationSettings,
       copilotChats,
+      messagesByCopilotChatId,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable

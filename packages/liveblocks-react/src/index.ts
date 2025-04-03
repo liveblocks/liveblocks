@@ -90,4 +90,5 @@ export {
   useUnreadInboxNotificationsCount,
   useUser,
   useCopilotChats,
+  useCopilotChatMessages,
 } from "./liveblocks";

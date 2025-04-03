@@ -1,3 +1,4 @@
+/* eslint-disable rulesdir/console-must-be-fancy */
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
 import type { Delegates, Status } from "./connection";
@@ -30,6 +31,7 @@ import type {
   ErrorServerMsg,
   GenerateAnswerResultServerMsg,
   GetMessagesServerMsg,
+  ISODateString,
   ListChatServerMsg,
   MessageAddedServerMsg,
   MessageId,
@@ -124,6 +126,16 @@ function createStore_forChatMessages() {
     });
   }
 
+  function addMessage(chatId: ChatId, message: AiChatMessage): void {
+    baseSignal.mutate((lut) => {
+      const messagesByChatId = lut.get(chatId);
+      if (!messagesByChatId) {
+        return;
+      }
+      messagesByChatId.set(message.id, message);
+    });
+  }
+
   return {
     messages: DerivedSignal.from(baseSignal, (chats) =>
       Object.fromEntries(
@@ -147,6 +159,7 @@ function createStore_forChatMessages() {
 
     // Mutations
     updateMessage,
+    addMessage,
     update,
     remove,
     removeByChatId,
@@ -193,12 +206,17 @@ export type Ai = {
   reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
-  listChats: (options: { cursor?: Cursor }) => Promise<ListChatServerMsg>;
+  listChats: (options?: { cursor?: Cursor }) => Promise<ListChatServerMsg>;
   newChat: (options?: {
     id?: ChatId;
     name?: string;
   }) => Promise<ChatCreatedServerMsg>;
-  getMessages: (chatId: ChatId) => Promise<GetMessagesServerMsg>;
+  getMessages: (
+    chatId: ChatId,
+    options?: {
+      cursor?: Cursor;
+    }
+  ) => Promise<GetMessagesServerMsg>;
   addUserMessage: (
     chatId: ChatId,
     message: string
@@ -388,9 +406,13 @@ export function createAi(config: AiConfig): Ai {
 
         case ServerAiMsgCode.GENERATE_ANSWER_RESULT:
           if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            context.messages.updateMessage(msg.chatId, msg.messageId, {
+            // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+            context.messages.addMessage(msg.chatId, {
+              id: msg.messageId,
+              role: "assistant",
               content: msg.content,
               status: "complete",
+              createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
             });
           }
           break;
@@ -463,7 +485,15 @@ export function createAi(config: AiConfig): Ai {
     return sendClientMsgWithResponse<ListChatServerMsg>({
       type: ClientAiMsgCode.LIST_CHATS,
       cursor: options.cursor,
-      pageSize: 2,
+      pageSize: 2, // TODO: Set a more sensible default page size
+    });
+  }
+
+  function getMessages(chatId: ChatId, options: { cursor?: Cursor } = {}) {
+    return sendClientMsgWithResponse<GetMessagesServerMsg>({
+      type: ClientAiMsgCode.GET_MESSAGES,
+      chatId,
+      cursor: options.cursor,
     });
   }
 
@@ -496,14 +526,7 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      getMessages: (chatId: ChatId) => {
-        return sendClientMsgWithResponse<
-          ServerAiMsg & { type: ServerAiMsgCode.GET_MESSAGES_OK }
-        >({
-          type: ClientAiMsgCode.GET_MESSAGES,
-          chatId,
-        });
-      },
+      getMessages,
 
       clearChat: (chatId: ChatId) => {
         return sendClientMsgWithResponse({
@@ -525,6 +548,16 @@ export function createAi(config: AiConfig): Ai {
           type: "text",
           text: message,
         };
+
+        // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+        context.messages.addMessage(chatId, {
+          id: nanoid() as MessageId,
+          role: "user",
+          content: [content],
+          status: "complete",
+          createdAt: new Date().toISOString() as ISODateString,
+        });
+
         return sendClientMsgWithResponse(
           {
             type: ClientAiMsgCode.ADD_USER_MESSAGE,

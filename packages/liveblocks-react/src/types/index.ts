@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChat,
+  AiChatMessage,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -184,6 +185,9 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 
 export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
+
+export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<AiChatMessage[], "messages">; // prettier-ignore
+export type CopilotChatMessagesAsyncResult = PagedAsyncResult<AiChatMessage[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1213,6 +1217,22 @@ export type LiveblocksContextBundle<
         options?: UseUserThreadsOptions<M>
       ): ThreadsAsyncResult<M>;
 
+      /**
+       * (Private beta)  Returns the chats for the current user.
+       *
+       * @example
+       * const { chats, error, isLoading } = useCopilotChats();
+       */
+      useCopilotChats(): CopilotChatsAsyncResult;
+
+      /**
+       * (Private beta)  Returns the messages in the given chat.
+       *
+       * @example
+       * const { messages, error, isLoading } = useCopilotChatMessages();
+       */
+      useCopilotChatMessages(chatId: string): CopilotChatMessagesAsyncResult;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1252,6 +1272,24 @@ export type LiveblocksContextBundle<
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
             ): ThreadsAsyncSuccess<M>;
+
+            /**
+             * (Private beta)  Returns the chats for the current user.
+             *
+             * @example
+             * const { chats } = useCopilotChats();
+             */
+            useCopilotChats(): CopilotChatsAsyncSuccess;
+
+            /**
+             * (Private beta)  Returns the messages in the given chat.
+             *
+             * @example
+             * const { messages } = useCopilotChatMessages();
+             */
+            useCopilotChatMessages(
+              chatId: string
+            ): CopilotChatMessagesAsyncSuccess;
           }
       >;
     }

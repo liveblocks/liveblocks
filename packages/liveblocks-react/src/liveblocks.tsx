@@ -8,6 +8,7 @@ import type {
 import {
   type AsyncResult,
   type BaseRoomInfo,
+  type ChatId,
   type DM,
   type DU,
   HttpError,
@@ -44,6 +45,8 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  CopilotChatMessagesAsyncResult,
+  CopilotChatMessagesAsyncSuccess,
   CopilotChatsAsyncResult,
   CopilotChatsAsyncSuccess,
   InboxNotificationsAsyncResult,
@@ -374,6 +377,7 @@ function makeLiveblocksContextBundle<
     useUserThreads_experimental,
 
     useCopilotChats,
+    useCopilotChatMessages,
 
     ...shared.classic,
 
@@ -400,6 +404,7 @@ function makeLiveblocksContextBundle<
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
       useCopilotChats: useCopilotChatsSuspense,
+      useCopilotChatMessages: useCopilotChatMessagesSuspense,
 
       ...shared.suspense,
     },
@@ -695,9 +700,9 @@ function useUpdateNotificationSettings_withClient(
 function useNotificationSettings_withClient(
   client: OpaqueClient
 ): [
-    UserNotificationSettingsAsyncResult,
-    (settings: PartialUserNotificationSettings) => void,
-  ] {
+  UserNotificationSettingsAsyncResult,
+  (settings: PartialUserNotificationSettings) => void,
+] {
   const updateNotificationSettings =
     useUpdateNotificationSettings_withClient(client);
 
@@ -734,9 +739,9 @@ function useNotificationSettings_withClient(
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-    UserNotificationSettingsAsyncSuccess,
-    (settings: PartialUserNotificationSettings) => void,
-  ] {
+  UserNotificationSettingsAsyncSuccess,
+  (settings: PartialUserNotificationSettings) => void,
+] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -958,6 +963,58 @@ function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
   use(store.outputs.copilotChats.waitUntilLoaded());
 
   const result = useCopilotChats();
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages } = useCopilotChatMessages();
+ */
+function useCopilotChatMessages(
+  chatId: ChatId
+): CopilotChatMessagesAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () =>
+      void store.outputs.messagesByCopilotChatId
+        .getOrCreate(chatId)
+        .waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(
+    store.outputs.messagesByCopilotChatId.getOrCreate(chatId).signal
+  );
+}
+
+function useCopilotChatMessagesSuspense(
+  chatId: ChatId
+): CopilotChatMessagesAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(
+    store.outputs.messagesByCopilotChatId.getOrCreate(chatId).waitUntilLoaded()
+  );
+
+  const result = useCopilotChatMessages(chatId);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -1449,6 +1506,24 @@ const _useCopilotChats: TypedBundle["useCopilotChats"] = useCopilotChats;
 const _useCopilotChatsSuspense: TypedBundle["suspense"]["useCopilotChats"] =
   useCopilotChatsSuspense;
 
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages, error, isLoading } = useCopilotChatMessages();
+ */
+const _useCopilotChatMessages: TypedBundle["useCopilotChatMessages"] =
+  useCopilotChatMessages;
+
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages, error, isLoading } = useCopilotChatMessages();
+ */
+const _useCopilotChatMessagesSuspense: TypedBundle["suspense"]["useCopilotChatMessages"] =
+  useCopilotChatMessagesSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -1563,4 +1638,6 @@ export {
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
   _useCopilotChats as useCopilotChats,
   _useCopilotChatsSuspense as useCopilotChatsSuspense,
+  _useCopilotChatMessages as useCopilotChatMessages,
+  _useCopilotChatMessagesSuspense as useCopilotChatMessagesSuspense,
 };
