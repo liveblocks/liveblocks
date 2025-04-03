@@ -193,7 +193,7 @@ export type Ai = {
   reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
-  listChats: () => Promise<ListChatServerMsg>;
+  listChats: (options: { cursor?: Cursor }) => Promise<ListChatServerMsg>;
   newChat: (options?: {
     id?: ChatId;
     name?: string;
@@ -459,6 +459,14 @@ export function createAi(config: AiConfig): Ai {
     );
   }
 
+  function listChats(options: { cursor?: Cursor } = {}) {
+    return sendClientMsgWithResponse<ListChatServerMsg>({
+      type: ClientAiMsgCode.LIST_CHATS,
+      cursor: options.cursor,
+      pageSize: 2,
+    });
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -469,12 +477,7 @@ export function createAi(config: AiConfig): Ai {
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
 
-      listChats: (cursor?: Cursor) => {
-        return sendClientMsgWithResponse({
-          type: ClientAiMsgCode.LIST_CHATS,
-          cursor,
-        });
-      },
+      listChats,
 
       newChat: (options?: { id?: ChatId; name?: string }) => {
         return sendClientMsgWithResponse({

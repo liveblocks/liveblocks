@@ -44,6 +44,8 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  CopilotChatsAsyncResult,
+  CopilotChatsAsyncSuccess,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
@@ -371,6 +373,8 @@ function makeLiveblocksContextBundle<
     useInboxNotificationThread,
     useUserThreads_experimental,
 
+    useCopilotChats,
+
     ...shared.classic,
 
     suspense: {
@@ -394,6 +398,8 @@ function makeLiveblocksContextBundle<
       useUpdateNotificationSettings,
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
+
+      useCopilotChats: useCopilotChatsSuspense,
 
       ...shared.suspense,
     },
@@ -916,6 +922,47 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   } as const;
 }
 
+/**
+ * (Private beta)  Returns the chats for the current user.
+ *
+ * @example
+ * const { chats } = useCopilotChats();
+ */
+function useCopilotChats(): CopilotChatsAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () => void store.outputs.copilotChats.waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.copilotChats.signal, identity, shallow);
+}
+
+function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(store.outputs.copilotChats.waitUntilLoaded());
+
+  const result = useCopilotChats();
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
 /** @internal */
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
@@ -1385,6 +1432,23 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
 
+/**
+ * (Private beta)  Returns the chats for the current user.
+ *
+ * @example
+ * const { chats, error, isLoading } = useCopilotChats();
+ */
+const _useCopilotChats: TypedBundle["useCopilotChats"] = useCopilotChats;
+
+/**
+ * (Private beta)  Returns the chats for the current user.
+ *
+ * @example
+ * const { chats, error, isLoading } = useCopilotChats();
+ */
+const _useCopilotChatsSuspense: TypedBundle["suspense"]["useCopilotChats"] =
+  useCopilotChatsSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -1497,4 +1561,6 @@ export {
   useUpdateNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
+  _useCopilotChats as useCopilotChats,
+  _useCopilotChatsSuspense as useCopilotChatsSuspense,
 };

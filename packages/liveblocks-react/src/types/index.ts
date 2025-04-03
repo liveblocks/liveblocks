@@ -14,6 +14,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AiChat,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -180,6 +181,9 @@ export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
+
+export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
+export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore

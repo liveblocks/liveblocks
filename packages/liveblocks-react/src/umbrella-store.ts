@@ -6,6 +6,7 @@ import type {
   CommentData,
   CommentReaction,
   CommentUserReaction,
+  Cursor,
   DistributiveOmit,
   HistoryVersion,
   InboxNotificationData,
@@ -47,6 +48,7 @@ import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  CopilotChatsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -902,6 +904,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<HistoryVersionsAsyncResult>
     >;
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
+    readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
   };
 
   // Notifications
@@ -919,6 +922,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // User Notification Settings
   #userNotificationSettings: SinglePageResource;
+
+  // Copilot chats
+  #copilotChats: PaginatedResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -954,6 +960,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.#userNotificationSettings = new SinglePageResource(
       userNotificationSettingsFetcher
     );
+
+    this.#copilotChats = new PaginatedResource(async (cursor?: string) => {
+      const result = await this.#client.ai.listChats({
+        cursor: cursor as Cursor,
+      });
+      return result.nextCursor;
+    });
 
     this.threads = new ThreadDB();
 
@@ -1209,6 +1222,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
         waitUntilLoaded: this.#userNotificationSettings.waitUntilLoaded,
       };
 
+    const copilotChats: LoadableResource<CopilotChatsAsyncResult> = {
+      signal: DerivedSignal.from((): CopilotChatsAsyncResult => {
+        const result = this.#copilotChats.get();
+        if (result.isLoading || result.error) {
+          return result;
+        }
+
+        return {
+          isLoading: false,
+          chats: this.#client.ai.signals.chats.get(),
+          hasFetchedAll: result.data.hasFetchedAll,
+          isFetchingMore: result.data.isFetchingMore,
+          fetchMore: result.data.fetchMore,
+          fetchMoreError: result.data.fetchMoreError,
+        };
+      }, shallow),
+      waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
+    };
+
     this.outputs = {
       threadifications,
       threads,
@@ -1219,6 +1251,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId,
       versionsByRoomId,
       userNotificationSettings,
+      copilotChats,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
