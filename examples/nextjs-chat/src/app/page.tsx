@@ -159,6 +159,14 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const client = useClient();
   const { messages } = useCopilotChatMessages(chatId);
 
+  const [overrideParentId, setOverrideParentId] = useState<
+    MessageId | undefined
+  >(undefined);
+
+  const lastMessageId =
+    messages.length > 0 ? messages[messages.length - 1].id : null;
+
+  const parentMessageId = overrideParentId ?? lastMessageId;
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
       <ChatMessages chatId={chatId} messages={messages} className="messages" />
@@ -176,16 +184,37 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           onSubmit={async (ev) => {
             if (ev.currentTarget.textContent?.trim()) {
               try {
-                await client.ai.addUserMessage(
+                const { messageId } = await client.ai.attachUserMessage(
                   chatId,
+                  parentMessageId,
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
-                await client.ai.generateAnswer(chatId);
+                await client.ai.generateAnswer(chatId, messageId);
               } finally {
+                setOverrideParentId(undefined);
               }
             }
           }}
+        />
+
+        <input
+          style={{
+            width: "85%",
+            border: "2px solid #888",
+            borderRadius: "6px",
+            backgroundColor: "white",
+            padding: "20px 1rem",
+            margin: "1rem 3rem",
+          }}
+          type="text"
+          onChange={(ev) =>
+            setOverrideParentId(
+              (ev.currentTarget.value || undefined) as MessageId | undefined
+            )
+          }
+          value={overrideParentId}
+          placeholder="Attach to which message?"
         />
       </div>
     </div>
