@@ -211,7 +211,12 @@ export type Ai = {
     name: string,
     metadata?: AiChat["metadata"]
   ) => Promise<ChatCreatedServerMsg>;
-  getMessages: (chatId: ChatId) => Promise<GetMessagesServerMsg>;
+  getMessages: (
+    chatId: ChatId,
+    options?: {
+      cursor?: Cursor;
+    }
+  ) => Promise<GetMessagesServerMsg>;
   addUserMessage: (
     chatId: ChatId,
     message: string
