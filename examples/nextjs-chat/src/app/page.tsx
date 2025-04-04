@@ -156,7 +156,7 @@ function ChatPicker() {
 }
 
 function ChatWindow({ chatId }: { chatId: ChatId }) {
-  const [renderCount, forceRerender] = useForceRerender();
+  const [_, forceRerender] = useForceRerender();
   const client = useClient();
   const { messages } = useCopilotChatMessages(chatId);
 
