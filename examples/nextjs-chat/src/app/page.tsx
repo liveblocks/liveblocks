@@ -68,9 +68,9 @@ function ChatPicker() {
   // The user-selected chat ID. If nothing is explicitly selected (or the
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
-  const [selectedChatId, setUserSelectedChatId] = useState<
-    ChatId | undefined
-  >();
+  const [selectedChatId, setUserSelectedChatId] = useState<ChatId | undefined>(
+    chats[0]?.id
+  );
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
   return (
     <div
@@ -201,7 +201,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
-  >(undefined);
+  >();
 
   const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
