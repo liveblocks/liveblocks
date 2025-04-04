@@ -9,7 +9,7 @@ export type ISODateString = Brand<string, "ISODateString">;
 // --------------------------------------------------------------
 
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
-export type MessageId = Brand<`msg_${string}`, "MessageId">;
+export type MessageId = Brand<`ms_${string}`, "MessageId">;
 export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
