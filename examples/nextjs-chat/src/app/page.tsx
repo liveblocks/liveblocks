@@ -8,8 +8,13 @@ import {
   useCopilotChats,
   useCopilotChatMessages,
 } from "@liveblocks/react/suspense";
-import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
-import { useEffect, useState } from "react";
+import {
+  AssistantChatMessage,
+  ChatComposer,
+  ChatMessages,
+  UserChatMessage,
+} from "@liveblocks/react-ui";
+import { useState } from "react";
 
 import { DebugClient } from "../DebugClient";
 import {
@@ -59,19 +64,13 @@ function ChatPicker() {
   const client = useClient();
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
-  const [selectedChatId, setSelectedChatId] = useState<ChatId | undefined>(
-    chats[0]?.id
-  );
 
-  if (selectedChatId === undefined && chats.length > 0) {
-    //setSelectedChatId(chats[0].id);
-  }
-
-  if (chats.length === 0) {
-    //setSelectedChatId(undefined);
-  }
-
-  // Make sure the selected chat ID actually exists!
+  // The user-selected chat ID. If nothing is explicitly selected (or the
+  // selected chat ID isn't a valid one), the selected chat will be the first
+  // one in the list.
+  const [selectedChatId, setUserSelectedChatId] = useState<
+    ChatId | undefined
+  >();
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
   return (
     <div
@@ -80,6 +79,7 @@ function ChatPicker() {
         flexDirection: "column",
         gap: 20,
         height: "100%",
+        padding: "20px 0",
       }}
     >
       <div
@@ -89,30 +89,9 @@ function ChatPicker() {
           alignItems: "center",
           padding: "0 20px",
           margin: "0 auto",
+          gap: "10px",
         }}
       >
-        <ul
-          style={{
-            display: "flex",
-            gap: "10px",
-            listStyle: "none",
-            padding: 0,
-          }}
-        >
-          {chats.map((chat) => (
-            <li key={chat.id}>
-              <a
-                href="#"
-                onClick={() => {
-                  setSelectedChatId(chat.id);
-                }}
-              >
-                {chat.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-
         <div style={{ display: "flex", gap: "10px" }}>
           <button
             style={{
@@ -122,7 +101,7 @@ function ChatPicker() {
             onClick={() => {
               const name = prompt("Enter a name for this chat?", "New chat");
               if (name !== null) {
-                client.ai.newChat(name);
+                client.ai.createChat(name);
               }
             }}
           >
@@ -148,6 +127,60 @@ function ChatPicker() {
             )}
           </div>
         </div>
+        <ul
+          style={{
+            display: "flex",
+            gap: "10px",
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
+          }}
+        >
+          {chats.map((chat) => (
+            <li key={chat.id}>
+              <a
+                href="#"
+                onClick={() => {
+                  setUserSelectedChatId(chat.id);
+                }}
+              >
+                {chat.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {selectedChat ? (
+          <div style={{ display: "flex", gap: "20px" }}>
+            <button
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                color: "red",
+              }}
+              onClick={() => {
+                if (confirm("Are you sure?")) {
+                  client.ai.clearChat(selectedChat.id);
+                }
+              }}
+            >
+              Clear this chat
+            </button>
+
+            <button
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                color: "red",
+              }}
+              onClick={() => {
+                client.ai.deleteChat(selectedChat.id);
+              }}
+            >
+              Delete this chat
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : null}
@@ -183,10 +216,164 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
 
+  function messageAbove(messageId: MessageId): AiChatMessage | undefined {
+    return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
+  }
+
   const parentMessageId = overrideParentId ?? lastMessageId;
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-      <ChatMessages chatId={chatId} messages={messages} className="messages" />
+      <ChatMessages
+        chatId={chatId}
+        messages={messages}
+        className="messages"
+        components={{
+          // Add bells and whistles to the default chat components
+          UserChatMessage: (props) => (
+            <div
+              style={{
+                borderBottom: "0.5px solid #efefef",
+                borderRight: "4px solid #efefef",
+                borderRadius: "6px",
+                padding: "1rem",
+              }}
+            >
+              <UserChatMessage {...props} />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row-reverse",
+                  gap: "20px",
+                  padding: "0 5rem",
+                  fontSize: "0.75rem",
+                  opacity: 0.8,
+                }}
+              >
+                <button
+                  style={{ all: "unset", cursor: "pointer", color: "red" }}
+                  onClick={async () => {
+                    if (confirm("Are you sure?")) {
+                      try {
+                        await client.ai.deleteMessage(chatId, props.message.id);
+                      } finally {
+                        forceRerender();
+                      }
+                    }
+                  }}
+                >
+                  delete
+                </button>
+                <button
+                  style={{ all: "unset", cursor: "pointer" }}
+                  onClick={async () => {
+                    const answer = prompt(
+                      "Edit",
+                      props.message.content
+                        .flatMap((b) => (b.type === "text" ? [b.text] : []))
+                        .join(" ")
+                    );
+                    if (answer !== null) {
+                      try {
+                        const { messageId } = await client.ai.attachUserMessage(
+                          chatId,
+                          messageAbove(props.message.id)?.id ?? null,
+                          answer
+                        );
+                        forceRerender();
+                        await client.ai.generateAnswer(
+                          chatId,
+                          messageId,
+                          selectedCopilotId
+                        );
+                      } finally {
+                        setOverrideParentId(undefined);
+                      }
+                    }
+                  }}
+                >
+                  edit
+                </button>
+                <button
+                  style={{ all: "unset", cursor: "pointer" }}
+                  onClick={async () => {
+                    try {
+                      await client.ai.generateAnswer(
+                        chatId,
+                        props.message.id,
+                        selectedCopilotId
+                      );
+                    } finally {
+                      setOverrideParentId(undefined);
+                    }
+                  }}
+                >
+                  regenerate
+                </button>
+                <button
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setOverrideParentId(props.message.id)}
+                >
+                  {props.message.id}
+                </button>
+              </div>
+            </div>
+          ),
+          // Add bells and whistles to the default chat components
+          AssistantChatMessage: (props) => (
+            <div
+              style={{
+                borderBottom: "0.5px solid #efefef",
+                borderLeft: "4px solid #efefef",
+                borderRadius: "6px",
+                padding: "1rem",
+              }}
+            >
+              <AssistantChatMessage {...props} />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: "20px",
+                  padding: "0 5rem",
+                  fontSize: "0.75rem",
+                  opacity: 0.8,
+                }}
+              >
+                <button
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setOverrideParentId(props.message.id)}
+                >
+                  {props.message.id}
+                </button>
+                <button
+                  style={{
+                    all: "unset",
+                    cursor: "pointer",
+                    color: "red",
+                  }}
+                  onClick={async () => {
+                    if (confirm("Are you sure?")) {
+                      try {
+                        await client.ai.deleteMessage(chatId, props.message.id);
+                      } finally {
+                        forceRerender();
+                      }
+                    }
+                  }}
+                >
+                  delete
+                </button>
+              </div>
+            </div>
+          ),
+        }}
+      />
 
       <div className="composer-container">
         <ChatComposer

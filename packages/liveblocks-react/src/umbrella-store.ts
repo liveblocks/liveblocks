@@ -968,7 +968,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.#copilotChats = new PaginatedResource(async (cursor?: string) => {
-      const result = await this.#client.ai.listChats({
+      const result = await this.#client.ai.getChats({
         cursor: cursor as Cursor,
       });
       return result.nextCursor;

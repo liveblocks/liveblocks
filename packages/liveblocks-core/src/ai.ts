@@ -25,11 +25,14 @@ import type {
   AiTool,
   AttachUserMessageResponse,
   ChatId,
+  ClearChatResponse,
   ClientAiMsg,
   CmdId,
   CopilotId,
   CreateChatResponse,
   Cursor,
+  DeleteChatResponse,
+  DeleteMessageResponse,
   ErrorServerEvent,
   GenerateAnswerResponse,
   GetChatsResponse,
@@ -202,17 +205,23 @@ export type Ai = {
   reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
-  listChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
-  newChat: (
+  getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
+  createChat: (
     name: string,
     metadata?: AiChat["metadata"]
   ) => Promise<CreateChatResponse>;
+  deleteChat: (chatId: ChatId) => Promise<DeleteChatResponse>;
   getMessages: (
     chatId: ChatId,
     options?: {
       cursor?: Cursor;
     }
   ) => Promise<GetMessagesResponse>;
+  deleteMessage: (
+    chatId: ChatId,
+    messageId: MessageId
+  ) => Promise<DeleteMessageResponse>;
+  clearChat: (chatId: ChatId) => Promise<ClearChatResponse>;
   attachUserMessage: (
     chatId: ChatId,
     parentMessageId: MessageId | null,
@@ -505,7 +514,7 @@ export function createAi(config: AiConfig): Ai {
     );
   }
 
-  function listChats(options: { cursor?: Cursor } = {}) {
+  function getChats(options: { cursor?: Cursor } = {}) {
     return sendClientMsgWithResponse<GetChatsResponse>({
       cmd: "get-chats",
       cursor: options.cursor,
@@ -531,9 +540,8 @@ export function createAi(config: AiConfig): Ai {
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
 
-      listChats,
-
-      newChat: (name: string, metadata?: AiChat["metadata"]) => {
+      getChats,
+      createChat: (name: string, metadata?: AiChat["metadata"]) => {
         const id = `ch_${nanoid()}` as ChatId;
         return sendClientMsgWithResponse({
           cmd: "create-chat",
@@ -552,20 +560,10 @@ export function createAi(config: AiConfig): Ai {
 
       getMessages,
 
-      clearChat: (chatId: ChatId) => {
-        return sendClientMsgWithResponse({
-          cmd: "clear-chat",
-          chatId,
-        });
-      },
-
-      deleteMessage: (chatId: ChatId, messageId: MessageId) => {
-        return sendClientMsgWithResponse({
-          cmd: "delete-message",
-          chatId,
-          messageId,
-        });
-      },
+      deleteMessage: (chatId: ChatId, messageId: MessageId) =>
+        sendClientMsgWithResponse({ cmd: "delete-message", chatId, messageId }),
+      clearChat: (chatId: ChatId) =>
+        sendClientMsgWithResponse({ cmd: "clear-chat", chatId }),
 
       attachUserMessage: (
         chatId: ChatId,
