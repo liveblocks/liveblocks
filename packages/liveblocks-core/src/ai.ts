@@ -21,8 +21,10 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
+  AiInputSource,
   AiTextContent,
   AiTool,
+  AskAiResponse,
   AttachUserMessageResponse,
   ChatId,
   ClearChatResponse,
@@ -34,13 +36,11 @@ import type {
   DeleteChatResponse,
   DeleteMessageResponse,
   ErrorServerEvent,
-  GenerateAnswerResponse,
   GetChatsResponse,
   GetMessagesResponse,
   ISODateString,
   MessageId,
   ServerAiMsg,
-  StreamMessageCompleteServerEvent,
 } from "./types/ai";
 import type {
   IWebSocket,
@@ -69,6 +69,14 @@ type AiContext = {
   >;
   chats: ReturnType<typeof createStore_forUserAiChats>;
   messages: ReturnType<typeof createStore_forChatMessages>;
+};
+
+export type AskAiOptions = {
+  copilotId?: CopilotId;
+  stream?: boolean; // True by default
+  tools?: AiTool[];
+  // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
+  // XXX Allow specifying a backend timeout here!
 };
 
 function createStore_forChatMessages() {
@@ -108,10 +116,10 @@ function createStore_forChatMessages() {
   }
 
   // TODO: do we want to fail or throw or return something if the message doesn't exist?
-  function updateMessage(
+  function patchMessage(
     chatId: ChatId,
     messageId: MessageId,
-    messageUpdate: Partial<AiChatMessage>
+    patch: Partial<AiChatMessage>
   ): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
@@ -124,7 +132,7 @@ function createStore_forChatMessages() {
       }
       messagesByChatId.set(messageId, {
         ...message,
-        ...messageUpdate,
+        ...patch,
       } as AiChatMessage);
     });
   }
@@ -161,7 +169,7 @@ function createStore_forChatMessages() {
     ),
 
     // Mutations
-    updateMessage,
+    patchMessage,
     addMessage,
     update,
     remove,
@@ -227,21 +235,16 @@ export type Ai = {
     parentMessageId: MessageId | null,
     message: string
   ) => Promise<AttachUserMessageResponse>;
-  streamAnswer: (
-    chatId: ChatId,
-    messageId: MessageId,
-    copilotId?: CopilotId
-  ) => Promise<StreamMessageCompleteServerEvent>;
-  generateAnswer: (
-    chatId: ChatId,
-    messageId: MessageId,
-    copilotId?: CopilotId
-  ) => Promise<GenerateAnswerResponse>;
+  ask: {
+    (
+      chatId: ChatId,
+      messageId: MessageId,
+      options?: AskAiOptions
+    ): Promise<AskAiResponse>;
+    (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
+  };
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
-  statelessAction: (
-    prompt: string,
-    tool: AiTool
-  ) => Promise<GenerateAnswerResponse>;
+  statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
   abortResponse: (chatId: ChatId) => Promise<ErrorServerEvent>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
@@ -368,7 +371,7 @@ export function createAi(config: AiConfig): Ai {
           // XXX Remove these cryptic "type" codes in the next pass!
           case 1003: // STREAM_MESSAGE_COMPLETE
             if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.updateMessage(msg.chatId, msg.messageId, {
+              context.messages.patchMessage(msg.chatId, msg.messageId, {
                 content: msg.content,
                 status: "complete",
               });
@@ -377,7 +380,7 @@ export function createAi(config: AiConfig): Ai {
 
           case 1004: // STREAM_MESSAGE_FAILED
             if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.updateMessage(msg.chatId, msg.messageId, {
+              context.messages.patchMessage(msg.chatId, msg.messageId, {
                 status: "failed",
               });
             }
@@ -386,7 +389,7 @@ export function createAi(config: AiConfig): Ai {
 
           case 1005: // STREAM_MESSAGE_ABORTED
             if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.updateMessage(msg.chatId, msg.messageId, {
+              context.messages.patchMessage(msg.chatId, msg.messageId, {
                 status: "aborted",
               });
             }
@@ -428,7 +431,7 @@ export function createAi(config: AiConfig): Ai {
             context.messages.removeByChatId(msg.chatId);
             break;
 
-          case "generate-answer":
+          case "ask-ai":
             if (msg.messageId !== undefined && msg.chatId !== undefined) {
               // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
               context.messages.addMessage(msg.chatId, {
@@ -442,7 +445,6 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           case "attach-user-message":
-          case "stream-answer":
             // TODO Not handled yet
             break;
 
@@ -595,34 +597,27 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
-      streamAnswer: (
-        chatId: ChatId,
-        messageId: MessageId,
-        copilotId?: CopilotId
-      ) => {
+      ask: (
+        one: string,
+        two?: MessageId | AskAiOptions,
+        three?: AskAiOptions
+      ): Promise<AskAiResponse> => {
+        const inputSource: AiInputSource =
+          typeof two === "string"
+            ? { chatId: one as ChatId, messageId: two }
+            : { prompt: one };
+        const options = typeof two === "string" ? three : two;
         return sendClientMsgWithResponse({
-          cmd: "stream-answer",
-          inputSource: { chatId, messageId },
-          copilotId,
-        });
-      },
-
-      generateAnswer: (
-        chatId: ChatId,
-        messageId: MessageId,
-        copilotId?: CopilotId
-      ) => {
-        return sendClientMsgWithResponse({
-          cmd: "generate-answer",
-          inputSource: { chatId, messageId },
-          copilotId,
+          cmd: "ask-ai",
+          inputSource,
+          ...options,
         });
       },
 
       statelessAction: (prompt: string, tool: AiTool) => {
         return sendClientMsgWithResponse(
           {
-            cmd: "generate-answer",
+            cmd: "ask-ai",
             inputSource: { prompt },
             tools: [tool],
             toolChoice: {
@@ -630,7 +625,7 @@ export function createAi(config: AiConfig): Ai {
               toolName: tool.name,
             },
           },
-          60_000
+          60_000 // XXX This should not be the _client_ timeout! The immediate response should be fast! We should pass this requested timeout to the backend and use it there!
         );
       },
 

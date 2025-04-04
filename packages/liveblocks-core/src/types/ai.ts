@@ -40,8 +40,7 @@ type CommandPair =
   | AttachUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
-  | GenerateAnswerPair
-  | StreamAnswerPair;
+  | AskAIPair;
 
 type ClientCmdRequest<T extends CommandPair> = T[0];
 type ServerCmdResponse<T extends CommandPair> = T[1];
@@ -53,8 +52,7 @@ export type GetMessagesCmd = ClientCmdRequest<GetMessagesPair>;
 export type AttachUserMessageCmd = ClientCmdRequest<AttachUserMessagePair>;
 export type DeleteMessageCmd = ClientCmdRequest<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmdRequest<ClearChatPair>;
-export type GenerateAnswerCmd = ClientCmdRequest<GenerateAnswerPair>;
-export type StreamAnswerCmd = ClientCmdRequest<StreamAnswerPair>;
+export type AskAiCmd = ClientCmdRequest<AskAIPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
@@ -64,8 +62,7 @@ export type AttachUserMessageResponse =
   ServerCmdResponse<AttachUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
-export type GenerateAnswerResponse = ServerCmdResponse<GenerateAnswerPair>;
-export type StreamAnswerResponse = ServerCmdResponse<StreamAnswerPair>;
+export type AskAiResponse = ServerCmdResponse<AskAIPair>;
 
 type GetChatsPair = DefineCmd<
   "get-chats",
@@ -114,27 +111,22 @@ type ClearChatPair = DefineCmd<
   { chatId: ChatId }
 >;
 
-type GenerateAnswerPair = DefineCmd<
-  "generate-answer",
+type AskAIPair = DefineCmd<
+  "ask-ai",
   {
     inputSource: AiInputSource;
+    stream?: boolean; // True by default
+    // XXX Allow specifying a timeout?
     tools?: AiTool[];
     toolChoice?: ToolChoice;
     copilotId?: CopilotId;
   },
-  { content: AiAssistantContent[]; chatId?: ChatId; messageId?: MessageId }
->;
-
-type StreamAnswerPair = DefineCmd<
-  "stream-answer", // XXX Should this not be "generate-answer" with a "stream?: boolean" option maybe?
   {
-    inputSource: AiInputSource;
-    tools?: AiTool[];
-    toolChoice?: ToolChoice;
-    copilotId?: CopilotId;
-  },
-  // XXX We should send back a "container ID" here - I'll work on that next
-  { chatId?: ChatId; messageId?: MessageId }
+    // XXX Replace `content` by an optimistically created "container" ID
+    content: AiAssistantContent[];
+    chatId?: ChatId;
+    messageId?: MessageId;
+  }
 >;
 
 // -------------------------------------------------------------------------------------------------

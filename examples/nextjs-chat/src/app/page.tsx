@@ -281,11 +281,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                           answer
                         );
                         forceRerender();
-                        await client.ai.generateAnswer(
-                          chatId,
-                          messageId,
-                          selectedCopilotId
-                        );
+                        await client.ai.ask(chatId, messageId, {
+                          copilotId: selectedCopilotId,
+                          stream: false,
+                        });
                       } finally {
                         setOverrideParentId(undefined);
                       }
@@ -298,11 +297,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   style={{ all: "unset", cursor: "pointer" }}
                   onClick={async () => {
                     try {
-                      await client.ai.generateAnswer(
-                        chatId,
-                        props.message.id,
-                        selectedCopilotId
-                      );
+                      await client.ai.ask(chatId, props.message.id, {
+                        copilotId: selectedCopilotId,
+                        stream: false,
+                      });
                     } finally {
                       setOverrideParentId(undefined);
                     }
@@ -395,11 +393,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
-                await client.ai.generateAnswer(
-                  chatId,
-                  messageId,
-                  selectedCopilotId
-                );
+                await client.ai.ask(chatId, messageId, {
+                  copilotId: selectedCopilotId,
+                  stream: false,
+                });
               } finally {
                 setOverrideParentId(undefined);
               }
