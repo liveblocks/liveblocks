@@ -164,18 +164,21 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     MessageId | undefined
   >(undefined);
 
-  const [selectedCopilotId, setSelectedCopilotId] = useState<CopilotId | undefined>(undefined);
+  const [selectedCopilotId, setSelectedCopilotId] = useState<
+    CopilotId | undefined
+  >(undefined);
 
   const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSelectedCopilotId(value === "default" ? undefined : value as CopilotId);
+    setSelectedCopilotId(
+      value === "default" ? undefined : (value as CopilotId)
+    );
   };
 
   const COPILOTS = [
     { id: "co_T6jQlhS", name: "Rhyme Maker (anthropic)" },
-    { id: "co_gblzUtw", name: "Wrong Answers Only (openAI)" }
+    { id: "co_gblzUtw", name: "Wrong Answers Only (openAI)" },
   ];
-
 
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
@@ -204,14 +207,24 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
-                await client.ai.generateAnswer(chatId, messageId, selectedCopilotId);
+                await client.ai.generateAnswer(
+                  chatId,
+                  messageId,
+                  selectedCopilotId
+                );
               } finally {
                 setOverrideParentId(undefined);
               }
             }
           }}
         />
-        <div style={{ display: "flex", justifyContent: "space-between", margin: "1rem 3rem" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            margin: "1rem 3rem",
+          }}
+        >
           <select
             value={selectedCopilotId || "default"}
             onChange={handleCopilotChange}
@@ -224,7 +237,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             }}
           >
             <option value="default">Default</option>
-            {COPILOTS.map(option => (
+            {COPILOTS.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.name}
               </option>
@@ -249,7 +262,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             placeholder="Attach to which message?"
           />
         </div>
-
       </div>
     </div>
   );
