@@ -610,7 +610,9 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
           inputSource,
-          ...options,
+          copilotId: options?.copilotId,
+          stream: options?.stream ?? false, // XXX Make true the default for .ask()?
+          tools: options?.tools,
         });
       },
 
@@ -619,6 +621,7 @@ export function createAi(config: AiConfig): Ai {
           {
             cmd: "ask-ai",
             inputSource: { prompt },
+            stream: false,
             tools: [tool],
             toolChoice: {
               type: "tool",

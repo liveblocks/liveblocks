@@ -115,7 +115,7 @@ type AskAIPair = DefineCmd<
   "ask-ai",
   {
     inputSource: AiInputSource;
-    stream?: boolean; // True by default
+    stream: boolean;
     // XXX Allow specifying a timeout?
     tools?: AiTool[];
     toolChoice?: ToolChoice;
