@@ -159,7 +159,7 @@ function ChatPicker() {
                 color: "red",
               }}
               onClick={() => {
-                if (confirm("Are you sure?")) {
+                if (confirm("This will wipe all messages! Are you sure?")) {
                   client.ai.clearChat(selectedChat.id);
                 }
               }}
@@ -174,7 +174,9 @@ function ChatPicker() {
                 color: "red",
               }}
               onClick={() => {
-                client.ai.deleteChat(selectedChat.id);
+                if (confirm(`Are you sure to delete '${selectedChat.name}'?`)) {
+                  client.ai.deleteChat(selectedChat.id);
+                }
               }}
             >
               Delete this chat
@@ -252,12 +254,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 <button
                   style={{ all: "unset", cursor: "pointer", color: "red" }}
                   onClick={async () => {
-                    if (confirm("Are you sure?")) {
-                      try {
-                        await client.ai.deleteMessage(chatId, props.message.id);
-                      } finally {
-                        forceRerender();
-                      }
+                    try {
+                      await client.ai.deleteMessage(chatId, props.message.id);
+                    } finally {
+                      forceRerender();
                     }
                   }}
                 >
