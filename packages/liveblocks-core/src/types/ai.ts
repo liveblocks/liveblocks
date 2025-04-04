@@ -10,13 +10,14 @@ export type ISODateString = Brand<string, "ISODateString">;
 
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
+export type PlaceholderId = Brand<`ph_${string}`, "PlaceholderId">;
 export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
 export type ClientAiMsg =
   | ClientCmdRequest<CommandPair>
-  | AbortSomethingClientMsg;
+  | AbortSomethingClientMsg; // XXX We should fine tune or remove this
 
 // A server WebSocket message can be either a command response from the server,
 // or a server-initiated event
@@ -115,18 +116,23 @@ type AskAIPair = DefineCmd<
   "ask-ai",
   {
     inputSource: AiInputSource;
+    placeholderId: PlaceholderId; // Optimistically assigned by client
+    copilotId?: CopilotId;
     stream: boolean;
     // XXX Allow specifying a timeout?
     tools?: AiTool[];
     toolChoice?: ToolChoice;
-    copilotId?: CopilotId;
   },
-  {
-    // XXX Replace `content` by an optimistically created "container" ID
-    content: AiAssistantContent[];
-    chatId?: ChatId;
-    messageId?: MessageId;
-  }
+  Relax<
+    | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats
+    | {
+        placeholderId: PlaceholderId;
+        chatId: ChatId;
+        messageId: MessageId;
+        // XXX Replace `content` by an optimistically created "container" ID
+        // content: AiAssistantContent[];
+      }
+  >
 >;
 
 // -------------------------------------------------------------------------------------------------
@@ -136,6 +142,7 @@ type AskAIPair = DefineCmd<
 export type ServerEvent =
   | CmdFailedEvent
   | ErrorServerEvent
+  | SettlePlaceholderServerEvent
   | StreamMessagePartServerEvent
   | StreamMessageFailedServerEvent
   | StreamMessageAbortedServerEvent
@@ -190,6 +197,17 @@ export type StreamMessageCompleteServerEvent = {
   content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;
+};
+
+// XXX Fine-tune this message!
+export type SettlePlaceholderServerEvent = {
+  event: "settle-placeholder";
+  placeholderId: PlaceholderId;
+  result:
+    | { status: "completed"; content: AiAssistantContent[] } // XXX Not decided yet!
+    | { status: "failed"; reason: string }; // XXX Not decided yet!
+  chatId?: ChatId; // XXX Not decided yet!
+  messageId?: MessageId; // XXX Not decided yet!
 };
 
 // -------------------------------------------------------------------------------------------------

@@ -40,6 +40,7 @@ import type {
   GetMessagesResponse,
   ISODateString,
   MessageId,
+  PlaceholderId,
   ServerAiMsg,
 } from "./types/ai";
 import type {
@@ -81,10 +82,7 @@ export type AskAiOptions = {
 
 function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(
-    new DefaultMap(() => new Map()) as DefaultMap<
-      string,
-      Map<string, AiChatMessage>
-    >
+    new DefaultMap<ChatId, Map<MessageId, AiChatMessage>>(() => new Map())
   );
 
   function update(chatId: ChatId, messages: AiChatMessage[]): void {
@@ -364,6 +362,37 @@ export function createAi(config: AiConfig): Ai {
             pendingReq?.reject(new Error(msg.error));
             break;
 
+          case "settle-placeholder": {
+            const { placeholderId, result } = msg;
+            if (result.status === "completed") {
+              alert(
+                "placeholder " +
+                  placeholderId +
+                  "settled! " +
+                  result.content.join(" ")
+              );
+              // context.messages.patchMessage(chatId, messageId, {
+              //   role: "assistant",
+              //   status: "complete",
+              // });
+            } else if (result.status === "failed") {
+              alert(
+                "placeholder " + placeholderId + "failed: " + result.reason
+              );
+              // context.messages.patchMessage(chatId, messageId, {
+              //   status: "failed",
+              // });
+            }
+
+            // if (msg.messageId !== undefined && msg.chatId !== undefined) {
+            //   context.messages.patchMessage(msg.chatId, msg.messageId, {
+            //     content: msg.content,
+            //     status: "complete",
+            //   });
+            // }
+            break;
+          }
+
           case "error":
             // TODO Handle generic server error
             break;
@@ -432,15 +461,24 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           case "ask-ai":
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
+            if (msg.messageId !== undefined) {
               // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
               context.messages.addMessage(msg.chatId, {
                 id: msg.messageId,
                 role: "assistant",
-                content: msg.content,
+                // XXX Remove content here in favor of detecting it's a placeholder message
+                content: [
+                  {
+                    type: "text",
+                    text: "Asking AI, please be patient...",
+                  },
+                ],
                 status: "complete",
                 createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
               });
+            } else {
+              // XXX Handle the case for one-off ask!
+              // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
             }
             break;
 
@@ -610,6 +648,7 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
           inputSource,
+          placeholderId: `ph_${nanoid()}` as PlaceholderId,
           copilotId: options?.copilotId,
           stream: options?.stream ?? false, // XXX Make true the default for .ask()?
           tools: options?.tools,
@@ -621,6 +660,7 @@ export function createAi(config: AiConfig): Ai {
           {
             cmd: "ask-ai",
             inputSource: { prompt },
+            placeholderId: `ph_${nanoid()}` as PlaceholderId,
             stream: false,
             tools: [tool],
             toolChoice: {
