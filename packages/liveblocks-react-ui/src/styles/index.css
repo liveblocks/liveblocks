@@ -2206,6 +2206,13 @@
   padding: 0 calc(0.75 * var(--lb-spacing));
   border-radius: 0.75rem;
   color: var(--lb-foreground);
+  text-wrap: pretty;
+  white-space: pre-line;
+}
+
+.lb-user-chat-message-body {
+  text-wrap: pretty;
+  white-space: pre-line;
 }
 
 .lb-user-chat-message-attachments {
