@@ -28,6 +28,7 @@ import type {
   ClearChatResponse,
   ClientAiMsg,
   CmdId,
+  CopilotContext,
   CopilotId,
   CreateChatResponse,
   Cursor,
@@ -69,6 +70,10 @@ type AiContext = {
   >;
   chats: ReturnType<typeof createStore_forUserAiChats>;
   messages: ReturnType<typeof createStore_forChatMessages>;
+  contextByChatId: Map<
+    ChatId,
+    Map<string, { description: string; value: string }>
+  >;
 };
 
 function createStore_forChatMessages() {
@@ -247,6 +252,11 @@ export type Ai = {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<Record<string, AiChatMessage[]>>;
   };
+  registerChatContext: (
+    chatId: ChatId,
+    data: Record<string, CopilotContext>
+  ) => void;
+  unregisterChatContext: (chatId: ChatId) => void;
 };
 
 /** @internal */
@@ -274,6 +284,7 @@ export function createAi(config: AiConfig): Ai {
     pendingRequests: new Map(),
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
+    contextByChatId: new Map(), // TODO: Include this context information when dispatching user message
   };
 
   let lastTokenKey: string | undefined;
@@ -329,10 +340,8 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
-    window.console.info(
-      "Incoming message in handleServerMessage: ",
-      event.data
-    );
+    typeof event.data === "string" &&
+      window.console.log(tryParseJson(event.data));
     if (typeof event.data === "string") {
       const msg = tryParseJson(event.data) as ServerAiMsg;
 
@@ -530,6 +539,27 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
+  function registerChatContext(
+    chatId: ChatId,
+    data: Record<string, CopilotContext>
+  ) {
+    if (context.contextByChatId.has(chatId)) {
+      context.contextByChatId.delete(chatId);
+    }
+    const contextMap = new Map<
+      string,
+      { description: string; value: string }
+    >();
+    for (const [key, { value, description }] of Object.entries(data)) {
+      contextMap.set(key, { description, value });
+    }
+    context.contextByChatId.set(chatId, contextMap);
+  }
+
+  function unregisterChatContext(chatId: ChatId) {
+    context.contextByChatId.delete(chatId);
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -647,6 +677,9 @@ export function createAi(config: AiConfig): Ai {
         chats: context.chats.signal,
         messages: context.messages.sortedMessages,
       },
+
+      registerChatContext,
+      unregisterChatContext,
     },
     kInternal,
     { enumerable: false }

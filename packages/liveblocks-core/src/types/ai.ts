@@ -318,3 +318,8 @@ export type AiAssistantMessage = AiUserMessageBase & {
 };
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
+
+export type CopilotContext = {
+  description: string;
+  value: string;
+};
