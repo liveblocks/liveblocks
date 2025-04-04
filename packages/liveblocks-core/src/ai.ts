@@ -27,6 +27,7 @@ import type {
   ChatId,
   ClientAiMsg,
   CmdId,
+  CopilotId,
   CreateChatResponse,
   Cursor,
   ErrorServerEvent,
@@ -219,11 +220,13 @@ export type Ai = {
   ) => Promise<AttachUserMessageResponse>;
   streamAnswer: (
     chatId: ChatId,
-    messageId: MessageId
+    messageId: MessageId,
+    copilotId?: CopilotId
   ) => Promise<StreamMessageCompleteServerEvent>;
   generateAnswer: (
     chatId: ChatId,
-    messageId: MessageId
+    messageId: MessageId,
+    copilotId?: CopilotId
   ) => Promise<GenerateAnswerResponse>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (
@@ -594,17 +597,27 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
-      streamAnswer: (chatId: ChatId, messageId: MessageId) => {
+      streamAnswer: (
+        chatId: ChatId,
+        messageId: MessageId,
+        copilotId?: CopilotId
+      ) => {
         return sendClientMsgWithResponse({
           cmd: "stream-answer",
           inputSource: { chatId, messageId },
+          copilotId,
         });
       },
 
-      generateAnswer: (chatId: ChatId, messageId: MessageId) => {
+      generateAnswer: (
+        chatId: ChatId,
+        messageId: MessageId,
+        copilotId?: CopilotId
+      ) => {
         return sendClientMsgWithResponse({
           cmd: "generate-answer",
           inputSource: { chatId, messageId },
+          copilotId,
         });
       },
 

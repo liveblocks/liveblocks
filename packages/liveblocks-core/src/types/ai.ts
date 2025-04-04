@@ -11,6 +11,7 @@ export type ISODateString = Brand<string, "ISODateString">;
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`msg_${string}`, "MessageId">;
 export type CmdId = Brand<string, "CmdId">;
+export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
 export type ClientAiMsg =
@@ -115,13 +116,23 @@ type ClearChatPair = DefineCmd<
 
 type GenerateAnswerPair = DefineCmd<
   "generate-answer",
-  { inputSource: AiInputSource; tools?: AiTool[]; toolChoice?: ToolChoice },
+  {
+    inputSource: AiInputSource;
+    tools?: AiTool[];
+    toolChoice?: ToolChoice;
+    copilotId?: CopilotId;
+  },
   { content: AiAssistantContent[]; chatId?: ChatId; messageId?: MessageId }
 >;
 
 type StreamAnswerPair = DefineCmd<
   "stream-answer", // XXX Should this not be "generate-answer" with a "stream?: boolean" option maybe?
-  { inputSource: AiInputSource; tools?: AiTool[]; toolChoice?: ToolChoice },
+  {
+    inputSource: AiInputSource;
+    tools?: AiTool[];
+    toolChoice?: ToolChoice;
+    copilotId?: CopilotId;
+  },
   // XXX We should send back a "container ID" here - I'll work on that next
   { chatId?: ChatId; messageId?: MessageId }
 >;
