@@ -579,7 +579,7 @@ export function createAi(config: AiConfig): Ai {
 
         // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
         context.messages.addMessage(chatId, {
-          id: nanoid() as MessageId,
+          id: `local:ms_${nanoid()}` as MessageId,
           role: "user",
           content: [content],
           status: "complete",
