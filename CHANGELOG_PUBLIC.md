@@ -18,6 +18,31 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 14 (2025-04-04)
+
+## v2.22.3
+
+### `@liveblocks/react-ui`
+
+- The `InboxNotification` component now uses `resolveRoomsInfo` for
+  `textMention` notifications to make them link to the mentions’ room
+  automatically if `href` isn’t set.
+- Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
+  tooltips)
+- Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
+  choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
+  from: another CDN, self-hosted files, etc.
+
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
+
+## Contributors
+
+marcbouchenoire, jrowny
+
 # Week 13 (2025-03-28)
 
 ## v2.22.2
