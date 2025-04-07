@@ -22,6 +22,8 @@ body {
   padding: 0;
   margin: 0;
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 * {
@@ -33,6 +35,7 @@ main {
   flex-direction: column;
   margin: 0 auto;
   height: 100vh;
+  overflow: hidden;
 }
 
 .loading,
@@ -45,14 +48,53 @@ main {
   place-items: center;
 }
 
+/* Chat app layout */
+.chat-app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.chat-controls {
+  padding: 10px 0;
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eaeaea;
+  z-index: 101;
+}
+
+/* Chat components layout */
+.chat-window-container {
+  position: relative;
+  height: calc(100vh - 70px);
+  width: 100%;
+  overflow: hidden;
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
+  height: calc(100vh - 270px);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 200px;
+  padding-bottom: 30px;
 }
 
 .composer-container {
-  padding: 0 1rem 1rem;
+  padding: 1rem;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  z-index: 100;
+  border-top: 1px solid #eaeaea;
+  height: 200px;
 }
 
 .composer {
@@ -66,6 +108,43 @@ main {
     0 8px 26px rgb(0 0 0 / 6%);
   max-width: 896px;
   margin: 0 auto;
+}
+
+/* Chat message container styles */
+.user-message-container {
+  border-bottom: 0.5px solid #efefef;
+  border-right: 4px solid #efefef;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.assistant-message-container {
+  border-bottom: 0.5px solid #efefef;
+  border-left: 4px solid #efefef;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.message-controls {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 20px;
+  padding: 0 5rem;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+}
+
+.assistant-message-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  padding: 0 5rem;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
 }
 
 button {
@@ -102,6 +181,16 @@ a:hover {
   main {
     color: #fff;
     background-color: #1e1e1e;
+  }
+
+  .chat-controls {
+    background-color: #222;
+    border-bottom: 1px solid #333;
+  }
+
+  .composer-container {
+    background-color: #1e1e1e;
+    border-top: 1px solid #333;
   }
 
   .lb-root {
@@ -149,22 +238,20 @@ a:hover {
     color: #fff;
   }
 
-  /* Chat message containers */
-  .messages > div > div {
-    background-color: #2a2a2a !important;
-    color: #fff !important;
+  /* User message container dark mode */
+  .user-message-container {
+    border-bottom: 0.5px solid #444;
+    border-right: 4px solid #444;
+    background-color: #2a2a2a;
+    color: #fff;
   }
 
-  /* User message borders */
-  .messages > div > div:nth-child(odd) {
-    border-bottom: 0.5px solid #444 !important;
-    border-right: 4px solid #444 !important;
-  }
-
-  /* Assistant message borders */
-  .messages > div > div:nth-child(even) {
-    border-bottom: 0.5px solid #444 !important;
-    border-left: 4px solid #444 !important;
+  /* Assistant message container dark mode */
+  .assistant-message-container {
+    border-bottom: 0.5px solid #444;
+    border-left: 4px solid #444;
+    background-color: #2a2a2a;
+    color: #fff;
   }
 
   /* Message buttons */

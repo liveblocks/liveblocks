@@ -74,116 +74,101 @@ function ChatPicker() {
   );
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 20,
-        height: "100%",
-        padding: "20px 0",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "0 20px",
-          margin: "0 auto",
-          gap: "10px",
-        }}
-      >
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button
-            style={{
-              all: "unset",
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              const name = prompt("Enter a name for this chat?", "New chat");
-              if (name !== null) {
-                client.ai.createChat(name);
-              }
-            }}
-          >
-            Create new chat
-          </button>
-
-          <button
-            style={{
-              all: "unset",
-              cursor:
-                isFetchingMore || hasFetchedAll ? "not-allowed" : "pointer",
-              opacity: isFetchingMore || hasFetchedAll ? 0.5 : 1,
-            }}
-            onClick={fetchMore}
-            disabled={isFetchingMore || hasFetchedAll}
-          >
-            {isFetchingMore ? "…" : "Load more"}
-          </button>
-
-          <div>
-            {fetchMoreError && (
-              <div>Failed to get more: ${fetchMoreError.message}</div>
-            )}
-          </div>
-        </div>
-        <ul
+    <div className="chat-app-container">
+      <div className="chat-controls">
+        <div
           style={{
             display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "0 20px",
+            margin: "0 auto",
             gap: "10px",
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
           }}
         >
-          {chats.map((chat) => (
-            <li key={chat.id}>
-              <a
-                href="#"
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              onClick={() => {
+                const name = prompt("Enter a name for this chat?", "New chat");
+                if (name !== null) {
+                  client.ai.createChat(name);
+                }
+              }}
+            >
+              Create new chat
+            </button>
+
+            <button
+              style={{
+                cursor:
+                  isFetchingMore || hasFetchedAll ? "not-allowed" : "pointer",
+                opacity: isFetchingMore || hasFetchedAll ? 0.5 : 1,
+              }}
+              onClick={fetchMore}
+              disabled={isFetchingMore || hasFetchedAll}
+            >
+              {isFetchingMore ? "…" : "Load more"}
+            </button>
+
+            <div>
+              {fetchMoreError && (
+                <div>Failed to get more: ${fetchMoreError.message}</div>
+              )}
+            </div>
+          </div>
+          <ul
+            style={{
+              display: "flex",
+              gap: "10px",
+              listStyle: "none",
+              padding: 0,
+              margin: 0,
+            }}
+          >
+            {chats.map((chat) => (
+              <li key={chat.id}>
+                <a
+                  href="#"
+                  onClick={() => {
+                    setUserSelectedChatId(chat.id);
+                  }}
+                >
+                  {chat.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          {selectedChat ? (
+            <div style={{ display: "flex", gap: "20px" }}>
+              <button
+                style={{
+                  color: "red",
+                }}
                 onClick={() => {
-                  setUserSelectedChatId(chat.id);
+                  if (confirm("This will wipe all messages! Are you sure?")) {
+                    client.ai.clearChat(selectedChat.id);
+                  }
                 }}
               >
-                {chat.name}
-              </a>
-            </li>
-          ))}
-        </ul>
+                Clear this chat
+              </button>
 
-        {selectedChat ? (
-          <div style={{ display: "flex", gap: "20px" }}>
-            <button
-              style={{
-                all: "unset",
-                cursor: "pointer",
-                color: "red",
-              }}
-              onClick={() => {
-                if (confirm("This will wipe all messages! Are you sure?")) {
-                  client.ai.clearChat(selectedChat.id);
-                }
-              }}
-            >
-              Clear this chat
-            </button>
-
-            <button
-              style={{
-                all: "unset",
-                cursor: "pointer",
-                color: "red",
-              }}
-              onClick={() => {
-                if (confirm(`Are you sure to delete '${selectedChat.name}'?`)) {
-                  client.ai.deleteChat(selectedChat.id);
-                }
-              }}
-            >
-              Delete this chat
-            </button>
-          </div>
-        ) : null}
+              <button
+                style={{
+                  color: "red",
+                }}
+                onClick={() => {
+                  if (confirm(`Are you sure to delete '${selectedChat.name}'?`)) {
+                    client.ai.deleteChat(selectedChat.id);
+                  }
+                }}
+              >
+                Delete this chat
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : null}
@@ -230,7 +215,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
   const parentMessageId = overrideParentId ?? lastMessageId;
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+    <div className="chat-window-container">
       <ChatMessages
         chatId={chatId}
         messages={messages}
@@ -238,27 +223,11 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
         components={{
           // Add bells and whistles to the default chat components
           UserChatMessage: (props) => (
-            <div
-              style={{
-                borderBottom: "0.5px solid #efefef",
-                borderRight: "4px solid #efefef",
-                borderRadius: "6px",
-                padding: "1rem",
-              }}
-            >
+            <div className="user-message-container">
               <UserChatMessage {...props} />
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row-reverse",
-                  gap: "20px",
-                  padding: "0 5rem",
-                  fontSize: "0.75rem",
-                  opacity: 0.8,
-                }}
-              >
+              <div className="message-controls">
                 <button
-                  style={{ all: "unset", cursor: "pointer", color: "red" }}
+                  style={{ color: "red" }}
                   onClick={async () => {
                     try {
                       await client.ai.deleteMessage(chatId, props.message.id);
@@ -270,7 +239,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   delete
                 </button>
                 <button
-                  style={{ all: "unset", cursor: "pointer" }}
                   onClick={async () => {
                     const answer = prompt(
                       "Edit",
@@ -301,7 +269,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   edit
                 </button>
                 <button
-                  style={{ all: "unset", cursor: "pointer" }}
                   onClick={async () => {
                     try {
                       await client.ai.ask(chatId, props.message.id, {
@@ -317,10 +284,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   regenerate
                 </button>
                 <button
-                  style={{
-                    all: "unset",
-                    cursor: "pointer",
-                  }}
                   onClick={() => setOverrideParentId(props.message.id)}
                 >
                   {props.message.id}
@@ -330,40 +293,16 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           ),
           // Add bells and whistles to the default chat components
           AssistantChatMessage: (props) => (
-            <div
-              style={{
-                borderBottom: "0.5px solid #efefef",
-                borderLeft: "4px solid #efefef",
-                borderRadius: "6px",
-                padding: "1rem",
-              }}
-            >
+            <div className="assistant-message-container">
               <AssistantChatMessage {...props} />
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  gap: "20px",
-                  padding: "0 5rem",
-                  fontSize: "0.75rem",
-                  opacity: 0.8,
-                }}
-              >
+              <div className="assistant-message-controls">
                 <button
-                  style={{
-                    all: "unset",
-                    cursor: "pointer",
-                  }}
                   onClick={() => setOverrideParentId(props.message.id)}
                 >
                   {props.message.id}
                 </button>
                 <button
-                  style={{
-                    all: "unset",
-                    cursor: "pointer",
-                    color: "red",
-                  }}
+                  style={{ color: "red" }}
                   onClick={async () => {
                     if (confirm("Are you sure?")) {
                       try {
