@@ -10,6 +10,11 @@
   `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
   comments between two emails data.
 
+### `@liveblocks/react-ui`
+
+- Improve event propagation from `Composer` and the emoji pickers in
+  `Comment`/`Thread`.
+
 ## v2.22.3
 
 ### `@liveblocks/react-ui`
