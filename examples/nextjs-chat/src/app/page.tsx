@@ -473,7 +473,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_1" as MessageId,
     role: "user",
-    status: "complete",
     content: [
       {
         type: "text",
@@ -485,7 +484,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_2" as MessageId,
     role: "assistant",
-    status: "complete",
     content: [
       {
         id: "2.1",
@@ -498,7 +496,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_3" as MessageId,
     role: "user",
-    status: "complete",
     content: [
       {
         type: "text",
@@ -517,7 +514,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_4" as MessageId,
     role: "assistant",
-    status: "complete",
     content: [
       {
         id: "4.1",
@@ -530,7 +526,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_5" as MessageId,
     role: "user",
-    status: "complete",
     content: [
       {
         type: "text",
@@ -542,7 +537,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_6" as MessageId,
     role: "assistant",
-    status: "complete",
     content: [
       {
         id: "6.1",

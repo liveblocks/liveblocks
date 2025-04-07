@@ -95,7 +95,6 @@ type AttachUserMessagePair = DefineCmd<
     chatId: ChatId;
     parentMessageId: MessageId | null;
     content: AiTextContent | string;
-    status?: AiStatus;
   },
   { chatId: ChatId; messageId: MessageId; createdAt: ISODateString }
 >;
@@ -206,8 +205,10 @@ export type SettlePlaceholderServerEvent = {
   result:
     | { status: "completed"; content: AiAssistantContent[] } // XXX Not decided yet!
     | { status: "failed"; reason: string }; // XXX Not decided yet!
-  chatId?: ChatId; // XXX Not decided yet!
-  messageId?: MessageId; // XXX Not decided yet!
+  replaces?: {
+    chatId: ChatId; // XXX Not decided yet!
+    messageId: MessageId; // XXX Not decided yet!
+  };
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -312,7 +313,6 @@ export type UsageMetadata = {
 
 export type AiUserMessageBase = {
   id: MessageId;
-  status: AiStatus; // I think this should only live on Assistent messages, not on User messages
   createdAt: ISODateString;
   deletedAt?: ISODateString;
 };

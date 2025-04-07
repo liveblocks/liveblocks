@@ -398,35 +398,42 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           // XXX Remove these cryptic "type" codes in the next pass!
-          case 1003: // STREAM_MESSAGE_COMPLETE
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.patchMessage(msg.chatId, msg.messageId, {
-                content: msg.content,
-                status: "complete",
-              });
-            }
+          // case 1003: // STREAM_MESSAGE_COMPLETE
+          //   if (msg.messageId !== undefined && msg.chatId !== undefined) {
+          //     context.messages.patchMessage(msg.chatId, msg.messageId, {
+          //       content: msg.content,
+          //       status: "complete",
+          //     });
+          //   }
+          //   break;
+
+          case 1003: // STREAM_MESSAGE_FAILED
+            console.error("XXX Received 1003 STREAM_MESSAGE_COMPLETE message!");
             break;
 
           case 1004: // STREAM_MESSAGE_FAILED
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.patchMessage(msg.chatId, msg.messageId, {
-                status: "failed",
-              });
-            }
+            console.error("XXX Received 1004 STREAM_MESSAGE_FAILED message!");
+            // if (msg.messageId !== undefined && msg.chatId !== undefined) {
+            //   context.messages.patchMessage(msg.chatId, msg.messageId, {
+            //     status: "failed",
+            //   });
+            // }
             pendingReq?.reject(new Error(msg.error));
             break;
 
           case 1005: // STREAM_MESSAGE_ABORTED
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.patchMessage(msg.chatId, msg.messageId, {
-                status: "aborted",
-              });
-            }
+            console.error("XXX Received 1005 STREAM_MESSAGE_ABORTED message!");
+            // if (msg.messageId !== undefined && msg.chatId !== undefined) {
+            //   context.messages.patchMessage(msg.chatId, msg.messageId, {
+            //     status: "aborted",
+            //   });
+            // }
             // TODO Alternatively we could resolve with the current message
             pendingReq?.reject(new Error("Message aborted"));
             break;
 
           case 1002: // STREAM_MESSAGE_PART
+            console.error("XXX Received 1002 STREAM_MESSAGE_PART message!");
             // TODO Not implemented yet!
             break;
 
@@ -473,7 +480,6 @@ export function createAi(config: AiConfig): Ai {
                     text: "Asking AI, please be patient...",
                   },
                 ],
-                status: "complete",
                 createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
               });
             } else {
@@ -617,10 +623,9 @@ export function createAi(config: AiConfig): Ai {
 
         // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
         context.messages.addMessage(chatId, {
-          id: `local:ms_${nanoid()}` as MessageId,
+          id: `local:ms_${nanoid()}` as MessageId, // XXX Maybe let the client generate msg IDs?
           role: "user",
           content: [content],
-          status: "complete",
           createdAt: new Date().toISOString() as ISODateString,
         });
 
