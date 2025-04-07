@@ -64,6 +64,7 @@ import { PKG_VERSION } from "./version";
 // which must happen within 4 seconds. In practice it should only take a few
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
+const DEFAULT_AI_TIMEOUT = 30_000;
 
 /**
  * A lookup table (LUT) for all the user AI chats.
@@ -91,7 +92,7 @@ export type AskAiOptions = {
   stream?: boolean; // True by default
   tools?: AiTool[];
   // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
-  // XXX Allow specifying a backend timeout here!
+  timeout?: number;
 };
 
 function createStore_forChatMessages() {
@@ -755,6 +756,7 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
           });
         } else {
           return sendClientMsgWithResponse({
@@ -765,11 +767,17 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
           });
         }
       },
 
-      statelessAction: (prompt: string, tool: AiTool) => {
+      statelessAction: (
+        prompt: string,
+        tool: AiTool,
+        // XXX Should this options param be shared with AskAiOptions?
+        options?: { timeout: number }
+      ) => {
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
           inputSource: { prompt },
@@ -780,6 +788,7 @@ export function createAi(config: AiConfig): Ai {
             type: "tool",
             toolName: tool.name,
           },
+          timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
         });
       },
 

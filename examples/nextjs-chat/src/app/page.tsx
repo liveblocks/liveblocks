@@ -204,9 +204,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     CopilotId | undefined
   >("co_T6jQlhS" as CopilotId);
   const [streaming, setStreaming] = useState(true);
+  const [maxTimeout, setMaxTimeout] = useState<number | undefined>(undefined);
 
   const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
+    const value = e.currentTarget.value;
     setSelectedCopilotId(
       value === "default" ? undefined : (value as CopilotId)
     );
@@ -289,6 +290,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                         await client.ai.ask(chatId, messageId, {
                           copilotId: selectedCopilotId,
                           stream: streaming,
+                          timeout: maxTimeout,
                         });
                       } finally {
                         setOverrideParentId(undefined);
@@ -305,6 +307,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                       await client.ai.ask(chatId, props.message.id, {
                         copilotId: selectedCopilotId,
                         stream: streaming,
+                        timeout: maxTimeout,
                       });
                     } finally {
                       setOverrideParentId(undefined);
@@ -402,6 +405,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 await client.ai.ask(chatId, messageId, {
                   copilotId: selectedCopilotId,
                   stream: streaming,
+                  timeout: maxTimeout,
                 });
               } finally {
                 setOverrideParentId(undefined);
@@ -452,6 +456,28 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             value={overrideParentId}
             placeholder="Attach to which message?"
           />
+          <select
+            value={maxTimeout}
+            onChange={(ev) => {
+              const value = ev.currentTarget.value;
+              setMaxTimeout(value === "default" ? undefined : Number(value));
+            }}
+            style={{
+              width: "30%",
+              border: "2px solid #888",
+              borderRadius: "6px",
+              backgroundColor: "white",
+              padding: "10px 1rem",
+            }}
+          >
+            <option value="default">Default</option>
+            <option value="default">30s (default)</option>
+            {[10_000, 5_000, 2_000, 1_000].map((t) => (
+              <option key={t} value={t}>
+                {t / 1000}s
+              </option>
+            ))}
+          </select>
           <label
             style={{
               display: "flex",

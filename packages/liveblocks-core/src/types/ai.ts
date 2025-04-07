@@ -124,9 +124,9 @@ type AskAIPair = DefineCmd<
     // ---------------------
     copilotId?: CopilotId;
     stream: boolean;
-    // XXX Allow specifying a timeout?
     tools?: AiTool[];
     toolChoice?: ToolChoice;
+    timeout: number; // in millis
   },
   Relax<
     | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats
