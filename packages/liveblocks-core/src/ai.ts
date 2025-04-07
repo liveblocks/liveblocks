@@ -57,8 +57,13 @@ import type {
 } from "./types/IWebSocket";
 import { PKG_VERSION } from "./version";
 
-// Allow server to take up to 10 seconds to respond to any WebSocket RPC request
-const DEFAULT_REQUEST_TIMEOUT = 10_000;
+// Server must respond to any command within 4 seconds. Note that this timeout
+// isn't related to the timeout for long-running AI tasks. If a long-running AI
+// task is started, the initial command response from the server is "okay, I'll
+// keep you posted about this long-running task". That okay is the response
+// which must happen within 4 seconds. In practice it should only take a few
+// milliseconds at most.
+const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
 /**
  * A lookup table (LUT) for all the user AI chats.
@@ -575,8 +580,7 @@ export function createAi(config: AiConfig): Ai {
   });
 
   async function sendClientMsgWithResponse<T extends ServerAiMsg>(
-    msg: DistributiveOmit<ClientAiMsg, "cmdId">,
-    timeout: number = DEFAULT_REQUEST_TIMEOUT
+    msg: DistributiveOmit<ClientAiMsg, "cmdId">
   ): Promise<T> {
     if (managedSocket.getStatus() !== "connected") {
       await managedSocket.events.didConnect.waitUntil();
@@ -585,7 +589,7 @@ export function createAi(config: AiConfig): Ai {
     const { promise, resolve, reject } = Promise_withResolvers<ServerAiMsg>();
 
     // Automatically calls reject() when signal is aborted
-    const abortSignal = AbortSignal.timeout(timeout);
+    const abortSignal = AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT);
     abortSignal.addEventListener("abort", () => reject(abortSignal.reason), {
       once: true,
     });
@@ -710,16 +714,13 @@ export function createAi(config: AiConfig): Ai {
           createdAt: new Date().toISOString() as ISODateString,
         });
 
-        return sendClientMsgWithResponse(
-          {
-            cmd: "attach-user-message",
-            id: messageId,
-            chatId,
-            parentMessageId,
-            content,
-          },
-          60_000 // todo: not sure if we even want to leave a promise hanging here. some requests can be pretty long, although we do need to have some bounds
-        );
+        return sendClientMsgWithResponse({
+          cmd: "attach-user-message",
+          id: messageId,
+          chatId,
+          parentMessageId,
+          content,
+        });
       },
 
       ask: (
@@ -769,20 +770,17 @@ export function createAi(config: AiConfig): Ai {
       },
 
       statelessAction: (prompt: string, tool: AiTool) => {
-        return sendClientMsgWithResponse(
-          {
-            cmd: "ask-ai",
-            inputSource: { prompt },
-            placeholderId: `ph_${nanoid()}` as PlaceholderId,
-            stream: false,
-            tools: [tool],
-            toolChoice: {
-              type: "tool",
-              toolName: tool.name,
-            },
+        return sendClientMsgWithResponse({
+          cmd: "ask-ai",
+          inputSource: { prompt },
+          placeholderId: `ph_${nanoid()}` as PlaceholderId,
+          stream: false,
+          tools: [tool],
+          toolChoice: {
+            type: "tool",
+            toolName: tool.name,
           },
-          60_000 // XXX This should not be the _client_ timeout! The immediate response should be fast! We should pass this requested timeout to the backend and use it there!
-        );
+        });
       },
 
       // abortPlaceholder: (placeholderId: PlaceholderId) => {
