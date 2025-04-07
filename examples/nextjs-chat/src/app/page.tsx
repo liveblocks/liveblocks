@@ -160,9 +160,7 @@ function ChatPicker() {
                 color: "red",
               }}
               onClick={() => {
-                if (confirm("This will wipe all messages! Are you sure?")) {
-                  client.ai.clearChat(selectedChat.id);
-                }
+                client.ai.clearChat(selectedChat.id);
               }}
             >
               Clear this chat
@@ -365,12 +363,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                     color: "red",
                   }}
                   onClick={async () => {
-                    if (confirm("Are you sure?")) {
-                      try {
-                        await client.ai.deleteMessage(chatId, props.message.id);
-                      } finally {
-                        forceRerender();
-                      }
+                    try {
+                      await client.ai.deleteMessage(chatId, props.message.id);
+                    } finally {
+                      forceRerender();
                     }
                   }}
                 >
