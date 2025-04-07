@@ -480,46 +480,6 @@ export function createAi(config: AiConfig): Ai {
             // TODO Handle generic server error
             break;
 
-          // XXX Remove these cryptic "type" codes in the next pass!
-          // case 1003: // STREAM_MESSAGE_COMPLETE
-          //   if (msg.messageId !== undefined && msg.chatId !== undefined) {
-          //     context.messages.patchMessage(msg.chatId, msg.messageId, {
-          //       content: msg.content,
-          //       status: "complete",
-          //     });
-          //   }
-          //   break;
-
-          case 1003: // STREAM_MESSAGE_FAILED
-            console.error("XXX Received 1003 STREAM_MESSAGE_COMPLETE message!");
-            break;
-
-          case 1004: // STREAM_MESSAGE_FAILED
-            console.error("XXX Received 1004 STREAM_MESSAGE_FAILED message!");
-            // if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            //   context.messages.patchMessage(msg.chatId, msg.messageId, {
-            //     status: "failed",
-            //   });
-            // }
-            pendingReq?.reject(new Error(msg.error));
-            break;
-
-          case 1005: // STREAM_MESSAGE_ABORTED
-            console.error("XXX Received 1005 STREAM_MESSAGE_ABORTED message!");
-            // if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            //   context.messages.patchMessage(msg.chatId, msg.messageId, {
-            //     status: "aborted",
-            //   });
-            // }
-            // TODO Alternatively we could resolve with the current message
-            pendingReq?.reject(new Error("Message aborted"));
-            break;
-
-          case 1002: // STREAM_MESSAGE_PART
-            console.error("XXX Received 1002 STREAM_MESSAGE_PART message!");
-            // TODO Not implemented yet!
-            break;
-
           default:
             return assertNever(msg, "Unhandled case");
         }

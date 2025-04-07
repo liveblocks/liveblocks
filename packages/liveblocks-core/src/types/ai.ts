@@ -147,11 +147,7 @@ export type ServerEvent =
   | CmdFailedEvent
   | ErrorServerEvent
   | UpdatePlaceholderServerEvent
-  | SettlePlaceholderServerEvent
-  | StreamMessagePartServerEvent
-  | StreamMessageFailedServerEvent
-  | StreamMessageAbortedServerEvent
-  | StreamMessageCompleteServerEvent;
+  | SettlePlaceholderServerEvent;
 
 export type CmdFailedEvent = {
   event: "cmd-failed";
@@ -163,45 +159,6 @@ export type CmdFailedEvent = {
 export type ErrorServerEvent = {
   event: "error";
   error: string;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessagePartServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1002; // STREAM_MESSAGE_PART
-  content: {
-    type: "text";
-    id: string;
-    delta: string;
-  };
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessageFailedServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1004; // STREAM_MESSAGE_FAILED
-  error: string;
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessageAbortedServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1005; // STREAM_MESSAGE_ABORTED
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessageCompleteServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1003; // STREAM_MESSAGE_COMPLETE
-  content: AiAssistantContent[];
-  chatId?: ChatId;
-  messageId?: MessageId;
 };
 
 // XXX Fine-tune this message!
