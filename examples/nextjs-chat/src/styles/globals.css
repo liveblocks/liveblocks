@@ -68,10 +68,40 @@ main {
   margin: 0 auto;
 }
 
+button {
+  all: unset;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+button:hover {
+  background-color: #f5f5f5;
+}
+
+a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode styles */
 @media (prefers-color-scheme: dark) {
   html,
   body {
     background: #111;
+    color: #fff;
+  }
+
+  main {
+    color: #fff;
+    background-color: #1e1e1e;
   }
 
   .lb-root {
@@ -84,6 +114,62 @@ main {
 
   .error {
     color: #fff;
+  }
+
+  /* Button styles for dark mode */
+  button {
+    color: #fff;
+    background-color: #333;
+  }
+
+  button:hover {
+    background-color: #444;
+  }
+
+  /* Red buttons */
+  button[style*="color: red"] {
+    color: #ff6b6b !important;
+  }
+
+  /* Chat links */
+  a {
+    color: #77bbff;
+  }
+
+  /* Selects and inputs */
+  select,
+  input[type="text"] {
+    border: 2px solid #555 !important;
+    background-color: #333 !important;
+    color: #fff !important;
+  }
+
+  /* Labels */
+  label {
+    color: #fff;
+  }
+
+  /* Chat message containers */
+  .messages > div > div {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+  }
+
+  /* User message borders */
+  .messages > div > div:nth-child(odd) {
+    border-bottom: 0.5px solid #444 !important;
+    border-right: 4px solid #444 !important;
+  }
+
+  /* Assistant message borders */
+  .messages > div > div:nth-child(even) {
+    border-bottom: 0.5px solid #444 !important;
+    border-left: 4px solid #444 !important;
+  }
+
+  /* Message buttons */
+  .messages button {
+    padding: 4px 8px;
   }
 
   .composer::after {
