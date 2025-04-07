@@ -148,7 +148,7 @@ html.grabbing * {
   user-select: none;
 }
 
-.lb-root {
+.lb-root:not(.lb-tooltip) {
   --lb-accent-foreground: var(--color-surface);
   --lb-background: var(--color-surface-elevated);
 }
