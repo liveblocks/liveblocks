@@ -9,7 +9,12 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
+import {
+  DerivedSignal,
+  type ISignal,
+  MutableSignal,
+  Signal,
+} from "./lib/signals";
 import { type DistributiveOmit, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -19,10 +24,14 @@ import type {
   TimeoutID,
 } from "./room";
 import type {
+  AiAssistantContent,
   AiChat,
   AiChatMessage,
+  AiInputSource,
+  AiPlaceholderChatMessage,
   AiTextContent,
   AiTool,
+  AskAiResponse,
   AttachUserMessageResponse,
   ChatId,
   ClearChatResponse,
@@ -34,14 +43,12 @@ import type {
   Cursor,
   DeleteChatResponse,
   DeleteMessageResponse,
-  ErrorServerEvent,
-  GenerateAnswerResponse,
   GetChatsResponse,
   GetMessagesResponse,
   ISODateString,
   MessageId,
+  PlaceholderId,
   ServerAiMsg,
-  StreamMessageCompleteServerEvent,
 } from "./types/ai";
 import type {
   IWebSocket,
@@ -70,18 +77,23 @@ type AiContext = {
   >;
   chats: ReturnType<typeof createStore_forUserAiChats>;
   messages: ReturnType<typeof createStore_forChatMessages>;
-  contextByChatId: Map<
-    ChatId,
-    Map<string, { description: string; value: string }>
-  >;
+  placeholders: ReturnType<typeof createStore_forPlaceholders>;
+};
+
+export type AskAiOptions = {
+  copilotId?: CopilotId;
+  stream?: boolean; // True by default
+  tools?: AiTool[];
+  // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
+  // XXX Allow specifying a backend timeout here!
 };
 
 function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(
-    new DefaultMap(() => new Map()) as DefaultMap<
-      string,
-      Map<string, AiChatMessage>
-    >
+    new DefaultMap<
+      ChatId,
+      Map<MessageId, AiChatMessage | AiPlaceholderChatMessage>
+    >(() => new Map())
   );
 
   function update(chatId: ChatId, messages: AiChatMessage[]): void {
@@ -113,10 +125,10 @@ function createStore_forChatMessages() {
   }
 
   // TODO: do we want to fail or throw or return something if the message doesn't exist?
-  function updateMessage(
+  function patchMessage(
     chatId: ChatId,
     messageId: MessageId,
-    messageUpdate: Partial<AiChatMessage>
+    patch: Partial<AiChatMessage>
   ): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
@@ -129,12 +141,15 @@ function createStore_forChatMessages() {
       }
       messagesByChatId.set(messageId, {
         ...message,
-        ...messageUpdate,
+        ...patch,
       } as AiChatMessage);
     });
   }
 
-  function addMessage(chatId: ChatId, message: AiChatMessage): void {
+  function addMessage(
+    chatId: ChatId,
+    message: AiChatMessage | AiPlaceholderChatMessage
+  ): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
       if (!messagesByChatId) {
@@ -166,11 +181,88 @@ function createStore_forChatMessages() {
     ),
 
     // Mutations
-    updateMessage,
+    patchMessage,
     addMessage,
     update,
     remove,
     removeByChatId,
+  };
+}
+
+// XXX Put this type elsewhere when we're happy with it
+export type Placeholder = {
+  id: PlaceholderId;
+  status: "thinking" | "streaming" | "completed" | "failed";
+  contentSoFar: AiAssistantContent[];
+  errorReason?: string;
+};
+
+function createStore_forPlaceholders() {
+  const baseSignal = new MutableSignal(
+    new DefaultMap<PlaceholderId, Placeholder>((id) => ({
+      id,
+      status: "thinking",
+      contentSoFar: [],
+    }))
+  );
+
+  function create(): PlaceholderId {
+    const placeholderId = `ph_${nanoid()}` as PlaceholderId;
+    baseSignal.mutate((lut) => {
+      lut.getOrCreate(placeholderId);
+    });
+    return placeholderId;
+  }
+
+  function addChunk(
+    placeholderId: PlaceholderId,
+    // XXX Currently, we're only replacing the "contents so far" completely on
+    // every update message. However, we could only send the delta and let the
+    // client append things locally if we want to optimize this later.
+    contentSoFar: AiAssistantContent[]
+  ): void {
+    baseSignal.mutate((lut) => {
+      const placeholder = lut.get(placeholderId);
+      if (!placeholder) {
+        return false; // No update needed
+      } else {
+        placeholder.status = "streaming";
+        placeholder.contentSoFar = contentSoFar;
+        return true;
+      }
+    });
+  }
+
+  function settle(
+    placeholderId: PlaceholderId,
+    result:
+      | { status: "completed"; content: AiAssistantContent[] }
+      | { status: "failed"; reason: string }
+  ): void {
+    baseSignal.mutate((lut) => {
+      const placeholder = lut.get(placeholderId);
+      if (!placeholder) {
+        return false; // No update needed
+      } else {
+        placeholder.status = result.status;
+        if (result.status === "failed") {
+          placeholder.errorReason = result.reason;
+        } else {
+          placeholder.contentSoFar = result.content;
+        }
+        return true;
+      }
+    });
+  }
+
+  return {
+    placeholdersById: DerivedSignal.from(
+      baseSignal,
+      (lut) => new Map(lut.entries()) as ReadonlyMap<PlaceholderId, Placeholder>
+    ).asReadonly(),
+    createOptimistically: create,
+    addChunk,
+    settle,
   };
 }
 
@@ -232,25 +324,23 @@ export type Ai = {
     parentMessageId: MessageId | null,
     message: string
   ) => Promise<AttachUserMessageResponse>;
-  streamAnswer: (
-    chatId: ChatId,
-    messageId: MessageId,
-    copilotId?: CopilotId
-  ) => Promise<StreamMessageCompleteServerEvent>;
-  generateAnswer: (
-    chatId: ChatId,
-    messageId: MessageId,
-    copilotId?: CopilotId
-  ) => Promise<GenerateAnswerResponse>;
+  ask: {
+    (
+      chatId: ChatId,
+      messageId: MessageId,
+      options?: AskAiOptions
+    ): Promise<AskAiResponse>;
+    (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
+  };
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
-  statelessAction: (
-    prompt: string,
-    tool: AiTool
-  ) => Promise<GenerateAnswerResponse>;
-  abortResponse: (chatId: ChatId) => Promise<ErrorServerEvent>;
+  statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
+  // abortPlaceholder: (placeholderId: PlaceholderId) => Promise<AbortPlaceholderResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
-    messages: DerivedSignal<Record<string, AiChatMessage[]>>;
+    messages: DerivedSignal<
+      Record<string, (AiChatMessage | AiPlaceholderChatMessage)[]>
+    >;
+    placeholders: ISignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -284,7 +374,7 @@ export function createAi(config: AiConfig): Ai {
     pendingRequests: new Map(),
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
-    contextByChatId: new Map(), // TODO: Include this context information when dispatching user message
+    placeholders: createStore_forPlaceholders(),
   };
 
   let lastTokenKey: string | undefined;
@@ -370,41 +460,20 @@ export function createAi(config: AiConfig): Ai {
             pendingReq?.reject(new Error(msg.error));
             break;
 
+          case "update-placeholder": {
+            const { placeholderId, contentSoFar } = msg;
+            context.placeholders.addChunk(placeholderId, contentSoFar);
+            break;
+          }
+
+          case "settle-placeholder": {
+            const { placeholderId, result } = msg;
+            context.placeholders.settle(placeholderId, result);
+            break;
+          }
+
           case "error":
             // TODO Handle generic server error
-            break;
-
-          // XXX Remove these cryptic "type" codes in the next pass!
-          case 1003: // STREAM_MESSAGE_COMPLETE
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.updateMessage(msg.chatId, msg.messageId, {
-                content: msg.content,
-                status: "complete",
-              });
-            }
-            break;
-
-          case 1004: // STREAM_MESSAGE_FAILED
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.updateMessage(msg.chatId, msg.messageId, {
-                status: "failed",
-              });
-            }
-            pendingReq?.reject(new Error(msg.error));
-            break;
-
-          case 1005: // STREAM_MESSAGE_ABORTED
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
-              context.messages.updateMessage(msg.chatId, msg.messageId, {
-                status: "aborted",
-              });
-            }
-            // TODO Alternatively we could resolve with the current message
-            pendingReq?.reject(new Error("Message aborted"));
-            break;
-
-          case 1002: // STREAM_MESSAGE_PART
-            // TODO Not implemented yet!
             break;
 
           default:
@@ -437,21 +506,28 @@ export function createAi(config: AiConfig): Ai {
             context.messages.removeByChatId(msg.chatId);
             break;
 
-          case "generate-answer":
-            if (msg.messageId !== undefined && msg.chatId !== undefined) {
+          case "ask-ai":
+            if (msg.messageId !== undefined) {
               // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
               context.messages.addMessage(msg.chatId, {
                 id: msg.messageId,
                 role: "assistant",
-                content: msg.content,
-                status: "complete",
+                // XXX Remove content here in favor of detecting it's a placeholder message
+                content: [
+                  {
+                    type: "text",
+                    text: "Asking AI, please be patient...",
+                  },
+                ],
                 createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
               });
+            } else {
+              // XXX Handle the case for one-off ask!
+              // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
             }
             break;
 
           case "attach-user-message":
-          case "stream-answer":
             // TODO Not handled yet
             break;
 
@@ -604,19 +680,20 @@ export function createAi(config: AiConfig): Ai {
           type: "text",
           text: message,
         };
+        const messageId = `ms_${nanoid()}` as MessageId;
 
         // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
         context.messages.addMessage(chatId, {
-          id: `local:ms_${nanoid()}` as MessageId,
+          id: messageId,
           role: "user",
           content: [content],
-          status: "complete",
           createdAt: new Date().toISOString() as ISODateString,
         });
 
         return sendClientMsgWithResponse(
           {
             cmd: "attach-user-message",
+            id: messageId,
             chatId,
             parentMessageId,
             content,
@@ -625,57 +702,82 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
-      streamAnswer: (
-        chatId: ChatId,
-        messageId: MessageId,
-        copilotId?: CopilotId
-      ) => {
-        return sendClientMsgWithResponse({
-          cmd: "stream-answer",
-          inputSource: { chatId, messageId },
-          copilotId,
-        });
-      },
+      ask: (
+        one: string,
+        two?: MessageId | AskAiOptions,
+        three?: AskAiOptions
+      ): Promise<AskAiResponse> => {
+        const inputSource: AiInputSource =
+          typeof two === "string"
+            ? { chatId: one as ChatId, messageId: two }
+            : { prompt: one };
+        const options = typeof two === "string" ? three : two;
 
-      generateAnswer: (
-        chatId: ChatId,
-        messageId: MessageId,
-        copilotId?: CopilotId
-      ) => {
-        return sendClientMsgWithResponse({
-          cmd: "generate-answer",
-          inputSource: { chatId, messageId },
-          copilotId,
-        });
+        const stream = options?.stream ?? false;
+        const placeholderId = context.placeholders.createOptimistically();
+        if (inputSource.messageId) {
+          const outputMessageId = `ms_${nanoid()}` as MessageId;
+
+          // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+          context.messages.addMessage(inputSource.chatId, {
+            id: outputMessageId,
+            role: "assistant",
+            placeholderId,
+            createdAt: new Date().toISOString() as ISODateString,
+          });
+
+          return sendClientMsgWithResponse({
+            cmd: "ask-ai",
+            inputSource,
+            placeholderId,
+            outputMessageId,
+            copilotId: options?.copilotId,
+            stream,
+            tools: options?.tools,
+          });
+        } else {
+          return sendClientMsgWithResponse({
+            cmd: "ask-ai",
+            inputSource,
+            placeholderId,
+            outputMessageId: undefined,
+            copilotId: options?.copilotId,
+            stream,
+            tools: options?.tools,
+          });
+        }
       },
 
       statelessAction: (prompt: string, tool: AiTool) => {
         return sendClientMsgWithResponse(
           {
-            cmd: "generate-answer",
+            cmd: "ask-ai",
             inputSource: { prompt },
+            placeholderId: `ph_${nanoid()}` as PlaceholderId,
+            stream: false,
             tools: [tool],
             toolChoice: {
               type: "tool",
               toolName: tool.name,
             },
           },
-          60_000
+          60_000 // XXX This should not be the _client_ timeout! The immediate response should be fast! We should pass this requested timeout to the backend and use it there!
         );
       },
 
-      abortResponse: (chatId: ChatId) => {
-        return sendClientMsgWithResponse({
-          cmd: "abort-something",
-          chatId,
-        });
-      },
+      // abortPlaceholder: (placeholderId: PlaceholderId) => {
+      //   return sendClientMsgWithResponse({
+      //     cmd: "abort-placeholder",
+      //     placeholderId,
+      //   });
+      // },
 
       getStatus: () => managedSocket.getStatus(),
 
       signals: {
         chats: context.chats.signal,
         messages: context.messages.sortedMessages,
+        placeholders: context.placeholders.placeholdersById,
       },
 
       registerChatContext,

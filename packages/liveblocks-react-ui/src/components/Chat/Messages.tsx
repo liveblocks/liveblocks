@@ -1,9 +1,13 @@
 import type {
   AiAssistantMessage,
   AiChatMessage,
+  AiPlaceholderChatMessage,
   AiUserMessage,
   ChatId,
+  PlaceholderId,
 } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
+import { useSignal } from "@liveblocks/react/_private";
 import type { ComponentType, HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -32,7 +36,7 @@ export type ChatMessagesProps = Omit<
   /**
    * The messages to display.
    */
-  messages: AiChatMessage[];
+  messages: (AiChatMessage | AiPlaceholderChatMessage)[];
   /**
    * The components displayed in the chat messages.
    */
@@ -292,7 +296,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: AiAssistantMessage;
+  message: AiAssistantMessage | AiPlaceholderChatMessage;
   /**
    * Override the component's strings.
    */
@@ -312,6 +316,42 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   }>;
 };
 
+function StreamingPlaceholder(props: {
+  placeholderId: PlaceholderId;
+  TextMessage: ComponentType<AssistantMessageTextContentProps>;
+  ToolCallMessage: ComponentType<AssistantMessageToolCallContentProps>;
+}) {
+  const client = useClient();
+  const placeholders = useSignal(client.ai.signals.placeholders);
+  const placeholder = placeholders.get(props.placeholderId);
+  const TextMessage = props.TextMessage;
+  const ToolCallMessage = props.ToolCallMessage;
+  return (
+    <div>
+      <i>
+        {placeholder?.status ?? "huh?"}
+        {placeholder?.status?.endsWith("ing") ? "..." : ""}
+      </i>
+      {placeholder
+        ? placeholder.contentSoFar.map((block) => {
+            switch (block.type) {
+              case "text":
+                return <TextMessage key={block.id} data={block.text} />;
+              case "tool-call":
+                return (
+                  <ToolCallMessage
+                    key={block.id}
+                    name={block.name}
+                    args={block.args}
+                  />
+                );
+            }
+          })
+        : null}
+    </div>
+  );
+}
+
 export const DefaultAssistantChatMessage = forwardRef<
   HTMLDivElement,
   AssistantChatMessageProps
@@ -327,20 +367,28 @@ export const DefaultAssistantChatMessage = forwardRef<
       {...props}
     >
       <div className="lb-assistant-chat-message-content">
-        {message.content.map((block) => {
-          switch (block.type) {
-            case "text":
-              return <TextMessage key={block.id} data={block.text} />;
-            case "tool-call":
-              return (
-                <ToolCallMessage
-                  key={block.id}
-                  name={block.name}
-                  args={block.args}
-                />
-              );
-          }
-        })}
+        {"content" in message ? (
+          message.content.map((block) => {
+            switch (block.type) {
+              case "text":
+                return <TextMessage key={block.id} data={block.text} />;
+              case "tool-call":
+                return (
+                  <ToolCallMessage
+                    key={block.id}
+                    name={block.name}
+                    args={block.args}
+                  />
+                );
+            }
+          })
+        ) : (
+          <StreamingPlaceholder
+            placeholderId={message.placeholderId}
+            TextMessage={TextMessage}
+            ToolCallMessage={ToolCallMessage}
+          />
+        )}
       </div>
     </div>
   );

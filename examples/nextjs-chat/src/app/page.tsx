@@ -20,6 +20,7 @@ import { DebugClient } from "../DebugClient";
 import {
   AiChat,
   AiChatMessage,
+  AiPlaceholderChatMessage,
   ChatId,
   CopilotId,
   ISODateString,
@@ -201,7 +202,8 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
-  >();
+  >("co_T6jQlhS" as CopilotId);
+  const [streaming, setStreaming] = useState(true);
 
   const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -211,14 +213,17 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   };
 
   const COPILOTS = [
-    { id: "co_T6jQlhS", name: "Rhyme Maker (anthropic)" },
-    { id: "co_gblzUtw", name: "Wrong Answers Only (openAI)" },
+    { id: "co_T6jQlhS", name: "Rhyme Maker (Anthropic, Sonnet 3.5)" },
+    { id: "co_gblzUtw", name: "Wrong Answers Only (OpenAI, gpt-4o)" },
+    { id: "co_6ftW85o", name: "The Comedian (Google, Gemini Flash 2.0)" },
   ];
 
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
 
-  function messageAbove(messageId: MessageId): AiChatMessage | undefined {
+  function messageAbove(
+    messageId: MessageId
+  ): (AiChatMessage | AiPlaceholderChatMessage) | undefined {
     return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
   }
 
@@ -280,11 +285,11 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                           answer
                         );
                         forceRerender();
-                        await client.ai.generateAnswer(
-                          chatId,
-                          messageId,
-                          selectedCopilotId
-                        );
+
+                        await client.ai.ask(chatId, messageId, {
+                          copilotId: selectedCopilotId,
+                          stream: streaming,
+                        });
                       } finally {
                         setOverrideParentId(undefined);
                       }
@@ -297,11 +302,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   style={{ all: "unset", cursor: "pointer" }}
                   onClick={async () => {
                     try {
-                      await client.ai.generateAnswer(
-                        chatId,
-                        props.message.id,
-                        selectedCopilotId
-                      );
+                      await client.ai.ask(chatId, props.message.id, {
+                        copilotId: selectedCopilotId,
+                        stream: streaming,
+                      });
                     } finally {
                       setOverrideParentId(undefined);
                     }
@@ -394,11 +398,11 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
-                await client.ai.generateAnswer(
-                  chatId,
-                  messageId,
-                  selectedCopilotId
-                );
+
+                await client.ai.ask(chatId, messageId, {
+                  copilotId: selectedCopilotId,
+                  stream: streaming,
+                });
               } finally {
                 setOverrideParentId(undefined);
               }
@@ -448,6 +452,20 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             value={overrideParentId}
             placeholder="Attach to which message?"
           />
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginLeft: "10px",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={streaming}
+              onChange={(ev) => setStreaming(ev.currentTarget.checked)}
+            />{" "}
+            Streaming
+          </label>
         </div>
       </div>
     </div>
@@ -475,7 +493,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_1" as MessageId,
     role: "user",
-    status: "complete",
     content: [
       {
         type: "text",
@@ -487,7 +504,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_2" as MessageId,
     role: "assistant",
-    status: "complete",
     content: [
       {
         id: "2.1",
@@ -500,7 +516,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_3" as MessageId,
     role: "user",
-    status: "complete",
     content: [
       {
         type: "text",
@@ -519,7 +534,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_4" as MessageId,
     role: "assistant",
-    status: "complete",
     content: [
       {
         id: "4.1",
@@ -532,7 +546,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_5" as MessageId,
     role: "user",
-    status: "complete",
     content: [
       {
         type: "text",
@@ -544,7 +557,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
   {
     id: "msg_6" as MessageId,
     role: "assistant",
-    status: "complete",
     content: [
       {
         id: "6.1",

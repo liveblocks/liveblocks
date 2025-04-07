@@ -10,13 +10,12 @@ export type ISODateString = Brand<string, "ISODateString">;
 
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
+export type PlaceholderId = Brand<`ph_${string}`, "PlaceholderId">;
 export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
-export type ClientAiMsg =
-  | ClientCmdRequest<CommandPair>
-  | AbortSomethingClientMsg;
+export type ClientAiMsg = ClientCmdRequest<CommandPair>;
 
 // A server WebSocket message can be either a command response from the server,
 // or a server-initiated event
@@ -40,8 +39,8 @@ type CommandPair =
   | AttachUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
-  | GenerateAnswerPair
-  | StreamAnswerPair;
+  | AskAIPair;
+// | AbortPlaceholderPair;
 
 type ClientCmdRequest<T extends CommandPair> = T[0];
 type ServerCmdResponse<T extends CommandPair> = T[1];
@@ -53,8 +52,8 @@ export type GetMessagesCmd = ClientCmdRequest<GetMessagesPair>;
 export type AttachUserMessageCmd = ClientCmdRequest<AttachUserMessagePair>;
 export type DeleteMessageCmd = ClientCmdRequest<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmdRequest<ClearChatPair>;
-export type GenerateAnswerCmd = ClientCmdRequest<GenerateAnswerPair>;
-export type StreamAnswerCmd = ClientCmdRequest<StreamAnswerPair>;
+export type AskAiCmd = ClientCmdRequest<AskAIPair>;
+// export type AbortPlaceholderCmd = ClientCmdRequest<AbortPlaceholderPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
@@ -64,8 +63,8 @@ export type AttachUserMessageResponse =
   ServerCmdResponse<AttachUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
-export type GenerateAnswerResponse = ServerCmdResponse<GenerateAnswerPair>;
-export type StreamAnswerResponse = ServerCmdResponse<StreamAnswerPair>;
+export type AskAiResponse = ServerCmdResponse<AskAIPair>;
+// export type AbortPlaceholderResponse = ServerCmdResponse<AbortPlaceholderPair>;
 
 type GetChatsPair = DefineCmd<
   "get-chats",
@@ -94,10 +93,10 @@ type GetMessagesPair = DefineCmd<
 type AttachUserMessagePair = DefineCmd<
   "attach-user-message",
   {
+    id: MessageId; // New message ID, optimistically assigned by client
     chatId: ChatId;
     parentMessageId: MessageId | null;
     content: AiTextContent | string;
-    status?: AiStatus;
   },
   { chatId: ChatId; messageId: MessageId; createdAt: ISODateString }
 >;
@@ -114,28 +113,41 @@ type ClearChatPair = DefineCmd<
   { chatId: ChatId }
 >;
 
-type GenerateAnswerPair = DefineCmd<
-  "generate-answer",
+type AskAIPair = DefineCmd<
+  "ask-ai",
   {
-    inputSource: AiInputSource;
+    inputSource: AiInputSource; // XXX Rename to "source"
+    // ---------------------
+    // XXX We should group these into a single "target" property
+    placeholderId: PlaceholderId; // Optimistically assigned by client
+    outputMessageId?: MessageId; // Optimistically assigned by client
+    // ---------------------
+    copilotId?: CopilotId;
+    stream: boolean;
+    // XXX Allow specifying a timeout?
     tools?: AiTool[];
     toolChoice?: ToolChoice;
-    copilotId?: CopilotId;
   },
-  { content: AiAssistantContent[]; chatId?: ChatId; messageId?: MessageId }
+  Relax<
+    | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats
+    | {
+        placeholderId: PlaceholderId;
+        chatId: ChatId;
+        messageId: MessageId;
+        // XXX Replace `content` by an optimistically created "container" ID
+        // content: AiAssistantContent[];
+      }
+  >
 >;
 
-type StreamAnswerPair = DefineCmd<
-  "stream-answer", // XXX Should this not be "generate-answer" with a "stream?: boolean" option maybe?
-  {
-    inputSource: AiInputSource;
-    tools?: AiTool[];
-    toolChoice?: ToolChoice;
-    copilotId?: CopilotId;
-  },
-  // XXX We should send back a "container ID" here - I'll work on that next
-  { chatId?: ChatId; messageId?: MessageId }
->;
+// type AbortPlaceholderPair = DefineCmd<
+//   "abort-placeholder",
+//   {
+//     placeholderId: PlaceholderId;
+//     // chatId?: ChatId  // TODO Consider one command to abort _all_ placeholders for a given chat? There should be only one at the start though
+//   },
+//   { placeholderId: PlaceholderId }
+// >;
 
 // -------------------------------------------------------------------------------------------------
 // Server-initiated events
@@ -144,10 +156,8 @@ type StreamAnswerPair = DefineCmd<
 export type ServerEvent =
   | CmdFailedEvent
   | ErrorServerEvent
-  | StreamMessagePartServerEvent
-  | StreamMessageFailedServerEvent
-  | StreamMessageAbortedServerEvent
-  | StreamMessageCompleteServerEvent;
+  | UpdatePlaceholderServerEvent
+  | SettlePlaceholderServerEvent;
 
 export type CmdFailedEvent = {
   event: "cmd-failed";
@@ -161,54 +171,25 @@ export type ErrorServerEvent = {
   error: string;
 };
 
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessagePartServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1002; // STREAM_MESSAGE_PART
-  content: {
-    type: "text";
-    id: string;
-    delta: string;
+// XXX Fine-tune this message!
+export type UpdatePlaceholderServerEvent = {
+  event: "update-placeholder";
+  placeholderId: PlaceholderId;
+  // XXX Maybe send just the delta instead? It should be possible now.
+  contentSoFar: AiAssistantContent[]; // XXX Not decided yet!
+};
+
+// XXX Fine-tune this message!
+export type SettlePlaceholderServerEvent = {
+  event: "settle-placeholder";
+  placeholderId: PlaceholderId;
+  result:
+    | { status: "completed"; content: AiAssistantContent[] } // XXX Not decided yet!
+    | { status: "failed"; reason: string }; // XXX Not decided yet!
+  replaces?: {
+    chatId: ChatId; // XXX Not decided yet!
+    messageId: MessageId; // XXX Not decided yet!
   };
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessageFailedServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1004; // STREAM_MESSAGE_FAILED
-  error: string;
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessageAbortedServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1005; // STREAM_MESSAGE_ABORTED
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// XXX Not really a response to a "command" - Vincent will refactor these streaming events next!
-export type StreamMessageCompleteServerEvent = {
-  cmdId: CmdId; // XXX Original cmdId that triggered this, but this is not how it should work
-  event: 1003; // STREAM_MESSAGE_COMPLETE
-  content: AiAssistantContent[];
-  chatId?: ChatId;
-  messageId?: MessageId;
-};
-
-// -------------------------------------------------------------------------------------------------
-// Client messages that aren't commands
-// -------------------------------------------------------------------------------------------------
-
-// XXX This isn't really a Cmd! Think about this
-export type AbortSomethingClientMsg = {
-  cmd: "abort-something"; // XXX rename to the thing that will actually get aborted, need to first find the best name for that, will fix later
-  cmdId: CmdId;
-  chatId: ChatId;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -229,14 +210,8 @@ export type AiChat = {
  * 2. responding, AI is responding via stream
  * 3. complete, AI has responded
  * 4. failed, AI failed to respond
- * 5. aborted, user aborted the response
  */
-export type AiStatus =
-  | "thinking"
-  | "responding"
-  | "complete"
-  | "failed"
-  | "aborted";
+export type AiStatus = "thinking" | "responding" | "complete" | "failed";
 
 export interface AiTool {
   name: string;
@@ -302,7 +277,6 @@ export type UsageMetadata = {
 
 export type AiUserMessageBase = {
   id: MessageId;
-  status: AiStatus; // I think this should only live on Assistent messages, not on User messages
   createdAt: ISODateString;
   deletedAt?: ISODateString;
 };
@@ -319,7 +293,10 @@ export type AiAssistantMessage = AiUserMessageBase & {
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
 
-export type CopilotContext = {
-  description: string;
-  value: string;
+// XXX I think we should make it part of the AiChatMessage union, but not 100% sure yet, so keeping it separate for now
+export type AiPlaceholderChatMessage = {
+  id: MessageId;
+  role: "assistant"; // TODO Consider role = 'assistant-placeholder' ?
+  placeholderId: PlaceholderId;
+  createdAt: ISODateString;
 };
