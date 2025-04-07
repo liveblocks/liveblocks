@@ -254,6 +254,16 @@ function createStore_forPlaceholders() {
     });
   }
 
+  function markAllLost(): void {
+    baseSignal.mutate((lut) => {
+      for (const placeholder of lut.values()) {
+        placeholder.status = "failed";
+        placeholder.errorReason = "Error: Lost connection.";
+      }
+      return true;
+    });
+  }
+
   return {
     placeholdersById: DerivedSignal.from(
       baseSignal,
@@ -262,6 +272,7 @@ function createStore_forPlaceholders() {
     createOptimistically: create,
     addChunk,
     settle,
+    markAllLost,
   };
 }
 
@@ -470,6 +481,10 @@ export function createAi(config: AiConfig): Ai {
 
           case "error":
             // TODO Handle generic server error
+            break;
+
+          case "rebooted":
+            context.placeholders.markAllLost();
             break;
 
           default:
