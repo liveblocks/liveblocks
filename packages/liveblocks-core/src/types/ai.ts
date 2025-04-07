@@ -115,8 +115,12 @@ type ClearChatPair = DefineCmd<
 type AskAIPair = DefineCmd<
   "ask-ai",
   {
-    inputSource: AiInputSource;
+    inputSource: AiInputSource; // XXX Rename to "source"
+    // ---------------------
+    // XXX We should group these into a single "target" property
     placeholderId: PlaceholderId; // Optimistically assigned by client
+    outputMessageId?: MessageId; // Optimistically assigned by client
+    // ---------------------
     copilotId?: CopilotId;
     stream: boolean;
     // XXX Allow specifying a timeout?
@@ -329,3 +333,11 @@ export type AiAssistantMessage = AiUserMessageBase & {
 };
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
+
+// XXX I think we should make it part of the AiChatMessage union, but not 100% sure yet, so keeping it separate for now
+export type AiPlaceholderChatMessage = {
+  id: MessageId;
+  role: "assistant"; // TODO Consider role = 'assistant-placeholder' ?
+  placeholderId: PlaceholderId;
+  createdAt: ISODateString;
+};

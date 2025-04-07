@@ -22,6 +22,7 @@ import type {
   AiChat,
   AiChatMessage,
   AiInputSource,
+  AiPlaceholderChatMessage,
   AiTextContent,
   AiTool,
   AskAiResponse,
@@ -70,6 +71,7 @@ type AiContext = {
   >;
   chats: ReturnType<typeof createStore_forUserAiChats>;
   messages: ReturnType<typeof createStore_forChatMessages>;
+  placeholders: ReturnType<typeof createStore_forPlaceholders>;
 };
 
 export type AskAiOptions = {
@@ -82,7 +84,10 @@ export type AskAiOptions = {
 
 function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(
-    new DefaultMap<ChatId, Map<MessageId, AiChatMessage>>(() => new Map())
+    new DefaultMap<
+      ChatId,
+      Map<MessageId, AiChatMessage | AiPlaceholderChatMessage>
+    >(() => new Map())
   );
 
   function update(chatId: ChatId, messages: AiChatMessage[]): void {
@@ -135,7 +140,10 @@ function createStore_forChatMessages() {
     });
   }
 
-  function addMessage(chatId: ChatId, message: AiChatMessage): void {
+  function addMessage(
+    chatId: ChatId,
+    message: AiChatMessage | AiPlaceholderChatMessage
+  ): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
       if (!messagesByChatId) {
@@ -172,6 +180,77 @@ function createStore_forChatMessages() {
     update,
     remove,
     removeByChatId,
+  };
+}
+
+// XXX Put this type elsewhere when we're happy with it
+type Placeholder = {
+  id: PlaceholderId;
+  status: "thinking" | "streaming" | "completed" | "failed";
+  chunks: unknown[];
+  errorReason?: string;
+};
+
+function createStore_forPlaceholders() {
+  const baseSignal = new MutableSignal(
+    new DefaultMap<PlaceholderId, Placeholder>((id) => ({
+      id,
+      status: "thinking",
+      chunks: [],
+    }))
+  );
+
+  function create(): PlaceholderId {
+    const placeholderId = `ph_${nanoid()}` as PlaceholderId;
+    baseSignal.mutate((lut) => {
+      lut.getOrCreate(placeholderId);
+    });
+    return placeholderId;
+  }
+
+  function addChunk(placeholderId: PlaceholderId, chunk: unknown): void {
+    baseSignal.mutate((lut) => {
+      const placeholder = lut.get(placeholderId);
+      if (!placeholder) {
+        return false; // No update needed
+      } else {
+        placeholder.status = "streaming";
+        placeholder.chunks.push(chunk);
+        return true;
+      }
+    });
+  }
+
+  function settle(
+    placeholderId: PlaceholderId,
+    result:
+      | { status: "completed"; content: unknown[] }
+      | { status: "failed"; reason: string }
+  ): void {
+    baseSignal.mutate((lut) => {
+      const placeholder = lut.get(placeholderId);
+      if (!placeholder) {
+        return false; // No update needed
+      } else {
+        placeholder.status = result.status;
+        if (result.status === "failed") {
+          placeholder.errorReason = result.reason;
+        } else {
+          placeholder.chunks = result.content;
+        }
+        return true;
+      }
+    });
+  }
+
+  return {
+    // placeholders: DerivedSignal.from(baseSignal, (placeholders) =>
+    //   placeholders.values()
+    // ),
+
+    createOptimistically: create,
+    addChunk,
+    settle,
   };
 }
 
@@ -235,23 +314,20 @@ export type Ai = {
   ) => Promise<AttachUserMessageResponse>;
   ask: {
     (
-      placeholderId: PlaceholderId,
       chatId: ChatId,
       messageId: MessageId,
       options?: AskAiOptions
     ): Promise<AskAiResponse>;
-    (
-      placeholderId: PlaceholderId,
-      prompt: string,
-      options?: AskAiOptions
-    ): Promise<AskAiResponse>;
+    (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
   };
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
   abortResponse: (chatId: ChatId) => Promise<ErrorServerEvent>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
-    messages: DerivedSignal<Record<string, AiChatMessage[]>>;
+    messages: DerivedSignal<
+      Record<string, (AiChatMessage | AiPlaceholderChatMessage)[]>
+    >;
   };
 };
 
@@ -280,6 +356,7 @@ export function createAi(config: AiConfig): Ai {
     pendingRequests: new Map(),
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
+    placeholders: createStore_forPlaceholders(),
   };
 
   let lastTokenKey: string | undefined;
@@ -648,7 +725,6 @@ export function createAi(config: AiConfig): Ai {
       },
 
       ask: (
-        placeholderId: PlaceholderId,
         one: string,
         two?: MessageId | AskAiOptions,
         three?: AskAiOptions
@@ -658,14 +734,39 @@ export function createAi(config: AiConfig): Ai {
             ? { chatId: one as ChatId, messageId: two }
             : { prompt: one };
         const options = typeof two === "string" ? three : two;
-        return sendClientMsgWithResponse({
-          cmd: "ask-ai",
-          inputSource,
-          placeholderId,
-          copilotId: options?.copilotId,
-          stream: options?.stream ?? false, // XXX Make true the default for .ask()?
-          tools: options?.tools,
-        });
+
+        const placeholderId = context.placeholders.createOptimistically();
+        if (inputSource.messageId) {
+          const outputMessageId = `ms_${nanoid()}` as MessageId;
+
+          // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+          context.messages.addMessage(inputSource.chatId, {
+            id: outputMessageId,
+            role: "assistant",
+            placeholderId,
+            createdAt: new Date().toISOString() as ISODateString,
+          });
+
+          return sendClientMsgWithResponse({
+            cmd: "ask-ai",
+            inputSource,
+            placeholderId,
+            outputMessageId,
+            copilotId: options?.copilotId,
+            stream: options?.stream ?? false, // XXX Make true the default for .ask()?
+            tools: options?.tools,
+          });
+        } else {
+          return sendClientMsgWithResponse({
+            cmd: "ask-ai",
+            inputSource,
+            placeholderId,
+            outputMessageId: undefined,
+            copilotId: options?.copilotId,
+            stream: options?.stream ?? false, // XXX Make true the default for .ask()?
+            tools: options?.tools,
+          });
+        }
       },
 
       statelessAction: (prompt: string, tool: AiTool) => {

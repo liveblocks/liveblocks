@@ -1,6 +1,7 @@
 import type {
   AiAssistantMessage,
   AiChatMessage,
+  AiPlaceholderChatMessage,
   AiUserMessage,
   ChatId,
 } from "@liveblocks/core";
@@ -32,7 +33,7 @@ export type ChatMessagesProps = Omit<
   /**
    * The messages to display.
    */
-  messages: AiChatMessage[];
+  messages: (AiChatMessage | AiPlaceholderChatMessage)[];
   /**
    * The components displayed in the chat messages.
    */
@@ -292,7 +293,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: AiAssistantMessage;
+  message: AiAssistantMessage | AiPlaceholderChatMessage;
   /**
    * Override the component's strings.
    */
@@ -327,20 +328,24 @@ export const DefaultAssistantChatMessage = forwardRef<
       {...props}
     >
       <div className="lb-assistant-chat-message-content">
-        {message.content.map((block) => {
-          switch (block.type) {
-            case "text":
-              return <TextMessage key={block.id} data={block.text} />;
-            case "tool-call":
-              return (
-                <ToolCallMessage
-                  key={block.id}
-                  name={block.name}
-                  args={block.args}
-                />
-              );
-          }
-        })}
+        {"content" in message
+          ? message.content.map((block) => {
+              switch (block.type) {
+                case "text":
+                  return <TextMessage key={block.id} data={block.text} />;
+                case "tool-call":
+                  return (
+                    <ToolCallMessage
+                      key={block.id}
+                      name={block.name}
+                      args={block.args}
+                    />
+                  );
+              }
+            })
+          : `XXX TODO Implement a stream watcher here for ${
+              message.placeholderId
+            }!`}
       </div>
     </div>
   );

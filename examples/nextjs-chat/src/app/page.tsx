@@ -20,12 +20,11 @@ import { DebugClient } from "../DebugClient";
 import {
   AiChat,
   AiChatMessage,
+  AiPlaceholderChatMessage,
   ChatId,
   CopilotId,
   ISODateString,
   MessageId,
-  nanoid,
-  PlaceholderId,
 } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
 
@@ -222,7 +221,9 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
 
-  function messageAbove(messageId: MessageId): AiChatMessage | undefined {
+  function messageAbove(
+    messageId: MessageId
+  ): (AiChatMessage | AiPlaceholderChatMessage) | undefined {
     return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
   }
 
@@ -285,8 +286,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                         );
                         forceRerender();
 
-                        const placeholderId = `ph_${nanoid()}` as PlaceholderId; // XXX Record/track this placeholder
-                        await client.ai.ask(placeholderId, chatId, messageId, {
+                        await client.ai.ask(chatId, messageId, {
                           copilotId: selectedCopilotId,
                           stream: streaming,
                         });
@@ -302,13 +302,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   style={{ all: "unset", cursor: "pointer" }}
                   onClick={async () => {
                     try {
-                      const placeholderId = `ph_${nanoid()}` as PlaceholderId; // XXX Record/track this placeholder
-                      await client.ai.ask(
-                        placeholderId,
-                        chatId,
-                        props.message.id,
-                        { copilotId: selectedCopilotId, stream: false }
-                      );
+                      await client.ai.ask(chatId, props.message.id, {
+                        copilotId: selectedCopilotId,
+                        stream: false,
+                      });
                     } finally {
                       setOverrideParentId(undefined);
                     }
@@ -402,8 +399,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 );
                 forceRerender();
 
-                const placeholderId = `ph_${nanoid()}` as PlaceholderId; // XXX Record/track this placeholder
-                await client.ai.ask(placeholderId, chatId, messageId, {
+                await client.ai.ask(chatId, messageId, {
                   copilotId: selectedCopilotId,
                   stream: false,
                 });
