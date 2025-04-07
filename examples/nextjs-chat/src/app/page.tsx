@@ -445,7 +445,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               borderRadius: "6px",
               backgroundColor: "white",
               padding: "10px 1rem",
-              marginLeft: "1rem",
+              margin: "0 1rem",
             }}
             type="text"
             onChange={(ev) =>
