@@ -154,10 +154,19 @@ type AskAIPair = DefineCmd<
 // -------------------------------------------------------------------------------------------------
 
 export type ServerEvent =
+  | RebootedEvent
   | CmdFailedEvent
   | ErrorServerEvent
   | UpdatePlaceholderServerEvent
   | SettlePlaceholderServerEvent;
+
+// Sent from the server any time it woke up from hibernation. If this happens,
+// it means that any placeholders a client is still tracking are lost track of.
+// We emit this event to connected clients, so they can mark all of their
+// placeholders as failed.
+export type RebootedEvent = {
+  event: "rebooted";
+};
 
 export type CmdFailedEvent = {
   event: "cmd-failed";
