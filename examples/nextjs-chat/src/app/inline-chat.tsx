@@ -41,7 +41,7 @@ export function InlineChat({
 
       {Object.entries(context).map(([key, value]) => {
         return (
-          <CopilotContext
+          <CopilotContextComp
             key={key}
             chatId={chatId}
             contextKey={key}
@@ -53,7 +53,7 @@ export function InlineChat({
   );
 }
 
-function CopilotContext({
+function CopilotContextComp({
   chatId,
   contextKey,
   data,
@@ -76,3 +76,17 @@ function CopilotContext({
   return null;
 }
 
+function A() {
+  return (
+    <InlineChat
+      chatId=""
+      copilotId=""
+      context={{
+        countries: {
+          value: "Countries in the world",
+          description: ["France", "USA"].join(""),
+        },
+      }}
+    />
+  );
+}
