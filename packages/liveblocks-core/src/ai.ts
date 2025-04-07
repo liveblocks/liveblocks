@@ -78,6 +78,7 @@ type AiContext = {
   chats: ReturnType<typeof createStore_forUserAiChats>;
   messages: ReturnType<typeof createStore_forChatMessages>;
   placeholders: ReturnType<typeof createStore_forPlaceholders>;
+  contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
 };
 
 export type AskAiOptions = {
@@ -344,9 +345,10 @@ export type Ai = {
   };
   registerChatContext: (
     chatId: ChatId,
-    data: Record<string, CopilotContext>
+    contextKey: string,
+    data: CopilotContext
   ) => void;
-  unregisterChatContext: (chatId: ChatId) => void;
+  unregisterChatContext: (chatId: ChatId, contextKey: string) => void;
 };
 
 /** @internal */
@@ -375,6 +377,7 @@ export function createAi(config: AiConfig): Ai {
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
     placeholders: createStore_forPlaceholders(),
+    contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -617,23 +620,25 @@ export function createAi(config: AiConfig): Ai {
 
   function registerChatContext(
     chatId: ChatId,
-    data: Record<string, CopilotContext>
+    contextKey: string,
+    data: CopilotContext
   ) {
-    if (context.contextByChatId.has(chatId)) {
-      context.contextByChatId.delete(chatId);
+    const chatContext = context.contextByChatId.get(chatId);
+    if (chatContext === undefined) {
+      context.contextByChatId.set(chatId, new Map([[contextKey, data]]));
+    } else {
+      chatContext.set(contextKey, data);
     }
-    const contextMap = new Map<
-      string,
-      { description: string; value: string }
-    >();
-    for (const [key, { value, description }] of Object.entries(data)) {
-      contextMap.set(key, { description, value });
-    }
-    context.contextByChatId.set(chatId, contextMap);
   }
 
-  function unregisterChatContext(chatId: ChatId) {
-    context.contextByChatId.delete(chatId);
+  function unregisterChatContext(chatId: ChatId, contextKey: string) {
+    const chatContext = context.contextByChatId.get(chatId);
+    if (chatContext) {
+      chatContext.delete(contextKey);
+      if (chatContext.size === 0) {
+        context.contextByChatId.delete(chatId);
+      }
+    }
   }
 
   return Object.defineProperty(

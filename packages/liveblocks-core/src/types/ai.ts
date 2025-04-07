@@ -300,3 +300,8 @@ export type AiPlaceholderChatMessage = {
   placeholderId: PlaceholderId;
   createdAt: ISODateString;
 };
+
+export type CopilotContext = {
+  value: string;
+  description: string;
+};

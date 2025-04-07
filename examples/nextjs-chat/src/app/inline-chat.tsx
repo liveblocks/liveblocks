@@ -22,13 +22,6 @@ export function InlineChat({
     hasFetchedAll,
   } = useCopilotChatMessages(chatId);
 
-  useEffect(() => {
-    client.ai.registerChatContext(chatId, context);
-    return () => {
-      client.ai.unregisterChatContext(chatId);
-    };
-  }, [client, chatId]);
-
   if (isLoading) {
     // TODO: Add suitable loading state
     return <></>;
@@ -45,6 +38,41 @@ export function InlineChat({
       <ChatMessages messages={messages} chatId={chatId} />
 
       <ChatComposer chatId={chatId} />
+
+      {Object.entries(context).map(([key, value]) => {
+        return (
+          <CopilotContext
+            key={key}
+            chatId={chatId}
+            contextKey={key}
+            data={value}
+          />
+        );
+      })}
     </div>
   );
 }
+
+function CopilotContext({
+  chatId,
+  contextKey,
+  data,
+}: {
+  chatId: ChatId;
+  contextKey: string;
+  data: CopilotContext;
+}) {
+  const client = useClient();
+  const value = data.value;
+  const description = data.description;
+
+  useEffect(() => {
+    client.ai.registerChatContext(chatId, contextKey, { value, description });
+    return () => {
+      client.ai.unregisterChatContext(chatId, contextKey);
+    };
+  }, [contextKey, data, value, description]);
+
+  return null;
+}
+
