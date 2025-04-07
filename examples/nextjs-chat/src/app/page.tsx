@@ -202,6 +202,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
   >();
+  const [streaming, setStreaming] = useState(false);
 
   const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -283,7 +284,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                         forceRerender();
                         await client.ai.ask(chatId, messageId, {
                           copilotId: selectedCopilotId,
-                          stream: false,
+                          stream: streaming,
                         });
                       } finally {
                         setOverrideParentId(undefined);
@@ -446,6 +447,20 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             value={overrideParentId}
             placeholder="Attach to which message?"
           />
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginLeft: "10px",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={streaming}
+              onChange={(ev) => setStreaming(ev.currentTarget.checked)}
+            />{" "}
+            Streaming
+          </label>
         </div>
       </div>
     </div>
