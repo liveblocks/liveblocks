@@ -146,6 +146,7 @@ type AskAIPair = DefineCmd<
 export type ServerEvent =
   | CmdFailedEvent
   | ErrorServerEvent
+  | UpdatePlaceholderServerEvent
   | SettlePlaceholderServerEvent
   | StreamMessagePartServerEvent
   | StreamMessageFailedServerEvent
@@ -201,6 +202,14 @@ export type StreamMessageCompleteServerEvent = {
   content: AiAssistantContent[];
   chatId?: ChatId;
   messageId?: MessageId;
+};
+
+// XXX Fine-tune this message!
+export type UpdatePlaceholderServerEvent = {
+  event: "update-placeholder";
+  placeholderId: PlaceholderId;
+  // XXX Maybe send just the delta instead? It should be possible now.
+  contentSoFar: AiAssistantContent[]; // XXX Not decided yet!
 };
 
 // XXX Fine-tune this message!

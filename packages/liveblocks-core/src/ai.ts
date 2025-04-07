@@ -9,7 +9,12 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
+import {
+  DerivedSignal,
+  type ISignal,
+  MutableSignal,
+  Signal,
+} from "./lib/signals";
 import { type DistributiveOmit, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -19,6 +24,7 @@ import type {
   TimeoutID,
 } from "./room";
 import type {
+  AiAssistantContent,
   AiChat,
   AiChatMessage,
   AiInputSource,
@@ -184,10 +190,10 @@ function createStore_forChatMessages() {
 }
 
 // XXX Put this type elsewhere when we're happy with it
-type Placeholder = {
+export type Placeholder = {
   id: PlaceholderId;
   status: "thinking" | "streaming" | "completed" | "failed";
-  chunks: unknown[];
+  contentSoFar: AiAssistantContent[];
   errorReason?: string;
 };
 
@@ -196,7 +202,7 @@ function createStore_forPlaceholders() {
     new DefaultMap<PlaceholderId, Placeholder>((id) => ({
       id,
       status: "thinking",
-      chunks: [],
+      contentSoFar: [],
     }))
   );
 
@@ -208,14 +214,25 @@ function createStore_forPlaceholders() {
     return placeholderId;
   }
 
-  function addChunk(placeholderId: PlaceholderId, chunk: unknown): void {
+  function addChunk(
+    placeholderId: PlaceholderId,
+    // XXX Currently, we're only replacing the "contents so far" completely on
+    // every update message. However, we could only send the delta and let the
+    // client append things locally if we want to optimize this later.
+    contentSoFar: AiAssistantContent[]
+  ): void {
     baseSignal.mutate((lut) => {
+      window.console.log(
+        "[vincent] adding chunk to placeholder:",
+        placeholderId,
+        contentSoFar
+      );
       const placeholder = lut.get(placeholderId);
       if (!placeholder) {
         return false; // No update needed
       } else {
         placeholder.status = "streaming";
-        placeholder.chunks.push(chunk);
+        placeholder.contentSoFar = contentSoFar;
         return true;
       }
     });
@@ -224,30 +241,32 @@ function createStore_forPlaceholders() {
   function settle(
     placeholderId: PlaceholderId,
     result:
-      | { status: "completed"; content: unknown[] }
+      | { status: "completed"; content: AiAssistantContent[] }
       | { status: "failed"; reason: string }
   ): void {
     baseSignal.mutate((lut) => {
       const placeholder = lut.get(placeholderId);
       if (!placeholder) {
+        window.console.log("[vincent] Signal not found!");
         return false; // No update needed
       } else {
         placeholder.status = result.status;
         if (result.status === "failed") {
           placeholder.errorReason = result.reason;
         } else {
-          placeholder.chunks = result.content;
+          placeholder.contentSoFar = result.content;
         }
+        window.console.log("[vincent] Settled the signal!", placeholder);
         return true;
       }
     });
   }
 
   return {
-    // placeholders: DerivedSignal.from(baseSignal, (placeholders) =>
-    //   placeholders.values()
-    // ),
-
+    placeholdersById: DerivedSignal.from(
+      baseSignal,
+      (lut) => new Map(lut.entries()) as ReadonlyMap<PlaceholderId, Placeholder>
+    ).asReadonly(),
     createOptimistically: create,
     addChunk,
     settle,
@@ -328,6 +347,7 @@ export type Ai = {
     messages: DerivedSignal<
       Record<string, (AiChatMessage | AiPlaceholderChatMessage)[]>
     >;
+    placeholders: ISignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
 };
 
@@ -444,34 +464,15 @@ export function createAi(config: AiConfig): Ai {
             pendingReq?.reject(new Error(msg.error));
             break;
 
+          case "update-placeholder": {
+            const { placeholderId, contentSoFar } = msg;
+            context.placeholders.addChunk(placeholderId, contentSoFar);
+            break;
+          }
+
           case "settle-placeholder": {
             const { placeholderId, result } = msg;
-            if (result.status === "completed") {
-              alert(
-                "placeholder " +
-                  placeholderId +
-                  "settled! " +
-                  result.content.join(" ")
-              );
-              // context.messages.patchMessage(chatId, messageId, {
-              //   role: "assistant",
-              //   status: "complete",
-              // });
-            } else if (result.status === "failed") {
-              alert(
-                "placeholder " + placeholderId + "failed: " + result.reason
-              );
-              // context.messages.patchMessage(chatId, messageId, {
-              //   status: "failed",
-              // });
-            }
-
-            // if (msg.messageId !== undefined && msg.chatId !== undefined) {
-            //   context.messages.patchMessage(msg.chatId, msg.messageId, {
-            //     content: msg.content,
-            //     status: "complete",
-            //   });
-            // }
+            context.placeholders.settle(placeholderId, result);
             break;
           }
 
@@ -798,6 +799,7 @@ export function createAi(config: AiConfig): Ai {
       signals: {
         chats: context.chats.signal,
         messages: context.messages.sortedMessages,
+        placeholders: context.placeholders.placeholdersById,
       },
     },
     kInternal,

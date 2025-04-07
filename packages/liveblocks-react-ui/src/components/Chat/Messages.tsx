@@ -4,7 +4,10 @@ import type {
   AiPlaceholderChatMessage,
   AiUserMessage,
   ChatId,
+  PlaceholderId,
 } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
+import { useSignal } from "@liveblocks/react/_private";
 import type { ComponentType, HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -313,6 +316,39 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   }>;
 };
 
+function StreamingPlaceholder(props: {
+  placeholderId: PlaceholderId;
+  TextMessage: ComponentType<AssistantMessageTextContentProps>;
+  ToolCallMessage: ComponentType<AssistantMessageToolCallContentProps>;
+}) {
+  const client = useClient();
+  const placeholders = useSignal(client.ai.signals.placeholders);
+  const placeholder = placeholders.get(props.placeholderId);
+  const TextMessage = props.TextMessage;
+  const ToolCallMessage = props.ToolCallMessage;
+  return (
+    <div>
+      <div>{placeholder?.status ?? "huh?"}</div>
+      {placeholder
+        ? placeholder.contentSoFar.map((block) => {
+            switch (block.type) {
+              case "text":
+                return <TextMessage key={block.id} data={block.text} />;
+              case "tool-call":
+                return (
+                  <ToolCallMessage
+                    key={block.id}
+                    name={block.name}
+                    args={block.args}
+                  />
+                );
+            }
+          })
+        : null}
+    </div>
+  );
+}
+
 export const DefaultAssistantChatMessage = forwardRef<
   HTMLDivElement,
   AssistantChatMessageProps
@@ -328,24 +364,28 @@ export const DefaultAssistantChatMessage = forwardRef<
       {...props}
     >
       <div className="lb-assistant-chat-message-content">
-        {"content" in message
-          ? message.content.map((block) => {
-              switch (block.type) {
-                case "text":
-                  return <TextMessage key={block.id} data={block.text} />;
-                case "tool-call":
-                  return (
-                    <ToolCallMessage
-                      key={block.id}
-                      name={block.name}
-                      args={block.args}
-                    />
-                  );
-              }
-            })
-          : `XXX TODO Implement a stream watcher here for ${
-              message.placeholderId
-            }!`}
+        {"content" in message ? (
+          message.content.map((block) => {
+            switch (block.type) {
+              case "text":
+                return <TextMessage key={block.id} data={block.text} />;
+              case "tool-call":
+                return (
+                  <ToolCallMessage
+                    key={block.id}
+                    name={block.name}
+                    args={block.args}
+                  />
+                );
+            }
+          })
+        ) : (
+          <StreamingPlaceholder
+            placeholderId={message.placeholderId}
+            TextMessage={TextMessage}
+            ToolCallMessage={ToolCallMessage}
+          />
+        )}
       </div>
     </div>
   );
