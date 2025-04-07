@@ -24,6 +24,7 @@ import type {
   TimeoutID,
 } from "./room";
 import type {
+  AbortAiResponse,
   AiAssistantContent,
   AiChat,
   AiChatMessage,
@@ -350,9 +351,9 @@ export type Ai = {
     ): Promise<AskAiResponse>;
     (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
   };
+  abort: (placeholderId: PlaceholderId) => Promise<AbortAiResponse>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
-  // abortPlaceholder: (placeholderId: PlaceholderId) => Promise<AbortPlaceholderResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<
@@ -552,6 +553,7 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           case "attach-user-message":
+          case "abort-ai":
             // TODO Not handled yet
             break;
 
@@ -792,12 +794,8 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      // abortPlaceholder: (placeholderId: PlaceholderId) => {
-      //   return sendClientMsgWithResponse({
-      //     cmd: "abort-placeholder",
-      //     placeholderId,
-      //   });
-      // },
+      abort: (placeholderId: PlaceholderId) =>
+        sendClientMsgWithResponse({ cmd: "abort-ai", placeholderId }),
 
       getStatus: () => managedSocket.getStatus(),
 

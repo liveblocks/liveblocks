@@ -328,10 +328,28 @@ function StreamingPlaceholder(props: {
   const ToolCallMessage = props.ToolCallMessage;
   return (
     <div>
-      <i>
-        {placeholder?.status ?? "huh?"}
-        {placeholder?.status?.endsWith("ing") ? "..." : ""}
-      </i>
+      <span>
+        <i>
+          {placeholder?.status ?? "huh?"}
+          {placeholder?.status?.endsWith("ing") ? "..." : ""}
+        </i>{" "}
+        {placeholder?.status?.endsWith("ing") ? (
+          <button
+            style={{
+              all: "unset",
+              cursor: "pointer",
+              border: "1px solid red",
+              padding: "6px 10px",
+              color: "red",
+            }}
+            onClick={() => {
+              void client.ai.abort(placeholder.id);
+            }}
+          >
+            abort
+          </button>
+        ) : null}
+      </span>
       {placeholder
         ? placeholder.contentSoFar.map((block) => {
             switch (block.type) {
