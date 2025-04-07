@@ -221,11 +221,6 @@ function createStore_forPlaceholders() {
     contentSoFar: AiAssistantContent[]
   ): void {
     baseSignal.mutate((lut) => {
-      window.console.log(
-        "[vincent] adding chunk to placeholder:",
-        placeholderId,
-        contentSoFar
-      );
       const placeholder = lut.get(placeholderId);
       if (!placeholder) {
         return false; // No update needed
@@ -246,7 +241,6 @@ function createStore_forPlaceholders() {
     baseSignal.mutate((lut) => {
       const placeholder = lut.get(placeholderId);
       if (!placeholder) {
-        window.console.log("[vincent] Signal not found!");
         return false; // No update needed
       } else {
         placeholder.status = result.status;
@@ -255,7 +249,6 @@ function createStore_forPlaceholders() {
         } else {
           placeholder.contentSoFar = result.content;
         }
-        window.console.log("[vincent] Settled the signal!", placeholder);
         return true;
       }
     });
@@ -696,11 +689,6 @@ export function createAi(config: AiConfig): Ai {
         const options = typeof two === "string" ? three : two;
 
         const stream = options?.stream ?? false;
-        if (!stream) {
-          alert("MUSTUSE STREAMING FOR NOW P2");
-          throw new Error("hlasshjalkdasjlkdas");
-        }
-
         const placeholderId = context.placeholders.createOptimistically();
         if (inputSource.messageId) {
           const outputMessageId = `ms_${nanoid()}` as MessageId;
