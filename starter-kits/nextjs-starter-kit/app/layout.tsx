@@ -6,8 +6,10 @@ import "../styles/normalize.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
 import "@liveblocks/react-tiptap/styles.css";
+import "@blocknote/mantine/style.css";
 import "../styles/globals.css";
-import "../styles/text-editor.css";
+import "../styles/tiptap.css";
+import "../styles/blocknote.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

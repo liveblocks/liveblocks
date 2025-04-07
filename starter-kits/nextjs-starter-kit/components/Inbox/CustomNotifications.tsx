@@ -6,7 +6,7 @@ import { DocumentIcon } from "@/components/Documents";
 import { DOCUMENT_URL } from "@/constants";
 import { getDocument } from "@/lib/actions";
 import { useDocumentsFunctionSWR } from "@/lib/hooks";
-import { LinkButton } from "@/primitives/Button";
+import { Button } from "@/primitives/Button";
 import styles from "@/components/Inbox/Inbox.module.css";
 
 // Component displayed when `$addedToDocument` custom notification is in inbox
@@ -26,6 +26,7 @@ export function AddedToDocumentNotification(
   return (
     <InboxNotification.Custom
       {...props}
+      href={DOCUMENT_URL(document.type, document.id)}
       title={
         <>
           Added to <strong>{document.name}</strong>
@@ -39,9 +40,7 @@ export function AddedToDocumentNotification(
     >
       You’ve been granted access to a new document.
       <div className={styles.addedToDocumentButton}>
-        <LinkButton href={DOCUMENT_URL(document.type, document.id)}>
-          Go to document
-        </LinkButton>
+        <Button>Go to document</Button>
       </div>
     </InboxNotification.Custom>
   );
