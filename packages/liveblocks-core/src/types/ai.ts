@@ -39,8 +39,8 @@ type CommandPair =
   | AttachUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
-  | AskAIPair;
-// | AbortPlaceholderPair;
+  | AskAIPair
+  | AbortAiPair;
 
 type ClientCmdRequest<T extends CommandPair> = T[0];
 type ServerCmdResponse<T extends CommandPair> = T[1];
@@ -53,7 +53,7 @@ export type AttachUserMessageCmd = ClientCmdRequest<AttachUserMessagePair>;
 export type DeleteMessageCmd = ClientCmdRequest<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmdRequest<ClearChatPair>;
 export type AskAiCmd = ClientCmdRequest<AskAIPair>;
-// export type AbortPlaceholderCmd = ClientCmdRequest<AbortPlaceholderPair>;
+export type AbortAiCmd = ClientCmdRequest<AbortAiPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
@@ -64,7 +64,7 @@ export type AttachUserMessageResponse =
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
 export type AskAiResponse = ServerCmdResponse<AskAIPair>;
-// export type AbortPlaceholderResponse = ServerCmdResponse<AbortPlaceholderPair>;
+export type AbortAiResponse = ServerCmdResponse<AbortAiPair>;
 
 type GetChatsPair = DefineCmd<
   "get-chats",
@@ -124,9 +124,9 @@ type AskAIPair = DefineCmd<
     // ---------------------
     copilotId?: CopilotId;
     stream: boolean;
-    // XXX Allow specifying a timeout?
     tools?: AiTool[];
     toolChoice?: ToolChoice;
+    timeout: number; // in millis
   },
   Relax<
     | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats
@@ -140,14 +140,13 @@ type AskAIPair = DefineCmd<
   >
 >;
 
-// type AbortPlaceholderPair = DefineCmd<
-//   "abort-placeholder",
-//   {
-//     placeholderId: PlaceholderId;
-//     // chatId?: ChatId  // TODO Consider one command to abort _all_ placeholders for a given chat? There should be only one at the start though
-//   },
-//   { placeholderId: PlaceholderId }
-// >;
+type AbortAiPair = DefineCmd<
+  "abort-ai",
+  // TODO Do we want to also be able to abort _all_ placeholders for a given
+  // chat ID? There should be only one at the start though.
+  { placeholderId: PlaceholderId },
+  { placeholderId: PlaceholderId }
+>;
 
 // -------------------------------------------------------------------------------------------------
 // Server-initiated events

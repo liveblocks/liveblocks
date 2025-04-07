@@ -24,6 +24,7 @@ import type {
   TimeoutID,
 } from "./room";
 import type {
+  AbortAiResponse,
   AiAssistantContent,
   AiChat,
   AiChatMessage,
@@ -57,8 +58,14 @@ import type {
 } from "./types/IWebSocket";
 import { PKG_VERSION } from "./version";
 
-// Allow server to take up to 10 seconds to respond to any WebSocket RPC request
-const DEFAULT_REQUEST_TIMEOUT = 10_000;
+// Server must respond to any command within 4 seconds. Note that this timeout
+// isn't related to the timeout for long-running AI tasks. If a long-running AI
+// task is started, the initial command response from the server is "okay, I'll
+// keep you posted about this long-running task". That okay is the response
+// which must happen within 4 seconds. In practice it should only take a few
+// milliseconds at most.
+const DEFAULT_REQUEST_TIMEOUT = 4_000;
+const DEFAULT_AI_TIMEOUT = 30_000;
 
 /**
  * A lookup table (LUT) for all the user AI chats.
@@ -86,7 +93,7 @@ export type AskAiOptions = {
   stream?: boolean; // True by default
   tools?: AiTool[];
   // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
-  // XXX Allow specifying a backend timeout here!
+  timeout?: number;
 };
 
 function createStore_forChatMessages() {
@@ -344,9 +351,9 @@ export type Ai = {
     ): Promise<AskAiResponse>;
     (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
   };
+  abort: (placeholderId: PlaceholderId) => Promise<AbortAiResponse>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
-  // abortPlaceholder: (placeholderId: PlaceholderId) => Promise<AbortPlaceholderResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<
@@ -546,6 +553,7 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           case "attach-user-message":
+          case "abort-ai":
             // TODO Not handled yet
             break;
 
@@ -575,8 +583,7 @@ export function createAi(config: AiConfig): Ai {
   });
 
   async function sendClientMsgWithResponse<T extends ServerAiMsg>(
-    msg: DistributiveOmit<ClientAiMsg, "cmdId">,
-    timeout: number = DEFAULT_REQUEST_TIMEOUT
+    msg: DistributiveOmit<ClientAiMsg, "cmdId">
   ): Promise<T> {
     if (managedSocket.getStatus() !== "connected") {
       await managedSocket.events.didConnect.waitUntil();
@@ -585,7 +592,7 @@ export function createAi(config: AiConfig): Ai {
     const { promise, resolve, reject } = Promise_withResolvers<ServerAiMsg>();
 
     // Automatically calls reject() when signal is aborted
-    const abortSignal = AbortSignal.timeout(timeout);
+    const abortSignal = AbortSignal.timeout(DEFAULT_REQUEST_TIMEOUT);
     abortSignal.addEventListener("abort", () => reject(abortSignal.reason), {
       once: true,
     });
@@ -710,16 +717,13 @@ export function createAi(config: AiConfig): Ai {
           createdAt: new Date().toISOString() as ISODateString,
         });
 
-        return sendClientMsgWithResponse(
-          {
-            cmd: "attach-user-message",
-            id: messageId,
-            chatId,
-            parentMessageId,
-            content,
-          },
-          60_000 // todo: not sure if we even want to leave a promise hanging here. some requests can be pretty long, although we do need to have some bounds
-        );
+        return sendClientMsgWithResponse({
+          cmd: "attach-user-message",
+          id: messageId,
+          chatId,
+          parentMessageId,
+          content,
+        });
       },
 
       ask: (
@@ -754,6 +758,7 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
           });
         } else {
           return sendClientMsgWithResponse({
@@ -764,33 +769,33 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
           });
         }
       },
 
-      statelessAction: (prompt: string, tool: AiTool) => {
-        return sendClientMsgWithResponse(
-          {
-            cmd: "ask-ai",
-            inputSource: { prompt },
-            placeholderId: `ph_${nanoid()}` as PlaceholderId,
-            stream: false,
-            tools: [tool],
-            toolChoice: {
-              type: "tool",
-              toolName: tool.name,
-            },
+      statelessAction: (
+        prompt: string,
+        tool: AiTool,
+        // XXX Should this options param be shared with AskAiOptions?
+        options?: { timeout: number }
+      ) => {
+        return sendClientMsgWithResponse({
+          cmd: "ask-ai",
+          inputSource: { prompt },
+          placeholderId: `ph_${nanoid()}` as PlaceholderId,
+          stream: false,
+          tools: [tool],
+          toolChoice: {
+            type: "tool",
+            toolName: tool.name,
           },
-          60_000 // XXX This should not be the _client_ timeout! The immediate response should be fast! We should pass this requested timeout to the backend and use it there!
-        );
+          timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+        });
       },
 
-      // abortPlaceholder: (placeholderId: PlaceholderId) => {
-      //   return sendClientMsgWithResponse({
-      //     cmd: "abort-placeholder",
-      //     placeholderId,
-      //   });
-      // },
+      abort: (placeholderId: PlaceholderId) =>
+        sendClientMsgWithResponse({ cmd: "abort-ai", placeholderId }),
 
       getStatus: () => managedSocket.getStatus(),
 
