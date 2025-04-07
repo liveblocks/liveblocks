@@ -15,9 +15,7 @@ export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
-export type ClientAiMsg =
-  | ClientCmdRequest<CommandPair>
-  | AbortSomethingClientMsg; // XXX We should fine tune or remove this
+export type ClientAiMsg = ClientCmdRequest<CommandPair>;
 
 // A server WebSocket message can be either a command response from the server,
 // or a server-initiated event
@@ -42,6 +40,7 @@ type CommandPair =
   | DeleteMessagePair
   | ClearChatPair
   | AskAIPair;
+// | AbortPlaceholderPair;
 
 type ClientCmdRequest<T extends CommandPair> = T[0];
 type ServerCmdResponse<T extends CommandPair> = T[1];
@@ -54,6 +53,7 @@ export type AttachUserMessageCmd = ClientCmdRequest<AttachUserMessagePair>;
 export type DeleteMessageCmd = ClientCmdRequest<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmdRequest<ClearChatPair>;
 export type AskAiCmd = ClientCmdRequest<AskAIPair>;
+// export type AbortPlaceholderCmd = ClientCmdRequest<AbortPlaceholderPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
@@ -64,6 +64,7 @@ export type AttachUserMessageResponse =
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
 export type AskAiResponse = ServerCmdResponse<AskAIPair>;
+// export type AbortPlaceholderResponse = ServerCmdResponse<AbortPlaceholderPair>;
 
 type GetChatsPair = DefineCmd<
   "get-chats",
@@ -139,6 +140,15 @@ type AskAIPair = DefineCmd<
   >
 >;
 
+// type AbortPlaceholderPair = DefineCmd<
+//   "abort-placeholder",
+//   {
+//     placeholderId: PlaceholderId;
+//     // chatId?: ChatId  // TODO Consider one command to abort _all_ placeholders for a given chat? There should be only one at the start though
+//   },
+//   { placeholderId: PlaceholderId }
+// >;
+
 // -------------------------------------------------------------------------------------------------
 // Server-initiated events
 // -------------------------------------------------------------------------------------------------
@@ -183,17 +193,6 @@ export type SettlePlaceholderServerEvent = {
 };
 
 // -------------------------------------------------------------------------------------------------
-// Client messages that aren't commands
-// -------------------------------------------------------------------------------------------------
-
-// XXX This isn't really a Cmd! Think about this
-export type AbortSomethingClientMsg = {
-  cmd: "abort-something"; // XXX rename to the thing that will actually get aborted, need to first find the best name for that, will fix later
-  cmdId: CmdId;
-  chatId: ChatId;
-};
-
-// -------------------------------------------------------------------------------------------------
 // Shared data types
 // -------------------------------------------------------------------------------------------------
 
@@ -211,14 +210,8 @@ export type AiChat = {
  * 2. responding, AI is responding via stream
  * 3. complete, AI has responded
  * 4. failed, AI failed to respond
- * 5. aborted, user aborted the response
  */
-export type AiStatus =
-  | "thinking"
-  | "responding"
-  | "complete"
-  | "failed"
-  | "aborted";
+export type AiStatus = "thinking" | "responding" | "complete" | "failed";
 
 export interface AiTool {
   name: string;

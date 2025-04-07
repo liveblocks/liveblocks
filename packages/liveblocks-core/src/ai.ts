@@ -42,7 +42,6 @@ import type {
   Cursor,
   DeleteChatResponse,
   DeleteMessageResponse,
-  ErrorServerEvent,
   GetChatsResponse,
   GetMessagesResponse,
   ISODateString,
@@ -341,7 +340,7 @@ export type Ai = {
   };
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
-  abortResponse: (chatId: ChatId) => Promise<ErrorServerEvent>;
+  // abortPlaceholder: (placeholderId: PlaceholderId) => Promise<AbortPlaceholderResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<
@@ -753,12 +752,12 @@ export function createAi(config: AiConfig): Ai {
         );
       },
 
-      abortResponse: (chatId: ChatId) => {
-        return sendClientMsgWithResponse({
-          cmd: "abort-something",
-          chatId,
-        });
-      },
+      // abortPlaceholder: (placeholderId: PlaceholderId) => {
+      //   return sendClientMsgWithResponse({
+      //     cmd: "abort-placeholder",
+      //     placeholderId,
+      //   });
+      // },
 
       getStatus: () => managedSocket.getStatus(),
 
