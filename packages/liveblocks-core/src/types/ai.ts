@@ -92,6 +92,7 @@ type GetMessagesPair = DefineCmd<
 type AttachUserMessagePair = DefineCmd<
   "attach-user-message",
   {
+    id: MessageId; // New message ID, optimistically assigned by client
     chatId: ChatId;
     parentMessageId: MessageId | null;
     content: AiTextContent | string;

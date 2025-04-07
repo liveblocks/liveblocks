@@ -24,6 +24,8 @@ import {
   CopilotId,
   ISODateString,
   MessageId,
+  nanoid,
+  PlaceholderId,
 } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
 
@@ -282,7 +284,9 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                           answer
                         );
                         forceRerender();
-                        await client.ai.ask(chatId, messageId, {
+
+                        const placeholderId = `ph_${nanoid()}` as PlaceholderId; // XXX Record/track this placeholder
+                        await client.ai.ask(placeholderId, chatId, messageId, {
                           copilotId: selectedCopilotId,
                           stream: streaming,
                         });
@@ -298,10 +302,13 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   style={{ all: "unset", cursor: "pointer" }}
                   onClick={async () => {
                     try {
-                      await client.ai.ask(chatId, props.message.id, {
-                        copilotId: selectedCopilotId,
-                        stream: false,
-                      });
+                      const placeholderId = `ph_${nanoid()}` as PlaceholderId; // XXX Record/track this placeholder
+                      await client.ai.ask(
+                        placeholderId,
+                        chatId,
+                        props.message.id,
+                        { copilotId: selectedCopilotId, stream: false }
+                      );
                     } finally {
                       setOverrideParentId(undefined);
                     }
@@ -394,7 +401,9 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
-                await client.ai.ask(chatId, messageId, {
+
+                const placeholderId = `ph_${nanoid()}` as PlaceholderId; // XXX Record/track this placeholder
+                await client.ai.ask(placeholderId, chatId, messageId, {
                   copilotId: selectedCopilotId,
                   stream: false,
                 });

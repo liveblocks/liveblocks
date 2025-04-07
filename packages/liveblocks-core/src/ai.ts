@@ -235,11 +235,16 @@ export type Ai = {
   ) => Promise<AttachUserMessageResponse>;
   ask: {
     (
+      placeholderId: PlaceholderId,
       chatId: ChatId,
       messageId: MessageId,
       options?: AskAiOptions
     ): Promise<AskAiResponse>;
-    (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
+    (
+      placeholderId: PlaceholderId,
+      prompt: string,
+      options?: AskAiOptions
+    ): Promise<AskAiResponse>;
   };
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
@@ -620,10 +625,11 @@ export function createAi(config: AiConfig): Ai {
           type: "text",
           text: message,
         };
+        const messageId = `ms_${nanoid()}` as MessageId;
 
         // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
         context.messages.addMessage(chatId, {
-          id: `local:ms_${nanoid()}` as MessageId, // XXX Maybe let the client generate msg IDs?
+          id: messageId,
           role: "user",
           content: [content],
           createdAt: new Date().toISOString() as ISODateString,
@@ -632,6 +638,7 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse(
           {
             cmd: "attach-user-message",
+            id: messageId,
             chatId,
             parentMessageId,
             content,
@@ -641,6 +648,7 @@ export function createAi(config: AiConfig): Ai {
       },
 
       ask: (
+        placeholderId: PlaceholderId,
         one: string,
         two?: MessageId | AskAiOptions,
         three?: AskAiOptions
@@ -653,7 +661,7 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
           inputSource,
-          placeholderId: `ph_${nanoid()}` as PlaceholderId,
+          placeholderId,
           copilotId: options?.copilotId,
           stream: options?.stream ?? false, // XXX Make true the default for .ask()?
           tools: options?.tools,
