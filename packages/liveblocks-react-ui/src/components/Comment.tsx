@@ -572,7 +572,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
         onCommentEdit?.(comment);
 
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.stopPropagation();
         event.preventDefault();
+
         setEditing(false);
         editComment({
           commentId: comment.id,
