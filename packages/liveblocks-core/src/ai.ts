@@ -736,6 +736,12 @@ export function createAi(config: AiConfig): Ai {
             : { prompt: one };
         const options = typeof two === "string" ? three : two;
 
+        const stream = options?.stream ?? false;
+        if (!stream) {
+          alert("MUSTUSE STREAMING FOR NOW P2");
+          throw new Error("hlasshjalkdasjlkdas");
+        }
+
         const placeholderId = context.placeholders.createOptimistically();
         if (inputSource.messageId) {
           const outputMessageId = `ms_${nanoid()}` as MessageId;
@@ -754,7 +760,7 @@ export function createAi(config: AiConfig): Ai {
             placeholderId,
             outputMessageId,
             copilotId: options?.copilotId,
-            stream: options?.stream ?? false, // XXX Make true the default for .ask()?
+            stream,
             tools: options?.tools,
           });
         } else {
@@ -764,7 +770,7 @@ export function createAi(config: AiConfig): Ai {
             placeholderId,
             outputMessageId: undefined,
             copilotId: options?.copilotId,
-            stream: options?.stream ?? false, // XXX Make true the default for .ask()?
+            stream,
             tools: options?.tools,
           });
         }

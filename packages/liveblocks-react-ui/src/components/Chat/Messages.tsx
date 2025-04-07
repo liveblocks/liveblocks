@@ -328,7 +328,10 @@ function StreamingPlaceholder(props: {
   const ToolCallMessage = props.ToolCallMessage;
   return (
     <div>
-      <div>{placeholder?.status ?? "huh?"}</div>
+      <i>
+        {placeholder?.status ?? "huh?"}
+        {placeholder?.status?.endsWith("ing") ? "..." : ""}
+      </i>
       {placeholder
         ? placeholder.contentSoFar.map((block) => {
             switch (block.type) {

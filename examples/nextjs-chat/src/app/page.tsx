@@ -202,8 +202,8 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
-  >();
-  const [streaming, setStreaming] = useState(false);
+  >("co_T6jQlhS" as CopilotId);
+  const [streaming, setStreaming] = useState(true);
 
   const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -304,7 +304,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                     try {
                       await client.ai.ask(chatId, props.message.id, {
                         copilotId: selectedCopilotId,
-                        stream: false,
+                        stream: streaming,
                       });
                     } finally {
                       setOverrideParentId(undefined);
@@ -401,7 +401,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
                 await client.ai.ask(chatId, messageId, {
                   copilotId: selectedCopilotId,
-                  stream: false,
+                  stream: streaming,
                 });
               } finally {
                 setOverrideParentId(undefined);
