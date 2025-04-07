@@ -75,18 +75,3 @@ function CopilotContextComp({
 
   return null;
 }
-
-function A() {
-  return (
-    <InlineChat
-      chatId=""
-      copilotId=""
-      context={{
-        countries: {
-          value: "Countries in the world",
-          description: ["France", "USA"].join(""),
-        },
-      }}
-    />
-  );
-}
