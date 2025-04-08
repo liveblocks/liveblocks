@@ -65,7 +65,10 @@ import { PKG_VERSION } from "./version";
 // which must happen within 4 seconds. In practice it should only take a few
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
-const DEFAULT_AI_TIMEOUT = 30_000;
+
+// TODO What is a good default timeout for long running tasks has not been
+// settled yet. Maybe we need to make this much larger?
+const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 seconds in the backend
 
 /**
  * A lookup table (LUT) for all the user AI chats.
@@ -759,7 +762,7 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
-            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT,
             context: chatContext ? Array.from(chatContext.values()) : undefined,
           });
         } else {
@@ -771,7 +774,7 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
-            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT,
           });
         }
       },
