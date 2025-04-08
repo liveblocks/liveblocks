@@ -14,6 +14,7 @@ import {
   ChatMessages,
   UserChatMessage,
 } from "@liveblocks/react-ui";
+import Markdown from "react-markdown";
 import { useState } from "react";
 
 import { DebugClient } from "../DebugClient";
@@ -274,7 +275,15 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           // Add bells and whistles to the default chat components
           AssistantChatMessage: (props) => (
             <div className="assistant-message-container">
-              <AssistantChatMessage {...props} />
+              <AssistantChatMessage {...props}
+                components={{
+                  TextMessage: (props) => (
+                    <div className="lb-root lb-assistant-chat-message-text-content">
+                      <Markdown>{props.data}</Markdown>
+                    </div>
+                  )
+                }}
+              />
               <div className="assistant-message-controls">
                 <button
                   onClick={() => setOverrideParentId(props.message.id)}
