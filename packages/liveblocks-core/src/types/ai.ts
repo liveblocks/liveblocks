@@ -127,6 +127,7 @@ type AskAIPair = DefineCmd<
     tools?: AiTool[];
     toolChoice?: ToolChoice;
     timeout: number; // in millis
+    context?: CopilotContext[];
   },
   Relax<
     | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats

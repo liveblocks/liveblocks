@@ -750,6 +750,7 @@ export function createAi(config: AiConfig): Ai {
             createdAt: new Date().toISOString() as ISODateString,
           });
 
+          const chatContext = context.contextByChatId.get(inputSource.chatId);
           return sendClientMsgWithResponse({
             cmd: "ask-ai",
             inputSource,
@@ -759,6 +760,7 @@ export function createAi(config: AiConfig): Ai {
             stream,
             tools: options?.tools,
             timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+            context: chatContext ? Array.from(chatContext.values()) : undefined,
           });
         } else {
           return sendClientMsgWithResponse({
