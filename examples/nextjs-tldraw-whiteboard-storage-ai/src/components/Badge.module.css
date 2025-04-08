@@ -1,0 +1,30 @@
+.badge {
+  display: block;
+  position: relative;
+  z-index: 99;
+  transition: opacity 0.3s ease-in-out;
+  outline: none;
+  width: 148px;
+  margin: 8px;
+  margin-top: 10px;
+  pointer-events: all;
+  opacity: 0.7;
+}
+
+.badge:hover,
+.badge:focus-visible {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .badge {
+    opacity: 1;
+  }
+}
+
+.image {
+  max-width: 100%;
+  min-width: 100%;
+  width: 100%;
+  filter: drop-shadow(1px 1px 0px #00000022) drop-shadow(3px 3px 3px #00000022);
+}
