@@ -343,7 +343,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            gap: ".5rem",
+            width: "100%",
             margin: "1rem",
           }}
         >
@@ -399,7 +402,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               setMaxTimeout(value === "default" ? undefined : Number(value));
             }}
             style={{
-              width: "30%",
               border: "2px solid #888",
               borderRadius: "6px",
               backgroundColor: "white",
