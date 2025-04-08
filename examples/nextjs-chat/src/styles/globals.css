@@ -215,21 +215,26 @@ a:hover {
 }
 
 .logo {
+  background-repeat: no-repeat;
+  background-size: contain;
+  padding-left: 46px;
+  background-image: url(https://liveblocks.io/_next/image?url=%2Fimages%2Fproducts%2Fai-copilots.png&w=64&q=75);
   margin: 1rem 0 0 0;
 }
 
 .create-chat-btn {
   margin-top: 0.7rem;
-  background-color: #0066cc;
+  background-color: hsl(340, 73%, 36%);
   color: white;
   text-align: center;
   padding: 8px;
   margin-bottom: 15px;
   border-radius: 4px;
+  font-weight: 600;
 }
 
 .create-chat-btn:hover {
-  background-color: #0055aa;
+  background-color: hsl(340, 73%, 39%);
 }
 
 .load-more-chats-btn {
@@ -307,14 +312,6 @@ a:hover {
 
   .error {
     color: #fff;
-  }
-
-  .create-chat-btn {
-    background-color: #4477ff;
-  }
-
-  .create-chat-btn:hover {
-    background-color: #3366dd;
   }
 
   /* Button styles for dark mode */
