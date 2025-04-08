@@ -25,12 +25,12 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
-  AiAssistantContent,
+  AiAssistantContentPart,
   AiChat,
   AiChatMessage,
   AiInputSource,
   AiPlaceholderChatMessage,
-  AiTextContent,
+  AiTextPart,
   AiTool,
   AskAiResponse,
   AttachUserMessageResponse,
@@ -65,7 +65,10 @@ import { PKG_VERSION } from "./version";
 // which must happen within 4 seconds. In practice it should only take a few
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
-const DEFAULT_AI_TIMEOUT = 30_000;
+
+// TODO What is a good default timeout for long running tasks has not been
+// settled yet. Maybe we need to make this much larger?
+const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 seconds in the backend
 
 /**
  * A lookup table (LUT) for all the user AI chats.
@@ -201,7 +204,7 @@ function createStore_forChatMessages() {
 export type Placeholder = {
   id: PlaceholderId;
   status: "thinking" | "streaming" | "completed" | "failed";
-  contentSoFar: AiAssistantContent[];
+  contentSoFar: AiAssistantContentPart[];
   errorReason?: string;
 };
 
@@ -227,7 +230,7 @@ function createStore_forPlaceholders() {
     // XXX Currently, we're only replacing the "contents so far" completely on
     // every update message. However, we could only send the delta and let the
     // client append things locally if we want to optimize this later.
-    contentSoFar: AiAssistantContent[]
+    contentSoFar: AiAssistantContentPart[]
   ): void {
     baseSignal.mutate((lut) => {
       const placeholder = lut.get(placeholderId);
@@ -244,7 +247,7 @@ function createStore_forPlaceholders() {
   function settle(
     placeholderId: PlaceholderId,
     result:
-      | { status: "completed"; content: AiAssistantContent[] }
+      | { status: "completed"; content: AiAssistantContentPart[] }
       | { status: "failed"; reason: string }
   ): void {
     baseSignal.mutate((lut) => {
@@ -703,7 +706,7 @@ export function createAi(config: AiConfig): Ai {
         parentMessageId: MessageId | null,
         message: string
       ) => {
-        const content: AiTextContent = {
+        const content: AiTextPart = {
           type: "text",
           text: message,
         };
@@ -750,6 +753,7 @@ export function createAi(config: AiConfig): Ai {
             createdAt: new Date().toISOString() as ISODateString,
           });
 
+          const chatContext = context.contextByChatId.get(inputSource.chatId);
           return sendClientMsgWithResponse({
             cmd: "ask-ai",
             inputSource,
@@ -758,7 +762,8 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
-            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT,
+            context: chatContext ? Array.from(chatContext.values()) : undefined,
           });
         } else {
           return sendClientMsgWithResponse({
@@ -769,7 +774,7 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream,
             tools: options?.tools,
-            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT,
           });
         }
       },

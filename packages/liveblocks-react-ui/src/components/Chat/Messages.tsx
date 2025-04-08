@@ -326,12 +326,15 @@ function StreamingPlaceholder(props: {
   const placeholder = placeholders.get(props.placeholderId);
   const TextMessage = props.TextMessage;
   const ToolCallMessage = props.ToolCallMessage;
+
+  const hasFailed = placeholder?.status === "failed";
   return (
     <div>
-      <span>
+      <span style={{ color: hasFailed ? "red" : undefined }}>
         <i>
           {placeholder?.status ?? "huh?"}
           {placeholder?.status?.endsWith("ing") ? "..." : ""}
+          {placeholder?.errorReason ? `: ${placeholder.errorReason}` : ""}
         </i>{" "}
         {placeholder?.status?.endsWith("ing") ? (
           <button
@@ -351,16 +354,17 @@ function StreamingPlaceholder(props: {
         ) : null}
       </span>
       {placeholder
-        ? placeholder.contentSoFar.map((block) => {
-            switch (block.type) {
+        ? placeholder.contentSoFar.map((part, index) => {
+            switch (part.type) {
               case "text":
-                return <TextMessage key={block.id} data={block.text} />;
+                return <TextMessage key={index} data={part.text} />;
               case "tool-call":
                 return (
                   <ToolCallMessage
-                    key={block.id}
-                    name={block.name}
-                    args={block.args}
+                    key={index}
+                    toolCallId={part.toolCallId}
+                    toolName={part.toolName}
+                    args={part.args}
                   />
                 );
             }
@@ -386,16 +390,17 @@ export const DefaultAssistantChatMessage = forwardRef<
     >
       <div className="lb-assistant-chat-message-content">
         {"content" in message ? (
-          message.content.map((block) => {
-            switch (block.type) {
+          message.content.map((part, index) => {
+            switch (part.type) {
               case "text":
-                return <TextMessage key={block.id} data={block.text} />;
+                return <TextMessage key={index} data={part.text} />;
               case "tool-call":
                 return (
                   <ToolCallMessage
-                    key={block.id}
-                    name={block.name}
-                    args={block.args}
+                    key={index}
+                    toolCallId={part.toolCallId}
+                    toolName={part.toolName}
+                    args={part.args}
                   />
                 );
             }
@@ -435,14 +440,15 @@ export const DefaultAssistantMessageTextContent = forwardRef<
 
 export type AssistantMessageToolCallContentProps =
   HTMLAttributes<HTMLDivElement> & {
-    name: string;
-    args?: unknown;
+    toolName: string;
+    toolCallId: string;
+    args: unknown;
   };
 
 export const DefaultAssistantMessageToolCallContent = forwardRef<
   HTMLDivElement,
   AssistantMessageToolCallContentProps
->(({ name, args, className }, forwardedRef) => {
+>(({ toolName, toolCallId, args, className }, forwardedRef) => {
   return (
     <div
       ref={forwardedRef}
@@ -451,7 +457,9 @@ export const DefaultAssistantMessageToolCallContent = forwardRef<
         className
       )}
     >
-      <span>{name}</span>
+      <span>
+        {toolName} (#{toolCallId})
+      </span>
       <pre style={{ overflow: "auto" }}>{JSON.stringify(args, null, 2)}</pre>
     </div>
   );

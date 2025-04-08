@@ -15,11 +15,11 @@ export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
-export type ClientAiMsg = ClientCmdRequest<CommandPair>;
+export type ClientAiMsg = ClientCmd;
 
 // A server WebSocket message can be either a command response from the server,
 // or a server-initiated event
-export type ServerAiMsg = ServerCmdResponse<CommandPair> | ServerEvent;
+export type ServerAiMsg = ServerCmdResponse | ServerEvent;
 
 // Helper to create a pair of matching commands and responses
 type DefineCmd<CmdName extends string, TRequest, TResponse> = [
@@ -42,18 +42,18 @@ type CommandPair =
   | AskAIPair
   | AbortAiPair;
 
-type ClientCmdRequest<T extends CommandPair> = T[0];
-type ServerCmdResponse<T extends CommandPair> = T[1];
+export type ClientCmd<T extends CommandPair = CommandPair> = T[0];
+export type ServerCmdResponse<T extends CommandPair = CommandPair> = T[1];
 
-export type GetChatsCmd = ClientCmdRequest<GetChatsPair>;
-export type CreateChatCmd = ClientCmdRequest<CreateChatPair>;
-export type DeleteChatCmd = ClientCmdRequest<DeleteChatPair>;
-export type GetMessagesCmd = ClientCmdRequest<GetMessagesPair>;
-export type AttachUserMessageCmd = ClientCmdRequest<AttachUserMessagePair>;
-export type DeleteMessageCmd = ClientCmdRequest<DeleteMessagePair>;
-export type ClearChatCmd = ClientCmdRequest<ClearChatPair>;
-export type AskAiCmd = ClientCmdRequest<AskAIPair>;
-export type AbortAiCmd = ClientCmdRequest<AbortAiPair>;
+export type GetChatsCmd = ClientCmd<GetChatsPair>;
+export type CreateChatCmd = ClientCmd<CreateChatPair>;
+export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
+export type GetMessagesCmd = ClientCmd<GetMessagesPair>;
+export type AttachUserMessageCmd = ClientCmd<AttachUserMessagePair>;
+export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
+export type ClearChatCmd = ClientCmd<ClearChatPair>;
+export type AskAiCmd = ClientCmd<AskAIPair>;
+export type AbortAiCmd = ClientCmd<AbortAiPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
@@ -96,7 +96,7 @@ type AttachUserMessagePair = DefineCmd<
     id: MessageId; // New message ID, optimistically assigned by client
     chatId: ChatId;
     parentMessageId: MessageId | null;
-    content: AiTextContent | string;
+    content: AiTextPart;
   },
   { chatId: ChatId; messageId: MessageId; createdAt: ISODateString }
 >;
@@ -126,6 +126,7 @@ type AskAIPair = DefineCmd<
     stream: boolean;
     tools?: AiTool[];
     toolChoice?: ToolChoice;
+    context?: CopilotContext[];
     timeout: number; // in millis
   },
   Relax<
@@ -135,7 +136,7 @@ type AskAIPair = DefineCmd<
         chatId: ChatId;
         messageId: MessageId;
         // XXX Replace `content` by an optimistically created "container" ID
-        // content: AiAssistantContent[];
+        // content: AiAssistantContentPart[];
       }
   >
 >;
@@ -184,7 +185,7 @@ export type UpdatePlaceholderServerEvent = {
   event: "update-placeholder";
   placeholderId: PlaceholderId;
   // XXX Maybe send just the delta instead? It should be possible now.
-  contentSoFar: AiAssistantContent[]; // XXX Not decided yet!
+  contentSoFar: AiAssistantContentPart[]; // XXX Not decided yet!
 };
 
 // XXX Fine-tune this message!
@@ -192,12 +193,13 @@ export type SettlePlaceholderServerEvent = {
   event: "settle-placeholder";
   placeholderId: PlaceholderId;
   result:
-    | { status: "completed"; content: AiAssistantContent[] } // XXX Not decided yet!
+    | { status: "completed"; content: AiAssistantContentPart[] } // XXX Not decided yet!
     | { status: "failed"; reason: string }; // XXX Not decided yet!
   replaces?: {
     chatId: ChatId; // XXX Not decided yet!
     messageId: MessageId; // XXX Not decided yet!
   };
+  kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -227,20 +229,19 @@ export interface AiTool {
   parameter_schema: Json;
 }
 
-export type AiToolContent = {
-  id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
+export type AiToolCallPart = {
   type: "tool-call";
-  name: string;
-  args?: unknown;
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
 };
 
-export type AiTextContent = {
-  id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
+export type AiTextPart = {
   type: "text";
   text: string;
 };
 
-export type AiUploadedImageContent = {
+export type AiUploadedImagePart = {
   type: "image";
   id: string;
   name: string;
@@ -248,18 +249,15 @@ export type AiUploadedImageContent = {
   mimeType: string;
 };
 
-export type AiUserContent = AiTextContent | AiUploadedImageContent;
-export type AiAssistantContent = AiTextContent | AiToolContent;
+// "Parts" are what make up the "content" of a message.
+// "Content" is always an "array of parts".
+export type AiUserContentPart = AiTextPart | AiUploadedImagePart;
+export type AiAssistantContentPart = AiTextPart | AiToolCallPart;
 
-export type AiInputSource = Relax<StatefullMsg | StatelessMsg>;
-
-export interface StatefullMsg {
-  chatId: ChatId;
-  messageId: MessageId;
-}
-export interface StatelessMsg {
-  prompt: string;
-}
+export type AiInputSource = Relax<
+  | { chatId: ChatId; messageId: MessageId } // for chat messages
+  | { prompt: string } // one-off asks
+>;
 
 export type ToolChoice =
   | "auto"
@@ -283,20 +281,20 @@ export type UsageMetadata = {
   model: string;
 };
 
-export type AiUserMessageBase = {
+export type AiUserMessage = {
   id: MessageId;
+  role: "user";
+  content: AiUserContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
 };
 
-export type AiUserMessage = AiUserMessageBase & {
-  role: "user";
-  content: AiUserContent[];
-};
-
-export type AiAssistantMessage = AiUserMessageBase & {
+export type AiAssistantMessage = {
+  id: MessageId;
   role: "assistant";
-  content: AiAssistantContent[];
+  content: AiAssistantContentPart[];
+  createdAt: ISODateString;
+  deletedAt?: ISODateString;
 };
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
