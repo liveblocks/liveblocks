@@ -350,7 +350,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           <button
             className="danger-btn"
             style={{
-              margin: "0 1rem 0 0",
               border: "1px solid #888",
             }}
             onClick={(e) => {
@@ -364,7 +363,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             value={selectedCopilotId || "default"}
             onChange={handleCopilotChange}
             style={{
-              width: "30%",
               border: "2px solid #888",
               borderRadius: "6px",
               backgroundColor: "white",
@@ -380,12 +378,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           </select>
           <input
             style={{
-              width: "70%",
               border: "2px solid #888",
               borderRadius: "6px",
               backgroundColor: "white",
               padding: "10px 1rem",
-              margin: "0 1rem",
             }}
             type="text"
             onChange={(ev) =>
@@ -422,7 +418,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             style={{
               display: "flex",
               alignItems: "center",
-              margin: "0 0 0 1rem",
             }}
           >
             <input
