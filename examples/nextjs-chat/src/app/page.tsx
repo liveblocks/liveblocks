@@ -344,7 +344,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           style={{
             display: "flex",
             justifyContent: "space-between",
-            margin: "1rem 3rem",
+            margin: "1rem",
           }}
         >
           <button
