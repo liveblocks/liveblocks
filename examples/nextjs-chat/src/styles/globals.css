@@ -214,8 +214,12 @@ a:hover {
   text-decoration: underline;
 }
 
+.logo {
+  margin: 1rem 0 0 0;
+}
+
 .create-chat-btn {
-  margin-top: 1em;
+  margin-top: 0.7rem;
   background-color: #0066cc;
   color: white;
   text-align: center;

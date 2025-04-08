@@ -81,6 +81,7 @@ function ChatPicker() {
   return (
     <div className="chat-app-container">
       <div className="chat-controls">
+        <h1 className="logo">lbChat</h1>
         <button
           className="create-chat-btn"
           onClick={() => {
