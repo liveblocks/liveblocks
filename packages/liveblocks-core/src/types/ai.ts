@@ -15,11 +15,11 @@ export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
-export type ClientAiMsg = ClientCmdRequest<CommandPair>;
+export type ClientAiMsg = ClientCmd;
 
 // A server WebSocket message can be either a command response from the server,
 // or a server-initiated event
-export type ServerAiMsg = ServerCmdResponse<CommandPair> | ServerEvent;
+export type ServerAiMsg = ServerCmdResponse | ServerEvent;
 
 // Helper to create a pair of matching commands and responses
 type DefineCmd<CmdName extends string, TRequest, TResponse> = [
@@ -42,18 +42,18 @@ type CommandPair =
   | AskAIPair
   | AbortAiPair;
 
-type ClientCmdRequest<T extends CommandPair> = T[0];
-type ServerCmdResponse<T extends CommandPair> = T[1];
+export type ClientCmd<T extends CommandPair = CommandPair> = T[0];
+export type ServerCmdResponse<T extends CommandPair = CommandPair> = T[1];
 
-export type GetChatsCmd = ClientCmdRequest<GetChatsPair>;
-export type CreateChatCmd = ClientCmdRequest<CreateChatPair>;
-export type DeleteChatCmd = ClientCmdRequest<DeleteChatPair>;
-export type GetMessagesCmd = ClientCmdRequest<GetMessagesPair>;
-export type AttachUserMessageCmd = ClientCmdRequest<AttachUserMessagePair>;
-export type DeleteMessageCmd = ClientCmdRequest<DeleteMessagePair>;
-export type ClearChatCmd = ClientCmdRequest<ClearChatPair>;
-export type AskAiCmd = ClientCmdRequest<AskAIPair>;
-export type AbortAiCmd = ClientCmdRequest<AbortAiPair>;
+export type GetChatsCmd = ClientCmd<GetChatsPair>;
+export type CreateChatCmd = ClientCmd<CreateChatPair>;
+export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
+export type GetMessagesCmd = ClientCmd<GetMessagesPair>;
+export type AttachUserMessageCmd = ClientCmd<AttachUserMessagePair>;
+export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
+export type ClearChatCmd = ClientCmd<ClearChatPair>;
+export type AskAiCmd = ClientCmd<AskAIPair>;
+export type AbortAiCmd = ClientCmd<AbortAiPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
