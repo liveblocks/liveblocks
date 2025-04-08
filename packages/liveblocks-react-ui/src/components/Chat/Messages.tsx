@@ -354,16 +354,16 @@ function StreamingPlaceholder(props: {
         ) : null}
       </span>
       {placeholder
-        ? placeholder.contentSoFar.map((block) => {
-            switch (block.type) {
+        ? placeholder.contentSoFar.map((part) => {
+            switch (part.type) {
               case "text":
-                return <TextMessage key={block.id} data={block.text} />;
+                return <TextMessage key={part.id} data={part.text} />;
               case "tool-call":
                 return (
                   <ToolCallMessage
-                    key={block.id}
-                    name={block.name}
-                    args={block.args}
+                    key={part.id}
+                    name={part.name}
+                    args={part.args}
                   />
                 );
             }
@@ -389,16 +389,16 @@ export const DefaultAssistantChatMessage = forwardRef<
     >
       <div className="lb-assistant-chat-message-content">
         {"content" in message ? (
-          message.content.map((block) => {
-            switch (block.type) {
+          message.content.map((part) => {
+            switch (part.type) {
               case "text":
-                return <TextMessage key={block.id} data={block.text} />;
+                return <TextMessage key={part.id} data={part.text} />;
               case "tool-call":
                 return (
                   <ToolCallMessage
-                    key={block.id}
-                    name={block.name}
-                    args={block.args}
+                    key={part.id}
+                    name={part.name}
+                    args={part.args}
                   />
                 );
             }
