@@ -189,6 +189,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     { id: "co_T6jQlhS", name: "Rhyme Maker (Anthropic, Sonnet 3.5)" },
     { id: "co_gblzUtw", name: "Wrong Answers Only (OpenAI, gpt-4o)" },
     { id: "co_6ftW85o", name: "The Comedian (Google, Gemini Flash 2.0)" },
+    { id: "co_r3a5on1", name: "Deep Thinker (Anthropic, Sonnet 3.7-Reasoning)" },
   ];
 
   const lastMessageId =
