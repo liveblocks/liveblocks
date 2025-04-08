@@ -389,6 +389,14 @@ a:hover {
   }
 }
 
+.lb-assistant-chat-message {
+  display: block;
+}
+
+.lb-assistant-chat-message-content {
+  display: block;
+}
+
 /* someone good at CSS will fix this, there was just too much vertical space*/
 .lb-assistant-chat-message-text-content h1,
 .lb-assistant-chat-message-text-content h2,

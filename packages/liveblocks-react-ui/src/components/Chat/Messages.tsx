@@ -326,11 +326,9 @@ function StreamingPlaceholder(props: {
   const placeholder = placeholders.get(props.placeholderId);
   const TextMessage = props.TextMessage;
   const ToolCallMessage = props.ToolCallMessage;
-
-  const hasFailed = placeholder?.status === "failed";
   return (
-    <div>
-      <span style={{ color: hasFailed ? "red" : undefined }}>
+    <>
+      <div style={{ float: "right" }}>
         <i>
           {placeholder?.status ?? "huh?"}
           {placeholder?.status?.endsWith("ing") ? "..." : ""}
@@ -342,35 +340,37 @@ function StreamingPlaceholder(props: {
               all: "unset",
               cursor: "pointer",
               border: "1px solid red",
-              padding: "6px 10px",
+              padding: "8px 13px",
               color: "red",
             }}
             onClick={() => {
               void client.ai.abort(placeholder.id);
             }}
           >
-            abort
+            Abort
           </button>
         ) : null}
-      </span>
-      {placeholder
-        ? placeholder.contentSoFar.map((part, index) => {
-            switch (part.type) {
-              case "text":
-                return <TextMessage key={index} data={part.text} />;
-              case "tool-call":
-                return (
-                  <ToolCallMessage
-                    key={index}
-                    toolCallId={part.toolCallId}
-                    toolName={part.toolName}
-                    args={part.args}
-                  />
-                );
-            }
-          })
-        : null}
-    </div>
+      </div>
+      <div>
+        {placeholder
+          ? placeholder.contentSoFar.map((part, index) => {
+              switch (part.type) {
+                case "text":
+                  return <TextMessage key={index} data={part.text} />;
+                case "tool-call":
+                  return (
+                    <ToolCallMessage
+                      key={index}
+                      toolCallId={part.toolCallId}
+                      toolName={part.toolName}
+                      args={part.args}
+                    />
+                  );
+              }
+            })
+          : null}
+      </div>
+    </>
   );
 }
 
@@ -389,6 +389,8 @@ export const DefaultAssistantChatMessage = forwardRef<
       {...props}
     >
       <div className="lb-assistant-chat-message-content">
+        {/* <pre>{JSON.stringify(message, null, 2)}</pre> */}
+
         {"content" in message ? (
           message.content.map((part, index) => {
             switch (part.type) {
