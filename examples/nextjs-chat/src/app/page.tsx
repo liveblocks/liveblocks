@@ -528,7 +528,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     role: "assistant",
     content: [
       {
-        id: "2.1",
         type: "text",
         text: "The weather in Bhaktapur, Nepal is 25°C and sunny. Would you like me to look up the weather in another location?",
       },
@@ -558,7 +557,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     role: "assistant",
     content: [
       {
-        id: "4.1",
         type: "text",
         text: "The weather in Kathmandu, Nepal is 27°C and sunny. Would you like me to look up the weather in another location?",
       },
@@ -581,7 +579,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     role: "assistant",
     content: [
       {
-        id: "6.1",
         type: "tool-call",
         name: "getTime",
         args: {

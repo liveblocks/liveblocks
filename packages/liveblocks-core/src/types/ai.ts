@@ -230,14 +230,13 @@ export interface AiTool {
 }
 
 export type AiToolCallPart = {
-  id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
   type: "tool-call";
-  name: string;
-  args?: unknown;
+  toolCallId: string;
+  toolName: string;
+  args: unknown;
 };
 
 export type AiTextPart = {
-  id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
   type: "text";
   text: string;
 };

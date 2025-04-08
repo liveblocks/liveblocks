@@ -354,15 +354,16 @@ function StreamingPlaceholder(props: {
         ) : null}
       </span>
       {placeholder
-        ? placeholder.contentSoFar.map((part) => {
+        ? placeholder.contentSoFar.map((part, index) => {
             switch (part.type) {
               case "text":
-                return <TextMessage key={part.id} data={part.text} />;
+                return <TextMessage key={index} data={part.text} />;
               case "tool-call":
                 return (
                   <ToolCallMessage
-                    key={part.id}
-                    name={part.name}
+                    key={index}
+                    toolCallId={part.toolCallId}
+                    toolName={part.toolName}
                     args={part.args}
                   />
                 );
@@ -389,15 +390,16 @@ export const DefaultAssistantChatMessage = forwardRef<
     >
       <div className="lb-assistant-chat-message-content">
         {"content" in message ? (
-          message.content.map((part) => {
+          message.content.map((part, index) => {
             switch (part.type) {
               case "text":
-                return <TextMessage key={part.id} data={part.text} />;
+                return <TextMessage key={index} data={part.text} />;
               case "tool-call":
                 return (
                   <ToolCallMessage
-                    key={part.id}
-                    name={part.name}
+                    key={index}
+                    toolCallId={part.toolCallId}
+                    toolName={part.toolName}
                     args={part.args}
                   />
                 );
@@ -438,14 +440,15 @@ export const DefaultAssistantMessageTextContent = forwardRef<
 
 export type AssistantMessageToolCallContentProps =
   HTMLAttributes<HTMLDivElement> & {
-    name: string;
-    args?: unknown;
+    toolName: string;
+    toolCallId: string;
+    args: unknown;
   };
 
 export const DefaultAssistantMessageToolCallContent = forwardRef<
   HTMLDivElement,
   AssistantMessageToolCallContentProps
->(({ name, args, className }, forwardedRef) => {
+>(({ toolName, toolCallId, args, className }, forwardedRef) => {
   return (
     <div
       ref={forwardedRef}
@@ -454,7 +457,9 @@ export const DefaultAssistantMessageToolCallContent = forwardRef<
         className
       )}
     >
-      <span>{name}</span>
+      <span>
+        {toolName} (#{toolCallId})
+      </span>
       <pre style={{ overflow: "auto" }}>{JSON.stringify(args, null, 2)}</pre>
     </div>
   );
