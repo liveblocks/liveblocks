@@ -326,12 +326,15 @@ function StreamingPlaceholder(props: {
   const placeholder = placeholders.get(props.placeholderId);
   const TextMessage = props.TextMessage;
   const ToolCallMessage = props.ToolCallMessage;
+
+  const hasFailed = placeholder?.status === "failed";
   return (
     <div>
-      <span>
+      <span style={{ color: hasFailed ? "red" : undefined }}>
         <i>
           {placeholder?.status ?? "huh?"}
           {placeholder?.status?.endsWith("ing") ? "..." : ""}
+          {placeholder?.errorReason ? `: ${placeholder.errorReason}` : ""}
         </i>{" "}
         {placeholder?.status?.endsWith("ing") ? (
           <button
