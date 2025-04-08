@@ -1,111 +1,7 @@
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { Liveblocks, LiveMap } from "@liveblocks/node";
-
-const exampleOutput = [
-  [
-    "document:document",
-    {
-      gridSize: 10,
-      name: "",
-      meta: {},
-      id: "document:document",
-      typeName: "document",
-    },
-  ],
-  [
-    "page:page",
-    {
-      meta: {},
-      id: "page:page",
-      name: "Page 1",
-      index: "a1",
-      typeName: "page",
-    },
-  ],
-  [
-    "shape:9tvuLXb10kgKUCnlL-dvy",
-    {
-      x: 632.50390625,
-      y: 161.69140625,
-      rotation: 0,
-      isLocked: false,
-      opacity: 1,
-      meta: {},
-      id: "shape:9tvuLXb10kgKUCnlL-dvy",
-      type: "geo",
-      props: {
-        shape: "rectangle",
-      },
-      parentId: "page:page",
-      index: "a3Bxv",
-      typeName: "shape",
-    },
-  ],
-  [
-    "shape:5LQxQQYzyoEOBdvDMpmqV",
-    {
-      x: 545.31,
-      y: 348.84,
-      rotation: 0,
-      isLocked: false,
-      opacity: 1,
-      meta: {},
-      id: "shape:5LQxQQYzyoEOBdvDMpmqV",
-      type: "draw",
-      props: {},
-      parentId: "page:page",
-      index: "a22mB",
-      typeName: "shape",
-    },
-  ],
-  [
-    "shape:appleBody",
-    {
-      x: 300,
-      y: 300,
-      rotation: 0,
-      isLocked: false,
-      opacity: 1,
-      meta: {},
-      id: "shape:appleBody",
-      type: "geo",
-      props: {
-        shape: "ellipse",
-        w: 100,
-        h: 120,
-        fill: "red",
-        stroke: "darkred",
-      },
-      parentId: "page:page",
-      index: "a100",
-      typeName: "shape",
-    },
-  ],
-  [
-    "shape:appleLeaf",
-    {
-      x: 320,
-      y: 250,
-      rotation: -20,
-      isLocked: false,
-      opacity: 1,
-      meta: {},
-      id: "shape:appleLeaf",
-      type: "geo",
-      props: {
-        shape: "ellipse",
-        w: 30,
-        h: 20,
-        fill: "green",
-        stroke: "darkgreen",
-      },
-      parentId: "page:page",
-      index: "a101",
-      typeName: "shape",
-    },
-  ],
-];
+import { Liveblocks } from "@liveblocks/node";
+import { nanoid } from "nanoid";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -121,137 +17,45 @@ export async function POST(request: Request) {
     async ({ root }) => {
       const records = root.get("records");
 
-      exampleOutput.forEach(([id, record]) => {
-        records.set(id as string, record);
-      });
-
-      return;
-      // root.set("records", new LiveMap());
-
-      // const recordsMap = root.get("records").toImmutable();
-      // const recordsArray = Array.from(recordsMap.entries());
-      // console.log("records", JSON.stringify(recordsArray, null, 2));
-      // console.log("input", input, roomId);
+      // exampleOutput.forEach(([id, record]) => {
+      //   records.set(id as string, record);
+      // });
 
       const { text } = await generateText({
         model: openai("o3-mini"),
-        system: `You accept a query and return tldraw state as a response. 
-You can only return tldraw state as JSON, and no other text. 
-This state is the whole state of the canvas after your edits.
-This state should be ready to be converted into a Map, so it must be an array of tuples.
-Each tuple contains an ID and a TLRecord value.
-Here is an example of the output format, showing a line and a box:
-
-\`\`\`
-[
-  [
-    "shape:9tvuLXb10kgKUCnlL-dvy",
-    {
-      "x": 285.62890625,
-      "y": 135.234375,
-      "rotation": 0,
-      "isLocked": false,
-      "opacity": 1,
-      "meta": {},
-      "id": "shape:9tvuLXb10kgKUCnlL-dvy",
-      "type": "geo",
-      "props": {
-        "w": 200,
-        "h": 200,
-        "geo": "rectangle",
-        "color": "black",
-        "labelColor": "black",
-        "fill": "none",
-        "dash": "draw",
-        "size": "m",
-        "font": "draw",
-        "text": "",
-        "align": "middle",
-        "verticalAlign": "middle",
-        "growY": 0,
-        "url": "",
-        "scale": 1
-      },
-      "parentId": "page:page",
-      "index": "a3Bxv",
-      "typeName": "shape"
-    }
-  ],
-  [
-    "shape:5LQxQQYzyoEOBdvDMpmqV",
-    {
-      "x": 161.66015625,
-      "y": 158.06640625,
-      "rotation": 0,
-      "isLocked": false,
-      "opacity": 1,
-      "meta": {},
-      "id": "shape:5LQxQQYzyoEOBdvDMpmqV",
-      "type": "line",
-      "props": {
-        "dash": "draw",
-        "size": "m",
-        "color": "black",
-        "spline": "line",
-        "points": {
-          "a1": {
-            "id": "a1",
-            "index": "a1",
-            "x": 0,
-            "y": 0
-          },
-          "a2Bvz": {
-            "id": "a2Bvz",
-            "index": "a2Bvz",
-            "x": 34.640625,
-            "y": 137.578125
-          }
-        },
-        "scale": 1
-      },
-      "parentId": "page:page",
-      "index": "a49VK",
-      "typeName": "shape"
-    }
-  ],
-  [
-    "document:document",
-    {
-      "gridSize": 10,
-      "name": "",
-      "meta": {},
-      "id": "document:document",
-      "typeName": "document"
-    }
-  ],
-  [
-    "page:page",
-    {
-      "meta": {},
-      "id": "page:page",
-      "name": "Page 1",
-      "index": "a1",
-      "typeName": "page"
-    }
-  ]
-]
-\`\`\`
-
-This is the format you must use.
-
-Generate what the users asks for.`,
-        prompt: `This is the current tldraw state, you will return your edits in the same format: 
-
-\`\`\`
-${recordsArray}
-\`\`\`
-    
-This is the user's query: 
-
-${input}`,
+        system: SYSTEM_PROMPT,
+        prompt: input,
       });
 
-      console.log("text", text);
+      const start = text.indexOf("<!DOCTYPE html>");
+      const end = text.indexOf("</html>");
+      const html = text.slice(start, end + "</html>".length);
+      console.log("html", html);
+
+      // No HTML? Something went wrong
+      if (html.length < 100) {
+        console.warn(text);
+        throw Error("Could not generate a design from those wireframes.");
+      }
+
+      const shapeId = `shape:${nanoid()}`;
+      records.set(shapeId, {
+        id: shapeId,
+        typeName: "response",
+        props: {
+          html,
+          w: (960 * 2) / 3,
+          h: (540 * 2) / 3,
+        },
+        x: 0,
+        y: 0,
+        rotation: 0,
+        index: "a1",
+        parentId: "page:page",
+        isLocked: false,
+        opacity: 1,
+        meta: {},
+      });
 
       // root.get("records").set(text);
 
@@ -261,3 +65,41 @@ ${input}`,
 
   return new Response();
 }
+
+const SYSTEM_PROMPT = `You are an expert web developer who specializes in building working website prototypes from low-fidelity wireframes. Your job is to accept low-fidelity designs and turn them into high-fidelity interactive and responsive working prototypes.
+
+## Your task
+
+When sent new designs, you should reply with a high-fidelity working prototype as a single HTML file.
+
+## Important constraints
+
+- Your ENTIRE PROTOTYPE needs to be included in a single HTML file.
+- Your response MUST contain the entire HTML file contents.
+- Put any JavaScript in a <script> tag with \`type="module"\`.
+- Put any additional CSS in a <style> tag.
+- Your protype must be responsive.
+- The HTML file should be self-contained and not reference any external resources except those listed below:
+	- Use tailwind (via \`cdn.tailwindcss.com\`) for styling.
+	- Use unpkg or skypack to import any required JavaScript dependencies.
+	- Use Google fonts to pull in any open source fonts you require.
+	- If you have any images, load them from Unsplash or use solid colored rectangles as placeholders.
+	- Create SVGs as needed for any icons.
+
+## Additional Instructions
+
+The designs may include flow charts, diagrams, labels, arrows, sticky notes, screenshots of other applications, or even previous designs. Treat all of these as references for your prototype.
+
+The designs may include structural elements (such as boxes that represent buttons or content) as well as annotations or figures that describe interactions, behavior, or appearance. Use your best judgement to determine what is an annotation and what should be included in the final result. Annotations are commonly made in the color red. Do NOT include any of those annotations in your final result.
+
+If there are any questions or underspecified features, use what you know about applications, user experience, and website design patterns to "fill in the blanks". If you're unsure of how the designs should work, take a guess—it's better for you to get it wrong than to leave things incomplete.
+
+Your prototype should look and feel much more complete and advanced than the wireframes provided. Flesh it out, make it real!
+
+IMPORTANT LAST NOTES
+- The last line of your response MUST be </html>
+- The prototype must incorporate any annotations and feedback.
+- Make it cool. You're a cool designer, your prototype should be an original work of creative genius.
+
+Remember: you love your designers and want them to be happy. The more complete and impressive your prototype, the happier they will be. You are evaluated on 1) whether your prototype resembles the designs, 2) whether your prototype is interactive and responsive, and 3) whether your prototype is complete and impressive.
+`;

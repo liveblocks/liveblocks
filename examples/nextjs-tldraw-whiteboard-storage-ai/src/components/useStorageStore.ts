@@ -165,6 +165,7 @@ export function useStorageStore({
                 store.remove(toRemove);
               }
               if (toPut.length) {
+                console.log("toPut", toPut);
                 store.put(toPut);
               }
             });

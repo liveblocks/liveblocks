@@ -7,12 +7,16 @@ import { useSelf, useRoom } from "@liveblocks/react/suspense";
 import { Avatars } from "@/components/Avatars";
 import { Badge } from "@/components/Badge";
 import { useState } from "react";
+import { PreviewShapeUtil } from "./PreviewShape";
 
 /**
  * IMPORTANT: LICENSE REQUIRED
  * To remove the watermark, you must first purchase a license
  * Learn more: https://tldraw.dev/community/license
  */
+
+const shapeUtils = [PreviewShapeUtil];
+PreviewShapeUtil.type = "response";
 
 export function StorageTldraw() {
   // Getting authenticated user info. Doing this using selectors instead
@@ -24,6 +28,7 @@ export function StorageTldraw() {
   const room = useRoom();
 
   const store = useStorageStore({
+    shapeUtils,
     user: { id, color: info.color, name: info.name },
   });
 
@@ -100,6 +105,7 @@ export function StorageTldraw() {
       </div>
       <Tldraw
         store={store}
+        shapeUtils={shapeUtils}
         components={{
           // Render a live avatar stack at the top-right
           StylePanel: () => (

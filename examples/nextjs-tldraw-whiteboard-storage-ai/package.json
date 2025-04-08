@@ -19,6 +19,7 @@
     "@types/react-dom": "18.2.5",
     "ai": "^4.3.3",
     "autoprefixer": "^10.4.17",
+    "nanoid": "^5.1.5",
     "next": "^14.2.11",
     "react": "18.2.0",
     "react-dom": "18.2.0",
