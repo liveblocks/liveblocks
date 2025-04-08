@@ -27,6 +27,7 @@ import {
   MessageId,
 } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
+import { TrashIcon } from "./icons";
 
 export default function Page() {
   return (
@@ -66,6 +67,8 @@ function ChatPicker() {
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
 
+  console.log(hasFetchedAll);
+
   // The user-selected chat ID. If nothing is explicitly selected (or the
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
@@ -73,92 +76,81 @@ function ChatPicker() {
     chats[0]?.id
   );
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+
   return (
     <div className="chat-app-container">
       <div className="chat-controls">
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button
-            onClick={() => {
-              const name = prompt("Enter a name for this chat?", "New chat");
-              if (name !== null) {
-                client.ai.createChat(name);
-              }
-            }}
-          >
-            Create new chat
-          </button>
+        <button
+          className="create-chat-btn"
+          onClick={() => {
+            const name = prompt("Enter a name for this chat?", "New chat");
+            if (name !== null) {
+              client.ai.createChat(name);
+            }
+          }}
+        >
+          New Chat
+        </button>
 
+
+
+        <div className="chat-list">
+          {chats.map((chat) => (
+            <div
+              key={chat.id}
+              className={`chat-list-item ${chat.id === selectedChatId ? 'active' : ''}`}
+              onClick={() => setUserSelectedChatId(chat.id)}
+            >
+              {chat.name} <button
+                className="danger-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  client.ai.deleteChat(chat.id);
+                }}
+              >
+                <TrashIcon />
+              </button></div>
+
+          ))}
+
+          {chats.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '20px 0', color: '#777' }}>
+              No chats yet. Create your first chat!
+            </div>
+          )}
+        </div>
+
+
+        {isFetchingMore ? (
+          <div style={{ textAlign: 'center', padding: '10px' }}>Loading more chats...</div>
+        ) : (
           <button
+            className="load-more-chats-btn"
             style={{
               cursor:
                 isFetchingMore || hasFetchedAll ? "not-allowed" : "pointer",
               opacity: isFetchingMore || hasFetchedAll ? 0.5 : 1,
             }}
             onClick={fetchMore}
-            disabled={isFetchingMore || hasFetchedAll}
           >
-            {isFetchingMore ? "…" : "Load more"}
+            Load More Chats
           </button>
-
-          <div>
-            {fetchMoreError && (
-              <div>Failed to get more: ${fetchMoreError.message}</div>
-            )}
+        )}
+        {fetchMoreError && (
+          <div style={{ color: 'red', marginBottom: '10px' }}>
+            Failed to get more: {fetchMoreError.message}
           </div>
-        </div>
-        <ul
-          style={{
-            display: "flex",
-            gap: "10px",
-            listStyle: "none",
-            padding: 0,
-            margin: 0,
-          }}
-        >
-          {chats.map((chat) => (
-            <li key={chat.id}>
-              <a
-                href="#"
-                onClick={() => {
-                  setUserSelectedChatId(chat.id);
-                }}
-              >
-                {chat.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-
-        {selectedChat ? (
-          <div style={{ display: "flex", gap: "20px" }}>
-            <button
-              style={{
-                color: "red",
-              }}
-              onClick={() => {
-                client.ai.clearChat(selectedChat.id);
-              }}
-            >
-              Clear this chat
-            </button>
-
-            <button
-              style={{
-                color: "red",
-              }}
-              onClick={() => {
-                if (confirm(`Are you sure to delete '${selectedChat.name}'?`)) {
-                  client.ai.deleteChat(selectedChat.id);
-                }
-              }}
-            >
-              Delete this chat
-            </button>
-          </div>
-        ) : null}
+        )}
       </div>
 
-      {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : null}
+      {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : (
+        <div className="chat-window-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', maxWidth: '400px', padding: '20px' }}>
+            <h2>Welcome to Liveblocks Chat</h2>
+            <p>Select a chat from the sidebar or create a new one to get started.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -345,6 +337,19 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             margin: "1rem 3rem",
           }}
         >
+          <button
+            className="danger-btn"
+            style={{
+              margin: "0 1rem 0 0",
+              border: "1px solid #888",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              client.ai.clearChat(chatId);
+            }}
+          >
+            Clear
+          </button>
           <select
             value={selectedCopilotId || "default"}
             onChange={handleCopilotChange}
@@ -370,7 +375,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               borderRadius: "6px",
               backgroundColor: "white",
               padding: "10px 1rem",
-              marginLeft: "1rem",
+              margin: "0 1rem",
             }}
             type="text"
             onChange={(ev) =>
@@ -407,7 +412,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             style={{
               display: "flex",
               alignItems: "center",
-              marginLeft: "10px",
+              margin: "0 0 0 1rem",
             }}
           >
             <input
@@ -417,6 +422,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             />{" "}
             Streaming
           </label>
+
         </div>
       </div>
     </div>
