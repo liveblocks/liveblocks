@@ -76,99 +76,86 @@ function ChatPicker() {
   return (
     <div className="chat-app-container">
       <div className="chat-controls">
-        <div
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={() => {
+              const name = prompt("Enter a name for this chat?", "New chat");
+              if (name !== null) {
+                client.ai.createChat(name);
+              }
+            }}
+          >
+            Create new chat
+          </button>
+
+          <button
+            style={{
+              cursor:
+                isFetchingMore || hasFetchedAll ? "not-allowed" : "pointer",
+              opacity: isFetchingMore || hasFetchedAll ? 0.5 : 1,
+            }}
+            onClick={fetchMore}
+            disabled={isFetchingMore || hasFetchedAll}
+          >
+            {isFetchingMore ? "…" : "Load more"}
+          </button>
+
+          <div>
+            {fetchMoreError && (
+              <div>Failed to get more: ${fetchMoreError.message}</div>
+            )}
+          </div>
+        </div>
+        <ul
           style={{
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "0 20px",
-            margin: "0 auto",
             gap: "10px",
+            listStyle: "none",
+            padding: 0,
+            margin: 0,
           }}
         >
-          <div style={{ display: "flex", gap: "10px" }}>
+          {chats.map((chat) => (
+            <li key={chat.id}>
+              <a
+                href="#"
+                onClick={() => {
+                  setUserSelectedChatId(chat.id);
+                }}
+              >
+                {chat.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {selectedChat ? (
+          <div style={{ display: "flex", gap: "20px" }}>
             <button
+              style={{
+                color: "red",
+              }}
               onClick={() => {
-                const name = prompt("Enter a name for this chat?", "New chat");
-                if (name !== null) {
-                  client.ai.createChat(name);
-                }
+                client.ai.clearChat(selectedChat.id);
               }}
             >
-              Create new chat
+              Clear this chat
             </button>
 
             <button
               style={{
-                cursor:
-                  isFetchingMore || hasFetchedAll ? "not-allowed" : "pointer",
-                opacity: isFetchingMore || hasFetchedAll ? 0.5 : 1,
+                color: "red",
               }}
-              onClick={fetchMore}
-              disabled={isFetchingMore || hasFetchedAll}
+              onClick={() => {
+                if (confirm(`Are you sure to delete '${selectedChat.name}'?`)) {
+                  client.ai.deleteChat(selectedChat.id);
+                }
+              }}
             >
-              {isFetchingMore ? "…" : "Load more"}
+              Delete this chat
             </button>
-
-            <div>
-              {fetchMoreError && (
-                <div>Failed to get more: ${fetchMoreError.message}</div>
-              )}
-            </div>
           </div>
-          <ul
-            style={{
-              display: "flex",
-              gap: "10px",
-              listStyle: "none",
-              padding: 0,
-              margin: 0,
-            }}
-          >
-            {chats.map((chat) => (
-              <li key={chat.id}>
-                <a
-                  href="#"
-                  onClick={() => {
-                    setUserSelectedChatId(chat.id);
-                  }}
-                >
-                  {chat.name}
-                </a>
-              </li>
-            ))}
-          </ul>
-
-          {selectedChat ? (
-            <div style={{ display: "flex", gap: "20px" }}>
-              <button
-                style={{
-                  color: "red",
-                }}
-                onClick={() => {
-                  if (confirm("This will wipe all messages! Are you sure?")) {
-                    client.ai.clearChat(selectedChat.id);
-                  }
-                }}
-              >
-                Clear this chat
-              </button>
-
-              <button
-                style={{
-                  color: "red",
-                }}
-                onClick={() => {
-                  if (confirm(`Are you sure to delete '${selectedChat.name}'?`)) {
-                    client.ai.deleteChat(selectedChat.id);
-                  }
-                }}
-              >
-                Delete this chat
-              </button>
-            </div>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : null}
@@ -304,12 +291,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 <button
                   style={{ color: "red" }}
                   onClick={async () => {
-                    if (confirm("Are you sure?")) {
-                      try {
-                        await client.ai.deleteMessage(chatId, props.message.id);
-                      } finally {
-                        forceRerender();
-                      }
+                    try {
+                      await client.ai.deleteMessage(chatId, props.message.id);
+                    } finally {
+                      forceRerender();
                     }
                   }}
                 >
@@ -384,7 +369,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               borderRadius: "6px",
               backgroundColor: "white",
               padding: "10px 1rem",
-              margin: "0 1rem",
+              marginLeft: "1rem",
             }}
             type="text"
             onChange={(ev) =>
@@ -471,7 +456,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     role: "assistant",
     content: [
       {
-        id: "2.1",
         type: "text",
         text: "The weather in Bhaktapur, Nepal is 25°C and sunny. Would you like me to look up the weather in another location?",
       },
@@ -501,7 +485,6 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     role: "assistant",
     content: [
       {
-        id: "4.1",
         type: "text",
         text: "The weather in Kathmandu, Nepal is 27°C and sunny. Would you like me to look up the weather in another location?",
       },
@@ -524,9 +507,9 @@ const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
     role: "assistant",
     content: [
       {
-        id: "6.1",
         type: "tool-call",
-        name: "getTime",
+        toolCallId: "tool_call_1",
+        toolName: "getTime",
         args: {
           city: "Bhaktapur",
           country: "Nepal",
