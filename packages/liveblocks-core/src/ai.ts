@@ -255,6 +255,14 @@ function createStore_forPlaceholders() {
       if (!placeholder) {
         return false; // No update needed
       } else {
+        // XXX We should probably fail here if the placeholder was already settled at this point
+        // if (!placeholder.status.endsWith("ing")) {
+        //   alert(
+        //     "UNEXPECTED!!!!! Placeholder was already settled!\n\n" +
+        //       JSON.stringify(placeholder, null, 2)
+        //   );
+        // }
+
         placeholder.status = result.status;
         if (result.status === "failed") {
           placeholder.errorReason = result.reason;
