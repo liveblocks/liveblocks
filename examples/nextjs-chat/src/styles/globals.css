@@ -383,3 +383,22 @@ a:hover {
     box-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   }
 }
+
+/* someone good at CSS will fix this, there was just too much vertical space*/
+.lb-assistant-chat-message-text-content h1,
+.lb-assistant-chat-message-text-content h2,
+.lb-assistant-chat-message-text-content h3 {
+  margin: 0;
+  margin-block-start: 0;
+}
+
+.lb-assistant-chat-message-text-content ul,
+.lb-assistant-chat-message-text-content ol,
+.lb-assistant-chat-message-text-content p {
+  margin-block-start: 0;
+  margin: 0;
+}
+
+.lb-assistant-chat-message-content li {
+  white-space: wrap;
+}
