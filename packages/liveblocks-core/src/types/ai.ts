@@ -199,6 +199,7 @@ export type SettlePlaceholderServerEvent = {
     chatId: ChatId; // XXX Not decided yet!
     messageId: MessageId; // XXX Not decided yet!
   };
+  kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
 // -------------------------------------------------------------------------------------------------
