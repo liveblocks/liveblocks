@@ -96,7 +96,7 @@ type AttachUserMessagePair = DefineCmd<
     id: MessageId; // New message ID, optimistically assigned by client
     chatId: ChatId;
     parentMessageId: MessageId | null;
-    content: AiTextContent | string;
+    content: AiTextPart;
   },
   { chatId: ChatId; messageId: MessageId; createdAt: ISODateString }
 >;
@@ -136,7 +136,7 @@ type AskAIPair = DefineCmd<
         chatId: ChatId;
         messageId: MessageId;
         // XXX Replace `content` by an optimistically created "container" ID
-        // content: AiAssistantContent[];
+        // content: AiAssistantContentPart[];
       }
   >
 >;
@@ -185,7 +185,7 @@ export type UpdatePlaceholderServerEvent = {
   event: "update-placeholder";
   placeholderId: PlaceholderId;
   // XXX Maybe send just the delta instead? It should be possible now.
-  contentSoFar: AiAssistantContent[]; // XXX Not decided yet!
+  contentSoFar: AiAssistantContentPart[]; // XXX Not decided yet!
 };
 
 // XXX Fine-tune this message!
@@ -193,7 +193,7 @@ export type SettlePlaceholderServerEvent = {
   event: "settle-placeholder";
   placeholderId: PlaceholderId;
   result:
-    | { status: "completed"; content: AiAssistantContent[] } // XXX Not decided yet!
+    | { status: "completed"; content: AiAssistantContentPart[] } // XXX Not decided yet!
     | { status: "failed"; reason: string }; // XXX Not decided yet!
   replaces?: {
     chatId: ChatId; // XXX Not decided yet!
@@ -228,20 +228,20 @@ export interface AiTool {
   parameter_schema: Json;
 }
 
-export type AiToolContent = {
+export type AiToolCallPart = {
   id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
   type: "tool-call";
   name: string;
   args?: unknown;
 };
 
-export type AiTextContent = {
+export type AiTextPart = {
   id?: string; // What's this? When is it optional? When not? Should we make it a branded ContentId?
   type: "text";
   text: string;
 };
 
-export type AiUploadedImageContent = {
+export type AiUploadedImagePart = {
   type: "image";
   id: string;
   name: string;
@@ -249,18 +249,15 @@ export type AiUploadedImageContent = {
   mimeType: string;
 };
 
-export type AiUserContent = AiTextContent | AiUploadedImageContent;
-export type AiAssistantContent = AiTextContent | AiToolContent;
+// "Parts" are what make up the "content" of a message.
+// "Content" is always an "array of parts".
+export type AiUserContentPart = AiTextPart | AiUploadedImagePart;
+export type AiAssistantContentPart = AiTextPart | AiToolCallPart;
 
-export type AiInputSource = Relax<StatefullMsg | StatelessMsg>;
-
-export interface StatefullMsg {
-  chatId: ChatId;
-  messageId: MessageId;
-}
-export interface StatelessMsg {
-  prompt: string;
-}
+export type AiInputSource = Relax<
+  | { chatId: ChatId; messageId: MessageId } // for chat messages
+  | { prompt: string } // one-off asks
+>;
 
 export type ToolChoice =
   | "auto"
@@ -284,20 +281,20 @@ export type UsageMetadata = {
   model: string;
 };
 
-export type AiUserMessageBase = {
+export type AiUserMessage = {
   id: MessageId;
+  role: "user";
+  content: AiUserContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
 };
 
-export type AiUserMessage = AiUserMessageBase & {
-  role: "user";
-  content: AiUserContent[];
-};
-
-export type AiAssistantMessage = AiUserMessageBase & {
+export type AiAssistantMessage = {
+  id: MessageId;
   role: "assistant";
-  content: AiAssistantContent[];
+  content: AiAssistantContentPart[];
+  createdAt: ISODateString;
+  deletedAt?: ISODateString;
 };
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;

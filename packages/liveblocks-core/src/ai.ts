@@ -25,12 +25,12 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
-  AiAssistantContent,
+  AiAssistantContentPart,
   AiChat,
   AiChatMessage,
   AiInputSource,
   AiPlaceholderChatMessage,
-  AiTextContent,
+  AiTextPart,
   AiTool,
   AskAiResponse,
   AttachUserMessageResponse,
@@ -204,7 +204,7 @@ function createStore_forChatMessages() {
 export type Placeholder = {
   id: PlaceholderId;
   status: "thinking" | "streaming" | "completed" | "failed";
-  contentSoFar: AiAssistantContent[];
+  contentSoFar: AiAssistantContentPart[];
   errorReason?: string;
 };
 
@@ -230,7 +230,7 @@ function createStore_forPlaceholders() {
     // XXX Currently, we're only replacing the "contents so far" completely on
     // every update message. However, we could only send the delta and let the
     // client append things locally if we want to optimize this later.
-    contentSoFar: AiAssistantContent[]
+    contentSoFar: AiAssistantContentPart[]
   ): void {
     baseSignal.mutate((lut) => {
       const placeholder = lut.get(placeholderId);
@@ -247,7 +247,7 @@ function createStore_forPlaceholders() {
   function settle(
     placeholderId: PlaceholderId,
     result:
-      | { status: "completed"; content: AiAssistantContent[] }
+      | { status: "completed"; content: AiAssistantContentPart[] }
       | { status: "failed"; reason: string }
   ): void {
     baseSignal.mutate((lut) => {
@@ -706,7 +706,7 @@ export function createAi(config: AiConfig): Ai {
         parentMessageId: MessageId | null,
         message: string
       ) => {
-        const content: AiTextContent = {
+        const content: AiTextPart = {
           type: "text",
           text: message,
         };
