@@ -94,16 +94,15 @@ function ChatPicker() {
           New Chat
         </button>
 
-
-
         <div className="chat-list">
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`chat-list-item ${chat.id === selectedChatId ? 'active' : ''}`}
+              className={`chat-list-item ${chat.id === selectedChatId ? "active" : ""}`}
               onClick={() => setUserSelectedChatId(chat.id)}
             >
-              {chat.name} <button
+              {chat.name}{" "}
+              <button
                 className="danger-btn"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -111,20 +110,23 @@ function ChatPicker() {
                 }}
               >
                 <TrashIcon />
-              </button></div>
-
+              </button>
+            </div>
           ))}
 
           {chats.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: '#777' }}>
+            <div
+              style={{ textAlign: "center", padding: "20px 0", color: "#777" }}
+            >
               No chats yet. Create your first chat!
             </div>
           )}
         </div>
 
-
         {isFetchingMore ? (
-          <div style={{ textAlign: 'center', padding: '10px' }}>Loading more chats...</div>
+          <div style={{ textAlign: "center", padding: "10px" }}>
+            Loading more chats...
+          </div>
         ) : (
           <button
             className="load-more-chats-btn"
@@ -139,17 +141,30 @@ function ChatPicker() {
           </button>
         )}
         {fetchMoreError && (
-          <div style={{ color: 'red', marginBottom: '10px' }}>
+          <div style={{ color: "red", marginBottom: "10px" }}>
             Failed to get more: {fetchMoreError.message}
           </div>
         )}
       </div>
 
-      {selectedChat ? <ChatWindow chatId={selectedChat.id} /> : (
-        <div className="chat-window-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', maxWidth: '400px', padding: '20px' }}>
+      {selectedChat ? (
+        <ChatWindow chatId={selectedChat.id} />
+      ) : (
+        <div
+          className="chat-window-container"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{ textAlign: "center", maxWidth: "400px", padding: "20px" }}
+          >
             <h2>Welcome to Liveblocks Chat</h2>
-            <p>Select a chat from the sidebar or create a new one to get started.</p>
+            <p>
+              Select a chat from the sidebar or create a new one to get started.
+            </p>
           </div>
         </div>
       )}
@@ -183,8 +198,11 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     { id: "co_T6jQlhS", name: "Rhyme Maker (Anthropic, Sonnet 3.5)" },
     { id: "co_gblzUtw", name: "Wrong Answers Only (OpenAI, gpt-4o)" },
     { id: "co_6ftW85o", name: "The Comedian (Google, Gemini Flash 2.0)" },
-    { id: "co_r3a5on1", name: "Deep Thinker (Anthropic, Sonnet 3.7-Reasoning)" },
-    { id: "co_lm5tud10", name: "LM Studio (Deepseek Qwen 7b Distilled)" }
+    {
+      id: "co_r3a5on1",
+      name: "Deep Thinker (Anthropic, Sonnet 3.7-Reasoning)",
+    },
+    { id: "co_lm5tud10", name: "LM Studio (Deepseek Qwen 7b Distilled)" },
   ];
 
   const lastMessageId =
@@ -266,9 +284,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 >
                   regenerate
                 </button>
-                <button
-                  onClick={() => setOverrideParentId(props.message.id)}
-                >
+                <button onClick={() => setOverrideParentId(props.message.id)}>
                   {props.message.id}
                 </button>
               </div>
@@ -277,19 +293,18 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           // Add bells and whistles to the default chat components
           AssistantChatMessage: (props) => (
             <div className="assistant-message-container">
-              <AssistantChatMessage {...props}
+              <AssistantChatMessage
+                {...props}
                 components={{
                   TextMessage: (props) => (
                     <div className="lb-root lb-assistant-chat-message-text-content">
                       <Markdown>{props.data}</Markdown>
                     </div>
-                  )
+                  ),
                 }}
               />
               <div className="assistant-message-controls">
-                <button
-                  onClick={() => setOverrideParentId(props.message.id)}
-                >
+                <button onClick={() => setOverrideParentId(props.message.id)}>
                   {props.message.id}
                 </button>
                 <button
@@ -346,9 +361,9 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             display: "flex",
             justifyContent: "center",
             flexWrap: "wrap",
-            gap: ".5rem",
+            gap: ".7rem",
             width: "100%",
-            margin: "1rem",
+            margin: "1rem 0 0 0",
           }}
         >
           <button
@@ -380,22 +395,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               </option>
             ))}
           </select>
-          <input
-            style={{
-              border: "2px solid #888",
-              borderRadius: "6px",
-              backgroundColor: "white",
-              padding: "10px 1rem",
-            }}
-            type="text"
-            onChange={(ev) =>
-              setOverrideParentId(
-                (ev.currentTarget.value || undefined) as MessageId | undefined
-              )
-            }
-            value={overrideParentId}
-            placeholder="Attach to which message?"
-          />
           <select
             value={maxTimeout}
             onChange={(ev) => {
@@ -430,7 +429,23 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             />{" "}
             Streaming
           </label>
-
+        </div>
+        <div
+          style={{
+            fontSize: "0.8rem",
+            textAlign: "center",
+            width: "100%",
+            margin: "1rem 0 0 0",
+          }}
+        >
+          The next message will be{" "}
+          {parentMessageId === null ? (
+            <>a new root message.</>
+          ) : (
+            <>
+              attached under <b>{parentMessageId}</b>.
+            </>
+          )}
         </div>
       </div>
     </div>

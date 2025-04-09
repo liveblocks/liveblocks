@@ -85,12 +85,14 @@ main {
 
 .chat-list-item {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #eaeaea;
   background-color: white;
   transition: background-color 0.2s;
+  cursor: pointer;
 }
 
 .chat-list-item:hover {
@@ -138,7 +140,7 @@ main {
   background-color: white;
   z-index: 100;
   border-top: 1px solid #eaeaea;
-  height: 200px;
+  height: 220px;
 }
 
 .composer {
@@ -239,7 +241,7 @@ a:hover {
 
 .load-more-chats-btn {
   margin-top: 1em;
-  background-color: #333333;
+  background-color: #ddd;
   text-align: center;
   padding: 8px;
   margin-bottom: 15px;
@@ -278,14 +280,16 @@ a:hover {
     border-right: 1px solid #333;
   }
 
+  .load-more-chats-btn {
+    background-color: #333333;
+  }
+
   .chat-list-item {
-    cursor: pointer;
     background-color: #2a2a2a;
     border-color: #444;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
   }
 
   .chat-list-item:hover {
