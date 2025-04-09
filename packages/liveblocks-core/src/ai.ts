@@ -267,6 +267,12 @@ function createStore_forPlaceholders() {
         placeholder.status = result.status;
         if (result.status === "failed") {
           placeholder.errorReason = result.reason;
+          placeholder.contentSoFar = [
+            ...placeholder.contentSoFar,
+            // XXX This logic is duplicated from the backend
+            // XXX We should however, tackle this more robustly when we tackle https://linear.app/liveblocks/issue/LB-1913
+            { type: "text", text: result.reason },
+          ];
         } else {
           placeholder.contentSoFar = result.content;
         }
