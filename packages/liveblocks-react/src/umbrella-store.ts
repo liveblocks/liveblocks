@@ -612,7 +612,16 @@ export type CleanThreadSubscriptions = {
    * e.g. `thread:${string}`, `$custom:${string}`, etc
    */
   subscriptions: SubscriptionsByKey;
-} & CleanNotifications;
+
+  /**
+   * All inbox notifications in a sorted array, optimistic updates applied.
+   *
+   * `useThreadSubscription` returns the subscription status based on subscriptions
+   * but also the `readAt` value of the associated notification, so we need to
+   * expose the notifications here as well.
+   */
+  notifications: InboxNotificationData[];
+};
 
 function createStore_forNotifications() {
   const signal = new MutableSignal<NotificationsLUT>(new Map());
@@ -1085,11 +1094,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     const threadSubscriptions = DerivedSignal.from(
-      threadifications,
+      notifications,
       this.subscriptions.signal,
-      (t, s) => ({
+      (n, s) => ({
         subscriptions: s,
-        ...t,
+        notifications: n.sortedNotifications,
       })
     );
 

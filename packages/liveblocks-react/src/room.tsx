@@ -2100,7 +2100,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const selector = useCallback(
     (state: SignalType<typeof signal>): ThreadSubscription => {
       const subscription = state.subscriptions[subscriptionKey];
-      const notification = state.sortedNotifications.find(
+      const notification = state.notifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
