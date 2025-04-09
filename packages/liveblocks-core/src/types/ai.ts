@@ -324,6 +324,7 @@ export type UsageMetadata = {
 
 export type AiUserMessage = {
   id: MessageId;
+  chatId: ChatId;
   role: "user";
   content: AiUserContentPart[];
   createdAt: ISODateString;
@@ -332,6 +333,7 @@ export type AiUserMessage = {
 
 export type AiAssistantMessage = {
   id: MessageId;
+  chatId: ChatId;
   role: "assistant";
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
@@ -343,6 +345,7 @@ export type AiChatMessage = AiUserMessage | AiAssistantMessage;
 // XXX I think we should make it part of the AiChatMessage union, but not 100% sure yet, so keeping it separate for now
 export type AiPlaceholderChatMessage = {
   id: MessageId;
+  chatId: ChatId;
   role: "assistant"; // TODO Consider role = 'assistant-placeholder' ?
   placeholderId: PlaceholderId;
   createdAt: ISODateString;

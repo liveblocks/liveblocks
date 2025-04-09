@@ -98,103 +98,82 @@ export type AskAiOptions = {
 
 function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(
-    new DefaultMap<
-      ChatId,
-      Map<
-        MessageId,
-        (AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId }
-      >
-    >(() => new Map())
+    new Map<MessageId, AiChatMessage | AiPlaceholderChatMessage>()
   );
 
-  function update(chatId: ChatId, messages: AiChatMessage[]): void {
-    baseSignal.mutate((lut) => {
-      const messagesById = lut.getOrCreate(chatId);
+  function upsertMany(
+    messages: (AiChatMessage | AiPlaceholderChatMessage)[]
+  ): void {
+    baseSignal.mutate((pool) => {
       for (const message of messages) {
-        messagesById.set(message.id, { ...message, chatId });
+        pool.set(message.id, message);
       }
     });
   }
 
-  function remove(chatId: ChatId, messageId: MessageId): void {
-    baseSignal.mutate((lut) => {
-      const messagesById = lut.get(chatId);
-      messagesById?.delete(messageId);
+  function remove(messageId: MessageId): void {
+    baseSignal.mutate((pool) => {
+      pool.delete(messageId);
     });
   }
 
   function removeByChatId(chatId: ChatId): void {
-    baseSignal.mutate((lut) => {
-      const messagesById = lut.get(chatId);
-      if (!messagesById) {
-        return;
-      }
-      for (const message of messagesById.values()) {
-        messagesById.delete(message.id);
+    baseSignal.mutate((pool) => {
+      for (const message of pool.values()) {
+        if (message.chatId === chatId) {
+          pool.delete(message.id);
+        }
       }
     });
   }
 
   // TODO: do we want to fail or throw or return something if the message doesn't exist?
-  function patchMessage(
-    chatId: ChatId,
+  function patchMessageIfExists(
     messageId: MessageId,
-    patch: Partial<AiChatMessage>
+    patch: Partial<AiChatMessage | AiPlaceholderChatMessage>
   ): void {
-    baseSignal.mutate((lut) => {
-      const messagesByChatId = lut.get(chatId);
-      if (!messagesByChatId) {
-        return;
-      }
-      const message = messagesByChatId.get(messageId);
-      if (!message) {
-        return;
-      }
-      messagesByChatId.set(messageId, {
+    baseSignal.mutate((pool) => {
+      const message = pool.get(messageId);
+      if (!message) return false;
+
+      pool.set(messageId, {
         ...message,
         ...patch,
-      } as AiChatMessage & { chatId: ChatId });
+      } as AiChatMessage | AiPlaceholderChatMessage);
+      return true;
     });
   }
 
-  function addMessage(
-    chatId: ChatId,
-    message: (AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId }
-  ): void {
-    baseSignal.mutate((lut) => {
-      const messagesByChatId = lut.get(chatId);
-      if (!messagesByChatId) {
-        return;
-      }
-      messagesByChatId.set(message.id, message);
-    });
+  function addMessage(message: AiChatMessage | AiPlaceholderChatMessage): void {
+    upsertMany([message]);
   }
 
   return {
-    messages: DerivedSignal.from(baseSignal, (chats) =>
-      Object.fromEntries(
-        [...chats].map(([chatId, messages]) => [
-          chatId,
-          Object.fromEntries(messages),
-        ])
-      )
-    ),
+    sortedMessagesByChatId: DerivedSignal.from(baseSignal, (pool) => {
+      const rv: Record<ChatId, (AiChatMessage | AiPlaceholderChatMessage)[]> =
+        {};
 
-    sortedMessages: DerivedSignal.from(baseSignal, (chats) =>
-      Object.fromEntries(
-        [...chats].map(([chatId, messages]) => [
-          chatId,
-          Array.from(messages.values()).sort((a, b) => {
-            return Date.parse(a.createdAt) - Date.parse(b.createdAt);
-          }),
-        ])
-      )
-    ),
+      for (const message of pool.values()) {
+        if (!rv[message.chatId]) {
+          rv[message.chatId] = [];
+        }
+        rv[message.chatId].push(message);
+      }
+
+      for (const messages of Object.values(rv)) {
+        messages.sort((a, b) => {
+          // XXX Messages should be sorted by their position in the tree, not using dates
+          return Date.parse(a.createdAt) - Date.parse(b.createdAt);
+        });
+      }
+
+      return rv;
+    }),
 
     // Mutations
-    patchMessage,
+    patchMessageIfExists,
     addMessage,
-    update,
+    upsertMany,
     remove,
     removeByChatId,
   };
@@ -370,11 +349,8 @@ export type Ai = {
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
-    sortedMessages: DerivedSignal<
-      Record<
-        string,
-        ((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId })[]
-      >
+    sortedMessagesByChatId: DerivedSignal<
+      Record<string, (AiChatMessage | AiPlaceholderChatMessage)[]>
     >;
     placeholders: DerivedSignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
@@ -509,26 +485,17 @@ export function createAi(config: AiConfig): Ai {
 
               // ------------------------------------------------------------------------
               // XXX This message replacing logic is still way too complicated
+              // XXX We would not need this if a failed settle would also re-send all the content
               // eslint-disable-next-line
               const ph = context.placeholders.placeholdersById
                 .get()
                 .get(placeholderId)!;
 
               if (replaces) {
-                const phm =
-                  context.messages.messages.get()[replaces.chatId]?.[
-                    replaces.messageId
-                  ];
-                if (phm) {
-                  context.messages.update(replaces.chatId, [
-                    {
-                      ...phm,
-                      id: replaces.messageId,
-                      role: "assistant",
-                      content: ph.contentSoFar,
-                    } satisfies AiChatMessage,
-                  ]);
-                }
+                context.messages.patchMessageIfExists(replaces.messageId, {
+                  content: ph.contentSoFar,
+                  placeholderId: undefined,
+                });
               }
               // ------------------------------------------------------------------------
             });
@@ -562,11 +529,11 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           case "get-messages":
-            context.messages.update(msg.chatId, msg.messages);
+            context.messages.upsertMany(msg.messages);
             break;
 
           case "delete-message":
-            context.messages.remove(msg.chatId, msg.messageId);
+            context.messages.remove(msg.messageId);
             break;
 
           case "clear-chat":
@@ -576,10 +543,10 @@ export function createAi(config: AiConfig): Ai {
           case "ask-ai":
             if (msg.messageId !== undefined) {
               // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-              context.messages.addMessage(msg.chatId, {
+              context.messages.addMessage({
                 id: msg.messageId,
-                role: "assistant",
                 chatId: msg.chatId,
+                role: "assistant",
                 // XXX Remove content here in favor of detecting it's a placeholder message
                 content: [
                   {
@@ -753,7 +720,7 @@ export function createAi(config: AiConfig): Ai {
         const messageId = `ms_${nanoid()}` as MessageId;
 
         // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-        context.messages.addMessage(chatId, {
+        context.messages.addMessage({
           id: messageId,
           role: "user",
           chatId,
@@ -800,7 +767,7 @@ export function createAi(config: AiConfig): Ai {
 
         if (io.type === "chat-io") {
           // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-          context.messages.addMessage(io.input.chatId, {
+          context.messages.addMessage({
             id: io.output.messageId,
             role: "assistant",
             placeholderId,
@@ -862,7 +829,7 @@ export function createAi(config: AiConfig): Ai {
 
       signals: {
         chats: context.chats.signal,
-        sortedMessages: context.messages.sortedMessages,
+        sortedMessagesByChatId: context.messages.sortedMessagesByChatId,
         placeholders: context.placeholders.placeholdersById,
       },
 

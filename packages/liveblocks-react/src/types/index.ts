@@ -22,7 +22,6 @@ import type {
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
-  ChatId,
   Client,
   CommentAttachment,
   CommentBody,
@@ -188,8 +187,8 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
-export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId})[], "messages">; // prettier-ignore
-export type CopilotChatMessagesAsyncResult = PagedAsyncResult<((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId})[], "messages">; // prettier-ignore
+export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<(AiChatMessage | AiPlaceholderChatMessage)[], "messages">; // prettier-ignore
+export type CopilotChatMessagesAsyncResult = PagedAsyncResult<(AiChatMessage | AiPlaceholderChatMessage)[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore

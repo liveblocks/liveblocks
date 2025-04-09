@@ -19,12 +19,10 @@ import { useState } from "react";
 
 import { DebugClient } from "../DebugClient";
 import {
-  AiChat,
   AiChatMessage,
   AiPlaceholderChatMessage,
   ChatId,
   CopilotId,
-  ISODateString,
   MessageId,
 } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
@@ -450,101 +448,3 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     </div>
   );
 }
-
-type UseChatMessagesResult = {
-  isLoading: boolean;
-  messages: AiChatMessage[];
-  fetchMore: () => void;
-  isFetchingMore: boolean;
-  hasFetchedAll: boolean;
-  fetchMoreError: Error | null;
-};
-
-const EXAMPLE_CHAT_ID: ChatId = "ch_example" as ChatId;
-const EXAMPLE_CHAT: AiChat = {
-  id: EXAMPLE_CHAT_ID,
-  name: "Weather in Nepal",
-  metadata: {},
-  createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-};
-
-const HARDCODED_EXAMPLE_MESSAGES: AiChatMessage[] = [
-  {
-    id: "msg_1" as MessageId,
-    role: "user",
-    content: [
-      {
-        type: "text",
-        text: "Hello, what is the weather like in Bhaktapur, Nepal?",
-      },
-    ],
-    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-  },
-  {
-    id: "msg_2" as MessageId,
-    role: "assistant",
-    content: [
-      {
-        type: "text",
-        text: "The weather in Bhaktapur, Nepal is 25°C and sunny. Would you like me to look up the weather in another location?",
-      },
-    ],
-    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-  },
-  {
-    id: "msg_3" as MessageId,
-    role: "user",
-    content: [
-      {
-        type: "text",
-        text: "Yes, what is the weather like in Kathmandu, Nepal?",
-      },
-      {
-        type: "image",
-        name: "weather.png",
-        id: "at_V2zdp9w6KHe8GCQ99UbCX",
-        mimeType: "image/png",
-        size: 12345,
-      },
-    ],
-    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-  },
-  {
-    id: "msg_4" as MessageId,
-    role: "assistant",
-    content: [
-      {
-        type: "text",
-        text: "The weather in Kathmandu, Nepal is 27°C and sunny. Would you like me to look up the weather in another location?",
-      },
-    ],
-    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-  },
-  {
-    id: "msg_5" as MessageId,
-    role: "user",
-    content: [
-      {
-        type: "text",
-        text: "Can you describe what the current weather is like in Lalitpur, Nepal? Also, what time is it in Bhaktapur, Nepal? And what are the top news in Nepal? Thank you!",
-      },
-    ],
-    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-  },
-  {
-    id: "msg_6" as MessageId,
-    role: "assistant",
-    content: [
-      {
-        type: "tool-call",
-        toolCallId: "tool_call_1",
-        toolName: "getTime",
-        args: {
-          city: "Bhaktapur",
-          country: "Nepal",
-        },
-      },
-    ],
-    createdAt: "2025-05-01T00:00:00Z" as ISODateString,
-  },
-];

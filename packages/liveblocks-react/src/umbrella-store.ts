@@ -1274,15 +1274,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
             const page = result.data;
             return {
               isLoading: false,
-              messages: Object.values(
-                this.#client.ai.signals.sortedMessages.get()[chatId] ?? {}
-              )
-                // TODO: @nimesh Really think about the sort order.
-                .sort(
-                  (a, b) =>
-                    new Date(a.createdAt).getTime() -
-                    new Date(b.createdAt).getTime()
-                ),
+              messages:
+                this.#client.ai.signals.sortedMessagesByChatId.get()[chatId] ??
+                [],
               hasFetchedAll: page.hasFetchedAll,
               isFetchingMore: page.isFetchingMore,
               fetchMoreError: page.fetchMoreError,
