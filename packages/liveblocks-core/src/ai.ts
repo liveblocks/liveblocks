@@ -298,7 +298,7 @@ function createStore_forPlaceholders() {
     placeholdersById: DerivedSignal.from(
       baseSignal,
       (lut) => new Map(lut.entries()) as ReadonlyMap<PlaceholderId, Placeholder>
-    ).asReadonly(),
+    ),
     createOptimistically,
     addChunk,
     settle,
