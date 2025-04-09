@@ -296,9 +296,9 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               <AssistantChatMessage
                 {...props}
                 components={{
-                  TextMessage: (props) => (
+                  TextPart: (props) => (
                     <div className="lb-root lb-assistant-chat-message-text-content">
-                      <Markdown>{props.data}</Markdown>
+                      <Markdown>{props.text}</Markdown>
                     </div>
                   ),
                 }}

@@ -21,6 +21,7 @@ import type {
 import type {
   AbortAiResponse,
   AiAssistantContentPart,
+  AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
   AiInputOutput,
@@ -46,6 +47,7 @@ import type {
   PlaceholderId,
   ServerAiMsg,
 } from "./types/ai";
+import { appendDelta } from "./types/ai";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -223,12 +225,9 @@ function createStore_forPlaceholders() {
     return placeholderId;
   }
 
-  function addChunk(
+  function addDelta(
     placeholderId: PlaceholderId,
-    // XXX Currently, we're only replacing the "contents so far" completely on
-    // every update message. However, we could only send the delta and let the
-    // client append things locally if we want to optimize this later.
-    contentSoFar: AiAssistantContentPart[]
+    delta: AiAssistantDeltaUpdate
   ): void {
     baseSignal.mutate((lut) => {
       const placeholder = lut.get(placeholderId);
@@ -236,7 +235,7 @@ function createStore_forPlaceholders() {
         return false; // No update needed
       } else {
         placeholder.status = "streaming";
-        placeholder.contentSoFar = contentSoFar;
+        appendDelta(placeholder.contentSoFar, delta);
         return true;
       }
     });
@@ -294,7 +293,7 @@ function createStore_forPlaceholders() {
       (lut) => new Map(lut.entries()) as ReadonlyMap<PlaceholderId, Placeholder>
     ),
     createOptimistically,
-    addChunk,
+    addDelta,
     settle,
     markAllLost,
   };
@@ -469,8 +468,6 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
-    typeof event.data === "string" &&
-      window.console.log(tryParseJson(event.data));
     if (typeof event.data === "string") {
       const msg = tryParseJson(event.data) as ServerAiMsg;
 
@@ -500,8 +497,8 @@ export function createAi(config: AiConfig): Ai {
             break;
 
           case "update-placeholder": {
-            const { placeholderId, contentSoFar } = msg;
-            context.placeholders.addChunk(placeholderId, contentSoFar);
+            const { placeholderId, delta } = msg;
+            context.placeholders.addDelta(placeholderId, delta);
             break;
           }
 

@@ -296,24 +296,30 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
     /**
      * The component used to display text content in the assistant chat message.
      */
-    TextMessage: ComponentType<AssistantMessageTextContentProps>;
+    TextPart: ComponentType<AssistantMessageTextPartProps>;
     /**
      * The component used to display tool call content in the assistant chat message.
      */
-    ToolCallMessage: ComponentType<AssistantMessageToolCallContentProps>;
+    ToolCallPart: ComponentType<AssistantMessageToolCallPartProps>;
+    /**
+     * The component used to display reasoning content in the assistant chat message.
+     */
+    ReasoningPart: ComponentType<AssistantMessageReasoningPartProps>;
   }>;
 };
 
 function StreamingPlaceholder(props: {
   placeholderId: PlaceholderId;
-  TextMessage: ComponentType<AssistantMessageTextContentProps>;
-  ToolCallMessage: ComponentType<AssistantMessageToolCallContentProps>;
+  TextPart: ComponentType<AssistantMessageTextPartProps>;
+  ReasoningPart: ComponentType<AssistantMessageReasoningPartProps>;
+  ToolCallPart: ComponentType<AssistantMessageToolCallPartProps>;
 }) {
   const client = useClient();
   const placeholders = useSignal(client.ai.signals.placeholders);
   const placeholder = placeholders.get(props.placeholderId);
-  const TextMessage = props.TextMessage;
-  const ToolCallMessage = props.ToolCallMessage;
+  const TextPart = props.TextPart;
+  const ToolCallPart = props.ToolCallPart;
+  const ReasoningPart = props.ReasoningPart;
   return (
     <>
       <div style={{ float: "right" }}>
@@ -344,16 +350,18 @@ function StreamingPlaceholder(props: {
           ? placeholder.contentSoFar.map((part, index) => {
               switch (part.type) {
                 case "text":
-                  return <TextMessage key={index} data={part.text} />;
+                  return <TextPart key={index} text={part.text} />;
                 case "tool-call":
                   return (
-                    <ToolCallMessage
+                    <ToolCallPart
                       key={index}
                       toolCallId={part.toolCallId}
                       toolName={part.toolName}
                       args={part.args}
                     />
                   );
+                case "reasoning":
+                  return <ReasoningPart key={index} text={part.text} />;
               }
             })
           : null}
@@ -366,10 +374,11 @@ export const DefaultAssistantChatMessage = forwardRef<
   HTMLDivElement,
   AssistantChatMessageProps
 >(({ message, className, components, ...props }, forwardedRef) => {
-  const TextMessage =
-    components?.TextMessage ?? DefaultAssistantMessageTextContent;
-  const ToolCallMessage =
-    components?.ToolCallMessage ?? DefaultAssistantMessageToolCallContent;
+  const TextPart = components?.TextPart ?? DefaultAssistantMessageTextPart;
+  const ToolCallPart =
+    components?.ToolCallPart ?? DefaultAssistantMessageToolCallPart;
+  const ReasoningPart =
+    components?.ReasoningPart ?? DefaultAssistantMessageReasoningPart;
   return (
     <div
       ref={forwardedRef}
@@ -383,23 +392,26 @@ export const DefaultAssistantChatMessage = forwardRef<
           message.content.map((part, index) => {
             switch (part.type) {
               case "text":
-                return <TextMessage key={index} data={part.text} />;
+                return <TextPart key={index} text={part.text} />;
               case "tool-call":
                 return (
-                  <ToolCallMessage
+                  <ToolCallPart
                     key={index}
                     toolCallId={part.toolCallId}
                     toolName={part.toolName}
                     args={part.args}
                   />
                 );
+              case "reasoning":
+                return <ReasoningPart key={index} text={part.text} />;
             }
           })
         ) : (
           <StreamingPlaceholder
             placeholderId={message.placeholderId}
-            TextMessage={TextMessage}
-            ToolCallMessage={ToolCallMessage}
+            TextPart={TextPart}
+            ToolCallPart={ToolCallPart}
+            ReasoningPart={ReasoningPart}
           />
         )}
       </div>
@@ -407,14 +419,14 @@ export const DefaultAssistantChatMessage = forwardRef<
   );
 });
 
-export type AssistantMessageTextContentProps =
-  HTMLAttributes<HTMLDivElement> & {
-    data: string;
-  };
-export const DefaultAssistantMessageTextContent = forwardRef<
+export type AssistantMessageTextPartProps = HTMLAttributes<HTMLDivElement> & {
+  text: string;
+};
+
+export const DefaultAssistantMessageTextPart = forwardRef<
   HTMLDivElement,
-  AssistantMessageTextContentProps
->(({ data, className }, forwardedRef) => {
+  AssistantMessageTextPartProps
+>(({ text, className }, forwardedRef) => {
   return (
     <div
       ref={forwardedRef}
@@ -423,21 +435,44 @@ export const DefaultAssistantMessageTextContent = forwardRef<
         className
       )}
     >
-      {data}
+      {text}
     </div>
   );
 });
 
-export type AssistantMessageToolCallContentProps =
+export type AssistantMessageReasoningPartProps =
+  HTMLAttributes<HTMLDivElement> & { text: string };
+
+export const DefaultAssistantMessageReasoningPart = forwardRef<
+  HTMLDivElement,
+  AssistantMessageReasoningPartProps
+>(({ text, className }, forwardedRef) => {
+  return (
+    <div
+      ref={forwardedRef}
+      className={classNames(
+        "lb-root lb-assistant-chat-message-reasoning-content",
+        className
+      )}
+    >
+      <details style={{ cursor: "pointer" }}>
+        <summary>Reasoning...</summary>
+        {text}
+      </details>
+    </div>
+  );
+});
+
+export type AssistantMessageToolCallPartProps =
   HTMLAttributes<HTMLDivElement> & {
     toolName: string;
     toolCallId: string;
     args: unknown;
   };
 
-export const DefaultAssistantMessageToolCallContent = forwardRef<
+export const DefaultAssistantMessageToolCallPart = forwardRef<
   HTMLDivElement,
-  AssistantMessageToolCallContentProps
+  AssistantMessageToolCallPartProps
 >(({ toolName, toolCallId, args, className }, forwardedRef) => {
   return (
     <div

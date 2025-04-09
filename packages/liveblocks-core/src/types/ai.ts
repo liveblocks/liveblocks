@@ -1,3 +1,4 @@
+import { assertNever } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
@@ -201,12 +202,10 @@ export type ErrorServerEvent = {
   error: string;
 };
 
-// XXX Fine-tune this message!
 export type UpdatePlaceholderServerEvent = {
-  event: "update-placeholder";
+  event: "update-placeholder"; // Rename "append-placeholder" or "delta"?
   placeholderId: PlaceholderId;
-  // XXX Maybe send just the delta instead? It should be possible now.
-  contentSoFar: AiAssistantContentPart[]; // XXX Not decided yet!
+  delta: AiAssistantDeltaUpdate;
 };
 
 // XXX Fine-tune this message!
@@ -261,6 +260,25 @@ export type AiTextPart = {
   text: string;
 };
 
+export type AiTextDelta = {
+  type: "text-delta";
+  textDelta: string;
+};
+
+export type AiReasoningDelta = {
+  // NOTE: This chunk type is { type: 'reasoning', textDelta } in the Vercel AI
+  // SDK, but I'm renaming it to reasoning-delta here, to distinguish it better
+  // from the { type: "reasoning", text } part!
+  type: "reasoning-delta";
+  textDelta: string;
+};
+
+export type AiReasoningPart = {
+  type: "reasoning";
+  text: string;
+  // signature?: string; // Unsure what this is used for yet
+};
+
 export type AiUploadedImagePart = {
   type: "image";
   id: string;
@@ -272,7 +290,15 @@ export type AiUploadedImagePart = {
 // "Parts" are what make up the "content" of a message.
 // "Content" is always an "array of parts".
 export type AiUserContentPart = AiTextPart | AiUploadedImagePart;
-export type AiAssistantContentPart = AiTextPart | AiToolCallPart;
+export type AiAssistantContentPart =
+  | AiReasoningPart
+  | AiTextPart
+  | AiToolCallPart;
+
+export type AiAssistantDeltaUpdate =
+  | AiAssistantContentPart // a new part
+  | AiTextDelta // ...or a delta to append to the last sent part
+  | AiReasoningDelta; // ...or a delta to append to the last sent part
 
 export type ToolChoice =
   | "auto"
@@ -326,3 +352,43 @@ export type CopilotContext = {
   value: string;
   description: string;
 };
+
+// --------------------------------------------------------------------------------------------------
+
+export function appendDelta(
+  content: AiAssistantContentPart[],
+  delta: AiAssistantDeltaUpdate
+): void {
+  const lastPart = content[content.length - 1] as
+    | AiAssistantContentPart
+    | undefined;
+
+  // Otherwise, append a new part type to the array, which we can start
+  // writing into
+  switch (delta.type) {
+    case "reasoning":
+    case "text":
+    case "tool-call":
+      content.push(delta);
+      break;
+
+    case "text-delta":
+      if (lastPart?.type === "text") {
+        lastPart.text += delta.textDelta;
+      } else {
+        content.push({ type: "text", text: delta.textDelta });
+      }
+      break;
+
+    case "reasoning-delta":
+      if (lastPart?.type === "reasoning") {
+        lastPart.text += delta.textDelta;
+      } else {
+        content.push({ type: "reasoning", text: delta.textDelta });
+      }
+      break;
+
+    default:
+      return assertNever(delta, "Unhandled case");
+  }
+}

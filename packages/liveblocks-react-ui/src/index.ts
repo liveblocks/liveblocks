@@ -8,17 +8,21 @@ export {
   Composer as ChatComposer,
   type ComposerProps as ChatComposerProps,
 } from "./components/Chat/Composer";
+export type {
+  AssistantChatMessageProps,
+  AssistantMessageReasoningPartProps,
+  AssistantMessageTextPartProps,
+  AssistantMessageToolCallPartProps,
+  ChatMessagesProps,
+  UserChatMessageProps,
+} from "./components/Chat/Messages";
 export {
   DefaultAssistantChatMessage as AssistantChatMessage,
-  type AssistantChatMessageProps,
-  DefaultAssistantMessageTextContent as AssistantMessageTextContent,
-  type AssistantMessageTextContentProps,
-  DefaultAssistantMessageToolCallContent as AssistantMessageToolCallContent,
-  type AssistantMessageToolCallContentProps,
+  DefaultAssistantMessageReasoningPart as AssistantMessageReasoningPart,
+  DefaultAssistantMessageTextPart as AssistantMessageTextPart,
+  DefaultAssistantMessageToolCallPart as AssistantMessageToolCallPart,
   ChatMessages,
-  type ChatMessagesProps,
   DefaultUserChatMessage as UserChatMessage,
-  type UserChatMessageProps,
 } from "./components/Chat/Messages";
 export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
