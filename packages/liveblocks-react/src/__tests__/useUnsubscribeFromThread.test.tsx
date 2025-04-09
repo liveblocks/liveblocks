@@ -2,7 +2,11 @@ import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetThreads, mockUnsubscribeFromThread } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
@@ -22,7 +26,7 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-describe.skip("useUnsubscribeFromThread", () => {
+describe("useUnsubscribeFromThread", () => {
   test("should unsubscribe from thread optimistically", async () => {
     const roomId = nanoid();
     const initialThread = dummyThreadData({ roomId });
@@ -37,8 +41,16 @@ describe.skip("useUnsubscribeFromThread", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications,
+            subscriptions: [
+              dummySubscriptionData({
+                kind: "thread",
+                subjectId: initialThread.id,
+                createdAt: initialThread.createdAt,
+              }),
+            ],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -111,8 +123,10 @@ describe.skip("useUnsubscribeFromThread", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

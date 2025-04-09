@@ -1999,17 +1999,33 @@ function useSubscribeToRoomThread(roomId: string) {
 
   return useCallback(
     (threadId: string) => {
-      // TODO: Optimistically create an inbox notification for the thread (if not already present),
-      //       createComment, createThread, updateRoomSubscriptionSettings etc, don't do this at the moment?
+      const subscribedAt = new Date();
+
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      const optimisticId = store.optimisticUpdates.add({
+        type: "subscribe-to-thread",
+        threadId,
+        subscribedAt,
+      });
 
       client[kInternal].httpClient.subscribeToThread({ roomId, threadId }).then(
         () => {
-          // TODO: Apply result of subscribeToThread
+          // TODO: subscribeToThread returns the thread, should it return the subscription (we could use it here instead of using subscribedAt)?
+          store.createSubscription(
+            {
+              kind: "thread",
+              subjectId: threadId,
+              createdAt: subscribedAt,
+            },
+            optimisticId
+          );
         },
-        (err: Error) => {
-          console.error("SUBSCRIBE_TO_THREAD_ERROR", err);
-          // onMutationFailure(optimisticId, { type: "SUBSCRIBE_TO_THREAD_ERROR", roomId, threadId }, err);
-        }
+        (err: Error) =>
+          onMutationFailure(
+            optimisticId,
+            { type: "SUBSCRIBE_TO_THREAD_ERROR", roomId, threadId },
+            err
+          )
       );
     },
     [client, roomId]
@@ -2032,49 +2048,33 @@ function useUnsubscribeFromThread() {
  */
 function useUnsubscribeFromRoomThread(roomId: string) {
   const client = useClient();
+
   return useCallback(
     (threadId: string) => {
+      const unsubscribedAt = new Date();
+
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const inboxNotification = Object.values(
-        store.outputs.notifications.get().notificationsById
-      ).find(
-        (inboxNotification) =>
-          inboxNotification.kind === "thread" &&
-          inboxNotification.threadId === threadId
-      );
-
-      if (!inboxNotification) return;
-
-      const now = new Date();
-
       const optimisticId = store.optimisticUpdates.add({
-        type: "delete-inbox-notification",
-        inboxNotificationId: inboxNotification.id,
-        deletedAt: now,
+        type: "unsubscribe-from-thread",
+        threadId,
+        unsubscribedAt,
       });
 
       client[kInternal].httpClient
-        .unsubscribeFromThread({
-          roomId,
-          threadId,
-        })
+        .unsubscribeFromThread({ roomId, threadId })
         .then(
           () => {
-            // Replace the optimistic update by the real thing
-            store.deleteInboxNotification(inboxNotification.id, optimisticId);
+            store.deleteSubscription(
+              getSubscriptionKey("thread", threadId),
+              optimisticId
+            );
           },
-          (err: Error) => {
+          (err: Error) =>
             onMutationFailure(
               optimisticId,
-              {
-                type: "UNSUBSCRIBE_FROM_THREAD_ERROR",
-                roomId,
-                threadId,
-              },
+              { type: "UNSUBSCRIBE_FROM_THREAD_ERROR", roomId, threadId },
               err
-            );
-            return;
-          }
+            )
         );
     },
     [client, roomId]

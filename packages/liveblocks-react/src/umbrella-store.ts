@@ -65,6 +65,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | EditThreadMetadataOptimisticUpdate<M>
   | MarkThreadAsResolvedOptimisticUpdate
   | MarkThreadAsUnresolvedOptimisticUpdate
+  | SubscribeToThreadOptimisticUpdate
+  | UnsubscribeFromThreadOptimisticUpdate
   | CreateCommentOptimisticUpdate
   | EditCommentOptimisticUpdate
   | DeleteCommentOptimisticUpdate
@@ -112,6 +114,20 @@ type MarkThreadAsUnresolvedOptimisticUpdate = {
   id: string;
   threadId: string;
   updatedAt: Date;
+};
+
+type SubscribeToThreadOptimisticUpdate = {
+  type: "subscribe-to-thread";
+  id: string;
+  threadId: string;
+  subscribedAt: Date;
+};
+
+type UnsubscribeFromThreadOptimisticUpdate = {
+  type: "unsubscribe-from-thread";
+  id: string;
+  threadId: string;
+  unsubscribedAt: Date;
 };
 
 type CreateCommentOptimisticUpdate = {
@@ -725,6 +741,18 @@ function createStore_forSubscriptions(
     });
   }
 
+  function create(subscription: SubscriptionData) {
+    baseSignal.mutate((lut) => {
+      lut.set(getSubscriptionKey(subscription), subscription);
+    });
+  }
+
+  function deleteOne(subscriptionKey: SubscriptionKey) {
+    baseSignal.mutate((lut) => {
+      lut.delete(subscriptionKey);
+    });
+  }
+
   return {
     signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
       applyOptimisticUpdates_forSubscriptions(base, threads, updates)
@@ -732,6 +760,8 @@ function createStore_forSubscriptions(
 
     // Mutations
     applyDelta,
+    create,
+    delete: deleteOne,
   };
 }
 
@@ -1361,6 +1391,34 @@ export class UmbrellaStore<M extends BaseMetadata> {
     batch(() => {
       this.optimisticUpdates.remove(optimisticId);
       this.notifications.clear();
+    });
+  }
+
+  /**
+   * Creates a existing subscription, replacing the corresponding
+   * optimistic update.
+   */
+  public createSubscription(
+    subscription: SubscriptionData,
+    optimisticId: string
+  ): void {
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.subscriptions.create(subscription);
+    });
+  }
+
+  /**
+   * Deletes an existing subscription, replacing the corresponding
+   * optimistic update.
+   */
+  public deleteSubscription(
+    subscriptionKey: SubscriptionKey,
+    optimisticId: string
+  ): void {
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.subscriptions.delete(subscriptionKey);
     });
   }
 
