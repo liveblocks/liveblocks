@@ -84,10 +84,11 @@ function ChatPicker() {
         <h1 className="logo">lbChat</h1>
         <button
           className="create-chat-btn"
-          onClick={() => {
+          onClick={async () => {
             const name = prompt("Enter a name for this chat?", "New chat");
             if (name !== null) {
-              client.ai.createChat(name);
+              const res = await client.ai.createChat(name);
+              setUserSelectedChatId(res.chat.id);
             }
           }}
         >
