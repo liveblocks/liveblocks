@@ -219,7 +219,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   return (
     <div className="chat-window-container">
       <ChatMessages
-        chatId={chatId}
         messages={messages}
         className="messages"
         components={{

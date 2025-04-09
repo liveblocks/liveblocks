@@ -104,7 +104,10 @@ function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(
     new DefaultMap<
       ChatId,
-      Map<MessageId, AiChatMessage | AiPlaceholderChatMessage>
+      Map<
+        MessageId,
+        (AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId }
+      >
     >(() => new Map())
   );
 
@@ -112,7 +115,7 @@ function createStore_forChatMessages() {
     baseSignal.mutate((lut) => {
       const messagesById = lut.getOrCreate(chatId);
       for (const message of messages) {
-        messagesById.set(message.id, message);
+        messagesById.set(message.id, { ...message, chatId });
       }
     });
   }
@@ -154,13 +157,13 @@ function createStore_forChatMessages() {
       messagesByChatId.set(messageId, {
         ...message,
         ...patch,
-      } as AiChatMessage);
+      } as AiChatMessage & { chatId: ChatId });
     });
   }
 
   function addMessage(
     chatId: ChatId,
-    message: AiChatMessage | AiPlaceholderChatMessage
+    message: (AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId }
   ): void {
     baseSignal.mutate((lut) => {
       const messagesByChatId = lut.get(chatId);
@@ -375,7 +378,10 @@ export type Ai = {
   signals: {
     chats: DerivedSignal<AiChat[]>;
     messages: DerivedSignal<
-      Record<string, (AiChatMessage | AiPlaceholderChatMessage)[]>
+      Record<
+        string,
+        ((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId })[]
+      >
     >;
     placeholders: ISignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
@@ -582,6 +588,7 @@ export function createAi(config: AiConfig): Ai {
               context.messages.addMessage(msg.chatId, {
                 id: msg.messageId,
                 role: "assistant",
+                chatId: msg.chatId,
                 // XXX Remove content here in favor of detecting it's a placeholder message
                 content: [
                   {
@@ -758,6 +765,7 @@ export function createAi(config: AiConfig): Ai {
         context.messages.addMessage(chatId, {
           id: messageId,
           role: "user",
+          chatId,
           content: [content],
           createdAt: new Date().toISOString() as ISODateString,
         });
@@ -805,6 +813,7 @@ export function createAi(config: AiConfig): Ai {
             id: io.output.messageId,
             role: "assistant",
             placeholderId,
+            chatId: io.input.chatId,
             createdAt: new Date().toISOString() as ISODateString,
           });
 

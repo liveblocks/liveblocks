@@ -35,7 +35,7 @@ export function InlineChat({
   return (
     <div>
       {/* TODO: Support auto fetch more when user scrolls to the top of the chat window */}
-      <ChatMessages messages={messages} chatId={chatId} />
+      <ChatMessages messages={messages} />
 
       <ChatComposer chatId={chatId} />
 

@@ -30,13 +30,9 @@ export type ChatMessagesProps = Omit<
   "children"
 > & {
   /**
-   * The current chat ID (needed to know where to attach file uploads to).
-   */
-  chatId: ChatId;
-  /**
    * The messages to display.
    */
-  messages: (AiChatMessage | AiPlaceholderChatMessage)[];
+  messages: ((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId })[];
   /**
    * The components displayed in the chat messages.
    */
@@ -57,10 +53,7 @@ export type ChatMessagesProps = Omit<
 };
 
 export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
-  (
-    { chatId, messages, className, components, overrides, ...props },
-    forwardedRef
-  ) => {
+  ({ messages, className, components, overrides, ...props }, forwardedRef) => {
     const UserChatMessage =
       components?.UserChatMessage ?? DefaultUserChatMessage;
     const AssistantChatMessage =
@@ -77,7 +70,6 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
             return (
               <UserChatMessage
                 key={message.id}
-                chatId={chatId}
                 message={message}
                 overrides={overrides}
               />
@@ -98,13 +90,9 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
  * -----------------------------------------------------------------------------------------------*/
 export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
-   * The current chat ID (needed to know where to attach file uploads to).
-   */
-  chatId: ChatId;
-  /**
    * The message to display.
    */
-  message: AiUserMessage;
+  message: AiUserMessage & { chatId: ChatId };
   /**
    * Override the component's strings.
    */
@@ -114,7 +102,7 @@ export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
 export const DefaultUserChatMessage = forwardRef<
   HTMLDivElement,
   UserChatMessageProps
->(({ chatId, message, className }, forwardedRef) => {
+>(({ message, className }, forwardedRef) => {
   const text = message.content
     .filter((c) => c.type === "text")
     .map((c) => c.text)
@@ -133,7 +121,7 @@ export const DefaultUserChatMessage = forwardRef<
             {images.map((image) => (
               <UserChatMessageMediaAttachment
                 key={image.id}
-                chatId={chatId}
+                chatId={message.chatId}
                 attachment={image}
                 className="lb-user-chat-message-attachment"
               />
