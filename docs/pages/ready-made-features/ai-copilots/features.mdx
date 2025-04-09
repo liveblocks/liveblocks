@@ -1,0 +1,118 @@
+---
+meta:
+  title: "Features"
+  parentTitle: "AI Copilots"
+  description: "Learn about AI Copilots"
+---
+
+A quick overview of the features of AI Copilots. Learn about the
+[architecture here](/docs/ready-made-features/ai-copilots/architecture).
+
+## Overview
+
+Liveblocks AI Copilots allows you to add a variety of AI experiences to your
+application, such as AI chat interfaces and toolbars, that can interact with
+your application and modify its state. For example, if your product contained a
+calendar, you could enable AI to automatically book meetings for your users,
+directly from a chat.
+
+[image of AI calendar chat or the full dashboard with AI]
+
+## Features
+
+- **Ready-made UI**: Polished, easily customizable React components to add to
+  your app.
+- **Custom rendering**: Register React components that the AI can selectively
+  render within the chat
+- **Persistent chats**: No database is required, each user’s chats are stored
+  automatically.
+- **AI Actions**: Easily allow AI to interact with your application and modify
+  its state.
+- **Supported AI providers**: Anthropic, OpenAI, Google Gemini, LangGraph,
+  CrewAI, and more.
+
+<Banner>
+
+AI Copilots is currently in closed beta. Some features are still under
+development.
+
+</Banner>
+
+## Persistant chats
+
+When building a chat interface, it's important to save the chat history so that
+the user can continue the conversation from where they left off. All chats and
+messages are stored automatically by Liveblocks, and each user has their own set
+of chats. No database is required.
+
+### Switch between multiple chats
+
+Each page of your application can have multiple differents chats, and it’s easy
+to switch between them, much like you’d find in ChatGPT. Each chat has a unique
+name, and can be given custom metadata, for example a custom title, description,
+tags, or anything you like.
+
+[image of multiple chats]
+
+### Branch into new chats
+
+It’s possible to go back to previous messages and create a new chat from there,
+as messages can be branched. Essentially, each message can be thought of as a
+branch in a tree, and you can choose to continue down the same branch, or create
+a new one at any time. This is helpful for duplicating chats, or going back and
+revising your previous responses.
+
+[image of create/fork new chat]
+
+### Automatic synchronization
+
+When the page refreshes, each user’s previous chats will load for them, and can
+be continued. If a user has your app open in multiple browser tabs, each tab
+will correctly display chats, and update in real-time.
+
+### Stateless mode
+
+If you don’t need to save chat history, you can use stateless mode instead. This
+is ideal for creating temporary AI interactions, that don’t need to be stored.
+
+## Actions
+
+Actions are a way to allow AI to modify your application state and interact with
+your front end. You can use them to extend the capabilities of AI Copilots
+beyond simple text-based interactions.
+
+[image of actions happening with regular messages]
+
+For example, you may have actions that create new documents in your app,
+automatically fill in form data, send notification emails to users, or anything
+else you like. Actions are defined in your code, and are executed when the AI
+requests to use them.
+
+## Ready-made components
+
+Liveblocks AI Copilots includes a set of UI components that can be used to add
+an AI chat interface to your application. They’re made with React and also
+contain a number of hooks for building custom interfaces.
+
+[image of a regular chat]
+
+## Custom chat components
+
+You can register custom React components that the AI can choose to render within
+the chat. if you have multiple components, AI can choose which one to render.
+
+[image of custom chat components, e.g. calendar]
+
+## Supported AI providers
+
+In our dashboard, you can configure multiple copilots powered by different AI
+providers, each with different settings. The following providers are supported
+out-of-the-box:
+
+- Anthropic
+- OpenAI (and other OpenAI-compatible APIs)
+- Google Gemini
+- LangGraph
+- CrewAI
+
+Additional providers can also be used, with our custom abstraction layer.
