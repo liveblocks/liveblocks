@@ -9,13 +9,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import {
-  batch,
-  DerivedSignal,
-  type ISignal,
-  MutableSignal,
-  Signal,
-} from "./lib/signals";
+import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { type DistributiveOmit, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -383,7 +377,7 @@ export type Ai = {
         ((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId })[]
       >
     >;
-    placeholders: ISignal<ReadonlyMap<PlaceholderId, Placeholder>>;
+    placeholders: DerivedSignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
   registerChatContext: (
     chatId: ChatId,
