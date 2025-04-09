@@ -409,7 +409,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               padding: "10px 1rem",
             }}
           >
-            <option value="default">Default</option>
             <option value="default">30s (default)</option>
             {[10_000, 5_000, 2_000, 1_000].map((t) => (
               <option key={t} value={t}>
