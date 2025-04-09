@@ -371,7 +371,7 @@ export type Ai = {
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
-    messages: DerivedSignal<
+    sortedMessages: DerivedSignal<
       Record<
         string,
         ((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId })[]
@@ -865,7 +865,7 @@ export function createAi(config: AiConfig): Ai {
 
       signals: {
         chats: context.chats.signal,
-        messages: context.messages.sortedMessages,
+        sortedMessages: context.messages.sortedMessages,
         placeholders: context.placeholders.placeholdersById,
       },
 

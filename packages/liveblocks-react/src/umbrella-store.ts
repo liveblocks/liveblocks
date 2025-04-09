@@ -1275,7 +1275,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return {
               isLoading: false,
               messages: Object.values(
-                this.#client.ai.signals.messages.get()[chatId] ?? {}
+                this.#client.ai.signals.sortedMessages.get()[chatId] ?? {}
               )
                 // TODO: @nimesh Really think about the sort order.
                 .sort(
