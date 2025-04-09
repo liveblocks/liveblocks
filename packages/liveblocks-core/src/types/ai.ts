@@ -113,15 +113,36 @@ type ClearChatPair = DefineCmd<
   { chatId: ChatId }
 >;
 
+// NOTE: I'm not sold on the shape of this type yet! However, it will now
+// ensure that TypeScript deeply understands that if there is a chat context,
+// there will be an input and an output message, and that is not the case for
+// one-off asks.
+// Maybe we should later split this into two separate commands anyway, one for
+// chats and one for one-off asks? Those would then still have lots of overlap
+// though. So let's punt on this decision until we understand it more deeply.
+export type AiInputOutput =
+  | {
+      // For chat messages
+      type: "chat-io";
+      input: { chatId: ChatId; messageId: MessageId; prompt?: never };
+      output: {
+        placeholderId: PlaceholderId; // Optimistically assigned by client
+        messageId: MessageId; // Optimistically assigned by client
+      };
+    }
+  | {
+      // One-off asks
+      type: "one-off-io";
+      input: { prompt: string; chatId?: never };
+      output: {
+        placeholderId: PlaceholderId; // Optimistically assigned by client
+      };
+    };
+
 type AskAIPair = DefineCmd<
   "ask-ai",
   {
-    inputSource: AiInputSource; // XXX Rename to "source"
-    // ---------------------
-    // XXX We should group these into a single "target" property
-    placeholderId: PlaceholderId; // Optimistically assigned by client
-    outputMessageId?: MessageId; // Optimistically assigned by client
-    // ---------------------
+    io: AiInputOutput;
     copilotId?: CopilotId;
     stream: boolean;
     tools?: AiTool[];
@@ -253,11 +274,6 @@ export type AiUploadedImagePart = {
 // "Content" is always an "array of parts".
 export type AiUserContentPart = AiTextPart | AiUploadedImagePart;
 export type AiAssistantContentPart = AiTextPart | AiToolCallPart;
-
-export type AiInputSource = Relax<
-  | { chatId: ChatId; messageId: MessageId } // for chat messages
-  | { prompt: string } // one-off asks
->;
 
 export type ToolChoice =
   | "auto"

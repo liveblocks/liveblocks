@@ -28,7 +28,7 @@ import type {
   AiAssistantContentPart,
   AiChat,
   AiChatMessage,
-  AiInputSource,
+  AiInputOutput,
   AiPlaceholderChatMessage,
   AiTextPart,
   AiTool,
@@ -734,47 +734,56 @@ export function createAi(config: AiConfig): Ai {
         two?: MessageId | AskAiOptions,
         three?: AskAiOptions
       ): Promise<AskAiResponse> => {
-        const inputSource: AiInputSource =
+        const placeholderId = context.placeholders.createOptimistically();
+        const io: AiInputOutput =
           typeof two === "string"
-            ? { chatId: one as ChatId, messageId: two }
-            : { prompt: one };
+            ? {
+                type: "chat-io",
+                input: { chatId: one as ChatId, messageId: two },
+                output: {
+                  placeholderId,
+                  messageId: `ms_${nanoid()}` as MessageId,
+                },
+              }
+            : {
+                type: "one-off-io",
+                input: { prompt: one },
+                output: { placeholderId },
+              };
         const options = typeof two === "string" ? three : two;
 
+        const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
-        const placeholderId = context.placeholders.createOptimistically();
-        if (inputSource.messageId) {
-          const outputMessageId = `ms_${nanoid()}` as MessageId;
+        const tools = options?.tools;
+        const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
+        if (io.type === "chat-io") {
           // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-          context.messages.addMessage(inputSource.chatId, {
-            id: outputMessageId,
+          context.messages.addMessage(io.input.chatId, {
+            id: io.output.messageId,
             role: "assistant",
             placeholderId,
             createdAt: new Date().toISOString() as ISODateString,
           });
 
-          const chatContext = context.contextByChatId.get(inputSource.chatId);
+          const chatContext = context.contextByChatId.get(io.input.chatId);
           return sendClientMsgWithResponse({
             cmd: "ask-ai",
-            inputSource,
-            placeholderId,
-            outputMessageId,
-            copilotId: options?.copilotId,
+            io,
+            copilotId,
             stream,
-            tools: options?.tools,
-            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT,
+            tools,
+            timeout,
             context: chatContext ? Array.from(chatContext.values()) : undefined,
           });
         } else {
           return sendClientMsgWithResponse({
             cmd: "ask-ai",
-            inputSource,
-            placeholderId,
-            outputMessageId: undefined,
-            copilotId: options?.copilotId,
+            io,
+            copilotId,
             stream,
-            tools: options?.tools,
-            timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT,
+            tools,
+            timeout,
           });
         }
       },
@@ -787,8 +796,13 @@ export function createAi(config: AiConfig): Ai {
       ) => {
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
-          inputSource: { prompt },
-          placeholderId: `ph_${nanoid()}` as PlaceholderId,
+          io: {
+            type: "one-off-io",
+            input: { prompt },
+            output: {
+              placeholderId: `ph_${nanoid()}` as PlaceholderId,
+            },
+          },
           stream: false,
           tools: [tool],
           toolChoice: {
