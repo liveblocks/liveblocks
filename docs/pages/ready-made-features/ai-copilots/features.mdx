@@ -16,18 +16,21 @@ your application and modify its state. For example, if your product contained a
 calendar, you could enable AI to automatically book meetings for your users,
 directly from a chat.
 
-[image of AI calendar chat or the full dashboard with AI]
+[image of AI calendar chat or the full dashboard with AI. something with all the
+features visible in one]
 
 ## Features
 
+- **Persistent chats**: No database is required, each user’s chats are stored
+  permanently.
+- **AI Actions**: Easily allow AI to interact with your application and modify
+  its state.
+- **Context**: Feed text and files into the AI so it understands the current
+  context.
 - **Ready-made UI**: Polished, easily customizable React components to add to
   your app.
 - **Custom rendering**: Register React components that the AI can selectively
   render within the chat
-- **Persistent chats**: No database is required, each user’s chats are stored
-  automatically.
-- **AI Actions**: Easily allow AI to interact with your application and modify
-  its state.
 - **Supported AI providers**: Anthropic, OpenAI, Google Gemini, LangGraph,
   CrewAI, and more.
 
@@ -45,14 +48,21 @@ the user can continue the conversation from where they left off. All chats and
 messages are stored automatically by Liveblocks, and each user has their own set
 of chats. No database is required.
 
-### Switch between multiple chats
+### Multiple chats with metadata
 
-Each page of your application can have multiple differents chats, and it’s easy
-to switch between them, much like you’d find in ChatGPT. Each chat has a unique
-name, and can be given custom metadata, for example a custom title, description,
-tags, or anything you like.
+Each page of your application can have multiple different chats, and it’s easy
+to switch between them, much like in ChatGPT. Each chat has a unique name, and
+can be given custom metadata, for example a custom title, description, tags, or
+anything you like.
 
-[image of multiple chats]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/multiple-chats.png"
+    alt="A list of chats, with a create new chat button"
+    width={1344}
+    height={896}
+  />
+</Figure>
 
 ### Branch into new chats
 
@@ -62,7 +72,14 @@ branch in a tree, and you can choose to continue down the same branch, or create
 a new one at any time. This is helpful for duplicating chats, or going back and
 revising your previous responses.
 
-[image of create/fork new chat]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/branching-chats.png"
+    alt="A create new chat button under a message"
+    width={1344}
+    height={896}
+  />
+</Figure>
 
 ### Automatic synchronization
 
@@ -79,29 +96,87 @@ is ideal for creating temporary AI interactions, that don’t need to be stored.
 
 Actions are a way to allow AI to modify your application state and interact with
 your front end. You can use them to extend the capabilities of AI Copilots
-beyond simple text-based interactions.
+beyond simple text-based interactions. For example, you may have actions that
+create new documents in your app, automatically fill in form data, search the
+web for data, or anything else you like.
 
-[image of actions happening with regular messages]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/actions.png"
+    alt="A chat with actions"
+    width={1344}
+    height={896}
+  />
+</Figure>
 
-For example, you may have actions that create new documents in your app,
-automatically fill in form data, send notification emails to users, or anything
-else you like. Actions are defined in your code, and are executed when the AI
-requests to use them.
+Actions are defined in your code, and are executed when the AI requests to use
+them.
+
+### Integrates into our other products
+
+With actions, you can integrate AI Copilots into our other products, such as
+[Comments](/docs/ready-made-features/comments),
+[Notifications](/docs/ready-made-features/notifications), and
+[Sync Datastore](/docs/platform/sync-datastore). For example, you can create
+actions that add comments to your application, send notifications to other
+users, or add shapes to a collaborative drawing app.
+
+[image of a custom component that shows a preview of a comment written by the
+current user, with a button saying "Post comment"]
+
+## Context
+
+It’s simple to add context to your AI, so that is understands the current
+document or page.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/context.png"
+    alt="A chat with context from a document"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+### Attachments
+
+Additionally, you can upload files into the chat, which AI can modify, or use
+for extra context. These files can be images, PDFs, text documents, or any file
+type your AI provider can understand. Files are automatically stored by
+Liveblocks.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/attachment.png"
+    alt="A chat with an uploaded attachment"
+    width={1344}
+    height={896}
+  />
+</Figure>
 
 ## Ready-made components
 
-Liveblocks AI Copilots includes a set of UI components that can be used to add
-an AI chat interface to your application. They’re made with React and also
-contain a number of hooks for building custom interfaces.
+Liveblocks AI Copilots includes a set of styled UI components that can be used
+to add an AI chat interface to your application. They’re made with React and
+also contain a number of hooks for building custom interfaces.
 
-[image of a regular chat]
+[image of a chat interface in the bottom right corner of a website]
 
 ## Custom chat components
 
 You can register custom React components that the AI can choose to render within
 the chat. if you have multiple components, AI can choose which one to render.
 
-[image of custom chat components, e.g. calendar]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/custom-component.png"
+    alt="A custom calendar chat component"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+[show that they can be interactive, e.g. spotify play button]
 
 ## Supported AI providers
 
