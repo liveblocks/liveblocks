@@ -109,28 +109,28 @@ function createStore_forChatMessages() {
 
   function update(chatId: ChatId, messages: AiChatMessage[]): void {
     baseSignal.mutate((lut) => {
-      const messagesByChatId = lut.getOrCreate(chatId);
+      const messagesById = lut.getOrCreate(chatId);
       for (const message of messages) {
-        messagesByChatId.set(message.id, message);
+        messagesById.set(message.id, message);
       }
     });
   }
 
   function remove(chatId: ChatId, messageId: MessageId): void {
     baseSignal.mutate((lut) => {
-      const messagesByChatId = lut.get(chatId);
-      messagesByChatId?.delete(messageId);
+      const messagesById = lut.get(chatId);
+      messagesById?.delete(messageId);
     });
   }
 
   function removeByChatId(chatId: ChatId): void {
     baseSignal.mutate((lut) => {
-      const messagesByChatId = lut.get(chatId);
-      if (!messagesByChatId) {
+      const messagesById = lut.get(chatId);
+      if (!messagesById) {
         return;
       }
-      for (const message of messagesByChatId.values()) {
-        messagesByChatId.delete(message.id);
+      for (const message of messagesById.values()) {
+        messagesById.delete(message.id);
       }
     });
   }
@@ -217,7 +217,7 @@ function createStore_forPlaceholders() {
     }))
   );
 
-  function create(): PlaceholderId {
+  function createOptimistically(): PlaceholderId {
     const placeholderId = `ph_${nanoid()}` as PlaceholderId;
     baseSignal.mutate((lut) => {
       lut.getOrCreate(placeholderId);
@@ -289,7 +289,7 @@ function createStore_forPlaceholders() {
       baseSignal,
       (lut) => new Map(lut.entries()) as ReadonlyMap<PlaceholderId, Placeholder>
     ).asReadonly(),
-    createOptimistically: create,
+    createOptimistically,
     addChunk,
     settle,
     markAllLost,
