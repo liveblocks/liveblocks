@@ -10,6 +10,7 @@ import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
 import {
+  batch,
   DerivedSignal,
   type ISignal,
   MutableSignal,
@@ -499,8 +500,35 @@ export function createAi(config: AiConfig): Ai {
           }
 
           case "settle-placeholder": {
-            const { placeholderId, result } = msg;
-            context.placeholders.settle(placeholderId, result);
+            const { placeholderId, result, replaces } = msg;
+            batch(() => {
+              context.placeholders.settle(placeholderId, result);
+
+              // ------------------------------------------------------------------------
+              // XXX This message replacing logic is still way too complicated
+              // eslint-disable-next-line
+              const ph = context.placeholders.placeholdersById
+                .get()
+                .get(placeholderId)!;
+
+              if (replaces) {
+                const phm =
+                  context.messages.messages.get()[replaces.chatId]?.[
+                    replaces.messageId
+                  ];
+                if (phm) {
+                  context.messages.update(replaces.chatId, [
+                    {
+                      ...phm,
+                      id: replaces.messageId,
+                      role: "assistant",
+                      content: ph.contentSoFar,
+                    } satisfies AiChatMessage,
+                  ]);
+                }
+              }
+              // ------------------------------------------------------------------------
+            });
             break;
           }
 
