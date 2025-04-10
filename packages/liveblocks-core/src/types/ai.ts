@@ -153,14 +153,7 @@ type AskAIPair = DefineCmd<
   },
   Relax<
     | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats
-    | {
-        placeholderId: PlaceholderId;
-
-        // XXX The backend should send the full, newly created, placeholder
-        // message in response, so we can simply upsert it to acknowledge it!!!
-        chatId: ChatId;
-        messageId: MessageId;
-      }
+    | { message: AiChatMessage } // for chat messages (internally references the placeholder ID)
   >
 >;
 

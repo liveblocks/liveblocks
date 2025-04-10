@@ -546,15 +546,8 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "ask-ai":
-          if (msg.messageId !== undefined) {
-            // XXX Let the backend dictate this upsert, ideally!
-            context.messages.upsert({
-              id: msg.messageId,
-              chatId: msg.chatId,
-              role: "assistant-placeholder",
-              placeholderId: msg.placeholderId,
-              createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
-            } satisfies AiAssistantPlaceholderMessage);
+          if (msg.message) {
+            context.messages.upsert(msg.message);
           } else {
             // XXX Handle the case for one-off ask!
             // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
