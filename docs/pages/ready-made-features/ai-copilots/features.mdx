@@ -5,8 +5,14 @@ meta:
   description: "Learn about AI Copilots"
 ---
 
-A quick overview of the features of AI Copilots. Learn about the
-[architecture here](/docs/ready-made-features/ai-copilots/architecture).
+Liveblocks AI Copilots allows you to add a variety of AI experiences to your
+application, such as AI chat interfaces and toolbars, that can interact with
+your application and modify its state. For example, if your product contained a
+calendar, you could enable AI to automatically book meetings for your users,
+directly from a chat.
+
+[image of AI calendar chat or the full dashboard with AI. something with all the
+features visible in one]
 
 <Banner type="warning" title="Request access to private beta">
 
@@ -17,48 +23,32 @@ learn more about the project in
 
 </Banner>
 
-## Overview
-
-Liveblocks AI Copilots allows you to add a variety of AI experiences to your
-application, such as AI chat interfaces and toolbars, that can interact with
-your application and modify its state. For example, if your product contained a
-calendar, you could enable AI to automatically book meetings for your users,
-directly from a chat.
-
-[image of AI calendar chat or the full dashboard with AI. something with all the
-features visible in one]
-
 ## Features
 
-- **Persistent chats**: No database is required, each user’s chats are stored
-  permanently.
-- **AI Actions**: Easily allow AI to interact with your application and modify
-  its state.
-- **Context**: Feed text and files into the AI so it understands the current
-  context.
-- **Ready-made UI**: Polished, easily customizable React components to add to
-  your app.
-- **Custom rendering**: Register React components that the AI can selectively
-  render within the chat
-- **Text editor toolbar**: AI suggestions toolbar for your collaborative text
-  editor,.
-- **Supported AI providers**: Anthropic, OpenAI, Google Gemini, LangGraph,
-  CrewAI, and more.
+- **[Persistent chats](#persistent-chats)**: No database is required, each
+  user's chats are stored permanently.
+- **[Actions](#actions)**: Easily allow AI to interact with your application and
+  modify its state.
+- **[Context](#context)**: Feed text and files into the AI so it understands the
+  current context.
+- **[Ready-made UI](#ready-made-ui)**: Polished, easily customizable React
+  components to add to your app.
+- **[Custom chat components](#custom-chat-components)**: Register React
+  components that the AI can choose to render in-chat.
+- **[Text editor toolbar](#text-editor-toolbar)**: AI suggestions toolbar for
+  your collaborative Tiptap text editor.
+- **[Supported AI providers](#supported-ai-providers)**: Anthropic, OpenAI,
+  Google Gemini, LangGraph, CrewAI, and more.
+- **[Coming soon](#coming-soon)**: Advanced reasoning, RAG, MCP servers, OAuth,
+  custom back end.
 
-<Banner>
-
-AI Copilots is currently in closed beta. Some features are still under
-development.
-
-</Banner>
-
-## Persistant chats
+## Persistent chats
 
 When building a chat interface, it’s important to save the chat history so that
 the user can continue the conversation from where they left off. All chats and
 messages are stored automatically by Liveblocks, and each user has their own set
-of chats. No database is required, and messages update in realtime using
-WebSockets.
+of chats. No database is required, and messages are streamed into the chat in
+realtime using WebSockets.
 
 ### Multiple chats with metadata
 
@@ -124,17 +114,14 @@ web for data, or anything else you like.
 Actions are defined in your code, and are executed when the AI requests to use
 them.
 
-### Integrates into our other products
+### Actions work with our other products
 
-With actions, you can integrate AI Copilots into our other products, such as
+Through actions, you can integrate AI Copilots into our other products, such as
 [Comments](/docs/ready-made-features/comments),
 [Notifications](/docs/ready-made-features/notifications), and
-[Sync Datastore](/docs/platform/sync-datastore). For example, you can create
-actions that add comments to your application, send notifications to other
-users, or add shapes to a collaborative drawing app.
-
-[image of a custom component that shows a preview of a comment written by the
-current user, with a button saying "Post comment"]
+[Sync Datastore](/docs/platform/sync-datastore). For example, you can allow AI
+to add comments to your application, send notifications to other users, or add
+shapes to a collaborative drawing app.
 
 ## Context
 
@@ -166,11 +153,11 @@ Liveblocks.
   />
 </Figure>
 
-## Ready-made components
+## Ready-made UI
 
 Liveblocks AI Copilots includes a set of styled UI components that can be used
-to add an AI chat interface to your application. They’re made with React and
-also contain a number of hooks for building custom interfaces.
+to add an AI chat interface to your application. Messages are streamed in
+realtime.
 
 <Figure>
   <Image
@@ -181,10 +168,15 @@ also contain a number of hooks for building custom interfaces.
   />
 </Figure>
 
+We provide a number of hooks that allow you to create your own custom chat
+components too, such as `useChats` and `useMessages`.
+
 ## Custom chat components
 
-You can register custom React components that the AI can choose to render within
-the chat. if you have multiple components, AI can choose which one to render.
+Inside your chat, you can register custom React components that the AI can
+choose to render as a response. For example, if your app contains playlists, AI
+can choose to render a custom playlist component instead of a message. If you
+have multiple components, AI can choose which one to render.
 
 <Figure>
   <Image
@@ -195,14 +187,15 @@ the chat. if you have multiple components, AI can choose which one to render.
   />
 </Figure>
 
-[show that they can be interactive, e.g. spotify play button]
+These components can be fully interactive, for example a playlist component
+could have a play button that the AI can use to play a song.
 
 ## Text editor toolbar
 
 Using our
 [Text Editor integration for Tiptap](/docs/ready-made-features/text-editor/tiptap),
 we provide an AI toolbar that can be added to your collaborative text editor.
-This toolbar allows to select text, and ask AI to make changes for you, for
+This toolbar allows you to select text, and ask AI to make changes for you, for
 example fixing typos, and creating new paragraphs.
 
 [image of AiToolbar]
