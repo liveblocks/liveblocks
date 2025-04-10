@@ -144,7 +144,7 @@ function createStore_forChatMessages() {
     });
   }
 
-  function addMessage(message: AiChatMessage | AiPlaceholderChatMessage): void {
+  function upsert(message: AiChatMessage | AiPlaceholderChatMessage): void {
     upsertMany([message]);
   }
 
@@ -172,7 +172,7 @@ function createStore_forChatMessages() {
 
     // Mutations
     patchMessageIfExists,
-    addMessage,
+    upsert,
     upsertMany,
     remove,
     removeByChatId,
@@ -543,7 +543,7 @@ export function createAi(config: AiConfig): Ai {
           case "ask-ai":
             if (msg.messageId !== undefined) {
               // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-              context.messages.addMessage({
+              context.messages.upsert({
                 id: msg.messageId,
                 chatId: msg.chatId,
                 role: "assistant",
@@ -720,7 +720,7 @@ export function createAi(config: AiConfig): Ai {
         const messageId = `ms_${nanoid()}` as MessageId;
 
         // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-        context.messages.addMessage({
+        context.messages.upsert({
           id: messageId,
           role: "user",
           chatId,
@@ -767,7 +767,7 @@ export function createAi(config: AiConfig): Ai {
 
         if (io.type === "chat-io") {
           // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-          context.messages.addMessage({
+          context.messages.upsert({
             id: io.output.messageId,
             role: "assistant",
             placeholderId,
