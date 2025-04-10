@@ -17,7 +17,6 @@ import {
 import Markdown from "react-markdown";
 import { useState } from "react";
 
-import { DebugClient } from "../DebugClient";
 import {
   AiAssistantPlaceholderMessage,
   AiChatMessage,
@@ -51,7 +50,6 @@ export default function Page() {
             </div>
           }
         >
-          <DebugClient />
           <RoomProvider id="liveblocks:examples:ai">
             <ChatPicker />
           </RoomProvider>
