@@ -254,15 +254,14 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                       );
                       if (answer !== null) {
                         try {
-                          const { messageId } =
-                            await client.ai.attachUserMessage(
-                              chatId,
-                              messageAbove(props.message.id)?.id ?? null,
-                              answer
-                            );
+                          const { message } = await client.ai.attachUserMessage(
+                            chatId,
+                            messageAbove(props.message.id)?.id ?? null,
+                            answer
+                          );
                           forceRerender();
 
-                          await client.ai.ask(chatId, messageId, {
+                          await client.ai.ask(chatId, message.id, {
                             copilotId: selectedCopilotId,
                             stream: streaming,
                             timeout: maxTimeout,
@@ -345,14 +344,14 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           onSubmit={async (ev) => {
             if (ev.currentTarget.textContent?.trim()) {
               try {
-                const { messageId } = await client.ai.attachUserMessage(
+                const { message } = await client.ai.attachUserMessage(
                   chatId,
                   parentMessageId,
                   ev.currentTarget.textContent.trim()
                 );
                 forceRerender();
 
-                await client.ai.ask(chatId, messageId, {
+                await client.ai.ask(chatId, message.id, {
                   copilotId: selectedCopilotId,
                   stream: streaming,
                   timeout: maxTimeout,

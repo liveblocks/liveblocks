@@ -97,9 +97,9 @@ type AttachUserMessagePair = DefineCmd<
     id: MessageId; // New message ID, optimistically assigned by client
     chatId: ChatId;
     parentMessageId: MessageId | null;
-    content: AiTextPart;
+    content: AiUserContentPart[];
   },
-  { chatId: ChatId; messageId: MessageId; createdAt: ISODateString }
+  { message: AiUserMessage }
 >;
 
 type DeleteMessagePair = DefineCmd<

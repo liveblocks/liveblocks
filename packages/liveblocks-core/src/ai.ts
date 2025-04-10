@@ -22,11 +22,13 @@ import type {
   AbortAiResponse,
   AiAssistantContentPart,
   AiAssistantDeltaUpdate,
+  AiAssistantPlaceholderMessage,
   AiChat,
   AiChatMessage,
   AiInputOutput,
-  AiTextPart,
   AiTool,
+  AiUserContentPart,
+  AiUserMessage,
   AskAiResponse,
   AttachUserMessageResponse,
   ChatId,
@@ -531,6 +533,10 @@ export function createAi(config: AiConfig): Ai {
           context.messages.upsertMany(msg.messages);
           break;
 
+        case "attach-user-message":
+          context.messages.upsert(msg.message);
+          break;
+
         case "delete-message":
           context.messages.remove(msg.messageId);
           break;
@@ -548,14 +554,13 @@ export function createAi(config: AiConfig): Ai {
               role: "assistant-placeholder",
               placeholderId: msg.placeholderId,
               createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
-            });
+            } satisfies AiAssistantPlaceholderMessage);
           } else {
             // XXX Handle the case for one-off ask!
             // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
           }
           break;
 
-        case "attach-user-message":
         case "abort-ai":
           // TODO Not handled yet
           break;
@@ -705,20 +710,17 @@ export function createAi(config: AiConfig): Ai {
         parentMessageId: MessageId | null,
         message: string
       ) => {
-        const content: AiTextPart = {
-          type: "text",
-          text: message,
-        };
         const messageId = `ms_${nanoid()}` as MessageId;
+        const content: AiUserContentPart[] = [{ type: "text", text: message }];
 
-        // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+        // Optimistically create the message already
         context.messages.upsert({
           id: messageId,
           role: "user",
           chatId,
-          content: [content],
-          createdAt: new Date().toISOString() as ISODateString,
-        });
+          content,
+          createdAt: new Date().toISOString() as ISODateString, // Client date (will soon be replaced by server date)
+        } satisfies AiUserMessage);
 
         return sendClientMsgWithResponse({
           cmd: "attach-user-message",
