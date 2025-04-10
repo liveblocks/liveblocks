@@ -2546,16 +2546,6 @@ return (
 return a loading state and will throw error to the nearest ErrorBoundary if
 initial load failed.
 
-### useThreadSubscription [@badge=RoomProvider]
-
-Returns the subscription status of a thread.
-
-```tsx
-import { useThreadSubscription } from "@liveblocks/react/suspense";
-
-const { status, unreadSince } = useThreadSubscription("th_xxx");
-```
-
 ### useCreateThread [@badge=RoomProvider]
 
 Returns a function that creates a thread with an initial comment, and optionally
@@ -2629,6 +2619,40 @@ import { useMarkThreadAsRead } from "@liveblocks/react/suspense";
 
 const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
+```
+
+### useThreadSubscription [@badge=RoomProvider]
+
+Returns the subscription status of a thread, methods to update it, and when the
+thread was last read.
+
+```tsx
+import { useThreadSubscription } from "@liveblocks/react/suspense";
+
+const { status, subscribe, unsubscribe, unreadSince } =
+  useThreadSubscription("th_xxx");
+```
+
+### useSubscribeToThread [@badge=RoomProvider]
+
+Returns a function that subscribes the user to a thread.
+
+```tsx
+import { useSubscribeToThread } from "@liveblocks/react/suspense";
+
+const subscribeToThread = useSubscribeToThread();
+subscribeToThread("th_xxx");
+```
+
+### useUnsubscribeFromThread [@badge=RoomProvider]
+
+Returns a function that unsubscribes the user from a thread.
+
+```tsx
+import { useUnsubscribeFromThread } from "@liveblocks/react/suspense";
+
+const unsubscribeFromThread = useUnsubscribeFromThread();
+unsubscribeFromThread("th_xxx");
 ```
 
 ### useCreateComment [@badge=RoomProvider]
