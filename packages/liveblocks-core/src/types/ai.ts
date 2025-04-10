@@ -1,7 +1,6 @@
 import type { JSONSchema4 } from "json-schema";
 
 import { assertNever } from "../lib/assert";
-import type { Json } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
@@ -148,7 +147,7 @@ type AskAIPair = DefineCmd<
     io: AiInputOutput;
     copilotId?: CopilotId;
     stream: boolean;
-    tools?: AiTool[];
+    tools?: AiToolDefinition[];
     toolChoice?: ToolChoice;
     context?: CopilotContext[];
     timeout: number; // in millis
@@ -238,13 +237,7 @@ export type AiChat = {
  */
 export type AiStatus = "thinking" | "responding" | "complete" | "failed";
 
-export interface AiTool {
-  name: string;
-  description: string;
-  parameter_schema: Json;
-}
-
-export type CopilotToolDefinition = {
+export type AiToolDefinition = {
   description?: string;
   parameters: JSONSchema4;
   execute?: (params: any) => void;

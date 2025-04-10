@@ -25,7 +25,7 @@ import type {
   AiChat,
   AiChatMessage,
   AiInputOutput,
-  AiTool,
+  AiToolDefinition,
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
@@ -36,7 +36,6 @@ import type {
   CmdId,
   CopilotContext,
   CopilotId,
-  CopilotToolDefinition,
   CreateChatResponse,
   Cursor,
   DeleteChatResponse,
@@ -87,13 +86,12 @@ type AiContext = {
   messages: ReturnType<typeof createStore_forChatMessages>;
   placeholders: ReturnType<typeof createStore_forPlaceholders>;
   contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
-  toolsByChatId: Map<ChatId, Map<string, CopilotToolDefinition>>;
+  toolsByChatId: Map<ChatId, Map<string, AiToolDefinition>>;
 };
 
 export type AskAiOptions = {
   copilotId?: CopilotId;
   stream?: boolean; // True by default
-  tools?: AiTool[];
   // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
   timeout?: number;
 };
@@ -342,7 +340,10 @@ export type Ai = {
   };
   abort: (placeholderId: PlaceholderId) => Promise<AbortAiResponse>;
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
-  statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
+  statelessAction: (
+    prompt: string,
+    tool: AiToolDefinition & { name: string }
+  ) => Promise<AskAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     sortedMessagesByChatId: DerivedSignal<Record<string, AiChatMessage[]>>;
@@ -358,7 +359,7 @@ export type Ai = {
   registerChatTool: (
     chatId: ChatId,
     toolName: string,
-    tool: CopilotToolDefinition
+    tool: AiToolDefinition
   ) => void;
   unregisterChatTool: (chatId: ChatId, toolName: string) => void;
 };
@@ -390,7 +391,7 @@ export function createAi(config: AiConfig): Ai {
     messages: createStore_forChatMessages(),
     placeholders: createStore_forPlaceholders(),
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
-    toolsByChatId: new Map<ChatId, Map<string, CopilotToolDefinition>>(),
+    toolsByChatId: new Map<ChatId, Map<string, AiToolDefinition>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -675,7 +676,7 @@ export function createAi(config: AiConfig): Ai {
   function registerChatTool(
     chatId: ChatId,
     toolName: string,
-    tool: CopilotToolDefinition
+    tool: AiToolDefinition
   ) {
     const chatTools = context.toolsByChatId.get(chatId);
     if (chatTools === undefined) {
@@ -781,7 +782,6 @@ export function createAi(config: AiConfig): Ai {
 
         const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
-        const tools = options?.tools;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
         if (io.type === "chat-io") {
@@ -795,6 +795,15 @@ export function createAi(config: AiConfig): Ai {
           });
 
           const chatContext = context.contextByChatId.get(io.input.chatId);
+          const chatTools = context.toolsByChatId.get(io.input.chatId);
+          const tools = chatTools
+            ? Array.from(chatTools.entries()).map(([name, tool]) => ({
+                name,
+                description: tool.description,
+                parameters: tool.parameters,
+              }))
+            : undefined;
+
           return sendClientMsgWithResponse({
             cmd: "ask-ai",
             io,
@@ -810,7 +819,6 @@ export function createAi(config: AiConfig): Ai {
             io,
             copilotId,
             stream,
-            tools,
             timeout,
           });
         }
@@ -818,7 +826,7 @@ export function createAi(config: AiConfig): Ai {
 
       statelessAction: (
         prompt: string,
-        tool: AiTool,
+        tool: AiToolDefinition & { name: string },
         // XXX Should this options param be shared with AskAiOptions?
         options?: { timeout: number }
       ) => {
