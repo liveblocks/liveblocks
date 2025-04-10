@@ -1,4 +1,4 @@
-import { ChatId, CopilotContext, AiToolDefinition } from "@liveblocks/core";
+import { ChatId, CopilotContext, ClientToolDefinition } from "@liveblocks/core";
 import { useClient, useCopilotChatMessages } from "@liveblocks/react/suspense";
 import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
 import { useEffect } from "react";
@@ -10,7 +10,7 @@ export function InlineChat({
 }: {
   chatId: ChatId;
   context: Record<string, CopilotContext>;
-  tools: Record<string, AiToolDefinition>;
+  tools: Record<string, ClientToolDefinition>;
 }) {
   const client = useClient();
 
@@ -125,7 +125,7 @@ function CopilotToolComp({
 }: {
   chatId: ChatId;
   toolKey: string;
-  tool: AiToolDefinition;
+  tool: ClientToolDefinition;
 }) {
   const client = useClient();
 

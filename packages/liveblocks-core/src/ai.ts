@@ -1,4 +1,6 @@
 /* eslint-disable rulesdir/console-must-be-fancy */
+import type { JSONSchema4 } from "json-schema";
+
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
 import type { Delegates, Status } from "./connection";
@@ -72,6 +74,13 @@ const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 second
  */
 type AiChatsLUT = Map<string, AiChat>;
 
+// XXX - Find a better name for this?
+export type ClientToolDefinition = {
+  description?: string;
+  parameters: JSONSchema4;
+  execute?: (params: any) => void;
+};
+
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
@@ -86,7 +95,7 @@ type AiContext = {
   messages: ReturnType<typeof createStore_forChatMessages>;
   placeholders: ReturnType<typeof createStore_forPlaceholders>;
   contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
-  toolsByChatId: Map<ChatId, Map<string, AiToolDefinition>>;
+  toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
 };
 
 export type AskAiOptions = {
@@ -342,7 +351,7 @@ export type Ai = {
   // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
   statelessAction: (
     prompt: string,
-    tool: AiToolDefinition & { name: string }
+    tool: Omit<AiToolDefinition, "parameters"> & { parameters: JSONSchema4 }
   ) => Promise<AskAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
@@ -359,7 +368,7 @@ export type Ai = {
   registerChatTool: (
     chatId: ChatId,
     toolName: string,
-    tool: AiToolDefinition
+    tool: ClientToolDefinition
   ) => void;
   unregisterChatTool: (chatId: ChatId, toolName: string) => void;
 };
@@ -391,7 +400,7 @@ export function createAi(config: AiConfig): Ai {
     messages: createStore_forChatMessages(),
     placeholders: createStore_forPlaceholders(),
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
-    toolsByChatId: new Map<ChatId, Map<string, AiToolDefinition>>(),
+    toolsByChatId: new Map<ChatId, Map<string, ClientToolDefinition>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -676,7 +685,7 @@ export function createAi(config: AiConfig): Ai {
   function registerChatTool(
     chatId: ChatId,
     toolName: string,
-    tool: AiToolDefinition
+    tool: ClientToolDefinition
   ) {
     const chatTools = context.toolsByChatId.get(chatId);
     if (chatTools === undefined) {
@@ -796,7 +805,7 @@ export function createAi(config: AiConfig): Ai {
 
           const chatContext = context.contextByChatId.get(io.input.chatId);
           const chatTools = context.toolsByChatId.get(io.input.chatId);
-          const tools = chatTools
+          const tools: AiToolDefinition[] | undefined = chatTools
             ? Array.from(chatTools.entries()).map(([name, tool]) => ({
                 name,
                 description: tool.description,
@@ -826,7 +835,9 @@ export function createAi(config: AiConfig): Ai {
 
       statelessAction: (
         prompt: string,
-        tool: AiToolDefinition & { name: string },
+        tool: Omit<AiToolDefinition, "parameters"> & {
+          parameters: JSONSchema4;
+        },
         // XXX Should this options param be shared with AskAiOptions?
         options?: { timeout: number }
       ) => {

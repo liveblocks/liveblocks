@@ -48,8 +48,13 @@ function App() {
         tools={{
           markTodoAsCompleted: {
             parameters: {
-              type: "number",
-              description: "The id of the todo to mark as completed",
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                  description: "The id of the todo to mark as completed",
+                },
+              },
             },
             execute: ({ id }: { id: string }) => {
               setTodos((todos) =>
@@ -64,8 +69,13 @@ function App() {
           },
           addTodo: {
             parameters: {
-              type: "string",
-              description: "The title of the todo to add",
+              type: "object",
+              properties: {
+                title: {
+                  type: "string",
+                  description: "The title of the todo to add",
+                },
+              },
             },
             execute: ({ title }: { title: string }) => {
               setTodos((todos) => [

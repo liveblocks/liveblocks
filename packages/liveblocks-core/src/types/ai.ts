@@ -1,6 +1,5 @@
-import type { JSONSchema4 } from "json-schema";
-
 import { assertNever } from "../lib/assert";
+import type { JsonObject } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
@@ -238,9 +237,9 @@ export type AiChat = {
 export type AiStatus = "thinking" | "responding" | "complete" | "failed";
 
 export type AiToolDefinition = {
+  name: string;
   description?: string;
-  parameters: JSONSchema4;
-  execute?: (params: any) => void;
+  parameters: JsonObject;
 };
 
 export type AiToolCallPart = {
