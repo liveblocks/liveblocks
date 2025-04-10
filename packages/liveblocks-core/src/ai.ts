@@ -26,7 +26,6 @@ import type {
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
-  AiInputOutput,
   AiToolDefinition,
   AiUserContentPart,
   AiUserMessage,
@@ -346,20 +345,12 @@ export type Ai = {
     parentMessageId: MessageId | null,
     message: string
   ) => Promise<AttachUserMessageResponse>;
-  ask: {
-    (
-      chatId: ChatId,
-      messageId: MessageId,
-      options?: AskAiOptions
-    ): Promise<AskAiResponse>;
-    (prompt: string, options?: AskAiOptions): Promise<AskAiResponse>;
-  };
-  abort: (placeholderId: PlaceholderId) => Promise<AbortAiResponse>;
-  // TODO: make statelessAction a convenience wrapper around generateAnswer, or maybe just delete it
-  statelessAction: (
-    prompt: string,
-    tool: Omit<AiToolDefinition, "parameters"> & { parameters: JSONSchema4 }
+  ask: (
+    chatId: ChatId,
+    messageId: MessageId,
+    options?: AskAiOptions
   ) => Promise<AskAiResponse>;
+  abort: (placeholderId: PlaceholderId) => Promise<AbortAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     sortedMessagesByChatId: DerivedSignal<Record<string, AiChatMessage[]>>;
@@ -760,96 +751,49 @@ export function createAi(config: AiConfig): Ai {
       },
 
       ask: (
-        one: string,
-        two?: MessageId | AskAiOptions,
-        three?: AskAiOptions
+        chatId: ChatId,
+        messageId: MessageId,
+        options?: AskAiOptions
       ): Promise<AskAiResponse> => {
         const placeholderId = context.placeholders.createOptimistically();
-        const io: AiInputOutput =
-          typeof two === "string"
-            ? {
-                type: "chat-io",
-                input: { chatId: one as ChatId, messageId: two },
-                output: {
-                  placeholderId,
-                  messageId: `ms_${nanoid()}` as MessageId,
-                },
-              }
-            : {
-                type: "one-off-io",
-                input: { prompt: one },
-                output: { placeholderId },
-              };
-        const options = typeof two === "string" ? three : two;
+        const input = { chatId, messageId };
+        const output = {
+          placeholderId,
+          messageId: `ms_${nanoid()}` as MessageId,
+        };
 
         const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
-        if (io.type === "chat-io") {
-          // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-          context.messages.upsert({
-            id: io.output.messageId,
-            role: "assistant-placeholder",
-            placeholderId,
-            chatId: io.input.chatId,
-            createdAt: new Date().toISOString() as ISODateString,
-          });
+        // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+        context.messages.upsert({
+          id: output.messageId,
+          role: "assistant-placeholder",
+          placeholderId,
+          chatId: input.chatId,
+          createdAt: new Date().toISOString() as ISODateString,
+        });
 
-          const chatContext = context.contextByChatId.get(io.input.chatId);
-          const chatTools = context.toolsByChatId.get(io.input.chatId);
-          const tools: AiToolDefinition[] | undefined = chatTools
-            ? Array.from(chatTools.entries()).map(([name, tool]) => ({
-                name,
-                description: tool.description,
-                parameters: tool.parameters,
-              }))
-            : undefined;
+        const chatContext = context.contextByChatId.get(input.chatId);
+        const chatTools = context.toolsByChatId.get(input.chatId);
+        const tools: AiToolDefinition[] | undefined = chatTools
+          ? Array.from(chatTools.entries()).map(([name, tool]) => ({
+              name,
+              description: tool.description,
+              parameters: tool.parameters,
+            }))
+          : undefined;
 
-          return sendClientMsgWithResponse({
-            cmd: "ask-ai",
-            io,
-            copilotId,
-            stream,
-            tools,
-            timeout,
-            context: chatContext ? Array.from(chatContext.values()) : undefined,
-          });
-        } else {
-          return sendClientMsgWithResponse({
-            cmd: "ask-ai",
-            io,
-            copilotId,
-            stream,
-            timeout,
-          });
-        }
-      },
-
-      statelessAction: (
-        prompt: string,
-        tool: Omit<AiToolDefinition, "parameters"> & {
-          parameters: JSONSchema4;
-        },
-        // XXX Should this options param be shared with AskAiOptions?
-        options?: { timeout: number }
-      ) => {
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
-          io: {
-            type: "one-off-io",
-            input: { prompt },
-            output: {
-              placeholderId: `ph_${nanoid()}` as PlaceholderId,
-            },
-          },
-          stream: false,
-          tools: [tool],
-          toolChoice: {
-            type: "tool",
-            toolName: tool.name,
-          },
-          timeout: options?.timeout ?? DEFAULT_AI_TIMEOUT, // Allow the job to run for at most 30 seconds in the backend
+          input,
+          output,
+          copilotId,
+          stream,
+          tools,
+          timeout,
+          context: chatContext ? Array.from(chatContext.values()) : undefined,
         });
       },
 
