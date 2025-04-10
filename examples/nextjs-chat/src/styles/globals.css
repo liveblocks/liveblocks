@@ -120,6 +120,7 @@ main {
 
 .messages {
   flex: 1;
+  overflow-x: clip;
   overflow-y: auto;
   padding: 1rem;
   position: absolute;

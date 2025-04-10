@@ -66,8 +66,6 @@ function ChatPicker() {
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
 
-  console.log(hasFetchedAll);
-
   // The user-selected chat ID. If nothing is explicitly selected (or the
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
@@ -216,45 +214,71 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const parentMessageId = overrideParentId ?? lastMessageId;
   return (
     <div className="chat-window-container">
-      <ChatMessages
-        messages={messages}
-        className="messages"
-        components={{
-          // Add bells and whistles to the default chat components
-          UserChatMessage: (props) => (
-            <div className="user-message-container">
-              <UserChatMessage {...props} />
-              <div className="message-controls">
-                <button
-                  style={{ color: "red" }}
-                  onClick={async () => {
-                    try {
-                      await client.ai.deleteMessage(chatId, props.message.id);
-                    } finally {
-                      forceRerender();
-                    }
-                  }}
-                >
-                  delete
-                </button>
-                <button
-                  onClick={async () => {
-                    const answer = prompt(
-                      "Edit",
-                      props.message.content
-                        .flatMap((b) => (b.type === "text" ? [b.text] : []))
-                        .join(" ")
-                    );
-                    if (answer !== null) {
+      <div className="messages">
+        <details
+          style={{
+            padding: "1rem",
+            backgroundColor: "#efefef",
+          }}
+        >
+          <summary style={{ cursor: "pointer" }}>Raw JSON</summary>
+          <pre>{JSON.stringify(messages, null, 2)}</pre>
+        </details>
+        <ChatMessages
+          messages={messages}
+          components={{
+            // Add bells and whistles to the default chat components
+            UserChatMessage: (props) => (
+              <div className="user-message-container">
+                <UserChatMessage {...props} />
+                <div className="message-controls">
+                  <button
+                    style={{ color: "red" }}
+                    onClick={async () => {
                       try {
-                        const { messageId } = await client.ai.attachUserMessage(
-                          chatId,
-                          messageAbove(props.message.id)?.id ?? null,
-                          answer
-                        );
+                        await client.ai.deleteMessage(chatId, props.message.id);
+                      } finally {
                         forceRerender();
+                      }
+                    }}
+                  >
+                    delete
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const answer = prompt(
+                        "Edit",
+                        props.message.content
+                          .flatMap((b) => (b.type === "text" ? [b.text] : []))
+                          .join(" ")
+                      );
+                      if (answer !== null) {
+                        try {
+                          const { messageId } =
+                            await client.ai.attachUserMessage(
+                              chatId,
+                              messageAbove(props.message.id)?.id ?? null,
+                              answer
+                            );
+                          forceRerender();
 
-                        await client.ai.ask(chatId, messageId, {
+                          await client.ai.ask(chatId, messageId, {
+                            copilotId: selectedCopilotId,
+                            stream: streaming,
+                            timeout: maxTimeout,
+                          });
+                        } finally {
+                          setOverrideParentId(undefined);
+                        }
+                      }
+                    }}
+                  >
+                    edit
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await client.ai.ask(chatId, props.message.id, {
                           copilotId: selectedCopilotId,
                           stream: streaming,
                           timeout: maxTimeout,
@@ -262,66 +286,51 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                       } finally {
                         setOverrideParentId(undefined);
                       }
-                    }
-                  }}
-                >
-                  edit
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await client.ai.ask(chatId, props.message.id, {
-                        copilotId: selectedCopilotId,
-                        stream: streaming,
-                        timeout: maxTimeout,
-                      });
-                    } finally {
-                      setOverrideParentId(undefined);
-                    }
-                  }}
-                >
-                  regenerate
-                </button>
-                <button onClick={() => setOverrideParentId(props.message.id)}>
-                  {props.message.id}
-                </button>
+                    }}
+                  >
+                    regenerate
+                  </button>
+                  <button onClick={() => setOverrideParentId(props.message.id)}>
+                    {props.message.id}
+                  </button>
+                </div>
               </div>
-            </div>
-          ),
-          // Add bells and whistles to the default chat components
-          AssistantChatMessage: (props) => (
-            <div className="assistant-message-container">
-              <AssistantChatMessage
-                {...props}
-                components={{
-                  TextPart: (props) => (
-                    <div className="lb-root lb-assistant-chat-message-text-content">
-                      <Markdown>{props.text}</Markdown>
-                    </div>
-                  ),
-                }}
-              />
-              <div className="assistant-message-controls">
-                <button onClick={() => setOverrideParentId(props.message.id)}>
-                  {props.message.id}
-                </button>
-                <button
-                  style={{ color: "red" }}
-                  onClick={async () => {
-                    try {
-                      await client.ai.deleteMessage(chatId, props.message.id);
-                    } finally {
-                      forceRerender();
-                    }
+            ),
+            // Add bells and whistles to the default chat components
+            AssistantChatMessage: (props) => (
+              <div className="assistant-message-container">
+                <AssistantChatMessage
+                  {...props}
+                  components={{
+                    TextPart: (props) => (
+                      <div className="lb-root lb-assistant-chat-message-text-content">
+                        <Markdown>{props.text}</Markdown>
+                      </div>
+                    ),
                   }}
-                >
-                  delete
-                </button>
+                />
+                <div className="assistant-message-controls">
+                  <button onClick={() => setOverrideParentId(props.message.id)}>
+                    {props.message.id}
+                  </button>
+                  <button
+                    style={{ color: "red" }}
+                    onClick={async () => {
+                      try {
+                        await client.ai.deleteMessage(chatId, props.message.id);
+                      } finally {
+                        forceRerender();
+                      }
+                    }}
+                  >
+                    delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ),
-        }}
-      />
+            ),
+          }}
+        />
+      </div>
 
       <div className="composer-container">
         <ChatComposer
