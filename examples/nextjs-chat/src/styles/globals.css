@@ -118,6 +118,16 @@ main {
   overflow: hidden;
 }
 
+.debug-raw-json {
+  padding: 1rem;
+  background-color: #efefef;
+  margin-bottom: 1rem;
+
+  summary {
+    cursor: pointer;
+  }
+}
+
 .messages {
   flex: 1;
   overflow-x: clip;
@@ -371,6 +381,10 @@ a:hover {
     border-left: 4px solid #444;
     background-color: #2a2a2a;
     color: #fff;
+  }
+
+  .debug-raw-json {
+    background-color: #454545;
   }
 
   /* Message buttons */

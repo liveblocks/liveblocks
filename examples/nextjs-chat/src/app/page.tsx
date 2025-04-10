@@ -213,13 +213,8 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   return (
     <div className="chat-window-container">
       <div className="messages">
-        <details
-          style={{
-            padding: "1rem",
-            backgroundColor: "#efefef",
-          }}
-        >
-          <summary style={{ cursor: "pointer" }}>Raw JSON</summary>
+        <details className="debug-raw-json">
+          <summary>Raw JSON</summary>
           <pre>{JSON.stringify(messages, null, 2)}</pre>
         </details>
         <ChatMessages
