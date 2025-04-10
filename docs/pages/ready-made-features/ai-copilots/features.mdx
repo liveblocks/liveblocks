@@ -40,6 +40,8 @@ features visible in one]
   your app.
 - **Custom rendering**: Register React components that the AI can selectively
   render within the chat
+- **Text editor toolbar**: AI suggestions toolbar for your collaborative text
+  editor,.
 - **Supported AI providers**: Anthropic, OpenAI, Google Gemini, LangGraph,
   CrewAI, and more.
 
@@ -52,10 +54,11 @@ development.
 
 ## Persistant chats
 
-When building a chat interface, it's important to save the chat history so that
+When building a chat interface, it’s important to save the chat history so that
 the user can continue the conversation from where they left off. All chats and
 messages are stored automatically by Liveblocks, and each user has their own set
-of chats. No database is required.
+of chats. No database is required, and messages update in realtime using
+WebSockets.
 
 ### Multiple chats with metadata
 
@@ -196,7 +199,16 @@ the chat. if you have multiple components, AI can choose which one to render.
 
 ## Text editor toolbar
 
+Using our
+[Text Editor integration for Tiptap](/docs/ready-made-features/text-editor/tiptap),
+we provide an AI toolbar that can be added to your collaborative text editor.
+This toolbar allows to select text, and ask AI to make changes for you, for
+example fixing typos, and creating new paragraphs.
+
 [image of AiToolbar]
+
+Learn more about this React component under
+[`AiToolbar`](/docs/api-reference/liveblocks-react-tiptap#AiToolbar)
 
 ## Supported AI providers
 
