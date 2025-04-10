@@ -153,7 +153,7 @@ and
 [`useThreadSubscription`](/docs/api-reference/liveblocks-react#useThreadSubscription)
 to replicate or customize this behavior.
 
-### Thread notification settings
+### Thread subscription settings
 
 By default, you’ll receive inbox notifications for threads you are participating
 in. This setting can be customized for each user and per room:
@@ -163,10 +163,10 @@ in. This setting can be customized for each user and per room:
 - `"none"` to mute the room.
 
 You can use
-[`useRoomNotificationSettings`](/docs/api-reference/liveblocks-react#useRoomNotificationSettings)
+[`useRoomSubscriptionSettings`](/docs/api-reference/liveblocks-react#useRoomSubscriptionSettings)
 to build a settings picker in your app and allow users to change their own
-notification settings for the current room, or use
-[`updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings)
+subscription settings for the current room, or use
+[`updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings)
 server-side to control them yourself: for example, to automatically make a
 document’s author notified about everything in their document.
 
