@@ -347,6 +347,7 @@ export type AiAssistantPlaceholderMessage = {
   role: "assistant-placeholder";
   placeholderId: PlaceholderId;
   createdAt: ISODateString;
+  deletedAt?: ISODateString;
 };
 
 export type AiChatMessage =
