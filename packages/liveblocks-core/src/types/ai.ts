@@ -1,3 +1,5 @@
+import type { JSONSchema4 } from "json-schema";
+
 import { assertNever } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
@@ -241,6 +243,12 @@ export interface AiTool {
   description: string;
   parameter_schema: Json;
 }
+
+export type CopilotToolDefinition = {
+  description?: string;
+  parameters: JSONSchema4;
+  execute?: (params: any) => void;
+};
 
 export type AiToolCallPart = {
   type: "tool-call";

@@ -36,6 +36,7 @@ import type {
   CmdId,
   CopilotContext,
   CopilotId,
+  CopilotToolDefinition,
   CreateChatResponse,
   Cursor,
   DeleteChatResponse,
@@ -86,6 +87,7 @@ type AiContext = {
   messages: ReturnType<typeof createStore_forChatMessages>;
   placeholders: ReturnType<typeof createStore_forPlaceholders>;
   contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
+  toolsByChatId: Map<ChatId, Map<string, CopilotToolDefinition>>;
 };
 
 export type AskAiOptions = {
@@ -352,6 +354,13 @@ export type Ai = {
     data: CopilotContext
   ) => void;
   unregisterChatContext: (chatId: ChatId, contextKey: string) => void;
+
+  registerChatTool: (
+    chatId: ChatId,
+    toolName: string,
+    tool: CopilotToolDefinition
+  ) => void;
+  unregisterChatTool: (chatId: ChatId, toolName: string) => void;
 };
 
 /** @internal */
@@ -381,6 +390,7 @@ export function createAi(config: AiConfig): Ai {
     messages: createStore_forChatMessages(),
     placeholders: createStore_forPlaceholders(),
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
+    toolsByChatId: new Map<ChatId, Map<string, CopilotToolDefinition>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -662,6 +672,29 @@ export function createAi(config: AiConfig): Ai {
     }
   }
 
+  function registerChatTool(
+    chatId: ChatId,
+    toolName: string,
+    tool: CopilotToolDefinition
+  ) {
+    const chatTools = context.toolsByChatId.get(chatId);
+    if (chatTools === undefined) {
+      context.toolsByChatId.set(chatId, new Map([[toolName, tool]]));
+    } else {
+      chatTools.set(toolName, tool);
+    }
+  }
+
+  function unregisterChatTool(chatId: ChatId, toolName: string) {
+    const chatTools = context.toolsByChatId.get(chatId);
+    if (chatTools) {
+      chatTools.delete(toolName);
+      if (chatTools.size === 0) {
+        context.toolsByChatId.delete(chatId);
+      }
+    }
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -821,6 +854,9 @@ export function createAi(config: AiConfig): Ai {
 
       registerChatContext,
       unregisterChatContext,
+
+      registerChatTool,
+      unregisterChatTool,
     },
     kInternal,
     { enumerable: false }

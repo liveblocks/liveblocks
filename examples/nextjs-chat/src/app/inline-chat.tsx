@@ -1,14 +1,20 @@
-import { ChatId, CopilotContext } from "@liveblocks/core";
-import { useClient, useCopilotChatMessages } from "@liveblocks/react";
+import {
+  ChatId,
+  CopilotContext,
+  CopilotToolDefinition,
+} from "@liveblocks/core";
+import { useClient, useCopilotChatMessages } from "@liveblocks/react/suspense";
 import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
 import { useEffect } from "react";
 
 export function InlineChat({
   chatId,
   context,
+  tools,
 }: {
   chatId: ChatId;
   context: Record<string, CopilotContext>;
+  tools: Record<string, CopilotToolDefinition>;
 }) {
   const client = useClient();
 
@@ -33,11 +39,40 @@ export function InlineChat({
   }
 
   return (
-    <div>
+    <>
       {/* TODO: Support auto fetch more when user scrolls to the top of the chat window */}
-      <ChatMessages messages={messages} />
+      <ChatMessages
+        messages={messages}
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          padding: "1rem",
+        }}
+      />
 
-      <ChatComposer chatId={chatId} />
+      <div style={{ padding: "0 1rem 1rem" }}>
+        <ChatComposer
+          chatId={chatId}
+          onComposerSubmit={async (message) => {
+            const result = await client.ai.attachUserMessage(
+              chatId,
+              null,
+              message.text
+            );
+            await client.ai.ask(chatId, result.message.id, { stream: true });
+          }}
+          style={{
+            position: "relative",
+            borderRadius: "0.75rem",
+            overflow: "hidden",
+            width: "100%",
+            boxShadow:
+              "0 0 0 1px rgb(0 0 0 / 4%),\n    0 2px 6px rgb(0 0 0 / 4%),\n    0 8px 26px rgb(0 0 0 / 6%)",
+            maxWidth: "896px",
+            margin: "0 auto",
+          }}
+        />
+      </div>
 
       {Object.entries(context).map(([key, value]) => {
         return (
@@ -49,7 +84,18 @@ export function InlineChat({
           />
         );
       })}
-    </div>
+
+      {Object.entries(tools).map(([keys, value]) => {
+        return (
+          <CopilotToolComp
+            key={keys}
+            chatId={chatId}
+            toolKey={keys}
+            tool={value}
+          />
+        );
+      })}
+    </>
   );
 }
 
@@ -71,7 +117,28 @@ function CopilotContextComp({
     return () => {
       client.ai.unregisterChatContext(chatId, contextKey);
     };
-  }, [contextKey, data, value, description]);
+  }, [contextKey, value, description]);
+
+  return null;
+}
+
+function CopilotToolComp({
+  chatId,
+  toolKey,
+  tool,
+}: {
+  chatId: ChatId;
+  toolKey: string;
+  tool: CopilotToolDefinition;
+}) {
+  const client = useClient();
+
+  useEffect(() => {
+    client.ai.registerChatTool(chatId, toolKey, tool);
+    return () => {
+      client.ai.unregisterChatContext(chatId, toolKey);
+    };
+  }, [toolKey, tool]);
 
   return null;
 }
