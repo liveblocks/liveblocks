@@ -28,6 +28,8 @@ import {
 } from "react";
 
 import { ArrowDownIcon } from "../icons/ArrowDown";
+import { BellIcon } from "../icons/Bell";
+import { BellCrossedIcon } from "../icons/BellCrossed";
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
 import type {
@@ -371,6 +373,13 @@ export const Thread = forwardRef(
                       <DropdownItem
                         onSelect={handleSubscribeChange}
                         onClick={stopPropagation}
+                        icon={
+                          subscriptionStatus === "subscribed" ? (
+                            <BellCrossedIcon />
+                          ) : (
+                            <BellIcon />
+                          )
+                        }
                       >
                         {subscriptionStatus === "subscribed"
                           ? $.THREAD_UNSUBSCRIBE
