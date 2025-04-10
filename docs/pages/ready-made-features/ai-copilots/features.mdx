@@ -8,6 +8,15 @@ meta:
 A quick overview of the features of AI Copilots. Learn about the
 [architecture here](/docs/ready-made-features/ai-copilots/architecture).
 
+<Banner type="warning" title="Request access to private beta">
+
+If you'd like to try AI Copilots we're currently onboarding a limited number of
+customers to our private beta. You can [request access here](/ai-copilots), and
+learn more about the project in
+[our blog post](/blog/introducing-ai-copilots-ready-made-interfaces-for-human-like-collaboration).
+
+</Banner>
+
 ## Overview
 
 Liveblocks AI Copilots allows you to add a variety of AI experiences to your
@@ -160,7 +169,14 @@ Liveblocks AI Copilots includes a set of styled UI components that can be used
 to add an AI chat interface to your application. They’re made with React and
 also contain a number of hooks for building custom interfaces.
 
-[image of a chat interface in the bottom right corner of a website]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/floating-chat.png"
+    alt="An empty chat component, floating in the corner"
+    width={768}
+    height={512}
+  />
+</Figure>
 
 ## Custom chat components
 
@@ -178,6 +194,10 @@ the chat. if you have multiple components, AI can choose which one to render.
 
 [show that they can be interactive, e.g. spotify play button]
 
+## Text editor toolbar
+
+[image of AiToolbar]
+
 ## Supported AI providers
 
 <Figure>
@@ -194,9 +214,43 @@ providers, each with different settings. The following providers are supported
 out-of-the-box:
 
 - Anthropic
-- OpenAI (and other OpenAI-compatible APIs)
+- OpenAI
+- Other OpenAI-compatible APIs
 - Google Gemini
-- LangGraph
-- CrewAI
+- LangGraph (coming soon)
+- CrewAI (coming soon)
 
 Additional providers can also be used, with our custom abstraction layer.
+
+## Coming soon
+
+### Advanced reasoning
+
+In future, AI Copilots will support reasoning, allowing you to ask the AI to
+reason about a situation and provide a more carefully thought out response.
+
+### RAG support
+
+Retrieval-Augmented Generation (RAG) is a technique that allows AI to retrieve
+information from a knowledge base and use it to generate responses. In future,
+AI Copilots will use this to support:
+
+- Contextual chat history retrieval
+- Knowledge base integration
+- Document context awareness
+
+### MCP server integration
+
+MCP is a protocol for running AI agents on a server, allowing you to make
+various back ends calls to different services. In future, AI Copilots will
+support this.
+
+### OAuth authentication
+
+In future, you will be able to use OAuth to securely authenticate requests to
+your back end.
+
+### Custom back end integration
+
+In future, you will be able to connect to specialized AI back ends, such as
+Bedrock and Vertex AI.
