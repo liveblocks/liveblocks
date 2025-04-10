@@ -2705,6 +2705,38 @@ await room.markThreadAsUnresolved("th_xxx");
   </PropertiesListItem>
 </PropertiesList>
 
+### Room.subscribeToThread
+
+Subscribes the user to a thread.
+
+```ts
+await room.subscribeToThread("th_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string" required>
+    The ID of the thread to subscribe to.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.unsubscribeFromThread
+
+Unsubscribes the user from a thread.
+
+```ts
+await room.unsubscribeFromThread("th_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string" required>
+    The ID of the thread to unsubscribe from.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Room.createComment
 
 Creates a comment in a given thread.
