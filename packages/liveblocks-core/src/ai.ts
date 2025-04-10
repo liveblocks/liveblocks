@@ -490,24 +490,22 @@ export function createAi(config: AiConfig): Ai {
           pendingCmd?.reject(new Error(msg.error));
           break;
 
-        case "update-placeholder": {
-          const { placeholderId, delta } = msg;
-          context.placeholders.addDelta(placeholderId, delta);
+        case "delta": {
+          const { id, delta } = msg;
+          context.placeholders.addDelta(id, delta);
           break;
         }
 
-        case "settle-placeholder": {
-          const { placeholderId, result, replaces } = msg;
+        case "settle": {
+          const { id, result, replaces } = msg;
           batch(() => {
-            context.placeholders.settle(placeholderId, result);
+            context.placeholders.settle(id, result);
 
             // ------------------------------------------------------------------------
             // XXX This message replacing logic is still way too complicated
             // XXX We would not need this if a failed settle would also re-send all the content
             // eslint-disable-next-line
-            const ph = context.placeholders.placeholdersById
-              .get()
-              .get(placeholderId)!;
+            const ph = context.placeholders.placeholdersById.get().get(id)!;
 
             if (replaces) {
               context.messages.patchMessageIfExists(replaces.messageId, {

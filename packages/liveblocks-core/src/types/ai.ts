@@ -173,8 +173,8 @@ export type ServerEvent =
   | RebootedEvent
   | CmdFailedEvent
   | ErrorServerEvent
-  | UpdatePlaceholderServerEvent
-  | SettlePlaceholderServerEvent;
+  | DeltaServerEvent
+  | SettleServerEvent;
 
 // Sent from the server any time it woke up from hibernation. If this happens,
 // it means that any placeholders a client is still tracking are lost track of.
@@ -196,16 +196,23 @@ export type ErrorServerEvent = {
   error: string;
 };
 
-export type UpdatePlaceholderServerEvent = {
-  event: "update-placeholder"; // Rename "append-placeholder" or "delta"?
-  placeholderId: PlaceholderId;
+/**
+ * A "delta" event is sent to append an incoming delta chunk to a placeholder.
+ */
+export type DeltaServerEvent = {
+  event: "delta";
+  id: PlaceholderId;
   delta: AiAssistantDeltaUpdate;
 };
 
-// XXX Fine-tune this message!
-export type SettlePlaceholderServerEvent = {
-  event: "settle-placeholder";
-  placeholderId: PlaceholderId;
+/**
+ * A "settle" event happens after 0 or more "delta" messages, and signifies the
+ * end of a stream of updates to a placeholder. A placeholder can be settled as
+ * a success, or an error.
+ */
+export type SettleServerEvent = {
+  event: "settle";
+  id: PlaceholderId;
   result:
     | { status: "completed"; content: AiAssistantContentPart[] } // XXX Not decided yet!
     | { status: "failed"; reason: string }; // XXX Not decided yet!
