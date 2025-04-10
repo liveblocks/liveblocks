@@ -216,9 +216,7 @@ export type SettleServerEvent = {
   result:
     | { status: "completed"; content: AiAssistantContentPart[] } // XXX Not decided yet!
     | { status: "failed"; reason: string }; // XXX Not decided yet!
-
-  // XXX Maybe better to send the full message again instead of trying to patch like this?
-  replaces: { chatId: ChatId; messageId: MessageId } | null;
+  replaces: AiAssistantMessage | null;
   kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
