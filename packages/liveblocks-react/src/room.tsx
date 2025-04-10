@@ -2089,14 +2089,24 @@ function useUnsubscribeFromRoomThread(roomId: string) {
  * const { status, subscribe, unsubscribe, unreadSince } = useThreadSubscription("th_xxx");
  */
 function useThreadSubscription(threadId: string): ThreadSubscription {
+  return useRoomThreadSubscription(useRoom().id, threadId);
+}
+
+/**
+ * @private
+ */
+function useRoomThreadSubscription(
+  roomId: string,
+  threadId: string
+): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
   const subscriptionKey = useMemo(
     () => getSubscriptionKey("thread", threadId),
     [threadId]
   );
-  const subscribeToThread = useSubscribeToRoomThread(useRoom().id);
-  const unsubscribeFromThread = useUnsubscribeFromRoomThread(useRoom().id);
+  const subscribeToThread = useSubscribeToRoomThread(roomId);
+  const unsubscribeFromThread = useUnsubscribeFromRoomThread(roomId);
   const subscribe = useCallback(
     () => subscribeToThread(threadId),
     [subscribeToThread, threadId]
@@ -3411,6 +3421,7 @@ export {
   useRoomPermissions,
   _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
   _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,
+  useRoomThreadSubscription,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,

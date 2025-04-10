@@ -6,10 +6,10 @@ import type {
   DM,
   ThreadData,
 } from "@liveblocks/core";
-import { useThreadSubscription } from "@liveblocks/react";
 import {
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
+  useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -192,9 +192,8 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
-    const { status: subscriptionStatus, unreadSince } = useThreadSubscription(
-      thread.id
-    );
+    const { status: subscriptionStatus, unreadSince } =
+      useRoomThreadSubscription(thread.roomId, thread.id);
     const unreadIndex = useMemo(() => {
       // The user is not subscribed to this thread.
       if (subscriptionStatus !== "subscribed") {
