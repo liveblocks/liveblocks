@@ -10,7 +10,7 @@ type RoomConnectionErrorContext = {
   roomId: string;
 };
 
-// All possible errors originating from using Comments or Notifications or UserNotificationSettings
+// All possible errors originating from using Comments or Notifications
 type CommentsOrNotificationsErrorContext =
   | {
       type: "CREATE_THREAD_ERROR";
@@ -32,7 +32,11 @@ type CommentsOrNotificationsErrorContext =
       metadata: Patchable<BaseMetadata>;
     }
   | {
-      type: "MARK_THREAD_AS_RESOLVED_ERROR" | "MARK_THREAD_AS_UNRESOLVED_ERROR";
+      type:
+        | "MARK_THREAD_AS_RESOLVED_ERROR"
+        | "MARK_THREAD_AS_UNRESOLVED_ERROR"
+        | "SUBSCRIBE_TO_THREAD_ERROR"
+        | "UNSUBSCRIBE_FROM_THREAD_ERROR";
       roomId: string;
       threadId: string;
     }
@@ -70,17 +74,23 @@ type CommentsOrNotificationsErrorContext =
         | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
         | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR";
     }
+  // TODO: Deprecated, remove this once "room notification settings" hooks are removed
   | {
       type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
       roomId: string;
     }
+  | {
+      type: "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR";
+      roomId: string;
+    }
+  // TODO: Rename this to "UPDATE_NOTIFICATION_SETTINGS_ERROR" once the current "UPDATE_NOTIFICATION_SETTINGS_ERROR" is removed
   | {
       type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR";
     };
 
 export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
-  | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
+  | CommentsOrNotificationsErrorContext // from Comments or Notifications
 >;
 
 export class LiveblocksError extends Error {
@@ -135,6 +145,8 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "EDIT_THREAD_METADATA_ERROR": return "Could not edit thread metadata";
     case "MARK_THREAD_AS_RESOLVED_ERROR": return "Could not mark thread as resolved";
     case "MARK_THREAD_AS_UNRESOLVED_ERROR": return "Could not mark thread as unresolved";
+    case "SUBSCRIBE_TO_THREAD_ERROR": return "Could not subscribe to thread";
+    case "UNSUBSCRIBE_FROM_THREAD_ERROR": return "Could not unsubscribe from thread";
     case "CREATE_COMMENT_ERROR": return "Could not create new comment";
     case "EDIT_COMMENT_ERROR": return "Could not edit comment";
     case "DELETE_COMMENT_ERROR": return "Could not delete comment";
@@ -145,7 +157,8 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR": return "Could not mark all inbox notifications as read";
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
-    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update user notification settings";
+    case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
+    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
 
     default:
       return assertNever(context, "Unhandled case");

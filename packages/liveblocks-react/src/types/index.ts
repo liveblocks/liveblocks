@@ -9,7 +9,7 @@ import type {
   LsonObject,
   OthersEvent,
   Room,
-  RoomNotificationSettings,
+  RoomSubscriptionSettings,
   Status,
   User,
 } from "@liveblocks/client";
@@ -27,8 +27,9 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  NotificationSettings,
+  PartialNotificationSettings,
   PartialUnless,
-  PartialUserNotificationSettings,
   Patchable,
   QueryMetadata,
   Relax,
@@ -38,7 +39,6 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
-  UserNotificationSettings,
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
 
@@ -170,11 +170,11 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
-export type UserNotificationSettingsAsyncResult = AsyncResult<UserNotificationSettings, "settings"> // prettier-ignore
-export type UserNotificationSettingsAsyncSuccess = AsyncSuccess<UserNotificationSettings, "settings">; // prettier-ignore
+export type NotificationSettingsAsyncResult = AsyncResult<NotificationSettings, "settings"> // prettier-ignore
+export type NotificationSettingsAsyncSuccess = AsyncSuccess<NotificationSettings, "settings">; // prettier-ignore
 
-export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
-export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
+export type RoomSubscriptionSettingsAsyncSuccess = AsyncSuccess<RoomSubscriptionSettings, "settings">; // prettier-ignore
+export type RoomSubscriptionSettingsAsyncResult = AsyncResult<RoomSubscriptionSettings, "settings">; // prettier-ignore
 
 export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
@@ -253,11 +253,21 @@ export type MutationContext<
 
 export type ThreadSubscription = Relax<
   // The user is not subscribed to the thread
-  | { status: "not-subscribed" }
+  | { status: "not-subscribed"; subscribe: () => void; unsubscribe: () => void }
   // The user is subscribed to the thread but has never read it
-  | { status: "subscribed"; unreadSince: null }
+  | {
+      status: "subscribed";
+      unreadSince: null;
+      subscribe: () => void;
+      unsubscribe: () => void;
+    }
   // The user is subscribed to the thread and has read it
-  | { status: "subscribed"; unreadSince: Date }
+  | {
+      status: "subscribed";
+      unreadSince: Date;
+      subscribe: () => void;
+      unsubscribe: () => void;
+    }
 >;
 
 export type SharedContextBundle<U extends BaseUserMeta> = {
@@ -760,6 +770,24 @@ type RoomContextBundleCommon<
   useMarkThreadAsUnresolved(): (threadId: string) => void;
 
   /**
+   * Returns a function that subscribes the user to a thread.
+   *
+   * @example
+   * const subscribeToThread = useSubscribeToThread();
+   * subscribeToThread("th_xxx");
+   */
+  useSubscribeToThread(): (threadId: string) => void;
+
+  /**
+   * Returns a function that unsubscribes the user from a thread.
+   *
+   * @example
+   * const unsubscribeFromThread = useUnsubscribeFromThread();
+   * unsubscribeFromThread("th_xxx");
+   */
+  useUnsubscribeFromThread(): (threadId: string) => void;
+
+  /**
    * Returns a function that adds a comment to a thread.
    *
    * @example
@@ -806,15 +834,25 @@ type RoomContextBundleCommon<
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * Returns a function that updates the user's notification settings
+   * @deprecated Renamed to `useUpdateRoomSubscriptionSettings`
+   *
+   * Returns a function that updates the user's subscription settings
+   * for the current room.
+   */
+  useUpdateRoomNotificationSettings(): (
+    settings: Partial<RoomSubscriptionSettings>
+  ) => void;
+
+  /**
+   * Returns a function that updates the user's subscription settings
    * for the current room.
    *
    * @example
-   * const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-   * updateRoomNotificationSettings({ threads: "all" });
+   * const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
+   * updateRoomSubscriptionSettings({ threads: "all" });
    */
-  useUpdateRoomNotificationSettings(): (
-    settings: Partial<RoomNotificationSettings>
+  useUpdateRoomSubscriptionSettings(): (
+    settings: Partial<RoomSubscriptionSettings>
   ) => void;
 
   /**
@@ -827,10 +865,11 @@ type RoomContextBundleCommon<
   useMarkThreadAsRead(): (threadId: string) => void;
 
   /**
-   * Returns the subscription status of a thread.
+   * Returns the subscription status of a thread, methods to update it, and when
+   * the thread was last read.
    *
    * @example
-   * const { status, unreadSince } = useThreadSubscription("th_xxx");
+   * const { status, subscribe, unsubscribe, unreadSince } = useThreadSubscription("th_xxx");
    */
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
@@ -925,15 +964,26 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
 
       /**
+       * @deprecated Renamed to `useRoomSubscriptionSettings`
+       *
        * Returns the user's notification settings for the current room
+       * and a function to update them.
+       */
+      useRoomNotificationSettings(): [
+        RoomSubscriptionSettingsAsyncResult,
+        (settings: Partial<RoomSubscriptionSettings>) => void,
+      ];
+
+      /**
+       * Returns the user's subscription settings for the current room
        * and a function to update them.
        *
        * @example
-       * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+       * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
        */
-      useRoomNotificationSettings(): [
-        RoomNotificationSettingsAsyncResult,
-        (settings: Partial<RoomNotificationSettings>) => void,
+      useRoomSubscriptionSettings(): [
+        RoomSubscriptionSettingsAsyncResult,
+        (settings: Partial<RoomSubscriptionSettings>) => void,
       ];
 
       /**
@@ -1056,15 +1106,26 @@ export type RoomContextBundle<
             // useHistoryVersionData(versionId: string): HistoryVersionDataState;
 
             /**
+             * @deprecated Renamed to `useRoomSubscriptionSettings`
+             *
              * Returns the user's notification settings for the current room
+             * and a function to update them.
+             */
+            useRoomNotificationSettings(): [
+              RoomSubscriptionSettingsAsyncSuccess,
+              (settings: Partial<RoomSubscriptionSettings>) => void,
+            ];
+
+            /**
+             * Returns the user's subscription settings for the current room
              * and a function to update them.
              *
              * @example
-             * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+             * const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
              */
-            useRoomNotificationSettings(): [
-              RoomNotificationSettingsAsyncSuccess,
-              (settings: Partial<RoomNotificationSettings>) => void,
+            useRoomSubscriptionSettings(): [
+              RoomSubscriptionSettingsAsyncSuccess,
+              (settings: Partial<RoomSubscriptionSettings>) => void,
             ];
 
             /**
@@ -1149,8 +1210,8 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
    */
   useNotificationSettings(): [
-    UserNotificationSettingsAsyncResult,
-    (settings: PartialUserNotificationSettings) => void,
+    NotificationSettingsAsyncResult,
+    (settings: PartialNotificationSettings) => void,
   ];
 
   /**
@@ -1161,7 +1222,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const updateNotificationSettings = useUpdateNotificationSettings()
    */
   useUpdateNotificationSettings(): (
-    settings: PartialUserNotificationSettings
+    settings: PartialNotificationSettings
   ) => void;
 
   /**
@@ -1235,8 +1296,8 @@ export type LiveblocksContextBundle<
              * const [{ settings }, updateNotificationSettings] = useNotificationSettings()
              */
             useNotificationSettings(): [
-              UserNotificationSettingsAsyncResult,
-              (settings: PartialUserNotificationSettings) => void,
+              NotificationSettingsAsyncResult,
+              (settings: PartialNotificationSettings) => void,
             ];
 
             /**

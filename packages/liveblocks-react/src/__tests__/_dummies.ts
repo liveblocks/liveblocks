@@ -3,6 +3,7 @@ import type {
   CommentData,
   InboxNotificationCustomData,
   InboxNotificationThreadData,
+  SubscriptionData,
   ThreadData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
@@ -124,6 +125,19 @@ export function dummyThreadInboxNotificationData({
     notifiedAt: now,
     threadId,
     readAt: null,
+    ...overrides,
+  };
+}
+
+export function dummySubscriptionData(
+  overrides: Partial<SubscriptionData>
+): SubscriptionData {
+  const now = new Date();
+
+  return {
+    kind: "thread",
+    subjectId: createThreadId(),
+    createdAt: now,
     ...overrides,
   };
 }

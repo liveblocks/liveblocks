@@ -2,7 +2,11 @@ import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import {
   mockGetInboxNotifications,
   mockMarkAllInboxNotificationsAsRead,
@@ -35,6 +39,10 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -43,6 +51,7 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -113,6 +122,10 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
         notifiedAt: new Date(2024, 3, 5),
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -121,6 +134,7 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -195,6 +209,10 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
         notifiedAt: new Date(2024, 3, 5),
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+      dummySubscriptionData({ subjectId: threads[1]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -203,6 +221,7 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

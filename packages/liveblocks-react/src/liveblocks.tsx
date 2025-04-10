@@ -13,7 +13,7 @@ import {
   HttpError,
   type LiveblocksError,
   type OpaqueClient,
-  type PartialUserNotificationSettings,
+  type PartialNotificationSettings,
   type SyncStatus,
 } from "@liveblocks/core";
 import {
@@ -46,6 +46,8 @@ import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
+  NotificationSettingsAsyncResult,
+  NotificationSettingsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
@@ -54,8 +56,6 @@ import type {
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
-  UserNotificationSettingsAsyncResult,
-  UserNotificationSettingsAsyncSuccess,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
@@ -292,13 +292,13 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
   );
 
-  const userNotificationSettingsPoller = makePoller(
+  const notificationSettingsPoller = makePoller(
     async (signal) => {
       try {
-        return await store.refreshUserNotificationSettings(signal);
+        return await store.refreshNotificationSettings(signal);
       } catch (err) {
         console.warn(
-          `Polling new user notification settings failed: ${String(err)}`
+          `Polling new notification settings failed: ${String(err)}`
         );
         throw err;
       }
@@ -311,7 +311,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     store,
     notificationsPoller,
     userThreadsPoller,
-    userNotificationSettingsPoller,
+    notificationSettingsPoller,
   };
 }
 
@@ -638,19 +638,19 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 
 function useUpdateNotificationSettings_withClient(
   client: OpaqueClient
-): (settings: PartialUserNotificationSettings) => void {
+): (settings: PartialNotificationSettings) => void {
   return useCallback(
-    (settings: PartialUserNotificationSettings): void => {
+    (settings: PartialNotificationSettings): void => {
       const { store } = getLiveblocksExtrasForClient(client);
       const optimisticUpdateId = store.optimisticUpdates.add({
-        type: "update-user-notification-settings",
+        type: "update-notification-settings",
         settings,
       });
 
       client.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateUserNotificationSettings_confirmOptimisticUpdate(
+          store.updateNotificationSettings_confirmOptimisticUpdate(
             settings,
             optimisticUpdateId
           );
@@ -689,17 +689,17 @@ function useUpdateNotificationSettings_withClient(
 function useNotificationSettings_withClient(
   client: OpaqueClient
 ): [
-  UserNotificationSettingsAsyncResult,
-  (settings: PartialUserNotificationSettings) => void,
+  NotificationSettingsAsyncResult,
+  (settings: PartialNotificationSettings) => void,
 ] {
   const updateNotificationSettings =
     useUpdateNotificationSettings_withClient(client);
 
-  const { store, userNotificationSettingsPoller: poller } =
+  const { store, notificationSettingsPoller: poller } =
     getLiveblocksExtrasForClient(client);
 
   useEffect(() => {
-    void store.outputs.userNotificationSettings.waitUntilLoaded();
+    void store.outputs.notificationSettings.waitUntilLoaded();
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -718,7 +718,7 @@ function useNotificationSettings_withClient(
     };
   }, [poller]);
 
-  const result = useSignal(store.outputs.userNotificationSettings.signal);
+  const result = useSignal(store.outputs.notificationSettings.signal);
 
   return useMemo(() => {
     return [result, updateNotificationSettings];
@@ -728,16 +728,16 @@ function useNotificationSettings_withClient(
 function useNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
-  UserNotificationSettingsAsyncSuccess,
-  (settings: PartialUserNotificationSettings) => void,
+  NotificationSettingsAsyncSuccess,
+  (settings: PartialNotificationSettings) => void,
 ] {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const store = getLiveblocksExtrasForClient(client).store;
 
-  // Suspend until there are at least some user notification settings
-  use(store.outputs.userNotificationSettings.waitUntilLoaded());
+  // Suspend until there are at least some notification settings
+  use(store.outputs.notificationSettings.waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useNotificationSettings()
   // hook is expected to only return success results when we're here.

@@ -6,10 +6,10 @@ import type {
   DM,
   ThreadData,
 } from "@liveblocks/core";
-import { useThreadSubscription } from "@liveblocks/react";
 import {
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
+  useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -28,6 +28,8 @@ import {
 } from "react";
 
 import { ArrowDownIcon } from "../icons/ArrowDown";
+import { BellIcon } from "../icons/Bell";
+import { BellCrossedIcon } from "../icons/BellCrossed";
 import { ResolveIcon } from "../icons/Resolve";
 import { ResolvedIcon } from "../icons/Resolved";
 import type {
@@ -44,6 +46,7 @@ import { Comment } from "./Comment";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
+import { DropdownItem } from "./internal/Dropdown";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
 
 export interface ThreadProps<M extends BaseMetadata = DM>
@@ -192,9 +195,12 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
-    const { status: subscriptionStatus, unreadSince } = useThreadSubscription(
-      thread.id
-    );
+    const {
+      status: subscriptionStatus,
+      unreadSince,
+      subscribe,
+      unsubscribe,
+    } = useRoomThreadSubscription(thread.roomId, thread.id);
     const unreadIndex = useMemo(() => {
       // The user is not subscribed to this thread.
       if (subscriptionStatus !== "subscribed") {
@@ -271,6 +277,14 @@ export const Thread = forwardRef(
       },
       [onCommentDelete, onThreadDelete, thread]
     );
+
+    const handleSubscribeChange = useCallback(() => {
+      if (subscriptionStatus === "subscribed") {
+        unsubscribe();
+      } else {
+        subscribe();
+      }
+    }, [subscriptionStatus, subscribe, unsubscribe]);
 
     return (
       <TooltipProvider>
@@ -352,6 +366,25 @@ export const Thread = forwardRef(
                           />
                         </TogglePrimitive.Root>
                       </Tooltip>
+                    ) : null
+                  }
+                  additionalDropdownItemsBefore={
+                    isFirstComment ? (
+                      <DropdownItem
+                        onSelect={handleSubscribeChange}
+                        onClick={stopPropagation}
+                        icon={
+                          subscriptionStatus === "subscribed" ? (
+                            <BellCrossedIcon />
+                          ) : (
+                            <BellIcon />
+                          )
+                        }
+                      >
+                        {subscriptionStatus === "subscribed"
+                          ? $.THREAD_UNSUBSCRIBE
+                          : $.THREAD_SUBSCRIBE}
+                      </DropdownItem>
                     ) : null
                   }
                 />
