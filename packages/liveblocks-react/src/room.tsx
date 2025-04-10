@@ -2082,7 +2082,7 @@ function useUnsubscribeFromRoomThread(roomId: string) {
 }
 
 /**
- * Returns the subscription status of a thread, methods to udpate it, and when
+ * Returns the subscription status of a thread, methods to update it, and when
  * the thread was last read.
  *
  * @example
