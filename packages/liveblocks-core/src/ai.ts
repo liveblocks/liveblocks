@@ -75,7 +75,7 @@ type AiChatsLUT = Map<string, AiChat>;
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
-  pendingRequests: Map<
+  pendingCmds: Map<
     CmdId,
     {
       resolve: (value: ServerAiMsg) => void;
@@ -384,7 +384,7 @@ export function createAi(config: AiConfig): Ai {
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
-    pendingRequests: new Map(),
+    pendingCmds: new Map(),
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
     placeholders: createStore_forPlaceholders(),
@@ -456,9 +456,9 @@ export function createAi(config: AiConfig): Ai {
           : msg.event === "cmd-failed"
             ? msg.failedCmdId
             : undefined;
-      const pendingReq = context.pendingRequests.get(cmdId!); // eslint-disable-line no-restricted-syntax
+      const pendingCmd = context.pendingCmds.get(cmdId!); // eslint-disable-line no-restricted-syntax
 
-      if (cmdId && !pendingReq) {
+      if (cmdId && !pendingCmd) {
         console.warn(
           "Ignoring unrecognized server message (already timed out, or not for us)",
           event.data
@@ -469,7 +469,7 @@ export function createAi(config: AiConfig): Ai {
       if ("event" in msg) {
         switch (msg.event) {
           case "cmd-failed":
-            pendingReq?.reject(new Error(msg.error));
+            pendingCmd?.reject(new Error(msg.error));
             break;
 
           case "update-placeholder": {
@@ -573,7 +573,7 @@ export function createAi(config: AiConfig): Ai {
       }
 
       // After handling the side-effects above, we can resolve the promise
-      pendingReq?.resolve(msg);
+      pendingCmd?.resolve(msg);
     }
   }
 
@@ -608,14 +608,14 @@ export function createAi(config: AiConfig): Ai {
     });
 
     const cmdId = nanoid() as CmdId;
-    context.pendingRequests.set(cmdId, { resolve, reject });
+    context.pendingCmds.set(cmdId, { resolve, reject });
 
     sendClientMsg({ ...msg, cmdId });
     return (
       (promise as Promise<T>)
         .finally(() => {
           // Always cleanup
-          context.pendingRequests.delete(cmdId);
+          context.pendingCmds.delete(cmdId);
         })
         // Make sure these promises don't go uncaught (in contrast to the
         // promise instance we return to the caller)
