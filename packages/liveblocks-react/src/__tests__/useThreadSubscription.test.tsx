@@ -73,7 +73,11 @@ describe("useThreadSubscription", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -89,6 +93,8 @@ describe("useThreadSubscription", () => {
     expect(result.current.subscription).toEqual({
       status: "subscribed",
       unreadSince: null,
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
     });
 
     unmount();
@@ -144,7 +150,11 @@ describe("useThreadSubscription", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -160,6 +170,8 @@ describe("useThreadSubscription", () => {
     expect(result.current.subscription).toEqual({
       status: "subscribed",
       unreadSince: inboxNotifications[0]!.readAt,
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
     });
 
     unmount();
@@ -205,7 +217,11 @@ describe("useThreadSubscription", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -218,7 +234,11 @@ describe("useThreadSubscription", () => {
       })
     );
 
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     unmount();
   });
@@ -269,7 +289,11 @@ describe("useThreadSubscription", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({
@@ -282,7 +306,11 @@ describe("useThreadSubscription", () => {
       })
     );
 
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     unmount();
   });
@@ -336,7 +364,11 @@ describe("useThreadSubscription", () => {
     );
 
     expect(result.current.threads).toEqual({ isLoading: true });
-    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+    expect(result.current.subscription).toEqual({
+      status: "not-subscribed",
+      subscribe: expect.any(Function),
+      unsubscribe: expect.any(Function),
+    });
 
     await waitFor(() =>
       expect(result.current.threads).toEqual({

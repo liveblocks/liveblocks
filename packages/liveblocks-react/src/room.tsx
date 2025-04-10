@@ -2082,10 +2082,11 @@ function useUnsubscribeFromRoomThread(roomId: string) {
 }
 
 /**
- * Returns the subscription status of a thread.
+ * Returns the subscription status of a thread, methods to udpate it, and when
+ * the thread was last read.
  *
  * @example
- * const { status, unreadSince } = useThreadSubscription("th_xxx");
+ * const { status, subscribe, unsubscribe, unreadSince } = useThreadSubscription("th_xxx");
  */
 function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
@@ -2093,6 +2094,16 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const subscriptionKey = useMemo(
     () => getSubscriptionKey("thread", threadId),
     [threadId]
+  );
+  const subscribeToThread = useSubscribeToRoomThread(useRoom().id);
+  const unsubscribeFromThread = useUnsubscribeFromRoomThread(useRoom().id);
+  const subscribe = useCallback(
+    () => subscribeToThread(threadId),
+    [subscribeToThread, threadId]
+  );
+  const unsubscribe = useCallback(
+    () => unsubscribeFromThread(threadId),
+    [unsubscribeFromThread, threadId]
   );
 
   const signal = store.outputs.threadSubscriptions;
@@ -2107,15 +2118,17 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
       );
 
       if (subscription === undefined) {
-        return { status: "not-subscribed" };
+        return { status: "not-subscribed", subscribe, unsubscribe };
       }
 
       return {
         status: "subscribed",
         unreadSince: notification?.readAt ?? null,
+        subscribe,
+        unsubscribe,
       };
     },
-    [subscriptionKey, threadId]
+    [subscriptionKey, threadId, subscribe, unsubscribe]
   );
 
   return useSignal(signal, selector, shallow);

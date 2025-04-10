@@ -188,9 +188,7 @@ describe("useCreateComment", () => {
       }
     );
 
-    expect(result.current.subscription).toEqual({
-      status: "not-subscribed",
-    });
+    expect(result.current.subscription.status).toEqual("not-subscribed");
 
     await waitFor(() =>
       expect(result.current.subscription.unreadSince).toBeNull()
@@ -206,10 +204,8 @@ describe("useCreateComment", () => {
       })
     );
 
-    expect(result.current.subscription).toEqual({
-      status: "subscribed",
-      unreadSince: comment.createdAt,
-    });
+    expect(result.current.subscription.status).toEqual("subscribed");
+    expect(result.current.subscription.unreadSince).toEqual(comment.createdAt);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await waitFor(() =>

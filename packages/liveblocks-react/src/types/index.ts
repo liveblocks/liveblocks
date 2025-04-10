@@ -253,11 +253,21 @@ export type MutationContext<
 
 export type ThreadSubscription = Relax<
   // The user is not subscribed to the thread
-  | { status: "not-subscribed" }
+  | { status: "not-subscribed"; subscribe: () => void; unsubscribe: () => void }
   // The user is subscribed to the thread but has never read it
-  | { status: "subscribed"; unreadSince: null }
+  | {
+      status: "subscribed";
+      unreadSince: null;
+      subscribe: () => void;
+      unsubscribe: () => void;
+    }
   // The user is subscribed to the thread and has read it
-  | { status: "subscribed"; unreadSince: Date }
+  | {
+      status: "subscribed";
+      unreadSince: Date;
+      subscribe: () => void;
+      unsubscribe: () => void;
+    }
 >;
 
 export type SharedContextBundle<U extends BaseUserMeta> = {
@@ -855,10 +865,11 @@ type RoomContextBundleCommon<
   useMarkThreadAsRead(): (threadId: string) => void;
 
   /**
-   * Returns the subscription status of a thread.
+   * Returns the subscription status of a thread, methods to udpate it, and when
+   * the thread was last read.
    *
    * @example
-   * const { status, unreadSince } = useThreadSubscription("th_xxx");
+   * const { status, subscribe, unsubscribe, unreadSince } = useThreadSubscription("th_xxx");
    */
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
