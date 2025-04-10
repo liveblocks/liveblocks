@@ -81,6 +81,14 @@ export type ClientToolDefinition = {
   execute?: (params: any) => void;
 };
 
+// XXX Put this type elsewhere when we're happy with it
+export type Placeholder = {
+  id: PlaceholderId;
+  status: "thinking" | "streaming" | "completed" | "failed";
+  contentSoFar: AiAssistantContentPart[];
+  errorReason?: string;
+};
+
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
@@ -181,14 +189,6 @@ function createStore_forChatMessages() {
     removeByChatId,
   };
 }
-
-// XXX Put this type elsewhere when we're happy with it
-export type Placeholder = {
-  id: PlaceholderId;
-  status: "thinking" | "streaming" | "completed" | "failed";
-  contentSoFar: AiAssistantContentPart[];
-  errorReason?: string;
-};
 
 function createStore_forPlaceholders() {
   const baseSignal = new MutableSignal(
