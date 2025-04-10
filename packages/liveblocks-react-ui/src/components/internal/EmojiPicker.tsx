@@ -7,7 +7,7 @@ import {
   type EmojiPickerListRowProps,
   type Locale,
 } from "frimousse";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, SyntheticEvent } from "react";
 import { forwardRef, useCallback, useState } from "react";
 
 import { useLiveblocksUIConfig } from "../../config";
@@ -77,7 +77,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
-    const { portalContainer } = useLiveblocksUIConfig();
+    const { portalContainer, emojibaseUrl } = useLiveblocksUIConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(
@@ -95,6 +95,10 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
       },
       [onEmojiSelect]
     );
+
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
 
     return (
       <PopoverPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>
@@ -116,8 +120,10 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
             <EmojiPickerPrimitive.Root
               onEmojiSelect={handleEmojiSelect}
               locale={$.locale as Locale}
-              emojiVersion={15.1}
               columns={10}
+              emojiVersion={15.1}
+              emojibaseUrl={emojibaseUrl}
+              onClick={stopPropagation}
             >
               <div className="lb-emoji-picker-header">
                 <div className="lb-emoji-picker-search-container">

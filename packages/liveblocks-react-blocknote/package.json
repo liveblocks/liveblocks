@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-blocknote",
-  "version": "2.22.2",
+  "version": "2.22.4-emails1",
   "description": "An integration of BlockNote + React to enable collaboration, comments, live cursors, and more with Liveblocks.",
   "license": "Apache-2.0",
   "type": "module",
@@ -42,12 +42,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "2.22.2",
-    "@liveblocks/core": "2.22.2",
-    "@liveblocks/react": "2.22.2",
-    "@liveblocks/react-tiptap": "2.22.2",
-    "@liveblocks/react-ui": "2.22.2",
-    "@liveblocks/yjs": "2.22.2",
+    "@liveblocks/client": "2.22.4-emails1",
+    "@liveblocks/core": "2.22.4-emails1",
+    "@liveblocks/react": "2.22.4-emails1",
+    "@liveblocks/react-tiptap": "2.22.4-emails1",
+    "@liveblocks/react-ui": "2.22.4-emails1",
+    "@liveblocks/yjs": "2.22.4-emails1",
     "@tiptap/core": "^2.7.2",
     "vitest-tsconfig-paths": "^3.4.1"
   },
