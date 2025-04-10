@@ -444,137 +444,139 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
-    if (typeof event.data === "string") {
-      const msg = tryParseJson(event.data) as ServerAiMsg;
+    if (typeof event.data !== "string")
+      // Ignore binary (non-string) WebSocket messages
+      return;
 
-      // If the current msg carries a requestId, check to see if it's a known
-      // one, and if it's still exists in our pendingRequest administration. If
-      // not, it may have timed out already, or it wasn't intended for us.
-      const cmdId =
-        "cmdId" in msg
-          ? msg.cmdId
-          : msg.event === "cmd-failed"
-            ? msg.failedCmdId
-            : undefined;
-      const pendingCmd = context.pendingCmds.get(cmdId!); // eslint-disable-line no-restricted-syntax
+    const msg = tryParseJson(event.data) as ServerAiMsg | undefined;
+    if (!msg)
+      // Ignore non-JSON messages
+      return;
 
-      if (cmdId && !pendingCmd) {
-        console.warn(
-          "Ignoring unrecognized server message (already timed out, or not for us)",
-          event.data
-        );
-        return;
-      }
+    // If the current msg carries a cmdId, check to see if it's a known one,
+    // and if it's still exists in our pendingRequest administration. If not,
+    // it may have timed out already, or it wasn't intended for us.
+    const cmdId =
+      "cmdId" in msg
+        ? msg.cmdId
+        : msg.event === "cmd-failed"
+          ? msg.failedCmdId
+          : undefined;
+    const pendingCmd = context.pendingCmds.get(cmdId!); // eslint-disable-line no-restricted-syntax
 
-      if ("event" in msg) {
-        switch (msg.event) {
-          case "cmd-failed":
-            pendingCmd?.reject(new Error(msg.error));
-            break;
-
-          case "update-placeholder": {
-            const { placeholderId, delta } = msg;
-            context.placeholders.addDelta(placeholderId, delta);
-            break;
-          }
-
-          case "settle-placeholder": {
-            const { placeholderId, result, replaces } = msg;
-            batch(() => {
-              context.placeholders.settle(placeholderId, result);
-
-              // ------------------------------------------------------------------------
-              // XXX This message replacing logic is still way too complicated
-              // XXX We would not need this if a failed settle would also re-send all the content
-              // eslint-disable-next-line
-              const ph = context.placeholders.placeholdersById
-                .get()
-                .get(placeholderId)!;
-
-              if (replaces) {
-                context.messages.patchMessageIfExists(replaces.messageId, {
-                  content: ph.contentSoFar,
-                  placeholderId: undefined,
-                });
-              }
-              // ------------------------------------------------------------------------
-            });
-            break;
-          }
-
-          case "error":
-            // TODO Handle generic server error
-            break;
-
-          case "rebooted":
-            context.placeholders.markAllLost();
-            break;
-
-          default:
-            return assertNever(msg, "Unhandled case");
-        }
-      } else {
-        switch (msg.cmd) {
-          case "get-chats":
-            context.chats.update(msg.chats);
-            break;
-
-          case "create-chat":
-            context.chats.update([msg.chat]);
-            break;
-
-          case "delete-chat":
-            context.chats.remove(msg.chatId);
-            context.messages.removeByChatId(msg.chatId);
-            break;
-
-          case "get-messages":
-            context.messages.upsertMany(msg.messages);
-            break;
-
-          case "delete-message":
-            context.messages.remove(msg.messageId);
-            break;
-
-          case "clear-chat":
-            context.messages.removeByChatId(msg.chatId);
-            break;
-
-          case "ask-ai":
-            if (msg.messageId !== undefined) {
-              // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-              context.messages.upsert({
-                id: msg.messageId,
-                chatId: msg.chatId,
-                role: "assistant",
-                // XXX Remove content here in favor of detecting it's a placeholder message
-                content: [
-                  {
-                    type: "text",
-                    text: "Asking AI, please be patient...",
-                  },
-                ],
-                createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
-              });
-            } else {
-              // XXX Handle the case for one-off ask!
-              // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
-            }
-            break;
-
-          case "attach-user-message":
-          case "abort-ai":
-            // TODO Not handled yet
-            break;
-
-          default:
-            return assertNever(msg, "Unhandled case");
-        }
-      }
-
-      // After handling the side-effects above, we can resolve the promise
-      pendingCmd?.resolve(msg);
+    if (cmdId && !pendingCmd) {
+      console.warn("Ignoring unexpected command response. Already timed out, or not for us?", msg); // prettier-ignore
+      return;
     }
+
+    if ("event" in msg) {
+      switch (msg.event) {
+        case "cmd-failed":
+          pendingCmd?.reject(new Error(msg.error));
+          break;
+
+        case "update-placeholder": {
+          const { placeholderId, delta } = msg;
+          context.placeholders.addDelta(placeholderId, delta);
+          break;
+        }
+
+        case "settle-placeholder": {
+          const { placeholderId, result, replaces } = msg;
+          batch(() => {
+            context.placeholders.settle(placeholderId, result);
+
+            // ------------------------------------------------------------------------
+            // XXX This message replacing logic is still way too complicated
+            // XXX We would not need this if a failed settle would also re-send all the content
+            // eslint-disable-next-line
+            const ph = context.placeholders.placeholdersById
+              .get()
+              .get(placeholderId)!;
+
+            if (replaces) {
+              context.messages.patchMessageIfExists(replaces.messageId, {
+                content: ph.contentSoFar,
+                placeholderId: undefined,
+              });
+            }
+            // ------------------------------------------------------------------------
+          });
+          break;
+        }
+
+        case "error":
+          // TODO Handle generic server error
+          break;
+
+        case "rebooted":
+          context.placeholders.markAllLost();
+          break;
+
+        default:
+          return assertNever(msg, "Unhandled case");
+      }
+    } else {
+      switch (msg.cmd) {
+        case "get-chats":
+          context.chats.update(msg.chats);
+          break;
+
+        case "create-chat":
+          context.chats.update([msg.chat]);
+          break;
+
+        case "delete-chat":
+          context.chats.remove(msg.chatId);
+          context.messages.removeByChatId(msg.chatId);
+          break;
+
+        case "get-messages":
+          context.messages.upsertMany(msg.messages);
+          break;
+
+        case "delete-message":
+          context.messages.remove(msg.messageId);
+          break;
+
+        case "clear-chat":
+          context.messages.removeByChatId(msg.chatId);
+          break;
+
+        case "ask-ai":
+          if (msg.messageId !== undefined) {
+            // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+            context.messages.upsert({
+              id: msg.messageId,
+              chatId: msg.chatId,
+              role: "assistant",
+              // XXX Remove content here in favor of detecting it's a placeholder message
+              content: [
+                {
+                  type: "text",
+                  text: "Asking AI, please be patient...",
+                },
+              ],
+              createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
+            });
+          } else {
+            // XXX Handle the case for one-off ask!
+            // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
+          }
+          break;
+
+        case "attach-user-message":
+        case "abort-ai":
+          // TODO Not handled yet
+          break;
+
+        default:
+          return assertNever(msg, "Unhandled case");
+      }
+    }
+
+    // After handling the side-effects above, we can resolve the promise
+    pendingCmd?.resolve(msg);
   }
 
   managedSocket.events.onMessage.subscribe(handleServerMessage);
