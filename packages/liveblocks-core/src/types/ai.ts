@@ -155,10 +155,11 @@ type AskAIPair = DefineCmd<
     | { placeholderId: PlaceholderId } // for one-off asks, unrelated to chats
     | {
         placeholderId: PlaceholderId;
+
+        // XXX The backend should send the full, newly created, placeholder
+        // message in response, so we can simply upsert it to acknowledge it!!!
         chatId: ChatId;
         messageId: MessageId;
-        // XXX Replace `content` by an optimistically created "container" ID
-        // content: AiAssistantContentPart[];
       }
   >
 >;
@@ -340,16 +341,18 @@ export type AiAssistantMessage = {
   deletedAt?: ISODateString;
 };
 
-export type AiChatMessage = AiUserMessage | AiAssistantMessage;
-
-// XXX I think we should make it part of the AiChatMessage union, but not 100% sure yet, so keeping it separate for now
-export type AiPlaceholderChatMessage = {
+export type AiAssistantPlaceholderMessage = {
   id: MessageId;
   chatId: ChatId;
-  role: "assistant"; // TODO Consider role = 'assistant-placeholder' ?
+  role: "assistant-placeholder";
   placeholderId: PlaceholderId;
   createdAt: ISODateString;
 };
+
+export type AiChatMessage =
+  | AiUserMessage
+  | AiAssistantMessage
+  | AiAssistantPlaceholderMessage;
 
 export type CopilotContext = {
   value: string;

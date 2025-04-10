@@ -1,7 +1,7 @@
 import type {
   AiAssistantMessage,
+  AiAssistantPlaceholderMessage,
   AiChatMessage,
-  AiPlaceholderChatMessage,
   AiUserMessage,
   ChatId,
   PlaceholderId,
@@ -32,7 +32,7 @@ export type ChatMessagesProps = Omit<
   /**
    * The messages to display.
    */
-  messages: ((AiChatMessage | AiPlaceholderChatMessage) & { chatId: ChatId })[];
+  messages: AiChatMessage[];
   /**
    * The components displayed in the chat messages.
    */
@@ -74,7 +74,10 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
                 overrides={overrides}
               />
             );
-          } else if (message.role === "assistant") {
+          } else if (
+            message.role === "assistant" ||
+            message.role === "assistant-placeholder"
+          ) {
             return <AssistantChatMessage key={message.id} message={message} />;
           }
 
@@ -284,7 +287,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: AiAssistantMessage | AiPlaceholderChatMessage;
+  message: AiAssistantMessage | AiAssistantPlaceholderMessage;
   /**
    * Override the component's strings.
    */
@@ -386,9 +389,7 @@ export const DefaultAssistantChatMessage = forwardRef<
       {...props}
     >
       <div className="lb-assistant-chat-message-content">
-        {/* <pre>{JSON.stringify(message, null, 2)}</pre> */}
-
-        {"content" in message ? (
+        {message.role === "assistant" ? (
           message.content.map((part, index) => {
             switch (part.type) {
               case "text":

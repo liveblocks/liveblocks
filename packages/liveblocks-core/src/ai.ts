@@ -25,7 +25,6 @@ import type {
   AiChat,
   AiChatMessage,
   AiInputOutput,
-  AiPlaceholderChatMessage,
   AiTextPart,
   AiTool,
   AskAiResponse,
@@ -97,13 +96,9 @@ export type AskAiOptions = {
 };
 
 function createStore_forChatMessages() {
-  const baseSignal = new MutableSignal(
-    new Map<MessageId, AiChatMessage | AiPlaceholderChatMessage>()
-  );
+  const baseSignal = new MutableSignal(new Map<MessageId, AiChatMessage>());
 
-  function upsertMany(
-    messages: (AiChatMessage | AiPlaceholderChatMessage)[]
-  ): void {
+  function upsertMany(messages: AiChatMessage[]): void {
     baseSignal.mutate((pool) => {
       for (const message of messages) {
         pool.set(message.id, message);
@@ -127,10 +122,9 @@ function createStore_forChatMessages() {
     });
   }
 
-  // TODO: do we want to fail or throw or return something if the message doesn't exist?
   function patchMessageIfExists(
     messageId: MessageId,
-    patch: Partial<AiChatMessage | AiPlaceholderChatMessage>
+    patch: Partial<AiChatMessage>
   ): void {
     baseSignal.mutate((pool) => {
       const message = pool.get(messageId);
@@ -139,19 +133,18 @@ function createStore_forChatMessages() {
       pool.set(messageId, {
         ...message,
         ...patch,
-      } as AiChatMessage | AiPlaceholderChatMessage);
+      } as AiChatMessage);
       return true;
     });
   }
 
-  function upsert(message: AiChatMessage | AiPlaceholderChatMessage): void {
+  function upsert(message: AiChatMessage): void {
     upsertMany([message]);
   }
 
   return {
     sortedMessagesByChatId: DerivedSignal.from(baseSignal, (pool) => {
-      const rv: Record<ChatId, (AiChatMessage | AiPlaceholderChatMessage)[]> =
-        {};
+      const rv: Record<ChatId, AiChatMessage[]> = {};
 
       for (const message of pool.values()) {
         if (!rv[message.chatId]) {
@@ -349,9 +342,7 @@ export type Ai = {
   statelessAction: (prompt: string, tool: AiTool) => Promise<AskAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
-    sortedMessagesByChatId: DerivedSignal<
-      Record<string, (AiChatMessage | AiPlaceholderChatMessage)[]>
-    >;
+    sortedMessagesByChatId: DerivedSignal<Record<string, AiChatMessage[]>>;
     placeholders: DerivedSignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
   registerChatContext: (
@@ -469,6 +460,9 @@ export function createAi(config: AiConfig): Ai {
       return;
     }
 
+    // XXX Remove
+    window.console.info("[ws]", msg);
+
     if ("event" in msg) {
       switch (msg.event) {
         case "cmd-failed":
@@ -496,7 +490,9 @@ export function createAi(config: AiConfig): Ai {
 
             if (replaces) {
               context.messages.patchMessageIfExists(replaces.messageId, {
+                role: "assistant",
                 content: ph.contentSoFar,
+                // @ts-expect-error Invalid TS, but still important at runtime!
                 placeholderId: undefined,
               });
             }
@@ -545,18 +541,12 @@ export function createAi(config: AiConfig): Ai {
 
         case "ask-ai":
           if (msg.messageId !== undefined) {
-            // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
+            // XXX Let the backend dictate this upsert, ideally!
             context.messages.upsert({
               id: msg.messageId,
               chatId: msg.chatId,
-              role: "assistant",
-              // XXX Remove content here in favor of detecting it's a placeholder message
-              content: [
-                {
-                  type: "text",
-                  text: "Asking AI, please be patient...",
-                },
-              ],
+              role: "assistant-placeholder",
+              placeholderId: msg.placeholderId,
               createdAt: new Date().toISOString() as ISODateString, // TODO: Should we use server date here?
             });
           } else {
@@ -771,7 +761,7 @@ export function createAi(config: AiConfig): Ai {
           // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
           context.messages.upsert({
             id: io.output.messageId,
-            role: "assistant",
+            role: "assistant-placeholder",
             placeholderId,
             chatId: io.input.chatId,
             createdAt: new Date().toISOString() as ISODateString,

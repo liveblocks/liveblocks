@@ -19,8 +19,8 @@ import { useState } from "react";
 
 import { DebugClient } from "../DebugClient";
 import {
+  AiAssistantPlaceholderMessage,
   AiChatMessage,
-  AiPlaceholderChatMessage,
   ChatId,
   CopilotId,
   MessageId,
@@ -207,7 +207,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
   function messageAbove(
     messageId: MessageId
-  ): (AiChatMessage | AiPlaceholderChatMessage) | undefined {
+  ): (AiChatMessage | AiAssistantPlaceholderMessage) | undefined {
     return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
   }
 
