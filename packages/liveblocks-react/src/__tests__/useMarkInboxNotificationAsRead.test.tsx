@@ -2,7 +2,11 @@ import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import {
   mockGetInboxNotifications,
   mockMarkInboxNotificationsAsRead,
@@ -30,6 +34,9 @@ describe("useMarkInboxNotificationAsRead", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -38,6 +45,7 @@ describe("useMarkInboxNotificationAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -94,6 +102,9 @@ describe("useMarkInboxNotificationAsRead", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -102,6 +113,7 @@ describe("useMarkInboxNotificationAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

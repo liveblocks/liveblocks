@@ -15,6 +15,12 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type {
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+} from "./protocol/Subscriptions";
 
 /**
  * Converts a plain comment data object (usually returned by the API) to a comment data object that can be used by the client.
@@ -121,6 +127,23 @@ export function convertToInboxNotificationData(
   };
 }
 
+/**
+ * Converts a plain subscription data object (usually returned by the API) to a subscription data object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * @param data The plain subscription data object (usually returned by the API)
+ * @returns The rich subscription data object that can be used by the client.
+ */
+export function convertToSubscriptionData(
+  data: SubscriptionDataPlain
+): SubscriptionData {
+  const createdAt = new Date(data.createdAt);
+
+  return {
+    ...data,
+    createdAt,
+  };
+}
+
 export function convertToThreadDeleteInfo(
   data: ThreadDeleteInfoPlain
 ): ThreadDeleteInfo {
@@ -135,6 +158,17 @@ export function convertToThreadDeleteInfo(
 export function convertToInboxNotificationDeleteInfo(
   data: InboxNotificationDeleteInfoPlain
 ): InboxNotificationDeleteInfo {
+  const deletedAt = new Date(data.deletedAt);
+
+  return {
+    ...data,
+    deletedAt,
+  };
+}
+
+export function convertToSubscriptionDeleteInfo(
+  data: SubscriptionDeleteInfoPlain
+): SubscriptionDeleteInfo {
   const deletedAt = new Date(data.deletedAt);
 
   return {

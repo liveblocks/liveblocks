@@ -2,7 +2,11 @@ import { nanoid, Permission } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetThreads } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
@@ -29,6 +33,9 @@ describe("useThreadSubscription", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -36,6 +43,7 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -96,6 +104,9 @@ describe("useThreadSubscription", () => {
         readAt: new Date(),
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -103,6 +114,7 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -163,6 +175,71 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
+            subscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads, useThreadSubscription },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => ({
+        threads: useThreads(),
+        subscription: useThreadSubscription(threads[0]!.id),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.threads).toEqual({ isLoading: true });
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+
+    await waitFor(() =>
+      expect(result.current.threads).toEqual({
+        isLoading: false,
+        threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    expect(result.current.subscription).toEqual({ status: "not-subscribed" });
+
+    unmount();
+  });
+
+  test("should return the expected object if the thread has an associated inbox notification but doesn't have a subscription for it", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threads[0]!.id,
+      }),
+    ];
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications,
+            subscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -219,6 +296,9 @@ describe("useThreadSubscription", () => {
         threadId: threads[0]!.id,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -226,6 +306,7 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

@@ -278,6 +278,14 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type {
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+  SubscriptionKey,
+} from "./protocol/Subscriptions";
+export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,
