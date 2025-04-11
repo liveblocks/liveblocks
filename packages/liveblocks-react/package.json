@@ -45,6 +45,8 @@
     "dist/**",
     "suspense/**",
     "_private/**",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "scripts": {
