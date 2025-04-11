@@ -21,6 +21,26 @@ import { AiChatMessage, ChatId, CopilotId, MessageId } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
 import { TrashIcon } from "./icons";
 
+const PRESETS = [
+  {
+    title: "How's the weather?",
+    prompt: "What's the current weather like in Tokyo, Japan?",
+  },
+  {
+    title: "Generate a poem",
+    prompt:
+      "Tell me a short story about a TypeScript core developer lost on Venus.",
+  },
+  {
+    title: "Baking instructions",
+    prompt: "Give me a delicious apple pie recipe.",
+  },
+  {
+    title: "Help me code",
+    prompt: "Implement a Fibonnacci number generator in Rust.",
+  },
+];
+
 export default function Page() {
   return (
     <main>
@@ -201,6 +221,29 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
   }
 
+  const [preset, setPreset] = useState<string | undefined>(undefined);
+
+  async function ask(text: string) {
+    try {
+      // Creates the user message
+      const { message } = await client.ai.attachUserMessage(
+        chatId,
+        parentMessageId,
+        text
+      );
+      forceRerender();
+
+      // Creates the assistant response message
+      await client.ai.ask(chatId, message.id, {
+        copilotId: selectedCopilotId,
+        stream: streaming,
+        timeout: maxTimeout,
+      });
+    } finally {
+      setOverrideParentId(undefined);
+    }
+  }
+
   const parentMessageId = overrideParentId ?? lastMessageId;
   return (
     <div className="chat-window-container">
@@ -317,6 +360,21 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
       </div>
 
       <div className="composer-container">
+        {messages.length === 0 ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "20px",
+              padding: "1rem",
+            }}
+          >
+            {PRESETS.map((preset) => (
+              <button onClick={() => ask(preset.prompt)}>{preset.title}</button>
+            ))}
+          </div>
+        ) : null}
+
         <ChatComposer
           chatId={chatId}
           className="composer"
@@ -328,24 +386,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           }}
           onSubmit={async (ev) => {
             if (ev.currentTarget.textContent?.trim()) {
-              try {
-                const { message } = await client.ai.attachUserMessage(
-                  chatId,
-                  parentMessageId,
-                  ev.currentTarget.textContent.trim()
-                );
-                forceRerender();
-
-                await client.ai.ask(chatId, message.id, {
-                  copilotId: selectedCopilotId,
-                  stream: streaming,
-                  timeout: maxTimeout,
-                });
-              } finally {
-                setOverrideParentId(undefined);
-              }
+              ask(ev.currentTarget.textContent);
             }
           }}
+          defaultValue={preset}
         />
         <div
           style={{
