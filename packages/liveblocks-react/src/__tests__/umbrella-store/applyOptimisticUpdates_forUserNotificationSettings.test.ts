@@ -86,9 +86,9 @@ describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
       ]
     );
 
-    expect(result.email.thread).toBe(true);
-    expect(result.email.textMention).toBe(true);
-    expect(result.email.$fileUploaded).toBe(true);
+    expect(result.email!.thread).toBe(true);
+    expect(result.email!.textMention).toBe(true);
+    expect(result.email!.$fileUploaded).toBe(true);
   });
 
   it("should update multiple channels simultaneously", () => {
@@ -108,8 +108,8 @@ describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
       ]
     );
 
-    expect(result.email.thread).toBe(true);
-    expect(result.slack.textMention).toBe(false);
+    expect(result.email!.thread).toBe(true);
+    expect(result.slack!.textMention).toBe(false);
     expect(result.webPush).toEqual(defaultSettings.webPush);
     expect(result.teams).toEqual(defaultSettings.teams);
   });
@@ -134,9 +134,9 @@ describe("applyOptimisticUpdates_forUserNotificationSettings", () => {
       ]
     );
 
-    expect(result.email.thread).toBe(true);
-    expect(result.email.textMention).toBe(false);
-    expect(result.email.$fileUploaded).toBe(false);
+    expect(result.email!.thread).toBe(true);
+    expect(result.email!.textMention).toBe(false);
+    expect(result.email!.$fileUploaded).toBe(false);
   });
 
   it("should handle empty channel updates", () => {
