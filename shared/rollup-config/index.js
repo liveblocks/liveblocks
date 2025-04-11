@@ -4,7 +4,7 @@ import MagicString from "magic-string";
 import { createRequire } from "module";
 import path from "path";
 import postcss from "postcss";
-import dts from "rollup-plugin-dts";
+import typescript from "@rollup/plugin-typescript";
 import esbuild from "rollup-plugin-esbuild";
 
 /**
@@ -289,6 +289,16 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
         styles({
           files: styleFiles,
         }),
+        // Build .d.ts files for "esm"
+        format === "esm" &&
+          typescript({
+            outDir: "dist",
+            declarationDir: "dist",
+            emitDeclarationOnly: true,
+            declaration: true,
+            declarationMap: true,
+            exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+          }),
       ],
       onwarn(warning, warn) {
         if (
@@ -302,35 +312,5 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
     };
   }
 
-  /**
-   * @returns {import('rollup').RollupOptions[]}
-   */
-  function createTypesConfigs() {
-    return entries.map((input) => ({
-      input,
-      output: [
-        {
-          file: input
-            .replace("src/", "dist/")
-            .replace(/\.ts$/, pkg.type === "module" ? ".d.ts" : ".d.mts"),
-        },
-        {
-          file: input
-            .replace("src/", "dist/")
-            .replace(/\.ts$/, pkg.type === "module" ? ".d.cts" : ".d.ts"),
-        },
-      ],
-      plugins: [dts()],
-    }));
-  }
-
-  const config = [
-    // Build .js and .mjs files
-    createMainConfig("cjs"),
-    createMainConfig("esm"),
-    // Build .d.ts and .d.mts files
-    ...createTypesConfigs(),
-  ];
-
-  return config;
+  return [createMainConfig("cjs"), createMainConfig("esm")];
 }

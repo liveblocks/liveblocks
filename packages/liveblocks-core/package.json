@@ -20,6 +20,8 @@
   },
   "files": [
     "dist/**",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "keywords": [
