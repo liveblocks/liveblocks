@@ -16,8 +16,10 @@ export default defineConfig({
   },
 
   async onSuccess() {
+    console.log("TSC Build start");
     execSync("tsc --project tsconfig.dts.json", {
       stdio: "inherit",
     });
+    console.log("TSC ⚡️ Build success");
   },
 });
