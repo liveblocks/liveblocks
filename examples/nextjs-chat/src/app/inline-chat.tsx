@@ -1,5 +1,5 @@
 import { ChatId, CopilotContext, ClientToolDefinition } from "@liveblocks/core";
-import { useClient, useCopilotChatMessages } from "@liveblocks/react/suspense";
+import { useClient, useCopilotChatMessages } from "@liveblocks/react";
 import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
 import { useEffect } from "react";
 
@@ -42,7 +42,7 @@ export function InlineChat({
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "1rem",
+          // padding: "1rem",
         }}
       />
 
