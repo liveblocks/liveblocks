@@ -121,6 +121,7 @@ type AskAIPair = DefineCmd<
       messageId: MessageId; // Optimistically assigned by client
     };
     copilotId?: CopilotId;
+    clientId: string;
     stream: boolean;
     tools?: AiToolDefinition[];
     toolChoice?: ToolChoice;
@@ -176,6 +177,7 @@ export type ErrorServerEvent = {
 export type DeltaServerEvent = {
   event: "delta";
   id: MessageId;
+  clientId: string;
   delta: AiAssistantDeltaUpdate;
 };
 
@@ -187,6 +189,7 @@ export type DeltaServerEvent = {
 export type SettleServerEvent = {
   event: "settle";
   message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
+  clientId: string;
   kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 

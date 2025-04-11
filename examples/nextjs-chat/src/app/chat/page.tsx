@@ -29,7 +29,13 @@ function App() {
 
   const [todos, setTodos] = useState<
     { id: string; title: string; isCompleted: false }[]
-  >([]);
+  >([
+    {
+      id: crypto.randomUUID(),
+      title: "Todo 1",
+      isCompleted: false,
+    },
+  ]);
 
   if (chats.length === 0) {
     return <div>No chats available</div>;
@@ -37,6 +43,14 @@ function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>
+            <span>{todo.title}</span>
+          </li>
+        ))}
+      </ul>
+
       <InlineChat
         chatId={chats[0].id}
         context={{
@@ -46,27 +60,6 @@ function App() {
           },
         }}
         tools={{
-          markTodoAsCompleted: {
-            parameters: {
-              type: "object",
-              properties: {
-                id: {
-                  type: "string",
-                  description: "The id of the todo to mark as completed",
-                },
-              },
-            },
-            execute: ({ id }: { id: string }) => {
-              setTodos((todos) =>
-                todos.map((todo) => {
-                  if (todo.id === id) {
-                    return { ...todo, completedAt: new Date() };
-                  }
-                  return todo;
-                })
-              );
-            },
-          },
           addTodo: {
             parameters: {
               type: "object",

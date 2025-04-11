@@ -76,7 +76,7 @@ type AiChatsLUT = Map<string, AiChat>;
 export type ClientToolDefinition = {
   description?: string;
   parameters: JSONSchema4;
-  execute?: (params: any) => void;
+  execute: (params: any) => void; // XXX - We should allow the execute callback to return a Promise too
 };
 
 type AiContext = {
@@ -229,6 +229,9 @@ function createStore_forChatMessages() {
     removeByChatId,
     addDelta,
     failAllPending,
+    getMessageById: (messageId: MessageId) => {
+      return baseSignal.get().get(messageId);
+    },
   };
 }
 
@@ -333,6 +336,7 @@ export function createAi(config: AiConfig): Ai {
     config.enableDebugLogging,
     false // AI doesn't have actors (yet, but it will)
   );
+  const clientId = nanoid();
 
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
@@ -433,6 +437,17 @@ export function createAi(config: AiConfig): Ai {
 
         case "delta": {
           const { id, delta } = msg;
+          const chatId = context.messages.getMessageById(id)?.chatId;
+          if (
+            delta.type === "tool-call" &&
+            msg.clientId === clientId &&
+            chatId !== undefined
+          ) {
+            const tool = context.toolsByChatId.get(chatId)?.get(delta.toolName);
+            if (tool !== undefined) {
+              tool.execute(delta.args);
+            }
+          }
           context.messages.addDelta(id, delta);
           break;
         }
@@ -715,6 +730,7 @@ export function createAi(config: AiConfig): Ai {
           input,
           output,
           copilotId,
+          clientId,
           stream,
           tools,
           timeout,
