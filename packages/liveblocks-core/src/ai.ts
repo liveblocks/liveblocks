@@ -1,5 +1,6 @@
 /* eslint-disable rulesdir/console-must-be-fancy */
 import type { JSONSchema4 } from "json-schema";
+import type { ComponentType } from "react";
 
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
@@ -73,11 +74,19 @@ const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 second
 type AiChatsLUT = Map<string, AiChat>;
 
 // XXX - Find a better name for this?
-export type ClientToolDefinition = {
-  description?: string;
-  parameters: JSONSchema4;
-  execute: (params: any) => void; // XXX - We should allow the execute callback to return a Promise too
-};
+export type ClientToolDefinition =
+  | {
+      description?: string;
+      parameters: JSONSchema4;
+      execute: (params: any) => void; // XXX - We should allow the execute callback to return a Promise too
+      render?: never;
+    }
+  | {
+      description?: string;
+      parameters: JSONSchema4;
+      render: ComponentType<any>;
+      execute?: never;
+    };
 
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
@@ -332,6 +341,11 @@ export type Ai = {
     tool: ClientToolDefinition
   ) => void;
   unregisterChatTool: (chatId: ChatId, toolName: string) => void;
+
+  getToolCallDefinition(
+    chatId: string,
+    toolName: string
+  ): ClientToolDefinition | undefined;
 };
 
 /** @internal */
@@ -460,7 +474,7 @@ export function createAi(config: AiConfig): Ai {
             chatId !== undefined
           ) {
             const tool = context.toolsByChatId.get(chatId)?.get(delta.toolName);
-            if (tool !== undefined) {
+            if (tool !== undefined && tool.execute !== undefined) {
               tool.execute(delta.args);
             }
           }
@@ -766,6 +780,13 @@ export function createAi(config: AiConfig): Ai {
 
       registerChatTool,
       unregisterChatTool,
+
+      getToolCallDefinition: (
+        chatId: string,
+        toolName: string
+      ): ClientToolDefinition | undefined => {
+        return context.toolsByChatId.get(chatId as ChatId)?.get(toolName);
+      },
     },
     kInternal,
     { enumerable: false }

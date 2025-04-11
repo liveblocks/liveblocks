@@ -28,7 +28,7 @@ function App() {
   const { chats } = useCopilotChats();
 
   const [todos, setTodos] = useState<
-    { id: string; title: string; isCompleted: false }[]
+    { id: string; title: string; isCompleted: boolean }[]
   >([
     {
       id: crypto.randomUUID(),
@@ -61,6 +61,7 @@ function App() {
         }}
         tools={{
           addTodo: {
+            description: "Add a todo to the list",
             parameters: {
               type: "object",
               properties: {
@@ -79,6 +80,43 @@ function App() {
                   isCompleted: false,
                 },
               ]);
+            },
+          },
+          displayTodo: {
+            description: "Display a todo",
+            parameters: {
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                  description: "The id of the todo to display",
+                },
+              },
+            },
+            render: ({ id }: { id: string }) => {
+              const todo = todos.find((todo) => todo.id === id);
+              return (
+                <div>
+                  <h3>{todo?.title}</h3>
+                  <span>
+                    {todo?.isCompleted ? "Completed" : "Not completed"}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setTodos((todos) =>
+                        todos.map((todo) => {
+                          if (todo.id === id) {
+                            return { ...todo, isCompleted: !todo.isCompleted };
+                          }
+                          return todo;
+                        })
+                      );
+                    }}
+                  >
+                    {todo?.isCompleted ? "Uncheck" : "Check"}
+                  </button>
+                </div>
+              );
             },
           },
         }}

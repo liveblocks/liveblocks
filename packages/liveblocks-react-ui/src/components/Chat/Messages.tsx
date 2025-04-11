@@ -297,7 +297,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
     /**
      * The component used to display tool call content in the assistant chat message.
      */
-    ToolCallPart: ComponentType<AssistantMessageToolCallPartProps>;
+    // ToolCallPart: ComponentType<AssistantMessageToolCallPartProps>;
     /**
      * The component used to display reasoning content in the assistant chat message.
      */
@@ -311,12 +311,21 @@ export const DefaultAssistantChatMessage = forwardRef<
 >(({ message, className, components, ...props }, forwardedRef) => {
   const client = useClient();
   const TextPart = components?.TextPart ?? DefaultAssistantMessageTextPart;
-  const ToolCallPart =
-    components?.ToolCallPart ?? DefaultAssistantMessageToolCallPart;
+
   const ReasoningPart =
     components?.ReasoningPart ?? DefaultAssistantMessageReasoningPart;
 
   const content = message.content ?? message.contentSoFar;
+
+  function ToolCallPart({ name, args }: { name: string; args: any }) {
+    const tool = client.ai.getToolCallDefinition(message.chatId, name);
+    if (tool === undefined) return null;
+
+    if (tool.render === undefined) return null;
+
+    return <tool.render {...args} />;
+  }
+
   return (
     <div
       ref={forwardedRef}
@@ -359,8 +368,7 @@ export const DefaultAssistantChatMessage = forwardRef<
               return (
                 <ToolCallPart
                   key={index}
-                  toolCallId={part.toolCallId}
-                  toolName={part.toolName}
+                  name={part.toolName}
                   args={part.args}
                 />
               );
