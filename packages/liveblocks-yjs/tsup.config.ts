@@ -1,12 +1,9 @@
 import { execSync } from "child_process";
 import { defineConfig } from "tsup";
 
-const isProductionBuild = process.env.NODE_ENV === "production";
-
 export default defineConfig({
   entry: ["src/index.ts"],
-  dts: isProductionBuild,
-  splitting: isProductionBuild,
+  splitting: true,
   clean: true,
   format: ["esm", "cjs"],
   sourcemap: true,
@@ -17,13 +14,11 @@ export default defineConfig({
     options.define.__VERSION__ = JSON.stringify(pkg.version);
   },
 
-  onSuccess: isProductionBuild
-    ? undefined
-    : async () => {
-        console.log("TSC Build start");
-        execSync("tsc --project tsconfig.dts.json", {
-          stdio: "inherit",
-        });
-        console.log("TSC ⚡️ Build success");
-      },
+  async onSuccess() {
+    console.log("DTS Build start");
+    execSync("tsc --project tsconfig.dts.json", {
+      stdio: "inherit",
+    });
+    console.log("DTS ⚡️ Build success");
+  },
 });
