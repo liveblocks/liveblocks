@@ -78,6 +78,7 @@ describe("text mention notification", () => {
         userId: "user-0",
         mentionId,
         inboxNotificationId: badInboxNotification.id,
+        triggeredAt: new Date(),
       });
 
       const extracted = await extractTextMentionNotificationData({
@@ -121,6 +122,7 @@ describe("text mention notification", () => {
         userId: "user-2",
         mentionId,
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: new Date(),
       });
 
       const extracted = await extractTextMentionNotificationData({
@@ -159,6 +161,7 @@ describe("text mention notification", () => {
         userId: "user-1",
         mentionId,
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: new Date(),
       });
 
       const extracted = await extractTextMentionNotificationData({
@@ -206,6 +209,7 @@ describe("text mention notification", () => {
         userId: MENTIONED_USER_ID_TIPTAP,
         mentionId: MENTION_ID_TIPTAP,
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: new Date(),
       });
 
       const extracted = await extractTextMentionNotificationData({
@@ -262,6 +266,7 @@ describe("text mention notification", () => {
         userId: MENTIONED_USER_ID_TIPTAP,
         mentionId: MENTION_ID_TIPTAP,
         inboxNotificationId: inboxNotification.id,
+        triggeredAt: new Date(),
       });
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
@@ -353,6 +358,7 @@ describe("text mention notification", () => {
       userId: MENTIONED_USER_ID_TIPTAP,
       mentionId: MENTION_ID_TIPTAP,
       inboxNotificationId: inboxNotification.id,
+      triggeredAt: new Date(),
     });
 
     const styles: Partial<ConvertTextEditorNodesAsHtmlStyles> = {
@@ -449,6 +455,7 @@ describe("text mention notification", () => {
       userId: MENTIONED_USER_ID_TIPTAP,
       mentionId: MENTION_ID_TIPTAP,
       inboxNotificationId: inboxNotification.id,
+      triggeredAt: new Date(),
     });
 
     const components: Partial<ConvertTextEditorNodesAsReactComponents> = {

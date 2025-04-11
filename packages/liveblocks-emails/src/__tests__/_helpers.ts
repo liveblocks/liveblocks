@@ -282,10 +282,12 @@ export const makeThreadNotificationEvent = ({
   threadId,
   userId,
   inboxNotificationId,
+  triggeredAt,
 }: {
   threadId: string;
   userId: string;
   inboxNotificationId: string;
+  triggeredAt: Date;
 }): ThreadNotificationEvent => ({
   type: "notification",
   data: {
@@ -297,6 +299,7 @@ export const makeThreadNotificationEvent = ({
     threadId,
     inboxNotificationId,
     createdAt: new Date().toISOString(),
+    triggeredAt: triggeredAt.toISOString(),
   },
 });
 
@@ -363,6 +366,7 @@ export const makeUnreadMentionDataset = (): {
     threadId,
     userId: "user-1",
     inboxNotificationId: inboxNotification.id,
+    triggeredAt: thread.createdAt,
   });
 
   return { threadId, comment, thread, inboxNotification, event };
@@ -401,6 +405,7 @@ export const makeUnreadRepliesDataset = (): {
     threadId,
     userId: "user-0",
     inboxNotificationId: inboxNotification.id,
+    triggeredAt: comment1.createdAt,
   });
 
   return { threadId, comment1, comment2, thread, inboxNotification, event };
@@ -497,10 +502,12 @@ export const makeTextMentionNotificationEvent = ({
   userId,
   mentionId,
   inboxNotificationId,
+  triggeredAt,
 }: {
   userId: string;
   mentionId: string;
   inboxNotificationId: string;
+  triggeredAt: Date;
 }): TextMentionNotificationEvent => ({
   type: "notification",
   data: {
@@ -512,6 +519,7 @@ export const makeTextMentionNotificationEvent = ({
     mentionId,
     createdAt: new Date().toISOString(),
     inboxNotificationId,
+    triggeredAt: triggeredAt.toISOString(),
   },
 });
 

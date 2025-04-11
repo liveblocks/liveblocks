@@ -1,5 +1,15 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
 ### `@liveblocks/react-ui`
 
 - Improve event propagation from `Composer` and the emoji pickers in
