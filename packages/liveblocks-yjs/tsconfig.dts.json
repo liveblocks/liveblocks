@@ -1,0 +1,14 @@
+{
+  // This config is used to generate declarations with their declaration maps
+  // which tsup's `dts` option doesn't support. https://tsup.egoist.dev/#generate-typescript-declaration-maps--d-ts-map
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "exclude": ["**/__tests__/**", "**/*.test.ts"]
+}
