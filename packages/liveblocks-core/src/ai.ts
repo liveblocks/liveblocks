@@ -536,7 +536,7 @@ export function createAi(config: AiConfig): Ai {
       once: true,
     });
 
-    const cmdId = nanoid() as CmdId;
+    const cmdId = nanoid(7) as CmdId;
     context.pendingCmds.set(cmdId, { resolve, reject });
 
     sendClientMsg({ ...msg, cmdId });
