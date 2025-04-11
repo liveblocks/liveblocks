@@ -10,18 +10,25 @@ import type {
 import type { Extension } from "@tiptap/core";
 
 import { withLiveblocksSchema } from "./schema";
-/**
- * Helper funcction to add Liveblocks support to BlockNoteEditorOptions
- */
-export const withLiveblocksEditorOptions = <
+
+type WithLiveblocksEditorOptions<
   B extends BlockSchema = DefaultBlockSchema,
   I extends InlineContentSchema = DefaultInlineContentSchema,
   S extends StyleSchema = DefaultStyleSchema,
->(
+> = (
   liveblocksExtension: Extension,
-  blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
-  liveblocksOptions: Partial<{ mentions: boolean }> = {}
-): Partial<BlockNoteEditorOptions<B, I, S>> => ({
+  blocknoteOptions?: Partial<BlockNoteEditorOptions<B, I, S>>,
+  liveblocksOptions?: Partial<{ mentions: boolean }>
+) => Partial<BlockNoteEditorOptions<B, I, S>>;
+
+/**
+ * Helper function to add Liveblocks support to BlockNoteEditorOptions
+ */
+export const withLiveblocksEditorOptions: WithLiveblocksEditorOptions = (
+  liveblocksExtension,
+  blocknoteOptions = {},
+  liveblocksOptions = {}
+) => ({
   // add the liveblocks schema (i.e.: add the mention node to the schema)
   schema: withLiveblocksSchema(blocknoteOptions.schema, liveblocksOptions),
 
