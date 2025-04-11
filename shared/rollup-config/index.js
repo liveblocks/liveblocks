@@ -1,5 +1,5 @@
 import replace from "@rollup/plugin-replace";
-import fs from "fs";
+import fs from "fs/promises";
 import MagicString from "magic-string";
 import { createRequire } from "module";
 import path from "path";
@@ -38,9 +38,9 @@ const require = createRequire(import.meta.url);
  * @param {string} file
  * @param {string | NodeJS.ArrayBufferView} data
  */
-function createFile(file, data) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, data);
+async function createFile(file, data) {
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, data);
 }
 
 /**
@@ -105,8 +105,6 @@ function colorMixScale(from, to, contrast, increment) {
  * @returns {import('rollup').RollupOptions[]}
  */
 export function createConfig({ pkg, entries, styles: styleFiles, external }) {
-  let didClean = false;
-
   /**
    * @param {CleanOptions} options
    * @returns {import('rollup').Plugin}
@@ -116,21 +114,15 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       name: "clean",
       buildStart: {
         order: "pre",
-        handler() {
-          if (!didClean) {
-            fs.rmSync(path.resolve(directory), {
-              recursive: true,
-              force: true,
-            });
-          }
-
-          didClean = true;
+        async handler() {
+          await fs.rm(path.resolve(directory), {
+            recursive: true,
+            force: true,
+          });
         },
       },
     };
   }
-
-  let didStyles = false;
 
   /**
    * @param {StylesOptions} options
@@ -139,11 +131,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
   function styles({ files }) {
     return {
       name: "styles",
-      buildStart: async () => {
-        if (didStyles) {
-          return;
-        }
-
+      async buildStart() {
         const processor = postcss([
           require("stylelint"),
           require("postcss-import"),
@@ -172,7 +160,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           const destination = path.resolve(file.destination);
 
           const { css, map } = await processor.process(
-            fs.readFileSync(entry, "utf8"),
+            await fs.readFile(entry, "utf8"),
             {
               from: entry,
               to: destination,
@@ -185,8 +173,6 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           createFile(destination, css);
           createFile(`${destination}.map`, map.toString());
         }
-
-        didStyles = true;
       },
     };
   }
@@ -226,6 +212,45 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
 
           return null;
         },
+      },
+    };
+  }
+
+  /**
+   * @param {string} directory
+   * @returns {string[]}
+   */
+  async function getFiles(directory) {
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+
+    const files = await Promise.all(
+      entries.map((entry) => {
+        const fullPath = path.join(directory, entry.name);
+        return entry.isDirectory() ? getFiles(fullPath) : fullPath;
+      })
+    );
+
+    return files.flat();
+  }
+
+  /**
+   * @returns {import('rollup').Plugin}
+   */
+  function renameDcts() {
+    return {
+      name: "rename-d-cts",
+      async writeBundle() {
+        const files = await getFiles(path.resolve("dist"));
+        const dtsFiles = files.filter(
+          (file) => file.endsWith(".d.ts") || file.endsWith(".d.ts.map")
+        );
+
+        await Promise.all(
+          dtsFiles.map(async (file) => {
+            const renamedFile = file.replace(/\.d\.ts(\.map)?$/, ".d.cts$1");
+            await fs.rename(file, renamedFile);
+          })
+        );
       },
     };
   }
@@ -283,23 +308,25 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           },
           preventAssignment: true,
         }),
-        // Clean dist directory
-        clean({ directory: "dist" }),
-        // Build .css files
-        styles({
-          files: styleFiles,
-        }),
-        // Build .d.ts files for "esm"
-        format === "esm" &&
-          typescript({
-            outDir: "dist",
-            declarationDir: "dist",
-            emitDeclarationOnly: true,
-            declaration: true,
-            declarationMap: true,
-            exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+        // Clean dist directory (only run once)
+        format === "cjs" && clean({ directory: "dist" }),
+        // Build .css files (only run once)
+        format === "cjs" &&
+          styles({
+            files: styleFiles,
           }),
-      ],
+        // Build .d.ts and .d.cts files
+        typescript({
+          outDir: "dist",
+          declarationDir: "dist",
+          emitDeclarationOnly: true,
+          declaration: true,
+          declarationMap: true,
+          exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+        }),
+        // Rename .d.ts files to .d.cts
+        format === "cjs" && renameDcts(),
+      ].filter(Boolean),
       onwarn(warning, warn) {
         if (
           warning.code === "MODULE_LEVEL_DIRECTIVE" &&
