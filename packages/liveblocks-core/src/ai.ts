@@ -109,17 +109,33 @@ function now(): ISODateString {
 function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(new Map<MessageId, AiChatMessage>());
 
-  function createOptimistically(chatId: ChatId) {
-    const newMessageId = `ms_${nanoid()}` as MessageId;
-    upsert({
-      id: newMessageId,
-      chatId,
-      role: "assistant",
-      createdAt: now(),
-      status: "pending",
-      contentSoFar: [],
-    } satisfies AiPendingAssistantMessage);
-    return newMessageId;
+  function createOptimistically(
+    chatId: ChatId,
+    role: "user",
+    content: AiUserContentPart[]
+  ): MessageId;
+  function createOptimistically(chatId: ChatId, role: "assistant"): MessageId;
+  function createOptimistically(
+    chatId: ChatId,
+    role: "user" | "assistant",
+    third?: AiUserContentPart[]
+  ) {
+    const id = `ms_${nanoid()}` as MessageId;
+    const createdAt = now();
+    if (role === "user") {
+      const content = third!; // eslint-disable-line
+      upsert({ id, chatId, role, createdAt, content } satisfies AiUserMessage);
+    } else {
+      upsert({
+        id,
+        chatId,
+        role,
+        createdAt,
+        status: "pending",
+        contentSoFar: [],
+      } satisfies AiPendingAssistantMessage);
+    }
+    return id;
   }
 
   function upsertMany(messages: AiChatMessage[]): void {
@@ -665,21 +681,15 @@ export function createAi(config: AiConfig): Ai {
         parentMessageId: MessageId | null,
         message: string
       ) => {
-        const messageId = `ms_${nanoid()}` as MessageId;
         const content: AiUserContentPart[] = [{ type: "text", text: message }];
-
-        // Optimistically create the message already
-        context.messages.upsert({
-          id: messageId,
-          role: "user",
+        const newMessageId = context.messages.createOptimistically(
           chatId,
-          content,
-          createdAt: now(), // Client date (will soon be replaced by server date)
-        } satisfies AiUserMessage);
-
+          "user",
+          content
+        );
         return sendClientMsgWithResponse({
           cmd: "attach-user-message",
-          id: messageId,
+          id: newMessageId,
           chatId,
           parentMessageId,
           content,
@@ -691,7 +701,10 @@ export function createAi(config: AiConfig): Ai {
         messageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskAiResponse> => {
-        const newMessageId = context.messages.createOptimistically(chatId);
+        const newMessageId = context.messages.createOptimistically(
+          chatId,
+          "assistant"
+        );
 
         const input = { chatId, messageId };
         const output = { messageId: newMessageId };
