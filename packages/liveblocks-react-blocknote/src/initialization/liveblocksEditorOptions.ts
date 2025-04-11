@@ -11,7 +11,7 @@ import type { Extension } from "@tiptap/core";
 
 import { withLiveblocksSchema } from "./schema";
 /**
- * Helper funcction to add Liveblocks support to BlockNoteEditorOptions
+ * Helper function to add Liveblocks support to BlockNoteEditorOptions
  */
 export const withLiveblocksEditorOptions = <
   B extends BlockSchema = DefaultBlockSchema,
@@ -21,13 +21,25 @@ export const withLiveblocksEditorOptions = <
   liveblocksExtension: Extension,
   blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
   liveblocksOptions: Partial<{ mentions: boolean }> = {}
-): Partial<BlockNoteEditorOptions<B, I, S>> => ({
-  // add the liveblocks schema (i.e.: add the mention node to the schema)
-  schema: withLiveblocksSchema(blocknoteOptions.schema, liveblocksOptions),
+): Partial<BlockNoteEditorOptions<B, I, S>> => {
+  const {
+    schema: blocknoteSchema,
+    _extensions: blocknoteExtensions,
+    disableExtensions: blocknoteDisableExtensions,
+    ...extraBlocknoteOptions
+  } = blocknoteOptions;
 
-  // add the liveblocks extension
-  _extensions: { liveblocksExtension, ...blocknoteOptions._extensions },
+  return {
+    // add the liveblocks schema (i.e.: add the mention node to the schema)
+    schema: withLiveblocksSchema(blocknoteSchema, liveblocksOptions),
 
-  // disable the history extension
-  disableExtensions: ["history", ...(blocknoteOptions.disableExtensions || [])],
-});
+    // add the liveblocks extension
+    _extensions: { liveblocksExtension, ...blocknoteExtensions },
+
+    // disable the history extension
+    disableExtensions: ["history", ...(blocknoteDisableExtensions || [])],
+
+    // pass the rest of the options through
+    ...extraBlocknoteOptions,
+  };
+};
