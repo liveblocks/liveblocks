@@ -205,7 +205,9 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             },
 
             onExit() {
-              document.body.removeChild(component.element);
+              if (document.body.contains(component.element)) {
+                document.body.removeChild(component.element);
+              }
               component.destroy();
             },
           };
