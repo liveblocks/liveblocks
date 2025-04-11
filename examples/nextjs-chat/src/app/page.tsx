@@ -17,13 +17,7 @@ import {
 import Markdown from "react-markdown";
 import { useState } from "react";
 
-import {
-  AiAssistantPlaceholderMessage,
-  AiChatMessage,
-  ChatId,
-  CopilotId,
-  MessageId,
-} from "@liveblocks/core";
+import { AiChatMessage, ChatId, CopilotId, MessageId } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
 import { TrashIcon } from "./icons";
 
@@ -203,9 +197,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
 
-  function messageAbove(
-    messageId: MessageId
-  ): (AiChatMessage | AiAssistantPlaceholderMessage) | undefined {
+  function messageAbove(messageId: MessageId): AiChatMessage | undefined {
     return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
   }
 

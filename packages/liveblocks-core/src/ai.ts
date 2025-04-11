@@ -8,10 +8,9 @@ import { ManagedSocket, StopRetrying } from "./connection";
 import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
-import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
+import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { type DistributiveOmit, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -22,10 +21,11 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
-  AiAssistantContentPart,
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
+  AiFailedAssistantMessage,
+  AiPendingAssistantMessage,
   AiToolDefinition,
   AiUserContentPart,
   AiUserMessage,
@@ -45,7 +45,6 @@ import type {
   GetMessagesResponse,
   ISODateString,
   MessageId,
-  PlaceholderId,
   ServerAiMsg,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
@@ -80,14 +79,6 @@ export type ClientToolDefinition = {
   execute?: (params: any) => void;
 };
 
-// XXX Put this type elsewhere when we're happy with it
-export type Placeholder = {
-  id: PlaceholderId;
-  status: "thinking" | "streaming" | "completed" | "failed";
-  contentSoFar: AiAssistantContentPart[];
-  errorReason?: string;
-};
-
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
@@ -100,7 +91,6 @@ type AiContext = {
   >;
   chats: ReturnType<typeof createStore_forUserAiChats>;
   messages: ReturnType<typeof createStore_forChatMessages>;
-  placeholders: ReturnType<typeof createStore_forPlaceholders>;
   contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
   toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
 };
@@ -112,8 +102,25 @@ export type AskAiOptions = {
   timeout?: number;
 };
 
+function now(): ISODateString {
+  return new Date().toISOString() as ISODateString;
+}
+
 function createStore_forChatMessages() {
   const baseSignal = new MutableSignal(new Map<MessageId, AiChatMessage>());
+
+  function createOptimistically(chatId: ChatId) {
+    const newMessageId = `ms_${nanoid()}` as MessageId;
+    upsert({
+      id: newMessageId,
+      chatId,
+      role: "assistant",
+      createdAt: now(),
+      status: "pending",
+      contentSoFar: [],
+    } satisfies AiPendingAssistantMessage);
+    return newMessageId;
+  }
 
   function upsertMany(messages: AiChatMessage[]): void {
     baseSignal.mutate((pool) => {
@@ -159,7 +166,41 @@ function createStore_forChatMessages() {
     upsertMany([message]);
   }
 
+  function addDelta(messageId: MessageId, delta: AiAssistantDeltaUpdate): void {
+    baseSignal.mutate((lut) => {
+      const message = lut.get(messageId);
+      if (
+        !message ||
+        message.role !== "assistant" ||
+        message.status !== "pending"
+      ) {
+        return false; // No update needed
+      }
+
+      // Apply the delta to the pending message
+      appendDelta(message.contentSoFar, delta);
+      return true;
+    });
+  }
+
+  function failAllPending(): void {
+    baseSignal.mutate((lut) => {
+      for (const message of lut.values()) {
+        if (message.role === "assistant" && message.status === "pending") {
+          upsert({
+            ...message,
+            status: "failed",
+            errorReason: "Lost connection",
+          } as AiFailedAssistantMessage);
+        }
+      }
+      return true;
+    });
+  }
+
   return {
+    createOptimistically,
+
     sortedMessagesByChatId: DerivedSignal.from(baseSignal, (pool) => {
       const rv: Record<ChatId, AiChatMessage[]> = {};
 
@@ -186,104 +227,8 @@ function createStore_forChatMessages() {
     upsertMany,
     remove,
     removeByChatId,
-  };
-}
-
-function createStore_forPlaceholders() {
-  const baseSignal = new MutableSignal(
-    new DefaultMap<PlaceholderId, Placeholder>((id) => ({
-      id,
-      status: "thinking",
-      contentSoFar: [],
-    }))
-  );
-
-  function createOptimistically(): PlaceholderId {
-    const placeholderId = `ph_${nanoid()}` as PlaceholderId;
-    baseSignal.mutate((lut) => {
-      lut.getOrCreate(placeholderId);
-    });
-    return placeholderId;
-  }
-
-  function delete_(id: PlaceholderId): void {
-    baseSignal.mutate((lut) => {
-      lut.delete(id);
-    });
-  }
-
-  function addDelta(
-    placeholderId: PlaceholderId,
-    delta: AiAssistantDeltaUpdate
-  ): void {
-    baseSignal.mutate((lut) => {
-      const placeholder = lut.get(placeholderId);
-      if (!placeholder) {
-        return false; // No update needed
-      } else {
-        placeholder.status = "streaming";
-        appendDelta(placeholder.contentSoFar, delta);
-        return true;
-      }
-    });
-  }
-
-  function settle(
-    placeholderId: PlaceholderId,
-    result:
-      | { status: "completed"; content: AiAssistantContentPart[] }
-      | { status: "failed"; reason: string }
-  ): void {
-    baseSignal.mutate((lut) => {
-      const placeholder = lut.get(placeholderId);
-      if (!placeholder) {
-        return false; // No update needed
-      } else {
-        // XXX We should probably fail here if the placeholder was already settled at this point
-        // if (!placeholder.status.endsWith("ing")) {
-        //   alert(
-        //     "UNEXPECTED!!!!! Placeholder was already settled!\n\n" +
-        //       JSON.stringify(placeholder, null, 2)
-        //   );
-        // }
-
-        placeholder.status = result.status;
-        if (result.status === "failed") {
-          placeholder.errorReason = result.reason;
-          placeholder.contentSoFar = [
-            ...placeholder.contentSoFar,
-            // XXX This logic is duplicated from the backend
-            // XXX We should however, tackle this more robustly when we tackle https://linear.app/liveblocks/issue/LB-1913
-            { type: "text", text: result.reason },
-          ];
-        } else {
-          placeholder.contentSoFar = result.content;
-        }
-        return true;
-      }
-    });
-  }
-
-  function markAllLost(): void {
-    baseSignal.mutate((lut) => {
-      for (const placeholder of lut.values()) {
-        placeholder.status = "failed";
-        placeholder.errorReason = "Error: Lost connection.";
-      }
-      return true;
-    });
-  }
-
-  return {
-    placeholdersById: DerivedSignal.from(
-      baseSignal,
-      (lut) => new Map(lut.entries()) as ReadonlyMap<PlaceholderId, Placeholder>
-    ),
-    createOptimistically,
-    delete: delete_,
     addDelta,
-    settle,
-    markAllLost,
+    failAllPending,
   };
 }
 
@@ -350,11 +295,10 @@ export type Ai = {
     messageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
-  abort: (placeholderId: PlaceholderId) => Promise<AbortAiResponse>;
+  abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
     sortedMessagesByChatId: DerivedSignal<Record<string, AiChatMessage[]>>;
-    placeholders: DerivedSignal<ReadonlyMap<PlaceholderId, Placeholder>>;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -396,7 +340,6 @@ export function createAi(config: AiConfig): Ai {
     pendingCmds: new Map(),
     chats: createStore_forUserAiChats(),
     messages: createStore_forChatMessages(),
-    placeholders: createStore_forPlaceholders(),
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
     toolsByChatId: new Map<ChatId, Map<string, ClientToolDefinition>>(),
   };
@@ -490,19 +433,12 @@ export function createAi(config: AiConfig): Ai {
 
         case "delta": {
           const { id, delta } = msg;
-          context.placeholders.addDelta(id, delta);
+          context.messages.addDelta(id, delta);
           break;
         }
 
         case "settle": {
-          const { id, result, replaces } = msg;
-          batch(() => {
-            context.placeholders.settle(id, result);
-            if (replaces) {
-              context.messages.upsert(replaces);
-              context.placeholders.delete(id); // Message has been replaced, so we can forget about the placeholder
-            }
-          });
+          context.messages.upsert(msg.message);
           break;
         }
 
@@ -511,7 +447,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "rebooted":
-          context.placeholders.markAllLost();
+          context.messages.failAllPending();
           break;
 
         default:
@@ -738,7 +674,7 @@ export function createAi(config: AiConfig): Ai {
           role: "user",
           chatId,
           content,
-          createdAt: new Date().toISOString() as ISODateString, // Client date (will soon be replaced by server date)
+          createdAt: now(), // Client date (will soon be replaced by server date)
         } satisfies AiUserMessage);
 
         return sendClientMsgWithResponse({
@@ -755,25 +691,14 @@ export function createAi(config: AiConfig): Ai {
         messageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskAiResponse> => {
-        const placeholderId = context.placeholders.createOptimistically();
+        const newMessageId = context.messages.createOptimistically(chatId);
+
         const input = { chatId, messageId };
-        const output = {
-          placeholderId,
-          messageId: `ms_${nanoid()}` as MessageId,
-        };
+        const output = { messageId: newMessageId };
 
         const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
-
-        // @nimesh - This is subject to change - I wired it up without much thinking for demo purpose.
-        context.messages.upsert({
-          id: output.messageId,
-          role: "assistant-placeholder",
-          placeholderId,
-          chatId: input.chatId,
-          createdAt: new Date().toISOString() as ISODateString,
-        });
 
         const chatContext = context.contextByChatId.get(input.chatId);
         const chatTools = context.toolsByChatId.get(input.chatId);
@@ -797,15 +722,14 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      abort: (placeholderId: PlaceholderId) =>
-        sendClientMsgWithResponse({ cmd: "abort-ai", placeholderId }),
+      abort: (messageId: MessageId) =>
+        sendClientMsgWithResponse({ cmd: "abort-ai", messageId }),
 
       getStatus: () => managedSocket.getStatus(),
 
       signals: {
         chats: context.chats.signal,
         sortedMessagesByChatId: context.messages.sortedMessagesByChatId,
-        placeholders: context.placeholders.placeholdersById,
       },
 
       registerChatContext,

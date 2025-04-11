@@ -1,5 +1,6 @@
 import { assertNever } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
+import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
 
@@ -10,7 +11,6 @@ export type ISODateString = Brand<string, "ISODateString">;
 
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
-export type PlaceholderId = Brand<`ph_${string}`, "PlaceholderId">;
 export type CmdId = Brand<string, "CmdId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
@@ -118,7 +118,6 @@ type AskAIPair = DefineCmd<
   {
     input: { chatId: ChatId; messageId: MessageId; prompt?: never };
     output: {
-      placeholderId: PlaceholderId; // Optimistically assigned by client
       messageId: MessageId; // Optimistically assigned by client
     };
     copilotId?: CopilotId;
@@ -133,10 +132,10 @@ type AskAIPair = DefineCmd<
 
 type AbortAiPair = DefineCmd<
   "abort-ai",
-  // TODO Do we want to also be able to abort _all_ placeholders for a given
-  // chat ID? There should be only one at the start though.
-  { placeholderId: PlaceholderId },
-  { placeholderId: PlaceholderId }
+  // TODO Do we want to also be able to abort _all_ pending messages for
+  // a given chat ID? There should be only one at the start though.
+  { messageId: MessageId },
+  { ok: true }
 >;
 
 // -------------------------------------------------------------------------------------------------
@@ -151,9 +150,9 @@ export type ServerEvent =
   | SettleServerEvent;
 
 // Sent from the server any time it woke up from hibernation. If this happens,
-// it means that any placeholders a client is still tracking are lost track of.
-// We emit this event to connected clients, so they can mark all of their
-// placeholders as failed.
+// it means that any pending messages a client is still tracking are lost track
+// of. We emit this event to connected clients, so they can mark all of their
+// pending messages as failed.
 export type RebootedEvent = {
   event: "rebooted";
 };
@@ -171,26 +170,23 @@ export type ErrorServerEvent = {
 };
 
 /**
- * A "delta" event is sent to append an incoming delta chunk to a placeholder.
+ * A "delta" event is sent to append an incoming delta chunk to an assistant
+ * message.
  */
 export type DeltaServerEvent = {
   event: "delta";
-  id: PlaceholderId;
+  id: MessageId;
   delta: AiAssistantDeltaUpdate;
 };
 
 /**
  * A "settle" event happens after 0 or more "delta" messages, and signifies the
- * end of a stream of updates to a placeholder. A placeholder can be settled as
- * a success, or an error.
+ * end of a stream of updates to a pending assistant message. This event turns
+ * a pending message into either a completed or failed assistant message.
  */
 export type SettleServerEvent = {
   event: "settle";
-  id: PlaceholderId;
-  result:
-    | { status: "completed"; content: AiAssistantContentPart[] } // XXX Not decided yet!
-    | { status: "failed"; reason: string }; // XXX Not decided yet!
-  replaces: AiAssistantMessage | null;
+  message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
   kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
@@ -206,14 +202,6 @@ export type AiChat = {
   lastMessageAt?: ISODateString; // Optional since some chats might have no messages
   deletedAt?: ISODateString; // Optional for soft-deleted chats
 };
-
-/**
- * 1. thinking, server called AI, but no response yet
- * 2. responding, AI is responding via stream
- * 3. complete, AI has responded
- * 4. failed, AI failed to respond
- */
-export type AiStatus = "thinking" | "responding" | "complete" | "failed";
 
 export type AiToolDefinition = {
   name: string;
@@ -304,28 +292,47 @@ export type AiUserMessage = {
   deletedAt?: ISODateString;
 };
 
-export type AiAssistantMessage = {
+export type AiAssistantMessage = Relax<
+  | AiCompletedAssistantMessage
+  | AiPendingAssistantMessage
+  | AiFailedAssistantMessage
+>;
+
+export type AiCompletedAssistantMessage = {
   id: MessageId;
   chatId: ChatId;
   role: "assistant";
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+
+  status: "completed";
 };
 
-export type AiAssistantPlaceholderMessage = {
+export type AiFailedAssistantMessage = {
   id: MessageId;
   chatId: ChatId;
-  role: "assistant-placeholder";
-  placeholderId: PlaceholderId;
+  role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+
+  status: "failed";
+  contentSoFar: AiAssistantContentPart[];
+  errorReason: string;
 };
 
-export type AiChatMessage =
-  | AiUserMessage
-  | AiAssistantMessage
-  | AiAssistantPlaceholderMessage;
+export type AiPendingAssistantMessage = {
+  id: MessageId;
+  chatId: ChatId;
+  role: "assistant";
+  createdAt: ISODateString;
+  deletedAt?: ISODateString;
+
+  status: "pending";
+  contentSoFar: AiAssistantContentPart[];
+};
+
+export type AiChatMessage = AiUserMessage | AiAssistantMessage;
 
 export type CopilotContext = {
   value: string;

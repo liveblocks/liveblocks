@@ -1,13 +1,10 @@
 import type {
   AiAssistantMessage,
-  AiAssistantPlaceholderMessage,
   AiChatMessage,
   AiUserMessage,
   ChatId,
-  PlaceholderId,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useSignal } from "@liveblocks/react/_private";
 import type { ComponentType, HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -74,10 +71,7 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
                 overrides={overrides}
               />
             );
-          } else if (
-            message.role === "assistant" ||
-            message.role === "assistant-placeholder"
-          ) {
+          } else if (message.role === "assistant") {
             return <AssistantChatMessage key={message.id} message={message} />;
           }
 
@@ -287,7 +281,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: AiAssistantMessage | AiAssistantPlaceholderMessage;
+  message: AiAssistantMessage;
   /**
    * Override the component's strings.
    */
@@ -311,110 +305,69 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   }>;
 };
 
-function StreamingPlaceholder(props: {
-  placeholderId: PlaceholderId;
-  TextPart: ComponentType<AssistantMessageTextPartProps>;
-  ReasoningPart: ComponentType<AssistantMessageReasoningPartProps>;
-  ToolCallPart: ComponentType<AssistantMessageToolCallPartProps>;
-}) {
-  const client = useClient();
-  const placeholders = useSignal(client.ai.signals.placeholders);
-  const placeholder = placeholders.get(props.placeholderId);
-  const TextPart = props.TextPart;
-  const ToolCallPart = props.ToolCallPart;
-  const ReasoningPart = props.ReasoningPart;
-  return (
-    <>
-      <div style={{ float: "right" }}>
-        <i>
-          {placeholder?.status ?? "huh?"}
-          {placeholder?.status?.endsWith("ing") ? "..." : ""}
-          {placeholder?.errorReason ? `: ${placeholder.errorReason}` : ""}
-        </i>{" "}
-        {placeholder?.status?.endsWith("ing") ? (
-          <button
-            style={{
-              all: "unset",
-              cursor: "pointer",
-              border: "1px solid red",
-              padding: "8px 13px",
-              color: "red",
-            }}
-            onClick={() => {
-              void client.ai.abort(placeholder.id);
-            }}
-          >
-            Abort
-          </button>
-        ) : null}
-      </div>
-      <div>
-        {placeholder
-          ? placeholder.contentSoFar.map((part, index) => {
-              switch (part.type) {
-                case "text":
-                  return <TextPart key={index} text={part.text} />;
-                case "tool-call":
-                  return (
-                    <ToolCallPart
-                      key={index}
-                      toolCallId={part.toolCallId}
-                      toolName={part.toolName}
-                      args={part.args}
-                    />
-                  );
-                case "reasoning":
-                  return <ReasoningPart key={index} text={part.text} />;
-              }
-            })
-          : null}
-      </div>
-    </>
-  );
-}
-
 export const DefaultAssistantChatMessage = forwardRef<
   HTMLDivElement,
   AssistantChatMessageProps
 >(({ message, className, components, ...props }, forwardedRef) => {
+  const client = useClient();
   const TextPart = components?.TextPart ?? DefaultAssistantMessageTextPart;
   const ToolCallPart =
     components?.ToolCallPart ?? DefaultAssistantMessageToolCallPart;
   const ReasoningPart =
     components?.ReasoningPart ?? DefaultAssistantMessageReasoningPart;
+
+  const content = message.content ?? message.contentSoFar;
   return (
     <div
       ref={forwardedRef}
       className={classNames("lb-root lb-assistant-chat-message", className)}
       {...props}
     >
+      {message.status !== "completed" ? (
+        <div style={{ float: "right" }}>
+          {message.status === "pending" ? (
+            <i>Generating response...</i>
+          ) : (
+            <i style={{ color: "red" }}>{message.errorReason}</i>
+          )}
+
+          {message.status === "pending" ? (
+            <button
+              style={{
+                all: "unset",
+                cursor: "pointer",
+                border: "1px solid red",
+                padding: "8px 13px",
+                color: "red",
+              }}
+              onClick={() => {
+                void client.ai.abort(message.id);
+              }}
+            >
+              Abort
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="lb-assistant-chat-message-content">
-        {message.role === "assistant" ? (
-          message.content.map((part, index) => {
-            switch (part.type) {
-              case "text":
-                return <TextPart key={index} text={part.text} />;
-              case "tool-call":
-                return (
-                  <ToolCallPart
-                    key={index}
-                    toolCallId={part.toolCallId}
-                    toolName={part.toolName}
-                    args={part.args}
-                  />
-                );
-              case "reasoning":
-                return <ReasoningPart key={index} text={part.text} />;
-            }
-          })
-        ) : (
-          <StreamingPlaceholder
-            placeholderId={message.placeholderId}
-            TextPart={TextPart}
-            ToolCallPart={ToolCallPart}
-            ReasoningPart={ReasoningPart}
-          />
-        )}
+        {content.map((part, index) => {
+          switch (part.type) {
+            case "text":
+              return <TextPart key={index} text={part.text} />;
+            case "tool-call":
+              return (
+                <ToolCallPart
+                  key={index}
+                  toolCallId={part.toolCallId}
+                  toolName={part.toolName}
+                  args={part.args}
+                />
+              );
+            case "reasoning":
+              return <ReasoningPart key={index} text={part.text} />;
+          }
+        })}
       </div>
     </div>
   );
