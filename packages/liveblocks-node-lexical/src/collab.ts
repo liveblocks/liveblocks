@@ -92,6 +92,7 @@ export function createNoOpProvider(): Provider {
       off: emptyFunction,
       on: emptyFunction,
       setLocalState: emptyFunction,
+      setLocalStateField: emptyFunction,
     },
     connect: emptyFunction,
     disconnect: emptyFunction,
