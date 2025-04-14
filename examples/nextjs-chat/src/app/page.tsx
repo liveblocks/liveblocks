@@ -221,8 +221,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
   }
 
-  const [preset, setPreset] = useState<string | undefined>(undefined);
-
   async function ask(text: string) {
     try {
       // Creates the user message
@@ -389,7 +387,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               ask(ev.currentTarget.textContent);
             }
           }}
-          defaultValue={preset}
         />
         <div
           style={{
