@@ -251,18 +251,18 @@ export type AiTextDelta = {
   textDelta: string;
 };
 
-export type AiReasoningDelta = {
-  // NOTE: This chunk type is { type: 'reasoning', textDelta } in the Vercel AI
-  // SDK, but I'm renaming it to reasoning-delta here, to distinguish it better
-  // from the { type: "reasoning", text } part!
-  type: "reasoning-delta";
-  textDelta: string;
-};
+// NOTE: This chunk type is { type: 'reasoning', textDelta } in the Vercel AI
+// SDK, but I'm renaming it to reasoning-delta here, to distinguish it better
+// from the { type: "reasoning", text } part!
+export type AiReasoningDelta = Relax<
+  | { type: "reasoning-delta"; textDelta: string }
+  | { type: "reasoning-delta"; signature: string }
+>;
 
 export type AiReasoningPart = {
   type: "reasoning";
   text: string;
-  // signature?: string; // Unsure what this is used for yet
+  signature?: string;
 };
 
 export type AiUploadedImagePart = {
@@ -394,8 +394,13 @@ export function appendDelta(
     case "reasoning-delta":
       if (lastPart?.type === "reasoning") {
         lastPart.text += delta.textDelta;
+        lastPart.signature ??= delta.signature;
       } else {
-        content.push({ type: "reasoning", text: delta.textDelta });
+        content.push({
+          type: "reasoning",
+          text: delta.textDelta ?? "",
+          signature: delta.signature,
+        });
       }
       break;
 
