@@ -40,7 +40,8 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*"
+    "@liveblocks/jest-config": "*",
+    "@liveblocks/tsup-config": "*"
   },
   "sideEffects": false,
   "bugs": {

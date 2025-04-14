@@ -233,12 +233,16 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
     return files.flat();
   }
 
+  const dtsRegex = /\.d\.ts(\.map)?$/;
+  const declarationMapFileRegex = /("file"\s*:\s*".*?\.d)\.ts/;
+  const sourceMappingUrlRegex = /^(\/\/.*sourceMappingURL=.*\.d)\.ts\.map/gm;
+
   /**
    * @returns {import('rollup').Plugin}
    */
-  function renameDcts() {
+  function createDcts() {
     return {
-      name: "rename-d-cts",
+      name: "create-d-cts",
       async writeBundle() {
         const files = await getFiles(path.resolve("dist"));
         const dtsFiles = files.filter(
@@ -247,8 +251,29 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
 
         await Promise.all(
           dtsFiles.map(async (file) => {
-            const renamedFile = file.replace(/\.d\.ts(\.map)?$/, ".d.cts$1");
-            await fs.rename(file, renamedFile);
+            // Rename .d.ts and .d.ts.map files to .d.cts and .d.cts.map
+            const renamedFile = file.replace(dtsRegex, ".d.cts$1");
+            await fs.copyFile(file, renamedFile);
+
+            // Update .d.cts files to point to their .d.cts.map file
+            if (file.endsWith(".d.ts")) {
+              const content = await fs.readFile(renamedFile, "utf-8");
+              await fs.writeFile(
+                renamedFile,
+                content.replace(sourceMappingUrlRegex, "$1.cts.map"),
+                "utf-8"
+              );
+            }
+
+            // Update .d.cts.map files to point to their .d.cts file
+            if (file.endsWith(".d.ts.map")) {
+              const content = await fs.readFile(renamedFile, "utf-8");
+              await fs.writeFile(
+                renamedFile,
+                content.replace(declarationMapFileRegex, "$1.cts"),
+                "utf-8"
+              );
+            }
           })
         );
       },
@@ -315,17 +340,18 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           styles({
             files: styleFiles,
           }),
-        // Build .d.ts and .d.cts files
-        typescript({
-          outDir: "dist",
-          declarationDir: "dist",
-          emitDeclarationOnly: true,
-          declaration: true,
-          declarationMap: true,
-          exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
-        }),
-        // Rename .d.ts files to .d.cts
-        format === "cjs" && renameDcts(),
+        // Build .d.ts files (only run once)
+        format === "cjs" &&
+          typescript({
+            outDir: "dist",
+            declarationDir: "dist",
+            emitDeclarationOnly: true,
+            declaration: true,
+            declarationMap: true,
+            exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+          }),
+        // Duplicate .d.ts files (and their maps) as .d.cts (only run once)
+        format === "cjs" && createDcts(),
       ].filter(Boolean),
       onwarn(warning, warn) {
         if (

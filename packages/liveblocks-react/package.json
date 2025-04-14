@@ -72,6 +72,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@liveblocks/tsup-config": "*",
     "@liveblocks/query-parser": "^0.1.1",
     "@testing-library/jest-dom": "6.4.6",
     "@testing-library/react": "14.1.2",
