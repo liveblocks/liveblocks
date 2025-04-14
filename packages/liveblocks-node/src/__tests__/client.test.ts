@@ -1012,6 +1012,66 @@ describe("client", () => {
     });
   });
 
+  describe("unsubscribe from thread", () => {
+    test("should not return anything when unsubscribeFromThread receives a successful response", async () => {
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/unsubscribe`,
+          () => {
+            return HttpResponse.json(undefined, { status: 204 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.unsubscribeFromThread({
+          roomId: "room1",
+          threadId: "thread1",
+          data: { userId: "user-1" },
+        })
+      ).resolves.not.toThrow();
+    });
+
+    test("should throw a LiveblocksError when unsubscribeFromThread receives an error response", async () => {
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/unsubscribe`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.unsubscribeFromThread({
+          roomId: "room1",
+          threadId: "thread1",
+          data: { userId: "user-1" },
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("get comment", () => {
     test("should return the specified comment when getComment receives a successful response", async () => {
       server.use(
