@@ -122,6 +122,12 @@ type AskAIPair = DefineCmd<
       messageId: MessageId; // Optimistically assigned by client
     };
     copilotId?: CopilotId;
+    /**
+     * A client ID unique to this command. Later delta and settle messages will
+     * reference this client ID, which is important to ensure that tool calls
+     * with side effects will only get executed once, and only by the client
+     * that originally made the request that produced the tool call.
+     */
     clientId: ClientId;
     stream: boolean;
     tools?: AiToolDefinition[];
@@ -178,6 +184,7 @@ export type ErrorServerEvent = {
 export type DeltaServerEvent = {
   event: "delta";
   id: MessageId;
+  /** The client ID that originally made the request that led to this event */
   clientId: ClientId;
   delta: AiAssistantDeltaUpdate;
 };
@@ -189,8 +196,9 @@ export type DeltaServerEvent = {
  */
 export type SettleServerEvent = {
   event: "settle";
-  message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
+  /** The client ID that originally made the request that led to this event */
   clientId: ClientId;
+  message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
   kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
