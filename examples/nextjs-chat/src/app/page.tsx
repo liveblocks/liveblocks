@@ -192,7 +192,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
 
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
-  >("co_T6jQlhS" as CopilotId);
+  >();
   const [streaming, setStreaming] = useState(true);
   const [maxTimeout, setMaxTimeout] = useState<number | undefined>(undefined);
 
