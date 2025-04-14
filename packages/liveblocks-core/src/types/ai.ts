@@ -12,6 +12,7 @@ export type ISODateString = Brand<string, "ISODateString">;
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
 export type CmdId = Brand<string, "CmdId">;
+export type ClientId = Brand<string, "ClientId">;
 export type CopilotId = Brand<`co_${string}`, "CopilotId">;
 
 // A client WebSocket message is always a command to the server
@@ -121,7 +122,7 @@ type AskAIPair = DefineCmd<
       messageId: MessageId; // Optimistically assigned by client
     };
     copilotId?: CopilotId;
-    clientId: string;
+    clientId: ClientId;
     stream: boolean;
     tools?: AiToolDefinition[];
     toolChoice?: ToolChoice;
@@ -177,7 +178,7 @@ export type ErrorServerEvent = {
 export type DeltaServerEvent = {
   event: "delta";
   id: MessageId;
-  clientId: string;
+  clientId: ClientId;
   delta: AiAssistantDeltaUpdate;
 };
 
@@ -189,7 +190,7 @@ export type DeltaServerEvent = {
 export type SettleServerEvent = {
   event: "settle";
   message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
-  clientId: string;
+  clientId: ClientId;
   kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 

@@ -35,6 +35,7 @@ import type {
   ChatId,
   ClearChatResponse,
   ClientAiMsg,
+  ClientId,
   CmdId,
   CopilotContext,
   CopilotId,
@@ -366,7 +367,7 @@ export function createAi(config: AiConfig): Ai {
     config.enableDebugLogging,
     false // AI doesn't have actors (yet, but it will)
   );
-  const clientId = nanoid();
+  const clientId = nanoid(7) as ClientId;
 
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
