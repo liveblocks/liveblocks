@@ -54,6 +54,7 @@ export {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
 } from "./convert-plain-data";
 export type {

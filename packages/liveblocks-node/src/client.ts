@@ -38,6 +38,8 @@ import type {
   RoomSubscriptionSettings,
   SerializedCrdt,
   StorageUpdate,
+  SubscriptionData,
+  SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
@@ -49,6 +51,7 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
   createManagedPool,
   createNotificationSettings,
@@ -1610,6 +1613,35 @@ export class Liveblocks {
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+  }
+
+  /**
+   * Subscribe a user to a thread.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to subscribe to.
+   * @param params.data.userId The user ID of the user to subscribe to the thread.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The thread subscription.
+   */
+  public async subscribeToThread(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<SubscriptionData> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/subscribe`,
+      { userId: params.data.userId },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return convertToSubscriptionData(
+      (await res.json()) as SubscriptionDataPlain
+    );
   }
 
   /**
