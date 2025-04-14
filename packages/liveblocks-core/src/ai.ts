@@ -99,8 +99,8 @@ type AiContext = {
       reject: (reason: unknown) => void;
     }
   >;
-  chats: ReturnType<typeof createStore_forUserAiChats>;
-  messages: ReturnType<typeof createStore_forChatMessages>;
+  chatsStore: ReturnType<typeof createStore_forUserAiChats>;
+  messagesStore: ReturnType<typeof createStore_forChatMessages>;
   contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
   toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
 };
@@ -373,8 +373,8 @@ export function createAi(config: AiConfig): Ai {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
     pendingCmds: new Map(),
-    chats: createStore_forUserAiChats(),
-    messages: createStore_forChatMessages(),
+    chatsStore: createStore_forUserAiChats(),
+    messagesStore: createStore_forChatMessages(),
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
     toolsByChatId: new Map<ChatId, Map<string, ClientToolDefinition>>(),
   };
@@ -468,7 +468,7 @@ export function createAi(config: AiConfig): Ai {
 
         case "delta": {
           const { id, delta } = msg;
-          const chatId = context.messages.getMessageById(id)?.chatId;
+          const chatId = context.messagesStore.getMessageById(id)?.chatId;
           if (
             delta.type === "tool-call" &&
             msg.clientId === clientId &&
@@ -479,12 +479,12 @@ export function createAi(config: AiConfig): Ai {
               tool.execute(delta.args);
             }
           }
-          context.messages.addDelta(id, delta);
+          context.messagesStore.addDelta(id, delta);
           break;
         }
 
         case "settle": {
-          context.messages.upsert(msg.message);
+          context.messagesStore.upsert(msg.message);
           break;
         }
 
@@ -493,7 +493,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "rebooted":
-          context.messages.failAllPending();
+          context.messagesStore.failAllPending();
           break;
 
         default:
@@ -502,37 +502,37 @@ export function createAi(config: AiConfig): Ai {
     } else {
       switch (msg.cmd) {
         case "get-chats":
-          context.chats.update(msg.chats);
+          context.chatsStore.update(msg.chats);
           break;
 
         case "create-chat":
-          context.chats.update([msg.chat]);
+          context.chatsStore.update([msg.chat]);
           break;
 
         case "delete-chat":
-          context.chats.remove(msg.chatId);
-          context.messages.removeByChatId(msg.chatId);
+          context.chatsStore.remove(msg.chatId);
+          context.messagesStore.removeByChatId(msg.chatId);
           break;
 
         case "get-messages":
-          context.messages.upsertMany(msg.messages);
+          context.messagesStore.upsertMany(msg.messages);
           break;
 
         case "attach-user-message":
-          context.messages.upsert(msg.message);
+          context.messagesStore.upsert(msg.message);
           break;
 
         case "delete-message":
-          context.messages.remove(msg.messageId);
+          context.messagesStore.remove(msg.messageId);
           break;
 
         case "clear-chat":
-          context.messages.removeByChatId(msg.chatId);
+          context.messagesStore.removeByChatId(msg.chatId);
           break;
 
         case "ask-ai":
           if (msg.message) {
-            context.messages.upsert(msg.message);
+            context.messagesStore.upsert(msg.message);
           } else {
             // XXX Handle the case for one-off ask!
             // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
@@ -712,7 +712,7 @@ export function createAi(config: AiConfig): Ai {
         message: string
       ) => {
         const content: AiUserContentPart[] = [{ type: "text", text: message }];
-        const newMessageId = context.messages.createOptimistically(
+        const newMessageId = context.messagesStore.createOptimistically(
           chatId,
           "user",
           content
@@ -731,7 +731,7 @@ export function createAi(config: AiConfig): Ai {
         messageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskAiResponse> => {
-        const targetMessageId = context.messages.createOptimistically(
+        const targetMessageId = context.messagesStore.createOptimistically(
           chatId,
           "assistant"
         );
@@ -770,8 +770,8 @@ export function createAi(config: AiConfig): Ai {
       getStatus: () => managedSocket.getStatus(),
 
       signals: {
-        chats: context.chats.signal,
-        sortedMessagesByChatId: context.messages.sortedMessagesByChatId,
+        chats: context.chatsStore.signal,
+        sortedMessagesByChatId: context.messagesStore.sortedMessagesByChatId,
       },
 
       registerChatContext,
