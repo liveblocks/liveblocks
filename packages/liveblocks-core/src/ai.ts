@@ -731,20 +731,17 @@ export function createAi(config: AiConfig): Ai {
         messageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskAiResponse> => {
-        const newMessageId = context.messages.createOptimistically(
+        const targetMessageId = context.messages.createOptimistically(
           chatId,
           "assistant"
         );
-
-        const input = { chatId, messageId };
-        const output = { messageId: newMessageId };
 
         const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
-        const chatContext = context.contextByChatId.get(input.chatId);
-        const chatTools = context.toolsByChatId.get(input.chatId);
+        const chatContext = context.contextByChatId.get(chatId);
+        const chatTools = context.toolsByChatId.get(chatId);
         const tools: AiToolDefinition[] | undefined = chatTools
           ? Array.from(chatTools.entries()).map(([name, tool]) => ({
               name,
@@ -755,8 +752,9 @@ export function createAi(config: AiConfig): Ai {
 
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
-          input,
-          output,
+          chatId,
+          sourceMessageId: messageId,
+          targetMessageId,
           copilotId,
           clientId,
           stream,

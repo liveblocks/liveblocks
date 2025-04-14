@@ -117,10 +117,23 @@ type ClearChatPair = DefineCmd<
 type AskAIPair = DefineCmd<
   "ask-ai",
   {
-    input: { chatId: ChatId; messageId: MessageId; prompt?: never };
-    output: {
-      messageId: MessageId; // Optimistically assigned by client
-    };
+    chatId: ChatId;
+
+    /** The chat message to use as the source to create the assistant response. */
+    sourceMessageId: MessageId;
+
+    /**
+     * The new (!) message ID to output the assistant response into. This ID
+     * should be a non-existing message ID, optimistically assigned by the
+     * client. The output message will be created as a child to the source
+     * message ID.
+     */
+    targetMessageId: MessageId;
+
+    /**
+     * The Copilot ID to use for this request. If not provided, the default
+     * Copilot ID (as set in your dashboard) will be used.
+     */
     copilotId?: CopilotId;
     /**
      * A client ID unique to this command. Later delta and settle messages will
