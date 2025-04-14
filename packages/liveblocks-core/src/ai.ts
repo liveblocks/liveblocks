@@ -31,7 +31,7 @@ import type {
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
-  AttachUserMessageResponse,
+  AddUserMessageResponse,
   ChatId,
   ClearChatResponse,
   ClientAiMsg,
@@ -314,11 +314,11 @@ export type Ai = {
     messageId: MessageId
   ) => Promise<DeleteMessageResponse>;
   clearChat: (chatId: ChatId) => Promise<ClearChatResponse>;
-  attachUserMessage: (
+  addUserMessage: (
     chatId: ChatId,
     parentMessageId: MessageId | null,
     message: string
-  ) => Promise<AttachUserMessageResponse>;
+  ) => Promise<AddUserMessageResponse>;
   ask: (
     chatId: ChatId,
     messageId: MessageId,
@@ -518,7 +518,7 @@ export function createAi(config: AiConfig): Ai {
           context.messagesStore.upsertMany(msg.messages);
           break;
 
-        case "attach-user-message":
+        case "add-user-message":
           context.messagesStore.upsert(msg.message);
           break;
 
@@ -706,7 +706,7 @@ export function createAi(config: AiConfig): Ai {
       clearChat: (chatId: ChatId) =>
         sendClientMsgWithResponse({ cmd: "clear-chat", chatId }),
 
-      attachUserMessage: (
+      addUserMessage: (
         chatId: ChatId,
         parentMessageId: MessageId | null,
         message: string
@@ -718,7 +718,7 @@ export function createAi(config: AiConfig): Ai {
           content
         );
         return sendClientMsgWithResponse({
-          cmd: "attach-user-message",
+          cmd: "add-user-message",
           id: newMessageId,
           chatId,
           parentMessageId,

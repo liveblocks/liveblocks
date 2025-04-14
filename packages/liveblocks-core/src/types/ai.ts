@@ -37,7 +37,7 @@ type CommandPair =
   | CreateChatPair
   | DeleteChatPair
   | GetMessagesPair
-  | AttachUserMessagePair
+  | AddUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
   | AskAIPair
@@ -50,7 +50,7 @@ export type GetChatsCmd = ClientCmd<GetChatsPair>;
 export type CreateChatCmd = ClientCmd<CreateChatPair>;
 export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
 export type GetMessagesCmd = ClientCmd<GetMessagesPair>;
-export type AttachUserMessageCmd = ClientCmd<AttachUserMessagePair>;
+export type AddUserMessageCmd = ClientCmd<AddUserMessagePair>;
 export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmd<ClearChatPair>;
 export type AskAiCmd = ClientCmd<AskAIPair>;
@@ -60,8 +60,7 @@ export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
 export type DeleteChatResponse = ServerCmdResponse<DeleteChatPair>;
 export type GetMessagesResponse = ServerCmdResponse<GetMessagesPair>;
-export type AttachUserMessageResponse =
-  ServerCmdResponse<AttachUserMessagePair>;
+export type AddUserMessageResponse = ServerCmdResponse<AddUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
 export type AskAiResponse = ServerCmdResponse<AskAIPair>;
@@ -91,8 +90,8 @@ type GetMessagesPair = DefineCmd<
   { chatId: ChatId; messages: AiChatMessage[]; nextCursor: Cursor | null }
 >;
 
-type AttachUserMessagePair = DefineCmd<
-  "attach-user-message",
+type AddUserMessagePair = DefineCmd<
+  "add-user-message",
   {
     id: MessageId; // New message ID, optimistically assigned by client
     chatId: ChatId;
