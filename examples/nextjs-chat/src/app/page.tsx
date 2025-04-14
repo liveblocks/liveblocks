@@ -226,7 +226,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   async function ask(text: string) {
     try {
       // Creates the user message
-      const { message } = await client.ai.attachUserMessage(
+      const { message } = await client.ai.addUserMessage(
         chatId,
         parentMessageId,
         text
@@ -282,7 +282,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                       );
                       if (answer !== null) {
                         try {
-                          const { message } = await client.ai.attachUserMessage(
+                          const { message } = await client.ai.addUserMessage(
                             chatId,
                             messageAbove(props.message.id)?.id ?? null,
                             answer
