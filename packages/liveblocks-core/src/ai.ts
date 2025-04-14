@@ -22,6 +22,7 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
+  AddUserMessageResponse,
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
@@ -31,7 +32,6 @@ import type {
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
-  AddUserMessageResponse,
   ChatId,
   ClearChatResponse,
   ClientAiMsg,
