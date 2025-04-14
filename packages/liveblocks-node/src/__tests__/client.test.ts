@@ -941,6 +941,8 @@ describe("client", () => {
 
   describe("subscribe to thread", () => {
     test("should return the created subscription when subscribeToThread receives a successful response", async () => {
+      const now = new Date();
+
       server.use(
         http.post(
           `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscribe`,
@@ -949,7 +951,7 @@ describe("client", () => {
               {
                 kind: "thread",
                 subjectId: "thread1",
-                createdAt: new Date().toISOString(),
+                createdAt: now.toISOString(),
                 userId: "user-1",
               },
               { status: 200 }
@@ -969,7 +971,7 @@ describe("client", () => {
       ).resolves.toEqual({
         kind: "thread",
         subjectId: "thread1",
-        createdAt: new Date().toISOString(),
+        createdAt: now,
         userId: "user-1",
       });
     });
@@ -1058,6 +1060,111 @@ describe("client", () => {
           roomId: "room1",
           threadId: "thread1",
           data: { userId: "user-1" },
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get thread subscriptions", () => {
+    test("should return the thread subscription when subgetThreadSubscriptionsscribeToThread receives a successful response", async () => {
+      const now = new Date();
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscriptions`,
+          () => {
+            return HttpResponse.json(
+              {
+                data: [
+                  {
+                    kind: "thread",
+                    subjectId: "thread1",
+                    createdAt: now.toISOString(),
+                    userId: "user-1",
+                  },
+                  {
+                    kind: "thread",
+                    subjectId: "thread1",
+                    createdAt: now.toISOString(),
+                    userId: "user-2",
+                  },
+                  {
+                    kind: "thread",
+                    subjectId: "thread1",
+                    createdAt: now.toISOString(),
+                    userId: "user-3",
+                  },
+                ],
+              },
+              { status: 200 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getThreadSubscriptions({
+          roomId: "room1",
+          threadId: "thread1",
+        })
+      ).resolves.toEqual({
+        data: [
+          {
+            kind: "thread",
+            subjectId: "thread1",
+            createdAt: now,
+            userId: "user-1",
+          },
+          {
+            kind: "thread",
+            subjectId: "thread1",
+            createdAt: now,
+            userId: "user-2",
+          },
+          {
+            kind: "thread",
+            subjectId: "thread1",
+            createdAt: now,
+            userId: "user-3",
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when getThreadSubscriptions receives an error response", async () => {
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscriptions`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.getThreadSubscriptions({
+          roomId: "room1",
+          threadId: "thread1",
         });
         // If it doesn't throw, fail the test.
         expect(true).toBe(false);

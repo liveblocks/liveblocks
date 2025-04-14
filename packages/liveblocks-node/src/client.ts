@@ -44,6 +44,8 @@ import type {
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
 } from "@liveblocks/core";
 import {
   checkBounds,
@@ -53,6 +55,7 @@ import {
   convertToInboxNotificationData,
   convertToSubscriptionData,
   convertToThreadData,
+  convertToUserSubscriptionData,
   createManagedPool,
   createNotificationSettings,
   LiveObject,
@@ -1385,6 +1388,39 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
     return (await res.json()) as Promise<ThreadParticipants>;
+  }
+
+  /**
+   * Gets a thread's subscriptions.
+   *
+   * @param params.roomId The room ID to get the thread subscriptions from.
+   * @param params.threadId The thread ID to get the subscriptions from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns An array of subscriptions.
+   */
+  public async getThreadSubscriptions(
+    params: { roomId: string; threadId: string },
+    options?: RequestOptions
+  ): Promise<{ data: UserSubscriptionData[] }> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/threads/${threadId}/subscriptions`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const { data } = (await res.json()) as {
+      data: UserSubscriptionDataPlain[];
+    };
+
+    return {
+      data: data.map(convertToUserSubscriptionData),
+    };
   }
 
   /**
