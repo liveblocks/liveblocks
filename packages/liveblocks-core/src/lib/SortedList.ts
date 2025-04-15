@@ -71,6 +71,35 @@ export class SortedList<T> {
   }
 
   /**
+   * Removes all values from the sorted list, making it empty again.
+   */
+  clear(): void {
+    this.#data.length = 0;
+  }
+
+  /**
+   * Removes the first value matching the predicate.
+   */
+  removeBy(
+    predicate: (item: T) => boolean,
+    limit: number = Number.POSITIVE_INFINITY
+  ): boolean {
+    let deleted = 0;
+    for (let i = 0; i < this.#data.length; i++) {
+      if (predicate(this.#data[i])) {
+        this.#data.splice(i, 1);
+        deleted++;
+        if (deleted >= limit) {
+          break;
+        } else {
+          i--;
+        }
+      }
+    }
+    return deleted > 0;
+  }
+
+  /**
    * Removes the given value from the sorted list, if it exists. The given
    * value must be `===` to one of the list items. Only the first entry will be
    * removed if the element exists in the sorted list multiple times.
@@ -98,5 +127,13 @@ export class SortedList<T> {
 
   [Symbol.iterator](): IterableIterator<T> {
     return this.#data[Symbol.iterator]();
+  }
+
+  find(predicate: (value: T, index: number) => unknown): T | undefined {
+    return this.#data.find(predicate);
+  }
+
+  get rawArray(): readonly T[] {
+    return this.#data;
   }
 }

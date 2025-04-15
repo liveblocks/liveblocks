@@ -1,10 +1,12 @@
 import type {
   AiAssistantMessage,
   AiChatMessage,
+  AiPendingAssistantMessage,
   AiUserMessage,
   ChatId,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
+import { useSignal } from "@liveblocks/react/_private";
 import type { ComponentType, HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -29,7 +31,7 @@ export type ChatMessagesProps = Omit<
   /**
    * The messages to display.
    */
-  messages: AiChatMessage[];
+  messages: readonly AiChatMessage[];
   /**
    * The components displayed in the chat messages.
    */
@@ -306,6 +308,46 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 export const DefaultAssistantChatMessage = forwardRef<
+  HTMLDivElement,
+  AssistantChatMessageProps
+>((props, forwardedRef) => {
+  return props.message.status === "pending" ? (
+    <PendingDefaultAssistantChatMessage
+      {...props}
+      message={props.message}
+      ref={forwardedRef}
+    />
+  ) : (
+    <RealDefaultAssistantChatMessage {...props} ref={forwardedRef} />
+  );
+});
+
+export type PendingAssistantChatMessageProps = Omit<
+  AssistantChatMessageProps,
+  "message"
+> & { message: AiPendingAssistantMessage };
+
+const PendingDefaultAssistantChatMessage = forwardRef<
+  HTMLDivElement,
+  PendingAssistantChatMessageProps
+>((props, forwardedRef) => {
+  const client = useClient();
+  const contentSoFar =
+    useSignal(
+      client.ai.signals.pendingContent,
+      (lut) => lut[props.message.id]
+    ) ?? props.message.contentSoFar;
+  const message = { ...props.message, contentSoFar };
+  return (
+    <RealDefaultAssistantChatMessage
+      {...props}
+      message={message}
+      ref={forwardedRef}
+    />
+  );
+});
+
+const RealDefaultAssistantChatMessage = forwardRef<
   HTMLDivElement,
   AssistantChatMessageProps
 >(({ message, className, components, ...props }, forwardedRef) => {

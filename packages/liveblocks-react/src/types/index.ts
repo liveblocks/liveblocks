@@ -186,8 +186,8 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
-export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<AiChatMessage[], "messages">; // prettier-ignore
-export type CopilotChatMessagesAsyncResult = PagedAsyncResult<AiChatMessage[], "messages">; // prettier-ignore
+export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<readonly AiChatMessage[], "messages">; // prettier-ignore
+export type CopilotChatMessagesAsyncResult = PagedAsyncResult<readonly AiChatMessage[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore

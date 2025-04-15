@@ -1272,18 +1272,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
             }
 
             const page = result.data;
+            const messages = this.#client.ai.signals
+              .getMessagesSignalByChatId(chatId)
+              .get().rawArray;
             return {
               isLoading: false,
-              messages:
-                this.#client.ai.signals.sortedMessagesByChatId.get()[chatId] ??
-                [],
+              messages,
               hasFetchedAll: page.hasFetchedAll,
               isFetchingMore: page.isFetchingMore,
               fetchMoreError: page.fetchMoreError,
               fetchMore: page.fetchMore,
             };
-          },
-          shallow
+          }
         );
 
         return { signal, waitUntilLoaded: resource.waitUntilLoaded };
