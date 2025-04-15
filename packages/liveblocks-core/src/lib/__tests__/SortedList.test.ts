@@ -88,6 +88,42 @@ describe("SortedList", () => {
     expect(Array.from(s)).toEqual([-555, 13, 88, 88]);
   });
 
+  test("removing all items (clear)", () => {
+    const s = SortedList.from(
+      [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
+      asc
+    );
+    s.clear();
+    expect(Array.from(s)).toEqual([]);
+  });
+
+  test("removing items by predicate (without limit)", () => {
+    const s = SortedList.from(
+      [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
+      asc
+    );
+    s.removeBy((n) => n % 2 !== 0);
+    expect(Array.from(s)).toEqual([0, 42, 88, 88, 88]);
+  });
+
+  test("removing items by predicate (with limit=2)", () => {
+    const s = SortedList.from(
+      [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
+      asc
+    );
+    s.removeBy((n) => n % 2 !== 0, /* limit */ 2);
+    expect(Array.from(s)).toEqual([0, Math.PI, 13, 13, 42, 88, 88, 88]);
+  });
+
+  test("removing items by predicate (with limit=3)", () => {
+    const s = SortedList.from(
+      [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
+      asc
+    );
+    s.removeBy((n) => n % 2 !== 0, /* limit */ 3);
+    expect(Array.from(s)).toEqual([0, 13, 13, 42, 88, 88, 88]);
+  });
+
   test("removing items keeps things sorted (desc)", () => {
     const s = SortedList.from(
       [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
@@ -126,6 +162,23 @@ describe("SortedList", () => {
 
     expect(Array.from(s.filter(() => true))).toEqual([88, 88, 13, 1, 0, -555]);
     expect(Array.from(s.filter(() => false))).toEqual([]);
+  });
+
+  test("find", () => {
+    const s1 = SortedList.from([-555, 0, 1, 13, 88, 88], asc);
+    expect(s1.find((n) => n > 1)).toEqual(13);
+    expect(s1.find((n) => n === 17)).toEqual(undefined);
+    const s2 = SortedList.from([-555, 0, 1, 13, 88, 88], desc);
+    expect(s2.find((n) => n > 1)).toEqual(88);
+    expect(s2.find((n) => n === 17)).toEqual(undefined);
+  });
+
+  test("accessing the raw internal array", () => {
+    const s1 = SortedList.from([3, 6, 7, 1, 0, 1, 0, 99, -13, -1], asc);
+    expect(s1.rawArray).toEqual([-13, -1, 0, 0, 1, 1, 3, 6, 7, 99]);
+
+    const s2 = SortedList.from([3, 6, 7, 1, 0, 1, 0, 99, -13, -1], desc);
+    expect(s2.rawArray).toEqual([99, 7, 6, 3, 1, 1, 0, 0, -1, -13]);
   });
 
   test("cloning sorted lists", () => {

@@ -389,8 +389,10 @@ function ChatWindow({ chatId, token }: { chatId: ChatId; token: string | undefin
               padding: "1rem",
             }}
           >
-            {PRESETS.map((preset) => (
-              <button key={preset.title} onClick={() => ask(preset.prompt)}>{preset.title}</button>
+            {PRESETS.map((preset, index) => (
+              <button key={index} onClick={() => ask(preset.prompt)}>
+                {preset.title}
+              </button>
             ))}
           </div>
         ) : null}

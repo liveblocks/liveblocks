@@ -9,10 +9,13 @@ import { ManagedSocket, StopRetrying } from "./connection";
 import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
+import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import { DerivedSignal, MutableSignal, Signal } from "./lib/signals";
-import { type DistributiveOmit, tryParseJson } from "./lib/utils";
+import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
+import { SortedList } from "./lib/SortedList";
+import type { DistributiveOmit } from "./lib/utils";
+import { tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -23,6 +26,7 @@ import type {
 import type {
   AbortAiResponse,
   AddUserMessageResponse,
+  AiAssistantContentPart,
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
@@ -118,7 +122,30 @@ function now(): ISODateString {
 }
 
 function createStore_forChatMessages() {
-  const baseSignal = new MutableSignal(new Map<MessageId, AiChatMessage>());
+  //
+  // We keep track of a signal per chat ID. Any time a new message arrives, we
+  // check its chat ID, getOrCreate its signal, and then add the message that
+  // signal's sorted list. This way, only the messages list for the relevant
+  // chat will get updated.
+  //
+  const signalsByChatId = new DefaultMap(
+    (_chatId: ChatId) =>
+      new MutableSignal(
+        SortedList.fromAlreadySorted<AiChatMessage>(
+          [],
+          (x, y) => x.createdAt < y.createdAt
+        )
+      )
+  );
+
+  //
+  // Separately from that, we keep track of a signal that contains all the
+  // contentsSoFar for any pending messages, which we assemble from the
+  // incoming deltas.
+  //
+  const pendingContent = new MutableSignal(
+    new Map<MessageId, AiAssistantContentPart[]>()
+  );
 
   function createOptimistically(
     chatId: ChatId,
@@ -150,115 +177,120 @@ function createStore_forChatMessages() {
   }
 
   function upsertMany(messages: AiChatMessage[]): void {
-    baseSignal.mutate((pool) => {
+    batch(() => {
       for (const message of messages) {
-        pool.set(message.id, message);
+        upsert(message);
       }
     });
   }
 
-  function remove(messageId: MessageId): void {
-    baseSignal.mutate((pool) => {
-      pool.delete(messageId);
+  function remove(chatId: ChatId, messageId: MessageId): void {
+    const sig = signalsByChatId.getOrCreate(chatId);
+    sig.mutate((list) => {
+      list.removeBy((m) => m.id === messageId, 1);
     });
   }
 
   function removeByChatId(chatId: ChatId): void {
-    baseSignal.mutate((pool) => {
-      for (const message of pool.values()) {
-        if (message.chatId === chatId) {
-          pool.delete(message.id);
-        }
-      }
-    });
-  }
-
-  function patchMessageIfExists(
-    messageId: MessageId,
-    patch: Partial<AiChatMessage>
-  ): void {
-    baseSignal.mutate((pool) => {
-      const message = pool.get(messageId);
-      if (!message) return false;
-
-      pool.set(messageId, {
-        ...message,
-        ...patch,
-      } as AiChatMessage);
-      return true;
+    const sig = signalsByChatId.getOrCreate(chatId);
+    sig.mutate((list) => {
+      list.clear();
     });
   }
 
   function upsert(message: AiChatMessage): void {
-    upsertMany([message]);
+    batch(() => {
+      const sig = signalsByChatId.getOrCreate(message.chatId);
+      sig.mutate((list) => {
+        list.removeBy((m) => m.id === message.id, 1);
+        list.add(message);
+      });
+
+      // If the message is a pending update, write it to the pendingContents
+      // LUT. If not, remove it from there.
+      if (message.role === "assistant" && message.status === "pending") {
+        pendingContent.mutate((lut) => {
+          lut.set(message.id, structuredClone(message.contentSoFar));
+        });
+      } else {
+        pendingContent.mutate((lut) => {
+          lut.delete(message.id);
+        });
+      }
+    });
   }
 
   function addDelta(messageId: MessageId, delta: AiAssistantDeltaUpdate): void {
-    baseSignal.mutate((lut) => {
-      const message = lut.get(messageId);
-      if (
-        !message ||
-        message.role !== "assistant" ||
-        message.status !== "pending"
-      ) {
-        return false; // No update needed
-      }
+    pendingContent.mutate((lut) => {
+      const contentSoFar = lut.get(messageId);
+      if (contentSoFar === undefined) return false;
 
-      // Apply the delta to the pending message
-      appendDelta(message.contentSoFar, delta);
+      appendDelta(contentSoFar, delta);
+      lut.set(messageId, structuredClone(contentSoFar));
       return true;
     });
+  }
+
+  function* iterPendingMessages() {
+    for (const messagesSig of signalsByChatId.values()) {
+      for (const message of messagesSig.get()) {
+        if (message.role === "assistant" && message.status === "pending") {
+          yield message;
+        }
+      }
+    }
   }
 
   function failAllPending(): void {
-    baseSignal.mutate((lut) => {
-      for (const message of lut.values()) {
-        if (message.role === "assistant" && message.status === "pending") {
-          upsert({
-            ...message,
-            status: "failed",
-            errorReason: "Lost connection",
-          } as AiFailedAssistantMessage);
-        }
-      }
-      return true;
+    batch(() => {
+      pendingContent.mutate((lut) => lut.clear());
+
+      const pendingMessages = Array.from(iterPendingMessages());
+      upsertMany(
+        pendingMessages.map(
+          (message) =>
+            ({
+              ...message,
+              status: "failed",
+              errorReason: "Lost connection",
+            }) as AiFailedAssistantMessage
+        )
+      );
     });
   }
 
+  function getMessageById(messageId: MessageId): AiChatMessage | undefined {
+    for (const messages of signalsByChatId.values()) {
+      const message = messages.get().find((m) => m.id === messageId);
+      if (message) {
+        return message;
+      }
+    }
+    return undefined;
+  }
+
+  function getMessagesSignalByChatId(chatId: ChatId) {
+    return signalsByChatId.getOrCreate(chatId);
+  }
+
   return {
-    createOptimistically,
-
-    sortedMessagesByChatId: DerivedSignal.from(baseSignal, (pool) => {
-      const rv: Record<ChatId, AiChatMessage[]> = {};
-
-      for (const message of pool.values()) {
-        if (!rv[message.chatId]) {
-          rv[message.chatId] = [];
-        }
-        rv[message.chatId].push(message);
-      }
-
-      for (const messages of Object.values(rv)) {
-        messages.sort((a, b) => {
-          // XXX Messages should be sorted by their position in the tree, not using dates
-          return Date.parse(a.createdAt) - Date.parse(b.createdAt);
-        });
-      }
-
-      return rv;
-    }),
+    // Readers
+    getMessageById,
+    getMessagesSignalByChatId,
+    pendingContent: DerivedSignal.from(pendingContent, (mutlut) =>
+      // Build a full copy of the mutable LUT, so we get a new reference every
+      // time, which plays better with React
+      Object.fromEntries(structuredClone(mutlut))
+    ),
 
     // Mutations
-    patchMessageIfExists,
+    createOptimistically,
     upsert,
     upsertMany,
     remove,
     removeByChatId,
     addDelta,
     failAllPending,
-    getMessageById: (messageId: MessageId) => {
-      return baseSignal.get().get(messageId);
-    },
   };
 }
 
@@ -328,7 +360,10 @@ export type Ai = {
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chats: DerivedSignal<AiChat[]>;
-    sortedMessagesByChatId: DerivedSignal<Record<string, AiChatMessage[]>>;
+    getMessagesSignalByChatId(
+      chatId: ChatId
+    ): MutableSignal<SortedList<AiChatMessage>>;
+    pendingContent: DerivedSignal<Record<MessageId, AiAssistantContentPart[]>>;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -370,12 +405,14 @@ export function createAi(config: AiConfig): Ai {
   );
   const clientId = nanoid(7) as ClientId;
 
+  const chatsStore = createStore_forUserAiChats();
+  const messagesStore = createStore_forChatMessages();
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
     pendingCmds: new Map(),
-    chatsStore: createStore_forUserAiChats(),
-    messagesStore: createStore_forChatMessages(),
+    chatsStore,
+    messagesStore,
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
     toolsByChatId: new Map<ChatId, Map<string, ClientToolDefinition>>(),
   };
@@ -524,7 +561,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "delete-message":
-          context.messagesStore.remove(msg.messageId);
+          context.messagesStore.remove(msg.chatId, msg.messageId);
           break;
 
         case "clear-chat":
@@ -775,7 +812,9 @@ export function createAi(config: AiConfig): Ai {
 
       signals: {
         chats: context.chatsStore.signal,
-        sortedMessagesByChatId: context.messagesStore.sortedMessagesByChatId,
+        getMessagesSignalByChatId:
+          context.messagesStore.getMessagesSignalByChatId,
+        pendingContent: context.messagesStore.pendingContent,
       },
 
       registerChatContext,
