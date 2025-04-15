@@ -15,6 +15,7 @@
     "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
     "@radix-ui/react-popover": "^1.0.7",
     "clsx": "^2.1.0",
+    "googleapis": "^148.0.0",
     "next": "^14.1.4",
     "radix-ui": "^1.2.0",
     "react": "^18.2.0",

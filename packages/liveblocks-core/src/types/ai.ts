@@ -146,6 +146,7 @@ type AskAIPair = DefineCmd<
     toolChoice?: ToolChoice;
     context?: CopilotContext[];
     timeout: number; // in millis
+    headers?: Record<string, string>;
   },
   { message: AiChatMessage }
 >;

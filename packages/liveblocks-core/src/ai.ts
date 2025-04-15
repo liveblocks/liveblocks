@@ -22,6 +22,7 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
+  AddUserMessageResponse,
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
@@ -31,7 +32,6 @@ import type {
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
-  AddUserMessageResponse,
   ChatId,
   ClearChatResponse,
   ClientAiMsg,
@@ -110,6 +110,7 @@ export type AskAiOptions = {
   stream?: boolean; // True by default
   // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
   timeout?: number;
+  headers?: Record<string, string>;
 };
 
 function now(): ISODateString {
@@ -750,6 +751,8 @@ export function createAi(config: AiConfig): Ai {
             }))
           : undefined;
 
+        console.warn("HEADERS BEING SENT: ", options?.headers);
+
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
           chatId,
@@ -761,6 +764,7 @@ export function createAi(config: AiConfig): Ai {
           tools,
           timeout,
           context: chatContext ? Array.from(chatContext.values()) : undefined,
+          headers: options?.headers,
         });
       },
 

@@ -78,6 +78,8 @@ function ChatPicker() {
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
 
+  const [token, setToken] = useState<string | undefined>(undefined);
+
   // The user-selected chat ID. If nothing is explicitly selected (or the
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
@@ -85,6 +87,17 @@ function ChatPicker() {
     chats[0]?.id
   );
   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+
+  const oauth2 = async () => {
+    const auth = await fetch("/api/google-auth");
+    const { authUrl, token } = await auth.json();
+    if (authUrl) {
+      location.href = authUrl;
+    } else if (token) {
+      console.log("TOKEN: ", token);
+      setToken(token);
+    }
+  };
 
   return (
     <div className="chat-app-container">
@@ -154,10 +167,14 @@ function ChatPicker() {
             Failed to get more: {fetchMoreError.message}
           </div>
         )}
+
+        <button onClick={oauth2}>
+          Authorize Google Calendar
+        </button>
       </div>
 
       {selectedChat ? (
-        <ChatWindow chatId={selectedChat.id} />
+        <ChatWindow chatId={selectedChat.id} token={token} />
       ) : (
         <div
           className="chat-window-container"
@@ -181,7 +198,7 @@ function ChatPicker() {
   );
 }
 
-function ChatWindow({ chatId }: { chatId: ChatId }) {
+function ChatWindow({ chatId, token }: { chatId: ChatId; token: string | undefined }) {
   const [_, forceRerender] = useForceRerender();
   const client = useClient();
   const { messages } = useCopilotChatMessages(chatId);
@@ -204,6 +221,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   };
 
   const COPILOTS = [
+    { id: "co_5a13nd3", name: "MCP Enabled Assistant" },
     { id: "co_T6jQlhS", name: "Rhyme Maker (Anthropic, Sonnet 3.5)" },
     { id: "co_gblzUtw", name: "Wrong Answers Only (OpenAI, gpt-4o)" },
     { id: "co_6ftW85o", name: "The Comedian (Google, Gemini Flash 2.0)" },
@@ -231,11 +249,13 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
       );
       forceRerender();
 
+      console.log("HEADERS BEING SENT: ", token ? { Authorization: `Bearer ${token}` } : undefined);
       // Creates the assistant response message
       await client.ai.ask(chatId, message.id, {
         copilotId: selectedCopilotId,
         stream: streaming,
         timeout: maxTimeout,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
     } finally {
       setOverrideParentId(undefined);
@@ -291,6 +311,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                             copilotId: selectedCopilotId,
                             stream: streaming,
                             timeout: maxTimeout,
+                            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                           });
                         } finally {
                           setOverrideParentId(undefined);
@@ -307,6 +328,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                           copilotId: selectedCopilotId,
                           stream: streaming,
                           timeout: maxTimeout,
+                          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                         });
                       } finally {
                         setOverrideParentId(undefined);
@@ -368,7 +390,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             }}
           >
             {PRESETS.map((preset) => (
-              <button onClick={() => ask(preset.prompt)}>{preset.title}</button>
+              <button key={preset.title} onClick={() => ask(preset.prompt)}>{preset.title}</button>
             ))}
           </div>
         ) : null}
