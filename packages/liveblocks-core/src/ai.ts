@@ -184,7 +184,8 @@ function createStore_forChatMessages() {
   }
 
   function removeByChatId(chatId: ChatId): void {
-    const chatMsgsΣ = signalsByChatId.getOrCreate(chatId);
+    const chatMsgsΣ = signalsByChatId.get(chatId);
+    if (chatMsgsΣ === undefined) return;
     chatMsgsΣ.mutate((list) => list.clear());
   }
 
@@ -524,6 +525,30 @@ export function createAi(config: AiConfig): Ai {
 
         case "rebooted":
           context.messagesStore.failAllPending();
+          break;
+
+        case "sync":
+          batch(() => {
+            // Delete any resources?
+            for (const m of msg["-messages"] ?? []) {
+              context.messagesStore.remove(m.chatId, m.id);
+            }
+            for (const chatId of msg["-chats"] ?? []) {
+              context.chatsStore.remove(chatId);
+              context.messagesStore.removeByChatId(chatId);
+            }
+            for (const chatId of msg.clear ?? []) {
+              context.messagesStore.removeByChatId(chatId);
+            }
+
+            // Add any new resources?
+            if (msg.chats) {
+              context.chatsStore.upsertMany(msg.chats);
+            }
+            if (msg.messages) {
+              context.messagesStore.upsertMany(msg.messages);
+            }
+          });
           break;
 
         default:
