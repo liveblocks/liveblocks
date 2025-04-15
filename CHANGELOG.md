@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.22.4
+
 ### `@liveblocks/react-ui`
 
 - Improve event propagation from `Composer` and the emoji pickers in
