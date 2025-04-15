@@ -50,7 +50,7 @@ export function InlineChat({
         <ChatComposer
           chatId={chatId}
           onComposerSubmit={async (message) => {
-            const result = await client.ai.attachUserMessage(
+            const result = await client.ai.addUserMessage(
               chatId,
               null,
               message.text
