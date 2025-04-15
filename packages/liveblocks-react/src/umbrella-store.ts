@@ -26,6 +26,7 @@ import type {
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import {
+  assertNever,
   autoRetry,
   batch,
   compactObject,
@@ -33,6 +34,7 @@ import {
   createNotificationSettings,
   DefaultMap,
   DerivedSignal,
+  getMentionedIdsFromCommentBody,
   getSubscriptionKey,
   kInternal,
   MutableSignal,
@@ -199,6 +201,7 @@ type UpdateRoomSubscriptionSettingsOptimisticUpdate = {
   type: "update-room-subscription-settings";
   id: string;
   roomId: string;
+  userId: string;
   settings: Partial<RoomSubscriptionSettings>;
 };
 
@@ -2020,33 +2023,61 @@ function applyOptimisticUpdates_forSubscriptions(
     // uses `useRoomSubscriptionSettings`.
 
     if (update.type === "update-room-subscription-settings") {
-      if (
-        update.settings.threads === "all" ||
-        update.settings.threads === "none"
-      ) {
-        const threadIds = threads
-          .findMany(update.roomId, undefined, "desc")
-          .map((t) => t.id);
+      if (update.settings.threads) {
+        const roomThreads = threads.findMany(update.roomId, undefined, "desc");
 
-        for (const threadId of threadIds) {
-          const subscriptionKey = getSubscriptionKey("thread", threadId);
+        for (const thread of roomThreads) {
+          const subscriptionKey = getSubscriptionKey("thread", thread.id);
 
           if (update.settings.threads === "all") {
             // Create subscriptions for all existing threads in the room
             subscriptions[subscriptionKey] = {
               kind: "thread",
-              subjectId: threadId,
+              subjectId: thread.id,
               createdAt: new Date(),
             };
           } else if (update.settings.threads === "none") {
             // Delete subscriptions for all existing threads in the room
             delete subscriptions[subscriptionKey];
+          } else if (update.settings.threads === "replies_and_mentions") {
+            let isParticipant = false;
+
+            for (const comment of thread.comments) {
+              if (comment.deletedAt) {
+                continue;
+              }
+
+              if (comment.userId === update.userId) {
+                isParticipant = true;
+
+                break;
+              }
+
+              const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+
+              if (mentionedIds.includes(update.userId)) {
+                isParticipant = true;
+
+                break;
+              }
+            }
+
+            // Create subscriptions for every threads in the room which the user participates in but doesn't have a subscription for yet
+            if (isParticipant && !subscriptions[subscriptionKey]) {
+              subscriptions[subscriptionKey] = {
+                kind: "thread",
+                subjectId: thread.id,
+                createdAt: new Date(),
+              };
+            }
+          } else {
+            assertNever(
+              update.settings.threads,
+              "Unexpected room subscription settings."
+            );
           }
         }
       }
-
-      // TODO: For "replies_and_mentions", we could check the room's threads to see if you participated but that feels
-      // too expensive for an optimistic update (we need to walk through all comment bodies to detect mentions)
     }
   }
 
