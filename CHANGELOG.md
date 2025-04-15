@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## `v2.23.0`
+
 ### `@liveblocks/node`
 
 - Expose new property `triggeredAt` for notification webhook events.
