@@ -18,6 +18,7 @@
     "postcss-reporter": "7.0.5",
     "postcss-sort-media-queries": "5.2.0",
     "rollup": "3.28.1",
+    "rollup-plugin-dts": "5.3.1",
     "rollup-plugin-esbuild": "5.0.0"
   },
   "peerDependencies": {

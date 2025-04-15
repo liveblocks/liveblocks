@@ -5,6 +5,7 @@ import { createRequire } from "module";
 import path from "path";
 import postcss from "postcss";
 import typescript from "@rollup/plugin-typescript";
+import dts from "rollup-plugin-dts";
 import esbuild from "rollup-plugin-esbuild";
 
 /**
@@ -306,6 +307,52 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
             sourcemap: true,
           };
 
+    /** @type {import('rollup').InputPluginOption[]} */
+    const plugins = [
+      esbuild({
+        target: "es2022",
+        sourceMap: true,
+        jsx: "automatic",
+      }),
+      preserveUseClient(),
+      replace({
+        values: {
+          __VERSION__: JSON.stringify(pkg.version),
+          ROLLUP_FORMAT: JSON.stringify(format),
+        },
+        preventAssignment: true,
+      }),
+    ];
+
+    // Plugins that should only run once (during the "cjs" build, not the "esm" one)
+    if (format === "cjs") {
+      plugins.push(
+        // Clean dist directory
+        clean({ directory: "dist" }),
+        // Build .css files
+        styles({
+          files: styleFiles,
+        })
+      );
+
+      // Generate .d.ts files with declaration maps
+      if (process.env.DECLARATION_MAPS) {
+        plugins.push(
+          // Build .d.ts files
+          typescript({
+            outDir: "dist",
+            declarationDir: "dist",
+            emitDeclarationOnly: true,
+            declaration: true,
+            declarationMap: true,
+            exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+          }),
+          // Duplicate .d.ts files (and their maps) as .d.cts
+          createDcts()
+        );
+      }
+    }
+
     return {
       input: entries,
       external: [
@@ -319,40 +366,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       ],
       output,
       treeshake: false,
-      plugins: [
-        esbuild({
-          target: "es2022",
-          sourceMap: true,
-          jsx: "automatic",
-        }),
-        preserveUseClient(),
-        replace({
-          values: {
-            __VERSION__: JSON.stringify(pkg.version),
-            ROLLUP_FORMAT: JSON.stringify(format),
-          },
-          preventAssignment: true,
-        }),
-        // Clean dist directory (only run once)
-        format === "cjs" && clean({ directory: "dist" }),
-        // Build .css files (only run once)
-        format === "cjs" &&
-          styles({
-            files: styleFiles,
-          }),
-        // Build .d.ts files (only run once)
-        format === "cjs" &&
-          typescript({
-            outDir: "dist",
-            declarationDir: "dist",
-            emitDeclarationOnly: true,
-            declaration: true,
-            declarationMap: true,
-            exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
-          }),
-        // Duplicate .d.ts files (and their maps) as .d.cts (only run once)
-        format === "cjs" && createDcts(),
-      ].filter(Boolean),
+      plugins,
       onwarn(warning, warn) {
         if (
           warning.code === "MODULE_LEVEL_DIRECTIVE" &&
@@ -365,5 +379,30 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
     };
   }
 
-  return [createMainConfig("cjs"), createMainConfig("esm")];
+  /** @type {import('rollup').RollupOptions[]} */
+  const config = [createMainConfig("cjs"), createMainConfig("esm")];
+
+  // Generate .d.ts files without declaration maps
+  if (!process.env.DECLARATION_MAPS) {
+    config.push(
+      ...entries.map((input) => ({
+        input,
+        output: [
+          {
+            file: input
+              .replace("src/", "dist/")
+              .replace(/\.ts$/, pkg.type === "module" ? ".d.ts" : ".d.mts"),
+          },
+          {
+            file: input
+              .replace("src/", "dist/")
+              .replace(/\.ts$/, pkg.type === "module" ? ".d.cts" : ".d.ts"),
+          },
+        ],
+        plugins: [dts()],
+      }))
+    );
+  }
+
+  return config;
 }

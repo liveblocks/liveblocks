@@ -77,11 +77,12 @@ async function generateDts() {
 export function createConfig(entry) {
   return defineConfig({
     entry,
+    dts: !process.env.DECLARATION_MAPS,
     splitting: true,
     clean: true,
     format: ["esm", "cjs"],
     sourcemap: true,
-    onSuccess: generateDts,
+    onSuccess: process.env.DECLARATION_MAPS ? generateDts : undefined,
 
     esbuildOptions(options, _context) {
       // Replace __VERSION__ globals with concrete version
