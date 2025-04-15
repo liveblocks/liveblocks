@@ -106,6 +106,8 @@ function colorMixScale(from, to, contrast, increment) {
  * @returns {import('rollup').RollupOptions[]}
  */
 export function createConfig({ pkg, entries, styles: styleFiles, external }) {
+  const withDeclarationMaps = process.env.DECLARATION_MAPS === "true";
+
   /**
    * @param {CleanOptions} options
    * @returns {import('rollup').Plugin}
@@ -286,8 +288,6 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
    * @returns {import('rollup').RollupOptions}
    */
   function createMainConfig(format) {
-    const withDeclarationMaps = process.env.DECLARATION_MAPS === "true";
-
     /** @type {import('rollup').OutputOptions} */
     const output =
       format === "cjs"
