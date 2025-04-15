@@ -22,7 +22,7 @@ directly from a chat.
 
 <Banner type="warning" title="Request access to private beta">
 
-If you'd like to try AI Copilots we’re currently onboarding a limited number of
+If you’d like to try AI Copilots we’re currently onboarding a limited number of
 customers to our private beta. You can [request access here](/ai-copilots), and
 learn more about the project in
 [our blog post](/blog/introducing-ai-copilots-ready-made-interfaces-for-human-like-collaboration).
@@ -31,6 +31,8 @@ learn more about the project in
 
 ## Features
 
+- **[One-off prompts](#one-off-prompts)**: Create AI buttons for various tasks,
+  with support for actions, context, more.
 - **[Persistent chats](#persistent-chats)**: No database is required, each
   user’s chats are stored permanently.
 - **[Actions](#actions)**: Easily allow AI to interact with your application and
@@ -43,26 +45,29 @@ learn more about the project in
   components that the AI can choose to render in-chat.
 - **[Text editor toolbar](#text-editor-toolbar)**: AI suggestions toolbar for
   your collaborative Tiptap text editor.
+- **[Manage AI copilots](#manage-ai-copilots)**: Configure AI providers and
+  system prompts from our dashboard.
 - **[Supported AI providers](#supported-ai-providers)**: Anthropic, OpenAI,
   Google Gemini, LangGraph, CrewAI, and more.
-- **[Dashboard](#dashboard)**: Create and manage copilots settings.
-- **[Coming soon](#coming-soon)**: Advanced reasoning, RAG, MCP servers, custom
-  back end.
+- **[Coming soon](#coming-soon)**: RAG, MCP servers, custom back end.
 
-## Persistent chats
+## One-off prompts [#one-off-prompts]
+
+One-off prompts are a way to create assorted AI features, that don’t require a
+chat, such as AI buttons on a page. [Actions](#actions) and [context](#context)
+are supported, allowing AI to interact with your application, and understand its
+state. An example use case for a one-off prompt is a button that uses AI to fill
+in a form.
+
+[image of ✨ AI button, possibly with an empty form, or similar, alongside]
+
+## Persistent chats [#persistent-chats]
 
 When building a chat interface, it’s important to save the chat history so that
 the user can continue the conversation from where they left off. All chats and
 messages are stored automatically by Liveblocks, and each user has their own set
 of chats. No database is required, and messages are streamed into the chat in
 realtime using WebSockets.
-
-### Multiple chats with metadata
-
-Each page of your application can have multiple different chats, and it’s easy
-to switch between them, much like in ChatGPT. Each chat has a unique name, and
-can be given custom metadata, for example a custom title, description, tags, or
-anything you like.
 
 <Figure>
   <Image
@@ -73,22 +78,15 @@ anything you like.
   />
 </Figure>
 
-### Branch into new chats
+Each page of your application can have multiple different chats, and it’s easy
+to switch between them, much like in ChatGPT. Each chat has a unique name, and
+can be given custom metadata, for example a custom title, description, tags, or
+anything you like.
 
-It’s possible to go back to previous messages and create a new chat from there,
-as messages can be branched. Essentially, each message can be thought of as a
-branch in a tree, and you can choose to continue down the same branch, or create
-a new one at any time. This is helpful for duplicating chats, or going back and
-revising your previous responses.
+### Edit messages
 
-<Figure>
-  <Image
-    src="/assets/ai-copilots/branching-chats.png"
-    alt="A create new chat button under a message"
-    width={768}
-    height={512}
-  />
-</Figure>
+It’s possible to go back to previous messages and start editing from there,
+allowing users to start again from a certain point in the chat.
 
 ### Automatic synchronization
 
@@ -96,12 +94,7 @@ When the page refreshes, each user’s previous chats will load for them, and ca
 be continued. If a user has your app open in multiple browser tabs, each tab
 will correctly display chats, and update in real-time.
 
-### Stateless mode
-
-If you don’t need to save chat history, you can use stateless mode instead. This
-is ideal for creating temporary AI interactions, that don’t need to be stored.
-
-## Actions
+## Actions [#actions]
 
 Actions are a way to allow AI to modify your application state and interact with
 your front end. You can use them to extend the capabilities of AI Copilots
@@ -130,7 +123,7 @@ Through actions, you can integrate AI Copilots into our other products, such as
 to add comments to your application, send notifications to other users, or add
 shapes to a collaborative drawing app.
 
-## Context
+## Context [#context]
 
 It’s simple to add context to your AI, so that is understands the current
 document or page.
@@ -160,7 +153,7 @@ Liveblocks.
   />
 </Figure>
 
-## Ready-made UI
+## Ready-made UI [#ready-made-ui]
 
 Liveblocks AI Copilots includes a set of styled UI components that can be used
 to add an AI chat interface to your application. Messages are streamed in
@@ -178,7 +171,7 @@ realtime.
 We provide a number of hooks that allow you to create your own custom chat
 components too, such as `useChats` and `useMessages`.
 
-## Custom chat components
+## Custom chat components [#custom-chat-components]
 
 Inside your chat, you can register custom React components that the AI can
 choose to render as a response. For example, if your app contains playlists, AI
@@ -217,54 +210,13 @@ example fixing typos, and creating new paragraphs.
 Learn more about this React component under
 [`AiToolbar`](/docs/api-reference/liveblocks-react-tiptap#AiToolbar)
 
-## Supported AI providers
+## Manage AI copilots [#manage-ai-copilots]
 
-<Figure>
-  <Image
-    src="/assets/ai-copilots/providers.png"
-    alt="We support different AI providers"
-    width={768}
-    height={512}
-  />
-</Figure>
-
-In our dashboard, you can configure multiple copilots powered by different AI
-providers, each with different settings. The following providers are supported
-out-of-the-box:
-
-- Anthropic
-- OpenAI
-- Other OpenAI-compatible APIs
-- Google Gemini
-- LangGraph (coming soon)
-- CrewAI (coming soon)
-
-Additional providers can also be used, with our custom abstraction layer.
-
-## Dashboard
-
-<Figure>
-  <Image
-    src="/assets/ai-copilots/dashboard-add-copilot.png"
-    alt="Add copilot from the dashboard"
-    width={768}
-    height={512}
-  />
-</Figure>
-
-The [Liveblocks dashboard](/dashboard) lets you create, configure, and manage AI
-copilots. You can:
-
-- Choose the AI provider (OpenAI, Anthropic, etc.)
-- Define the copilot’s role, tone, and behavior
-- Specify how it should respond (text, custom components, or both)
-- Connect it to actions to interact with your app
-- Try out predefined personas like “_make it rhyme_” “_wrong answers only_” or a
-  helpful assistant for specific workflows
-
-You can also fine-tune how each copilot interacts with users by adjusting the
-model settings. These options are passed through directly to the AI provider,
-and can influence the creativity, consistency, and safety of generated content.
+The [Liveblocks dashboard](/dashboard) allows you to create, configure, and
+manage your AI copilots, each of which can be used in different applications.
+You can select your [AI provider](#supported-ai-providers) (e.g. OpenAI,
+Anthropic), specify a system prompt, and pass in your secret key to get it
+working.
 
 <Figure>
   <Image
@@ -275,21 +227,45 @@ and can influence the creativity, consistency, and safety of generated content.
   />
 </Figure>
 
-This allows you to build copilots tailored to different pages or user roles
-within your product—like one for onboarding, one for advanced editing, or even a
-fun AI for brainstorming.
+You can also fine-tune how each copilot interacts with users by adjusting each
+model’s settings, which are passed through directly to the AI provider. These
+can influence its creativity, consistency, and the safety of generated content.
+Each copilot can be configured independently, and tested live in the dashboard.
 
-Each copilot can be configured independently, and tested live in the dashboard
-before adding it to your application.
+## Supported AI providers [#supported-ai-providers]
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/providers.png"
+    alt="We support different AI providers"
+    width={768}
+    height={512}
+  />
+</Figure>
+
+In our dashboard, you can create, configure, and manage copilots powered by
+different AI providers, each with different settings. The following providers
+are supported out-of-the-box:
+
+- Anthropic
+- OpenAI
+- Other OpenAI-compatible APIs
+- Google Gemini
+
+### Additional providers
+
+Additional providers can also be used, with our custom abstraction layer, such
+as LangGraph, Crew AI, Bedrock, and Vertex AI. More providers will be given
+first-party support in future.
+
+### Reasoning models
+
+Reasoning models are supported by our built-in components, allowing models to
+show their thought processes.
 
 ---
 
-## Coming soon
-
-### Advanced reasoning
-
-In future, AI Copilots will support reasoning, allowing you to ask the AI to
-reason about a situation and provide a more carefully thought out response.
+## Coming soon [#coming-soon]
 
 ### RAG support
 
@@ -306,8 +282,3 @@ AI Copilots will use this to support:
 MCP is a protocol for running AI agents on a server, allowing you to make
 various back ends calls to different services. In future, AI Copilots will
 support this.
-
-### Custom back end integration
-
-In future, you will be able to connect to specialized AI back ends, such as
-Bedrock and Vertex AI.
