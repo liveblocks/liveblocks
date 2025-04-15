@@ -286,6 +286,8 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
    * @returns {import('rollup').RollupOptions}
    */
   function createMainConfig(format) {
+    const withDeclarationMaps = process.env.DECLARATION_MAPS === "true";
+
     /** @type {import('rollup').OutputOptions} */
     const output =
       format === "cjs"
@@ -336,7 +338,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       );
 
       // Generate .d.ts files with declaration maps
-      if (process.env.DECLARATION_MAPS) {
+      if (withDeclarationMaps) {
         plugins.push(
           // Build .d.ts files
           typescript({
@@ -383,7 +385,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
   const config = [createMainConfig("cjs"), createMainConfig("esm")];
 
   // Generate .d.ts files without declaration maps
-  if (!process.env.DECLARATION_MAPS) {
+  if (!withDeclarationMaps) {
     config.push(
       ...entries.map((input) => ({
         input,

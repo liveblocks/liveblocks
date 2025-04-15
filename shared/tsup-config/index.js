@@ -75,14 +75,18 @@ async function generateDts() {
  * @returns {import('tsup').Options}
  */
 export function createConfig(entry) {
+  const withDeclarationMaps = process.env.DECLARATION_MAPS === "true";
+
   return defineConfig({
     entry,
-    dts: !process.env.DECLARATION_MAPS,
     splitting: true,
     clean: true,
     format: ["esm", "cjs"],
     sourcemap: true,
-    onSuccess: process.env.DECLARATION_MAPS ? generateDts : undefined,
+
+    // Generate .d.ts files differently depending on whether also generating declaration maps
+    dts: !withDeclarationMaps,
+    onSuccess: withDeclarationMaps ? generateDts : undefined,
 
     esbuildOptions(options, _context) {
       // Replace __VERSION__ globals with concrete version
