@@ -14,25 +14,28 @@ import type { LiveblocksExtensionOptions } from "../BlockNoteLiveblocksExtension
 import { useLiveblocksExtension } from "../BlockNoteLiveblocksExtension";
 import { withLiveblocksEditorOptions } from "./liveblocksEditorOptions";
 
-/**
- * Function that can be used instead of standard useCreateBlockNote to add Liveblocks support
- */
-export const useCreateBlockNoteWithLiveblocks = <
+type UseCreateBlockNoteWithLiveblocks<
   B extends BlockSchema = DefaultBlockSchema,
   I extends InlineContentSchema = DefaultInlineContentSchema,
   S extends StyleSchema = DefaultStyleSchema,
->(
-  blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>> = {},
-  liveblocksOptions: LiveblocksExtensionOptions = undefined,
-  deps: DependencyList = []
-) => {
-  const liveblocksExtension = useLiveblocksExtension(liveblocksOptions);
-  return useCreateBlockNote(
-    withLiveblocksEditorOptions(
-      liveblocksExtension,
-      blocknoteOptions,
-      liveblocksOptions
-    ),
-    [liveblocksExtension, ...deps]
-  );
-};
+> = (
+  blocknoteOptions: Partial<BlockNoteEditorOptions<B, I, S>>,
+  liveblocksOptions: LiveblocksExtensionOptions,
+  deps: DependencyList
+) => Partial<BlockNoteEditorOptions<B, I, S>>;
+
+/**
+ * Function that can be used instead of standard useCreateBlockNote to add Liveblocks support
+ */
+export const useCreateBlockNoteWithLiveblocks: UseCreateBlockNoteWithLiveblocks =
+  (blocknoteOptions = {}, liveblocksOptions = undefined, deps = []) => {
+    const liveblocksExtension = useLiveblocksExtension(liveblocksOptions);
+    return useCreateBlockNote(
+      withLiveblocksEditorOptions(
+        liveblocksExtension,
+        blocknoteOptions,
+        liveblocksOptions
+      ),
+      [liveblocksExtension, ...deps]
+    );
+  };
