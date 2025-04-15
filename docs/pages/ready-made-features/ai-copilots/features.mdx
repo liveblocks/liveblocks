@@ -11,7 +11,14 @@ your application and modify its state. For example, if your product contained a
 calendar, you could enable AI to automatically book meetings for your users,
 directly from a chat.
 
-[image of dashboard with most the features visible in a chat]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/full-dashboard.png"
+    alt="Dashboard with Liveblocks AI Copilots features"
+    width={768}
+    height={512}
+  />
+</Figure>
 
 <Banner type="warning" title="Request access to private beta">
 
@@ -38,6 +45,7 @@ learn more about the project in
   your collaborative Tiptap text editor.
 - **[Supported AI providers](#supported-ai-providers)**: Anthropic, OpenAI,
   Google Gemini, LangGraph, CrewAI, and more.
+- **[Dashboard](#dashboard)**: Create and manage copilots settings.
 - **[Coming soon](#coming-soon)**: Advanced reasoning, RAG, MCP servers, custom
   back end.
 
@@ -197,7 +205,14 @@ we provide an AI toolbar that can be added to your collaborative text editor.
 This toolbar allows you to select text, and ask AI to make changes for you, for
 example fixing typos, and creating new paragraphs.
 
-[image of AiToolbar]
+<Figure>
+  <Image
+    src="/assets/ai-copilots/ai-toolbar.png"
+    alt="Text editor AI toolbar"
+    width={768}
+    height={512}
+  />
+</Figure>
 
 Learn more about this React component under
 [`AiToolbar`](/docs/api-reference/liveblocks-react-tiptap#AiToolbar)
@@ -225,6 +240,49 @@ out-of-the-box:
 - CrewAI (coming soon)
 
 Additional providers can also be used, with our custom abstraction layer.
+
+## Dashboard
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/dashboard-add-copilot.png"
+    alt="Add copilot from the dashboard"
+    width={768}
+    height={512}
+  />
+</Figure>
+
+The [Liveblocks dashboard](/dashboard) lets you create, configure, and manage AI
+copilots. You can:
+
+- Choose the AI provider (OpenAI, Anthropic, etc.)
+- Define the copilot’s role, tone, and behavior
+- Specify how it should respond (text, custom components, or both)
+- Connect it to actions to interact with your app
+- Try out predefined personas like “_make it rhyme_” “_wrong answers only_” or a
+  helpful assistant for specific workflows
+
+You can also fine-tune how each copilot interacts with users by adjusting the
+model settings. These options are passed through directly to the AI provider,
+and can influence the creativity, consistency, and safety of generated content.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/dashboard-manage-copilot.png"
+    alt="Manage copilot settings from the dashboard"
+    width={768}
+    height={512}
+  />
+</Figure>
+
+This allows you to build copilots tailored to different pages or user roles
+within your product—like one for onboarding, one for advanced editing, or even a
+fun AI for brainstorming.
+
+Each copilot can be configured independently, and tested live in the dashboard
+before adding it to your application.
+
+---
 
 ## Coming soon
 
