@@ -166,6 +166,7 @@ export type ServerEvent =
   | RebootedEvent
   | CmdFailedEvent
   | ErrorServerEvent
+  | SyncServerEvent
   | DeltaServerEvent
   | SettleServerEvent;
 
@@ -187,6 +188,19 @@ export type CmdFailedEvent = {
 export type ErrorServerEvent = {
   event: "error";
   error: string;
+};
+
+export type SyncServerEvent = {
+  event: "sync";
+
+  // Stuff to upsert
+  chats?: AiChat[];
+  messages?: AiChatMessage[];
+
+  // Stuff to delete
+  clear?: ChatId[]; // Chats to clear
+  "-chats"?: ChatId[]; // Chats to delete
+  "-messages"?: Pick<AiChatMessage, "id" | "chatId">[]; // Messages to delete
 };
 
 /**
@@ -211,7 +225,7 @@ export type SettleServerEvent = {
   /** The client ID that originally made the request that led to this event */
   clientId: ClientId;
   message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
-  kase: number; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
+  kase: 1 | 2 | 3; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
 // -------------------------------------------------------------------------------------------------
