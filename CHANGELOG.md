@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-## `v2.23.0`
+## v2.23.0
 
 ### `@liveblocks/node`
 
@@ -16,6 +16,12 @@
 
 - Improve event propagation from `Composer` and the emoji pickers in
   `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
+  (Thanks @chadnorvell for the contribution!)
 
 ## v2.22.3
 
