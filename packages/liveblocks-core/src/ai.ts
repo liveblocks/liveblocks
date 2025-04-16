@@ -73,11 +73,6 @@ const DEFAULT_REQUEST_TIMEOUT = 4_000;
 // settled yet. Maybe we need to make this much larger?
 const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 seconds in the backend
 
-/**
- * A lookup table (LUT) for all the user AI chats.
- */
-type AiChatsLUT = Map<string, AiChat>;
-
 // XXX - Find a better name for this?
 export type ClientToolDefinition =
   | {
@@ -121,29 +116,29 @@ function now(): ISODateString {
 }
 
 function createStore_forChatMessages() {
-  //
-  // We keep track of a signal per chat ID. Any time a new message arrives, we
-  // check its chat ID, getOrCreate its signal, and then add the message that
-  // signal's sorted list. This way, only the messages list for the relevant
-  // chat will get updated.
-  //
+  // We maintain a Map (not a signal!) with signals. Each signal tracks the
+  // sorted messages list for that chat ID.
   const signalsByChatId = new DefaultMap(
     (_chatId: ChatId) =>
       new MutableSignal(
-        SortedList.fromAlreadySorted<AiChatMessage>(
-          [],
-          (x, y) => x.createdAt < y.createdAt
-        )
+        SortedList.with<AiChatMessage>((x, y) => x.createdAt < y.createdAt)
       )
   );
 
-  //
-  // Separately from that, we keep track of a signal that contains all the
-  // contentsSoFar for any pending messages, which we assemble from the
-  // incoming deltas.
-  //
-  const pendingContent = new MutableSignal(
+  // Separately from that, we track all _pending_ signals in a separate
+  // administration. Because pending messages are likely to receive
+  // many/frequent updates, updating them in a separate administration makes
+  // rendering streaming contents much more efficient than if we had to
+  // re-create and re-render the entire chat list on every such update.
+  const pendingMapΣ = new MutableSignal(
     new Map<MessageId, AiAssistantContentPart[]>()
+  );
+  const pendingContentΣ = DerivedSignal.from(
+    () =>
+      Object.fromEntries(structuredClone(pendingMapΣ.get())) as Record<
+        ChatId,
+        AiAssistantContentPart[]
+      >
   );
 
   function createOptimistically(
@@ -184,23 +179,19 @@ function createStore_forChatMessages() {
   }
 
   function remove(chatId: ChatId, messageId: MessageId): void {
-    const sig = signalsByChatId.getOrCreate(chatId);
-    sig.mutate((list) => {
-      list.removeBy((m) => m.id === messageId, 1);
-    });
+    const chatMsgsΣ = signalsByChatId.getOrCreate(chatId);
+    chatMsgsΣ.mutate((list) => list.removeBy((m) => m.id === messageId, 1));
   }
 
   function removeByChatId(chatId: ChatId): void {
-    const sig = signalsByChatId.getOrCreate(chatId);
-    sig.mutate((list) => {
-      list.clear();
-    });
+    const chatMsgsΣ = signalsByChatId.getOrCreate(chatId);
+    chatMsgsΣ.mutate((list) => list.clear());
   }
 
   function upsert(message: AiChatMessage): void {
     batch(() => {
-      const sig = signalsByChatId.getOrCreate(message.chatId);
-      sig.mutate((list) => {
+      const chatMsgsΣ = signalsByChatId.getOrCreate(message.chatId);
+      chatMsgsΣ.mutate((list) => {
         list.removeBy((m) => m.id === message.id, 1);
         list.add(message);
       });
@@ -208,11 +199,11 @@ function createStore_forChatMessages() {
       // If the message is a pending update, write it to the pendingContents
       // LUT. If not, remove it from there.
       if (message.role === "assistant" && message.status === "pending") {
-        pendingContent.mutate((lut) => {
+        pendingMapΣ.mutate((lut) => {
           lut.set(message.id, structuredClone(message.contentSoFar));
         });
       } else {
-        pendingContent.mutate((lut) => {
+        pendingMapΣ.mutate((lut) => {
           lut.delete(message.id);
         });
       }
@@ -220,7 +211,7 @@ function createStore_forChatMessages() {
   }
 
   function addDelta(messageId: MessageId, delta: AiAssistantDeltaUpdate): void {
-    pendingContent.mutate((lut) => {
+    pendingMapΣ.mutate((lut) => {
       const contentSoFar = lut.get(messageId);
       if (contentSoFar === undefined) return false;
 
@@ -231,10 +222,10 @@ function createStore_forChatMessages() {
   }
 
   function* iterPendingMessages() {
-    for (const messagesSig of signalsByChatId.values()) {
-      for (const message of messagesSig.get()) {
-        if (message.role === "assistant" && message.status === "pending") {
-          yield message;
+    for (const chatMsgsΣ of signalsByChatId.values()) {
+      for (const m of chatMsgsΣ.get()) {
+        if (m.role === "assistant" && m.status === "pending") {
+          yield m;
         }
       }
     }
@@ -242,11 +233,10 @@ function createStore_forChatMessages() {
 
   function failAllPending(): void {
     batch(() => {
-      pendingContent.mutate((lut) => lut.clear());
+      pendingMapΣ.mutate((lut) => lut.clear());
 
-      const pendingMessages = Array.from(iterPendingMessages());
       upsertMany(
-        pendingMessages.map(
+        Array.from(iterPendingMessages()).map(
           (message) =>
             ({
               ...message,
@@ -259,8 +249,8 @@ function createStore_forChatMessages() {
   }
 
   function getMessageById(messageId: MessageId): AiChatMessage | undefined {
-    for (const messages of signalsByChatId.values()) {
-      const message = messages.get().find((m) => m.id === messageId);
+    for (const messagesΣ of signalsByChatId.values()) {
+      const message = messagesΣ.get().find((m) => m.id === messageId);
       if (message) {
         return message;
       }
@@ -276,11 +266,7 @@ function createStore_forChatMessages() {
     // Readers
     getMessageById,
     getMessagesSignalByChatId,
-    pendingContent: DerivedSignal.from(pendingContent, (mutlut) =>
-      // Build a full copy of the mutable LUT, so we get a new reference every
-      // time, which plays better with React
-      Object.fromEntries(structuredClone(mutlut))
-    ),
+    pendingContentΣ,
 
     // Mutations
     createOptimistically,
@@ -294,27 +280,33 @@ function createStore_forChatMessages() {
 }
 
 function createStore_forUserAiChats() {
-  const baseSignal = new MutableSignal(new Map() as AiChatsLUT);
-  const signal = DerivedSignal.from(baseSignal, (chats) => {
-    return Array.from(chats.values());
-  });
+  // The foundation is the mutable signal, which is a simple Map (easy to make
+  // one-off updates to). But externally we expose a derived signal that
+  // produces a new lazy "object" copy of this map any time it changes. This
+  // plays better with React APIs.
+  const mutableΣ = new MutableSignal(
+    SortedList.with<AiChat>((x, y) => y.createdAt < x.createdAt)
+  );
+  const chatsΣ = DerivedSignal.from(() => Array.from(mutableΣ.get()));
 
   function upsertMany(chats: AiChat[]) {
-    baseSignal.mutate((lut) => {
+    mutableΣ.mutate((list) => {
       for (const chat of chats) {
-        lut.set(chat.id, chat);
+        // XXX[vincent] DRY up with line below by allowing nested calls to
+        // .mutate() on MutableSignal and being able to call remove() here
+        // directly!
+        list.removeBy((c) => c.id === chat.id, 1);
+        list.add(chat);
       }
     });
   }
 
   function remove(chatId: ChatId) {
-    baseSignal.mutate((lut) => {
-      lut.delete(chatId);
-    });
+    mutableΣ.mutate((list) => list.removeBy((c) => c.id === chatId, 1));
   }
 
   return {
-    signal,
+    chatsΣ,
 
     // Mutations
     upsertMany,
@@ -359,11 +351,11 @@ export type Ai = {
   ) => Promise<AskAiResponse>;
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
-    chats: DerivedSignal<AiChat[]>;
+    chatsΣ: DerivedSignal<AiChat[]>;
     getMessagesSignalByChatId(
       chatId: ChatId
     ): MutableSignal<SortedList<AiChatMessage>>;
-    pendingContent: DerivedSignal<Record<MessageId, AiAssistantContentPart[]>>;
+    pendingContentΣ: DerivedSignal<Record<MessageId, AiAssistantContentPart[]>>;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -808,10 +800,10 @@ export function createAi(config: AiConfig): Ai {
       getStatus: () => managedSocket.getStatus(),
 
       signals: {
-        chats: context.chatsStore.signal,
+        chatsΣ: context.chatsStore.chatsΣ,
         getMessagesSignalByChatId:
           context.messagesStore.getMessagesSignalByChatId,
-        pendingContent: context.messagesStore.pendingContent,
+        pendingContentΣ: context.messagesStore.pendingContentΣ,
       },
 
       registerChatContext,

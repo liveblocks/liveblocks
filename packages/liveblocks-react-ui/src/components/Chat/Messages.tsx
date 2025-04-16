@@ -334,7 +334,7 @@ const PendingDefaultAssistantChatMessage = forwardRef<
   const client = useClient();
   const contentSoFar =
     useSignal(
-      client.ai.signals.pendingContent,
+      client.ai.signals.pendingContentΣ,
       (lut) => lut[props.message.id]
     ) ?? props.message.contentSoFar;
   const message = { ...props.message, contentSoFar };

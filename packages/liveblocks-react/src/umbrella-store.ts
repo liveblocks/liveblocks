@@ -1237,14 +1237,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
         return {
           isLoading: false,
-          chats: this.#client.ai.signals.chats
-            .get()
-            // TODO: @nimesh Really think about the sort order.
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            ),
+          chats: this.#client.ai.signals.chatsΣ.get(),
           hasFetchedAll: result.data.hasFetchedAll,
           isFetchingMore: result.data.isFetchingMore,
           fetchMore: result.data.fetchMore,
