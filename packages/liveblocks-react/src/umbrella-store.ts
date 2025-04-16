@@ -1265,12 +1265,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
             }
 
             const page = result.data;
-            const messages = this.#client.ai.signals
-              .getMessagesSignalByChatId(chatId)
-              .get().rawArray;
             return {
               isLoading: false,
-              messages,
+              messages: this.#client.ai.signals.getChatMessagesΣ(chatId).get(),
               hasFetchedAll: page.hasFetchedAll,
               isFetchingMore: page.isFetchingMore,
               fetchMoreError: page.fetchMoreError,

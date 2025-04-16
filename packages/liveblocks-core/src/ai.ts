@@ -118,7 +118,7 @@ function now(): ISODateString {
 function createStore_forChatMessages() {
   // We maintain a Map (not a signal!) with signals. Each signal tracks the
   // sorted messages list for that chat ID.
-  const signalsByChatId = new DefaultMap(
+  const messagesByChatId = new DefaultMap(
     (_chatId: ChatId) =>
       new MutableSignal(
         SortedList.with<AiChatMessage>((x, y) => x.createdAt < y.createdAt)
@@ -179,19 +179,19 @@ function createStore_forChatMessages() {
   }
 
   function remove(chatId: ChatId, messageId: MessageId): void {
-    const chatMsgsΣ = signalsByChatId.getOrCreate(chatId);
+    const chatMsgsΣ = messagesByChatId.getOrCreate(chatId);
     chatMsgsΣ.mutate((list) => list.removeBy((m) => m.id === messageId, 1));
   }
 
   function removeByChatId(chatId: ChatId): void {
-    const chatMsgsΣ = signalsByChatId.get(chatId);
+    const chatMsgsΣ = messagesByChatId.get(chatId);
     if (chatMsgsΣ === undefined) return;
     chatMsgsΣ.mutate((list) => list.clear());
   }
 
   function upsert(message: AiChatMessage): void {
     batch(() => {
-      const chatMsgsΣ = signalsByChatId.getOrCreate(message.chatId);
+      const chatMsgsΣ = messagesByChatId.getOrCreate(message.chatId);
       chatMsgsΣ.mutate((list) => {
         list.removeBy((m) => m.id === message.id, 1);
         list.add(message);
@@ -223,7 +223,7 @@ function createStore_forChatMessages() {
   }
 
   function* iterPendingMessages() {
-    for (const chatMsgsΣ of signalsByChatId.values()) {
+    for (const chatMsgsΣ of messagesByChatId.values()) {
       for (const m of chatMsgsΣ.get()) {
         if (m.role === "assistant" && m.status === "pending") {
           yield m;
@@ -250,7 +250,7 @@ function createStore_forChatMessages() {
   }
 
   function getMessageById(messageId: MessageId): AiChatMessage | undefined {
-    for (const messagesΣ of signalsByChatId.values()) {
+    for (const messagesΣ of messagesByChatId.values()) {
       const message = messagesΣ.get().find((m) => m.id === messageId);
       if (message) {
         return message;
@@ -259,14 +259,19 @@ function createStore_forChatMessages() {
     return undefined;
   }
 
-  function getMessagesSignalByChatId(chatId: ChatId) {
-    return signalsByChatId.getOrCreate(chatId);
+  const immutableMessagesByChatId = new DefaultMap((chatId: ChatId) =>
+    DerivedSignal.from(() =>
+      Array.from(messagesByChatId.getOrCreate(chatId).get())
+    )
+  );
+  function getChatMessagesΣ(chatId: ChatId) {
+    return immutableMessagesByChatId.getOrCreate(chatId);
   }
 
   return {
     // Readers
     getMessageById,
-    getMessagesSignalByChatId,
+    getChatMessagesΣ,
     pendingContentΣ,
 
     // Mutations
@@ -353,9 +358,7 @@ export type Ai = {
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
-    getMessagesSignalByChatId(
-      chatId: ChatId
-    ): MutableSignal<SortedList<AiChatMessage>>;
+    getChatMessagesΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
     pendingContentΣ: DerivedSignal<Record<MessageId, AiAssistantContentPart[]>>;
   };
   registerChatContext: (
@@ -826,8 +829,7 @@ export function createAi(config: AiConfig): Ai {
 
       signals: {
         chatsΣ: context.chatsStore.chatsΣ,
-        getMessagesSignalByChatId:
-          context.messagesStore.getMessagesSignalByChatId,
+        getChatMessagesΣ: context.messagesStore.getChatMessagesΣ,
         pendingContentΣ: context.messagesStore.pendingContentΣ,
       },
 
