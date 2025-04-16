@@ -26,7 +26,6 @@ import type {
 import type {
   AbortAiResponse,
   AddUserMessageResponse,
-  AiAssistantContentPart,
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
@@ -116,8 +115,8 @@ function now(): ISODateString {
 }
 
 function createStore_forChatMessages() {
-  // We maintain a Map (not a signal!) with signals. Each signal tracks the
-  // sorted messages list for that chat ID.
+  // We maintain a Map with mutable signals. Each such signal contains
+  // a mutable automatically-sorted list of chat messages by chat ID.
   const messagesByChatId = new DefaultMap(
     (_chatId: ChatId) =>
       new MutableSignal(
@@ -130,14 +129,14 @@ function createStore_forChatMessages() {
   // many/frequent updates, updating them in a separate administration makes
   // rendering streaming contents much more efficient than if we had to
   // re-create and re-render the entire chat list on every such update.
-  const pendingMapΣ = new MutableSignal(
-    new Map<MessageId, AiAssistantContentPart[]>()
+  const pendingMessagesΣ = new MutableSignal(
+    new Map<MessageId, AiPendingAssistantMessage>()
   );
-  const pendingContentΣ = DerivedSignal.from(
+  const immPendingMessagesΣ = DerivedSignal.from(
     () =>
-      Object.fromEntries(structuredClone(pendingMapΣ.get())) as Record<
-        ChatId,
-        AiAssistantContentPart[]
+      Object.fromEntries(structuredClone(pendingMessagesΣ.get())) as Record<
+        MessageId,
+        AiPendingAssistantMessage
       >
   );
 
@@ -200,11 +199,11 @@ function createStore_forChatMessages() {
       // If the message is a pending update, write it to the pendingContents
       // LUT. If not, remove it from there.
       if (message.role === "assistant" && message.status === "pending") {
-        pendingMapΣ.mutate((lut) => {
-          lut.set(message.id, structuredClone(message.contentSoFar));
+        pendingMessagesΣ.mutate((lut) => {
+          lut.set(message.id, structuredClone(message));
         });
       } else {
-        pendingMapΣ.mutate((lut) => {
+        pendingMessagesΣ.mutate((lut) => {
           lut.delete(message.id);
         });
       }
@@ -212,12 +211,12 @@ function createStore_forChatMessages() {
   }
 
   function addDelta(messageId: MessageId, delta: AiAssistantDeltaUpdate): void {
-    pendingMapΣ.mutate((lut) => {
-      const contentSoFar = lut.get(messageId);
-      if (contentSoFar === undefined) return false;
+    pendingMessagesΣ.mutate((lut) => {
+      const message = lut.get(messageId);
+      if (message === undefined) return false;
 
-      appendDelta(contentSoFar, delta);
-      lut.set(messageId, structuredClone(contentSoFar));
+      appendDelta(message.contentSoFar, delta);
+      lut.set(messageId, message);
       return true;
     });
   }
@@ -234,7 +233,7 @@ function createStore_forChatMessages() {
 
   function failAllPending(): void {
     batch(() => {
-      pendingMapΣ.mutate((lut) => lut.clear());
+      pendingMessagesΣ.mutate((lut) => lut.clear());
 
       upsertMany(
         Array.from(iterPendingMessages()).map(
@@ -272,7 +271,7 @@ function createStore_forChatMessages() {
     // Readers
     getMessageById,
     getChatMessagesΣ,
-    pendingContentΣ,
+    pendingMessagesΣ: immPendingMessagesΣ,
 
     // Mutations
     createOptimistically,
@@ -359,7 +358,9 @@ export type Ai = {
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
     getChatMessagesΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
-    pendingContentΣ: DerivedSignal<Record<MessageId, AiAssistantContentPart[]>>;
+    pendingMessagesΣ: DerivedSignal<
+      Record<MessageId, AiPendingAssistantMessage>
+    >;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -830,7 +831,7 @@ export function createAi(config: AiConfig): Ai {
       signals: {
         chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesΣ: context.messagesStore.getChatMessagesΣ,
-        pendingContentΣ: context.messagesStore.pendingContentΣ,
+        pendingMessagesΣ: context.messagesStore.pendingMessagesΣ,
       },
 
       registerChatContext,
