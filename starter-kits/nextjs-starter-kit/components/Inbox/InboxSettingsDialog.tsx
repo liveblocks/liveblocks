@@ -9,6 +9,7 @@ import { Dialog } from "@/primitives/Dialog";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
 import { Switch } from "@/primitives/Switch";
+import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import styles from "./InboxSettingsDialog.module.css";
 
 function ThreadsSubscriptionSettings() {
@@ -139,6 +140,7 @@ function EmailNotificationSettings() {
 
 export function InboxSettingsDialog({ children }: { children: ReactNode }) {
   const isInsideRoom = useIsInsideRoom();
+  const initialDocument = useInitialDocument();
 
   return (
     <Dialog
@@ -158,18 +160,23 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
                 >
                   <ThreadsSubscriptionSettings />
                 </Suspense>
-                <h3>
-                  In this document, receive text mentions notifications for…{" "}
-                </h3>
-                <Suspense
-                  fallback={
-                    <div className={clsx(styles.switchBox, styles.loading)}>
-                      <Spinner />
-                    </div>
-                  }
-                >
-                  <TextMentionsSubscriptionSettings />
-                </Suspense>
+                {initialDocument.type === "text" ||
+                initialDocument.type === "note" ? (
+                  <>
+                    <h3>
+                      In this document, receive text mentions notifications for…{" "}
+                    </h3>
+                    <Suspense
+                      fallback={
+                        <div className={clsx(styles.switchBox, styles.loading)}>
+                          <Spinner />
+                        </div>
+                      }
+                    >
+                      <TextMentionsSubscriptionSettings />
+                    </Suspense>
+                  </>
+                ) : null}
               </>
             ) : null}
             <h3>In all documents, receive emails for…</h3>
