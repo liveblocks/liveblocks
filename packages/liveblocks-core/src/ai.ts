@@ -295,8 +295,11 @@ function createStore_forChatMessages() {
 
 function createStore_forUserAiChats() {
   const baseSignal = new MutableSignal(new Map() as AiChatsLUT);
+  const signal = DerivedSignal.from(baseSignal, (chats) => {
+    return Array.from(chats.values());
+  });
 
-  function update(chats: AiChat[]) {
+  function upsertMany(chats: AiChat[]) {
     baseSignal.mutate((lut) => {
       for (const chat of chats) {
         lut.set(chat.id, chat);
@@ -311,12 +314,10 @@ function createStore_forUserAiChats() {
   }
 
   return {
-    signal: DerivedSignal.from(baseSignal, (chats) => {
-      return Array.from(chats.values());
-    }),
+    signal,
 
     // Mutations
-    update,
+    upsertMany,
     remove,
   };
 }
@@ -539,11 +540,11 @@ export function createAi(config: AiConfig): Ai {
     } else {
       switch (msg.cmd) {
         case "get-chats":
-          context.chatsStore.update(msg.chats);
+          context.chatsStore.upsertMany(msg.chats);
           break;
 
         case "create-chat":
-          context.chatsStore.update([msg.chat]);
+          context.chatsStore.upsertMany([msg.chat]);
           break;
 
         case "delete-chat":
