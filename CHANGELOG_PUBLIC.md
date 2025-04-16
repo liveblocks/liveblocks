@@ -20,7 +20,32 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 15 (2025-04-11)
 
+## v2.23.0
+
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation from `Composer` and the emoji pickers in
+  `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
+  (Thanks @chadnorvell for the contribution!)
+
 ## Contributors
+
+marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell
 
 # Week 14 (2025-04-04)
 
