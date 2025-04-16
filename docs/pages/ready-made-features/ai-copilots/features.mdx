@@ -7,14 +7,14 @@ meta:
 
 Liveblocks AI Copilots allows you to add a variety of AI experiences to your
 application, such as AI chat interfaces and toolbars, that can interact with
-your application and modify its state. For example, if your product contained a
-calendar, you could enable AI to automatically book meetings for your users,
-directly from a chat.
+your application and modify its state. For example, if your product contains a
+dashboard, you could ask AI to create a new project for you, or question it
+about certain statistics on the page.
 
 <Figure>
   <Image
     src="/assets/ai-copilots/full-dashboard.png"
-    alt="Dashboard with Liveblocks AI Copilots features"
+    alt="An example of a dashboard with integrated Liveblocks AI Copilots features"
     width={768}
     height={512}
   />
@@ -49,7 +49,7 @@ learn more about the project in
   system prompts from our dashboard.
 - **[Supported AI providers](#supported-ai-providers)**: Anthropic, OpenAI,
   Google Gemini, LangGraph, CrewAI, and more.
-- **[Coming soon](#coming-soon)**: RAG, MCP servers, custom back end.
+- **[Coming soon](#coming-soon)**: Attachments, RAG, MCP servers.
 
 ## One-off prompts [#one-off-prompts]
 
@@ -62,7 +62,7 @@ for a one-off prompt is a button that uses AI to fill in a form.
 <Figure>
   <Image
     src="/assets/ai-copilots/one-off-prompts.png"
-    alt="One-off prompts"
+    alt="An example use for a one-off prompt, an AI button that fills in a table for you."
     width={768}
     height={512}
   />
@@ -79,7 +79,7 @@ realtime using WebSockets.
 <Figure>
   <Image
     src="/assets/ai-copilots/multiple-chats.png"
-    alt="A list of chats, with a create new chat button"
+    alt="An example showing a list of different chats, each with custom metadata, and a create new chat button."
     width={768}
     height={512}
   />
@@ -112,7 +112,7 @@ web for data, or anything else you like.
 <Figure>
   <Image
     src="/assets/ai-copilots/document-changes.png"
-    alt="A chat with actions"
+    alt="An example of a document with a chat app in the corner. The chat has run an action, and has edited the document."
     width={768}
     height={512}
   />
@@ -138,23 +138,7 @@ document or page.
 <Figure>
   <Image
     src="/assets/ai-copilots/context.png"
-    alt="A chat with context from a document"
-    width={768}
-    height={512}
-  />
-</Figure>
-
-### Attachments
-
-Additionally, you can upload files into the chat, which AI can modify, or use
-for extra context. These files can be images, PDFs, text documents, or any file
-type your AI provider can understand. Files are automatically stored by
-Liveblocks.
-
-<Figure>
-  <Image
-    src="/assets/ai-copilots/attachment.png"
-    alt="A chat with an uploaded attachment"
+    alt="An example of a document containing numbers. The AI chat in the corner has been asked about the numbers, and understands the context of the document."
     width={768}
     height={512}
   />
@@ -169,14 +153,14 @@ realtime.
 <Figure>
   <Image
     src="/assets/ai-copilots/floating-chat.png"
-    alt="An empty chat component, floating in the corner"
+    alt="A screenshot of the ready-made chat component, with messages and AI suggestion buttons."
     width={768}
     height={512}
   />
 </Figure>
 
-We provide a number of hooks that allow you to create your own custom chat
-components too, such as `useChats` and `useMessages`.
+We also provide a number of hooks, such as `useChats` and `useMessages`, that
+allow you to create your own custom chat components.
 
 ## Custom chat components [#custom-chat-components]
 
@@ -188,7 +172,7 @@ have multiple components, AI can choose which one to render.
 <Figure>
   <Image
     src="/assets/ai-copilots/custom-component.png"
-    alt="A custom calendar chat component"
+    alt="An example of the AI rendering a custom chat component instead of a message. It's a playlist component, with a play button."
     width={768}
     height={512}
   />
@@ -208,7 +192,7 @@ example fixing typos, and creating new paragraphs.
 <Figure>
   <Image
     src="/assets/ai-copilots/ai-toolbar.png"
-    alt="Text editor AI toolbar"
+    alt="An example of the AI toolbar in a text editor, with an 'Ask Copilot' button."
     width={768}
     height={512}
   />
@@ -228,7 +212,7 @@ it working.
 <Figure>
   <Image
     src="/assets/ai-copilots/dashboard-manage-copilot.png"
-    alt="Manage copilot settings from the dashboard"
+    alt="A screenshot of our dashboard, showing the settings for an AI copilot."
     width={768}
     height={512}
   />
@@ -267,6 +251,21 @@ show their thought processes.
 ---
 
 ## Coming soon [#coming-soon]
+
+### Chat attachments
+
+Upload files into the chat, which AI can modify, or use for extra context. These
+files can be images, PDFs, text documents, or any file type your AI provider can
+understand. Files are automatically stored by Liveblocks.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/attachment.png"
+    alt="A zoomed-in screenshot of a chat with an uploaded attachment, ready to send."
+    width={768}
+    height={512}
+  />
+</Figure>
 
 ### RAG support
 
