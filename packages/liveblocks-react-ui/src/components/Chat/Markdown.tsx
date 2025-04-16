@@ -56,7 +56,9 @@ function BlockTokenComp({ token }: { token: Token }) {
       );
     }
     case "text": {
-      if (token.tokens !== undefined) {
+      // TODO: Ask Nimesh about this. I had to add this `"tokens" in ...` check
+      // here to work around a TS issue.
+      if ("tokens" in token && token.tokens !== undefined) {
         return (
           <Fragment>
             {(token.tokens ?? []).map((token, index) => (
