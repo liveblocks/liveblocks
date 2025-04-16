@@ -40,6 +40,10 @@ export class SortedList<T> {
     this.#data = alreadySortedList;
   }
 
+  public static with<T>(lt: (a: T, b: T) => boolean): SortedList<T> {
+    return SortedList.fromAlreadySorted([], lt);
+  }
+
   public static from<T>(arr: T[], lt: (a: T, b: T) => boolean): SortedList<T> {
     const sorted = new SortedList([], lt);
     for (const item of arr) {
@@ -72,13 +76,17 @@ export class SortedList<T> {
 
   /**
    * Removes all values from the sorted list, making it empty again.
+   * Returns whether the list was mutated or not.
    */
-  clear(): void {
+  clear(): boolean {
+    const hadData = this.#data.length > 0;
     this.#data.length = 0;
+    return hadData;
   }
 
   /**
    * Removes the first value matching the predicate.
+   * Returns whether the list was mutated or not.
    */
   removeBy(
     predicate: (item: T) => boolean,
@@ -103,6 +111,8 @@ export class SortedList<T> {
    * Removes the given value from the sorted list, if it exists. The given
    * value must be `===` to one of the list items. Only the first entry will be
    * removed if the element exists in the sorted list multiple times.
+   *
+   * Returns whether the list was mutated or not.
    */
   remove(value: T): boolean {
     const idx = this.#data.indexOf(value);

@@ -93,7 +93,9 @@ describe("SortedList", () => {
       [1, -555, 88, Math.PI, 88, 0, 13, 42, 88, 13],
       asc
     );
-    s.clear();
+    expect(s.clear()).toEqual(true); // was mutated
+    expect(Array.from(s)).toEqual([]);
+    expect(s.clear()).toEqual(false); // was not mutated
     expect(Array.from(s)).toEqual([]);
   });
 
@@ -269,6 +271,11 @@ describe("SortedList", () => {
         }
       )
     );
+  });
+
+  test("Static convenience method .with() produces empty lists", () => {
+    expect(Array.from(SortedList.with(asc))).toEqual([]);
+    expect(Array.from(SortedList.with(desc))).toEqual([]);
   });
 
   test("will keep a sorted list sorted, no matter what elements are added (asc)", () => {
