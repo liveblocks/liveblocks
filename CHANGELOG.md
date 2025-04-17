@@ -4,8 +4,7 @@
 
 ### `@liveblocks/node`
 
-- Fix bug in `.mutateStorage()` and `.massMutateStorage()` where mutating
-  storage with this API could potentially corrupt the storage tree.
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating storage could potentially corrupt the storage tree.
 
 ## v2.23.0
 
