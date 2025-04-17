@@ -59,6 +59,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Website
 
+- New blog post: [Add Notion-style collaborative text editing to your app with Liveblocks BlockNote](https://liveblocks.io/blog/add-notion-style-collaborative-text-editing-to-your-app-with-liveblocks-blocknote).
+- New blog post: [What’s new in Liveblocks: March 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-march-edition-2025).
 - New blog post: [How Artefect reinvented collaborative workspaces for technical teams](https://liveblocks.io/blog/how-artefact-reinvented-collaborative-workspaces-for-technical-teams).
 
 ## Contributors
@@ -219,8 +221,6 @@ nvie, sugardarius, ctnicholas, marcbouchenoire
 
 ## Website
 
-- New blog post: [Add Notion-style collaborative text editing to your app with Liveblocks BlockNote](https://liveblocks.io/blog/add-notion-style-collaborative-text-editing-to-your-app-with-liveblocks-blocknote).
-- New blog post: [What’s new in Liveblocks: March 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-march-edition-2025).
 - New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
 
 ## Contributors
