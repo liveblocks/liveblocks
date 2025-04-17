@@ -2,9 +2,15 @@
 
 ## v2.23.1
 
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose`
+  yet.
+
 ### `@liveblocks/node`
 
-- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating storage could potentially corrupt the storage tree.
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating
+  storage could potentially corrupt the storage tree.
 
 ## v2.23.0
 
