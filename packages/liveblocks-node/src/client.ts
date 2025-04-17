@@ -1852,6 +1852,41 @@ export class Liveblocks {
   }
 
   /**
+   * Returns the room subscription settings for a user.
+   * @param params.userId The user ID to get the room subscription settings from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getUserRoomSubscriptionSettings(
+    params: {
+      userId: string;
+    },
+    options?: RequestOptions
+  ): Promise<
+    Page<
+      {
+        roomId: string;
+      } & RoomSubscriptionSettings
+    >
+  > {
+    const { userId } = params;
+
+    const res = await this.#get(
+      url`/v2/users/${userId}/room-subscription-settings`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as Page<
+      {
+        roomId: string;
+      } & RoomSubscriptionSettings
+    >;
+  }
+
+  /**
    * Gets the user's room subscription settings.
    * @param params.userId The user ID to get the room subscription settings from.
    * @param params.roomId The room ID to get the room subscription settings from.
