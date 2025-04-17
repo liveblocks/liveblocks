@@ -49,9 +49,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/react-blocknote`
 
-- Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
-- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
-  (Thanks @chadnorvell for the contribution!)
+- Fix crash when unmounting. Thank you [@nperez0111](https://github.com/nperez0111)!
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote. Thank you [@chadnorvell](https://github.com/chadnorvell)!
   
 ## Documentation
 
