@@ -20,6 +20,16 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 15 (2025-04-11)
 
+## v2.23.1
+
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose` yet.
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating storage could potentially corrupt the storage tree.
+
 ## v2.23.0
 
 ### `@liveblocks/node`
@@ -45,7 +55,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell
+marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell, nvie
 
 # Week 14 (2025-04-04)
 
