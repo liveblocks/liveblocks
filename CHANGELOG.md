@@ -1,5 +1,11 @@
 ## vNEXT (not yet published)
 
+## v2.23.1
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating storage could potentially corrupt the storage tree.
+
 ## v2.23.0
 
 ### `@liveblocks/node`
