@@ -1,9 +1,39 @@
 ## vNEXT (not yet published)
 
+## v2.23.1
+
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose`
+  yet.
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating
+  storage could potentially corrupt the storage tree.
+
+## v2.23.0
+
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
 ### `@liveblocks/react-ui`
 
 - Improve event propagation from `Composer` and the emoji pickers in
   `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
+  (Thanks @chadnorvell for the contribution!)
 
 ## v2.22.3
 

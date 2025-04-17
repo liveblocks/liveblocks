@@ -155,8 +155,8 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
     this.subscribeOnce = this.subscribeOnce.bind(this);
   }
 
-  [Symbol.dispose](): void {
-    this.#eventSource[Symbol.dispose]();
+  dispose(): void {
+    this.#eventSource.dispose();
 
     // @ts-expect-error make disposed object completely unusable
     this.#eventSource = "(disposed)";
@@ -241,8 +241,8 @@ export class Signal<T> extends AbstractSignal<T> {
     this.#value = freeze(value);
   }
 
-  [Symbol.dispose](): void {
-    super[Symbol.dispose]();
+  dispose(): void {
+    super.dispose();
     // @ts-expect-error make disposed object completely unusable
     this.#value = "(disposed)";
   }
@@ -339,7 +339,7 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     this.#transform = transform;
   }
 
-  [Symbol.dispose](): void {
+  dispose(): void {
     for (const src of this.#sources) {
       src.removeSink(this as DerivedSignal<unknown>);
     }
@@ -448,8 +448,8 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
     this.#state = initialState;
   }
 
-  [Symbol.dispose](): void {
-    super[Symbol.dispose]();
+  dispose(): void {
+    super.dispose();
     // @ts-expect-error make disposed object completely unusable
     this.#state = "(disposed)";
   }

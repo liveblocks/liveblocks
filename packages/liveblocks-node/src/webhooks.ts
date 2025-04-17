@@ -495,10 +495,19 @@ type ThreadNotificationEvent = {
     threadId: string;
     inboxNotificationId: string;
     /**
+     * Date representing the time when the webhook event was created.
+     *
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
      */
     createdAt: string;
+    /**
+     * Date representing the  time when the notification was created.
+     *
+     * ISO 8601 datestring
+     * @example "2021-03-01T18:00:00.000Z"
+     */
+    triggeredAt: string;
   };
 };
 
@@ -513,10 +522,19 @@ type TextMentionNotificationEvent = {
     mentionId: string;
     inboxNotificationId: string;
     /**
+     * Date representing the time when the webhook event was created.
+     *
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
      */
     createdAt: string;
+    /**
+     * Date representing the  time when the notification was created.
+     *
+     * ISO 8601 datestring
+     * @example "2021-03-01T18:00:00.000Z"
+     */
+    triggeredAt: string;
   };
 };
 
@@ -531,10 +549,19 @@ type CustomNotificationEvent = {
     subjectId: string;
     inboxNotificationId: string;
     /**
+     * Date representing the time when the webhook event was created.
+     *
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
      */
     createdAt: string;
+    /**
+     * Date representing the  time when the notification was created.
+     *
+     * ISO 8601 datestring
+     * @example "2021-03-01T18:00:00.000Z"
+     */
+    triggeredAt: string;
   };
 };
 
