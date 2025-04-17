@@ -1670,6 +1670,23 @@ await liveblocks.unsubscribeFromThread({
 });
 ```
 
+#### Liveblocks.getThreadSubscriptions [#get-rooms-roomId-threads-threadId-subscriptions]
+
+Gets a thread's subscriptions. Throws an error if the room or thread isn’t
+found. This is a wrapper around the
+[Get Thread Subscriptions API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-subscriptions)
+and returns the same response.
+
+```ts
+const { data: subscriptions } = await liveblocks.getThreadSubscriptions({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+});
+
+// [{ kind: "thread", subjectId: "th_d75sF3...", userId: "steven@example.com", ... }, ...]
+console.log(subscriptions);
+```
+
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments]
 
 Creates a new comment in a specific thread within a room. This method allows
