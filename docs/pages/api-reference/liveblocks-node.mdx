@@ -1633,6 +1633,43 @@ await liveblocks.deleteThread({
 });
 ```
 
+#### Liveblocks.subscribeToThread [#post-rooms-roomId-threads-threadId-subscribe]
+
+Subscribes a user to a thread. Throws an error if the room or thread isn’t
+found. This is a wrapper around the
+[Subscribe To Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-subscribe)
+and returns the same response.
+
+```ts
+const subscription = await liveblocks.subscribeToThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+
+// { kind: "thread", subjectId: "th_d75sF3...", ... }
+console.log(subscription);
+```
+
+#### Liveblocks.unsubscribeFromThread [#post-rooms-roomId-threads-threadId-unsubscribe]
+
+Unsubscribes a user from a thread. Throws an error if the room or thread isn’t
+found. This is a wrapper around the
+[Unsubscribe From Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-unsubscribe)
+and returns the same response.
+
+```ts
+await liveblocks.unsubscribeFromThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+```
+
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments]
 
 Creates a new comment in a specific thread within a room. This method allows
