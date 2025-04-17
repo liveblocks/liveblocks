@@ -21,6 +21,8 @@
   },
   "files": [
     "dist/**",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "scripts": {
@@ -47,7 +49,8 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*"
+    "@liveblocks/jest-config": "*",
+    "@liveblocks/tsup-config": "*"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"

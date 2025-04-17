@@ -1,9 +1,10 @@
 import replace from "@rollup/plugin-replace";
-import fs from "fs";
+import fs from "fs/promises";
 import MagicString from "magic-string";
 import { createRequire } from "module";
 import path from "path";
 import postcss from "postcss";
+import typescript from "@rollup/plugin-typescript";
 import dts from "rollup-plugin-dts";
 import esbuild from "rollup-plugin-esbuild";
 
@@ -38,9 +39,9 @@ const require = createRequire(import.meta.url);
  * @param {string} file
  * @param {string | NodeJS.ArrayBufferView} data
  */
-function createFile(file, data) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, data);
+async function createFile(file, data) {
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, data);
 }
 
 /**
@@ -105,7 +106,7 @@ function colorMixScale(from, to, contrast, increment) {
  * @returns {import('rollup').RollupOptions[]}
  */
 export function createConfig({ pkg, entries, styles: styleFiles, external }) {
-  let didClean = false;
+  const withDeclarationMaps = process.env.DECLARATION_MAPS === "true";
 
   /**
    * @param {CleanOptions} options
@@ -116,21 +117,15 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       name: "clean",
       buildStart: {
         order: "pre",
-        handler() {
-          if (!didClean) {
-            fs.rmSync(path.resolve(directory), {
-              recursive: true,
-              force: true,
-            });
-          }
-
-          didClean = true;
+        async handler() {
+          await fs.rm(path.resolve(directory), {
+            recursive: true,
+            force: true,
+          });
         },
       },
     };
   }
-
-  let didStyles = false;
 
   /**
    * @param {StylesOptions} options
@@ -139,11 +134,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
   function styles({ files }) {
     return {
       name: "styles",
-      buildStart: async () => {
-        if (didStyles) {
-          return;
-        }
-
+      async buildStart() {
         const processor = postcss([
           require("stylelint"),
           require("postcss-import"),
@@ -172,7 +163,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           const destination = path.resolve(file.destination);
 
           const { css, map } = await processor.process(
-            fs.readFileSync(entry, "utf8"),
+            await fs.readFile(entry, "utf8"),
             {
               from: entry,
               to: destination,
@@ -185,8 +176,6 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           createFile(destination, css);
           createFile(`${destination}.map`, map.toString());
         }
-
-        didStyles = true;
       },
     };
   }
@@ -231,6 +220,70 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
   }
 
   /**
+   * @param {string} directory
+   * @returns {string[]}
+   */
+  async function getFiles(directory) {
+    const entries = await fs.readdir(directory, { withFileTypes: true });
+
+    const files = await Promise.all(
+      entries.map((entry) => {
+        const fullPath = path.join(directory, entry.name);
+        return entry.isDirectory() ? getFiles(fullPath) : fullPath;
+      })
+    );
+
+    return files.flat();
+  }
+
+  const dtsRegex = /\.d\.ts(\.map)?$/;
+  const declarationMapFileRegex = /("file"\s*:\s*".*?\.d)\.ts/;
+  const sourceMappingUrlRegex = /^(\/\/.*sourceMappingURL=.*\.d)\.ts\.map/gm;
+
+  /**
+   * @returns {import('rollup').Plugin}
+   */
+  function createDcts() {
+    return {
+      name: "create-d-cts",
+      async writeBundle() {
+        const files = await getFiles(path.resolve("dist"));
+        const dtsFiles = files.filter(
+          (file) => file.endsWith(".d.ts") || file.endsWith(".d.ts.map")
+        );
+
+        await Promise.all(
+          dtsFiles.map(async (file) => {
+            // Rename .d.ts and .d.ts.map files to .d.cts and .d.cts.map
+            const renamedFile = file.replace(dtsRegex, ".d.cts$1");
+            await fs.copyFile(file, renamedFile);
+
+            // Update .d.cts files to point to their .d.cts.map file
+            if (file.endsWith(".d.ts")) {
+              const content = await fs.readFile(renamedFile, "utf-8");
+              await fs.writeFile(
+                renamedFile,
+                content.replace(sourceMappingUrlRegex, "$1.cts.map"),
+                "utf-8"
+              );
+            }
+
+            // Update .d.cts.map files to point to their .d.cts file
+            if (file.endsWith(".d.ts.map")) {
+              const content = await fs.readFile(renamedFile, "utf-8");
+              await fs.writeFile(
+                renamedFile,
+                content.replace(declarationMapFileRegex, "$1.cts"),
+                "utf-8"
+              );
+            }
+          })
+        );
+      },
+    };
+  }
+
+  /**
    * @param {Format} format
    * @returns {import('rollup').RollupOptions}
    */
@@ -256,6 +309,52 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
             sourcemap: true,
           };
 
+    /** @type {import('rollup').InputPluginOption[]} */
+    const plugins = [
+      esbuild({
+        target: "es2022",
+        sourceMap: true,
+        jsx: "automatic",
+      }),
+      preserveUseClient(),
+      replace({
+        values: {
+          __VERSION__: JSON.stringify(pkg.version),
+          ROLLUP_FORMAT: JSON.stringify(format),
+        },
+        preventAssignment: true,
+      }),
+    ];
+
+    // Plugins that should only run once (during the "cjs" build, not the "esm" one)
+    if (format === "cjs") {
+      plugins.push(
+        // Clean dist directory
+        clean({ directory: "dist" }),
+        // Build .css files
+        styles({
+          files: styleFiles,
+        })
+      );
+
+      // Generate .d.ts files with declaration maps
+      if (withDeclarationMaps) {
+        plugins.push(
+          // Build .d.ts files
+          typescript({
+            outDir: "dist",
+            declarationDir: "dist",
+            emitDeclarationOnly: true,
+            declaration: true,
+            declarationMap: true,
+            exclude: ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+          }),
+          // Duplicate .d.ts files (and their maps) as .d.cts
+          createDcts()
+        );
+      }
+    }
+
     return {
       input: entries,
       external: [
@@ -269,27 +368,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       ],
       output,
       treeshake: false,
-      plugins: [
-        esbuild({
-          target: "es2022",
-          sourceMap: true,
-          jsx: "automatic",
-        }),
-        preserveUseClient(),
-        replace({
-          values: {
-            __VERSION__: JSON.stringify(pkg.version),
-            ROLLUP_FORMAT: JSON.stringify(format),
-          },
-          preventAssignment: true,
-        }),
-        // Clean dist directory
-        clean({ directory: "dist" }),
-        // Build .css files
-        styles({
-          files: styleFiles,
-        }),
-      ],
+      plugins,
       onwarn(warning, warn) {
         if (
           warning.code === "MODULE_LEVEL_DIRECTIVE" &&
@@ -302,35 +381,30 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
     };
   }
 
-  /**
-   * @returns {import('rollup').RollupOptions[]}
-   */
-  function createTypesConfigs() {
-    return entries.map((input) => ({
-      input,
-      output: [
-        {
-          file: input
-            .replace("src/", "dist/")
-            .replace(/\.ts$/, pkg.type === "module" ? ".d.ts" : ".d.mts"),
-        },
-        {
-          file: input
-            .replace("src/", "dist/")
-            .replace(/\.ts$/, pkg.type === "module" ? ".d.cts" : ".d.ts"),
-        },
-      ],
-      plugins: [dts()],
-    }));
-  }
+  /** @type {import('rollup').RollupOptions[]} */
+  const config = [createMainConfig("cjs"), createMainConfig("esm")];
 
-  const config = [
-    // Build .js and .mjs files
-    createMainConfig("cjs"),
-    createMainConfig("esm"),
-    // Build .d.ts and .d.mts files
-    ...createTypesConfigs(),
-  ];
+  // Generate .d.ts files without declaration maps
+  if (!withDeclarationMaps) {
+    config.push(
+      ...entries.map((input) => ({
+        input,
+        output: [
+          {
+            file: input
+              .replace("src/", "dist/")
+              .replace(/\.ts$/, pkg.type === "module" ? ".d.ts" : ".d.mts"),
+          },
+          {
+            file: input
+              .replace("src/", "dist/")
+              .replace(/\.ts$/, pkg.type === "module" ? ".d.cts" : ".d.ts"),
+          },
+        ],
+        plugins: [dts()],
+      }))
+    );
+  }
 
   return config;
 }
