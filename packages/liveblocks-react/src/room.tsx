@@ -297,8 +297,15 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
   return {
     store,
     onMutationFailure,
-    pollThreadsIfStaleForRoomId: (roomId: string) =>
-      threadsPollersByRoomId.get(roomId)?.pollNowIfStale(),
+    pollThreadsForRoomId: (roomId: string) => {
+      const threadsPoller = threadsPollersByRoomId.getOrCreate(roomId);
+
+      // If there's a threads poller for this room, immediately trigger it
+      if (threadsPoller) {
+        threadsPoller.markAsStale();
+        threadsPoller.pollNowIfStale();
+      }
+    },
     getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(
       threadsPollersByRoomId
     ),
@@ -2443,7 +2450,7 @@ function useUpdateRoomNotificationSettings() {
   const room = useRoom();
   return useCallback(
     (settings: Partial<RoomSubscriptionSettings>) => {
-      const { store, onMutationFailure, pollThreadsIfStaleForRoomId } =
+      const { store, onMutationFailure, pollThreadsForRoomId } =
         getRoomExtrasForClient(client);
       const userId = getCurrentUserId(client);
       const optimisticId = store.optimisticUpdates.add({
@@ -2462,9 +2469,9 @@ function useUpdateRoomNotificationSettings() {
             updatedSettings
           );
 
-          // If Comments is used and the `threads` settings are changed, trigger a polling to update thread subscriptions
+          // If the `threads` settings are changed, trigger a polling to update thread subscriptions
           if (settings.threads) {
-            pollThreadsIfStaleForRoomId(room.id);
+            pollThreadsForRoomId(room.id);
           }
         },
         (err: Error) =>
@@ -2492,7 +2499,7 @@ function useUpdateRoomSubscriptionSettings() {
   const room = useRoom();
   return useCallback(
     (settings: Partial<RoomSubscriptionSettings>) => {
-      const { store, onMutationFailure, pollThreadsIfStaleForRoomId } =
+      const { store, onMutationFailure, pollThreadsForRoomId } =
         getRoomExtrasForClient(client);
       const userId = getCurrentUserId(client);
       const optimisticId = store.optimisticUpdates.add({
@@ -2511,9 +2518,9 @@ function useUpdateRoomSubscriptionSettings() {
             udpatedSettings
           );
 
-          // If Comments is used and the `threads` settings are changed, trigger a polling to update thread subscriptions
+          // If the `threads` settings are changed, trigger a polling to update thread subscriptions
           if (settings.threads) {
-            pollThreadsIfStaleForRoomId(room.id);
+            pollThreadsForRoomId(room.id);
           }
         },
         (err: Error) =>
