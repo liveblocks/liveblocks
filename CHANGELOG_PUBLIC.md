@@ -18,7 +18,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
-# Week 15 (2025-04-11)
+# Week 16 (2025-04-18)
 
 ## v2.23.1
 
@@ -52,10 +52,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
 - Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
   (Thanks @chadnorvell for the contribution!)
+  
+### Documentation
+
+- New [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features) page, highlighting all upcoming features.
 
 ## Contributors
 
-marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell, nvie
+marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell, nvie, ctnicholas, pierrelevaillant
 
 # Week 14 (2025-04-04)
 
