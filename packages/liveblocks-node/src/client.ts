@@ -52,6 +52,7 @@ import {
   convertToThreadData,
   createManagedPool,
   createUserNotificationSettings,
+  isPlainObject,
   LiveObject,
   makeAbortController,
   objectToQuery,
@@ -944,14 +945,14 @@ export class Liveblocks {
 
     // Read the first element from the NDJson stream and interpret it as the response data
     const iter = stream[Symbol.asyncIterator]();
-    const { actor } = (await iter.next()).value as Record<string, unknown>;
-    if (typeof actor !== "number") {
+    const first = (await iter.next()).value;
+    if (!isPlainObject(first) || typeof first.actor !== "number") {
       throw new Error("Failed to obtain a unique session");
     }
 
     // The rest of the stream are all the Storage nodes
     const nodes = (await asyncConsume(iter)) as IdTuple<SerializedCrdt>[];
-    return { actor, nodes };
+    return { actor: first.actor, nodes };
   }
 
   /**
