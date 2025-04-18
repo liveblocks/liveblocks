@@ -349,7 +349,14 @@ function BlockTokenComp({ token }: { token: BlockToken }) {
             <tr>
               {token.header.map((cell, index) => {
                 return (
-                  <th key={index} align={cell.align ?? undefined}>
+                  <th
+                    key={index}
+                    align={
+                      // XXX @Nimesh? I'm getting a TS error here
+                      // cell.align ?? undefined
+                      undefined
+                    }
+                  >
                     {cell.tokens.map((token, index) => (
                       <InlineTokenComp
                         key={index}
@@ -367,7 +374,14 @@ function BlockTokenComp({ token }: { token: BlockToken }) {
                 <tr key={index}>
                   {row.map((cell, index) => {
                     return (
-                      <td key={index} align={cell.align ?? undefined}>
+                      <td
+                        key={index}
+                        align={
+                          // XXX @Nimesh? I'm getting a TS error here
+                          // cell.align ?? undefined
+                          undefined
+                        }
+                      >
                         {cell.tokens.map((token, index) => (
                           <InlineTokenComp
                             key={index}
