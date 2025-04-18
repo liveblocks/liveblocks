@@ -175,6 +175,72 @@ describe("SortedList", () => {
     expect(s2.find((n) => n === 17)).toEqual(undefined);
   });
 
+  test("find with start index", () => {
+    const s1 = SortedList.from([-555, 0, 1, 13, 88, 88], asc);
+    expect(s1.find((n) => n > 1, -99)).toEqual(13);
+    expect(s1.find((n) => n > 1, 0)).toEqual(13);
+    expect(s1.find((n) => n > 1, 1)).toEqual(13);
+    expect(s1.find((n) => n > 1, 2)).toEqual(13);
+    expect(s1.find((n) => n > 1, 3)).toEqual(13);
+    expect(s1.find((n) => n === 17, 3)).toEqual(undefined);
+    const s2 = SortedList.from([-555, 0, 1, 13, 88, 88], desc);
+    expect(s2.find((n) => n > 1, -99)).toEqual(88);
+    expect(s2.find((n) => n > 1, 0)).toEqual(88);
+    expect(s2.find((n) => n > 1, 1)).toEqual(88);
+    expect(s2.find((n) => n > 1, 2)).toEqual(13);
+    expect(s2.find((n) => n > 1, 3)).toEqual(undefined);
+    expect(s2.find((n) => n === 17, 3)).toEqual(undefined);
+  });
+
+  test("at", () => {
+    const s1 = SortedList.from([0, 88, 1, -555, 13, 88], asc);
+    expect(s1.at(-1)).toEqual(undefined);
+    expect(s1.at(0)).toEqual(-555);
+    expect(s1.at(1)).toEqual(0);
+    expect(s1.at(2)).toEqual(1);
+    expect(s1.at(3)).toEqual(13);
+    expect(s1.at(4)).toEqual(88);
+    expect(s1.at(5)).toEqual(88);
+    expect(s1.at(6)).toEqual(undefined);
+
+    const s2 = SortedList.from([0, 88, 1, -555, 13, 88], desc);
+    expect(s2.at(-1)).toEqual(undefined);
+    expect(s2.at(0)).toEqual(88);
+    expect(s2.at(1)).toEqual(88);
+    expect(s2.at(2)).toEqual(13);
+    expect(s2.at(3)).toEqual(1);
+    expect(s2.at(4)).toEqual(0);
+    expect(s2.at(5)).toEqual(-555);
+    expect(s2.at(6)).toEqual(undefined);
+  });
+
+  test("findRightmost", () => {
+    const s1 = SortedList.from([-555, 0, 1, 13, 88, 88], asc);
+    expect(s1.findRight((n) => n <= 0)).toEqual(0);
+    expect(s1.findRight((n) => n > 1)).toEqual(88);
+    expect(s1.findRight((n) => n === 17)).toEqual(undefined);
+    const s2 = SortedList.from([-555, 0, 1, 13, 88, 88], desc);
+    expect(s2.findRight((n) => n <= 0)).toEqual(-555);
+    expect(s2.findRight((n) => n > 1)).toEqual(13);
+    expect(s2.findRight((n) => n === 17)).toEqual(undefined);
+  });
+
+  test("findRightmost with start index", () => {
+    const s1 = SortedList.from([-555, 0, 1, 13, 88, 88], asc);
+    expect(s1.findRight((n) => n <= 0, 999)).toEqual(0);
+    expect(s1.findRight((n) => n <= 0, 7)).toEqual(0);
+    expect(s1.findRight((n) => n <= 0, 6)).toEqual(0);
+    expect(s1.findRight((n) => n <= 0, 5)).toEqual(0);
+    expect(s1.findRight((n) => n <= 0, 4)).toEqual(0);
+    const s2 = SortedList.from([-555, 0, 1, 13, 88, 88], desc);
+    expect(s2.findRight((n) => n <= 0, 999)).toEqual(-555);
+    expect(s2.findRight((n) => n <= 0, 7)).toEqual(-555);
+    expect(s2.findRight((n) => n <= 0, 6)).toEqual(-555);
+    expect(s2.findRight((n) => n <= 0, 5)).toEqual(-555);
+    expect(s2.findRight((n) => n <= 0, 4)).toEqual(0);
+    expect(s2.findRight((n) => n <= 0, 3)).toEqual(undefined);
+  });
+
   test("accessing the raw internal array", () => {
     const s1 = SortedList.from([3, 6, 7, 1, 0, 1, 0, 99, -13, -1], asc);
     expect(s1.rawArray).toEqual([-13, -1, 0, 0, 1, 1, 3, 6, 7, 99]);

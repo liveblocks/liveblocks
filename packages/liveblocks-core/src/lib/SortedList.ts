@@ -123,6 +123,10 @@ export class SortedList<T> {
     return false;
   }
 
+  at(index: number): T | undefined {
+    return this.#data[index];
+  }
+
   get length(): number {
     return this.#data.length;
   }
@@ -139,8 +143,48 @@ export class SortedList<T> {
     return this.#data[Symbol.iterator]();
   }
 
-  find(predicate: (value: T, index: number) => unknown): T | undefined {
-    return this.#data.find(predicate);
+  /** Finds the leftmost item that matches the predicate. */
+  find(
+    predicate: (value: T, index: number) => unknown,
+    start?: number
+  ): T | undefined {
+    const idx = this.findIndex(predicate, start);
+    return idx > -1 ? this.#data.at(idx)! : undefined; // eslint-disable-line no-restricted-syntax
+  }
+
+  /** Finds the leftmost index that matches the predicate. */
+  findIndex(
+    predicate: (value: T, index: number) => unknown,
+    start = 0
+  ): number {
+    for (let i = Math.max(0, start); i < this.#data.length; i++) {
+      if (predicate(this.#data[i], i)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /** Finds the rightmost item that matches the predicate. */
+  findRight(
+    predicate: (value: T, index: number) => unknown,
+    start?: number
+  ): T | undefined {
+    const idx = this.findIndexRight(predicate, start);
+    return idx > -1 ? this.#data.at(idx)! : undefined; // eslint-disable-line no-restricted-syntax
+  }
+
+  /** Finds the rightmost index that matches the predicate. */
+  findIndexRight(
+    predicate: (value: T, index: number) => unknown,
+    start = this.#data.length - 1
+  ): number {
+    for (let i = Math.min(start, this.#data.length - 1); i >= 0; i--) {
+      if (predicate(this.#data[i], i)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   get rawArray(): readonly T[] {
