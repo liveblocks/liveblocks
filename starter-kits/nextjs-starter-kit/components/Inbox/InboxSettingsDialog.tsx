@@ -1,7 +1,7 @@
 import {
   useIsInsideRoom,
   useNotificationSettings,
-  useRoomNotificationSettings,
+  useRoomSubscriptionSettings,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import { ReactNode, Suspense } from "react";
@@ -9,11 +9,12 @@ import { Dialog } from "@/primitives/Dialog";
 import { Select } from "@/primitives/Select";
 import { Spinner } from "@/primitives/Spinner";
 import { Switch } from "@/primitives/Switch";
+import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import styles from "./InboxSettingsDialog.module.css";
 
-function RoomNotificationSettings() {
-  // Render which thread notifications should be received (for both the inbox, and also in webhooks)
-  const [roomSettings, updateRoomSettings] = useRoomNotificationSettings();
+function ThreadsSubscriptionSettings() {
+  // Render which notifications should be received (for both the inbox, and also in webhooks)
+  const [roomSettings, updateRoomSettings] = useRoomSubscriptionSettings();
 
   return (
     <div className={styles.selectBox}>
@@ -44,6 +45,38 @@ function RoomNotificationSettings() {
           });
         }}
         value={roomSettings.settings.threads}
+      />
+    </div>
+  );
+}
+
+function TextMentionsSubscriptionSettings() {
+  // Render which notifications should be received (for both the inbox, and also in webhooks)
+  const [roomSettings, updateRoomSettings] = useRoomSubscriptionSettings();
+
+  return (
+    <div className={styles.selectBox}>
+      <Select
+        aboveOverlay
+        initialValue="mine"
+        items={[
+          {
+            title: "Only my mentions",
+            value: "mine",
+            description: "Only mentions of yourself",
+          },
+          {
+            title: "No mentions",
+            value: "none",
+            description: "Never be notified of mentions",
+          },
+        ]}
+        onChange={(value) => {
+          updateRoomSettings({
+            textMentions: value as any,
+          });
+        }}
+        value={roomSettings.settings.textMentions}
       />
     </div>
   );
@@ -107,6 +140,7 @@ function EmailNotificationSettings() {
 
 export function InboxSettingsDialog({ children }: { children: ReactNode }) {
   const isInsideRoom = useIsInsideRoom();
+  const initialDocument = useInitialDocument();
 
   return (
     <Dialog
@@ -124,8 +158,25 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
                     </div>
                   }
                 >
-                  <RoomNotificationSettings />
+                  <ThreadsSubscriptionSettings />
                 </Suspense>
+                {initialDocument.type === "text" ||
+                initialDocument.type === "note" ? (
+                  <>
+                    <h3>
+                      In this document, receive text mentions notifications for…{" "}
+                    </h3>
+                    <Suspense
+                      fallback={
+                        <div className={clsx(styles.switchBox, styles.loading)}>
+                          <Spinner />
+                        </div>
+                      }
+                    >
+                      <TextMentionsSubscriptionSettings />
+                    </Suspense>
+                  </>
+                ) : null}
               </>
             ) : null}
             <h3>In all documents, receive emails for…</h3>
