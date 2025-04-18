@@ -12,6 +12,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
+import { shallow } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
 import type { DistributiveOmit } from "./lib/utils";
@@ -206,13 +207,8 @@ function createStore_forChatMessages() {
     batch(() => {
       const chatMsgsΣ = messagesByChatIdΣ.getOrCreate(message.chatId);
       chatMsgsΣ.mutate((list) => {
-        const existed = list.removeBy((m) => m.id === message.id, 1);
-        if (!message.deletedAt) {
-          list.add(message);
-          return true;
-        } else {
-          return existed;
-        }
+        list.removeBy((m) => m.id === message.id, 1);
+        list.add(message);
       });
 
       // If the message is a pending update, write it to the pendingContents
@@ -277,14 +273,27 @@ function createStore_forChatMessages() {
     return undefined;
   }
 
-  const immutableMessagesByChatId = new DefaultMap((chatId: ChatId) =>
-    DerivedSignal.from(() =>
-      Array.from(messagesByChatIdΣ.getOrCreate(chatId).get())
-    )
+  function selectBranch(
+    pool: SortedList<AiChatMessage>,
+    _preferredBranch: MessageId | null
+  ) {
+    // XXX Implement this for real!
+    return Array.from(pool).filter((m) => !m.deletedAt);
+  }
+
+  const immutableMessagesByBranch = new DefaultMap(
+    (chatId: ChatId) =>
+      new DefaultMap((branch: MessageId | null) =>
+        DerivedSignal.from(() => {
+          const pool = messagesByChatIdΣ.getOrCreate(chatId).get();
+          return selectBranch(pool, branch);
+        }, shallow)
+      )
   );
-  function getChatMessagesΣ(chatId: ChatId, _branch?: MessageId) {
-    // XXX Start using the _branch argument
-    return immutableMessagesByChatId.getOrCreate(chatId);
+  function getChatMessagesΣ(chatId: ChatId, branch?: MessageId) {
+    return immutableMessagesByBranch
+      .getOrCreate(chatId)
+      .getOrCreate(branch || null);
   }
 
   return {
