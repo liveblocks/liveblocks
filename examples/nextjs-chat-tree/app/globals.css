@@ -1,0 +1,3 @@
+@import "tailwindcss";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
