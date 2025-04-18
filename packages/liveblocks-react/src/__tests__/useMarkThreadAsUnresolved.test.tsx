@@ -34,8 +34,10 @@ describe("useMarkThreadAsUnresolved", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

@@ -367,6 +367,39 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(2); // Poll 2
   });
 
+  test("should force an immediate poll after markAsStale is called", async () => {
+    // 0s                         5s    6s                   11s
+    // |--------------------------|--------------------------|
+    // Start                   Poll 1              Poll 3 (natural but offset
+    //                                  ^        by 1s because the last poll was
+    //                                  |             at 6s and not 5s)
+    //                          markAsStale here
+    //                          + pollNowIfStale
+    //                       (forces immediate poll 2)
+
+    const callback = jest.fn();
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 30000 });
+
+    // Start the poller
+    poller.inc();
+
+    // Fast-forward to 5s
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(callback).toHaveBeenCalledTimes(1); // Poll 1
+
+    // Fast-forward from 5s -> 6s
+    await jest.advanceTimersByTimeAsync(1000);
+
+    // Mark as stale and poll
+    poller.markAsStale();
+    poller.pollNowIfStale(); // Should force a poll, ignoring maxStaleTimeMs since it was marked as stale
+    expect(callback).toHaveBeenCalledTimes(2); // Forced poll 2
+
+    // Fast-forward from 6s -> 11s
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(callback).toHaveBeenCalledTimes(3); // Poll 3
+  });
+
   test("should allow new polls when re-enabled, but not schedule extra polls after completion of an in-progress poll", async () => {
     // Mock async callback that takes 4s to resolve
     const callback = jest.fn(async () => {

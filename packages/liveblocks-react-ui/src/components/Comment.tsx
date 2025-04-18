@@ -162,6 +162,16 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * @internal
    */
+  additionalDropdownItemsBefore?: ReactNode;
+
+  /**
+   * @internal
+   */
+  additionalDropdownItemsAfter?: ReactNode;
+
+  /**
+   * @internal
+   */
   additionalActionsClassName?: string;
 }
 
@@ -527,6 +537,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       className,
       additionalActions,
       additionalActionsClassName,
+      additionalDropdownItemsBefore,
+      additionalDropdownItemsAfter,
       autoMarkReadThreadId,
       ...props
     },
@@ -741,27 +753,35 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     </Tooltip>
                   </EmojiPicker>
                 )}
-                {comment.userId === currentUserId && (
+                {comment.userId === currentUserId ||
+                additionalDropdownItemsBefore ||
+                additionalDropdownItemsAfter ? (
                   <Dropdown
                     open={isMoreActionOpen}
                     onOpenChange={setMoreActionOpen}
                     align="end"
                     content={
                       <>
-                        <DropdownItem
-                          onSelect={handleEdit}
-                          onClick={stopPropagation}
-                          icon={<EditIcon />}
-                        >
-                          {$.COMMENT_EDIT}
-                        </DropdownItem>
-                        <DropdownItem
-                          onSelect={handleDelete}
-                          onClick={stopPropagation}
-                          icon={<DeleteIcon />}
-                        >
-                          {$.COMMENT_DELETE}
-                        </DropdownItem>
+                        {additionalDropdownItemsBefore}
+                        {comment.userId === currentUserId && (
+                          <>
+                            <DropdownItem
+                              onSelect={handleEdit}
+                              onClick={stopPropagation}
+                              icon={<EditIcon />}
+                            >
+                              {$.COMMENT_EDIT}
+                            </DropdownItem>
+                            <DropdownItem
+                              onSelect={handleDelete}
+                              onClick={stopPropagation}
+                              icon={<DeleteIcon />}
+                            >
+                              {$.COMMENT_DELETE}
+                            </DropdownItem>
+                          </>
+                        )}
+                        {additionalDropdownItemsAfter}
                       </>
                     }
                   >
@@ -777,7 +797,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       </DropdownTrigger>
                     </Tooltip>
                   </Dropdown>
-                )}
+                ) : null}
               </div>
             )}
           </div>

@@ -222,6 +222,20 @@ export type {
 } from "./protocol/InboxNotifications";
 export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
+  NotificationSettings,
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/NotificationSettings";
+export {
+  createNotificationSettings,
+  isNotificationChannelEnabled,
+  patchNotificationSettings,
+} from "./protocol/NotificationSettings";
+export type {
   AckOp,
   CreateListOp,
   CreateMapOp,
@@ -235,6 +249,10 @@ export type {
   UpdateObjectOp,
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
+export type {
+  RoomNotificationSettings,
+  RoomSubscriptionSettings,
+} from "./protocol/RoomSubscriptionSettings";
 export type {
   IdTuple,
   SerializedChild,
@@ -262,18 +280,13 @@ export type {
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
-  NotificationChannel,
-  NotificationChannelSettings,
-  NotificationKind,
-  PartialUserNotificationSettings,
-  UserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
-export {
-  createUserNotificationSettings,
-  isNotificationChannelEnabled,
-  patchUserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+  SubscriptionKey,
+} from "./protocol/Subscriptions";
+export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,
@@ -316,7 +329,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { User } from "./types/User";
 export { detectDupes };
 

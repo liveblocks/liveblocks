@@ -20,6 +20,12 @@ export type Poller = {
   pollNowIfStale(): void;
 
   /**
+   * Marks the poller as stale. This can be used to force the next call
+   * to `.pollNowIfStale()` to poll immediately.
+   */
+  markAsStale(): void;
+
+  /**
    * Used in unit tests only.
    * @internal
    */
@@ -189,6 +195,11 @@ export function makePoller(
     }
   }
 
+  function markAsStale() {
+    // Set the last successful poll timestamp to a stale time
+    context.lastSuccessfulPollAt = performance.now() - maxStaleTimeMs - 1;
+  }
+
   function setInForeground(inForeground: boolean) {
     context.inForeground = inForeground;
     startOrStop();
@@ -211,6 +222,7 @@ export function makePoller(
     inc,
     dec,
     pollNowIfStale,
+    markAsStale,
 
     // Internal API, used by unit tests only to simulate visibility events
     setInForeground,

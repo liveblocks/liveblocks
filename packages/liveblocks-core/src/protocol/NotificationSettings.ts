@@ -29,41 +29,49 @@ export type NotificationChannelSettings = {
 /**
  * @private
  *
- * Base definition of user notification settings.
+ * Base definition of notification settings.
  * Plain means it's a simple object coming from the remote backend.
  *
  * It's the raw settings object where somme channels cannot exists
  * because there are no notification kinds enabled on the dashboard.
- * And this object isn't yet proxied by the creator factory `createUserNotificationSettings`.
+ * And this object isn't yet proxied by the creator factory `createNotificationSettings`.
  */
-export type UserNotificationSettingsPlain = {
+export type NotificationSettingsPlain = {
   [C in NotificationChannel]?: NotificationChannelSettings;
 };
 
 /**
  * @internal
  *
- * Symbol to branch plain value of user notification settings
- * inside  the UserNotificationSettings object.
+ * Symbol to branch plain value of notification settings
+ * inside the NotificationSettings object.
  */
-const kPlain = Symbol("user-notification-settings-plain");
+const kPlain = Symbol("notification-settings-plain");
 
 /**
  * @internal
- * Proxied `UserNotificationSettingsPlain` object.
+ * Proxied `NotificationSettingsPlain` object.
  */
-type ProxiedUserNotificationSettings = UserNotificationSettingsPlain;
+type ProxiedNotificationSettings = NotificationSettingsPlain;
 
 /**
- * User notification settings.
+ * @deprecated Renamed to `NotificationSettings`
+ *
+ * Notification settings.
  * One channel for one set of settings.
  */
-export type UserNotificationSettings = {
+export type UserNotificationSettings = NotificationSettings;
+
+/**
+ * Notification settings.
+ * One channel for one set of settings.
+ */
+export type NotificationSettings = {
   [C in NotificationChannel]: NotificationChannelSettings | null;
 };
 
 /**
- * It creates a deep partial specific for `UserNotificationSettings`
+ * It creates a deep partial specific for `NotificationSettings`
  * to offer a nice DX when updating the settings (e.g not being forced to define every keys)
  * and at the same the some preserver the augmentation for custom kinds (e.g `liveblocks.config.ts`).
  */
@@ -76,28 +84,28 @@ type DeepPartialWithAugmentation<T> = T extends object
   : T;
 
 /**
- * Partial user notification settings with augmentation preserved gracefully.
+ * Partial notification settings with augmentation preserved gracefully.
  * It means you can update the settings without being forced to define every keys.
  * Useful when implementing update functions.
  */
-export type PartialUserNotificationSettings =
-  DeepPartialWithAugmentation<UserNotificationSettingsPlain>;
+export type PartialNotificationSettings =
+  DeepPartialWithAugmentation<NotificationSettingsPlain>;
 
 /**
  * @private
  *
- * Creates a `UserNotificationSettings` object with the given initial plain settings.
+ * Creates a `NotificationSettings` object with the given initial plain settings.
  * It defines a getter for each channel to access the settings and returns `null` with an error log
  * in case the required channel isn't enabled in the dashboard.
  *
- * You can see this function as `Proxy` like around `UserNotificationSettingsPlain` type.
+ * You can see this function as `Proxy` like around `NotificationSettingsPlain` type.
  * We can't predict what will be enabled on the dashboard or not, so it's important
  * provide a good DX to developers by returning `null` completed by an error log
  * when they try to access a channel that isn't enabled in the dashboard.
  */
-export function createUserNotificationSettings(
-  plain: UserNotificationSettingsPlain
-): UserNotificationSettings {
+export function createNotificationSettings(
+  plain: NotificationSettingsPlain
+): NotificationSettings {
   const channels: NotificationChannel[] = [
     "email",
     "slack",
@@ -105,14 +113,13 @@ export function createUserNotificationSettings(
     "webPush",
   ];
   const descriptors: PropertyDescriptorMap &
-    ThisType<
-      UserNotificationSettings & { [kPlain]: ProxiedUserNotificationSettings }
-    > = {
-    [kPlain]: {
-      value: plain,
-      enumerable: false,
-    },
-  };
+    ThisType<NotificationSettings & { [kPlain]: ProxiedNotificationSettings }> =
+    {
+      [kPlain]: {
+        value: plain,
+        enumerable: false,
+      },
+    };
 
   for (const channel of channels) {
     descriptors[channel] = {
@@ -125,12 +132,12 @@ export function createUserNotificationSettings(
        * no enforced shape for ⁠this. And so the standard library definitions have to remain as broad as possible
        * to support any valid JavaScript usage (e.g `Object.defineProperty`).
        *
-       * So we can safely tells that this getter is typed as `this: UserNotificationSettings` because we're
-       * creating a well known shaped object → `UserNotificationSettings`.
+       * So we can safely tells that this getter is typed as `this: NotificationSettings` because we're
+       * creating a well known shaped object → `NotificationSettings`.
        */
       get(
-        this: UserNotificationSettings & {
-          [kPlain]: ProxiedUserNotificationSettings;
+        this: NotificationSettings & {
+          [kPlain]: ProxiedNotificationSettings;
         }
       ): NotificationChannelSettings | null {
         const value = this[kPlain][channel];
@@ -145,24 +152,24 @@ export function createUserNotificationSettings(
     };
   }
 
-  return create<UserNotificationSettings>(null, descriptors);
+  return create<NotificationSettings>(null, descriptors);
 }
 
 /**
  * @private
  *
- * Patch a `UserNotificationSettings` object by applying notification kind updates
- * coming from a `PartialUserNotificationSettings` object.
+ * Patch a `NotificationSettings` object by applying notification kind updates
+ * coming from a `PartialNotificationSettings` object.
  */
-export function patchUserNotificationSettings(
-  existing: UserNotificationSettings,
-  patch: PartialUserNotificationSettings
-): UserNotificationSettings {
+export function patchNotificationSettings(
+  existing: NotificationSettings,
+  patch: PartialNotificationSettings
+): NotificationSettings {
   // Create a copy of the settings object to mutate
-  const outcoming = createUserNotificationSettings({
+  const outcoming = createNotificationSettings({
     ...(
-      existing as UserNotificationSettings & {
-        [kPlain]: ProxiedUserNotificationSettings;
+      existing as NotificationSettings & {
+        [kPlain]: ProxiedNotificationSettings;
       }
     )[kPlain],
   });
@@ -175,13 +182,13 @@ export function patchUserNotificationSettings(
       ) as NotificationChannelSettings; // Fine to type cast here because we've filtered out undefined values
 
       (
-        outcoming as UserNotificationSettings & {
-          [kPlain]: ProxiedUserNotificationSettings;
+        outcoming as NotificationSettings & {
+          [kPlain]: ProxiedNotificationSettings;
         }
       )[kPlain][channel] = {
         ...(
-          outcoming as UserNotificationSettings & {
-            [kPlain]: ProxiedUserNotificationSettings;
+          outcoming as NotificationSettings & {
+            [kPlain]: ProxiedNotificationSettings;
           }
         )[kPlain][channel],
         ...kindUpdates,

@@ -36,6 +36,7 @@ describe("useCreateThread", () => {
           ctx.json({
             data: [],
             inboxNotifications: [],
+            subscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -136,6 +137,7 @@ describe("useCreateThread", () => {
           ctx.json({
             data: [],
             inboxNotifications: [],
+            subscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

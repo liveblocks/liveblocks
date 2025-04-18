@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 
 import type {
   InboxNotificationData,
+  SubscriptionData,
   ThreadData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
@@ -17,7 +18,7 @@ import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { dummyThreadData } from "./_dummies";
+import { dummySubscriptionData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { createContextsForTest, makeThreadFilter } from "./_utils";
 
@@ -45,6 +46,7 @@ function mockGetUserThreads(
     {
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
+      subscriptions: SubscriptionData[];
       meta: {
         nextCursor: string | null;
         requestedAt: string;
@@ -63,8 +65,10 @@ function mockGetUserThreadsDelta(
     {
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
+      subscriptions: SubscriptionData[];
       deletedInboxNotifications: InboxNotificationData[];
       deletedThreads: ThreadDataWithDeleteInfo[];
+      deletedSubscriptions: SubscriptionData[];
       meta: {
         requestedAt: string; // ISO date
         permissionHints: Record<string, Permission[]>;
@@ -87,6 +91,9 @@ describe("useUserThreads", () => {
   test("should fetch user threads on mount", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetUserThreads((_req, res, ctx) => {
@@ -94,6 +101,7 @@ describe("useUserThreads", () => {
           ctx.json({
             threads,
             inboxNotifications: [],
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -151,6 +159,10 @@ describe("useUserThreads", () => {
         pinned: false,
       },
     });
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: pinnedThread.id }),
+      dummySubscriptionData({ subjectId: unpinnedThread.id }),
+    ];
 
     server.use(
       mockGetUserThreads((req, res, ctx) => {
@@ -161,6 +173,7 @@ describe("useUserThreads", () => {
           ctx.json({
             threads: [pinnedThread, unpinnedThread].filter(pred),
             inboxNotifications: [],
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -212,12 +225,15 @@ describe("useUserThreads", () => {
       createdAt: new Date("2021-01-01T00:00:00Z"),
       updatedAt: new Date("2021-01-03T00:00:00Z"),
     });
-
     const earliestUpdatedThread = dummyThreadData({
       roomId,
       createdAt: new Date("2020-12-31T00:00:00Z"), // Earlier creation date
       updatedAt: new Date("2021-01-01T00:00:00Z"), // Earlier update date
     });
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: latestUpdatedThread.id }),
+      dummySubscriptionData({ subjectId: earliestUpdatedThread.id }),
+    ];
 
     server.use(
       mockGetUserThreads((_req, res, ctx) => {
@@ -225,6 +241,7 @@ describe("useUserThreads", () => {
           ctx.json({
             threads: [latestUpdatedThread, earliestUpdatedThread],
             inboxNotifications: [],
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -395,6 +412,9 @@ describe("useThreadsSuspense", () => {
   test("should fetch user threads on render", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetUserThreads(async (_req, res, ctx) => {
@@ -402,8 +422,10 @@ describe("useThreadsSuspense", () => {
           ctx.json({
             threads,
             inboxNotifications: [],
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -472,8 +494,10 @@ describe("useUserThreadsSuspense: error", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               permissionHints: {},
@@ -577,6 +601,15 @@ describe("useUserThreads: pagination", () => {
     const threadsPageThree = [
       dummyThreadData({ roomId, createdAt: new Date("2021-01-01T00:00:00Z") }),
     ];
+    const subscriptionsPageOne = [
+      dummySubscriptionData({ subjectId: threadsPageOne[0]!.id }),
+    ];
+    const subscriptionsPageTwo = [
+      dummySubscriptionData({ subjectId: threadsPageTwo[0]!.id }),
+    ];
+    const subscriptionsPageThree = [
+      dummySubscriptionData({ subjectId: threadsPageThree[0]!.id }),
+    ];
 
     let isPageOneRequested = false;
     let isPageTwoRequested = false;
@@ -594,6 +627,7 @@ describe("useUserThreads: pagination", () => {
             ctx.json({
               threads: threadsPageTwo,
               inboxNotifications: [],
+              subscriptions: subscriptionsPageTwo,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
@@ -611,6 +645,7 @@ describe("useUserThreads: pagination", () => {
             ctx.json({
               threads: threadsPageThree,
               inboxNotifications: [],
+              subscriptions: subscriptionsPageThree,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
@@ -628,6 +663,7 @@ describe("useUserThreads: pagination", () => {
             ctx.json({
               threads: threadsPageOne,
               inboxNotifications: [],
+              subscriptions: subscriptionsPageOne,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -712,6 +748,12 @@ describe("useUserThreads: pagination", () => {
     const threadsPageTwo = [
       dummyThreadData({ roomId, createdAt: new Date("2021-01-01T00:00:00Z") }),
     ];
+    const subscriptionsPageOne = [
+      dummySubscriptionData({ subjectId: threadsPageOne[0]!.id }),
+    ];
+    const subscriptionsPageTwo = [
+      dummySubscriptionData({ subjectId: threadsPageTwo[0]!.id }),
+    ];
 
     let isPageOneRequested = false;
     let isPageTwoRequested = false;
@@ -728,6 +770,7 @@ describe("useUserThreads: pagination", () => {
             ctx.json({
               threads: threadsPageTwo,
               inboxNotifications: [],
+              subscriptions: subscriptionsPageTwo,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
@@ -745,6 +788,7 @@ describe("useUserThreads: pagination", () => {
             ctx.json({
               threads: threadsPageOne,
               inboxNotifications: [],
+              subscriptions: subscriptionsPageOne,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -809,6 +853,9 @@ describe("useUserThreads: pagination", () => {
   test("should handle error while fetching more and set fetchMoreError", async () => {
     const roomId = nanoid();
     const threadsPageOne = [dummyThreadData({ roomId })];
+    const subscriptionsPageOne = [
+      dummySubscriptionData({ subjectId: threadsPageOne[0]!.id }),
+    ];
 
     let isPageTwoRequested = false;
 
@@ -823,8 +870,10 @@ describe("useUserThreads: pagination", () => {
             ctx.json({
               threads: threadsPageOne,
               inboxNotifications: [],
+              subscriptions: subscriptionsPageOne,
               deletedThreads: [],
               deletedInboxNotifications: [],
+              deletedSubscriptions: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",

@@ -1,10 +1,10 @@
 import * as console from "../../lib/fancy-console";
 import {
-  createUserNotificationSettings,
-  type UserNotificationSettingsPlain,
-} from "../UserNotificationSettings";
+  createNotificationSettings,
+  type NotificationSettingsPlain,
+} from "../NotificationSettings";
 
-describe("UserNotificationSettings protocol", () => {
+describe("NotificationSettings protocol", () => {
   let consoleErrorMock: jest.Mock;
 
   beforeEach(() => {
@@ -16,7 +16,7 @@ describe("UserNotificationSettings protocol", () => {
   });
 
   it("should create an object with getters for each known notification channel", () => {
-    const plain: UserNotificationSettingsPlain = {
+    const plain: NotificationSettingsPlain = {
       email: {
         thread: true,
         textMention: false,
@@ -27,7 +27,7 @@ describe("UserNotificationSettings protocol", () => {
       },
     };
 
-    const settings = createUserNotificationSettings(plain);
+    const settings = createNotificationSettings(plain);
 
     expect(settings.email).not.toBeNull();
     expect(settings.slack).not.toBeNull();
@@ -39,13 +39,13 @@ describe("UserNotificationSettings protocol", () => {
   });
 
   it("should return null and log an error if a channel is not defined in plain and is accessed later", () => {
-    const plain: UserNotificationSettingsPlain = {
+    const plain: NotificationSettingsPlain = {
       email: {
         thread: true,
         textMention: true,
       },
     };
-    const settings = createUserNotificationSettings(plain);
+    const settings = createNotificationSettings(plain);
 
     const slackSettings = settings.slack;
     const teamsSettings = settings.teams;
@@ -77,13 +77,13 @@ describe("UserNotificationSettings protocol", () => {
   });
 
   it("should return an object where properties are enumerable except `[kPlain]`", () => {
-    const plain: UserNotificationSettingsPlain = {
+    const plain: NotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: true, textMention: true },
       teams: { thread: true, textMention: true },
       webPush: { thread: true, textMention: true },
     };
-    const settings = createUserNotificationSettings(plain);
+    const settings = createNotificationSettings(plain);
 
     const keys = Object.keys(settings);
     expect(keys.sort()).toEqual(["email", "slack", "teams", "webPush"].sort());
