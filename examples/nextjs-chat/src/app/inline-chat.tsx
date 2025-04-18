@@ -1,5 +1,5 @@
 import { ChatId, CopilotContext, ClientToolDefinition } from "@liveblocks/core";
-import { useClient, useCopilotChatMessages } from "@liveblocks/react";
+import { useChatMessages, useClient } from "@liveblocks/react";
 import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
 import { useEffect } from "react";
 
@@ -18,11 +18,11 @@ export function InlineChat({
     isLoading,
     messages,
     error,
-    fetchMore,
-    isFetchingMore,
-    fetchMoreError,
-    hasFetchedAll,
-  } = useCopilotChatMessages(chatId);
+    // fetchMore,
+    // isFetchingMore,
+    // fetchMoreError,
+    // hasFetchedAll,
+  } = useChatMessages(chatId);
 
   if (isLoading) {
     // TODO: Add suitable loading state
