@@ -120,6 +120,7 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export { Deque } from "./lib/Deque";
 export type {
   EventSource,
   Observable,
