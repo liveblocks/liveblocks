@@ -1,4 +1,5 @@
 {
+  "name": "@liveblocks-starter-kits/nextjs-starter-kit",
   "description": "This repository contains a collaborative starter kit using Liveblocks and Next.js.",
   "license": "Apache-2.0",
   "private": true,
