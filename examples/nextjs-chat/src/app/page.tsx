@@ -17,7 +17,7 @@ import {
 import Markdown from "react-markdown";
 import { useState } from "react";
 
-import { AiChatMessage, ChatId, CopilotId, MessageId } from "@liveblocks/core";
+import { ChatId, CopilotId, MessageId } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
 import { TrashIcon } from "./icons";
 
@@ -186,10 +186,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const client = useClient();
   const { messages } = useChatMessages(chatId);
 
-  const [overrideParentId, setOverrideParentId] = useState<
-    MessageId | undefined
-  >(undefined);
-
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
   >();
@@ -217,32 +213,23 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
 
-  function messageAbove(messageId: MessageId): AiChatMessage | undefined {
-    return messages[messages.findIndex((msg) => msg.id === messageId) - 1];
+  async function ask(text: string, parentMessageId: MessageId | null) {
+    // Creates the user message
+    const { message } = await client.ai.addUserMessage(
+      chatId,
+      parentMessageId,
+      text
+    );
+    forceRerender();
+
+    // Creates the assistant response message
+    await client.ai.ask(chatId, message.id, {
+      copilotId: selectedCopilotId,
+      stream: streaming,
+      timeout: maxTimeout,
+    });
   }
 
-  async function ask(text: string) {
-    try {
-      // Creates the user message
-      const { message } = await client.ai.addUserMessage(
-        chatId,
-        parentMessageId,
-        text
-      );
-      forceRerender();
-
-      // Creates the assistant response message
-      await client.ai.ask(chatId, message.id, {
-        copilotId: selectedCopilotId,
-        stream: streaming,
-        timeout: maxTimeout,
-      });
-    } finally {
-      setOverrideParentId(undefined);
-    }
-  }
-
-  const parentMessageId = overrideParentId ?? lastMessageId;
   return (
     <div className="chat-window-container">
       <div className="messages">
@@ -279,22 +266,18 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                           .join(" ")
                       );
                       if (answer !== null) {
-                        try {
-                          const { message } = await client.ai.addUserMessage(
-                            chatId,
-                            messageAbove(props.message.id)?.id ?? null,
-                            answer
-                          );
-                          forceRerender();
+                        const { message } = await client.ai.addUserMessage(
+                          chatId,
+                          props.message.parentId,
+                          answer
+                        );
+                        forceRerender();
 
-                          await client.ai.ask(chatId, message.id, {
-                            copilotId: selectedCopilotId,
-                            stream: streaming,
-                            timeout: maxTimeout,
-                          });
-                        } finally {
-                          setOverrideParentId(undefined);
-                        }
+                        await client.ai.ask(chatId, message.id, {
+                          copilotId: selectedCopilotId,
+                          stream: streaming,
+                          timeout: maxTimeout,
+                        });
                       }
                     }}
                   >
@@ -302,22 +285,20 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   </button>
                   <button
                     onClick={async () => {
-                      try {
-                        await client.ai.ask(chatId, props.message.id, {
-                          copilotId: selectedCopilotId,
-                          stream: streaming,
-                          timeout: maxTimeout,
-                        });
-                      } finally {
-                        setOverrideParentId(undefined);
-                      }
+                      await client.ai.ask(chatId, props.message.id, {
+                        copilotId: selectedCopilotId,
+                        stream: streaming,
+                        timeout: maxTimeout,
+                      });
                     }}
                   >
                     regenerate
                   </button>
-                  <button onClick={() => setOverrideParentId(props.message.id)}>
-                    {props.message.id}
-                  </button>
+                  <span>
+                    id = {props.message.id}
+                    <br />
+                    parent = {props.message.parentId ?? "null"}
+                  </span>
                 </div>
               </div>
             ),
@@ -335,9 +316,11 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                   }}
                 />
                 <div className="assistant-message-controls">
-                  <button onClick={() => setOverrideParentId(props.message.id)}>
-                    {props.message.id}
-                  </button>
+                  <span>
+                    id = {props.message.id}
+                    <br />
+                    parent = {props.message.parentId ?? "null"}
+                  </span>
                   <button
                     style={{ color: "red" }}
                     onClick={async () => {
@@ -368,7 +351,10 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             }}
           >
             {PRESETS.map((preset, index) => (
-              <button key={index} onClick={() => ask(preset.prompt)}>
+              <button
+                key={index}
+                onClick={() => ask(preset.prompt, lastMessageId)}
+              >
                 {preset.title}
               </button>
             ))}
@@ -386,7 +372,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           }}
           onSubmit={async (ev) => {
             if (ev.currentTarget.textContent?.trim()) {
-              ask(ev.currentTarget.textContent);
+              ask(ev.currentTarget.textContent, lastMessageId);
             }
           }}
         />
@@ -462,23 +448,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             />{" "}
             Streaming
           </label>
-        </div>
-        <div
-          style={{
-            fontSize: "0.8rem",
-            textAlign: "center",
-            width: "100%",
-            margin: "1rem 0 0 0",
-          }}
-        >
-          The next message will be{" "}
-          {parentMessageId === null ? (
-            <>a new root message.</>
-          ) : (
-            <>
-              attached under <b>{parentMessageId}</b>.
-            </>
-          )}
         </div>
       </div>
     </div>
