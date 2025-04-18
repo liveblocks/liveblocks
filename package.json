@@ -8,7 +8,8 @@
     "tools/*",
     "schema-lang/*",
     "e2e/next-sandbox",
-    "examples/nextjs-chat"
+    "examples/nextjs-chat",
+    "examples/nextjs-chat-tree"
   ],
   "scripts": {
     "build": "turbo run build",
