@@ -117,7 +117,7 @@ function now(): ISODateString {
 function createStore_forChatMessages() {
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
-  const messagesByChatId = new DefaultMap(
+  const messagesByChatIdΣ = new DefaultMap(
     (_chatId: ChatId) =>
       new MutableSignal(
         SortedList.with<AiChatMessage>((x, y) => x.createdAt < y.createdAt)
@@ -192,19 +192,19 @@ function createStore_forChatMessages() {
   }
 
   function remove(chatId: ChatId, messageId: MessageId): void {
-    const chatMsgsΣ = messagesByChatId.getOrCreate(chatId);
+    const chatMsgsΣ = messagesByChatIdΣ.getOrCreate(chatId);
     chatMsgsΣ.mutate((list) => list.removeBy((m) => m.id === messageId, 1));
   }
 
   function removeByChatId(chatId: ChatId): void {
-    const chatMsgsΣ = messagesByChatId.get(chatId);
+    const chatMsgsΣ = messagesByChatIdΣ.get(chatId);
     if (chatMsgsΣ === undefined) return;
     chatMsgsΣ.mutate((list) => list.clear());
   }
 
   function upsert(message: AiChatMessage): void {
     batch(() => {
-      const chatMsgsΣ = messagesByChatId.getOrCreate(message.chatId);
+      const chatMsgsΣ = messagesByChatIdΣ.getOrCreate(message.chatId);
       chatMsgsΣ.mutate((list) => {
         const existed = list.removeBy((m) => m.id === message.id, 1);
         if (!message.deletedAt) {
@@ -241,7 +241,7 @@ function createStore_forChatMessages() {
   }
 
   function* iterPendingMessages() {
-    for (const chatMsgsΣ of messagesByChatId.values()) {
+    for (const chatMsgsΣ of messagesByChatIdΣ.values()) {
       for (const m of chatMsgsΣ.get()) {
         if (m.role === "assistant" && m.status === "pending") {
           yield m;
@@ -268,7 +268,7 @@ function createStore_forChatMessages() {
   }
 
   function getMessageById(messageId: MessageId): AiChatMessage | undefined {
-    for (const messagesΣ of messagesByChatId.values()) {
+    for (const messagesΣ of messagesByChatIdΣ.values()) {
       const message = messagesΣ.get().find((m) => m.id === messageId);
       if (message) {
         return message;
@@ -279,7 +279,7 @@ function createStore_forChatMessages() {
 
   const immutableMessagesByChatId = new DefaultMap((chatId: ChatId) =>
     DerivedSignal.from(() =>
-      Array.from(messagesByChatId.getOrCreate(chatId).get())
+      Array.from(messagesByChatIdΣ.getOrCreate(chatId).get())
     )
   );
   function getChatMessagesΣ(chatId: ChatId, _branch?: MessageId) {
