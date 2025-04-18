@@ -192,6 +192,9 @@ function createStore_forChatMessages() {
     });
   }
 
+  // XXX We should reimplement this function to upsert() these as "deletedAt"
+  // messages, instead of actually removing them from the sorted list. It can
+  // break parent relationships this way!
   function remove(chatId: ChatId, messageId: MessageId): void {
     const chatMsgsΣ = messagesByChatIdΣ.getOrCreate(chatId);
     chatMsgsΣ.mutate((list) => list.removeBy((m) => m.id === messageId, 1));
