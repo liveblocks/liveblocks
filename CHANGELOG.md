@@ -2,10 +2,20 @@
 
 ## v2.24.0
 
+We are introducing thread subscriptions to add more granularity to thread
+notifications, allowing users to subscribe to threads without participating or
+unsubscribing from specific ones.
+
+We are also using this opportunity to rename some of the concepts around
+notifications and notification settings to improve clarity. None of these
+changes are breaking but you can learn more about them, their rationale, and how
+to automatically apply them with a codemod in our
+[Upgrade Guide for 2.24](https://liveblocks.io/docs/platform/upgrading/2.24).
+
 ### `@liveblocks/react-ui`
 
-- Add "subscribe to thread"/"unsubscribe from thread" actions to `Thread` and
-  thread `InboxNotification` out of the box.
+- Add "Subscribe to thread" and "Unsubscribe from thread" actions to `Thread`
+  and thread `InboxNotification` out of the box.
 
 ### `@liveblocks/react`
 
