@@ -38,10 +38,14 @@ import type {
   RoomSubscriptionSettings,
   SerializedCrdt,
   StorageUpdate,
+  SubscriptionData,
+  SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
 } from "@liveblocks/core";
 import {
   checkBounds,
@@ -49,7 +53,9 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
+  convertToUserSubscriptionData,
   createManagedPool,
   createNotificationSettings,
   isPlainObject,
@@ -1389,6 +1395,39 @@ export class Liveblocks {
   }
 
   /**
+   * Gets a thread's subscriptions.
+   *
+   * @param params.roomId The room ID to get the thread subscriptions from.
+   * @param params.threadId The thread ID to get the subscriptions from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns An array of subscriptions.
+   */
+  public async getThreadSubscriptions(
+    params: { roomId: string; threadId: string },
+    options?: RequestOptions
+  ): Promise<{ data: UserSubscriptionData[] }> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/threads/${threadId}/subscriptions`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const { data } = (await res.json()) as {
+      data: UserSubscriptionDataPlain[];
+    };
+
+    return {
+      data: data.map(convertToUserSubscriptionData),
+    };
+  }
+
+  /**
    * Gets a thread's comment.
    *
    * @param params.roomId The room ID to get the comment from.
@@ -1614,6 +1653,59 @@ export class Liveblocks {
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+  }
+
+  /**
+   * Subscribes a user to a thread.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to subscribe to.
+   * @param params.data.userId The user ID of the user to subscribe to the thread.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The thread subscription.
+   */
+  public async subscribeToThread(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<SubscriptionData> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/subscribe`,
+      { userId: params.data.userId },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return convertToSubscriptionData(
+      (await res.json()) as SubscriptionDataPlain
+    );
+  }
+
+  /**
+   * Unsubscribes a user from a thread.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to unsubscribe from.
+   * @param params.data.userId The user ID of the user to unsubscribe from the thread.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async unsubscribeFromThread(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/unsubscribe`,
+      { userId: params.data.userId },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
   }
 
   /**

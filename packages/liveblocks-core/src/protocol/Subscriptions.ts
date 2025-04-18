@@ -10,6 +10,13 @@ export type SubscriptionData<K extends keyof DAD = keyof DAD> = {
 
 export type SubscriptionDataPlain = DateToString<SubscriptionData>;
 
+export type UserSubscriptionData<K extends keyof DAD = keyof DAD> =
+  SubscriptionData<K> & {
+    userId: string;
+  };
+
+export type UserSubscriptionDataPlain = DateToString<UserSubscriptionData>;
+
 export type SubscriptionDeleteInfo = {
   type: "deletedSubscription";
   kind: NotificationKind;

@@ -54,7 +54,9 @@ export {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
+  convertToUserSubscriptionData,
 } from "./convert-plain-data";
 export type {
   CreateManagedPoolOptions,
@@ -284,6 +286,8 @@ export type {
   SubscriptionDeleteInfo,
   SubscriptionDeleteInfoPlain,
   SubscriptionKey,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
 } from "./protocol/Subscriptions";
 export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { HistoryVersion } from "./protocol/VersionHistory";

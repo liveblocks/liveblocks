@@ -20,6 +20,8 @@ import type {
   SubscriptionDataPlain,
   SubscriptionDeleteInfo,
   SubscriptionDeleteInfoPlain,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
 } from "./protocol/Subscriptions";
 
 /**
@@ -136,6 +138,23 @@ export function convertToInboxNotificationData(
 export function convertToSubscriptionData(
   data: SubscriptionDataPlain
 ): SubscriptionData {
+  const createdAt = new Date(data.createdAt);
+
+  return {
+    ...data,
+    createdAt,
+  };
+}
+
+/**
+ * Converts a plain user subscription data object (usually returned by the API) to a user subscription data object that can be used by the client.
+ * This is necessary because the plain data object stores dates as ISO strings, but the client expects them as Date objects.
+ * @param data The plain user subscription data object (usually returned by the API)
+ * @returns The rich user subscription data object that can be used by the client.
+ */
+export function convertToUserSubscriptionData(
+  data: UserSubscriptionDataPlain
+): UserSubscriptionData {
   const createdAt = new Date(data.createdAt);
 
   return {
