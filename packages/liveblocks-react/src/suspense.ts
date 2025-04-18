@@ -87,6 +87,5 @@ export {
   useUserSuspense as useUser,
   useUserThreadsSuspense_experimental as useUserThreads_experimental,
   useCopilotChatsSuspense as useCopilotChats,
-  useCopilotChatMessagesSuspense as useCopilotChatMessages,
   useChatMessagesSuspense as useChatMessages,
 } from "./liveblocks";

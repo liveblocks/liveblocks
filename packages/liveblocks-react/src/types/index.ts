@@ -186,9 +186,6 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
-export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<readonly AiChatMessage[], "messages">; // prettier-ignore
-export type CopilotChatMessagesAsyncResult = PagedAsyncResult<readonly AiChatMessage[], "messages">; // prettier-ignore
-
 export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly AiChatMessage[], "messages">; // prettier-ignore
 export type ChatMessageTreeAsyncResult = AsyncResult<readonly AiChatMessage[], "messages">; // prettier-ignore
 
@@ -1229,14 +1226,6 @@ export type LiveblocksContextBundle<
       useCopilotChats(): CopilotChatsAsyncResult;
 
       /**
-       * (Private beta) Returns the messages in the given chat.
-       *
-       * @example
-       * const { messages, error, isLoading } = useCopilotChatMessages();
-       */
-      useCopilotChatMessages(chatId: string): CopilotChatMessagesAsyncResult;
-
-      /**
        * (Private beta)  Returns the messages in the given chat.
        *
        * @example
@@ -1291,16 +1280,6 @@ export type LiveblocksContextBundle<
              * const { chats } = useCopilotChats();
              */
             useCopilotChats(): CopilotChatsAsyncSuccess;
-
-            /**
-             * (Private beta) Returns the messages in the given chat.
-             *
-             * @example
-             * const { messages } = useCopilotChatMessages();
-             */
-            useCopilotChatMessages(
-              chatId: string
-            ): CopilotChatMessagesAsyncSuccess;
 
             /**
              * (Private beta) Returns the messages in the given chat.

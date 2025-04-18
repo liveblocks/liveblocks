@@ -47,7 +47,6 @@ import type {
   DeleteChatResponse,
   DeleteMessageResponse,
   GetChatsResponse,
-  GetMessagesResponse,
   GetMessageTreeResponse,
   ISODateString,
   MessageId,
@@ -348,12 +347,6 @@ export type Ai = {
     metadata?: AiChat["metadata"]
   ) => Promise<CreateChatResponse>;
   deleteChat: (chatId: ChatId) => Promise<DeleteChatResponse>;
-  getMessages: (
-    chatId: ChatId,
-    options?: {
-      cursor?: Cursor;
-    }
-  ) => Promise<GetMessagesResponse>;
   getMessageTree: (chatId: ChatId) => Promise<GetMessageTreeResponse>;
   deleteMessage: (
     chatId: ChatId,
@@ -589,10 +582,6 @@ export function createAi(config: AiConfig): Ai {
           context.messagesStore.removeByChatId(msg.chatId);
           break;
 
-        case "get-messages":
-          context.messagesStore.upsertMany(msg.messages);
-          break;
-
         case "get-message-tree":
           context.messagesStore.upsertMany(msg.messages);
           break;
@@ -696,14 +685,6 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function getMessages(chatId: ChatId, options: { cursor?: Cursor } = {}) {
-    return sendClientMsgWithResponse<GetMessagesResponse>({
-      cmd: "get-messages",
-      chatId,
-      cursor: options.cursor,
-    });
-  }
-
   function getMessageTree(chatId: ChatId) {
     return sendClientMsgWithResponse<GetMessageTreeResponse>({
       cmd: "get-message-tree",
@@ -785,7 +766,6 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      getMessages,
       getMessageTree,
 
       deleteMessage: (chatId: ChatId, messageId: MessageId) =>

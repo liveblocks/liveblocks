@@ -50,7 +50,6 @@ import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
   ChatMessageTreeAsyncResult,
-  CopilotChatMessagesAsyncResult,
   CopilotChatsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
@@ -908,10 +907,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     >;
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
     readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
-    readonly messagesByCopilotChatId: DefaultMap<
-      ChatId,
-      LoadableResource<CopilotChatMessagesAsyncResult>
-    >;
     readonly messageTreeByChatId: DefaultMap<
       ChatId,
       LoadableResource<ChatMessageTreeAsyncResult>
@@ -1252,39 +1247,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
     };
 
-    const messagesByCopilotChatId = new DefaultMap(
-      (chatId: ChatId): LoadableResource<CopilotChatMessagesAsyncResult> => {
-        const resource = new PaginatedResource(async (cursor?: string) => {
-          const result = await this.#client.ai.getMessages(chatId, {
-            cursor: cursor as Cursor,
-          });
-          const nextCursor = result.nextCursor;
-          return nextCursor;
-        });
-
-        const signal = DerivedSignal.from(
-          (): CopilotChatMessagesAsyncResult => {
-            const result = resource.get();
-            if (result.isLoading || result.error) {
-              return result;
-            }
-
-            const page = result.data;
-            return {
-              isLoading: false,
-              messages: this.#client.ai.signals.getChatMessagesΣ(chatId).get(),
-              hasFetchedAll: page.hasFetchedAll,
-              isFetchingMore: page.isFetchingMore,
-              fetchMoreError: page.fetchMoreError,
-              fetchMore: page.fetchMore,
-            };
-          }
-        );
-
-        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
-      }
-    );
-
     const messageTreeByChatId = new DefaultMap(
       (chatId: ChatId): LoadableResource<ChatMessageTreeAsyncResult> => {
         const resource = new SinglePageResource(async () => {
@@ -1318,7 +1280,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versionsByRoomId,
       userNotificationSettings,
       copilotChats,
-      messagesByCopilotChatId,
       messageTreeByChatId,
     };
 

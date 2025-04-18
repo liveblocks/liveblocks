@@ -8,6 +8,7 @@ export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
 
 // --------------------------------------------------------------
+
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
 export type CmdId = Brand<string, "CmdId">;
@@ -35,7 +36,6 @@ type CommandPair =
   | GetChatsPair
   | CreateChatPair
   | DeleteChatPair
-  | GetMessagesPair
   | GetMessageTreePair
   | AddUserMessagePair
   | DeleteMessagePair
@@ -49,7 +49,6 @@ export type ServerCmdResponse<T extends CommandPair = CommandPair> = T[1];
 export type GetChatsCmd = ClientCmd<GetChatsPair>;
 export type CreateChatCmd = ClientCmd<CreateChatPair>;
 export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
-export type GetMessagesCmd = ClientCmd<GetMessagesPair>;
 export type GetMessageTreeCmd = ClientCmd<GetMessageTreePair>;
 export type AddUserMessageCmd = ClientCmd<AddUserMessagePair>;
 export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
@@ -60,7 +59,6 @@ export type AbortAiCmd = ClientCmd<AbortAiPair>;
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
 export type DeleteChatResponse = ServerCmdResponse<DeleteChatPair>;
-export type GetMessagesResponse = ServerCmdResponse<GetMessagesPair>;
 export type GetMessageTreeResponse = ServerCmdResponse<GetMessageTreePair>;
 export type AddUserMessageResponse = ServerCmdResponse<AddUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
@@ -84,12 +82,6 @@ type DeleteChatPair = DefineCmd<
   "delete-chat",
   { chatId: ChatId },
   { chatId: ChatId }
->;
-
-type GetMessagesPair = DefineCmd<
-  "get-messages",
-  { cursor?: Cursor; pageSize?: number; chatId: ChatId },
-  { chatId: ChatId; messages: AiChatMessage[]; nextCursor: Cursor | null }
 >;
 
 type GetMessageTreePair = DefineCmd<

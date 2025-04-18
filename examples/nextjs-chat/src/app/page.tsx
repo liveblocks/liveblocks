@@ -6,7 +6,7 @@ import {
   RoomProvider,
   useClient,
   useCopilotChats,
-  useCopilotChatMessages,
+  useChatMessages,
 } from "@liveblocks/react/suspense";
 import {
   AssistantChatMessage,
@@ -184,7 +184,7 @@ function ChatPicker() {
 function ChatWindow({ chatId }: { chatId: ChatId }) {
   const [_, forceRerender] = useForceRerender();
   const client = useClient();
-  const { messages } = useCopilotChatMessages(chatId);
+  const { messages } = useChatMessages(chatId);
 
   const [overrideParentId, setOverrideParentId] = useState<
     MessageId | undefined
