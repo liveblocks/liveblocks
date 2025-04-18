@@ -228,7 +228,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   }: {
     roomId: string;
     threadId: string;
-  }): Promise<void>;
+  }): Promise<SubscriptionData>;
 
   unsubscribeFromThread({
     roomId,
@@ -825,13 +825,15 @@ export function createApiClient<M extends BaseMetadata>({
     roomId: string;
     threadId: string;
   }) {
-    await httpClient.post(
+    const subscription = await httpClient.post<SubscriptionDataPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
       })
     );
+
+    return convertToSubscriptionData(subscription);
   }
 
   async function unsubscribeFromThread(options: {

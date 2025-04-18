@@ -2018,16 +2018,8 @@ function useSubscribeToRoomThread(roomId: string) {
       });
 
       client[kInternal].httpClient.subscribeToThread({ roomId, threadId }).then(
-        () => {
-          // TODO: subscribeToThread returns the thread, should it return the subscription (we could use it here instead of using subscribedAt)?
-          store.createSubscription(
-            {
-              kind: "thread",
-              subjectId: threadId,
-              createdAt: subscribedAt,
-            },
-            optimisticId
-          );
+        (subscription) => {
+          store.createSubscription(subscription, optimisticId);
         },
         (err: Error) =>
           onMutationFailure(
