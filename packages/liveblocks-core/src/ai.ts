@@ -206,8 +206,13 @@ function createStore_forChatMessages() {
     batch(() => {
       const chatMsgsΣ = messagesByChatId.getOrCreate(message.chatId);
       chatMsgsΣ.mutate((list) => {
-        list.removeBy((m) => m.id === message.id, 1);
-        list.add(message);
+        const existed = list.removeBy((m) => m.id === message.id, 1);
+        if (!message.deletedAt) {
+          list.add(message);
+          return true;
+        } else {
+          return existed;
+        }
       });
 
       // If the message is a pending update, write it to the pendingContents
