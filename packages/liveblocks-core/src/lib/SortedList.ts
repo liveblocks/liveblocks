@@ -139,6 +139,18 @@ export class SortedList<T> {
     }
   }
 
+  // XXX If we keep this, add unit tests. Or remove it.
+  *findAllRight(
+    predicate: (value: T, index: number) => unknown
+  ): IterableIterator<T> {
+    for (let i = this.#data.length - 1; i >= 0; i--) {
+      const item = this.#data[i];
+      if (predicate(item, i)) {
+        yield item;
+      }
+    }
+  }
+
   [Symbol.iterator](): IterableIterator<T> {
     return this.#data[Symbol.iterator]();
   }
