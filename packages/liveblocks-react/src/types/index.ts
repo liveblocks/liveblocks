@@ -189,6 +189,9 @@ export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // pr
 export type CopilotChatMessagesAsyncSuccess = PagedAsyncSuccess<readonly AiChatMessage[], "messages">; // prettier-ignore
 export type CopilotChatMessagesAsyncResult = PagedAsyncResult<readonly AiChatMessage[], "messages">; // prettier-ignore
 
+export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly AiChatMessage[], "messages">; // prettier-ignore
+export type ChatMessageTreeAsyncResult = AsyncResult<readonly AiChatMessage[], "messages">; // prettier-ignore
+
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
   Resolve<
@@ -1226,12 +1229,20 @@ export type LiveblocksContextBundle<
       useCopilotChats(): CopilotChatsAsyncResult;
 
       /**
-       * (Private beta)  Returns the messages in the given chat.
+       * (Private beta) Returns the messages in the given chat.
        *
        * @example
        * const { messages, error, isLoading } = useCopilotChatMessages();
        */
       useCopilotChatMessages(chatId: string): CopilotChatMessagesAsyncResult;
+
+      /**
+       * (Private beta)  Returns the messages in the given chat.
+       *
+       * @example
+       * const { messages, error, isLoading } = useChatMessages();
+       */
+      useChatMessages(chatId: string): ChatMessageTreeAsyncResult;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1282,7 +1293,7 @@ export type LiveblocksContextBundle<
             useCopilotChats(): CopilotChatsAsyncSuccess;
 
             /**
-             * (Private beta)  Returns the messages in the given chat.
+             * (Private beta) Returns the messages in the given chat.
              *
              * @example
              * const { messages } = useCopilotChatMessages();
@@ -1290,6 +1301,14 @@ export type LiveblocksContextBundle<
             useCopilotChatMessages(
               chatId: string
             ): CopilotChatMessagesAsyncSuccess;
+
+            /**
+             * (Private beta) Returns the messages in the given chat.
+             *
+             * @example
+             * const { messages } = useChatMessages();
+             */
+            useChatMessages(chatId: string): ChatMessageTreeAsyncSuccess;
           }
       >;
     }

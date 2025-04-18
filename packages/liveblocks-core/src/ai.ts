@@ -48,6 +48,7 @@ import type {
   DeleteMessageResponse,
   GetChatsResponse,
   GetMessagesResponse,
+  GetMessageTreeResponse,
   ISODateString,
   MessageId,
   ServerAiMsg,
@@ -143,24 +144,38 @@ function createStore_forChatMessages() {
   function createOptimistically(
     chatId: ChatId,
     role: "user",
+    parentId: MessageId | null,
     content: AiUserContentPart[]
   ): MessageId;
-  function createOptimistically(chatId: ChatId, role: "assistant"): MessageId;
+  function createOptimistically(
+    chatId: ChatId,
+    role: "assistant",
+    parentId: MessageId | null
+  ): MessageId;
   function createOptimistically(
     chatId: ChatId,
     role: "user" | "assistant",
+    parentId: MessageId | null,
     third?: AiUserContentPart[]
   ) {
     const id = `ms_${nanoid()}` as MessageId;
     const createdAt = now();
     if (role === "user") {
       const content = third!; // eslint-disable-line
-      upsert({ id, chatId, role, createdAt, content } satisfies AiUserMessage);
+      upsert({
+        id,
+        chatId,
+        role,
+        parentId,
+        createdAt,
+        content,
+      } satisfies AiUserMessage);
     } else {
       upsert({
         id,
         chatId,
         role,
+        parentId,
         createdAt,
         status: "pending",
         contentSoFar: [],
@@ -339,6 +354,7 @@ export type Ai = {
       cursor?: Cursor;
     }
   ) => Promise<GetMessagesResponse>;
+  getMessageTree: (chatId: ChatId) => Promise<GetMessageTreeResponse>;
   deleteMessage: (
     chatId: ChatId,
     messageId: MessageId
@@ -577,6 +593,10 @@ export function createAi(config: AiConfig): Ai {
           context.messagesStore.upsertMany(msg.messages);
           break;
 
+        case "get-message-tree":
+          context.messagesStore.upsertMany(msg.messages);
+          break;
+
         case "add-user-message":
           context.messagesStore.upsert(msg.message);
           break;
@@ -684,6 +704,13 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
+  function getMessageTree(chatId: ChatId) {
+    return sendClientMsgWithResponse<GetMessageTreeResponse>({
+      cmd: "get-message-tree",
+      chatId,
+    });
+  }
+
   function registerChatContext(
     chatId: ChatId,
     contextKey: string,
@@ -759,6 +786,7 @@ export function createAi(config: AiConfig): Ai {
       },
 
       getMessages,
+      getMessageTree,
 
       deleteMessage: (chatId: ChatId, messageId: MessageId) =>
         sendClientMsgWithResponse({ cmd: "delete-message", chatId, messageId }),
@@ -774,6 +802,7 @@ export function createAi(config: AiConfig): Ai {
         const newMessageId = context.messagesStore.createOptimistically(
           chatId,
           "user",
+          parentMessageId,
           content
         );
         return sendClientMsgWithResponse({
@@ -792,7 +821,8 @@ export function createAi(config: AiConfig): Ai {
       ): Promise<AskAiResponse> => {
         const targetMessageId = context.messagesStore.createOptimistically(
           chatId,
-          "assistant"
+          "assistant",
+          messageId
         );
 
         const copilotId = options?.copilotId;

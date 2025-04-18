@@ -91,4 +91,5 @@ export {
   useUser,
   useCopilotChats,
   useCopilotChatMessages,
+  useChatMessages,
 } from "./liveblocks";

@@ -8,7 +8,6 @@ export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
 
 // --------------------------------------------------------------
-
 export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
 export type CmdId = Brand<string, "CmdId">;
@@ -37,6 +36,7 @@ type CommandPair =
   | CreateChatPair
   | DeleteChatPair
   | GetMessagesPair
+  | GetMessageTreePair
   | AddUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
@@ -50,6 +50,7 @@ export type GetChatsCmd = ClientCmd<GetChatsPair>;
 export type CreateChatCmd = ClientCmd<CreateChatPair>;
 export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
 export type GetMessagesCmd = ClientCmd<GetMessagesPair>;
+export type GetMessageTreeCmd = ClientCmd<GetMessageTreePair>;
 export type AddUserMessageCmd = ClientCmd<AddUserMessagePair>;
 export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmd<ClearChatPair>;
@@ -60,6 +61,7 @@ export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
 export type DeleteChatResponse = ServerCmdResponse<DeleteChatPair>;
 export type GetMessagesResponse = ServerCmdResponse<GetMessagesPair>;
+export type GetMessageTreeResponse = ServerCmdResponse<GetMessageTreePair>;
 export type AddUserMessageResponse = ServerCmdResponse<AddUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
@@ -88,6 +90,12 @@ type GetMessagesPair = DefineCmd<
   "get-messages",
   { cursor?: Cursor; pageSize?: number; chatId: ChatId },
   { chatId: ChatId; messages: AiChatMessage[]; nextCursor: Cursor | null }
+>;
+
+type GetMessageTreePair = DefineCmd<
+  "get-message-tree",
+  { chatId: ChatId },
+  { chatId: ChatId; messages: AiChatMessage[] }
 >;
 
 type AddUserMessagePair = DefineCmd<
@@ -324,6 +332,7 @@ export type UsageMetadata = {
 export type AiUserMessage = {
   id: MessageId;
   chatId: ChatId;
+  parentId: MessageId | null;
   role: "user";
   content: AiUserContentPart[];
   createdAt: ISODateString;
@@ -339,6 +348,7 @@ export type AiAssistantMessage = Relax<
 export type AiCompletedAssistantMessage = {
   id: MessageId;
   chatId: ChatId;
+  parentId: MessageId | null;
   role: "assistant";
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
@@ -350,6 +360,7 @@ export type AiCompletedAssistantMessage = {
 export type AiFailedAssistantMessage = {
   id: MessageId;
   chatId: ChatId;
+  parentId: MessageId | null;
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
@@ -362,6 +373,7 @@ export type AiFailedAssistantMessage = {
 export type AiPendingAssistantMessage = {
   id: MessageId;
   chatId: ChatId;
+  parentId: MessageId | null;
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;

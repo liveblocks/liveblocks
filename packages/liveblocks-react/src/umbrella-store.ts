@@ -49,6 +49,7 @@ import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  ChatMessageTreeAsyncResult,
   CopilotChatMessagesAsyncResult,
   CopilotChatsAsyncResult,
   HistoryVersionsAsyncResult,
@@ -911,6 +912,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       ChatId,
       LoadableResource<CopilotChatMessagesAsyncResult>
     >;
+    readonly messageTreeByChatId: DefaultMap<
+      ChatId,
+      LoadableResource<ChatMessageTreeAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1280,6 +1285,28 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
+    const messageTreeByChatId = new DefaultMap(
+      (chatId: ChatId): LoadableResource<ChatMessageTreeAsyncResult> => {
+        const resource = new SinglePageResource(async () => {
+          await this.#client.ai.getMessageTree(chatId);
+        });
+
+        const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          return ASYNC_OK(
+            "messages",
+            this.#client.ai.signals.getChatMessagesΣ(chatId).get()
+          );
+        });
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
     this.outputs = {
       threadifications,
       threads,
@@ -1292,6 +1319,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       userNotificationSettings,
       copilotChats,
       messagesByCopilotChatId,
+      messageTreeByChatId,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable

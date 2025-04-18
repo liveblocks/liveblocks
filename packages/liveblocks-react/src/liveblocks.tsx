@@ -45,6 +45,8 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  ChatMessageTreeAsyncResult,
+  ChatMessageTreeAsyncSuccess,
   CopilotChatMessagesAsyncResult,
   CopilotChatMessagesAsyncSuccess,
   CopilotChatsAsyncResult,
@@ -378,6 +380,7 @@ function makeLiveblocksContextBundle<
 
     useCopilotChats,
     useCopilotChatMessages,
+    useChatMessages,
 
     ...shared.classic,
 
@@ -405,6 +408,7 @@ function makeLiveblocksContextBundle<
 
       useCopilotChats: useCopilotChatsSuspense,
       useCopilotChatMessages: useCopilotChatMessagesSuspense,
+      useChatMessages: useChatMessagesSuspense,
 
       ...shared.suspense,
     },
@@ -1020,6 +1024,46 @@ function useCopilotChatMessagesSuspense(
   return result;
 }
 
+function useChatMessages(chatId: ChatId): ChatMessageTreeAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () =>
+      void store.outputs.messageTreeByChatId
+        .getOrCreate(chatId)
+        .waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(
+    store.outputs.messageTreeByChatId.getOrCreate(chatId).signal
+  );
+}
+
+function useChatMessagesSuspense(chatId: ChatId): ChatMessageTreeAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(store.outputs.messageTreeByChatId.getOrCreate(chatId).waitUntilLoaded());
+
+  const result = useChatMessages(chatId);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
 /** @internal */
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
@@ -1524,6 +1568,23 @@ const _useCopilotChatMessages: TypedBundle["useCopilotChatMessages"] =
 const _useCopilotChatMessagesSuspense: TypedBundle["suspense"]["useCopilotChatMessages"] =
   useCopilotChatMessagesSuspense;
 
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages, error, isLoading } = useChatMessages();
+ */
+const _useChatMessages: TypedBundle["useChatMessages"] = useChatMessages;
+
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages, error, isLoading } = useChatMessages();
+ */
+const _useChatMessagesSuspense: TypedBundle["suspense"]["useChatMessages"] =
+  useChatMessagesSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -1639,5 +1700,7 @@ export {
   _useCopilotChats as useCopilotChats,
   _useCopilotChatsSuspense as useCopilotChatsSuspense,
   _useCopilotChatMessages as useCopilotChatMessages,
+  _useChatMessages as useChatMessages,
   _useCopilotChatMessagesSuspense as useCopilotChatMessagesSuspense,
+  _useChatMessagesSuspense as useChatMessagesSuspense,
 };
