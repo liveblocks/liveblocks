@@ -282,7 +282,8 @@ function createStore_forChatMessages() {
       Array.from(messagesByChatId.getOrCreate(chatId).get())
     )
   );
-  function getChatMessagesΣ(chatId: ChatId) {
+  function getChatMessagesΣ(chatId: ChatId, _branch?: MessageId) {
+    // XXX Start using the _branch argument
     return immutableMessagesByChatId.getOrCreate(chatId);
   }
 
@@ -371,7 +372,10 @@ export type Ai = {
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
-    getChatMessagesΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
+    getChatMessagesΣ(
+      chatId: ChatId,
+      branch?: MessageId
+    ): DerivedSignal<AiChatMessage[]>;
     pendingMessagesΣ: DerivedSignal<
       Record<MessageId, AiPendingAssistantMessage>
     >;
