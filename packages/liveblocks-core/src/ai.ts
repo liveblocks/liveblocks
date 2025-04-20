@@ -108,7 +108,6 @@ type AiContext = {
 export type AskAiOptions = {
   copilotId?: CopilotId;
   stream?: boolean; // True by default
-  // toolChoice?: ToolChoice;  // XXX Expose this? What's this compared to tools?
   timeout?: number;
 };
 
