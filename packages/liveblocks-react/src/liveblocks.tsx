@@ -13,7 +13,6 @@ import {
   type DU,
   HttpError,
   type LiveblocksError,
-  type MessageId,
   type OpaqueClient,
   type PartialUserNotificationSettings,
   type SyncStatus,
@@ -969,10 +968,7 @@ function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
   return result;
 }
 
-function useChatMessages(
-  chatId: ChatId,
-  branch?: MessageId
-): ChatMessageTreeAsyncResult {
+function useChatMessages(chatId: ChatId): ChatMessageTreeAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
@@ -980,7 +976,6 @@ function useChatMessages(
     () =>
       void store.outputs.messageTreeByChatId
         .getOrCreate(chatId)
-        .getOrCreate(branch ?? null)
         .waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
@@ -994,30 +989,20 @@ function useChatMessages(
   );
 
   return useSignal(
-    store.outputs.messageTreeByChatId
-      .getOrCreate(chatId)
-      .getOrCreate(branch ?? null).signal
+    store.outputs.messageTreeByChatId.getOrCreate(chatId).signal
   );
 }
 
-function useChatMessagesSuspense(
-  chatId: ChatId,
-  branch?: MessageId
-): ChatMessageTreeAsyncSuccess {
+function useChatMessagesSuspense(chatId: ChatId): ChatMessageTreeAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
-  use(
-    store.outputs.messageTreeByChatId
-      .getOrCreate(chatId)
-      .getOrCreate(branch ?? null)
-      .waitUntilLoaded()
-  );
+  use(store.outputs.messageTreeByChatId.getOrCreate(chatId).waitUntilLoaded());
 
-  const result = useChatMessages(chatId, branch);
+  const result = useChatMessages(chatId);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;

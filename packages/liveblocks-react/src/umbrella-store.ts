@@ -13,7 +13,6 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
-  MessageId,
   OpaqueClient,
   PartialUserNotificationSettings,
   Patchable,
@@ -910,7 +909,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
     readonly messageTreeByChatId: DefaultMap<
       ChatId,
-      DefaultMap<MessageId | null, LoadableResource<ChatMessageTreeAsyncResult>>
+      LoadableResource<ChatMessageTreeAsyncResult>
     >;
   };
 
@@ -1253,27 +1252,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
         await this.#client.ai.getMessageTree(chatId);
       });
 
-      return new DefaultMap(
-        (
-          branch: MessageId | null
-        ): LoadableResource<ChatMessageTreeAsyncResult> => {
-          const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
-            const result = resourceΣ.get();
-            if (result.isLoading || result.error) {
-              return result;
-            }
-
-            return ASYNC_OK(
-              "messages",
-              this.#client.ai.signals
-                .getChatMessagesΣ(chatId, branch ?? undefined)
-                .get()
-            );
-          });
-
-          return { signal, waitUntilLoaded: resourceΣ.waitUntilLoaded };
+      const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
+        const result = resourceΣ.get();
+        if (result.isLoading || result.error) {
+          return result;
         }
-      );
+
+        return ASYNC_OK(
+          "messages",
+          this.#client.ai.signals
+            .getChatMessagesΣ(chatId)
+            .get()
+            .getMessagesForDefaultBranch()
+        );
+      });
+
+      return { signal, waitUntilLoaded: resourceΣ.waitUntilLoaded };
     });
 
     this.outputs = {

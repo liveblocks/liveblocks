@@ -127,7 +127,7 @@ function MessageNodesRenderer({ messages }: { messages: MessageNode[] }) {
     return (
       <Fragment key={message.id}>
         <div className="flex flex-col items-end w-full max-w-[896px] mx-auto p-2">
-          <BranchButtons message={message} />
+          <BranchButtons message={message} /> 
           <div className="max-w-[80%]">{text}</div>
         </div>
 
@@ -179,8 +179,6 @@ function MessageNodesRenderer({ messages }: { messages: MessageNode[] }) {
     }
   }
 }
-
-function UserChatMessage({ message }: { message: MessageNode }) {}
 
 type MessageNode = AiChatMessage & {
   children: MessageNode[];
