@@ -1248,36 +1248,33 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
     };
 
-    const messageTreeByChatId = new DefaultMap(
-      (chatId: ChatId) =>
-        new DefaultMap(
-          (
-            branch: MessageId | null
-          ): LoadableResource<ChatMessageTreeAsyncResult> => {
-            const resource = new SinglePageResource(async () => {
-              await this.#client.ai.getMessageTree(chatId);
-            });
+    const messageTreeByChatId = new DefaultMap((chatId: ChatId) => {
+      const resourceΣ = new SinglePageResource(async () => {
+        await this.#client.ai.getMessageTree(chatId);
+      });
 
-            const signal = DerivedSignal.from(
-              (): ChatMessageTreeAsyncResult => {
-                const result = resource.get();
-                if (result.isLoading || result.error) {
-                  return result;
-                }
+      return new DefaultMap(
+        (
+          branch: MessageId | null
+        ): LoadableResource<ChatMessageTreeAsyncResult> => {
+          const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
+            const result = resourceΣ.get();
+            if (result.isLoading || result.error) {
+              return result;
+            }
 
-                return ASYNC_OK(
-                  "messages",
-                  this.#client.ai.signals
-                    .getChatMessagesΣ(chatId, branch ?? undefined)
-                    .get()
-                );
-              }
+            return ASYNC_OK(
+              "messages",
+              this.#client.ai.signals
+                .getChatMessagesΣ(chatId, branch ?? undefined)
+                .get()
             );
+          });
 
-            return { signal, waitUntilLoaded: resource.waitUntilLoaded };
-          }
-        )
-    );
+          return { signal, waitUntilLoaded: resourceΣ.waitUntilLoaded };
+        }
+      );
+    });
 
     this.outputs = {
       threadifications,
