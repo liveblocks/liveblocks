@@ -376,10 +376,7 @@ function createStore_forUserAiChats() {
   function upsertMany(chats: AiChat[]) {
     mutableΣ.mutate((list) => {
       for (const chat of chats) {
-        // XXX[vincent] DRY up with line below by allowing nested calls to
-        // .mutate() on MutableSignal and being able to call remove() here
-        // directly!
-        list.removeBy((c) => c.id === chat.id, 1);
+        remove(chat.id);
         list.add(chat);
       }
     });
