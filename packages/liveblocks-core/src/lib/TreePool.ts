@@ -2,14 +2,14 @@ import { DefaultMap } from "./DefaultMap";
 import { SortedList } from "./SortedList";
 import { raise } from "./utils";
 
-type PK = string | number;
+type PK = string;
 
 /**
- * A "pool" is a data structure that allows for easy insertion, deletion,
+ * A "tree pool" is a data structure that allows for easy insertion, deletion,
  * mutation, sorting, and accessing of an object pool of objects that have
  * tree-like relationships.
  *
- *   const pool = new Pool<Simpson>(
+ *   const pool = new TreePool<Simpson>(
  *     x => x.id,
  *     x => x.parent,
  *     (a, b) => a.name < b.name,
@@ -62,6 +62,17 @@ type PK = string | number;
  *   //                                Cannot change parent ID. If you want to ever
  *   //                                do this, remove the entry, and recreate it!
  *
+ * XXX Idea for the API to iterate nodes in this tree in arbitrary ways:
+ * Traversal can be done in all directions:
+ *   pool.walk("4", "up", { includeSelf: true })   // Iterates: Lisa, Marge
+ *   pool.walk("4", "up", { includeSelf: false })  // Iterates: Marge
+ *   pool.walk("4", "left")                        // Iterates: Bart    // Prev
+ *   pool.walk("4", "right")                       // Iterates: Maggie  // Next
+ *   pool.walk("4", "depth-first")
+ *   pool.walk("4", "breadth-first")
+ *   pool.walk("4", "depth-first-reversed")
+ *   pool.walk("4", "breadth-first-reversed")
+ *
  */
 export class TreePool<T> {
   #_items: Map<PK, T>;
@@ -113,6 +124,9 @@ export class TreePool<T> {
   public getChildren(id: PK | null): readonly T[] {
     const childIds = this.#_childrenOf.get(id);
     if (!childIds) return [];
+
+    // XXX Ideally we do not have to *compute* the sorted list here every time!
+    // XXX Think about *storing* it as a sorted list here!
     return SortedList.from(
       Array.from(childIds).map(
         (id) => this.#_items.get(id)! // eslint-disable-line no-restricted-syntax
@@ -121,11 +135,64 @@ export class TreePool<T> {
     ).rawArray;
   }
 
+  public *walkUp(
+    id: PK,
+    predicate?: (item: T) => boolean
+    // options?: { includeSelf?: boolean },
+  ): Iterable<T> {
+    // const includeSelf = options?.includeSelf ?? true;
+    const includeSelf = true; // XXX Generalize
+    let nodeId: PK | null = id;
+    do {
+      const item = this.getOrThrow(nodeId);
+      if (includeSelf || nodeId !== id) {
+        if (!predicate || predicate(item)) {
+          yield item;
+        }
+      }
+      nodeId = this.#_parentKeyFn(item);
+    } while (nodeId !== null);
+  }
+
+  // XXX Generalize
+  public *walkDown(
+    id: PK,
+    predicate?: (item: T) => boolean
+    // _direction?: "depth-first",
+    // _reversed?: true
+    // | "depth-first"
+    // | "breadth-first"
+    // | "breadth-first-rev"
+    // options?: {
+    //   _direction: "depth-first";
+    //   _reversed: true;
+    //   // _includeSelf?: boolean;
+    // }
+  ): Iterable<T> {
+    const children = this.getChildren(id);
+    for (let i = children.length - 1; i >= 0; i--) {
+      const child = children[i];
+      yield* this.walkDown(
+        this.#_primaryKey(child),
+        predicate
+        // "depth-first",
+        // true
+      );
+      if (!predicate || predicate(child)) {
+        yield child;
+      }
+    }
+
+    // if (options?.includeSelf) {
+    //   yield this.getOrThrow(id);
+    // }
+  }
+
   /** Returns all siblings, not including the item itself. */
   public getSiblings(id: PK): readonly T[] {
     const self = this.getOrThrow(id);
-    const parent = this.getParentId(id);
-    return this.getChildren(parent).filter((item) => item !== self);
+    const parentId = this.getParentId(id);
+    return this.getChildren(parentId).filter((item) => item !== self);
   }
 
   public [Symbol.iterator](): IterableIterator<T> {

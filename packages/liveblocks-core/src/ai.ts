@@ -10,7 +10,6 @@ import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
-import { Deque } from "./lib/Deque";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
 import { shallow } from "./lib/shallow";
@@ -201,10 +200,8 @@ function createStore_forChatMessages() {
     const chatMsgsΣ = messagesByChatIdΣ.get(chatId);
     if (!chatMsgsΣ) return;
 
-    const existing = chatMsgsΣ
-      .get()
-      .find((m) => m.id === messageId && !m.deletedAt);
-    if (!existing) return;
+    const existing = chatMsgsΣ.get().get(messageId);
+    if (!existing || existing.deletedAt) return;
 
     if (
       existing.role === "assistant" &&
@@ -219,16 +216,13 @@ function createStore_forChatMessages() {
   function removeByChatId(chatId: ChatId): void {
     const chatMsgsΣ = messagesByChatIdΣ.get(chatId);
     if (chatMsgsΣ === undefined) return;
-    chatMsgsΣ.mutate((list) => list.clear());
+    chatMsgsΣ.mutate((pool) => pool.clear());
   }
 
   function upsert(message: AiChatMessage): void {
     batch(() => {
       const chatMsgsΣ = messagesByChatIdΣ.getOrCreate(message.chatId);
-      chatMsgsΣ.mutate((list) => {
-        list.removeBy((m) => m.id === message.id, 1);
-        list.add(message);
-      });
+      chatMsgsΣ.mutate((pool) => pool.upsert(message));
 
       // If the message is a pending update, write it to the pendingContents
       // LUT. If not, remove it from there.
@@ -284,7 +278,7 @@ function createStore_forChatMessages() {
 
   function getMessageById(messageId: MessageId): AiChatMessage | undefined {
     for (const messagesΣ of messagesByChatIdΣ.values()) {
-      const message = messagesΣ.get().find((m) => m.id === messageId);
+      const message = messagesΣ.get().get(messageId);
       if (message) {
         return message;
       }
@@ -293,135 +287,48 @@ function createStore_forChatMessages() {
   }
 
   function selectBranch(
-    pool: SortedList<AiChatMessage>,
+    pool: TreePool<AiChatMessage>,
     preferredBranch: MessageId | null
   ) {
-    /** Gets or throws a message by ID. */
-    // XXX Optimize to be O(1) later.
-    function get(messageId: MessageId): AiChatMessage {
-      return (
-        pool.find((m) => m.id === messageId) ??
-        raise(`Message with id ${messageId} not found`)
-      );
-    }
-
-    /** Given a valid leaf message, select the spine (from the root to the leaf). */
     function selectSpine(leaf: AiChatMessage): AiChatMessage[] {
-      let message: AiChatMessage = leaf;
-
-      const spine = new Deque<AiChatMessage>();
-      while (true) {
-        if (!message.deletedAt) {
-          spine.pushLeft(message);
-        }
-        if (message.parentId === null) {
-          break;
-        }
-        message = get(message.parentId);
+      const spine = [];
+      for (const item of pool.walkUp(leaf.id)) {
+        if (!item.deletedAt) spine.push(item);
       }
-
-      return Array.from(spine);
-    }
-
-    // The selection algorithm makes a few key assumptions for efficiency.
-    //
-    // ASSUMPTION 1: The message pool contains all messages for this chat. This also means, that every message's parent is also in the pool.
-    // ASSUMPTION 2: The message pool is ordered by created at date (oldest first, newest last).
-    // ASSUMPTION 3: The message pool also includes deleted messages. (Still needed to not break parent relationships.)
-    // ASSUMPTION 4: Messages are always created later than their parents. This means that to find the parent message
-    //               within the pool, you will only have to "look left". To find its children, "look right".
-    //
-    // The algo:
-    //
-    // --------------------------------------------------------------------------
-    // FALLBACK: Select the rightmost non-deleted message in the pool. This is the leaf to use.
-    // --------------------------------------------------------------------------
-    //
-    // Step 1: Find the best LEAF node matching the preferred branch.
-    // - If an explicit branch is provided:
-    //
-    //   - [NO BRANCH REQUESTED]  (preferredBranch == null)
-    //       → ✅ FALLBACK
-    //
-    //   - [BRANCH REQUESTED]     (preferredBranch != null)
-    //       Look it up. Exists?
-    //       → ✅ No. It was garbage input. FALLBACK!
-    //       - Yes. Perfect. Is it deleted?
-    //           - ✅ No. Perfect! Select the latest non-deleted grandchild. (Could be itself!)
-    //           - Yes. Select the latest non-deleted grandchild. (Can NOT be itself!) Is there one?
-    //               - ✅ Yes. Perfect! Select it!
-    //               - ✅ No. Go to the parent, then select its latest non-deleted grandchild (or the parent itself if it is not deleted). Rinse, repeat.
-    //
-    // Result of step 1 can still be nothing, but then the message list is empty (or all deleted).
-    //
-    // Step 2: From the starting point from step 1, walk up the tree, collecting all non-deleted parents.
-    //
-
-    function fallbackLeaf(): AiChatMessage | undefined {
-      return pool.findRight((m) => !m.deletedAt);
+      return spine.reverse();
     }
 
     function fallback(): AiChatMessage[] {
-      const leaf = fallbackLeaf();
-      return leaf ? selectSpine(leaf) : [];
+      const latest = pool.sorted.findRight((m) => !m.deletedAt);
+      return latest ? selectSpine(latest) : [];
     }
 
     if (preferredBranch === null) {
       return fallback();
     }
 
-    let message: AiChatMessage;
-    try {
-      message = get(preferredBranch);
-    } catch {
+    const message = pool.get(preferredBranch);
+    if (!message) {
       return fallback();
     }
 
-    /** Iterates over all direct children. Latest child first. */
-    function iterChildren(message: AiChatMessage) {
-      return pool.findAllRight((c) => c.parentId === message.id);
+    // Find the first non-deleted grand child. If one doesn't exist, keep
+    // walking up the tree and repeat, until we find one.
+    for (const current of pool.walkUp(message.id)) {
+      // If a non-deleted grandchild exists, select it.
+      for (const desc of pool.walkDown(current.id, (m) => !m.deletedAt)) {
+        return selectSpine(desc);
+      }
+
+      // If the current node is not deleted, select it.
+      if (!current.deletedAt) {
+        return selectSpine(current);
+      }
+
+      // Otherwise, continue looping by walking up one level and repeating.
     }
 
-    /** Depth-first iteration of all child nodes, latest grandchild first. */
-    function* iterGrandchildren(
-      message: AiChatMessage
-    ): IterableIterator<AiChatMessage> {
-      for (const child of iterChildren(message)) {
-        yield* iterGrandchildren(child);
-        yield child;
-      }
-    }
-
-    if (!message.deletedAt) {
-      for (const grandchild of iterGrandchildren(message)) {
-        if (!grandchild.deletedAt) {
-          return selectSpine(grandchild);
-        }
-      }
-      return selectSpine(message);
-    } else {
-      // CASE M: Requested branch/message is deleted
-      let current: AiChatMessage | null = message;
-      while (current) {
-        // 1) try any non-deleted descendant first
-        for (const desc of iterGrandchildren(current)) {
-          if (!desc.deletedAt) {
-            return selectSpine(desc);
-          }
-        }
-        // 2) if the node itself is not deleted, pick it
-        if (!current.deletedAt) {
-          return selectSpine(current);
-        }
-        // 3) otherwise, move up to the parent and repeat
-        if (current.parentId === null) {
-          break;
-        }
-        current = get(current.parentId);
-      }
-      // 4) if we hit the root with no valid picks, fall back
-      return fallback();
-    }
+    return fallback();
   }
 
   const immutableMessagesByBranch = new DefaultMap(
