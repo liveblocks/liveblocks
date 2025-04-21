@@ -15,7 +15,7 @@ import {
   UserChatMessage,
 } from "@liveblocks/react-ui";
 import Markdown from "react-markdown";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ChatId, CopilotId, MessageId } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
@@ -184,11 +184,6 @@ function ChatPicker() {
 function ChatWindow({ chatId }: { chatId: ChatId }) {
   const [_, forceRerender] = useForceRerender();
   const client = useClient();
-
-  useEffect(() => {
-    // @ts-ignore
-    window.client = client.ai;
-  }, []);
 
   const [branch, setBranch] = useState<MessageId | undefined>();
   const { messages } = useChatMessages(chatId, branch);
