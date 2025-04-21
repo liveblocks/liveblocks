@@ -1266,7 +1266,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return ASYNC_OK(
               "messages",
               this.#client.ai.signals
-                .getChatMessagesΣ(chatId, branch ?? undefined)
+                .getChatMessagesForBranchΣ(chatId, branch ?? undefined)
                 .get()
             );
           });

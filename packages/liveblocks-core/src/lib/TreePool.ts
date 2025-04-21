@@ -121,18 +121,14 @@ export class TreePool<T> {
     return parentId ? this.getOrThrow(parentId) : null;
   }
 
-  public getChildren(id: PK | null): readonly T[] {
+  public getChildren(id: PK | null): T[] {
     const childIds = this.#_childrenOf.get(id);
     if (!childIds) return [];
 
-    // XXX Ideally we do not have to *compute* the sorted list here every time!
-    // XXX Think about *storing* it as a sorted list here!
-    return SortedList.from(
-      Array.from(childIds).map(
-        (id) => this.#_items.get(id)! // eslint-disable-line no-restricted-syntax
-      ),
-      this.#_lt
-    ).rawArray;
+    // XXX Should we return a sorted list here? From previous note: Think about *storing* it as a sorted list here!
+    return Array.from(childIds).map(
+      (id) => this.#_items.get(id)! // eslint-disable-line no-restricted-syntax
+    );
   }
 
   public *walkUp(
@@ -169,7 +165,7 @@ export class TreePool<T> {
     //   // _includeSelf?: boolean;
     // }
   ): Iterable<T> {
-    const children = this.getChildren(id);
+    const children = SortedList.from(this.getChildren(id), this.#_lt).rawArray;
     for (let i = children.length - 1; i >= 0; i--) {
       const child = children[i];
       yield* this.walkDown(

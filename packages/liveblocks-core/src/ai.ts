@@ -118,7 +118,7 @@ function now(): ISODateString {
 function createStore_forChatMessages() {
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
-  const messagesByChatIdΣ = new DefaultMap(
+  const messagePoolByChatIdΣ = new DefaultMap(
     (_chatId: ChatId) =>
       new MutableSignal(
         new TreePool<AiChatMessage>(
@@ -197,7 +197,7 @@ function createStore_forChatMessages() {
   }
 
   function remove(chatId: ChatId, messageId: MessageId): void {
-    const chatMsgsΣ = messagesByChatIdΣ.get(chatId);
+    const chatMsgsΣ = messagePoolByChatIdΣ.get(chatId);
     if (!chatMsgsΣ) return;
 
     const existing = chatMsgsΣ.get().get(messageId);
@@ -214,14 +214,14 @@ function createStore_forChatMessages() {
   }
 
   function removeByChatId(chatId: ChatId): void {
-    const chatMsgsΣ = messagesByChatIdΣ.get(chatId);
+    const chatMsgsΣ = messagePoolByChatIdΣ.get(chatId);
     if (chatMsgsΣ === undefined) return;
     chatMsgsΣ.mutate((pool) => pool.clear());
   }
 
   function upsert(message: AiChatMessage): void {
     batch(() => {
-      const chatMsgsΣ = messagesByChatIdΣ.getOrCreate(message.chatId);
+      const chatMsgsΣ = messagePoolByChatIdΣ.getOrCreate(message.chatId);
       chatMsgsΣ.mutate((pool) => pool.upsert(message));
 
       // If the message is a pending update, write it to the pendingContents
@@ -250,7 +250,7 @@ function createStore_forChatMessages() {
   }
 
   function* iterPendingMessages() {
-    for (const chatMsgsΣ of messagesByChatIdΣ.values()) {
+    for (const chatMsgsΣ of messagePoolByChatIdΣ.values()) {
       for (const m of chatMsgsΣ.get()) {
         if (m.role === "assistant" && m.status === "pending") {
           yield m;
@@ -277,7 +277,7 @@ function createStore_forChatMessages() {
   }
 
   function getMessageById(messageId: MessageId): AiChatMessage | undefined {
-    for (const messagesΣ of messagesByChatIdΣ.values()) {
+    for (const messagesΣ of messagePoolByChatIdΣ.values()) {
       const message = messagesΣ.get().get(messageId);
       if (message) {
         return message;
@@ -335,21 +335,38 @@ function createStore_forChatMessages() {
     (chatId: ChatId) =>
       new DefaultMap((branch: MessageId | null) =>
         DerivedSignal.from(() => {
-          const pool = messagesByChatIdΣ.getOrCreate(chatId).get();
+          const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
           return selectBranch(pool, branch);
         }, shallow)
       )
   );
-  function getChatMessagesΣ(chatId: ChatId, branch?: MessageId) {
+  function getChatMessagesForBranchΣ(chatId: ChatId, branch?: MessageId) {
     return immutableMessagesByBranch
       .getOrCreate(chatId)
       .getOrCreate(branch || null);
   }
 
+  const messagesByChatIdΣ = new DefaultMap((chatId: ChatId) => {
+    return DerivedSignal.from(() => {
+      const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
+      return Array.from(pool.sorted);
+    });
+  });
+
+  function getMessagesForChatΣ(chatId: ChatId) {
+    return messagesByChatIdΣ.getOrCreate(chatId);
+  }
+
+  function getMessagesPool(chatId: ChatId) {
+    return messagePoolByChatIdΣ.getOrCreate(chatId).get();
+  }
+
   return {
     // Readers
     getMessageById,
-    getChatMessagesΣ,
+    getMessagesPool,
+    getChatMessagesForBranchΣ,
+    getMessagesForChatΣ,
     pendingMessagesΣ: immPendingMessagesΣ,
 
     // Mutations
@@ -431,14 +448,16 @@ export type Ai = {
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
-    getChatMessagesΣ(
+    getChatMessagesForBranchΣ(
       chatId: ChatId,
       branch?: MessageId
     ): DerivedSignal<AiChatMessage[]>;
+    getMessagesForChatΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
     pendingMessagesΣ: DerivedSignal<
       Record<MessageId, AiPendingAssistantMessage>
     >;
   };
+  getMessagesPool(chatId: ChatId): TreePool<AiChatMessage>;
   registerChatContext: (
     chatId: ChatId,
     contextKey: string,
@@ -908,9 +927,13 @@ export function createAi(config: AiConfig): Ai {
 
       signals: {
         chatsΣ: context.chatsStore.chatsΣ,
-        getChatMessagesΣ: context.messagesStore.getChatMessagesΣ,
+        getChatMessagesForBranchΣ:
+          context.messagesStore.getChatMessagesForBranchΣ,
+        getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
         pendingMessagesΣ: context.messagesStore.pendingMessagesΣ,
       },
+
+      getMessagesPool: context.messagesStore.getMessagesPool,
 
       registerChatContext,
       unregisterChatContext,

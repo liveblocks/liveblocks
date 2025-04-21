@@ -341,7 +341,10 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
 
   [Symbol.dispose](): void {
     for (const src of this.#sources) {
-      src.removeSink(this as DerivedSignal<unknown>);
+      // XXX This was needed because I noticed error saying 'src.removeSink is not a function' when attempting to dispose a DerivedSignal
+      if (typeof src.removeSink === "function") {
+        src.removeSink(this as DerivedSignal<unknown>);
+      }
     }
 
     // @ts-expect-error make disposed object completely unusable
