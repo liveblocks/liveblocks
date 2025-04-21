@@ -10,8 +10,10 @@ import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
+import { Deque } from "./lib/Deque";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
+import { shallow } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
 import type { DistributiveOmit } from "./lib/utils";
@@ -113,82 +115,10 @@ function now(): ISODateString {
   return new Date().toISOString() as ISODateString;
 }
 
-type MessageNode = {
-  message: AiChatMessage;
-  children: MessageNode[];
-};
-
-class MessageTree {
-  private readonly nodes: Map<MessageId, MessageNode>;
-  private roots: MessageNode[];
-  constructor() {
-    this.nodes = new Map();
-    this.roots = [];
-  }
-
-  addMessage(message: AiChatMessage) {
-    const node: MessageNode = { message, children: [] };
-    this.nodes.set(message.id, node);
-    if (message.parentId === null) {
-      this.roots.push(node);
-    } else {
-      const parent = this.nodes.get(message.parentId);
-      if (parent) {
-        parent.children.push(node);
-      }
-    }
-  }
-
-  /**
-   * Returns the messages for the default branch of the chat tree. A branch can be thought of as the path from the root to a leaf node.
-   * The default branch is the one that traces to the latest non deleted leaf node.
-   */
-  getMessagesForDefaultBranch(): AiChatMessage[] {
-    const messages: AiChatMessage[] = [];
-
-    // Get the latest message in the tree that is not deleted. We assume that messages are always created later than their ancestors, so this message node must be a leaf node.
-    let latestNode: MessageNode | null = null;
-    for (const node of this.nodes.values()) {
-      if (node.message.deletedAt !== undefined) continue;
-      if (latestNode === null) {
-        latestNode = node;
-      } else if (node.message.createdAt > latestNode.message.createdAt) {
-        latestNode = node;
-      }
-    }
-
-    // Now, we walk up the tree from the latest node to the root, collecting all messages along the way.
-    let cursor = latestNode;
-    while (cursor !== null) {
-      messages.push(cursor.message);
-      if (cursor.message.parentId === null) break;
-      cursor = this.nodes.get(cursor.message.parentId) ?? null;
-    }
-    return messages.reverse();
-  }
-
-  getMessageById(messageId: MessageId): AiChatMessage | undefined {
-    return this.nodes.get(messageId)?.message;
-  }
-
-  getMessages(): AiChatMessage[] {
-    const messages: AiChatMessage[] = [];
-    for (const node of this.nodes.values()) {
-      messages.push(node.message);
-    }
-    return messages;
-  }
-
-  clear() {
-    this.nodes.clear();
-    this.roots = [];
-  }
-}
-
 function createStore_forChatMessages() {
-  // We maintain a Map with mutable signals. Each such signal contains a mutable tree of messages for a given chat.
-  const messageTreebyChatId = new DefaultMap(
-    (_chatId: ChatId) => new MutableSignal(new MessageTree())
+  // We maintain a Map with mutable signals. Each such signal contains a mutable map of messages (from message id) for a given chat.
+  const messagesbyChatId = new DefaultMap(
+    (_chatId: ChatId) => new MutableSignal(new Map<MessageId, AiChatMessage>())
   );
 
   // Separately from that, we track all _pending_ signals in a separate
@@ -259,10 +189,10 @@ function createStore_forChatMessages() {
   }
 
   function remove(chatId: ChatId, messageId: MessageId): void {
-    const messageTreeΣ = messageTreebyChatId.get(chatId);
-    if (!messageTreeΣ) return;
+    const messagesΣ = messagesbyChatId.get(chatId);
+    if (!messagesΣ) return;
 
-    const existing = messageTreeΣ.get().getMessageById(messageId);
+    const existing = messagesΣ.get().get(messageId);
     if (existing === undefined || existing.deletedAt !== undefined) return;
 
     if (
@@ -276,16 +206,16 @@ function createStore_forChatMessages() {
   }
 
   function removeByChatId(chatId: ChatId): void {
-    const messageTreeΣ = messageTreebyChatId.get(chatId);
-    if (messageTreeΣ === undefined) return;
-    messageTreeΣ.mutate((tree) => tree.clear());
+    const messagesΣ = messagesbyChatId.get(chatId);
+    if (messagesΣ === undefined) return;
+    messagesΣ.mutate((m) => m.clear());
   }
 
   function upsert(message: AiChatMessage): void {
     batch(() => {
-      const messageTreeΣ = messageTreebyChatId.getOrCreate(message.chatId);
-      messageTreeΣ.mutate((tree) => {
-        tree.addMessage(message);
+      const messagesΣ = messagesbyChatId.getOrCreate(message.chatId);
+      messagesΣ.mutate((m) => {
+        m.set(message.id, message);
       });
 
       // If the message is a pending update, write it to the pendingContents
@@ -314,10 +244,10 @@ function createStore_forChatMessages() {
   }
 
   function* iterPendingMessages() {
-    for (const messageTreeΣ of messageTreebyChatId.values()) {
-      for (const m of messageTreeΣ.get().getMessages()) {
-        if (m.role === "assistant" && m.status === "pending") {
-          yield m;
+    for (const messagesΣ of messagesbyChatId.values()) {
+      for (const message of messagesΣ.get().values()) {
+        if (message.role === "assistant" && message.status === "pending") {
+          yield message;
         }
       }
     }
@@ -341,8 +271,8 @@ function createStore_forChatMessages() {
   }
 
   function getMessageById(messageId: MessageId): AiChatMessage | undefined {
-    for (const treesΣ of messageTreebyChatId.values()) {
-      const message = treesΣ.get().getMessageById(messageId);
+    for (const messagesΣ of messagesbyChatId.values()) {
+      const message = messagesΣ.get().get(messageId);
       if (message) {
         return message;
       }
@@ -350,137 +280,149 @@ function createStore_forChatMessages() {
     return undefined;
   }
 
-  // function selectBranch(
-  //   pool: SortedList<AiChatMessage>,
-  //   preferredBranch: MessageId | null
-  // ) {
-  //   /** Gets or throws a message by ID. */
-  //   // XXX Optimize to be O(1) later.
-  //   function get(messageId: MessageId): AiChatMessage {
-  //     return (
-  //       pool.find((m) => m.id === messageId) ??
-  //       raise(`Message with id ${messageId} not found`)
-  //     );
-  //   }
+  function selectBranch(
+    messages: Map<MessageId, AiChatMessage>,
+    preferredBranch: MessageId | null
+  ) {
+    /** Gets or throws a message by ID. */
+    function get(messageId: MessageId): AiChatMessage {
+      const message = messages.get(messageId);
+      if (message === undefined) {
+        throw new Error(`Message with id ${messageId} not found`);
+      }
+      return message;
+    }
 
-  //   /** Given a valid leaf message, select the spine (from the root to the leaf). */
-  //   function selectSpine(leaf: AiChatMessage): AiChatMessage[] {
-  //     let message: AiChatMessage = leaf;
+    /** Given a valid leaf message, select the spine (from the root to the leaf). */
+    function selectSpine(leaf: AiChatMessage): AiChatMessage[] {
+      let message: AiChatMessage = leaf;
 
-  //     const spine = new Deque<AiChatMessage>();
-  //     while (true) {
-  //       if (!message.deletedAt) {
-  //         spine.pushLeft(message);
-  //       }
-  //       if (message.parentId === null) {
-  //         break;
-  //       }
-  //       message = get(message.parentId);
-  //     }
+      const spine = new Deque<AiChatMessage>();
+      while (true) {
+        if (!message.deletedAt) {
+          spine.pushLeft(message);
+        }
+        if (message.parentId === null) {
+          break;
+        }
+        message = get(message.parentId);
+      }
 
-  //     return Array.from(spine);
-  //   }
+      return Array.from(spine);
+    }
 
-  //   // The selection algorithm makes a few key assumptions for efficiency.
-  //   //
-  //   // ASSUMPTION 1: The message pool contains all messages for this chat. This also means, that every message's parent is also in the pool.
-  //   // ASSUMPTION 2: The message pool is ordered by created at date (oldest first, newest last).
-  //   // ASSUMPTION 3: The message pool also includes deleted messages. (Still needed to not break parent relationships.)
-  //   // ASSUMPTION 4: Messages are always created later than their parents. This means that to find the parent message
-  //   //               within the pool, you will only have to "look left". To find its children, "look right".
-  //   //
-  //   // The algo:
-  //   //
-  //   // --------------------------------------------------------------------------
-  //   // FALLBACK: Select the rightmost non-deleted message in the pool. This is the leaf to use.
-  //   // --------------------------------------------------------------------------
-  //   //
-  //   // Step 1: Find the best LEAF node matching the preferred branch.
-  //   // - If an explicit branch is provided:
-  //   //
-  //   //   - [NO BRANCH REQUESTED]  (preferredBranch == null)
-  //   //       → ✅ FALLBACK
-  //   //
-  //   //   - [BRANCH REQUESTED]     (preferredBranch != null)
-  //   //       Look it up. Exists?
-  //   //       → ✅ No. It was garbage input. FALLBACK!
-  //   //       - Yes. Perfect. Is it deleted?
-  //   //           - ✅ No. Perfect! Select the latest non-deleted grandchild. (Could be itself!)
-  //   //           - Yes. Select the latest non-deleted grandchild. (Can NOT be itself!) Is there one?
-  //   //               - ✅ Yes. Perfect! Select it!
-  //   //               - ✅ No. Find the latest non-deleted parent, then select its latest non-deleted grandchild. Rinse, repeat.
-  //   //
-  //   // Result of step 1 can still be nothing, but then the message list is empty (or all deleted).
-  //   //
-  //   // Step 2: From the starting point from step 1, walk up the tree, collecting all non-deleted parents.
-  //   //
+    // The selection algorithm makes a few key assumptions for efficiency.
+    //
+    // ASSUMPTION 1: The message pool contains all messages for this chat. This also means, that every message's parent is also in the pool.
+    // ASSUMPTION 2: The message pool is ordered by created at date (oldest first, newest last).
+    // ASSUMPTION 3: The message pool also includes deleted messages. (Still needed to not break parent relationships.)
+    // ASSUMPTION 4: Messages are always created later than their parents. This means that to find the parent message
+    //               within the pool, you will only have to "look left". To find its children, "look right".
+    //
+    // The algo:
+    //
+    // --------------------------------------------------------------------------
+    // FALLBACK: Select the rightmost non-deleted message in the pool. This is the leaf to use.
+    // --------------------------------------------------------------------------
+    //
+    // Step 1: Find the best LEAF node matching the preferred branch.
+    // - If an explicit branch is provided:
+    //
+    //   - [NO BRANCH REQUESTED]  (preferredBranch == null)
+    //       → ✅ FALLBACK
+    //
+    //   - [BRANCH REQUESTED]     (preferredBranch != null)
+    //       Look it up. Exists?
+    //       → ✅ No. It was garbage input. FALLBACK!
+    //       - Yes. Perfect. Is it deleted?
+    //           - ✅ No. Perfect! Select the latest non-deleted grandchild. (Could be itself!)
+    //           - Yes. Select the latest non-deleted grandchild. (Can NOT be itself!) Is there one?
+    //               - ✅ Yes. Perfect! Select it!
+    //               - ✅ No. Find the latest non-deleted parent, then select its latest non-deleted grandchild. Rinse, repeat.
+    //
+    // Result of step 1 can still be nothing, but then the message list is empty (or all deleted).
+    //
+    // Step 2: From the starting point from step 1, walk up the tree, collecting all non-deleted parents.
+    //
 
-  //   function fallbackLeaf(): AiChatMessage | undefined {
-  //     return pool.findRight((m) => !m.deletedAt);
-  //   }
+    // XXX - We previously used to represent messages in a chat using SortedList, so finding the fallback leaf was O(1) in the best case (and O(N) in the worst case - same as the current map implementation).
+    // XXX - Could we optimize this by keeping a pointer to the latest non-deleted message in the tree? or should we revert to Prority Queue/SortedList?
+    function fallbackLeaf(): AiChatMessage | undefined {
+      let latestMessage: AiChatMessage | undefined = undefined;
+      for (const message of messages.values()) {
+        if (message.deletedAt !== undefined) continue;
+        if (latestMessage === undefined) {
+          latestMessage = message;
+        } else if (message.createdAt > latestMessage.createdAt) {
+          latestMessage = message;
+        }
+      }
+      return latestMessage;
+    }
 
-  //   function fallback(): AiChatMessage[] {
-  //     const leaf = fallbackLeaf();
-  //     return leaf ? selectSpine(leaf) : [];
-  //   }
+    function fallback(): AiChatMessage[] {
+      const leaf = fallbackLeaf();
+      return leaf ? selectSpine(leaf) : [];
+    }
 
-  //   if (preferredBranch === null) {
-  //     return fallback();
-  //   }
+    if (preferredBranch === null) {
+      return fallback();
+    }
 
-  //   let message: AiChatMessage;
-  //   try {
-  //     message = get(preferredBranch);
-  //   } catch {
-  //     return fallback();
-  //   }
+    let message: AiChatMessage;
+    try {
+      message = get(preferredBranch);
+    } catch {
+      return fallback();
+    }
 
-  //   /** Iterates over all direct children. Latest child first. */
-  //   function iterChildren(message: AiChatMessage) {
-  //     return pool.findAllRight((c) => c.parentId === message.id);
-  //   }
+    /** Iterates over all direct children. Latest child first. */
+    function* iterChildren(message: AiChatMessage) {
+      for (const m of messages.values()) {
+        if (m.parentId === message.id) {
+          yield m;
+        }
+      }
+    }
 
-  //   /** Depth-first iteration of all child nodes, latest grandchild first. */
-  //   function* iterGrandchildren(
-  //     message: AiChatMessage
-  //   ): IterableIterator<AiChatMessage> {
-  //     for (const child of iterChildren(message)) {
-  //       yield* iterGrandchildren(child);
-  //       yield child;
-  //     }
-  //   }
+    /** Depth-first iteration of all child nodes, latest grandchild first. */
+    // XXX - This is inefficient, because we iterate over all messages in order to find the children of a message.
+    function* iterGrandchildren(
+      message: AiChatMessage
+    ): IterableIterator<AiChatMessage> {
+      for (const child of iterChildren(message)) {
+        yield* iterGrandchildren(child);
+        yield child;
+      }
+    }
 
-  //   if (!message.deletedAt) {
-  //     for (const grandchild of iterGrandchildren(message)) {
-  //       if (!grandchild.deletedAt) {
-  //         return selectSpine(grandchild);
-  //       }
-  //     }
-  //     return selectSpine(message);
-  //   } else {
-  //     // XXX TODO
-  //     throw new Error("Case M not implemented yet");
-  //   }
-  // }
+    if (!message.deletedAt) {
+      for (const grandchild of iterGrandchildren(message)) {
+        if (!grandchild.deletedAt) {
+          return selectSpine(grandchild);
+        }
+      }
+      return selectSpine(message);
+    } else {
+      // XXX TODO
+      throw new Error("Case M not implemented yet");
+    }
+  }
 
-  // const immutableMessagesByBranch = new DefaultMap(
-  //   (chatId: ChatId) =>
-  //     new DefaultMap((branch: MessageId | null) =>
-  //       DerivedSignal.from(() => {
-  //         const pool = messageTreebyChatId.getOrCreate(chatId).get();
-  //         return selectBranch(pool, branch);
-  //       }, shallow)
-  //     )
-  // );
+  const immutableMessagesByBranch = new DefaultMap(
+    (chatId: ChatId) =>
+      new DefaultMap((branch: MessageId | null) =>
+        DerivedSignal.from(() => {
+          const pool = messagesbyChatId.getOrCreate(chatId).get();
+          return selectBranch(pool, branch);
+        }, shallow)
+      )
+  );
 
-  // function getChatMessagesΣ(chatId: ChatId, branch?: MessageId) {
-  //   return immutableMessagesByBranch
-  //     .getOrCreate(chatId)
-  //     .getOrCreate(branch || null);
-  // }
-
-  function getChatMessagesΣ(chatId: ChatId) {
-    return messageTreebyChatId.getOrCreate(chatId);
+  function getChatMessagesΣ(chatId: ChatId, branch?: MessageId) {
+    return immutableMessagesByBranch
+      .getOrCreate(chatId)
+      .getOrCreate(branch || null);
   }
 
   return {
@@ -568,7 +510,10 @@ export type Ai = {
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
-    getChatMessagesΣ(chatId: ChatId): MutableSignal<MessageTree>;
+    getChatMessagesΣ(
+      chatId: ChatId,
+      branch?: MessageId
+    ): DerivedSignal<AiChatMessage[]>;
     pendingMessagesΣ: DerivedSignal<
       Record<MessageId, AiPendingAssistantMessage>
     >;

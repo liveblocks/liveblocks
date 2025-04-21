@@ -190,8 +190,8 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     window.client = client.ai;
   }, []);
 
-  // const [branch, setBranch] = useState<MessageId | undefined>();
-  const { messages } = useChatMessages(chatId);
+  const [branch, setBranch] = useState<MessageId | undefined>();
+  const { messages } = useChatMessages(chatId, branch);
 
   const [selectedCopilotId, setSelectedCopilotId] = useState<
     CopilotId | undefined
@@ -406,14 +406,14 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             Clear
           </button>
 
-          {/* <input
+          <input
             type="text"
             placeholder="Branch ID"
             value={branch || ""}
             onChange={(ev) => {
               setBranch((ev.currentTarget.value as MessageId) || undefined);
             }}
-          /> */}
+          />
 
           <select
             value={selectedCopilotId || "default"}

@@ -29,6 +29,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  MessageId,
   PartialUnless,
   PartialUserNotificationSettings,
   Patchable,
@@ -1287,7 +1288,10 @@ export type LiveblocksContextBundle<
              * @example
              * const { messages } = useChatMessages();
              */
-            useChatMessages(chatId: string): ChatMessageTreeAsyncSuccess;
+            useChatMessages(
+              chatId: string,
+              branch?: MessageId
+            ): ChatMessageTreeAsyncSuccess;
           }
       >;
     }

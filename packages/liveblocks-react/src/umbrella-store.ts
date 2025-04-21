@@ -13,6 +13,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
+  MessageId,
   OpaqueClient,
   PartialUserNotificationSettings,
   Patchable,
@@ -907,9 +908,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     >;
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
     readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
-    readonly messageTreeByChatId: DefaultMap<
+    readonly messagesByChatId: DefaultMap<
       ChatId,
-      LoadableResource<ChatMessageTreeAsyncResult>
+      DefaultMap<MessageId | null, LoadableResource<ChatMessageTreeAsyncResult>>
     >;
   };
 
@@ -1247,27 +1248,32 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
     };
 
-    const messageTreeByChatId = new DefaultMap((chatId: ChatId) => {
+    const messagesByChatId = new DefaultMap((chatId: ChatId) => {
       const resourceΣ = new SinglePageResource(async () => {
         await this.#client.ai.getMessageTree(chatId);
       });
 
-      const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
-        const result = resourceΣ.get();
-        if (result.isLoading || result.error) {
-          return result;
+      return new DefaultMap(
+        (
+          branch: MessageId | null
+        ): LoadableResource<ChatMessageTreeAsyncResult> => {
+          const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
+            const result = resourceΣ.get();
+            if (result.isLoading || result.error) {
+              return result;
+            }
+
+            return ASYNC_OK(
+              "messages",
+              this.#client.ai.signals
+                .getChatMessagesΣ(chatId, branch ?? undefined)
+                .get()
+            );
+          });
+
+          return { signal, waitUntilLoaded: resourceΣ.waitUntilLoaded };
         }
-
-        return ASYNC_OK(
-          "messages",
-          this.#client.ai.signals
-            .getChatMessagesΣ(chatId)
-            .get()
-            .getMessagesForDefaultBranch()
-        );
-      });
-
-      return { signal, waitUntilLoaded: resourceΣ.waitUntilLoaded };
+      );
     });
 
     this.outputs = {
@@ -1281,7 +1287,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versionsByRoomId,
       userNotificationSettings,
       copilotChats,
-      messageTreeByChatId,
+      messagesByChatId,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable
