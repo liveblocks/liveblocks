@@ -16,8 +16,9 @@ import { nanoid } from "./lib/nanoid";
 import { shallow } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
+import { TreePool } from "./lib/TreePool";
 import type { DistributiveOmit } from "./lib/utils";
-import { raise, tryParseJson } from "./lib/utils";
+import { tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -121,7 +122,11 @@ function createStore_forChatMessages() {
   const messagesByChatIdΣ = new DefaultMap(
     (_chatId: ChatId) =>
       new MutableSignal(
-        SortedList.with<AiChatMessage>((x, y) => x.createdAt < y.createdAt)
+        new TreePool<AiChatMessage>(
+          (x) => x.id,
+          (x) => x.parentId,
+          (x, y) => x.createdAt < y.createdAt
+        )
       )
   );
 
