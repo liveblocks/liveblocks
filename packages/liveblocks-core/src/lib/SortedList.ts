@@ -44,7 +44,10 @@ export class SortedList<T> {
     return SortedList.fromAlreadySorted([], lt);
   }
 
-  public static from<T>(arr: T[], lt: (a: T, b: T) => boolean): SortedList<T> {
+  public static from<T>(
+    arr: readonly T[],
+    lt: (a: T, b: T) => boolean
+  ): SortedList<T> {
     const sorted = new SortedList([], lt);
     for (const item of arr) {
       sorted.add(item);
@@ -153,6 +156,12 @@ export class SortedList<T> {
 
   [Symbol.iterator](): IterableIterator<T> {
     return this.#data[Symbol.iterator]();
+  }
+
+  *iterReversed(): IterableIterator<T> {
+    for (let i = this.#data.length - 1; i >= 0; i--) {
+      yield this.#data[i];
+    }
   }
 
   /** Finds the leftmost item that matches the predicate. */

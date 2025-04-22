@@ -135,7 +135,7 @@ export class TreePool<T> {
     id: PK,
     predicate?: (item: T) => boolean
     // options?: { includeSelf?: boolean },
-  ): Iterable<T> {
+  ): IterableIterator<T> {
     // const includeSelf = options?.includeSelf ?? true;
     const includeSelf = true; // XXX Generalize
     let nodeId: PK | null = id;
@@ -148,6 +148,46 @@ export class TreePool<T> {
       }
       nodeId = this.#_parentKeyFn(item);
     } while (nodeId !== null);
+  }
+
+  // XXX Generalize
+  public *walkLeft(
+    id: PK,
+    predicate?: (item: T) => boolean
+  ): IterableIterator<T> {
+    // XXX Calling getSiblings is too inefficient, optimize later!
+    // XXX But first make it work
+    const self = this.getOrThrow(id);
+    const siblings = SortedList.from(this.getSiblings(id), this.#_lt);
+    for (const sibling of siblings.iterReversed()) {
+      // Skip over all the "right" siblings
+      if (this.#_lt(self, sibling)) continue;
+
+      // If we get here, it's a "left" sibling
+      if (!predicate || predicate(sibling)) {
+        yield sibling;
+      }
+    }
+  }
+
+  // XXX Generalize
+  public *walkRight(
+    id: PK,
+    predicate?: (item: T) => boolean
+  ): IterableIterator<T> {
+    // XXX Calling getSiblings is too inefficient, optimize later!
+    // XXX But first make it work
+    const self = this.getOrThrow(id);
+    const siblings = SortedList.from(this.getSiblings(id), this.#_lt);
+    for (const sibling of siblings) {
+      // Skip over all the "left" siblings
+      if (this.#_lt(sibling, self)) continue;
+
+      // If we get here, it's a "right" sibling
+      if (!predicate || predicate(sibling)) {
+        yield sibling;
+      }
+    }
   }
 
   // XXX Generalize
@@ -164,7 +204,7 @@ export class TreePool<T> {
     //   _reversed: true;
     //   // _includeSelf?: boolean;
     // }
-  ): Iterable<T> {
+  ): IterableIterator<T> {
     const children = SortedList.from(this.getChildren(id), this.#_lt).rawArray;
     for (let i = children.length - 1; i >= 0; i--) {
       const child = children[i];

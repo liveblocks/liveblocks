@@ -70,18 +70,24 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
               <div>
                 <button
                   onClick={() => {
-                    alert("Implement this behavior");
+                    alert(`Implement this behavior! prev = ${prev}`);
                   }}
-                  className="disabled:opacity-50"
+                  style={{
+                    cursor: prev ? "pointer" : "not-allowed",
+                    opacity: prev ? undefined : 0.5,
+                  }}
                   disabled={!prev}
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => {
-                    alert("Implement this behavior");
+                    alert(`Implement this behavior! next = ${next}`);
                   }}
-                  className="disabled:opacity-50"
+                  style={{
+                    cursor: next ? "pointer" : "not-allowed",
+                    opacity: next ? undefined : 0.5,
+                  }}
                   disabled={!next}
                 >
                   Next
@@ -119,10 +125,14 @@ export const DefaultUserChatMessage = forwardRef<
   HTMLDivElement,
   UserChatMessageProps
 >(({ message, className }, forwardedRef) => {
-  const text = message.content
-    .filter((c) => c.type === "text")
-    .map((c) => c.text)
-    .join("\n");
+  const text = message.deletedAt ? (
+    <i>This message has been deleted.</i>
+  ) : (
+    message.content
+      .filter((c) => c.type === "text")
+      .map((c) => c.text)
+      .join("\n")
+  );
 
   const images = message.content.filter((c) => c.type === "image");
 
@@ -418,6 +428,7 @@ const RealDefaultAssistantChatMessage = forwardRef<
       ) : null}
 
       <div className="lb-assistant-chat-message-content">
+        {message.deletedAt ? <i>This message has been deleted.</i> : null}
         {content.map((part, index) => {
           switch (part.type) {
             case "text":

@@ -292,17 +292,45 @@ function createStore_forChatMessages() {
     return undefined;
   }
 
+  function first<T>(iterable: IterableIterator<T>): T | undefined {
+    const result = iterable.next();
+    return result.done ? undefined : result.value;
+  }
+
   function selectBranch(
     pool: TreePool<AiChatMessage>,
     preferredBranch: MessageId | null
   ): BranchEntry[] {
+    function isAlive(message: AiChatMessage): boolean {
+      // This could be generalized by doing a walk(
+      //   { direction: 'down',
+      //     type: 'breadth-first',
+      //     includeSelf: true,
+      //     predicate: m => !m.deletedAt,
+      //   })
+
+      // If it's a non-deleted message, it's alive
+      if (!message.deletedAt) {
+        return true;
+      }
+      for (const _ of pool.walkDown(message.id, (m) => !m.deletedAt)) {
+        return true;
+      }
+      return false;
+    }
+
     function selectSpine(leaf: AiChatMessage): BranchEntry[] {
       const spine = [];
-      for (const item of pool.walkUp(leaf.id)) {
-        // XXX Remove deleted messages only if they don't have any non-deleted
-        // children, and also don't have a next/prev link
-        // if (!item.deletedAt)
-        spine.push({ prev: null, next: null, message: item });
+      for (const message of pool.walkUp(leaf.id)) {
+        const prev = first(pool.walkLeft(message.id, isAlive))?.id ?? null;
+        const next = first(pool.walkRight(message.id, isAlive))?.id ?? null;
+
+        // Remove deleted messages only if they don't have any non-deleted
+        // children, and also don't have a next/prev link, requiring the
+        // deleted node to have an on-screen presence.
+        if (!message.deletedAt || prev || next) {
+          spine.push({ prev, next, message });
+        }
       }
       return spine.reverse();
     }
