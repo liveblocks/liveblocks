@@ -89,8 +89,10 @@ export type ClientToolDefinition =
       execute?: never;
     };
 
-export type BranchEntry = {
-  message: AiChatMessage;
+export type BranchEntry<M extends AiChatMessage = AiChatMessage> = {
+  prev: MessageId | null;
+  next: MessageId | null;
+  message: M;
 };
 
 type AiContext = {
@@ -297,7 +299,10 @@ function createStore_forChatMessages() {
     function selectSpine(leaf: AiChatMessage): BranchEntry[] {
       const spine = [];
       for (const item of pool.walkUp(leaf.id)) {
-        if (!item.deletedAt) spine.push({ message: item });
+        // XXX Remove deleted messages only if they don't have any non-deleted
+        // children, and also don't have a next/prev link
+        // if (!item.deletedAt)
+        spine.push({ prev: null, next: null, message: item });
       }
       return spine.reverse();
     }

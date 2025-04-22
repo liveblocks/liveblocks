@@ -7,7 +7,7 @@ import type {
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
-import type { ComponentType, HTMLAttributes } from "react";
+import { Fragment, type ComponentType, type HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
 import { SpinnerIcon } from "../../icons";
@@ -64,21 +64,38 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
         className={classNames("lb-root lb-chat-messages", className)}
         {...props}
       >
-        {messages.map(({ message }) => {
-          if (message.role === "user") {
-            return (
-              <UserChatMessage
-                key={message.id}
-                message={message}
-                overrides={overrides}
-              />
-            );
-          } else if (message.role === "assistant") {
-            return <AssistantChatMessage key={message.id} message={message} />;
-          }
+        {messages.map(({ message, prev, next }) => (
+          <Fragment key={message.id}>
+            {prev || next ? (
+              <div>
+                <button
+                  onClick={() => {
+                    alert("Implement this behavior");
+                  }}
+                  className="disabled:opacity-50"
+                  disabled={!prev}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => {
+                    alert("Implement this behavior");
+                  }}
+                  className="disabled:opacity-50"
+                  disabled={!next}
+                >
+                  Next
+                </button>
+              </div>
+            ) : null}
 
-          return null;
-        })}
+            {message.role === "user" ? (
+              <UserChatMessage message={message} overrides={overrides} />
+            ) : message.role === "assistant" ? (
+              <AssistantChatMessage message={message} />
+            ) : null}
+          </Fragment>
+        ))}
       </div>
     );
   }
