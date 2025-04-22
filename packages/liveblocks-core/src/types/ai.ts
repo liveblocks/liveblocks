@@ -225,7 +225,6 @@ export type SettleServerEvent = {
   /** The client ID that originally made the request that led to this event */
   clientId: ClientId;
   message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
-  kase: 1 | 2 | 3; // XXX Don't mind this, Vincent just uses this for debugging which instance produced this message, it will be removed later!
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -304,22 +303,6 @@ export type ToolChoice =
   | "required"
   | "none"
   | { type: "tool"; toolName: string };
-
-export type AiUsage = {
-  id: string;
-  messageId?: MessageId;
-  inputTokens: number;
-  outputTokens: number;
-  model: string;
-  type: "chat" | "stateless";
-  createdAt: ISODateString;
-};
-
-export type UsageMetadata = {
-  inputTokens: number;
-  outputTokens: number;
-  model: string;
-};
 
 export type AiUserMessage = {
   id: MessageId;
