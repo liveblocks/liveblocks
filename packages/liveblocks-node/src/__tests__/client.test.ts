@@ -1524,6 +1524,74 @@ describe("client", () => {
     });
   });
 
+  describe("get user room subscription settings", () => {
+    test("should get user's room subscription settings", async () => {
+      const userId = "user1";
+
+      const settings = {
+        threads: "all",
+        textMentions: "mine",
+        roomId: "room1",
+      };
+
+      const response = {
+        data: [settings],
+        meta: {
+          nextPage: null,
+        },
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/users/:userId/room-subscription-settings`,
+          () => {
+            return HttpResponse.json(response, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getUserRoomSubscriptionSettings({ userId })
+      ).resolves.toEqual(response);
+    });
+
+    test("should throw a LiveblocksError when getUserRoomSubscriptionSettings receives an error response", async () => {
+      const userId = "user1";
+
+      const error = {
+        error: "USER_NOT_FOUND",
+        message: "User not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/users/:userId/room-subscription-settings`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getUserRoomSubscriptionSettings({ userId });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("User not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("get room subscription settings", () => {
     test("should get user's room subscription settings", async () => {
       const userId = "user1";

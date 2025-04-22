@@ -7,6 +7,10 @@ export type RoomSubscriptionSettings = {
   textMentions: RoomTextMentionsSubscriptionSettings;
 };
 
+export type UserRoomSubscriptionSettings = {
+  roomId: string;
+} & RoomSubscriptionSettings;
+
 /**
  * @deprecated Renamed to `RoomSubscriptionSettings`
  */
