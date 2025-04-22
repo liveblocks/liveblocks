@@ -42,6 +42,7 @@ import type {
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
+  UserRoomSubscriptionSettings,
 } from "@liveblocks/core";
 import {
   checkBounds,
@@ -1861,13 +1862,7 @@ export class Liveblocks {
       userId: string;
     },
     options?: RequestOptions
-  ): Promise<
-    Page<
-      {
-        roomId: string;
-      } & RoomSubscriptionSettings
-    >
-  > {
+  ): Promise<Page<UserRoomSubscriptionSettings>> {
     const { userId } = params;
 
     const res = await this.#get(
@@ -1879,11 +1874,7 @@ export class Liveblocks {
       throw await LiveblocksError.from(res);
     }
 
-    return (await res.json()) as Page<
-      {
-        roomId: string;
-      } & RoomSubscriptionSettings
-    >;
+    return (await res.json()) as Page<UserRoomSubscriptionSettings>;
   }
 
   /**
