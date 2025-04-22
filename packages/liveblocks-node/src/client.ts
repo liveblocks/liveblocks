@@ -1947,6 +1947,8 @@ export class Liveblocks {
   /**
    * Returns all room subscription settings for a user.
    * @param params.userId The user ID to get the room subscription settings from.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param params.limit (optional) The number of items to return.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getUserRoomSubscriptionSettings(
