@@ -1852,7 +1852,7 @@ export class Liveblocks {
   }
 
   /**
-   * Returns the room subscription settings for a user.
+   * Returns all room subscription settings for a user.
    * @param params.userId The user ID to get the room subscription settings from.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
