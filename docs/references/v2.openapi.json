@@ -1926,9 +1926,6 @@
           "404": {
             "$ref": "#/components/responses/404-thread"
           }
-        },
-        "x-stoplight": {
-          "id": "xqu3vycpenubo"
         }
       },
       "parameters": [
@@ -1994,9 +1991,6 @@
           "404": {
             "$ref": "#/components/responses/404-thread"
           }
-        },
-        "x-stoplight": {
-          "id": "ydqlu7gpsojiy"
         }
       },
       "parameters": [
@@ -2054,14 +2048,8 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "x-stoplight": {
-                        "id": "9wqmg4820r0c1"
-                      },
                       "items": {
-                        "$ref": "#/components/schemas/UserSubscription",
-                        "x-stoplight": {
-                          "id": "050yuqyjjo9oi"
-                        }
+                        "$ref": "#/components/schemas/UserSubscription"
                       }
                     }
                   }
@@ -2075,9 +2063,6 @@
           "404": {
             "$ref": "#/components/responses/404-thread"
           }
-        },
-        "x-stoplight": {
-          "id": "r5quewb6mmumd"
         },
         "x-internal": false
       },
@@ -3435,26 +3420,14 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "x-stoplight": {
-                        "id": "v7u3olczawx3p"
-                      },
                       "items": {
-                        "$ref": "#/components/schemas/UserRoomSubscriptionSettings",
-                        "x-stoplight": {
-                          "id": "ymdr3kn04er2z"
-                        }
+                        "$ref": "#/components/schemas/UserRoomSubscriptionSettings"
                       }
                     },
                     "meta": {
                       "type": "object",
-                      "x-stoplight": {
-                        "id": "ztc88vml833uc"
-                      },
                       "properties": {
                         "nextCursor": {
-                          "x-stoplight": {
-                            "id": "ab2fztjw78qji"
-                          },
                           "type": "string"
                         }
                       }
@@ -3473,9 +3446,6 @@
           "404": {
             "description": "Not Found"
           }
-        },
-        "x-stoplight": {
-          "id": "gdxf3igxbme6g"
         }
       }
     },
@@ -4479,9 +4449,6 @@
       },
       "UserRoomSubscriptionSettings": {
         "title": "UserRoomSubscriptionSettings",
-        "x-stoplight": {
-          "id": "k3dfv7o1vehom"
-        },
         "type": "object",
         "properties": {
           "threads": {
@@ -4491,10 +4458,7 @@
             "enum": ["mine", "none"]
           },
           "roomId": {
-            "type": "string",
-            "x-stoplight": {
-              "id": "ecq6ue5qyruk6"
-            }
+            "type": "string"
           }
         }
       },
@@ -4532,52 +4496,31 @@
       },
       "Subscription": {
         "title": "Subscription",
-        "x-stoplight": {
-          "id": "5zpw1zi1xb46p"
-        },
         "type": "object",
         "properties": {
           "kind": {
-            "type": "string",
-            "x-stoplight": {
-              "id": "bba0bodaro6ug"
-            }
+            "type": "string"
           },
           "subjectId": {
-            "type": "string",
-            "x-stoplight": {
-              "id": "919pp5n049o3l"
-            }
+            "type": "string"
           },
           "createdAt": {
             "type": "string",
-            "x-stoplight": {
-              "id": "0bv6l8jy3f1ye"
-            },
             "format": "date-time"
           }
         }
       },
       "UserSubscription": {
         "title": "UserSubscription",
-        "x-stoplight": {
-          "id": "rd1ceosn2hf0e"
-        },
         "allOf": [
           {
             "$ref": "#/components/schemas/Subscription"
           },
           {
             "type": "object",
-            "x-stoplight": {
-              "id": "tmvtm6bvk2d73"
-            },
             "properties": {
               "userId": {
-                "type": "string",
-                "x-stoplight": {
-                  "id": "3heft6n51aoce"
-                }
+                "type": "string"
               }
             }
           }
