@@ -109,10 +109,14 @@ function UserMessage({
 }: {
   message: BranchEntry<AiUserMessage>;
 }) {
-  const text = message.content
-    .filter((c) => c.type === "text")
-    .map((c) => c.text)
-    .join("\n");
+  const text = message.deletedAt ? (
+    <i>This message has been deleted.</i>
+  ) : (
+    message.content
+      .filter((c) => c.type === "text")
+      .map((c) => c.text)
+      .join("\n")
+  );
 
   return (
     <div
@@ -132,7 +136,16 @@ function AssistantMessage({
 }: {
   message: BranchEntry<AiAssistantMessage>;
 }) {
-  if (message.status === "pending") {
+  if (message.deletedAt) {
+    return (
+      <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
+        <div className="flex gap-2">
+          <BranchControls prev={prev} next={next} />
+        </div>
+        <i>This message has been deleted.</i>
+      </div>
+    );
+  } else if (message.status === "pending") {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
