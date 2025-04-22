@@ -1887,7 +1887,7 @@
       "post": {
         "summary": "Subscribe to thread",
         "tags": ["Comments"],
-        "description": "This endpoint subscribes to a thread.",
+        "description": "This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).",
         "operationId": "post-rooms-roomId-threads-threadId-subscribe",
         "parameters": [
           {
@@ -1911,7 +1911,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Success. Returns the updated thread.",
+            "description": "Success. Returns the thread subscription.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1951,7 +1951,7 @@
       "post": {
         "summary": "Unsubscribe from thread",
         "tags": ["Comments"],
-        "description": "This endpoint unsubscribes from a thread.",
+        "description": "This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).",
         "operationId": "post-rooms-roomId-threads-threadId-unsubscribe",
         "parameters": [
           {
@@ -2016,7 +2016,7 @@
       "get": {
         "summary": "Get thread subscriptions",
         "tags": ["Comments"],
-        "description": "This endpoint gets the list of subscriptions to a thread.",
+        "description": "This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).",
         "operationId": "get-rooms-roomId-threads-threadId-subscriptions",
         "parameters": [
           {
@@ -3356,7 +3356,7 @@
         }
       }
     },
-    "users/{userId}/room-subscription-settings": {
+    "/users/{userId}/room-subscription-settings": {
       "parameters": [
         {
           "schema": {
@@ -3368,20 +3368,11 @@
         }
       ],
       "get": {
-        "summary": "Get room subscription settings",
+        "summary": "Get user room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "get-rooms-roomId-users-userId-subscription-settings",
-        "description": "This endpoint returns the list of a user's room subscription settings.",
+        "operationId": "get-users-userId-subscription-settings",
+        "description": "This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).",
         "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          },
           {
             "schema": {
               "type": "string"
@@ -3403,7 +3394,8 @@
             "schema": {
               "type": "number",
               "minimum": 1,
-              "maximum": 50
+              "maximum": 50,
+              "default": 50
             },
             "in": "query",
             "name": "limit",
