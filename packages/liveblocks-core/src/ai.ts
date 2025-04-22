@@ -357,14 +357,9 @@ function createStore_forChatMessages() {
     return messagesByChatIdΣ.getOrCreate(chatId);
   }
 
-  function getMessagesPool(chatId: ChatId) {
-    return messagePoolByChatIdΣ.getOrCreate(chatId).get();
-  }
-
   return {
     // Readers
     getMessageById,
-    getMessagesPool,
     getChatMessagesForBranchΣ,
     getMessagesForChatΣ,
     pendingMessagesΣ: immPendingMessagesΣ,
@@ -454,7 +449,6 @@ export type Ai = {
       Record<MessageId, AiPendingAssistantMessage>
     >;
   };
-  getMessagesPool(chatId: ChatId): TreePool<AiChatMessage>;
   registerChatContext: (
     chatId: ChatId,
     contextKey: string,
@@ -929,8 +923,6 @@ export function createAi(config: AiConfig): Ai {
         getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
         pendingMessagesΣ: context.messagesStore.pendingMessagesΣ,
       },
-
-      getMessagesPool: context.messagesStore.getMessagesPool,
 
       registerChatContext,
       unregisterChatContext,
