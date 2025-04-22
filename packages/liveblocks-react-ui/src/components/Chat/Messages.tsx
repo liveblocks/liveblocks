@@ -2,8 +2,8 @@ import type {
   AiAssistantMessage,
   AiPendingAssistantMessage,
   AiUserMessage,
-  BranchEntry,
   ChatId,
+  UiChatMessage,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
@@ -31,7 +31,7 @@ export type ChatMessagesProps = Omit<
   /**
    * The messages to display.
    */
-  messages: readonly BranchEntry[];
+  messages: readonly UiChatMessage[];
   /**
    * The components displayed in the chat messages.
    */
@@ -64,31 +64,31 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
         className={classNames("lb-root lb-chat-messages", className)}
         {...props}
       >
-        {messages.map(({ message, prev, next }) => (
+        {messages.map((message) => (
           <Fragment key={message.id}>
-            {prev || next ? (
+            {message.prev || message.next ? (
               <div>
                 <button
                   onClick={() => {
-                    alert(`Implement this behavior! prev = ${prev}`);
+                    alert(`Implement this behavior! prev = ${message.prev}`);
                   }}
                   style={{
-                    cursor: prev ? "pointer" : "not-allowed",
-                    opacity: prev ? undefined : 0.5,
+                    cursor: message.prev ? "pointer" : "not-allowed",
+                    opacity: message.prev ? undefined : 0.5,
                   }}
-                  disabled={!prev}
+                  disabled={!message.prev}
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => {
-                    alert(`Implement this behavior! next = ${next}`);
+                    alert(`Implement this behavior! next = ${message.next}`);
                   }}
                   style={{
-                    cursor: next ? "pointer" : "not-allowed",
-                    opacity: next ? undefined : 0.5,
+                    cursor: message.next ? "pointer" : "not-allowed",
+                    opacity: message.next ? undefined : 0.5,
                   }}
-                  disabled={!next}
+                  disabled={!message.next}
                 >
                   Next
                 </button>

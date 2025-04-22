@@ -20,7 +20,6 @@ import type {
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
-  BranchEntry,
   Client,
   CommentAttachment,
   CommentBody,
@@ -41,6 +40,7 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
+  UiChatMessage,
   UserNotificationSettings,
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
@@ -187,8 +187,8 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
-export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly BranchEntry[], "messages">; // prettier-ignore
-export type ChatMessageTreeAsyncResult = AsyncResult<readonly BranchEntry[], "messages">; // prettier-ignore
+export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
+export type ChatMessageTreeAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore

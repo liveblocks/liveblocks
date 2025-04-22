@@ -3,8 +3,8 @@
 import {
   AiAssistantMessage,
   AiUserMessage,
-  BranchEntry,
   MessageId,
+  UiChatMessage,
 } from "@liveblocks/core";
 import { ChatComposer } from "@liveblocks/react-ui";
 import {
@@ -65,20 +65,10 @@ function App() {
       <div className="flex flex-col flex-1 overflow-y-auto gap-4">
         <BranchContext.Provider value={{ branch, onBranchChange: setBranch }}>
           {messages.map((message) => {
-            if (message.message.role === "user") {
-              return (
-                <UserMessage
-                  message={message as BranchEntry<AiUserMessage>}
-                  key={message.message.id}
-                />
-              );
-            } else if (message.message.role === "assistant") {
-              return (
-                <AssistantMessage
-                  message={message as BranchEntry<AiAssistantMessage>}
-                  key={message.message.id}
-                />
-              );
+            if (message.role === "user") {
+              return <UserMessage message={message} key={message.id} />;
+            } else if (message.role === "assistant") {
+              return <AssistantMessage message={message} key={message.id} />;
             }
           })}
         </BranchContext.Provider>
@@ -89,8 +79,7 @@ function App() {
           chatId={chatId}
           className="rounded-lg mx-auto w-full max-w-[896px] shadow-[0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)]"
           onComposerSubmit={async (message) => {
-            const lastMessageId =
-              messages.length > 0 ? messages[0].message.id : null;
+            const lastMessageId = messages.length > 0 ? messages[0].id : null;
             const result = await client.ai.addUserMessage(
               chatId,
               lastMessageId,
@@ -104,11 +93,7 @@ function App() {
   );
 }
 
-function UserMessage({
-  message: { message, prev, next },
-}: {
-  message: BranchEntry<AiUserMessage>;
-}) {
+function UserMessage({ message }: { message: UiChatMessage & AiUserMessage }) {
   const text = message.deletedAt ? (
     <i>This message has been deleted.</i>
   ) : (
@@ -124,7 +109,7 @@ function UserMessage({
       key={message.id}
     >
       <div className="flex gap-2">
-        <BranchControls next={next} prev={prev} />
+        <BranchControls message={message} />
       </div>
       <div className="max-w-[80%]">{text}</div>
     </div>
@@ -132,15 +117,15 @@ function UserMessage({
 }
 
 function AssistantMessage({
-  message: { message, prev, next },
+  message,
 }: {
-  message: BranchEntry<AiAssistantMessage>;
+  message: UiChatMessage & AiAssistantMessage;
 }) {
   if (message.deletedAt) {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls prev={prev} next={next} />
+          <BranchControls message={message} />
         </div>
         <i>This message has been deleted.</i>
       </div>
@@ -149,7 +134,7 @@ function AssistantMessage({
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls prev={prev} next={next} />
+          <BranchControls message={message} />
         </div>
         <div>Generating response...</div>
       </div>
@@ -158,7 +143,7 @@ function AssistantMessage({
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls prev={prev} next={next} />
+          <BranchControls message={message} />
         </div>
         <div className="text-red-500">Error: {message.errorReason}</div>
       </div>
@@ -167,7 +152,7 @@ function AssistantMessage({
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls prev={prev} next={next} />
+          <BranchControls message={message} />
         </div>
         {message.content.map((part, index) => {
           if (part.type === "text") {
@@ -195,13 +180,7 @@ function AssistantMessage({
   }
 }
 
-function BranchControls({
-  prev,
-  next,
-}: {
-  prev: MessageId | null;
-  next: MessageId | null;
-}) {
+function BranchControls({ message }: { message: UiChatMessage }) {
   const context = useContext(BranchContext);
   if (context === null) {
     throw new Error("BranchControls must be a descendant of Messages");
@@ -211,23 +190,23 @@ function BranchControls({
     <>
       <button
         onClick={() => {
-          if (prev !== null) {
-            onBranchChange(prev);
+          if (message.prev !== null) {
+            onBranchChange(message.prev);
           }
         }}
         className="disabled:opacity-50"
-        disabled={!prev}
+        disabled={!message.prev}
       >
         Previous
       </button>
       <button
         onClick={() => {
-          if (next !== null) {
-            onBranchChange(next);
+          if (message.next !== null) {
+            onBranchChange(message.next);
           }
         }}
         className="disabled:opacity-50"
-        disabled={!next}
+        disabled={!message.next}
       >
         Next
       </button>

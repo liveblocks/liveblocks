@@ -89,10 +89,9 @@ export type ClientToolDefinition =
       execute?: never;
     };
 
-export type BranchEntry<M extends AiChatMessage = AiChatMessage> = {
+export type UiChatMessage = AiChatMessage & {
   prev: MessageId | null;
   next: MessageId | null;
-  message: M;
 };
 
 type AiContext = {
@@ -300,7 +299,7 @@ function createStore_forChatMessages() {
   function selectBranch(
     pool: TreePool<AiChatMessage>,
     preferredBranch: MessageId | null
-  ): BranchEntry[] {
+  ): UiChatMessage[] {
     function isAlive(message: AiChatMessage): boolean {
       // This could be generalized by doing a walk(
       //   { direction: 'down',
@@ -319,7 +318,7 @@ function createStore_forChatMessages() {
       return false;
     }
 
-    function selectSpine(leaf: AiChatMessage): BranchEntry[] {
+    function selectSpine(leaf: AiChatMessage): UiChatMessage[] {
       const spine = [];
       for (const message of pool.walkUp(leaf.id)) {
         const prev = first(pool.walkLeft(message.id, isAlive))?.id ?? null;
@@ -329,13 +328,13 @@ function createStore_forChatMessages() {
         // children, and also don't have a next/prev link, requiring the
         // deleted node to have an on-screen presence.
         if (!message.deletedAt || prev || next) {
-          spine.push({ prev, next, message });
+          spine.push({ ...message, prev, next });
         }
       }
       return spine.reverse();
     }
 
-    function fallback(): BranchEntry[] {
+    function fallback(): UiChatMessage[] {
       const latest = pool.sorted.findRight((m) => !m.deletedAt);
       return latest ? selectSpine(latest) : [];
     }
@@ -480,7 +479,7 @@ export type Ai = {
     getChatMessagesForBranchΣ(
       chatId: ChatId,
       branch?: MessageId
-    ): DerivedSignal<BranchEntry[]>;
+    ): DerivedSignal<UiChatMessage[]>;
     getMessagesForChatΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
     pendingMessagesΣ: DerivedSignal<
       Record<MessageId, AiPendingAssistantMessage>

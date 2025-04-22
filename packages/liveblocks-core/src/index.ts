@@ -17,7 +17,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  */
 
 // XXX Before launching, make sure to be deliberate about these exports!
-export type { BranchEntry, ClientToolDefinition } from "./ai";
+export type { ClientToolDefinition, UiChatMessage } from "./ai";
 export type {
   Client,
   ClientOptions,
