@@ -875,7 +875,7 @@ export type Room<
    * @example
    * await room.subscribeToThread("th_xxx");
    */
-  subscribeToThread(threadId: string): Promise<void>;
+  subscribeToThread(threadId: string): Promise<SubscriptionData>;
 
   /**
    * Unsubscribes the user from a thread.

@@ -1,5 +1,49 @@
 ## vNEXT (not yet published)
 
+## v2.24.0
+
+We are introducing thread subscriptions to add more granularity to thread
+notifications, allowing users to subscribe to threads without participating or
+unsubscribing from specific ones.
+
+We are also using this opportunity to rename some of the concepts around
+notifications and notification settings to improve clarity. None of these
+changes are breaking but you can learn more about them, their rationale, and how
+to automatically apply them with a codemod in our
+[Upgrade Guide for 2.24](https://liveblocks.io/docs/platform/upgrading/2.24).
+
+### `@liveblocks/react-ui`
+
+- Add "Subscribe to thread" and "Unsubscribe from thread" actions to `Thread`
+  and thread `InboxNotification` out of the box.
+
+### `@liveblocks/react`
+
+- Add `useSubscribeToThread` and `useUnsubscribeFromThread` hooks.
+- Add `subscribe` and `unsubscribe` methods to the existing
+  `useThreadSubscription` hook.
+- Add support for `textMentions` in room subscription settings.
+- Rename `useRoomNotificationSettings` and `useUpdateRoomNotificationSettings`
+  to `useRoomSubscriptionSettings` and `useUpdateRoomSubscriptionSettings`.
+
+### `@liveblocks/node`
+
+- Add `subscribeToThread`, `unsubscribeFromThread`, and `getThreadSubscriptions`
+  methods.
+- Add support for `textMentions` in room subscription settings.
+- Rename `getRoomNotificationSettings`, `updateRoomNotificationSettings`, and
+  `deleteRoomNotificationSettings` to `getRoomSubscriptionSettings`,
+  `updateRoomSubscriptionSettings`, and `deleteRoomSubscriptionSettings`.
+
+### `@liveblocks/client`
+
+- Add `Room.subscribeToThread` and `Room.unsubscribeFromThread` methods.
+- Methods which return threads and their associated inbox notifications now also
+  return the thread’s associated subscriptions.
+- Add support for `textMentions` in room subscription settings.
+- Rename `Room.getNotificationSettings` and `Room.updateNotificationSettings` to
+  `Room.getSubscriptionSettings` and `Room.updateSubscriptionSettings`.
+
 ## v2.23.1
 
 ### `@liveblocks/client`

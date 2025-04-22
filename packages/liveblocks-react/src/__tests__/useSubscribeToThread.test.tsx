@@ -57,7 +57,13 @@ describe("useSubscribeToThread", () => {
         async (_, res, ctx) => {
           hasCalledSubscribeToThread = true;
 
-          return res(ctx.status(200));
+          return res(
+            ctx.json({
+              kind: "thread",
+              subjectId: initialThread.id,
+              createdAt: Date.now(),
+            })
+          );
         }
       )
     );
@@ -141,7 +147,13 @@ describe("useSubscribeToThread", () => {
         async (_, res, ctx) => {
           hasCalledSubscribeToThread = true;
 
-          return res(ctx.status(200));
+          return res(
+            ctx.json({
+              kind: "thread",
+              subjectId: initialThread.id,
+              createdAt: Date.now(),
+            })
+          );
         }
       )
     );
