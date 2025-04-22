@@ -15,7 +15,7 @@ import {
   useCopilotChats,
 } from "@liveblocks/react/suspense";
 import Image from "next/image";
-import { createContext, useContext, useState } from "react";
+import { createContext, memo, useContext, useState } from "react";
 import { Markdown } from "./markdown";
 
 export default function Home() {
@@ -62,7 +62,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex flex-col flex-1 overflow-y-auto gap-4">
+      <div className="flex flex-col flex-1 overflow-y-auto gap-4 p-4">
         <BranchContext.Provider value={{ branch, onBranchChange: setBranch }}>
           {messages.map((message) => {
             if (message.role === "user") {
@@ -79,7 +79,8 @@ function App() {
           chatId={chatId}
           className="rounded-lg mx-auto w-full max-w-[896px] shadow-[0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)]"
           onComposerSubmit={async (message) => {
-            const lastMessageId = messages.length > 0 ? messages[0].id : null;
+            const lastMessageId =
+              messages.length > 0 ? messages[messages.length - 1].id : null;
             const result = await client.ai.addUserMessage(
               chatId,
               lastMessageId,
@@ -93,7 +94,12 @@ function App() {
   );
 }
 
-function UserMessage({ message }: { message: UiChatMessage & AiUserMessage }) {
+const UserMessage = memo(function UserMessage({
+  message,
+}: {
+  message: UiChatMessage & AiUserMessage;
+}) {
+  const client = useClient();
   const text = message.deletedAt ? (
     <i>This message has been deleted.</i>
   ) : (
@@ -104,29 +110,43 @@ function UserMessage({ message }: { message: UiChatMessage & AiUserMessage }) {
   );
 
   return (
-    <div
-      className="flex flex-col items-end w-full max-w-[896px] mx-auto p-2"
-      key={message.id}
-    >
+    <div className="flex flex-col items-end w-full max-w-[896px] mx-auto p-2">
       <div className="flex gap-2">
         <BranchControls message={message} />
+        <button
+          onClick={() => {
+            client.ai.ask(message.chatId, message.id, { stream: true });
+          }}
+        >
+          Regenerate
+        </button>
+        <button
+          onClick={() => {
+            client.ai.deleteMessage(message.chatId, message.id);
+          }}
+        >
+          Delete
+        </button>
       </div>
+      <pre>{message.id}</pre>
       <div className="max-w-[80%]">{text}</div>
     </div>
   );
-}
+});
 
-function AssistantMessage({
+const AssistantMessage = memo(function AssistantMessage({
   message,
 }: {
   message: UiChatMessage & AiAssistantMessage;
 }) {
+  const client = useClient();
   if (message.deletedAt) {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
           <BranchControls message={message} />
         </div>
+        <pre>{message.id}</pre>
         <i>This message has been deleted.</i>
       </div>
     );
@@ -136,7 +156,32 @@ function AssistantMessage({
         <div className="flex gap-2">
           <BranchControls message={message} />
         </div>
-        <div>Generating response...</div>
+        <pre>{message.id}</pre>
+        {message.contentSoFar.length === 0 ? (
+          <i>Generating response...</i>
+        ) : (
+          message.contentSoFar.map((part, index) => {
+            if (part.type === "text") {
+              return (
+                <div key={index}>
+                  <Markdown content={part.text} />
+                </div>
+              );
+            } else if (part.type === "reasoning") {
+              return (
+                <div key={index} className="text-slate-500">
+                  {part.text}
+                </div>
+              );
+            } else if (part.type === "tool-call") {
+              return (
+                <div key={index} className="text-blue-500">
+                  {part.toolName} - {JSON.stringify(part.args)}
+                </div>
+              );
+            }
+          })
+        )}
       </div>
     );
   } else if (message.status === "failed") {
@@ -145,6 +190,7 @@ function AssistantMessage({
         <div className="flex gap-2">
           <BranchControls message={message} />
         </div>
+        <pre>{message.id}</pre>
         <div className="text-red-500">Error: {message.errorReason}</div>
       </div>
     );
@@ -153,7 +199,15 @@ function AssistantMessage({
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
           <BranchControls message={message} />
+          <button
+            onClick={() => {
+              client.ai.deleteMessage(message.chatId, message.id);
+            }}
+          >
+            Delete
+          </button>
         </div>
+        <pre>{message.id}</pre>
         {message.content.map((part, index) => {
           if (part.type === "text") {
             return (
@@ -178,7 +232,7 @@ function AssistantMessage({
       </div>
     );
   }
-}
+});
 
 function BranchControls({ message }: { message: UiChatMessage }) {
   const context = useContext(BranchContext);

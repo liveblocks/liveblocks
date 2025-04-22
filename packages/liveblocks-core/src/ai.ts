@@ -12,7 +12,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import { shallow2 } from "./lib/shallow";
+import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
 import { TreePool } from "./lib/TreePool";
@@ -367,15 +367,30 @@ function createStore_forChatMessages() {
     return fallback();
   }
 
-  const immutableMessagesByBranch = new DefaultMap(
-    (chatId: ChatId) =>
-      new DefaultMap((branch: MessageId | null) =>
-        DerivedSignal.from(() => {
-          const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
-          return selectBranch(pool, branch);
-        }, shallow2)
-      )
-  );
+  const immutableMessagesByBranch = new DefaultMap((chatId: ChatId) => {
+    return new DefaultMap((branchId: MessageId | null) => {
+      const messages = DerivedSignal.from(() => {
+        const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
+        return selectBranch(pool, branchId);
+      }, shallow2);
+
+      return DerivedSignal.from((): UiChatMessage[] => {
+        const pendingMessages = pendingMessagesΣ.get();
+        return messages.get().map((message) => {
+          if (message.role !== "assistant" || message.status !== "pending") {
+            return message;
+          }
+          const pendingMessage = pendingMessages.get(message.id);
+          if (pendingMessage === undefined) return message;
+          return {
+            ...message,
+            contentSoFar: pendingMessage.contentSoFar,
+          } satisfies AiPendingAssistantMessage;
+        });
+      }, shallow);
+    });
+  });
+
   function getChatMessagesForBranchΣ(chatId: ChatId, branch?: MessageId) {
     return immutableMessagesByBranch
       .getOrCreate(chatId)
