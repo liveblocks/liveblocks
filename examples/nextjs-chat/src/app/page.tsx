@@ -213,7 +213,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   ];
 
   const lastMessageId =
-    messages.length > 0 ? messages[messages.length - 1].id : null;
+    messages.length > 0 ? messages[messages.length - 1].message.id : null;
 
   async function ask(text: string, parentMessageId: MessageId | null) {
     // Creates the user message

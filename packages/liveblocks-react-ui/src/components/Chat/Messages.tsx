@@ -1,8 +1,8 @@
 import type {
   AiAssistantMessage,
-  AiChatMessage,
   AiPendingAssistantMessage,
   AiUserMessage,
+  BranchEntry,
   ChatId,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
@@ -31,7 +31,7 @@ export type ChatMessagesProps = Omit<
   /**
    * The messages to display.
    */
-  messages: readonly AiChatMessage[];
+  messages: readonly BranchEntry[];
   /**
    * The components displayed in the chat messages.
    */
@@ -64,7 +64,7 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
         className={classNames("lb-root lb-chat-messages", className)}
         {...props}
       >
-        {messages.map((message) => {
+        {messages.map(({ message }) => {
           if (message.role === "user") {
             return (
               <UserChatMessage

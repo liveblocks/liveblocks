@@ -15,12 +15,12 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChat,
-  AiChatMessage,
   AsyncError,
   AsyncLoading,
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
+  BranchEntry,
   Client,
   CommentAttachment,
   CommentBody,
@@ -187,8 +187,8 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
-export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly AiChatMessage[], "messages">; // prettier-ignore
-export type ChatMessageTreeAsyncResult = AsyncResult<readonly AiChatMessage[], "messages">; // prettier-ignore
+export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly BranchEntry[], "messages">; // prettier-ignore
+export type ChatMessageTreeAsyncResult = AsyncResult<readonly BranchEntry[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore

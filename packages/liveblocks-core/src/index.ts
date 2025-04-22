@@ -16,7 +16,8 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-export type { ClientToolDefinition } from "./ai";
+// XXX Before launching, make sure to be deliberate about these exports!
+export type { BranchEntry, ClientToolDefinition } from "./ai";
 export type {
   Client,
   ClientOptions,

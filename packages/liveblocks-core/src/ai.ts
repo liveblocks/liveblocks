@@ -12,7 +12,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { nanoid } from "./lib/nanoid";
-import { shallow } from "./lib/shallow";
+import { shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
 import { TreePool } from "./lib/TreePool";
@@ -88,6 +88,10 @@ export type ClientToolDefinition =
       render: ComponentType<any>;
       execute?: never;
     };
+
+export type BranchEntry = {
+  message: AiChatMessage;
+};
 
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;
@@ -289,16 +293,16 @@ function createStore_forChatMessages() {
   function selectBranch(
     pool: TreePool<AiChatMessage>,
     preferredBranch: MessageId | null
-  ) {
-    function selectSpine(leaf: AiChatMessage): AiChatMessage[] {
+  ): BranchEntry[] {
+    function selectSpine(leaf: AiChatMessage): BranchEntry[] {
       const spine = [];
       for (const item of pool.walkUp(leaf.id)) {
-        if (!item.deletedAt) spine.push(item);
+        if (!item.deletedAt) spine.push({ message: item });
       }
       return spine.reverse();
     }
 
-    function fallback(): AiChatMessage[] {
+    function fallback(): BranchEntry[] {
       const latest = pool.sorted.findRight((m) => !m.deletedAt);
       return latest ? selectSpine(latest) : [];
     }
@@ -337,7 +341,7 @@ function createStore_forChatMessages() {
         DerivedSignal.from(() => {
           const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
           return selectBranch(pool, branch);
-        }, shallow)
+        }, shallow2)
       )
   );
   function getChatMessagesForBranchΣ(chatId: ChatId, branch?: MessageId) {
@@ -443,7 +447,7 @@ export type Ai = {
     getChatMessagesForBranchΣ(
       chatId: ChatId,
       branch?: MessageId
-    ): DerivedSignal<AiChatMessage[]>;
+    ): DerivedSignal<BranchEntry[]>;
     getMessagesForChatΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
     pendingMessagesΣ: DerivedSignal<
       Record<MessageId, AiPendingAssistantMessage>
