@@ -1537,7 +1537,7 @@ describe("client", () => {
       const response = {
         data: [settings],
         meta: {
-          nextPage: null,
+          nextCursor: null,
         },
       };
 
@@ -1557,6 +1557,48 @@ describe("client", () => {
       ).resolves.toEqual(response);
     });
 
+    test("should return the next page of user's room subscription settings when getUserRoomSubscriptionSettings receives a successful response", async () => {
+      const userId = "user1";
+      const startingAfter = "cursor1";
+      const limit = 1;
+
+      const settings = [
+        {
+          roomId: "room1",
+          threads: "all",
+          textMentions: "mine",
+        },
+      ];
+
+      const response = {
+        data: settings,
+        meta: {
+          nextCursor: "cursor2",
+        },
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/users/:userId/room-subscription-settings`,
+          (res) => {
+            const url = new URL(res.request.url);
+            expect(url.searchParams.size).toEqual(2);
+            expect(url.searchParams.get("startingAfter")).toEqual(
+              startingAfter
+            );
+            expect(url.searchParams.get("limit")).toEqual(limit.toString());
+
+            return HttpResponse.json(response, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getUserRoomSubscriptionSettings({ userId, startingAfter, limit })
+      ).resolves.toEqual(response);
+    });
     test("should throw a LiveblocksError when getUserRoomSubscriptionSettings receives an error response", async () => {
       const userId = "user1";
 
