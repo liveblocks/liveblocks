@@ -1950,16 +1950,17 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getUserRoomSubscriptionSettings(
-    params: {
-      userId: string;
-    },
+    params: { userId: string } & PaginationOptions,
     options?: RequestOptions
   ): Promise<Page<UserRoomSubscriptionSettings>> {
-    const { userId } = params;
+    const { userId, startingAfter, limit } = params;
 
     const res = await this.#get(
       url`/v2/users/${userId}/room-subscription-settings`,
-      undefined,
+      {
+        startingAfter,
+        limit,
+      },
       options
     );
     if (!res.ok) {
