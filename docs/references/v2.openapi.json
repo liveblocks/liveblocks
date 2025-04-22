@@ -1883,6 +1883,223 @@
         }
       }
     },
+    "/rooms/{roomId}/threads/{threadId}/subscribe": {
+      "post": {
+        "summary": "Subscribe to thread",
+        "tags": ["Comments"],
+        "description": "This endpoint subscribes to a thread.",
+        "operationId": "post-rooms-roomId-threads-threadId-subscribe",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated thread.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "x-stoplight": {
+          "id": "xqu3vycpenubo"
+        }
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/rooms/{roomId}/threads/{threadId}/unsubscribe": {
+      "post": {
+        "summary": "Unsubscribe from thread",
+        "tags": ["Comments"],
+        "description": "This endpoint unsubscribes from a thread.",
+        "operationId": "post-rooms-roomId-threads-threadId-unsubscribe",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "x-stoplight": {
+          "id": "ydqlu7gpsojiy"
+        }
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/rooms/{roomId}/threads/{threadId}/subscriptions": {
+      "get": {
+        "summary": "Get thread subscriptions",
+        "tags": ["Comments"],
+        "description": "This endpoint gets the list of subscriptions to a thread.",
+        "operationId": "get-rooms-roomId-threads-threadId-subscriptions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "x-stoplight": {
+                        "id": "9wqmg4820r0c1"
+                      },
+                      "items": {
+                        "$ref": "#/components/schemas/UserSubscription",
+                        "x-stoplight": {
+                          "id": "050yuqyjjo9oi"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "x-stoplight": {
+          "id": "r5quewb6mmumd"
+        },
+        "x-internal": false
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
     "/rooms/{roomId}/threads/{threadId}/comments": {
       "post": {
         "summary": "Create comment",
@@ -3154,6 +3371,114 @@
         }
       }
     },
+    "users/{userId}/room-subscription-settings": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get room subscription settings",
+        "tags": ["Notifications"],
+        "operationId": "get-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint returns the list of a user's room subscription settings.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 50
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "x-stoplight": {
+                        "id": "v7u3olczawx3p"
+                      },
+                      "items": {
+                        "$ref": "#/components/schemas/UserRoomSubscriptionSettings",
+                        "x-stoplight": {
+                          "id": "ymdr3kn04er2z"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "x-stoplight": {
+                        "id": "ztc88vml833uc"
+                      },
+                      "properties": {
+                        "nextCursor": {
+                          "x-stoplight": {
+                            "id": "ab2fztjw78qji"
+                          },
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "x-stoplight": {
+          "id": "gdxf3igxbme6g"
+        }
+      }
+    },
     "/rooms/{roomId}/users/{userId}/notification-settings": {
       "parameters": [
         {
@@ -4152,6 +4477,27 @@
           }
         }
       },
+      "UserRoomSubscriptionSettings": {
+        "title": "UserRoomSubscriptionSettings",
+        "x-stoplight": {
+          "id": "k3dfv7o1vehom"
+        },
+        "type": "object",
+        "properties": {
+          "threads": {
+            "enum": ["all", "replies_and_mentions", "none"]
+          },
+          "textMentions": {
+            "enum": ["mine", "none"]
+          },
+          "roomId": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "ecq6ue5qyruk6"
+            }
+          }
+        }
+      },
       "TriggerInboxNotification": {
         "title": "TriggerInboxNotification",
         "type": "object",
@@ -4180,6 +4526,59 @@
             "subjectId": "file123",
             "activityData": {
               "url": "url-to-file"
+            }
+          }
+        ]
+      },
+      "Subscription": {
+        "title": "Subscription",
+        "x-stoplight": {
+          "id": "5zpw1zi1xb46p"
+        },
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "bba0bodaro6ug"
+            }
+          },
+          "subjectId": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "919pp5n049o3l"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "0bv6l8jy3f1ye"
+            },
+            "format": "date-time"
+          }
+        }
+      },
+      "UserSubscription": {
+        "title": "UserSubscription",
+        "x-stoplight": {
+          "id": "rd1ceosn2hf0e"
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Subscription"
+          },
+          {
+            "type": "object",
+            "x-stoplight": {
+              "id": "tmvtm6bvk2d73"
+            },
+            "properties": {
+              "userId": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "3heft6n51aoce"
+                }
+              }
             }
           }
         ]

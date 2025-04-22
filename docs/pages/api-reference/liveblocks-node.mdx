@@ -1986,6 +1986,31 @@ await liveblocks.deleteRoomSubscriptionSettings({
 });
 ```
 
+#### Liveblocks.getUserRoomSubscriptionSettings [#get-users-userId-room-subscription-settings]
+
+Returns a list of a user’s subscription settings for all rooms. This is a
+wrapper around the
+[Get User Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-room-subscription-settings).
+
+```ts
+const { data: subscriptionSettings, nextCursor } =
+  await liveblocks.getUserRoomSubscriptionSettings({
+    userId: "steven@example.com",
+  });
+
+console.log(subscriptionSettings);
+
+// { roomId: "my-room-id", threads: "all", ... }
+
+// Pagination
+if (nextCursor) {
+  const { data: nextPage } = await liveblocks.getUserRoomSubscriptionSettings({
+    userId: "steven@example.com",
+    startingAfter: nextCursor,
+  });
+}
+```
+
 ### Notifications
 
 #### Liveblocks.getInboxNotifications [#get-users-userId-inboxNotifications]
