@@ -2,8 +2,8 @@
 
 import {
   AiAssistantMessage,
-  AiChatMessage,
   AiUserMessage,
+  BranchEntry,
   MessageId,
 } from "@liveblocks/core";
 import { ChatComposer } from "@liveblocks/react-ui";
@@ -15,13 +15,7 @@ import {
   useCopilotChats,
 } from "@liveblocks/react/suspense";
 import Image from "next/image";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { createContext, useContext, useState } from "react";
 import { Markdown } from "./markdown";
 
 export default function Home() {
@@ -71,10 +65,20 @@ function App() {
       <div className="flex flex-col flex-1 overflow-y-auto gap-4">
         <BranchContext.Provider value={{ branch, onBranchChange: setBranch }}>
           {messages.map((message) => {
-            if (message.role === "user") {
-              return <UserMessage message={message} key={message.id} />;
-            } else if (message.role === "assistant") {
-              return <AssistantMessage message={message} key={message.id} />;
+            if (message.message.role === "user") {
+              return (
+                <UserMessage
+                  message={message as BranchEntry<AiUserMessage>}
+                  key={message.message.id}
+                />
+              );
+            } else if (message.message.role === "assistant") {
+              return (
+                <AssistantMessage
+                  message={message as BranchEntry<AiAssistantMessage>}
+                  key={message.message.id}
+                />
+              );
             }
           })}
         </BranchContext.Provider>
@@ -85,7 +89,8 @@ function App() {
           chatId={chatId}
           className="rounded-lg mx-auto w-full max-w-[896px] shadow-[0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)]"
           onComposerSubmit={async (message) => {
-            const lastMessageId = messages.length > 0 ? messages[0].id : null;
+            const lastMessageId =
+              messages.length > 0 ? messages[0].message.id : null;
             const result = await client.ai.addUserMessage(
               chatId,
               lastMessageId,
@@ -99,7 +104,11 @@ function App() {
   );
 }
 
-function UserMessage({ message }: { message: AiUserMessage }) {
+function UserMessage({
+  message: { message, prev, next },
+}: {
+  message: BranchEntry<AiUserMessage>;
+}) {
   const text = message.content
     .filter((c) => c.type === "text")
     .map((c) => c.text)
@@ -111,19 +120,23 @@ function UserMessage({ message }: { message: AiUserMessage }) {
       key={message.id}
     >
       <div className="flex gap-2">
-        <BranchControls message={message} />
+        <BranchControls next={next} prev={prev} />
       </div>
       <div className="max-w-[80%]">{text}</div>
     </div>
   );
 }
 
-function AssistantMessage({ message }: { message: AiAssistantMessage }) {
+function AssistantMessage({
+  message: { message, prev, next },
+}: {
+  message: BranchEntry<AiAssistantMessage>;
+}) {
   if (message.status === "pending") {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls message={message} />
+          <BranchControls prev={prev} next={next} />
         </div>
         <div>Generating response...</div>
       </div>
@@ -132,7 +145,7 @@ function AssistantMessage({ message }: { message: AiAssistantMessage }) {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls message={message} />
+          <BranchControls prev={prev} next={next} />
         </div>
         <div className="text-red-500">Error: {message.errorReason}</div>
       </div>
@@ -141,7 +154,7 @@ function AssistantMessage({ message }: { message: AiAssistantMessage }) {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">
         <div className="flex gap-2">
-          <BranchControls message={message} />
+          <BranchControls prev={prev} next={next} />
         </div>
         {message.content.map((part, index) => {
           if (part.type === "text") {
@@ -169,109 +182,39 @@ function AssistantMessage({ message }: { message: AiAssistantMessage }) {
   }
 }
 
-function BranchControls({ message }: { message: AiChatMessage }) {
+function BranchControls({
+  prev,
+  next,
+}: {
+  prev: MessageId | null;
+  next: MessageId | null;
+}) {
   const context = useContext(BranchContext);
   if (context === null) {
     throw new Error("BranchControls must be a descendant of Messages");
   }
   const onBranchChange = context.onBranchChange;
-
-  const client = useClient();
-
-  const getNumOfYoungerSiblings = useCallback((): number => {
-    const siblings = client.ai
-      .getMessagesPool(message.chatId)
-      .getSiblings(message.id);
-    return siblings.filter((sibling) => sibling.createdAt > message.createdAt)
-      .length;
-  }, [client, message.id, message.chatId, message.createdAt]);
-
-  const getNumOfOlderSiblings = useCallback(() => {
-    const siblings = client.ai
-      .getMessagesPool(message.chatId)
-      .getSiblings(message.id);
-    return siblings.filter((sibling) => sibling.createdAt < message.createdAt)
-      .length;
-  }, [client, message.id, message.chatId, message.createdAt]);
-
-  const numOfYoungerSiblings = useSyncExternalStore(
-    (callback) => {
-      const signal = client.ai.signals.getMessagesForChatΣ(message.chatId);
-      const unsubscribe = signal.subscribe(callback);
-      return () => {
-        signal[Symbol.dispose]();
-        unsubscribe();
-      };
-    },
-    getNumOfYoungerSiblings,
-    getNumOfYoungerSiblings
-  );
-
-  const numOfOlderSiblings = useSyncExternalStore(
-    (callback) => {
-      const signal = client.ai.signals.getMessagesForChatΣ(message.chatId);
-      const unsubscribe = signal.subscribe(callback);
-      return () => {
-        signal[Symbol.dispose]();
-        unsubscribe();
-      };
-    },
-    getNumOfOlderSiblings,
-    getNumOfOlderSiblings
-  );
-
   return (
     <>
       <button
         onClick={() => {
-          if (numOfOlderSiblings === 0) return;
-          const siblings = client.ai
-            .getMessagesPool(message.chatId)
-            .getSiblings(message.id);
-
-          let previousMessage: AiChatMessage | null = null;
-          for (const sibling of siblings) {
-            if (sibling.createdAt < message.createdAt) {
-              if (previousMessage === null) {
-                previousMessage = sibling;
-              } else if (sibling.createdAt < previousMessage.createdAt) {
-                previousMessage = sibling;
-              }
-            }
-          }
-          if (previousMessage !== null) {
-            onBranchChange(previousMessage.id);
+          if (prev !== null) {
+            onBranchChange(prev);
           }
         }}
         className="disabled:opacity-50"
-        disabled={numOfOlderSiblings === 0}
+        disabled={!prev}
       >
         Previous
       </button>
       <button
         onClick={() => {
-          if (numOfYoungerSiblings === 0) return;
-          const siblings = client.ai
-            .getMessagesPool(message.chatId)
-            .getSiblings(message.id);
-
-          let nextMessage: AiChatMessage | null = null;
-          for (const sibling of siblings) {
-            if (sibling.createdAt > message.createdAt) {
-              if (nextMessage === null) {
-                nextMessage = sibling;
-              } else if (sibling.createdAt > nextMessage.createdAt) {
-                nextMessage = sibling;
-              }
-            }
-          }
-          console.log(nextMessage);
-          if (nextMessage !== null) {
-            onBranchChange(nextMessage.id);
+          if (next !== null) {
+            onBranchChange(next);
           }
         }}
         className="disabled:opacity-50"
-        disabled={numOfYoungerSiblings === 0}
+        disabled={!next}
       >
         Next
       </button>
