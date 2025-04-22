@@ -1,5 +1,14 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/tiptap`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+- Fix `AiToolbar` focus behavior in Safari.
+
+### `@liveblocks/lexical`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+
 ## v2.23.1
 
 ### `@liveblocks/client`
