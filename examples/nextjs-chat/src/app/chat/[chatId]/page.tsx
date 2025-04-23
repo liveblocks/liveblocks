@@ -318,6 +318,8 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
             if (ev.currentTarget.textContent?.trim()) {
               ask(ev.currentTarget.textContent, lastMessageId);
             }
+
+            ev.preventDefault(); // Avoid double-creation
           }}
         />
         <div
