@@ -80,6 +80,10 @@ export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
    * @internal
    */
   branchId?: MessageId;
+  /**
+   * @internal
+   */
+  stream?: boolean;
 };
 
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
@@ -93,6 +97,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       chatId,
       branchId,
       copilotId,
+      stream,
       ...props
     },
     forwardedRef
@@ -133,7 +138,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         if (event.isDefaultPrevented()) return;
 
         client.ai.addUserMessageAndAsk(chatId, lastMessageId, message.text, {
-          stream: true,
+          stream,
           copilotId,
         });
       },
@@ -143,6 +148,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
         chatId,
         lastMessageId,
         pendingMessage,
+        stream,
         copilotId,
       ]
     );

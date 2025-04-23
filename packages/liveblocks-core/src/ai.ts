@@ -85,7 +85,7 @@ export type ClientToolDefinition =
   | {
       description?: string;
       parameters: JSONSchema4;
-      render: ComponentType<any>;
+      render: ComponentType<{ args: any }>;
       execute?: never;
     };
 
@@ -105,6 +105,7 @@ type AiContext = {
     }
   >;
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
+  toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
   contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
   toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
@@ -123,6 +124,40 @@ export type AskAiOptions = {
 
 function now(): ISODateString {
   return new Date().toISOString() as ISODateString;
+}
+
+function createStore_forTools() {
+  const toolsByChatIdΣ = new DefaultMap((_chatId: ChatId) => {
+    return new DefaultMap((_toolName: string) => {
+      return new Signal<ClientToolDefinition | undefined>(undefined);
+    });
+  });
+
+  function getToolDefinitionΣ(chatId: ChatId, toolName: string) {
+    return toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(toolName);
+  }
+
+  function addToolDefinition(
+    chatId: ChatId,
+    name: string,
+    definition: ClientToolDefinition
+  ) {
+    toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(definition);
+  }
+
+  function removeToolDefinition(chatId: ChatId, toolName: string) {
+    const tools = toolsByChatIdΣ.get(chatId);
+    if (tools === undefined) return;
+    const tool = tools.get(toolName);
+    if (tool === undefined) return;
+    tool.set(undefined);
+  }
+
+  return {
+    getToolCallByNameΣ: getToolDefinitionΣ,
+    addToolDefinition,
+    removeToolDefinition,
+  };
 }
 
 function createStore_forChatMessages() {
@@ -499,6 +534,10 @@ export type Ai = {
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
     getMessagesForChatΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
+    getToolDefinitionΣ(
+      chatId: ChatId,
+      toolName: string
+    ): Signal<ClientToolDefinition | undefined>;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -509,8 +548,8 @@ export type Ai = {
 
   registerChatTool: (
     chatId: ChatId,
-    toolName: string,
-    tool: ClientToolDefinition
+    name: string,
+    definition: ClientToolDefinition
   ) => void;
   unregisterChatTool: (chatId: ChatId, toolName: string) => void;
 
@@ -542,12 +581,14 @@ export function createAi(config: AiConfig): Ai {
 
   const chatsStore = createStore_forUserAiChats();
   const messagesStore = createStore_forChatMessages();
+  const toolsStore = createStore_forTools();
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
     pendingCmds: new Map(),
     chatsStore,
     messagesStore,
+    toolsStore,
     contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
     toolsByChatId: new Map<ChatId, Map<string, ClientToolDefinition>>(),
   };
@@ -844,29 +885,6 @@ export function createAi(config: AiConfig): Ai {
     }
   }
 
-  function registerChatTool(
-    chatId: ChatId,
-    toolName: string,
-    tool: ClientToolDefinition
-  ) {
-    const chatTools = context.toolsByChatId.get(chatId);
-    if (chatTools === undefined) {
-      context.toolsByChatId.set(chatId, new Map([[toolName, tool]]));
-    } else {
-      chatTools.set(toolName, tool);
-    }
-  }
-
-  function unregisterChatTool(chatId: ChatId, toolName: string) {
-    const chatTools = context.toolsByChatId.get(chatId);
-    if (chatTools) {
-      chatTools.delete(toolName);
-      if (chatTools.size === 0) {
-        context.toolsByChatId.delete(chatId);
-      }
-    }
-  }
-
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -1028,14 +1046,15 @@ export function createAi(config: AiConfig): Ai {
         chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
+        getToolDefinitionΣ: context.toolsStore.getToolCallByNameΣ,
         getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
       },
 
       registerChatContext,
       unregisterChatContext,
 
-      registerChatTool,
-      unregisterChatTool,
+      registerChatTool: context.toolsStore.addToolDefinition,
+      unregisterChatTool: context.toolsStore.removeToolDefinition,
 
       getToolCallDefinition: (
         chatId: string,
@@ -1043,7 +1062,7 @@ export function createAi(config: AiConfig): Ai {
       ): ClientToolDefinition | undefined => {
         return context.toolsByChatId.get(chatId as ChatId)?.get(toolName);
       },
-    },
+    } satisfies Ai,
     kInternal,
     { enumerable: false }
   );
