@@ -1407,7 +1407,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Creates a existing subscription, replacing the corresponding
+   * Creates an existing subscription, replacing the corresponding
    * optimistic update.
    */
   public createSubscription(
