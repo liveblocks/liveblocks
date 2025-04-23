@@ -132,6 +132,7 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
         if (disabled || isEmpty(editor, editor.children)) return;
 
         onSubmit?.(event);
+
         if (onComposerSubmit === undefined || event.isDefaultPrevented()) {
           event.preventDefault();
           return;
@@ -155,6 +156,10 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
           .join("\n");
 
         onComposerSubmit({ text: content }, event);
+
+        if (event.isDefaultPrevented()) {
+          return;
+        }
 
         event.preventDefault();
 

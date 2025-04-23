@@ -142,13 +142,6 @@ function createStore_forChatMessages() {
   const pendingMessagesΣ = new MutableSignal(
     new Map<MessageId, AiPendingAssistantMessage>()
   );
-  const immPendingMessagesΣ = DerivedSignal.from(
-    () =>
-      Object.fromEntries(structuredClone(pendingMessagesΣ.get())) as Record<
-        MessageId,
-        AiPendingAssistantMessage
-      >
-  );
 
   function createOptimistically(
     chatId: ChatId,
@@ -413,7 +406,6 @@ function createStore_forChatMessages() {
     getMessageById,
     getChatMessagesForBranchΣ,
     getMessagesForChatΣ,
-    pendingMessagesΣ: immPendingMessagesΣ,
 
     // Mutations
     createOptimistically,
@@ -488,6 +480,12 @@ export type Ai = {
     messageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
+  addUserMessageAndAsk: (
+    chatId: ChatId,
+    parentMessageId: MessageId | null,
+    message: string,
+    options?: AskAiOptions
+  ) => Promise<AskAiResponse>;
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
@@ -496,9 +494,6 @@ export type Ai = {
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
     getMessagesForChatΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
-    pendingMessagesΣ: DerivedSignal<
-      Record<MessageId, AiPendingAssistantMessage>
-    >;
   };
   registerChatContext: (
     chatId: ChatId,
@@ -962,6 +957,62 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
+      addUserMessageAndAsk: async (
+        chatId: ChatId,
+        parentMessageId: MessageId | null,
+        message: string,
+        options?: AskAiOptions
+      ): Promise<AskAiResponse> => {
+        const content: AiUserContentPart[] = [{ type: "text", text: message }];
+        const newMessageId = context.messagesStore.createOptimistically(
+          chatId,
+          "user",
+          parentMessageId,
+          content
+        );
+        const targetMessageId = context.messagesStore.createOptimistically(
+          chatId,
+          "assistant",
+          newMessageId
+        );
+
+        // XXX - We should handle the case where the user message fails to send
+        await sendClientMsgWithResponse({
+          cmd: "add-user-message",
+          id: newMessageId,
+          chatId,
+          parentMessageId,
+          content,
+        });
+
+        const copilotId = options?.copilotId;
+        const stream = options?.stream ?? false;
+        const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
+
+        const chatContext = context.contextByChatId.get(chatId);
+        const chatTools = context.toolsByChatId.get(chatId);
+        const tools: AiToolDefinition[] | undefined = chatTools
+          ? Array.from(chatTools.entries()).map(([name, tool]) => ({
+              name,
+              description: tool.description,
+              parameters: tool.parameters,
+            }))
+          : undefined;
+
+        return sendClientMsgWithResponse({
+          cmd: "ask-ai",
+          chatId,
+          sourceMessageId: newMessageId,
+          targetMessageId,
+          copilotId,
+          clientId,
+          stream,
+          tools,
+          timeout,
+          context: chatContext ? Array.from(chatContext.values()) : undefined,
+        });
+      },
+
       abort: (messageId: MessageId) =>
         sendClientMsgWithResponse({ cmd: "abort-ai", messageId }),
 
@@ -972,7 +1023,6 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
-        pendingMessagesΣ: context.messagesStore.pendingMessagesΣ,
       },
 
       registerChatContext,

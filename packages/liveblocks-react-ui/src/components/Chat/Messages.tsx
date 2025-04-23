@@ -1,13 +1,12 @@
 import type {
+  AiAssistantContentPart,
   AiAssistantMessage,
-  AiPendingAssistantMessage,
   AiUserMessage,
   ChatId,
   UiChatMessage,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useSignal } from "@liveblocks/react/_private";
-import { Fragment, type ComponentType, type HTMLAttributes } from "react";
+import { type ComponentType, Fragment, type HTMLAttributes, memo } from "react";
 import { forwardRef, useState } from "react";
 
 import { SpinnerIcon } from "../../icons";
@@ -121,47 +120,48 @@ export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   overrides?: Partial<GlobalOverrides>;
 };
 
-export const DefaultUserChatMessage = forwardRef<
-  HTMLDivElement,
-  UserChatMessageProps
->(({ message, className }, forwardedRef) => {
-  const text = message.deletedAt ? (
-    <i>This message has been deleted.</i>
-  ) : (
-    message.content
-      .filter((c) => c.type === "text")
-      .map((c) => c.text)
-      .join("\n")
-  );
+export const DefaultUserChatMessage = memo(
+  forwardRef<HTMLDivElement, UserChatMessageProps>(
+    ({ message, className }, forwardedRef) => {
+      const text = message.deletedAt ? (
+        <i>This message has been deleted.</i>
+      ) : (
+        message.content
+          .filter((c) => c.type === "text")
+          .map((c) => c.text)
+          .join("\n")
+      );
 
-  const images = message.content.filter((c) => c.type === "image");
+      const images = message.content.filter((c) => c.type === "image");
 
-  return (
-    <div
-      ref={forwardedRef}
-      className={classNames("lb-root lb-user-chat-message", className)}
-    >
-      {images.length > 0 && (
-        <div className="lb-user-chat-message-attachments">
-          <div className="lb-user-chat-message-media-attachments">
-            {images.map((image) => (
-              <UserChatMessageMediaAttachment
-                key={image.id}
-                chatId={message.chatId}
-                attachment={image}
-                className="lb-user-chat-message-attachment"
-              />
-            ))}
+      return (
+        <div
+          ref={forwardedRef}
+          className={classNames("lb-root lb-user-chat-message", className)}
+        >
+          {images.length > 0 && (
+            <div className="lb-user-chat-message-attachments">
+              <div className="lb-user-chat-message-media-attachments">
+                {images.map((image) => (
+                  <UserChatMessageMediaAttachment
+                    key={image.id}
+                    chatId={message.chatId}
+                    attachment={image}
+                    className="lb-user-chat-message-attachment"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="lb-user-chat-message-content">
+            <div className="lb-user-chat-message-body">{text}</div>
           </div>
         </div>
-      )}
-
-      <div className="lb-user-chat-message-content">
-        <div className="lb-user-chat-message-body">{text}</div>
-      </div>
-    </div>
-  );
-});
+      );
+    }
+  )
+);
 
 type UserChatMessageMediaAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   chatId: ChatId;
@@ -334,59 +334,60 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   }>;
 };
 
-export const DefaultAssistantChatMessage = forwardRef<
-  HTMLDivElement,
-  AssistantChatMessageProps
->((props, forwardedRef) => {
-  return props.message.status === "pending" ? (
-    <PendingDefaultAssistantChatMessage
-      {...props}
-      message={props.message}
-      ref={forwardedRef}
-    />
-  ) : (
-    <RealDefaultAssistantChatMessage {...props} ref={forwardedRef} />
-  );
-});
+export const DefaultAssistantChatMessage = memo(
+  forwardRef<HTMLDivElement, AssistantChatMessageProps>(
+    (props, forwardedRef) => {
+      const { message } = props;
+      if (message.status === "pending") {
+        if (message.contentSoFar.length === 0) {
+          return <div>Waiting for response...</div>;
+        } else {
+          return (
+            <AssistantMessageContent
+              ref={forwardedRef}
+              chatId={message.chatId}
+              content={message.contentSoFar}
+            />
+          );
+        }
+      } else if (message.status === "completed") {
+        return (
+          <AssistantMessageContent
+            ref={forwardedRef}
+            chatId={message.chatId}
+            content={message.content}
+          />
+        );
+      } else if (message.status === "failed") {
+        return <div>{message.errorReason}</div>;
+      }
+      return null;
+    }
+  )
+);
 
-export type PendingAssistantChatMessageProps = Omit<
-  AssistantChatMessageProps,
-  "message"
-> & { message: AiPendingAssistantMessage };
+type AssistantMessageContentProps = {
+  chatId: ChatId;
+  content: AiAssistantContentPart[];
+  components?: Partial<{
+    TextPart: ComponentType<AssistantMessageTextPartProps>;
+    ReasoningPart: ComponentType<AssistantMessageReasoningPartProps>;
+  }>;
+};
 
-const PendingDefaultAssistantChatMessage = forwardRef<
+const AssistantMessageContent = forwardRef<
   HTMLDivElement,
-  PendingAssistantChatMessageProps
+  AssistantMessageContentProps
 >((props, forwardedRef) => {
   const client = useClient();
-  const pendingMessage = useSignal(
-    client.ai.signals.pendingMessagesΣ,
-    (lut) => lut[props.message.id]
-  );
-  const message = pendingMessage ?? props.message;
-  return (
-    <RealDefaultAssistantChatMessage
-      {...props}
-      message={message}
-      ref={forwardedRef}
-    />
-  );
-});
+  const { components } = props;
 
-const RealDefaultAssistantChatMessage = forwardRef<
-  HTMLDivElement,
-  AssistantChatMessageProps
->(({ message, className, components, ...props }, forwardedRef) => {
-  const client = useClient();
   const TextPart = components?.TextPart ?? DefaultAssistantMessageTextPart;
-
   const ReasoningPart =
     components?.ReasoningPart ?? DefaultAssistantMessageReasoningPart;
 
-  const content = message.content ?? message.contentSoFar;
-
   function ToolCallPart({ name, args }: { name: string; args: any }) {
-    const tool = client.ai.getToolCallDefinition(message.chatId, name);
+    const tool = client.ai.getToolCallDefinition(props.chatId, name);
     if (tool === undefined) return null;
 
     if (tool.render === undefined) return null;
@@ -395,57 +396,19 @@ const RealDefaultAssistantChatMessage = forwardRef<
   }
 
   return (
-    <div
-      ref={forwardedRef}
-      className={classNames("lb-root lb-assistant-chat-message", className)}
-      {...props}
-    >
-      {message.status !== "completed" ? (
-        <div style={{ float: "right" }}>
-          {message.status === "pending" ? (
-            <i>Generating response...</i>
-          ) : (
-            <i style={{ color: "red" }}>{message.errorReason}</i>
-          )}
-
-          {message.status === "pending" ? (
-            <button
-              style={{
-                all: "unset",
-                cursor: "pointer",
-                border: "1px solid red",
-                padding: "8px 13px",
-                color: "red",
-              }}
-              onClick={() => {
-                void client.ai.abort(message.id);
-              }}
-            >
-              Abort
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="lb-assistant-chat-message-content">
-        {message.deletedAt ? <i>This message has been deleted.</i> : null}
-        {content.map((part, index) => {
-          switch (part.type) {
-            case "text":
-              return <TextPart key={index} text={part.text} />;
-            case "tool-call":
-              return (
-                <ToolCallPart
-                  key={index}
-                  name={part.toolName}
-                  args={part.args}
-                />
-              );
-            case "reasoning":
-              return <ReasoningPart key={index} text={part.text} />;
-          }
-        })}
-      </div>
+    <div ref={forwardedRef} className="lb-assistant-chat-message-content">
+      {props.content.map((part, index) => {
+        switch (part.type) {
+          case "text":
+            return <TextPart key={index} text={part.text} />;
+          case "tool-call":
+            return (
+              <ToolCallPart key={index} name={part.toolName} args={part.args} />
+            );
+          case "reasoning":
+            return <ReasoningPart key={index} text={part.text} />;
+        }
+      })}
     </div>
   );
 });

@@ -55,8 +55,6 @@ function App() {
   if (chats.length === 0) throw new Error("No chats found");
   const chatId = chats[0].id;
 
-  const client = useClient();
-
   const [branch, setBranch] = useState<MessageId | undefined>(undefined);
   const { messages } = useChatMessages(chatId, branch);
 
@@ -77,17 +75,8 @@ function App() {
       <div className="pb-4 px-4">
         <ChatComposer
           chatId={chatId}
+          branchId={branch}
           className="rounded-lg mx-auto w-full max-w-[896px] shadow-[0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)]"
-          onComposerSubmit={async (message) => {
-            const lastMessageId =
-              messages.length > 0 ? messages[messages.length - 1].id : null;
-            const result = await client.ai.addUserMessage(
-              chatId,
-              lastMessageId,
-              message.text
-            );
-            await client.ai.ask(chatId, result.message.id, { stream: true });
-          }}
         />
       </div>
     </div>
@@ -140,6 +129,7 @@ const AssistantMessage = memo(function AssistantMessage({
   message: UiChatMessage & AiAssistantMessage;
 }) {
   const client = useClient();
+
   if (message.deletedAt) {
     return (
       <div className="flex flex-col items-start w-full max-w-[896px] mx-auto p-2">

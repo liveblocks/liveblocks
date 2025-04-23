@@ -10,12 +10,12 @@ import {
 } from "@liveblocks/react/suspense";
 import {
   AssistantChatMessage,
+  AssistantMessageTextPartProps,
   ChatComposer,
-  ChatMessages,
   UserChatMessage,
 } from "@liveblocks/react-ui";
 import Markdown from "react-markdown";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 
 import { ChatId, CopilotId, MessageId } from "@liveblocks/core";
 import { useForceRerender } from "./debugTools";
@@ -201,6 +201,14 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     );
   };
 
+  const assistantMessageCustomComponents = {
+    TextPart: (props: AssistantMessageTextPartProps) => (
+      <div className="lb-root lb-assistant-chat-message-text-content">
+        <Markdown>{props.text}</Markdown>
+      </div>
+    ),
+  };
+
   const COPILOTS = [
     { id: "co_T6jQlhS", name: "Rhyme Maker (Anthropic, Sonnet 3.5)" },
     { id: "co_gblzUtw", name: "Wrong Answers Only (OpenAI, gpt-4o)" },
@@ -239,107 +247,132 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           <summary>Raw JSON</summary>
           <pre>{JSON.stringify(messages, null, 2)}</pre>
         </details>
-        <ChatMessages
-          messages={messages}
-          components={{
-            // Add bells and whistles to the default chat components
-            UserChatMessage: (props) => (
-              <div className="user-message-container">
-                <UserChatMessage {...props} />
-                <div className="message-controls">
+        <div className="lb-root lb-chat-messages">
+          {messages.map((message) => (
+            <Fragment key={message.id}>
+              {message.prev || message.next ? (
+                <div>
                   <button
-                    style={{ color: "red" }}
-                    onClick={async () => {
-                      try {
-                        await client.ai.deleteMessage(chatId, props.message.id);
-                      } finally {
-                        forceRerender();
+                    onClick={() => {
+                      if (message.prev !== null) {
+                        setBranch(message.prev);
                       }
                     }}
+                    style={{
+                      cursor: message.prev ? "pointer" : "not-allowed",
+                      opacity: message.prev ? undefined : 0.5,
+                    }}
+                    disabled={!message.prev}
                   >
-                    delete
+                    Previous
                   </button>
                   <button
-                    onClick={async () => {
-                      const answer = prompt(
-                        "Edit",
-                        props.message.content
-                          .flatMap((b) => (b.type === "text" ? [b.text] : []))
-                          .join(" ")
-                      );
-                      if (answer !== null) {
-                        const { message } = await client.ai.addUserMessage(
-                          chatId,
-                          props.message.parentId,
-                          answer
-                        );
-                        forceRerender();
+                    onClick={() => {
+                      if (message.next !== null) {
+                        setBranch(message.next);
+                      }
+                    }}
+                    style={{
+                      cursor: message.next ? "pointer" : "not-allowed",
+                      opacity: message.next ? undefined : 0.5,
+                    }}
+                    disabled={!message.next}
+                  >
+                    Next
+                  </button>
+                </div>
+              ) : null}
 
+              {message.role === "user" ? (
+                <div className="user-message-container">
+                  <UserChatMessage message={message} />
+                  <div className="message-controls">
+                    <button
+                      style={{ color: "red" }}
+                      onClick={async () => {
+                        try {
+                          await client.ai.deleteMessage(chatId, message.id);
+                        } finally {
+                          forceRerender();
+                        }
+                      }}
+                    >
+                      delete
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const answer = prompt(
+                          "Edit",
+                          message.content
+                            .flatMap((b) => (b.type === "text" ? [b.text] : []))
+                            .join(" ")
+                        );
+                        if (answer !== null) {
+                          const result = await client.ai.addUserMessage(
+                            chatId,
+                            message.parentId,
+                            answer
+                          );
+                          forceRerender();
+
+                          await client.ai.ask(chatId, result.message.id, {
+                            copilotId: selectedCopilotId,
+                            stream: streaming,
+                            timeout: maxTimeout,
+                          });
+                        }
+                      }}
+                    >
+                      edit
+                    </button>
+                    <button
+                      onClick={async () => {
                         await client.ai.ask(chatId, message.id, {
                           copilotId: selectedCopilotId,
                           stream: streaming,
                           timeout: maxTimeout,
                         });
-                      }
-                    }}
-                  >
-                    edit
-                  </button>
-                  <button
-                    onClick={async () => {
-                      await client.ai.ask(chatId, props.message.id, {
-                        copilotId: selectedCopilotId,
-                        stream: streaming,
-                        timeout: maxTimeout,
-                      });
-                    }}
-                  >
-                    regenerate
-                  </button>
-                  <span>
-                    id = {props.message.id}
-                    <br />
-                    parent = {props.message.parentId ?? "null"}
-                  </span>
+                      }}
+                    >
+                      regenerate
+                    </button>
+                    <span>
+                      id = {message.id}
+                      <br />
+                      parent = {message.parentId ?? "null"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ),
-            // Add bells and whistles to the default chat components
-            AssistantChatMessage: (props) => (
-              <div className="assistant-message-container">
-                <AssistantChatMessage
-                  {...props}
-                  components={{
-                    TextPart: (props) => (
-                      <div className="lb-root lb-assistant-chat-message-text-content">
-                        <Markdown>{props.text}</Markdown>
-                      </div>
-                    ),
-                  }}
-                />
-                <div className="assistant-message-controls">
-                  <span>
-                    id = {props.message.id}
-                    <br />
-                    parent = {props.message.parentId ?? "null"}
-                  </span>
-                  <button
-                    style={{ color: "red" }}
-                    onClick={async () => {
-                      try {
-                        await client.ai.deleteMessage(chatId, props.message.id);
-                      } finally {
-                        forceRerender();
-                      }
-                    }}
-                  >
-                    delete
-                  </button>
+              ) : message.role === "assistant" ? (
+                <div className="assistant-message-container">
+                  <AssistantChatMessage
+                    message={message}
+                    components={assistantMessageCustomComponents}
+                  />
+                  <div className="assistant-message-controls">
+                    <span>
+                      id = {message.id}
+                      <br />
+                      parent = {message.parentId ?? "null"}
+                    </span>
+                    <button
+                      style={{ color: "red" }}
+                      onClick={async () => {
+                        try {
+                          await client.ai.deleteMessage(chatId, message.id);
+                        } finally {
+                          forceRerender();
+                        }
+                      }}
+                    >
+                      delete
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ),
-          }}
-        />
+              ) : null}
+            </Fragment>
+          ))}
+        </div>
       </div>
 
       <div className="composer-container">

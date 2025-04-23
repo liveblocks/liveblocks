@@ -1,7 +1,16 @@
-import type { AsyncResult, ChatId } from "@liveblocks/core";
+import type {
+  AsyncResult,
+  ChatId,
+  CopilotId,
+  MessageId,
+  UiChatMessage,
+} from "@liveblocks/core";
 import { assert, kInternal, shallow } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useSyncExternalStoreWithSelector } from "@liveblocks/react/_private";
+import {
+  useSignal,
+  useSyncExternalStoreWithSelector,
+} from "@liveblocks/react/_private";
 import {
   type FormEvent,
   type FormHTMLAttributes,
@@ -63,6 +72,14 @@ export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
    * The id of the chat the composer belongs to.
    */
   chatId: ChatId;
+  /**
+   * The id of the copilot to use to send the message.
+   */
+  copilotId?: CopilotId;
+  /**
+   * @internal
+   */
+  branchId?: MessageId;
 };
 
 export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
@@ -74,20 +91,60 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       overrides,
       className,
       chatId,
+      branchId,
+      copilotId,
       ...props
     },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
+    const client = useClient();
+
+    const getLastMessageId = useCallback((messages: UiChatMessage[]) => {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage === undefined) return null;
+      return lastMessage.id;
+    }, []);
+
+    const getPendingMessage = useCallback((messages: UiChatMessage[]) => {
+      return messages.find(
+        (m) => m.role === "assistant" && m.status === "pending"
+      )?.id;
+    }, []);
+
+    const pendingMessage = useSignal(
+      client.ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
+      getPendingMessage
+    );
+
+    const lastMessageId = useSignal(
+      client.ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
+      getLastMessageId
+    );
 
     const handleComposerSubmit = useCallback(
       (message: { text: string }, event: FormEvent<HTMLFormElement>) => {
+        if (pendingMessage !== undefined) {
+          event.preventDefault();
+          return;
+        }
+
         onComposerSubmit?.(message, event);
         if (event.isDefaultPrevented()) return;
 
-        /* send(message.text) */
+        client.ai.addUserMessageAndAsk(chatId, lastMessageId, message.text, {
+          stream: true,
+          copilotId,
+        });
       },
-      [onComposerSubmit]
+      [
+        onComposerSubmit,
+        client,
+        chatId,
+        lastMessageId,
+        pendingMessage,
+        copilotId,
+      ]
     );
 
     return (
@@ -143,37 +200,73 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
               </div>
 
               <div className="lb-chat-composer-actions">
-                <ShortcutTooltip
-                  content={$.CHAT_COMPOSER_SEND}
-                  shortcut="Enter"
-                >
-                  <ComposerPrimitive.Submit
-                    className="lb-button"
-                    data-variant="primary"
-                    data-size="default"
-                    aria-label={$.CHAT_COMPOSER_SEND}
-                    onPointerDown={(event) => event.preventDefault()}
-                    onClick={(event) => event.stopPropagation()}
+                {pendingMessage === undefined ? (
+                  <ShortcutTooltip
+                    content={$.CHAT_COMPOSER_SEND}
+                    shortcut="Enter"
                   >
-                    <span className="lb-icon-container">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width={20}
-                        height={20}
-                        viewBox={`0 0 ${20} ${20}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        role="presentation"
-                        className="lb-icon"
-                      >
-                        <path d="m5 16 12-6L5 4l2 6-2 6ZM7 10h10" />
-                      </svg>
-                    </span>
-                  </ComposerPrimitive.Submit>
-                </ShortcutTooltip>
+                    <ComposerPrimitive.Submit
+                      className="lb-button"
+                      data-variant="primary"
+                      data-size="default"
+                      aria-label={$.CHAT_COMPOSER_SEND}
+                      onPointerDown={(event) => event.preventDefault()}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <span className="lb-icon-container">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width={20}
+                          height={20}
+                          viewBox={`0 0 ${20} ${20}`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          role="presentation"
+                          className="lb-icon"
+                        >
+                          <path d="m5 16 12-6L5 4l2 6-2 6ZM7 10h10" />
+                        </svg>
+                      </span>
+                    </ComposerPrimitive.Submit>
+                  </ShortcutTooltip>
+                ) : (
+                  <ShortcutTooltip content={$.CHAT_COMPOSER_ABORT}>
+                    <button
+                      type="button"
+                      className="lb-button"
+                      data-variant="primary"
+                      data-size="default"
+                      aria-label={$.CHAT_COMPOSER_ABORT}
+                      onPointerDown={(event) => event.preventDefault()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        client.ai.abort(pendingMessage);
+                      }}
+                    >
+                      <span className="lb-icon-container">
+                        {/* XXX - Prepare a more suitable icon */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width={20}
+                          height={20}
+                          viewBox={`0 0 ${20} ${20}`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          role="presentation"
+                          className="lb-icon"
+                        >
+                          <rect width="10" height="10" x="5" y="5" rx="2" />
+                        </svg>
+                      </span>
+                    </button>
+                  </ShortcutTooltip>
+                )}
               </div>
             </div>
           </div>
