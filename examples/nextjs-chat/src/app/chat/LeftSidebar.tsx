@@ -34,13 +34,15 @@ function RealLeftSidebar() {
         className="create-chat-btn"
         onClick={async () => {
           const name = prompt(
-            'Enter a name:\nUse "tmp" to create an ephemeral chat.',
+            'Enter a name:\n\n(Include "tmp" to create an ephemeral chat.)',
             "My new chat"
           );
           if (name !== null) {
-            const res = await client.ai.createChat(name, {
-              ephemeral: name.includes("tmp"),
-            });
+            const ephemeral = /\btmp\b/.test(name);
+            const res = await client.ai.createChat(
+              name.replace(/\btmp\b/g, "").trim(),
+              { ephemeral }
+            );
             router.push(`/chat/${res.chat.id}`);
           }
         }}
