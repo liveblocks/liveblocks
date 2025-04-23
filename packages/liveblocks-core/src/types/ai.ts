@@ -74,7 +74,12 @@ type GetChatsPair = DefineCmd<
 
 type CreateChatPair = DefineCmd<
   "create-chat",
-  { id: ChatId; name: string; metadata: Record<string, string | string[]> },
+  {
+    id: ChatId;
+    name: string;
+    ephemeral: boolean;
+    metadata: Record<string, string | string[]>;
+  },
   { chat: AiChat }
 >;
 

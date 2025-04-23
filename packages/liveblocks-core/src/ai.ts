@@ -110,6 +110,11 @@ type AiContext = {
   toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
 };
 
+export type CreateChatOptions = {
+  ephemeral?: boolean;
+  metadata?: AiChat["metadata"];
+};
+
 export type AskAiOptions = {
   copilotId?: CopilotId;
   stream?: boolean; // True by default
@@ -461,7 +466,7 @@ export type Ai = {
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
   createChat: (
     name: string,
-    metadata?: AiChat["metadata"]
+    options?: CreateChatOptions
   ) => Promise<CreateChatResponse>;
   deleteChat: (chatId: ChatId) => Promise<DeleteChatResponse>;
   getMessageTree: (chatId: ChatId) => Promise<GetMessageTreeResponse>;
@@ -873,13 +878,14 @@ export function createAi(config: AiConfig): Ai {
       disconnect: () => managedSocket.disconnect(),
 
       getChats,
-      createChat: (name: string, metadata?: AiChat["metadata"]) => {
+      createChat: (name: string, options?: CreateChatOptions) => {
         const id = `ch_${nanoid()}` as ChatId;
         return sendClientMsgWithResponse({
           cmd: "create-chat",
           id,
           name,
-          metadata: metadata ?? {},
+          ephemeral: options?.ephemeral ?? false,
+          metadata: options?.metadata ?? {},
         });
       },
 
