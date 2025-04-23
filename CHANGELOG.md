@@ -28,8 +28,8 @@ to automatically apply them with a codemod in our
 
 ### `@liveblocks/node`
 
-- Add `subscribeToThread`, `unsubscribeFromThread`, and `getThreadSubscriptions`
-  methods.
+- Add `subscribeToThread`, `unsubscribeFromThread`, `getThreadSubscriptions` and
+  `getUserRoomSubscriptionSettings` methods.
 - Add support for `textMentions` in room subscription settings.
 - Rename `getRoomNotificationSettings`, `updateRoomNotificationSettings`, and
   `deleteRoomNotificationSettings` to `getRoomSubscriptionSettings`,
