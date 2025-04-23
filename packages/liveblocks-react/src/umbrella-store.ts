@@ -36,6 +36,7 @@ import {
   nn,
   patchUserNotificationSettings,
   shallow,
+  shallow2,
   Signal,
   stableStringify,
 } from "@liveblocks/core";
@@ -43,7 +44,6 @@ import {
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
 import { find } from "./lib/itertools";
-import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
