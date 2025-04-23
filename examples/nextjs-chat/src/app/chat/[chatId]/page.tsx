@@ -52,7 +52,7 @@ export default function Page() {
             justifyContent: "center",
           }}
         >
-          THANK YOU
+          Loading...
         </div>
       }
     >
