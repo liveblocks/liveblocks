@@ -431,7 +431,9 @@ function createStore_forUserAiChats() {
   const mutableΣ = new MutableSignal(
     SortedList.with<AiChat>((x, y) => y.createdAt < x.createdAt)
   );
-  const chatsΣ = DerivedSignal.from(() => Array.from(mutableΣ.get()));
+  const chatsΣ = DerivedSignal.from(() =>
+    Array.from(mutableΣ.get()).filter((c) => !c.ephemeral && !c.deletedAt)
+  );
 
   function upsertMany(chats: AiChat[]) {
     mutableΣ.mutate((list) => {
