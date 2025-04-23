@@ -2,8 +2,9 @@
 
 ### `@liveblocks/tiptap`
 
-- Fix `FloatingToolbar` focus behavior in Safari.
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
 - Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
 
 ### `@liveblocks/lexical`
 

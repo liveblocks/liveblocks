@@ -169,6 +169,12 @@ export const AiExtension = Extension.create<
         return true;
       },
 
+      closeAi: () => () => {
+        (this.editor.commands as unknown as AiCommands).$closeAiToolbar();
+
+        return true;
+      },
+
       $acceptAiToolbarResponse:
         () =>
         ({ tr, view }: CommandProps) => {

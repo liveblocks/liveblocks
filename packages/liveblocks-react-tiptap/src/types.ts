@@ -265,7 +265,15 @@ export type CommentsCommands<ReturnType = boolean> = {
 };
 
 export type AiCommands<ReturnType = boolean> = {
+  /**
+   * Open the AI toolbar, with an optional prompt.
+   */
   askAi: (prompt?: string) => ReturnType;
+
+  /**
+   * Close the AI toolbar.
+   */
+  closeAi: () => ReturnType;
 
   // Transitions (see AiToolbarState)
 
