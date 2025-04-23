@@ -1,6 +1,7 @@
 import { defineConfig } from "tsup";
 import { execSync } from "child_process";
 import fs from "fs/promises";
+import { readFileSync } from "fs";
 import path from "path";
 
 /**
@@ -76,6 +77,7 @@ async function generateDts() {
  */
 export function createConfig(entry) {
   const withDeclarationMaps = process.env.DECLARATION_MAPS === "true";
+  const pkg = JSON.parse(readFileSync(path.resolve("./package.json"), "utf-8"));
 
   return defineConfig({
     entry,
@@ -90,7 +92,6 @@ export function createConfig(entry) {
 
     esbuildOptions(options, _context) {
       // Replace __VERSION__ globals with concrete version
-      const pkg = require("./package.json");
       options.define.__VERSION__ = JSON.stringify(pkg.version);
     },
   });
