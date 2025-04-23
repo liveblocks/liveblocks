@@ -234,6 +234,9 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
           ref={forwardedRef}
           icon={icon}
           aria-label={!children ? name : undefined}
+          // Safari doesn't mark buttons as focusable, which breaks `relatedTarget`
+          // in focus/blur events. https://bugs.webkit.org/show_bug.cgi?id=254655
+          tabIndex={0}
           {...props}
           onKeyDown={handleKeyDown}
         >
