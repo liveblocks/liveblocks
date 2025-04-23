@@ -245,16 +245,29 @@ main a:hover {
   background-size: contain;
   padding-left: 46px;
   background-image: url(https://liveblocks.io/_next/image?url=%2Fimages%2Fproducts%2Fai-copilots.png&w=64&q=75);
-  margin: 1rem 0 0 0;
+  margin: 1rem 0;
+}
+
+.btn {
+  margin-top: 0.5rem;
+  background-color: #ddd;
+  color: #333;
+  text-align: center;
+  padding: 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.btn:hover {
+  background-color: #ccc;
 }
 
 .create-chat-btn {
-  margin-top: 0.7rem;
+  margin-top: 0.5rem;
   background-color: hsl(340, 73%, 36%);
   color: white;
   text-align: center;
   padding: 8px;
-  margin-bottom: 15px;
   border-radius: 4px;
   font-weight: 600;
 }
