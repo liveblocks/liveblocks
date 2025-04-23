@@ -41,13 +41,15 @@ export function InlineChat({
       <div style={{ padding: "0 1rem 1rem" }}>
         <ChatComposer
           chatId={chatId}
-          onComposerSubmit={async (message) => {
+          onComposerSubmit={async (message, event) => {
             const result = await client.ai.addUserMessage(
               chatId,
               null,
               message.text
             );
             await client.ai.ask(chatId, result.message.id, { stream: true });
+
+            event.preventDefault(); // Avoid double-creation
           }}
           style={{
             position: "relative",

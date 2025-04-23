@@ -239,6 +239,7 @@ export type SettleServerEvent = {
 export type AiChat = {
   id: ChatId;
   name: string;
+  ephemeral: boolean;
   metadata: Record<string, string | string[]>;
   createdAt: ISODateString;
   lastMessageAt?: ISODateString; // Optional since some chats might have no messages

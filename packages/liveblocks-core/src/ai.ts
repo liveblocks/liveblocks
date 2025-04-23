@@ -402,14 +402,14 @@ function createStore_forChatMessages() {
 
   const immutableMessagesByBranch = new DefaultMap((chatId: ChatId) => {
     return new DefaultMap((branchId: MessageId | null) => {
-      const messages = DerivedSignal.from(() => {
+      const messagesΣ = DerivedSignal.from(() => {
         const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
         return selectBranch(pool, branchId);
       }, shallow2);
 
       return DerivedSignal.from((): UiChatMessage[] => {
         const pendingMessages = pendingMessagesΣ.get();
-        return messages.get().map((message) => {
+        return messagesΣ.get().map((message) => {
           if (message.role !== "assistant" || message.status !== "pending") {
             return message;
           }
@@ -466,7 +466,9 @@ function createStore_forUserAiChats() {
   const mutableΣ = new MutableSignal(
     SortedList.with<AiChat>((x, y) => y.createdAt < x.createdAt)
   );
-  const chatsΣ = DerivedSignal.from(() => Array.from(mutableΣ.get()));
+  const chatsΣ = DerivedSignal.from(() =>
+    Array.from(mutableΣ.get()).filter((c) => !c.ephemeral && !c.deletedAt)
+  );
 
   function upsertMany(chats: AiChat[]) {
     mutableΣ.mutate((list) => {
