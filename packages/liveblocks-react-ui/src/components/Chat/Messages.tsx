@@ -338,7 +338,9 @@ export const DefaultAssistantChatMessage = memo(
   forwardRef<HTMLDivElement, AssistantChatMessageProps>(
     (props, forwardedRef) => {
       const { message } = props;
-      if (message.status === "pending") {
+      if (message.deletedAt) {
+        return <i>This message has been deleted.</i>;
+      } else if (message.status === "pending") {
         if (message.contentSoFar.length === 0) {
           return <div>Waiting for response...</div>;
         } else {

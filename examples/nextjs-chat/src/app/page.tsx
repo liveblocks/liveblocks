@@ -230,7 +230,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
       parentMessageId,
       text
     );
-    forceRerender();
+    setBranch(undefined); // Show the latest message on screen
 
     // Creates the assistant response message
     await client.ai.ask(chatId, message.id, {
@@ -250,39 +250,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
         <div className="lb-root lb-chat-messages">
           {messages.map((message) => (
             <Fragment key={message.id}>
-              {message.prev || message.next ? (
-                <div>
-                  <button
-                    onClick={() => {
-                      if (message.prev !== null) {
-                        setBranch(message.prev);
-                      }
-                    }}
-                    style={{
-                      cursor: message.prev ? "pointer" : "not-allowed",
-                      opacity: message.prev ? undefined : 0.5,
-                    }}
-                    disabled={!message.prev}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (message.next !== null) {
-                        setBranch(message.next);
-                      }
-                    }}
-                    style={{
-                      cursor: message.next ? "pointer" : "not-allowed",
-                      opacity: message.next ? undefined : 0.5,
-                    }}
-                    disabled={!message.next}
-                  >
-                    Next
-                  </button>
-                </div>
-              ) : null}
-
               {message.role === "user" ? (
                 <div className="user-message-container">
                   <UserChatMessage message={message} />
@@ -299,6 +266,20 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                     >
                       delete
                     </button>
+                    {message.prev || message.next ? (
+                      <button
+                        onClick={() => {
+                          if (message.next !== null) setBranch(message.next);
+                        }}
+                        style={{
+                          cursor: message.next ? "pointer" : "not-allowed",
+                          opacity: message.next ? undefined : 0.5,
+                        }}
+                        disabled={!message.next}
+                      >
+                        »
+                      </button>
+                    ) : null}
                     <button
                       onClick={async () => {
                         const answer = prompt(
@@ -313,7 +294,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                             message.parentId,
                             answer
                           );
-                          forceRerender();
+                          setBranch(undefined); // Show the latest message on screen
 
                           await client.ai.ask(chatId, result.message.id, {
                             copilotId: selectedCopilotId,
@@ -325,6 +306,20 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                     >
                       edit
                     </button>
+                    {message.prev || message.next ? (
+                      <button
+                        onClick={() => {
+                          if (message.prev !== null) setBranch(message.prev);
+                        }}
+                        style={{
+                          cursor: message.prev ? "pointer" : "not-allowed",
+                          opacity: message.prev ? undefined : 0.5,
+                        }}
+                        disabled={!message.prev}
+                      >
+                        «
+                      </button>
+                    ) : null}
                     <button
                       onClick={async () => {
                         await client.ai.ask(chatId, message.id, {
@@ -336,11 +331,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                     >
                       regenerate
                     </button>
-                    <span>
-                      id = {message.id}
-                      <br />
-                      parent = {message.parentId ?? "null"}
-                    </span>
+                    <span style={{ wordWrap: "normal" }}>{message.id}</span>
                   </div>
                 </div>
               ) : message.role === "assistant" ? (
@@ -350,11 +341,35 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                     components={assistantMessageCustomComponents}
                   />
                   <div className="assistant-message-controls">
-                    <span>
-                      id = {message.id}
-                      <br />
-                      parent = {message.parentId ?? "null"}
-                    </span>
+                    <span>{message.id}</span>
+                    {message.prev || message.next ? (
+                      <>
+                        <button
+                          onClick={() => {
+                            if (message.prev !== null) setBranch(message.prev);
+                          }}
+                          style={{
+                            cursor: message.prev ? "pointer" : "not-allowed",
+                            opacity: message.prev ? undefined : 0.5,
+                          }}
+                          disabled={!message.prev}
+                        >
+                          «
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (message.next !== null) setBranch(message.next);
+                          }}
+                          style={{
+                            cursor: message.next ? "pointer" : "not-allowed",
+                            opacity: message.next ? undefined : 0.5,
+                          }}
+                          disabled={!message.next}
+                        >
+                          »
+                        </button>
+                      </>
+                    ) : null}
                     <button
                       style={{ color: "red" }}
                       onClick={async () => {
@@ -433,15 +448,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
           >
             Clear
           </button>
-
-          <input
-            type="text"
-            placeholder="Branch ID"
-            value={branch || ""}
-            onChange={(ev) => {
-              setBranch((ev.currentTarget.value as MessageId) || undefined);
-            }}
-          />
 
           <select
             value={selectedCopilotId || "default"}

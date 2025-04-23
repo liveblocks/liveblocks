@@ -193,6 +193,7 @@ main {
 .message-controls {
   display: flex;
   flex-direction: row-reverse;
+  align-items: center;
   gap: 20px;
   padding: 0 5rem;
   font-size: 0.75rem;
@@ -203,6 +204,7 @@ main {
 .assistant-message-controls {
   display: flex;
   flex-direction: row;
+  align-items: center;
   gap: 20px;
   padding: 0 5rem;
   font-size: 0.75rem;
