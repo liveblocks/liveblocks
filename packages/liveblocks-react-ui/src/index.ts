@@ -5,25 +5,17 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export {
+  AssistantChatMessage,
+  type AssistantChatMessageProps,
+} from "./components/Chat/AssistantMessage";
+export {
   Composer as ChatComposer,
   type ComposerProps as ChatComposerProps,
 } from "./components/Chat/Composer";
-export type {
-  AssistantChatMessageProps,
-  AssistantMessageReasoningPartProps,
-  AssistantMessageTextPartProps,
-  AssistantMessageToolCallPartProps,
-  ChatMessagesProps,
-  UserChatMessageProps,
-} from "./components/Chat/Messages";
 export {
-  DefaultAssistantChatMessage as AssistantChatMessage,
-  DefaultAssistantMessageReasoningPart as AssistantMessageReasoningPart,
-  DefaultAssistantMessageTextPart as AssistantMessageTextPart,
-  DefaultAssistantMessageToolCallPart as AssistantMessageToolCallPart,
-  ChatMessages,
-  DefaultUserChatMessage as UserChatMessage,
-} from "./components/Chat/Messages";
+  UserChatMessage,
+  type UserChatMessageProps,
+} from "./components/Chat/UserMessage";
 export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";
@@ -62,6 +54,14 @@ export type {
 } from "./overrides";
 export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";
+export {
+  AssistantMessageContent,
+  type AssistantMessageContentProps,
+  DefaultAssistantMessageReasoningPart as AssistantMessageReasoningPart,
+  type AssistantMessageReasoningPartProps,
+  DefaultAssistantMessageTextPart as AssistantMessageTextPart,
+  type AssistantMessageTextPartProps,
+} from "./primitives/Chat/AssistantMessage";
 export type {
   CommentAttachmentArgs,
   ComposerBodyMark,

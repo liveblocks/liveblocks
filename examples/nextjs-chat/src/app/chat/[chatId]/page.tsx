@@ -13,7 +13,6 @@ import {
   UserChatMessage,
 } from "@liveblocks/react-ui";
 import { useParams } from "next/navigation";
-import Markdown from "react-markdown";
 import { useState, Fragment } from "react";
 
 import { ChatId, CopilotId, MessageId } from "@liveblocks/core";
@@ -93,14 +92,6 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
     setSelectedCopilotId(
       value === "default" ? undefined : (value as CopilotId)
     );
-  };
-
-  const assistantMessageCustomComponents = {
-    TextPart: (props: AssistantMessageTextPartProps) => (
-      <div className="lb-root lb-assistant-chat-message-text-content">
-        <Markdown>{props.text}</Markdown>
-      </div>
-    ),
   };
 
   const COPILOTS = [
@@ -230,10 +221,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 </div>
               ) : message.role === "assistant" ? (
                 <div className="assistant-message-container">
-                  <AssistantChatMessage
-                    message={message}
-                    components={assistantMessageCustomComponents}
-                  />
+                  <AssistantChatMessage message={message} />
                   <div className="assistant-message-controls">
                     <span>{message.id}</span>
                     {message.prev || message.next ? (
@@ -314,11 +302,9 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
                 ? "Reply to your AI friend…"
                 : "How can I help you today?",
           }}
-          onSubmit={async (ev) => {
-            if (ev.currentTarget.textContent?.trim()) {
-              ask(ev.currentTarget.textContent, lastMessageId);
-            }
-          }}
+          branchId={branch}
+          copilotId={selectedCopilotId}
+          stream={streaming}
         />
         <div
           style={{

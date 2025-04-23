@@ -2153,66 +2153,23 @@
   flex-direction: column;
 }
 
-:is(.lb-user-chat-message, .lb-assistant-chat-message) {
+.lb-user-chat-message {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   inline-size: 100%;
-  max-inline-size: 896px;
-  margin: 0 auto;
-  padding: var(--lb-spacing) calc(1.75 * var(--lb-spacing));
 
   &,
   * {
     line-height: var(--lb-line-height);
   }
-
-  :where(p) {
-    --lb-line-height-crop: calc(1lh - 1em) / -2;
-
-    margin-block-start: 0.25em;
-    margin-block-end: 0.25em;
-
-    /* Cancel out the impact of line-height on margins/paddings */
-    &:where(:first-of-type) {
-      margin-block-start: calc(0.125em + var(--lb-line-height-crop));
-    }
-
-    /* Cancel out the impact of line-height on margins/paddings */
-    &:where(:last-of-type) {
-      margin-block-end: calc(0.125em + var(--lb-line-height-crop));
-    }
-  }
-}
-
-.lb-user-chat-message {
-  align-items: flex-end;
-}
-
-.lb-assistant-chat-message {
-  align-items: flex-start;
 }
 
 .lb-user-chat-message-content {
-  max-inline-size: 80%;
   padding: calc(0.75 * var(--lb-spacing));
   border-radius: 0.75rem;
   background: var(--lb-background-foreground-faint);
   color: var(--lb-foreground);
-}
-
-.lb-assistant-chat-message-content {
-  max-inline-size: 100%;
-  padding: 0 calc(0.75 * var(--lb-spacing));
-  border-radius: 0.75rem;
-  color: var(--lb-foreground);
-  text-wrap: pretty;
-  white-space: pre-line;
-}
-
-.lb-user-chat-message-body {
-  text-wrap: pretty;
-  white-space: pre-line;
 }
 
 .lb-user-chat-message-attachments {
@@ -2232,6 +2189,125 @@
 .lb-user-chat-message-attachment {
   flex-shrink: 1;
   flex-basis: 300px;
+}
+
+.lb-assistant-chat-message {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.75 * var(--lb-spacing));
+  inline-size: 100%;
+}
+
+.lb-assistant-chat-message-text-part {
+  display: flex;
+  flex-direction: column;
+
+  &,
+  * {
+    line-height: var(--lb-line-height);
+  }
+
+  :where(p) {
+    margin-block: 0.25em;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    margin-block: 0.5em;
+    font-weight: 600;
+  }
+
+  :where(h1) {
+    font-size: 1.75em;
+  }
+
+  :where(h2) {
+    font-size: 1.5em;
+  }
+
+  :where(h3) {
+    font-size: 1.25em;
+  }
+
+  :where(h4) {
+    font-size: 1.125em;
+  }
+
+  :where(h5) {
+    font-size: 1em;
+  }
+
+  :where(h6) {
+    font-size: 0.875em;
+  }
+
+  :where(ol, ul) {
+    margin-block: calc(0.75 * var(--lb-spacing));
+    padding-inline-start: calc(1.5 * var(--lb-spacing));
+    list-style-position: outside;
+  }
+
+  :where(ul) {
+    list-style-type: disc;
+  }
+
+  :where(ol) {
+    list-style-type: decimal;
+  }
+
+  :where(li) {
+    margin-block: calc(0.25 * var(--lb-spacing));
+  }
+
+  :where(code) {
+    padding: 0.2em 0.4em;
+    border-radius: calc(0.75 * var(--lb-radius));
+    background: var(--lb-foreground-subtle);
+    box-decoration-break: clone;
+    font-size: 85%;
+    line-height: 1;
+  }
+
+  /**
+   * Merge adjacent inline code elements
+   */
+  :where(span:has(code) + span code) {
+    padding-inline-start: 0;
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  :where(span:has(code):has(+ span code) code) {
+    padding-inline-end: 0;
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  :where(a) {
+    color: var(--lb-foreground);
+    outline: none;
+    font-weight: 500;
+    transition-property: color, text-decoration-color;
+    text-decoration-line: underline;
+    text-decoration-color: var(--lb-foreground-moderate);
+    text-underline-offset: 2px;
+
+    &:where([href]):where(:hover, :focus-visible) {
+      color: var(--lb-accent);
+      text-decoration-color: var(--lb-accent-moderate);
+    }
+  }
+
+  :where(strong) {
+    font-weight: 600;
+  }
+}
+
+.lb-assistant-chat-message-thinking {
+  @include truncate;
+
+  user-select: none;
+  animation: lb-animation-assistant-chat-message-thinking-shimmer 8s linear
+    infinite;
 }
 
 /*************************************
@@ -2311,5 +2387,27 @@
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes lb-animation-assistant-chat-message-thinking-shimmer {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      #000 8%,
+      rgb(0 0 0 / 50%) 20%,
+      rgb(0 0 0 / 50%) 80%,
+      #000 92%
+    );
+    mask-size: 400% 100%;
+  }
+
+  from {
+    mask-position: 200% 0;
+  }
+
+  to {
+    mask-position: -200% 0;
   }
 }

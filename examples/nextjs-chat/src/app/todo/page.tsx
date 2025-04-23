@@ -273,7 +273,7 @@ function App() {
                         },
                       },
                     },
-                    render: ({ ids }: { ids: number[] }) => {
+                    render: ({ args }: { args: { ids: number[] } }) => {
                       return (
                         <div
                           style={{
@@ -288,7 +288,7 @@ function App() {
                             flexDirection: "column",
                           }}
                         >
-                          {ids.map((id) => {
+                          {args.ids.map((id) => {
                             const todo = todos.find((todo) => todo.id === id);
                             if (todo === undefined) {
                               return null;

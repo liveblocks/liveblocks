@@ -1,6 +1,6 @@
 import { ChatId, CopilotContext, ClientToolDefinition } from "@liveblocks/core";
 import { useChatMessages, useClient } from "@liveblocks/react";
-import { ChatComposer, ChatMessages } from "@liveblocks/react-ui";
+import { ChatComposer } from "@liveblocks/react-ui";
 import { useEffect } from "react";
 
 export function InlineChat({
@@ -37,14 +37,6 @@ export function InlineChat({
   return (
     <>
       {/* TODO: Support auto fetch more when user scrolls to the top of the chat window */}
-      <ChatMessages
-        messages={messages}
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          // padding: "1rem",
-        }}
-      />
 
       <div style={{ padding: "0 1rem 1rem" }}>
         <ChatComposer

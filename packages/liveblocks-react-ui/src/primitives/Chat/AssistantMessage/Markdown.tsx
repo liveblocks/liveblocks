@@ -1,5 +1,9 @@
 import { Lexer, type Tokens } from "marked";
 import { type ReactNode, useMemo } from "react";
+
+export type MarkdownProps = {
+  content: string;
+};
 export function Markdown({ content }: { content: string }) {
   const tokens = useMemo(() => {
     return new Lexer().lex(content);
@@ -22,7 +26,7 @@ export function Markdown({ content }: { content: string }) {
  * - paragraph
  * - table
  */
-type BlockToken =
+export type BlockToken =
   | Tokens.Space
   | Tokens.Code
   | Tokens.Blockquote
@@ -33,7 +37,7 @@ type BlockToken =
   | Tokens.Paragraph
   | Tokens.Table;
 
-function BlockTokenComp({ token }: { token: BlockToken }) {
+export function BlockTokenComp({ token }: { token: BlockToken }) {
   switch (token.type) {
     case "space": {
       return null;
