@@ -95,19 +95,24 @@ main {
   justify-content: space-between;
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #eaeaea;
+  border: 0;
+  outline: 1px solid #eee;
   background-color: white;
   transition: background-color 0.2s;
   cursor: pointer;
+  color: #111;
+  margin: 3px;
 }
 
 .chat-list-item:hover {
   background-color: #f5f5f5;
+  text-decoration: none;
+  outline: 1px solid #ccc;
 }
 
 .chat-list-item.active {
   background-color: #f0f0f0;
-  border-color: #ccc;
+  outline: 2px solid #ccc;
 }
 
 .chat-actions {
@@ -268,7 +273,7 @@ main a:hover {
 }
 
 .load-more-chats-btn:hover {
-  background-color: #434343;
+  background-color: #ccc;
 }
 
 .danger-btn {
@@ -300,24 +305,31 @@ main a:hover {
   }
 
   .load-more-chats-btn {
-    background-color: #333333;
+    background-color: #333;
+  }
+
+  .load-more-chats-btn:hover {
+    background-color: #434343;
   }
 
   .chat-list-item {
     background-color: #2a2a2a;
-    border-color: #444;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    color: #eee;
+    outline: 1px solid #444;
   }
 
   .chat-list-item:hover {
     background-color: #333;
+    outline: 1px solid #555;
   }
 
   .chat-list-item.active {
     background-color: #333;
     border-color: #555;
+    outline: 2px solid #555;
   }
 
   .composer-container {

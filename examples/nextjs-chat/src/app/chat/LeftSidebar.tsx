@@ -27,8 +27,7 @@ function RealLeftSidebar() {
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
   const router = useRouter();
-  const selectedChatId = useParams<{ chatId: ChatId }>().chatId;
-
+  const selectedChatId = useParams<{ chatId?: ChatId }>().chatId;
   return (
     <>
       <button
@@ -57,8 +56,6 @@ function RealLeftSidebar() {
             className={`chat-list-item ${chat.id === selectedChatId ? "active" : ""}`}
           >
             {chat.name}
-            <br />
-            <small>{chat.id}</small>
             <button
               className="danger-btn"
               onClick={(e) => {
