@@ -2072,7 +2072,7 @@ function applyOptimisticUpdates_forSubscriptions(
       }
 
       // TODO: We can't do the following pseudo-code yet because we don't have the room subscription settings
-      // in the umbrealla store when `useRoomSubscriptionSettings` isn't used.
+      // in the umbrella store when `useRoomSubscriptionSettings` isn't used.
       //
       // case "create-thread":
       // case "create-comment":
