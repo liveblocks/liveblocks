@@ -2,13 +2,11 @@
 
 import {
   ClientSideSuspense,
-  RoomProvider,
   useClient,
   useChatMessages,
 } from "@liveblocks/react/suspense";
 import {
   AssistantChatMessage,
-  AssistantMessageTextPartProps,
   ChatComposer,
   UserChatMessage,
 } from "@liveblocks/react-ui";
@@ -55,9 +53,7 @@ export default function Page() {
         </div>
       }
     >
-      <RoomProvider id="liveblocks:examples:ai">
-        <ChatPicker />
-      </RoomProvider>
+      <ChatPicker />
     </ClientSideSuspense>
   );
 }
