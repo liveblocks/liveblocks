@@ -75,6 +75,10 @@ main {
   flex-direction: column;
 }
 
+.chat-controls h3 {
+  margin: 0;
+}
+
 .chat-control-buttons {
   display: flex;
   gap: 10px;

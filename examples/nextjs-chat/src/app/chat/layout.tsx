@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LeftSidebar } from "./LeftSidebar";
 import { Providers } from "./Providers";
 
@@ -9,6 +10,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="chat-controls">
             <h1 className="logo">lbChat</h1>
             <LeftSidebar />
+            <div
+              style={{
+                display: "flex",
+                height: "100%",
+                flexDirection: "column",
+                justifyContent: "end",
+                gap: 16,
+              }}
+            >
+              <h3>
+                <Link href="/">"Kitchen sink"</Link>
+              </h3>
+              <h3>
+                <Link href="/todo">Todo app</Link>
+              </h3>
+              <h3>
+                <Link href="/simple">Simple/clean chat</Link>
+              </h3>
+            </div>
           </div>
           <div
             className="chat-window-container"
