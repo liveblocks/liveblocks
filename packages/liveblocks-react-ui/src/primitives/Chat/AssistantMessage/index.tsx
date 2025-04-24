@@ -44,7 +44,7 @@ export const AssistantMessageContent = forwardRef<
             case "text": {
               const TextPart =
                 components?.TextPart ?? DefaultAssistantMessageTextPart;
-              return <TextPart key={index} text={part.text} className="" />;
+              return <TextPart key={index} text={part.text} />;
             }
             case "tool-call": {
               return (
@@ -59,9 +59,7 @@ export const AssistantMessageContent = forwardRef<
               const ReasoningPart =
                 components?.ReasoningPart ??
                 DefaultAssistantMessageReasoningPart;
-              return (
-                <ReasoningPart key={index} text={part.text} className="" />
-              );
+              return <ReasoningPart key={index} text={part.text} />;
             }
             default: {
               return null;

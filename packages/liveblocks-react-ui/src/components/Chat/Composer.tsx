@@ -97,7 +97,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
       chatId,
       branchId,
       copilotId,
-      stream,
+      stream = true,
       ...props
     },
     forwardedRef

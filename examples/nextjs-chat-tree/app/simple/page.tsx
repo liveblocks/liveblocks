@@ -1,0 +1,88 @@
+"use client";
+
+import {
+  ChatComposer,
+  UserChatMessage,
+  AssistantChatMessage,
+} from "@liveblocks/react-ui";
+import {
+  ClientSideSuspense,
+  LiveblocksProvider,
+  useChatMessages,
+  useCopilotChats,
+} from "@liveblocks/react/suspense";
+import Image from "next/image";
+
+export default function Home() {
+  return (
+    <main className="h-screen w-full">
+      <LiveblocksProvider
+        authEndpoint="/api/auth/liveblocks"
+        // @ts-expect-error
+        baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+      >
+        <ClientSideSuspense
+          fallback={
+            <div className="h-full w-full flex items-center justify-center">
+              <Image
+                src="https://liveblocks.io/loading.svg"
+                alt="Loading"
+                width={64}
+                height={64}
+                className="opacity-20"
+              />
+            </div>
+          }
+        >
+          <App />
+        </ClientSideSuspense>
+      </LiveblocksProvider>
+    </main>
+  );
+}
+
+function App() {
+  const { chats } = useCopilotChats();
+  if (chats.length === 0) throw new Error("No chats found");
+  const chatId = chats[0].id;
+
+  const { messages } = useChatMessages(chatId);
+
+  return (
+    <div className="flex flex-col h-full w-full">
+      <div className="flex flex-col flex-1 overflow-y-auto gap-6 p-4">
+        {messages.map((message) => {
+          if (message.role === "user") {
+            return (
+              <div
+                key={message.id}
+                className="max-w-[896px] w-full flex mx-auto"
+              >
+                <UserChatMessage
+                  message={message}
+                  key={message.id}
+                  className="max-w-[80%] ml-auto"
+                />
+              </div>
+            );
+          } else if (message.role === "assistant") {
+            return (
+              <AssistantChatMessage
+                message={message}
+                key={message.id}
+                className="w-full items-start max-w-[896px] mx-auto"
+              />
+            );
+          }
+        })}
+      </div>
+
+      <div className="pb-4 px-4">
+        <ChatComposer
+          chatId={chatId}
+          className="rounded-lg mx-auto w-full max-w-[896px] shadow-[0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)]"
+        />
+      </div>
+    </div>
+  );
+}

@@ -36,6 +36,19 @@ export const UserChatMessage = forwardRef<HTMLDivElement, UserChatMessageProps>(
 
     const images = message.content.filter((c) => c.type === "image");
 
+    if (message.deletedAt !== undefined) {
+      return (
+        <div
+          ref={forwardedRef}
+          className={classNames("lb-root lb-user-chat-message", className)}
+        >
+          <div className="lb-user-chat-message-deleted">
+            This message has been deleted.
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div
         ref={forwardedRef}

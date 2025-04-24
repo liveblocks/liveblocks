@@ -2148,16 +2148,10 @@
 /*************************************
  *           Chat message            *
  *************************************/
-.lb-chat-messages {
-  display: flex;
-  flex-direction: column;
-}
-
 .lb-user-chat-message {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
-  inline-size: 100%;
 
   &,
   * {
@@ -2195,7 +2189,6 @@
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
-  inline-size: 100%;
 }
 
 .lb-assistant-chat-message-text-part {
@@ -2308,6 +2301,59 @@
   user-select: none;
   animation: lb-animation-assistant-chat-message-thinking-shimmer 8s linear
     infinite;
+}
+
+.lb-user-chat-message-deleted,
+.lb-assistant-chat-message-deleted {
+  position: relative;
+  align-items: center;
+  inline-size: 100%;
+  color: var(--lb-foreground-moderate);
+  font-size: 0.875em;
+  text-wrap: balance;
+}
+
+.lb-asssitant-chat-message-error {
+  --lb-dynamic-background: var(--lb-background-destructive-subtle);
+
+  position: relative;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  align-items: center;
+  inline-size: 100%;
+  padding: calc(0.75 * var(--lb-spacing));
+  border-radius: var(--lb-radius);
+  background: var(--lb-dynamic-background);
+  color: var(--lb-destructive);
+  font-size: 0.875em;
+  text-wrap: balance;
+
+  :where(.lb-icon-container) {
+    color: var(--lb-destructive-secondary);
+  }
+}
+
+.lb-assistant-chat-message-reasoning-part {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+}
+
+.lb-assistant-chat-message-reasoning-part-trigger {
+  display: flex;
+  gap: calc(0.25 * var(--lb-spacing));
+  align-items: center;
+}
+
+.lb-assistant-chat-message-reasoning-part-content {
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  line-height: var(--lb-line-height);
+
+  &:where([data-state="open"]) {
+    margin-block-start: 0.25em;
+  }
 }
 
 /*************************************

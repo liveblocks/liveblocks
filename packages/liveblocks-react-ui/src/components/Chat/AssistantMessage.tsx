@@ -1,6 +1,8 @@
 import type { AiAssistantMessage } from "@liveblocks/core";
-import { forwardRef, type HTMLAttributes, memo } from "react";
+import { forwardRef, type HTMLAttributes, memo, useState } from "react";
 
+import { ChevronDownIcon, ChevronRightIcon } from "../../icons";
+import { WarningIcon } from "../../icons/Warning";
 import type { GlobalOverrides } from "../../overrides";
 import {
   AssistantMessageContent,
@@ -8,6 +10,7 @@ import {
   type AssistantMessageTextPartProps,
   DefaultAssistantMessageTextPart,
 } from "../../primitives/Chat/AssistantMessage";
+import * as CollapsiblePrimitive from "../../primitives/Chat/AssistantMessage/Collapsible";
 import { classNames } from "../../utils/class-names";
 
 /* -------------------------------------------------------------------------------------------------
@@ -27,7 +30,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
 export const AssistantChatMessage = memo(
   forwardRef<HTMLDivElement, AssistantChatMessageProps>(
     ({ message, className, ...props }, forwardedRef) => {
-      if (message.deletedAt) {
+      if (message.deletedAt !== undefined) {
         return (
           <div
             className={classNames(
@@ -107,7 +110,20 @@ export const AssistantChatMessage = memo(
             {...props}
             ref={forwardedRef}
           >
+            <AssistantMessageContent
+              content={message.contentSoFar}
+              chatId={message.chatId}
+              className="lb-assistant-chat-message-content"
+              components={{
+                TextPart,
+                ReasoningPart,
+              }}
+            />
             <div className="lb-asssitant-chat-message-error">
+              <span className="lb-icon-container">
+                <WarningIcon />
+              </span>
+
               {message.errorReason}
             </div>
           </div>
@@ -128,16 +144,31 @@ function TextPart({ className, ...props }: AssistantMessageTextPartProps) {
 }
 
 function ReasoningPart({
+  text,
   className,
   ...props
 }: AssistantMessageReasoningPartProps) {
+  const [isOpen, setIsOpen] = useState(false);
   return (
-    <div
+    <CollapsiblePrimitive.Root
       {...props}
       className={classNames(
         "lb-assistant-chat-message-reasoning-part",
         className
       )}
-    />
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
+      <CollapsiblePrimitive.Trigger className="lb-assistant-chat-message-reasoning-part-trigger">
+        Reasoning
+        <span className="lb-icon-container">
+          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+        </span>
+      </CollapsiblePrimitive.Trigger>
+
+      <CollapsiblePrimitive.Content className="lb-assistant-chat-message-reasoning-part-content">
+        {text}
+      </CollapsiblePrimitive.Content>
+    </CollapsiblePrimitive.Root>
   );
 }
