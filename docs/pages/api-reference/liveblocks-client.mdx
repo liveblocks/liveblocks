@@ -2707,7 +2707,8 @@ await room.markThreadAsUnresolved("th_xxx");
 
 ### Room.subscribeToThread
 
-Subscribes the user to a thread.
+Subscribes the user to a thread, meaning they will receive inbox notifications
+when new comments are posted.
 
 ```ts
 await room.subscribeToThread("th_xxx");
@@ -2725,9 +2726,31 @@ await room.subscribeToThread("th_xxx");
   </PropertiesListItem>
 </PropertiesList>
 
+#### Replacing room-level subscriptions
+
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#Room.updateSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+// 1. Disables notifications for all threads
+await room.updateSubscriptionSettings({
+  threads: "none",
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+await room.subscribeToThread("th_d75sF3...");
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+await room.updateSubscriptionSettings({
+  threads: "none",
+});
+```
+
 ### Room.unsubscribeFromThread
 
-Unsubscribes the user from a thread.
+Unsubscribes the user from a thread, meaning they will no longer receive inbox
+notifications when new comments are posted.
 
 ```ts
 await room.unsubscribeFromThread("th_xxx");
@@ -2740,6 +2763,27 @@ await room.unsubscribeFromThread("th_xxx");
     The ID of the thread to unsubscribe from.
   </PropertiesListItem>
 </PropertiesList>
+
+#### Replacing room-level unsubscriptions
+
+Unsubscribing will replace any existing unsubscription for the current thread
+[set at room-level](#Room.updateSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+// 1. Enable notifications for all threads
+await room.updateSubscriptionSettings({
+  threads: "all",
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+await room.unsubscribeFromThread("th_d75sF3...");
+
+// 3. Enables notifications for all threads, including "th_d75sF3..."
+await room.updateSubscriptionSettings({
+  threads: "all",
+});
+```
 
 ### Room.createComment
 
@@ -3321,6 +3365,22 @@ const settings = await room.updateSubscriptionSettings({
 
   </PropertiesListItem>
 </PropertiesList>
+
+#### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#Room.subscribeToThread) in the current room.
+This value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+await room.subscribeToThread("th_d75sF3...");
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+await room.updateSubscriptionSettings({
+  threads: "none",
+});
+```
 
 ### Client.getNotificationSettings [@badge=Beta]
 

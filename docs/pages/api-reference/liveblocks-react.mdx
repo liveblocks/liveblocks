@@ -2624,7 +2624,8 @@ markThreadAsRead("th_xxx");
 ### useThreadSubscription [@badge=RoomProvider]
 
 Returns the subscription status of a thread, methods to update it, and when the
-thread was last read.
+thread was last read. The subscription status affects whether the current user
+receives inbox notifications when new comments are posted.
 
 ```tsx
 import { useThreadSubscription } from "@liveblocks/react/suspense";
@@ -2633,9 +2634,15 @@ const { status, subscribe, unsubscribe, unreadSince } =
   useThreadSubscription("th_xxx");
 ```
 
+`subscribe` and `unsubscribe` work similarly to
+[`useSubscribeToThread`](#useSubscribeToThread) and
+[`useUnsubscribeFromThread`](#useUnsubscribeFromThread), but they only affect
+the current thread.
+
 ### useSubscribeToThread [@badge=RoomProvider]
 
-Returns a function that subscribes the user to a thread.
+Returns a function that subscribes the current user to a thread, meaning they
+will receive inbox notifications when new comments are posted.
 
 ```tsx
 import { useSubscribeToThread } from "@liveblocks/react/suspense";
@@ -2644,15 +2651,60 @@ const subscribeToThread = useSubscribeToThread();
 subscribeToThread("th_xxx");
 ```
 
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#useRoomSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Disables notifications for all threads
+updateSettings({
+  threads: "none",
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "none",
+});
+```
+
 ### useUnsubscribeFromThread [@badge=RoomProvider]
 
-Returns a function that unsubscribes the user from a thread.
+Returns a function that unsubscribes the current user from a thread, meaning
+they will no longer receive inbox notifications when new comments are posted.
 
 ```tsx
 import { useUnsubscribeFromThread } from "@liveblocks/react/suspense";
 
 const unsubscribeFromThread = useUnsubscribeFromThread();
 unsubscribeFromThread("th_xxx");
+```
+
+Unsubscribing will replace any existing subscription for the current thread
+[set at room-level](#useRoomSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Enables notifications for all threads
+updateSettings({
+  threads: "all",
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 3. Enables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "all",
+});
 ```
 
 ### useCreateComment [@badge=RoomProvider]
@@ -3014,6 +3066,25 @@ For `"textMentions"`, these are the two possible values that can be set:
 Works the same as `updateSettings` in
 [`useRoomSubscriptionSettings`](#useRoomSubscriptionSettings).
 
+##### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#useSubscribeToThread) in the current room. This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "none",
+});
+```
+
 ### useNotificationSettings [@badge=LiveblocksProvider]
 
 <Banner>
@@ -3094,6 +3165,23 @@ updateSettings({
 });
 ```
 
+Subscribing will replace any
+[existing thread subscriptions](#useSubscribeToThread) in the current room. This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "none",
+});
+```
+
 #### Error handling [#useNotificationSettings-error-handling]
 
 Error handling is an important aspect to consider when using the
@@ -3117,8 +3205,6 @@ if (error) {
   );
 }
 ```
-
-####
 
 👉 A [Suspense version][] of this hook is also available, which will never
 return a loading state and will throw and error to the nearest `ErrorBoundary`

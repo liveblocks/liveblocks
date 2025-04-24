@@ -1644,8 +1644,9 @@ await liveblocks.deleteThread({
 
 #### Liveblocks.subscribeToThread [#post-rooms-roomId-threads-threadId-subscribe]
 
-Subscribes a user to a thread. Throws an error if the room or thread isn’t
-found. This is a wrapper around the
+Subscribes a user to a thread, meaning they will receive inbox notifications
+when new comments are posted. Throws an error if the room or thread isn’t found.
+This is a wrapper around the
 [Subscribe To Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-subscribe)
 and returns the same response.
 
@@ -1662,10 +1663,45 @@ const subscription = await liveblocks.subscribeToThread({
 console.log(subscription);
 ```
 
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#post-rooms-roomId-users-userId-subscription-settings). This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Disables notifications for all threads
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+await liveblocks.subscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
 #### Liveblocks.unsubscribeFromThread [#post-rooms-roomId-threads-threadId-unsubscribe]
 
-Unsubscribes a user from a thread. Throws an error if the room or thread isn’t
-found. This is a wrapper around the
+Unsubscribes a user from a thread, meaning they will no longer receive inbox
+notifications when new comments are posted. Throws an error if the room or
+thread isn’t found. This is a wrapper around the
 [Unsubscribe From Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-unsubscribe)
 and returns the same response.
 
@@ -1679,10 +1715,45 @@ await liveblocks.unsubscribeFromThread({
 });
 ```
 
+Unsubscribing will replace any existing subscription for the current thread
+[set at room-level](#post-rooms-roomId-users-userId-subscription-settings). This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Enables notifications for all thread activity
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "all",
+  },
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+await liveblocks.unsubscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 3. Enables notifications for all thread activity, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
 #### Liveblocks.getThreadSubscriptions [#get-rooms-roomId-threads-threadId-subscriptions]
 
-Gets a thread’s subscriptions. Throws an error if the room or thread isn’t
-found. This is a wrapper around the
+Gets a thread’s subscriptions, returning a list of users that will receive
+notifications when new comments are posted. Throws an error if the room or
+thread isn’t found. This is a wrapper around the
 [Get Thread Subscriptions API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-subscriptions)
 and returns the same response.
 
@@ -1948,8 +2019,9 @@ await liveblocks.removeCommentReaction({
 
 #### Liveblocks.getRoomSubscriptionSettings [#get-rooms-roomId-users-userId-subscription-settings]
 
-Returns a user’s subscription settings for a specific room. This is a wrapper
-around the
+Returns a user’s subscription settings for a specific room, specifying which
+`thread` and `textMention` inbox notifications they are set to receive. This is
+a wrapper around the
 [Get Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
@@ -1958,14 +2030,27 @@ const subscriptionSettings = await liveblocks.getRoomSubscriptionSettings({
   userId: "steven@example.com",
 });
 
-// { threads: "all", ... }
+// { threads: "all", textMentions: "mine" }
 console.log(subscriptionSettings);
 ```
 
+For `"threads"`, these are the three possible values:
+
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+  participating in.
+- `"none"` No notifications are received.
+
+For `"textMentions"`, these are the two possible values:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
 #### Liveblocks.updateRoomSubscriptionSettings [#post-rooms-roomId-users-userId-subscription-settings]
 
-Updates a user’s subscription settings for a specific room. This is a wrapper
-around the
+Updates a user’s subscription settings for a specific room, defining which
+`thread` and `textMention` inbox notifications they will receive. This is a
+wrapper around the
 [Update Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
@@ -1975,11 +2060,52 @@ const updatedSubscriptionSettings =
     userId: "steven@example.com",
     data: {
       threads: "replies_and_mentions",
+      textMentions: "mine",
     },
   });
 
 // { threads: "replies_and_mentions", ... }
 console.log(updatedSubscriptionSettings);
+```
+
+For `"threads"`, these are the three possible values that can be set:
+
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+  participating in.
+- `"none"` No notifications are received.
+
+For `"textMentions"`, these are the two possible values that can be set:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
+##### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#post-rooms-roomId-users-userId-subscription-settings)
+in the current room. This value can also be overridden by a room-level call that
+is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+await liveblocks.subscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
 ```
 
 #### Liveblocks.deleteRoomSubscriptionSettings [#delete-rooms-roomId-users-userId-subscription-settings]
