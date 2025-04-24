@@ -13,7 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div
               style={{
                 display: "flex",
-                height: "100%",
+                flex: 1,
                 flexDirection: "column",
                 justifyContent: "end",
                 gap: 16,
