@@ -128,10 +128,12 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
   return (
     <div className="chat-window-container">
       <div className="messages">
+        {/*
         <details className="debug-raw-json">
           <summary>Raw JSON</summary>
           <pre>{JSON.stringify(messages, null, 2)}</pre>
         </details>
+        */}
         <div className="lb-root lb-chat-messages">
           {messages.map((message) => (
             <Fragment key={message.id}>
