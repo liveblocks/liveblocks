@@ -116,43 +116,29 @@ function App() {
               return (
                 <li
                   key={index}
+                  className="todo"
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
+                    cursor: "pointer",
+                    textDecoration: todo.isCompleted
+                      ? "line-through"
+                      : undefined,
+                    opacity: todo.isCompleted ? 0.5 : 1,
+                  }}
+                  onClick={() => {
+                    setTodos((todos) =>
+                      todos.map((t) => {
+                        if (t.id === todo.id) {
+                          return { ...todo, isCompleted: !todo.isCompleted };
+                        }
+                        return t;
+                      })
+                    );
                   }}
                 >
-                  <div className="todo">
-                    <span
-                      style={{
-                        textDecoration: todo.isCompleted
-                          ? "line-through"
-                          : undefined,
-                      }}
-                    >
-                      {todo.title}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setTodos((todos) =>
-                        todos.map((t) => {
-                          if (t.id === todo.id) {
-                            return { ...todo, isCompleted: !todo.isCompleted };
-                          }
-                          return t;
-                        })
-                      );
-                    }}
-                    style={{
-                      all: "unset",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {todo.isCompleted
-                      ? "Mark as not completed"
-                      : "Mark as completed"}
-                  </button>
+                  {todo.title}
                 </li>
               );
             })}
