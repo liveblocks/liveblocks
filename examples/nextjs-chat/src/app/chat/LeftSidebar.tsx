@@ -57,12 +57,13 @@ function RealLeftSidebar() {
 
       <div className="chat-list">
         {chats.map((chat) => (
-          <Link
-            key={chat.id}
-            href={`/chat/${chat.id}`}
-            className={`chat-list-item ${chat.id === selectedChatId ? "active" : ""}`}
-          >
-            {chat.name}
+          <div key={chat.id} className="chat-list-item">
+            <Link
+              className={`chat-list-item-link ${chat.id === selectedChatId ? "active" : ""}`}
+              href={`/chat/${chat.id}`}
+            >
+              {chat.name}
+            </Link>
             <button
               className="danger-btn"
               onClick={(e) => {
@@ -72,7 +73,7 @@ function RealLeftSidebar() {
             >
               <TrashIcon />
             </button>
-          </Link>
+          </div>
         ))}
 
         {chats.length === 0 && (
@@ -101,7 +102,7 @@ function RealLeftSidebar() {
           }}
           onClick={fetchMore}
         >
-          Load More Chats
+          Load more
         </button>
       )}
       {fetchMoreError && (
