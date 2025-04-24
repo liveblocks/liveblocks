@@ -406,6 +406,24 @@ function createStore_forChatMessages() {
     return fallback();
   }
 
+  function getLatestUserMessageAncestor(
+    chatId: ChatId,
+    messageId: MessageId
+  ): MessageId | null {
+    const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
+    const message = pool.get(messageId);
+    if (!message) return null;
+
+    if (message.role === "user") return message.id;
+
+    for (const m of pool.walkUp(message.id)) {
+      if (m.role === "user" && !m.deletedAt) {
+        return m.id;
+      }
+    }
+    return null;
+  }
+
   const immutableMessagesByBranch = new DefaultMap((chatId: ChatId) => {
     return new DefaultMap((branchId: MessageId | null) => {
       const messagesΣ = DerivedSignal.from(() => {
@@ -452,6 +470,7 @@ function createStore_forChatMessages() {
     getMessageById,
     getChatMessagesForBranchΣ,
     getMessagesForChatΣ,
+    getLatestUserMessageAncestor,
 
     // Mutations
     createOptimistically,
@@ -526,6 +545,11 @@ export type Ai = {
     message: string
   ) => Promise<AddUserMessageResponse>;
   ask: (
+    chatId: ChatId,
+    messageId: MessageId,
+    options?: AskAiOptions
+  ) => Promise<AskAiResponse>;
+  regenerateMessage: (
     chatId: ChatId,
     messageId: MessageId,
     options?: AskAiOptions
@@ -906,6 +930,46 @@ export function createAi(config: AiConfig): Ai {
     }
   }
 
+  function ask(
+    chatId: ChatId,
+    messageId: MessageId,
+    options?: AskAiOptions
+  ): Promise<AskAiResponse> {
+    const targetMessageId = context.messagesStore.createOptimistically(
+      chatId,
+      "assistant",
+      messageId
+    );
+
+    window.console.log(options?.stream);
+    const copilotId = options?.copilotId;
+    const stream = options?.stream ?? false;
+    const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
+
+    const chatContext = context.contextByChatId.get(chatId);
+    const chatTools = context.toolsByChatId.get(chatId);
+    const tools: AiToolDefinition[] | undefined = chatTools
+      ? Array.from(chatTools.entries()).map(([name, tool]) => ({
+          name,
+          description: tool.description,
+          parameters: tool.parameters,
+        }))
+      : undefined;
+
+    return sendClientMsgWithResponse({
+      cmd: "ask-ai",
+      chatId,
+      sourceMessageId: messageId,
+      targetMessageId,
+      copilotId,
+      clientId,
+      stream,
+      tools,
+      timeout,
+      context: chatContext ? Array.from(chatContext.values()) : undefined,
+    });
+  }
+
   // XXX Consider setting this to a randomly generated nanoid upon client
   // instantiation? This way, the ID will be truly random, but it won't work
   // across browser reloads and/or in multiple tabs. However, it may also be
@@ -961,43 +1025,21 @@ export function createAi(config: AiConfig): Ai {
         });
       },
 
-      ask: (
+      ask,
+
+      regenerateMessage: (
         chatId: ChatId,
         messageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskAiResponse> => {
-        const targetMessageId = context.messagesStore.createOptimistically(
-          chatId,
-          "assistant",
-          messageId
-        );
-
-        const copilotId = options?.copilotId;
-        const stream = options?.stream ?? false;
-        const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
-
-        const chatContext = context.contextByChatId.get(chatId);
-        const chatTools = context.toolsByChatId.get(chatId);
-        const tools: AiToolDefinition[] | undefined = chatTools
-          ? Array.from(chatTools.entries()).map(([name, tool]) => ({
-              name,
-              description: tool.description,
-              parameters: tool.parameters,
-            }))
-          : undefined;
-
-        return sendClientMsgWithResponse({
-          cmd: "ask-ai",
-          chatId,
-          sourceMessageId: messageId,
-          targetMessageId,
-          copilotId,
-          clientId,
-          stream,
-          tools,
-          timeout,
-          context: chatContext ? Array.from(chatContext.values()) : undefined,
-        });
+        const parentUserMessageId =
+          context.messagesStore.getLatestUserMessageAncestor(chatId, messageId);
+        if (parentUserMessageId === null) {
+          throw new Error(
+            `Unable to find user message ancestor for messageId: ${messageId}`
+          );
+        }
+        return ask(chatId, parentUserMessageId, options);
       },
 
       addUserMessageAndAsk: async (

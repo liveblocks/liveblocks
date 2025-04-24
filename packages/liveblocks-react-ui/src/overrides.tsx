@@ -64,6 +64,13 @@ export interface ChatComposerOverrides {
   CHAT_COMPOSER_ABORT: string;
 }
 
+export interface ChatMessageOverrides {
+  CHAT_MESSAGE_DELETED: string;
+  CHAT_MESSAGE_THINKING: string;
+  CHAT_MESSAGE_COPY: string;
+  CHAT_MESSAGE_REGENERATE: string;
+}
+
 export interface ThreadOverrides {
   THREAD_RESOLVE: string;
   THREAD_UNRESOLVE: string;
@@ -106,7 +113,8 @@ export type Overrides = LocalizationOverrides &
   ThreadOverrides &
   InboxNotificationOverrides &
   HistoryVersionPreviewOverrides &
-  ChatComposerOverrides;
+  ChatComposerOverrides &
+  ChatMessageOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -206,6 +214,10 @@ export const defaultOverrides: Overrides = {
   CHAT_COMPOSER_ATTACH_FILES: "Attach files",
   CHAT_COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
   CHAT_COMPOSER_ABORT: "Abort message.", // XXX - Think about the message to use
+  CHAT_MESSAGE_DELETED: "This message has been deleted.",
+  CHAT_MESSAGE_THINKING: "Thinking…",
+  CHAT_MESSAGE_COPY: "Copy message",
+  CHAT_MESSAGE_REGENERATE: "Regenerate response",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

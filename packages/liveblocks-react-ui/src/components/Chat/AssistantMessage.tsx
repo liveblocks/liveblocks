@@ -1,9 +1,21 @@
-import type { AiAssistantMessage } from "@liveblocks/core";
-import { forwardRef, type HTMLAttributes, memo, useState } from "react";
+import type { AiAssistantMessage, ChatId, MessageId } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
+import {
+  type ButtonHTMLAttributes,
+  forwardRef,
+  type HTMLAttributes,
+  memo,
+  useState,
+} from "react";
 
-import { ChevronDownIcon, ChevronRightIcon } from "../../icons";
+import { Tooltip, TooltipProvider } from "../../_private";
+import { ChevronDownIcon, ChevronRightIcon, UndoIcon } from "../../icons";
 import { WarningIcon } from "../../icons/Warning";
-import type { GlobalOverrides } from "../../overrides";
+import {
+  type ChatMessageOverrides,
+  type GlobalOverrides,
+  useOverrides,
+} from "../../overrides";
 import {
   AssistantMessageContent,
   type AssistantMessageReasoningPartProps,
@@ -24,12 +36,13 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<GlobalOverrides>;
+  overrides?: Partial<GlobalOverrides & ChatMessageOverrides>;
 };
 
 export const AssistantChatMessage = memo(
   forwardRef<HTMLDivElement, AssistantChatMessageProps>(
-    ({ message, className, ...props }, forwardedRef) => {
+    ({ message, className, overrides, ...props }, forwardedRef) => {
+      const $ = useOverrides(overrides);
       if (message.deletedAt !== undefined) {
         return (
           <div
@@ -41,7 +54,7 @@ export const AssistantChatMessage = memo(
             ref={forwardedRef}
           >
             <div className="lb-assistant-chat-message-deleted">
-              This message has been deleted.
+              {$.CHAT_MESSAGE_DELETED}
             </div>
           </div>
         );
@@ -57,7 +70,7 @@ export const AssistantChatMessage = memo(
               ref={forwardedRef}
             >
               <div className="lb-assistant-chat-message-thinking">
-                Thinking…
+                {$.CHAT_MESSAGE_THINKING}
               </div>
             </div>
           );
@@ -75,58 +88,99 @@ export const AssistantChatMessage = memo(
                 content={message.contentSoFar}
                 chatId={message.chatId}
                 className="lb-assistant-chat-message-content"
+                components={{
+                  TextPart,
+                  ReasoningPart,
+                }}
               />
             </div>
           );
         }
       } else if (message.status === "completed") {
         return (
-          <div
-            className={classNames(
-              "lb-root lb-assistant-chat-message",
-              className
-            )}
-            {...props}
-            ref={forwardedRef}
-          >
-            <AssistantMessageContent
-              content={message.content}
-              chatId={message.chatId}
-              className="lb-assistant-chat-message-content"
-              components={{
-                TextPart,
-                ReasoningPart,
-              }}
-            />
-          </div>
+          <TooltipProvider>
+            <div
+              className={classNames(
+                "lb-root lb-assistant-chat-message",
+                className
+              )}
+              {...props}
+              ref={forwardedRef}
+            >
+              <AssistantMessageContent
+                content={message.content}
+                chatId={message.chatId}
+                className="lb-assistant-chat-message-content"
+                components={{
+                  TextPart,
+                  ReasoningPart,
+                }}
+              />
+              <div className="lb-assistant-chat-message-actions">
+                {/* <Tooltip content={$.CHAT_MESSAGE_COPY}>
+                  <button
+                    className="lb-button"
+                    aria-label={$.CHAT_MESSAGE_COPY}
+                  >
+                  </button>
+                </Tooltip> */}
+
+                <Tooltip content={$.CHAT_MESSAGE_REGENERATE}>
+                  <RegenerateMessageButton
+                    chatId={message.chatId}
+                    messageId={message.id}
+                    className="lb-button"
+                    aria-label={$.CHAT_MESSAGE_REGENERATE}
+                  >
+                    <UndoIcon />
+                  </RegenerateMessageButton>
+                </Tooltip>
+              </div>
+            </div>
+          </TooltipProvider>
         );
       } else if (message.status === "failed") {
         return (
-          <div
-            className={classNames(
-              "lb-root lb-assistant-chat-message",
-              className
-            )}
-            {...props}
-            ref={forwardedRef}
-          >
-            <AssistantMessageContent
-              content={message.contentSoFar}
-              chatId={message.chatId}
-              className="lb-assistant-chat-message-content"
-              components={{
-                TextPart,
-                ReasoningPart,
-              }}
-            />
-            <div className="lb-asssitant-chat-message-error">
-              <span className="lb-icon-container">
-                <WarningIcon />
-              </span>
+          <TooltipProvider>
+            <div
+              className={classNames(
+                "lb-root lb-assistant-chat-message",
+                className
+              )}
+              {...props}
+              ref={forwardedRef}
+            >
+              <AssistantMessageContent
+                content={message.contentSoFar}
+                chatId={message.chatId}
+                className="lb-assistant-chat-message-content"
+                components={{
+                  TextPart,
+                  ReasoningPart,
+                }}
+              />
+              <div className="lb-asssitant-chat-message-error">
+                <span className="lb-icon-container">
+                  <WarningIcon />
+                </span>
 
-              {message.errorReason}
+                {message.errorReason}
+              </div>
+
+              <div className="lb-assistant-chat-message-actions">
+                <Tooltip content={$.CHAT_MESSAGE_REGENERATE}>
+                  <RegenerateMessageButton
+                    chatId={message.chatId}
+                    messageId={message.id}
+                    className="lb-button"
+                    aria-label={$.CHAT_MESSAGE_REGENERATE}
+                  >
+                    <UndoIcon />
+                  </RegenerateMessageButton>
+                </Tooltip>
+              </div>
             </div>
-          </div>
+          </TooltipProvider>
         );
       }
       return null;
@@ -172,3 +226,27 @@ function ReasoningPart({
     </CollapsiblePrimitive.Root>
   );
 }
+
+export const RegenerateMessageButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    chatId: ChatId;
+    messageId: MessageId;
+  }
+>(({ chatId, messageId, onClick, disabled, ...props }, forwardedRef) => {
+  const client = useClient();
+
+  return (
+    <button
+      type="button"
+      {...props}
+      onClick={function (event) {
+        if (disabled) return;
+        onClick?.(event);
+        if (event.defaultPrevented) return;
+        client.ai.regenerateMessage(chatId, messageId, { stream: true });
+      }}
+      ref={forwardedRef}
+    />
+  );
+});

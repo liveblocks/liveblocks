@@ -253,12 +253,11 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                       }}
                     >
                       <span className="lb-icon-container">
-                        {/* XXX - Prepare a more suitable icon */}
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width={20}
                           height={20}
-                          viewBox={`0 0 ${20} ${20}`}
+                          viewBox="0 0 20 20"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth={1.5}
@@ -267,7 +266,14 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                           role="presentation"
                           className="lb-icon"
                         >
-                          <rect width="10" height="10" x="5" y="5" rx="2" />
+                          <rect
+                            x={5}
+                            y={5}
+                            width={10}
+                            height={10}
+                            rx={1}
+                            fill="currentColor"
+                          />
                         </svg>
                       </span>
                     </button>

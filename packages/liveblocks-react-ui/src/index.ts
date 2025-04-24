@@ -54,14 +54,6 @@ export type {
 } from "./overrides";
 export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";
-export {
-  AssistantMessageContent,
-  type AssistantMessageContentProps,
-  DefaultAssistantMessageReasoningPart as AssistantMessageReasoningPart,
-  type AssistantMessageReasoningPartProps,
-  DefaultAssistantMessageTextPart as AssistantMessageTextPart,
-  type AssistantMessageTextPartProps,
-} from "./primitives/Chat/AssistantMessage";
 export type {
   CommentAttachmentArgs,
   ComposerBodyMark,

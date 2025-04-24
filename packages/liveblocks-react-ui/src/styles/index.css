@@ -2338,6 +2338,8 @@
   display: flex;
   flex-direction: column;
   inline-size: 100%;
+  color: var(--lb-foreground-secondary);
+  font-size: 0.875em;
 }
 
 .lb-assistant-chat-message-reasoning-part-trigger {
@@ -2354,6 +2356,12 @@
   &:where([data-state="open"]) {
     margin-block-start: 0.25em;
   }
+}
+
+.lb-assistant-chat-message-actions {
+  display: flex;
+  gap: calc(0.125 * var(--lb-spacing));
+  align-items: center;
 }
 
 /*************************************
