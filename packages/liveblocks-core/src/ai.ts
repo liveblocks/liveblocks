@@ -955,7 +955,7 @@ export function createAi(config: AiConfig): Ai {
           messageId
         );
 
-        const copilotId = options?.copilotId ?? "built-in";
+        const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 

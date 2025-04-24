@@ -337,7 +337,7 @@ function ChatWindow({ chatId }: { chatId: ChatId }) {
               padding: "10px 1rem",
             }}
           >
-            <option value="default">Default</option>
+            <option value="default">Built-in</option>
             {COPILOTS.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.name}

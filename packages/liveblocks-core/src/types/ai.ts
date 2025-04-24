@@ -135,10 +135,12 @@ type AskAIPair = DefineCmd<
     targetMessageId: MessageId;
 
     /**
-     * The Copilot ID to use for this request. If not provided, the default
-     * Copilot ID (as set in your dashboard) will be used.
+     * The Copilot ID to use for this request. If not provided, a built-in
+     * default Copilot will be used instead of one that you configured via the
+     * dashboard.
      */
     copilotId?: CopilotId;
+
     /**
      * A client ID unique to this command. Later delta and settle messages will
      * reference this client ID, which is important to ensure that tool calls
