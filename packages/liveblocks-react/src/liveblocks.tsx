@@ -970,12 +970,13 @@ function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
 }
 
 function useChatMessages(
-  chatId: ChatId,
+  chatId?: ChatId,
   branch?: MessageId
 ): ChatMessageTreeAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
+  chatId ??= client.ai.defaultEphemeralChatId;
   useEffect(
     () =>
       void store.outputs.messagesByChatId

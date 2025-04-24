@@ -111,6 +111,12 @@ type AiContext = {
   toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
 };
 
+export type GetOrCreateChatOptions = {
+  name: string;
+  ephemeral?: boolean;
+  metadata?: AiChat["metadata"];
+};
+
 export type CreateChatOptions = {
   ephemeral?: boolean;
   metadata?: AiChat["metadata"];
@@ -500,6 +506,8 @@ export type Ai = {
   reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
+
+  defaultEphemeralChatId: ChatId;
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
   createChat: (
     name: string,
@@ -857,6 +865,17 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
+  function createChat(name: string, options?: CreateChatOptions) {
+    const id = `ch_${nanoid()}` as ChatId;
+    return sendClientMsgWithResponse<CreateChatResponse>({
+      cmd: "create-chat",
+      id,
+      name,
+      ephemeral: options?.ephemeral ?? false,
+      metadata: options?.metadata ?? {},
+    });
+  }
+
   function getMessageTree(chatId: ChatId) {
     return sendClientMsgWithResponse<GetMessageTreeResponse>({
       cmd: "get-message-tree",
@@ -887,6 +906,12 @@ export function createAi(config: AiConfig): Ai {
     }
   }
 
+  // XXX Consider setting this to a randomly generated nanoid upon client
+  // instantiation? This way, the ID will be truly random, but it won't work
+  // across browser reloads and/or in multiple tabs. However, it may also be
+  // a feature.
+  const defaultEphemeralChatId = "ch__lb_default_ephemeral" as ChatId;
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -897,17 +922,9 @@ export function createAi(config: AiConfig): Ai {
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
 
+      defaultEphemeralChatId,
       getChats,
-      createChat: (name: string, options?: CreateChatOptions) => {
-        const id = `ch_${nanoid()}` as ChatId;
-        return sendClientMsgWithResponse({
-          cmd: "create-chat",
-          id,
-          name,
-          ephemeral: options?.ephemeral ?? false,
-          metadata: options?.metadata ?? {},
-        });
-      },
+      createChat,
 
       deleteChat: (chatId: ChatId) => {
         return sendClientMsgWithResponse({

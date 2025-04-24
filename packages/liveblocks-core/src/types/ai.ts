@@ -72,13 +72,17 @@ type GetChatsPair = DefineCmd<
   { chats: AiChat[]; nextCursor: Cursor | null }
 >;
 
+// XXX Rename to UpsertChat?
 type CreateChatPair = DefineCmd<
-  "create-chat",
+  "create-chat", // XXX Rename to "upsert-chat"?
   {
     id: ChatId;
+    // -------------------------------------------------
+    // Group these?
     name: string;
     ephemeral: boolean;
     metadata: Record<string, string | string[]>;
+    // -------------------------------------------------
   },
   { chat: AiChat }
 >;

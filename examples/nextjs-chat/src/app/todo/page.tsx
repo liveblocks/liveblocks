@@ -4,7 +4,6 @@ import {
   ClientSideSuspense,
   LiveblocksProvider,
   useClient,
-  useCopilotChats,
 } from "@liveblocks/react/suspense";
 import { useEffect, useState } from "react";
 import { InlineChat } from "../inline-chat";
@@ -47,10 +46,6 @@ function App() {
     },
   ]);
   const [value, setValue] = useState("");
-
-  const { chats } = useCopilotChats();
-  if (chats.length === 0) return null;
-
   return (
     <div
       style={{
@@ -194,7 +189,6 @@ function App() {
               }}
             >
               <InlineChat
-                chatId={chats[0].id}
                 context={{
                   todos: {
                     description:

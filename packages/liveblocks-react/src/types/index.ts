@@ -1232,7 +1232,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { messages, error, isLoading } = useChatMessages();
        */
-      useChatMessages(chatId: string): ChatMessageTreeAsyncResult;
+      useChatMessages(chatId?: string): ChatMessageTreeAsyncResult;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &

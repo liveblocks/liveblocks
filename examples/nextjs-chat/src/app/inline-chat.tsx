@@ -8,7 +8,7 @@ export function InlineChat({
   context,
   tools,
 }: {
-  chatId: ChatId;
+  chatId?: ChatId;
   context: Record<string, CopilotContext>;
   tools: Record<string, ClientToolDefinition>;
 }) {
@@ -22,7 +22,7 @@ export function InlineChat({
     // isFetchingMore,
     // fetchMoreError,
     // hasFetchedAll,
-  } = useChatMessages(chatId);
+  } = useChatMessages();
 
   if (isLoading) {
     // TODO: Add suitable loading state
@@ -34,6 +34,7 @@ export function InlineChat({
     return <></>;
   }
 
+  chatId ??= client.ai.defaultEphemeralChatId;
   return (
     <>
       {/* TODO: Support auto fetch more when user scrolls to the top of the chat window */}
