@@ -37,6 +37,7 @@ export { ShortenIcon } from "./Shorten";
 export { SparklesIcon } from "./Sparkles";
 export { SparklesTextIcon } from "./SparklesText";
 export { SpinnerIcon } from "./Spinner";
+export { StopIcon } from "./Stop";
 export { StrikethroughIcon } from "./Strikethrough";
 export { TextIcon } from "./Text";
 export { TranslateIcon } from "./Translate";
