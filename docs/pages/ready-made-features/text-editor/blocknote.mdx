@@ -176,29 +176,6 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
-## Server-side modifications
-
-Fetch and modify your text editor’s content from the server, enabling features
-such as AI agents. Easily make changes that update in real-time for every
-connected user. Use
-[`withProsemirrorDocument`](/docs/api-reference/liveblocks-node-prosemirror#withProsemirrorDocument)
-to get your editor’s content and make modifications live.
-
-```tsx
-await withProsemirrorDocument(
-  { roomId: "your-room-id", client: liveblocks },
-  async (api) => {
-    // get editor content
-    const text = api.getText();
-
-    await api.update((doc, tr) => {
-      // Make real-time updates
-      // ...
-    });
-  }
-);
-```
-
 ## Multiple editors
 
 It’s possible to use multiple BlockNote editors on a single page, and each

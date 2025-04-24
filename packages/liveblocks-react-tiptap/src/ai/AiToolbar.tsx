@@ -325,7 +325,7 @@ function AiToolbarCustomPromptContent() {
 
   useLayoutEffect(
     () => {
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         const textArea = textAreaRef.current;
 
         if (!textArea) {
@@ -337,7 +337,7 @@ function AiToolbarCustomPromptContent() {
           textArea.value.length,
           textArea.value.length
         );
-      }, 0);
+      });
     },
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );

@@ -163,23 +163,6 @@ replies mentions the user. A single comment with the latest mention is returned.
 }
 ```
 
-### Limitations
-
-Before you get started, there are some limitations with thread notifications
-that you should be aware of.
-
-#### Duplicated emails for unread mentions
-
-If a user is mentioned (e.g `@username`) in a thread, all further notifications
-received for this thread will be `unreadMention` types, _until the user reads
-the thread again_. This means that you will receive duplicated `unreadMention`
-notifications, even if a notification should be an `unreadReplies` type. After
-the thread has been read by the user, `unreadReplies` will be sent for the
-thread again if the user isn’t mentioned another time in the thread.
-
-This is due to the architecture of our notifications database, and we’re
-investigating solutions to move past this limitation.
-
 ### prepareThreadNotificationEmailAsReact [#prepare-thread-notification-email-as-react]
 
 Takes a
@@ -970,6 +953,14 @@ Tiptap optionally allows you to
 [render multiple editors per page](/docs/ready-made-features/text-editor/tiptap#Multiple-editors),
 instead of just one. For now, these functions only support one editor per room,
 but we’ll be looking to add support for more later.
+
+#### BlockNote
+
+This package does not yet support our
+[collaborative BlockNote text editor](/docs/api-reference/liveblocks-react-blocknote)
+integration. Support of BlockNote is planned for a future release and is
+currently on our development roadmap. Users requiring BlockNote compatibility
+should monitor package updates for this upcoming feature.
 
 ### prepareTextMentionNotificationEmailAsReact [#prepare-text-mention-notification-email-as-react]
 

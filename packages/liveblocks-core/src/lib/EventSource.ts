@@ -47,7 +47,9 @@ export type EventSource<T> = Observable<T> & {
    * Be careful when using this API, because the subscribers may not have any
    * idea they won't be notified anymore.
    */
-  [Symbol.dispose](): void;
+  // NOTE: This can eventually become [Symbol.dispose] when it's widely
+  // available in all browsers
+  dispose(): void;
 };
 
 export type BufferableEventSource<T> = EventSource<T> & {
@@ -135,7 +137,7 @@ export function makeEventSource<T>(): EventSource<T> {
 
     waitUntil,
 
-    [Symbol.dispose]: (): void => {
+    dispose(): void {
       _observers.clear();
     },
 
@@ -183,8 +185,8 @@ export function makeBufferableEventSource<T>(): BufferableEventSource<T> {
     pause,
     unpause,
 
-    [Symbol.dispose]: (): void => {
-      eventSource[Symbol.dispose]();
+    dispose(): void {
+      eventSource.dispose();
       if (_buffer !== null) {
         _buffer.length = 0;
       }

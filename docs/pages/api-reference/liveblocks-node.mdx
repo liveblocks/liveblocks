@@ -593,35 +593,44 @@ response as the
 
 ```ts
 const room = await liveblocks.upsertRoom("my-room-id", {
-  defaultAccesses: ["room:write"],
+  // These fields will get updated when the room exists, or will be created
+  update: {
+    metadata: { color: "red" },
+  },
+  // These fields will only be set when the room will get created
+  create: {
+    defaultAccesses: ["room:write"],
+  },
 });
 
 // { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
-A number of room creation options are available, allowing you to set permissions
-and attach custom metadata.
+A number of room update or creation options are available, allowing you to set
+permissions and attach custom metadata.
 
 ```ts
 const room = await liveblocks.upsertRoom("my-room-id", {
-  // The default room permissions. `[]` for private, `["room:write"]` for public.
-  defaultAccesses: [],
+  update: {
+    // The default room permissions. `[]` for private, `["room:write"]` for public.
+    defaultAccesses: [],
 
-  // Optional, the room's group ID permissions
-  groupsAccesses: {
-    design: ["room:write"],
-    engineering: ["room:presence:write", "room:read"],
-  },
+    // Optional, the room's group ID permissions
+    groupsAccesses: {
+      design: ["room:write"],
+      engineering: ["room:presence:write", "room:read"],
+    },
 
-  // Optional, the room's user ID permissions
-  usersAccesses: {
-    "my-user-id": ["room:write"],
-  },
+    // Optional, the room's user ID permissions
+    usersAccesses: {
+      "my-user-id": ["room:write"],
+    },
 
-  // Optional, custom metadata to attach to the room
-  metadata: {
-    myRoomType: "whiteboard",
+    // Optional, custom metadata to attach to the room
+    metadata: {
+      myRoomType: "whiteboard",
+    },
   },
 });
 ```

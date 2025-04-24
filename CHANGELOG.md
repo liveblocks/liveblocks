@@ -1,5 +1,77 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/tiptap`
+
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
+- Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+### `@liveblocks/lexical`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+## v2.23.1
+
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose`
+  yet.
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating
+  storage could potentially corrupt the storage tree.
+
+## v2.23.0
+
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation from `Composer` and the emoji pickers in
+  `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
+  (Thanks @chadnorvell for the contribution!)
+
+## v2.22.3
+
+### `@liveblocks/react-ui`
+
+- The `InboxNotification` component now uses `resolveRoomsInfo` for
+  `textMention` notifications to make them link to the mentions’ room
+  automatically if `href` isn’t set.
+- Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
+  tooltips)
+- Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
+  choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
+  from: another CDN, self-hosted files, etc.
+
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
+
+## v2.22.2
+
+### `@liveblocks/node`
+
+- Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
+- Optimize `.upsertRoom()` to only make a single round-trip to the server.
+- Also expose `LiveObject`, `LiveMap`, and `LiveList` in `@liveblocks/node`.
+
 ## v2.22.1
 
 ### `@liveblocks/react-blocknote`

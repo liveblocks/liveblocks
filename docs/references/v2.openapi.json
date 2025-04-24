@@ -114,7 +114,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
         "tags": ["Room"],
         "parameters": [],
         "responses": {
@@ -384,6 +384,111 @@
         ],
         "operationId": "delete-rooms-roomId",
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
+      }
+    },
+    "/rooms/{roomId}/upsert": {
+      "post": {
+        "summary": "Upsert (update or create) room",
+        "tags": ["Room"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated or created room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "room",
+                      "id": "react-todo-list",
+                      "lastConnectionAt": "2022-08-04T21:07:09.380Z",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "blue",
+                        "size": "10",
+                        "target": ["abc", "def"]
+                      },
+                      "defaultAccesses": ["room:write"],
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "usersAccesses": {
+                        "alice": ["room:write"],
+                        "vinod": ["room:write"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-rooms-roomId",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertRoom"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "update": {
+                      "usersAccesses": {
+                        "vinod": ["room:write"],
+                        "alice": ["room:write"]
+                      },
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "metadata": {
+                        "color": "blue"
+                      }
+                    },
+                    "create": {
+                      "defaultAccesses": ["room:write"]
+                    }
+                  }
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
       }
     },
     "/rooms/{roomId}/update-room-id": {
@@ -3710,6 +3815,61 @@
             "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
           }
         }
+      },
+      "UpsertRoom": {
+        "type": "object",
+        "title": "UpsertRoom",
+        "additionalProperties": false,
+        "properties": {
+          "update": {
+            "type": "object",
+            "properties": {
+              "defaultAccesses": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "usersAccesses": {
+                "type": ["object", "null"],
+                "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
+              },
+              "groupsAccesses": {
+                "type": ["object", "null"],
+                "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
+              },
+              "metadata": {
+                "type": ["object", "null"],
+                "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
+              }
+            }
+          },
+          "create": {
+            "type": "object",
+            "properties": {
+              "defaultAccesses": {
+                "type": ["array"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "usersAccesses": {
+                "type": ["object"],
+                "description": "A map of user identifiers to permissions list."
+              },
+              "groupsAccesses": {
+                "type": ["object"],
+                "description": "A map of group identifiers to permissions list."
+              },
+              "metadata": {
+                "type": ["object"],
+                "description": "A map of metadata keys to their values (`string` or `string[]`)."
+              }
+            },
+            "required": ["defaultAccesses"]
+          }
+        },
+        "required": ["update"]
       },
       "CreateRoom": {
         "title": "CreateRoom",

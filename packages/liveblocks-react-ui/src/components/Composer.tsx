@@ -751,13 +751,15 @@ export const Composer = forwardRef(
       [onCollapsedChange, canComment]
     );
 
-    const handleCommentSubmit = useCallback(
+    const handleComposerSubmit = useCallback(
       (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
         onComposerSubmit?.(comment, event);
 
         if (event.isDefaultPrevented()) {
           return;
         }
+
+        event.stopPropagation();
 
         if (commentId && threadId) {
           editComment({
@@ -794,7 +796,7 @@ export const Composer = forwardRef(
     return (
       <TooltipProvider>
         <ComposerPrimitive.Form
-          onComposerSubmit={handleCommentSubmit}
+          onComposerSubmit={handleComposerSubmit}
           className={classNames(
             "lb-root lb-composer lb-composer-form",
             className

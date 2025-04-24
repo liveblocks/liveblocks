@@ -18,6 +18,75 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 14 (2025-04-04)
+
+## v2.22.3
+
+### `@liveblocks/react-ui`
+
+- The `InboxNotification` component now uses `resolveRoomsInfo` for
+  `textMention` notifications to make them link to the mentions’ room
+  automatically if `href` isn’t set.
+- Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
+  tooltips)
+- Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
+  choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
+  from: another CDN, self-hosted files, etc.
+
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
+
+## Contributors
+
+marcbouchenoire, jrowny
+
+# Week 13 (2025-03-28)
+
+## v2.22.2
+
+### `@liveblocks/node`
+
+- Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
+- Optimize `.upsertRoom()` to only make a single round-trip to the server.
+- Also expose `LiveObject`, `LiveMap`, and `LiveList` in `@liveblocks/node`.
+
+## v2.22.1
+
+### `@liveblocks/react-blocknote`
+
+- Fix report text editor function's call. Now we report correctly `blocknote` as
+  text editor type.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactoring.
+
+### `@liveblocks/node`
+
+- Fix: improve stack traces of REST API errors to include the original error
+  location.
+
+## Dashboard
+
+- BlockNote editors are now supported in a room's Text Editor view.
+
+## Documentation
+
+- Improve guide on [how to modify Liveblocks Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+- Fix BlockNote code snippets and add info about it in the email package.
+
+## Examples
+
+- Improve notification settings in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+- Update [notifications settings example](https://liveblocks.io/examples/notification-settings) to use the latest APIs.
+
+## Contributors
+
+nvie, sugardarius, ctnicholas, marcbouchenoire
+
 # Week 12 (2025-03-21)
 
 ## v2.22.0

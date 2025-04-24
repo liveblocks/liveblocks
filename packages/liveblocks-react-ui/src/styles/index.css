@@ -779,17 +779,21 @@
  *               Name                *
  *************************************/
 
-.lb-name:where([data-loading]) {
-  &::before {
-    content: "\FEFF";
-    display: inline-block;
-    vertical-align: middle;
-    inline-size: 8ch;
-    block-size: 1.75ex;
-    border-radius: calc(0.5 * var(--lb-radius));
-    background: currentcolor;
-    opacity: $lb-loading-opacity;
-    user-select: none;
+.lb-name {
+  display: inline-block;
+
+  &:where([data-loading]) {
+    &::before {
+      content: "\FEFF";
+      display: inline-block;
+      vertical-align: middle;
+      inline-size: 8ch;
+      block-size: 1.75ex;
+      border-radius: calc(0.5 * var(--lb-radius));
+      background: currentcolor;
+      opacity: $lb-loading-opacity;
+      user-select: none;
+    }
   }
 }
 
