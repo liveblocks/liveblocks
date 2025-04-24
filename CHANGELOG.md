@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.23.2
+
 ### `@liveblocks/tiptap`
 
 - Add `closeAi` Tiptap command to manually close the AI toolbar.
