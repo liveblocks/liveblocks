@@ -44,10 +44,13 @@ to automatically apply them with a codemod in our
 - Rename `Room.getNotificationSettings` and `Room.updateNotificationSettings` to
   `Room.getSubscriptionSettings` and `Room.updateSubscriptionSettings`.
 
+## v2.23.2
+
 ### `@liveblocks/tiptap`
 
-- Fix `FloatingToolbar` focus behavior in Safari.
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
 - Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
 
 ### `@liveblocks/lexical`
 

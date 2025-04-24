@@ -23,6 +23,7 @@ import {
   ShortenIcon,
   SparklesIcon,
   SparklesTextIcon,
+  StopIcon,
   TooltipProvider,
   UndoIcon,
   useRefs,
@@ -486,7 +487,7 @@ function AiToolbarThinking() {
               className="lb-tiptap-ai-toolbar-action"
               variant="secondary"
               aria-label="Cancel"
-              icon={<UndoIcon />}
+              icon={<StopIcon />}
               onClick={handleCancel}
             />
           </ShortcutTooltip>

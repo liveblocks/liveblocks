@@ -38,6 +38,7 @@ export {
   ShortenIcon as Shorten,
   SparklesIcon as Sparkles,
   SparklesTextIcon as SparklesText,
+  StopIcon as Stop,
   StrikethroughIcon as Strikethrough,
   TextIcon as Text,
   TranslateIcon as Translate,
