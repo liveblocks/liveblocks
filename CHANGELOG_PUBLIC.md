@@ -56,6 +56,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - New [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features) page, highlighting all upcoming features.
 
+## Dashboard
+
+- Refined billing and usage settings page, now displaying billed and non-billed users for monthly active users (MAUs) metric.
+
 ## Website
 
 - New blog post: [Add Notion-style collaborative text editing to your app with Liveblocks BlockNote](https://liveblocks.io/blog/add-notion-style-collaborative-text-editing-to-your-app-with-liveblocks-blocknote).
