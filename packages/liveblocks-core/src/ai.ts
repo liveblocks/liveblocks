@@ -792,6 +792,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "get-message-tree":
+          context.chatsStore.upsert(msg.chat);
           context.messagesStore.upsertMany(msg.messages);
           break;
 

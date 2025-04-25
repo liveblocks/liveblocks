@@ -96,7 +96,7 @@ type DeleteChatPair = DefineCmd<
 type GetMessageTreePair = DefineCmd<
   "get-message-tree",
   { chatId: ChatId },
-  { chatId: ChatId; messages: AiChatMessage[] }
+  { chat: AiChat; messages: AiChatMessage[] }
 >;
 
 type AddUserMessagePair = DefineCmd<
