@@ -1,6 +1,10 @@
 import { ClientToolDefinition, CopilotContext } from "@liveblocks/core";
 import { useChatMessages, useClient } from "@liveblocks/react";
-import { ChatComposer } from "@liveblocks/react-ui";
+import {
+  AssistantChatMessage,
+  ChatComposer,
+  UserChatMessage,
+} from "@liveblocks/react-ui";
 import { useEffect } from "react";
 
 export function InlineChat({
@@ -22,21 +26,31 @@ export function InlineChat({
     // isFetchingMore,
     // fetchMoreError,
     // hasFetchedAll,
-  } = useChatMessages();
+  } = useChatMessages(chatId);
 
   if (isLoading) {
-    // TODO: Add suitable loading state
-    return <></>;
+    // TODO: Add a more polished loading state?
+    return null;
   }
 
   if (error) {
-    // TODO: Add suitable error state
-    return <></>;
+    // TODO: Add a more polished error state
+    return <div style={{ color: "red" }}>{String(error)}</div>;
   }
 
   return (
     <>
       {/* TODO: Support auto fetch more when user scrolls to the top of the chat window */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        {messages.map(
+          (m) =>
+            m.role === "user" ? (
+              <UserChatMessage key={m.id} message={m} />
+            ) : m.role === "assistant" ? (
+              <AssistantChatMessage key={m.id} message={m} />
+            ) : null /* Unknown role from the future? */
+        )}
+      </div>
 
       <div style={{ padding: "0 1rem 1rem" }}>
         <ChatComposer

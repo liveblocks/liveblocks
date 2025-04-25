@@ -1230,9 +1230,12 @@ export type LiveblocksContextBundle<
        * (Private beta)  Returns the messages in the given chat.
        *
        * @example
-       * const { messages, error, isLoading } = useChatMessages();
+       * const { messages, error, isLoading } = useChatMessages("my-chat");
        */
-      useChatMessages(chatId?: string): ChatMessageTreeAsyncResult;
+      useChatMessages(
+        chatId: string,
+        branch?: MessageId
+      ): ChatMessageTreeAsyncResult;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1286,7 +1289,7 @@ export type LiveblocksContextBundle<
              * (Private beta) Returns the messages in the given chat.
              *
              * @example
-             * const { messages } = useChatMessages();
+             * const { messages } = useChatMessages("my-chat");
              */
             useChatMessages(
               chatId: string,

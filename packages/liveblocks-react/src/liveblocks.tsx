@@ -1512,7 +1512,7 @@ const _useCopilotChatsSuspense: TypedBundle["suspense"]["useCopilotChats"] =
  * (Private beta)  Returns the messages in the given chat.
  *
  * @example
- * const { messages, error, isLoading } = useChatMessages();
+ * const { messages, error, isLoading } = useChatMessages("my-chat");
  */
 const _useChatMessages: TypedBundle["useChatMessages"] = useChatMessages;
 
@@ -1520,7 +1520,7 @@ const _useChatMessages: TypedBundle["useChatMessages"] = useChatMessages;
  * (Private beta)  Returns the messages in the given chat.
  *
  * @example
- * const { messages, error, isLoading } = useChatMessages();
+ * const { messages, error, isLoading } = useChatMessages("my-chat");
  */
 const _useChatMessagesSuspense: TypedBundle["suspense"]["useChatMessages"] =
   useChatMessagesSuspense;

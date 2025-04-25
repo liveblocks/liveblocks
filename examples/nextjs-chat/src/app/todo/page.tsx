@@ -3,9 +3,8 @@
 import {
   ClientSideSuspense,
   LiveblocksProvider,
-  useClient,
 } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { InlineChat } from "../inline-chat";
 import { Popover } from "radix-ui";
 
@@ -24,7 +23,6 @@ export default function Page() {
         }
       >
         <App />
-        <DebugClient />
       </ClientSideSuspense>
     </LiveblocksProvider>
   );
@@ -187,139 +185,131 @@ function App() {
                 height: "600px",
                 boxShadow:
                   "0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%), 0 8px 26px rgb(0 0 0 / 6%)",
+                overflowX: "scroll",
+                padding: "20px",
               }}
             >
-              <InlineChat
-                chatId="my-todo-app"
-                context={{
-                  todos: {
-                    description:
-                      "A list of todos with id, title and completion status",
-                    value: `${JSON.stringify(todos)}`,
-                  },
-                }}
-                tools={{
-                  addTodo: {
-                    description: "Add a todo to the list",
-                    parameters: {
-                      type: "object",
-                      properties: {
-                        title: {
-                          type: "string",
-                          description: "The title of the todo to add",
+              <div style={{}}>
+                <InlineChat
+                  chatId="my-todo-app"
+                  context={{
+                    todos: {
+                      description:
+                        "A list of todos with id, title and completion status",
+                      value: `${JSON.stringify(todos)}`,
+                    },
+                  }}
+                  tools={{
+                    addTodo: {
+                      description: "Add a todo to the list",
+                      parameters: {
+                        type: "object",
+                        properties: {
+                          title: {
+                            type: "string",
+                            description: "The title of the todo to add",
+                          },
                         },
                       },
-                    },
-                    execute: ({ title }: { title: string }) => {
-                      setTodos((todos) => [
-                        ...todos,
-                        {
-                          id: todos.length + 1,
-                          title,
-                          isCompleted: false,
-                        },
-                      ]);
-                    },
-                  },
-                  markTodoAsCompleted: {
-                    description: "Mark a todo as completed",
-                    parameters: {
-                      type: "object",
-                      properties: {
-                        ids: {
-                          type: "array",
-                          description:
-                            "The ids of the todo to mark as completed",
-                        },
+                      execute: ({ title }: { title: string }) => {
+                        setTodos((todos) => [
+                          ...todos,
+                          {
+                            id: todos.length + 1,
+                            title,
+                            isCompleted: false,
+                          },
+                        ]);
                       },
                     },
-                    execute: ({ ids }: { ids: number[] }) => {
-                      setTodos((todos) =>
-                        todos.map((todo) => {
-                          if (ids.includes(todo.id)) {
-                            return { ...todo, isCompleted: true };
-                          }
-                          return todo;
-                        })
-                      );
-                    },
-                  },
-                  displayTodo: {
-                    description: "Display a todo",
-                    parameters: {
-                      type: "object",
-                      properties: {
-                        ids: {
-                          type: "array",
-                          description: "The ids of the todo to display",
+                    markTodoAsCompleted: {
+                      description: "Mark a todo as completed",
+                      parameters: {
+                        type: "object",
+                        properties: {
+                          ids: {
+                            type: "array",
+                            description:
+                              "The ids of the todo to mark as completed",
+                          },
                         },
                       },
-                    },
-                    render: ({ args }: { args: { ids: number[] } }) => {
-                      return (
-                        <div
-                          style={{
-                            display: "flex",
-                            borderRadius: "0.75rem",
-                            boxShadow:
-                              "0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%), 0 8px 26px rgb(0 0 0 / 6%)",
-                            padding: "1rem",
-                            backgroundColor: "white",
-                            margin: "1rem 0",
-                            gap: "1rem",
-                            flexDirection: "column",
-                          }}
-                        >
-                          {args.ids.map((id) => {
-                            const todo = todos.find((todo) => todo.id === id);
-                            if (todo === undefined) {
-                              return null;
+                      execute: ({ ids }: { ids: number[] }) => {
+                        setTodos((todos) =>
+                          todos.map((todo) => {
+                            if (ids.includes(todo.id)) {
+                              return { ...todo, isCompleted: true };
                             }
+                            return todo;
+                          })
+                        );
+                      },
+                    },
+                    displayTodo: {
+                      description: "Display a todo",
+                      parameters: {
+                        type: "object",
+                        properties: {
+                          ids: {
+                            type: "array",
+                            description: "The ids of the todo to display",
+                          },
+                        },
+                      },
+                      render: ({ args }: { args: { ids: number[] } }) => {
+                        return (
+                          <div
+                            style={{
+                              display: "flex",
+                              borderRadius: "0.75rem",
+                              boxShadow:
+                                "0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 4%), 0 8px 26px rgb(0 0 0 / 6%)",
+                              padding: "1rem",
+                              backgroundColor: "white",
+                              margin: "1rem 0",
+                              gap: "1rem",
+                              flexDirection: "column",
+                            }}
+                          >
+                            {args.ids.map((id) => {
+                              const todo = todos.find((todo) => todo.id === id);
+                              if (todo === undefined) {
+                                return null;
+                              }
 
-                            return (
-                              <div
-                                key={todo.id}
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "row",
-                                  justifyContent: "space-between",
-                                }}
-                              >
-                                <span>{todo.title}</span>
-                                <span
+                              return (
+                                <div
+                                  key={todo.id}
                                   style={{
-                                    opacity: 0.5,
+                                    display: "flex",
+                                    flexDirection: "row",
+                                    justifyContent: "space-between",
                                   }}
                                 >
-                                  {todo.isCompleted
-                                    ? "Completed"
-                                    : "Not completed"}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
+                                  <span>{todo.title}</span>
+                                  <span
+                                    style={{
+                                      opacity: 0.5,
+                                    }}
+                                  >
+                                    {todo.isCompleted
+                                      ? "Completed"
+                                      : "Not completed"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+              </div>
             </Popover.Content>
           </Popover.Portal>
         </Popover.Root>
       </div>
     </div>
   );
-}
-
-function DebugClient() {
-  const client = useClient();
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      (window as any).lbClient = client;
-    }
-  }, [client]);
-
-  return null;
 }
