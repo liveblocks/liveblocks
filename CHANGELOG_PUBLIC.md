@@ -55,6 +55,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Documentation
 
 - New [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features) page, highlighting all upcoming features.
+- Mention first day free policy.
+- Small updates to docs homepage
 
 ## Dashboard
 
@@ -63,6 +65,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Website
 
 - New blog post: [Add Notion-style collaborative text editing to your app with Liveblocks BlockNote](https://liveblocks.io/blog/add-notion-style-collaborative-text-editing-to-your-app-with-liveblocks-blocknote).
+- New blog post: [Introducing fairer billing with first day free](https://liveblocks.io/blog/introducing-fairer-billing-with-first-day-free).
+- New blog post: [Rethinking product strategy in the age of AI with Melissa Perri](https://liveblocks.io/blog/rethinking-product-strategy-in-the-age-of-ai).
 - New blog post: [What’s new in Liveblocks: March 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-march-edition-2025).
 - New blog post: [How Artefect reinvented collaborative workspaces for technical teams](https://liveblocks.io/blog/how-artefact-reinvented-collaborative-workspaces-for-technical-teams).
 
