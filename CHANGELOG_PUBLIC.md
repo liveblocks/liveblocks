@@ -20,6 +20,18 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 17 (2025-04-25)
 
+## v2.23.2
+
+### `@liveblocks/tiptap`
+
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
+- Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+### `@liveblocks/lexical`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+
 ## v2.23.1
 
 ### `@liveblocks/client`
