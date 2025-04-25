@@ -1,4 +1,4 @@
-import { ChatId, CopilotContext, ClientToolDefinition } from "@liveblocks/core";
+import { ClientToolDefinition, CopilotContext } from "@liveblocks/core";
 import { useChatMessages, useClient } from "@liveblocks/react";
 import { ChatComposer } from "@liveblocks/react-ui";
 import { useEffect } from "react";
@@ -8,7 +8,7 @@ export function InlineChat({
   context,
   tools,
 }: {
-  chatId?: ChatId;
+  chatId: string;
   context: Record<string, CopilotContext>;
   tools: Record<string, ClientToolDefinition>;
 }) {
@@ -34,7 +34,6 @@ export function InlineChat({
     return <></>;
   }
 
-  chatId ??= client.ai.defaultEphemeralChatId;
   return (
     <>
       {/* TODO: Support auto fetch more when user scrolls to the top of the chat window */}
@@ -95,7 +94,7 @@ function CopilotContextComp({
   contextKey,
   data,
 }: {
-  chatId: ChatId;
+  chatId: string;
   contextKey: string;
   data: CopilotContext;
 }) {
@@ -118,7 +117,7 @@ function CopilotToolComp({
   toolKey,
   tool,
 }: {
-  chatId: ChatId;
+  chatId: string;
   toolKey: string;
   tool: ClientToolDefinition;
 }) {

@@ -1,6 +1,5 @@
 "use client";
 
-import { ChatId } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   useClient,
@@ -13,12 +12,12 @@ import { TrashIcon } from "../icons";
 export function LeftSidebar() {
   return (
     <ClientSideSuspense fallback="">
-      <RealLeftSidebar />
+      <ActualLeftSidebar />
     </ClientSideSuspense>
   );
 }
 
-function RealLeftSidebar() {
+function ActualLeftSidebar() {
   const client = useClient();
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
@@ -27,7 +26,7 @@ function RealLeftSidebar() {
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
   const router = useRouter();
-  const selectedChatId = useParams<{ chatId?: ChatId }>().chatId;
+  const selectedChatId = useParams<{ chatId?: string }>().chatId;
   return (
     <>
       <button

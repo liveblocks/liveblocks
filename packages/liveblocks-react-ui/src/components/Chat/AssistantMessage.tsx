@@ -1,4 +1,4 @@
-import type { AiAssistantMessage, ChatId, MessageId } from "@liveblocks/core";
+import type { AiAssistantMessage, MessageId } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import {
   type ButtonHTMLAttributes,
@@ -230,7 +230,7 @@ function ReasoningPart({
 export const RegenerateMessageButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement> & {
-    chatId: ChatId;
+    chatId: string;
     messageId: MessageId;
   }
 >(({ chatId, messageId, onClick, disabled, ...props }, forwardedRef) => {

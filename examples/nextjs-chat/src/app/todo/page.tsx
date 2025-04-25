@@ -46,6 +46,7 @@ function App() {
     },
   ]);
   const [value, setValue] = useState("");
+
   return (
     <div
       style={{
@@ -189,6 +190,7 @@ function App() {
               }}
             >
               <InlineChat
+                chatId="my-todo-app"
                 context={{
                   todos: {
                     description:

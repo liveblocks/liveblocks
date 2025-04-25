@@ -1,4 +1,4 @@
-import type { AiAssistantContentPart, ChatId } from "@liveblocks/core";
+import type { AiAssistantContentPart } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Lexer } from "marked";
@@ -19,14 +19,14 @@ import { BlockTokenComp as BlockTokenCompPrimitive } from "./Markdown";
 /* -------------------------------------------------------------------------------------------------
  * AssistantChatMessage
  * -----------------------------------------------------------------------------------------------*/
-const MessageContentContext = createContext<{ chatId: ChatId } | null>(null);
+const MessageContentContext = createContext<{ chatId: string } | null>(null);
 
 export type AssistantMessageContentProps = Omit<
   HTMLAttributes<HTMLDivElement>,
   "content"
 > & {
   content: AiAssistantContentPart[];
-  chatId: ChatId;
+  chatId: string;
   components?: Partial<{
     TextPart: ComponentType<AssistantMessageTextPartProps>;
     ReasoningPart: ComponentType<AssistantMessageReasoningPartProps>;

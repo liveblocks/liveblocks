@@ -8,7 +8,6 @@ import type {
 import {
   type AsyncResult,
   type BaseRoomInfo,
-  type ChatId,
   type DM,
   type DU,
   HttpError,
@@ -970,13 +969,12 @@ function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
 }
 
 function useChatMessages(
-  chatId?: ChatId,
+  chatId: string,
   branch?: MessageId
 ): ChatMessageTreeAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
-  chatId ??= client.ai.defaultEphemeralChatId;
   useEffect(
     () =>
       void store.outputs.messagesByChatId
@@ -1002,7 +1000,7 @@ function useChatMessages(
 }
 
 function useChatMessagesSuspense(
-  chatId: ChatId,
+  chatId: string,
   branch?: MessageId
 ): ChatMessageTreeAsyncSuccess {
   // Throw error if we're calling this hook server side

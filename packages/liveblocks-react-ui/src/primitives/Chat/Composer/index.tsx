@@ -1,4 +1,3 @@
-import type { ChatId } from "@liveblocks/core";
 import { HttpError, kInternal, nanoid } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
@@ -33,7 +32,7 @@ import { AttachmentTooLargeError } from "../../Composer/utils";
  * Form
  * -----------------------------------------------------------------------------------------------*/
 export const ComposerContext = createContext<{
-  chatId: ChatId;
+  chatId: string;
 
   editor: SlateEditor;
   onEditorValueChange: (value: Descendant[]) => void;
@@ -82,7 +81,7 @@ export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The id of the chat the composer belongs to.
    */
-  chatId: ChatId;
+  chatId: string;
 };
 
 /**
