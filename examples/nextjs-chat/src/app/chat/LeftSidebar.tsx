@@ -1,5 +1,6 @@
 "use client";
 
+import { nanoid } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   useClient,
@@ -34,7 +35,7 @@ function ActualLeftSidebar() {
         onClick={async () => {
           const name = prompt("Enter a name:", "My chat");
           if (name !== null) {
-            const res = await client.ai.createChat(name);
+            const res = await client.ai.createChat(nanoid(7), name);
             router.push(`/chat/${res.chat.id}`);
           }
         }}
@@ -46,7 +47,9 @@ function ActualLeftSidebar() {
         onClick={async () => {
           const name = prompt("Enter a name:", "My ephemeral chat");
           if (name !== null) {
-            const res = await client.ai.createChat(name, { ephemeral: true });
+            const res = await client.ai.createChat(nanoid(7), name, {
+              ephemeral: true,
+            });
             router.push(`/chat/${res.chat.id}`);
           }
         }}

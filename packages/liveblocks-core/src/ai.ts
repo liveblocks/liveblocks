@@ -532,7 +532,8 @@ export type Ai = {
 
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
   createChat: (
-    name: string,
+    chatId: string, // A unique identifier
+    name: string, // A human-friendly "title"
     options?: CreateChatOptions
   ) => Promise<CreateChatResponse>;
   deleteChat: (chatId: string) => Promise<DeleteChatResponse>;
@@ -893,8 +894,7 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function createChat(name: string, options?: CreateChatOptions) {
-    const id = `ch_${nanoid()}`;
+  function createChat(id: string, name: string, options?: CreateChatOptions) {
     return sendClientMsgWithResponse<CreateChatResponse>({
       cmd: "create-chat",
       id,
