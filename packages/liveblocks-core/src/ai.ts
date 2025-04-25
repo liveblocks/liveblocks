@@ -504,6 +504,10 @@ function createStore_forUserAiChats() {
     });
   }
 
+  function upsert(chat: AiChat) {
+    upsertMany([chat]);
+  }
+
   function remove(chatId: ChatId) {
     mutableΣ.mutate((list) => list.removeBy((c) => c.id === chatId, 1));
   }
@@ -512,6 +516,7 @@ function createStore_forUserAiChats() {
     chatsΣ,
 
     // Mutations
+    upsert,
     upsertMany,
     remove,
   };
@@ -778,7 +783,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "create-chat":
-          context.chatsStore.upsertMany([msg.chat]);
+          context.chatsStore.upsert(msg.chat);
           break;
 
         case "delete-chat":
