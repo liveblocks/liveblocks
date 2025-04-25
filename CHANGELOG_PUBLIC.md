@@ -18,6 +18,74 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 17 (2025-04-25)
+
+## v2.23.2
+
+### `@liveblocks/tiptap`
+
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
+- Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+### `@liveblocks/lexical`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+## v2.23.1
+
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose` yet.
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating storage could potentially corrupt the storage tree.
+
+## v2.23.0
+
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation from `Composer` and the emoji pickers in
+  `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. Thank you [@nperez0111](https://github.com/nperez0111)!
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote. Thank you [@chadnorvell](https://github.com/chadnorvell)!
+  
+## Documentation
+
+- New [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features) page, highlighting all upcoming features.
+- Mention first day free policy.
+- Small updates to docs homepage
+
+## Dashboard
+
+- Refined billing and usage settings page, now displaying billed and non-billed users for monthly active users (MAUs) metric.
+
+## Website
+
+- New blog post: [Add Notion-style collaborative text editing to your app with Liveblocks BlockNote](https://liveblocks.io/blog/add-notion-style-collaborative-text-editing-to-your-app-with-liveblocks-blocknote).
+- New blog post: [Introducing fairer billing with first day free](https://liveblocks.io/blog/introducing-fairer-billing-with-first-day-free).
+- New blog post: [Rethinking product strategy in the age of AI with Melissa Perri](https://liveblocks.io/blog/rethinking-product-strategy-in-the-age-of-ai).
+- New blog post: [What’s new in Liveblocks: March 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-march-edition-2025).
+- New blog post: [How Artefect reinvented collaborative workspaces for technical teams](https://liveblocks.io/blog/how-artefact-reinvented-collaborative-workspaces-for-technical-teams).
+
+## Contributors
+
+marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell, nvie, ctnicholas, pierrelevaillant
+
 # Week 14 (2025-04-04)
 
 ## v2.22.3
