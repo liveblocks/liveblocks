@@ -37,7 +37,6 @@ import type {
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
-  ChatId,
   ClearChatResponse,
   ClientAiMsg,
   ClientId,
@@ -107,8 +106,8 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  contextByChatId: Map<ChatId, Map<string, CopilotContext>>;
-  toolsByChatId: Map<ChatId, Map<string, ClientToolDefinition>>;
+  contextByChatId: Map<string, Map<string, CopilotContext>>;
+  toolsByChatId: Map<string, Map<string, ClientToolDefinition>>;
 };
 
 export type GetOrCreateChatOptions = {
@@ -133,25 +132,25 @@ function now(): ISODateString {
 }
 
 function createStore_forTools() {
-  const toolsByChatIdΣ = new DefaultMap((_chatId: ChatId) => {
+  const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
     return new DefaultMap((_toolName: string) => {
       return new Signal<ClientToolDefinition | undefined>(undefined);
     });
   });
 
-  function getToolDefinitionΣ(chatId: ChatId, toolName: string) {
+  function getToolDefinitionΣ(chatId: string, toolName: string) {
     return toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(toolName);
   }
 
   function addToolDefinition(
-    chatId: ChatId,
+    chatId: string,
     name: string,
     definition: ClientToolDefinition
   ) {
     toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(definition);
   }
 
-  function removeToolDefinition(chatId: ChatId, toolName: string) {
+  function removeToolDefinition(chatId: string, toolName: string) {
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return;
     const tool = tools.get(toolName);
@@ -170,7 +169,7 @@ function createStore_forChatMessages() {
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
   const messagePoolByChatIdΣ = new DefaultMap(
-    (_chatId: ChatId) =>
+    (_chatId: string) =>
       new MutableSignal(
         new TreePool<AiChatMessage>(
           (x) => x.id,
@@ -190,18 +189,18 @@ function createStore_forChatMessages() {
   );
 
   function createOptimistically(
-    chatId: ChatId,
+    chatId: string,
     role: "user",
     parentId: MessageId | null,
     content: AiUserContentPart[]
   ): MessageId;
   function createOptimistically(
-    chatId: ChatId,
+    chatId: string,
     role: "assistant",
     parentId: MessageId | null
   ): MessageId;
   function createOptimistically(
-    chatId: ChatId,
+    chatId: string,
     role: "user" | "assistant",
     parentId: MessageId | null,
     third?: AiUserContentPart[]
@@ -240,7 +239,7 @@ function createStore_forChatMessages() {
     });
   }
 
-  function remove(chatId: ChatId, messageId: MessageId): void {
+  function remove(chatId: string, messageId: MessageId): void {
     const chatMsgsΣ = messagePoolByChatIdΣ.get(chatId);
     if (!chatMsgsΣ) return;
 
@@ -257,7 +256,7 @@ function createStore_forChatMessages() {
     }
   }
 
-  function removeByChatId(chatId: ChatId): void {
+  function removeByChatId(chatId: string): void {
     const chatMsgsΣ = messagePoolByChatIdΣ.get(chatId);
     if (chatMsgsΣ === undefined) return;
     chatMsgsΣ.mutate((pool) => pool.clear());
@@ -407,7 +406,7 @@ function createStore_forChatMessages() {
   }
 
   function getLatestUserMessageAncestor(
-    chatId: ChatId,
+    chatId: string,
     messageId: MessageId
   ): MessageId | null {
     const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
@@ -424,7 +423,7 @@ function createStore_forChatMessages() {
     return null;
   }
 
-  const immutableMessagesByBranch = new DefaultMap((chatId: ChatId) => {
+  const immutableMessagesByBranch = new DefaultMap((chatId: string) => {
     return new DefaultMap((branchId: MessageId | null) => {
       const messagesΣ = DerivedSignal.from(() => {
         const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
@@ -448,20 +447,20 @@ function createStore_forChatMessages() {
     });
   });
 
-  function getChatMessagesForBranchΣ(chatId: ChatId, branch?: MessageId) {
+  function getChatMessagesForBranchΣ(chatId: string, branch?: MessageId) {
     return immutableMessagesByBranch
       .getOrCreate(chatId)
       .getOrCreate(branch || null);
   }
 
-  const messagesByChatIdΣ = new DefaultMap((chatId: ChatId) => {
+  const messagesByChatIdΣ = new DefaultMap((chatId: string) => {
     return DerivedSignal.from(() => {
       const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
       return Array.from(pool.sorted);
     });
   });
 
-  function getMessagesForChatΣ(chatId: ChatId) {
+  function getMessagesForChatΣ(chatId: string) {
     return messagesByChatIdΣ.getOrCreate(chatId);
   }
 
@@ -504,7 +503,11 @@ function createStore_forUserAiChats() {
     });
   }
 
-  function remove(chatId: ChatId) {
+  function upsert(chat: AiChat) {
+    upsertMany([chat]);
+  }
+
+  function remove(chatId: string) {
     mutableΣ.mutate((list) => list.removeBy((c) => c.id === chatId, 1));
   }
 
@@ -512,6 +515,7 @@ function createStore_forUserAiChats() {
     chatsΣ,
 
     // Mutations
+    upsert,
     upsertMany,
     remove,
   };
@@ -526,36 +530,36 @@ export type Ai = {
   disconnect: () => void;
   getStatus: () => Status;
 
-  defaultEphemeralChatId: ChatId;
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
   createChat: (
-    name: string,
+    chatId: string, // A unique identifier
+    name: string, // A human-friendly "title"
     options?: CreateChatOptions
   ) => Promise<CreateChatResponse>;
-  deleteChat: (chatId: ChatId) => Promise<DeleteChatResponse>;
-  getMessageTree: (chatId: ChatId) => Promise<GetMessageTreeResponse>;
+  deleteChat: (chatId: string) => Promise<DeleteChatResponse>;
+  getMessageTree: (chatId: string) => Promise<GetMessageTreeResponse>;
   deleteMessage: (
-    chatId: ChatId,
+    chatId: string,
     messageId: MessageId
   ) => Promise<DeleteMessageResponse>;
-  clearChat: (chatId: ChatId) => Promise<ClearChatResponse>;
+  clearChat: (chatId: string) => Promise<ClearChatResponse>;
   addUserMessage: (
-    chatId: ChatId,
+    chatId: string,
     parentMessageId: MessageId | null,
     message: string
   ) => Promise<AddUserMessageResponse>;
   ask: (
-    chatId: ChatId,
+    chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
   regenerateMessage: (
-    chatId: ChatId,
+    chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
   addUserMessageAndAsk: (
-    chatId: ChatId,
+    chatId: string,
     parentMessageId: MessageId | null,
     message: string,
     options?: AskAiOptions
@@ -564,28 +568,28 @@ export type Ai = {
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
     getChatMessagesForBranchΣ(
-      chatId: ChatId,
+      chatId: string,
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
-    getMessagesForChatΣ(chatId: ChatId): DerivedSignal<AiChatMessage[]>;
+    getMessagesForChatΣ(chatId: string): DerivedSignal<AiChatMessage[]>;
     getToolDefinitionΣ(
-      chatId: ChatId,
+      chatId: string,
       toolName: string
     ): Signal<ClientToolDefinition | undefined>;
   };
   registerChatContext: (
-    chatId: ChatId,
+    chatId: string,
     contextKey: string,
     data: CopilotContext
   ) => void;
-  unregisterChatContext: (chatId: ChatId, contextKey: string) => void;
+  unregisterChatContext: (chatId: string, contextKey: string) => void;
 
   registerChatTool: (
-    chatId: ChatId,
+    chatId: string,
     name: string,
     definition: ClientToolDefinition
   ) => void;
-  unregisterChatTool: (chatId: ChatId, toolName: string) => void;
+  unregisterChatTool: (chatId: string, toolName: string) => void;
 
   getToolCallDefinition(
     chatId: string,
@@ -623,8 +627,8 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    contextByChatId: new Map<ChatId, Map<string, CopilotContext>>(),
-    toolsByChatId: new Map<ChatId, Map<string, ClientToolDefinition>>(),
+    contextByChatId: new Map<string, Map<string, CopilotContext>>(),
+    toolsByChatId: new Map<string, Map<string, ClientToolDefinition>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -778,7 +782,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "create-chat":
-          context.chatsStore.upsertMany([msg.chat]);
+          context.chatsStore.upsert(msg.chat);
           break;
 
         case "delete-chat":
@@ -787,6 +791,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "get-message-tree":
+          context.chatsStore.upsert(msg.chat);
           context.messagesStore.upsertMany(msg.messages);
           break;
 
@@ -889,8 +894,7 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function createChat(name: string, options?: CreateChatOptions) {
-    const id = `ch_${nanoid()}` as ChatId;
+  function createChat(id: string, name: string, options?: CreateChatOptions) {
     return sendClientMsgWithResponse<CreateChatResponse>({
       cmd: "create-chat",
       id,
@@ -900,7 +904,7 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function getMessageTree(chatId: ChatId) {
+  function getMessageTree(chatId: string) {
     return sendClientMsgWithResponse<GetMessageTreeResponse>({
       cmd: "get-message-tree",
       chatId,
@@ -908,7 +912,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function registerChatContext(
-    chatId: ChatId,
+    chatId: string,
     contextKey: string,
     data: CopilotContext
   ) {
@@ -920,7 +924,7 @@ export function createAi(config: AiConfig): Ai {
     }
   }
 
-  function unregisterChatContext(chatId: ChatId, contextKey: string) {
+  function unregisterChatContext(chatId: string, contextKey: string) {
     const chatContext = context.contextByChatId.get(chatId);
     if (chatContext) {
       chatContext.delete(contextKey);
@@ -931,7 +935,7 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function ask(
-    chatId: ChatId,
+    chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
   ): Promise<AskAiResponse> {
@@ -970,12 +974,6 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  // XXX Consider setting this to a randomly generated nanoid upon client
-  // instantiation? This way, the ID will be truly random, but it won't work
-  // across browser reloads and/or in multiple tabs. However, it may also be
-  // a feature.
-  const defaultEphemeralChatId = "ch__lb_default_ephemeral" as ChatId;
-
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -986,11 +984,10 @@ export function createAi(config: AiConfig): Ai {
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
 
-      defaultEphemeralChatId,
       getChats,
       createChat,
 
-      deleteChat: (chatId: ChatId) => {
+      deleteChat: (chatId: string) => {
         return sendClientMsgWithResponse({
           cmd: "delete-chat",
           chatId,
@@ -999,13 +996,13 @@ export function createAi(config: AiConfig): Ai {
 
       getMessageTree,
 
-      deleteMessage: (chatId: ChatId, messageId: MessageId) =>
+      deleteMessage: (chatId: string, messageId: MessageId) =>
         sendClientMsgWithResponse({ cmd: "delete-message", chatId, messageId }),
-      clearChat: (chatId: ChatId) =>
+      clearChat: (chatId: string) =>
         sendClientMsgWithResponse({ cmd: "clear-chat", chatId }),
 
       addUserMessage: (
-        chatId: ChatId,
+        chatId: string,
         parentMessageId: MessageId | null,
         message: string
       ) => {
@@ -1028,7 +1025,7 @@ export function createAi(config: AiConfig): Ai {
       ask,
 
       regenerateMessage: (
-        chatId: ChatId,
+        chatId: string,
         messageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskAiResponse> => {
@@ -1043,7 +1040,7 @@ export function createAi(config: AiConfig): Ai {
       },
 
       addUserMessageAndAsk: async (
-        chatId: ChatId,
+        chatId: string,
         parentMessageId: MessageId | null,
         message: string,
         options?: AskAiOptions
@@ -1121,7 +1118,7 @@ export function createAi(config: AiConfig): Ai {
         chatId: string,
         toolName: string
       ): ClientToolDefinition | undefined => {
-        return context.toolsByChatId.get(chatId as ChatId)?.get(toolName);
+        return context.toolsByChatId.get(chatId)?.get(toolName);
       },
     } satisfies Ai,
     kInternal,

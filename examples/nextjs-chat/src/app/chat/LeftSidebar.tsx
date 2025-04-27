@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatId } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   useClient,
@@ -13,12 +13,12 @@ import { TrashIcon } from "../icons";
 export function LeftSidebar() {
   return (
     <ClientSideSuspense fallback="">
-      <RealLeftSidebar />
+      <ActualLeftSidebar />
     </ClientSideSuspense>
   );
 }
 
-function RealLeftSidebar() {
+function ActualLeftSidebar() {
   const client = useClient();
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useCopilotChats();
@@ -27,7 +27,7 @@ function RealLeftSidebar() {
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
   const router = useRouter();
-  const selectedChatId = useParams<{ chatId?: ChatId }>().chatId;
+  const selectedChatId = useParams<{ chatId?: string }>().chatId;
   return (
     <>
       <button
@@ -35,7 +35,7 @@ function RealLeftSidebar() {
         onClick={async () => {
           const name = prompt("Enter a name:", "My chat");
           if (name !== null) {
-            const res = await client.ai.createChat(name);
+            const res = await client.ai.createChat(nanoid(7), name);
             router.push(`/chat/${res.chat.id}`);
           }
         }}
@@ -47,7 +47,9 @@ function RealLeftSidebar() {
         onClick={async () => {
           const name = prompt("Enter a name:", "My ephemeral chat");
           if (name !== null) {
-            const res = await client.ai.createChat(name, { ephemeral: true });
+            const res = await client.ai.createChat(nanoid(7), name, {
+              ephemeral: true,
+            });
             router.push(`/chat/${res.chat.id}`);
           }
         }}

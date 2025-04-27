@@ -1,4 +1,4 @@
-import type { AiUserMessage, ChatId } from "@liveblocks/core";
+import type { AiUserMessage } from "@liveblocks/core";
 import type { HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -78,7 +78,7 @@ export const UserChatMessage = forwardRef<HTMLDivElement, UserChatMessageProps>(
 );
 
 type UserChatMessageMediaAttachmentProps = HTMLAttributes<HTMLDivElement> & {
-  chatId: ChatId;
+  chatId: string;
   attachment: {
     id: string;
     name: string;

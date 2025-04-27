@@ -1,7 +1,6 @@
 import type {
   AiAssistantContentPart,
   AiAssistantMessage,
-  ChatId,
   MessageId,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
@@ -231,7 +230,7 @@ function RegenerateMessageButton({
   messageId,
   label,
 }: {
-  chatId: ChatId;
+  chatId: string;
   messageId: MessageId;
   label: string;
 }) {
@@ -275,7 +274,7 @@ function AssistantMessageContent({
   chatId,
 }: {
   content: AiAssistantContentPart[];
-  chatId: ChatId;
+  chatId: string;
 }) {
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
   const isReasoning =
@@ -373,7 +372,7 @@ function ToolCallPart({
   name,
   args,
 }: {
-  chatId: ChatId;
+  chatId: string;
   name: string;
   args: any;
 }) {

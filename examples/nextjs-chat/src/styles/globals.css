@@ -64,7 +64,7 @@ main {
 }
 
 .chat-controls {
-  width: 250px;
+  width: 310px;
   background-color: #f9f9f9;
   border-right: 1px solid #eaeaea;
   z-index: 101;
@@ -168,12 +168,12 @@ main {
   padding: 1rem;
   position: fixed;
   bottom: 0;
-  left: 250px;
+  left: 310px;
   right: 0;
   background-color: white;
   z-index: 100;
   border-top: 1px solid #eaeaea;
-  height: 220px;
+  height: 260px;
 }
 
 .composer {

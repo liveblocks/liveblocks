@@ -13,7 +13,7 @@ import {
 import { useParams } from "next/navigation";
 import { useState, Fragment } from "react";
 
-import { ChatId, CopilotId, MessageId } from "@liveblocks/core";
+import { CopilotId, MessageId } from "@liveblocks/core";
 import { useForceRerender } from "../../debugTools";
 
 const PRESETS = [
@@ -62,7 +62,7 @@ function ChatPicker() {
   // The user-selected chat ID. If nothing is explicitly selected (or the
   // selected chat ID isn't a valid one), the selected chat will be the first
   // one in the list.
-  const selectedChatId = useParams<{ chatId: ChatId }>().chatId;
+  const selectedChatId = useParams<{ chatId: string }>().chatId;
   return (
     <div className="chat-app-container">
       <ChatWindow chatId={selectedChatId} />
@@ -70,7 +70,7 @@ function ChatPicker() {
   );
 }
 
-function ChatWindow({ chatId }: { chatId: ChatId }) {
+function ChatWindow({ chatId }: { chatId: string }) {
   const [_, forceRerender] = useForceRerender();
   const client = useClient();
 

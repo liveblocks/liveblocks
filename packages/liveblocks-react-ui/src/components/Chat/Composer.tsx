@@ -1,6 +1,5 @@
 import type {
   AsyncResult,
-  ChatId,
   CopilotId,
   MessageId,
   UiChatMessage,
@@ -71,7 +70,7 @@ export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The id of the chat the composer belongs to.
    */
-  chatId: ChatId;
+  chatId: string;
   /**
    * The id of the copilot to use to send the message.
    */
@@ -424,7 +423,7 @@ function ImageAttachmentPreview({
   id,
   file,
 }: {
-  chatId: ChatId;
+  chatId: string;
   id: string;
   file: File;
 }) {
@@ -488,7 +487,7 @@ export function splitFileName(name: string) {
 }
 
 export function useChatAttachmentUrl(
-  chatId: ChatId,
+  chatId: string,
   attachmentId: string
 ): AsyncResult<string, "url"> {
   const client = useClient();

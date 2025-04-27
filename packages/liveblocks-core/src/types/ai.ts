@@ -7,9 +7,10 @@ import type { Brand } from "../lib/utils";
 export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
 
+type ChatId = string;
+
 // --------------------------------------------------------------
 
-export type ChatId = Brand<`ch_${string}`, "ChatId">;
 export type MessageId = Brand<`ms_${string}`, "MessageId">;
 export type CmdId = Brand<string, "CmdId">;
 export type ClientId = Brand<string, "ClientId">;
@@ -96,7 +97,7 @@ type DeleteChatPair = DefineCmd<
 type GetMessageTreePair = DefineCmd<
   "get-message-tree",
   { chatId: ChatId },
-  { chatId: ChatId; messages: AiChatMessage[] }
+  { chat: AiChat; messages: AiChatMessage[] }
 >;
 
 type AddUserMessagePair = DefineCmd<

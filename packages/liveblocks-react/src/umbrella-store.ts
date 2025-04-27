@@ -2,7 +2,6 @@ import type {
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
-  ChatId,
   Client,
   CommentData,
   CommentReaction,
@@ -909,7 +908,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
     readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
     readonly messagesByChatId: DefaultMap<
-      ChatId,
+      string,
       DefaultMap<MessageId | null, LoadableResource<ChatMessageTreeAsyncResult>>
     >;
   };
@@ -1248,7 +1247,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
     };
 
-    const messagesByChatId = new DefaultMap((chatId: ChatId) => {
+    const messagesByChatId = new DefaultMap((chatId: string) => {
       const resourceΣ = new SinglePageResource(async () => {
         await this.#client.ai.getMessageTree(chatId);
       });

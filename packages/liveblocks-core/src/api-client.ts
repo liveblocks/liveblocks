@@ -54,7 +54,6 @@ import type {
   UserNotificationSettingsPlain,
 } from "./protocol/UserNotificationSettings";
 import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { ChatId } from "./types/ai";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
@@ -258,13 +257,13 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     attachment,
     signal,
   }: {
-    chatId: ChatId;
+    chatId: string;
     attachment: { id: string; file: File };
     signal?: AbortSignal;
   }): Promise<void>;
 
   getOrCreateChatAttachmentUrlsStore(
-    chatId: ChatId
+    chatId: string
   ): BatchStore<string, string>;
   getChatAttachmentUrl(options: { attachmentId: string }): Promise<string>;
 
@@ -1033,7 +1032,7 @@ export function createApiClient<M extends BaseMetadata>({
    * Attachments (Chat level)
    * -----------------------------------------------------------------------------------------------*/
   async function uploadChatAttachment(options: {
-    chatId: ChatId;
+    chatId: string;
     attachment: {
       id: string;
       file: File;
@@ -1152,13 +1151,13 @@ export function createApiClient<M extends BaseMetadata>({
   });
 
   function getOrCreateChatAttachmentUrlsStore(
-    chatId: ChatId
+    chatId: string
   ): BatchStore<string, string> {
     return attachmentUrlsBatchStoresByChat.getOrCreate(chatId);
   }
 
   function getChatAttachmentUrl(options: {
-    chatId: ChatId;
+    chatId: string;
     attachmentId: string;
   }) {
     const batch = getOrCreateChatAttachmentUrlsStore(options.chatId).batch;
