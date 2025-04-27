@@ -26,7 +26,7 @@ export function AddedToDocumentNotification(
   return (
     <InboxNotification.Custom
       {...props}
-      href={DOCUMENT_URL(document.type, document.id)}
+      href={DOCUMENT_URL(document)}
       title={
         <>
           Added to <strong>{document.name}</strong>

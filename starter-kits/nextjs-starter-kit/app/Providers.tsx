@@ -59,9 +59,7 @@ export function Providers({
           });
           return documents.map((document) => ({
             name: document ? document.name : undefined,
-            url: document
-              ? DOCUMENT_URL(document.type, document.id)
-              : undefined,
+            url: document ? DOCUMENT_URL(document) : undefined,
           }));
         }}
       >

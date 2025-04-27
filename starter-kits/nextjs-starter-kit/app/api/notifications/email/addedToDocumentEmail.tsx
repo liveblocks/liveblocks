@@ -38,7 +38,7 @@ export async function addedToDocumentEmail(
     });
   }
 
-  const url = DOCUMENT_URL(roomData.data.type, roomData.data.id);
+  const url = DOCUMENT_URL(roomData.data);
 
   const email = (
     <div>

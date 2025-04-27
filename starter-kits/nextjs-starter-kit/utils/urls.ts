@@ -1,10 +1,9 @@
 import { RoomData } from "@liveblocks/node";
+import { Document } from "@/types";
 
-export function getDocumentUrl(room: RoomData) {
-  const id = room.id;
-  const title = room.metadata.title;
-
-  return `${room.metadata.type}/${title}-${id}`;
+export function getDocumentUrl(document: Document) {
+  const slug = slugify(document.name);
+  return `${document.type}/${slug}-${document.id}`;
 }
 
 export function getDocumentId(idParam: string) {
@@ -19,7 +18,7 @@ export function isDocumentUrlHealed(room: RoomData) {
   return true;
 }
 
-function getSlugFromTitle(title: string) {
+function slugify(title: string) {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "") // only alphanumeric

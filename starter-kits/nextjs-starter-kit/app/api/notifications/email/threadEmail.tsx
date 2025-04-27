@@ -43,7 +43,7 @@ export async function threadEmail(
 
         return {
           name: roomData.data.name,
-          url: DOCUMENT_URL(roomData.data.type, roomData.data.id),
+          url: DOCUMENT_URL(roomData.data),
         };
       },
       components: {

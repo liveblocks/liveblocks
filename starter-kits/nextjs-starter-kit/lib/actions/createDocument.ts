@@ -102,7 +102,7 @@ export async function createDocument(
 
   if (redirectToDocument) {
     // Has to return `undefined`
-    return redirect(DOCUMENT_URL(document.type, document.id));
+    return redirect(DOCUMENT_URL(document.type));
   }
 
   return { data: document };

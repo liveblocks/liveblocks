@@ -64,7 +64,7 @@ export function DocumentRow({
   const [isMoreOpen, setMoreOpen] = useState(false);
 
   const date = new Date(document.lastConnection);
-  const url = DOCUMENT_URL(document.type, document.id);
+  const url = DOCUMENT_URL(document);
 
   const handleDeleteDialogOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
