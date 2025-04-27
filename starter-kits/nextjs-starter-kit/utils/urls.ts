@@ -1,11 +1,12 @@
 import { customAlphabet } from "nanoid";
 import { Document } from "@/types";
 
+const ALPHANUMERIC =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+const ID_LENGTH = 10;
+
 export function generateNewRoomId() {
-  const nanoid = customAlphabet(
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-    10
-  );
+  const nanoid = customAlphabet(ALPHANUMERIC, ID_LENGTH);
   return nanoid();
 }
 
@@ -16,11 +17,11 @@ export function getDocumentUrl(document: Document) {
 
 export function getDocumentIdParam({ name, id }: { name: string; id: string }) {
   const slug = slugify(name);
-  return `${slug}-${id}`;
+  return `${slug}~${id}`;
 }
 
 export function getDocumentId(idParam: string) {
-  return idParam.split("-").pop() || idParam;
+  return idParam.split("~").pop() || idParam;
 }
 
 export function isDocumentUrlHealed(document: Document, idParam: string) {
