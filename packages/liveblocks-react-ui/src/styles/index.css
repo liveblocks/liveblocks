@@ -2343,9 +2343,16 @@
 }
 
 .lb-assistant-chat-message-reasoning-part-trigger {
+  @include truncate;
+
   display: flex;
   gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
+
+  &:where([data-reasoning]) {
+    animation: lb-animation-assistant-chat-message-thinking-shimmer 8s linear
+      infinite;
+  }
 }
 
 .lb-assistant-chat-message-reasoning-part-content {
