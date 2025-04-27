@@ -31,7 +31,7 @@ export function isDocumentUrlHealed(document: Document, idParam: string) {
 function slugify(title: string) {
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "") // only alphanumeric
+    .replace(/[^a-z0-9-\s]/g, "") // only alphanumeric and hyphens
     .replace(/\s+/g, "-") // spaces to hyphens
     .replace(/-+/g, "-") // no duplicate hyphens
     .replace(/^-+|-+$/g, ""); // no leading/trailing hyphens

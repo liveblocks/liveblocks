@@ -1,4 +1,5 @@
 import { getDocument } from "@/lib/actions";
+import { getDocumentId } from "@/utils/urls";
 import { CanvasDocumentView } from "./CanvasDocumentView";
 
 export default async function Canvas(props: {
@@ -7,7 +8,8 @@ export default async function Canvas(props: {
   const params = await props.params;
   const { id } = params;
 
-  const { data = null, error = null } = await getDocument({ documentId: id });
+  const documentId = getDocumentId(id);
+  const { data = null, error = null } = await getDocument({ documentId });
 
   return <CanvasDocumentView initialDocument={data} initialError={error} />;
 }
