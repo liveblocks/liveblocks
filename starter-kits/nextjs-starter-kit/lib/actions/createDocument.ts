@@ -1,7 +1,6 @@
 "use server";
 
 import { RoomAccesses } from "@liveblocks/node";
-import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DOCUMENT_URL } from "@/constants";
@@ -14,6 +13,7 @@ import {
   DocumentType,
   DocumentUser,
 } from "@/types";
+import { generateNewRoomId } from "@/utils/urls";
 
 type Props = {
   name: Document["name"];
@@ -78,7 +78,7 @@ export async function createDocument(
     });
   }
 
-  const roomId = nanoid();
+  const roomId = generateNewRoomId();
 
   let room;
   try {
@@ -102,7 +102,7 @@ export async function createDocument(
 
   if (redirectToDocument) {
     // Has to return `undefined`
-    return redirect(DOCUMENT_URL(document.type));
+    return redirect(DOCUMENT_URL(document));
   }
 
   return { data: document };

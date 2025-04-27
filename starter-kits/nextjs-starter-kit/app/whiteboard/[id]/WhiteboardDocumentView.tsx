@@ -6,6 +6,7 @@ import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
 import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout, DocumentProviders } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
+import { useHealedUrl } from "@/lib/hooks";
 import { Document, ErrorData } from "@/types";
 import { getDocumentId } from "@/utils/urls";
 
@@ -21,6 +22,7 @@ export function WhiteboardDocumentView({
   const { id, error: queryError } = useParams<{ id: string; error: string }>();
   const documentId = getDocumentId(id);
   const [error, setError] = useState<ErrorData | null>(initialError);
+  useHealedUrl(initialDocument);
 
   // If error object in params, retrieve it
   useEffect(() => {

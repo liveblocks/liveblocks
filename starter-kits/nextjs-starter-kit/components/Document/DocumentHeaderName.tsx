@@ -4,6 +4,7 @@ import {
   useSelf,
 } from "@liveblocks/react/suspense";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 import {
   ChangeEvent,
   ComponentProps,
@@ -15,6 +16,7 @@ import { EditIcon } from "@/icons";
 import { getDocument } from "@/lib/actions";
 import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import { Tooltip } from "@/primitives/Tooltip";
+import { getDocumentIdParam } from "@/utils/urls";
 import styles from "./DocumentHeaderName.module.css";
 
 interface Props extends ComponentProps<"div"> {
@@ -28,6 +30,7 @@ export function DocumentHeaderName({
 }: Props) {
   const initialDocument = useInitialDocument();
   const broadcastEvent = useBroadcastEvent();
+  const router = useRouter();
 
   const isReadOnly = useSelf((me) => !me.canWrite);
   const [draftName, setDraftName] = useState(initialDocument.name);
@@ -48,7 +51,12 @@ export function DocumentHeaderName({
 
     // Send event to others, telling them you've updated the name
     broadcastEvent({ type: "DOCUMENT_NAME_UPDATE" });
-  }, [draftName, onDocumentRename, broadcastEvent]);
+    window.history.replaceState(
+      {},
+      "",
+      getDocumentIdParam({ id: initialDocument.id, name: draftName })
+    );
+  }, [draftName, onDocumentRename, broadcastEvent, router, initialDocument]);
 
   const handleNameChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -76,6 +84,7 @@ export function DocumentHeaderName({
       });
       if (!error && data) {
         setDraftName(data.name);
+        window.history.replaceState({}, "", getDocumentIdParam(data));
       }
     }
   });

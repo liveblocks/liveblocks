@@ -1,21 +1,30 @@
-import { RoomData } from "@liveblocks/node";
+import { customAlphabet } from "nanoid";
 import { Document } from "@/types";
 
+export function generateNewRoomId() {
+  const nanoid = customAlphabet(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+    10
+  );
+  return nanoid();
+}
+
 export function getDocumentUrl(document: Document) {
-  const slug = slugify(document.name);
-  return `${document.type}/${slug}-${document.id}`;
+  const idParam = getDocumentIdParam(document);
+  return `/${document.type}/${idParam}`;
+}
+
+export function getDocumentIdParam({ name, id }: { name: string; id: string }) {
+  const slug = slugify(name);
+  return `${slug}-${id}`;
 }
 
 export function getDocumentId(idParam: string) {
   return idParam.split("-").pop() || idParam;
 }
 
-export function isDocumentUrlHealed(room: RoomData) {
-  if (!room.id.includes("-")) {
-    return room.id;
-  }
-
-  return true;
+export function isDocumentUrlHealed(document: Document, idParam: string) {
+  return idParam === getDocumentIdParam(document);
 }
 
 function slugify(title: string) {
