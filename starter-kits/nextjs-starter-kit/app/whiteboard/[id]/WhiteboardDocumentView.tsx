@@ -7,6 +7,7 @@ import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout, DocumentProviders } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { Document, ErrorData } from "@/types";
+import { getDocumentId } from "@/utils/urls";
 
 type Props = {
   initialDocument: Document | null;
@@ -18,6 +19,7 @@ export function WhiteboardDocumentView({
   initialError,
 }: Props) {
   const { id, error: queryError } = useParams<{ id: string; error: string }>();
+  const documentId = getDocumentId(id);
   const [error, setError] = useState<ErrorData | null>(initialError);
 
   // If error object in params, retrieve it
@@ -36,7 +38,7 @@ export function WhiteboardDocumentView({
   }
 
   return (
-    <DocumentProviders roomId={id} initialDocument={initialDocument}>
+    <DocumentProviders roomId={documentId} initialDocument={initialDocument}>
       <DocumentLayout
         header={<DocumentHeader documentId={initialDocument.id} />}
       >
