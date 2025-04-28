@@ -1642,6 +1642,131 @@ await liveblocks.deleteThread({
 });
 ```
 
+#### Liveblocks.subscribeToThread [#post-rooms-roomId-threads-threadId-subscribe]
+
+Subscribes a user to a thread, meaning they will receive inbox notifications
+when new comments are posted. Throws an error if the room or thread isn’t found.
+This is a wrapper around the
+[Subscribe To Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-subscribe)
+and returns the same response.
+
+```ts
+const subscription = await liveblocks.subscribeToThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+
+// { kind: "thread", subjectId: "th_d75sF3...", ... }
+console.log(subscription);
+```
+
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#post-rooms-roomId-users-userId-subscription-settings). This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Disables notifications for all threads
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+await liveblocks.subscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
+#### Liveblocks.unsubscribeFromThread [#post-rooms-roomId-threads-threadId-unsubscribe]
+
+Unsubscribes a user from a thread, meaning they will no longer receive inbox
+notifications when new comments are posted. Throws an error if the room or
+thread isn’t found. This is a wrapper around the
+[Unsubscribe From Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-unsubscribe)
+and returns the same response.
+
+```ts
+await liveblocks.unsubscribeFromThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+```
+
+Unsubscribing will replace any existing subscription for the current thread
+[set at room-level](#post-rooms-roomId-users-userId-subscription-settings). This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Enables notifications for all thread activity
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "all",
+  },
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+await liveblocks.unsubscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 3. Enables notifications for all thread activity, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
+#### Liveblocks.getThreadSubscriptions [#get-rooms-roomId-threads-threadId-subscriptions]
+
+Gets a thread’s subscriptions, returning a list of users that will receive
+notifications when new comments are posted. Throws an error if the room or
+thread isn’t found. This is a wrapper around the
+[Get Thread Subscriptions API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-subscriptions)
+and returns the same response.
+
+```ts
+const { data: subscriptions } = await liveblocks.getThreadSubscriptions({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+});
+
+// [{ kind: "thread", subjectId: "th_d75sF3...", userId: "steven@example.com", ... }, ...]
+console.log(subscriptions);
+```
+
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments]
 
 Creates a new comment in a specific thread within a room. This method allows
@@ -1892,53 +2017,133 @@ await liveblocks.removeCommentReaction({
 });
 ```
 
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.getRoomSubscriptionSettings [#get-rooms-roomId-users-userId-subscription-settings]
 
-Returns a user’s notification settings for a specific room. This is a wrapper
-around the
-[Get Room Notification Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-notification-settings).
+Returns a user’s subscription settings for a specific room, specifying which
+`thread` and `textMention` inbox notifications they are set to receive. This is
+a wrapper around the
+[Get Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-const notificationSettings = await liveblocks.getRoomNotificationSettings({
+const subscriptionSettings = await liveblocks.getRoomSubscriptionSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
 });
 
-// { threads: "all", ... }
-console.log(notificationSettings);
+// { threads: "all", textMentions: "mine" }
+console.log(subscriptionSettings);
 ```
 
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+For `"threads"`, these are the three possible values:
 
-Updates a user’s notification settings for a specific room. This is a wrapper
-around the
-[Update Room Notification Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-notification-settings).
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+  participating in.
+- `"none"` No notifications are received.
+
+For `"textMentions"`, these are the two possible values:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
+#### Liveblocks.updateRoomSubscriptionSettings [#post-rooms-roomId-users-userId-subscription-settings]
+
+Updates a user’s subscription settings for a specific room, defining which
+`thread` and `textMention` inbox notifications they will receive. This is a
+wrapper around the
+[Update Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-const updatedNotificationSettings =
-  await liveblocks.updateRoomNotificationSettings({
+const updatedSubscriptionSettings =
+  await liveblocks.updateRoomSubscriptionSettings({
     roomId: "my-room-id",
     userId: "steven@example.com",
     data: {
       threads: "replies_and_mentions",
+      textMentions: "mine",
     },
   });
 
 // { threads: "replies_and_mentions", ... }
-console.log(updatedNotificationSettings);
+console.log(updatedSubscriptionSettings);
 ```
 
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+For `"threads"`, these are the three possible values that can be set:
 
-Deletes a user’s notification settings for a specific room. This is a wrapper
-around the
-[Delete Room Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-notification-settings).
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+  participating in.
+- `"none"` No notifications are received.
+
+For `"textMentions"`, these are the two possible values that can be set:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
+##### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#post-rooms-roomId-users-userId-subscription-settings)
+in the current room. This value can also be overridden by a room-level call that
+is run afterwards.
 
 ```ts
-await liveblocks.deleteRoomNotificationSettings({
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+await liveblocks.subscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
+#### Liveblocks.deleteRoomSubscriptionSettings [#delete-rooms-roomId-users-userId-subscription-settings]
+
+Deletes a user’s subscription settings for a specific room. This is a wrapper
+around the
+[Delete Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-subscription-settings).
+
+```ts
+await liveblocks.deleteRoomSubscriptionSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
 });
+```
+
+#### Liveblocks.getUserRoomSubscriptionSettings [#get-users-userId-room-subscription-settings]
+
+Returns a list of a user’s subscription settings for all rooms. This is a
+wrapper around the
+[Get User Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-room-subscription-settings).
+
+```ts
+const { data: subscriptionSettings, nextCursor } =
+  await liveblocks.getUserRoomSubscriptionSettings({
+    userId: "steven@example.com",
+  });
+
+console.log(subscriptionSettings);
+
+// { roomId: "my-room-id", threads: "all", ... }
+
+// Pagination
+if (nextCursor) {
+  const { data: nextPage } = await liveblocks.getUserRoomSubscriptionSettings({
+    userId: "steven@example.com",
+    startingAfter: nextCursor,
+  });
+}
 ```
 
 ### Notifications
@@ -2109,10 +2314,9 @@ await liveblocks.deleteAllInboxNotifications({
 
 Returns a user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the user. User notification settings are project-based, which
-means that this returns the user’s settings for every room. This a wrapper
-around the
-[Get User Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
+will be sent for the user. Notification settings are project-based, which means
+that this returns the user’s settings for every room. This a wrapper around the
+[Get Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
 
 ```ts
 const settings = await liveblocks.getNotificationSettings({
@@ -2140,11 +2344,11 @@ console.log(settings);
 
 Updates a user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the user. User notification settings are project-based, which means
-that this modifies the user’s settings in every room. Each notification `kind`
-must first be enabled on your project’s notification dashboard page before
-settings can be used. This a wrapper around the
-[Update User Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
+sent for the user. Notification settings are project-based, which means that
+this modifies the user’s settings in every room. Each notification `kind` must
+first be enabled on your project’s notification dashboard page before settings
+can be used. This a wrapper around the
+[Update Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
 
 ```ts
 const updatedSettings = await liveblocks.updateNotificationSettings({
@@ -2197,7 +2401,7 @@ await liveblocks.updateNotificationSettings({
 Deletes the user’s notification settings, resetting them to the default values.
 The default values can be adjusted in a project’s notification dashboard page.
 This a wrapper around the
-[Delete User Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
+[Delete Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
 
 ```ts
 await liveblocks.deleteNotificationSettings({
@@ -2392,7 +2596,7 @@ const stringComment = await stringifyCommentBody(comment.body, {
 
 <Banner title="Also available from @liveblocks/client">
 
-If you’d like to use this on the client side, it's also available from
+If you’d like to use this on the client side, it’s also available from
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client#stringify-comment-body).
 
 </Banner>
@@ -2610,6 +2814,24 @@ Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you’re
 using the `authorize` function in your back end, and adopt
 [`Liveblocks.prepareSession`](#access-tokens) or
 [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
+
+#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+
+This method was renamed to
+[`Liveblocks.getRoomSubscriptionSettings`](#get-rooms-roomId-users-userId-subscription-settings)
+in 2.24, read more in our [migration guide](/docs/platform/upgrading/2.24).
+
+#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+
+This method was renamed to
+[`Liveblocks.updateRoomSubscriptionSettings`](#post-rooms-roomId-users-userId-subscription-settings)
+in 2.24, read more in our [migration guide](/docs/platform/upgrading/2.24).
+
+#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+
+This method was renamed to
+[`Liveblocks.deleteRoomSubscriptionSettings`](#delete-rooms-roomId-users-userId-subscription-settings)
+in 2.24, read more in our [migration guide](/docs/platform/upgrading/2.24).
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [Permissions REST API]: /docs/authentication/id-token
