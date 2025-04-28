@@ -8,6 +8,8 @@ export {
   ArrowDownIcon as ArrowDown,
   ArrowUpIcon as ArrowUp,
   AttachmentIcon as Attachment,
+  BellIcon as Bell,
+  BellCrossedIcon as BellCrossed,
   BlockquoteIcon as Blockquote,
   BoldIcon as Bold,
   CheckIcon as Check,

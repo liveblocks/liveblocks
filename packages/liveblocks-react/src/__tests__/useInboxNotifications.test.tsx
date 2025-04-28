@@ -13,7 +13,11 @@ import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
@@ -43,6 +47,9 @@ describe("useInboxNotifications", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -50,6 +57,7 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -93,6 +101,9 @@ describe("useInboxNotifications", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -100,6 +111,7 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -112,8 +124,10 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },
@@ -161,6 +175,9 @@ describe("useInboxNotifications", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -168,6 +185,7 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -185,6 +203,7 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -270,6 +289,7 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
+            subscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -429,6 +449,9 @@ describe("useInboxNotifications - Suspense", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -436,6 +459,7 @@ describe("useInboxNotifications - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -448,8 +472,10 @@ describe("useInboxNotifications - Suspense", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },
@@ -512,6 +538,9 @@ describe("useInboxNotifications: polling", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     let initialCount = 0;
     let pollerCount = 0;
@@ -523,6 +552,7 @@ describe("useInboxNotifications: polling", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -536,8 +566,10 @@ describe("useInboxNotifications: polling", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },
@@ -592,6 +624,9 @@ describe("useInboxNotifications: polling", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     let hasCalledGetNotifications = false;
     let pollerCount = 0;
@@ -603,6 +638,7 @@ describe("useInboxNotifications: polling", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -616,8 +652,10 @@ describe("useInboxNotifications: polling", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },
@@ -680,6 +718,9 @@ describe("useInboxNotifications: polling", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     let hasCalledGetNotifications = false;
     let pollerCount = 0;
@@ -691,6 +732,7 @@ describe("useInboxNotifications: polling", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -704,8 +746,10 @@ describe("useInboxNotifications: polling", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },
@@ -835,6 +879,9 @@ describe("useInboxNotificationsSuspense: error", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     let n = 0;
     server.use(
@@ -850,6 +897,7 @@ describe("useInboxNotificationsSuspense: error", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -915,7 +963,6 @@ describe("useInboxNotifications: pagination", () => {
         notifiedAt: new Date("2021-01-03"),
       }),
     ];
-
     const inboxNotificationsPage2 = [
       dummyThreadInboxNotificationData({
         roomId,
@@ -923,13 +970,22 @@ describe("useInboxNotifications: pagination", () => {
         notifiedAt: new Date("2021-01-02"),
       }),
     ];
-
     const inboxNotificationsPage3 = [
       dummyThreadInboxNotificationData({
         roomId,
         threadId: thread3.id,
         notifiedAt: new Date("2021-01-01"),
       }),
+    ];
+
+    const subscriptionsPage1 = [
+      dummySubscriptionData({ subjectId: thread1.id }),
+    ];
+    const subscriptionsPage2 = [
+      dummySubscriptionData({ subjectId: thread2.id }),
+    ];
+    const subscriptionsPage3 = [
+      dummySubscriptionData({ subjectId: thread3.id }),
     ];
 
     let isPage1Requested = false;
@@ -948,6 +1004,7 @@ describe("useInboxNotifications: pagination", () => {
             ctx.json({
               threads: [thread2],
               inboxNotifications: inboxNotificationsPage2,
+              subscriptions: subscriptionsPage2,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
@@ -962,6 +1019,7 @@ describe("useInboxNotifications: pagination", () => {
             ctx.json({
               threads: [thread3],
               inboxNotifications: inboxNotificationsPage3,
+              subscriptions: subscriptionsPage3,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
@@ -976,6 +1034,7 @@ describe("useInboxNotifications: pagination", () => {
             ctx.json({
               threads: [thread1],
               inboxNotifications: inboxNotificationsPage1,
+              subscriptions: subscriptionsPage1,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -989,8 +1048,10 @@ describe("useInboxNotifications: pagination", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },
@@ -1087,13 +1148,19 @@ describe("useInboxNotifications: pagination", () => {
         notifiedAt: new Date("2021-01-02T00:01:00Z"),
       }),
     ];
-
     const inboxNotificationsPageTwo = [
       dummyThreadInboxNotificationData({
         roomId,
         threadId: threadTwo.id,
         notifiedAt: new Date("2021-01-01T00:01:00Z"),
       }),
+    ];
+
+    const subscriptionsPageOne = [
+      dummySubscriptionData({ subjectId: threadOne.id }),
+    ];
+    const subscriptionsPageTwo = [
+      dummySubscriptionData({ subjectId: threadTwo.id }),
     ];
 
     let isPageTwoRequested = false;
@@ -1112,6 +1179,7 @@ describe("useInboxNotifications: pagination", () => {
             ctx.json({
               threads: [threadTwo],
               inboxNotifications: inboxNotificationsPageTwo,
+              subscriptions: subscriptionsPageTwo,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
@@ -1125,6 +1193,7 @@ describe("useInboxNotifications: pagination", () => {
             ctx.json({
               threads: [threadOne],
               inboxNotifications: inboxNotificationsPageOne,
+              subscriptions: subscriptionsPageOne,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -1197,6 +1266,10 @@ describe("useInboxNotifications: pagination", () => {
       }),
     ];
 
+    const subscriptionsPageOne = [
+      dummySubscriptionData({ subjectId: threadOne.id }),
+    ];
+
     server.use(
       mockGetInboxNotifications(async (req, res, ctx) => {
         const url = new URL(req.url);
@@ -1208,6 +1281,7 @@ describe("useInboxNotifications: pagination", () => {
             ctx.json({
               threads: [threadOne],
               inboxNotifications: inboxNotificationsPageOne,
+              subscriptions: subscriptionsPageOne,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",

@@ -1,6 +1,6 @@
 import type {
   BaseMetadata,
-  UserNotificationSettings,
+  NotificationSettings,
   Json,
   Lson,
 } from "@liveblocks/client";
@@ -211,7 +211,24 @@ import { expectAssignable, expectError, expectType } from "tsd";
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
-      | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "CREATE_THREAD_ERROR"
+      | "DELETE_THREAD_ERROR"
+      | "EDIT_THREAD_METADATA_ERROR"
+      | "MARK_THREAD_AS_RESOLVED_ERROR"
+      | "MARK_THREAD_AS_UNRESOLVED_ERROR"
+      | "SUBSCRIBE_TO_THREAD_ERROR"
+      | "UNSUBSCRIBE_FROM_THREAD_ERROR"
+      | "CREATE_COMMENT_ERROR"
+      | "EDIT_COMMENT_ERROR"
+      | "DELETE_COMMENT_ERROR"
+      | "ADD_REACTION_ERROR"
+      | "REMOVE_REACTION_ERROR"
+      | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
+      | "DELETE_INBOX_NOTIFICATION_ERROR"
+      | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
+      | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
+      | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -235,7 +252,24 @@ import { expectAssignable, expectError, expectType } from "tsd";
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
-      | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+      | "CREATE_THREAD_ERROR"
+      | "DELETE_THREAD_ERROR"
+      | "EDIT_THREAD_METADATA_ERROR"
+      | "MARK_THREAD_AS_RESOLVED_ERROR"
+      | "MARK_THREAD_AS_UNRESOLVED_ERROR"
+      | "SUBSCRIBE_TO_THREAD_ERROR"
+      | "UNSUBSCRIBE_FROM_THREAD_ERROR"
+      | "CREATE_COMMENT_ERROR"
+      | "EDIT_COMMENT_ERROR"
+      | "DELETE_COMMENT_ERROR"
+      | "ADD_REACTION_ERROR"
+      | "REMOVE_REACTION_ERROR"
+      | "MARK_INBOX_NOTIFICATION_AS_READ_ERROR"
+      | "DELETE_INBOX_NOTIFICATION_ERROR"
+      | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
+      | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
+      | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
@@ -906,7 +940,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
     classic.useNotificationSettings();
   expectType<boolean>(isLoading);
   expectType<Error | undefined>(error);
-  expectType<UserNotificationSettings | undefined>(settings);
+  expectType<NotificationSettings | undefined>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // the useNotificationSettings() hook suspense
@@ -915,7 +949,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
     suspense.useNotificationSettings();
   expectType<false>(isLoading);
   expectType<undefined>(error);
-  expectType<UserNotificationSettings>(settings);
+  expectType<NotificationSettings>(settings);
   expectType<void>(update({})); // empty {} because of partial definition
 }
 // ---------------------------------------------------------

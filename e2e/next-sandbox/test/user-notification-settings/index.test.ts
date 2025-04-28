@@ -4,12 +4,12 @@ import { expect, test } from "@playwright/test";
 import { genRoomId, getJson, preparePage, waitForJson } from "../utils";
 
 const SLOW = { timeout: 20_000 };
-const TEST_URL = "http://localhost:3007/user-notification-settings";
+const TEST_URL = "http://localhost:3007/notification-settings";
 
 // eslint-disable-next-line @typescript-eslint/unbound-method
 const skipOnCI = process.env.CI ? test.skip : test;
 
-test.describe("User notification settings", () => {
+test.describe("Notification settings", () => {
   const user1 = 13; // Aurélien
 
   let page: Page;
@@ -25,7 +25,7 @@ test.describe("User notification settings", () => {
 
   // skipping on CI because of waiting on the backend to be deliver
   // on `main` branch on `dev`
-  skipOnCI("update user notification settings", async () => {
+  skipOnCI("update notification settings", async () => {
     // wait until page is loaded
     await waitForJson(page, "#name", "Aurélien D. D.", SLOW);
     await waitForJson(page, "#isLoading", false, SLOW);

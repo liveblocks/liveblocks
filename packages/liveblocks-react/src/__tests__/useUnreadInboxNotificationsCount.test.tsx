@@ -5,7 +5,11 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
   mockGetInboxNotifications,
@@ -38,6 +42,10 @@ describe("useUnreadInboxNotificationsCount", () => {
       readAt: null,
     });
     const inboxNotifications = [inboxNotification];
+    const subscription = dummySubscriptionData({
+      subjectId: threads[0]!.id,
+    });
+    const subscriptions = [subscription];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -45,6 +53,7 @@ describe("useUnreadInboxNotificationsCount", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -92,6 +101,10 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
       readAt: null,
     });
     const inboxNotifications = [inboxNotification];
+    const subscription = dummySubscriptionData({
+      subjectId: threads[0]!.id,
+    });
+    const subscriptions = [subscription];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -99,6 +112,7 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -111,8 +125,10 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
             },

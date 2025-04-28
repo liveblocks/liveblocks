@@ -34,8 +34,10 @@ describe("useEditThreadMetadata", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -111,8 +113,10 @@ describe("useEditThreadMetadata", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

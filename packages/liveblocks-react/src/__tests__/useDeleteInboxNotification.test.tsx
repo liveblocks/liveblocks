@@ -4,6 +4,7 @@ import { setupServer } from "msw/node";
 
 import {
   dummyCommentData,
+  dummySubscriptionData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
 } from "./_dummies";
@@ -42,6 +43,13 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification1, notification2];
+    const subscription1 = dummySubscriptionData({
+      subjectId: thread1.id,
+    });
+    const subscription2 = dummySubscriptionData({
+      subjectId: thread2.id,
+    });
+    const subscriptions = [subscription1, subscription2];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -50,6 +58,7 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -119,6 +128,13 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification1, notification2];
+    const subscription1 = dummySubscriptionData({
+      subjectId: thread1.id,
+    });
+    const subscription2 = dummySubscriptionData({
+      subjectId: thread2.id,
+    });
+    const subscriptions = [subscription1, subscription2];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -127,6 +143,7 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -204,6 +221,13 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification1, notification2];
+    const subscription1 = dummySubscriptionData({
+      subjectId: thread1.id,
+    });
+    const subscription2 = dummySubscriptionData({
+      subjectId: thread2.id,
+    });
+    const subscriptions = [subscription1, subscription2];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -212,6 +236,7 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -292,6 +317,13 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification1, notification2];
+    const subscription1 = dummySubscriptionData({
+      subjectId: thread1.id,
+    });
+    const subscription2 = dummySubscriptionData({
+      subjectId: thread2.id,
+    });
+    const subscriptions = [subscription1, subscription2];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -300,6 +332,7 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -386,6 +419,10 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification];
+    const subscription = dummySubscriptionData({
+      subjectId: thread.id,
+    });
+    const subscriptions = [subscription];
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -394,6 +431,7 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
