@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-ui",
-  "version": "2.23.2",
+  "version": "2.24.0",
   "description": "A set of React pre-built components for the Liveblocks products. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
