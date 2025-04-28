@@ -875,7 +875,7 @@ export type Room<
    * @example
    * await room.subscribeToThread("th_xxx");
    */
-  subscribeToThread(threadId: string): Promise<void>;
+  subscribeToThread(threadId: string): Promise<SubscriptionData>;
 
   /**
    * Unsubscribes the user from a thread.
@@ -3135,7 +3135,7 @@ export function createRoom<
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks
         for (const source of Object.values(eventsExceptDestroy)) {
-          source[Symbol.dispose]();
+          source.dispose();
         }
         eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
@@ -3145,7 +3145,7 @@ export function createRoom<
         managedSocket.destroy();
 
         // cleanup will destroy listener
-        roomWillDestroy[Symbol.dispose]();
+        roomWillDestroy.dispose();
       },
 
       // Presence

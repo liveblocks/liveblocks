@@ -38,10 +38,15 @@ import type {
   RoomSubscriptionSettings,
   SerializedCrdt,
   StorageUpdate,
+  SubscriptionData,
+  SubscriptionDataPlain,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
   URLSafeString,
+  UserRoomSubscriptionSettings,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
 } from "@liveblocks/core";
 import {
   checkBounds,
@@ -49,9 +54,12 @@ import {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
+  convertToUserSubscriptionData,
   createManagedPool,
   createNotificationSettings,
+  isPlainObject,
   LiveObject,
   makeAbortController,
   objectToQuery,
@@ -944,11 +952,14 @@ export class Liveblocks {
 
     // Read the first element from the NDJson stream and interpret it as the response data
     const iter = stream[Symbol.asyncIterator]();
-    const { actor } = (await iter.next()) as unknown as { actor: number };
+    const first = (await iter.next()).value;
+    if (!isPlainObject(first) || typeof first.actor !== "number") {
+      throw new Error("Failed to obtain a unique session");
+    }
 
     // The rest of the stream are all the Storage nodes
     const nodes = (await asyncConsume(iter)) as IdTuple<SerializedCrdt>[];
-    return { actor, nodes };
+    return { actor: first.actor, nodes };
   }
 
   /**
@@ -1385,6 +1396,39 @@ export class Liveblocks {
   }
 
   /**
+   * Gets a thread's subscriptions.
+   *
+   * @param params.roomId The room ID to get the thread subscriptions from.
+   * @param params.threadId The thread ID to get the subscriptions from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns An array of subscriptions.
+   */
+  public async getThreadSubscriptions(
+    params: { roomId: string; threadId: string },
+    options?: RequestOptions
+  ): Promise<{ data: UserSubscriptionData[] }> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#get(
+      url`/v2/rooms/${roomId}/threads/${threadId}/subscriptions`,
+      undefined,
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const { data } = (await res.json()) as {
+      data: UserSubscriptionDataPlain[];
+    };
+
+    return {
+      data: data.map(convertToUserSubscriptionData),
+    };
+  }
+
+  /**
    * Gets a thread's comment.
    *
    * @param params.roomId The room ID to get the comment from.
@@ -1610,6 +1654,59 @@ export class Liveblocks {
     }
 
     return convertToThreadData((await res.json()) as ThreadDataPlain<M>);
+  }
+
+  /**
+   * Subscribes a user to a thread.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to subscribe to.
+   * @param params.data.userId The user ID of the user to subscribe to the thread.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The thread subscription.
+   */
+  public async subscribeToThread(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<SubscriptionData> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/subscribe`,
+      { userId: params.data.userId },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return convertToSubscriptionData(
+      (await res.json()) as SubscriptionDataPlain
+    );
+  }
+
+  /**
+   * Unsubscribes a user from a thread.
+   * @param params.roomId The room ID of the thread.
+   * @param params.threadId The thread ID to unsubscribe from.
+   * @param params.data.userId The user ID of the user to unsubscribe from the thread.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async unsubscribeFromThread(
+    params: { roomId: string; threadId: string; data: { userId: string } },
+    options?: RequestOptions
+  ): Promise<void> {
+    const { roomId, threadId } = params;
+
+    const res = await this.#post(
+      url`/v2/rooms/${roomId}/threads/${threadId}/unsubscribe`,
+      { userId: params.data.userId },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
   }
 
   /**
@@ -1845,6 +1942,34 @@ export class Liveblocks {
     options?: RequestOptions
   ): Promise<RoomSubscriptionSettings> {
     return this.getRoomSubscriptionSettings(params, options);
+  }
+
+  /**
+   * Returns all room subscription settings for a user.
+   * @param params.userId The user ID to get the room subscription settings from.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param params.limit (optional) The number of items to return.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getUserRoomSubscriptionSettings(
+    params: { userId: string } & PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<UserRoomSubscriptionSettings>> {
+    const { userId, startingAfter, limit } = params;
+
+    const res = await this.#get(
+      url`/v2/users/${userId}/room-subscription-settings`,
+      {
+        startingAfter,
+        limit,
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    return (await res.json()) as Page<UserRoomSubscriptionSettings>;
   }
 
   /**

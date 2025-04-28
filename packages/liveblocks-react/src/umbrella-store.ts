@@ -42,6 +42,7 @@ import {
   nn,
   patchNotificationSettings,
   shallow,
+  shallow2,
   Signal,
   stableStringify,
 } from "@liveblocks/core";
@@ -49,7 +50,6 @@ import {
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
 import { find } from "./lib/itertools";
-import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -1407,7 +1407,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Creates a existing subscription, replacing the corresponding
+   * Creates an existing subscription, replacing the corresponding
    * optimistic update.
    */
   public createSubscription(
@@ -2018,66 +2018,66 @@ function applyOptimisticUpdates_forSubscriptions(
   const subscriptions = Object.fromEntries(subscriptionsLUT);
 
   for (const update of optimisticUpdates) {
-    // TODO: For "create-comment"/"create-thread", we could apply the update optimistically but we need the room subscription settings
-    // to know if the user has disabled thread notifications. Currently, we only have the room subscription settings locally if the user
-    // uses `useRoomSubscriptionSettings`.
+    switch (update.type) {
+      case "update-room-subscription-settings": {
+        // Other room subscription settings don't affect optimistic updates at the moment
+        if (!update.settings.threads) {
+          continue;
+        }
 
-    if (update.type === "update-room-subscription-settings") {
-      if (update.settings.threads) {
         const roomThreads = threads.findMany(update.roomId, undefined, "desc");
 
         for (const thread of roomThreads) {
           const subscriptionKey = getSubscriptionKey("thread", thread.id);
 
-          if (update.settings.threads === "all") {
+          switch (update.settings.threads) {
             // Create subscriptions for all existing threads in the room
-            subscriptions[subscriptionKey] = {
-              kind: "thread",
-              subjectId: thread.id,
-              createdAt: new Date(),
-            };
-          } else if (update.settings.threads === "none") {
-            // Delete subscriptions for all existing threads in the room
-            delete subscriptions[subscriptionKey];
-          } else if (update.settings.threads === "replies_and_mentions") {
-            let isParticipant = false;
-
-            for (const comment of thread.comments) {
-              if (comment.deletedAt) {
-                continue;
-              }
-
-              if (comment.userId === update.userId) {
-                isParticipant = true;
-
-                break;
-              }
-
-              const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
-
-              if (mentionedIds.includes(update.userId)) {
-                isParticipant = true;
-
-                break;
-              }
-            }
-
-            // Create subscriptions for every threads in the room which the user participates in but doesn't have a subscription for yet
-            if (isParticipant && !subscriptions[subscriptionKey]) {
+            case "all": {
               subscriptions[subscriptionKey] = {
                 kind: "thread",
                 subjectId: thread.id,
                 createdAt: new Date(),
               };
+              break;
             }
-          } else {
-            assertNever(
-              update.settings.threads,
-              "Unexpected room subscription settings."
-            );
+
+            // Delete subscriptions for all existing threads in the room
+            case "none": {
+              delete subscriptions[subscriptionKey];
+              break;
+            }
+
+            // Create subscriptions for every threads in the room which the user participates in but doesn't have a subscription for yet
+            case "replies_and_mentions": {
+              if (
+                isThreadParticipant(thread, update.userId) &&
+                !subscriptions[subscriptionKey]
+              ) {
+                subscriptions[subscriptionKey] = {
+                  kind: "thread",
+                  subjectId: thread.id,
+                  createdAt: new Date(),
+                };
+              }
+              break;
+            }
+
+            default:
+              assertNever(
+                update.settings.threads,
+                "Unexpected thread subscription settings."
+              );
           }
         }
       }
+
+      // TODO: We can't do the following pseudo-code yet because we don't have the room subscription settings
+      // in the umbrella store when `useRoomSubscriptionSettings` isn't used.
+      //
+      // case "create-thread":
+      // case "create-comment":
+      //  // Create a subscription (if it doesn't exist yet) for the thread optimistically, unless the `"thread"`
+      //  // room subscription settings for the user and the thread's room are set to `"none"`.
     }
   }
 
@@ -2396,4 +2396,38 @@ function upsertReaction(
   }
 
   return reactions;
+}
+
+/**
+ * Returns whether a user is a thread participant:
+ * - If the user commented in the thread
+ * - If the user was mentioned in the thread
+ */
+function isThreadParticipant<M extends BaseMetadata>(
+  thread: ThreadData<M>,
+  userId: string
+) {
+  let isParticipant = false;
+
+  for (const comment of thread.comments) {
+    if (comment.deletedAt) {
+      continue;
+    }
+
+    if (comment.userId === userId) {
+      isParticipant = true;
+
+      break;
+    }
+
+    const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+
+    if (mentionedIds.includes(userId)) {
+      isParticipant = true;
+
+      break;
+    }
+  }
+
+  return isParticipant;
 }

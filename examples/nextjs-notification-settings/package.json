@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks-examples/nextjs-notification-settings",
-  "description": "This example shows how to build a user notification settings experience.",
+  "description": "This example shows how to build a notification settings experience.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
