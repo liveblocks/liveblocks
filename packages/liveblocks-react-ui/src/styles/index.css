@@ -2371,6 +2371,19 @@
   align-items: center;
 }
 
+.lb-chat-messages {
+  scroll-behavior: smooth;
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
+}
+
+.lb-chat-messages-user-message {
+  max-inline-size: 80%;
+  margin-inline-start: auto;
+}
+
 /*************************************
  *            Animations             *
  *************************************/

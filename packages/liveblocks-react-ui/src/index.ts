@@ -9,6 +9,10 @@ export {
   type AssistantChatMessageProps,
 } from "./components/Chat/AssistantMessage";
 export {
+  ChatMessages,
+  type ChatMessagesProps,
+} from "./components/Chat/ChatMessages";
+export {
   Composer as ChatComposer,
   type ComposerProps as ChatComposerProps,
 } from "./components/Chat/Composer";

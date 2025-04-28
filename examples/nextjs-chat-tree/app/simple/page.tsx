@@ -50,7 +50,7 @@ function App() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="flex flex-col flex-1 overflow-y-auto gap-6 p-4">
+      <div className="flex flex-col flex-1 overflow-y-auto gap-6 p-10">
         {messages.map((message) => {
           if (message.role === "user") {
             return (
