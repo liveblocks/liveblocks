@@ -69,6 +69,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
+import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
@@ -81,6 +82,10 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  SubscriptionData,
+  SubscriptionDeleteInfo,
+} from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import { ManagedOthers } from "./refs/ManagedOthers";
 import type * as DevTools from "./types/DevToolsTreeNode";
@@ -98,7 +103,6 @@ import type {
   TextEditorType,
 } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -485,7 +489,7 @@ type ListTextVersionsSinceOptions = {
   signal?: AbortSignal;
 };
 
-type GetNotificationSettingsOptions = {
+type GetSubscriptionSettingsOptions = {
   signal?: AbortSignal;
 };
 
@@ -760,19 +764,21 @@ export type Room<
    * const {
    *   threads,
    *   inboxNotifications,
+   *   subscriptions,
    *   requestedAt
    * } = await room.getThreads({ query: { resolved: false }});
    */
   getThreads(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
     permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
-   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
+   * Returns the updated and deleted threads and their associated inbox notifications and subscriptions since the requested date.
    *
    * @example
    * const result = await room.getThreads();
@@ -788,19 +794,24 @@ export type Room<
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
     };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
+    };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
-   * Returns a thread and the associated inbox notification if it exists.
+   * Returns a thread and the associated inbox notification and subscription if it exists.
    *
    * @example
-   * const { thread, inboxNotification } = await room.getThread("th_xxx");
+   * const { thread, inboxNotification, subscription } = await room.getThread("th_xxx");
    */
   getThread(threadId: string): Promise<{
     thread?: ThreadData<M>;
     inboxNotification?: InboxNotificationData;
+    subscription?: SubscriptionData;
   }>;
 
   /**
@@ -857,6 +868,22 @@ export type Room<
    * await room.markThreadAsUnresolved("th_xxx");
    */
   markThreadAsUnresolved(threadId: string): Promise<void>;
+
+  /**
+   * Subscribes the user to a thread.
+   *
+   * @example
+   * await room.subscribeToThread("th_xxx");
+   */
+  subscribeToThread(threadId: string): Promise<SubscriptionData>;
+
+  /**
+   * Unsubscribes the user from a thread.
+   *
+   * @example
+   * await room.unsubscribeFromThread("th_xxx");
+   */
+  unsubscribeFromThread(threadId: string): Promise<void>;
 
   /**
    * Creates a comment.
@@ -965,26 +992,46 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
-   * Gets the user's notification settings for the current room.
+   * @deprecated Renamed to `getSubscriptionSettings`
    *
-   * @example
-   * const settings = await room.getNotificationSettings();
+   * Gets the user's subscription settings for the current room.
    */
   getNotificationSettings(
-    options?: GetNotificationSettingsOptions
-  ): Promise<RoomNotificationSettings>;
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings>;
 
   /**
-   * Updates the user's notification settings for the current room.
+   * Gets the user's subscription settings for the current room.
    *
    * @example
-   * await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+   * const settings = await room.getSubscriptionSettings();
    */
-  updateNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings>;
+  getSubscriptionSettings(
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings>;
 
   /**
+   * @deprecated Renamed to `getSubscriptionSettings`
+   *
+   * Updates the user's subscription settings for the current room.
+   */
+  updateNotificationSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * Updates the user's subscription settings for the current room.
+   *
+   * @example
+   * await room.updateSubscriptionSettings({ threads: "replies_and_mentions" });
+   */
+  updateSubscriptionSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * @private
+   *
    * Internal use only. Signature might change in the future.
    */
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
@@ -2882,6 +2929,14 @@ export function createRoom<
     });
   }
 
+  async function subscribeToThread(threadId: string) {
+    return httpClient.subscribeToThread({ roomId, threadId });
+  }
+
+  async function unsubscribeFromThread(threadId: string) {
+    return httpClient.unsubscribeFromThread({ roomId, threadId });
+  }
+
   async function createComment(options: {
     threadId: string;
     commentId?: string;
@@ -2979,19 +3034,19 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
-  function getNotificationSettings(
-    options?: GetNotificationSettingsOptions
-  ): Promise<RoomNotificationSettings> {
-    return httpClient.getNotificationSettings({
+  function getSubscriptionSettings(
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings> {
+    return httpClient.getSubscriptionSettings({
       roomId,
       signal: options?.signal,
     });
   }
 
-  function updateNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings> {
-    return httpClient.updateNotificationSettings({ roomId, settings });
+  function updateSubscriptionSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings> {
+    return httpClient.updateSubscriptionSettings({ roomId, settings });
   }
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
@@ -3080,7 +3135,7 @@ export function createRoom<
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks
         for (const source of Object.values(eventsExceptDestroy)) {
-          source[Symbol.dispose]();
+          source.dispose();
         }
         eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
@@ -3090,7 +3145,7 @@ export function createRoom<
         managedSocket.destroy();
 
         // cleanup will destroy listener
-        roomWillDestroy[Symbol.dispose]();
+        roomWillDestroy.dispose();
       },
 
       // Presence
@@ -3139,6 +3194,8 @@ export function createRoom<
       editThreadMetadata,
       markThreadAsResolved,
       markThreadAsUnresolved,
+      subscribeToThread,
+      unsubscribeFromThread,
       createComment,
       editComment,
       deleteComment,
@@ -3149,8 +3206,10 @@ export function createRoom<
       getAttachmentUrl,
 
       // Notifications
-      getNotificationSettings,
-      updateNotificationSettings,
+      getNotificationSettings: getSubscriptionSettings,
+      getSubscriptionSettings,
+      updateNotificationSettings: updateSubscriptionSettings,
+      updateSubscriptionSettings,
       markInboxNotificationAsRead,
     },
 

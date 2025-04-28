@@ -140,6 +140,7 @@ export function DocumentsList({
               { value: "text", title: "Text" },
               { value: "whiteboard", title: "Whiteboard" },
               { value: "canvas", title: "Canvas" },
+              { value: "note", title: "Note" },
             ]}
             onChange={(value: "all" | DocumentType) => {
               setDocumentType(value);

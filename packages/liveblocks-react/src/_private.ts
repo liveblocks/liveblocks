@@ -22,6 +22,7 @@ export {
   useResolveMentionSuggestions,
   useRoomAttachmentUrl,
   useRoomPermissions,
+  useRoomThreadSubscription,
   useYjsProvider,
 } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";

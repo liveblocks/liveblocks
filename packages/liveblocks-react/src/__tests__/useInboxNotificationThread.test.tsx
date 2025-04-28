@@ -7,6 +7,7 @@ import { setupServer } from "msw/node";
 
 import {
   dummyCustomInboxNoficationData,
+  dummySubscriptionData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
 } from "./_dummies";
@@ -45,6 +46,7 @@ describe("useInboxNotificationThread", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -119,6 +121,7 @@ describe("useInboxNotificationThread", () => {
           ctx.json({
             threads: [], // NOTE! Not setting the thread ID, making it a broken reference from the inbox notification
             inboxNotifications,
+            subscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -214,6 +217,8 @@ describe("useInboxNotificationThread", () => {
       roomId,
       threadId: thread1.id,
     });
+    const subscription1 = dummySubscriptionData({ subjectId: thread1.id });
+    const subscriptions = [subscription1];
     const customInboxNotification = dummyCustomInboxNoficationData();
     const inboxNotifications = [inboxNotification, customInboxNotification];
 
@@ -223,6 +228,7 @@ describe("useInboxNotificationThread", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

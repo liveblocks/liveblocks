@@ -54,7 +54,9 @@ export {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
+  convertToUserSubscriptionData,
 } from "./convert-plain-data";
 export type {
   CreateManagedPoolOptions,
@@ -120,6 +122,7 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export { Deque } from "./lib/Deque";
 export type {
   EventSource,
   Observable,
@@ -139,7 +142,7 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Relax } from "./lib/Relax";
 export type { Resolve } from "./lib/Resolve";
-export { shallow } from "./lib/shallow";
+export { shallow, shallow2 } from "./lib/shallow";
 export type { ISignal, SignalType } from "./lib/signals";
 export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
@@ -221,6 +224,20 @@ export type {
 } from "./protocol/InboxNotifications";
 export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
+  NotificationSettings,
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/NotificationSettings";
+export {
+  createNotificationSettings,
+  isNotificationChannelEnabled,
+  patchNotificationSettings,
+} from "./protocol/NotificationSettings";
+export type {
   AckOp,
   CreateListOp,
   CreateMapOp,
@@ -234,6 +251,11 @@ export type {
   UpdateObjectOp,
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
+export type {
+  RoomNotificationSettings,
+  RoomSubscriptionSettings,
+  UserRoomSubscriptionSettings,
+} from "./protocol/RoomSubscriptionSettings";
 export type {
   IdTuple,
   SerializedChild,
@@ -261,18 +283,15 @@ export type {
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
-  NotificationChannel,
-  NotificationChannelSettings,
-  NotificationKind,
-  PartialUserNotificationSettings,
-  UserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
-export {
-  createUserNotificationSettings,
-  isNotificationChannelEnabled,
-  patchUserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+  SubscriptionKey,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
+} from "./protocol/Subscriptions";
+export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,
@@ -315,7 +334,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { User } from "./types/User";
 export { detectDupes };
 

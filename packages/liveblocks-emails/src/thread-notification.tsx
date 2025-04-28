@@ -34,34 +34,45 @@ import type { ResolveRoomInfoArgs } from "./lib/types";
 export const getUnreadComments = ({
   comments,
   inboxNotification,
+  notificationTriggerAt,
   userId,
 }: {
   comments: CommentData[];
   inboxNotification: InboxNotificationData;
+  notificationTriggerAt: Date;
   userId: string;
 }): CommentDataWithBody[] => {
+  // Let's get only not deleted comments with a body.
   const commentsWithBody = filterCommentsWithBody(comments);
-  const otherUserComments = commentsWithBody.filter((c) => c.userId !== userId);
+  // Let's filter out comments written by the user that received the notification.
+  const notAuthoredComments = commentsWithBody.filter(
+    (c) => c.userId !== userId
+  );
 
   const readAt = inboxNotification.readAt;
-
-  return otherUserComments.filter((c) => {
-    // If the notification was read, we only want to comments created after the readAt date
-    // and before (or equal) the notifiedAt date of the inbox notification.
-    //
-    // Same behavior as in the `InboxNotificationThread` component.
-    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
+  // This behavior is different from the `InboxNotificationThread` component
+  // because we in the front-end we want the always the last activity.
+  // In this case then we want to do a sequential reading of the activity.
+  // It allow us to determine much more precisely which comments was created between
+  // the moment the inbox notification is created and the moment the webhook event is received.
+  return notAuthoredComments.filter((c) => {
+    // If the inbox notification is read, because of the 1:1 relationship between an
+    // and inbox notification and a thread, we must not include comments created
+    // strictly after the `readAt` date. It means the inbox notification can be updated
+    // in the db after the `readAt` date.
     if (readAt !== null) {
       return (
-        c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
+        c.createdAt > readAt &&
+        c.createdAt >= notificationTriggerAt &&
+        c.createdAt <= inboxNotification.notifiedAt
       );
     }
-
-    // Otherwise takes every comments created before (or equal) the notifiedAt date of the inbox notification.
-    //
-    // Same behavior as in the `InboxNotificationThread` component.
-    // See → https://github.com/liveblocks/liveblocks/blob/a2e621ce5e0db2b810413e8711c227a759141820/packages/liveblocks-react-ui/src/components/internal/InboxNotificationThread.tsx#L162
-    return c.createdAt <= inboxNotification.notifiedAt;
+    // Otherwise we can include all comments created between the inbox notification
+    // creation date (`triggeredAt`) and the inbox notification `notifiedAt` date.
+    return (
+      c.createdAt >= notificationTriggerAt &&
+      c.createdAt <= inboxNotification.notifiedAt
+    );
   });
 };
 
@@ -102,10 +113,12 @@ export const extractThreadNotificationData = async ({
     client.getInboxNotification({ inboxNotificationId, userId }),
   ]);
 
+  const notificationTriggerAt = new Date(event.data.triggeredAt);
   const unreadComments = getUnreadComments({
     comments: thread.comments,
     inboxNotification,
     userId,
+    notificationTriggerAt,
   });
 
   if (unreadComments.length <= 0) {

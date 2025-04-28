@@ -227,7 +227,7 @@ function Header() {
         fontFamily: "sans-serif",
       }}
     >
-      <h3>User notification settings</h3>
+      <h3>Notification settings</h3>
       <div style={{ display: "flex", width: "100%", margin: "8px 0" }}>
         <table width="100%">
           <tbody>

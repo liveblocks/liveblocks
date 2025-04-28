@@ -13,8 +13,8 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import MockWebSocket from "./_MockWebSocket";
 import {
-  mockGetUserNotificationSettings,
-  mockUpdateUserNotificationSettings,
+  mockGetNotificationSettings,
+  mockUpdateNotificationSettings,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
@@ -34,9 +34,9 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe("useNotificationSettings", () => {
-  test("should fetch user notification settings and be referentially stable", async () => {
+  test("should fetch notification settings and be referentially stable", async () => {
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -107,9 +107,9 @@ describe("useNotificationSettings", () => {
     unmount();
   });
 
-  test("should update user notification settings partially", async () => {
+  test("should update notification settings partially", async () => {
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -131,7 +131,7 @@ describe("useNotificationSettings", () => {
           })
         );
       }),
-      mockUpdateUserNotificationSettings((_req, res, ctx) => {
+      mockUpdateNotificationSettings((_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -188,7 +188,7 @@ describe("useNotificationSettings", () => {
     });
 
     await waitFor(() =>
-      // User notification settings response from the server should be updated accordingly
+      // Notification settings response from the server should be updated accordingly
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -215,9 +215,9 @@ describe("useNotificationSettings", () => {
     unmount();
   });
 
-  test("should update user notification settings optimistically and revert the updates if error response from server", async () => {
+  test("should update notification settings optimistically and revert the updates if error response from server", async () => {
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -239,7 +239,7 @@ describe("useNotificationSettings", () => {
           })
         );
       }),
-      mockUpdateUserNotificationSettings((_req, res, ctx) => {
+      mockUpdateNotificationSettings((_req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
@@ -288,7 +288,7 @@ describe("useNotificationSettings", () => {
       });
     });
 
-    // User notification settings should be updated optimistically
+    // Notification settings should be updated optimistically
     expect(result.current[0]).toEqual({
       isLoading: false,
       settings: {
@@ -312,7 +312,7 @@ describe("useNotificationSettings", () => {
     });
 
     await waitFor(() =>
-      // User notification settings should be reverted to the original value after the error response from the server
+      // Notification settings should be reverted to the original value after the error response from the server
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -351,10 +351,10 @@ describe("useNotificationSettings: error", () => {
   });
 
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
-    let getUserNotificationSettingsCount = 0;
+    let getNotificationSettingsCount = 0;
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
-        getUserNotificationSettingsCount++;
+      mockGetNotificationSettings(async (_req, res, ctx) => {
+        getNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -373,24 +373,24 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -404,11 +404,11 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(6));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(6));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(7));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(7));
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // and so on...
@@ -418,11 +418,11 @@ describe("useNotificationSettings: error", () => {
 
   test("should clear error state after a successful error retry", async () => {
     let shouldReturnErrorResponse = true;
-    let getUserNotificationSettingsCount = 0;
+    let getNotificationSettingsCount = 0;
 
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
-        getUserNotificationSettingsCount++;
+      mockGetNotificationSettings(async (_req, res, ctx) => {
+        getNotificationSettingsCount++;
         if (shouldReturnErrorResponse) {
           // Mock an error response from the server for the initial fetch
           return res(ctx.status(500));
@@ -464,24 +464,24 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -495,7 +495,7 @@ describe("useNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(6));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(6));
 
     // Switch the mock endpoint to return a successful response after 4 seconds
     shouldReturnErrorResponse = false;
@@ -526,17 +526,17 @@ describe("useNotificationSettings: error", () => {
         },
       })
     );
-    expect(getUserNotificationSettingsCount).toBe(7);
+    expect(getNotificationSettingsCount).toBe(7);
 
     unmount();
   });
 
-  test("should poll user notification settings every 5 mins", async () => {
-    let getUserNotificationSettingsCount = 0;
+  test("should poll notification settings every 5 mins", async () => {
+    let getNotificationSettingsCount = 0;
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
-        getUserNotificationSettingsCount++;
-        if (getUserNotificationSettingsCount === 1) {
+      mockGetNotificationSettings(async (_req, res, ctx) => {
+        getNotificationSettingsCount++;
+        if (getNotificationSettingsCount === 1) {
           return res(
             ctx.json({
               email: {
@@ -557,7 +557,7 @@ describe("useNotificationSettings: error", () => {
               },
             })
           );
-        } else if (getUserNotificationSettingsCount === 2) {
+        } else if (getNotificationSettingsCount === 2) {
           return res(
             ctx.json({
               email: {
@@ -640,7 +640,7 @@ describe("useNotificationSettings: error", () => {
       })
     );
 
-    expect(getUserNotificationSettingsCount).toBe(1);
+    expect(getNotificationSettingsCount).toBe(1);
 
     // Advance by 5 minute so that and verify that the first poll is triggered
     jest.advanceTimersByTime(60_000 * 5);
@@ -667,7 +667,7 @@ describe("useNotificationSettings: error", () => {
         },
       })
     );
-    expect(getUserNotificationSettingsCount).toBe(2);
+    expect(getNotificationSettingsCount).toBe(2);
 
     // Advance by another 5 minute so that and verify that the second poll is triggered
     jest.advanceTimersByTime(60_000 * 5);
@@ -694,7 +694,7 @@ describe("useNotificationSettings: error", () => {
         },
       })
     );
-    expect(getUserNotificationSettingsCount).toBe(3);
+    expect(getNotificationSettingsCount).toBe(3);
 
     unmount();
   });
@@ -703,7 +703,7 @@ describe("useNotificationSettings: error", () => {
 describe("useNotificationSettings - Suspense", () => {
   test("should be referentially stable", async () => {
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
+      mockGetNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -791,10 +791,10 @@ describe("useNotificationSettings - Suspense: error", () => {
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
-    let getUserNotificationSettingsCount = 0;
+    let getNotificationSettingsCount = 0;
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
-        getUserNotificationSettingsCount++;
+      mockGetNotificationSettings(async (_req, res, ctx) => {
+        getNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -831,24 +831,24 @@ describe("useNotificationSettings - Suspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       // Check if the error boundary's fallback is displayed
@@ -863,10 +863,10 @@ describe("useNotificationSettings - Suspense: error", () => {
   });
 
   test("should retry with exponential backoff on error and clear error boundary", async () => {
-    let getUserNotificationSettingsCount = 0;
+    let getNotificationSettingsCount = 0;
     server.use(
-      mockGetUserNotificationSettings(async (_req, res, ctx) => {
-        getUserNotificationSettingsCount++;
+      mockGetNotificationSettings(async (_req, res, ctx) => {
+        getNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -903,24 +903,24 @@ describe("useNotificationSettings - Suspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getUserNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       // Check if the error boundary's fallback is displayed

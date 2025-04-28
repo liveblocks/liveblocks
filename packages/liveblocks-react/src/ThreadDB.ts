@@ -182,7 +182,7 @@ export class ThreadDB<M extends BaseMetadata> {
   public findMany(
     // TODO: Implement caching here
     roomId: string | undefined,
-    query: ThreadsQuery<M>,
+    query: ThreadsQuery<M> | undefined,
     direction: "asc" | "desc"
   ): ThreadData<M>[] {
     const index = direction === "desc" ? this.#desc : this.#asc;
@@ -190,7 +190,9 @@ export class ThreadDB<M extends BaseMetadata> {
     if (roomId !== undefined) {
       crit.push((t) => t.roomId === roomId);
     }
-    crit.push(makeThreadsFilter(query));
+    if (query !== undefined) {
+      crit.push(makeThreadsFilter(query));
+    }
     return Array.from(index.filter((t) => crit.every((pred) => pred(t))));
   }
 }

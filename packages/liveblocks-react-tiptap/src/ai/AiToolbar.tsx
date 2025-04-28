@@ -23,6 +23,7 @@ import {
   ShortenIcon,
   SparklesIcon,
   SparklesTextIcon,
+  StopIcon,
   TooltipProvider,
   UndoIcon,
   useRefs,
@@ -325,7 +326,7 @@ function AiToolbarCustomPromptContent() {
 
   useLayoutEffect(
     () => {
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         const textArea = textAreaRef.current;
 
         if (!textArea) {
@@ -337,7 +338,7 @@ function AiToolbarCustomPromptContent() {
           textArea.value.length,
           textArea.value.length
         );
-      }, 0);
+      });
     },
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -486,7 +487,7 @@ function AiToolbarThinking() {
               className="lb-tiptap-ai-toolbar-action"
               variant="secondary"
               aria-label="Cancel"
-              icon={<UndoIcon />}
+              icon={<StopIcon />}
               onClick={handleCancel}
             />
           </ShortcutTooltip>
