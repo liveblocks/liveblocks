@@ -83,23 +83,10 @@ function ChatWindow({ chatId }: { chatId: string }) {
   const [streaming, setStreaming] = useState(true);
   const [maxTimeout, setMaxTimeout] = useState<number | undefined>(undefined);
 
-  const handleCopilotChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCopilotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.currentTarget.value;
-    setSelectedCopilotId(
-      value === "default" ? undefined : (value as CopilotId)
-    );
+    setSelectedCopilotId(value === "" ? undefined : value as CopilotId);
   };
-
-  const COPILOTS = [
-    { id: "co_T6jQlhS", name: "Rhyme Maker (Anthropic, Sonnet 3.5)" },
-    { id: "co_gblzUtw", name: "Wrong Answers Only (OpenAI, gpt-4o)" },
-    { id: "co_6ftW85o", name: "The Comedian (Google, Gemini Flash 2.0)" },
-    {
-      id: "co_r3a5on1",
-      name: "Deep Thinker (Anthropic, Sonnet 3.7-Reasoning)",
-    },
-    { id: "co_lm5tud10", name: "LM Studio (Deepseek Qwen 7b Distilled)" },
-  ];
 
   const lastMessageId =
     messages.length > 0 ? messages[messages.length - 1].id : null;
@@ -327,23 +314,19 @@ function ChatWindow({ chatId }: { chatId: string }) {
             Clear
           </button>
 
-          <select
-            value={selectedCopilotId || "default"}
+          <input
+            type="text"
+            value={selectedCopilotId || ""}
             onChange={handleCopilotChange}
+            placeholder="Copilot ID (leave empty for built-in)"
             style={{
+              width: "20em",
               border: "2px solid #888",
               borderRadius: "6px",
               backgroundColor: "white",
               padding: "10px 1rem",
             }}
-          >
-            <option value="default">Built-in</option>
-            {COPILOTS.map((option) => (
-              <option key={option.id} value={option.id}>
-                {option.name}
-              </option>
-            ))}
-          </select>
+          />
           <select
             value={maxTimeout}
             onChange={(ev) => {
