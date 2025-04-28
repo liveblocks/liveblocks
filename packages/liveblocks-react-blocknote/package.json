@@ -42,12 +42,12 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "2.23.2",
-    "@liveblocks/core": "2.23.2",
-    "@liveblocks/react": "2.23.2",
-    "@liveblocks/react-tiptap": "2.23.2",
-    "@liveblocks/react-ui": "2.23.2",
-    "@liveblocks/yjs": "2.23.2",
+    "@liveblocks/client": "2.24.0",
+    "@liveblocks/core": "2.24.0",
+    "@liveblocks/react": "2.24.0",
+    "@liveblocks/react-tiptap": "2.24.0",
+    "@liveblocks/react-ui": "2.24.0",
+    "@liveblocks/yjs": "2.24.0",
     "@tiptap/core": "^2.7.2",
     "vitest-tsconfig-paths": "^3.4.1"
   },

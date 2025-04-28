@@ -34,8 +34,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/core": "2.23.2",
-    "@liveblocks/node": "2.23.2",
+    "@liveblocks/core": "2.24.0",
+    "@liveblocks/node": "2.24.0",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {

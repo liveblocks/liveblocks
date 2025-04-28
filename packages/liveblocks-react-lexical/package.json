@@ -43,11 +43,11 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.1",
-    "@liveblocks/client": "2.23.2",
-    "@liveblocks/core": "2.23.2",
-    "@liveblocks/react": "2.23.2",
-    "@liveblocks/react-ui": "2.23.2",
-    "@liveblocks/yjs": "2.23.2",
+    "@liveblocks/client": "2.24.0",
+    "@liveblocks/core": "2.24.0",
+    "@liveblocks/react": "2.24.0",
+    "@liveblocks/react-ui": "2.24.0",
+    "@liveblocks/yjs": "2.24.0",
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-toggle": "^1.1.0",
     "yjs": "^13.6.18"
