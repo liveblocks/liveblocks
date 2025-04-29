@@ -1660,14 +1660,6 @@ describe("client", () => {
           roomId,
         })
       ).resolves.toEqual(settings);
-
-      // TODO: Deprecated, remove this once "room notification settings" methods are removed
-      await expect(
-        client.getRoomNotificationSettings({
-          userId,
-          roomId,
-        })
-      ).resolves.toEqual(settings);
     });
 
     test("should throw a LiveblocksError when getRoomSubscriptionSettings receives an error response", async () => {
@@ -1737,15 +1729,6 @@ describe("client", () => {
 
       await expect(
         client.updateRoomSubscriptionSettings({
-          userId,
-          roomId,
-          data: settings,
-        })
-      ).resolves.toEqual(settings);
-
-      // TODO: Deprecated, remove this once "room notification settings" methods are removed
-      await expect(
-        client.updateRoomNotificationSettings({
           userId,
           roomId,
           data: settings,
@@ -1821,14 +1804,6 @@ describe("client", () => {
 
       await expect(
         client.deleteRoomSubscriptionSettings({
-          userId,
-          roomId,
-        })
-      ).resolves.toBeUndefined();
-
-      // TODO: Deprecated, remove this once "room notification settings" methods are removed
-      await expect(
-        client.deleteRoomNotificationSettings({
           userId,
           roomId,
         })

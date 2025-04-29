@@ -412,9 +412,7 @@ function makeRoomContextBundle<
     useHistoryVersions,
     useHistoryVersionData,
 
-    useRoomNotificationSettings,
     useRoomSubscriptionSettings,
-    useUpdateRoomNotificationSettings,
     useUpdateRoomSubscriptionSettings,
 
     ...shared.classic,
@@ -479,9 +477,7 @@ function makeRoomContextBundle<
       // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
       useHistoryVersions: useHistoryVersionsSuspense,
 
-      useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
-      useUpdateRoomNotificationSettings,
       useUpdateRoomSubscriptionSettings,
 
       ...shared.suspense,
@@ -2146,60 +2142,6 @@ function useRoomThreadSubscription(
 }
 
 /**
- * @deprecated Renamed to `useRoomSubscriptionSettings`
- *
- * Returns the user's subscription settings for the current room
- * and a function to update them.
- */
-function useRoomNotificationSettings(): [
-  RoomSubscriptionSettingsAsyncResult,
-  (settings: Partial<RoomSubscriptionSettings>) => void,
-] {
-  // We're keeping this deprecated implementation separate instead of aliasing it
-  // because `useUpdateRoomNotificationSettings` triggers a specific error type and changing it
-  // would be a breaking change
-  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-  const client = useClient();
-  const room = useRoom();
-  const { store, getOrCreateSubscriptionSettingsPollerForRoomId } =
-    getRoomExtrasForClient(client);
-
-  const poller = getOrCreateSubscriptionSettingsPollerForRoomId(room.id);
-
-  useEffect(
-    () =>
-      void store.outputs.roomSubscriptionSettingsByRoomId
-        .getOrCreate(room.id)
-        .waitUntilLoaded()
-
-    // NOTE: Deliberately *not* using a dependency array here!
-    //
-    // It is important to call waitUntil on *every* render.
-    // This is harmless though, on most renders, except:
-    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
-    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
-    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
-    //    *next* render after that, a *new* fetch/promise will get created.
-  );
-
-  useEffect(() => {
-    poller.inc();
-    poller.pollNowIfStale();
-    return () => {
-      poller.dec();
-    };
-  }, [poller]);
-
-  const settings = useSignal(
-    store.outputs.roomSubscriptionSettingsByRoomId.getOrCreate(room.id).signal
-  );
-
-  return useMemo(() => {
-    return [settings, updateRoomNotificationSettings];
-  }, [settings, updateRoomNotificationSettings]);
-}
-
-/**
  * Returns the user's subscription settings for the current room
  * and a function to update them.
  *
@@ -2249,46 +2191,6 @@ function useRoomSubscriptionSettings(): [
   return useMemo(() => {
     return [settings, updateRoomSubscriptionSettings];
   }, [settings, updateRoomSubscriptionSettings]);
-}
-
-/**
- * @deprecated Renamed to `useRoomSubscriptionSettings`
- *
- * Returns the user's subscription settings for the current room
- * and a function to update them.
- */
-function useRoomNotificationSettingsSuspense(): [
-  RoomSubscriptionSettingsAsyncSuccess,
-  (settings: Partial<RoomSubscriptionSettings>) => void,
-] {
-  // We're keeping this deprecated implementation separate instead of aliasing it
-  // because `useUpdateRoomNotificationSettings` triggers a specific error type and changing it
-  // would be a breaking change
-
-  // Throw error if we're calling this hook server side
-  ensureNotServerSide();
-
-  const client = useClient();
-  const store = getRoomExtrasForClient(client).store;
-  const room = useRoom();
-
-  // Suspend until there are at least some inbox notifications
-  use(
-    store.outputs.roomSubscriptionSettingsByRoomId
-      .getOrCreate(room.id)
-      .waitUntilLoaded()
-  );
-
-  // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
-  // hook is expected to only return success results when we're here.
-  const [settings, updateRoomNotificationSettings] =
-    useRoomNotificationSettings();
-  assert(!settings.error, "Did not expect error");
-  assert(!settings.isLoading, "Did not expect loading");
-
-  return useMemo(() => {
-    return [settings, updateRoomNotificationSettings];
-  }, [settings, updateRoomNotificationSettings]);
 }
 
 /**
@@ -2427,55 +2329,6 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
-}
-
-/**
- * @deprecated Renamed to `useUpdateRoomSubscriptionSettings`
- *
- * Returns a function that updates the user's subscription settings
- * for the current room.
- */
-function useUpdateRoomNotificationSettings() {
-  // We're keeping this deprecated implementation separate instead of aliasing it
-  // because changing the error type would be a breaking change
-  const client = useClient();
-  const room = useRoom();
-  return useCallback(
-    (settings: Partial<RoomSubscriptionSettings>) => {
-      const { store, onMutationFailure, pollThreadsForRoomId } =
-        getRoomExtrasForClient(client);
-      const userId = getCurrentUserId(client);
-      const optimisticId = store.optimisticUpdates.add({
-        type: "update-room-subscription-settings",
-        roomId: room.id,
-        userId,
-        settings,
-      });
-
-      room.updateSubscriptionSettings(settings).then(
-        (updatedSettings) => {
-          // Replace the optimistic update by the real thing
-          store.updateRoomSubscriptionSettings(
-            room.id,
-            optimisticId,
-            updatedSettings
-          );
-
-          // If the `threads` settings are changed, trigger a polling to update thread subscriptions
-          if (settings.threads) {
-            pollThreadsForRoomId(room.id);
-          }
-        },
-        (err: Error) =>
-          onMutationFailure(
-            optimisticId,
-            { type: "UPDATE_NOTIFICATION_SETTINGS_ERROR", roomId: room.id },
-            err
-          )
-      );
-    },
-    [client, room]
-  );
 }
 
 /**
@@ -3067,15 +2920,6 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
 /**
- * @deprecated Renamed to `useRoomSubscriptionSettings`
- *
- * Returns the user's subscription settings for the current room
- * and a function to update them.
- */
-const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
-  useRoomNotificationSettings;
-
-/**
  * Returns the user's subscription settings for the current room
  * and a function to update them.
  *
@@ -3084,15 +2928,6 @@ const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
  */
 const _useRoomSubscriptionSettings: TypedBundle["useRoomSubscriptionSettings"] =
   useRoomSubscriptionSettings;
-
-/**
- * @deprecated Renamed to `useRoomSubscriptionSettings`
- *
- * Returns the user's subscription settings for the current room
- * and a function to update them.
- */
-const _useRoomNotificationSettingsSuspense: TypedBundle["suspense"]["useRoomNotificationSettings"] =
-  useRoomNotificationSettingsSuspense;
 
 /**
  * Returns the user's subscription settings for the current room
@@ -3441,8 +3276,6 @@ export {
   useResolveMentionSuggestions,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
-  _useRoomNotificationSettings as useRoomNotificationSettings,
-  _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
   useRoomPermissions,
   _useRoomSubscriptionSettings as useRoomSubscriptionSettings,
   _useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettingsSuspense,
@@ -3464,7 +3297,6 @@ export {
   useUnsubscribeFromRoomThread,
   useUnsubscribeFromThread,
   _useUpdateMyPresence as useUpdateMyPresence,
-  useUpdateRoomNotificationSettings,
   useUpdateRoomSubscriptionSettings,
   useYjsProvider,
 };

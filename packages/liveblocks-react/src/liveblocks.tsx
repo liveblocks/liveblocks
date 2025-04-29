@@ -669,7 +669,7 @@ function useUpdateNotificationSettings_withClient(
 
             client[kInternal].emitError(
               {
-                type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR",
+                type: "UPDATE_NOTIFICATION_SETTINGS_ERROR",
               },
               err
             );
