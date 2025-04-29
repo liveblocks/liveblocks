@@ -376,7 +376,7 @@ function makeLiveblocksContextBundle<
     useInboxNotificationThread,
     useUserThreads_experimental,
 
-    useCopilotChats,
+    useChats,
     useChatMessages,
 
     ...shared.classic,
@@ -403,7 +403,7 @@ function makeLiveblocksContextBundle<
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
-      useCopilotChats: useCopilotChatsSuspense,
+      useChats: useChatsSuspense,
       useChatMessages: useChatMessagesSuspense,
 
       ...shared.suspense,
@@ -931,9 +931,9 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
- * const { chats } = useCopilotChats();
+ * const { chats } = useChats();
  */
-function useCopilotChats(): CopilotChatsAsyncResult {
+function useChats(): CopilotChatsAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
@@ -953,7 +953,7 @@ function useCopilotChats(): CopilotChatsAsyncResult {
   return useSignal(store.outputs.copilotChats.signal, identity, shallow);
 }
 
-function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
+function useChatsSuspense(): CopilotChatsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -962,7 +962,7 @@ function useCopilotChatsSuspense(): CopilotChatsAsyncSuccess {
 
   use(store.outputs.copilotChats.waitUntilLoaded());
 
-  const result = useCopilotChats();
+  const result = useChats();
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -1495,18 +1495,17 @@ const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThre
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
- * const { chats, error, isLoading } = useCopilotChats();
+ * const { chats, error, isLoading } = useChats();
  */
-const _useCopilotChats: TypedBundle["useCopilotChats"] = useCopilotChats;
+const _useChats: TypedBundle["useChats"] = useChats;
 
 /**
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
- * const { chats, error, isLoading } = useCopilotChats();
+ * const { chats, error, isLoading } = useChats();
  */
-const _useCopilotChatsSuspense: TypedBundle["suspense"]["useCopilotChats"] =
-  useCopilotChatsSuspense;
+const _useChatsSuspense: TypedBundle["suspense"]["useChats"] = useChatsSuspense;
 
 /**
  * (Private beta)  Returns the messages in the given chat.
@@ -1637,8 +1636,8 @@ export {
   useUpdateNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
-  _useCopilotChats as useCopilotChats,
-  _useCopilotChatsSuspense as useCopilotChatsSuspense,
+  _useChats as useChats,
+  _useChatsSuspense as useChatsSuspense,
   _useChatMessages as useChatMessages,
   _useChatMessagesSuspense as useChatMessagesSuspense,
 };

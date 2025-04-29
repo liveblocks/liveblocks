@@ -1,5 +1,6 @@
 import type {
   AiAssistantContentPart,
+  CopilotId,
   MessageId,
   UiAssistantChatMessage,
 } from "@liveblocks/core";
@@ -44,14 +45,19 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
    */
   showActions?: boolean | "hover";
   /**
+   * Override the component's strings.
+   */
+  overrides?: Partial<GlobalOverrides & ChatMessageOverrides>;
+  /**
    * @internal
    * Whether to show or hide the regenerate button.
    */
   showRegenerate?: boolean;
   /**
-   * Override the component's strings.
+   * @internal
+   * The id of the copilot to use to regenerate the message. Only used if `showRegenerate` is true.
    */
-  overrides?: Partial<GlobalOverrides & ChatMessageOverrides>;
+  copilotId?: CopilotId;
 };
 
 export const AssistantChatMessage = memo(
@@ -60,7 +66,8 @@ export const AssistantChatMessage = memo(
       {
         message,
         showActions = "hover",
-        showRegenerate = false,
+        showRegenerate,
+        copilotId,
         className,
         overrides,
         ...props
@@ -83,6 +90,7 @@ export const AssistantChatMessage = memo(
                 <RegenerateMessageButton
                   chatId={message.chatId}
                   messageId={message.id}
+                  copilotId={copilotId}
                   label={$.CHAT_MESSAGE_REGENERATE}
                 />
               </Tooltip>
@@ -246,10 +254,12 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
 function RegenerateMessageButton({
   chatId,
   messageId,
+  copilotId,
   label,
 }: {
   chatId: string;
   messageId: MessageId;
+  copilotId?: CopilotId;
   label: string;
 }) {
   const client = useClient();
@@ -258,7 +268,10 @@ function RegenerateMessageButton({
     <button
       type="button"
       onClick={function () {
-        client.ai.regenerateMessage(chatId, messageId, { stream: true });
+        client.ai.regenerateMessage(chatId, messageId, {
+          copilotId,
+          stream: true,
+        });
       }}
       data-variant="default"
       className="lb-button lb-assistant-chat-message-regenerate-button"

@@ -86,6 +86,6 @@ export {
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,
   useUserThreadsSuspense_experimental as useUserThreads_experimental,
-  useCopilotChatsSuspense as useCopilotChats,
+  useChatsSuspense as useChats,
   useChatMessagesSuspense as useChatMessages,
 } from "./liveblocks";

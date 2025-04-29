@@ -1222,9 +1222,9 @@ export type LiveblocksContextBundle<
        * (Private beta)  Returns the chats for the current user.
        *
        * @example
-       * const { chats, error, isLoading } = useCopilotChats();
+       * const { chats, error, isLoading } = useChats();
        */
-      useCopilotChats(): CopilotChatsAsyncResult;
+      useChats(): CopilotChatsAsyncResult;
 
       /**
        * (Private beta)  Returns the messages in the given chat.
@@ -1281,9 +1281,9 @@ export type LiveblocksContextBundle<
              * (Private beta)  Returns the chats for the current user.
              *
              * @example
-             * const { chats } = useCopilotChats();
+             * const { chats } = useChats();
              */
-            useCopilotChats(): CopilotChatsAsyncSuccess;
+            useChats(): CopilotChatsAsyncSuccess;
 
             /**
              * (Private beta) Returns the messages in the given chat.

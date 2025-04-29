@@ -4,7 +4,7 @@ import { nanoid } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   useClient,
-  useCopilotChats,
+  useChats,
 } from "@liveblocks/react/suspense";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ export function LeftSidebar() {
 function ActualLeftSidebar() {
   const client = useClient();
   const { chats, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
-    useCopilotChats();
+    useChats();
 
   // The user-selected chat ID. If nothing is explicitly selected (or the
   // selected chat ID isn't a valid one), the selected chat will be the first
