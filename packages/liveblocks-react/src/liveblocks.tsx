@@ -378,6 +378,7 @@ function makeLiveblocksContextBundle<
 
     useChats,
     useChatMessages,
+    useChatContext,
 
     ...shared.classic,
 
@@ -405,6 +406,7 @@ function makeLiveblocksContextBundle<
 
       useChats: useChatsSuspense,
       useChatMessages: useChatMessagesSuspense,
+      useChatContext,
 
       ...shared.suspense,
     },
@@ -1022,6 +1024,39 @@ function useChatMessagesSuspense(
   return result;
 }
 
+function useChatContext(
+  chatId: string,
+  data: { value: string; description: string }
+): void;
+function useChatContext(
+  chatId: string,
+  data: Array<{ value: string; description: string }>
+): void;
+function useChatContext(
+  chatId: string,
+  data:
+    | { value: string; description: string }
+    | Array<{ value: string; description: string }>
+): void {
+  const client = useClient();
+
+  useEffect(() => {
+    if (Array.isArray(data)) {
+      const unregister = data.map((context) =>
+        client.ai.registerChatContext(chatId, context)
+      );
+      return () => {
+        unregister.forEach((unregister) => unregister());
+      };
+    } else {
+      const unregister = client.ai.registerChatContext(chatId, data);
+      return () => {
+        unregister();
+      };
+    }
+  }, [client, chatId, data]);
+}
+
 /** @internal */
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
@@ -1625,6 +1660,7 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
+  useChatContext,
   useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,

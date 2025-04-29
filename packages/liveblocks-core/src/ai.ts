@@ -38,11 +38,11 @@ import type {
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
+  ChatContext,
   ClearChatResponse,
   ClientAiMsg,
   ClientId,
   CmdId,
-  CopilotContext,
   CopilotId,
   CreateChatResponse,
   Cursor,
@@ -117,7 +117,7 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  contextByChatId: Map<string, Map<string, CopilotContext>>;
+  contextByChatId: Map<string, Set<ChatContext>>;
   toolsByChatId: Map<string, Map<string, ClientToolDefinition>>;
 };
 
@@ -588,13 +588,7 @@ export type Ai = {
       toolName: string
     ): Signal<ClientToolDefinition | undefined>;
   };
-  registerChatContext: (
-    chatId: string,
-    contextKey: string,
-    data: CopilotContext
-  ) => void;
-  unregisterChatContext: (chatId: string, contextKey: string) => void;
-
+  registerChatContext: (chatId: string, data: ChatContext) => () => void;
   registerChatTool: (
     chatId: string,
     name: string,
@@ -638,7 +632,7 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    contextByChatId: new Map<string, Map<string, CopilotContext>>(),
+    contextByChatId: new Map<string, Set<ChatContext>>(),
     toolsByChatId: new Map<string, Map<string, ClientToolDefinition>>(),
   };
 
@@ -922,27 +916,23 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function registerChatContext(
-    chatId: string,
-    contextKey: string,
-    data: CopilotContext
-  ) {
+  function registerChatContext(chatId: string, data: ChatContext) {
     const chatContext = context.contextByChatId.get(chatId);
     if (chatContext === undefined) {
-      context.contextByChatId.set(chatId, new Map([[contextKey, data]]));
+      context.contextByChatId.set(chatId, new Set([data]));
     } else {
-      chatContext.set(contextKey, data);
+      chatContext.add(data);
     }
-  }
 
-  function unregisterChatContext(chatId: string, contextKey: string) {
-    const chatContext = context.contextByChatId.get(chatId);
-    if (chatContext) {
-      chatContext.delete(contextKey);
-      if (chatContext.size === 0) {
-        context.contextByChatId.delete(chatId);
+    return () => {
+      const chatContext = context.contextByChatId.get(chatId);
+      if (chatContext !== undefined) {
+        chatContext.delete(data);
+        if (chatContext.size === 0) {
+          context.contextByChatId.delete(chatId);
+        }
       }
-    }
+    };
   }
 
   function ask(
@@ -956,7 +946,6 @@ export function createAi(config: AiConfig): Ai {
       messageId
     );
 
-    window.console.log(options?.stream);
     const copilotId = options?.copilotId;
     const stream = options?.stream ?? false;
     const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
@@ -1120,7 +1109,6 @@ export function createAi(config: AiConfig): Ai {
       },
 
       registerChatContext,
-      unregisterChatContext,
 
       registerChatTool: context.toolsStore.addToolDefinition,
       unregisterChatTool: context.toolsStore.removeToolDefinition,

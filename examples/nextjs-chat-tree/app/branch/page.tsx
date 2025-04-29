@@ -12,7 +12,7 @@ import {
   LiveblocksProvider,
   useClient,
   useChatMessages,
-  useCopilotChats,
+  useChats,
 } from "@liveblocks/react/suspense";
 import Image from "next/image";
 import { createContext, memo, useContext, useState } from "react";
@@ -51,7 +51,7 @@ const BranchContext = createContext<{
   onBranchChange: (branchId: MessageId | undefined) => void;
 } | null>(null);
 function App() {
-  const { chats } = useCopilotChats();
+  const { chats } = useChats();
   if (chats.length === 0) throw new Error("No chats found");
   const chatId = chats[0].id;
 

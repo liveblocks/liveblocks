@@ -1184,6 +1184,19 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const syncStatus = useSyncStatus({ smooth: true });
    */
   useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+  /**
+   * (Private beta)  Add contextual information to the given chat.
+   *
+   * @example
+   * useChatContext("my-chat", { description: "List of todos", values: "Get groceries, Cook dinner" });
+   */
+  useChatContext(
+    chatId: string,
+    data:
+      | { value: string; description: string }
+      | Array<{ value: string; description: string }>
+  ): void;
 };
 
 export type LiveblocksContextBundle<
