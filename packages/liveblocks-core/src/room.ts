@@ -992,15 +992,6 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
-   * @deprecated Renamed to `getSubscriptionSettings`
-   *
-   * Gets the user's subscription settings for the current room.
-   */
-  getNotificationSettings(
-    options?: GetSubscriptionSettingsOptions
-  ): Promise<RoomSubscriptionSettings>;
-
-  /**
    * Gets the user's subscription settings for the current room.
    *
    * @example
@@ -1008,15 +999,6 @@ export type Room<
    */
   getSubscriptionSettings(
     options?: GetSubscriptionSettingsOptions
-  ): Promise<RoomSubscriptionSettings>;
-
-  /**
-   * @deprecated Renamed to `getSubscriptionSettings`
-   *
-   * Updates the user's subscription settings for the current room.
-   */
-  updateNotificationSettings(
-    settings: Partial<RoomSubscriptionSettings>
   ): Promise<RoomSubscriptionSettings>;
 
   /**

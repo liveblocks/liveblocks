@@ -63,7 +63,6 @@ export {
   useThreadSubscription,
   useUndo,
   useUpdateMyPresence,
-  useUpdateRoomNotificationSettings,
   useUpdateRoomSubscriptionSettings,
 } from "./room";
 
@@ -80,7 +79,6 @@ export {
   useThreadsSuspense as useThreads,
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
-  useRoomNotificationSettingsSuspense as useRoomNotificationSettings,
   useRoomSubscriptionSettingsSuspense as useRoomSubscriptionSettings,
 } from "./room";
 export {

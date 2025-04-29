@@ -834,16 +834,6 @@ type RoomContextBundleCommon<
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @deprecated Renamed to `useUpdateRoomSubscriptionSettings`
-   *
-   * Returns a function that updates the user's subscription settings
-   * for the current room.
-   */
-  useUpdateRoomNotificationSettings(): (
-    settings: Partial<RoomSubscriptionSettings>
-  ) => void;
-
-  /**
    * Returns a function that updates the user's subscription settings
    * for the current room.
    *
@@ -962,17 +952,6 @@ export type RoomContextBundle<
        * const { threads, error, isLoading } = useThreads();
        */
       useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
-
-      /**
-       * @deprecated Renamed to `useRoomSubscriptionSettings`
-       *
-       * Returns the user's notification settings for the current room
-       * and a function to update them.
-       */
-      useRoomNotificationSettings(): [
-        RoomSubscriptionSettingsAsyncResult,
-        (settings: Partial<RoomSubscriptionSettings>) => void,
-      ];
 
       /**
        * Returns the user's subscription settings for the current room
@@ -1104,17 +1083,6 @@ export type RoomContextBundle<
             //  * const { data } = useHistoryVersionData(version.id);
             //  */
             // useHistoryVersionData(versionId: string): HistoryVersionDataState;
-
-            /**
-             * @deprecated Renamed to `useRoomSubscriptionSettings`
-             *
-             * Returns the user's notification settings for the current room
-             * and a function to update them.
-             */
-            useRoomNotificationSettings(): [
-              RoomSubscriptionSettingsAsyncSuccess,
-              (settings: Partial<RoomSubscriptionSettings>) => void,
-            ];
 
             /**
              * Returns the user's subscription settings for the current room

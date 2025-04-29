@@ -69,7 +69,6 @@ export type {
   ToImmutable,
   UploadAttachmentOptions,
   User,
-  UserNotificationSettings,
 } from "@liveblocks/core";
 export {
   createClient,

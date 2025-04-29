@@ -230,7 +230,6 @@ export type {
   NotificationSettings,
   NotificationSettingsPlain,
   PartialNotificationSettings,
-  UserNotificationSettings,
 } from "./protocol/NotificationSettings";
 export {
   createNotificationSettings,
