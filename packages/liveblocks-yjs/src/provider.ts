@@ -80,35 +80,29 @@ export class LiveblocksYjsProvider
         const { stateVector, update: updateStr, guid, v2 } = message;
         const canWrite = this.room.getSelf()?.canWrite ?? true;
         const update = Base64.toUint8Array(updateStr);
-        let foundPendingUpdate = false;
         const updateId = this.getUniqueUpdateId(update);
         this.pending = this.pending.filter((pendingUpdate) => {
           if (pendingUpdate === updateId) {
-            foundPendingUpdate = true;
             return false;
           }
           return true;
         });
-        // if we found this update in our queue, we don't need to apply it
-        if (!foundPendingUpdate) {
-          // find the right doc and update
-          if (guid !== undefined) {
-            this.subdocHandlers.get(guid)?.handleServerUpdate({
-              update,
-              stateVector,
-              readOnly: !canWrite,
-              v2,
-            });
-          } else {
-            this.rootDocHandler.handleServerUpdate({
-              update,
-              stateVector,
-              readOnly: !canWrite,
-              v2,
-            });
-          }
+        // find the right doc and update
+        if (guid !== undefined) {
+          this.subdocHandlers.get(guid)?.handleServerUpdate({
+            update,
+            stateVector,
+            readOnly: !canWrite,
+            v2,
+          });
+        } else {
+          this.rootDocHandler.handleServerUpdate({
+            update,
+            stateVector,
+            readOnly: !canWrite,
+            v2,
+          });
         }
-
         // notify any listeners that the status has changed
         this.emit("status", [this.getStatus()]);
       })
