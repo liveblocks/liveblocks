@@ -353,14 +353,7 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
             <tr>
               {token.header.map((cell, index) => {
                 return (
-                  <th
-                    key={index}
-                    align={
-                      // XXX @Nimesh? I'm getting a TS error here
-                      // cell.align ?? undefined
-                      undefined
-                    }
-                  >
+                  <th key={index} align={cell.align ?? undefined}>
                     {cell.tokens.map((token, index) => (
                       <InlineTokenComp
                         key={index}
@@ -378,14 +371,7 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
                 <tr key={index}>
                   {row.map((cell, index) => {
                     return (
-                      <td
-                        key={index}
-                        align={
-                          // XXX @Nimesh? I'm getting a TS error here
-                          // cell.align ?? undefined
-                          undefined
-                        }
-                      >
+                      <td key={index} align={cell.align ?? undefined}>
                         {cell.tokens.map((token, index) => (
                           <InlineTokenComp
                             key={index}
@@ -451,7 +437,7 @@ function InlineTokenComp({
       );
     }
     case "codespan": {
-      return <code>{token.text}</code>;
+      return <code>{parseHtmlEntities(token.text)}</code>;
     }
     case "br": {
       return <br />;
@@ -524,7 +510,7 @@ function InlineTokenComp({
           <InlineTokenComp key={index} token={token as InlineToken} />
         ));
       } else {
-        return token.text;
+        return parseHtmlEntities(token.text);
       }
     }
     case "escape": {
@@ -537,4 +523,13 @@ function InlineTokenComp({
       return null;
     }
   }
+}
+
+export function parseHtmlEntities(input: string) {
+  const document = new DOMParser().parseFromString(
+    `<!doctype html><body>${input}`,
+    "text/html"
+  );
+
+  return document.body.textContent;
 }

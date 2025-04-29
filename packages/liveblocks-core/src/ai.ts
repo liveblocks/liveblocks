@@ -29,6 +29,7 @@ import type {
   AbortAiResponse,
   AddUserMessageResponse,
   AiAssistantDeltaUpdate,
+  AiAssistantMessage,
   AiChat,
   AiChatMessage,
   AiFailedAssistantMessage,
@@ -89,6 +90,16 @@ export type ClientToolDefinition =
     };
 
 export type UiChatMessage = AiChatMessage & {
+  prev: MessageId | null;
+  next: MessageId | null;
+};
+
+export type UiUserChatMessage = AiUserMessage & {
+  prev: MessageId | null;
+  next: MessageId | null;
+};
+
+export type UiAssistantChatMessage = AiAssistantMessage & {
   prev: MessageId | null;
   next: MessageId | null;
 };

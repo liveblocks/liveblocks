@@ -2161,9 +2161,10 @@
 
 .lb-user-chat-message-content {
   padding: calc(0.75 * var(--lb-spacing));
-  border-radius: 0.75rem;
+  border-radius: var(--lb-radius);
   background: var(--lb-background-foreground-faint);
   color: var(--lb-foreground);
+  white-space: break-spaces;
 }
 
 .lb-user-chat-message-attachments {
@@ -2189,6 +2190,25 @@
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
+
+  @media (hover: hover) {
+    &:where(.lb-assistant-chat-message\:show-actions-hover) {
+      :where(.lb-assistant-chat-message-actions) {
+        opacity: 0;
+        transition-property: opacity;
+      }
+
+      &:where(:is(:hover, :focus-within)) {
+        :where(.lb-assistant-chat-message-actions) {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+.lb-assistant-chat-message-content {
+  inline-size: 100%;
 }
 
 .lb-assistant-chat-message-text-part {
@@ -2251,15 +2271,6 @@
     margin-block: calc(0.25 * var(--lb-spacing));
   }
 
-  :where(code) {
-    padding: 0.2em 0.4em;
-    border-radius: calc(0.75 * var(--lb-radius));
-    background: var(--lb-foreground-subtle);
-    box-decoration-break: clone;
-    font-size: 85%;
-    line-height: 1;
-  }
-
   /**
    * Merge adjacent inline code elements
    */
@@ -2287,6 +2298,28 @@
     &:where([href]):where(:hover, :focus-visible) {
       color: var(--lb-accent);
       text-decoration-color: var(--lb-accent-moderate);
+    }
+  }
+
+  :where(code) {
+    padding: 0.2em 0.4em;
+    border-radius: calc(0.75 * var(--lb-radius));
+    background: var(--lb-foreground-subtle);
+    box-decoration-break: clone;
+    font-size: 85%;
+    line-height: 1;
+  }
+
+  :where(pre) {
+    margin-block: 0.25em;
+    padding: var(--lb-spacing);
+    border-radius: var(--lb-radius);
+    box-decoration-break: clone;
+    box-shadow: var(--lb-foreground-subtle) 0 0 0 1px inset;
+
+    :where(code) {
+      padding: 0;
+      background: transparent;
     }
   }
 

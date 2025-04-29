@@ -216,8 +216,8 @@ export const defaultOverrides: Overrides = {
   CHAT_COMPOSER_ABORT: "Abort message.", // XXX - Think about the message to use
   CHAT_MESSAGE_DELETED: "This message has been deleted.",
   CHAT_MESSAGE_THINKING: "Thinking…",
-  CHAT_MESSAGE_COPY: "Copy message",
-  CHAT_MESSAGE_REGENERATE: "Regenerate response",
+  CHAT_MESSAGE_COPY: "Copy text",
+  CHAT_MESSAGE_REGENERATE: "Regenerate",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

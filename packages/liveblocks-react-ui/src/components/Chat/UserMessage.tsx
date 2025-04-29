@@ -1,4 +1,4 @@
-import type { AiUserMessage } from "@liveblocks/core";
+import type { UiUserChatMessage } from "@liveblocks/core";
 import type { HTMLAttributes } from "react";
 import { forwardRef, useState } from "react";
 
@@ -20,7 +20,7 @@ export type UserChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: AiUserMessage;
+  message: UiUserChatMessage;
   /**
    * Override the component's strings.
    */

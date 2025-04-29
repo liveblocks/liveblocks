@@ -1,7 +1,7 @@
 import type {
   AiAssistantContentPart,
-  AiAssistantMessage,
   MessageId,
+  UiAssistantChatMessage,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
@@ -38,7 +38,16 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: AiAssistantMessage;
+  message: UiAssistantChatMessage;
+  /**
+   * Whether to show or hide message actions.
+   */
+  showActions?: boolean | "hover";
+  /**
+   * @internal
+   * Whether to show or hide the regenerate button.
+   */
+  showRegenerate?: boolean;
   /**
    * Override the component's strings.
    */
@@ -47,8 +56,40 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
 
 export const AssistantChatMessage = memo(
   forwardRef<HTMLDivElement, AssistantChatMessageProps>(
-    ({ message, className, overrides, ...props }, forwardedRef) => {
+    (
+      {
+        message,
+        showActions = "hover",
+        showRegenerate = false,
+        className,
+        overrides,
+        ...props
+      },
+      forwardedRef
+    ) => {
       const $ = useOverrides(overrides);
+
+      function MessageActions({ text }: { text: string }) {
+        if (!showActions) return null;
+
+        return (
+          <div className="lb-assistant-chat-message-actions">
+            <Tooltip content={$.CHAT_MESSAGE_COPY}>
+              <CopyTextButton text={text} label={$.CHAT_MESSAGE_COPY} />
+            </Tooltip>
+
+            {showRegenerate && (
+              <Tooltip content={$.CHAT_MESSAGE_REGENERATE}>
+                <RegenerateMessageButton
+                  chatId={message.chatId}
+                  messageId={message.id}
+                  label={$.CHAT_MESSAGE_REGENERATE}
+                />
+              </Tooltip>
+            )}
+          </div>
+        );
+      }
 
       if (message.deletedAt !== undefined) {
         return (
@@ -86,6 +127,8 @@ export const AssistantChatMessage = memo(
             <div
               className={classNames(
                 "lb-root lb-assistant-chat-message",
+                showActions === "hover" &&
+                  "lb-assistant-chat-message:show-actions-hover",
                 className
               )}
               {...props}
@@ -111,34 +154,19 @@ export const AssistantChatMessage = memo(
             <div
               className={classNames(
                 "lb-root lb-assistant-chat-message",
+                showActions === "hover" &&
+                  "lb-assistant-chat-message:show-actions-hover",
                 className
               )}
               {...props}
               ref={forwardedRef}
             >
-              {/* {message.id === ("ms_xxah19VYAKCa2woLgwTK2" as MessageId) && (
-                <ReasoningPart
-                  isPending={true}
-                  text="Yes, you could use a max-heap, keyed by timestamps, for tracking the latest non-deleted leaf in a chat tree. When inserting, you'd push new leaf nodes. Once a message has children, it's no longer a leaf and should be updated. For deletion, typical heaps can't easily remove arbitrary elements, so you could either use lazy deletion (marking the entries as invalid) or maintain pointers to nodes that need updating. Handling priority updates will require careful management of heap structure."
-                />
-              )} */}
               <AssistantMessageContent
                 content={message.content}
                 chatId={message.chatId}
               />
-              <div className="lb-assistant-chat-message-actions">
-                <Tooltip content={$.CHAT_MESSAGE_COPY}>
-                  <CopyTextButton text={text} label={$.CHAT_MESSAGE_COPY} />
-                </Tooltip>
 
-                <Tooltip content={$.CHAT_MESSAGE_REGENERATE}>
-                  <RegenerateMessageButton
-                    chatId={message.chatId}
-                    messageId={message.id}
-                    label={$.CHAT_MESSAGE_REGENERATE}
-                  />
-                </Tooltip>
-              </div>
+              <MessageActions text={text} />
             </div>
           </TooltipProvider>
         );
@@ -155,6 +183,8 @@ export const AssistantChatMessage = memo(
             <div
               className={classNames(
                 "lb-root lb-assistant-chat-message",
+                showActions === "hover" &&
+                  "lb-assistant-chat-message:show-actions-hover",
                 className
               )}
               {...props}
@@ -173,19 +203,7 @@ export const AssistantChatMessage = memo(
                 {message.errorReason}
               </div>
 
-              <div className="lb-assistant-chat-message-actions">
-                <Tooltip content={$.CHAT_MESSAGE_COPY}>
-                  <CopyTextButton text={text} label={$.CHAT_MESSAGE_COPY} />
-                </Tooltip>
-
-                <Tooltip content={$.CHAT_MESSAGE_REGENERATE}>
-                  <RegenerateMessageButton
-                    chatId={message.chatId}
-                    messageId={message.id}
-                    label={$.CHAT_MESSAGE_REGENERATE}
-                  />
-                </Tooltip>
-              </div>
+              <MessageActions text={text} />
             </div>
           </TooltipProvider>
         );

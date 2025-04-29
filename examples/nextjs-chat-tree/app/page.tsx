@@ -49,7 +49,7 @@ function App() {
       <div className="flex-1 overflow-y-auto pt-10 pb-4">
         <ChatMessages
           messages={messages}
-          className="max-w-[896px] px-6 mx-auto flex flex-col gap-6"
+          className="max-w-[896px] px-6 py-2 mx-auto flex flex-col gap-6"
         />
       </div>
 
