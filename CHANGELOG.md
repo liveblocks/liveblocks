@@ -1,5 +1,11 @@
 ## vNEXT (not yet published)
 
+## v2.24.1
+
+### `@liveblocks/yjs`
+
+- Fix for occasional desync issue
+
 ## v2.24.0
 
 We are introducing thread subscriptions to add more granularity to thread
