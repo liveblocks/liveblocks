@@ -74,18 +74,12 @@ type CommentsOrNotificationsErrorContext =
         | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
         | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR";
     }
-  // TODO: Deprecated, remove this once "room notification settings" hooks are removed
-  | {
-      type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
-      roomId: string;
-    }
   | {
       type: "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR";
       roomId: string;
     }
-  // TODO: Rename this to "UPDATE_NOTIFICATION_SETTINGS_ERROR" once the current "UPDATE_NOTIFICATION_SETTINGS_ERROR" is removed
   | {
-      type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR";
+      type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
     };
 
 export type LiveblocksErrorContext = Relax<
@@ -156,9 +150,8 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "DELETE_INBOX_NOTIFICATION_ERROR": return "Could not delete inbox notification";
     case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR": return "Could not mark all inbox notifications as read";
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
-    case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
     case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
-    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
+    case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
 
     default:
       return assertNever(context, "Unhandled case");
