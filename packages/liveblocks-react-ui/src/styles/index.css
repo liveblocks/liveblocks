@@ -26,6 +26,7 @@
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-highlight-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
   --lb-elevation-shadow: $lb-elevation-shadow;
+  --lb-elevation-shadow-small: $lb-elevation-shadow-small;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
   --lb-destructive-contrast: 8%;
@@ -2465,11 +2466,23 @@
 }
 
 .lb-chat-composer {
+  position: relative;
   max-inline-size: var(--lb-chat-container-width);
   margin-inline: auto;
   margin-block-start: auto;
   border-radius: calc(2 * var(--lb-radius));
-  box-shadow: var(--lb-highlight-shadow);
+  background: var(--lb-dynamic-background);
+  box-shadow: var(--lb-elevation-shadow-small);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
 }
 
 .lb-chat-scroll-button {
