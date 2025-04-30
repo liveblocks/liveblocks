@@ -26,6 +26,7 @@
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-highlight-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
   --lb-elevation-shadow: $lb-elevation-shadow;
+  --lb-elevation-shadow-small: $lb-elevation-shadow-small;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
   --lb-destructive-contrast: 8%;
@@ -2467,21 +2468,24 @@
   }
 }
 
-.lb-ai-chat-footer-actions {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: calc(-3 * var(--lb-spacing));
-  display: flex;
-  justify-content: center;
-}
-
 .lb-ai-chat-composer {
-  inline-size: 100%;
-  max-inline-size: var(--lb-ai-chat-container-width);
+  position: relative;
+  max-inline-size: var(--lb-chat-container-width);
   margin-inline: auto;
   margin-block-start: auto;
   border-radius: calc(2 * var(--lb-radius));
-  box-shadow: var(--lb-highlight-shadow);
+  background: var(--lb-dynamic-background);
+  box-shadow: var(--lb-elevation-shadow-small);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
 }
 
 .lb-ai-chat-scroll-button {
