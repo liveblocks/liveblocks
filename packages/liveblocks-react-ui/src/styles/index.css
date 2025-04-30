@@ -30,7 +30,6 @@
   --lb-accent-contrast: 8%;
   --lb-destructive-contrast: 8%;
   --lb-foreground-contrast: 8%;
-  --lb-chat-max-inline-size: 100%;
 
   /** 
    * Colors
@@ -2334,8 +2333,7 @@
   @include truncate;
 
   user-select: none;
-  animation: lb-animation-assistant-chat-message-thinking-shimmer 8s linear
-    infinite;
+  animation: lb-animation-shimmer-small 8s linear infinite;
 }
 
 .lb-user-chat-message-deleted,
@@ -2385,8 +2383,7 @@
   align-items: center;
 
   &:where([data-reasoning]) {
-    animation: lb-animation-assistant-chat-message-thinking-shimmer 8s linear
-      infinite;
+    animation: lb-animation-shimmer-small 8s linear infinite;
   }
 }
 
@@ -2407,17 +2404,13 @@
 }
 
 .lb-chat {
+  --lb-chat-container-width: 100%;
+
   display: flex;
   flex-direction: column;
   inline-size: 100%;
   block-size: 100%;
-}
-
-.lb-chat-messages-container {
-  flex: 1 1 auto;
-  inline-size: 100%;
-  padding-inline: calc(1.375 * var(--lb-spacing));
-  padding-block: var(--lb-spacing);
+  background: var(--lb-background);
 
   /* overflow-block: auto; doesn't work as expected */
   /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
@@ -2429,8 +2422,13 @@
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   inline-size: 100%;
-  max-inline-size: calc(var(--lb-chat-max-inline-size) - var(--lb-spacing));
+  max-inline-size: min(
+    calc(var(--lb-chat-container-width) - var(--lb-spacing)),
+    calc(100% - 3 * var(--lb-spacing))
+  );
   margin-inline: auto;
+  padding-block-start: var(--lb-spacing);
+  padding-block-end: calc(3 * var(--lb-spacing));
 }
 
 .lb-chat-loading,
@@ -2445,15 +2443,31 @@
 }
 
 .lb-chat-composer-container {
+  position: sticky;
+  inset-block-end: 0;
   inline-size: 100%;
-  padding-inline: var(--lb-spacing);
-  padding-block-end: var(--lb-spacing);
+  padding: var(--lb-spacing);
+  padding-block-start: 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    inset-block-start: calc(-3 * var(--lb-spacing));
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      var(--lb-background) calc(3 * var(--lb-spacing))
+    );
+    pointer-events: none;
+  }
 }
 
 .lb-chat-composer {
-  max-inline-size: var(--lb-chat-max-inline-size);
+  max-inline-size: var(--lb-chat-container-width);
   margin-inline: auto;
-  border-radius: var(--lb-radius);
+  margin-block-start: auto;
+  border-radius: calc(2 * var(--lb-radius));
   box-shadow: var(--lb-highlight-shadow);
 }
 
@@ -2534,17 +2548,7 @@
   }
 }
 
-@keyframes lb-animation-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes lb-animation-assistant-chat-message-thinking-shimmer {
+@keyframes lb-animation-shimmer-small {
   from,
   to {
     mask-image: linear-gradient(
@@ -2563,5 +2567,15 @@
 
   to {
     mask-position: -200% 0;
+  }
+}
+
+@keyframes lb-animation-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }

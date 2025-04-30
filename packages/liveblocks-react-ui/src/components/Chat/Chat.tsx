@@ -191,33 +191,31 @@ const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(function (
     <div
       ref={containerRef}
       {...props}
-      className={classNames("lb-chat-messages-container", className)}
+      className={classNames("lb-chat-messages", className)}
     >
-      <div className="lb-chat-messages">
-        {messages.map((message) => {
-          if (message.role === "user") {
-            return (
-              <UserChatMessage
-                key={message.id}
-                message={message}
-                overrides={$}
-                className="lb-chat-messages-user-message"
-              />
-            );
-          } else if (message.role === "assistant") {
-            return (
-              <AssistantChatMessage
-                key={message.id}
-                message={message}
-                overrides={$}
-                className="lb-chat-messages-assistant-message"
-              />
-            );
-          } else {
-            return null;
-          }
-        })}
-      </div>
+      {messages.map((message) => {
+        if (message.role === "user") {
+          return (
+            <UserChatMessage
+              key={message.id}
+              message={message}
+              overrides={$}
+              className="lb-chat-messages-user-message"
+            />
+          );
+        } else if (message.role === "assistant") {
+          return (
+            <AssistantChatMessage
+              key={message.id}
+              message={message}
+              overrides={$}
+              className="lb-chat-messages-assistant-message"
+            />
+          );
+        } else {
+          return null;
+        }
+      })}
     </div>
   );
 });
