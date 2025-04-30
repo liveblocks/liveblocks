@@ -2,7 +2,7 @@ import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
-import { isIdle, type Status } from "./connection";
+import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
@@ -166,8 +166,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
-  aiConnect(): void;
-  aiDisconnect(): void;
+  ai: Ai;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -415,10 +414,6 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * const status = client.getSyncStatus();  // "synchronizing" | "synchronized"
    */
   getSyncStatus(): SyncStatus;
-
-  getAiStatus(): Status;
-
-  ai: Ai;
 
   /**
    * All possible client events, subscribable from a single place.
@@ -915,21 +910,11 @@ export function createClient<U extends BaseUserMeta = DU>(
         syncStatus: syncStatusSignal,
       },
 
-      ai,
-      getAiStatus: () => {
-        return ai.getStatus();
-      },
-
       // Internal
       [kInternal]: {
         currentUserId,
         mentionSuggestionsCache,
-        aiConnect: () => {
-          ai.connect();
-        },
-        aiDisconnect: () => {
-          ai.disconnect();
-        },
+        ai,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,

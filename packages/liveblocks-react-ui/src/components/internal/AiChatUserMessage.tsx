@@ -1,6 +1,6 @@
 import type { UiUserMessage } from "@liveblocks/core";
 import type { HTMLAttributes } from "react";
-import { forwardRef, useState } from "react";
+import { forwardRef, memo, useState } from "react";
 
 import { SpinnerIcon } from "../../icons";
 import type { GlobalOverrides } from "../../overrides";
@@ -27,56 +27,57 @@ export type AiChatUserMessageProps = HTMLAttributes<HTMLDivElement> & {
   overrides?: Partial<GlobalOverrides>;
 };
 
-export const AiChatUserMessage = forwardRef<
-  HTMLDivElement,
-  AiChatUserMessageProps
->(({ message, className }, forwardedRef) => {
-  const text = message.content
-    .filter((c) => c.type === "text")
-    .map((c) => c.text)
-    .join("\n");
+export const AiChatUserMessage = memo(
+  forwardRef<HTMLDivElement, AiChatUserMessageProps>(
+    ({ message, className }, forwardedRef) => {
+      const text = message.content
+        .filter((c) => c.type === "text")
+        .map((c) => c.text)
+        .join("\n");
 
-  const images = message.content.filter((c) => c.type === "image");
+      const images = message.content.filter((c) => c.type === "image");
 
-  if (message.deletedAt !== undefined) {
-    return (
-      <div
-        ref={forwardedRef}
-        className={classNames("lb-ai-chat-user-message", className)}
-      >
-        <div className="lb-ai-chat-user-message-deleted">
-          This message has been deleted.
-        </div>
-      </div>
-    );
-  }
+      if (message.deletedAt !== undefined) {
+        return (
+          <div
+            ref={forwardedRef}
+            className={classNames("lb-ai-chat-user-message", className)}
+          >
+            <div className="lb-ai-chat-user-message-deleted">
+              This message has been deleted.
+            </div>
+          </div>
+        );
+      }
 
-  return (
-    <div
-      ref={forwardedRef}
-      className={classNames("lb-ai-chat-user-message", className)}
-    >
-      {images.length > 0 && (
-        <div className="lb-ai-chat-user-message-attachments">
-          <div className="lb-ai-chat-user-message-media-attachments">
-            {images.map((image) => (
-              <AiChatUserMessageMediaAttachment
-                key={image.id}
-                chatId={message.chatId}
-                attachment={image}
-                className="lb-ai-chat-user-message-attachment"
-              />
-            ))}
+      return (
+        <div
+          ref={forwardedRef}
+          className={classNames("lb-ai-chat-user-message", className)}
+        >
+          {images.length > 0 && (
+            <div className="lb-ai-chat-user-message-attachments">
+              <div className="lb-ai-chat-user-message-media-attachments">
+                {images.map((image) => (
+                  <AiChatUserMessageMediaAttachment
+                    key={image.id}
+                    chatId={message.chatId}
+                    attachment={image}
+                    className="lb-ai-chat-user-message-attachment"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="lb-ai-chat-user-message-content">
+            <div className="lb-ai-chat-user-message-body">{text}</div>
           </div>
         </div>
-      )}
-
-      <div className="lb-ai-chat-user-message-content">
-        <div className="lb-ai-chat-user-message-body">{text}</div>
-      </div>
-    </div>
-  );
-});
+      );
+    }
+  )
+);
 
 type AiChatUserMessageMediaAttachmentProps = HTMLAttributes<HTMLDivElement> & {
   chatId: string;

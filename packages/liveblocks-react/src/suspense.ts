@@ -25,7 +25,6 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
-  useChatContext,
   useUpdateNotificationSettings,
   useSyncStatus,
   useErrorListener,

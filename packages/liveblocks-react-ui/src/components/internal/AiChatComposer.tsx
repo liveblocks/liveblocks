@@ -117,12 +117,12 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
     }, []);
 
     const pendingMessage = useSignal(
-      client.ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
+      client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
       getPendingMessage
     );
 
     const lastMessageId = useSignal(
-      client.ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
+      client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
       getLastMessageId
     );
 
@@ -136,10 +136,15 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
         onComposerSubmit?.(message, event);
         if (event.isDefaultPrevented()) return;
 
-        client.ai.addUserMessageAndAsk(chatId, lastMessageId, message.text, {
-          stream,
-          copilotId,
-        });
+        client[kInternal].ai.addUserMessageAndAsk(
+          chatId,
+          lastMessageId,
+          message.text,
+          {
+            stream,
+            copilotId,
+          }
+        );
       },
       [
         onComposerSubmit,
@@ -245,7 +250,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                       onPointerDown={(event) => event.preventDefault()}
                       onClick={(event) => {
                         event.stopPropagation();
-                        client.ai.abort(pendingMessage);
+                        client[kInternal].ai.abort(pendingMessage);
                       }}
                     >
                       <span className="lb-icon-container">

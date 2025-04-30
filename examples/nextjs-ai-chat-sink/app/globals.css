@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+.lb-ai-chat {
+  --lb-ai-chat-container-width: 896px;
+}

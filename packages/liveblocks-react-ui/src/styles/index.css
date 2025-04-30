@@ -2468,9 +2468,18 @@
   }
 }
 
+.lb-ai-chat-footer-actions {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(-3 * var(--lb-spacing));
+  display: flex;
+  justify-content: center;
+}
+
 .lb-ai-chat-composer {
   position: relative;
-  max-inline-size: var(--lb-chat-container-width);
+  inline-size: 100%;
+  max-inline-size: var(--lb-ai-chat-container-width);
   margin-inline: auto;
   margin-block-start: auto;
   border-radius: calc(2 * var(--lb-radius));

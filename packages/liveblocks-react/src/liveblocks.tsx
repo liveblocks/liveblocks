@@ -378,7 +378,6 @@ function makeLiveblocksContextBundle<
 
     useAiChats,
     useAiChatMessages,
-    useChatContext,
 
     ...shared.classic,
 
@@ -406,7 +405,6 @@ function makeLiveblocksContextBundle<
 
       useAiChats: useAiChatsSuspense,
       useAiChatMessages: useAiChatMessagesSuspense,
-      useChatContext,
 
       ...shared.suspense,
     },
@@ -1024,39 +1022,6 @@ function useAiChatMessagesSuspense(
   return result;
 }
 
-function useChatContext(
-  chatId: string,
-  data: { value: string; description: string }
-): void;
-function useChatContext(
-  chatId: string,
-  data: Array<{ value: string; description: string }>
-): void;
-function useChatContext(
-  chatId: string,
-  data:
-    | { value: string; description: string }
-    | Array<{ value: string; description: string }>
-): void {
-  const client = useClient();
-
-  useEffect(() => {
-    if (Array.isArray(data)) {
-      const unregister = data.map((context) =>
-        client.ai.registerChatContext(chatId, context)
-      );
-      return () => {
-        unregister.forEach((unregister) => unregister());
-      };
-    } else {
-      const unregister = client.ai.registerChatContext(chatId, data);
-      return () => {
-        unregister();
-      };
-    }
-  }, [client, chatId, data]);
-}
-
 /** @internal */
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
@@ -1187,9 +1152,9 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
 
   // TODO: only do this if ai feature enabled
   useEffect(() => {
-    client[kInternal].aiConnect();
+    client[kInternal].ai.connect();
     return () => {
-      client[kInternal].aiDisconnect();
+      client[kInternal].ai.disconnect();
     };
   }, [client]);
 
@@ -1661,7 +1626,6 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
-  useChatContext,
   useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,

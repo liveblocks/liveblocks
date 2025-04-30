@@ -968,7 +968,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.#copilotChats = new PaginatedResource(async (cursor?: string) => {
-      const result = await this.#client.ai.getChats({
+      const result = await this.#client[kInternal].ai.getChats({
         cursor: cursor as Cursor,
       });
       return result.nextCursor;
@@ -1237,7 +1237,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
         return {
           isLoading: false,
-          chats: this.#client.ai.signals.chatsΣ.get(),
+          chats: this.#client[kInternal].ai.signals.chatsΣ.get(),
           hasFetchedAll: result.data.hasFetchedAll,
           isFetchingMore: result.data.isFetchingMore,
           fetchMore: result.data.fetchMore,
@@ -1249,7 +1249,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const messagesByChatId = new DefaultMap((chatId: string) => {
       const resourceΣ = new SinglePageResource(async () => {
-        await this.#client.ai.getMessageTree(chatId);
+        await this.#client[kInternal].ai.getMessageTree(chatId);
       });
 
       return new DefaultMap(
@@ -1264,7 +1264,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
             return ASYNC_OK(
               "messages",
-              this.#client.ai.signals
+              this.#client[kInternal].ai.signals
                 .getChatMessagesForBranchΣ(chatId, branch ?? undefined)
                 .get()
             );

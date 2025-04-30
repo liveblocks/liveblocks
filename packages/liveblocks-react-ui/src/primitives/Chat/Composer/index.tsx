@@ -404,16 +404,14 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
     useEffect(() => {
       if (!autoFocus) return;
 
-      requestAnimationFrame(() => {
-        try {
-          if (!ReactEditor.isFocused(editor)) {
-            Transforms.select(editor, SlateEditor.end(editor, []));
-            ReactEditor.focus(editor);
-          }
-        } catch {
-          // Slate's DOM-specific methods will throw if the editor's DOM  node no longer exists. This action doesn't make sense on an unmounted editor so we can safely ignore it.
+      try {
+        if (!ReactEditor.isFocused(editor)) {
+          Transforms.select(editor, SlateEditor.end(editor, []));
+          ReactEditor.focus(editor);
         }
-      });
+      } catch {
+        // Slate's DOM-specific methods will throw if the editor's DOM  node no longer exists. This action doesn't make sense on an unmounted editor so we can safely ignore it.
+      }
     }, [editor, autoFocus]);
 
     const initialValue: { type: "paragraph"; children: { text: string }[] }[] =

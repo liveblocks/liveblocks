@@ -1,8 +1,9 @@
-import type {
-  AiAssistantContentPart,
-  CopilotId,
-  MessageId,
-  UiAssistantMessage,
+import {
+  type AiAssistantContentPart,
+  type CopilotId,
+  kInternal,
+  type MessageId,
+  type UiAssistantMessage,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
@@ -263,7 +264,7 @@ function RegenerateMessageButton({
     <button
       type="button"
       onClick={function () {
-        client.ai.regenerateMessage(chatId, messageId, {
+        client[kInternal].ai.regenerateMessage(chatId, messageId, {
           copilotId,
           stream: true,
         });
@@ -404,7 +405,9 @@ function ToolCallPart({
 }) {
   const client = useClient();
 
-  const tool = useSignal(client.ai.signals.getToolDefinitionΣ(chatId, name));
+  const tool = useSignal(
+    client[kInternal].ai.signals.getToolDefinitionΣ(chatId, name)
+  );
   if (tool === undefined || tool.render === undefined) return null;
 
   return <tool.render args={args as unknown} />;

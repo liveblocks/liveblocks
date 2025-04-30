@@ -73,9 +73,9 @@ type GetChatsPair = DefineCmd<
   { chats: AiChat[]; nextCursor: Cursor | null }
 >;
 
-// XXX Rename to UpsertChat?
+// XXXX Rename to UpsertChat?
 type CreateChatPair = DefineCmd<
-  "create-chat", // XXX Rename to "upsert-chat"?
+  "create-chat", // XXXX Rename to "upsert-chat"?
   {
     id: ChatId;
     // -------------------------------------------------

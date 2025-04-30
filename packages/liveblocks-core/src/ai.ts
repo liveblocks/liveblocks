@@ -74,20 +74,12 @@ const DEFAULT_REQUEST_TIMEOUT = 4_000;
 // settled yet. Maybe we need to make this much larger?
 const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 seconds in the backend
 
-// XXX - Find a better name for this?
-export type ClientToolDefinition =
-  | {
-      description?: string;
-      parameters: JSONSchema4;
-      execute: (params: any) => void; // XXX - We should allow the execute callback to return a Promise too
-      render?: never;
-    }
-  | {
-      description?: string;
-      parameters: JSONSchema4;
-      render: ComponentType<{ args: any }>;
-      execute?: never;
-    };
+export type ClientToolDefinition = {
+  description?: string;
+  parameters: JSONSchema4;
+  render: ComponentType<{ args: any }>;
+  execute?: never;
+};
 
 export type UiChatMessage = AiChatMessage & {
   prev: MessageId | null;
@@ -714,9 +706,6 @@ export function createAi(config: AiConfig): Ai {
       return;
     }
 
-    // XXX Remove
-    window.console.info("[ws]", msg);
-
     if ("event" in msg) {
       switch (msg.event) {
         case "cmd-failed":
@@ -725,17 +714,6 @@ export function createAi(config: AiConfig): Ai {
 
         case "delta": {
           const { id, delta } = msg;
-          const chatId = context.messagesStore.getMessageById(id)?.chatId;
-          if (
-            delta.type === "tool-call" &&
-            msg.clientId === clientId &&
-            chatId !== undefined
-          ) {
-            const tool = context.toolsByChatId.get(chatId)?.get(delta.toolName);
-            if (tool !== undefined && tool.execute !== undefined) {
-              tool.execute(delta.args);
-            }
-          }
           context.messagesStore.addDelta(id, delta);
           break;
         }
@@ -816,7 +794,7 @@ export function createAi(config: AiConfig): Ai {
           if (msg.message) {
             context.messagesStore.upsert(msg.message);
           } else {
-            // XXX Handle the case for one-off ask!
+            // XXXX Handle the case for one-off ask!
             // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
           }
           break;
@@ -1057,7 +1035,6 @@ export function createAi(config: AiConfig): Ai {
           newMessageId
         );
 
-        // XXX - We should handle the case where the user message fails to send
         await sendClientMsgWithResponse({
           cmd: "add-user-message",
           id: newMessageId,

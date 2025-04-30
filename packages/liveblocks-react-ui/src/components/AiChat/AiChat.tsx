@@ -1,8 +1,9 @@
-import type {
-  AiChatContext,
-  ClientToolDefinition,
-  CopilotId,
-  UiChatMessage,
+import {
+  type AiChatContext,
+  type ClientToolDefinition,
+  type CopilotId,
+  kInternal,
+  type UiChatMessage,
 } from "@liveblocks/core";
 import { useAiChatMessages, useClient } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
@@ -62,93 +63,18 @@ export type AiChatProps = HTMLAttributes<HTMLDivElement> & {
   >;
 };
 export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
-  { chatId, copilotId, overrides, className, ...props },
-  forwardedRef
-) {
-  const { messages, isLoading, error } = useAiChatMessages(chatId);
-  const $ = useOverrides(overrides);
-
-  if (isLoading) {
-    return (
-      <div
-        ref={forwardedRef}
-        {...props}
-        className={classNames("lb-root lb-ai-chat", className)}
-      >
-        <div className="lb-ai-chat-loading lb-loading">
-          <SpinnerIcon />
-        </div>
-
-        <div className="lb-ai-chat-footer">
-          <AiChatComposer
-            key={chatId}
-            chatId={chatId}
-            copilotId={copilotId}
-            className="lb-ai-chat-composer"
-            overrides={$}
-            disabled
-            autoFocus={false}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  if (error !== undefined) {
-    return (
-      <div
-        ref={forwardedRef}
-        {...props}
-        className={classNames("lb-root lb-ai-chat", className)}
-      >
-        <div className="lb-ai-chat-error lb-error">
-          {$.GET_CHAT_MESSAGES_ERROR(error)}
-        </div>
-
-        <div className="lb-ai-chat-footer">
-          <AiChatComposer
-            key={chatId}
-            chatId={chatId}
-            copilotId={copilotId}
-            className="lb-ai-chat-composer"
-            overrides={$}
-            disabled
-            autoFocus={false}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <_Chat
-      chatId={chatId}
-      copilotId={copilotId}
-      {...props}
-      className={className}
-      ref={forwardedRef}
-      messages={messages}
-      overrides={$}
-    />
-  );
-});
-
-type _ChatProps = AiChatProps & {
-  messages: readonly UiChatMessage[];
-};
-const _Chat = forwardRef<HTMLDivElement, _ChatProps>(function (
   {
     chatId,
-    messages,
     copilotId,
+    overrides,
     contexts = [],
     tools = {},
-    overrides,
     className,
     ...props
   },
   forwardedRef
 ) {
+  const { messages, isLoading, error } = useAiChatMessages(chatId);
   const $ = useOverrides(overrides);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
@@ -160,25 +86,28 @@ const _Chat = forwardRef<HTMLDivElement, _ChatProps>(function (
     []
   );
 
-  // Scroll to the bottom of the chat on mount
+  // Add the provided contextual information to the chat on mount and remove on unmount
+  // Note: 'contexts' will most likely be a new object on each render (unless user passes a stable object), but this won't be an issue as context addition and removal is a quick operation
   useEffect(() => {
-    const container = containerRef.current;
-    if (container === null) return;
+    const unregister = contexts.map((context) =>
+      client[kInternal].ai.registerChatContext(chatId, context)
+    );
+    return () => {
+      unregister.forEach((unregister) => unregister());
+    };
+  }, [client, chatId, contexts]);
 
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "instant",
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (container === null) return;
-
-    // setDistanceToBottom(
-    //   container.scrollHeight - container.clientHeight - container.scrollTop
-    // );
-  }, []);
+  // Register the provided tools to the chat on mount and unregister them on unmount
+  useEffect(() => {
+    Object.entries(tools).map(([key, value]) =>
+      client[kInternal].ai.registerChatTool(chatId, key, value)
+    );
+    return () => {
+      Object.entries(tools).map(([key]) =>
+        client[kInternal].ai.unregisterChatTool(chatId, key)
+      );
+    };
+  }, [client, chatId, tools]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -197,37 +126,21 @@ const _Chat = forwardRef<HTMLDivElement, _ChatProps>(function (
     };
   }, []);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (container === null) return;
+  const scrollToBottomCallbackRef = useRef<() => void>(undefined);
+  if (scrollToBottomCallbackRef.current === undefined) {
+    scrollToBottomCallbackRef.current = function () {
+      const container = containerRef.current;
+      if (container === null) return;
 
-    setDistanceToBottom(
-      container.scrollHeight - container.clientHeight - container.scrollTop
-    );
-  }, [messages]);
-
-  // Add the provided contextual information to the chat on mount and remove on unmount
-  // Note: 'contexts' will most likely be a new object on each render (unless user passes a stable object), but this won't be an issue as context addition and removal is a quick operation
-  useEffect(() => {
-    const unregister = contexts.map((context) =>
-      client.ai.registerChatContext(chatId, context)
-    );
-    return () => {
-      unregister.forEach((unregister) => unregister());
-    };
-  }, [client, chatId, contexts]);
-
-  // Register the provided tools to the chat on mount and unregister them on unmount
-  useEffect(() => {
-    Object.entries(tools).map(([key, value]) =>
-      client.ai.registerChatTool(chatId, key, value)
-    );
-    return () => {
-      Object.entries(tools).map(([key]) =>
-        client.ai.unregisterChatTool(chatId, key)
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "instant",
+      });
+      setDistanceToBottom(
+        container.scrollHeight - container.clientHeight - container.scrollTop
       );
     };
-  }, [client, chatId, tools]);
+  }
 
   return (
     <div
@@ -235,31 +148,23 @@ const _Chat = forwardRef<HTMLDivElement, _ChatProps>(function (
       {...props}
       className={classNames("lb-root lb-ai-chat", className)}
     >
-      <div className="lb-ai-chat-messages">
-        {messages.map((message) => {
-          if (message.role === "user") {
-            return (
-              <AiChatUserMessage
-                key={message.id}
-                message={message}
-                overrides={$}
-                className="lb-ai-chat-messages-user-message"
-              />
-            );
-          } else if (message.role === "assistant") {
-            return (
-              <AiChatAssistantMessage
-                key={message.id}
-                message={message}
-                overrides={$}
-                className="lb-ai-chat-messages-assistant-message"
-              />
-            );
-          } else {
-            return null;
-          }
-        })}
-      </div>
+      {isLoading ? (
+        <div className="lb-ai-chat-loading lb-loading">
+          <SpinnerIcon />
+        </div>
+      ) : error !== undefined ? (
+        <div className="lb-ai-chat-error lb-error">
+          {$.GET_CHAT_MESSAGES_ERROR(error)}
+        </div>
+      ) : (
+        <div className="lb-ai-chat-messages">
+          <Messages
+            messages={messages}
+            overrides={$}
+            onDistanceToBottomChange={scrollToBottomCallbackRef.current}
+          />
+        </div>
+      )}
 
       <div className="lb-ai-chat-footer">
         <div className="lb-ai-chat-footer-actions">
@@ -305,6 +210,46 @@ const _Chat = forwardRef<HTMLDivElement, _ChatProps>(function (
     </div>
   );
 });
+
+function Messages({
+  messages,
+  overrides,
+  onDistanceToBottomChange,
+}: {
+  messages: readonly UiChatMessage[];
+  overrides: Partial<GlobalOverrides & ChatMessageOverrides>;
+  onDistanceToBottomChange: () => void;
+}) {
+  const $ = useOverrides(overrides);
+
+  useLayoutEffect(() => {
+    onDistanceToBottomChange();
+  }, [onDistanceToBottomChange]);
+
+  return messages.map((message) => {
+    if (message.role === "user") {
+      return (
+        <AiChatUserMessage
+          key={message.id}
+          message={message}
+          overrides={$}
+          className="lb-ai-chat-messages-user-message"
+        />
+      );
+    } else if (message.role === "assistant") {
+      return (
+        <AiChatAssistantMessage
+          key={message.id}
+          message={message}
+          overrides={$}
+          className="lb-ai-chat-messages-assistant-message"
+        />
+      );
+    } else {
+      return null;
+    }
+  });
+}
 
 /**
  * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
