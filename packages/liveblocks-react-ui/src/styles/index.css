@@ -2446,6 +2446,7 @@
   position: sticky;
   inset-block-end: 0;
   inline-size: 100%;
+  margin-block-start: auto;
   padding: var(--lb-spacing);
   padding-block-start: 0;
 
