@@ -2,7 +2,7 @@ import type {
   AiAssistantContentPart,
   CopilotId,
   MessageId,
-  UiAssistantChatMessage,
+  UiAssistantMessage,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
@@ -33,13 +33,13 @@ import {
 import { classNames } from "../../utils/class-names";
 
 /* -------------------------------------------------------------------------------------------------
- * AssistantChatMessage
+ * AiChatAssistantMessage
  * -----------------------------------------------------------------------------------------------*/
-export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
+export type AiChatAssistantMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The message to display.
    */
-  message: UiAssistantChatMessage;
+  message: UiAssistantMessage;
   /**
    * Whether to show or hide message actions.
    * @internal
@@ -61,8 +61,8 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   copilotId?: CopilotId;
 };
 
-export const AssistantChatMessage = memo(
-  forwardRef<HTMLDivElement, AssistantChatMessageProps>(
+export const AiChatAssistantMessage = memo(
+  forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
     (
       {
         message,
@@ -81,7 +81,7 @@ export const AssistantChatMessage = memo(
         if (!showActions) return null;
 
         return (
-          <div className="lb-assistant-chat-message-actions">
+          <div className="lb-ai-chat-assistant-message-actions">
             <Tooltip content={$.CHAT_MESSAGE_COPY}>
               <CopyTextButton text={text} label={$.CHAT_MESSAGE_COPY} />
             </Tooltip>
@@ -103,11 +103,11 @@ export const AssistantChatMessage = memo(
       if (message.deletedAt !== undefined) {
         return (
           <div
-            className={classNames("lb-assistant-chat-message", className)}
+            className={classNames("lb-ai-chat-assistant-message", className)}
             {...props}
             ref={forwardedRef}
           >
-            <div className="lb-assistant-chat-message-deleted">
+            <div className="lb-ai-chat-assistant-message-deleted">
               {$.CHAT_MESSAGE_DELETED}
             </div>
           </div>
@@ -116,11 +116,11 @@ export const AssistantChatMessage = memo(
         if (message.contentSoFar.length === 0) {
           return (
             <div
-              className={classNames("lb-assistant-chat-message", className)}
+              className={classNames("lb-ai-chat-assistant-message", className)}
               {...props}
               ref={forwardedRef}
             >
-              <div className="lb-assistant-chat-message-thinking">
+              <div className="lb-ai-chat-assistant-message-thinking">
                 {$.CHAT_MESSAGE_THINKING}
               </div>
             </div>
@@ -129,9 +129,9 @@ export const AssistantChatMessage = memo(
           return (
             <div
               className={classNames(
-                "lb-assistant-chat-message",
+                "lb-ai-chat-assistant-message",
                 showActions === "hover" &&
-                  "lb-assistant-chat-message:show-actions-hover",
+                  "lb-ai-chat-assistant-message:show-actions-hover",
                 className
               )}
               {...props}
@@ -156,9 +156,9 @@ export const AssistantChatMessage = memo(
           <TooltipProvider>
             <div
               className={classNames(
-                "lb-assistant-chat-message",
+                "lb-ai-chat-assistant-message",
                 showActions === "hover" &&
-                  "lb-assistant-chat-message:show-actions-hover",
+                  "lb-ai-chat-assistant-message:show-actions-hover",
                 className
               )}
               {...props}
@@ -185,9 +185,9 @@ export const AssistantChatMessage = memo(
           <TooltipProvider>
             <div
               className={classNames(
-                "lb-assistant-chat-message",
+                "lb-ai-chat-assistant-message",
                 showActions === "hover" &&
-                  "lb-assistant-chat-message:show-actions-hover",
+                  "lb-ai-chat-assistant-message:show-actions-hover",
                 className
               )}
               {...props}
@@ -236,7 +236,7 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
         setIsCopied(true);
       }}
       data-variant="default"
-      className="lb-button lb-assistant-chat-message-copy-button"
+      className="lb-button lb-ai-chat-assistant-message-copy-button"
       aria-label={label}
     >
       <span className="lb-icon-container">
@@ -269,7 +269,7 @@ function RegenerateMessageButton({
         });
       }}
       data-variant="default"
-      className="lb-button lb-assistant-chat-message-regenerate-button"
+      className="lb-button lb-ai-chat-assistant-message-regenerate-button"
       aria-label={label}
     >
       <span className="lb-icon-container">
@@ -308,7 +308,7 @@ function AssistantMessageContent({
     content.every((part) => part.type === "reasoning");
 
   return (
-    <div className="lb-assistant-chat-message-content">
+    <div className="lb-ai-chat-assistant-message-content">
       {content.map((part, index) => {
         switch (part.type) {
           case "text": {
@@ -316,7 +316,7 @@ function AssistantMessageContent({
               <TextPart
                 key={index}
                 text={part.text}
-                className="lb-assistant-chat-message-text-part"
+                className="lb-ai-chat-assistant-message-text-part"
               />
             );
           }
@@ -423,12 +423,12 @@ function ReasoningPart({
   const [isOpen, setIsOpen] = useState(false);
   return (
     <CollapsiblePrimitive.Root
-      className="lb-assistant-chat-message-reasoning-part"
+      className="lb-ai-chat-assistant-message-reasoning-part"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
       <CollapsiblePrimitive.Trigger
-        className="lb-assistant-chat-message-reasoning-part-trigger"
+        className="lb-ai-chat-assistant-message-reasoning-part-trigger"
         data-reasoning={isPending ? "" : undefined}
       >
         Reasoning
@@ -437,7 +437,7 @@ function ReasoningPart({
         </span>
       </CollapsiblePrimitive.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-assistant-chat-message-reasoning-part-content">
+      <CollapsiblePrimitive.Content className="lb-ai-chat-assistant-message-reasoning-part-content">
         {text}
       </CollapsiblePrimitive.Content>
     </CollapsiblePrimitive.Root>

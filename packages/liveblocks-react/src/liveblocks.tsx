@@ -376,8 +376,8 @@ function makeLiveblocksContextBundle<
     useInboxNotificationThread,
     useUserThreads_experimental,
 
-    useChats,
-    useChatMessages,
+    useAiChats,
+    useAiChatMessages,
     useChatContext,
 
     ...shared.classic,
@@ -404,8 +404,8 @@ function makeLiveblocksContextBundle<
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
-      useChats: useChatsSuspense,
-      useChatMessages: useChatMessagesSuspense,
+      useAiChats: useAiChatsSuspense,
+      useAiChatMessages: useAiChatMessagesSuspense,
       useChatContext,
 
       ...shared.suspense,
@@ -933,9 +933,9 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
- * const { chats } = useChats();
+ * const { chats } = useAiChats();
  */
-function useChats(): CopilotChatsAsyncResult {
+function useAiChats(): CopilotChatsAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
@@ -955,7 +955,7 @@ function useChats(): CopilotChatsAsyncResult {
   return useSignal(store.outputs.copilotChats.signal, identity, shallow);
 }
 
-function useChatsSuspense(): CopilotChatsAsyncSuccess {
+function useAiChatsSuspense(): CopilotChatsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -964,13 +964,13 @@ function useChatsSuspense(): CopilotChatsAsyncSuccess {
 
   use(store.outputs.copilotChats.waitUntilLoaded());
 
-  const result = useChats();
+  const result = useAiChats();
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
 }
 
-function useChatMessages(
+function useAiChatMessages(
   chatId: string,
   branch?: MessageId
 ): ChatMessageTreeAsyncResult {
@@ -1001,7 +1001,7 @@ function useChatMessages(
   );
 }
 
-function useChatMessagesSuspense(
+function useAiChatMessagesSuspense(
   chatId: string,
   branch?: MessageId
 ): ChatMessageTreeAsyncSuccess {
@@ -1018,7 +1018,7 @@ function useChatMessagesSuspense(
       .waitUntilLoaded()
   );
 
-  const result = useChatMessages(chatId, branch);
+  const result = useAiChatMessages(chatId, branch);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -1530,34 +1530,35 @@ const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThre
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
- * const { chats, error, isLoading } = useChats();
+ * const { chats, error, isLoading } = useAiChats();
  */
-const _useChats: TypedBundle["useChats"] = useChats;
+const _useAiChats: TypedBundle["useAiChats"] = useAiChats;
 
 /**
  * (Private beta)  Returns the chats for the current user.
  *
  * @example
- * const { chats, error, isLoading } = useChats();
+ * const { chats, error, isLoading } = useAiChats();
  */
-const _useChatsSuspense: TypedBundle["suspense"]["useChats"] = useChatsSuspense;
+const _useAiChatsSuspense: TypedBundle["suspense"]["useAiChats"] =
+  useAiChatsSuspense;
 
 /**
  * (Private beta)  Returns the messages in the given chat.
  *
  * @example
- * const { messages, error, isLoading } = useChatMessages("my-chat");
+ * const { messages, error, isLoading } = useAiChatMessages("my-chat");
  */
-const _useChatMessages: TypedBundle["useChatMessages"] = useChatMessages;
+const _useAiChatMessages: TypedBundle["useAiChatMessages"] = useAiChatMessages;
 
 /**
  * (Private beta)  Returns the messages in the given chat.
  *
  * @example
- * const { messages, error, isLoading } = useChatMessages("my-chat");
+ * const { messages, error, isLoading } = useAiChatMessages("my-chat");
  */
-const _useChatMessagesSuspense: TypedBundle["suspense"]["useChatMessages"] =
-  useChatMessagesSuspense;
+const _useAiChatMessagesSuspense: TypedBundle["suspense"]["useAiChatMessages"] =
+  useAiChatMessagesSuspense;
 
 function useSyncStatus_withClient(
   client: OpaqueClient,
@@ -1672,8 +1673,8 @@ export {
   useUpdateNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
-  _useChats as useChats,
-  _useChatsSuspense as useChatsSuspense,
-  _useChatMessages as useChatMessages,
-  _useChatMessagesSuspense as useChatMessagesSuspense,
+  _useAiChats as useAiChats,
+  _useAiChatsSuspense as useAiChatsSuspense,
+  _useAiChatMessages as useAiChatMessages,
+  _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
 };

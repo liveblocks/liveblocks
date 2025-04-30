@@ -31,6 +31,7 @@ import type {
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
   AiChat,
+  AiChatContext,
   AiChatMessage,
   AiFailedAssistantMessage,
   AiPendingAssistantMessage,
@@ -38,7 +39,6 @@ import type {
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
-  ChatContext,
   ClearChatResponse,
   ClientAiMsg,
   ClientId,
@@ -94,12 +94,12 @@ export type UiChatMessage = AiChatMessage & {
   next: MessageId | null;
 };
 
-export type UiUserChatMessage = AiUserMessage & {
+export type UiUserMessage = AiUserMessage & {
   prev: MessageId | null;
   next: MessageId | null;
 };
 
-export type UiAssistantChatMessage = AiAssistantMessage & {
+export type UiAssistantMessage = AiAssistantMessage & {
   prev: MessageId | null;
   next: MessageId | null;
 };
@@ -117,7 +117,7 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  contextByChatId: Map<string, Set<ChatContext>>;
+  contextByChatId: Map<string, Set<AiChatContext>>;
   toolsByChatId: Map<string, Map<string, ClientToolDefinition>>;
 };
 
@@ -588,7 +588,7 @@ export type Ai = {
       toolName: string
     ): Signal<ClientToolDefinition | undefined>;
   };
-  registerChatContext: (chatId: string, data: ChatContext) => () => void;
+  registerChatContext: (chatId: string, data: AiChatContext) => () => void;
   registerChatTool: (
     chatId: string,
     name: string,
@@ -632,7 +632,7 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    contextByChatId: new Map<string, Set<ChatContext>>(),
+    contextByChatId: new Map<string, Set<AiChatContext>>(),
     toolsByChatId: new Map<string, Map<string, ClientToolDefinition>>(),
   };
 
@@ -895,7 +895,6 @@ export function createAi(config: AiConfig): Ai {
     return sendClientMsgWithResponse<GetChatsResponse>({
       cmd: "get-chats",
       cursor: options.cursor,
-      pageSize: 2, // TODO: Set a more sensible default page size
     });
   }
 
@@ -916,7 +915,7 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function registerChatContext(chatId: string, data: ChatContext) {
+  function registerChatContext(chatId: string, data: AiChatContext) {
     const chatContext = context.contextByChatId.get(chatId);
     if (chatContext === undefined) {
       context.contextByChatId.set(chatId, new Set([data]));

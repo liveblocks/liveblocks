@@ -19,9 +19,9 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 // XXX Before launching, make sure to be deliberate about these exports!
 export type {
   ClientToolDefinition,
-  UiAssistantChatMessage,
+  UiAssistantMessage,
   UiChatMessage,
-  UiUserChatMessage,
+  UiUserMessage,
 } from "./ai";
 export type {
   Client,

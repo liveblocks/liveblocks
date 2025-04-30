@@ -1235,17 +1235,17 @@ export type LiveblocksContextBundle<
        * (Private beta)  Returns the chats for the current user.
        *
        * @example
-       * const { chats, error, isLoading } = useChats();
+       * const { chats, error, isLoading } = useAiChats();
        */
-      useChats(): CopilotChatsAsyncResult;
+      useAiChats(): CopilotChatsAsyncResult;
 
       /**
        * (Private beta)  Returns the messages in the given chat.
        *
        * @example
-       * const { messages, error, isLoading } = useChatMessages("my-chat");
+       * const { messages, error, isLoading } = useAiChatMessages("my-chat");
        */
-      useChatMessages(
+      useAiChatMessages(
         chatId: string,
         branch?: MessageId
       ): ChatMessageTreeAsyncResult;
@@ -1294,17 +1294,17 @@ export type LiveblocksContextBundle<
              * (Private beta)  Returns the chats for the current user.
              *
              * @example
-             * const { chats } = useChats();
+             * const { chats } = useAiChats();
              */
-            useChats(): CopilotChatsAsyncSuccess;
+            useAiChats(): CopilotChatsAsyncSuccess;
 
             /**
              * (Private beta) Returns the messages in the given chat.
              *
              * @example
-             * const { messages } = useChatMessages("my-chat");
+             * const { messages } = useAiChatMessages("my-chat");
              */
-            useChatMessages(
+            useAiChatMessages(
               chatId: string,
               branch?: MessageId
             ): ChatMessageTreeAsyncSuccess;

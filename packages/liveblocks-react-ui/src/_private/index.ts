@@ -1,5 +1,17 @@
 // Private APIs
 
+export {
+  AiChatAssistantMessage,
+  type AiChatAssistantMessageProps,
+} from "../components/internal/AiChatAssistantMessage";
+export {
+  AiChatComposer,
+  type AiChatComposerProps,
+} from "../components/internal/AiChatComposer";
+export {
+  AiChatUserMessage,
+  type AiChatUserMessageProps,
+} from "../components/internal/AiChatUserMessage";
 export { Button, SelectButton } from "../components/internal/Button";
 export { List } from "../components/internal/List";
 export {

@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import './JobApplicationForm.css';
-import { useClient } from '@liveblocks/react';
-import { AiMessageContent, AiToolContent } from '@liveblocks/core';
+import React, { useCallback, useState } from "react";
+import "./JobApplicationForm.css";
+import { useClient } from "@liveblocks/react";
+// import { AiMessageContent, AiToolContent } from "@liveblocks/core";
 
 interface Experience {
   id: string;
@@ -13,47 +13,97 @@ interface Experience {
 }
 
 const APPLICATION_SCHEMA = {
-  type: 'object',
+  type: "object",
   properties: {
     personalInfo: {
-      type: 'object',
+      type: "object",
       properties: {
-        name: { type: 'string', description: 'The full name of the applicant' },
-        email: { type: 'string', format: 'email', description: 'The email address of the applicant' },
-        phone: { type: 'string', description: 'The phone number of the applicant' },
-        address: { type: 'string', description: 'The address of the applicant' }
+        name: { type: "string", description: "The full name of the applicant" },
+        email: {
+          type: "string",
+          format: "email",
+          description: "The email address of the applicant",
+        },
+        phone: {
+          type: "string",
+          description: "The phone number of the applicant",
+        },
+        address: {
+          type: "string",
+          description: "The address of the applicant",
+        },
       },
-      required: ['name', 'email', 'phone', 'address']
+      required: ["name", "email", "phone", "address"],
     },
     education: {
-      type: 'object',
+      type: "object",
       properties: {
-        school: { type: 'string', description: 'The name of the school or university' },
-        degree: { type: 'string', description: 'The degree or qualification of the applicant' },
-        startYear: { type: 'string', description: 'The start year of the applicant\'s education' },
-        endYear: { type: 'string', description: 'The end year of the applicant\'s education' },
-        major: { type: 'string', description: 'The major or field of study of the applicant' }
+        school: {
+          type: "string",
+          description: "The name of the school or university",
+        },
+        degree: {
+          type: "string",
+          description: "The degree or qualification of the applicant",
+        },
+        startYear: {
+          type: "string",
+          description: "The start year of the applicant's education",
+        },
+        endYear: {
+          type: "string",
+          description: "The end year of the applicant's education",
+        },
+        major: {
+          type: "string",
+          description: "The major or field of study of the applicant",
+        },
       },
-      required: ['school', 'degree', 'startYear', 'endYear', 'major']
+      required: ["school", "degree", "startYear", "endYear", "major"],
     },
     experiences: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         properties: {
-          id: { type: 'string', description: 'The unique identifier of the experience' },
-          company: { type: 'string', description: 'The name of the company the applicant worked at' },
-          position: { type: 'string', description: 'The position of the applicant at the company' },
-          startDate: { type: 'string', description: 'The start date of the applicant\'s employment' },
-          endDate: { type: 'string', description: 'The end date of the applicant\'s employment' },
-          description: { type: 'string', description: 'A description of the applicant\'s responsibilities and achievements at the company' }
+          id: {
+            type: "string",
+            description: "The unique identifier of the experience",
+          },
+          company: {
+            type: "string",
+            description: "The name of the company the applicant worked at",
+          },
+          position: {
+            type: "string",
+            description: "The position of the applicant at the company",
+          },
+          startDate: {
+            type: "string",
+            description: "The start date of the applicant's employment",
+          },
+          endDate: {
+            type: "string",
+            description: "The end date of the applicant's employment",
+          },
+          description: {
+            type: "string",
+            description:
+              "A description of the applicant's responsibilities and achievements at the company",
+          },
         },
-        required: ['id', 'company', 'position', 'startDate', 'endDate', 'description']
-      }
-    }
+        required: [
+          "id",
+          "company",
+          "position",
+          "startDate",
+          "endDate",
+          "description",
+        ],
+      },
+    },
   },
-  required: ['personalInfo', 'education', 'experiences']
-
+  required: ["personalInfo", "education", "experiences"],
 };
 
 interface UseAiGenerationOptions<T> {
@@ -64,34 +114,40 @@ interface UseAiGenerationOptions<T> {
   onSuccess?: (data: T) => void;
 }
 
-function useAiAction<T>({ prompt, name, description, schema, onSuccess }: UseAiGenerationOptions<T>) {
+function useAiAction<T>({
+  prompt,
+  name,
+  description,
+  schema,
+  onSuccess,
+}: UseAiGenerationOptions<T>) {
   const client = useClient();
   const [isGenerating, setIsGenerating] = useState(false);
 
   const executeAction = useCallback(async () => {
     setIsGenerating(true);
-    let result: AiMessageContent[] | undefined;
-    try {
-      result = await client.ai.statelessAction(prompt, {
-        name,
-        description,
-        parameter_schema: schema,
-      });
-    } catch (error) {
-      console.error(error);
-      setIsGenerating(false);
-      return;
-    }
-    if (result) {
-      const toolCallResult = result.find(item =>
-        item.type === "tool-call" && item.name === name
-      ) as AiToolContent | undefined;
+    // let result: AiMessageContent[] | undefined;
+    // try {
+    //   result = await client.ai.statelessAction(prompt, {
+    //     name,
+    //     description,
+    //     parameter_schema: schema,
+    //   });
+    // } catch (error) {
+    //   console.error(error);
+    //   setIsGenerating(false);
+    //   return;
+    // }
+    // if (result) {
+    //   const toolCallResult = result.find(
+    //     (item) => item.type === "tool-call" && item.name === name
+    //   ) as AiToolContent | undefined;
 
-      console.log(toolCallResult, toolCallResult?.args);
-      if (toolCallResult && toolCallResult.args && onSuccess) {
-        onSuccess(toolCallResult.args as T);
-      }
-    }
+    //   console.log(toolCallResult, toolCallResult?.args);
+    //   if (toolCallResult && toolCallResult.args && onSuccess) {
+    //     onSuccess(toolCallResult.args as T);
+    //   }
+    // }
     setIsGenerating(false);
   }, [client, prompt, name, description, schema, onSuccess]);
 
@@ -101,27 +157,28 @@ function useAiAction<T>({ prompt, name, description, schema, onSuccess }: UseAiG
 const JobApplicationForm: React.FC = () => {
   const [formData, setFormData] = useState({
     personalInfo: {
-      name: '',
-      email: '',
-      phone: '',
-      address: '',
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
     },
     education: {
-      school: '',
-      degree: '',
-      startYear: '',
-      endYear: '',
-      major: '',
+      school: "",
+      degree: "",
+      startYear: "",
+      endYear: "",
+      major: "",
     },
     experiences: [] as Experience[],
   });
 
   const { executeAction, isGenerating } = useAiAction({
-    prompt: 'Generate a job application for an imaginary person, make up a person and all their data',
-    name: 'generateJobApplication',
-    description: 'Generate a job application for me',
+    prompt:
+      "Generate a job application for an imaginary person, make up a person and all their data",
+    name: "generateJobApplication",
+    description: "Generate a job application for me",
     schema: APPLICATION_SCHEMA,
-    onSuccess: setFormData
+    onSuccess: setFormData,
   });
 
   const handlePersonalInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,11 +206,11 @@ const JobApplicationForm: React.FC = () => {
   const addExperience = () => {
     const newExperience: Experience = {
       id: Date.now().toString(),
-      company: '',
-      position: '',
-      startDate: '',
-      endDate: '',
-      description: '',
+      company: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      description: "",
     };
 
     setFormData({
@@ -169,7 +226,10 @@ const JobApplicationForm: React.FC = () => {
     });
   };
 
-  const handleExperienceChange = (id: string, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleExperienceChange = (
+    id: string,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -181,7 +241,7 @@ const JobApplicationForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    console.log("Form submitted:", formData);
     // Handle form submission (e.g., send to API)
   };
 
@@ -200,7 +260,7 @@ const JobApplicationForm: React.FC = () => {
             Generating...
           </>
         ) : (
-          'Generate Magically'
+          "Generate Magically"
         )}
       </button>
       <form onSubmit={handleSubmit}>
@@ -351,7 +411,9 @@ const JobApplicationForm: React.FC = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label htmlFor={`startDate-${experience.id}`}>Start Date</label>
+                  <label htmlFor={`startDate-${experience.id}`}>
+                    Start Date
+                  </label>
                   <input
                     type="text"
                     id={`startDate-${experience.id}`}
@@ -375,7 +437,9 @@ const JobApplicationForm: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor={`description-${experience.id}`}>Description</label>
+                <label htmlFor={`description-${experience.id}`}>
+                  Description
+                </label>
                 <textarea
                   id={`description-${experience.id}`}
                   name="description"
@@ -407,4 +471,4 @@ const JobApplicationForm: React.FC = () => {
   );
 };
 
-export default JobApplicationForm; 
+export default JobApplicationForm;

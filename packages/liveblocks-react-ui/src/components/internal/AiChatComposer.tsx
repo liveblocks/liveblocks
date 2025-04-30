@@ -40,9 +40,9 @@ import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 
 /* -------------------------------------------------------------------------------------------------
- * Composer
+ * AiChatComposer
  * -----------------------------------------------------------------------------------------------*/
-export type ChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
+export type AiChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The composer's initial value.
    */
@@ -85,7 +85,7 @@ export type ChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   stream?: boolean;
 };
 
-export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
+export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
   (
     {
       defaultValue,
@@ -155,7 +155,7 @@ export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
     return (
       <TooltipProvider>
         <ComposerPrimitive.Form
-          className={classNames("lb-chat-composer-form", className)}
+          className={classNames("lb-ai-chat-composer-form", className)}
           chatId={chatId}
           dir={$.dir}
           {...props}
@@ -163,18 +163,18 @@ export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
           ref={forwardedRef}
           onComposerSubmit={handleComposerSubmit}
         >
-          <div className="lb-chat-composer-editor-container">
+          <div className="lb-ai-chat-composer-editor-container">
             <ComposerPrimitive.Editor
               autoFocus
-              className="lb-chat-composer-editor"
+              className="lb-ai-chat-composer-editor"
               placeholder={$.CHAT_COMPOSER_PLACEHOLDER}
               defaultValue={defaultValue}
             />
 
             <Attachments />
 
-            <div className="lb-chat-composer-footer">
-              <div className="lb-chat-composer-editor-actions">
+            <div className="lb-ai-chat-composer-footer">
+              <div className="lb-ai-chat-composer-editor-actions">
                 {/* <Tooltip content={$.CHAT_COMPOSER_ATTACH_FILES}>
                   <ComposerPrimitive.AttachFiles
                     className="lb-button"
@@ -201,7 +201,7 @@ export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
                 </Tooltip> */}
               </div>
 
-              <div className="lb-chat-composer-actions">
+              <div className="lb-ai-chat-composer-actions">
                 {pendingMessage === undefined ? (
                   <ShortcutTooltip
                     content={$.CHAT_COMPOSER_SEND}
@@ -307,7 +307,7 @@ export const Attachments = forwardRef<HTMLDivElement, AttachmentsProps>(
       <div
         {...props}
         ref={forwardedRef}
-        className={classNames("lb-chat-composer-attachments", className)}
+        className={classNames("lb-ai-chat-composer-attachments", className)}
       >
         <div className="lb-attachments">
           {attachments.map((attachment) => (
@@ -372,7 +372,7 @@ function Attachment({
 
   return (
     <div
-      className="lb-attachment lb-file-attachment lb-chat-composer-attachment"
+      className="lb-attachment lb-file-attachment lb-ai-chat-composer-attachment"
       data-error={attachment.status === "error" ? "" : undefined}
     >
       <div className="lb-attachment-preview">

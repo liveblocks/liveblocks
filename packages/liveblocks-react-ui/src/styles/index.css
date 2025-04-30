@@ -2047,8 +2047,8 @@
 /*************************************
  *          Chat Composer            *
  *************************************/
-.lb-chat-composer-form:where(
-    :has(.lb-chat-composer-editor:not(:focus-visible))
+.lb-ai-chat-composer-form:where(
+    :has(.lb-ai-chat-composer-editor:not(:focus-visible))
   ) {
   :where(.lb-button[data-variant="primary"]) {
     --lb-button-background: var(--lb-foreground-subtle);
@@ -2063,14 +2063,14 @@
   }
 }
 
-.lb-chat-composer-form {
+.lb-ai-chat-composer-form {
   position: relative;
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   transition-property: background;
 }
 
-.lb-chat-composer-editor {
+.lb-ai-chat-composer-editor {
   max-block-size: 15rem;
   padding: var(--lb-spacing) var(--lb-spacing) 0;
   color: var(--lb-foreground-secondary);
@@ -2113,7 +2113,7 @@
   }
 }
 
-.lb-chat-composer-footer {
+.lb-ai-chat-composer-footer {
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
@@ -2121,21 +2121,21 @@
   padding: var(--lb-spacing);
 }
 
-.lb-chat-composer-actions,
-.lb-chat-composer-editor-actions {
+.lb-ai-chat-composer-actions,
+.lb-ai-chat-composer-editor-actions {
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   align-items: center;
 }
 
-.lb-chat-composer-editor-actions {
+.lb-ai-chat-composer-editor-actions {
   margin-inline-end: auto;
 }
 
 /*************************************
  *     Chat composer attachments     *
  *************************************/
-.lb-chat-composer-attachments {
+.lb-ai-chat-composer-attachments {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
@@ -2143,14 +2143,14 @@
   padding-block-start: calc(0.75 * var(--lb-spacing));
 }
 
-.lb-chat-composer-editor-container:where([data-drop]) * {
+.lb-ai-chat-composer-editor-container:where([data-drop]) * {
   pointer-events: none;
 }
 
 /*************************************
  *           Chat message            *
  *************************************/
-.lb-user-chat-message {
+.lb-ai-chat-user-message {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
@@ -2161,7 +2161,7 @@
   }
 }
 
-.lb-user-chat-message-content {
+.lb-ai-chat-user-message-content {
   padding: calc(0.75 * var(--lb-spacing)) calc(1.375 * var(--lb-spacing));
   border-radius: calc(3 * var(--lb-radius));
   background: var(--lb-background-foreground-faint);
@@ -2169,38 +2169,38 @@
   white-space: break-spaces;
 }
 
-.lb-user-chat-message-attachments {
+.lb-ai-chat-user-message-attachments {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
 }
 
-.lb-user-chat-message-media-attachments {
+.lb-ai-chat-user-message-media-attachments {
   display: flex;
   flex-wrap: wrap;
   gap: calc(0.75 * var(--lb-spacing));
   justify-content: flex-end;
 }
 
-.lb-user-chat-message-attachment {
+.lb-ai-chat-user-message-attachment {
   flex-shrink: 1;
   flex-basis: 300px;
 }
 
-.lb-assistant-chat-message {
+.lb-ai-chat-assistant-message {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
 
   @media (hover: hover) {
-    &:where(.lb-assistant-chat-message\:show-actions-hover) {
-      :where(.lb-assistant-chat-message-actions) {
+    &:where(.lb-ai-chat-assistant-message\:show-actions-hover) {
+      :where(.lb-ai-chat-assistant-message-actions) {
         opacity: 0;
         transition-property: opacity;
       }
 
       &:where(:is(:hover, :focus-within)) {
-        :where(.lb-assistant-chat-message-actions) {
+        :where(.lb-ai-chat-assistant-message-actions) {
           opacity: 1;
         }
       }
@@ -2208,11 +2208,11 @@
   }
 }
 
-.lb-assistant-chat-message-content {
+.lb-ai-chat-assistant-message-content {
   inline-size: 100%;
 }
 
-.lb-assistant-chat-message-text-part {
+.lb-ai-chat-assistant-message-text-part {
   display: flex;
   flex-direction: column;
 
@@ -2329,15 +2329,15 @@
   }
 }
 
-.lb-assistant-chat-message-thinking {
+.lb-ai-chat-assistant-message-thinking {
   @include truncate;
 
   user-select: none;
   animation: lb-animation-shimmer-small 8s linear infinite;
 }
 
-.lb-user-chat-message-deleted,
-.lb-assistant-chat-message-deleted {
+.lb-ai-chat-user-message-deleted,
+.lb-ai-chat-assistant-message-deleted {
   position: relative;
   align-items: center;
   inline-size: 100%;
@@ -2366,7 +2366,7 @@
   }
 }
 
-.lb-assistant-chat-message-reasoning-part {
+.lb-ai-chat-assistant-message-reasoning-part {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2375,7 +2375,7 @@
   font-size: 0.875em;
 }
 
-.lb-assistant-chat-message-reasoning-part-trigger {
+.lb-ai-chat-assistant-message-reasoning-part-trigger {
   @include truncate;
 
   display: flex;
@@ -2387,7 +2387,7 @@
   }
 }
 
-.lb-assistant-chat-message-reasoning-part-content {
+.lb-ai-chat-assistant-message-reasoning-part-content {
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
   line-height: var(--lb-line-height);
@@ -2397,14 +2397,14 @@
   }
 }
 
-.lb-assistant-chat-message-actions {
+.lb-ai-chat-assistant-message-actions {
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   align-items: center;
 }
 
-.lb-chat {
-  --lb-chat-container-width: 100%;
+.lb-ai-chat {
+  --lb-ai-chat-container-width: 100%;
 
   display: flex;
   flex-direction: column;
@@ -2417,13 +2417,13 @@
   overflow-y: auto;
 }
 
-.lb-chat-messages {
+.lb-ai-chat-messages {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   inline-size: 100%;
   max-inline-size: min(
-    calc(var(--lb-chat-container-width) - var(--lb-spacing)),
+    calc(var(--lb-ai-chat-container-width) - var(--lb-spacing)),
     calc(100% - 3 * var(--lb-spacing))
   );
   margin-inline: auto;
@@ -2431,20 +2431,23 @@
   padding-block-end: calc(3 * var(--lb-spacing));
 }
 
-.lb-chat-loading,
-.lb-chat-error {
+.lb-ai-chat-loading,
+.lb-ai-chat-error {
   position: relative;
   flex: 1 1 auto;
 }
 
-.lb-chat-messages-user-message {
+.lb-ai-chat-messages-user-message {
   max-inline-size: 80%;
   margin-inline-start: auto;
 }
 
-.lb-chat-composer-container {
+.lb-ai-chat-footer {
   position: sticky;
   inset-block-end: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.75 * var(--lb-spacing));
   inline-size: 100%;
   margin-block-start: auto;
   padding: var(--lb-spacing);
@@ -2464,19 +2467,33 @@
   }
 }
 
-.lb-chat-composer {
-  max-inline-size: var(--lb-chat-container-width);
+.lb-ai-chat-footer-actions {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(-3 * var(--lb-spacing));
+  display: flex;
+  justify-content: center;
+}
+
+.lb-ai-chat-composer {
+  inline-size: 100%;
+  max-inline-size: var(--lb-ai-chat-container-width);
   margin-inline: auto;
   margin-block-start: auto;
   border-radius: calc(2 * var(--lb-radius));
   box-shadow: var(--lb-highlight-shadow);
 }
 
-.lb-chat-scroll-button {
-  position: sticky;
-  inset-block: 0;
-  margin-inline: auto;
+.lb-ai-chat-scroll-button {
   border-radius: $lb-radius-full;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: opacity;
+
+  &:where([data-visible]) {
+    opacity: 1;
+    pointer-events: all;
+  }
 }
 
 /*************************************
