@@ -12,8 +12,8 @@ import {
   useOverrides,
 } from "../../overrides";
 import { classNames } from "../../utils/class-names";
-import { AssistantChatMessage } from "./AssistantMessage";
-import { UserChatMessage } from "./UserMessage";
+import { AssistantChatMessage } from "./AssistantChatMessage";
+import { UserChatMessage } from "./UserChatMessage";
 
 export type ChatMessagesProps = HTMLAttributes<HTMLDivElement> & {
   /**
@@ -37,11 +37,7 @@ export const ChatMessages = forwardRef<HTMLDivElement, ChatMessagesProps>(
     );
 
     return (
-      <div
-        ref={containerRef}
-        {...props}
-        className={classNames("lb-root lb-chat-messages", className)}
-      >
+      <div ref={containerRef} {...props} className={classNames("", className)}>
         {messages.map((message) => {
           if (message.role === "user") {
             return (

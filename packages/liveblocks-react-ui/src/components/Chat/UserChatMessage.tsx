@@ -11,7 +11,7 @@ import {
   MAX_DISPLAYED_MEDIA_SIZE,
   splitFileName,
   useChatAttachmentUrl,
-} from "./Composer";
+} from "./ChatComposer";
 
 /* -------------------------------------------------------------------------------------------------
  * UserChatMessage
@@ -40,7 +40,7 @@ export const UserChatMessage = forwardRef<HTMLDivElement, UserChatMessageProps>(
       return (
         <div
           ref={forwardedRef}
-          className={classNames("lb-root lb-user-chat-message", className)}
+          className={classNames("lb-user-chat-message", className)}
         >
           <div className="lb-user-chat-message-deleted">
             This message has been deleted.
@@ -52,7 +52,7 @@ export const UserChatMessage = forwardRef<HTMLDivElement, UserChatMessageProps>(
     return (
       <div
         ref={forwardedRef}
-        className={classNames("lb-root lb-user-chat-message", className)}
+        className={classNames("lb-user-chat-message", className)}
       >
         {images.length > 0 && (
           <div className="lb-user-chat-message-attachments">

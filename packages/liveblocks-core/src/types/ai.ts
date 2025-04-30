@@ -156,7 +156,7 @@ type AskAIPair = DefineCmd<
     stream: boolean;
     tools?: AiToolDefinition[];
     toolChoice?: ToolChoice;
-    context?: CopilotContext[];
+    context?: ChatContext[];
     timeout: number; // in millis
   },
   { message: AiChatMessage }
@@ -372,7 +372,7 @@ export type AiPendingAssistantMessage = {
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
 
-export type CopilotContext = {
+export type ChatContext = {
   value: string;
   description: string;
 };

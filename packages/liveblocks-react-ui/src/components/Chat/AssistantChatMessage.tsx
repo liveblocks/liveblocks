@@ -42,6 +42,7 @@ export type AssistantChatMessageProps = HTMLAttributes<HTMLDivElement> & {
   message: UiAssistantChatMessage;
   /**
    * Whether to show or hide message actions.
+   * @internal
    */
   showActions?: boolean | "hover";
   /**
@@ -65,8 +66,8 @@ export const AssistantChatMessage = memo(
     (
       {
         message,
-        showActions = "hover",
-        showRegenerate,
+        showActions = false,
+        showRegenerate = false,
         copilotId,
         className,
         overrides,
@@ -86,12 +87,12 @@ export const AssistantChatMessage = memo(
             </Tooltip>
 
             {showRegenerate && (
-              <Tooltip content={$.CHAT_MESSAGE_REGENERATE}>
+              <Tooltip content={$.CHAT_MESSAGE_TRY_AGAIN}>
                 <RegenerateMessageButton
                   chatId={message.chatId}
                   messageId={message.id}
                   copilotId={copilotId}
-                  label={$.CHAT_MESSAGE_REGENERATE}
+                  label={$.CHAT_MESSAGE_TRY_AGAIN}
                 />
               </Tooltip>
             )}
@@ -102,10 +103,7 @@ export const AssistantChatMessage = memo(
       if (message.deletedAt !== undefined) {
         return (
           <div
-            className={classNames(
-              "lb-root lb-assistant-chat-message",
-              className
-            )}
+            className={classNames("lb-assistant-chat-message", className)}
             {...props}
             ref={forwardedRef}
           >
@@ -118,10 +116,7 @@ export const AssistantChatMessage = memo(
         if (message.contentSoFar.length === 0) {
           return (
             <div
-              className={classNames(
-                "lb-root lb-assistant-chat-message",
-                className
-              )}
+              className={classNames("lb-assistant-chat-message", className)}
               {...props}
               ref={forwardedRef}
             >
@@ -134,7 +129,7 @@ export const AssistantChatMessage = memo(
           return (
             <div
               className={classNames(
-                "lb-root lb-assistant-chat-message",
+                "lb-assistant-chat-message",
                 showActions === "hover" &&
                   "lb-assistant-chat-message:show-actions-hover",
                 className
@@ -161,7 +156,7 @@ export const AssistantChatMessage = memo(
           <TooltipProvider>
             <div
               className={classNames(
-                "lb-root lb-assistant-chat-message",
+                "lb-assistant-chat-message",
                 showActions === "hover" &&
                   "lb-assistant-chat-message:show-actions-hover",
                 className
@@ -190,7 +185,7 @@ export const AssistantChatMessage = memo(
           <TooltipProvider>
             <div
               className={classNames(
-                "lb-root lb-assistant-chat-message",
+                "lb-assistant-chat-message",
                 showActions === "hover" &&
                   "lb-assistant-chat-message:show-actions-hover",
                 className

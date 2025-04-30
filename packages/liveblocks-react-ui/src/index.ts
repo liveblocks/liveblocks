@@ -7,19 +7,20 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export {
   AssistantChatMessage,
   type AssistantChatMessageProps,
-} from "./components/Chat/AssistantMessage";
+} from "./components/Chat/AssistantChatMessage";
+export { Chat, type ChatProps } from "./components/Chat/Chat";
+export {
+  ChatComposer as ChatComposer,
+  type ChatComposerProps as ChatComposerProps,
+} from "./components/Chat/ChatComposer";
 export {
   ChatMessages,
   type ChatMessagesProps,
 } from "./components/Chat/ChatMessages";
 export {
-  Composer as ChatComposer,
-  type ComposerProps as ChatComposerProps,
-} from "./components/Chat/Composer";
-export {
   UserChatMessage,
   type UserChatMessageProps,
-} from "./components/Chat/UserMessage";
+} from "./components/Chat/UserChatMessage";
 export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";

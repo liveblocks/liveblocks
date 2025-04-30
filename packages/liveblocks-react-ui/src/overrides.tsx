@@ -68,7 +68,11 @@ export interface ChatMessageOverrides {
   CHAT_MESSAGE_DELETED: string;
   CHAT_MESSAGE_THINKING: string;
   CHAT_MESSAGE_COPY: string;
-  CHAT_MESSAGE_REGENERATE: string;
+  CHAT_MESSAGE_TRY_AGAIN: string;
+}
+
+export interface ChatOverrides {
+  GET_CHAT_MESSAGES_ERROR: (error: Error) => ReactNode;
 }
 
 export interface ThreadOverrides {
@@ -114,7 +118,8 @@ export type Overrides = LocalizationOverrides &
   InboxNotificationOverrides &
   HistoryVersionPreviewOverrides &
   ChatComposerOverrides &
-  ChatMessageOverrides;
+  ChatMessageOverrides &
+  ChatOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -209,15 +214,18 @@ export const defaultOverrides: Overrides = {
   HISTORY_VERSION_PREVIEW_EMPTY: "No content.",
   HISTORY_VERSION_PREVIEW_ERROR: () =>
     "There was an error while getting this version.",
-  CHAT_COMPOSER_PLACEHOLDER: "Write a message…",
+  CHAT_COMPOSER_PLACEHOLDER: "Ask anything…",
   CHAT_COMPOSER_SEND: "Send",
   CHAT_COMPOSER_ATTACH_FILES: "Attach files",
   CHAT_COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
-  CHAT_COMPOSER_ABORT: "Abort message.", // XXX - Think about the message to use
+  CHAT_COMPOSER_ABORT: "Abort response.",
   CHAT_MESSAGE_DELETED: "This message has been deleted.",
   CHAT_MESSAGE_THINKING: "Thinking…",
-  CHAT_MESSAGE_COPY: "Copy text",
-  CHAT_MESSAGE_REGENERATE: "Regenerate",
+  CHAT_MESSAGE_COPY: "Copy",
+  CHAT_MESSAGE_TRY_AGAIN: "Try again",
+  GET_CHAT_MESSAGES_ERROR: () => (
+    <>There was an error while getting the messages</>
+  ),
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

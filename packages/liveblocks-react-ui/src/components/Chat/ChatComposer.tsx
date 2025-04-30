@@ -42,7 +42,7 @@ import { formatFileSize } from "../../utils/format-file-size";
 /* -------------------------------------------------------------------------------------------------
  * Composer
  * -----------------------------------------------------------------------------------------------*/
-export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
+export type ChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * The composer's initial value.
    */
@@ -85,7 +85,7 @@ export type ComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   stream?: boolean;
 };
 
-export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
+export const ChatComposer = forwardRef<HTMLFormElement, ChatComposerProps>(
   (
     {
       defaultValue,
@@ -155,10 +155,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
     return (
       <TooltipProvider>
         <ComposerPrimitive.Form
-          className={classNames(
-            "lb-root lb-chat-composer lb-chat-composer-form",
-            className
-          )}
+          className={classNames("lb-chat-composer-form", className)}
           chatId={chatId}
           dir={$.dir}
           {...props}
@@ -178,7 +175,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
 
             <div className="lb-chat-composer-footer">
               <div className="lb-chat-composer-editor-actions">
-                <Tooltip content={$.CHAT_COMPOSER_ATTACH_FILES}>
+                {/* <Tooltip content={$.CHAT_COMPOSER_ATTACH_FILES}>
                   <ComposerPrimitive.AttachFiles
                     className="lb-button"
                     aria-label={$.CHAT_COMPOSER_ATTACH_FILES}
@@ -201,7 +198,7 @@ export const Composer = forwardRef<HTMLFormElement, ComposerProps>(
                       </svg>
                     </span>
                   </ComposerPrimitive.AttachFiles>
-                </Tooltip>
+                </Tooltip> */}
               </div>
 
               <div className="lb-chat-composer-actions">
