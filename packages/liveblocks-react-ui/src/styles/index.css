@@ -2474,6 +2474,7 @@
   inset-block-start: calc(-3 * var(--lb-spacing));
   display: flex;
   justify-content: center;
+  pointer-events: none;
 }
 
 .lb-ai-chat-composer {

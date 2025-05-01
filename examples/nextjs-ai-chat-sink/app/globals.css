@@ -5,3 +5,11 @@
 .lb-ai-chat {
   --lb-ai-chat-container-width: 896px;
 }
+
+.lb-ai-chat-composer-editor-container {
+  box-shadow:
+    0 0 0 1px #0000000a,
+    0 2px 6px #0000000f,
+    0 8px 26px #00000014;
+  border-radius: 12px;
+}

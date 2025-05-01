@@ -16,27 +16,7 @@ export default function Home() {
         // @ts-expect-error
         baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       >
-        <ClientSideSuspense
-          fallback={
-            <div className="lb-root h-screen w-full flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width={20}
-                height={20}
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                role="presentation"
-                className="lb-icon"
-              >
-                <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
-              </svg>
-            </div>
-          }
-        >
+        <ClientSideSuspense fallback={null}>
           <App />
         </ClientSideSuspense>
       </LiveblocksProvider>

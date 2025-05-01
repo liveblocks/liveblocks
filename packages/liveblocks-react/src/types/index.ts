@@ -28,7 +28,6 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
-  MessageId,
   PartialUnless,
   PartialUserNotificationSettings,
   Patchable,
@@ -1232,10 +1231,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { messages, error, isLoading } = useAiChatMessages("my-chat");
        */
-      useAiChatMessages(
-        chatId: string,
-        branch?: MessageId
-      ): ChatMessageTreeAsyncResult;
+      useAiChatMessages(chatId: string): ChatMessageTreeAsyncResult;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1291,10 +1287,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { messages } = useAiChatMessages("my-chat");
              */
-            useAiChatMessages(
-              chatId: string,
-              branch?: MessageId
-            ): ChatMessageTreeAsyncSuccess;
+            useAiChatMessages(chatId: string): ChatMessageTreeAsyncSuccess;
           }
       >;
     }

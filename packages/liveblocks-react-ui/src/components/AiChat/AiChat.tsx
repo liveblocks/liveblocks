@@ -136,9 +136,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
         top: container.scrollHeight,
         behavior: "instant",
       });
-      setDistanceToBottom(
-        container.scrollHeight - container.clientHeight - container.scrollTop
-      );
     };
   }
 
