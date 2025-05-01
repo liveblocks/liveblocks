@@ -1,0 +1,142 @@
+---
+meta:
+  title: "MCP server"
+  parentTitle: "Tools"
+  description:
+    "Learn to use the official MCP server for Liveblocks, helpful for inspecting
+    and modifying your project with AI in Cursor, VS Code, Claude Desktop, and
+    more."
+---
+
+The Liveblocks MCP server allows you to inspect and modify your project with AI
+in compatible apps such as Cursor, VS Code, Claude Desktop, and more.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/assets/ai-copilots/mcp-server.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+## Features
+
+Our MCP server features 39 different tools, enabling most features from our
+[REST API](/docs/api-reference/rest-api-endpoints). You can use it to:
+
+- Create and modify rooms, threads, comments, notifications, more.
+- Read realtime Storage and Yjs values.
+- Broadcast custom events to connected clients.
+- Mark threads and notifications as read/unread.
+
+AI will often string tool calls together—for example, if you ask it to fetch a
+room that doesn’t exist, it will ask if you’d like to create the room first, and
+then fetch it after.
+
+## Automatic setup
+
+To install automatically, use one of the following commands, making sure to
+insert a secret key from your correct project in [your dashboard](/dashboard).
+
+<Banner type="warning" title="Only for development">
+
+Don’t insert a secret key from your product application, as AI will have direct
+access to modify it.
+
+</Banner>
+
+### Cursor
+
+Run the following command to set up [Cursor](https://cursor.sh/):
+
+```bash
+npx -y @smithery/cli install @liveblocks/liveblocks-mcp-server --client cursor --key "{{SECRET_KEY}}"
+```
+
+### Claude
+
+Run the following command to set up
+[Claude Desktop](https://claude.ai/download):
+
+```bash
+npx -y @smithery/cli install @liveblocks/liveblocks-mcp-server --client claude --key "{{SECRET_KEY}}"
+```
+
+### VS Code
+
+Run the following command to set up [VS Code](https://code.visualstudio.com/):
+
+```bash
+npx -y @smithery/cli install @liveblocks/liveblocks-mcp-server --client vscode --key "{{SECRET_KEY}}"
+```
+
+### Other clients
+
+Find installation information for other clients on
+[Smithery](https://smithery.ai/server/@liveblocks/liveblocks-mcp-server).
+
+## Manual setup
+
+1. Clone the
+   [Liveblocks MCP server](https://github.com/liveblocks/liveblocks-mcp-server)
+   repo.
+
+```bash
+git clone https://github.com/liveblocks/liveblocks-mcp-server.git
+```
+
+2. Build the project.
+
+```bash
+npm install
+npm run build
+```
+
+### Cursor
+
+3. Go to File → Cursor Settings → MCP → Add new server.
+
+4. Add the following, with the full path to the repo and the correct secret key
+   from [your dashboard](/dashboard):
+
+```json
+{
+  "mcpServers": {
+    "liveblocks-mcp-server": {
+      "command": "node",
+      "args": ["/full/path/to/the/repo/liveblocks-mcp-server/build/index.js"],
+      "env": {
+        "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
+      }
+    }
+  }
+}
+```
+
+5. Check it's enabled in the MCP menu.
+
+### Claude Desktop
+
+3. Go to File → Settings → Developer → Edit Config.
+
+4. Open the JSON file, `claude_desktop_config.json`.
+
+5. Add the following, with the full path to the repo and the correct secret key
+   from [your dashboard](/dashboard):
+
+```json
+{
+  "mcpServers": {
+    "liveblocks-mcp-server": {
+      "command": "node",
+      "args": ["/full/path/to/the/repo/liveblocks-mcp-server/build/index.js"],
+      "env": {
+        "LIVEBLOCKS_SECRET_KEY": "{{SECRET_KEY}}"
+      }
+    }
+  }
+}
+```
+
+## Source code
+
+The source code is available in our
+[GitHub repository](https://github.com/liveblocks/liveblocks-mcp-server).
