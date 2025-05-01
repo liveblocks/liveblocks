@@ -2,7 +2,6 @@
 
 import {
   ClientSideSuspense,
-  LiveblocksProvider,
   useAiChatMessages,
 } from "@liveblocks/react/suspense";
 import {
@@ -22,14 +21,10 @@ export default function Page({
   const { chatId } = use(params);
 
   return (
-    <LiveblocksProvider
-      authEndpoint="/api/auth/liveblocks"
-      // @ts-expect-error
-      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
-    >
+    <main className="lb-root h-screen w-full">
       <ClientSideSuspense
         fallback={
-          <div className="lb-root h-screen w-full flex items-center justify-center">
+          <div className="h-full w-full flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width={20}
@@ -47,11 +42,9 @@ export default function Page({
           </div>
         }
       >
-        <main className="h-screen w-full">
-          <Chat chatId={chatId} />
-        </main>
+        <Chat chatId={chatId} />
       </ClientSideSuspense>
-    </LiveblocksProvider>
+    </main>
   );
 }
 
@@ -193,7 +186,7 @@ function Chat({ chatId }: { chatId: string }) {
             key={chatId}
             chatId={chatId}
             copilotId={copilotId === "default" ? undefined : copilotId}
-            className="dark:shadow-[inset_0_0_0_1px_#ffffff0f] rounded-2xl shadow-[inset_0_0_0_1px_#0000000f]"
+            className="rounded-2xl shadow-[0_0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)] dark:shadow-[inset_0_0_0_1px_#ffffff0f]"
             onComposerSubmit={() => {
               const container = containerRef.current;
               if (container === null) return;
