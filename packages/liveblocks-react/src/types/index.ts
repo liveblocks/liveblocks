@@ -1183,6 +1183,24 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const syncStatus = useSyncStatus({ smooth: true });
    */
   useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+  /**
+   * Returns a function that creates an AI chat.
+   *
+   * @example
+   * const createAiChat = useCreateAiChat();
+   * createAiChat({ id: "ai-chat-id" });
+   */
+  useCreateAiChat(): (options: { id: string }) => void;
+
+  /**
+   * Returns a function that deletes the AI chat with the specified id.
+   *
+   * @example
+   * const deleteAiChat = useDeleteAiChat();
+   * deleteAiChat("ai-chat-id");
+   */
+  useDeleteAiChat(): (chatId: string) => void;
 };
 
 export type LiveblocksContextBundle<

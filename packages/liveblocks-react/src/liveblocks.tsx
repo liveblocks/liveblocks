@@ -378,6 +378,8 @@ function makeLiveblocksContextBundle<
 
     useAiChats,
     useAiChatMessages,
+    useCreateAiChat,
+    useDeleteAiChat,
 
     ...shared.classic,
 
@@ -405,6 +407,8 @@ function makeLiveblocksContextBundle<
 
       useAiChats: useAiChatsSuspense,
       useAiChatMessages: useAiChatMessagesSuspense,
+      useCreateAiChat,
+      useDeleteAiChat,
 
       ...shared.suspense,
     },
@@ -1020,6 +1024,36 @@ function useAiChatMessagesSuspense(
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
+}
+
+function useCreateAiChat() {
+  const client = useClient();
+
+  return useCallback(
+    (options: { id: string }) => {
+      client[kInternal].ai.createChat(options.id).catch((err) => {
+        console.error(
+          `Failed to create chat with ID "${options.id}": ${String(err)}`
+        );
+      });
+    },
+    [client]
+  );
+}
+
+function useDeleteAiChat() {
+  const client = useClient();
+
+  return useCallback(
+    (chatId: string) => {
+      client[kInternal].ai.deleteChat(chatId).catch((err) => {
+        console.error(
+          `Failed to delete chat with ID "${chatId}": ${String(err)}`
+        );
+      });
+    },
+    [client]
+  );
 }
 
 /** @internal */
@@ -1641,4 +1675,6 @@ export {
   _useAiChatsSuspense as useAiChatsSuspense,
   _useAiChatMessages as useAiChatMessages,
   _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
+  useCreateAiChat,
+  useDeleteAiChat,
 };

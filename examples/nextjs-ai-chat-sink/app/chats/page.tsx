@@ -1,11 +1,11 @@
 "use client";
 
-import { kInternal, nanoid } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
   useAiChats,
-  useClient,
+  useDeleteAiChat,
 } from "@liveblocks/react/suspense";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -46,8 +46,8 @@ export default function Page() {
 
 function Chats() {
   const { chats } = useAiChats();
-  const client = useClient();
   const router = useRouter();
+  const deleteAiChat = useDeleteAiChat();
 
   return (
     <main className="h-screen w-full max-w-4xl mx-auto flex p-4 py-8 flex-col">
@@ -71,7 +71,7 @@ function Chats() {
               <Link href={`/chats/${chat.id}`}>{chat.name}</Link>
               <button
                 onClick={() => {
-                  client[kInternal].ai.deleteChat(chat.id);
+                  deleteAiChat(chat.id);
                 }}
                 className="inline-flex underline"
               >

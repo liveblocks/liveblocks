@@ -80,7 +80,7 @@ type CreateChatPair = DefineCmd<
     id: ChatId;
     // -------------------------------------------------
     // Group these?
-    name: string;
+    name?: string;
     ephemeral: boolean;
     metadata: Record<string, string | string[]>;
     // -------------------------------------------------

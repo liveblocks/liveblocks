@@ -26,6 +26,8 @@ export {
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
   useUpdateNotificationSettings,
+  useCreateAiChat,
+  useDeleteAiChat,
   useSyncStatus,
   useErrorListener,
 } from "./liveblocks";
