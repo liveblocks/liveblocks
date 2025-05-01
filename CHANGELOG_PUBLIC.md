@@ -20,7 +20,25 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 18 (2025-05-02)
 
+## MCP Server
+
+- New [MCP server](https://github.com/liveblocks/liveblocks-mcp-server) has been created for Liveblocks.
+- Create and modify rooms, threads, comments, notifications, more.
+- Read realtime Storage and Yjs values.
+- Broadcast custom events to connected clients.
+- Mark threads and notifications as read/unread.
+
+## Documentation
+
+- New page detailing how to use the [Liveblocks MCP server](https://liveblocks.io/docs/tools/mcp-server).
+
+## Website
+
+- New [trust center](https://liveblocks.safebase.us/) has been created, and links added to our website.
+
 ## Contributors
+
+ctnicholas
 
 # Week 17 (2025-04-25)
 
