@@ -20,7 +20,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 18 (2025-05-02)
 
-## MCP Server
+## MCP server
 
 - New [MCP server](https://github.com/liveblocks/liveblocks-mcp-server) has been created for Liveblocks.
 - Create and modify rooms, threads, comments, notifications, more.
