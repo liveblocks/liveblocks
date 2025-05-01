@@ -126,6 +126,23 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
     };
   }, []);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
+    const observer = new ResizeObserver(() => {
+      const container = containerRef.current;
+      if (container === null) return;
+      setDistanceToBottom(
+        container.scrollHeight - container.clientHeight - container.scrollTop
+      );
+    });
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const scrollToBottomCallbackRef = useRef<() => void>(undefined);
   if (scrollToBottomCallbackRef.current === undefined) {
     scrollToBottomCallbackRef.current = function () {

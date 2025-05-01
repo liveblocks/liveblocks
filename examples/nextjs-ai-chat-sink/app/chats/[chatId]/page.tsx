@@ -46,7 +46,6 @@ export default function Page({
               strokeLinecap="round"
               strokeLinejoin="round"
               role="presentation"
-              className="lb-icon"
             >
               <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
             </svg>
@@ -68,8 +67,11 @@ function Chat({ chatId }: { chatId: string }) {
   const { distanceToBottom } = useScrollToBottom(containerRef);
 
   return (
-    <div ref={containerRef} className="lb-root h-full overflow-y-auto">
-      <div className="flex flex-col max-w-4xl mx-auto px-2 py-8 gap-4">
+    <div
+      ref={containerRef}
+      className="flex flex-col h-full overflow-y-auto [--lb-ai-chat-container-width:896px]"
+    >
+      <div className="flex flex-col w-full max-w-4xl mx-auto px-8 py-8 gap-4">
         {messages.map((message) => {
           if (message.role === "user") {
             return (
@@ -94,7 +96,7 @@ function Chat({ chatId }: { chatId: string }) {
         })}
       </div>
 
-      <div className="sticky bottom-0 mt-auto mx-auto max-w-4xl">
+      <div className="w-full sticky bottom-0 mt-auto mx-auto max-w-4xl pb-4 before:content-[''] before:absolute before:inset-0 before:bg-[var(--lb-background)] px-4">
         <div className="flex absolute -top-12 justify-center w-full pointer-events-none">
           <button
             data-visible={
@@ -102,7 +104,8 @@ function Chat({ chatId }: { chatId: string }) {
                 ? ""
                 : undefined
             }
-            className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 focus:outline-none opacity-0 transition-opacity duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto"
+            data-variant="secondary"
+            className="rounded-full opacity-0 transition-all duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto bg-[var(--lb-foreground-subtle)] text-[var(--lb-foreground-tertiary)] hover:bg-[var(--lb-foreground)] hover:text-[var(--lb-background)] inline-flex items-center justify-center p-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014]"
             onClick={() => {
               const container = containerRef.current;
               if (container === null) return;
@@ -113,28 +116,29 @@ function Chat({ chatId }: { chatId: string }) {
               });
             }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width={20}
-              height={20}
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              role="presentation"
-              className="lb-icon"
-            >
-              <path d="M14.5 8.5 10 13 5.5 8.5" />
-            </svg>
+            <span className="size-5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={20}
+                height={20}
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                role="presentation"
+              >
+                <path d="M14.5 8.5 10 13 5.5 8.5" />
+              </svg>
+            </span>
           </button>
         </div>
 
         <AiChatComposer
           key={chatId}
           chatId={chatId}
-          className="pb-6"
+          className="dark:shadow-[inset_0_0_0_1px_#ffffff0f] rounded-2xl shadow-[inset_0_0_0_1px_#0000000f]"
           onComposerSubmit={() => {
             const container = containerRef.current;
             if (container === null) return;
@@ -175,6 +179,23 @@ function useScrollToBottom(elementRef: RefObject<HTMLElement | null>) {
     element.addEventListener("scroll", handleScrollChange);
     return () => {
       element.removeEventListener("scroll", handleScrollChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (element === null) return;
+
+    const observer = new ResizeObserver(() => {
+      const element = elementRef.current;
+      if (element === null) return;
+      setDistanceToBottom(
+        element.scrollHeight - element.clientHeight - element.scrollTop
+      );
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
     };
   }, []);
 
