@@ -130,6 +130,9 @@ export default function Page() {
                             ids: {
                               type: "array",
                               description: "The ids of the todo to display",
+                              items: {
+                                type: "number",
+                              },
                             },
                           },
                         },

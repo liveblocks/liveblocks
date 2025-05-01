@@ -942,10 +942,6 @@ export function createAi(config: AiConfig): Ai {
 
     const chatContext = context.contextByChatId.get(chatId);
 
-    context.toolsStore.getToolsForChat(chatId).forEach((tool) => {
-      window.console.log(tool);
-    });
-
     return sendClientMsgWithResponse({
       cmd: "ask-ai",
       chatId,
