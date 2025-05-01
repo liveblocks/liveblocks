@@ -201,7 +201,7 @@ function NotificationSettings() {
       <input
         type="checkbox"
         // +++
-        checked={settings.email.thread}
+        checked={settings.email?.thread}
         onChange={(e) =>
           updateSettings({ email: { thread: e.target.checked } })
         }

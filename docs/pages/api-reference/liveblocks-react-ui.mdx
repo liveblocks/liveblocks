@@ -557,7 +557,9 @@ function Component() {
 ### Primitives
 
 Primitives are unstyled, headless components that can be used to create fully
-custom commenting experiences.
+custom commenting experiences. We have a
+[primitives example](/examples/comments-primitives) highlighting how to use
+them.
 
 <Banner title="Using primitives with TypeScript">
 
@@ -1392,6 +1394,94 @@ function MyComment({ comment }: { comment: CommentData }) {
   </PropertiesListItem>
 </PropertiesList>
 
+#### Emoji picker [#emoji-picker]
+
+Using [Frimousse](https://frimousse.liveblocks.io) alongside
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction), a
+package originally designed for Comments, you can easily add an emoji picker to
+your primitive Comments components.
+
+```tsx
+import { EmojiPicker } from "frimousse";
+import { useAddReaction } from "@liveblocks/react/suspense";
+import { CommentData } from "@liveblocks/react-ui";
+
+export function MyEmojiPicker({ comment }: { comment: CommentData }) {
+  const addReaction = useAddReaction();
+
+  return (
+    <EmojiPicker.Root
+      onEmojiSelect={({ emoji }) => {
+        addReaction({
+          threadId: comment.threadId,
+          commentId: comment.id,
+          emoji,
+        });
+      }}
+    >
+      <EmojiPicker.Search />
+      <EmojiPicker.Viewport>
+        <EmojiPicker.Loading>Loading…</EmojiPicker.Loading>
+        <EmojiPicker.Empty>No emoji found.</EmojiPicker.Empty>
+        <EmojiPicker.List />
+      </EmojiPicker.Viewport>
+    </EmojiPicker.Root>
+  );
+}
+```
+
+Find a full code snippet of this in our
+[Comments primitives example](/examples/comments-primitives/nextjs-comments-primitives).
+
+#### Emoji reactions [#emoji-reactions]
+
+A list of clickable emoji reactions can be created using the
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction),
+[`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction),
+and [`useSelf`](/docs/api-reference/liveblocks-react#useSelf) hooks.
+
+```tsx
+import { CommentData } from "@liveblocks/react-ui";
+import {
+  useAddReaction,
+  useRemoveReaction,
+  useSelf,
+} from "@liveblocks/react/suspense";
+
+export function MyEmojiReactions({ comment }: { comment: CommentData }) {
+  const userId = useSelf().id;
+  const addReaction = useAddReaction();
+  const removeReaction = useRemoveReaction();
+
+  return (
+    <>
+      {comment.reactions.map((reaction) => {
+        const hasPicked = reaction.users.some((user) => user.id === userId);
+        const reactionObject = {
+          threadId: comment.threadId,
+          commentId: comment.id,
+          emoji: reaction.emoji,
+        };
+
+        return (
+          <button
+            key={reaction.emoji}
+            onClick={() =>
+              hasPicked
+                ? removeReaction(reactionObject)
+                : addReaction(reactionObject)
+            }
+            data-picked={hasPicked || undefined /* Use for CSS styling */}
+          >
+            {reaction.emoji} {reaction.users.length}
+          </button>
+        );
+      })}
+    </>
+  );
+}
+```
+
 ### Hooks
 
 #### useComposer
@@ -2086,6 +2176,23 @@ Set configuration options for all `@liveblocks/react-ui` components, such as
     attachments that are (being) uploaded via comments/threads composers, but
     not submitted yet. If you want to prevent unsaved changes with Liveblocks,
     but not for composers, you can opt-out by setting this option to `false`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="emojibaseUrl"
+    type="string"
+    defaultValue={`"https://cdn.jsdelivr.net/npm/emojibase-data"`}
+  >
+    Use this option to host your own emoji data.
+
+    The Liveblocks emoji picker (visible when adding reactions in `Comment`) is built with
+    [Frimousse](https://github.com/liveblocks/frimousse), which fetches its data
+    from [Emojibase](https://emojibase.dev/docs/datasets/).
+
+    This option allows you to change the base URL of where the
+    [`emojibase-data`](https://www.npmjs.com/package/emojibase-data) files
+    should be fetched from, used as follows: `${emojibaseUrl}/${locale}/${file}.json`.
+    (e.g. `${emojibaseUrl}/en/data.json`).
+
   </PropertiesListItem>
 </PropertiesList>
 

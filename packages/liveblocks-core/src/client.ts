@@ -31,10 +31,14 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
-  PartialUserNotificationSettings,
-  UserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
-import { createUserNotificationSettings } from "./protocol/UserNotificationSettings";
+  NotificationSettings,
+  PartialNotificationSettings,
+} from "./protocol/NotificationSettings";
+import { createNotificationSettings } from "./protocol/NotificationSettings";
+import type {
+  SubscriptionData,
+  SubscriptionDeleteInfo,
+} from "./protocol/Subscriptions";
 import type {
   LargeMessageStrategy,
   OpaqueRoom,
@@ -172,7 +176,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
    * Gets a page (or the initial page) for user inbox notifications and their
-   * associated threads.
+   * associated threads and thread subscriptions.
    *
    * This function should NOT be used for delta updates, only for pagination
    * (including the first page fetch). For delta updates (done during the
@@ -182,6 +186,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const {
    *   inboxNotifications,
    *   threads,
+   *   subscriptions,
    *   nextCursor,
    * } = await client.getInboxNotifications();
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
@@ -190,6 +195,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
   getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
+    subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
@@ -209,7 +215,11 @@ export type NotificationsApi<M extends BaseMetadata> = {
    *   threads: {
    *     updated,
    *     deleted,
-   *    },
+   *   },
+   *   subscriptions: {
+   *     updated,
+   *     deleted,
+   *   },
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
@@ -224,6 +234,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
   }>;
@@ -276,7 +290,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    */
   getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettings>;
+  }): Promise<NotificationSettings>;
 
   /**
    * Update notifications settings for a user for a project.
@@ -291,8 +305,8 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * })
    */
   updateNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettings>;
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettings>;
 };
 
 /**
@@ -858,19 +872,18 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   async function getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettings> {
-    const plainSettings = await httpClient.getUserNotificationSettings(options);
-    const settings = createUserNotificationSettings(plainSettings);
+  }): Promise<NotificationSettings> {
+    const plainSettings = await httpClient.getNotificationSettings(options);
+    const settings = createNotificationSettings(plainSettings);
 
     return settings;
   }
 
   async function updateNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettings> {
-    const plainSettings =
-      await httpClient.updateUserNotificationSettings(settings);
-    const settingsObject = createUserNotificationSettings(plainSettings);
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettings> {
+    const plainSettings = await httpClient.updateNotificationSettings(settings);
+    const settingsObject = createNotificationSettings(plainSettings);
 
     return settingsObject;
   }
@@ -893,7 +906,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
 
-      // Public user notification settings API
+      // Public notification settings API
       getNotificationSettings,
       updateNotificationSettings,
 
@@ -943,7 +956,10 @@ export function createClient<U extends BaseUserMeta = DU>(
   return client;
 }
 
-function checkBounds(
+/**
+ * @private Private API, don't use this directly.
+ */
+export function checkBounds(
   option: string,
   value: unknown,
   min: number,

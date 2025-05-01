@@ -114,7 +114,7 @@
       },
       "post": {
         "summary": "Create room",
-        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms). \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
+        "description": "This endpoint creates a new room. `id` and `defaultAccesses` are required. When provided with a `?idempotent` query argument, will not return a 409 when the room already exists, but instead return the existing room as-is. Corresponds to [`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms), or to [`liveblocks.getOrCreateRoom`](docs/api-reference/liveblocks-node#get-or-create-rooms-roomId) when `?idempotent` is provided. \n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 40 characters. `usersAccesses` is optional field.\n- `groupsAccesses` are optional fields.\n",
         "tags": ["Room"],
         "parameters": [],
         "responses": {
@@ -367,9 +367,6 @@
           "403": {
             "$ref": "#/components/responses/403"
           },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
           "422": {
             "$ref": "#/components/responses/422"
           }
@@ -387,6 +384,111 @@
         ],
         "operationId": "delete-rooms-roomId",
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid)."
+      }
+    },
+    "/rooms/{roomId}/upsert": {
+      "post": {
+        "summary": "Upsert (update or create) room",
+        "tags": ["Room"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated or created room.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                },
+                "examples": {
+                  "example": {
+                    "value": {
+                      "type": "room",
+                      "id": "react-todo-list",
+                      "lastConnectionAt": "2022-08-04T21:07:09.380Z",
+                      "createdAt": "2022-07-13T14:32:50.697Z",
+                      "metadata": {
+                        "color": "blue",
+                        "size": "10",
+                        "target": ["abc", "def"]
+                      },
+                      "defaultAccesses": ["room:write"],
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "usersAccesses": {
+                        "alice": ["room:write"],
+                        "vinod": ["room:write"]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "post-rooms-roomId",
+        "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.upsertRoom`](docs/api-reference/liveblocks-node#upsert-rooms-roomId). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertRoom"
+              },
+              "examples": {
+                "example": {
+                  "value": {
+                    "update": {
+                      "usersAccesses": {
+                        "vinod": ["room:write"],
+                        "alice": ["room:write"]
+                      },
+                      "groupsAccesses": {
+                        "marketing": ["room:write"]
+                      },
+                      "metadata": {
+                        "color": "blue"
+                      }
+                    },
+                    "create": {
+                      "defaultAccesses": ["room:write"]
+                    }
+                  }
+                }
+              }
+            },
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        }
       }
     },
     "/rooms/{roomId}/update-room-id": {
@@ -1886,6 +1988,208 @@
         }
       }
     },
+    "/rooms/{roomId}/threads/{threadId}/subscribe": {
+      "post": {
+        "summary": "Subscribe to thread",
+        "tags": ["Comments"],
+        "description": "This endpoint subscribes to a thread. Corresponds to [`liveblocks.subscribeToThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-subscribe).",
+        "operationId": "post-rooms-roomId-threads-threadId-subscribe",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the thread subscription.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/rooms/{roomId}/threads/{threadId}/unsubscribe": {
+      "post": {
+        "summary": "Unsubscribe from thread",
+        "tags": ["Comments"],
+        "description": "This endpoint unsubscribes from a thread. Corresponds to [`liveblocks.unsubscribeFromThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-unsubscribe).",
+        "operationId": "post-rooms-roomId-threads-threadId-unsubscribe",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
+    "/rooms/{roomId}/threads/{threadId}/subscriptions": {
+      "get": {
+        "summary": "Get thread subscriptions",
+        "tags": ["Comments"],
+        "description": "This endpoint gets the list of subscriptions to a thread. Corresponds to [`liveblocks.getThreadSubscriptions`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-subscriptions).",
+        "operationId": "get-rooms-roomId-threads-threadId-subscriptions",
+        "parameters": [
+          {
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the room"
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the thread"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserSubscription"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404-thread"
+          }
+        },
+        "x-internal": false
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "threadId",
+          "in": "path",
+          "required": true
+        }
+      ]
+    },
     "/rooms/{roomId}/threads/{threadId}/comments": {
       "post": {
         "summary": "Create comment",
@@ -2834,7 +3138,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserNotificationSettings"
+                  "$ref": "#/components/schemas/NotificationSettings"
                 },
                 "examples": {
                   "example": {
@@ -2893,7 +3197,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PartialUserNotificationSettings"
+                "$ref": "#/components/schemas/PartialNotificationSettings"
               },
               "examples": {
                 "example": {
@@ -2920,7 +3224,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserNotificationSettings"
+                  "$ref": "#/components/schemas/NotificationSettings"
                 },
                 "examples": {
                   "example": {
@@ -2991,7 +3295,7 @@
         }
       }
     },
-    "/rooms/{roomId}/users/{userId}/notification-settings": {
+    "/rooms/{roomId}/users/{userId}/subscription-settings": {
       "parameters": [
         {
           "schema": {
@@ -3011,10 +3315,10 @@
         }
       ],
       "get": {
-        "summary": "Get room notification settings",
+        "summary": "Get room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "get-rooms-roomId-users-userId-notification-settings",
-        "description": "This endpoint returns a user’s notification settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "operationId": "get-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3041,7 +3345,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                  "$ref": "#/components/schemas/RoomSubscriptionSettings"
                 }
               }
             }
@@ -3058,10 +3362,10 @@
         }
       },
       "post": {
-        "summary": "Update room notification settings",
+        "summary": "Update room subscription settings",
         "tags": ["Notifications"],
-        "operationId": "post-rooms-roomId-users-userId-notification-settings",
-        "description": "This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "operationId": "post-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint updates a user’s subscription settings for a specific room. Corresponds to [`liveblocks.updateRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-subscription-settings).",
         "parameters": [
           {
             "schema": {
@@ -3088,7 +3392,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                  "$ref": "#/components/schemas/RoomSubscriptionSettings"
                 }
               }
             }
@@ -3110,7 +3414,260 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserRoomNotificationSettings"
+                "$ref": "#/components/schemas/RoomSubscriptionSettings"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete room subscription settings",
+        "tags": ["Notifications"],
+        "operationId": "delete-rooms-roomId-users-userId-subscription-settings",
+        "description": "This endpoint deletes a user’s subscription settings for a specific room. Corresponds to [`liveblocks.deleteRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-subscription-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/{userId}/room-subscription-settings": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get user room subscription settings",
+        "tags": ["Notifications"],
+        "operationId": "get-users-userId-subscription-settings",
+        "description": "This endpoint returns the list of a user's room subscription settings. Corresponds to [`liveblocks.getUserRoomSubscriptionSettings`](/docs/api-reference/liveblocks-node#get-users-userId-room-subscription-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 50
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of elements to be returned. The limit can range between 1 and 50, and defaults to 50."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserRoomSubscriptionSettings"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}/users/{userId}/notification-settings": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "roomId",
+          "in": "path",
+          "required": true
+        },
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "userId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get room notification settings",
+        "operationId": "get-rooms-roomId-users-userId-notification-settings",
+        "tags": ["Deprecated"],
+        "x-badge": "Deprecated",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](get-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint returns a user’s subscription settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update room notification settings",
+        "operationId": "post-rooms-roomId-users-userId-notification-settings",
+        "tags": ["Deprecated"],
+        "x-badge": "Deprecated",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](post-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "roomId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the room"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomSubscriptionSettings"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomSubscriptionSettings"
               }
             }
           }
@@ -3118,9 +3675,10 @@
       },
       "delete": {
         "summary": "Delete room notification settings",
-        "tags": ["Notifications"],
         "operationId": "delete-rooms-roomId-users-userId-notification-settings",
-        "description": "This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
+        "tags": ["Deprecated"],
+        "x-badge": "Deprecated",
+        "description": "**Deprecated.** Renamed to [`/subscription-settings`](delete-rooms-roomId-users-userId-subscription-settings). Read more in our [migration guide](/docs/platform/upgrading/2.24).\n\nThis endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
             "schema": {
@@ -3257,6 +3815,61 @@
             "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
           }
         }
+      },
+      "UpsertRoom": {
+        "type": "object",
+        "title": "UpsertRoom",
+        "additionalProperties": false,
+        "properties": {
+          "update": {
+            "type": "object",
+            "properties": {
+              "defaultAccesses": {
+                "type": ["array", "null"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "usersAccesses": {
+                "type": ["object", "null"],
+                "description": "A map of user identifiers to permissions list. Setting the value as `null` will clear all users’ accesses. Setting one user identifier as `null` will clear this user’s accesses."
+              },
+              "groupsAccesses": {
+                "type": ["object", "null"],
+                "description": "A map of group identifiers to permissions list. Setting the value as `null` will clear all groups’ accesses. Setting one group identifier as `null` will clear this group’s accesses."
+              },
+              "metadata": {
+                "type": ["object", "null"],
+                "description": "A map of metadata keys to their values (`string` or `string[]`). Setting the value as `null` will clear all metadata. Setting a key as `null` will clear the key."
+              }
+            }
+          },
+          "create": {
+            "type": "object",
+            "properties": {
+              "defaultAccesses": {
+                "type": ["array"],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "usersAccesses": {
+                "type": ["object"],
+                "description": "A map of user identifiers to permissions list."
+              },
+              "groupsAccesses": {
+                "type": ["object"],
+                "description": "A map of group identifiers to permissions list."
+              },
+              "metadata": {
+                "type": ["object"],
+                "description": "A map of metadata keys to their values (`string` or `string[]`)."
+              }
+            },
+            "required": ["defaultAccesses"]
+          }
+        },
+        "required": ["update"]
       },
       "CreateRoom": {
         "title": "CreateRoom",
@@ -3938,7 +4551,7 @@
           "description": "Custom notification kinds prefixed by a '$'"
         }
       },
-      "UserNotificationSettings": {
+      "NotificationSettings": {
         "type": "object",
         "properties": {
           "email": {
@@ -3954,9 +4567,9 @@
             "$ref": "#/components/schemas/NotificationChannelSettings"
           }
         },
-        "description": "User notification settings for each supported channel"
+        "description": "Notification settings for each supported channel"
       },
-      "PartialUserNotificationSettings": {
+      "PartialNotificationSettings": {
         "type": "object",
         "properties": {
           "email": {
@@ -3972,14 +4585,32 @@
             "$ref": "#/components/schemas/NotificationChannelSettings"
           }
         },
-        "description": "Partial user notification settings - all properties are optional"
+        "description": "Partial notification settings - all properties are optional"
       },
-      "UserRoomNotificationSettings": {
-        "title": "UserRoomNotificationSettings",
+      "RoomSubscriptionSettings": {
+        "title": "RoomSubscriptionSettings",
         "type": "object",
         "properties": {
           "threads": {
             "enum": ["all", "replies_and_mentions", "none"]
+          },
+          "textMentions": {
+            "enum": ["mine", "none"]
+          }
+        }
+      },
+      "UserRoomSubscriptionSettings": {
+        "title": "UserRoomSubscriptionSettings",
+        "type": "object",
+        "properties": {
+          "threads": {
+            "enum": ["all", "replies_and_mentions", "none"]
+          },
+          "textMentions": {
+            "enum": ["mine", "none"]
+          },
+          "roomId": {
+            "type": "string"
           }
         }
       },
@@ -4011,6 +4642,38 @@
             "subjectId": "file123",
             "activityData": {
               "url": "url-to-file"
+            }
+          }
+        ]
+      },
+      "Subscription": {
+        "title": "Subscription",
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserSubscription": {
+        "title": "UserSubscription",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Subscription"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string"
+              }
             }
           }
         ]

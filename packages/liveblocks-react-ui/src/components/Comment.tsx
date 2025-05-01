@@ -37,7 +37,7 @@ import { CrossIcon } from "../icons/Cross";
 import { DeleteIcon } from "../icons/Delete";
 import { EditIcon } from "../icons/Edit";
 import { EllipsisIcon } from "../icons/Ellipsis";
-import { EmojiAddIcon } from "../icons/EmojiAdd";
+import { EmojiPlusIcon } from "../icons/EmojiPlus";
 import type {
   CommentOverrides,
   ComposerOverrides,
@@ -158,6 +158,16 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * @internal
    */
   additionalActions?: ReactNode;
+
+  /**
+   * @internal
+   */
+  additionalDropdownItemsBefore?: ReactNode;
+
+  /**
+   * @internal
+   */
+  additionalDropdownItemsAfter?: ReactNode;
 
   /**
    * @internal
@@ -527,6 +537,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       className,
       additionalActions,
       additionalActionsClassName,
+      additionalDropdownItemsBefore,
+      additionalDropdownItemsAfter,
       autoMarkReadThreadId,
       ...props
     },
@@ -572,7 +584,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
         onCommentEdit?.(comment);
 
+        if (event.isDefaultPrevented()) {
+          return;
+        }
+
+        event.stopPropagation();
         event.preventDefault();
+
         setEditing(false);
         editComment({
           commentId: comment.id,
@@ -729,33 +747,41 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           className="lb-comment-action"
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_ADD_REACTION}
-                          icon={<EmojiAddIcon />}
+                          icon={<EmojiPlusIcon />}
                         />
                       </EmojiPickerTrigger>
                     </Tooltip>
                   </EmojiPicker>
                 )}
-                {comment.userId === currentUserId && (
+                {comment.userId === currentUserId ||
+                additionalDropdownItemsBefore ||
+                additionalDropdownItemsAfter ? (
                   <Dropdown
                     open={isMoreActionOpen}
                     onOpenChange={setMoreActionOpen}
                     align="end"
                     content={
                       <>
-                        <DropdownItem
-                          onSelect={handleEdit}
-                          onClick={stopPropagation}
-                          icon={<EditIcon />}
-                        >
-                          {$.COMMENT_EDIT}
-                        </DropdownItem>
-                        <DropdownItem
-                          onSelect={handleDelete}
-                          onClick={stopPropagation}
-                          icon={<DeleteIcon />}
-                        >
-                          {$.COMMENT_DELETE}
-                        </DropdownItem>
+                        {additionalDropdownItemsBefore}
+                        {comment.userId === currentUserId && (
+                          <>
+                            <DropdownItem
+                              onSelect={handleEdit}
+                              onClick={stopPropagation}
+                              icon={<EditIcon />}
+                            >
+                              {$.COMMENT_EDIT}
+                            </DropdownItem>
+                            <DropdownItem
+                              onSelect={handleDelete}
+                              onClick={stopPropagation}
+                              icon={<DeleteIcon />}
+                            >
+                              {$.COMMENT_DELETE}
+                            </DropdownItem>
+                          </>
+                        )}
+                        {additionalDropdownItemsAfter}
                       </>
                     }
                   >
@@ -771,7 +797,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       </DropdownTrigger>
                     </Tooltip>
                   </Dropdown>
-                )}
+                ) : null}
               </div>
             )}
           </div>
@@ -883,7 +909,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             variant="outline"
                             onClick={stopPropagation}
                             aria-label={$.COMMENT_ADD_REACTION}
-                            icon={<EmojiAddIcon />}
+                            icon={<EmojiPlusIcon />}
                           />
                         </EmojiPickerTrigger>
                       </Tooltip>

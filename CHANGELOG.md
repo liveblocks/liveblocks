@@ -1,5 +1,183 @@
 ## vNEXT (not yet published)
 
+## v2.24.1
+
+### `@liveblocks/yjs`
+
+- Fix for occasional desync issue
+
+## v2.24.0
+
+We are introducing thread subscriptions to add more granularity to thread
+notifications, allowing users to subscribe to threads without participating or
+unsubscribing from specific ones.
+
+We are also using this opportunity to rename some of the concepts around
+notifications and notification settings to improve clarity. None of these
+changes are breaking but you can learn more about them, their rationale, and how
+to automatically apply them with a codemod in our
+[Upgrade Guide for 2.24](https://liveblocks.io/docs/platform/upgrading/2.24).
+
+### `@liveblocks/react-ui`
+
+- Add "Subscribe to thread" and "Unsubscribe from thread" actions to `Thread`
+  and thread `InboxNotification` out of the box.
+
+### `@liveblocks/react`
+
+- Add `useSubscribeToThread` and `useUnsubscribeFromThread` hooks.
+- Add `subscribe` and `unsubscribe` methods to the existing
+  `useThreadSubscription` hook.
+- Add support for `textMentions` in room subscription settings.
+- Rename `useRoomNotificationSettings` and `useUpdateRoomNotificationSettings`
+  to `useRoomSubscriptionSettings` and `useUpdateRoomSubscriptionSettings`.
+
+### `@liveblocks/node`
+
+- Add `subscribeToThread`, `unsubscribeFromThread`, `getThreadSubscriptions` and
+  `getUserRoomSubscriptionSettings` methods.
+- Add support for `textMentions` in room subscription settings.
+- Rename `getRoomNotificationSettings`, `updateRoomNotificationSettings`, and
+  `deleteRoomNotificationSettings` to `getRoomSubscriptionSettings`,
+  `updateRoomSubscriptionSettings`, and `deleteRoomSubscriptionSettings`.
+
+### `@liveblocks/client`
+
+- Add `Room.subscribeToThread` and `Room.unsubscribeFromThread` methods.
+- Methods which return threads and their associated inbox notifications now also
+  return the thread’s associated subscriptions.
+- Add support for `textMentions` in room subscription settings.
+- Rename `Room.getNotificationSettings` and `Room.updateNotificationSettings` to
+  `Room.getSubscriptionSettings` and `Room.updateSubscriptionSettings`.
+
+## v2.23.2
+
+### `@liveblocks/tiptap`
+
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
+- Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+### `@liveblocks/lexical`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+## v2.23.1
+
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose`
+  yet.
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating
+  storage could potentially corrupt the storage tree.
+
+## v2.23.0
+
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation from `Composer` and the emoji pickers in
+  `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. (Thanks @nperez0111 for the contribution!)
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote.
+  (Thanks @chadnorvell for the contribution!)
+
+## v2.22.3
+
+### `@liveblocks/react-ui`
+
+- The `InboxNotification` component now uses `resolveRoomsInfo` for
+  `textMention` notifications to make them link to the mentions’ room
+  automatically if `href` isn’t set.
+- Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
+  tooltips)
+- Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
+  choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
+  from: another CDN, self-hosted files, etc.
+
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
+
+## v2.22.2
+
+### `@liveblocks/node`
+
+- Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
+- Optimize `.upsertRoom()` to only make a single round-trip to the server.
+- Also expose `LiveObject`, `LiveMap`, and `LiveList` in `@liveblocks/node`.
+
+## v2.22.1
+
+### `@liveblocks/react-blocknote`
+
+- Fix report text editor function's call. Now we report correctly `blocknote` as
+  text editor type.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactoring.
+
+### `@liveblocks/node`
+
+- Fix: improve stack traces of REST API errors to include the original error
+  location.
+
+## v2.22.0
+
+### `@liveblocks/node`
+
+- Added pagination support to `.getInboxNotifications()`. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
+- New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).
+- New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically. See [docs](https://liveblocks.io).
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#iter-users-userId-inboxNotifications).
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mutate-storage).
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mass-mutate-storage).
+- Updated method `.deleteRoom()` to no longer throw when the room already does
+  not exist. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId).
+
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/emails`
+
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
 ## v2.21.0
 
 ### `@liveblocks/react-blocknote`
@@ -17,9 +195,9 @@
 - Improve emoji picker’s performance, bundle size, and add a preview of the
   currently selected emoji.
   - This is the result of us moving the emoji picker to
-    [its own package](https://www.npmjs.com/package/frimousse) and improving it
-    in the process. You can also combine this package with the primitives to
-    build your own reaction picker for example.
+    [its own package](https://frimousse.liveblocks.io) and improving it in the
+    process. You can also combine this package with the primitives to build your
+    own reaction picker for example.
 - Improve and fix pasting HTML into the composer.
 
 ## v2.20.0

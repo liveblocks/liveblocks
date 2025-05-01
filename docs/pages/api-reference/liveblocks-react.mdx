@@ -1080,7 +1080,7 @@ useErrorListener((error) => {
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR":
       break;
 
-    case "UPDATE_NOTIFICATION_SETTINGS_ERROR":
+    case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR":
       const { roomId } = error.context;
       break;
 
@@ -1098,7 +1098,7 @@ The behavior of this hook changed in 2.16. Previously, this hook had to be in a
 current room. Since 2.16, this hook only requires a [`LiveblocksProvider`][]
 context, and will notify about any errors, and for any room. For example,
 notifications are not part of rooms, and errors for these will show. See the
-[upgrade guide for 2.6](/docs/platform/upgrading/2.16) for more details.
+[upgrade guide for 2.16](/docs/platform/upgrading/2.16) for more details.
 
 </Banner>
 
@@ -1470,41 +1470,6 @@ const status = useStatus();
 The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 `disconnected`.
 
-### useStorageStatus [@badge=RoomProvider]
-
-<Banner title="Deprecated">
-
-Deprecated. Starting with 2.12.0, we recommend using [`useSyncStatus`][] instead
-for tracking sync status, because it will reflect sync status of all parts of
-Liveblocks, not just Storage.
-
-</Banner>
-
-Returns the current storage status of the room, and will re-render your
-component whenever it changes. A `{ smooth: true }` option is also available,
-which prevents quick changes between states, making it ideal for
-[rendering a synchronization badge in your app](#display-synchronization-badge).
-
-```ts
-import { useStorageStatus } from "@liveblocks/react";
-
-const storageStatus = useStorageStatus();
-
-// "not-loaded" | "loading" | "synchronizing" | "synchronized"
-console.log(storageStatus);
-```
-
-👉 A [Suspense version][] of this hook is also available.
-
-```ts
-import { useStorageStatus } from "@liveblocks/react/suspense";
-
-const storageStatus = useStorageStatus();
-
-// "synchronizing" | "synchronized"
-console.log(storageStatus);
-```
-
 ### useSyncStatus [@badge=Both]
 
 Returns the current synchronization status of Liveblocks, and will re-render
@@ -1759,8 +1724,8 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 ### useOthers [@badge=RoomProvider]
 
@@ -1787,8 +1752,8 @@ const typingUsers = useOthers(
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -1827,7 +1792,8 @@ arguments.
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
-all changes to the selected data. A [Suspense version][] of this hook is also available.
+all changes to the selected data. A [Suspense version][] of this hook is also
+available.
 
 The key difference with [`useOthers`][] is that the selector (and the optional
 comparison function) work at the _item_ level, like doing a `.map()` over the
@@ -1897,8 +1863,8 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this hook
-is also available.
+subscribe to all changes to the selected data. A [Suspense version][] of this
+hook is also available.
 
 ```tsx
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
@@ -1949,8 +1915,8 @@ function Cursor({ connectionId }) {
 3. Makes sure each cursor remains associated to the same connection.
 4. Makes sure each cursor rerenders whenever _its_ data changes only.
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 ## Broadcast
 
@@ -2238,40 +2204,6 @@ const myTodos = useStorage(
 ```
 
 </Banner>
-
-### useBatch [@badge=RoomProvider]
-
-<Banner title="Deprecated">
-
-Deprecated, starting with 0.18, we recommend using [`useMutation`][] for writing
-to Storage, which will automatically batch all mutations.
-
-</Banner>
-
-Returns a function that batches Storage and Presence modifications made during
-the given function. Each modification is grouped together, which means that
-other clients receive the changes as a single message after the batch function
-has run. Every modification made during the batch is merged into a single
-history item (undo/redo).
-
-```tsx
-import { useBatch } from "@liveblocks/react/suspense";
-
-const batch = useBatch();
-batch(() => {
-  // All modifications made in this callback are batched
-});
-```
-
-Note that `batch` cannot take an `async` function.
-
-```tsx
-// ❌ Won't work
-batch(async () => /* ... */);
-
-// ✅ Will work
-batch(() => /*... */);
-```
 
 ### useHistory [@badge=RoomProvider]
 
@@ -2610,19 +2542,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw error to the nearest ErrorBoundary if initial load
-failed.
-
-### useThreadSubscription [@badge=RoomProvider]
-
-Returns the subscription status of a thread.
-
-```tsx
-import { useThreadSubscription } from "@liveblocks/react/suspense";
-
-const { status, unreadSince } = useThreadSubscription("th_xxx");
-```
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 ### useCreateThread [@badge=RoomProvider]
 
@@ -2699,6 +2621,92 @@ const markThreadAsRead = useMarkThreadAsRead();
 markThreadAsRead("th_xxx");
 ```
 
+### useThreadSubscription [@badge=RoomProvider]
+
+Returns the subscription status of a thread, methods to update it, and when the
+thread was last read. The subscription status affects whether the current user
+receives inbox notifications when new comments are posted.
+
+```tsx
+import { useThreadSubscription } from "@liveblocks/react/suspense";
+
+const { status, subscribe, unsubscribe, unreadSince } =
+  useThreadSubscription("th_xxx");
+```
+
+`subscribe` and `unsubscribe` work similarly to
+[`useSubscribeToThread`](#useSubscribeToThread) and
+[`useUnsubscribeFromThread`](#useUnsubscribeFromThread), but they only affect
+the current thread.
+
+### useSubscribeToThread [@badge=RoomProvider]
+
+Returns a function that subscribes the current user to a thread, meaning they
+will receive inbox notifications when new comments are posted.
+
+```tsx
+import { useSubscribeToThread } from "@liveblocks/react/suspense";
+
+const subscribeToThread = useSubscribeToThread();
+subscribeToThread("th_xxx");
+```
+
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#useRoomSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Disables notifications for all threads
+updateSettings({
+  threads: "none",
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "none",
+});
+```
+
+### useUnsubscribeFromThread [@badge=RoomProvider]
+
+Returns a function that unsubscribes the current user from a thread, meaning
+they will no longer receive inbox notifications when new comments are posted.
+
+```tsx
+import { useUnsubscribeFromThread } from "@liveblocks/react/suspense";
+
+const unsubscribeFromThread = useUnsubscribeFromThread();
+unsubscribeFromThread("th_xxx");
+```
+
+Unsubscribing will replace any existing subscription for the current thread
+[set at room-level](#useRoomSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Enables notifications for all threads
+updateSettings({
+  threads: "all",
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 3. Enables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "all",
+});
+```
+
 ### useCreateComment [@badge=RoomProvider]
 
 Returns a function that adds a comment to a thread.
@@ -2744,7 +2752,9 @@ deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" });
 
 ### useAddReaction [@badge=RoomProvider]
 
-Returns a function that adds a reaction to a comment.
+Returns a function that adds a reaction to a comment. Can be used to create an
+[emoji picker](/docs/api-reference/liveblocks-react-ui#emoji-picker) or
+[emoji reactions](/docs/api-reference/liveblocks-react-ui#emoji-reactions).
 
 ```tsx
 import { useAddReaction } from "@liveblocks/react/suspense";
@@ -2755,7 +2765,9 @@ addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 
 ### useRemoveReaction [@badge=RoomProvider]
 
-Returns a function that removes a reaction from a comment.
+Returns a function that removes a reaction from a comment. Can be used to create
+an [emoji picker](/docs/api-reference/liveblocks-react-ui#emoji-picker) or
+[emoji reactions](/docs/api-reference/liveblocks-react-ui#emoji-reactions)
 
 ```tsx
 import { useRemoveReaction } from "@liveblocks/react/suspense";
@@ -2774,8 +2786,8 @@ import { useAttachmentUrl } from "@liveblocks/react/suspense";
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 ## Notifications
 
@@ -2901,9 +2913,9 @@ function Inbox() {
 }
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw error to the nearest ErrorBoundary if initial load
-failed.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -2915,8 +2927,8 @@ import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -2988,35 +3000,40 @@ notification ID you passed to it, without any fetching or waterfalls.
 
 </Banner>
 
-### useRoomNotificationSettings [@badge=RoomProvider]
+### useRoomSubscriptionSettings [@badge=RoomProvider]
 
-Returns the user’s notification settings for the current room and a function to
+Returns the user’s subscription settings for the current room and a function to
 update them. Updating this setting will change which
 [`inboxNotifications`](#useInboxNotifications) the current user receives in the
 current room.
 
 ```tsx
-import { useRoomNotificationSettings } from "@liveblocks/react/suspense";
+import { useRoomSubscriptionSettings } from "@liveblocks/react/suspense";
 
-const [{ settings }, updateSettings] = useRoomNotificationSettings();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
 
-// { threads: "replies_and_mentions" }
+// { threads: "replies_and_mentions", textMentions: "mine" }
 console.log(settings);
 
-// No longer receive thread notifications in this room
+// No longer receive thread subscriptions in this room
 updateSettings({
   threads: "none",
 });
 ```
 
-These are the three possible values that can be set:
+For `"threads"`, these are the three possible values that can be set:
 
-- `"all"` Receive notifications for every activity.
-- `"replies_and_mentions"` Receive notifications for mentions and thread you’re
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
   participating in.
 - `"none"` No notifications are received.
 
-### useUpdateRoomNotificationSettings [@badge=RoomProvider]
+For `"textMentions"`, these are the two possible values that can be set:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
+### useUpdateRoomSubscriptionSettings [@badge=RoomProvider]
 
 Returns a function that updates the user’s notification settings for the current
 room. Updating this setting will change which
@@ -3024,9 +3041,9 @@ room. Updating this setting will change which
 current room.
 
 ```tsx
-import { useUpdateRoomNotificationSettings } from "@liveblocks/react/suspense";
+import { useUpdateRoomSubscriptionSettings } from "@liveblocks/react/suspense";
 
-const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+const updateRoomSubscriptionSettings = useUpdateRoomSubscriptionSettings();
 
 // No longer receive thread notifications in this room
 updateSettings({
@@ -3034,27 +3051,51 @@ updateSettings({
 });
 ```
 
-These are the three possible values that can be set:
+For `"threads"`, these are the three possible values that can be set:
 
-- `"all"` Receive notifications for every activity.
-- `"replies_and_mentions"` Receive notifications for mentions and thread you’re
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
   participating in.
 - `"none"` No notifications are received.
 
+For `"textMentions"`, these are the two possible values that can be set:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
 Works the same as `updateSettings` in
-[`useRoomNotificationSettings`](#useRoomNotificationSettings).
+[`useRoomSubscriptionSettings`](#useRoomSubscriptionSettings).
+
+##### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#useSubscribeToThread) in the current room. This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "none",
+});
+```
 
 ### useNotificationSettings [@badge=LiveblocksProvider]
 
 <Banner>
 
-User notification settings is currently in beta.
+Notification settings is currently in beta.
 
 </Banner>
 
 Returns the user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the current user. User notification settings are project-based,
+will be sent for the current user. Notification settings are project-based,
 which means that `settings` and `updateSettings` are for the current user’s
 settings in every room. Useful for creating a
 [notification settings panel](/docs/guides/how-to-create-a-notification-settings-panel).
@@ -3124,6 +3165,23 @@ updateSettings({
 });
 ```
 
+Subscribing will replace any
+[existing thread subscriptions](#useSubscribeToThread) in the current room. This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const subscribeToThread = useSubscribeToThread();
+const [{ settings }, updateSettings] = useRoomSubscriptionSettings();
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+subscribeToThread("th_d75sF3...");
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+updateSettings({
+  threads: "none",
+});
+```
+
 #### Error handling [#useNotificationSettings-error-handling]
 
 Error handling is an important aspect to consider when using the
@@ -3142,29 +3200,27 @@ const [{ isLoading, error, settings }, updateSettings] =
 if (error) {
   return (
     <div>
-      <p>Error loading user notification settings: {error.message}</p>
+      <p>Error loading notification settings: {error.message}</p>
     </div>
   );
 }
 ```
 
-####
-
-👉🏻 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw and error to the nearest `ErrorBoundary` if initial
-load failed.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw and error to the nearest `ErrorBoundary`
+if initial load failed.
 
 ### useUpdateNotificationSettings [@badge=LiveblocksProvider]
 
 <Banner>
 
-User notification settings is currently in beta.
+Notification settings is currently in beta.
 
 </Banner>
 
 Returns a function that updates user’s notification settings, which affects
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the current user. User notification settings are project-based,
+will be sent for the current user. Notification settings are project-based,
 which means that `updateSettings` modifies the current user’s settings in every
 room. Each notification `kind` must first be enabled on your project’s
 notification dashboard page before settings can be used. Useful for creating a
@@ -3247,8 +3303,8 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -3267,8 +3323,8 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -3679,6 +3735,105 @@ And the following timeline:
   `root.animals` gets re-evaluated, and now it returns `["🦁", "🦊"]`.
 - Because the previous value and this value are different, the component will
   rerender, seeing the updated value.
+
+## Deprecated
+
+### useStorageStatus [@badge=RoomProvider]
+
+<Banner title="Deprecated" type="error">
+
+Starting with 2.12, we recommend using [`useSyncStatus`][] instead for tracking
+sync status, because it will reflect sync status of all parts of Liveblocks, not
+just Storage.
+
+</Banner>
+
+Returns the current storage status of the room, and will re-render your
+component whenever it changes. A `{ smooth: true }` option is also available,
+which prevents quick changes between states, making it ideal for
+[rendering a synchronization badge in your app](#display-synchronization-badge).
+
+```ts
+import { useStorageStatus } from "@liveblocks/react";
+
+const storageStatus = useStorageStatus();
+
+// "not-loaded" | "loading" | "synchronizing" | "synchronized"
+console.log(storageStatus);
+```
+
+👉 A [Suspense version][] of this hook is also available.
+
+```ts
+import { useStorageStatus } from "@liveblocks/react/suspense";
+
+const storageStatus = useStorageStatus();
+
+// "synchronizing" | "synchronized"
+console.log(storageStatus);
+```
+
+### useBatch [@badge=RoomProvider]
+
+<Banner title="Deprecated" type="error">
+
+Starting with 0.18, we recommend using [`useMutation`][] for writing to Storage,
+which will automatically batch all mutations.
+
+</Banner>
+
+Returns a function that batches Storage and Presence modifications made during
+the given function. Each modification is grouped together, which means that
+other clients receive the changes as a single message after the batch function
+has run. Every modification made during the batch is merged into a single
+history item (undo/redo).
+
+```tsx
+import { useBatch } from "@liveblocks/react/suspense";
+
+const batch = useBatch();
+batch(() => {
+  // All modifications made in this callback are batched
+});
+```
+
+Note that `batch` cannot take an `async` function.
+
+```tsx
+// ❌ Won't work
+batch(async () => /* ... */);
+
+// ✅ Will work
+batch(() => /*... */);
+```
+
+### useRoomNotificationSettings [@badge=RoomProvider]
+
+<Banner title="Deprecated" type="error">
+
+This hook was renamed to [`useRoomSubscriptionSettings`][] in 2.24, read more in
+our [migration guide](/docs/platform/upgrading/2.24).
+
+</Banner>
+
+Returns the user’s subscription settings for the current room and a function to
+update them. Updating this setting will change which
+[`inboxNotifications`](#useInboxNotifications) the current user receives in the
+current room.
+
+### useUpdateRoomNotificationSettings [@badge=RoomProvider]
+
+<Banner title="Deprecated" type="error">
+
+This hook was renamed to [`useUpdateRoomSubscriptionSettings`][] in 2.24, read
+more in our [migration guide](/docs/platform/upgrading/2.24).
+
+</Banner>
+
+Returns a function that updates the user’s subscription settings for the current
+room. Updating this setting will change which
+[`inboxNotifications`](#useInboxNotifications) the current user receives in the
+current room.
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`createroomcontext`]: /docs/api-reference/liveblocks-react#createRoomContext

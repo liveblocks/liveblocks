@@ -33,7 +33,7 @@ export type {
   ResolveUsersArgs,
   SyncStatus,
 } from "./client";
-export { createClient } from "./client";
+export { checkBounds, createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -60,8 +60,15 @@ export {
   convertToCommentData,
   convertToCommentUserReaction,
   convertToInboxNotificationData,
+  convertToSubscriptionData,
   convertToThreadData,
+  convertToUserSubscriptionData,
 } from "./convert-plain-data";
+export type {
+  CreateManagedPoolOptions,
+  ManagedPool,
+} from "./crdts/AbstractCrdt";
+export { createManagedPool } from "./crdts/AbstractCrdt";
 export { cloneLson, isLiveNode } from "./crdts/liveblocks-helpers";
 export { LiveList } from "./crdts/LiveList";
 export { LiveMap } from "./crdts/LiveMap";
@@ -97,6 +104,7 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { kInternal } from "./internal";
+export { makeAbortController } from "./lib/abortController";
 export { assert, assertNever, nn } from "./lib/assert";
 export type {
   AsyncError,
@@ -120,6 +128,7 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export { Deque } from "./lib/Deque";
 export type {
   EventSource,
   Observable,
@@ -221,6 +230,20 @@ export type {
 } from "./protocol/InboxNotifications";
 export type { InboxNotificationDeleteInfo } from "./protocol/InboxNotifications";
 export type {
+  NotificationChannel,
+  NotificationChannelSettings,
+  NotificationKind,
+  NotificationSettings,
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+  UserNotificationSettings,
+} from "./protocol/NotificationSettings";
+export {
+  createNotificationSettings,
+  isNotificationChannelEnabled,
+  patchNotificationSettings,
+} from "./protocol/NotificationSettings";
+export type {
   AckOp,
   CreateListOp,
   CreateMapOp,
@@ -234,6 +257,11 @@ export type {
   UpdateObjectOp,
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
+export type {
+  RoomNotificationSettings,
+  RoomSubscriptionSettings,
+  UserRoomSubscriptionSettings,
+} from "./protocol/RoomSubscriptionSettings";
 export type {
   IdTuple,
   SerializedChild,
@@ -261,18 +289,15 @@ export type {
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
-  NotificationChannel,
-  NotificationChannelSettings,
-  NotificationKind,
-  PartialUserNotificationSettings,
-  UserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
-export {
-  createUserNotificationSettings,
-  isNotificationChannelEnabled,
-  patchUserNotificationSettings,
-} from "./protocol/UserNotificationSettings";
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+  SubscriptionKey,
+  UserSubscriptionData,
+  UserSubscriptionDataPlain,
+} from "./protocol/Subscriptions";
+export { getSubscriptionKey } from "./protocol/Subscriptions";
 export type { HistoryVersion } from "./protocol/VersionHistory";
 export type {
   IYjsProvider,
@@ -323,7 +348,6 @@ export type {
   PlainLsonMap,
   PlainLsonObject,
 } from "./types/PlainLson";
-export type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 export type { User } from "./types/User";
 export { detectDupes };
 

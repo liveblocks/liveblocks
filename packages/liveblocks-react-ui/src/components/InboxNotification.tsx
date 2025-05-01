@@ -14,6 +14,7 @@ import {
   useMarkInboxNotificationAsRead,
   useRoomInfo,
 } from "@liveblocks/react";
+import { useRoomThreadSubscription } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type {
@@ -28,6 +29,8 @@ import { forwardRef, useCallback, useMemo, useState } from "react";
 
 import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";
+import { BellIcon } from "../icons/Bell";
+import { BellCrossedIcon } from "../icons/BellCrossed";
 import { CheckIcon } from "../icons/Check";
 import { DeleteIcon } from "../icons/Delete";
 import { EllipsisIcon } from "../icons/Ellipsis";
@@ -36,6 +39,7 @@ import type {
   CommentOverrides,
   GlobalOverrides,
   InboxNotificationOverrides,
+  ThreadOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives/Timestamp";
@@ -96,7 +100,10 @@ export interface InboxNotificationProps
    * Override the component's strings.
    */
   overrides?: Partial<
-    GlobalOverrides & InboxNotificationOverrides & CommentOverrides
+    GlobalOverrides &
+      InboxNotificationOverrides &
+      ThreadOverrides &
+      CommentOverrides
   >;
 
   /**
@@ -207,6 +214,16 @@ interface InboxNotificationLayoutProps
   overrides?: Partial<GlobalOverrides & InboxNotificationOverrides>;
   components?: Partial<GlobalComponents>;
   markAsReadOnClick?: boolean;
+
+  /**
+   * @internal
+   */
+  additionalDropdownItemsBefore?: ReactNode;
+
+  /**
+   * @internal
+   */
+  additionalDropdownItemsAfter?: ReactNode;
 }
 
 export type InboxNotificationIconProps = ComponentProps<"div">;
@@ -233,6 +250,8 @@ const InboxNotificationLayout = forwardRef<
       components,
       className,
       asChild,
+      additionalDropdownItemsBefore,
+      additionalDropdownItemsAfter,
       ...props
     },
     forwardedRef
@@ -335,6 +354,7 @@ const InboxNotificationLayout = forwardRef<
                     align="end"
                     content={
                       <>
+                        {additionalDropdownItemsBefore}
                         {unread ? (
                           <DropdownItem
                             onSelect={handleMarkAsRead}
@@ -351,6 +371,7 @@ const InboxNotificationLayout = forwardRef<
                         >
                           {$.INBOX_NOTIFICATION_DELETE}
                         </DropdownItem>
+                        {additionalDropdownItemsAfter}
                       </>
                     }
                   >
@@ -424,11 +445,12 @@ const InboxNotificationThread = forwardRef<
   ) => {
     const $ = useOverrides(overrides);
     const thread = useInboxNotificationThread(inboxNotification.id);
+    const {
+      status: subscriptionStatus,
+      subscribe,
+      unsubscribe,
+    } = useRoomThreadSubscription(thread.roomId, thread.id);
     const currentUserId = useCurrentUserId();
-    // TODO: If you provide `href` (or plan to), we shouldn't run this hook. We should find a way to conditionally run it.
-    //       Because of batching and the fact that the same hook will be called within <Room /> in the notification's title,
-    //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
-    //       `href` AND disables room names in the title via `showRoomName={false}`.
     const { info } = useRoomInfo(inboxNotification.roomId);
     const contents = useMemo(() => {
       const contents = generateInboxNotificationThreadContents(
@@ -544,6 +566,18 @@ const InboxNotificationThread = forwardRef<
         : undefined;
     }, [contents?.commentId, href, info?.url]);
 
+    const handleSubscribeChange = useCallback(() => {
+      if (subscriptionStatus === "subscribed") {
+        unsubscribe();
+      } else {
+        subscribe();
+      }
+    }, [subscriptionStatus, subscribe, unsubscribe]);
+
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
+
     if (!contents) {
       return null;
     }
@@ -561,6 +595,23 @@ const InboxNotificationThread = forwardRef<
         href={resolvedHref}
         showActions={showActions}
         markAsReadOnClick={false}
+        additionalDropdownItemsBefore={
+          <DropdownItem
+            onSelect={handleSubscribeChange}
+            onClick={stopPropagation}
+            icon={
+              subscriptionStatus === "subscribed" ? (
+                <BellCrossedIcon />
+              ) : (
+                <BellIcon />
+              )
+            }
+          >
+            {subscriptionStatus === "subscribed"
+              ? $.THREAD_UNSUBSCRIBE
+              : $.THREAD_SUBSCRIBE}
+          </DropdownItem>
+        }
         {...props}
         ref={forwardedRef}
       >
@@ -582,12 +633,20 @@ const InboxNotificationTextMention = forwardRef<
       inboxNotification,
       showActions = "hover",
       showRoomName = true,
+      href,
       overrides,
       ...props
     },
     ref
   ) => {
     const $ = useOverrides(overrides);
+    const { info } = useRoomInfo(inboxNotification.roomId);
+    // Use URL from `resolveRoomsInfo` if `href` isn't set.
+    const resolvedHref = useMemo(() => {
+      const resolvedHref = href ?? info?.url;
+
+      return resolvedHref ? generateURL(resolvedHref) : undefined;
+    }, [href, info?.url]);
 
     const unread = useMemo(() => {
       return (
@@ -611,6 +670,7 @@ const InboxNotificationTextMention = forwardRef<
         unread={unread}
         overrides={overrides}
         showActions={showActions}
+        href={resolvedHref}
         {...props}
         ref={ref}
       />

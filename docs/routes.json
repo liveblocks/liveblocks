@@ -428,7 +428,13 @@
       },
       {
         "title": "AI Copilots",
-        "path": "/ready-made-features/ai-copilots"
+        "path": "/ready-made-features/ai-copilots",
+        "routes": [
+          {
+            "title": "Features",
+            "path": "/ready-made-features/ai-copilots/features"
+          }
+        ]
       }
     ]
   },
@@ -509,6 +515,10 @@
       {
         "title": "Next.js Starter Kit",
         "path": "/tools/nextjs-starter-kit"
+      },
+      {
+        "title": "MCP server",
+        "path": "/tools/mcp-server"
       }
     ]
   },
@@ -570,6 +580,10 @@
       {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "Frimousse",
+        "href": "https://frimousse.liveblocks.io"
       },
       {
         "title": "API v1 Endpoints",
@@ -671,7 +685,8 @@
           { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" },
           { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" },
           { "title": "Upgrading to 2.15", "path": "/platform/upgrading/2.15" },
-          { "title": "Upgrading to 2.16", "path": "/platform/upgrading/2.16" }
+          { "title": "Upgrading to 2.16", "path": "/platform/upgrading/2.16" },
+          { "title": "Upgrading to 2.24", "path": "/platform/upgrading/2.24" }
         ]
       },
       {

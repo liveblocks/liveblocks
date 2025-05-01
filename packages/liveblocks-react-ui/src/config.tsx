@@ -35,11 +35,27 @@ type LiveblocksUIConfigProps = PropsWithChildren<{
    * composers, you can opt-out by setting this option to `false`.
    */
   preventUnsavedComposerChanges?: boolean;
+
+  /**
+   * The Liveblocks emoji picker (visible when adding reactions in `Comment`) is built with
+   * {@link https://github.com/liveblocks/frimousse | Frimousse}, which fetches its data from
+   * {@link https://emojibase.dev/docs/datasets/ | Emojibase}.
+   *
+   * This option allows you to change the base URL of where the {@link https://www.npmjs.com/package/emojibase-data | `emojibase-data`}
+   * files should be fetched from, used as follows: `${emojibaseUrl}/${locale}/${file}.json`.
+   * (e.g. `${emojibaseUrl}/en/data.json`).
+   *
+   * @example "https://unpkg.com/emojibase-data"
+   *
+   * @example "https://example.com/self-hosted-emojibase-data"
+   */
+  emojibaseUrl?: string;
 }>;
 
 interface LiveblocksUIConfigContext {
   portalContainer?: HTMLElement;
   preventUnsavedComposerChanges?: boolean;
+  emojibaseUrl?: string;
 }
 
 const LiveblocksUIConfigContext = createContext<LiveblocksUIConfigContext>({});
@@ -61,11 +77,16 @@ export function LiveblocksUIConfig({
   components,
   portalContainer,
   preventUnsavedComposerChanges = true,
+  emojibaseUrl,
   children,
 }: LiveblocksUIConfigProps) {
   const liveblocksUIConfig = useMemo(
-    () => ({ portalContainer, preventUnsavedComposerChanges }),
-    [portalContainer, preventUnsavedComposerChanges]
+    () => ({
+      portalContainer,
+      preventUnsavedComposerChanges,
+      emojibaseUrl,
+    }),
+    [portalContainer, preventUnsavedComposerChanges, emojibaseUrl]
   );
 
   return (

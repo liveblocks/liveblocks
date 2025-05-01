@@ -6,13 +6,26 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
+  CreateRoomOptions,
+  GetInboxNotificationsOptions,
+  GetRoomsOptions,
+  InboxNotificationsQueryCriteria,
   LiveblocksOptions,
+  MassMutateStorageCallback,
+  MassMutateStorageOptions,
+  MutateStorageCallback,
+  MutateStorageOptions,
+  Page,
+  PaginationOptions,
   RoomAccesses,
   RoomData,
   RoomPermission,
+  RoomsQueryCriteria,
   RoomUser,
   Schema,
   ThreadParticipants,
+  UpdateRoomOptions,
+  UpsertRoomOptions,
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export type {
@@ -65,6 +78,7 @@ export type {
   JsonArray,
   JsonObject,
   JsonScalar,
+  LiveStructure,
   Lson,
   LsonObject,
   PlainLsonObject,
@@ -77,6 +91,9 @@ export type {
 export {
   getMentionedIdsFromCommentBody,
   isNotificationChannelEnabled,
+  LiveList,
+  LiveMap,
+  LiveObject,
   stringifyCommentBody,
 } from "@liveblocks/core";
 

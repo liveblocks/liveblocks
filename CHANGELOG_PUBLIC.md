@@ -18,6 +18,234 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 17 (2025-04-25)
+
+## v2.23.2
+
+### `@liveblocks/tiptap`
+
+- Add `closeAi` Tiptap command to manually close the AI toolbar.
+- Fix `AiToolbar` focus behavior in Safari.
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+### `@liveblocks/lexical`
+
+- Fix `FloatingToolbar` focus behavior in Safari.
+
+## v2.23.1
+
+### `@liveblocks/client`
+
+- Fix potential runtime error in browsers that do not support `Symbol.dispose` yet.
+
+### `@liveblocks/node`
+
+- Fix a bug in `.mutateStorage()` and `.massMutateStorage()` where mutating storage could potentially corrupt the storage tree.
+
+## v2.23.0
+
+### `@liveblocks/node`
+
+- Expose new property `triggeredAt` for notification webhook events.
+
+### `@liveblocks/emails`
+
+- The `prepareThreadNotificationEmailAsHtml` and
+  `prepareThreadNotificationEmailAsReact` functions are now avoiding duplicated
+  comments between two emails data.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation from `Composer` and the emoji pickers in
+  `Comment`/`Thread`.
+
+### `@liveblocks/react-blocknote`
+
+- Fix crash when unmounting. Thank you [@nperez0111](https://github.com/nperez0111)!
+- Fix `withLiveblocksEditorOptions` not passing all options to BlockNote. Thank you [@chadnorvell](https://github.com/chadnorvell)!
+  
+## Documentation
+
+- New [AI Copilots features](https://liveblocks.io/docs/ready-made-features/ai-copilots/features) page, highlighting all upcoming features.
+- Mention first day free policy.
+- Small updates to docs homepage
+
+## Dashboard
+
+- Refined billing and usage settings page, now displaying billed and non-billed users for monthly active users (MAUs) metric.
+
+## Website
+
+- New blog post: [Add Notion-style collaborative text editing to your app with Liveblocks BlockNote](https://liveblocks.io/blog/add-notion-style-collaborative-text-editing-to-your-app-with-liveblocks-blocknote).
+- New blog post: [Introducing fairer billing with first day free](https://liveblocks.io/blog/introducing-fairer-billing-with-first-day-free).
+- New blog post: [Rethinking product strategy in the age of AI with Melissa Perri](https://liveblocks.io/blog/rethinking-product-strategy-in-the-age-of-ai).
+- New blog post: [What’s new in Liveblocks: March 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-march-edition-2025).
+- New blog post: [How Artefect reinvented collaborative workspaces for technical teams](https://liveblocks.io/blog/how-artefact-reinvented-collaborative-workspaces-for-technical-teams).
+
+## Contributors
+
+marcbouchenoire, flowflorent, sugardarius, nperez0111, chadnorvell, nvie, ctnicholas, pierrelevaillant
+
+# Week 14 (2025-04-04)
+
+## v2.22.3
+
+### `@liveblocks/react-ui`
+
+- The `InboxNotification` component now uses `resolveRoomsInfo` for
+  `textMention` notifications to make them link to the mentions’ room
+  automatically if `href` isn’t set.
+- Fix names capitalization in lists. (e.g. the list of who reacted in reactions’
+  tooltips)
+- Add `emojibaseUrl` **advanced** option on `LiveblocksUIConfig` to allow
+  choosing where Emojibase’s data used by the Liveblocks emoji picker is fetched
+  from: another CDN, self-hosted files, etc.
+
+### `@liveblocks/react-blocknote`
+
+- Fix: Update dependencies resolution.
+- Fix: Avoid `<AnchoredThreads />` threads rendering if the editor's view is
+  `null`.
+
+## Contributors
+
+marcbouchenoire, jrowny
+
+# Week 13 (2025-03-28)
+
+## v2.22.2
+
+### `@liveblocks/node`
+
+- Optimize `.getOrCreateRoom()` to only make a single round-trip to the server.
+- Optimize `.upsertRoom()` to only make a single round-trip to the server.
+- Also expose `LiveObject`, `LiveMap`, and `LiveList` in `@liveblocks/node`.
+
+## v2.22.1
+
+### `@liveblocks/react-blocknote`
+
+- Fix report text editor function's call. Now we report correctly `blocknote` as
+  text editor type.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactoring.
+
+### `@liveblocks/node`
+
+- Fix: improve stack traces of REST API errors to include the original error
+  location.
+
+## Dashboard
+
+- BlockNote editors are now supported in a room's Text Editor view.
+
+## Documentation
+
+- Improve guide on [how to modify Liveblocks Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+- Fix BlockNote code snippets and add info about it in the email package.
+
+## Examples
+
+- Improve notification settings in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+- Update [notifications settings example](https://liveblocks.io/examples/notification-settings) to use the latest APIs.
+
+## Contributors
+
+nvie, sugardarius, ctnicholas, marcbouchenoire
+
+# Week 12 (2025-03-21)
+
+## v2.22.0
+
+### `@liveblocks/node`
+
+- Added pagination support to `.getInboxNotifications()`. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).
+- New method `.getOrCreate()` which combines `.getRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#get-or-create-rooms-roomId).
+- New method `.upsertRoom()` which combines `.updateRoom()` and `.createRoom()`.
+  See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#upsert-rooms-roomId).
+- New method `.iterRooms()` which is like `.getRooms()` except pagination
+  happens automatically. See [docs](https://liveblocks.io).
+- New method `.iterInboxNotifications()` which is like
+  `.getInboxNotifications()` except pagination happens automatically. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#iter-users-userId-inboxNotifications).
+- New method `.mutateStorage()` which can be used to make changes to Storage
+  from your backend. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mutate-storage).
+- New method `.massMutateStorage()` which can be used to make changes to Storage
+  for multiple rooms simultaneously. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#mass-mutate-storage).
+- Updated method `.deleteRoom()` to no longer throw when the room already does
+  not exist. See
+  [docs](https://liveblocks.io/docs/api-reference/liveblocks-node#delete-rooms-roomId).
+
+### `@liveblocks/react-ui`
+
+- Add new icons to `<Icon.* />`.
+
+### `@liveblocks/emails`
+
+- Implement a new core logic for thread notification event.
+- Mark `htmlBody` from `prepareThreadNotificationEmailAsHtml` and `reactBody`
+  from `prepareThreadNotificationEmailAsReact` as deprecated. Use `body`
+  property instead.
+
+## v2.21.0
+
+### `@liveblocks/react-blocknote`
+
+- New package to support using BlockNote with Liveblock’s comments, mentions,
+  and realtime collaboration out of the box.
+
+### `@liveblocks/node`
+
+- Fix `markThreadAsResolved` and `markThreadAsUnresolved` methods not passing
+  user ID correctly to the corresponding backend endpoints.
+
+### `@liveblocks/react-ui`
+
+- Improve emoji picker’s performance, bundle size, and add a preview of the
+  currently selected emoji.
+  - This is the result of us moving the emoji picker to
+    [its own package](https://frimousse.liveblocks.io) and improving it in the
+    process. You can also combine this package with the primitives to build your
+    own reaction picker for example.
+- Improve and fix pasting HTML into the composer.
+
+## REST API
+
+- The
+  [Delete Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
+  endpoint will no longer return a 404 when a room already did not exist before.
+
+## Examples
+
+- Updated [Comments primitives example](https://liveblocks.io/examples/comments-primitives) to use [Frimousse](https://frimousse.liveblocks.io).
+- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-blocknote) to use our new package.
+
+## Documentation
+
+- Mention our latest package, [Frimousse](https://frimousse.liveblocks.io).
+- Detail building a primitive [emoji picker](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-picker) and [emoji reactions](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#emoji-reactions).
+- API reference for all new [Node.js methods](https://liveblocks.io/docs/api-reference/liveblocks-node).
+- API reference for [`@liveblocks/react-blocknoite`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote).
+- Updated [get started guides for BlockNote](https://liveblocks.io/docs/get-started/text-editor/blocknote).
+- New [BlockNote overview](https://liveblocks.io/docs/ready-made-features/text-editor/blocknote) page.
+- Updated guide on [modifying Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server).
+
+## Website
+
+- New blog post: [We’ve open-sourced our customizable React emoji picker](https://liveblocks.io/blog/weve-open-sourced-our-customizable-emoji-picker-for-react).
+
+## Contributors
+
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas, nvie, sugardarius
+
 # Week 11 (2025-03-14)
 
 ## Documentation

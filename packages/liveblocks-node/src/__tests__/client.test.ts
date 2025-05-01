@@ -1,11 +1,13 @@
-import {
-  type CommentData,
-  type CommentUserReaction,
-  createUserNotificationSettings,
-  type RoomNotificationSettings,
-  type ThreadData,
-  type UserNotificationSettingsPlain,
+import type {
+  CommentData,
+  CommentUserReaction,
+  IdTuple,
+  NotificationSettingsPlain,
+  RoomSubscriptionSettings,
+  SerializedCrdt,
+  ThreadData,
 } from "@liveblocks/core";
+import { createNotificationSettings, LiveList } from "@liveblocks/core";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
@@ -456,6 +458,7 @@ describe("client", () => {
       }
     });
   });
+
   describe("get active users", () => {
     test("should return active users when getActiveUsers receives a successful response", async () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
@@ -936,6 +939,246 @@ describe("client", () => {
     });
   });
 
+  describe("subscribe to thread", () => {
+    test("should return the created subscription when subscribeToThread receives a successful response", async () => {
+      const now = new Date();
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscribe`,
+          () => {
+            return HttpResponse.json(
+              {
+                kind: "thread",
+                subjectId: "thread1",
+                createdAt: now.toISOString(),
+                userId: "user-1",
+              },
+              { status: 200 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.subscribeToThread({
+          roomId: "room1",
+          threadId: "thread1",
+          data: { userId: "user-1" },
+        })
+      ).resolves.toEqual({
+        kind: "thread",
+        subjectId: "thread1",
+        createdAt: now,
+        userId: "user-1",
+      });
+    });
+
+    test("should throw a LiveblocksError when subscribeToThread receives an error response", async () => {
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscribe`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.subscribeToThread({
+          roomId: "room1",
+          threadId: "thread1",
+          data: { userId: "user-1" },
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("unsubscribe from thread", () => {
+    test("should not return anything when unsubscribeFromThread receives a successful response", async () => {
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/unsubscribe`,
+          () => {
+            return HttpResponse.json(undefined, { status: 204 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.unsubscribeFromThread({
+          roomId: "room1",
+          threadId: "thread1",
+          data: { userId: "user-1" },
+        })
+      ).resolves.not.toThrow();
+    });
+
+    test("should throw a LiveblocksError when unsubscribeFromThread receives an error response", async () => {
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/unsubscribe`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.unsubscribeFromThread({
+          roomId: "room1",
+          threadId: "thread1",
+          data: { userId: "user-1" },
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get thread subscriptions", () => {
+    test("should return the thread subscription when subgetThreadSubscriptionsscribeToThread receives a successful response", async () => {
+      const now = new Date();
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscriptions`,
+          () => {
+            return HttpResponse.json(
+              {
+                data: [
+                  {
+                    kind: "thread",
+                    subjectId: "thread1",
+                    createdAt: now.toISOString(),
+                    userId: "user-1",
+                  },
+                  {
+                    kind: "thread",
+                    subjectId: "thread1",
+                    createdAt: now.toISOString(),
+                    userId: "user-2",
+                  },
+                  {
+                    kind: "thread",
+                    subjectId: "thread1",
+                    createdAt: now.toISOString(),
+                    userId: "user-3",
+                  },
+                ],
+              },
+              { status: 200 }
+            );
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getThreadSubscriptions({
+          roomId: "room1",
+          threadId: "thread1",
+        })
+      ).resolves.toEqual({
+        data: [
+          {
+            kind: "thread",
+            subjectId: "thread1",
+            createdAt: now,
+            userId: "user-1",
+          },
+          {
+            kind: "thread",
+            subjectId: "thread1",
+            createdAt: now,
+            userId: "user-2",
+          },
+          {
+            kind: "thread",
+            subjectId: "thread1",
+            createdAt: now,
+            userId: "user-3",
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when getThreadSubscriptions receives an error response", async () => {
+      const error = {
+        error: "THREAD_NOT_FOUND",
+        message: "Thread not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads/:threadId/subscriptions`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.getThreadSubscriptions({
+          roomId: "room1",
+          threadId: "thread1",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Thread not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
   describe("get comment", () => {
     test("should return the specified comment when getComment receives a successful response", async () => {
       server.use(
@@ -1281,8 +1524,118 @@ describe("client", () => {
     });
   });
 
-  describe("get room notification settings", () => {
-    test("should get user's room notification settings", async () => {
+  describe("get user room subscription settings", () => {
+    test("should get user's room subscription settings", async () => {
+      const userId = "user1";
+
+      const settings = {
+        threads: "all",
+        textMentions: "mine",
+        roomId: "room1",
+      };
+
+      const response = {
+        data: [settings],
+        meta: {
+          nextCursor: null,
+        },
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/users/:userId/room-subscription-settings`,
+          () => {
+            return HttpResponse.json(response, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getUserRoomSubscriptionSettings({ userId })
+      ).resolves.toEqual(response);
+    });
+
+    test("should return the next page of user's room subscription settings when getUserRoomSubscriptionSettings receives a successful response", async () => {
+      const userId = "user1";
+      const startingAfter = "cursor1";
+      const limit = 1;
+
+      const settings = [
+        {
+          roomId: "room1",
+          threads: "all",
+          textMentions: "mine",
+        },
+      ];
+
+      const response = {
+        data: settings,
+        meta: {
+          nextCursor: "cursor2",
+        },
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/users/:userId/room-subscription-settings`,
+          (res) => {
+            const url = new URL(res.request.url);
+            expect(url.searchParams.size).toEqual(2);
+            expect(url.searchParams.get("startingAfter")).toEqual(
+              startingAfter
+            );
+            expect(url.searchParams.get("limit")).toEqual(limit.toString());
+
+            return HttpResponse.json(response, { status: 200 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getUserRoomSubscriptionSettings({ userId, startingAfter, limit })
+      ).resolves.toEqual(response);
+    });
+    test("should throw a LiveblocksError when getUserRoomSubscriptionSettings receives an error response", async () => {
+      const userId = "user1";
+
+      const error = {
+        error: "USER_NOT_FOUND",
+        message: "User not found",
+      };
+
+      server.use(
+        http.get(
+          `${DEFAULT_BASE_URL}/v2/users/:userId/room-subscription-settings`,
+          () => {
+            return HttpResponse.json(error, { status: 404 });
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getUserRoomSubscriptionSettings({ userId });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("User not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get room subscription settings", () => {
+    test("should get user's room subscription settings", async () => {
       const userId = "user1";
       const roomId = "room1";
 
@@ -1292,7 +1645,7 @@ describe("client", () => {
 
       server.use(
         http.get(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/subscription-settings`,
           () => {
             return HttpResponse.json(settings, { status: 200 });
           }
@@ -1302,6 +1655,14 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       await expect(
+        client.getRoomSubscriptionSettings({
+          userId,
+          roomId,
+        })
+      ).resolves.toEqual(settings);
+
+      // TODO: Deprecated, remove this once "room notification settings" methods are removed
+      await expect(
         client.getRoomNotificationSettings({
           userId,
           roomId,
@@ -1309,7 +1670,7 @@ describe("client", () => {
       ).resolves.toEqual(settings);
     });
 
-    test("should throw a LiveblocksError when getRoomNotificationSettings receives an error response", async () => {
+    test("should throw a LiveblocksError when getRoomSubscriptionSettings receives an error response", async () => {
       const userId = "user1";
       const roomId = "room1";
 
@@ -1320,7 +1681,7 @@ describe("client", () => {
 
       server.use(
         http.get(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/subscription-settings`,
           () => {
             return HttpResponse.json(error, { status: 404 });
           }
@@ -1332,7 +1693,7 @@ describe("client", () => {
       // This should throw a LiveblocksError
       try {
         // Attempt to get, which should fail and throw an error.
-        await client.getRoomNotificationSettings({
+        await client.getRoomSubscriptionSettings({
           userId,
           roomId,
         });
@@ -1349,17 +1710,17 @@ describe("client", () => {
     });
   });
 
-  describe("update room notification settings", () => {
-    test("should update user's room notification settings", async () => {
+  describe("update room subscription settings", () => {
+    test("should update user's room subcription settings", async () => {
       const userId = "user1";
       const roomId = "room1";
-      const settings: RoomNotificationSettings = {
+      const settings: Partial<RoomSubscriptionSettings> = {
         threads: "all",
       };
 
       server.use(
         http.post(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/subscription-settings`,
           async ({ request }) => {
             const data = await request.json();
 
@@ -1375,6 +1736,15 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       await expect(
+        client.updateRoomSubscriptionSettings({
+          userId,
+          roomId,
+          data: settings,
+        })
+      ).resolves.toEqual(settings);
+
+      // TODO: Deprecated, remove this once "room notification settings" methods are removed
+      await expect(
         client.updateRoomNotificationSettings({
           userId,
           roomId,
@@ -1383,10 +1753,10 @@ describe("client", () => {
       ).resolves.toEqual(settings);
     });
 
-    test("should throw a LiveblocksError when updateRoomNotificationSettings receives an error response", async () => {
+    test("should throw a LiveblocksError when updateRoomSubscriptionSettings receives an error response", async () => {
       const userId = "user1";
       const roomId = "room1";
-      const settings: RoomNotificationSettings = {
+      const settings: Partial<RoomSubscriptionSettings> = {
         threads: "all",
       };
 
@@ -1397,7 +1767,7 @@ describe("client", () => {
 
       server.use(
         http.post(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/subscription-settings`,
           async ({ request }) => {
             const data = await request.json();
 
@@ -1415,7 +1785,7 @@ describe("client", () => {
       // This should throw a LiveblocksError
       try {
         // Attempt to get, which should fail and throw an error.
-        await client.updateRoomNotificationSettings({
+        await client.updateRoomSubscriptionSettings({
           userId,
           roomId,
           data: settings,
@@ -1433,14 +1803,14 @@ describe("client", () => {
     });
   });
 
-  describe("delete room notification settings", () => {
-    test("should delete user's room notification settings", async () => {
+  describe("delete room subscription settings", () => {
+    test("should delete user's room subscription settings", async () => {
       const userId = "user1";
       const roomId = "room1";
 
       server.use(
         http.delete(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/subscription-settings`,
           () => {
             return HttpResponse.json(undefined, { status: 204 });
           }
@@ -1450,6 +1820,14 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       await expect(
+        client.deleteRoomSubscriptionSettings({
+          userId,
+          roomId,
+        })
+      ).resolves.toBeUndefined();
+
+      // TODO: Deprecated, remove this once "room notification settings" methods are removed
+      await expect(
         client.deleteRoomNotificationSettings({
           userId,
           roomId,
@@ -1457,7 +1835,7 @@ describe("client", () => {
       ).resolves.toBeUndefined();
     });
 
-    test("should throw a LiveblocksError when deleteRoomNotificationSettings receives an error response", async () => {
+    test("should throw a LiveblocksError when deleteRoomSubscriptionSettings receives an error response", async () => {
       const userId = "user1";
       const roomId = "room1";
 
@@ -1468,7 +1846,7 @@ describe("client", () => {
 
       server.use(
         http.delete(
-          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/notification-settings`,
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/users/:userId/subscription-settings`,
           () => {
             return HttpResponse.json(error, { status: 404 });
           }
@@ -1480,7 +1858,7 @@ describe("client", () => {
       // This should throw a LiveblocksError
       try {
         // Attempt to get, which should fail and throw an error.
-        await client.deleteRoomNotificationSettings({
+        await client.deleteRoomSubscriptionSettings({
           userId,
           roomId,
         });
@@ -1662,7 +2040,7 @@ describe("client", () => {
     test("should get user's notification settings", async () => {
       const userId = "florent";
 
-      const settings: UserNotificationSettingsPlain = {
+      const settings: NotificationSettingsPlain = {
         email: {
           thread: true,
           textMention: false,
@@ -1692,7 +2070,7 @@ describe("client", () => {
 
       const client = new Liveblocks({ secret: "sk_xxx" });
 
-      const expected = createUserNotificationSettings(settings);
+      const expected = createNotificationSettings(settings);
       await expect(client.getNotificationSettings({ userId })).resolves.toEqual(
         expected
       );
@@ -1737,7 +2115,7 @@ describe("client", () => {
   describe("update user's notification settings", () => {
     test("should update user's notification settings", async () => {
       const userId = "nimesh";
-      const settings: UserNotificationSettingsPlain = {
+      const settings: NotificationSettingsPlain = {
         email: {
           textMention: false,
           thread: false,
@@ -1766,7 +2144,7 @@ describe("client", () => {
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
-      const expected = createUserNotificationSettings(settings);
+      const expected = createNotificationSettings(settings);
       await expect(
         client.updateNotificationSettings({
           userId,
@@ -1794,7 +2172,7 @@ describe("client", () => {
 
     test("should update user's notification settings partially", async () => {
       const userId = "adri";
-      const settings: UserNotificationSettingsPlain = {
+      const settings: NotificationSettingsPlain = {
         email: {
           textMention: true,
           thread: true,
@@ -1823,7 +2201,7 @@ describe("client", () => {
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
-      const expected = createUserNotificationSettings(settings);
+      const expected = createNotificationSettings(settings);
       await expect(
         client.updateNotificationSettings({
           userId,
@@ -1945,6 +2323,50 @@ describe("client", () => {
           expect(err.name).toBe("LiveblocksError");
         }
       }
+    });
+  });
+
+  describe("mutating storage from the backend", () => {
+    test("should read room's storage from the server and construct a Live tree", async () => {
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/rooms/:roomId/request-storage-mutation`,
+          () => {
+            // prettier-ignore
+            const nodes = [
+              ["root", { type: 0, data: {} }],
+              ["0:1", { type: 1, parentId: "root", parentKey: "a" }],
+              ["0:2", { type: 2, parentId: "root", parentKey: "b" }],
+              ["0:3", { type: 3, parentId: "0:1", parentKey: "!", data: { abc: 123 }}],
+              ["0:4", { type: 3, parentId: "0:1", parentKey: "%", data: { xyz: 3.14 }}],
+            ] satisfies IdTuple<SerializedCrdt>[];
+
+            return HttpResponse.text(
+              [{ actor: 123 }, ...nodes]
+                .map((n) => JSON.stringify(n))
+                .join("\n"),
+              { headers: { "Content-Type": "application/x-ndjson" } }
+            );
+          }
+        ),
+        http.post(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/send-message`, () => {
+          // Accept anything for this test
+          return new HttpResponse(null, { status: 204 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      await expect(
+        client.mutateStorage("my-room", ({ root }) => {
+          expect(root.toImmutable() as unknown).toEqual({
+            a: [{ abc: 123 }, { xyz: 3.14 }],
+            b: new Map(),
+          });
+
+          // Mutate it!
+          root.set("z", new LiveList([1, 2, 3]));
+        })
+      ).resolves.toBeUndefined();
     });
   });
 });

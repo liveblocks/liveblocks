@@ -363,6 +363,65 @@ async function getNextPage() {
 }
 ```
 
+If you’d like to iterate over all your rooms, it’s most convenient to use
+[`liveblocks.iterRooms`](#iter-rooms) instead. This method automatically
+paginates your API requests.
+
+#### Liveblocks.iterRooms [#iter-rooms]
+
+Like `.getRooms()`, but returns an asynchronous iterator, which will help you
+iterate over all (matching) rooms in your project, without having to manually
+paginate over those results. List `.getRooms()`, but returns an asynchronous
+iterator, which will help you iterate over all (matching) rooms in your project,
+without having to manually paginate over those results. Returns a list of rooms
+that are in the current project. Works similarly to
+[`liveblocks.getRooms`](#get-rooms), but instead returns an asynchronous
+iterator, which helps you iterate over all selected rooms in your project,
+without having to manually paginate through the results.
+
+```ts
+const roomsIterator = liveblocks.iterRooms();
+
+for await (const room of roomsIterator) {
+  // { type: "room", id: "my-room-id", metadata: {...}, ... }
+  console.log(room);
+}
+```
+
+A number of options are also available, enabling you to filter for certain
+rooms.
+
+```ts
+const roomsIterator = await liveblocks.iterRooms({
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
+  groupIds: ["engineering", "design"],
+
+  // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+  userId: "my-user-id",
+
+  // Optional, use advanced filtering
+  query: {
+    // Optional, filter for rooms with an ID that starts with specific string
+    roomId: {
+      startsWith: "liveblocks:",
+    },
+    // Optional, filter for rooms with custom metadata in `metadata`
+    metadata: {
+      roomType: "whiteboard",
+    },
+  },
+});
+
+for await (const room of roomsIterator) {
+  // { type: "room", id: "my-room-id", metadata: {...}, ... }
+  console.log(room);
+}
+```
+
+The `query` option also allows you to pass a
+[query language](/docs/guides/how-to-filter-rooms-using-query-language) string
+instead of a `query` object.
+
 #### Liveblocks.createRoom [#post-rooms]
 
 Programmatically creates a new room from a room ID. The `defaultAccesses` option
@@ -377,7 +436,7 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: ["room:write"],
 });
 
-// { type: "room", id: "my-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -421,9 +480,58 @@ returns the same response.
 ```ts
 const room = await liveblocks.getRoom("my-room-id");
 
-// { type: "room", id: "my-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
+
+#### Liveblocks.getOrCreateRoom [#get-or-create-rooms-roomId]
+
+Get a room by its ID. If the room doesn’t exist, create it instead. The
+`defaultAccesses` option is required. Setting `defaultAccesses` to
+`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+private room that needs
+[ID token permission to enter](/docs/authentication/id-token). Returns the same
+response as the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
+
+```ts
+const room = await liveblocks.getOrCreateRoom("my-room-id", {
+  defaultAccesses: ["room:write"],
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+A number of room creation options are available, allowing you to set permissions
+and attach custom metadata.
+
+```ts
+const room = await liveblocks.getOrCreateRoom("my-room-id", {
+  // The default room permissions. `[]` for private, `["room:write"]` for public.
+  defaultAccesses: [],
+
+  // Optional, the room's group ID permissions
+  groupsAccesses: {
+    design: ["room:write"],
+    engineering: ["room:presence:write", "room:read"],
+  },
+
+  // Optional, the room's user ID permissions
+  usersAccesses: {
+    "my-user-id": ["room:write"],
+  },
+
+  // Optional, custom metadata to attach to the room
+  metadata: {
+    myRoomType: "whiteboard",
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about [managing permission with ID tokens](/docs/authentication/id-token).
 
 #### Liveblocks.updateRoom [#post-rooms-roomId]
 
@@ -438,7 +546,7 @@ const room = await liveblocks.updateRoom("my-room-id", {
   // ...
 });
 
-// { type: "room", id: "my-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -473,10 +581,68 @@ Group and user permissions are only used with
 [ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
 more about [managing permission with ID tokens](/docs/authentication/id-token).
 
+#### Liveblocks.upsertRoom [#upsert-rooms-roomId]
+
+Update a room’s properties by its ID. If the room doesn’t exist, create it
+instead. The `defaultAccesses` option is required. Setting `defaultAccesses` to
+`["room:write"]` creates a public room, whereas setting it to `[]` will create a
+private room that needs
+[ID token permission to enter](/docs/authentication/id-token). Returns the same
+response as the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms).
+
+```ts
+const room = await liveblocks.upsertRoom("my-room-id", {
+  // These fields will get updated when the room exists, or will be created
+  update: {
+    metadata: { color: "red" },
+  },
+  // These fields will only be set when the room will get created
+  create: {
+    defaultAccesses: ["room:write"],
+  },
+});
+
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
+console.log(room);
+```
+
+A number of room update or creation options are available, allowing you to set
+permissions and attach custom metadata.
+
+```ts
+const room = await liveblocks.upsertRoom("my-room-id", {
+  update: {
+    // The default room permissions. `[]` for private, `["room:write"]` for public.
+    defaultAccesses: [],
+
+    // Optional, the room's group ID permissions
+    groupsAccesses: {
+      design: ["room:write"],
+      engineering: ["room:presence:write", "room:read"],
+    },
+
+    // Optional, the room's user ID permissions
+    usersAccesses: {
+      "my-user-id": ["room:write"],
+    },
+
+    // Optional, custom metadata to attach to the room
+    metadata: {
+      myRoomType: "whiteboard",
+    },
+  },
+});
+```
+
+Group and user permissions are only used with
+[ID token authorization](/docs/api-reference/liveblocks-node#id-tokens), learn
+more about [managing permission with ID tokens](/docs/authentication/id-token).
+
 #### Liveblocks.deleteRoom [#delete-rooms-roomId]
 
-Deletes a room. Throws an error if the room isn’t found. This is a wrapper
-around the
+Deletes a room. If the room doesn’t exist, or has already been deleted, no error
+will throw. This is a wrapper around the
 [Delete Room API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId)
 and returns no response.
 
@@ -498,7 +664,7 @@ const room = await liveblocks.updateRoomId({
   newRoomId: "new-room-id",
 });
 
-// { type: "room", id: "new-room-id", ... }
+// { type: "room", id: "my-room-id", metadata: {...}, ... }
 console.log(room);
 ```
 
@@ -724,6 +890,118 @@ const storage = await liveblocks.initializeStorageDocument("my-room-id", {
   },
 });
 ```
+
+#### Liveblocks.mutateStorage [#mutate-storage]
+
+Modify Storage contents from the server. No presence will be shown when you make
+changes.
+
+```ts
+// Mutate a single room
+await liveblocks.mutateStorage(
+  "my-room-id",
+
+  ({ root }) => {
+    root.get("list").push("item3");
+  }
+);
+```
+
+The callback can be asynchronous, in which case a stream of mutations can happen
+over time.
+
+```ts
+// Mutate a single room
+await liveblocks.mutateStorage(
+  "my-room-id",
+
+  async ({ root }) => {
+    // These changes happen immediately
+    const animals = root.get("animals");
+    animals.clear();
+    animals.push("Thinking...");
+
+    await thinkForAWhile();
+
+    // These changes happen after `await` has run
+    animals.clear();
+    animals.push("🐶");
+    animals.push("🦘");
+  }
+);
+```
+
+Learn how to
+[type your Storage](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+#### Liveblocks.massMutateStorage [#mass-mutate-storage]
+
+Modify Storage contents for multiple rooms simultaneously. With the default
+query value `{}` it will loop through every room in your project.
+
+```ts
+// Mutate a number of rooms
+await liveblocks.massMutateStorage(
+  {},
+
+  // Callback runs on every selected room
+  ({ room, root }) => {
+    // { type: "room", id: "my-room-id", metadata: {...}, ... }
+    console.log(room);
+
+    root.get("animals").push("🦍");
+  }
+);
+```
+
+A number of options are also available, enabling you to filter for certain
+rooms. Additionally, you can set options for concurrency and provide an abort
+signal to cancel the mutations.
+
+```ts
+// Mutate a number of rooms
+await liveblocks.massMutateStorage(
+  {
+    // +++
+    // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
+    groupIds: ["engineering", "design"],
+
+    // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
+    userId: "my-user-id",
+
+    // Optional, use advanced filtering
+    query: {
+      // Optional, filter for rooms with an ID that starts with specific string
+      roomId: {
+        startsWith: "liveblocks:",
+      },
+      // Optional, filter for rooms with custom metadata in `metadata`
+      metadata: {
+        roomType: "whiteboard",
+      },
+    },
+    // +++
+  },
+
+  ({ room, root }) => {
+    // { type: "room", id: "my-room-id", metadata: {...}, ... }
+    console.log(room);
+
+    root.get("animals").push("🦍");
+  },
+
+  // Optional
+  // +++
+  {
+    concurrency: 10, // Optional, process at most 10 rooms simultaneously
+    signal, // Optional, provide an abort signal to cancel mutations mid-way
+  }
+  // +++
+);
+```
+
+Learn how to
+[type your Storage](/docs/api-reference/liveblocks-react#Typing-your-data).
 
 #### Liveblocks.deleteStorageDocument [#delete-rooms-roomId-storage]
 
@@ -1364,6 +1642,131 @@ await liveblocks.deleteThread({
 });
 ```
 
+#### Liveblocks.subscribeToThread [#post-rooms-roomId-threads-threadId-subscribe]
+
+Subscribes a user to a thread, meaning they will receive inbox notifications
+when new comments are posted. Throws an error if the room or thread isn’t found.
+This is a wrapper around the
+[Subscribe To Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-subscribe)
+and returns the same response.
+
+```ts
+const subscription = await liveblocks.subscribeToThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+
+// { kind: "thread", subjectId: "th_d75sF3...", ... }
+console.log(subscription);
+```
+
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#post-rooms-roomId-users-userId-subscription-settings). This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Disables notifications for all threads
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+await liveblocks.subscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
+#### Liveblocks.unsubscribeFromThread [#post-rooms-roomId-threads-threadId-unsubscribe]
+
+Unsubscribes a user from a thread, meaning they will no longer receive inbox
+notifications when new comments are posted. Throws an error if the room or
+thread isn’t found. This is a wrapper around the
+[Unsubscribe From Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-unsubscribe)
+and returns the same response.
+
+```ts
+await liveblocks.unsubscribeFromThread({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+```
+
+Unsubscribing will replace any existing subscription for the current thread
+[set at room-level](#post-rooms-roomId-users-userId-subscription-settings). This
+value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Enables notifications for all thread activity
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "all",
+  },
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+await liveblocks.unsubscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 3. Enables notifications for all thread activity, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
+#### Liveblocks.getThreadSubscriptions [#get-rooms-roomId-threads-threadId-subscriptions]
+
+Gets a thread’s subscriptions, returning a list of users that will receive
+notifications when new comments are posted. Throws an error if the room or
+thread isn’t found. This is a wrapper around the
+[Get Thread Subscriptions API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-subscriptions)
+and returns the same response.
+
+```ts
+const { data: subscriptions } = await liveblocks.getThreadSubscriptions({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+});
+
+// [{ kind: "thread", subjectId: "th_d75sF3...", userId: "steven@example.com", ... }, ...]
+console.log(subscriptions);
+```
+
 #### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments]
 
 Creates a new comment in a specific thread within a room. This method allows
@@ -1614,53 +2017,133 @@ await liveblocks.removeCommentReaction({
 });
 ```
 
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+#### Liveblocks.getRoomSubscriptionSettings [#get-rooms-roomId-users-userId-subscription-settings]
 
-Returns a user’s notification settings for a specific room. This is a wrapper
-around the
-[Get Room Notification Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-notification-settings).
+Returns a user’s subscription settings for a specific room, specifying which
+`thread` and `textMention` inbox notifications they are set to receive. This is
+a wrapper around the
+[Get Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-const notificationSettings = await liveblocks.getRoomNotificationSettings({
+const subscriptionSettings = await liveblocks.getRoomSubscriptionSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
 });
 
-// { threads: "all", ... }
-console.log(notificationSettings);
+// { threads: "all", textMentions: "mine" }
+console.log(subscriptionSettings);
 ```
 
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+For `"threads"`, these are the three possible values:
 
-Updates a user’s notification settings for a specific room. This is a wrapper
-around the
-[Update Room Notification Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-notification-settings).
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+  participating in.
+- `"none"` No notifications are received.
+
+For `"textMentions"`, these are the two possible values:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
+#### Liveblocks.updateRoomSubscriptionSettings [#post-rooms-roomId-users-userId-subscription-settings]
+
+Updates a user’s subscription settings for a specific room, defining which
+`thread` and `textMention` inbox notifications they will receive. This is a
+wrapper around the
+[Update Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-users-userId-subscription-settings).
 
 ```ts
-const updatedNotificationSettings =
-  await liveblocks.updateRoomNotificationSettings({
+const updatedSubscriptionSettings =
+  await liveblocks.updateRoomSubscriptionSettings({
     roomId: "my-room-id",
     userId: "steven@example.com",
     data: {
       threads: "replies_and_mentions",
+      textMentions: "mine",
     },
   });
 
 // { threads: "replies_and_mentions", ... }
-console.log(updatedNotificationSettings);
+console.log(updatedSubscriptionSettings);
 ```
 
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+For `"threads"`, these are the three possible values that can be set:
 
-Deletes a user’s notification settings for a specific room. This is a wrapper
-around the
-[Delete Room Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-notification-settings).
+- `"all"` Receive notifications for every activity in every thread.
+- `"replies_and_mentions"` Receive notifications for mentions and threads you’re
+  participating in.
+- `"none"` No notifications are received.
+
+For `"textMentions"`, these are the two possible values that can be set:
+
+- `"mine"` Receive notifications for mentions of you.
+- `"none"` No notifications are received.
+
+##### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#post-rooms-roomId-users-userId-subscription-settings)
+in the current room. This value can also be overridden by a room-level call that
+is run afterwards.
 
 ```ts
-await liveblocks.deleteRoomNotificationSettings({
+const roomId = "my-room-id";
+const userId = "steven@example.com";
+
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+await liveblocks.subscribeToThread({
+  roomId,
+  threadId: "th_d75sF3...",
+  data: { userId },
+});
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+await liveblocks.updateRoomSubscriptionSettings({
+  roomId,
+  userId,
+  data: {
+    threads: "none",
+  },
+});
+```
+
+#### Liveblocks.deleteRoomSubscriptionSettings [#delete-rooms-roomId-users-userId-subscription-settings]
+
+Deletes a user’s subscription settings for a specific room. This is a wrapper
+around the
+[Delete Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-users-userId-subscription-settings).
+
+```ts
+await liveblocks.deleteRoomSubscriptionSettings({
   roomId: "my-room-id",
   userId: "steven@example.com",
 });
+```
+
+#### Liveblocks.getUserRoomSubscriptionSettings [#get-users-userId-room-subscription-settings]
+
+Returns a list of a user’s subscription settings for all rooms. This is a
+wrapper around the
+[Get User Room Subscription Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-room-subscription-settings).
+
+```ts
+const { data: subscriptionSettings, nextCursor } =
+  await liveblocks.getUserRoomSubscriptionSettings({
+    userId: "steven@example.com",
+  });
+
+console.log(subscriptionSettings);
+
+// { roomId: "my-room-id", threads: "all", ... }
+
+// Pagination
+if (nextCursor) {
+  const { data: nextPage } = await liveblocks.getUserRoomSubscriptionSettings({
+    userId: "steven@example.com",
+    startingAfter: nextCursor,
+  });
+}
 ```
 
 ### Notifications
@@ -1672,21 +2155,64 @@ Returns a list of a user’s inbox notifications. This is a wrapper around the
 It also provides an unread query parameter to filter unread notifications.
 
 ```ts
-const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
-  userId: "steven@example.com",
-});
+const { data: inboxNotifications, nextCursor } =
+  await liveblocks.getInboxNotifications({ userId: "steven@example.com" });
 
 // [{ id: "in_3dH7sF3...", kind: "thread", ... }, { id: "in_3dH7sF3...", kind: "textMention", ... }, ...]
 console.log(inboxNotifications);
 
 // Filter unread notifications
-const { data: unreadInboxNotifications } =
+const { data: unreadInboxNotifications, nextCursor } =
   await liveblocks.getInboxNotifications({
     userId: "steven@example.com",
-    query: {
-      unread: true,
-    },
+    query: { unread: true },
   });
+```
+
+##### Pagination
+
+You can use `nextCursor` to paginate inbox notifications. In this example, when
+`getNextPage` is called, the next page of inbox notifications is added to
+`pages`.
+
+```ts
+import { InboxNotificationData } from "@liveblocks/node";
+
+// An array of pages, each containing a list of retrieved inbox notifications
+const pages: InboxNotificationData[][] = [];
+
+// Holds the pagination cursor for the next set of inbox notifications
+let startingAfter;
+
+// Call to get the next page of inbox notifications
+async function getNextPage() {
+  const { data, nextCursor } = await liveblocks.getInboxNotifications({
+    startingAfter,
+  });
+  pages.push(data);
+  startingAfter = nextCursor;
+}
+```
+
+If you’d like to iterate over all your inbox notifications, it’s most convenient
+to use
+[`liveblocks.iterInboxNotifications`](#iter-users-userId-inboxNotifications)
+instead. This method automatically paginates your API requests.
+
+#### Liveblocks.iterInboxNotifications [#iter-users-userId-inboxNotifications]
+
+Returns a list of inbox notifications for the given user. Works similarly to
+[`liveblocks.getInboxNotifications`](#get-users-userId-inboxNotifications), but
+instead returns an asynchronous iterator, which helps you iterate over all the
+inbox notifications, without having to manually paginate through the results.
+
+```ts
+const userId = "steven@example.com";
+
+for await (const item of liveblocks.iterInboxNotifications({ userId })) {
+  console.log(item.id); // in_3dH7sF3...
+  console.log(item.kind); // "thread", "textMention", ...
+}
 ```
 
 #### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId]
@@ -1788,10 +2314,9 @@ await liveblocks.deleteAllInboxNotifications({
 
 Returns a user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the user. User notification settings are project-based, which
-means that this returns the user’s settings for every room. This a wrapper
-around the
-[Get User Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
+will be sent for the user. Notification settings are project-based, which means
+that this returns the user’s settings for every room. This a wrapper around the
+[Get Notification Settings API](/docs/api-reference/rest-api-endpoints#get-users-userId-notification-settings).
 
 ```ts
 const settings = await liveblocks.getNotificationSettings({
@@ -1819,11 +2344,11 @@ console.log(settings);
 
 Updates a user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the user. User notification settings are project-based, which means
-that this modifies the user’s settings in every room. Each notification `kind`
-must first be enabled on your project’s notification dashboard page before
-settings can be used. This a wrapper around the
-[Update User Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
+sent for the user. Notification settings are project-based, which means that
+this modifies the user’s settings in every room. Each notification `kind` must
+first be enabled on your project’s notification dashboard page before settings
+can be used. This a wrapper around the
+[Update Notification Settings API](/docs/api-reference/rest-api-endpoints#post-users-userId-notification-settings).
 
 ```ts
 const updatedSettings = await liveblocks.updateNotificationSettings({
@@ -1876,7 +2401,7 @@ await liveblocks.updateNotificationSettings({
 Deletes the user’s notification settings, resetting them to the default values.
 The default values can be adjusted in a project’s notification dashboard page.
 This a wrapper around the
-[Delete User Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
+[Delete Notification Settings API](/docs/api-reference/rest-api-endpoints#delete-users-userId-notification-settings).
 
 ```ts
 await liveblocks.deleteNotificationSettings({
@@ -2071,7 +2596,7 @@ const stringComment = await stringifyCommentBody(comment.body, {
 
 <Banner title="Also available from @liveblocks/client">
 
-If you’d like to use this on the client side, it's also available from
+If you’d like to use this on the client side, it’s also available from
 [`@liveblocks/client`](/docs/api-reference/liveblocks-client#stringify-comment-body).
 
 </Banner>
@@ -2289,6 +2814,24 @@ Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you’re
 using the `authorize` function in your back end, and adopt
 [`Liveblocks.prepareSession`](#access-tokens) or
 [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
+
+#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
+
+This method was renamed to
+[`Liveblocks.getRoomSubscriptionSettings`](#get-rooms-roomId-users-userId-subscription-settings)
+in 2.24, read more in our [migration guide](/docs/platform/upgrading/2.24).
+
+#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
+
+This method was renamed to
+[`Liveblocks.updateRoomSubscriptionSettings`](#post-rooms-roomId-users-userId-subscription-settings)
+in 2.24, read more in our [migration guide](/docs/platform/upgrading/2.24).
+
+#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
+
+This method was renamed to
+[`Liveblocks.deleteRoomSubscriptionSettings`](#delete-rooms-roomId-users-userId-subscription-settings)
+in 2.24, read more in our [migration guide](/docs/platform/upgrading/2.24).
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [Permissions REST API]: /docs/authentication/id-token

@@ -6,6 +6,7 @@ import { setupServer } from "msw/node";
 
 import {
   dummyCommentData,
+  dummySubscriptionData,
   dummyThreadData,
   dummyThreadInboxNotificationData,
 } from "./_dummies";
@@ -40,8 +41,10 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -120,6 +123,9 @@ describe("useCreateComment", () => {
       roomId,
       threadId: initialThread.id,
     });
+    const initialSubscription = dummySubscriptionData({
+      subjectId: initialThread.id,
+    });
     const fakeCreatedAt = addMinutes(new Date(), 5);
 
     server.use(
@@ -128,8 +134,10 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [initialInboxNotification],
+            subscriptions: [initialSubscription],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -180,9 +188,7 @@ describe("useCreateComment", () => {
       }
     );
 
-    expect(result.current.subscription).toEqual({
-      status: "not-subscribed",
-    });
+    expect(result.current.subscription.status).toEqual("not-subscribed");
 
     await waitFor(() =>
       expect(result.current.subscription.unreadSince).toBeNull()
@@ -198,10 +204,8 @@ describe("useCreateComment", () => {
       })
     );
 
-    expect(result.current.subscription).toEqual({
-      status: "subscribed",
-      unreadSince: comment.createdAt,
-    });
+    expect(result.current.subscription.status).toEqual("subscribed");
+    expect(result.current.subscription.unreadSince).toEqual(comment.createdAt);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await waitFor(() =>
@@ -221,8 +225,10 @@ describe("useCreateComment", () => {
           ctx.json({
             data: [initialThread],
             inboxNotifications: [],
+            subscriptions: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

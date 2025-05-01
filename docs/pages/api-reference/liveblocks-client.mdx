@@ -2310,9 +2310,9 @@ room.disconnect();
 
 ### Room.getThreads
 
-Returns threads, and their associated inbox notifications, that are in the
-current room. It also returns the request date that can be used for subsequent
-polling. It’s possible to filter for
+Returns threads, and their associated inbox notifications and subscriptions,
+that are in the current room. It also returns the request date that can be used
+for subsequent polling. It’s possible to filter for
 [a thread’s resolved status](#filtering-resolved-status) and using
 [custom metadata](#filtering-metadata).
 
@@ -2332,6 +2332,9 @@ console.log(inboxNotifications);
   </PropertiesListItem>
   <PropertiesListItem name="inboxNotifications" type="InboxNotificationData[]">
     Inbox notifications associated with the threads.
+  </PropertiesListItem>
+  <PropertiesListItem name="subscriptions" type="SubscriptionData[]">
+    Subscriptions associated with the threads.
   </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
     The request date to use for subsequent polling.
@@ -2419,23 +2422,25 @@ const threads = await room.getThreads({
 
 ### Room.getThreadsSince
 
-Returns threads, and their associated inbox notifications, that have been
-updated or deleted since the requested date. Helpful when used in combination
-with [`Room.getThreads`](#Room.getThreads) to initially fetch all threads, then
-receive updates later.
+Returns threads, and their associated inbox notifications and subscriptions,
+that have been updated or deleted since the requested date. Helpful when used in
+combination with [`Room.getThreads`](#Room.getThreads) to initially fetch all
+threads, then receive updates later.
 
 ```ts
 const initial = await room.getThreads();
 
-const { threads, inboxNotifications, requestedAt } = await room.getThreadsSince(
-  { since: initial.requestedAt }
-);
+const { threads, inboxNotifications, subscriptions, requestedAt } =
+  await room.getThreadsSince({ since: initial.requestedAt });
 
 // { updated: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
 console.log(threads);
 
 // { updated: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
 console.log(inboxNotifications);
+
+// { updated: [{ subjectId: "th_s4368s...", kind: "thread", }, ...], deleted: [...] }
+console.log(subscriptions);
 ```
 
 <PropertiesList title="Returns">
@@ -2452,6 +2457,12 @@ console.log(inboxNotifications);
     Inbox notifications that have been updated or deleted since the requested
     date.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="subscriptions"
+    detailedType="{ updated: SubscriptionData[], deleted: SubscriptionDeleteInfo[] }"
+  >
+    Subscriptions that have been updated or deleted since the requested date.
+  </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
     The request date to use for subsequent polling.
   </PropertiesListItem>
@@ -2465,11 +2476,12 @@ console.log(inboxNotifications);
 
 ### Room.getThread
 
-Returns a thread and its associated inbox notification, from its ID, if it
-exists.
+Returns a thread and its associated inbox notification and subscription, from
+its ID, if it exists.
 
 ```ts
-const { thread, inboxNotification } = await room.getThread("th_xxx");
+const { thread, inboxNotification, subscription } =
+  await room.getThread("th_xxx");
 ```
 
 The thread ID can be retrieved from existing threads.
@@ -2490,6 +2502,10 @@ const { thread, inboxNotification } = await room.getThread(newThread.id);
   >
     The inbox notification associated with the thread, or `undefined` if it
     doesn’t exist.
+  </PropertiesListItem>
+  <PropertiesListItem name="subscription" type="SubscriptionData | undefined">
+    The subscription associated with the thread, or `undefined` if it doesn’t
+    exist.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2688,6 +2704,86 @@ await room.markThreadAsUnresolved("th_xxx");
     The ID of the thread to resolve.
   </PropertiesListItem>
 </PropertiesList>
+
+### Room.subscribeToThread
+
+Subscribes the user to a thread, meaning they will receive inbox notifications
+when new comments are posted.
+
+```ts
+await room.subscribeToThread("th_xxx");
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="SubscriptionData">
+    The thread’s subscription.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string" required>
+    The ID of the thread to subscribe to.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Replacing room-level subscriptions
+
+Subscribing will replace any existing subscription for the current thread
+[set at room-level](#Room.updateSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+// 1. Disables notifications for all threads
+await room.updateSubscriptionSettings({
+  threads: "none",
+});
+
+// 2. Enables notifications just for this thread, "th_d75sF3..."
+await room.subscribeToThread("th_d75sF3...");
+
+// 3. Disables notifications for all threads, including "th_d75sF3..."
+await room.updateSubscriptionSettings({
+  threads: "none",
+});
+```
+
+### Room.unsubscribeFromThread
+
+Unsubscribes the user from a thread, meaning they will no longer receive inbox
+notifications when new comments are posted.
+
+```ts
+await room.unsubscribeFromThread("th_xxx");
+```
+
+<PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="threadId" type="string" required>
+    The ID of the thread to unsubscribe from.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Replacing room-level unsubscriptions
+
+Unsubscribing will replace any existing unsubscription for the current thread
+[set at room-level](#Room.updateSubscriptionSettings). This value can also be
+overridden by a room-level call that is run afterwards.
+
+```ts
+// 1. Enable notifications for all threads
+await room.updateSubscriptionSettings({
+  threads: "all",
+});
+
+// 2. Disables notifications just for this thread, "th_d75sF3..."
+await room.unsubscribeFromThread("th_d75sF3...");
+
+// 3. Enables notifications for all threads, including "th_d75sF3..."
+await room.updateSubscriptionSettings({
+  threads: "all",
+});
+```
 
 ### Room.createComment
 
@@ -2993,11 +3089,12 @@ console.log(url);
 
 ### Client.getInboxNotifications
 
-Returns the current user’s inbox notifications and their associated threads. It
-also returns the request date that can be used for subsequent polling.
+Returns the current user’s inbox notifications and their associated threads and
+subscriptions. It also returns the request date that can be used for subsequent
+polling.
 
 ```ts
-const { inboxNotifications, threads, requestedAt } =
+const { inboxNotifications, threads, subscriptions, requestedAt } =
   await client.getInboxNotifications();
 
 // [{ id: "in_fwh3d4...", kind: "thread", }, ...]
@@ -3005,6 +3102,9 @@ console.log(inboxNotifications);
 
 // [{ id: "th_s436g8...", type: "thread" }, ...]
 console.log(threads);
+
+// [{ subjectId: "th_s436g8...", kind: "thread", }, ...]
+console.log(subscriptions);
 ```
 
 <PropertiesList title="Returns">
@@ -3013,6 +3113,9 @@ console.log(threads);
   </PropertiesListItem>
   <PropertiesListItem name="threads" type="ThreadData[]">
     Threads associated with the inbox notifications.
+  </PropertiesListItem>
+  <PropertiesListItem name="subscriptions" type="SubscriptionData[]">
+    Subscriptions associated with the inbox notifications.
   </PropertiesListItem>
   <PropertiesListItem name="requestedAt" type="Date">
     The request date to use for subsequent polling.
@@ -3024,14 +3127,14 @@ console.log(threads);
 ### Client.getInboxNotificationsSince
 
 Returns the updated and deleted inbox notifications and their associated threads
-since the requested date. Helpful when used in combination with
-[`Client.getInboxNotifications`](#Client.getInboxNotifications) to initially
-fetch all notifications, then receive updates later.
+and subscriptions since the requested date. Helpful when used in combination
+with [`Client.getInboxNotifications`](#Client.getInboxNotifications) to
+initially fetch all notifications, then receive updates later.
 
 ```ts
 const initial = await client.getInboxNotifications();
 
-const { inboxNotifications, threads, requestedAt } =
+const { inboxNotifications, threads, subscriptions, requestedAt } =
   await client.getInboxNotificationsSince({ since: initial.requestedAt });
 
 // { updated: [{ id: "in_ds83hs...", kind: "thread", }, ...], deleted: [...] }
@@ -3039,6 +3142,9 @@ console.log(inboxNotifications);
 
 // { updated: [{ id: "th_s4368s...", type: "thread" }, ...], deleted: [...] }
 console.log(threads);
+
+// { updated: [{ subjectId: "th_s4368s...", kind: "thread", }, ...], deleted: [...] }
+console.log(subscriptions);
 ```
 
 <PropertiesList title="Returns">
@@ -3139,33 +3245,45 @@ await client.deleteInboxNotification("in_xxx");
   </PropertiesListItem>
 </PropertiesList>
 
-### Room.getNotificationSettings
+### Room.getSubscriptionSettings
 
-Gets the user’s notification settings for the current room. This notates which
+Gets the user’s subscription settings for the current room. This notates which
 [`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
 the current user receives in the current room.
 
 ```ts
-const settings = await room.getNotificationSettings();
+const settings = await room.getSubscriptionSettings();
 ```
 
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="settings"
-    type="{ threads }"
+    type="{ threads, textMentions }"
   >
-    Notification settings for Liveblocks products.
+    Subscription settings for Liveblocks products.
   </PropertiesListItem>
   <PropertiesListItem
     name="settings.threads"
     type={`"all" | "replies_and_mentions" | "none"`}
   >
     <div className="-mb-3">
-      Returns the current room’s notification settings for threads. It can return one of three values:
+      Returns the current room’s subscription settings for threads. It can return one of three values:
     </div>
 
-    - `"all"` Receive notifications for every activity.
-    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"all"` Receive notifications for every activity in every thread.
+    - `"replies_and_mentions"` Receive notifications for mentions and threads you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+    <PropertiesListItem
+    name="settings.textMentions"
+    type={`"mine" | "none"`}
+  >
+    <div className="-mb-3">
+      Returns the current room’s subscription settings for text mentions. It can be one of two values:
+    </div>
+
+    - `"mine"` Receive notifications for mentions of you.
     - `"none"` No notifications are received.
 
   </PropertiesListItem>
@@ -3173,15 +3291,15 @@ const settings = await room.getNotificationSettings();
 
 <PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
 
-### Room.updateNotificationSettings
+### Room.updateSubscriptionSettings
 
-Updates the user’s notification settings for the current room. Updating this
+Updates the user’s subscription settings for the current room. Updating this
 setting will change which
 [`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
 the current user receives in the current room.
 
 ```ts
-const settings = await room.updateNotificationSettings({
+const settings = await room.updateSubscriptionSettings({
   threads: "replies_and_mentions",
 });
 ```
@@ -3189,46 +3307,86 @@ const settings = await room.updateNotificationSettings({
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="settings"
-    type="{ threads }"
+    type="{ threads, textMentions }"
   >
-    Notification settings for Liveblocks products.
+    Subscription settings for Liveblocks products.
   </PropertiesListItem>
   <PropertiesListItem
     name="settings.threads"
     type={`"all" | "replies_and_mentions" | "none"`}
   >
     <div className="-mb-3">
-      Returns the current room’s notification settings for threads. It can return one of three values:
+      Returns the current room’s subscription settings for threads. It can return one of three values:
     </div>
 
-    - `"all"` Receive notifications for every activity.
-    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"all"` Receive notifications for every activity in every thread.
+    - `"replies_and_mentions"` Receive notifications for mentions and threads you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+    <PropertiesListItem
+    name="settings.textMentions"
+    type={`"mine" | "none"`}
+  >
+    <div className="-mb-3">
+      Returns the current room’s subscription settings for text mentions. It can be one of two values:
+    </div>
+
+    - `"mine"` Receive notifications for mentions of you.
     - `"none"` No notifications are received.
 
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem
+    <PropertiesListItem
     name="threads"
     type={`"all" | "replies_and_mentions" | "none"`}
   >
     <div className="-mb-3">
-      Sets the current room’s notification settings for threads. It can be one of three values:
+      Sets the current room’s subscription settings for threads. It can be one of three values:
     </div>
 
-    - `"all"` Receive notifications for every activity.
-    - `"replies_and_mentions"` Receive notifications for mentions and thread you’re participating in.
+    - `"all"` Receive notifications for every activity in every thread.
+    - `"replies_and_mentions"` Receive notifications for mentions and threads you’re participating in.
+    - `"none"` No notifications are received.
+
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="textMentions"
+    type={`"mine" | "none"`}
+  >
+    <div className="-mb-3">
+      Sets the current room’s subscription settings for text mentions. It can be one of two values:
+    </div>
+
+    - `"mine"` Receive notifications for mentions of you.
     - `"none"` No notifications are received.
 
   </PropertiesListItem>
 </PropertiesList>
 
+#### Replacing individual thread subscriptions
+
+Subscribing will replace any
+[existing thread subscriptions](#Room.subscribeToThread) in the current room.
+This value can also be overridden by a room-level call that is run afterwards.
+
+```ts
+// 1. Enables notifications just for this thread, "th_d75sF3..."
+await room.subscribeToThread("th_d75sF3...");
+
+// 2. Disables notifications for all threads, including "th_d75sF3..."
+await room.updateSubscriptionSettings({
+  threads: "none",
+});
+```
+
 ### Client.getNotificationSettings [@badge=Beta]
 
 Returns the user’s notification settings in the current project, in other words
 which [notification webhook events](/docs/platform/webhooks#NotificationEvent)
-will be sent for the current user. User notification settings are project-based,
+will be sent for the current user. Notification settings are project-based,
 which means that this returns the current user’s settings for every room.
 
 ```ts
@@ -3250,7 +3408,7 @@ console.log(settings);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="UserNotificationSettings">
+  <PropertiesListItem name="settings" type="NotificationSettings">
     Current user’s notification settings.
   </PropertiesListItem>
 </PropertiesList>
@@ -3261,10 +3419,10 @@ console.log(settings);
 
 Updates the current user’s notification settings, which affects which
 [notification webhook events](/docs/platform/webhooks#NotificationEvent) will be
-sent for the current user. User notification settings are project-based, which
-means that this modifies the current user’s settings in every room. Each
-notification `kind` must first be enabled on your project’s notification
-dashboard page before settings can be used.
+sent for the current user. Notification settings are project-based, which means
+that this modifies the current user’s settings in every room. Each notification
+`kind` must first be enabled on your project’s notification dashboard page
+before settings can be used.
 
 ```ts
 const settings = await client.updateNotificationSettings({
@@ -3277,14 +3435,14 @@ console.log(settings);
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="settings" type="UserNotificationSettings">
+  <PropertiesListItem name="settings" type="NotificationSettings">
     Current user’s notification settings.
   </PropertiesListItem>
 </PropertiesList>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="settings" type="object" required>
-    A deep partial object containing the user notification settings to
+    A deep partial object containing the notification settings to
     update. Custom notifications can be set too.
 
     <div className="-mt-2">
@@ -3318,17 +3476,17 @@ console.log(settings);
     </div>
 
   </PropertiesListItem>
-  <PropertiesListItem name="settings.email" type="ChannelNotificationSetting">
+  <PropertiesListItem name="settings.email" type="NotificationChannelSettings">
     The email notification settings.
   </PropertiesListItem>
-  <PropertiesListItem name="settings.slack" type="ChannelNotificationSetting">
-    The slack notification settings.
+  <PropertiesListItem name="settings.slack" type="NotificationChannelSettings">
+    The Slack notification settings.
   </PropertiesListItem>
-  <PropertiesListItem name="settings.teams" type="ChannelNotificationSetting">
-    The microsoft teams notification settings.
+  <PropertiesListItem name="settings.teams" type="NotificationChannelSettings">
+    The Microsoft Teams notification settings.
   </PropertiesListItem>
-  <PropertiesListItem name="settings.webPush" type="ChannelNotificationSetting">
-    The web push notification settings.
+  <PropertiesListItem name="settings.webPush" type="NotificationChannelSettings">
+    The Web Push notification settings.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -4986,7 +5144,7 @@ const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
 
 `User` is a type that’s returned by [`room.getSelf`][], [`room.getOthers`][],
 and other functions. Some of its values are set when
-[typing your room](#typing-your-data), here are some example values:
+[typing your room](#Typing-your-data), here are some example values:
 
 ```ts file="liveblocks.config.ts"
 declare global {
@@ -5106,6 +5264,29 @@ const { room, leave } = client.enterRoom("my-room" /* options */);
 leave();
 ```
 
+### Room.getNotificationSettings [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This method was renamed to [`room.getSubscriptionSettings`][] in 2.24, read
+  more in our [migration guide](/docs/platform/upgrading/2.24).
+</Banner>
+
+Gets the user’s subscription settings for the current room. This notates which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
+
+### Room.updateNotificationSettings [@badge=Deprecated]
+
+<Banner title="Deprecated" type="error">
+  This method was renamed to [`room.updateSubscriptionSettings`][] in 2.24, read
+  more in our [migration guide](/docs/platform/upgrading/2.24).
+</Banner>
+
+Updates the user’s subscription settings for the current room. Updating this
+setting will change which
+[`inboxNotifications`](/docs/api-reference/liveblocks-client#Client.getInboxNotifications)
+the current user receives in the current room.
+
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
 [`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
@@ -5126,6 +5307,10 @@ leave();
 [`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
 [`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [`room.getStorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.getSubscriptionSettings`]:
+  /docs/api-reference/liveblocks-client#Room.getSubscriptionSettings
+[`room.updateSubscriptionSettings`]:
+  /docs/api-reference/liveblocks-client#Room.updateSubscriptionSettings
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:
   /docs/api-reference/liveblocks-client#Room.subscribe.event

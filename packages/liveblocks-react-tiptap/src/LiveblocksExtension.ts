@@ -13,6 +13,7 @@ import {
   useReportTextEditor,
   useYjsProvider,
 } from "@liveblocks/react/_private";
+import { useInitial } from "@liveblocks/react-ui/_private";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
@@ -163,6 +164,9 @@ export const useLiveblocksExtension = (
     ...DEFAULT_OPTIONS,
     ...opts,
   };
+  const textEditorType = useInitial<TextEditorType>(
+    options.textEditorType ?? TextEditorType.TipTap
+  );
   const editor = useRef<Editor | null>(null);
   const room = useRoom();
 
@@ -204,10 +208,7 @@ export const useLiveblocksExtension = (
     }
   }, [isEditorReady, yjsProvider, options.initialContent]);
 
-  useReportTextEditor(
-    TextEditorType.TipTap,
-    options.field ?? DEFAULT_OPTIONS.field
-  );
+  useReportTextEditor(textEditorType, options.field ?? DEFAULT_OPTIONS.field);
 
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();

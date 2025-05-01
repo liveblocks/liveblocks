@@ -29,7 +29,7 @@ import type {
   TextMentionNotificationEmailDataAsReact,
 } from "../text-mention-notification";
 import type {
-  CommentEmailBaseData,
+  CommentEmailData,
   ThreadNotificationEmailData,
   ThreadNotificationEmailDataAsReact,
 } from "../thread-notification";
@@ -282,10 +282,12 @@ export const makeThreadNotificationEvent = ({
   threadId,
   userId,
   inboxNotificationId,
+  triggeredAt,
 }: {
   threadId: string;
   userId: string;
   inboxNotificationId: string;
+  triggeredAt: Date;
 }): ThreadNotificationEvent => ({
   type: "notification",
   data: {
@@ -297,6 +299,7 @@ export const makeThreadNotificationEvent = ({
     threadId,
     inboxNotificationId,
     createdAt: new Date().toISOString(),
+    triggeredAt: triggeredAt.toISOString(),
   },
 });
 
@@ -363,6 +366,7 @@ export const makeUnreadMentionDataset = (): {
     threadId,
     userId: "user-1",
     inboxNotificationId: inboxNotification.id,
+    triggeredAt: thread.createdAt,
   });
 
   return { threadId, comment, thread, inboxNotification, event };
@@ -401,26 +405,45 @@ export const makeUnreadRepliesDataset = (): {
     threadId,
     userId: "user-0",
     inboxNotificationId: inboxNotification.id,
+    triggeredAt: comment1.createdAt,
   });
 
   return { threadId, comment1, comment2, thread, inboxNotification, event };
 };
+
+export function makeCommentEmailData<BodyType, U extends BaseUserMeta = DU>(
+  comment: CommentData,
+  body: BodyType,
+  isRoomInfoResolved?: boolean
+): CommentEmailData<BodyType, U> {
+  return {
+    id: comment.id,
+    threadId: comment.threadId,
+    roomId: comment.roomId,
+    createdAt: comment.createdAt,
+    url: isRoomInfoResolved ? getResolvedCommentUrl(comment.id) : undefined,
+    author: {
+      id: comment.userId,
+      info: { name: comment.userId },
+    } as U,
+    body,
+  };
+}
 
 export const renderToStaticMarkup = (reactNode: ReactNode): string =>
   ReactDOMServer.renderToStaticMarkup(reactNode);
 
 // Note: Rendering React comments bodies as a string (e.g static markup)
 // to ease testing and avoid unnecessary operations.
-type CommentEmailAsStaticMarkupData<U extends BaseUserMeta> = Omit<
-  CommentEmailBaseData,
-  "userId" | "rawBody"
-> & {
-  author: U;
-  reactBody: string;
-};
 type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
+  string,
   BaseUserMeta,
-  CommentEmailAsStaticMarkupData<BaseUserMeta>
+  // Keeping backward compatibility with the `reactBody` property
+  // that was used in the previous versions.
+  CommentEmailData<string, BaseUserMeta> & {
+    /** @deprecated */
+    reactBody: string;
+  }
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
@@ -433,11 +456,13 @@ export const commentBodiesAsReactToStaticMarkup = (
     case "unreadMention": {
       const { comment, ...rest } = threadNotificationEmailDataAsReact;
 
+      const body = renderToStaticMarkup(comment.body);
       return {
         ...rest,
         comment: {
           ...comment,
-          reactBody: renderToStaticMarkup(comment.reactBody),
+          body,
+          reactBody: body,
         },
       };
     }
@@ -445,10 +470,14 @@ export const commentBodiesAsReactToStaticMarkup = (
       const { comments, ...rest } = threadNotificationEmailDataAsReact;
       return {
         ...rest,
-        comments: comments.map((comment) => ({
-          ...comment,
-          reactBody: renderToStaticMarkup(comment.reactBody),
-        })),
+        comments: comments.map((comment) => {
+          const body = renderToStaticMarkup(comment.body);
+          return {
+            ...comment,
+            body,
+            reactBody: body,
+          };
+        }),
       };
     }
     default:
@@ -473,10 +502,12 @@ export const makeTextMentionNotificationEvent = ({
   userId,
   mentionId,
   inboxNotificationId,
+  triggeredAt,
 }: {
   userId: string;
   mentionId: string;
   inboxNotificationId: string;
+  triggeredAt: Date;
 }): TextMentionNotificationEvent => ({
   type: "notification",
   data: {
@@ -488,6 +519,7 @@ export const makeTextMentionNotificationEvent = ({
     mentionId,
     createdAt: new Date().toISOString(),
     inboxNotificationId,
+    triggeredAt: triggeredAt.toISOString(),
   },
 });
 

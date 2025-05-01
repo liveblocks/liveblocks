@@ -4,6 +4,8 @@ import {
   convertToCommentUserReaction,
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
+  convertToSubscriptionData,
+  convertToSubscriptionDeleteInfo,
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
@@ -48,15 +50,21 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type {
+  NotificationSettingsPlain,
+  PartialNotificationSettings,
+} from "./protocol/NotificationSettings";
+import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
-  PartialUserNotificationSettings,
-  UserNotificationSettingsPlain,
-} from "./protocol/UserNotificationSettings";
+  SubscriptionData,
+  SubscriptionDataPlain,
+  SubscriptionDeleteInfo,
+  SubscriptionDeleteInfoPlain,
+} from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import { PKG_VERSION } from "./version";
 
 export interface RoomHttpApi<M extends BaseMetadata> {
@@ -70,6 +78,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   }): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
     permissionHints: Record<string, Permission[]>;
@@ -87,6 +96,10 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
@@ -111,6 +124,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   getThread(options: { roomId: string; threadId: string }): Promise<{
     thread?: ThreadData<M>;
     inboxNotification?: InboxNotificationData;
+    subscription?: SubscriptionData;
   }>;
 
   deleteThread({
@@ -209,6 +223,22 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     threadId: string;
   }): Promise<void>;
 
+  subscribeToThread({
+    roomId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+  }): Promise<SubscriptionData>;
+
+  unsubscribeFromThread({
+    roomId,
+    threadId,
+  }: {
+    roomId: string;
+    threadId: string;
+  }): Promise<void>;
+
   // Notifications
   markRoomInboxNotificationAsRead({
     roomId,
@@ -218,21 +248,21 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     inboxNotificationId: string;
   }): Promise<string>;
 
-  getNotificationSettings({
+  getSubscriptionSettings({
     roomId,
     signal,
   }: {
     roomId: string;
     signal?: AbortSignal;
-  }): Promise<RoomNotificationSettings>;
+  }): Promise<RoomSubscriptionSettings>;
 
-  updateNotificationSettings({
+  updateSubscriptionSettings({
     roomId,
     settings,
   }: {
     roomId: string;
-    settings: Partial<RoomNotificationSettings>;
-  }): Promise<RoomNotificationSettings>;
+    settings: Partial<RoomSubscriptionSettings>;
+  }): Promise<RoomSubscriptionSettings>;
 
   // Attachments
   getAttachmentUrl(options: {
@@ -371,6 +401,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
+    subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
@@ -387,6 +418,10 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
     };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
+    };
     requestedAt: Date;
   }>;
 
@@ -400,21 +435,13 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  // Note: Using term `user` on this following method
-  // to avoid confusion with the same methods used in the `RoomHttpApi`.
-  // Let's wait the room subscription renaming to be here.
-  // It returns a `UserNotificationSettingsPlain` as the back-end does.
-  getUserNotificationSettings(options?: {
+  getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettingsPlain>;
+  }): Promise<NotificationSettingsPlain>;
 
-  // Note: Using term `user` on this following method
-  // to avoid confusion with the same methods used in the `RoomHttpApi`.
-  // Let's wait the room subscription renaming to be here.
-  // It returns a `UserNotificationSettingsPlain` as the back-end does.
-  updateUserNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettingsPlain>;
+  updateNotificationSettings(
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettingsPlain>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -429,6 +456,7 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
   }): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     nextCursor: string | null;
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
@@ -445,6 +473,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
+    };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
     };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
@@ -475,8 +507,10 @@ export function createApiClient<M extends BaseMetadata>({
     const result = await httpClient.get<{
       data: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
         permissionHints: Record<string, Permission[]>;
@@ -504,6 +538,12 @@ export function createApiClient<M extends BaseMetadata>({
           convertToInboxNotificationDeleteInfo
         ),
       },
+      subscriptions: {
+        updated: result.subscriptions.map(convertToSubscriptionData),
+        deleted: result.deletedSubscriptions.map(
+          convertToSubscriptionDeleteInfo
+        ),
+      },
       requestedAt: new Date(result.meta.requestedAt),
       permissionHints: result.meta.permissionHints,
     };
@@ -529,8 +569,10 @@ export function createApiClient<M extends BaseMetadata>({
       const result = await httpClient.get<{
         data: ThreadDataPlain<M>[];
         inboxNotifications: InboxNotificationDataPlain[];
+        subscriptions: SubscriptionDataPlain[];
         deletedThreads: ThreadDeleteInfoPlain[];
         deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        deletedSubscriptions: SubscriptionDeleteInfoPlain[];
         meta: {
           requestedAt: string;
           nextCursor: string | null;
@@ -554,6 +596,7 @@ export function createApiClient<M extends BaseMetadata>({
         inboxNotifications: result.inboxNotifications.map(
           convertToInboxNotificationData
         ),
+        subscriptions: result.subscriptions.map(convertToSubscriptionData),
         nextCursor: result.meta.nextCursor,
         requestedAt: new Date(result.meta.requestedAt),
         permissionHints: result.meta.permissionHints,
@@ -565,6 +608,7 @@ export function createApiClient<M extends BaseMetadata>({
         return {
           threads: [],
           inboxNotifications: [],
+          subscriptions: [],
           nextCursor: null,
           //
           // HACK
@@ -637,6 +681,7 @@ export function createApiClient<M extends BaseMetadata>({
       const json = (await response.json()) as {
         thread: ThreadDataPlain<M>;
         inboxNotification?: InboxNotificationDataPlain;
+        subscription?: SubscriptionDataPlain;
       };
 
       return {
@@ -644,11 +689,15 @@ export function createApiClient<M extends BaseMetadata>({
         inboxNotification: json.inboxNotification
           ? convertToInboxNotificationData(json.inboxNotification)
           : undefined,
+        subscription: json.subscription
+          ? convertToSubscriptionData(json.subscription)
+          : undefined,
       };
     } else if (response.status === 404) {
       return {
         thread: undefined,
         inboxNotification: undefined,
+        subscription: undefined,
       };
     } else {
       throw new Error(
@@ -783,6 +832,34 @@ export function createApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+  }
+
+  async function subscribeToThread(options: {
+    roomId: string;
+    threadId: string;
+  }) {
+    const subscription = await httpClient.post<SubscriptionDataPlain>(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/subscribe`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+
+    return convertToSubscriptionData(subscription);
+  }
+
+  async function unsubscribeFromThread(options: {
+    roomId: string;
+    threadId: string;
+  }) {
+    await httpClient.post(
+      url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/unsubscribe`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1167,12 +1244,12 @@ export function createApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getNotificationSettings(options: {
+  async function getSubscriptionSettings(options: {
     roomId: string;
     signal?: AbortSignal;
-  }): Promise<RoomNotificationSettings> {
-    return httpClient.get<RoomNotificationSettings>(
-      url`/v2/c/rooms/${options.roomId}/notification-settings`,
+  }): Promise<RoomSubscriptionSettings> {
+    return httpClient.get<RoomSubscriptionSettings>(
+      url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1184,12 +1261,12 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  async function updateNotificationSettings(options: {
+  async function updateSubscriptionSettings(options: {
     roomId: string;
-    settings: Partial<RoomNotificationSettings>;
-  }): Promise<RoomNotificationSettings> {
-    return httpClient.post<RoomNotificationSettings>(
-      url`/v2/c/rooms/${options.roomId}/notification-settings`,
+    settings: Partial<RoomSubscriptionSettings>;
+  }): Promise<RoomSubscriptionSettings> {
+    return httpClient.post<RoomSubscriptionSettings>(
+      url`/v2/c/rooms/${options.roomId}/subscription-settings`,
       await authManager.getAuthValue({
         requestedScope: "comments:read",
         roomId: options.roomId,
@@ -1435,6 +1512,7 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
@@ -1453,6 +1531,7 @@ export function createApiClient<M extends BaseMetadata>({
         convertToInboxNotificationData
       ),
       threads: json.threads.map(convertToThreadData),
+      subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -1465,8 +1544,10 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
       };
@@ -1486,6 +1567,10 @@ export function createApiClient<M extends BaseMetadata>({
       threads: {
         updated: json.threads.map(convertToThreadData),
         deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      subscriptions: {
+        updated: json.subscriptions.map(convertToSubscriptionData),
+        deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -1549,18 +1634,13 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * User notifications settings (Project level)
+   * Notifications settings (Project level)
    * -------------------------------------------------------------------------------------------------
-   *
-   * Note: Using term `user` on those two following methods
-   * to avoid confusion with the same methods used in the `RoomHttpApi`.
-   *
-   * Let's wait the room subscription renaming to be here.
    */
-  async function getUserNotificationSettings(options?: {
+  async function getNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<UserNotificationSettingsPlain> {
-    return httpClient.get<UserNotificationSettingsPlain>(
+  }): Promise<NotificationSettingsPlain> {
+    return httpClient.get<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
@@ -1568,10 +1648,10 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  async function updateUserNotificationSettings(
-    settings: PartialUserNotificationSettings
-  ): Promise<UserNotificationSettingsPlain> {
-    return httpClient.post<UserNotificationSettingsPlain>(
+  async function updateNotificationSettings(
+    settings: PartialNotificationSettings
+  ): Promise<NotificationSettingsPlain> {
+    return httpClient.post<NotificationSettingsPlain>(
       url`/v2/c/notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
@@ -1600,8 +1680,10 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
@@ -1622,6 +1704,7 @@ export function createApiClient<M extends BaseMetadata>({
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
+      subscriptions: json.subscriptions.map(convertToSubscriptionData),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
       permissionHints: json.meta.permissionHints,
@@ -1634,8 +1717,10 @@ export function createApiClient<M extends BaseMetadata>({
     const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
+      subscriptions: SubscriptionDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      deletedSubscriptions: SubscriptionDeleteInfoPlain[];
       meta: {
         requestedAt: string;
         permissionHints: Record<string, Permission[]>;
@@ -1658,6 +1743,10 @@ export function createApiClient<M extends BaseMetadata>({
           convertToInboxNotificationDeleteInfo
         ),
       },
+      subscriptions: {
+        updated: json.subscriptions.map(convertToSubscriptionData),
+        deleted: json.deletedSubscriptions.map(convertToSubscriptionDeleteInfo),
+      },
       requestedAt: new Date(json.meta.requestedAt),
       permissionHints: json.meta.permissionHints,
     };
@@ -1678,10 +1767,12 @@ export function createApiClient<M extends BaseMetadata>({
     removeReaction,
     markThreadAsResolved,
     markThreadAsUnresolved,
+    subscribeToThread,
+    unsubscribeFromThread,
     markRoomInboxNotificationAsRead,
-    // Room notifications
-    getNotificationSettings,
-    updateNotificationSettings,
+    // Room subscription settings
+    getSubscriptionSettings,
+    updateSubscriptionSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1701,7 +1792,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room storage
     streamStorage,
     sendMessages,
-    // Notification
+    // Notifications
     getInboxNotifications,
     getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
@@ -1709,8 +1800,8 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getUserNotificationSettings,
-    updateUserNotificationSettings,
+    getNotificationSettings,
+    updateNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

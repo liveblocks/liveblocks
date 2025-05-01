@@ -4,7 +4,7 @@ import type { InternalSyncStatus } from "./client";
 import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
-import { OpSource } from "./crdts/AbstractCrdt";
+import { createManagedPool, OpSource } from "./crdts/AbstractCrdt";
 import {
   cloneLson,
   getTreesDiffOperations,
@@ -14,7 +14,7 @@ import {
   mergeStorageUpdates,
 } from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
-import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
+import type { LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
@@ -69,6 +69,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
+import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type {
   CommentsEventServerMsg,
@@ -81,6 +82,10 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type {
+  SubscriptionData,
+  SubscriptionDeleteInfo,
+} from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import { ManagedOthers } from "./refs/ManagedOthers";
 import type * as DevTools from "./types/DevToolsTreeNode";
@@ -98,7 +103,6 @@ import type {
   TextEditorType,
 } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
@@ -485,7 +489,7 @@ type ListTextVersionsSinceOptions = {
   signal?: AbortSignal;
 };
 
-type GetNotificationSettingsOptions = {
+type GetSubscriptionSettingsOptions = {
   signal?: AbortSignal;
 };
 
@@ -760,19 +764,21 @@ export type Room<
    * const {
    *   threads,
    *   inboxNotifications,
+   *   subscriptions,
    *   requestedAt
    * } = await room.getThreads({ query: { resolved: false }});
    */
   getThreads(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    subscriptions: SubscriptionData[];
     requestedAt: Date;
     nextCursor: string | null;
     permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
-   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
+   * Returns the updated and deleted threads and their associated inbox notifications and subscriptions since the requested date.
    *
    * @example
    * const result = await room.getThreads();
@@ -788,19 +794,24 @@ export type Room<
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
     };
+    subscriptions: {
+      updated: SubscriptionData[];
+      deleted: SubscriptionDeleteInfo[];
+    };
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
-   * Returns a thread and the associated inbox notification if it exists.
+   * Returns a thread and the associated inbox notification and subscription if it exists.
    *
    * @example
-   * const { thread, inboxNotification } = await room.getThread("th_xxx");
+   * const { thread, inboxNotification, subscription } = await room.getThread("th_xxx");
    */
   getThread(threadId: string): Promise<{
     thread?: ThreadData<M>;
     inboxNotification?: InboxNotificationData;
+    subscription?: SubscriptionData;
   }>;
 
   /**
@@ -857,6 +868,22 @@ export type Room<
    * await room.markThreadAsUnresolved("th_xxx");
    */
   markThreadAsUnresolved(threadId: string): Promise<void>;
+
+  /**
+   * Subscribes the user to a thread.
+   *
+   * @example
+   * await room.subscribeToThread("th_xxx");
+   */
+  subscribeToThread(threadId: string): Promise<SubscriptionData>;
+
+  /**
+   * Unsubscribes the user from a thread.
+   *
+   * @example
+   * await room.unsubscribeFromThread("th_xxx");
+   */
+  unsubscribeFromThread(threadId: string): Promise<void>;
 
   /**
    * Creates a comment.
@@ -965,26 +992,46 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
-   * Gets the user's notification settings for the current room.
+   * @deprecated Renamed to `getSubscriptionSettings`
    *
-   * @example
-   * const settings = await room.getNotificationSettings();
+   * Gets the user's subscription settings for the current room.
    */
   getNotificationSettings(
-    options?: GetNotificationSettingsOptions
-  ): Promise<RoomNotificationSettings>;
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings>;
 
   /**
-   * Updates the user's notification settings for the current room.
+   * Gets the user's subscription settings for the current room.
    *
    * @example
-   * await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+   * const settings = await room.getSubscriptionSettings();
    */
-  updateNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings>;
+  getSubscriptionSettings(
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings>;
 
   /**
+   * @deprecated Renamed to `updateSubscriptionSettings`
+   *
+   * Updates the user's subscription settings for the current room.
+   */
+  updateNotificationSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * Updates the user's subscription settings for the current room.
+   *
+   * @example
+   * await room.updateSubscriptionSettings({ threads: "replies_and_mentions" });
+   */
+  updateSubscriptionSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * @private
+   *
    * Internal use only. Signature might change in the future.
    */
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
@@ -1154,9 +1201,7 @@ type RoomState<
   yjsProvider: IYjsProvider | undefined;
   readonly yjsProviderDidChange: EventSource<void>;
 
-  clock: number;
-  opClock: number;
-  readonly nodes: Map<string, LiveNode>;
+  pool: ManagedPool;
   root: LiveObject<S> | undefined;
 
   readonly undoStack: HistoryOp<P>[][];
@@ -1326,6 +1371,7 @@ export function createRoom<
   options: { initialPresence: P; initialStorage: S },
   config: RoomConfig<M>
 ): Room<P, S, U, E, M> {
+  const roomId = config.roomId;
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
 
@@ -1389,9 +1435,11 @@ export function createRoom<
     yjsProviderDidChange: makeEventSource(),
 
     // Storage
-    clock: 0,
-    opClock: 0,
-    nodes: new Map<string, LiveNode>(),
+    pool: createManagedPool(roomId, {
+      getCurrentConnectionId,
+      onDispatch,
+      isStorageWritable,
+    }),
     root: undefined,
 
     undoStack: [],
@@ -1517,71 +1565,49 @@ export function createRoom<
     }
   });
 
-  const pool: ManagedPool = {
-    roomId: config.roomId,
-
-    getNode: (id: string) => context.nodes.get(id),
-    addNode: (id: string, node: LiveNode) => void context.nodes.set(id, node),
-    deleteNode: (id: string) => void context.nodes.delete(id),
-
-    generateId: () => `${getConnectionId()}:${context.clock++}`,
-    generateOpId: () => `${getConnectionId()}:${context.opClock++}`,
-
-    dispatch(
-      ops: Op[],
-      reverse: Op[],
-      storageUpdates: Map<string, StorageUpdate>
-    ) {
-      const activeBatch = context.activeBatch;
-
-      if (process.env.NODE_ENV !== "production") {
-        const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
-        if (stackTrace) {
-          for (const op of ops) {
-            if (op.opId) {
-              nn(context.opStackTraces).set(op.opId, stackTrace);
-            }
+  function onDispatch(
+    ops: Op[],
+    reverse: Op[],
+    storageUpdates: Map<string, StorageUpdate>
+  ): void {
+    if (process.env.NODE_ENV !== "production") {
+      const stackTrace = captureStackTrace("Storage mutation", onDispatch);
+      if (stackTrace) {
+        for (const op of ops) {
+          if (op.opId) {
+            nn(context.opStackTraces).set(op.opId, stackTrace);
           }
         }
       }
+    }
 
-      if (activeBatch) {
-        for (const op of ops) {
-          activeBatch.ops.push(op);
-        }
-        for (const [key, value] of storageUpdates) {
-          activeBatch.updates.storageUpdates.set(
-            key,
-            mergeStorageUpdates(
-              activeBatch.updates.storageUpdates.get(key),
-              value
-            )
-          );
-        }
-        activeBatch.reverseOps.pushLeft(reverse);
-      } else {
-        addToUndoStack(reverse);
-        context.redoStack.length = 0;
-        dispatchOps(ops);
-        notify({ storageUpdates });
+    if (context.activeBatch) {
+      for (const op of ops) {
+        context.activeBatch.ops.push(op);
       }
-    },
-
-    assertStorageIsWritable: () => {
-      const scopes = context.dynamicSessionInfoSig.get()?.scopes;
-      if (scopes === undefined) {
-        // If we aren't connected yet, assume we can write
-        return;
-      }
-
-      const canWrite = canWriteStorage(scopes);
-      if (!canWrite) {
-        throw new Error(
-          "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      for (const [key, value] of storageUpdates) {
+        context.activeBatch.updates.storageUpdates.set(
+          key,
+          mergeStorageUpdates(
+            context.activeBatch.updates.storageUpdates.get(key),
+            value
+          )
         );
       }
-    },
-  };
+      context.activeBatch.reverseOps.pushLeft(reverse);
+    } else {
+      addToUndoStack(reverse);
+      context.redoStack.length = 0;
+      dispatchOps(ops);
+      notify({ storageUpdates });
+    }
+  }
+
+  function isStorageWritable(): boolean {
+    const scopes = context.dynamicSessionInfoSig.get()?.scopes;
+    // If we aren't connected yet, assume we can write
+    return scopes !== undefined ? canWriteStorage(scopes) : true;
+  }
 
   const eventHub = {
     status: makeEventSource<Status>(), // New/recommended API
@@ -1600,8 +1626,6 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
     roomWillDestroy: makeEventSource<void>(),
   };
-
-  const roomId = config.roomId;
 
   async function createTextMention(userId: string, mentionId: string) {
     return httpClient.createTextMention({ roomId, userId, mentionId });
@@ -1808,7 +1832,7 @@ export function createRoom<
     if (context.root !== undefined) {
       updateRoot(message.items);
     } else {
-      context.root = LiveObject._fromItems<S>(message.items, pool);
+      context.root = LiveObject._fromItems<S>(message.items, context.pool);
     }
 
     const canWrite = self.get()?.canWrite ?? true;
@@ -1838,7 +1862,7 @@ export function createRoom<
     }
 
     const currentItems: NodeMap = new Map();
-    for (const [id, node] of context.nodes) {
+    for (const [id, node] of context.pool.nodes) {
       currentItems.set(id, node._serialize());
     }
 
@@ -1897,7 +1921,7 @@ export function createRoom<
     notifyStorageStatus();
   }
 
-  function getConnectionId() {
+  function getCurrentConnectionId() {
     const info = context.dynamicSessionInfoSig.get();
     if (info) {
       return info.actor;
@@ -1932,7 +1956,7 @@ export function createRoom<
     // that right now first.
     const ops = rawOps.map((op) => {
       if (op.type !== "presence" && !op.opId) {
-        return { ...op, opId: pool.generateOpId() };
+        return { ...op, opId: context.pool.generateOpId() };
       } else {
         return op;
       }
@@ -2027,7 +2051,7 @@ export function createRoom<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const node = context.nodes.get(op.id);
+        const node = context.pool.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -2036,7 +2060,7 @@ export function createRoom<
       }
 
       case OpCode.SET_PARENT_KEY: {
-        const node = context.nodes.get(op.id);
+        const node = context.pool.nodes.get(op.id);
         if (node === undefined) {
           return { modified: false };
         }
@@ -2058,7 +2082,7 @@ export function createRoom<
           return { modified: false };
         }
 
-        const parentNode = context.nodes.get(op.parentId);
+        const parentNode = context.pool.nodes.get(op.parentId);
         if (parentNode === undefined) {
           return { modified: false };
         }
@@ -2905,6 +2929,14 @@ export function createRoom<
     });
   }
 
+  async function subscribeToThread(threadId: string) {
+    return httpClient.subscribeToThread({ roomId, threadId });
+  }
+
+  async function unsubscribeFromThread(threadId: string) {
+    return httpClient.unsubscribeFromThread({ roomId, threadId });
+  }
+
   async function createComment(options: {
     threadId: string;
     commentId?: string;
@@ -3002,19 +3034,19 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
-  function getNotificationSettings(
-    options?: GetNotificationSettingsOptions
-  ): Promise<RoomNotificationSettings> {
-    return httpClient.getNotificationSettings({
+  function getSubscriptionSettings(
+    options?: GetSubscriptionSettingsOptions
+  ): Promise<RoomSubscriptionSettings> {
+    return httpClient.getSubscriptionSettings({
       roomId,
       signal: options?.signal,
     });
   }
 
-  function updateNotificationSettings(
-    settings: Partial<RoomNotificationSettings>
-  ): Promise<RoomNotificationSettings> {
-    return httpClient.updateNotificationSettings({ roomId, settings });
+  function updateSubscriptionSettings(
+    settings: Partial<RoomSubscriptionSettings>
+  ): Promise<RoomSubscriptionSettings> {
+    return httpClient.updateSubscriptionSettings({ roomId, settings });
   }
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
@@ -3039,7 +3071,7 @@ export function createRoom<
       [kInternal]: {
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
-        get nodeCount() { return context.nodes.size }, // prettier-ignore
+        get nodeCount() { return context.pool.nodes.size }, // prettier-ignore
 
         getYjsProvider() {
           return context.yjsProvider;
@@ -3088,9 +3120,9 @@ export function createRoom<
         attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
       },
 
-      id: config.roomId,
+      id: roomId,
       subscribe: makeClassicSubscribeFn(
-        config.roomId,
+        roomId,
         events,
         config.errorEventSource
       ),
@@ -3103,7 +3135,7 @@ export function createRoom<
         const { roomWillDestroy, ...eventsExceptDestroy } = eventHub;
         // Unregister all registered callbacks
         for (const source of Object.values(eventsExceptDestroy)) {
-          source[Symbol.dispose]();
+          source.dispose();
         }
         eventHub.roomWillDestroy.notify();
         context.yjsProvider?.off("status", yjsStatusDidChange);
@@ -3113,7 +3145,7 @@ export function createRoom<
         managedSocket.destroy();
 
         // cleanup will destroy listener
-        roomWillDestroy[Symbol.dispose]();
+        roomWillDestroy.dispose();
       },
 
       // Presence
@@ -3162,6 +3194,8 @@ export function createRoom<
       editThreadMetadata,
       markThreadAsResolved,
       markThreadAsUnresolved,
+      subscribeToThread,
+      unsubscribeFromThread,
       createComment,
       editComment,
       deleteComment,
@@ -3172,8 +3206,10 @@ export function createRoom<
       getAttachmentUrl,
 
       // Notifications
-      getNotificationSettings,
-      updateNotificationSettings,
+      getNotificationSettings: getSubscriptionSettings,
+      getSubscriptionSettings,
+      updateNotificationSettings: updateSubscriptionSettings,
+      updateSubscriptionSettings,
       markInboxNotificationAsRead,
     },
 

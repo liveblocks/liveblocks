@@ -2,7 +2,11 @@ import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 
-import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
+import {
+  dummySubscriptionData,
+  dummyThreadData,
+  dummyThreadInboxNotificationData,
+} from "./_dummies";
 import {
   mockGetInboxNotifications,
   mockGetThreads,
@@ -31,6 +35,9 @@ describe("useMarkThreadAsRead", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetThreads((_req, res, ctx) =>
@@ -39,6 +46,7 @@ describe("useMarkThreadAsRead", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
             meta: {
@@ -57,6 +65,7 @@ describe("useMarkThreadAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -112,6 +121,9 @@ describe("useMarkThreadAsRead", () => {
         readAt: null,
       }),
     ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
 
     server.use(
       mockGetThreads((_req, res, ctx) =>
@@ -120,8 +132,10 @@ describe("useMarkThreadAsRead", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
+            subscriptions,
             deletedThreads: [],
             deletedInboxNotifications: [],
+            deletedSubscriptions: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -138,6 +152,7 @@ describe("useMarkThreadAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
+            subscriptions,
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
