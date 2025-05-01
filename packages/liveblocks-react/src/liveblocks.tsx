@@ -45,10 +45,10 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
-  ChatMessageTreeAsyncResult,
-  ChatMessageTreeAsyncSuccess,
-  CopilotChatsAsyncResult,
-  CopilotChatsAsyncSuccess,
+  AiChatMessagesAsyncResult,
+  AiChatMessagesAsyncSuccess,
+  AiChatsAsyncResult,
+  AiChatsAsyncSuccess,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
@@ -937,12 +937,12 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
  * @example
  * const { chats } = useAiChats();
  */
-function useAiChats(): CopilotChatsAsyncResult {
+function useAiChats(): AiChatsAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
   useEffect(
-    () => void store.outputs.copilotChats.waitUntilLoaded()
+    () => void store.outputs.aiChats.waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -954,17 +954,17 @@ function useAiChats(): CopilotChatsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  return useSignal(store.outputs.copilotChats.signal, identity, shallow);
+  return useSignal(store.outputs.aiChats.signal, identity, shallow);
 }
 
-function useAiChatsSuspense(): CopilotChatsAsyncSuccess {
+function useAiChatsSuspense(): AiChatsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
-  use(store.outputs.copilotChats.waitUntilLoaded());
+  use(store.outputs.aiChats.waitUntilLoaded());
 
   const result = useAiChats();
   assert(!result.error, "Did not expect error");
@@ -975,7 +975,7 @@ function useAiChatsSuspense(): CopilotChatsAsyncSuccess {
 function useAiChatMessages(
   chatId: string,
   branch?: MessageId
-): ChatMessageTreeAsyncResult {
+): AiChatMessagesAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
@@ -1006,7 +1006,7 @@ function useAiChatMessages(
 function useAiChatMessagesSuspense(
   chatId: string,
   branch?: MessageId
-): ChatMessageTreeAsyncSuccess {
+): AiChatMessagesAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 

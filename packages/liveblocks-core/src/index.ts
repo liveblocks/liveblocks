@@ -16,7 +16,6 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  * https://join.team/liveblocks ;)
  */
 
-// XXX Before launching, make sure to be deliberate about these exports!
 export type {
   ClientToolDefinition,
   UiAssistantMessage,
@@ -293,7 +292,14 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
-export type * from "./types/ai"; // XXX Before launching, make sure to be deliberate about all re-exports here!
+export type {
+  AiAssistantContentPart,
+  AiChat,
+  AiChatContext,
+  CopilotId,
+  Cursor,
+  MessageId,
+} from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
 export type {

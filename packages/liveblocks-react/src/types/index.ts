@@ -183,11 +183,11 @@ export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
 
-export type CopilotChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
-export type CopilotChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
+export type AiChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
+export type AiChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
-export type ChatMessageTreeAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
-export type ChatMessageTreeAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
+export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
+export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1241,7 +1241,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { chats, error, isLoading } = useAiChats();
        */
-      useAiChats(): CopilotChatsAsyncResult;
+      useAiChats(): AiChatsAsyncResult;
 
       /**
        * (Private beta)  Returns the messages in the given chat.
@@ -1249,7 +1249,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { messages, error, isLoading } = useAiChatMessages("my-chat");
        */
-      useAiChatMessages(chatId: string): ChatMessageTreeAsyncResult;
+      useAiChatMessages(chatId: string): AiChatMessagesAsyncResult;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1297,7 +1297,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { chats } = useAiChats();
              */
-            useAiChats(): CopilotChatsAsyncSuccess;
+            useAiChats(): AiChatsAsyncSuccess;
 
             /**
              * (Private beta) Returns the messages in the given chat.
@@ -1305,7 +1305,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { messages } = useAiChatMessages("my-chat");
              */
-            useAiChatMessages(chatId: string): ChatMessageTreeAsyncSuccess;
+            useAiChatMessages(chatId: string): AiChatMessagesAsyncSuccess;
           }
       >;
     }

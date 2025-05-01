@@ -62,7 +62,7 @@ type PK = string;
  *   //                                Cannot change parent ID. If you want to ever
  *   //                                do this, remove the entry, and recreate it!
  *
- * XXX Idea for the API to iterate nodes in this tree in arbitrary ways:
+ * XXXX Idea for the API to iterate nodes in this tree in arbitrary ways:
  * Traversal can be done in all directions:
  *   pool.walk("4", "up", { includeSelf: true })   // Iterates: Lisa, Marge
  *   pool.walk("4", "up", { includeSelf: false })  // Iterates: Marge
@@ -106,7 +106,7 @@ export class TreePool<T> {
   }
 
   public get sorted(): SortedList<T> {
-    // XXX While it's fine to expose this SortedList for efficiency, really we
+    // XXXX While it's fine to expose this SortedList for efficiency, really we
     // should be exposing it as a readonly value.
     return this.#_sorted;
   }
@@ -125,7 +125,7 @@ export class TreePool<T> {
     const childIds = this.#_childrenOf.get(id);
     if (!childIds) return [];
 
-    // XXX Should we return a sorted list here? From previous note: Think about *storing* it as a sorted list here!
+    // XXXX Should we return a sorted list here? From previous note: Think about *storing* it as a sorted list here!
     return Array.from(childIds).map(
       (id) => this.#_items.get(id)! // eslint-disable-line no-restricted-syntax
     );
@@ -137,7 +137,7 @@ export class TreePool<T> {
     // options?: { includeSelf?: boolean },
   ): IterableIterator<T> {
     // const includeSelf = options?.includeSelf ?? true;
-    const includeSelf = true; // XXX Generalize
+    const includeSelf = true; // XXXX Generalize
     let nodeId: PK | null = id;
     do {
       const item = this.getOrThrow(nodeId);
@@ -150,13 +150,13 @@ export class TreePool<T> {
     } while (nodeId !== null);
   }
 
-  // XXX Generalize
+  // XXXX Generalize
   public *walkLeft(
     id: PK,
     predicate?: (item: T) => boolean
   ): IterableIterator<T> {
-    // XXX Calling getSiblings is too inefficient, optimize later!
-    // XXX But first make it work
+    // XXXX Calling getSiblings is too inefficient, optimize later!
+    // XXXX But first make it work
     const self = this.getOrThrow(id);
     const siblings = SortedList.from(this.getSiblings(id), this.#_lt);
     for (const sibling of siblings.iterReversed()) {
@@ -170,13 +170,13 @@ export class TreePool<T> {
     }
   }
 
-  // XXX Generalize
+  // XXXX Generalize
   public *walkRight(
     id: PK,
     predicate?: (item: T) => boolean
   ): IterableIterator<T> {
-    // XXX Calling getSiblings is too inefficient, optimize later!
-    // XXX But first make it work
+    // XXXX Calling getSiblings is too inefficient, optimize later!
+    // XXXX But first make it work
     const self = this.getOrThrow(id);
     const siblings = SortedList.from(this.getSiblings(id), this.#_lt);
     for (const sibling of siblings) {
@@ -190,7 +190,7 @@ export class TreePool<T> {
     }
   }
 
-  // XXX Generalize
+  // XXXX Generalize
   public *walkDown(
     id: PK,
     predicate?: (item: T) => boolean

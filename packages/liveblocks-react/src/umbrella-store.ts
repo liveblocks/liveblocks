@@ -49,8 +49,8 @@ import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
-  ChatMessageTreeAsyncResult,
-  CopilotChatsAsyncResult,
+  AiChatMessagesAsyncResult,
+  AiChatsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -906,10 +906,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<HistoryVersionsAsyncResult>
     >;
     readonly userNotificationSettings: LoadableResource<UserNotificationSettingsAsyncResult>;
-    readonly copilotChats: LoadableResource<CopilotChatsAsyncResult>;
+    readonly aiChats: LoadableResource<AiChatsAsyncResult>;
     readonly messagesByChatId: DefaultMap<
       string,
-      DefaultMap<MessageId | null, LoadableResource<ChatMessageTreeAsyncResult>>
+      DefaultMap<MessageId | null, LoadableResource<AiChatMessagesAsyncResult>>
     >;
   };
 
@@ -930,7 +930,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #userNotificationSettings: SinglePageResource;
 
   // Copilot chats
-  #copilotChats: PaginatedResource;
+  #aiChats: PaginatedResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -967,7 +967,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       userNotificationSettingsFetcher
     );
 
-    this.#copilotChats = new PaginatedResource(async (cursor?: string) => {
+    this.#aiChats = new PaginatedResource(async (cursor?: string) => {
       const result = await this.#client[kInternal].ai.getChats({
         cursor: cursor as Cursor,
       });
@@ -1228,9 +1228,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
         waitUntilLoaded: this.#userNotificationSettings.waitUntilLoaded,
       };
 
-    const copilotChats: LoadableResource<CopilotChatsAsyncResult> = {
-      signal: DerivedSignal.from((): CopilotChatsAsyncResult => {
-        const result = this.#copilotChats.get();
+    const aiChats: LoadableResource<AiChatsAsyncResult> = {
+      signal: DerivedSignal.from((): AiChatsAsyncResult => {
+        const result = this.#aiChats.get();
         if (result.isLoading || result.error) {
           return result;
         }
@@ -1244,7 +1244,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
           fetchMoreError: result.data.fetchMoreError,
         };
       }, shallow),
-      waitUntilLoaded: this.#copilotChats.waitUntilLoaded,
+      waitUntilLoaded: this.#aiChats.waitUntilLoaded,
     };
 
     const messagesByChatId = new DefaultMap((chatId: string) => {
@@ -1255,8 +1255,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return new DefaultMap(
         (
           branch: MessageId | null
-        ): LoadableResource<ChatMessageTreeAsyncResult> => {
-          const signal = DerivedSignal.from((): ChatMessageTreeAsyncResult => {
+        ): LoadableResource<AiChatMessagesAsyncResult> => {
+          const signal = DerivedSignal.from((): AiChatMessagesAsyncResult => {
             const result = resourceΣ.get();
             if (result.isLoading || result.error) {
               return result;
@@ -1285,7 +1285,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId,
       versionsByRoomId,
       userNotificationSettings,
-      copilotChats,
+      aiChats,
       messagesByChatId,
     };
 

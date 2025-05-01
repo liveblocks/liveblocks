@@ -142,7 +142,7 @@ export class SortedList<T> {
     }
   }
 
-  // XXX If we keep this, add unit tests. Or remove it.
+  // XXXX If we keep this, add unit tests. Or remove it.
   *findAllRight(
     predicate: (value: T, index: number) => unknown
   ): IterableIterator<T> {
