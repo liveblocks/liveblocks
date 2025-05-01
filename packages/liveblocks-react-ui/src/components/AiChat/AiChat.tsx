@@ -33,7 +33,7 @@ import { AiChatUserMessage } from "../internal/AiChatUserMessage";
 /**
  * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
  */
-// const BOTTOM_THRESHOLD = 50;
+const BOTTOM_THRESHOLD = 100;
 
 export type AiChatProps = HTMLAttributes<HTMLDivElement> & {
   /**
@@ -273,8 +273,3 @@ function Messages({
     }
   });
 }
-
-/**
- * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
- */
-const BOTTOM_THRESHOLD = 50;

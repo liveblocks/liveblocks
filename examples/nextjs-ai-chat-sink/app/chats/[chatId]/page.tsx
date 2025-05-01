@@ -10,14 +10,9 @@ import {
   AiChatAssistantMessage,
   AiChatComposer,
 } from "@liveblocks/react-ui/_private";
-import {
-  RefObject,
-  use,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Select } from "radix-ui";
+import { CopilotId } from "@liveblocks/core";
 
 export default function Page({
   params,
@@ -63,8 +58,9 @@ export default function Page({
 function Chat({ chatId }: { chatId: string }) {
   const { messages } = useAiChatMessages(chatId);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
+
+  const [copilotId, setCopilotId] = useState<CopilotId | "default">("default");
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -119,88 +115,181 @@ function Chat({ chatId }: { chatId: string }) {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="flex flex-col h-full overflow-y-auto [--lb-ai-chat-container-width:896px]"
-    >
-      <div className="flex flex-col w-full max-w-4xl mx-auto px-8 py-8 gap-4">
-        {messages.map((message) => {
-          if (message.role === "user") {
-            return (
-              <AiChatUserMessage
-                key={message.id}
-                message={message}
-                className="max-w-[80%] ml-auto"
-              />
-            );
-          } else if (message.role === "assistant") {
-            return (
-              <AiChatAssistantMessage
-                key={message.id}
-                message={message}
-                className="w-full"
-                showActions={true}
-                showRegenerate={true}
-              />
-            );
-          }
-          return null;
-        })}
+    <div className="relative flex flex-col h-full">
+      <div className="sticky top-0 border-b border-[var(--lb-foreground-subtle)] p-4 flex flex-row items-center gap-2">
+        <CopilotSelect copilotId={copilotId} onCopilotIdChange={setCopilotId} />
       </div>
 
-      <div className="w-full sticky bottom-0 mt-auto mx-auto max-w-4xl pb-4 before:content-[''] before:absolute before:inset-0 before:bg-[var(--lb-background)] px-4">
-        <div className="flex absolute -top-12 justify-center w-full pointer-events-none">
-          <button
-            data-visible={
-              distanceToBottom !== null && distanceToBottom > 10
-                ? ""
-                : undefined
+      <div
+        ref={containerRef}
+        className="flex flex-col flex-1 overflow-y-auto [--lb-ai-chat-container-width:896px]"
+      >
+        <div className="flex flex-col w-full max-w-4xl mx-auto px-8 py-8 gap-4">
+          {messages.map((message) => {
+            if (message.role === "user") {
+              return (
+                <AiChatUserMessage
+                  key={message.id}
+                  message={message}
+                  className="max-w-[80%] ml-auto"
+                />
+              );
+            } else if (message.role === "assistant") {
+              return (
+                <AiChatAssistantMessage
+                  key={message.id}
+                  message={message}
+                  className="w-full"
+                  showActions={true}
+                  showRegenerate={true}
+                  copilotId={copilotId === "default" ? undefined : copilotId}
+                />
+              );
             }
-            data-variant="secondary"
-            className="rounded-full opacity-0 transition-all duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto bg-[var(--lb-foreground-subtle)] text-[var(--lb-foreground-tertiary)] hover:bg-[var(--lb-foreground)] hover:text-[var(--lb-background)] inline-flex items-center justify-center p-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014]"
-            onClick={() => {
+            return null;
+          })}
+        </div>
+
+        <div className="w-full sticky bottom-0 mt-auto mx-auto max-w-4xl pb-4 before:content-[''] before:absolute before:inset-0 before:bg-[var(--lb-background)] px-4">
+          <div className="flex absolute -top-12 justify-center w-full pointer-events-none">
+            <button
+              data-visible={
+                distanceToBottom !== null && distanceToBottom > 100
+                  ? ""
+                  : undefined
+              }
+              data-variant="secondary"
+              className="rounded-full opacity-0 transition-all duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto bg-[var(--lb-foreground-subtle)] text-[var(--lb-foreground-tertiary)] hover:bg-[var(--lb-foreground)] hover:text-[var(--lb-background)] inline-flex items-center justify-center p-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014]"
+              onClick={() => {
+                const container = containerRef.current;
+                if (container === null) return;
+
+                container.scrollTo({
+                  top: container.scrollHeight,
+                  behavior: "smooth",
+                });
+              }}
+            >
+              <span className="size-5">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={20}
+                  height={20}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  role="presentation"
+                >
+                  <path d="M14.5 8.5 10 13 5.5 8.5" />
+                </svg>
+              </span>
+            </button>
+          </div>
+
+          <AiChatComposer
+            key={chatId}
+            chatId={chatId}
+            copilotId={copilotId === "default" ? undefined : copilotId}
+            className="dark:shadow-[inset_0_0_0_1px_#ffffff0f] rounded-2xl shadow-[inset_0_0_0_1px_#0000000f]"
+            onComposerSubmit={() => {
               const container = containerRef.current;
               if (container === null) return;
-
               container.scrollTo({
                 top: container.scrollHeight,
                 behavior: "smooth",
               });
             }}
-          >
-            <span className="size-5">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width={20}
-                height={20}
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                role="presentation"
-              >
-                <path d="M14.5 8.5 10 13 5.5 8.5" />
-              </svg>
-            </span>
-          </button>
+          />
         </div>
-
-        <AiChatComposer
-          key={chatId}
-          chatId={chatId}
-          className="dark:shadow-[inset_0_0_0_1px_#ffffff0f] rounded-2xl shadow-[inset_0_0_0_1px_#0000000f]"
-          onComposerSubmit={() => {
-            const container = containerRef.current;
-            if (container === null) return;
-            container.scrollTo({
-              top: container.scrollHeight,
-              behavior: "smooth",
-            });
-          }}
-        />
       </div>
     </div>
+  );
+}
+
+function CopilotSelect({
+  copilotId,
+  onCopilotIdChange,
+}: {
+  copilotId: CopilotId | "default";
+  onCopilotIdChange: (id: CopilotId | "default") => void;
+}) {
+  return (
+    <Select.Root value={copilotId} onValueChange={onCopilotIdChange}>
+      <Select.Trigger className="inline-flex text-sm items-center rounded-lg hover:bg-[var(--lb-background-foreground-faint)] outline-none px-3 py-2 gap-1">
+        <Select.Value placeholder="Select a copilot…" />
+        <Select.Icon>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width={20}
+            height={20}
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            role="presentation"
+          >
+            <path d="M14.5 8.5 10 13 5.5 8.5" />
+          </svg>
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content className="rounded-md shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014] bg-[var(--lb-background)]">
+          <Select.Viewport className="p-1 flex flex-col">
+            <Select.Item
+              value="default"
+              className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-[var(--lb-foreground-subtle)] data-[highlighted]:text-[var(--lb-foreground-secondary)] outline-none rounded-sm"
+            >
+              {/* Default copilot */}
+              <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={20}
+                  height={20}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  role="presentation"
+                >
+                  <path d="M16 6L8 14L4 10" />
+                </svg>
+              </Select.ItemIndicator>
+              <Select.ItemText>Default copilot</Select.ItemText>
+            </Select.Item>
+
+            {/* Custom copilot - Make sure to use valid copilot ids */}
+            <Select.Item
+              value="co_84wo9tp8o4s0J1dkVhdsp"
+              className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-[var(--lb-foreground-subtle)] data-[highlighted]:text-[var(--lb-foreground-secondary)] outline-none rounded-sm"
+            >
+              <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width={20}
+                  height={20}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  role="presentation"
+                >
+                  <path d="M16 6L8 14L4 10" />
+                </svg>
+              </Select.ItemIndicator>
+              <Select.ItemText>Code review assistant</Select.ItemText>
+            </Select.Item>
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
   );
 }

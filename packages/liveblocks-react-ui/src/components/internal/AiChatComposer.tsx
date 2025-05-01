@@ -213,7 +213,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                     shortcut="Enter"
                   >
                     <ComposerPrimitive.Submit
-                      className="lb-button"
+                      className="lb-button lb-ai-chat-composer-action"
                       data-variant="primary"
                       data-size="default"
                       aria-label={$.CHAT_COMPOSER_SEND}
@@ -243,7 +243,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                   <ShortcutTooltip content={$.CHAT_COMPOSER_ABORT}>
                     <button
                       type="button"
-                      className="lb-button"
+                      className="lb-button lb-ai-chat-composer-action"
                       data-variant="primary"
                       data-size="default"
                       aria-label={$.CHAT_COMPOSER_ABORT}
