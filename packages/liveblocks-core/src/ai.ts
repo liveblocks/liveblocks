@@ -35,7 +35,6 @@ import type {
   AiChatMessage,
   AiFailedAssistantMessage,
   AiPendingAssistantMessage,
-  AiToolDefinition,
   AiUserContentPart,
   AiUserMessage,
   AskAiResponse,
@@ -110,7 +109,6 @@ type AiContext = {
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
   contextByChatId: Map<string, Set<AiChatContext>>;
-  toolsByChatId: Map<string, Map<string, ClientToolDefinition>>;
 };
 
 export type GetOrCreateChatOptions = {
@@ -161,8 +159,29 @@ function createStore_forTools() {
     tool.set(undefined);
   }
 
+  function getToolsForChat(chatId: string): {
+    name: string;
+    definition: ClientToolDefinition;
+  }[] {
+    const tools = toolsByChatIdΣ.get(chatId);
+    if (tools === undefined) return [];
+    return Array.from(tools.entries())
+      .map(([name, tool]) => {
+        if (tool.get() === undefined) return null;
+        return {
+          name,
+          definition: tool.get(),
+        };
+      })
+      .filter((tool) => tool !== null) as {
+      name: string;
+      definition: ClientToolDefinition;
+    }[];
+  }
+
   return {
     getToolCallByNameΣ: getToolDefinitionΣ,
+    getToolsForChat,
     addToolDefinition,
     removeToolDefinition,
   };
@@ -587,11 +606,6 @@ export type Ai = {
     definition: ClientToolDefinition
   ) => void;
   unregisterChatTool: (chatId: string, toolName: string) => void;
-
-  getToolCallDefinition(
-    chatId: string,
-    toolName: string
-  ): ClientToolDefinition | undefined;
 };
 
 /** @internal */
@@ -625,7 +639,6 @@ export function createAi(config: AiConfig): Ai {
     messagesStore,
     toolsStore,
     contextByChatId: new Map<string, Set<AiChatContext>>(),
-    toolsByChatId: new Map<string, Map<string, ClientToolDefinition>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -928,14 +941,10 @@ export function createAi(config: AiConfig): Ai {
     const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
     const chatContext = context.contextByChatId.get(chatId);
-    const chatTools = context.toolsByChatId.get(chatId);
-    const tools: AiToolDefinition[] | undefined = chatTools
-      ? Array.from(chatTools.entries()).map(([name, tool]) => ({
-          name,
-          description: tool.description,
-          parameters: tool.parameters,
-        }))
-      : undefined;
+
+    context.toolsStore.getToolsForChat(chatId).forEach((tool) => {
+      window.console.log(tool);
+    });
 
     return sendClientMsgWithResponse({
       cmd: "ask-ai",
@@ -945,7 +954,11 @@ export function createAi(config: AiConfig): Ai {
       copilotId,
       clientId,
       stream,
-      tools,
+      tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
+        name: tool.name,
+        description: tool.definition.description,
+        parameters: tool.definition.parameters,
+      })),
       timeout,
       context: chatContext ? Array.from(chatContext.values()) : undefined,
     });
@@ -1048,14 +1061,6 @@ export function createAi(config: AiConfig): Ai {
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
         const chatContext = context.contextByChatId.get(chatId);
-        const chatTools = context.toolsByChatId.get(chatId);
-        const tools: AiToolDefinition[] | undefined = chatTools
-          ? Array.from(chatTools.entries()).map(([name, tool]) => ({
-              name,
-              description: tool.description,
-              parameters: tool.parameters,
-            }))
-          : undefined;
 
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
@@ -1065,7 +1070,11 @@ export function createAi(config: AiConfig): Ai {
           copilotId,
           clientId,
           stream,
-          tools,
+          tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
+            name: tool.name,
+            description: tool.definition.description,
+            parameters: tool.definition.parameters,
+          })),
           timeout,
           context: chatContext ? Array.from(chatContext.values()) : undefined,
         });
@@ -1088,13 +1097,6 @@ export function createAi(config: AiConfig): Ai {
 
       registerChatTool: context.toolsStore.addToolDefinition,
       unregisterChatTool: context.toolsStore.removeToolDefinition,
-
-      getToolCallDefinition: (
-        chatId: string,
-        toolName: string
-      ): ClientToolDefinition | undefined => {
-        return context.toolsByChatId.get(chatId)?.get(toolName);
-      },
     } satisfies Ai,
     kInternal,
     { enumerable: false }

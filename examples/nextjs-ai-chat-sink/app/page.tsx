@@ -11,6 +11,9 @@ export default function Home() {
         <Link href="/chats" className="underline">
           Chats
         </Link>
+        <Link href="/todo" className="underline">
+          Todo
+        </Link>
       </div>
     </main>
   );

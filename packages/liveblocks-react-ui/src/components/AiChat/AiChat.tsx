@@ -130,6 +130,15 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
     const container = containerRef.current;
     if (container === null) return;
 
+    setDistanceToBottom(
+      container.scrollHeight - container.clientHeight - container.scrollTop
+    );
+  }, [messages]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
     const observer = new ResizeObserver(() => {
       const container = containerRef.current;
       if (container === null) return;

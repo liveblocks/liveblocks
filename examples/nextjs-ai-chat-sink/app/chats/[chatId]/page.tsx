@@ -64,7 +64,59 @@ function Chat({ chatId }: { chatId: string }) {
   const { messages } = useAiChatMessages(chatId);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { distanceToBottom } = useScrollToBottom(containerRef);
+  const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "instant",
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+    function handleScrollChange() {
+      const container = containerRef.current;
+      if (container === null) return;
+      setDistanceToBottom(
+        container.scrollHeight - container.clientHeight - container.scrollTop
+      );
+    }
+    container.addEventListener("scroll", handleScrollChange);
+    return () => {
+      container.removeEventListener("scroll", handleScrollChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
+    setDistanceToBottom(
+      container.scrollHeight - container.clientHeight - container.scrollTop
+    );
+  }, [messages]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
+    const observer = new ResizeObserver(() => {
+      const container = containerRef.current;
+      if (container === null) return;
+      setDistanceToBottom(
+        container.scrollHeight - container.clientHeight - container.scrollTop
+      );
+    });
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   return (
     <div
@@ -151,53 +203,4 @@ function Chat({ chatId }: { chatId: string }) {
       </div>
     </div>
   );
-}
-
-function useScrollToBottom(elementRef: RefObject<HTMLElement | null>) {
-  const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
-
-  useLayoutEffect(() => {
-    const element = elementRef.current;
-    if (element === null) return;
-
-    element.scrollTo({
-      top: element.scrollHeight,
-      behavior: "instant",
-    });
-  }, []);
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (element === null) return;
-    function handleScrollChange() {
-      const element = elementRef.current;
-      if (element === null) return;
-      setDistanceToBottom(
-        element.scrollHeight - element.clientHeight - element.scrollTop
-      );
-    }
-    element.addEventListener("scroll", handleScrollChange);
-    return () => {
-      element.removeEventListener("scroll", handleScrollChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const element = elementRef.current;
-    if (element === null) return;
-
-    const observer = new ResizeObserver(() => {
-      const element = elementRef.current;
-      if (element === null) return;
-      setDistanceToBottom(
-        element.scrollHeight - element.clientHeight - element.scrollTop
-      );
-    });
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  return { distanceToBottom };
 }
