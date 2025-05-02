@@ -199,7 +199,7 @@ export const AiChatAssistantMessage = memo(
                 chatId={message.chatId}
               />
 
-              <div className="lb-asssitant-chat-message-error">
+              <div className="lb-ai-chat-assitant-message-error">
                 <span className="lb-icon-container">
                   <WarningIcon />
                 </span>
