@@ -642,8 +642,7 @@ export function createAi(config: AiConfig): Ai {
   };
 
   let lastTokenKey: string | undefined;
-  function onStatusDidChange(newStatus: Status) {
-    console.warn("onStatusDidChange", newStatus);
+  function onStatusDidChange(_newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
       const tokenKey = getBearerTokenFromAuthValue(authValue);
@@ -685,7 +684,6 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function onDidConnect() {
-    console.warn("onDidConnect");
     // NoOp for now, but we should maybe fetch messages or something?
   }
 
