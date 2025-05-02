@@ -85,9 +85,21 @@ function Chat({ chatId }: { chatId: string }) {
     const container = containerRef.current;
     if (container === null) return;
 
-    setDistanceToBottom(
-      container.scrollHeight - container.clientHeight - container.scrollTop
-    );
+    const distanceToBottom =
+      container.scrollHeight - container.clientHeight - container.scrollTop;
+
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage !== undefined && lastMessage.role === "user") {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    } else if (distanceToBottom < 50) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -117,7 +129,7 @@ function Chat({ chatId }: { chatId: string }) {
         ref={containerRef}
         className="flex flex-col flex-1 overflow-y-auto [--lb-ai-chat-container-width:896px]"
       >
-        <div className="flex flex-col w-full max-w-4xl mx-auto px-8 py-8 gap-4">
+        <div className="flex flex-col w-full max-w-4xl mx-auto px-8 pt-8 pb-30 gap-4">
           {messages.map((message) => {
             if (message.role === "user") {
               return (
@@ -187,14 +199,6 @@ function Chat({ chatId }: { chatId: string }) {
             chatId={chatId}
             copilotId={copilotId === "default" ? undefined : copilotId}
             className="rounded-2xl shadow-[0_0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)] dark:shadow-[inset_0_0_0_1px_#ffffff0f]"
-            onComposerSubmit={() => {
-              const container = containerRef.current;
-              if (container === null) return;
-              container.scrollTo({
-                top: container.scrollHeight,
-                behavior: "smooth",
-              });
-            }}
           />
         </div>
       </div>

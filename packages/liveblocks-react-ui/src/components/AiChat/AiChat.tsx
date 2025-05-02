@@ -33,7 +33,7 @@ import { AiChatUserMessage } from "../internal/AiChatUserMessage";
 /**
  * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
  */
-const BOTTOM_THRESHOLD = 100;
+const MIN_DISTANCE_TO_BOTTOM = 50;
 
 export type AiChatProps = HTMLAttributes<HTMLDivElement> & {
   /**
@@ -139,6 +139,28 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
     const container = containerRef.current;
     if (container === null) return;
 
+    const distanceToBottom =
+      container.scrollHeight - container.clientHeight - container.scrollTop;
+
+    if (messages === undefined) return;
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage !== undefined && lastMessage.role === "user") {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    } else if (distanceToBottom <= MIN_DISTANCE_TO_BOTTOM) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
+
     const observer = new ResizeObserver(() => {
       const container = containerRef.current;
       if (container === null) return;
@@ -194,7 +216,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
           <button
             className="lb-ai-chat-scroll-button lb-button"
             data-visible={
-              distanceToBottom !== null && distanceToBottom > BOTTOM_THRESHOLD
+              distanceToBottom !== null &&
+              distanceToBottom > MIN_DISTANCE_TO_BOTTOM
                 ? ""
                 : undefined
             }
@@ -220,14 +243,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
           copilotId={copilotId}
           className="lb-ai-chat-composer"
           overrides={$}
-          onComposerSubmit={() => {
-            const container = containerRef.current;
-            if (container === null) return;
-            container.scrollTo({
-              top: container.scrollHeight,
-              behavior: "smooth",
-            });
-          }}
         />
       </div>
     </div>

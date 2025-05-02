@@ -2455,7 +2455,7 @@
   );
   margin-inline: auto;
   padding-block-start: var(--lb-spacing);
-  padding-block-end: calc(3 * var(--lb-spacing));
+  padding-block-end: calc(5 * var(--lb-spacing));
 }
 
 .lb-ai-chat-loading,
