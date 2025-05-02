@@ -1,7 +1,7 @@
-"use client"
-import { siteConfig } from "@/app/siteConfig"
-import { Tooltip } from "@/components/Tooltip"
-import { cx, focusRing } from "@/lib/utils"
+"use client";
+import { siteConfig } from "@/app/siteConfig";
+import { Tooltip } from "@/components/Tooltip";
+import { cx, focusRing } from "@/lib/utils";
 import {
   BarChartBig,
   Compass,
@@ -9,11 +9,11 @@ import {
   PanelRightOpen,
   Settings2,
   Table2,
-} from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import MobileSidebar from "./MobileSidebar"
-import { UserProfileDesktop, UserProfileMobile } from "./UserProfile"
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import MobileSidebar from "./MobileSidebar";
+import { UserProfileDesktop, UserProfileMobile } from "./UserProfile";
 
 const navigation = [
   { name: "Reports", href: siteConfig.baseLinks.reports, icon: BarChartBig },
@@ -27,21 +27,21 @@ const navigation = [
     href: siteConfig.baseLinks.settings.audit,
     icon: Settings2,
   },
-] as const
+] as const;
 
 interface SidebarProps {
-  isCollapsed: boolean
-  toggleSidebar: () => void
+  isCollapsed: boolean;
+  toggleSidebar: () => void;
 }
 
 export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
   const isActive = (itemHref: string) => {
     if (itemHref === siteConfig.baseLinks.settings.audit) {
-      return pathname.startsWith("/settings")
+      return pathname.startsWith("/settings");
     }
-    return pathname === itemHref || pathname.startsWith(itemHref)
-  }
+    return pathname === itemHref || pathname.startsWith(itemHref);
+  };
   return (
     <>
       {/* sidebar (lg+) */}
@@ -49,7 +49,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         className={cx(
           isCollapsed ? "lg:w-[60px]" : "lg:w-64",
           "hidden overflow-x-hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col",
-          "ease transform-gpu transition-all duration-100 will-change-transform",
+          "ease transform-gpu transition-all duration-100 will-change-transform"
         )}
       >
         <aside className="flex grow flex-col gap-y-4 overflow-y-auto whitespace-nowrap px-3 py-4">
@@ -74,7 +74,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
               <span
                 className={cx(
                   "text-sm font-semibold text-gray-900 transition-opacity dark:text-gray-50",
-                  isCollapsed ? "opacity-0" : "opacity-100",
+                  isCollapsed ? "opacity-0" : "opacity-100"
                 )}
               >
                 <a aria-label="Home Link" href="/">
@@ -92,7 +92,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                 aria-hidden={isCollapsed}
                 className={cx(
                   "block h-6 text-xs font-medium leading-6 text-gray-500 transition-opacity dark:text-gray-500",
-                  isCollapsed ? "opacity-0" : "opacity-100",
+                  isCollapsed ? "opacity-0" : "opacity-100"
                 )}
               >
                 Platform
@@ -115,7 +115,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                               ? "text-blue-600 dark:text-blue-500"
                               : "text-gray-700 dark:text-gray-300",
                             "inline-flex items-center rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 hover:dark:bg-gray-900",
-                            focusRing,
+                            focusRing
                           )}
                         >
                           <item.icon
@@ -132,7 +132,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                             ? "text-blue-600 dark:text-blue-500"
                             : "text-gray-700 dark:text-gray-300",
                           "flex items-center gap-x-2.5 rounded-md p-2 text-sm font-medium transition-opacity hover:bg-gray-200/50 hover:dark:bg-gray-900",
-                          focusRing,
+                          focusRing
                         )}
                       >
                         <item.icon
@@ -146,7 +146,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                 ))}
               </ul>
             </div>
-            <div>
+            {/* <div>
               <span
                 aria-hidden={isCollapsed}
                 className={cx(
@@ -199,7 +199,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                   )}
                 </li>
               </ul>
-            </div>
+            </div> */}
           </nav>
           <div className="mt-auto border-t border-gray-200 pt-3 dark:border-gray-800">
             <UserProfileDesktop isCollapsed={isCollapsed} />
@@ -211,7 +211,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         <span
           className={cx(
             "font-semibold text-gray-900 sm:text-sm dark:text-gray-50",
-            isCollapsed ? "opacity-0" : "opacity-100",
+            isCollapsed ? "opacity-0" : "opacity-100"
           )}
         >
           <a aria-label="Home Link" href="/">
@@ -224,5 +224,5 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         </div>
       </div>
     </>
-  )
+  );
 }
