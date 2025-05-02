@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/Button"
+import { Button } from "@/components/Button";
 import {
   Dialog,
   DialogClose,
@@ -10,17 +10,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog"
-import { Divider } from "@/components/Divider"
-import { Input } from "@/components/Input"
-import { Label } from "@/components/Label"
+} from "@/components/Dialog";
+import { Divider } from "@/components/Divider";
+import { Input } from "@/components/Input";
+import { Label } from "@/components/Label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/Select"
+} from "@/components/Select";
 import {
   Table,
   TableBody,
@@ -31,8 +31,8 @@ import {
   TableHeaderCell,
   TableRoot,
   TableRow,
-} from "@/components/Table"
-import { CircleCheck, Plus } from "lucide-react"
+} from "@/components/Table";
+import { CircleCheck, Plus } from "lucide-react";
 
 const data = [
   {
@@ -53,7 +53,7 @@ const data = [
     unit: "$45",
     price: "$90",
   },
-]
+];
 
 const states = [
   {
@@ -76,7 +76,7 @@ const states = [
     value: "hawaii",
     label: "Hawaii",
   },
-]
+];
 
 export default function Billing() {
   return (
@@ -208,7 +208,7 @@ export default function Billing() {
               </h3>
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="gap-2" disabled>
                     <Plus
                       className="-ml-1 size-4 shrink-0"
                       aria-hidden="true"
@@ -473,5 +473,5 @@ export default function Billing() {
         </div>
       </section>
     </div>
-  )
+  );
 }

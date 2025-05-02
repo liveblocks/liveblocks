@@ -8,7 +8,7 @@ const nextConfig = {
         destination: "/reports",
         permanent: true,
       },
-    ]
+    ];
   },
   images: {
     remotePatterns: [
@@ -18,8 +18,14 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "liveblocks.io",
+        port: "",
+        pathname: "/avatars/**",
+      },
     ],
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

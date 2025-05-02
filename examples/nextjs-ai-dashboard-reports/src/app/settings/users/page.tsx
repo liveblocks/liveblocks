@@ -1,6 +1,7 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/Button"
+import Image from "next/image";
+import { Button } from "@/components/Button";
 import {
   Dialog,
   DialogClose,
@@ -10,16 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog"
-import { Input } from "@/components/Input"
-import { Label } from "@/components/Label"
+} from "@/components/Dialog";
+import { Input } from "@/components/Input";
+import { Label } from "@/components/Label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/Select"
+} from "@/components/Select";
 import {
   Table,
   TableBody,
@@ -28,66 +29,10 @@ import {
   TableHeaderCell,
   TableRoot,
   TableRow,
-} from "@/components/Table"
-import { departments } from "@/data/data"
-import { Plus, Trash2 } from "lucide-react"
-
-const users = [
-  {
-    initials: "AC",
-    name: "Adam Clarke",
-    email: "a.clarke@acme.com",
-    dateAdded: "Jan 13, 2022",
-    lastActive: "Mar 2, 2024",
-    permission: "All areas",
-    status: "active",
-  },
-  {
-    initials: "LB",
-    name: "Lisa Brown",
-    email: "l.brown@acme.com",
-    dateAdded: "Feb 12, 2022",
-    lastActive: "Jun 2, 2024",
-    permission: "Sales",
-    status: "active",
-  },
-  {
-    initials: "DW",
-    name: "David Wilson",
-    email: "d.wilson@acme.com",
-    dateAdded: "Sep 19, 2023",
-    lastActive: "Jul 10, 2024",
-    permission: "Marketing",
-    status: "active",
-  },
-  {
-    initials: "KT",
-    name: "Karen Thompson",
-    email: "k.thompson@acme.com",
-    dateAdded: "Jan 21, 2024",
-    lastActive: "Feb 8, 2024",
-    permission: "Sales",
-    status: "active",
-  },
-  {
-    initials: "NP",
-    name: "Nathan Parker",
-    email: "n.parker@acme.com",
-    dateAdded: "Apr 18, 2023",
-    lastActive: "Dec 20, 2023",
-    permission: "IT",
-    status: "active",
-  },
-  {
-    initials: "SG",
-    name: "Sarah Green",
-    email: "s.green@acme.com",
-    dateAdded: "Jul 14. 2024",
-    lastActive: "--",
-    permission: "",
-    status: "pending",
-  },
-]
+} from "@/components/Table";
+import { departments } from "@/data/data";
+import users from "@/data/users";
+import { Plus, Trash2 } from "lucide-react";
 
 export default function Users() {
   return (
@@ -117,7 +62,7 @@ export default function Users() {
               <div className="flex items-center gap-4">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button className="w-full gap-2 sm:w-fit">
+                    <Button className="w-full gap-2 sm:w-fit" disabled>
                       <Plus
                         className="-ml-1 size-4 shrink-0"
                         aria-hidden="true"
@@ -218,12 +163,13 @@ export default function Users() {
                       <TableCell className="w-full">
                         {item.status === "pending" ? (
                           <div className="flex items-center gap-4">
-                            <span
-                              className="inline-flex size-9 items-center justify-center rounded-full border border-dashed border-gray-300 p-1.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:text-gray-50"
-                              aria-hidden="true"
-                            >
-                              {item.initials}
-                            </span>
+                            <Image
+                              src={item.avatar}
+                              alt={`${item.name}'s avatar`}
+                              width={36}
+                              height={36}
+                              className="size-9 rounded-full border border-dashed border-gray-300 object-cover dark:border-gray-700"
+                            />
                             <div>
                               <div className="flex items-center gap-2">
                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
@@ -240,12 +186,13 @@ export default function Users() {
                           </div>
                         ) : (
                           <div className="flex items-center gap-4">
-                            <span
-                              className="inline-flex size-9 items-center justify-center rounded-full bg-gray-50 p-1.5 text-xs font-medium text-gray-700 ring-1 ring-gray-300 dark:bg-gray-800 dark:text-gray-50 dark:ring-gray-700"
-                              aria-hidden="true"
-                            >
-                              {item.initials}
-                            </span>
+                            <Image
+                              src={item.avatar}
+                              alt={`${item.name}'s avatar`}
+                              width={36}
+                              height={36}
+                              className="size-9 rounded-full object-cover ring-1 ring-gray-300 dark:ring-gray-700"
+                            />
                             <div>
                               <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
                                 {item.name}
@@ -264,6 +211,7 @@ export default function Users() {
                           <Button
                             variant="secondary"
                             className="justify-center sm:w-36 dark:border dark:border-gray-800 dark:bg-[#090E1A] hover:dark:bg-gray-950/50"
+                            disabled
                           >
                             Resend
                           </Button>
@@ -292,6 +240,7 @@ export default function Users() {
                               variant="ghost"
                               className="p-2.5 text-gray-600 transition-all hover:border hover:border-gray-300 hover:bg-gray-50 hover:text-red-500 dark:text-gray-400 hover:dark:border-gray-800 hover:dark:bg-gray-900 hover:dark:text-red-500"
                               aria-label={`Delete ${item.name}`}
+                              disabled
                             >
                               <Trash2
                                 className="size-4 shrink-0"
@@ -337,5 +286,5 @@ export default function Users() {
         </div>
       </form>
     </section>
-  )
+  );
 }

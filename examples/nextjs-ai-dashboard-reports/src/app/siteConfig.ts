@@ -6,13 +6,13 @@ export const siteConfig = {
     reports: "/reports",
     transactions: "/transactions",
     settings: {
-      audit: "/settings/audit",
+      // audit: "/settings/audit",
       users: "/settings/users",
       billing: "/settings/billing",
     },
     login: "/login",
     onboarding: "/onboarding/products",
   },
-}
+};
 
-export type siteConfig = typeof siteConfig
+export type siteConfig = typeof siteConfig;

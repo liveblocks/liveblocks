@@ -43,8 +43,10 @@ export function AiWidget() {
             )}
           >
             <div className="relative h-full w-full">
-              <div className="h-10 border-b flex justify-between items-center pr-1.5 pl-4">
-                <span className="text-sm font-medium">Assistant</span>
+              <div className="h-11 border-b flex justify-between items-center pr-1.5 pl-4">
+                <span className="text-sm font-medium text-gray-700">
+                  AI Assistant
+                </span>
                 <PopoverPrimitives.Close className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-gray-100 hover:dark:bg-gray-800">
                   <RiCloseCircleLine className="h-5 w-5 text-gray-500" />
                 </PopoverPrimitives.Close>

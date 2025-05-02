@@ -24,7 +24,7 @@ const navigation = [
   },
   {
     name: "Settings",
-    href: siteConfig.baseLinks.settings.audit,
+    href: siteConfig.baseLinks.settings.billing,
     icon: Settings2,
   },
 ] as const;
