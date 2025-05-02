@@ -1,4 +1,4 @@
-const users = [
+export const users = [
   {
     initials: "CL",
     name: "Charlie Layne",
@@ -88,5 +88,3 @@ const users = [
     avatar: "https://liveblocks.io/avatars/avatar-8.png",
   },
 ];
-
-export default users;

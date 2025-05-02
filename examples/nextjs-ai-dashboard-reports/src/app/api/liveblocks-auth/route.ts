@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { getRandomUser } from "../database";
+import { users } from "@/data/users";
 
 /**
  * Authenticating your Liveblocks application
@@ -17,11 +17,19 @@ export async function POST(request: NextRequest) {
   }
 
   // Get the current user's unique id and info from your database
-  const user = getRandomUser();
+  const user = users.find((user) => user.email === "charlie.layne@example.com");
+
+  if (!user) {
+    return new NextResponse("User not found", { status: 404 });
+  }
 
   // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(`${user.id}`, {
-    userInfo: user.info,
+  const session = liveblocks.prepareSession(`${user.email}`, {
+    userInfo: {
+      id: user.email,
+      name: user.name,
+      avatar: user.avatar,
+    },
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard

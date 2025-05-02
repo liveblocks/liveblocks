@@ -5,6 +5,7 @@ import * as PopoverPrimitives from "@radix-ui/react-popover";
 import { RiCloseCircleLine, RiRobot2Line } from "@remixicon/react";
 import { cx } from "@/lib/utils";
 import { AiChat } from "@liveblocks/react-ui";
+import useSWR from "swr";
 
 export function AiWidget() {
   return (
@@ -63,5 +64,13 @@ export function AiWidget() {
 }
 
 function Chat() {
-  return <AiChat chatId="main" className="max-h-96" />;
+  const { data: contexts } = useSWR(
+    "/api/liveblocks-ai-context",
+    (resource: string, init: RequestInit) =>
+      fetch(resource, init).then((res) => res.json())
+  );
+
+  console.log(contexts);
+
+  return <AiChat chatId="main" className="max-h-96" contexts={contexts} />;
 }
