@@ -43,7 +43,7 @@ export type AiChatProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * The id of the copilot to use to send the message.
    */
-  copilotId?: CopilotId;
+  copilotId?: string;
   /**
    * The contextual information to include in the chat. Used by the assistant when generating responses.
    */
@@ -240,7 +240,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(function (
         <AiChatComposer
           key={chatId}
           chatId={chatId}
-          copilotId={copilotId}
+          copilotId={copilotId as CopilotId}
           className="lb-ai-chat-composer"
           overrides={$}
         />
