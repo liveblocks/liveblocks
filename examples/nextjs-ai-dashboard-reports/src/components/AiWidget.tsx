@@ -13,6 +13,8 @@ import { transactions } from "@/data/transactions";
 import { format } from "date-fns";
 import { Badge } from "./Badge";
 import { expense_statuses } from "@/data/schema";
+import { users } from "@/data/users";
+import Image from "next/image";
 
 export function AiWidget() {
   return (
@@ -79,7 +81,7 @@ function Chat() {
 
   return (
     <AiChat
-      chatId="main-2"
+      chatId="main-4"
       className="max-h-96"
       contexts={contexts}
       tools={{
@@ -105,6 +107,18 @@ function Chat() {
           },
           render: ({ args: { transactionId } }) => {
             return <TransactionTool transactionId={transactionId} />;
+          },
+        },
+        member: {
+          description: "Display the member details",
+          parameters: {
+            type: "object",
+            properties: {
+              email: { type: "string" },
+            },
+          },
+          render: ({ args: { email } }) => {
+            return <MemberTool email={email} />;
           },
         },
       }}
@@ -183,6 +197,34 @@ function TransactionTool({ transactionId }: { transactionId: string }) {
       <div className="text-xs flex gap-1.5 mt-0.5 items-center">
         {format(transaction.transaction_date, "MMM d yyyy")}, $
         {transaction.amount.toLocaleString()}
+      </div>
+    </div>
+  );
+}
+
+function MemberTool({ email }: { email: string }) {
+  const user = users.find((user) => user.email === email);
+
+  if (!user) {
+    return <div>User not found</div>;
+  }
+
+  return (
+    <div className="flex items-center gap-2 my-2 bg-neutral-100 p-4 rounded">
+      <Image
+        src={user.avatar}
+        alt={`${user.name}'s avatar`}
+        width={36}
+        height={36}
+        className="size-9 rounded-full border border-gray-300 object-cover dark:border-gray-700"
+      />
+      <div>
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+          {user?.name}
+        </p>
+        <p className="text-xs text-gray-600 dark:text-gray-400">
+          {user?.email}
+        </p>
       </div>
     </div>
   );
