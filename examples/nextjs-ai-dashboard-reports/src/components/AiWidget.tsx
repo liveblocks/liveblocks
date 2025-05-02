@@ -9,6 +9,10 @@ import useSWR from "swr";
 import { Button } from "./Button";
 import { Input } from "./Input";
 import { Label } from "./Label";
+import { transactions } from "@/data/transactions";
+import { format } from "date-fns";
+import { Badge } from "./Badge";
+import { expense_statuses } from "@/data/schema";
 
 export function AiWidget() {
   return (
@@ -88,7 +92,19 @@ function Chat() {
             },
           },
           render: ({ args: { email } }) => {
-            return <InviteMemberForm email={email} />;
+            return <InviteMemberFormTool email={email} />;
+          },
+        },
+        transaction: {
+          description: "Display the transaction details",
+          parameters: {
+            type: "object",
+            properties: {
+              transactionId: { type: "string" },
+            },
+          },
+          render: ({ args: { transactionId } }) => {
+            return <TransactionTool transactionId={transactionId} />;
           },
         },
       }}
@@ -97,11 +113,11 @@ function Chat() {
 }
 
 // A unique ID for the tool would help
-function InviteMemberForm({ email }: { email: string }) {
+function InviteMemberFormTool({ email }: { email: string }) {
   const [emailValue, setEmailValue] = useState(email);
 
   return (
-    <div className="my-2 pt-3 pb-4 px-4 rounded bg-gray-100 w-full">
+    <div className="my-2 pt-2.5 pb-4 px-4 rounded bg-neutral-100 w-full">
       <Label htmlFor="inviteMemberEmail" className="font-medium pb-4 grow">
         Invite a team member
       </Label>
@@ -114,11 +130,59 @@ function InviteMemberForm({ email }: { email: string }) {
         />
         <Button
           onClick={() => {
+            // TODO
             console.log(emailValue);
           }}
         >
           Invite
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function TransactionTool({ transactionId }: { transactionId: string }) {
+  const transaction = transactions.find(
+    (transaction) => transaction.transaction_id === transactionId
+  );
+
+  if (!transaction) {
+    return <div>Transaction not found</div>;
+  }
+
+  const status = expense_statuses.find(
+    (item) => item.value === transaction.expense_status
+  );
+
+  return (
+    <div className="my-2 pt-3.5 pb-4 px-4 rounded bg-neutral-100 w-full">
+      <div className="flex justify-between items-center">
+        <div className="font-semibold flex items-center gap-1">
+          {transaction.merchant}{" "}
+          <a href="#">
+            <svg
+              className="text-blue-600 w-4 h-4"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </a>
+        </div>
+        <Badge variant={status?.variant as any}>{status?.label}</Badge>
+      </div>
+
+      <div className="text-xs flex gap-1.5 mt-0.5 items-center">
+        {format(transaction.transaction_date, "MMM d yyyy")}, $
+        {transaction.amount.toLocaleString()}
       </div>
     </div>
   );
