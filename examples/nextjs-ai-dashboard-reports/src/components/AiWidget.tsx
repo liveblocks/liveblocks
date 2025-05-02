@@ -72,5 +72,5 @@ function Chat() {
 
   console.log(contexts);
 
-  return <AiChat chatId="main" className="max-h-96" contexts={contexts} />;
+  return <AiChat chatId="main-2" className="max-h-96" contexts={contexts} />;
 }
