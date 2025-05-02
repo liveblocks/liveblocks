@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/Table";
 import { departments } from "@/data/data";
-import users from "@/data/users";
+import { users } from "@/data/users";
 import { Plus, Trash2 } from "lucide-react";
 
 export default function Users() {

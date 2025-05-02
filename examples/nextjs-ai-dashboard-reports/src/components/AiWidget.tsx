@@ -1,11 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
 import { RiCloseCircleLine, RiRobot2Line } from "@remixicon/react";
 import { cx } from "@/lib/utils";
 import { AiChat } from "@liveblocks/react-ui";
 import useSWR from "swr";
+import { Button } from "./Button";
+import { Input } from "./Input";
+import { Label } from "./Label";
 
 export function AiWidget() {
   return (
@@ -70,7 +73,53 @@ function Chat() {
       fetch(resource, init).then((res) => res.json())
   );
 
-  console.log(contexts);
+  return (
+    <AiChat
+      chatId="main-2"
+      className="max-h-96"
+      contexts={contexts}
+      tools={{
+        "invite-member": {
+          description: "Invite a new member to the team",
+          parameters: {
+            type: "object",
+            properties: {
+              email: { type: "string" },
+            },
+          },
+          render: ({ args: { email } }) => {
+            return <InviteMemberForm email={email} />;
+          },
+        },
+      }}
+    />
+  );
+}
 
-  return <AiChat chatId="main-2" className="max-h-96" contexts={contexts} />;
+// A unique ID for the tool would help
+function InviteMemberForm({ email }: { email: string }) {
+  const [emailValue, setEmailValue] = useState(email);
+
+  return (
+    <div className="my-2 pt-3 pb-4 px-4 rounded bg-gray-100 w-full">
+      <Label htmlFor="inviteMemberEmail" className="font-medium pb-4 grow">
+        Invite a team member
+      </Label>
+      <div className="flex gap-2 w-full mt-1.5">
+        <Input
+          className="grow"
+          id="inviteMemberEmail"
+          value={emailValue}
+          onChange={(e) => setEmailValue(e.target.value)}
+        />
+        <Button
+          onClick={() => {
+            console.log(emailValue);
+          }}
+        >
+          Invite
+        </Button>
+      </div>
+    </div>
+  );
 }
