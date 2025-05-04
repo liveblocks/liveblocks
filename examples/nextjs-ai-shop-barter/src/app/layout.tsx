@@ -58,7 +58,7 @@ export default function RootLayout({
               <Link href="#" className="flex items-center">
                 <span className="sr-only">Cart</span>
                 <svg
-                  className="size-6 shrink-0 text-gray-400 group-hover:text-gray-500"
+                  className="size-6 shrink-0 text-neutral-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
