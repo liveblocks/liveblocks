@@ -33,18 +33,15 @@ export function ProductDisplay() {
 
       {/* Product Details */}
       <div className="w-full md:w-1/2 flex flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-medium">{name}</h1>
-
-          {/* Price Display */}
-          <p className="text-gray-800 text-lg font-medium mt-3">
-            <span className="font-semibold">${startingPrice.toFixed(2)}</span>{" "}
-            or lower
-          </p>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-xl font-medium flex justify-between items-center">
+            {name}{" "}
+            <span className="">${startingPrice.toFixed(2)} or lower</span>
+          </h1>
 
           {/* Stars */}
-          <div className="flex items-center gap-2 -mt-1.5">
-            {/* <span className="text-sm text-gray-500">4.7</span> */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">4.4</span>
             <div className="flex items-center">
               <svg
                 className="size-5 shrink-0 text-yellow-400"
