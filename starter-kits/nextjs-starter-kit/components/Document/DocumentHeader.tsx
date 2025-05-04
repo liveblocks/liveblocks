@@ -1,3 +1,5 @@
+"use client";
+
 import { ClientSideSuspense } from "@liveblocks/react";
 import clsx from "clsx";
 import Link from "next/link";

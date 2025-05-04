@@ -50,6 +50,16 @@ export function DocumentCreatePopover({
           <Button
             icon={<PlusIcon />}
             onClick={() => {
+              createNewDocument("Untitled", "ai-chat");
+            }}
+            variant="subtle"
+            disabled={disableButtons}
+          >
+            AI Chat
+          </Button>
+          <Button
+            icon={<PlusIcon />}
+            onClick={() => {
               createNewDocument("Untitled", "text");
             }}
             variant="subtle"

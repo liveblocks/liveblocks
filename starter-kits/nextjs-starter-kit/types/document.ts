@@ -31,7 +31,12 @@ export type Document = {
   type: DocumentType;
 };
 
-export type DocumentType = "text" | "whiteboard" | "canvas" | "note";
+export type DocumentType =
+  | "text"
+  | "whiteboard"
+  | "canvas"
+  | "note"
+  | "ai-chat";
 
 export type DocumentGroup = Group & {
   access: DocumentAccess;

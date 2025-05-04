@@ -9,3 +9,6 @@ export const DASHBOARD_GROUP_URL = (id: string) =>
 
 export const DOCUMENT_URL = (type: DocumentType, id: string) =>
   `/${type}/${id}`;
+
+export const AI_CHAT_URL = (id: string, chatId: string) =>
+  `/ai-chat/${id}/${chatId}`;
