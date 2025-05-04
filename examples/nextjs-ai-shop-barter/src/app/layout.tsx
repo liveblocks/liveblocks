@@ -26,13 +26,10 @@ export default function RootLayout({
         />
       </head>
       <Providers>
-        <body className="absolute inset-0 flex flex-col">
-          <header className="h-[100px]">
-            <div className="max-w-[900px] xl:mr-[-100px] 2xl:mr-[-175px]">
-              <h1>Liveblocks</h1>
-            </div>
-          </header>
-          <main className="grow">{children}</main>
+        <body className="absolute inset-0 flex flex-col overflow-x-hidden overflow-y-auto">
+          <header></header>
+          <main className="grow min-h-0">{children}</main>
+          <footer></footer>
         </body>
       </Providers>
     </html>

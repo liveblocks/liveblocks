@@ -13,7 +13,7 @@ export default function Page() {
           <ProductDisplay />
         </div>
       </div>
-      <div className="w-[350px]">
+      <div className="w-[350px] border-l border-gray-200 shrink-0">
         <Chat />
       </div>
     </div>

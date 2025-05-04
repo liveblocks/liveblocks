@@ -3,10 +3,9 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 
 // Product variant type
-type ProductVariant = {
+export type ProductVariant = {
   id: string;
   name: string;
-  price: number;
   image: string;
 };
 
@@ -39,19 +38,16 @@ const defaultShopState: ShopState = {
     {
       id: "white",
       name: "White",
-      price: 29.99,
       image: "/images/t-shirt-white.jpg",
     },
     {
       id: "red",
       name: "Red",
-      price: 29.99,
       image: "/images/t-shirt-red.jpg",
     },
     {
       id: "blue",
       name: "Blue",
-      price: 32.99,
       image: "/images/t-shirt-blue.jpg",
     },
   ],

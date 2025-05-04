@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Get the current user's unique id from your database
-  const userIndex = Math.floor(Math.random() * NAMES.length);
+  const userIndex = Math.floor(0);
 
   // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`user-${userIndex}`);

@@ -11,88 +11,183 @@ export function ProductDisplay() {
     currentPrice,
     variants,
     currentVariantId,
-    setCurrentPrice,
     setCurrentVariant,
     getCurrentVariant,
   } = useShop();
 
   const currentVariant = getCurrentVariant();
 
-  // Handler for price change
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPrice = parseFloat(e.target.value);
-    if (!isNaN(newPrice)) {
-      setCurrentPrice(newPrice);
-    }
-  };
-
-  // Handler for variant change
-  const handleVariantChange = (variantId: string) => {
-    setCurrentVariant(variantId);
-  };
-
   return (
-    <div className="flex flex-col md:flex-row gap-8 p-4">
+    <div className="flex flex-col md:flex-row gap-8 p-4 pt-12">
       {/* Product Image */}
-      <div className="relative w-full md:w-1/2 h-[400px]">
+      <div className="relative w-full md:w-1/2 h-[500px]">
         {currentVariant && (
           <Image
             src={currentVariant.image}
             alt={`${name} - ${currentVariant.name}`}
             fill
-            className="object-contain"
+            className="object-cover rounded-lg aspect-[5/4]"
           />
         )}
       </div>
 
       {/* Product Details */}
-      <div className="w-full md:w-1/2 space-y-4">
-        <h1 className="text-2xl font-bold">{name}</h1>
-        <p className="text-gray-600">{description}</p>
+      <div className="w-full md:w-1/2 flex flex-col gap-8">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-xl font-medium">{name}</h1>
 
-        {/* Price Display */}
-        <div className="mt-4">
-          <p className="text-gray-500">
-            Starting price: ${startingPrice.toFixed(2)}
+          {/* Price Display */}
+          <p className="text-gray-800 text-lg font-medium mt-3">
+            <span className="font-semibold">${startingPrice.toFixed(2)}</span>{" "}
+            or lower
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <label htmlFor="price" className="font-medium">
-              Current price:
-            </label>
-            <input
-              id="price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={currentPrice}
-              onChange={handlePriceChange}
-              className="border rounded px-2 py-1 w-24"
-            />
+
+          {/* Stars */}
+          <div className="flex items-center gap-2 -mt-1.5">
+            {/* <span className="text-sm text-gray-500">4.7</span> */}
+            <div className="flex items-center">
+              <svg
+                className="size-5 shrink-0 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <svg
+                className="size-5 shrink-0 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <svg
+                className="size-5 shrink-0 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <svg
+                className="size-5 shrink-0 text-yellow-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <svg
+                className="size-5 shrink-0"
+                viewBox="0 0 20 20"
+                aria-hidden="true"
+                data-slot="icon"
+              >
+                <defs>
+                  <linearGradient
+                    id="partialStarGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stopColor="rgb(250 204 21)" />
+                    <stop offset="44%" stopColor="rgb(250 204 21)" />
+                    <stop offset="44%" stopColor="rgb(229 231 235)" />
+                    <stop offset="100%" stopColor="rgb(229 231 235)" />
+                  </linearGradient>
+                </defs>
+                <path
+                  fillRule="evenodd"
+                  d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
+                  clipRule="evenodd"
+                  fill="url(#partialStarGradient)"
+                />
+              </svg>
+            </div>{" "}
+            <span className="text-gray-300">•</span>
+            <a
+              href="#reviews"
+              className="text-neutral-900 hover:underline text-sm font-medium"
+            >
+              Reviews
+            </a>
           </div>
         </div>
 
         {/* Variant Selection */}
-        <div className="mt-4">
-          <h3 className="font-medium mb-2">Color Options:</h3>
+        <div className="">
+          <h3 className="font-medium mb-2 text-sm">Variant</h3>
           <div className="flex gap-2">
             {variants.map((variant) => (
-              <button
+              <label
                 key={variant.id}
-                onClick={() => handleVariantChange(variant.id)}
-                className={`
-                  border rounded-full w-8 h-8 flex items-center justify-center
-                  ${currentVariantId === variant.id ? "ring-2 ring-blue-500" : ""}
-                `}
-                style={{ backgroundColor: variant.id.toLowerCase() }}
-                title={variant.name}
-              />
+                aria-label={variant.name}
+                className={`relative flex cursor-pointer items-center justify-center rounded-full p-0.5 ${
+                  currentVariantId === variant.id
+                    ? "ring-3 ring-neutral-800 ring-offset-[0.5px]"
+                    : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="color-choice"
+                  value={variant.name}
+                  className="sr-only"
+                  checked={currentVariantId === variant.id}
+                  onChange={() => setCurrentVariant(variant.id)}
+                />
+                <span
+                  aria-hidden="true"
+                  className="h-8 w-8 rounded-full border border-black/10"
+                  style={{ backgroundColor: variant.id.toLowerCase() }}
+                ></span>
+              </label>
             ))}
           </div>
         </div>
 
-        {/* Selected Variant Display */}
-        <div className="mt-4">
-          <p>Selected: {currentVariant?.name}</p>
+        {/* Add to Basket Button */}
+        <div className="mt-2">
+          <button
+            type="button"
+            className="w-full bg-black text-white py-3 px-4 rounded-md hover:bg-gray-800 transition-colors"
+            onClick={() => {
+              // Add to basket functionality would go here
+              console.log(`Added ${name} - ${currentVariant?.name} to basket`);
+            }}
+          >
+            Buy for{" "}
+            <strong className="font-semibold">
+              ${currentPrice.toFixed(2)}
+            </strong>
+          </button>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-2 text-sm">Description</h3>
+          <p className="text-gray-500 leading-relaxed">{description}</p>
         </div>
       </div>
     </div>

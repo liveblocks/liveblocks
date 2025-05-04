@@ -6,29 +6,43 @@ import { ShopProvider } from "../components/ShopProvider";
 
 // Default product data
 const defaultProduct = {
-  id: "vintage-leather-jacket",
-  name: "Vintage Leather Jacket",
-  description:
-    "A premium quality leather jacket with a classic vintage design. Made with genuine leather and featuring a comfortable cotton lining.",
-  startingPrice: 199.99,
+  id: "t-shirt",
+  name: "T-Shirt",
+  description: (
+    <>
+      <p>
+        A comfortable and stylish t-shirt made with soft cotton fabric that's
+        perfect for everyday wear. The premium quality material ensures
+        breathability and durability, while the modern fit flatters all body
+        types.
+      </p>
+      <p className="mt-3">
+        Each t-shirt features reinforced stitching at the seams for longevity
+        and a tagless collar for maximum comfort. Available in multiple vibrant
+        colors that won't fade after washing. An essential addition to any
+        casual wardrobe.
+      </p>
+    </>
+  ),
+  startingPrice: 79.99,
   variants: [
     {
-      id: "black",
-      name: "Black",
-      price: 199.99,
-      image: "/images/leather-jacket-black.jpg",
+      id: "blue",
+      name: "Blue",
+      price: 79.99,
+      image: "/blue-t-shirt.jpg",
     },
     {
-      id: "brown",
-      name: "Brown",
-      price: 219.99,
-      image: "/images/leather-jacket-brown.jpg",
+      id: "green",
+      name: "Green",
+      price: 79.99,
+      image: "/green-t-shirt.jpg",
     },
     {
-      id: "tan",
-      name: "Tan",
-      price: 229.99,
-      image: "/images/leather-jacket-tan.jpg",
+      id: "purple",
+      name: "Purple",
+      price: 79.99,
+      image: "/purple-t-shirt.jpg",
     },
   ],
 };
