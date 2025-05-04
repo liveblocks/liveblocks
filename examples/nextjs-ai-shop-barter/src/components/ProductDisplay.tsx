@@ -36,7 +36,16 @@ export function ProductDisplay() {
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-medium flex justify-between items-center">
             {name}{" "}
-            <span className="">${startingPrice.toFixed(2)} or lower</span>
+            {startingPrice === currentPrice ? (
+              <span className="">${startingPrice.toFixed(2)} or less</span>
+            ) : (
+              <span className="">
+                <span className="line-through">
+                  ${startingPrice.toFixed(2)}
+                </span>{" "}
+                ${currentPrice.toFixed(2)}
+              </span>
+            )}
           </h1>
 
           {/* Stars */}
