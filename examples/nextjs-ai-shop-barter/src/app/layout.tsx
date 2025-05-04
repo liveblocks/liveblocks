@@ -28,7 +28,7 @@ export default function RootLayout({
       </head>
       <Providers>
         <body className="absolute inset-0 flex flex-col overflow-x-hidden overflow-y-auto">
-          <header className="border-b border-gray-200 px-8 flex items-center justify-between gap-9">
+          <header className="border-b border-gray-200 px-8 flex items-center justify-between gap-8">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="32"
