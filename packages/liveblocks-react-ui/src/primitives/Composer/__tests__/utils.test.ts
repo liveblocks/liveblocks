@@ -119,21 +119,7 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
           type: "paragraph",
           children: [
             {
-              type: "auto-link",
-              url: "https://liveblocks.io",
-              children: [
-                {
-                  text: "https://liveblocks.io",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          type: "paragraph",
-          children: [
-            {
-              type: "custom-link",
+              type: "link",
               url: "https://liveblocks.io",
               children: [
                 {
@@ -355,21 +341,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
           type: "paragraph",
           children: [
             {
-              type: "auto-link",
-              url: "https://liveblocks.io",
-              children: [
-                {
-                  text: "https://liveblocks.io",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          type: "paragraph",
-          children: [
-            {
-              type: "custom-link",
+              type: "link",
               url: "https://liveblocks.io",
               children: [
                 {
@@ -541,7 +513,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
           type: "paragraph",
           children: [
             {
-              type: "custom-link",
+              type: "link",
               url: "https://liveblocks.io",
               children: [
                 {
@@ -578,7 +550,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
 
 describe("composerBodyToCommentBody", () => {
   test.each(composerBodyToCommentBodyFixtures)(
-    "converts %s to a composer body",
+    "converts %s to a comment body",
     (_, composerBody, commentBody) => {
       expect(composerBodyToCommentBody(composerBody)).toEqual(commentBody);
     }

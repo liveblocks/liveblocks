@@ -18,8 +18,7 @@ export type ComposerBodyBlockElement = ComposerBodyParagraph;
 export type ComposerBodyInlineElement =
   | ComposerBodyText
   | ComposerBodyMention
-  | ComposerBodyAutoLink
-  | ComposerBodyCustomLink;
+  | ComposerBodyLink;
 
 export type ComposerBodyInlineNonTextElement = Exclude<
   ComposerBodyInlineElement,
@@ -31,14 +30,8 @@ export type ComposerBodyParagraph = {
   children: ComposerBodyInlineElement[];
 };
 
-export type ComposerBodyAutoLink = {
-  type: "auto-link";
-  url: string;
-  children: ComposerBodyText[];
-};
-
-export type ComposerBodyCustomLink = {
-  type: "custom-link";
+export type ComposerBodyLink = {
+  type: "link";
   url: string;
   children: ComposerBodyText[];
 };

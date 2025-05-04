@@ -934,6 +934,18 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
 />
 ```
 
+<<<<<<< HEAD
+
+<PropertiesList>
+  <PropertiesListItem name="textFormats" type="ComposerBodyTextActiveFormats">
+    Which text formats are currently active and which aren't.
+  </PropertiesListItem>
+</PropertiesList>
+
+=======
+
+> > > > > > > main
+
 ##### Composer.Mention [#primitives-Composer.Mention]
 
 Displays mentions within `Composer.Editor`.
@@ -1031,6 +1043,14 @@ Displays links within `Composer.Editor`.
   </PropertiesListItem>
 </PropertiesList>
 
+<Table columns={["28%", "auto"]}>
+
+| Attribute       | Value                              |
+| --------------- | ---------------------------------- |
+| `data-selected` | Present when the link is selected. |
+
+</Table>
+
 ##### Composer.Submit [#primitives-Composer.Submit]
 
 A button to submit the composer.
@@ -1051,8 +1071,13 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
 
 ```tsx
 <Composer.FloatingToolbar>
+<<<<<<< HEAD
+  <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
+  <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
+=======
   <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
   <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
+>>>>>>> main
 </Composer.FloatingToolbar>
 ```
 
@@ -1062,6 +1087,27 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
   </PropertiesListItem>
 </PropertiesList>
 
+<<<<<<< HEAD
+
+##### Composer.TextFormatToggle
+
+A toggle button which toggles a specific text format.
+
+```tsx
+<Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="format" type="ComposerBodyTextFormat" required>
+    The text format to toggle.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onFormatChange"
+    type="function"
+    detailedType="(format: ComposerBodyTextFormat) => void"
+  >
+    The event handler called when the format is toggled.
+=======
 ##### Composer.MarkToggle
 
 A toggle button which toggles a specific text mark.
@@ -1079,7 +1125,7 @@ A toggle button which toggles a specific text mark.
     type="function"
     detailedType="(mark: ComposerBodyMark) => void"
   >
-    The event handler called when the mark is toggled.
+    The event handler called when the mark is toggled. >>>>>>> main
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.

@@ -67,9 +67,8 @@ import {
 
 import { useLiveblocksUIConfig } from "../../config";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
-import { withAutoLinks } from "../../slate/plugins/auto-links";
-import { withCustomLinks } from "../../slate/plugins/custom-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
+import { withLinks } from "../../slate/plugins/links";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
   getMentionDraftAtSelection,
@@ -89,8 +88,7 @@ import {
 } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
-  ComposerBodyAutoLink,
-  ComposerBodyCustomLink,
+  ComposerBodyLink,
   ComposerBodyMark,
   ComposerBodyMarks,
   ComposerBodyMention,
@@ -176,17 +174,16 @@ function createComposerEditor({
   createAttachments: (files: File[]) => void;
   pasteFilesAsAttachments?: boolean;
 }) {
+  // The order of plugins is important
   return withNormalize(
     withMentions(
-      withCustomLinks(
-        withAutoLinks(
-          withAutoFormatting(
-            withEmptyClearFormatting(
-              withPaste(withHistory(withReact(createEditor())), {
-                createAttachments,
-                pasteFilesAsAttachments,
-              })
-            )
+      withLinks(
+        withAutoFormatting(
+          withEmptyClearFormatting(
+            withPaste(withHistory(withReact(createEditor())), {
+              createAttachments,
+              pasteFilesAsAttachments,
+            })
           )
         )
       )
@@ -218,6 +215,7 @@ function ComposerEditorLinkWrapper({
   element,
   children,
 }: ComposerEditorLinkWrapperProps) {
+  const isSelected = useSelected();
   const href = useMemo(
     () => toAbsoluteUrl(element.url) ?? element.url,
     [element.url]
@@ -225,7 +223,9 @@ function ComposerEditorLinkWrapper({
 
   return (
     <span {...attributes}>
-      <Link href={href}>{children}</Link>
+      <Link href={href} isSelected={isSelected}>
+        {children}
+      </Link>
     </span>
   );
 }
@@ -539,14 +539,11 @@ function ComposerEditorElement({
           {...(props as RenderElementSpecificProps<ComposerBodyMention>)}
         />
       );
-    case "auto-link":
-    case "custom-link":
+    case "link":
       return (
         <ComposerEditorLinkWrapper
           Link={Link}
-          {...(props as RenderElementSpecificProps<
-            ComposerBodyAutoLink | ComposerBodyCustomLink
-          >)}
+          {...(props as RenderElementSpecificProps<ComposerBodyLink>)}
         />
       );
     case "paragraph":
@@ -626,11 +623,13 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
 const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "a";
+    const isSelected = useSelected();
 
     return (
       <Component
         target="_blank"
         rel="noopener noreferrer nofollow"
+        data-selected={isSelected || undefined}
         {...props}
         ref={forwardedRef}
       >
