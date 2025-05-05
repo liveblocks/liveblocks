@@ -1,6 +1,12 @@
-import type { Descendant, Editor, Node as SlateNode } from "slate";
-import { Transforms } from "slate";
+import type {
+  Descendant as SlateDescendant,
+  Editor as SlateEditor,
+  Node as SlateNode,
+} from "slate";
+import { Transforms as SlateTransforms } from "slate";
+import type { HistoryEditor } from "slate-history";
 import { jsx } from "slate-hyperscript";
+import type { ReactEditor } from "slate-react";
 
 import type {
   ComposerBodyAutoLink,
@@ -9,8 +15,8 @@ import type {
   ComposerBodyInlineElement,
   ComposerBodyParagraph,
   ComposerBodyText,
-} from "../../types";
-import { getFiles } from "../../utils/data-transfer";
+} from "../../../../types";
+import { getFiles } from "../../../../utils/data-transfer";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 
@@ -27,8 +33,8 @@ type ComposerBodyTextTag = OmitTextChildren<ComposerBodyText>;
 type DeserializedNode =
   | null
   | string
-  | Descendant
-  | Descendant[]
+  | SlateDescendant
+  | SlateDescendant[]
   | DeserializedNode[];
 
 function areUrlsEqual(a: string, b: string) {
@@ -202,7 +208,7 @@ function deserialize(node: Node): DeserializedNode {
 }
 
 export function withPaste(
-  editor: Editor,
+  editor: SlateEditor & ReactEditor & HistoryEditor,
   {
     createAttachments,
     pasteFilesAsAttachments,
@@ -253,7 +259,7 @@ export function withPaste(
         const fragment = deserialize(body);
 
         if (fragment !== null && Array.isArray(fragment)) {
-          Transforms.insertFragment(editor, fragment as SlateNode[]);
+          SlateTransforms.insertFragment(editor, fragment as SlateNode[]);
 
           return;
         }

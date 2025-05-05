@@ -39,10 +39,6 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
-import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
-import { isComposerBodyMention } from "../../slate/plugins/mentions";
-import { isText } from "../../slate/utils/is-text";
 import type {
   ComposerBody,
   ComposerBodyAutoLink,
@@ -60,7 +56,11 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
+import { isText } from "../slate/utils/is-text";
 import { useComposer, useComposerAttachmentsContext } from "./contexts";
+import { isComposerBodyAutoLink } from "./slate/plugins/auto-links";
+import { isComposerBodyCustomLink } from "./slate/plugins/custom-links";
+import { isComposerBodyMention } from "./slate/plugins/mentions";
 import type { FloatingAlignment, FloatingPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(

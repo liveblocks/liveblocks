@@ -6,11 +6,14 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 
-import type { ComposerBodyMention } from "../../types";
-import { getCharacterAfter, getCharacterBefore } from "../utils/get-character";
-import { getMatchRange } from "../utils/get-match-range";
-import { isEmptyString } from "../utils/is-empty-string";
-import { isWhitespaceCharacter } from "../utils/is-whitespace-character";
+import type { ComposerBodyMention } from "../../../../types";
+import {
+  getCharacterAfter,
+  getCharacterBefore,
+} from "../../../slate/utils/get-character";
+import { getMatchRange } from "../../../slate/utils/get-match-range";
+import { isEmptyString } from "../../../slate/utils/is-empty-string";
+import { isWhitespaceCharacter } from "../../../slate/utils/is-whitespace-character";
 
 export const MENTION_CHARACTER = "@";
 

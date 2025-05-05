@@ -1,10 +1,10 @@
-import type { Descendant } from "slate";
+import type { Descendant as SlateDescendant } from "slate";
 import { Editor as SlateEditor } from "slate";
 
 import { isEmptyString } from "./is-empty-string";
 import { isText } from "./is-text";
 
-export function isEmpty(editor: SlateEditor, children: Descendant[]) {
+export function isEmpty(editor: SlateEditor, children: SlateDescendant[]) {
   // Check if all blocks are empty, stopping at the first non-empty block
   for (const child of children) {
     if (isText(child)) {

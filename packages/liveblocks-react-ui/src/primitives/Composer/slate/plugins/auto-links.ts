@@ -1,9 +1,16 @@
-import type { NodeEntry, Text } from "slate";
-import { Editor, Element, Node, Path, Range, Transforms } from "slate";
+import type { NodeEntry as SlateNodeEntry, Text as SlateText } from "slate";
+import {
+  Editor as SlateEditor,
+  Element as SlateElement,
+  Node as SlateNode,
+  Path as SlatePath,
+  Range as SlateRange,
+  Transforms as SlateTransforms,
+} from "slate";
 
-import type { ComposerBodyAutoLink } from "../../types";
-import { isPlainText, isText } from "../utils/is-text";
-import { filterActiveMarks } from "../utils/marks";
+import type { ComposerBodyAutoLink } from "../../../../types";
+import { isPlainText, isText } from "../../../slate/utils/is-text";
+import { filterActiveMarks } from "../../../slate/utils/marks";
 import { isComposerBodyCustomLink } from "./custom-links";
 
 /**
@@ -12,7 +19,7 @@ import { isComposerBodyCustomLink } from "./custom-links";
  *
  * Original Lexical AutoLink plugin can be found at [Lexical's Github Repository](https://github.com/facebook/lexical/blob/main/packages/lexical-react/src/LexicalAutoLinkPlugin.ts)
  */
-export function withAutoLinks(editor: Editor): Editor {
+export function withAutoLinks(editor: SlateEditor): SlateEditor {
   const { isInline, normalizeNode, deleteBackward } = editor;
 
   editor.isInline = (element) => {
@@ -27,21 +34,31 @@ export function withAutoLinks(editor: Editor): Editor {
       return;
     }
 
+    // Prevent nested or empty auto links
+    if (SlateElement.isElement(node) && node.type === "auto-link") {
+      if (
+        node.children.length === 0 ||
+        (node.children.length === 1 && node.children[0]?.text === "")
+      ) {
+        SlateTransforms.removeNodes(editor, { at: path });
+      }
+    }
+
     if (isText(node)) {
-      const parentNode = Node.parent(editor, path);
+      const parentNode = SlateNode.parent(editor, path);
 
       // Prevent auto links from being created inside custom links
       if (isComposerBodyCustomLink(parentNode)) {
         return;
       } else if (isComposerBodyAutoLink(parentNode)) {
-        const parentPath = Path.parent(path);
+        const parentPath = SlatePath.parent(path);
         handleLinkEdit(editor, [parentNode, parentPath]);
 
         // Prevent rich text within auto links by removing all marks of inner text nodes
         if (!isPlainText(node)) {
           const marks = filterActiveMarks(node);
 
-          Transforms.unsetNodes(editor, marks, { at: path });
+          SlateTransforms.unsetNodes(editor, marks, { at: path });
         }
       } else {
         handleLinkCreate(editor, [node, path]);
@@ -57,9 +74,9 @@ export function withAutoLinks(editor: Editor): Editor {
     const { selection } = editor;
     if (!selection) return;
 
-    if (!Range.isCollapsed(selection)) return;
+    if (!SlateRange.isCollapsed(selection)) return;
 
-    const [match] = Editor.nodes(editor, {
+    const [match] = SlateEditor.nodes(editor, {
       at: selection,
       match: isComposerBodyAutoLink,
       mode: "lowest",
@@ -67,7 +84,7 @@ export function withAutoLinks(editor: Editor): Editor {
 
     if (!match) return;
 
-    Transforms.unwrapNodes(editor, {
+    SlateTransforms.unwrapNodes(editor, {
       match: isComposerBodyAutoLink,
     });
   };
@@ -76,9 +93,9 @@ export function withAutoLinks(editor: Editor): Editor {
 }
 
 export function isComposerBodyAutoLink(
-  node: Node
+  node: SlateNode
 ): node is ComposerBodyAutoLink {
-  return Element.isElement(node) && node.type === "auto-link";
+  return SlateElement.isElement(node) && node.type === "auto-link";
 }
 
 /**
@@ -196,8 +213,8 @@ function getUrlLogicalLength(url: string): number {
 /**
  * Helper function to check if the previous node is valid (text node that ends with a separator or is empty)
  */
-function isPreviousNodeValid(editor: Editor, path: Path): boolean {
-  const entry = Editor.previous(editor, { at: path });
+function isPreviousNodeValid(editor: SlateEditor, path: SlatePath): boolean {
+  const entry = SlateEditor.previous(editor, { at: path });
   if (!entry) return true;
 
   return (
@@ -209,8 +226,8 @@ function isPreviousNodeValid(editor: Editor, path: Path): boolean {
 /**
  * Helper function to check if the next node is valid (text node that starts with a separator or is empty)
  */
-function isNextNodeValid(editor: Editor, path: Path): boolean {
-  const entry = Editor.next(editor, { at: path });
+function isNextNodeValid(editor: SlateEditor, path: SlatePath): boolean {
+  const entry = SlateEditor.next(editor, { at: path });
   if (!entry) return true;
 
   return (
@@ -228,8 +245,8 @@ function isNextNodeValid(editor: Editor, path: Path): boolean {
  * @returns
  */
 function isContentAroundValid(
-  editor: Editor,
-  entry: NodeEntry<Text>,
+  editor: SlateEditor,
+  entry: SlateNodeEntry<SlateText>,
   start: number,
   end: number
 ): boolean {
@@ -252,37 +269,37 @@ function isContentAroundValid(
 }
 
 const handleLinkEdit = (
-  editor: Editor,
-  entry: NodeEntry<ComposerBodyAutoLink>
+  editor: SlateEditor,
+  entry: SlateNodeEntry<ComposerBodyAutoLink>
 ) => {
   const [node, path] = entry;
 
   // Step 1: Ensure that the Link node only contains text nodes as children
-  const children = Node.children(editor, path);
+  const children = SlateNode.children(editor, path);
   for (const [child] of children) {
     if (isText(child)) continue;
-    Transforms.unwrapNodes(editor, { at: path });
+    SlateTransforms.unwrapNodes(editor, { at: path });
     return;
   }
   // Attempt to match the text content (of the Link node) against the URL regex
-  const text = Node.string(node);
+  const text = SlateNode.string(node);
   const match = URL_REGEX.exec(text);
   const matchContent = match?.[0];
 
   // Step 2: Ensure that the text content of the Link node matches the URL regex and is identical to the match
   if (!match || matchContent !== text) {
-    Transforms.unwrapNodes(editor, { at: path });
+    SlateTransforms.unwrapNodes(editor, { at: path });
     return;
   }
 
   // Step 3: Ensure that if the text content of the Link node ends with a period, we unwrap the Link node and wrap the text before the period in a new Link node
   if (endsWithPeriodOrQuestionMark(text)) {
-    Transforms.unwrapNodes(editor, { at: path });
+    SlateTransforms.unwrapNodes(editor, { at: path });
 
     const textBeforePeriod = text.slice(0, text.length - 1);
 
     // Remove the last character from the link text and wrap the remaining text in a new link node
-    Transforms.wrapNodes<ComposerBodyAutoLink>(
+    SlateTransforms.wrapNodes<ComposerBodyAutoLink>(
       editor,
       {
         type: "auto-link",
@@ -304,12 +321,12 @@ const handleLinkEdit = (
   const logicalLength = getUrlLogicalLength(text);
 
   if (logicalLength < text.length) {
-    Transforms.unwrapNodes(editor, { at: path });
+    SlateTransforms.unwrapNodes(editor, { at: path });
 
     const logicalText = text.slice(0, logicalLength);
 
     // Keep the "logical" text and wrap it in a new link node
-    Transforms.wrapNodes<ComposerBodyAutoLink>(
+    SlateTransforms.wrapNodes<ComposerBodyAutoLink>(
       editor,
       {
         type: "auto-link",
@@ -329,18 +346,21 @@ const handleLinkEdit = (
 
   // Step 5: Ensure that the text content of the Link node is surrounded by separators or the start/end of the text content
   if (!isPreviousNodeValid(editor, path) || !isNextNodeValid(editor, path)) {
-    Transforms.unwrapNodes(editor, { at: path });
+    SlateTransforms.unwrapNodes(editor, { at: path });
     return;
   }
 
   // Step 6: Ensure that the url attribute of the Link node is identical to its text content
   if (node.url !== text) {
-    Transforms.setNodes(editor, { url: matchContent }, { at: path });
+    SlateTransforms.setNodes(editor, { url: matchContent }, { at: path });
     return;
   }
 };
 
-const handleLinkCreate = (editor: Editor, entry: NodeEntry<Text>) => {
+const handleLinkCreate = (
+  editor: SlateEditor,
+  entry: SlateNodeEntry<SlateText>
+) => {
   const [node, path] = entry;
 
   // Step 1: Ensure that the text content of the node matches the URL regex
@@ -357,7 +377,7 @@ const handleLinkCreate = (editor: Editor, entry: NodeEntry<Text>) => {
   // Step 2: Ensure that the content around the node is valid
   if (!isContentAroundValid(editor, entry, start, end)) return;
 
-  Transforms.wrapNodes<ComposerBodyAutoLink>(
+  SlateTransforms.wrapNodes<ComposerBodyAutoLink>(
     editor,
     {
       type: "auto-link",
@@ -375,32 +395,35 @@ const handleLinkCreate = (editor: Editor, entry: NodeEntry<Text>) => {
   return;
 };
 
-const handleNeighbours = (editor: Editor, entry: NodeEntry<Text>) => {
+const handleNeighbours = (
+  editor: SlateEditor,
+  entry: SlateNodeEntry<SlateText>
+) => {
   const [node, path] = entry;
   const text = node.text;
 
-  const previousSibling = Editor.previous(editor, { at: path });
+  const previousSibling = SlateEditor.previous(editor, { at: path });
 
   if (previousSibling && isComposerBodyAutoLink(previousSibling[0])) {
     if (PERIOD_OR_QUESTION_MARK_FOLLOWED_BY_ALPHANUMERIC.test(text)) {
-      Transforms.unwrapNodes(editor, { at: previousSibling[1] });
-      Transforms.mergeNodes(editor, { at: path });
+      SlateTransforms.unwrapNodes(editor, { at: previousSibling[1] });
+      SlateTransforms.mergeNodes(editor, { at: path });
       return;
     }
 
     if (!startsWithSeparator(text)) {
-      Transforms.unwrapNodes(editor, { at: previousSibling[1] });
+      SlateTransforms.unwrapNodes(editor, { at: previousSibling[1] });
       return;
     }
   }
 
-  const nextSibling = Editor.next(editor, { at: path });
+  const nextSibling = SlateEditor.next(editor, { at: path });
   if (
     nextSibling &&
     isComposerBodyAutoLink(nextSibling[0]) &&
     !endsWithSeparator(text)
   ) {
-    Transforms.unwrapNodes(editor, { at: nextSibling[1] });
+    SlateTransforms.unwrapNodes(editor, { at: nextSibling[1] });
     return;
   }
 };

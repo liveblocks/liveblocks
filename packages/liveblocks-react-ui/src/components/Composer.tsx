@@ -66,7 +66,7 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import { MENTION_CHARACTER } from "../primitives/Composer/slate/plugins/mentions";
 import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";

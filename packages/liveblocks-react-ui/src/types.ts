@@ -1,5 +1,8 @@
 import type { CommentAttachment } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef, ElementType } from "react";
+import type { BaseEditor } from "slate";
+import type { HistoryEditor } from "slate-history";
+import type { ReactEditor } from "slate-react";
 
 export type Direction = "ltr" | "rtl";
 
@@ -12,11 +15,22 @@ export type SlotProp = {
 
 export type ComponentPropsWithSlot<TElement extends ElementType<any>> =
   ComponentPropsWithoutRef<TElement> & SlotProp;
+export type SlateEmptyText = {
+  text: "";
+};
+
+export type ComposerEditor = BaseEditor & ReactEditor & HistoryEditor;
 
 export type ComposerBodyBlockElement = ComposerBodyParagraph;
 
 export type ComposerBodyInlineElement =
   | ComposerBodyText
+  | ComposerBodyMention
+  | ComposerBodyAutoLink
+  | ComposerBodyCustomLink;
+
+export type ComposerBodyElement =
+  | ComposerBodyParagraph
   | ComposerBodyMention
   | ComposerBodyAutoLink
   | ComposerBodyCustomLink;
@@ -46,7 +60,7 @@ export type ComposerBodyCustomLink = {
 export type ComposerBodyMention = {
   type: "mention";
   id: string;
-  children: [ComposerBodyEmptyText];
+  children: [SlateEmptyText];
 };
 
 export type ComposerBodyText = {
@@ -63,11 +77,31 @@ export type ComposerBodyMarks = {
   [K in ComposerBodyMark]: boolean;
 };
 
-export type ComposerBodyEmptyText = {
-  text: "";
+export type ComposerBody = ComposerBodyBlockElement[];
+
+export type AiComposerEditor = BaseEditor & ReactEditor & HistoryEditor;
+
+export type AiComposerBodyBlockElement = AiComposerBodyParagraph;
+
+export type AiComposerBodyInlineElement = AiComposerBodyText;
+
+export type AiComposerBodyElement = AiComposerBodyParagraph;
+
+export type AiComposerBodyInlineNonTextElement = Exclude<
+  AiComposerBodyInlineElement,
+  AiComposerBodyText
+>;
+
+export type AiComposerBodyParagraph = {
+  type: "paragraph";
+  children: AiComposerBodyInlineElement[];
 };
 
-export type ComposerBody = ComposerBodyBlockElement[];
+export type AiComposerBodyText = {
+  text: string;
+};
+
+export type AiComposerBody = AiComposerBodyBlockElement[];
 
 export interface CommentAttachmentArgs {
   /**

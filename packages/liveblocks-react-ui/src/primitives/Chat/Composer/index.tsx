@@ -25,9 +25,9 @@ import type { HistoryEditor } from "slate-history";
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 
-import { withNormalize } from "../../../slate/plugins/normalize";
-import { isEmpty } from "../../../slate/utils/is-empty";
 import { AttachmentTooLargeError } from "../../Composer/utils";
+import { withNormalize } from "../../slate/plugins/normalize";
+import { isEmpty } from "../../slate/utils/is-empty";
 
 /* -------------------------------------------------------------------------------------------------
  * Form

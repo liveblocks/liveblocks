@@ -1,10 +1,15 @@
-import type { Editor } from "slate";
-import { Element, Node, Range, Transforms } from "slate";
+import type { Editor as SlateEditor } from "slate";
+import {
+  Element as SlateElement,
+  Node as SlateNode,
+  Range as SlateRange,
+  Transforms as SlateTransforms,
+} from "slate";
 
-import type { ComposerBodyCustomLink } from "../../types";
-import { isPlainText, isText } from "../utils/is-text";
-import { filterActiveMarks } from "../utils/marks";
-import { selectionContainsInlines } from "../utils/selection-contains-inlines";
+import type { ComposerBodyCustomLink } from "../../../../types";
+import { isPlainText, isText } from "../../../slate/utils/is-text";
+import { filterActiveMarks } from "../../../slate/utils/marks";
+import { selectionContainsInlines } from "../../../slate/utils/selection-contains-inlines";
 
 function isUrl(string: string) {
   try {
@@ -15,7 +20,7 @@ function isUrl(string: string) {
   }
 }
 
-export function withCustomLinks(editor: Editor): Editor {
+export function withCustomLinks(editor: SlateEditor): SlateEditor {
   const { isInline, normalizeNode, insertData } = editor;
 
   editor.isInline = (element) => {
@@ -25,15 +30,25 @@ export function withCustomLinks(editor: Editor): Editor {
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
+    // Prevent nested or empty custom links
+    if (SlateElement.isElement(node) && node.type === "custom-link") {
+      if (
+        node.children.length === 0 ||
+        (node.children.length === 1 && node.children[0]?.text === "")
+      ) {
+        SlateTransforms.removeNodes(editor, { at: path });
+      }
+    }
+
     if (isText(node)) {
-      const parentNode = Node.parent(editor, path);
+      const parentNode = SlateNode.parent(editor, path);
 
       // Prevent rich text within custom links by removing all marks of inner text nodes
       if (isComposerBodyCustomLink(parentNode)) {
         if (!isPlainText(node)) {
           const marks = filterActiveMarks(node);
 
-          Transforms.unsetNodes(editor, marks, { at: path });
+          SlateTransforms.unsetNodes(editor, marks, { at: path });
         }
       }
     }
@@ -52,7 +67,7 @@ export function withCustomLinks(editor: Editor): Editor {
     let shouldInvokeDefaultBehavior = true;
 
     // Check if the selection is a range
-    if (selection && !Range.isCollapsed(selection)) {
+    if (selection && !SlateRange.isCollapsed(selection)) {
       // Check if the selection is contained in a single block
       if (selection.anchor.path[0] === selection.focus.path[0]) {
         // Check if the pasted text is a valid URL
@@ -60,7 +75,7 @@ export function withCustomLinks(editor: Editor): Editor {
           // Check if the selection only contains (rich and/or plain) text nodes
           if (!selectionContainsInlines(editor, (node) => !isText(node))) {
             // If all conditions are met, wrap the selected nodes in a custom link
-            Transforms.wrapNodes<ComposerBodyCustomLink>(
+            SlateTransforms.wrapNodes<ComposerBodyCustomLink>(
               editor,
               {
                 type: "custom-link",
@@ -88,7 +103,7 @@ export function withCustomLinks(editor: Editor): Editor {
 }
 
 export function isComposerBodyCustomLink(
-  node: Node
+  node: SlateNode
 ): node is ComposerBodyCustomLink {
-  return Element.isElement(node) && node.type === "custom-link";
+  return SlateElement.isElement(node) && node.type === "custom-link";
 }

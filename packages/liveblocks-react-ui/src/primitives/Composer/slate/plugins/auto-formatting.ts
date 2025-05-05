@@ -1,17 +1,17 @@
-import type { EditorMarks } from "slate";
 import {
   Editor as SlateEditor,
   Range as SlateRange,
   Transforms as SlateTransforms,
 } from "slate";
 
-import { getCharacterBefore } from "../utils/get-character";
-import { getMatchRange } from "../utils/get-match-range";
-import { isEmptyString } from "../utils/is-empty-string";
+import type { ComposerBodyMarks } from "../../../../types";
+import { getCharacterBefore } from "../../../slate/utils/get-character";
+import { getMatchRange } from "../../../slate/utils/get-match-range";
+import { isEmptyString } from "../../../slate/utils/is-empty-string";
 
 interface MarkFormatter {
   type: "mark";
-  mark: keyof EditorMarks;
+  mark: keyof ComposerBodyMarks;
   character: string;
 }
 
