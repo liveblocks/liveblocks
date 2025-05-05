@@ -1,5 +1,3 @@
-import { HttpError, kInternal, nanoid } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
   ButtonHTMLAttributes,
@@ -19,13 +17,16 @@ import {
   useRef,
   useState,
 } from "react";
-import type { BaseEditor, Descendant } from "slate";
-import { createEditor, Editor as SlateEditor, Transforms } from "slate";
-import type { HistoryEditor } from "slate-history";
+import type { Descendant as SlateDescendant } from "slate";
+import {
+  createEditor,
+  Editor as SlateEditor,
+  Transforms as SlateTransforms,
+} from "slate";
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 
-import { AttachmentTooLargeError } from "../../Composer/utils";
+import type { AiComposerEditor } from "../../../types";
 import { withNormalize } from "../../slate/plugins/normalize";
 import { isEmpty } from "../../slate/utils/is-empty";
 
@@ -36,31 +37,12 @@ export const ComposerContext = createContext<{
   chatId: string;
 
   editor: SlateEditor;
-  onEditorValueChange: (value: Descendant[]) => void;
+  onEditorValueChange: (value: SlateDescendant[]) => void;
   isEditorEmpty: boolean;
-
-  attachments: ({
-    id: string;
-    file: File;
-  } & (
-    | {
-        status: "uploading" | "uploaded";
-      }
-    | {
-        status: "error";
-        error: Error;
-      }
-  ))[];
-  onAttachFiles: () => void;
-  onRemoveAttachment: (id: string) => void;
-  numOfAttachments: number;
 
   requestFormSubmit: () => void;
   disabled: boolean;
 } | null>(null);
-
-export const MAX_ATTACHMENTS = 10;
-export const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 1024; // 1 GB
 
 export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
@@ -100,32 +82,14 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     forwardedRef
   ) => {
     const formRef = useRef<HTMLFormElement | null>(null);
-    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const editorRef = useRef<(BaseEditor & ReactEditor & HistoryEditor) | null>(
-      null
-    );
+    const editorRef = useRef<AiComposerEditor | null>(null);
     if (editorRef.current === null) {
       editorRef.current = withNormalize(withHistory(withReact(createEditor())));
     }
     const editor = editorRef.current;
 
     const [isEditorEmpty, setIsEditorEmpty] = useState(true);
-
-    const [attachments, setAttachments] = useState<
-      ({
-        id: string;
-        file: File;
-      } & (
-        | {
-            status: "uploading" | "uploaded";
-          }
-        | {
-            status: "error";
-            error: Error;
-          }
-      ))[]
-    >([]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
@@ -164,7 +128,7 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
         event.preventDefault();
 
         // Clear the editor after dispatching the message.
-        Transforms.delete(editor, {
+        SlateTransforms.delete(editor, {
           at: {
             anchor: SlateEditor.start(editor, []),
             focus: SlateEditor.end(editor, []),
@@ -185,10 +149,6 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     const requestFormSubmit = useCallback(() => {
       if (isEmpty(editor, editor.children)) return;
 
-      if (attachments.some((attachment) => attachment.status === "uploading")) {
-        return;
-      }
-
       // We need to wait for the next frame in some cases like when composing diacritics,
       // we want any native handling to be done first while still being handled on `keydown`.
       requestAnimationFrame(() => {
@@ -203,26 +163,13 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
         submitter.click();
         formRef.current.removeChild(submitter);
       });
-    }, [editor, attachments]);
-
-    const handleAttachFiles = useCallback(() => {
-      if (disabled) return;
-      fileInputRef.current?.click();
-    }, [disabled]);
-
-    const handleRemoveAttachment = useCallback((id: string) => {
-      setAttachments((attachments) =>
-        attachments.filter((attachment) => attachment.id !== id)
-      );
-    }, []);
+    }, [editor]);
 
     useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
       forwardedRef,
       () => formRef.current,
       []
     );
-
-    const client = useClient();
 
     return (
       <ComposerContext.Provider
@@ -233,99 +180,9 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
           isEditorEmpty,
           requestFormSubmit,
           disabled: disabled || false,
-          attachments,
-          onAttachFiles: handleAttachFiles,
-          onRemoveAttachment: handleRemoveAttachment,
-          numOfAttachments: attachments.length,
         }}
       >
         <form onSubmit={handleSubmit} {...props} ref={formRef} />
-        <input
-          type="file"
-          multiple
-          accept="image/png, image/jpeg"
-          ref={fileInputRef}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          onChange={function (event) {
-            if (disabled) return;
-
-            if (event.target.files === null) return;
-            if (event.target.files.length === 0) return;
-
-            for (const file of Array.from(event.target.files).slice(
-              0,
-              MAX_ATTACHMENTS - attachments.length
-            )) {
-              const id = `at_${nanoid()}`;
-              if (file.size > MAX_ATTACHMENT_SIZE) {
-                setAttachments((attachments) => [
-                  ...attachments,
-                  {
-                    id,
-                    file,
-                    status: "error",
-                    error: new AttachmentTooLargeError("File is too large."),
-                  },
-                ]);
-                continue;
-              }
-
-              setAttachments((attachments) => [
-                ...attachments,
-                {
-                  id,
-                  file,
-                  status: "uploading",
-                },
-              ]);
-
-              client[kInternal].httpClient
-                .uploadChatAttachment({
-                  chatId,
-                  attachment: {
-                    id,
-                    file,
-                  },
-                })
-                .then(() => {
-                  setAttachments((attachments) =>
-                    attachments.map((attachment) =>
-                      attachment.id === id
-                        ? { ...attachment, status: "uploaded" }
-                        : attachment
-                    )
-                  );
-                })
-                .catch((error) => {
-                  if (error instanceof Error) {
-                    setAttachments((attachments) =>
-                      attachments.map((attachment) =>
-                        attachment.id === id
-                          ? {
-                              ...attachment,
-                              status: "error",
-                              error:
-                                error instanceof HttpError &&
-                                error.status === 413
-                                  ? new AttachmentTooLargeError(
-                                      "File is too large"
-                                    )
-                                  : error,
-                            }
-                          : attachment
-                      )
-                    );
-                  }
-                });
-            }
-
-            event.target.value = "";
-          }}
-          tabIndex={-1}
-          style={{ display: "none" }}
-        />
       </ComposerContext.Provider>
     );
   }
@@ -406,7 +263,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
 
       try {
         if (!ReactEditor.isFocused(editor)) {
-          Transforms.select(editor, SlateEditor.end(editor, []));
+          SlateTransforms.select(editor, SlateEditor.end(editor, []));
           ReactEditor.focus(editor);
         }
       } catch {
@@ -467,62 +324,14 @@ export const Submit = forwardRef<HTMLButtonElement, SubmitProps>(
       throw new Error("Submit must be a descendant of Form.");
     }
 
-    const { disabled: isFormDisabled, isEditorEmpty, attachments } = context;
+    const { disabled: isFormDisabled, isEditorEmpty } = context;
 
     return (
       <button
         type="submit"
         {...props}
         ref={forwardedRef}
-        disabled={
-          disabled ||
-          isFormDisabled ||
-          isEditorEmpty ||
-          attachments.some((attachment) => attachment.status === "uploading")
-        }
-      />
-    );
-  }
-);
-
-/* -------------------------------------------------------------------------------------------------
- * AttachFiles
- * -----------------------------------------------------------------------------------------------*/
-export type AttachFilesProps = ButtonHTMLAttributes<HTMLButtonElement>;
-
-/**
- * A button which opens a file picker to create attachments.
- *
- * @example
- * <Composer.AttachFiles>Attach files</Composer.AttachFiles>
- */
-export const AttachFiles = forwardRef<HTMLButtonElement, AttachFilesProps>(
-  ({ onClick, disabled, ...props }, forwardedRef) => {
-    const context = useContext(ComposerContext);
-    if (context === null) {
-      throw new Error("AttachFiles must be a descendant of Form.");
-    }
-
-    const {
-      disabled: isFormDisabled,
-      onAttachFiles,
-      numOfAttachments,
-    } = context;
-
-    return (
-      <button
-        type="button"
-        {...props}
-        onClick={function (event) {
-          onClick?.(event);
-          if (event.isDefaultPrevented()) return;
-          onAttachFiles();
-        }}
-        onPointerDown={(event) => event.preventDefault()}
-        ref={forwardedRef}
-        disabled={
-          isFormDisabled || disabled || numOfAttachments >= MAX_ATTACHMENTS
-        }
+        disabled={disabled || isFormDisabled || isEditorEmpty}
       />
     );
   }

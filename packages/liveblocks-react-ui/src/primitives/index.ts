@@ -1,7 +1,5 @@
 export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
 export {
-  AttachFiles as ChatComposerAttachFiles,
-  type AttachFilesProps as ChatComposerAttachFilesProps,
   Editor as ChatComposerEditor,
   type EditorProps as ChatComposerEditorProps,
   Form as ChatComposerForm,

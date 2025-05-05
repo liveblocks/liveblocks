@@ -2138,21 +2138,6 @@
 }
 
 /*************************************
- *     Chat composer attachments     *
- *************************************/
-.lb-ai-chat-composer-attachments {
-  display: flex;
-  flex-direction: column;
-  gap: calc(0.75 * var(--lb-spacing));
-  padding-inline: var(--lb-spacing);
-  padding-block-start: calc(0.75 * var(--lb-spacing));
-}
-
-.lb-ai-chat-composer-editor-container:where([data-drop]) * {
-  pointer-events: none;
-}
-
-/*************************************
  *           Chat message            *
  *************************************/
 .lb-ai-chat-user-message {
@@ -2172,24 +2157,6 @@
   background: var(--lb-background-foreground-faint);
   color: var(--lb-foreground);
   white-space: break-spaces;
-}
-
-.lb-ai-chat-user-message-attachments {
-  display: flex;
-  flex-direction: column;
-  gap: calc(0.75 * var(--lb-spacing));
-}
-
-.lb-ai-chat-user-message-media-attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(0.75 * var(--lb-spacing));
-  justify-content: flex-end;
-}
-
-.lb-ai-chat-user-message-attachment {
-  flex-shrink: 1;
-  flex-basis: 300px;
 }
 
 .lb-ai-chat-assistant-message {
