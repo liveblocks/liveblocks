@@ -66,6 +66,7 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUIConfig } from "../../config";
+import { MENTION_CHARACTER } from "../../constants";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -113,7 +114,6 @@ import {
   getMentionDraftAtSelection,
   insertMention,
   insertMentionCharacter,
-  MENTION_CHARACTER,
   withMentions,
 } from "./slate/plugins/mentions";
 import { withPaste } from "./slate/plugins/paste";

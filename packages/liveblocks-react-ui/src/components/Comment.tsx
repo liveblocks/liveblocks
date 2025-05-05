@@ -32,6 +32,7 @@ import {
   useState,
 } from "react";
 
+import { MENTION_CHARACTER } from "../constants";
 import { CheckIcon } from "../icons/Check";
 import { CrossIcon } from "../icons/Cross";
 import { DeleteIcon } from "../icons/Delete";
@@ -55,7 +56,6 @@ import type {
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
-import { MENTION_CHARACTER } from "../primitives/Composer/slate/plugins/mentions";
 import type { CommentAttachmentArgs } from "../types";
 import { classNames } from "../utils/class-names";
 import { download } from "../utils/download";

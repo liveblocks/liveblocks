@@ -6,6 +6,7 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 
+import { MENTION_CHARACTER } from "../../../../constants";
 import type { ComposerBodyMention } from "../../../../types";
 import {
   getCharacterAfter,
@@ -14,8 +15,6 @@ import {
 import { getMatchRange } from "../../../slate/utils/get-match-range";
 import { isEmptyString } from "../../../slate/utils/is-empty-string";
 import { isWhitespaceCharacter } from "../../../slate/utils/is-whitespace-character";
-
-export const MENTION_CHARACTER = "@";
 
 export type MentionDraft = {
   range: SlateRange;
