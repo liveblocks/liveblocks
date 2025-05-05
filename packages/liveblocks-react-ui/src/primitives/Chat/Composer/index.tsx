@@ -1,4 +1,5 @@
 import { useLayoutEffect } from "@liveblocks/react/_private";
+import { Slot } from "@radix-ui/react-slot";
 import type {
   ButtonHTMLAttributes,
   FormEvent,
@@ -26,7 +27,7 @@ import {
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 
-import type { AiComposerEditor } from "../../../types";
+import type { AiComposerEditor, SlotProp } from "../../../types";
 import { withNormalize } from "../../slate/plugins/normalize";
 import { isEmpty } from "../../slate/utils/is-empty";
 
@@ -309,7 +310,7 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
 /* -------------------------------------------------------------------------------------------------
  * Submit
  * -----------------------------------------------------------------------------------------------*/
-export type SubmitProps = ButtonHTMLAttributes<HTMLButtonElement>;
+export type SubmitProps = ButtonHTMLAttributes<HTMLButtonElement> & SlotProp;
 
 /**
  * A button to submit a chat message.
@@ -318,7 +319,8 @@ export type SubmitProps = ButtonHTMLAttributes<HTMLButtonElement>;
  * <ChatComposer.Submit>Send</ChatComposer.Submit>
  */
 export const Submit = forwardRef<HTMLButtonElement, SubmitProps>(
-  ({ disabled, ...props }, forwardedRef) => {
+  ({ disabled, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "button";
     const context = useContext(ComposerContext);
     if (context === null) {
       throw new Error("Submit must be a descendant of Form.");
@@ -327,7 +329,7 @@ export const Submit = forwardRef<HTMLButtonElement, SubmitProps>(
     const { disabled: isFormDisabled, isEditorEmpty } = context;
 
     return (
-      <button
+      <Component
         type="submit"
         {...props}
         ref={forwardedRef}

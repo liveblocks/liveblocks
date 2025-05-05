@@ -17,9 +17,13 @@ import {
   useState,
 } from "react";
 
-import { Tooltip, TooltipProvider } from "../../_private";
-import { CheckIcon, ChevronDownIcon, ChevronRightIcon } from "../../icons";
+import { Button } from "../../components/internal/Button";
+import { Tooltip, TooltipProvider } from "../../components/internal/Tooltip";
+import { CheckIcon } from "../../icons/Check";
+import { ChevronDownIcon } from "../../icons/ChevronDown";
+import { ChevronRightIcon } from "../../icons/ChevronRight";
 import { CopyIcon } from "../../icons/Copy";
+import { RetryIcon } from "../../icons/Retry";
 import { WarningIcon } from "../../icons/Warning";
 import {
   type ChatMessageOverrides,
@@ -230,20 +234,15 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
   }, [isCopied]);
 
   return (
-    <button
-      type="button"
+    <Button
       onClick={function () {
         navigator.clipboard.writeText(text);
         setIsCopied(true);
       }}
-      data-variant="default"
-      className="lb-button lb-ai-chat-assistant-message-copy-button"
+      className="lb-ai-chat-assistant-message-copy-button"
       aria-label={label}
-    >
-      <span className="lb-icon-container">
-        {isCopied ? <CheckIcon /> : <CopyIcon />}
-      </span>
-    </button>
+      icon={isCopied ? <CheckIcon /> : <CopyIcon />}
+    />
   );
 }
 
@@ -261,38 +260,17 @@ function RegenerateMessageButton({
   const client = useClient();
 
   return (
-    <button
-      type="button"
+    <Button
       onClick={function () {
         client[kInternal].ai.regenerateMessage(chatId, messageId, {
           copilotId,
           stream: true,
         });
       }}
-      data-variant="default"
-      className="lb-button lb-ai-chat-assistant-message-regenerate-button"
+      className="lb-ai-chat-assistant-message-regenerate-button"
       aria-label={label}
-    >
-      <span className="lb-icon-container">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lb-icon"
-        >
-          <path d="M4 10 a6 6 0 0 1 6 -6 a6.5 6.5 0 0 1 4.49 1.83 L16 7.33" />
-          <path d="M16 4 v3.33 h-3.33" />
-          <path d="M16 10 a6 6 0 0 1 -6 6 a6.5 6.5 0 0 1 -4.49 -1.83 L4 12.67" />
-          <path d="M7.33 12.67 H4 v3.33" />
-        </svg>
-      </span>
-    </button>
+      icon={<RetryIcon />}
+    />
   );
 }
 

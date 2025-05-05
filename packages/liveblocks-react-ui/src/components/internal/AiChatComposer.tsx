@@ -9,7 +9,8 @@ import {
   useCallback,
 } from "react";
 
-import { ShortcutTooltip, TooltipProvider } from "../../_private";
+import { SendIcon } from "../../icons/Send";
+import { StopIcon } from "../../icons/Stop";
 import {
   type ChatComposerOverrides,
   type GlobalOverrides,
@@ -17,6 +18,8 @@ import {
 } from "../../overrides";
 import * as ComposerPrimitive from "../../primitives/Chat/Composer";
 import { classNames } from "../../utils/class-names";
+import { Button } from "./Button";
+import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
 
 /* -------------------------------------------------------------------------------------------------
  * AiChatComposer
@@ -156,7 +159,9 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
             />
 
             <div className="lb-ai-chat-composer-footer">
-              <div className="lb-ai-chat-composer-editor-actions" />
+              <div className="lb-ai-chat-composer-editor-actions">
+                {/* No actions for now but it makes sense to keep the DOM structure */}
+              </div>
 
               <div className="lb-ai-chat-composer-actions">
                 {pendingMessage === undefined ? (
@@ -164,72 +169,30 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                     content={$.CHAT_COMPOSER_SEND}
                     shortcut="Enter"
                   >
-                    <ComposerPrimitive.Submit
-                      className="lb-button lb-ai-chat-composer-action"
-                      data-variant="primary"
-                      data-size="default"
-                      aria-label={$.CHAT_COMPOSER_SEND}
-                      onPointerDown={(event) => event.preventDefault()}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <span className="lb-icon-container">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width={20}
-                          height={20}
-                          viewBox={`0 0 ${20} ${20}`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          role="presentation"
-                          className="lb-icon"
-                        >
-                          <path d="m5 16 12-6L5 4l2 6-2 6ZM7 10h10" />
-                        </svg>
-                      </span>
+                    <ComposerPrimitive.Submit asChild>
+                      <Button
+                        onPointerDown={(event) => event.preventDefault()}
+                        onClick={(event) => event.stopPropagation()}
+                        className="lb-ai-chat-composer-action"
+                        variant="primary"
+                        aria-label={$.CHAT_COMPOSER_SEND}
+                        icon={<SendIcon />}
+                      />
                     </ComposerPrimitive.Submit>
                   </ShortcutTooltip>
                 ) : (
                   <ShortcutTooltip content={$.CHAT_COMPOSER_ABORT}>
-                    <button
-                      type="button"
-                      className="lb-button lb-ai-chat-composer-action"
-                      data-variant="primary"
-                      data-size="default"
-                      aria-label={$.CHAT_COMPOSER_ABORT}
+                    <Button
                       onPointerDown={(event) => event.preventDefault()}
                       onClick={(event) => {
                         event.stopPropagation();
                         client[kInternal].ai.abort(pendingMessage);
                       }}
-                    >
-                      <span className="lb-icon-container">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width={20}
-                          height={20}
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          role="presentation"
-                          className="lb-icon"
-                        >
-                          <rect
-                            x={5}
-                            y={5}
-                            width={10}
-                            height={10}
-                            rx={1}
-                            fill="currentColor"
-                          />
-                        </svg>
-                      </span>
-                    </button>
+                      className="lb-ai-chat-composer-action"
+                      variant="secondary"
+                      aria-label={$.CHAT_COMPOSER_ABORT}
+                      icon={<StopIcon />}
+                    />
                   </ShortcutTooltip>
                 )}
               </div>
