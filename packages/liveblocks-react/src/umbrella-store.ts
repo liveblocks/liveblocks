@@ -583,8 +583,6 @@ type RoomSubscriptionSettingsByRoomId = Record<
 
 type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
 
-type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
-
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
   CleanThreads<M> &
@@ -832,25 +830,28 @@ function createStore_forHistoryVersions() {
 }
 
 function createStore_forPermissionHints() {
-  const signal = new MutableSignal<PermissionHintsLUT>(
-    new DefaultMap(() => new Set())
+  const permissionsByRoomId = new DefaultMap(
+    () => new Signal<Set<Permission>>(new Set())
   );
 
   function update(newHints: Record<string, Permission[]>) {
-    signal.mutate((lut) => {
-      for (const [roomId, newPermissions] of Object.entries(newHints)) {
-        // Get the existing set of permissions for the room and only ever add permission to this set
-        const existing = lut.getOrCreate(roomId);
-        // Add the new permissions to the set of existing permissions
-        for (const permission of newPermissions) {
-          existing.add(permission);
-        }
+    for (const [roomId, permissions] of Object.entries(newHints)) {
+      const signal = permissionsByRoomId.getOrCreate(roomId);
+      // Get the existing set of permissions for the room and only ever add permission to this set
+      const existingPermissions = new Set(signal.get());
+      for (const permission of permissions) {
+        existingPermissions.add(permission);
       }
-    });
+      signal.set(existingPermissions);
+    }
+  }
+
+  function getPermissionForRoomΣ(roomId: string): ISignal<Set<Permission>> {
+    return permissionsByRoomId.getOrCreate(roomId);
   }
 
   return {
-    signal: signal.asReadonly(),
+    getPermissionForRoomΣ: getPermissionForRoomΣ,
 
     // Mutations
     update,

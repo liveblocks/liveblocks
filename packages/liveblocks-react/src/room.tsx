@@ -2771,18 +2771,13 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   } as const;
 }
 
-const NO_PERMISSIONS = new Set();
-
 /**
  * @private For internal use only. Do not rely on this hook.
  */
 function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-  return useSignal(
-    store.permissionHints.signal,
-    (hints) => hints.get(roomId) ?? NO_PERMISSIONS
-  );
+  return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId));
 }
 
 /**
