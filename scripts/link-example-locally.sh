@@ -66,7 +66,7 @@ done
 
 # Step 4: Add this example to the top-level package.json to officially make it
 # a workspace.
-if ! grep -q "$reldir" ../../package.json; then
+if ! grep -q "\"$reldir\"" ../../package.json; then
     jq ".workspaces |= . + [\"$reldir\"]" ../../package.json | sponge ../../package.json
 fi
 
