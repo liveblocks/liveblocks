@@ -85,16 +85,17 @@ function Chat({ chatId }: { chatId: string }) {
     const container = containerRef.current;
     if (container === null) return;
 
-    const distanceToBottom =
-      container.scrollHeight - container.clientHeight - container.scrollTop;
+    setDistanceToBottom(
+      container.scrollHeight - container.clientHeight - container.scrollTop
+    );
+  }, [messages]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) return;
 
     const lastMessage = messages[messages.length - 1];
     if (lastMessage !== undefined && lastMessage.role === "user") {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-    } else if (distanceToBottom < 50) {
       container.scrollTo({
         top: container.scrollHeight,
         behavior: "smooth",
@@ -164,7 +165,7 @@ function Chat({ chatId }: { chatId: string }) {
                   : undefined
               }
               data-variant="secondary"
-              className="rounded-full opacity-0 transition-all duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto bg-[var(--lb-foreground-subtle)] text-[var(--lb-foreground-tertiary)] hover:bg-[var(--lb-foreground)] hover:text-[var(--lb-background)] inline-flex items-center justify-center p-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014]"
+              className="rounded-full opacity-0 transition-[opacity,color] duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto cursor-pointer bg-[var(--lb-dynamic-background)] text-[var(--lb-foreground-moderate)] hover:text-[var(--lb-foreground-secondary)] inline-flex items-center justify-center p-1.5 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#00000014,0_8px_26px_#0000001f]"
               onClick={() => {
                 const container = containerRef.current;
                 if (container === null) return;
@@ -188,7 +189,7 @@ function Chat({ chatId }: { chatId: string }) {
                   strokeLinejoin="round"
                   role="presentation"
                 >
-                  <path d="M14.5 8.5 10 13 5.5 8.5" />
+                  <path d="M10 4v12m6-6-6 6-6-6" />
                 </svg>
               </span>
             </button>

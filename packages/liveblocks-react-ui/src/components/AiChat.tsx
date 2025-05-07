@@ -1,10 +1,10 @@
-import {
-  type AiChatContext,
-  type ClientToolDefinition,
-  type CopilotId,
-  kInternal,
-  type UiChatMessage,
+import type {
+  AiChatContext,
+  ClientToolDefinition,
+  CopilotId,
+  UiChatMessage,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { useAiChatMessages, useClient } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
@@ -49,10 +49,6 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   copilotId?: string;
   /**
-   * The layout of the chat and its composer.
-   */
-  layout?: "inset" | "compact";
-  /**
    * The contextual information to include in the chat. Used by the assistant when generating responses.
    */
   contexts?: AiChatContext[];
@@ -77,7 +73,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       chatId,
       copilotId,
       autoFocus,
-      layout = "inset",
       overrides,
       contexts = [],
       tools = {},
@@ -153,17 +148,9 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       const container = containerRef.current;
       if (container === null) return;
 
-      const distanceToBottom =
-        container.scrollHeight - container.clientHeight - container.scrollTop;
-
       if (messages === undefined) return;
       const lastMessage = messages[messages.length - 1];
       if (lastMessage !== undefined && lastMessage.role === "user") {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: "smooth",
-        });
-      } else if (distanceToBottom <= MIN_DISTANCE_TO_BOTTOM) {
         container.scrollTo({
           top: container.scrollHeight,
           behavior: "smooth",
@@ -207,13 +194,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       <div
         ref={containerRef}
         {...props}
-        className={classNames(
-          "lb-root lb-ai-chat",
-          layout === "compact"
-            ? "lb-ai-chat:layout-compact"
-            : "lb-ai-chat:layout-inset",
-          className
-        )}
+        className={classNames("lb-root lb-ai-chat", className)}
       >
         <div className="lb-ai-chat-content">
           {isLoading ? (
