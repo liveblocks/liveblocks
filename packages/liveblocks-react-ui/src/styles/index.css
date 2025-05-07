@@ -2392,10 +2392,6 @@
   block-size: 100%;
   background: var(--lb-background);
   isolation: isolate;
-
-  /* overflow-block: auto; doesn't work as expected */
-  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
-  overflow-y: auto;
 }
 
 .lb-ai-chat-messages {
@@ -2422,59 +2418,86 @@
 }
 
 .lb-ai-chat-footer {
-  position: sticky;
-  inset-block-end: 0;
-  z-index: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   inline-size: 100%;
-  margin-block-start: auto;
-  padding: var(--lb-spacing);
-  padding-block-start: 0;
+}
 
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    inset-block-start: calc(-3 * var(--lb-spacing));
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      var(--lb-background) calc(3 * var(--lb-spacing))
+.lb-ai-chat\:layout-inset {
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
+
+  :where(.lb-ai-chat-footer) {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 1;
+    margin-block-start: auto;
+    padding: var(--lb-spacing);
+    padding-block-start: 0;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      inset-block-start: calc(-3 * var(--lb-spacing));
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--lb-background) calc(3.5 * var(--lb-spacing))
+      );
+      pointer-events: none;
+    }
+  }
+
+  :where(.lb-ai-chat-composer) {
+    max-inline-size: var(--lb-ai-chat-container-width);
+    margin-inline: auto;
+    border-radius: calc(2 * var(--lb-radius));
+    background: var(--lb-dynamic-background);
+    box-shadow: var(--lb-elevation-shadow-small);
+  }
+}
+
+.lb-ai-chat\:layout-compact {
+  :where(.lb-ai-chat-content) {
+    flex: 1;
+    min-block-size: 0;
+
+    /* overflow-block: auto; doesn't work as expected */
+    /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+    overflow-y: auto;
+  }
+
+  :where(.lb-ai-chat-footer) {
+    border-block-start: 1px solid var(--lb-foreground-subtle);
+    background: var(--lb-dynamic-background);
+  }
+
+  :where(.lb-ai-chat-composer) {
+    max-inline-size: min(
+      100%,
+      calc(var(--lb-ai-chat-container-width) + 2 * var(--lb-spacing))
     );
-    pointer-events: none;
+    margin-inline: auto;
   }
 }
 
 .lb-ai-chat-footer-actions {
   position: absolute;
   inset-inline: 0;
-  inset-block-start: calc(-3 * var(--lb-spacing));
+  inset-block-start: calc(-1 * var(--lb-spacing));
   display: flex;
   justify-content: center;
   pointer-events: none;
+  transform: translateY(-100%);
 }
 
 .lb-ai-chat-composer {
   position: relative;
   inline-size: 100%;
-  max-inline-size: var(--lb-ai-chat-container-width);
-  margin-inline: auto;
-  margin-block-start: auto;
-  border-radius: calc(2 * var(--lb-radius));
-  background: var(--lb-dynamic-background);
-  box-shadow: var(--lb-elevation-shadow-small);
-
-  &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    border-radius: inherit;
-    box-shadow: var(--lb-inset-shadow);
-    pointer-events: none;
-  }
 }
 
 .lb-ai-chat-scroll-indicator {
