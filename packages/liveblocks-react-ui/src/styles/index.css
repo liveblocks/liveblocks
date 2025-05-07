@@ -2140,40 +2140,22 @@
 /*************************************
  *           Chat message            *
  *************************************/
-.lb-ai-chat-user-message {
-  display: flex;
-  flex-direction: column;
-  gap: calc(0.75 * var(--lb-spacing));
 
-  &,
-  * {
-    line-height: var(--lb-line-height);
-  }
-}
-
-.lb-ai-chat-user-message-content {
-  padding: calc(0.75 * var(--lb-spacing)) calc(1.375 * var(--lb-spacing));
-  border-radius: calc(3 * var(--lb-radius));
-  background: var(--lb-background-foreground-faint);
-  color: var(--lb-foreground);
-  white-space: break-spaces;
-}
-
-.lb-ai-chat-assistant-message {
+.lb-ai-chat-message {
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   color: var(--lb-foreground);
 
   @media (hover: hover) {
-    &:where(.lb-ai-chat-assistant-message\:show-actions-hover) {
-      :where(.lb-ai-chat-assistant-message-actions) {
+    &:where(.lb-ai-chat-message\:show-actions-hover) {
+      :where(.lb-ai-chat-message-actions) {
         opacity: 0;
         transition-property: opacity;
       }
 
       &:where(:is(:hover, :focus-within)) {
-        :where(.lb-ai-chat-assistant-message-actions) {
+        :where(.lb-ai-chat-message-actions) {
           opacity: 1;
         }
       }
@@ -2181,11 +2163,21 @@
   }
 }
 
-.lb-ai-chat-assistant-message-content {
+.lb-ai-chat-message-content {
   inline-size: 100%;
+  white-space: break-spaces;
 }
 
-.lb-ai-chat-assistant-message-text-part {
+.lb-ai-chat-user-message {
+  :where(.lb-ai-chat-message-content) {
+    padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
+    border-radius: calc(3 * var(--lb-radius));
+    background: var(--lb-background-foreground-faint);
+    color: var(--lb-foreground);
+  }
+}
+
+.lb-ai-chat-message-text {
   display: flex;
   flex-direction: column;
 
@@ -2324,15 +2316,11 @@
   }
 }
 
-.lb-ai-chat-assistant-message-thinking {
-  @include truncate;
-
-  user-select: none;
-  animation: lb-animation-shimmer-small 8s linear infinite;
+.lb-ai-chat-message-tool {
+  margin-block: calc(0.25 * var(--lb-spacing));
 }
 
-.lb-ai-chat-user-message-deleted,
-.lb-ai-chat-assistant-message-deleted {
+.lb-ai-chat-message-deleted {
   position: relative;
   align-items: center;
   inline-size: 100%;
@@ -2341,7 +2329,7 @@
   text-wrap: balance;
 }
 
-.lb-ai-chat-assitant-message-error {
+.lb-ai-chat-message-error {
   --lb-dynamic-background: var(--lb-background-destructive-subtle);
 
   position: relative;
@@ -2361,7 +2349,7 @@
   }
 }
 
-.lb-ai-chat-assistant-message-reasoning-part {
+.lb-ai-chat-assistant-message-collapsible {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2370,19 +2358,16 @@
   font-size: 0.875em;
 }
 
-.lb-ai-chat-assistant-message-reasoning-part-trigger {
+.lb-ai-chat-message-collapsible-trigger {
   @include truncate;
 
   display: flex;
   gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
-
-  &:where([data-reasoning]) {
-    animation: lb-animation-shimmer-small 8s linear infinite;
-  }
+  cursor: pointer;
 }
 
-.lb-ai-chat-assistant-message-reasoning-part-content {
+.lb-ai-chat-message-collapsible-content {
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
   line-height: var(--lb-line-height);
@@ -2392,11 +2377,10 @@
   }
 }
 
-.lb-ai-chat-assistant-message-actions {
+.lb-ai-chat-message-actions {
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   align-items: center;
-  margin-inline-start: calc(-0.25 * var(--lb-spacing));
 }
 
 .lb-ai-chat {
@@ -2407,6 +2391,7 @@
   inline-size: 100%;
   block-size: 100%;
   background: var(--lb-background);
+  isolation: isolate;
 
   /* overflow-block: auto; doesn't work as expected */
   /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
@@ -2425,22 +2410,21 @@
   margin-inline: auto;
   padding-block-start: var(--lb-spacing);
   padding-block-end: calc(5 * var(--lb-spacing));
-}
 
-.lb-ai-chat-loading,
-.lb-ai-chat-error {
-  position: relative;
-  flex: 1 1 auto;
-}
+  :where(.lb-ai-chat-user-message) {
+    max-inline-size: 80%;
+    margin-inline-start: auto;
 
-.lb-ai-chat-messages-user-message {
-  max-inline-size: 80%;
-  margin-inline-start: auto;
+    :where(.lb-ai-chat-message-actions) {
+      margin-inline-start: auto;
+    }
+  }
 }
 
 .lb-ai-chat-footer {
   position: sticky;
   inset-block-end: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
@@ -2493,16 +2477,53 @@
   }
 }
 
-.lb-ai-chat-scroll-button {
+.lb-ai-chat-scroll-indicator {
   border-radius: $lb-radius-full;
+  color: var(--lb-foreground-moderate);
   opacity: 0;
   pointer-events: none;
-  transition-property: opacity;
+  transition-property: transform, opacity, background;
+  transform: scale(0.8);
+  transform-origin: bottom;
 
   &:where([data-visible]) {
     opacity: 1;
     pointer-events: all;
+    transform: scale(1);
   }
+}
+
+.lb-ai-chat-scroll-indicator-button {
+  @include button-base;
+
+  padding: calc(0.375 * var(--lb-spacing));
+  border-radius: $lb-radius-full;
+  color: var(--lb-foreground-moderate);
+  transition-property: opacity, color;
+
+  &:where(:hover, :focus-visible) {
+    color: var(--lb-foreground-secondary);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    transition-property: box-shadow;
+  }
+
+  &:where(:focus-visible)::after {
+    box-shadow: inset var(--lb-accent) 0 0 0 2px;
+  }
+}
+
+.lb-ai-chat-pending {
+  @include truncate;
+
+  user-select: none;
+  animation: lb-animation-shimmer-small 8s linear infinite;
 }
 
 /*************************************

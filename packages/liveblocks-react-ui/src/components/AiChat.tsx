@@ -195,6 +195,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         });
       };
     }
+    const isScrollIndicatorVisible =
+      distanceToBottom !== null && distanceToBottom > MIN_DISTANCE_TO_BOTTOM;
 
     return (
       <div
@@ -203,11 +205,11 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         className={classNames("lb-root lb-ai-chat", className)}
       >
         {isLoading ? (
-          <div className="lb-ai-chat-loading lb-loading">
+          <div className="lb-loading lb-ai-chat-loading">
             <SpinnerIcon />
           </div>
         ) : error !== undefined ? (
-          <div className="lb-ai-chat-error lb-error">
+          <div className="lb-error lb-ai-chat-error">
             {$.AI_CHAT_MESSAGES_ERROR(error)}
           </div>
         ) : (
@@ -222,35 +224,35 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
         <div className="lb-ai-chat-footer">
           <div className="lb-ai-chat-footer-actions">
-            <button
-              className="lb-ai-chat-scroll-button lb-button"
-              data-visible={
-                distanceToBottom !== null &&
-                distanceToBottom > MIN_DISTANCE_TO_BOTTOM
-                  ? ""
-                  : undefined
-              }
-              data-variant="secondary"
-              onClick={() => {
-                const container = containerRef.current;
-                if (container === null) return;
-
-                container.scrollTo({
-                  top: container.scrollHeight,
-                  behavior: "smooth",
-                });
-              }}
+            <div
+              className="lb-elevation lb-ai-chat-scroll-indicator"
+              data-visible={isScrollIndicatorVisible ? "" : undefined}
             >
-              <span className="lb-icon-container">
-                <ChevronDownIcon />
-              </span>
-            </button>
+              <button
+                className="lb-ai-chat-scroll-indicator-button"
+                tabIndex={isScrollIndicatorVisible ? 0 : -1}
+                aria-hidden={!isScrollIndicatorVisible}
+                disabled={!isScrollIndicatorVisible}
+                onClick={() => {
+                  const container = containerRef.current;
+                  if (container === null) return;
+
+                  container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: "smooth",
+                  });
+                }}
+              >
+                <span className="lb-icon-container">
+                  <ChevronDownIcon />
+                </span>
+              </button>
+            </div>
           </div>
           <AiChatComposer
             key={chatId}
             chatId={chatId}
             copilotId={copilotId as CopilotId}
-            className="lb-ai-chat-composer"
             overrides={$}
             autoFocus={autoFocus}
           />
@@ -278,12 +280,7 @@ function Messages({
   return messages.map((message) => {
     if (message.role === "user") {
       return (
-        <AiChatUserMessage
-          key={message.id}
-          message={message}
-          overrides={$}
-          className="lb-ai-chat-messages-user-message"
-        />
+        <AiChatUserMessage key={message.id} message={message} overrides={$} />
       );
     } else if (message.role === "assistant") {
       return (
@@ -291,7 +288,6 @@ function Messages({
           key={message.id}
           message={message}
           overrides={$}
-          className="lb-ai-chat-messages-assistant-message"
         />
       );
     } else {

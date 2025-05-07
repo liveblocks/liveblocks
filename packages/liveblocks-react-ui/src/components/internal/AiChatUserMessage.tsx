@@ -2,7 +2,7 @@ import type { UiUserMessage } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 import { forwardRef, memo } from "react";
 
-import type { GlobalOverrides } from "../../overrides";
+import { type GlobalOverrides, useOverrides } from "../../overrides";
 import { classNames } from "../../utils/class-names";
 
 /* -------------------------------------------------------------------------------------------------
@@ -21,33 +21,35 @@ export interface AiChatUserMessageProps extends ComponentProps<"div"> {
 
 export const AiChatUserMessage = memo(
   forwardRef<HTMLDivElement, AiChatUserMessageProps>(
-    ({ message, className }, forwardedRef) => {
-      const text = message.content
+    ({ message, className, overrides }, forwardedRef) => {
+      const $ = useOverrides(overrides);
+      const paragraphs = message.content
         .filter((c) => c.type === "text")
-        .map((c) => c.text)
-        .join("\n");
-
-      if (message.deletedAt !== undefined) {
-        return (
-          <div
-            ref={forwardedRef}
-            className={classNames("lb-ai-chat-user-message", className)}
-          >
-            <div className="lb-ai-chat-user-message-deleted">
-              This message has been deleted.
-            </div>
-          </div>
-        );
-      }
+        .map((c) => c.text);
 
       return (
         <div
           ref={forwardedRef}
-          className={classNames("lb-ai-chat-user-message", className)}
+          className={classNames(
+            "lb-ai-chat-message lb-ai-chat-user-message",
+            className
+          )}
         >
-          <div className="lb-ai-chat-user-message-content">
-            <div className="lb-ai-chat-user-message-body">{text}</div>
+          <div className="lb-ai-chat-message-content">
+            {message.deletedAt !== undefined ? (
+              <div className="lb-ai-chat-message-deleted">
+                {$.AI_CHAT_MESSAGE_DELETED}
+              </div>
+            ) : (
+              <div className="lb-ai-chat-message-text">
+                {/* Mimic the structure of assistant messages even though there's no rich text here yet. */}
+                {paragraphs.map((text, index) => (
+                  <p key={index}>{text}</p>
+                ))}
+              </div>
+            )}
           </div>
+          {/* <div className="lb-ai-chat-message-actions" /> */}
         </div>
       );
     }

@@ -12,6 +12,7 @@ import {
   type ComponentProps,
   forwardRef,
   memo,
+  type ReactNode,
   useEffect,
   useMemo,
   useState,
@@ -82,11 +83,13 @@ export const AiChatAssistantMessage = memo(
     ) => {
       const $ = useOverrides(overrides);
 
+      let children: ReactNode = null;
+
       function MessageActions({ text }: { text: string }) {
         if (!showActions) return null;
 
         return (
-          <div className="lb-ai-chat-assistant-message-actions">
+          <div className="lb-ai-chat-message-actions">
             <Tooltip content={$.AI_CHAT_MESSAGE_COPY}>
               <CopyTextButton text={text} label={$.AI_CHAT_MESSAGE_COPY} />
             </Tooltip>
@@ -106,47 +109,24 @@ export const AiChatAssistantMessage = memo(
       }
 
       if (message.deletedAt !== undefined) {
-        return (
-          <div
-            className={classNames("lb-ai-chat-assistant-message", className)}
-            {...props}
-            ref={forwardedRef}
-          >
-            <div className="lb-ai-chat-assistant-message-deleted">
-              {$.AI_CHAT_MESSAGE_DELETED}
-            </div>
+        children = (
+          <div className="lb-ai-chat-message-deleted">
+            {$.AI_CHAT_MESSAGE_DELETED}
           </div>
         );
       } else if (message.status === "pending") {
         if (message.contentSoFar.length === 0) {
-          return (
-            <div
-              className={classNames("lb-ai-chat-assistant-message", className)}
-              {...props}
-              ref={forwardedRef}
-            >
-              <div className="lb-ai-chat-assistant-message-thinking">
-                {$.AI_CHAT_MESSAGE_THINKING}
-              </div>
+          children = (
+            <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
+              {$.AI_CHAT_MESSAGE_THINKING}
             </div>
           );
         } else {
-          return (
-            <div
-              className={classNames(
-                "lb-ai-chat-assistant-message",
-                showActions === "hover" &&
-                  "lb-ai-chat-assistant-message:show-actions-hover",
-                className
-              )}
-              {...props}
-              ref={forwardedRef}
-            >
-              <AssistantMessageContent
-                content={message.contentSoFar}
-                chatId={message.chatId}
-              />
-            </div>
+          children = (
+            <AssistantMessageContent
+              content={message.contentSoFar}
+              chatId={message.chatId}
+            />
           );
         }
       } else if (message.status === "completed") {
@@ -157,26 +137,15 @@ export const AiChatAssistantMessage = memo(
           return acc;
         }, "");
 
-        return (
-          <TooltipProvider>
-            <div
-              className={classNames(
-                "lb-ai-chat-assistant-message",
-                showActions === "hover" &&
-                  "lb-ai-chat-assistant-message:show-actions-hover",
-                className
-              )}
-              {...props}
-              ref={forwardedRef}
-            >
-              <AssistantMessageContent
-                content={message.content}
-                chatId={message.chatId}
-              />
+        children = (
+          <>
+            <AssistantMessageContent
+              content={message.content}
+              chatId={message.chatId}
+            />
 
-              <MessageActions text={text} />
-            </div>
-          </TooltipProvider>
+            <MessageActions text={text} />
+          </>
         );
       } else if (message.status === "failed") {
         const text: string = message.contentSoFar.reduce((acc, part) => {
@@ -186,37 +155,41 @@ export const AiChatAssistantMessage = memo(
           return acc;
         }, "");
 
-        return (
-          <TooltipProvider>
-            <div
-              className={classNames(
-                "lb-ai-chat-assistant-message",
-                showActions === "hover" &&
-                  "lb-ai-chat-assistant-message:show-actions-hover",
-                className
-              )}
-              {...props}
-              ref={forwardedRef}
-            >
-              <AssistantMessageContent
-                content={message.contentSoFar}
-                chatId={message.chatId}
-              />
+        children = (
+          <>
+            <AssistantMessageContent
+              content={message.contentSoFar}
+              chatId={message.chatId}
+            />
 
-              <div className="lb-ai-chat-assitant-message-error">
-                <span className="lb-icon-container">
-                  <WarningIcon />
-                </span>
-
-                {message.errorReason}
-              </div>
-
-              <MessageActions text={text} />
+            <div className="lb-ai-chat-message-error">
+              <span className="lb-icon-container">
+                <WarningIcon />
+              </span>
+              {message.errorReason}
             </div>
-          </TooltipProvider>
+
+            <MessageActions text={text} />
+          </>
         );
       }
-      return null;
+
+      return (
+        <TooltipProvider>
+          <div
+            className={classNames(
+              "lb-ai-chat-message lb-ai-chat-assistant-message",
+              showActions === "hover" &&
+                "lb-ai-chat-message:show-actions-hover",
+              className
+            )}
+            {...props}
+            ref={forwardedRef}
+          >
+            {children}
+          </div>
+        </TooltipProvider>
+      );
     }
   )
 );
@@ -239,7 +212,7 @@ function CopyTextButton({ text, label }: { text: string; label: string }) {
         navigator.clipboard.writeText(text);
         setIsCopied(true);
       }}
-      className="lb-ai-chat-assistant-message-copy-button"
+      className="lb-ai-chat-message-action"
       aria-label={label}
       icon={isCopied ? <CheckIcon /> : <CopyIcon />}
     />
@@ -267,7 +240,7 @@ function RegenerateMessageButton({
           stream: true,
         });
       }}
-      className="lb-ai-chat-assistant-message-regenerate-button"
+      className="lb-ai-chat-message-action"
       aria-label={label}
       icon={<RetryIcon />}
     />
@@ -287,7 +260,7 @@ function AssistantMessageContent({
     content.every((part) => part.type === "reasoning");
 
   return (
-    <div className="lb-ai-chat-assistant-message-content">
+    <div className="lb-ai-chat-message-content">
       {content.map((part, index) => {
         switch (part.type) {
           case "text": {
@@ -295,7 +268,7 @@ function AssistantMessageContent({
               <TextPart
                 key={index}
                 text={part.text}
-                className="lb-ai-chat-assistant-message-text-part"
+                className="lb-ai-chat-message-text"
               />
             );
           }
@@ -388,7 +361,11 @@ function ToolCallPart({
   );
   if (tool === undefined || tool.render === undefined) return null;
 
-  return <tool.render args={args as unknown} />;
+  return (
+    <div className="lb-ai-chat-message-tool">
+      <tool.render args={args as unknown} />
+    </div>
+  );
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -404,13 +381,15 @@ function ReasoningPart({
   const [isOpen, setIsOpen] = useState(false);
   return (
     <CollapsiblePrimitive.Root
-      className="lb-ai-chat-assistant-message-reasoning-part"
+      className="lb-ai-chat-message-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
       <CollapsiblePrimitive.Trigger
-        className="lb-ai-chat-assistant-message-reasoning-part-trigger"
-        data-reasoning={isPending ? "" : undefined}
+        className={classNames(
+          "lb-ai-chat-message-collapsible-trigger",
+          isPending && "lb-ai-chat-pending"
+        )}
       >
         Reasoning
         <span className="lb-icon-container">
@@ -418,7 +397,7 @@ function ReasoningPart({
         </span>
       </CollapsiblePrimitive.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-ai-chat-assistant-message-reasoning-part-content">
+      <CollapsiblePrimitive.Content className="lb-ai-chat-message-collapsible-content">
         {text}
       </CollapsiblePrimitive.Content>
     </CollapsiblePrimitive.Root>
