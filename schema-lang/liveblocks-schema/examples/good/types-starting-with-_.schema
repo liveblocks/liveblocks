@@ -1,6 +1,0 @@
-type Storage {
-  x: _Foo
-}
-
-type _Foo {}
-#    ^ OK
