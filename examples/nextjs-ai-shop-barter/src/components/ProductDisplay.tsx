@@ -193,7 +193,7 @@ export function ProductDisplay() {
 
         <div>
           <h3 className="font-medium mb-2 text-sm">Description</h3>
-          <p className="text-gray-500 leading-relaxed">{description}</p>
+          <div className="text-gray-500 leading-relaxed">{description}</div>
         </div>
       </div>
     </div>
