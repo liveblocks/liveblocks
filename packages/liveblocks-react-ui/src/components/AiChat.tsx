@@ -16,7 +16,7 @@ import {
   useState,
 } from "react";
 
-import { ChevronDownIcon } from "../icons/ChevronDown";
+import { ArrowDownIcon } from "../icons/ArrowDown";
 import { SpinnerIcon } from "../icons/Spinner";
 import {
   type AiChatComposerOverrides,
@@ -49,6 +49,10 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   copilotId?: string;
   /**
+   * The layout of the chat and its composer.
+   */
+  layout?: "inset" | "compact";
+  /**
    * The contextual information to include in the chat. Used by the assistant when generating responses.
    */
   contexts?: AiChatContext[];
@@ -73,6 +77,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       chatId,
       copilotId,
       autoFocus,
+      layout = "inset",
       overrides,
       contexts = [],
       tools = {},
@@ -202,25 +207,33 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       <div
         ref={containerRef}
         {...props}
-        className={classNames("lb-root lb-ai-chat", className)}
-      >
-        {isLoading ? (
-          <div className="lb-loading lb-ai-chat-loading">
-            <SpinnerIcon />
-          </div>
-        ) : error !== undefined ? (
-          <div className="lb-error lb-ai-chat-error">
-            {$.AI_CHAT_MESSAGES_ERROR(error)}
-          </div>
-        ) : (
-          <div className="lb-ai-chat-messages">
-            <Messages
-              messages={messages}
-              overrides={$}
-              onDistanceToBottomChange={scrollToBottomCallbackRef.current}
-            />
-          </div>
+        className={classNames(
+          "lb-root lb-ai-chat",
+          layout === "compact"
+            ? "lb-ai-chat:layout-compact"
+            : "lb-ai-chat:layout-inset",
+          className
         )}
+      >
+        <div className="lb-ai-chat-content">
+          {isLoading ? (
+            <div className="lb-loading lb-ai-chat-loading">
+              <SpinnerIcon />
+            </div>
+          ) : error !== undefined ? (
+            <div className="lb-error lb-ai-chat-error">
+              {$.AI_CHAT_MESSAGES_ERROR(error)}
+            </div>
+          ) : (
+            <div className="lb-ai-chat-messages">
+              <Messages
+                messages={messages}
+                overrides={$}
+                onDistanceToBottomChange={scrollToBottomCallbackRef.current}
+              />
+            </div>
+          )}
+        </div>
 
         <div className="lb-ai-chat-footer">
           <div className="lb-ai-chat-footer-actions">
@@ -244,7 +257,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 }}
               >
                 <span className="lb-icon-container">
-                  <ChevronDownIcon />
+                  <ArrowDownIcon />
                 </span>
               </button>
             </div>
