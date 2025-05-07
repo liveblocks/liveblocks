@@ -835,15 +835,17 @@ function createStore_forPermissionHints() {
   );
 
   function update(newHints: Record<string, Permission[]>) {
-    for (const [roomId, permissions] of Object.entries(newHints)) {
-      const signal = permissionsByRoomId.getOrCreate(roomId);
-      // Get the existing set of permissions for the room and only ever add permission to this set
-      const existingPermissions = new Set(signal.get());
-      for (const permission of permissions) {
-        existingPermissions.add(permission);
+    batch(() => {
+      for (const [roomId, permissions] of Object.entries(newHints)) {
+        const signal = permissionsByRoomId.getOrCreate(roomId);
+        // Get the existing set of permissions for the room and only ever add permission to this set
+        const existingPermissions = new Set(signal.get());
+        for (const permission of permissions) {
+          existingPermissions.add(permission);
+        }
+        signal.set(existingPermissions);
       }
-      signal.set(existingPermissions);
-    }
+    });
   }
 
   function getPermissionForRoomΣ(roomId: string): ISignal<Set<Permission>> {
@@ -851,7 +853,7 @@ function createStore_forPermissionHints() {
   }
 
   return {
-    getPermissionForRoomΣ: getPermissionForRoomΣ,
+    getPermissionForRoomΣ,
 
     // Mutations
     update,
