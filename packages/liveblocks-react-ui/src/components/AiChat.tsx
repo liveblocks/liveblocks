@@ -41,6 +41,10 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   chatId: string;
   /**
+   * Whether to focus the chat composer on mount.
+   */
+  autoFocus?: boolean;
+  /**
    * The id of the copilot to use to send the message.
    */
   copilotId?: string;
@@ -68,6 +72,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     {
       chatId,
       copilotId,
+      autoFocus,
       overrides,
       contexts = [],
       tools = {},
@@ -247,6 +252,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             className="lb-ai-chat-composer"
             overrides={$}
+            autoFocus={autoFocus}
           />
         </div>
       </div>

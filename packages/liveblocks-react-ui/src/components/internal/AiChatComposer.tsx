@@ -46,6 +46,10 @@ export interface AiChatComposerProps extends ComponentProps<"form"> {
    */
   disabled?: boolean;
   /**
+   * Whether to focus the editor on mount.
+   */
+  autoFocus?: boolean;
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & AiChatComposerOverrides>;
@@ -73,6 +77,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
       defaultValue,
       onComposerSubmit,
       disabled,
+      autoFocus,
       overrides,
       className,
       chatId,
@@ -152,7 +157,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
         >
           <div className="lb-ai-chat-composer-editor-container">
             <ComposerPrimitive.Editor
-              autoFocus
+              autoFocus={autoFocus}
               className="lb-ai-chat-composer-editor"
               placeholder={$.AI_CHAT_COMPOSER_PLACEHOLDER}
               defaultValue={defaultValue}
