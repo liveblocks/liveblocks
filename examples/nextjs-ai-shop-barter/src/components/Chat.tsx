@@ -25,7 +25,7 @@ export function Chat() {
       },
       {
         description: "The description of the product",
-        value: `${description}`,
+        value: `${JSON.stringify(description)}`,
       },
       {
         description: "The current price of the product",
@@ -57,6 +57,7 @@ export function Chat() {
             id
           } /* TODO actions to change product price, variant, and offer to throw in another small product or free delivery */
           contexts={contexts}
+          copilotId="co_EMwwotoh1Z5QlU1xNcY1Q"
         />
       </div>
       <div className="px-4 py-3 border-t border-gray-200">
