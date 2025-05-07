@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v2.24.2
+
 ### `@liveblocks/react-ui`
 
 - Disable or hide actions in `Thread` and `Comment` components for users without
