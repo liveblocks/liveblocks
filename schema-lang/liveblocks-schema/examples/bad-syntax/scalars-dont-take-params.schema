@@ -1,9 +1,0 @@
-type X {
-  a: number<string>
-           ^ Expected ",", ";", "[", "\n", "|", or "}" but "<" found
-}
----
-type X {
-  a: string<number>
-           ^ Expected ",", ";", "[", "\n", "|", or "}" but "<" found
-}
