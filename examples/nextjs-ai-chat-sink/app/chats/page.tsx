@@ -62,8 +62,8 @@ function Chats() {
           return (
             <div key={chat.id} className="flex flex-row gap-2 items-center">
               <Link href={`/chats/${chat.id}`}>
-                {chat.name ? (
-                  chat.name
+                {chat.title ? (
+                  chat.title
                 ) : (
                   <span className="text-gray-500">Untitled</span>
                 )}
