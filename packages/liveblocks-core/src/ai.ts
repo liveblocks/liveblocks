@@ -286,6 +286,14 @@ function createStore_forChatMessages() {
   function upsert(message: AiChatMessage): void {
     batch(() => {
       const chatMsgsΣ = messagePoolByChatIdΣ.getOrCreate(message.chatId);
+      const existing = chatMsgsΣ.get().get(message.id);
+      // If the message already exists, we do not want to overwrite the creation date. This is because when submitting a message,
+      // we optimistically create a user message and an assistant message. They happen serially, so when the user message addition
+      // is acknowledged by the server, we receive a user message from the server with the updated creation date, which ends up
+      // becoming later than the assistant message creation date, so the message ordering becomes incorrect.
+      if (existing !== undefined) {
+        message.createdAt = existing.createdAt;
+      }
       chatMsgsΣ.mutate((pool) => pool.upsert(message));
 
       // If the message is a pending update, write it to the pendingContents
