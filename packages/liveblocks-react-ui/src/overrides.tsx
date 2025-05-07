@@ -56,23 +56,23 @@ export interface ComposerOverrides {
   COMPOSER_TOGGLE_MARK: (mark: ComposerBodyMark) => string;
 }
 
-export interface ChatComposerOverrides {
-  CHAT_COMPOSER_PLACEHOLDER: string;
-  CHAT_COMPOSER_SEND: string;
-  CHAT_COMPOSER_ATTACH_FILES: string;
-  CHAT_COMPOSER_REMOVE_ATTACHMENT: string;
-  CHAT_COMPOSER_ABORT: string;
+export interface AiChatComposerOverrides {
+  AI_CHAT_COMPOSER_PLACEHOLDER: string;
+  AI_CHAT_COMPOSER_SEND: string;
+  AI_CHAT_COMPOSER_ATTACH_FILES: string;
+  AI_CHAT_COMPOSER_REMOVE_ATTACHMENT: string;
+  AI_CHAT_COMPOSER_ABORT: string;
 }
 
-export interface ChatMessageOverrides {
-  CHAT_MESSAGE_DELETED: string;
-  CHAT_MESSAGE_THINKING: string;
-  CHAT_MESSAGE_COPY: string;
-  CHAT_MESSAGE_TRY_AGAIN: string;
+export interface AiChatMessageOverrides {
+  AI_CHAT_MESSAGE_DELETED: string;
+  AI_CHAT_MESSAGE_THINKING: string;
+  AI_CHAT_MESSAGE_COPY: string;
+  AI_CHAT_MESSAGE_TRY_AGAIN: string;
 }
 
-export interface ChatOverrides {
-  GET_CHAT_MESSAGES_ERROR: (error: Error) => ReactNode;
+export interface AiChatOverrides {
+  AI_CHAT_MESSAGES_ERROR: (error: Error) => ReactNode;
 }
 
 export interface ThreadOverrides {
@@ -119,9 +119,9 @@ export type Overrides = LocalizationOverrides &
   ThreadOverrides &
   InboxNotificationOverrides &
   HistoryVersionPreviewOverrides &
-  ChatComposerOverrides &
-  ChatMessageOverrides &
-  ChatOverrides;
+  AiChatComposerOverrides &
+  AiChatMessageOverrides &
+  AiChatOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -218,16 +218,16 @@ export const defaultOverrides: Overrides = {
   HISTORY_VERSION_PREVIEW_EMPTY: "No content.",
   HISTORY_VERSION_PREVIEW_ERROR: () =>
     "There was an error while getting this version.",
-  CHAT_COMPOSER_PLACEHOLDER: "Ask anything…",
-  CHAT_COMPOSER_SEND: "Send",
-  CHAT_COMPOSER_ATTACH_FILES: "Attach files",
-  CHAT_COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
-  CHAT_COMPOSER_ABORT: "Abort response.",
-  CHAT_MESSAGE_DELETED: "This message has been deleted.",
-  CHAT_MESSAGE_THINKING: "Thinking…",
-  CHAT_MESSAGE_COPY: "Copy",
-  CHAT_MESSAGE_TRY_AGAIN: "Try again",
-  GET_CHAT_MESSAGES_ERROR: () => (
+  AI_CHAT_COMPOSER_PLACEHOLDER: "Ask anything…",
+  AI_CHAT_COMPOSER_SEND: "Send",
+  AI_CHAT_COMPOSER_ATTACH_FILES: "Attach files",
+  AI_CHAT_COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
+  AI_CHAT_COMPOSER_ABORT: "Abort response.",
+  AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
+  AI_CHAT_MESSAGE_THINKING: "Thinking…",
+  AI_CHAT_MESSAGE_COPY: "Copy",
+  AI_CHAT_MESSAGE_TRY_AGAIN: "Try again",
+  AI_CHAT_MESSAGES_ERROR: () => (
     <>There was an error while getting the messages</>
   ),
 };

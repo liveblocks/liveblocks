@@ -3,8 +3,8 @@ import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import {
+  type ComponentProps,
   type FormEvent,
-  type FormHTMLAttributes,
   forwardRef,
   useCallback,
 } from "react";
@@ -12,11 +12,11 @@ import {
 import { SendIcon } from "../../icons/Send";
 import { StopIcon } from "../../icons/Stop";
 import {
-  type ChatComposerOverrides,
+  type AiChatComposerOverrides,
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
-import * as ComposerPrimitive from "../../primitives/Chat/Composer";
+import * as ComposerPrimitive from "../../primitives/AiChatComposer";
 import { classNames } from "../../utils/class-names";
 import { Button } from "./Button";
 import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
@@ -24,7 +24,7 @@ import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
 /* -------------------------------------------------------------------------------------------------
  * AiChatComposer
  * -----------------------------------------------------------------------------------------------*/
-export type AiChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
+export interface AiChatComposerProps extends ComponentProps<"form"> {
   /**
    * The composer's initial value.
    */
@@ -48,7 +48,7 @@ export type AiChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<GlobalOverrides & ChatComposerOverrides>;
+  overrides?: Partial<GlobalOverrides & AiChatComposerOverrides>;
   /**
    * The id of the chat the composer belongs to.
    */
@@ -65,7 +65,7 @@ export type AiChatComposerProps = FormHTMLAttributes<HTMLFormElement> & {
    * @internal
    */
   stream?: boolean;
-};
+}
 
 export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
   (
@@ -154,7 +154,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
             <ComposerPrimitive.Editor
               autoFocus
               className="lb-ai-chat-composer-editor"
-              placeholder={$.CHAT_COMPOSER_PLACEHOLDER}
+              placeholder={$.AI_CHAT_COMPOSER_PLACEHOLDER}
               defaultValue={defaultValue}
             />
 
@@ -166,7 +166,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
               <div className="lb-ai-chat-composer-actions">
                 {pendingMessage === undefined ? (
                   <ShortcutTooltip
-                    content={$.CHAT_COMPOSER_SEND}
+                    content={$.AI_CHAT_COMPOSER_SEND}
                     shortcut="Enter"
                   >
                     <ComposerPrimitive.Submit asChild>
@@ -175,13 +175,13 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                         onClick={(event) => event.stopPropagation()}
                         className="lb-ai-chat-composer-action"
                         variant="primary"
-                        aria-label={$.CHAT_COMPOSER_SEND}
+                        aria-label={$.AI_CHAT_COMPOSER_SEND}
                         icon={<SendIcon />}
                       />
                     </ComposerPrimitive.Submit>
                   </ShortcutTooltip>
                 ) : (
-                  <ShortcutTooltip content={$.CHAT_COMPOSER_ABORT}>
+                  <ShortcutTooltip content={$.AI_CHAT_COMPOSER_ABORT}>
                     <Button
                       onPointerDown={(event) => event.preventDefault()}
                       onClick={(event) => {
@@ -190,7 +190,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                       }}
                       className="lb-ai-chat-composer-action"
                       variant="secondary"
-                      aria-label={$.CHAT_COMPOSER_ABORT}
+                      aria-label={$.AI_CHAT_COMPOSER_ABORT}
                       icon={<StopIcon />}
                     />
                   </ShortcutTooltip>

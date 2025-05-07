@@ -1,12 +1,6 @@
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import type {
-  ButtonHTMLAttributes,
-  FormEvent,
-  FormHTMLAttributes,
-  HTMLAttributes,
-  KeyboardEvent,
-} from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import {
   createContext,
   forwardRef,
@@ -27,14 +21,20 @@ import {
 import { withHistory } from "slate-history";
 import { Editable, ReactEditor, Slate, withReact } from "slate-react";
 
-import type { AiComposerEditor, SlotProp } from "../../../types";
-import { withNormalize } from "../../slate/plugins/normalize";
-import { isEmpty } from "../../slate/utils/is-empty";
+import type { AiComposerEditor } from "../../types";
+import { withNormalize } from "../slate/plugins/normalize";
+import { isEmpty } from "../slate/utils/is-empty";
+import type {
+  AiChatComposerEditorProps,
+  AiChatComposerFormProps,
+  AiChatComposerSubmitProps,
+} from "./types";
 
-/* -------------------------------------------------------------------------------------------------
- * Form
- * -----------------------------------------------------------------------------------------------*/
-export const ComposerContext = createContext<{
+const AI_CHAT_COMPOSER_SUBMIT_NAME = "AiChatComposerSubmit";
+const AI_CHAT_COMPOSER_EDITOR_NAME = "AiChatComposerEditor";
+const AI_CHAT_COMPOSER_FORM_NAME = "AiChatComposerForm";
+
+const AiChatComposerContext = createContext<{
   chatId: string;
 
   editor: SlateEditor;
@@ -45,43 +45,28 @@ export const ComposerContext = createContext<{
   disabled: boolean;
 } | null>(null);
 
-export type FormProps = FormHTMLAttributes<HTMLFormElement> & {
-  /**
-   * The event handler called when a chat message is submitted.
-   */
-  onComposerSubmit?: (
-    message: {
-      /**
-       * The submitted message text.
-       */
-      text: string;
-    },
-    event: FormEvent<HTMLFormElement>
-  ) => void;
-  /**
-   * Whether the composer is disabled.
-   */
-  disabled?: boolean;
-  /**
-   * The id of the chat the composer belongs to.
-   */
-  chatId: string;
-};
+/* -------------------------------------------------------------------------------------------------
+ * Form
+ * -----------------------------------------------------------------------------------------------*/
 
 /**
  * Surrounds the chat composer's content and handles submissions.
  *
  * @example
- * <Form onComposerSubmit={({ text }) => {}}>
- *	 <Editor />
- *   <Submit />
- * </Form>
+ * <AiChatComposer.Form onComposerSubmit={({ text }) => {}}>
+ *	 <AiChatComposer.Editor />
+ *   <AiChatComposer.Submit />
+ * </AiChatComposer.Form>
  */
-export const Form = forwardRef<HTMLFormElement, FormProps>(
+export const AiChatComposerForm = forwardRef<
+  HTMLFormElement,
+  AiChatComposerFormProps
+>(
   (
-    { onComposerSubmit, onSubmit, disabled, chatId, ...props },
+    { onComposerSubmit, onSubmit, disabled, chatId, asChild, ...props },
     forwardedRef
   ) => {
+    const Component = asChild ? Slot : "form";
     const formRef = useRef<HTMLFormElement | null>(null);
 
     const editorRef = useRef<AiComposerEditor | null>(null);
@@ -173,7 +158,7 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
     );
 
     return (
-      <ComposerContext.Provider
+      <AiChatComposerContext.Provider
         value={{
           chatId,
           editor,
@@ -183,8 +168,8 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
           disabled: disabled || false,
         }}
       >
-        <form onSubmit={handleSubmit} {...props} ref={formRef} />
-      </ComposerContext.Provider>
+        <Component onSubmit={handleSubmit} {...props} ref={formRef} />
+      </AiChatComposerContext.Provider>
     );
   }
 );
@@ -192,42 +177,24 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
 /* -------------------------------------------------------------------------------------------------
  * Editor
  * -----------------------------------------------------------------------------------------------*/
-export type EditorProps = Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "defaultValue"
-> & {
-  /**
-   * The editor's initial value.
-   */
-  defaultValue?: string;
-  /**
-   * The text to display when the editor is empty.
-   */
-  placeholder?: string;
-  /**
-   * Whether the editor is disabled.
-   */
-  disabled?: boolean;
-  /**
-   * Whether to focus the editor on mount.
-   */
-  autoFocus?: boolean;
-};
 
 /**
  * Displays the chat composer's editor.
  *
  * @example
- * <Editor placeholder="Write a message…" />
+ * <AiChatComposer.Editor placeholder="Write a message…" />
  */
-export const Editor = forwardRef<HTMLDivElement, EditorProps>(
+export const AiChatComposerEditor = forwardRef<
+  HTMLDivElement,
+  AiChatComposerEditorProps
+>(
   (
     { defaultValue = "", onKeyDown, disabled, autoFocus, ...props },
     forwardedRef
   ) => {
-    const context = useContext(ComposerContext);
+    const context = useContext(AiChatComposerContext);
     if (context === null) {
-      throw new Error("Editor must be a descendant of Form.");
+      throw new Error("AiChatComposer.Form is missing from the React tree.");
     }
 
     const {
@@ -310,31 +277,44 @@ export const Editor = forwardRef<HTMLDivElement, EditorProps>(
 /* -------------------------------------------------------------------------------------------------
  * Submit
  * -----------------------------------------------------------------------------------------------*/
-export type SubmitProps = ButtonHTMLAttributes<HTMLButtonElement> & SlotProp;
 
 /**
  * A button to submit a chat message.
  *
  * @example
- * <ChatComposer.Submit>Send</ChatComposer.Submit>
+ * <AiChatComposer.Submit>Send</AiChatComposer.Submit>
  */
-export const Submit = forwardRef<HTMLButtonElement, SubmitProps>(
-  ({ disabled, asChild, ...props }, forwardedRef) => {
-    const Component = asChild ? Slot : "button";
-    const context = useContext(ComposerContext);
-    if (context === null) {
-      throw new Error("Submit must be a descendant of Form.");
-    }
-
-    const { disabled: isFormDisabled, isEditorEmpty } = context;
-
-    return (
-      <Component
-        type="submit"
-        {...props}
-        ref={forwardedRef}
-        disabled={disabled || isFormDisabled || isEditorEmpty}
-      />
-    );
+export const AiChatComposerSubmit = forwardRef<
+  HTMLButtonElement,
+  AiChatComposerSubmitProps
+>(({ disabled, asChild, ...props }, forwardedRef) => {
+  const Component = asChild ? Slot : "button";
+  const context = useContext(AiChatComposerContext);
+  if (context === null) {
+    throw new Error("AiChatComposer.Form is missing from the React tree.");
   }
-);
+
+  const { disabled: isFormDisabled, isEditorEmpty } = context;
+
+  return (
+    <Component
+      type="submit"
+      {...props}
+      ref={forwardedRef}
+      disabled={disabled || isFormDisabled || isEditorEmpty}
+    />
+  );
+});
+
+if (process.env.NODE_ENV !== "production") {
+  AiChatComposerEditor.displayName = AI_CHAT_COMPOSER_EDITOR_NAME;
+  AiChatComposerForm.displayName = AI_CHAT_COMPOSER_FORM_NAME;
+  AiChatComposerSubmit.displayName = AI_CHAT_COMPOSER_SUBMIT_NAME;
+}
+
+// NOTE: Every export from this file will be available publicly as AiChatComposer.*
+export {
+  AiChatComposerEditor as Editor,
+  AiChatComposerForm as Form,
+  AiChatComposerSubmit as Submit,
+};

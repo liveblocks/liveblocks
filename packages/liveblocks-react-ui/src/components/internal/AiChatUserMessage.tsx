@@ -1,5 +1,5 @@
 import type { UiUserMessage } from "@liveblocks/core";
-import type { HTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { forwardRef, memo } from "react";
 
 import type { GlobalOverrides } from "../../overrides";
@@ -8,7 +8,7 @@ import { classNames } from "../../utils/class-names";
 /* -------------------------------------------------------------------------------------------------
  * AiChatUserMessage
  * -----------------------------------------------------------------------------------------------*/
-export type AiChatUserMessageProps = HTMLAttributes<HTMLDivElement> & {
+export interface AiChatUserMessageProps extends ComponentProps<"div"> {
   /**
    * The message to display.
    */
@@ -17,7 +17,7 @@ export type AiChatUserMessageProps = HTMLAttributes<HTMLDivElement> & {
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides>;
-};
+}
 
 export const AiChatUserMessage = memo(
   forwardRef<HTMLDivElement, AiChatUserMessageProps>(

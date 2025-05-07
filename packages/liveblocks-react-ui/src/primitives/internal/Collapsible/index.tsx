@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import { Slot } from "@radix-ui/react-slot";
 import {
   createContext,
   forwardRef,
@@ -8,6 +8,8 @@ import {
   useImperativeHandle,
   useRef,
 } from "react";
+
+import type { ContentProps, RootProps, TriggerProps } from "./types";
 
 /* -------------------------------------------------------------------------------------------------
  * Root
@@ -21,39 +23,36 @@ const RootContext = createContext<{
   contentId: string;
 } | null>(null);
 
-export interface RootProps extends HTMLAttributes<HTMLDivElement> {
-  open: boolean;
-  onOpenChange(open: boolean): void;
-  disabled?: boolean;
-}
+export const Root = forwardRef<HTMLDivElement, RootProps>(
+  (
+    { open, onOpenChange, disabled = false, asChild, ...props },
+    forwardedRef
+  ) => {
+    const Component = asChild ? Slot : "div";
+    const id = useId();
 
-export const Root = forwardRef<HTMLDivElement, RootProps>(function Root(
-  { open, onOpenChange, disabled = false, ...props },
-  forwardedRef
-) {
-  const id = useId();
-
-  return (
-    <RootContext.Provider
-      value={{ open, onOpenChange, disabled, contentId: id }}
-    >
-      <div
-        {...props}
-        ref={forwardedRef}
-        data-state={open ? "open" : "closed"}
-        data-disabled={disabled ? "" : undefined}
-      />
-    </RootContext.Provider>
-  );
-});
+    return (
+      <RootContext.Provider
+        value={{ open, onOpenChange, disabled, contentId: id }}
+      >
+        <Component
+          {...props}
+          ref={forwardedRef}
+          data-state={open ? "open" : "closed"}
+          data-disabled={disabled ? "" : undefined}
+        />
+      </RootContext.Provider>
+    );
+  }
+);
 
 /* -------------------------------------------------------------------------------------------------
  * Trigger
  * -----------------------------------------------------------------------------------------------*/
-interface TriggerProps extends HTMLAttributes<HTMLButtonElement> {}
 
 export const Trigger = forwardRef<HTMLButtonElement, TriggerProps>(
-  function Trigger({ onClick, ...props }, forwardedRef) {
+  ({ onClick, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "button";
     const context = useContext(RootContext);
 
     if (!context) {
@@ -63,7 +62,7 @@ export const Trigger = forwardRef<HTMLButtonElement, TriggerProps>(
     const { open, disabled, contentId, onOpenChange } = context;
 
     return (
-      <button
+      <Component
         {...props}
         ref={forwardedRef}
         type="button"
@@ -87,10 +86,9 @@ export const Trigger = forwardRef<HTMLButtonElement, TriggerProps>(
  * Content
  * -----------------------------------------------------------------------------------------------*/
 
-interface ContentProps extends HTMLAttributes<HTMLDivElement> {}
-
 export const Content = forwardRef<HTMLDivElement, ContentProps>(
-  function Content(props, forwardedRef) {
+  ({ asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "div";
     const rootContext = useContext(RootContext);
     const divRef = useRef<HTMLDivElement>(null);
 
@@ -140,7 +138,7 @@ export const Content = forwardRef<HTMLDivElement, ContentProps>(
     }, []);
 
     return (
-      <div
+      <Component
         {...props}
         ref={divRef}
         data-state={open ? "open" : "closed"}

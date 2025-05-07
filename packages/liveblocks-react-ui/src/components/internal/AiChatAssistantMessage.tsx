@@ -9,8 +9,8 @@ import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Lexer } from "marked";
 import {
+  type ComponentProps,
   forwardRef,
-  type HTMLAttributes,
   memo,
   useEffect,
   useMemo,
@@ -26,7 +26,7 @@ import { CopyIcon } from "../../icons/Copy";
 import { RetryIcon } from "../../icons/Retry";
 import { WarningIcon } from "../../icons/Warning";
 import {
-  type ChatMessageOverrides,
+  type AiChatMessageOverrides,
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
@@ -40,7 +40,7 @@ import { classNames } from "../../utils/class-names";
 /* -------------------------------------------------------------------------------------------------
  * AiChatAssistantMessage
  * -----------------------------------------------------------------------------------------------*/
-export type AiChatAssistantMessageProps = HTMLAttributes<HTMLDivElement> & {
+export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
   /**
    * The message to display.
    */
@@ -53,7 +53,7 @@ export type AiChatAssistantMessageProps = HTMLAttributes<HTMLDivElement> & {
   /**
    * Override the component's strings.
    */
-  overrides?: Partial<GlobalOverrides & ChatMessageOverrides>;
+  overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
   /**
    * @internal
    * Whether to show or hide the regenerate button.
@@ -64,7 +64,7 @@ export type AiChatAssistantMessageProps = HTMLAttributes<HTMLDivElement> & {
    * The id of the copilot to use to regenerate the message. Only used if `showRegenerate` is true.
    */
   copilotId?: CopilotId;
-};
+}
 
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
@@ -87,17 +87,17 @@ export const AiChatAssistantMessage = memo(
 
         return (
           <div className="lb-ai-chat-assistant-message-actions">
-            <Tooltip content={$.CHAT_MESSAGE_COPY}>
-              <CopyTextButton text={text} label={$.CHAT_MESSAGE_COPY} />
+            <Tooltip content={$.AI_CHAT_MESSAGE_COPY}>
+              <CopyTextButton text={text} label={$.AI_CHAT_MESSAGE_COPY} />
             </Tooltip>
 
             {showRegenerate && (
-              <Tooltip content={$.CHAT_MESSAGE_TRY_AGAIN}>
+              <Tooltip content={$.AI_CHAT_MESSAGE_TRY_AGAIN}>
                 <RegenerateMessageButton
                   chatId={message.chatId}
                   messageId={message.id}
                   copilotId={copilotId}
-                  label={$.CHAT_MESSAGE_TRY_AGAIN}
+                  label={$.AI_CHAT_MESSAGE_TRY_AGAIN}
                 />
               </Tooltip>
             )}
@@ -113,7 +113,7 @@ export const AiChatAssistantMessage = memo(
             ref={forwardedRef}
           >
             <div className="lb-ai-chat-assistant-message-deleted">
-              {$.CHAT_MESSAGE_DELETED}
+              {$.AI_CHAT_MESSAGE_DELETED}
             </div>
           </div>
         );
@@ -126,7 +126,7 @@ export const AiChatAssistantMessage = memo(
               ref={forwardedRef}
             >
               <div className="lb-ai-chat-assistant-message-thinking">
-                {$.CHAT_MESSAGE_THINKING}
+                {$.AI_CHAT_MESSAGE_THINKING}
               </div>
             </div>
           );
@@ -330,9 +330,9 @@ function AssistantMessageContent({
 /* -------------------------------------------------------------------------------------------------
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
-type TextPartProps = HTMLAttributes<HTMLDivElement> & {
+interface TextPartProps extends ComponentProps<"div"> {
   text: string;
-};
+}
 
 const TextPart = forwardRef<HTMLDivElement, TextPartProps>(
   ({ text, ...props }, forwardedRef) => {
