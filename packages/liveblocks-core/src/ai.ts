@@ -1,4 +1,3 @@
-/* eslint-disable rulesdir/console-must-be-fancy */
 import type { JSONSchema4 } from "json-schema";
 import type { ComponentType } from "react";
 
