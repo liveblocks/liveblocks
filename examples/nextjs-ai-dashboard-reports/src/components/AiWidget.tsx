@@ -81,13 +81,15 @@ function Chat() {
 
   return (
     <AiChat
-      chatId="main-4"
+      chatId="main-6"
       className="max-h-96"
+      copilotId="co_wFdUQ9c0kxhQ0BAlkct0B"
       contexts={contexts}
       tools={{
         "invite-member": {
           description: "Invite a new member to the team",
           parameters: {
+            additionalProperties: false, // 👈
             type: "object",
             properties: {
               email: { type: "string" },
