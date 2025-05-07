@@ -55,13 +55,19 @@ function Chats() {
         </button>
       </div>
 
-      <h1 className="text-2xl font-bold mb-4">Examples</h1>
+      <h1 className="text-2xl font-bold mb-4">List of all chats</h1>
 
       <div className="flex flex-col gap-4">
         {chats.map((chat) => {
           return (
             <div key={chat.id} className="flex flex-row gap-2 items-center">
-              <Link href={`/chats/${chat.id}`}>{chat.name}</Link>
+              <Link href={`/chats/${chat.id}`}>
+                {chat.name ? (
+                  chat.name
+                ) : (
+                  <span className="text-gray-500">Untitled</span>
+                )}
+              </Link>
               <button
                 onClick={() => {
                   deleteAiChat(chat.id);
