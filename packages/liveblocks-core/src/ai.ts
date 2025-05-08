@@ -29,9 +29,9 @@ import type {
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
   AiChat,
-  AiChatContext,
   AiChatMessage,
   AiFailedAssistantMessage,
+  AiKnowledgeSource,
   AiPendingAssistantMessage,
   AiUserContentPart,
   AiUserMessage,
@@ -106,7 +106,7 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  contextByChatId: Map<string, Set<AiChatContext>>;
+  knowledgeByChatId: Map<string, Set<AiKnowledgeSource>>;
 };
 
 export type GetOrCreateChatOptions = {
@@ -624,7 +624,10 @@ export type Ai = {
     ): Signal<ClientToolDefinition | undefined>;
   };
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  registerChatContext: (chatId: string, data: AiChatContext) => () => void;
+  registerKnowledgeSource: (
+    chatId: string,
+    data: AiKnowledgeSource
+  ) => () => void;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   registerChatTool: (
     chatId: string,
@@ -665,7 +668,7 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    contextByChatId: new Map<string, Set<AiChatContext>>(),
+    knowledgeByChatId: new Map<string, Set<AiKnowledgeSource>>(),
   };
 
   let lastTokenKey: string | undefined;
@@ -931,20 +934,20 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function registerChatContext(chatId: string, data: AiChatContext) {
-    const chatContext = context.contextByChatId.get(chatId);
-    if (chatContext === undefined) {
-      context.contextByChatId.set(chatId, new Set([data]));
+  function registerKnowledgeSource(chatId: string, data: AiKnowledgeSource) {
+    const knowledge = context.knowledgeByChatId.get(chatId);
+    if (knowledge === undefined) {
+      context.knowledgeByChatId.set(chatId, new Set([data]));
     } else {
-      chatContext.add(data);
+      knowledge.add(data);
     }
 
     return () => {
-      const chatContext = context.contextByChatId.get(chatId);
-      if (chatContext !== undefined) {
-        chatContext.delete(data);
-        if (chatContext.size === 0) {
-          context.contextByChatId.delete(chatId);
+      const knowledge = context.knowledgeByChatId.get(chatId);
+      if (knowledge !== undefined) {
+        knowledge.delete(data);
+        if (knowledge.size === 0) {
+          context.knowledgeByChatId.delete(chatId);
         }
       }
     };
@@ -964,8 +967,7 @@ export function createAi(config: AiConfig): Ai {
     const copilotId = options?.copilotId;
     const stream = options?.stream ?? false;
     const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
-
-    const chatContext = context.contextByChatId.get(chatId);
+    const knowledge = context.knowledgeByChatId.get(chatId);
 
     return sendClientMsgWithResponse({
       cmd: "ask-ai",
@@ -975,13 +977,13 @@ export function createAi(config: AiConfig): Ai {
       copilotId,
       clientId,
       stream,
+      knowledge: knowledge ? Array.from(knowledge) : undefined,
       tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
         name: tool.name,
         description: tool.definition.description,
         parameters: tool.definition.parameters,
       })),
       timeout,
-      context: chatContext ? Array.from(chatContext.values()) : undefined,
     });
   }
 
@@ -1058,7 +1060,7 @@ export function createAi(config: AiConfig): Ai {
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
 
-        const chatContext = context.contextByChatId.get(chatId);
+        const knowledge = context.knowledgeByChatId.get(chatId);
 
         return sendClientMsgWithResponse({
           cmd: "ask-ai",
@@ -1074,7 +1076,7 @@ export function createAi(config: AiConfig): Ai {
             parameters: tool.definition.parameters,
           })),
           timeout,
-          context: chatContext ? Array.from(chatContext.values()) : undefined,
+          knowledge: knowledge ? Array.from(knowledge) : undefined,
         });
       },
 
@@ -1091,7 +1093,7 @@ export function createAi(config: AiConfig): Ai {
         getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
       },
 
-      registerChatContext,
+      registerKnowledgeSource,
 
       registerChatTool: context.toolsStore.addToolDefinition,
       unregisterChatTool: context.toolsStore.removeToolDefinition,

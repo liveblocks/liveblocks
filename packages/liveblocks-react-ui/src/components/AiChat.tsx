@@ -1,5 +1,5 @@
 import type {
-  AiChatContext,
+  AiKnowledgeSource,
   ClientToolDefinition,
   CopilotId,
   UiChatMessage,
@@ -49,11 +49,11 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   copilotId?: string;
   /**
-   * The contextual information to include in the chat. Used by the assistant when generating responses.
+   * The contextual knowledge to include in the chat. May be used by the assistant when generating responses.
    */
-  contexts?: AiChatContext[];
+  knowledgeSources?: AiKnowledgeSource[];
   /**
-   * The contextual information to include in the chat. Used by the assistant when generating responses.
+   * Tool definitions to make available within this chat. May be used by the assistant when generating responses.
    */
   tools?: Record<string, ClientToolDefinition>;
   /**
@@ -74,7 +74,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       copilotId,
       autoFocus,
       overrides,
-      contexts = [],
+      knowledgeSources = [],
       tools = {},
       className,
       ...props
@@ -98,13 +98,13 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     // Add the provided contextual information to the chat on mount and remove on unmount
     // Note: 'contexts' will most likely be a new object on each render (unless user passes a stable object), but this won't be an issue as context addition and removal is a quick operation
     useEffect(() => {
-      const unregister = contexts.map((context) =>
-        client[kInternal].ai.registerChatContext(chatId, context)
+      const unregister = knowledgeSources.map((source) =>
+        client[kInternal].ai.registerKnowledgeSource(chatId, source)
       );
       return () => {
         unregister.forEach((unregister) => unregister());
       };
-    }, [client, chatId, contexts]);
+    }, [client, chatId, knowledgeSources]);
 
     // Register the provided tools to the chat on mount and unregister them on unmount
     useEffect(() => {

@@ -1,5 +1,5 @@
 import { assertNever } from "../lib/assert";
-import type { JsonObject } from "../lib/Json";
+import type { Json, JsonObject } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
@@ -154,7 +154,7 @@ type AskAIPair = DefineCmd<
     clientId: ClientId;
     stream: boolean;
     tools?: AiToolDefinition[];
-    context?: AiChatContext[];
+    knowledge?: AiKnowledgeSource[];
     timeout: number; // in millis
   },
   { message: AiChatMessage }
@@ -372,9 +372,9 @@ export type AiPendingAssistantMessage = {
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
 
-export type AiChatContext = {
-  value: string;
+export type AiKnowledgeSource = {
   description: string;
+  value: Json;
 };
 
 // --------------------------------------------------------------------------------------------------

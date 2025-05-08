@@ -114,7 +114,7 @@ export default function Page() {
                 <ClientSideSuspense fallback={null}>
                   <AiChat
                     chatId="todo"
-                    contexts={[
+                    knowledgeSources={[
                       {
                         description:
                           "A list of todos with id, title and completion status",
