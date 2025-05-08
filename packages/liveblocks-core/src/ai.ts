@@ -41,12 +41,13 @@ import type {
   ClientId,
   CmdId,
   CopilotId,
-  CreateChatResponse,
+  CreateChatOptions,
   Cursor,
   DeleteChatResponse,
   DeleteMessageResponse,
   GetChatsResponse,
   GetMessageTreeResponse,
+  GetOrCreateChatResponse,
   ISODateString,
   MessageId,
   ServerAiMsg,
@@ -111,12 +112,6 @@ type AiContext = {
 
 export type GetOrCreateChatOptions = {
   name: string;
-  ephemeral?: boolean;
-  metadata?: AiChat["metadata"];
-};
-
-export type CreateChatOptions = {
-  ephemeral?: boolean;
   metadata?: AiChat["metadata"];
 };
 
@@ -526,7 +521,7 @@ function createStore_forUserAiChats() {
     SortedList.with<AiChat>((x, y) => y.createdAt < x.createdAt)
   );
   const chatsΣ = DerivedSignal.from(() =>
-    Array.from(mutableΣ.get()).filter((c) => !c.ephemeral && !c.deletedAt)
+    Array.from(mutableΣ.get()).filter((c) => !c.deletedAt)
   );
 
   function upsertMany(chats: AiChat[]) {
@@ -569,13 +564,13 @@ export type Ai = {
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  createChat: (
+  getOrCreateChat: (
     /** A unique identifier for the chat. */
     chatId: string,
     /** A human-friendly title for the chat. If not set, it will get auto-generated after the first response. */
     title?: string,
     options?: CreateChatOptions
-  ) => Promise<CreateChatResponse>;
+  ) => Promise<GetOrCreateChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   deleteChat: (chatId: string) => Promise<DeleteChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
@@ -797,7 +792,7 @@ export function createAi(config: AiConfig): Ai {
           context.chatsStore.upsertMany(msg.chats);
           break;
 
-        case "create-chat":
+        case "get-or-create-chat":
           context.chatsStore.upsert(msg.chat);
           break;
 
@@ -906,12 +901,13 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function createChat(id: string, title?: string, options?: CreateChatOptions) {
-    return sendClientMsgWithResponse<CreateChatResponse>({
-      cmd: "create-chat",
+    return sendClientMsgWithResponse<GetOrCreateChatResponse>({
+      cmd: "get-or-create-chat",
       id,
-      title,
-      ephemeral: options?.ephemeral ?? false,
-      metadata: options?.metadata ?? {},
+      options: {
+        title,
+        metadata: options?.metadata,
+      },
     });
   }
 
@@ -988,7 +984,7 @@ export function createAi(config: AiConfig): Ai {
       disconnect: () => managedSocket.disconnect(),
 
       getChats,
-      createChat,
+      getOrCreateChat: createChat,
 
       deleteChat: (chatId: string) => {
         return sendClientMsgWithResponse({

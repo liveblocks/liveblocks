@@ -35,7 +35,7 @@ type DefineCmd<CmdName extends string, TRequest, TResponse> = [
 
 type CommandPair =
   | GetChatsPair
-  | CreateChatPair
+  | GetOrCreateChatPair
   | DeleteChatPair
   | GetMessageTreePair
   | DeleteMessagePair
@@ -47,7 +47,7 @@ export type ClientCmd<T extends CommandPair = CommandPair> = T[0];
 export type ServerCmdResponse<T extends CommandPair = CommandPair> = T[1];
 
 export type GetChatsCmd = ClientCmd<GetChatsPair>;
-export type CreateChatCmd = ClientCmd<CreateChatPair>;
+export type GetOrCreateChatCmd = ClientCmd<GetOrCreateChatPair>;
 export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
 export type GetMessageTreeCmd = ClientCmd<GetMessageTreePair>;
 export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
@@ -56,7 +56,7 @@ export type AskInChatCmd = ClientCmd<AskInChatPair>;
 export type AbortAiCmd = ClientCmd<AbortAiPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
-export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
+export type GetOrCreateChatResponse = ServerCmdResponse<GetOrCreateChatPair>;
 export type DeleteChatResponse = ServerCmdResponse<DeleteChatPair>;
 export type GetMessageTreeResponse = ServerCmdResponse<GetMessageTreePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
@@ -70,16 +70,16 @@ type GetChatsPair = DefineCmd<
   { chats: AiChat[]; nextCursor: Cursor | null }
 >;
 
-type CreateChatPair = DefineCmd<
-  "create-chat",
+export type CreateChatOptions = {
+  title?: string;
+  metadata?: Record<string, string | string[]>;
+};
+
+type GetOrCreateChatPair = DefineCmd<
+  "get-or-create-chat",
   {
     id: ChatId;
-    // -------------------------------------------------
-    // Group these?
-    title?: string;
-    ephemeral: boolean;
-    metadata: Record<string, string | string[]>;
-    // -------------------------------------------------
+    options?: CreateChatOptions;
   },
   { chat: AiChat }
 >;
@@ -245,7 +245,6 @@ export type SettleServerEvent = {
 export type AiChat = {
   id: ChatId;
   title: string;
-  ephemeral: boolean;
   metadata: Record<string, string | string[]>;
   createdAt: ISODateString;
   lastMessageAt?: ISODateString; // Optional since some chats might have no messages

@@ -1031,7 +1031,7 @@ function useCreateAiChat() {
 
   return useCallback(
     (options: { id: string }) => {
-      client[kInternal].ai.createChat(options.id).catch((err) => {
+      client[kInternal].ai.getOrCreateChat(options.id).catch((err) => {
         console.error(
           `Failed to create chat with ID "${options.id}": ${String(err)}`
         );
