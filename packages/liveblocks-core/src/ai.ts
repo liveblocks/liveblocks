@@ -550,6 +550,7 @@ function createStore_forUserAiChats() {
   };
 }
 
+/** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
 export type Ai = {
   [kInternal]: {
     debugContext: () => AiContext;
@@ -559,7 +560,9 @@ export type Ai = {
   disconnect: () => void;
   getStatus: () => Status;
 
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   createChat: (
     /** A unique identifier for the chat. */
     chatId: string,
@@ -567,35 +570,45 @@ export type Ai = {
     title?: string,
     options?: CreateChatOptions
   ) => Promise<CreateChatResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   deleteChat: (chatId: string) => Promise<DeleteChatResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   getMessageTree: (chatId: string) => Promise<GetMessageTreeResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   deleteMessage: (
     chatId: string,
     messageId: MessageId
   ) => Promise<DeleteMessageResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   clearChat: (chatId: string) => Promise<ClearChatResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   addUserMessage: (
     chatId: string,
     parentMessageId: MessageId | null,
     message: string
   ) => Promise<AddUserMessageResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   ask: (
     chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   regenerateMessage: (
     chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   addUserMessageAndAsk: (
     chatId: string,
     parentMessageId: MessageId | null,
     message: string,
     options?: AskAiOptions
   ) => Promise<AskAiResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
     getChatMessagesForBranchΣ(
@@ -608,12 +621,15 @@ export type Ai = {
       toolName: string
     ): Signal<ClientToolDefinition | undefined>;
   };
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   registerChatContext: (chatId: string, data: AiChatContext) => () => void;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   registerChatTool: (
     chatId: string,
     name: string,
     definition: ClientToolDefinition
   ) => void;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   unregisterChatTool: (chatId: string, toolName: string) => void;
 };
 
