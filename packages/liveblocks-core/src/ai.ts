@@ -35,7 +35,7 @@ import type {
   AiPendingAssistantMessage,
   AiUserContentPart,
   AiUserMessage,
-  AskAiResponse,
+  AskInChatResponse,
   ClearChatResponse,
   ClientAiMsg,
   ClientId,
@@ -592,14 +592,14 @@ export type Ai = {
     chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
-  ) => Promise<AskAiResponse>;
+  ) => Promise<AskInChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   addUserMessageAndAsk: (
     chatId: string,
     parentMessageId: MessageId | null,
     message: string,
     options?: AskAiOptions
-  ) => Promise<AskAiResponse>;
+  ) => Promise<AskInChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
@@ -823,13 +823,13 @@ export function createAi(config: AiConfig): Ai {
           context.messagesStore.removeByChatId(msg.chatId);
           break;
 
-        case "ask-ai":
-          if (msg.message) {
-            context.messagesStore.upsert(msg.message);
-          } else {
-            // XXXX Handle the case for one-off ask!
-            // We can still render a pending container _somewhere_, but in this case we know it's not going to be associated to a chat message
+        case "ask-in-chat":
+          if (msg.sourceMessage) {
+            // This field will only be returned if the ask-in-chat command
+            // created a new source message
+            context.messagesStore.upsert(msg.sourceMessage);
           }
+          context.messagesStore.upsert(msg.targetMessage);
           break;
 
         case "abort-ai":
@@ -949,7 +949,7 @@ export function createAi(config: AiConfig): Ai {
     chatId: string,
     messageId: MessageId,
     options?: AskAiOptions
-  ): Promise<AskAiResponse> {
+  ): Promise<AskInChatResponse> {
     const targetMessageId = context.messagesStore.createOptimistically(
       chatId,
       "assistant",
@@ -962,20 +962,22 @@ export function createAi(config: AiConfig): Ai {
     const knowledge = context.knowledgeByChatId.get(chatId);
 
     return sendClientMsgWithResponse({
-      cmd: "ask-ai",
+      cmd: "ask-in-chat",
       chatId,
-      sourceMessageId: messageId,
+      sourceMessage: messageId,
       targetMessageId,
-      copilotId,
       clientId,
-      stream,
-      knowledge: knowledge ? Array.from(knowledge) : undefined,
-      tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-        name: tool.name,
-        description: tool.definition.description,
-        parameters: tool.definition.parameters,
-      })),
-      timeout,
+      generationOptions: {
+        copilotId,
+        stream,
+        knowledge: knowledge ? Array.from(knowledge) : undefined,
+        tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
+          name: tool.name,
+          description: tool.definition.description,
+          parameters: tool.definition.parameters,
+        })),
+        timeout,
+      },
     });
   }
 
@@ -1010,7 +1012,7 @@ export function createAi(config: AiConfig): Ai {
         chatId: string,
         messageId: MessageId,
         options?: AskAiOptions
-      ): Promise<AskAiResponse> => {
+      ): Promise<AskInChatResponse> => {
         const parentUserMessageId =
           context.messagesStore.getLatestUserMessageAncestor(chatId, messageId);
         if (parentUserMessageId === null) {
@@ -1026,7 +1028,7 @@ export function createAi(config: AiConfig): Ai {
         parentMessageId: MessageId | null,
         message: string,
         options?: AskAiOptions
-      ): Promise<AskAiResponse> => {
+      ): Promise<AskInChatResponse> => {
         const content: AiUserContentPart[] = [{ type: "text", text: message }];
         const newMessageId = context.messagesStore.createOptimistically(
           chatId,
@@ -1040,14 +1042,6 @@ export function createAi(config: AiConfig): Ai {
           newMessageId
         );
 
-        await sendClientMsgWithResponse({
-          cmd: "add-user-message",
-          id: newMessageId,
-          chatId,
-          parentMessageId,
-          content,
-        });
-
         const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
@@ -1055,20 +1049,22 @@ export function createAi(config: AiConfig): Ai {
         const knowledge = context.knowledgeByChatId.get(chatId);
 
         return sendClientMsgWithResponse({
-          cmd: "ask-ai",
+          cmd: "ask-in-chat",
           chatId,
-          sourceMessageId: newMessageId,
+          sourceMessage: { id: newMessageId, parentMessageId, content },
           targetMessageId,
-          copilotId,
           clientId,
-          stream,
-          tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-            name: tool.name,
-            description: tool.definition.description,
-            parameters: tool.definition.parameters,
-          })),
-          timeout,
-          knowledge: knowledge ? Array.from(knowledge) : undefined,
+          generationOptions: {
+            copilotId,
+            stream,
+            knowledge: knowledge ? Array.from(knowledge) : undefined,
+            tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
+              name: tool.name,
+              description: tool.definition.description,
+              parameters: tool.definition.parameters,
+            })),
+            timeout,
+          },
         });
       },
 

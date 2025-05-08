@@ -41,7 +41,7 @@ type CommandPair =
   | AddUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
-  | AskAIPair
+  | AskInChatPair
   | AbortAiPair;
 
 export type ClientCmd<T extends CommandPair = CommandPair> = T[0];
@@ -54,7 +54,7 @@ export type GetMessageTreeCmd = ClientCmd<GetMessageTreePair>;
 export type AddUserMessageCmd = ClientCmd<AddUserMessagePair>;
 export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmd<ClearChatPair>;
-export type AskAiCmd = ClientCmd<AskAIPair>;
+export type AskInChatCmd = ClientCmd<AskInChatPair>;
 export type AbortAiCmd = ClientCmd<AbortAiPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
@@ -64,7 +64,7 @@ export type GetMessageTreeResponse = ServerCmdResponse<GetMessageTreePair>;
 export type AddUserMessageResponse = ServerCmdResponse<AddUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
-export type AskAiResponse = ServerCmdResponse<AskAIPair>;
+export type AskInChatResponse = ServerCmdResponse<AskInChatPair>;
 export type AbortAiResponse = ServerCmdResponse<AbortAiPair>;
 
 type GetChatsPair = DefineCmd<
@@ -122,13 +122,34 @@ type ClearChatPair = DefineCmd<
   { chatId: ChatId }
 >;
 
-type AskAIPair = DefineCmd<
-  "ask-ai",
+export type AiGenerationOptions = {
+  /**
+   * The Copilot ID to use for this request. If not provided, a built-in
+   * default Copilot will be used instead of one that you configured via the
+   * dashboard.
+   */
+  copilotId?: CopilotId;
+  stream: boolean;
+  tools?: AiToolDefinition[];
+  knowledge?: AiKnowledgeSource[];
+  timeout: number; // in millis
+};
+
+type AskInChatPair = DefineCmd<
+  "ask-in-chat",
   {
     chatId: ChatId;
 
     /** The chat message to use as the source to create the assistant response. */
-    sourceMessageId: MessageId;
+    sourceMessage:
+      | // An existing message ID to reply to
+      MessageId
+      // Or a new (!) message ID to create (optimistically created on the client)
+      | {
+          id: MessageId;
+          parentMessageId: MessageId | null; // The existing message to use as parent
+          content: AiUserContentPart[];
+        };
 
     /**
      * The new (!) message ID to output the assistant response into. This ID
@@ -139,25 +160,19 @@ type AskAIPair = DefineCmd<
     targetMessageId: MessageId;
 
     /**
-     * The Copilot ID to use for this request. If not provided, a built-in
-     * default Copilot will be used instead of one that you configured via the
-     * dashboard.
-     */
-    copilotId?: CopilotId;
-
-    /**
      * A client ID unique to this command. Later delta and settle messages will
      * reference this client ID, which is important to ensure that tool calls
      * with side effects will only get executed once, and only by the client
      * that originally made the request that produced the tool call.
      */
     clientId: ClientId;
-    stream: boolean;
-    tools?: AiToolDefinition[];
-    knowledge?: AiKnowledgeSource[];
-    timeout: number; // in millis
+
+    generationOptions: AiGenerationOptions;
   },
-  { message: AiChatMessage }
+  {
+    sourceMessage?: AiChatMessage; // If optimistically created
+    targetMessage: AiChatMessage;
+  }
 >;
 
 type AbortAiPair = DefineCmd<
