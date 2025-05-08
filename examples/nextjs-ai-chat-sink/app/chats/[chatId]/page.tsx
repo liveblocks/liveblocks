@@ -262,29 +262,36 @@ function CopilotSelect({
               <Select.ItemText>Default copilot</Select.ItemText>
             </Select.Item>
 
-            {/* Custom copilot - Make sure to use valid copilot ids */}
-            <Select.Item
-              value="co_84wo9tp8o4s0J1dkVhdsp"
-              className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-[var(--lb-foreground-subtle)] data-[highlighted]:text-[var(--lb-foreground-secondary)] outline-none rounded-sm"
-            >
-              <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width={20}
-                  height={20}
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  role="presentation"
-                >
-                  <path d="M16 6L8 14L4 10" />
-                </svg>
-              </Select.ItemIndicator>
-              <Select.ItemText>Code review assistant</Select.ItemText>
-            </Select.Item>
+            {/* Custom copilots - Make sure to use valid copilot ids */}
+            {(process.env.NEXT_PUBLIC_AVAILABLE_COPILOT_IDS ?? "")
+              .split(",")
+              .map((copilot) =>
+                copilot ? (
+                  <Select.Item
+                    key={copilot.split(":")[1]}
+                    value={copilot.split(":")[1]}
+                    className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-[var(--lb-foreground-subtle)] data-[highlighted]:text-[var(--lb-foreground-secondary)] outline-none rounded-sm"
+                  >
+                    <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width={20}
+                        height={20}
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        role="presentation"
+                      >
+                        <path d="M16 6L8 14L4 10" />
+                      </svg>
+                    </Select.ItemIndicator>
+                    <Select.ItemText>{copilot.split(":")[0]}</Select.ItemText>
+                  </Select.Item>
+                ) : null
+              )}
           </Select.Viewport>
         </Select.Content>
       </Select.Portal>
