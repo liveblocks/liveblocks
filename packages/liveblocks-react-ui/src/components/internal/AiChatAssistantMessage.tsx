@@ -155,23 +155,36 @@ export const AiChatAssistantMessage = memo(
           return acc;
         }, "");
 
-        children = (
-          <>
-            <AssistantMessageContent
-              content={message.contentSoFar}
-              chatId={message.chatId}
-            />
+        // Do not include the error message if the user aborted the request.
+        if (message.errorReason === "Aborted by user") {
+          children = (
+            <>
+              <AssistantMessageContent
+                content={message.contentSoFar}
+                chatId={message.chatId}
+              />
+              <MessageActions text={text} />
+            </>
+          );
+        } else {
+          children = (
+            <>
+              <AssistantMessageContent
+                content={message.contentSoFar}
+                chatId={message.chatId}
+              />
 
-            <div className="lb-ai-chat-message-error">
-              <span className="lb-icon-container">
-                <WarningIcon />
-              </span>
-              {message.errorReason}
-            </div>
+              <div className="lb-ai-chat-message-error">
+                <span className="lb-icon-container">
+                  <WarningIcon />
+                </span>
+                {message.errorReason}
+              </div>
 
-            <MessageActions text={text} />
-          </>
-        );
+              <MessageActions text={text} />
+            </>
+          );
+        }
       }
 
       return (
