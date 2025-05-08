@@ -26,7 +26,6 @@ import type {
 } from "./room";
 import type {
   AbortAiResponse,
-  AddUserMessageResponse,
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
   AiChat,
@@ -582,18 +581,6 @@ export type Ai = {
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   clearChat: (chatId: string) => Promise<ClearChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  addUserMessage: (
-    chatId: string,
-    parentMessageId: MessageId | null,
-    message: string
-  ) => Promise<AddUserMessageResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  ask: (
-    chatId: string,
-    messageId: MessageId,
-    options?: AskAiOptions
-  ) => Promise<AskAiResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   regenerateMessage: (
     chatId: string,
     messageId: MessageId,
@@ -1009,29 +996,6 @@ export function createAi(config: AiConfig): Ai {
         sendClientMsgWithResponse({ cmd: "delete-message", chatId, messageId }),
       clearChat: (chatId: string) =>
         sendClientMsgWithResponse({ cmd: "clear-chat", chatId }),
-
-      addUserMessage: (
-        chatId: string,
-        parentMessageId: MessageId | null,
-        message: string
-      ) => {
-        const content: AiUserContentPart[] = [{ type: "text", text: message }];
-        const newMessageId = context.messagesStore.createOptimistically(
-          chatId,
-          "user",
-          parentMessageId,
-          content
-        );
-        return sendClientMsgWithResponse({
-          cmd: "add-user-message",
-          id: newMessageId,
-          chatId,
-          parentMessageId,
-          content,
-        });
-      },
-
-      ask,
 
       regenerateMessage: (
         chatId: string,
