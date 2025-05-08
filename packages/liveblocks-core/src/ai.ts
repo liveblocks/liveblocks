@@ -900,7 +900,11 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function createChat(id: string, title?: string, options?: CreateChatOptions) {
+  function getOrCreateChat(
+    id: string,
+    title?: string,
+    options?: CreateChatOptions
+  ) {
     return sendClientMsgWithResponse<GetOrCreateChatResponse>({
       cmd: "get-or-create-chat",
       id,
@@ -984,7 +988,7 @@ export function createAi(config: AiConfig): Ai {
       disconnect: () => managedSocket.disconnect(),
 
       getChats,
-      getOrCreateChat: createChat,
+      getOrCreateChat,
 
       deleteChat: (chatId: string) => {
         return sendClientMsgWithResponse({
