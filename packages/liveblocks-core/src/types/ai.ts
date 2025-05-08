@@ -324,6 +324,8 @@ export type AiUserMessage = {
   content: AiUserContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  /** @internal */
+  _optimistic?: true; // Only set by clients, never by server
 };
 
 export type AiAssistantMessage = Relax<
@@ -342,6 +344,8 @@ export type AiCompletedAssistantMessage = {
   deletedAt?: ISODateString;
 
   status: "completed";
+  /** @internal */
+  _optimistic?: true; // Only set by clients, never by server
 };
 
 export type AiFailedAssistantMessage = {
@@ -355,6 +359,8 @@ export type AiFailedAssistantMessage = {
   status: "failed";
   contentSoFar: AiAssistantContentPart[];
   errorReason: string;
+  /** @internal */
+  _optimistic?: true; // Only set by clients, never by server
 };
 
 export type AiPendingAssistantMessage = {
@@ -367,6 +373,8 @@ export type AiPendingAssistantMessage = {
 
   status: "pending";
   contentSoFar: AiAssistantContentPart[];
+  /** @internal */
+  _optimistic?: true; // Only set by clients, never by server
 };
 
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;

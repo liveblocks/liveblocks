@@ -236,6 +236,7 @@ function createStore_forChatMessages() {
         parentId,
         createdAt,
         content,
+        _optimistic: true,
       } satisfies AiUserMessage);
     } else {
       upsert({
@@ -246,6 +247,7 @@ function createStore_forChatMessages() {
         createdAt,
         status: "pending",
         contentSoFar: [],
+        _optimistic: true,
       } satisfies AiPendingAssistantMessage);
     }
     return id;
@@ -323,7 +325,11 @@ function createStore_forChatMessages() {
   function* iterPendingMessages() {
     for (const chatMsgsΣ of messagePoolByChatIdΣ.values()) {
       for (const m of chatMsgsΣ.get()) {
-        if (m.role === "assistant" && m.status === "pending") {
+        if (
+          m.role === "assistant" &&
+          m.status === "pending" &&
+          !m._optimistic
+        ) {
           yield m;
         }
       }
@@ -332,7 +338,16 @@ function createStore_forChatMessages() {
 
   function failAllPending(): void {
     batch(() => {
-      pendingMessagesΣ.mutate((lut) => lut.clear());
+      pendingMessagesΣ.mutate((lut) => {
+        let deleted = false;
+        for (const [k, v] of lut) {
+          if (!v._optimistic) {
+            lut.delete(k);
+            deleted = true;
+          }
+        }
+        return deleted;
+      });
 
       upsertMany(
         Array.from(iterPendingMessages()).map(
