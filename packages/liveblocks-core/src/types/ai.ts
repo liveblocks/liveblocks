@@ -154,7 +154,6 @@ type AskAIPair = DefineCmd<
     clientId: ClientId;
     stream: boolean;
     tools?: AiToolDefinition[];
-    toolChoice?: ToolChoice;
     context?: AiChatContext[];
     timeout: number; // in millis
   },
@@ -309,12 +308,6 @@ export type AiAssistantDeltaUpdate =
   | AiAssistantContentPart // a new part
   | AiTextDelta // ...or a delta to append to the last sent part
   | AiReasoningDelta; // ...or a delta to append to the last sent part
-
-export type ToolChoice =
-  | "auto"
-  | "required"
-  | "none"
-  | { type: "tool"; toolName: string };
 
 export type AiUserMessage = {
   id: MessageId;
