@@ -38,7 +38,6 @@ type CommandPair =
   | CreateChatPair
   | DeleteChatPair
   | GetMessageTreePair
-  | AddUserMessagePair
   | DeleteMessagePair
   | ClearChatPair
   | AskInChatPair
@@ -51,7 +50,6 @@ export type GetChatsCmd = ClientCmd<GetChatsPair>;
 export type CreateChatCmd = ClientCmd<CreateChatPair>;
 export type DeleteChatCmd = ClientCmd<DeleteChatPair>;
 export type GetMessageTreeCmd = ClientCmd<GetMessageTreePair>;
-export type AddUserMessageCmd = ClientCmd<AddUserMessagePair>;
 export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmd<ClearChatPair>;
 export type AskInChatCmd = ClientCmd<AskInChatPair>;
@@ -61,7 +59,6 @@ export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type CreateChatResponse = ServerCmdResponse<CreateChatPair>;
 export type DeleteChatResponse = ServerCmdResponse<DeleteChatPair>;
 export type GetMessageTreeResponse = ServerCmdResponse<GetMessageTreePair>;
-export type AddUserMessageResponse = ServerCmdResponse<AddUserMessagePair>;
 export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
 export type AskInChatResponse = ServerCmdResponse<AskInChatPair>;
@@ -97,17 +94,6 @@ type GetMessageTreePair = DefineCmd<
   "get-message-tree",
   { chatId: ChatId },
   { chat: AiChat; messages: AiChatMessage[] }
->;
-
-type AddUserMessagePair = DefineCmd<
-  "add-user-message",
-  {
-    id: MessageId; // New message ID, optimistically assigned by client
-    chatId: ChatId;
-    parentMessageId: MessageId | null;
-    content: AiUserContentPart[];
-  },
-  { message: AiUserMessage }
 >;
 
 type DeleteMessagePair = DefineCmd<

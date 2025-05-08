@@ -811,10 +811,6 @@ export function createAi(config: AiConfig): Ai {
           context.messagesStore.upsertMany(msg.messages);
           break;
 
-        case "add-user-message":
-          context.messagesStore.upsert(msg.message);
-          break;
-
         case "delete-message":
           context.messagesStore.remove(msg.chatId, msg.messageId);
           break;
