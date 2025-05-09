@@ -1030,8 +1030,12 @@ function useCreateAiChat() {
   const client = useClient();
 
   return useCallback(
-    (options: { id: string }) => {
-      client[kInternal].ai.getOrCreateChat(options.id).catch((err) => {
+    (options: {
+      id: string;
+      title?: string;
+      metadata?: Record<string, string | string[]>;
+    }) => {
+      client[kInternal].ai.getOrCreateChat(options.id, options).catch((err) => {
         console.error(
           `Failed to create chat with ID "${options.id}": ${String(err)}`
         );

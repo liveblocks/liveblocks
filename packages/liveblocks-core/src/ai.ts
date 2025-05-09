@@ -31,6 +31,7 @@ import type {
   AiChat,
   AiChatMessage,
   AiFailedAssistantMessage,
+  AiGenerationOptions,
   AiKnowledgeSource,
   AiPendingAssistantMessage,
   AiUserContentPart,
@@ -40,7 +41,6 @@ import type {
   ClientAiMsg,
   ClientId,
   CmdId,
-  CopilotId,
   CreateChatOptions,
   Cursor,
   DeleteChatResponse,
@@ -67,10 +67,6 @@ import { PKG_VERSION } from "./version";
 // which must happen within 4 seconds. In practice it should only take a few
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
-
-// TODO What is a good default timeout for long running tasks has not been
-// settled yet. Maybe we need to make this much larger?
-const DEFAULT_AI_TIMEOUT = 30_000; // Allow AI jobs to run for at most 30 seconds in the backend
 
 export type ClientToolDefinition = {
   description?: string;
@@ -137,12 +133,6 @@ type AiContext = {
 export type GetOrCreateChatOptions = {
   name: string;
   metadata?: AiChat["metadata"];
-};
-
-export type AskAiOptions = {
-  copilotId?: CopilotId;
-  stream?: boolean; // True by default
-  timeout?: number;
 };
 
 function now(): ISODateString {
@@ -591,8 +581,6 @@ export type Ai = {
   getOrCreateChat: (
     /** A unique identifier for the chat. */
     chatId: string,
-    /** A human-friendly title for the chat. If not set, it will get auto-generated after the first response. */
-    title?: string,
     options?: CreateChatOptions
   ) => Promise<GetOrCreateChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
@@ -610,7 +598,7 @@ export type Ai = {
   regenerateMessage: (
     chatId: string,
     messageId: MessageId,
-    options?: AskAiOptions
+    options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   askUserMessageInChat: (
@@ -621,7 +609,7 @@ export type Ai = {
       content: AiUserContentPart[];
     },
     targetMessageId: MessageId,
-    options?: AskAiOptions
+    options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
@@ -928,18 +916,11 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function getOrCreateChat(
-    id: string,
-    title?: string,
-    options?: CreateChatOptions
-  ) {
+  function getOrCreateChat(id: string, options?: CreateChatOptions) {
     return sendClientMsgWithResponse<GetOrCreateChatResponse>({
       cmd: "get-or-create-chat",
       id,
-      options: {
-        title,
-        metadata: options?.metadata,
-      },
+      options,
     });
   }
 
@@ -972,7 +953,7 @@ export function createAi(config: AiConfig): Ai {
   function ask(
     chatId: string,
     messageId: MessageId,
-    options?: AskAiOptions
+    options?: AiGenerationOptions
   ): Promise<AskInChatResponse> {
     const targetMessageId = context.messagesStore.createOptimistically(
       chatId,
@@ -981,8 +962,8 @@ export function createAi(config: AiConfig): Ai {
     );
 
     const copilotId = options?.copilotId;
-    const stream = options?.stream ?? false;
-    const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
+    const stream = options?.stream;
+    const timeout = options?.timeout;
     const knowledge = context.knowledgeByChatId.get(chatId);
 
     return sendClientMsgWithResponse({
@@ -1035,7 +1016,7 @@ export function createAi(config: AiConfig): Ai {
       regenerateMessage: (
         chatId: string,
         messageId: MessageId,
-        options?: AskAiOptions
+        options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
         const parentUserMessageId =
           context.messagesStore.getLatestUserMessageAncestor(chatId, messageId);
@@ -1055,14 +1036,9 @@ export function createAi(config: AiConfig): Ai {
           content: AiUserContentPart[];
         },
         targetMessageId: MessageId,
-        options?: AskAiOptions
+        options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
-        const copilotId = options?.copilotId;
-        const stream = options?.stream ?? false;
-        const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
-
         const knowledge = context.knowledgeByChatId.get(chatId);
-
         return sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -1070,15 +1046,15 @@ export function createAi(config: AiConfig): Ai {
           targetMessageId,
           clientId,
           generationOptions: {
-            copilotId,
-            stream,
+            copilotId: options?.copilotId,
+            stream: options?.stream,
+            timeout: options?.timeout,
             knowledge: knowledge ? Array.from(knowledge) : undefined,
             tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
               name: tool.name,
               description: tool.definition.description,
               parameters: tool.definition.parameters,
             })),
-            timeout,
           },
         });
       },
