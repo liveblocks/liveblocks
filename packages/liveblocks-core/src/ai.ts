@@ -80,17 +80,41 @@ export type ClientToolDefinition = {
 };
 
 export type UiChatMessage = AiChatMessage & {
+  /**
+   * @internal
+   * The message ID of the left sibling message, or null if there is no left sibling.
+   */
   prev: MessageId | null;
+  /**
+   * @internal
+   * The message ID of the right sibling message, or null if there is no right sibling.
+   */
   next: MessageId | null;
 };
 
 export type UiUserMessage = AiUserMessage & {
+  /**
+   * @internal
+   * The message ID of the left sibling message, or null if there is no left sibling.
+   */
   prev: MessageId | null;
+  /**
+   * @internal
+   * The message ID of the right sibling message, or null if there is no right sibling.
+   */
   next: MessageId | null;
 };
 
 export type UiAssistantMessage = AiAssistantMessage & {
+  /**
+   * @internal
+   * The message ID of the left sibling message, or null if there is no left sibling.
+   */
   prev: MessageId | null;
+  /**
+   * @internal
+   * The message ID of the right sibling message, or null if there is no right sibling.
+   */
   next: MessageId | null;
 };
 
@@ -554,7 +578,7 @@ function createStore_forUserAiChats() {
 /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
 export type Ai = {
   [kInternal]: {
-    debugContext: () => AiContext;
+    context: AiContext;
   };
   connect: () => void;
   reconnect: () => void;
@@ -589,10 +613,14 @@ export type Ai = {
     options?: AskAiOptions
   ) => Promise<AskInChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  addUserMessageAndAsk: (
+  askUserMessageInChat: (
     chatId: string,
-    parentMessageId: MessageId | null,
-    message: string,
+    userMessage: {
+      id: MessageId;
+      parentMessageId: MessageId | null;
+      content: AiUserContentPart[];
+    },
+    targetMessageId: MessageId,
     options?: AskAiOptions
   ) => Promise<AskInChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
@@ -980,7 +1008,7 @@ export function createAi(config: AiConfig): Ai {
   return Object.defineProperty(
     {
       [kInternal]: {
-        debugContext: () => context,
+        context,
       },
 
       connect: () => managedSocket.connect(),
@@ -1019,25 +1047,16 @@ export function createAi(config: AiConfig): Ai {
         return ask(chatId, parentUserMessageId, options);
       },
 
-      addUserMessageAndAsk: async (
+      askUserMessageInChat: async (
         chatId: string,
-        parentMessageId: MessageId | null,
-        message: string,
+        userMessage: {
+          id: MessageId;
+          parentMessageId: MessageId | null;
+          content: AiUserContentPart[];
+        },
+        targetMessageId: MessageId,
         options?: AskAiOptions
       ): Promise<AskInChatResponse> => {
-        const content: AiUserContentPart[] = [{ type: "text", text: message }];
-        const newMessageId = context.messagesStore.createOptimistically(
-          chatId,
-          "user",
-          parentMessageId,
-          content
-        );
-        const targetMessageId = context.messagesStore.createOptimistically(
-          chatId,
-          "assistant",
-          newMessageId
-        );
-
         const copilotId = options?.copilotId;
         const stream = options?.stream ?? false;
         const timeout = options?.timeout ?? DEFAULT_AI_TIMEOUT;
@@ -1047,7 +1066,7 @@ export function createAi(config: AiConfig): Ai {
         return sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
-          sourceMessage: { id: newMessageId, parentMessageId, content },
+          sourceMessage: userMessage,
           targetMessageId,
           clientId,
           generationOptions: {
