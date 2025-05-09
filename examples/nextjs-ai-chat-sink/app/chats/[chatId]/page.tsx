@@ -11,7 +11,7 @@ import {
 } from "@liveblocks/react-ui/_private";
 import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Select } from "radix-ui";
-import { CopilotId } from "@liveblocks/core";
+import { CopilotId, MessageId } from "@liveblocks/core";
 
 export default function Page({
   params,
@@ -52,7 +52,8 @@ function Chat({ chatId }: { chatId: string }) {
   const { messages } = useAiChatMessages(chatId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
-
+  const [lastSubmittedMessageId, setLastSubmittedMessageId] =
+    useState<MessageId | null>(null);
   const [copilotId, setCopilotId] = useState<CopilotId | "default">("default");
 
   useLayoutEffect(() => {
@@ -94,14 +95,11 @@ function Chat({ chatId }: { chatId: string }) {
     const container = containerRef.current;
     if (container === null) return;
 
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage !== undefined && lastMessage.role === "user") {
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: "smooth",
-      });
-    }
-  }, [messages]);
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [lastSubmittedMessageId]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -146,6 +144,7 @@ function Chat({ chatId }: { chatId: string }) {
                   key={message.id}
                   message={message}
                   className="w-full"
+                  // @ts-ignore
                   showActions={true}
                   showRegenerate={true}
                   copilotId={copilotId === "default" ? undefined : copilotId}
@@ -165,7 +164,7 @@ function Chat({ chatId }: { chatId: string }) {
                   : undefined
               }
               data-variant="secondary"
-              className="rounded-full opacity-0 transition-[opacity,color] duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto cursor-pointer bg-[var(--lb-dynamic-background)] text-[var(--lb-foreground-moderate)] hover:text-[var(--lb-foreground-secondary)] inline-flex items-center justify-center p-1.5 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#00000014,0_8px_26px_#0000001f]"
+              className="rounded-full opacity-0 transition-[opacity,color] duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto cursor-pointer bg-[var(--lb-dynamic-background)] text-[var(--lb-foreground-moderate)] hover:text-[var(--lb-foreground-secondary)] inline-flex items-center justify-center p-1.5 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#00000014,0_8px_26px_#0000001f] dark:shadow-[inset_0_0_0_1px_#ffffff0f]"
               onClick={() => {
                 const container = containerRef.current;
                 if (container === null) return;
@@ -200,6 +199,11 @@ function Chat({ chatId }: { chatId: string }) {
             chatId={chatId}
             copilotId={copilotId === "default" ? undefined : copilotId}
             className="rounded-2xl shadow-[0_0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)] dark:shadow-[inset_0_0_0_1px_#ffffff0f]"
+            // @ts-ignore
+            onUserMessageCreate={({ id }) => {
+              console.log("User message created", id);
+              setLastSubmittedMessageId(id);
+            }}
           />
         </div>
       </div>

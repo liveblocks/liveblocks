@@ -2,6 +2,7 @@ import type {
   AiKnowledgeSource,
   ClientToolDefinition,
   CopilotId,
+  MessageId,
   UiChatMessage,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
@@ -88,6 +89,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       null
     );
     const client = useClient();
+    const [lastSendMessageId, setLastSendMessageId] =
+      useState<MessageId | null>(null);
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       forwardedRef,
@@ -148,15 +151,11 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       const container = containerRef.current;
       if (container === null) return;
 
-      if (messages === undefined) return;
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage !== undefined && lastMessage.role === "user") {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: "smooth",
-        });
-      }
-    }, [messages]);
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+    }, [lastSendMessageId]);
 
     useEffect(() => {
       const container = containerRef.current;
@@ -249,6 +248,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={$}
             autoFocus={autoFocus}
+            onUserMessageCreate={({ id }) => setLastSendMessageId(id)}
           />
         </div>
       </div>

@@ -41,6 +41,17 @@ export interface AiChatComposerProps extends ComponentProps<"form"> {
     },
     event: FormEvent<HTMLFormElement>
   ) => void;
+
+  /**
+   * @internal
+   * The event handler called when a user chat message is created optimistically.
+   */
+  onUserMessageCreate?: (message: {
+    /**
+     * The created user message id.
+     */
+    id: MessageId;
+  }) => void;
   /**
    * Whether the composer is disabled.
    */
@@ -84,6 +95,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
       branchId,
       copilotId,
       stream = true,
+      onUserMessageCreate,
       ...props
     },
     forwardedRef
@@ -123,10 +135,29 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
         onComposerSubmit?.(message, event);
         if (event.isDefaultPrevented()) return;
 
-        client[kInternal].ai.addUserMessageAndAsk(
+        const content = [{ type: "text" as const, text: message.text }];
+        const newMessageId = client[kInternal].ai[
+          kInternal
+        ].context.messagesStore.createOptimistically(
           chatId,
+          "user",
           lastMessageId,
-          message.text,
+          content
+        );
+        onUserMessageCreate?.({ id: newMessageId });
+
+        const targetMessageId = client[kInternal].ai[
+          kInternal
+        ].context.messagesStore.createOptimistically(
+          chatId,
+          "assistant",
+          newMessageId
+        );
+
+        client[kInternal].ai.askUserMessageInChat(
+          chatId,
+          { id: newMessageId, parentMessageId: lastMessageId, content },
+          targetMessageId,
           {
             stream,
             copilotId,
@@ -135,6 +166,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
       },
       [
         onComposerSubmit,
+        onUserMessageCreate,
         client,
         chatId,
         lastMessageId,
