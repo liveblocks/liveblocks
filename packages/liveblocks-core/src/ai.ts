@@ -557,8 +557,6 @@ export type Ai = {
   getOrCreateChat: (
     /** A unique identifier for the chat. */
     chatId: string,
-    /** A human-friendly title for the chat. If not set, it will get auto-generated after the first response. */
-    title?: string,
     options?: CreateChatOptions
   ) => Promise<GetOrCreateChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
@@ -890,18 +888,11 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function getOrCreateChat(
-    id: string,
-    title?: string,
-    options?: CreateChatOptions
-  ) {
+  function getOrCreateChat(id: string, options?: CreateChatOptions) {
     return sendClientMsgWithResponse<GetOrCreateChatResponse>({
       cmd: "get-or-create-chat",
       id,
-      options: {
-        title,
-        metadata: options?.metadata,
-      },
+      options,
     });
   }
 

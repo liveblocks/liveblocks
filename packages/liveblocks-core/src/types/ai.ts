@@ -71,7 +71,9 @@ type GetChatsPair = DefineCmd<
 >;
 
 export type CreateChatOptions = {
+  /** A human-friendly title for the chat. If not set, it will get auto-generated after the first response. */
   title?: string;
+  /** Arbitrary metadata to record for this chat. This can be later used to filter the list of chats by metadata. */
   metadata?: Record<string, string | string[]>;
 };
 
