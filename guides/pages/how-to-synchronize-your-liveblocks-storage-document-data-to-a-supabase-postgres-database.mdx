@@ -38,7 +38,7 @@ spreadsheet)(/examples/collaborative-spreadsheet-advanced/nextjs-spreadsheet-adv
 ### This specific webhook is throttled
 
 Note that the [StorageUpdated](/docs/platform/webhooks#StorageUpdatedEvent)
-webhook event is throttled at a rate of _once every 5 seconds_. This is because
+webhook event is throttled at a rate of _once every 60 seconds_. This is because
 Storage can update up to _60 times per second_, and it would be impractical to
 run the webhook this frequently.
 
@@ -527,7 +527,7 @@ Storage document—we’ve successfully set up data synchronization!
 
 When a user edits Storage data in your app, this function will be called, and
 your database will be updated. You can rely on this to stay up to date, within
-the 5 second throttle limit.
+the 60 second throttle limit.
 
 ## Learn more
 
