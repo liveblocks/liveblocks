@@ -115,10 +115,10 @@ export type AiGenerationOptions = {
    * dashboard.
    */
   copilotId?: CopilotId;
-  stream: boolean;
+  stream?: boolean; // default = true
   tools?: AiToolDefinition[];
   knowledge?: AiKnowledgeSource[];
-  timeout: number; // in millis
+  timeout?: number; // in millis
 };
 
 type AskInChatPair = DefineCmd<
