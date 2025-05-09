@@ -55,6 +55,7 @@ import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  AiChatAsyncResult,
   AiChatMessagesAsyncResult,
   AiChatsAsyncResult,
   HistoryVersionsAsyncResult,
@@ -1019,6 +1020,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       string,
       DefaultMap<MessageId | null, LoadableResource<AiChatMessagesAsyncResult>>
     >;
+    readonly aiChatById: DefaultMap<
+      string,
+      LoadableResource<AiChatAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1405,6 +1410,34 @@ export class UmbrellaStore<M extends BaseMetadata> {
       );
     });
 
+    const aiChatById = new DefaultMap((chatId: string) => {
+      const resource = new SinglePageResource(async () => {
+        await this.#client[kInternal].ai.getOrCreateChat(chatId);
+      });
+
+      const signal = DerivedSignal.from(() => {
+        const chat = this.#client[kInternal].ai.signals.getChatById(chatId);
+        if (chat === undefined) {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          } else {
+            return ASYNC_OK(
+              "chat",
+              nn(this.#client[kInternal].ai.signals.getChatById(chatId))
+            );
+          }
+        } else {
+          return ASYNC_OK(
+            "chat",
+            nn(this.#client[kInternal].ai.signals.getChatById(chatId))
+          );
+        }
+      }, shallow);
+
+      return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+    });
+
     this.outputs = {
       threadifications,
       threads,
@@ -1418,6 +1451,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       threadSubscriptions,
       aiChats,
       messagesByChatId,
+      aiChatById,
     };
 
     // Auto-bind all of this class' methods here, so we can use stable

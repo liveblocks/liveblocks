@@ -186,6 +186,9 @@ export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions
 export type AiChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
 export type AiChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
 
+export type AiChatAsyncSuccess = AsyncSuccess<AiChat, "chat">; // prettier-ignore
+export type AiChatAsyncResult = AsyncResult<AiChat, "chat">; // prettier-ignore
+
 export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
 export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
 
@@ -1319,6 +1322,14 @@ export type LiveblocksContextBundle<
        */
       useAiChatMessages(chatId: string): AiChatMessagesAsyncResult;
 
+      /**
+       * (Private beta)  Returns the information of the given chat.
+       *
+       * @example
+       * const { chat, error, isLoading } = useAiChat("my-chat");
+       */
+      useAiChat(chatId: string): AiChatAsyncResult;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1374,6 +1385,14 @@ export type LiveblocksContextBundle<
              * const { messages } = useAiChatMessages("my-chat");
              */
             useAiChatMessages(chatId: string): AiChatMessagesAsyncSuccess;
+
+            /**
+             * (Private beta)  Returns the information of the given chat.
+             *
+             * @example
+             * const { chat, error, isLoading } = useAiChat("my-chat");
+             */
+            useAiChat(chatId: string): AiChatAsyncSuccess;
           }
       >;
     }

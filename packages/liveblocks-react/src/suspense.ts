@@ -94,4 +94,5 @@ export {
   useUserThreadsSuspense_experimental as useUserThreads_experimental,
   useAiChatsSuspense as useAiChats,
   useAiChatMessagesSuspense as useAiChatMessages,
+  useAiChatSuspense as useAiChat,
 } from "./liveblocks";

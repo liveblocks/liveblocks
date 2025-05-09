@@ -554,8 +554,13 @@ function createStore_forUserAiChats() {
     mutableΣ.mutate((list) => list.removeBy((c) => c.id === chatId, 1));
   }
 
+  function getChatById(chatId: string) {
+    return Array.from(mutableΣ.get()).find((chat) => chat.id === chatId);
+  }
+
   return {
     chatsΣ,
+    getChatById,
 
     // Mutations
     upsert,
@@ -619,6 +624,7 @@ export type Ai = {
       chatId: string,
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
+    getChatById: (chatId: string) => AiChat | undefined;
     getMessagesForChatΣ(chatId: string): DerivedSignal<AiChatMessage[]>;
     getToolDefinitionΣ(
       chatId: string,
@@ -1067,6 +1073,7 @@ export function createAi(config: AiConfig): Ai {
         chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
+        getChatById: context.chatsStore.getChatById,
         getToolDefinitionΣ: context.toolsStore.getToolCallByNameΣ,
         getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
       },

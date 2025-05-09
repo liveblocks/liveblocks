@@ -2,6 +2,7 @@
 
 import {
   ClientSideSuspense,
+  useAiChat,
   useAiChatMessages,
 } from "@liveblocks/react/suspense";
 import {
@@ -49,6 +50,7 @@ export default function Page({
 }
 
 function Chat({ chatId }: { chatId: string }) {
+  const { chat } = useAiChat(chatId);
   const { messages } = useAiChatMessages(chatId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
@@ -120,7 +122,9 @@ function Chat({ chatId }: { chatId: string }) {
 
   return (
     <div className="relative flex flex-col h-full">
-      <div className="sticky top-0 border-b border-[var(--lb-foreground-subtle)] p-4 flex flex-row items-center gap-2">
+      <div className="sticky top-0 border-b border-[var(--lb-foreground-subtle)] p-4 flex flex-row items-center gap-2 justify-between">
+        <div className="font-medium text-sm">{chat.title}</div>
+
         <CopilotSelect copilotId={copilotId} onCopilotIdChange={setCopilotId} />
       </div>
 

@@ -45,6 +45,8 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  AiChatAsyncResult,
+  AiChatAsyncSuccess,
   AiChatMessagesAsyncResult,
   AiChatMessagesAsyncSuccess,
   AiChatsAsyncResult,
@@ -377,6 +379,7 @@ function makeLiveblocksContextBundle<
     useUserThreads_experimental,
 
     useAiChats,
+    useAiChat,
     useAiChatMessages,
     useCreateAiChat,
     useDeleteAiChat,
@@ -406,6 +409,7 @@ function makeLiveblocksContextBundle<
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
       useAiChats: useAiChatsSuspense,
+      useAiChat: useAiChatSuspense,
       useAiChatMessages: useAiChatMessagesSuspense,
       useCreateAiChat,
       useDeleteAiChat,
@@ -1026,6 +1030,41 @@ function useAiChatMessagesSuspense(
   return result;
 }
 
+function useAiChat(chatId: string): AiChatAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEffect(
+    () => void store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.aiChatById.getOrCreate(chatId).signal);
+}
+
+function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  use(store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded());
+
+  const result = useAiChat(chatId);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
 function useCreateAiChat() {
   const client = useClient();
 
@@ -1547,6 +1586,23 @@ const _useAiChatsSuspense: TypedBundle["suspense"]["useAiChats"] =
   useAiChatsSuspense;
 
 /**
+ * (Private beta)  Returns the information of the given chat.
+ *
+ * @example
+ * const { chat, error, isLoading } = useAiChat("my-chat");
+ */
+const _useAiChat: TypedBundle["useAiChat"] = useAiChat;
+
+/**
+ * (Private beta)  Returns the information of the given chat.
+ *
+ * @example
+ * const { chat, error, isLoading } = useAiChat("my-chat");
+ */
+const _useAiChatSuspense: TypedBundle["suspense"]["useAiChat"] =
+  useAiChatSuspense;
+
+/**
  * (Private beta)  Returns the messages in the given chat.
  *
  * @example
@@ -1677,6 +1733,8 @@ export {
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
   _useAiChats as useAiChats,
   _useAiChatsSuspense as useAiChatsSuspense,
+  _useAiChat as useAiChat,
+  _useAiChatSuspense as useAiChatSuspense,
   _useAiChatMessages as useAiChatMessages,
   _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
   useCreateAiChat,
