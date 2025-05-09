@@ -72,7 +72,6 @@ export type ClientToolDefinition = {
   description?: string;
   parameters: JSONSchema4;
   render: ComponentType<{ args: any }>;
-  execute?: never;
 };
 
 export type UiChatMessage = AiChatMessage & {
