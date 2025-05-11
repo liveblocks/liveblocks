@@ -10,6 +10,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       // @ts-ignore
       baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
     >
+      {/* @ts-ignore */}
       {children}
     </LiveblocksProvider>
   );

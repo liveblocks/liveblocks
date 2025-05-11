@@ -20,10 +20,6 @@ export interface AiChatComposerFormProps
    * Whether the composer is disabled.
    */
   disabled?: boolean;
-  /**
-   * The id of the chat the composer belongs to.
-   */
-  chatId: string;
 }
 
 export interface AiChatComposerEditorProps

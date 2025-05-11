@@ -183,7 +183,6 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
             "lb-ai-chat-composer lb-ai-chat-composer-form",
             className
           )}
-          chatId={chatId}
           dir={$.dir}
           {...props}
           disabled={disabled}

@@ -35,8 +35,6 @@ const AI_CHAT_COMPOSER_EDITOR_NAME = "AiChatComposerEditor";
 const AI_CHAT_COMPOSER_FORM_NAME = "AiChatComposerForm";
 
 const AiChatComposerContext = createContext<{
-  chatId: string;
-
   editor: SlateEditor;
   onEditorValueChange: (value: SlateDescendant[]) => void;
   isEditorEmpty: boolean;
@@ -63,7 +61,7 @@ export const AiChatComposerForm = forwardRef<
   AiChatComposerFormProps
 >(
   (
-    { onComposerSubmit, onSubmit, disabled, chatId, asChild, ...props },
+    { onComposerSubmit, onSubmit, disabled, asChild, ...props },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
@@ -160,7 +158,6 @@ export const AiChatComposerForm = forwardRef<
     return (
       <AiChatComposerContext.Provider
         value={{
-          chatId,
           editor,
           onEditorValueChange: handleEditorValueChange,
           isEditorEmpty,

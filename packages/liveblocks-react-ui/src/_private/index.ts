@@ -21,6 +21,16 @@ export {
 } from "../components/internal/Tooltip";
 export { User } from "../components/internal/User";
 export * from "../icons";
+export {
+  AiChatComposerEditor,
+  AiChatComposerForm,
+  AiChatComposerSubmit,
+} from "../primitives/AiChatComposer";
+export type {
+  AiChatComposerEditorProps,
+  AiChatComposerFormProps,
+  AiChatComposerSubmitProps,
+} from "../primitives/AiChatComposer/types";
 export { capitalize } from "../utils/capitalize";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";

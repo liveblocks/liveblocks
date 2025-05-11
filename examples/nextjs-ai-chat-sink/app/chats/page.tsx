@@ -13,7 +13,7 @@ export default function Page() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="lb-root h-screen w-full flex items-center justify-center">
+        <div className="h-screen w-full flex items-center justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width={20}

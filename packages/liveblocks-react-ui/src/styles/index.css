@@ -2146,21 +2146,6 @@
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   color: var(--lb-foreground);
-
-  @media (hover: hover) {
-    &:where(.lb-ai-chat-message\:show-actions-hover) {
-      :where(.lb-ai-chat-message-actions) {
-        opacity: 0;
-        transition-property: opacity;
-      }
-
-      &:where(:is(:hover, :focus-within)) {
-        :where(.lb-ai-chat-message-actions) {
-          opacity: 1;
-        }
-      }
-    }
-  }
 }
 
 .lb-ai-chat-message-content {
@@ -2377,12 +2362,6 @@
   }
 }
 
-.lb-ai-chat-message-actions {
-  display: flex;
-  gap: calc(0.125 * var(--lb-spacing));
-  align-items: center;
-}
-
 .lb-ai-chat-messages {
   display: flex;
   flex-direction: column;
@@ -2399,10 +2378,6 @@
   :where(.lb-ai-chat-user-message) {
     max-inline-size: 80%;
     margin-inline-start: auto;
-
-    :where(.lb-ai-chat-message-actions) {
-      margin-inline-start: auto;
-    }
   }
 }
 

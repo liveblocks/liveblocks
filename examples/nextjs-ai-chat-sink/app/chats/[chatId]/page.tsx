@@ -5,14 +5,14 @@ import {
   useAiChat,
   useAiChatMessages,
 } from "@liveblocks/react/suspense";
-import {
-  AiChatUserMessage,
-  AiChatAssistantMessage,
-  AiChatComposer,
-} from "@liveblocks/react-ui/_private";
+
 import { use, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Select } from "radix-ui";
 import { CopilotId, MessageId } from "@liveblocks/core";
+import { AssistantMessage } from "./assistant-message";
+import { ChatComposer } from "./chat-composer";
+import { ArrowDownIcon } from "../../icons/arrow-down-icon";
+import { UserMessage } from "./user-message";
 
 export default function Page({
   params,
@@ -22,7 +22,7 @@ export default function Page({
   const { chatId } = use(params);
 
   return (
-    <main className="lb-root h-screen w-full">
+    <main className="h-screen w-full">
       <ClientSideSuspense
         fallback={
           <div className="h-full w-full flex items-center justify-center">
@@ -37,8 +37,9 @@ export default function Page({
               strokeLinecap="round"
               strokeLinejoin="round"
               role="presentation"
+              className="animate-spin"
             >
-              <path d="M3 10a7 7 0 0 1 7-7" className="lb-icon-spinner" />
+              <path d="M3 10a7 7 0 0 1 7-7" />
             </svg>
           </div>
         }
@@ -51,12 +52,14 @@ export default function Page({
 
 function Chat({ chatId }: { chatId: string }) {
   const { chat } = useAiChat(chatId);
-  const { messages } = useAiChatMessages(chatId);
   const containerRef = useRef<HTMLDivElement>(null);
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
   const [lastSubmittedMessageId, setLastSubmittedMessageId] =
     useState<MessageId | null>(null);
   const [copilotId, setCopilotId] = useState<CopilotId | "default">("default");
+  const [branchId, setBranchId] = useState<MessageId | null>(null);
+  // @ts-ignore 'branchId' is an internal property of the useAiChatMessages hook
+  const { messages } = useAiChatMessages(chatId, branchId);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -122,8 +125,8 @@ function Chat({ chatId }: { chatId: string }) {
 
   return (
     <div className="relative flex flex-col h-full">
-      <div className="sticky top-0 border-b border-[var(--lb-foreground-subtle)] p-4 flex flex-row items-center gap-2 justify-between">
-        <div className="font-medium text-sm">{chat.title}</div>
+      <div className="sticky top-0 border-b p-4 flex flex-row items-center gap-2 justify-between border-b-neutral-900/5 dark:border-neutral-50/10">
+        <div className="text-sm">{chat.title}</div>
 
         <CopilotSelect copilotId={copilotId} onCopilotIdChange={setCopilotId} />
       </div>
@@ -132,26 +135,23 @@ function Chat({ chatId }: { chatId: string }) {
         ref={containerRef}
         className="flex flex-col flex-1 overflow-y-auto [--lb-ai-chat-container-width:896px]"
       >
-        <div className="flex flex-col w-full max-w-4xl mx-auto px-8 pt-8 pb-30 gap-4">
+        <div className="flex flex-col w-full max-w-4xl mx-auto px-8 pt-8 pb-30 gap-8">
           {messages.map((message) => {
             if (message.role === "user") {
               return (
-                <AiChatUserMessage
+                <UserMessage
                   key={message.id}
                   message={message}
-                  className="max-w-[80%] ml-auto"
+                  onBranchChange={setBranchId}
                 />
               );
             } else if (message.role === "assistant") {
               return (
-                <AiChatAssistantMessage
+                <AssistantMessage
                   key={message.id}
                   message={message}
-                  className="w-full"
-                  // @ts-ignore
-                  showActions={true}
-                  showRegenerate={true}
                   copilotId={copilotId === "default" ? undefined : copilotId}
+                  onBranchChange={setBranchId}
                 />
               );
             }
@@ -159,7 +159,7 @@ function Chat({ chatId }: { chatId: string }) {
           })}
         </div>
 
-        <div className="w-full sticky bottom-0 mt-auto mx-auto max-w-4xl pb-4 before:content-[''] before:absolute before:inset-0 before:bg-[var(--lb-background)] px-4">
+        <div className="w-full sticky bottom-0 mt-auto mx-auto max-w-4xl pb-4 bg-white dark:bg-neutral-900 px-4">
           <div className="flex absolute -top-12 justify-center w-full pointer-events-none">
             <button
               data-visible={
@@ -168,7 +168,7 @@ function Chat({ chatId }: { chatId: string }) {
                   : undefined
               }
               data-variant="secondary"
-              className="rounded-full opacity-0 transition-[opacity,color] duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto cursor-pointer bg-[var(--lb-dynamic-background)] text-[var(--lb-foreground-moderate)] hover:text-[var(--lb-foreground-secondary)] inline-flex items-center justify-center p-1.5 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#00000014,0_8px_26px_#0000001f] dark:shadow-[inset_0_0_0_1px_#ffffff0f]"
+              className="rounded-full opacity-0 transition-[opacity,color] duration-200 ease-in-out pointer-events-none data-[visible]:opacity-100 data-[visible]:pointer-events-auto cursor-pointer bg-white hover:bg-neutral-100 inline-flex items-center justify-center p-1.5 shadow size-7.5 ring-1 ring-neutral-950/10 dark:ring-neutral-100/10 dark:bg-neutral-800 dark:hover:bg-neutral-700"
               onClick={() => {
                 const container = containerRef.current;
                 if (container === null) return;
@@ -179,34 +179,22 @@ function Chat({ chatId }: { chatId: string }) {
                 });
               }}
             >
-              <span className="size-5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width={20}
-                  height={20}
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  role="presentation"
-                >
-                  <path d="M10 4v12m6-6-6 6-6-6" />
-                </svg>
-              </span>
+              <ArrowDownIcon className="size-4" />
             </button>
           </div>
 
-          <AiChatComposer
-            key={chatId}
+          <ChatComposer
             chatId={chatId}
             copilotId={copilotId === "default" ? undefined : copilotId}
-            className="rounded-2xl shadow-[0_0_0_1px_rgb(0_0_0/4%),0_2px_6px_rgb(0_0_0/4%),0_8px_26px_rgb(0_0_0/6%)] dark:shadow-[inset_0_0_0_1px_#ffffff0f]"
-            // @ts-ignore
-            onUserMessageCreate={({ id }) => {
-              console.log("User message created", id);
+            lastMessageId={messages[messages.length - 1]?.id ?? null}
+            pendingMessage={
+              messages.find(
+                (m) => m.role === "assistant" && m.status === "pending"
+              )?.id ?? null
+            }
+            onUserMessageCreate={(id) => {
               setLastSubmittedMessageId(id);
+              setBranchId(id);
             }}
           />
         </div>
@@ -224,7 +212,7 @@ function CopilotSelect({
 }) {
   return (
     <Select.Root value={copilotId} onValueChange={onCopilotIdChange}>
-      <Select.Trigger className="inline-flex text-sm items-center rounded-lg hover:bg-[var(--lb-background-foreground-faint)] outline-none px-3 py-2 gap-1">
+      <Select.Trigger className="inline-flex text-sm items-center rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 outline-none px-3 py-2 gap-1">
         <Select.Value placeholder="Select a copilot…" />
         <Select.Icon>
           <svg
@@ -244,11 +232,11 @@ function CopilotSelect({
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal>
-        <Select.Content className="rounded-md shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014] bg-[var(--lb-background)]">
+        <Select.Content className="rounded-md shadow-sm bg-white dark:bg-neutral-900 ring-1 ring-neutral-950/10 dark:ring-neutral-100/10">
           <Select.Viewport className="p-1 flex flex-col">
             <Select.Item
               value="default"
-              className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-[var(--lb-foreground-subtle)] data-[highlighted]:text-[var(--lb-foreground-secondary)] outline-none rounded-sm"
+              className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-800 outline-none rounded-sm"
             >
               {/* Default copilot */}
               <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
@@ -278,7 +266,7 @@ function CopilotSelect({
                   <Select.Item
                     key={copilot.split(":")[1]}
                     value={copilot.split(":")[1]}
-                    className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-[var(--lb-foreground-subtle)] data-[highlighted]:text-[var(--lb-foreground-secondary)] outline-none rounded-sm"
+                    className="relative inline-flex select-none text-sm h-8 items-center pl-6 pr-6 gap-2 py-0.5 data-[highlighted]:bg-neutral-100 dark:data-[highlighted]:bg-neutral-800 outline-none rounded-sm"
                   >
                     <Select.ItemIndicator className="absolute left-1 inline-flex size-4 items-center justify-center">
                       <svg

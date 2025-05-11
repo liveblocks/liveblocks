@@ -75,42 +75,54 @@ export type ClientToolDefinition = {
 };
 
 export type UiChatMessage = AiChatMessage & {
-  /**
-   * @internal
-   * The message ID of the left sibling message, or null if there is no left sibling.
-   */
-  prev: MessageId | null;
-  /**
-   * @internal
-   * The message ID of the right sibling message, or null if there is no right sibling.
-   */
-  next: MessageId | null;
+  navigation: {
+    /**
+     * The message ID of the parent message, or null if there is no parent.
+     */
+    parent: MessageId | null;
+    /**
+     * The message ID of the left sibling message, or null if there is no left sibling.
+     */
+    prev: MessageId | null;
+    /**
+     * The message ID of the right sibling message, or null if there is no right sibling.
+     */
+    next: MessageId | null;
+  };
 };
 
 export type UiUserMessage = AiUserMessage & {
-  /**
-   * @internal
-   * The message ID of the left sibling message, or null if there is no left sibling.
-   */
-  prev: MessageId | null;
-  /**
-   * @internal
-   * The message ID of the right sibling message, or null if there is no right sibling.
-   */
-  next: MessageId | null;
+  navigation: {
+    /**
+     * The message ID of the parent message, or null if there is no parent.
+     */
+    parent: MessageId | null;
+    /**
+     * The message ID of the left sibling message, or null if there is no left sibling.
+     */
+    prev: MessageId | null;
+    /**
+     * The message ID of the right sibling message, or null if there is no right sibling.
+     */
+    next: MessageId | null;
+  };
 };
 
 export type UiAssistantMessage = AiAssistantMessage & {
-  /**
-   * @internal
-   * The message ID of the left sibling message, or null if there is no left sibling.
-   */
-  prev: MessageId | null;
-  /**
-   * @internal
-   * The message ID of the right sibling message, or null if there is no right sibling.
-   */
-  next: MessageId | null;
+  navigation: {
+    /**
+     * The message ID of the parent message, or null if there is no parent.
+     */
+    parent: MessageId | null;
+    /**
+     * The message ID of the left sibling message, or null if there is no left sibling.
+     */
+    prev: MessageId | null;
+    /**
+     * The message ID of the right sibling message, or null if there is no right sibling.
+     */
+    next: MessageId | null;
+  };
 };
 
 type AiContext = {
@@ -401,6 +413,8 @@ function createStore_forChatMessages() {
 
     function selectSpine(leaf: AiChatMessage): UiChatMessage[] {
       const spine = [];
+
+      let lastVisitedMessage: UiChatMessage | null = null;
       for (const message of pool.walkUp(leaf.id)) {
         const prev = first(pool.walkLeft(message.id, isAlive))?.id ?? null;
         const next = first(pool.walkRight(message.id, isAlive))?.id ?? null;
@@ -409,7 +423,16 @@ function createStore_forChatMessages() {
         // children, and also don't have a next/prev link, requiring the
         // deleted node to have an on-screen presence.
         if (!message.deletedAt || prev || next) {
-          spine.push({ ...message, prev, next });
+          const node: UiChatMessage = {
+            ...message,
+            navigation: { parent: null, prev, next },
+          };
+          // Set the parent of the last visited to the id of the current node.
+          if (lastVisitedMessage !== null) {
+            lastVisitedMessage.navigation.parent = node.id;
+          }
+          lastVisitedMessage = node;
+          spine.push(node);
         }
       }
       return spine.reverse();
@@ -448,24 +471,6 @@ function createStore_forChatMessages() {
     return fallback();
   }
 
-  function getLatestUserMessageAncestor(
-    chatId: string,
-    messageId: MessageId
-  ): MessageId | null {
-    const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
-    const message = pool.get(messageId);
-    if (!message) return null;
-
-    if (message.role === "user") return message.id;
-
-    for (const m of pool.walkUp(message.id)) {
-      if (m.role === "user" && !m.deletedAt) {
-        return m.id;
-      }
-    }
-    return null;
-  }
-
   const immutableMessagesByBranch = new DefaultMap((chatId: string) => {
     return new DefaultMap((branchId: MessageId | null) => {
       const messagesΣ = DerivedSignal.from(() => {
@@ -496,23 +501,10 @@ function createStore_forChatMessages() {
       .getOrCreate(branch || null);
   }
 
-  const messagesByChatIdΣ = new DefaultMap((chatId: string) => {
-    return DerivedSignal.from(() => {
-      const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
-      return Array.from(pool.sorted);
-    });
-  });
-
-  function getMessagesForChatΣ(chatId: string) {
-    return messagesByChatIdΣ.getOrCreate(chatId);
-  }
-
   return {
     // Readers
     getMessageById,
     getChatMessagesForBranchΣ,
-    getMessagesForChatΣ,
-    getLatestUserMessageAncestor,
 
     // Mutations
     createOptimistically,
@@ -599,19 +591,15 @@ export type Ai = {
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   clearChat: (chatId: string) => Promise<ClearChatResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  regenerateMessage: (
-    chatId: string,
-    messageId: MessageId,
-    options?: AiGenerationOptions
-  ) => Promise<AskInChatResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   askUserMessageInChat: (
     chatId: string,
-    userMessage: {
-      id: MessageId;
-      parentMessageId: MessageId | null;
-      content: AiUserContentPart[];
-    },
+    userMessage:
+      | MessageId
+      | {
+          id: MessageId;
+          parentMessageId: MessageId | null;
+          content: AiUserContentPart[];
+        },
     targetMessageId: MessageId,
     options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>;
@@ -625,7 +613,6 @@ export type Ai = {
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
     getChatById: (chatId: string) => AiChat | undefined;
-    getMessagesForChatΣ(chatId: string): DerivedSignal<AiChatMessage[]>;
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
@@ -955,42 +942,6 @@ export function createAi(config: AiConfig): Ai {
     };
   }
 
-  function ask(
-    chatId: string,
-    messageId: MessageId,
-    options?: AiGenerationOptions
-  ): Promise<AskInChatResponse> {
-    const targetMessageId = context.messagesStore.createOptimistically(
-      chatId,
-      "assistant",
-      messageId
-    );
-
-    const copilotId = options?.copilotId;
-    const stream = options?.stream;
-    const timeout = options?.timeout;
-    const knowledge = context.knowledgeByChatId.get(chatId);
-
-    return sendClientMsgWithResponse({
-      cmd: "ask-in-chat",
-      chatId,
-      sourceMessage: messageId,
-      targetMessageId,
-      clientId,
-      generationOptions: {
-        copilotId,
-        stream,
-        knowledge: knowledge ? Array.from(knowledge) : undefined,
-        tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-          name: tool.name,
-          description: tool.definition.description,
-          parameters: tool.definition.parameters,
-        })),
-        timeout,
-      },
-    });
-  }
-
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -1018,28 +969,15 @@ export function createAi(config: AiConfig): Ai {
       clearChat: (chatId: string) =>
         sendClientMsgWithResponse({ cmd: "clear-chat", chatId }),
 
-      regenerateMessage: (
-        chatId: string,
-        messageId: MessageId,
-        options?: AiGenerationOptions
-      ): Promise<AskInChatResponse> => {
-        const parentUserMessageId =
-          context.messagesStore.getLatestUserMessageAncestor(chatId, messageId);
-        if (parentUserMessageId === null) {
-          throw new Error(
-            `Unable to find user message ancestor for messageId: ${messageId}`
-          );
-        }
-        return ask(chatId, parentUserMessageId, options);
-      },
-
       askUserMessageInChat: async (
         chatId: string,
-        userMessage: {
-          id: MessageId;
-          parentMessageId: MessageId | null;
-          content: AiUserContentPart[];
-        },
+        userMessage:
+          | MessageId
+          | {
+              id: MessageId;
+              parentMessageId: MessageId | null;
+              content: AiUserContentPart[];
+            },
         targetMessageId: MessageId,
         options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
@@ -1075,7 +1013,6 @@ export function createAi(config: AiConfig): Ai {
           context.messagesStore.getChatMessagesForBranchΣ,
         getChatById: context.chatsStore.getChatById,
         getToolDefinitionΣ: context.toolsStore.getToolCallByNameΣ,
-        getMessagesForChatΣ: context.messagesStore.getMessagesForChatΣ,
       },
 
       registerKnowledgeSource,

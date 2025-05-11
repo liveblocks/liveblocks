@@ -59,16 +59,12 @@ export interface ComposerOverrides {
 export interface AiChatComposerOverrides {
   AI_CHAT_COMPOSER_PLACEHOLDER: string;
   AI_CHAT_COMPOSER_SEND: string;
-  AI_CHAT_COMPOSER_ATTACH_FILES: string;
-  AI_CHAT_COMPOSER_REMOVE_ATTACHMENT: string;
   AI_CHAT_COMPOSER_ABORT: string;
 }
 
 export interface AiChatMessageOverrides {
   AI_CHAT_MESSAGE_DELETED: string;
   AI_CHAT_MESSAGE_THINKING: string;
-  AI_CHAT_MESSAGE_COPY: string;
-  AI_CHAT_MESSAGE_TRY_AGAIN: string;
 }
 
 export interface AiChatOverrides {
@@ -220,13 +216,9 @@ export const defaultOverrides: Overrides = {
     "There was an error while getting this version.",
   AI_CHAT_COMPOSER_PLACEHOLDER: "Ask anything…",
   AI_CHAT_COMPOSER_SEND: "Send",
-  AI_CHAT_COMPOSER_ATTACH_FILES: "Attach files",
-  AI_CHAT_COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
   AI_CHAT_COMPOSER_ABORT: "Abort response.",
   AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
-  AI_CHAT_MESSAGE_COPY: "Copy",
-  AI_CHAT_MESSAGE_TRY_AGAIN: "Try again",
   AI_CHAT_MESSAGES_ERROR: () => (
     <>There was an error while getting the messages</>
   ),

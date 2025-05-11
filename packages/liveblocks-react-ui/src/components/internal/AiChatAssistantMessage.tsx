@@ -1,8 +1,6 @@
 import {
   type AiAssistantContentPart,
-  type CopilotId,
   kInternal,
-  type MessageId,
   type UiAssistantMessage,
 } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
@@ -13,18 +11,12 @@ import {
   forwardRef,
   memo,
   type ReactNode,
-  useEffect,
   useMemo,
   useState,
 } from "react";
 
-import { Button } from "../../components/internal/Button";
-import { Tooltip, TooltipProvider } from "../../components/internal/Tooltip";
-import { CheckIcon } from "../../icons/Check";
 import { ChevronDownIcon } from "../../icons/ChevronDown";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
-import { CopyIcon } from "../../icons/Copy";
-import { RetryIcon } from "../../icons/Retry";
 import { WarningIcon } from "../../icons/Warning";
 import {
   type AiChatMessageOverrides,
@@ -46,67 +38,19 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
    * The message to display.
    */
   message: UiAssistantMessage;
-  /**
-   * Whether to show or hide message actions.
-   * @internal
-   */
-  showActions?: boolean | "hover";
+
   /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
-  /**
-   * @internal
-   * Whether to show or hide the regenerate button.
-   */
-  showRegenerate?: boolean;
-  /**
-   * @internal
-   * The id of the copilot to use to regenerate the message. Only used if `showRegenerate` is true.
-   */
-  copilotId?: CopilotId;
 }
 
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
-    (
-      {
-        message,
-        showActions = false,
-        showRegenerate = false,
-        copilotId,
-        className,
-        overrides,
-        ...props
-      },
-      forwardedRef
-    ) => {
+    ({ message, className, overrides, ...props }, forwardedRef) => {
       const $ = useOverrides(overrides);
 
       let children: ReactNode = null;
-
-      function MessageActions({ text }: { text: string }) {
-        if (!showActions) return null;
-
-        return (
-          <div className="lb-ai-chat-message-actions">
-            <Tooltip content={$.AI_CHAT_MESSAGE_COPY}>
-              <CopyTextButton text={text} label={$.AI_CHAT_MESSAGE_COPY} />
-            </Tooltip>
-
-            {showRegenerate && (
-              <Tooltip content={$.AI_CHAT_MESSAGE_TRY_AGAIN}>
-                <RegenerateMessageButton
-                  chatId={message.chatId}
-                  messageId={message.id}
-                  copilotId={copilotId}
-                  label={$.AI_CHAT_MESSAGE_TRY_AGAIN}
-                />
-              </Tooltip>
-            )}
-          </div>
-        );
-      }
 
       if (message.deletedAt !== undefined) {
         children = (
@@ -130,41 +74,20 @@ export const AiChatAssistantMessage = memo(
           );
         }
       } else if (message.status === "completed") {
-        const text: string = message.content.reduce((acc, part) => {
-          if (part.type === "text") {
-            return acc + part.text;
-          }
-          return acc;
-        }, "");
-
         children = (
-          <>
-            <AssistantMessageContent
-              content={message.content}
-              chatId={message.chatId}
-            />
-
-            <MessageActions text={text} />
-          </>
+          <AssistantMessageContent
+            content={message.content}
+            chatId={message.chatId}
+          />
         );
       } else if (message.status === "failed") {
-        const text: string = message.contentSoFar.reduce((acc, part) => {
-          if (part.type === "text") {
-            return acc + part.text;
-          }
-          return acc;
-        }, "");
-
         // Do not include the error message if the user aborted the request.
         if (message.errorReason === "Aborted by user") {
           children = (
-            <>
-              <AssistantMessageContent
-                content={message.contentSoFar}
-                chatId={message.chatId}
-              />
-              <MessageActions text={text} />
-            </>
+            <AssistantMessageContent
+              content={message.contentSoFar}
+              chatId={message.chatId}
+            />
           );
         } else {
           children = (
@@ -180,85 +103,26 @@ export const AiChatAssistantMessage = memo(
                 </span>
                 {message.errorReason}
               </div>
-
-              <MessageActions text={text} />
             </>
           );
         }
       }
 
       return (
-        <TooltipProvider>
-          <div
-            className={classNames(
-              "lb-ai-chat-message lb-ai-chat-assistant-message",
-              showActions === "hover" &&
-                "lb-ai-chat-message:show-actions-hover",
-              className
-            )}
-            {...props}
-            ref={forwardedRef}
-          >
-            {children}
-          </div>
-        </TooltipProvider>
+        <div
+          className={classNames(
+            "lb-ai-chat-message lb-ai-chat-assistant-message",
+            className
+          )}
+          {...props}
+          ref={forwardedRef}
+        >
+          {children}
+        </div>
       );
     }
   )
 );
-
-function CopyTextButton({ text, label }: { text: string; label: string }) {
-  const [isCopied, setIsCopied] = useState(false);
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setIsCopied(false);
-    }, 2000);
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [isCopied]);
-
-  return (
-    <Button
-      onClick={function () {
-        navigator.clipboard.writeText(text);
-        setIsCopied(true);
-      }}
-      className="lb-ai-chat-message-action"
-      aria-label={label}
-      icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-    />
-  );
-}
-
-function RegenerateMessageButton({
-  chatId,
-  messageId,
-  copilotId,
-  label,
-}: {
-  chatId: string;
-  messageId: MessageId;
-  copilotId?: CopilotId;
-  label: string;
-}) {
-  const client = useClient();
-
-  return (
-    <Button
-      onClick={function () {
-        client[kInternal].ai.regenerateMessage(chatId, messageId, {
-          copilotId,
-          stream: true,
-        });
-      }}
-      className="lb-ai-chat-message-action"
-      aria-label={label}
-      icon={<RetryIcon />}
-    />
-  );
-}
 
 function AssistantMessageContent({
   content,
