@@ -28,6 +28,7 @@ export type {
 export { InboxNotification } from "./components/InboxNotification";
 export type { InboxNotificationListProps } from "./components/InboxNotificationList";
 export { InboxNotificationList } from "./components/InboxNotificationList";
+export { RegisterAiKnowledge } from "./components/RegisterAiKnowledge";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
 export { LiveblocksUIConfig } from "./config";

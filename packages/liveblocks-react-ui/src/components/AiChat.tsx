@@ -12,6 +12,7 @@ import {
   type ComponentProps,
   forwardRef,
   useEffect,
+  useId,
   useImperativeHandle,
   useRef,
   useState,
@@ -30,6 +31,7 @@ import { classNames } from "../utils/class-names";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
+import { RegisterAiKnowledge } from "./RegisterAiKnowledge";
 
 /**
  * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
@@ -75,7 +77,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       copilotId,
       autoFocus,
       overrides,
-      knowledgeSources = [],
+      knowledgeSources,
       tools = {},
       className,
       ...props
@@ -89,6 +91,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       null
     );
     const client = useClient();
+    const ai = client[kInternal].ai;
+
     const [lastSendMessageId, setLastSendMessageId] =
       useState<MessageId | null>(null);
 
@@ -98,28 +102,17 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       []
     );
 
-    // Add the provided contextual information to the chat on mount and remove on unmount
-    // Note: 'contexts' will most likely be a new object on each render (unless user passes a stable object), but this won't be an issue as context addition and removal is a quick operation
-    useEffect(() => {
-      const unregister = knowledgeSources.map((source) =>
-        client[kInternal].ai.registerKnowledgeSource(chatId, source)
-      );
-      return () => {
-        unregister.forEach((unregister) => unregister());
-      };
-    }, [client, chatId, knowledgeSources]);
-
     // Register the provided tools to the chat on mount and unregister them on unmount
     useEffect(() => {
       Object.entries(tools).map(([key, value]) =>
-        client[kInternal].ai.registerChatTool(chatId, key, value)
+        ai.registerChatTool(chatId, key, value)
       );
       return () => {
         Object.entries(tools).map(([key]) =>
-          client[kInternal].ai.unregisterChatTool(chatId, key)
+          ai.unregisterChatTool(chatId, key)
         );
       };
-    }, [client, chatId, tools]);
+    }, [ai, chatId, tools]);
 
     useEffect(() => {
       const container = containerRef.current;
@@ -195,6 +188,16 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         {...props}
         className={classNames("lb-root lb-ai-chat", className)}
       >
+        {knowledgeSources
+          ? knowledgeSources.map((source, index) => (
+              <RegisterAiKnowledge
+                key={index}
+                description={source.description}
+                value={source.value}
+                // knowledgeKey={source.knowledgeKey}
+              />
+            ))
+          : null}
         <div className="lb-ai-chat-content">
           {isLoading ? (
             <div className="lb-loading lb-ai-chat-loading">
