@@ -3,53 +3,10 @@
 import {
   ClientSideSuspense,
   LiveblocksProvider,
-  useClient,
 } from "@liveblocks/react/suspense";
-import { memo, useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
 import { AiChat, RegisterAiKnowledge } from "@liveblocks/react-ui";
-import { kInternal } from "@liveblocks/core";
-import { Liveblocks } from "@liveblocks/node";
-
-type RegisterAiToolProps = {
-  toolName: string;
-  description: string;
-  parameters: any;
-  render: (args: any) => JSX.Element;
-};
-
-//
-// TODO: Implement similarly:
-// <RegisterAiTool />
-//
-// XXX Maybe split these tools into multiple components?
-// <RegisterAiChatWidget />
-// <RegisterAiChatImmediateSideEffect />
-// <RegisterAiChatConfirmableSideEffect />
-//
-// XXX Move this component into `@liveblocks/react-ui` eventually when done iterating on it
-const RegisterAiTool = memo(function RegisterAiTool(
-  _props: RegisterAiToolProps
-) {
-  // useRegisterAiKnowledge(props);
-  // XXX TODO Implement registering the provided tool
-  return null;
-});
-
-// export function Foo() {
-//   const [selectedTool, setSelectedTool] = useState<string | null>("circle");
-//
-//   return selectedTool === "circle" ? (
-//     <>
-//       <RegisterTool key="resizeCircle" description="Available circle tools" />
-//       <RegisterTool key="changeColor" render={(args) => ...} />
-//     </>
-//   ) : (
-//     <>
-//       <RegisterTool key="changeColor" />
-//     </>
-//   );
-// }
 
 function DarkModeToggle(_props: { x?: number }) {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -63,16 +20,6 @@ function DarkModeToggle(_props: { x?: number }) {
       <RegisterAiKnowledge
         description="The current mode of the app"
         value={mode}
-      />
-
-      <RegisterAiTool
-        toolName="toggleDarkMode"
-        description="Toggle dark mode"
-        parameters={{}}
-        render={(_args) => {
-          toggleDarkMode();
-          return <h1>...</h1>;
-        }}
       />
 
       <label>
@@ -141,35 +88,6 @@ function TodoApp() {
       <RegisterAiKnowledge
         description="A list of todos with id, title and completion status"
         value={todos}
-      />
-
-      <RegisterAiTool
-        toolName="displayTodo"
-        description="Display todos"
-        parameters={{
-          type: "object",
-          properties: {
-            ids: {
-              type: "array",
-              description: "The ids of the todo to display",
-              items: {
-                type: "number",
-              },
-            },
-          },
-        }}
-        render={({ args }: { args: { ids: number[] } }) => {
-          return (
-            <div className="flex flex-col gap-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-lg p-4 mt-4">
-              {args.ids.map((id) => {
-                const todo = todos.find((t) => t.id === id);
-                if (!todo) return null;
-
-                return <div key={todo.id}>{todo.title}</div>;
-              })}
-            </div>
-          );
-        }}
       />
 
       <input
