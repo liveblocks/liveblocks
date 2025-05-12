@@ -10,13 +10,14 @@ import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
+import { isDefined } from "./lib/guards";
 import { nanoid } from "./lib/nanoid";
 import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
 import { TreePool } from "./lib/TreePool";
-import type { DistributiveOmit } from "./lib/utils";
-import { tryParseJson } from "./lib/utils";
+import type { Brand, DistributiveOmit } from "./lib/utils";
+import { raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -138,8 +139,79 @@ type AiContext = {
   chatsStore: ReturnType<typeof createStore_forUserAiChats>;
   toolsStore: ReturnType<typeof createStore_forTools>;
   messagesStore: ReturnType<typeof createStore_forChatMessages>;
-  knowledgeByChatId: Map<string, Set<AiKnowledgeSource>>;
+  knowledge: KnowledgeStack;
 };
+
+type LayerKey = Brand<string, "LayerKey">;
+
+export class KnowledgeStack {
+  #_layers: Set<LayerKey>;
+
+  #stack: DefaultMap<string, Map<LayerKey, AiKnowledgeSource | null>>;
+  //                 /                \
+  //      knowledge key               "layer" key
+  //      (random, or optionally      (one entry per mounted component)
+  //       set by user)
+  #_cache: AiKnowledgeSource[] | undefined;
+
+  constructor() {
+    this.#_layers = new Set<LayerKey>();
+    this.#stack = new DefaultMap(
+      () => new Map<LayerKey, AiKnowledgeSource | null>()
+    );
+    this.#_cache = undefined;
+  }
+
+  // Typically a useId()
+  registerLayer(uniqueLayerId: string): LayerKey {
+    const layerKey = uniqueLayerId as LayerKey;
+    if (this.#_layers.has(layerKey))
+      raise(`Layer '${layerKey}' already exists, provide a unique layer id`);
+    this.#_layers.add(layerKey);
+    return layerKey;
+  }
+
+  deregisterLayer(layerKey: LayerKey): void {
+    this.#_layers.delete(layerKey);
+    let deleted = false;
+    for (const [key, knowledge] of this.#stack) {
+      if (knowledge.delete(layerKey)) {
+        deleted = true;
+      }
+      if (knowledge.size === 0)
+        // Just memory cleanup
+        this.#stack.delete(key);
+    }
+    if (deleted) {
+      this.invalidate();
+    }
+  }
+
+  get(): AiKnowledgeSource[] {
+    return (this.#_cache ??= this.#recompute());
+  }
+
+  invalidate(): void {
+    this.#_cache = undefined;
+  }
+
+  #recompute(): AiKnowledgeSource[] {
+    return Array.from(this.#stack.values()).flatMap((layer) =>
+      // Return only the last item (returns [] when empty)
+      Array.from(layer.values()).slice(-1).filter(isDefined)
+    );
+  }
+
+  updateKnowledge(
+    layerKey: LayerKey,
+    key: string,
+    data: AiKnowledgeSource | null
+  ): void {
+    if (!this.#_layers.has(layerKey)) raise(`Unknown layer key: ${layerKey}`);
+    this.#stack.getOrCreate(key).set(layerKey, data);
+    this.invalidate();
+  }
+}
 
 export type GetOrCreateChatOptions = {
   name: string;
@@ -619,10 +691,17 @@ export type Ai = {
     ): Signal<ClientToolDefinition | undefined>;
   };
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
-  registerKnowledgeSource: (
-    chatId: string,
-    data: AiKnowledgeSource
-  ) => () => void;
+  registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  deregisterKnowledgeLayer: (layerKey: LayerKey) => void;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  updateKnowledge: (
+    layerKey: LayerKey,
+    data: AiKnowledgeSource,
+    key?: string
+  ) => void;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  debug_getAllKnowledge(): AiKnowledgeSource[];
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   registerChatTool: (
     chatId: string,
@@ -663,7 +742,7 @@ export function createAi(config: AiConfig): Ai {
     chatsStore,
     messagesStore,
     toolsStore,
-    knowledgeByChatId: new Map<string, Set<AiKnowledgeSource>>(),
+    knowledge: new KnowledgeStack(),
   };
 
   let lastTokenKey: string | undefined;
@@ -923,23 +1002,24 @@ export function createAi(config: AiConfig): Ai {
     });
   }
 
-  function registerKnowledgeSource(chatId: string, data: AiKnowledgeSource) {
-    const knowledge = context.knowledgeByChatId.get(chatId);
-    if (knowledge === undefined) {
-      context.knowledgeByChatId.set(chatId, new Set([data]));
-    } else {
-      knowledge.add(data);
-    }
+  function registerKnowledgeLayer(uniqueLayerId: string): LayerKey {
+    return context.knowledge.registerLayer(uniqueLayerId);
+  }
 
-    return () => {
-      const knowledge = context.knowledgeByChatId.get(chatId);
-      if (knowledge !== undefined) {
-        knowledge.delete(data);
-        if (knowledge.size === 0) {
-          context.knowledgeByChatId.delete(chatId);
-        }
-      }
-    };
+  function deregisterKnowledgeLayer(layerKey: LayerKey): void {
+    context.knowledge.deregisterLayer(layerKey);
+  }
+
+  function updateKnowledge(
+    layerKey: LayerKey,
+    data: AiKnowledgeSource,
+    key: string = nanoid()
+  ) {
+    context.knowledge.updateKnowledge(layerKey, key, data);
+  }
+
+  function debug_getAllKnowledge() {
+    return context.knowledge.get();
   }
 
   return Object.defineProperty(
@@ -981,7 +1061,7 @@ export function createAi(config: AiConfig): Ai {
         targetMessageId: MessageId,
         options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
-        const knowledge = context.knowledgeByChatId.get(chatId);
+        const knowledge = context.knowledge.get();
         return sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -992,7 +1072,7 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream: options?.stream,
             timeout: options?.timeout,
-            knowledge: knowledge ? Array.from(knowledge) : undefined,
+            knowledge: knowledge.length > 0 ? knowledge : undefined,
             tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
               name: tool.name,
               description: tool.definition.description,
@@ -1015,7 +1095,10 @@ export function createAi(config: AiConfig): Ai {
         getToolDefinitionΣ: context.toolsStore.getToolCallByNameΣ,
       },
 
-      registerKnowledgeSource,
+      registerKnowledgeLayer,
+      deregisterKnowledgeLayer,
+      updateKnowledge,
+      debug_getAllKnowledge,
 
       registerChatTool: context.toolsStore.addToolDefinition,
       unregisterChatTool: context.toolsStore.removeToolDefinition,
