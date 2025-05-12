@@ -1,0 +1,343 @@
+"use client";
+
+import {
+  ClientSideSuspense,
+  LiveblocksProvider,
+  useClient,
+} from "@liveblocks/react/suspense";
+import { memo, useCallback, useEffect, useState } from "react";
+import { Popover } from "radix-ui";
+import { AiChat, RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { kInternal } from "@liveblocks/core";
+import { Liveblocks } from "@liveblocks/node";
+
+type RegisterAiToolProps = {
+  toolName: string;
+  description: string;
+  parameters: any;
+  render: (args: any) => JSX.Element;
+};
+
+//
+// TODO: Implement similarly:
+// <RegisterAiTool />
+//
+// XXX Maybe split these tools into multiple components?
+// <RegisterAiChatWidget />
+// <RegisterAiChatImmediateSideEffect />
+// <RegisterAiChatConfirmableSideEffect />
+//
+// XXX Move this component into `@liveblocks/react-ui` eventually when done iterating on it
+const RegisterAiTool = memo(function RegisterAiTool(
+  _props: RegisterAiToolProps
+) {
+  // useRegisterAiKnowledge(props);
+  // XXX TODO Implement registering the provided tool
+  return null;
+});
+
+// export function Foo() {
+//   const [selectedTool, setSelectedTool] = useState<string | null>("circle");
+//
+//   return selectedTool === "circle" ? (
+//     <>
+//       <RegisterTool key="resizeCircle" description="Available circle tools" />
+//       <RegisterTool key="changeColor" render={(args) => ...} />
+//     </>
+//   ) : (
+//     <>
+//       <RegisterTool key="changeColor" />
+//     </>
+//   );
+// }
+
+function DarkModeToggle(_props: { x?: number }) {
+  const [mode, setMode] = useState<"light" | "dark">("light");
+
+  const toggleDarkMode = useCallback(() => {
+    setMode(mode === "dark" ? "light" : "dark");
+  }, [mode]);
+
+  return (
+    <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
+      <RegisterAiKnowledge
+        description="The current mode of the app"
+        value={mode}
+      />
+
+      <RegisterAiTool
+        toolName="toggleDarkMode"
+        description="Toggle dark mode"
+        parameters={{}}
+        render={(_args) => {
+          toggleDarkMode();
+          return <h1>...</h1>;
+        }}
+      />
+
+      <label>
+        <input
+          type="checkbox"
+          checked={mode === "dark"}
+          onChange={() => toggleDarkMode()}
+        />{" "}
+        Dark mode {mode === "light" ? "☀️" : "🌙"}
+      </label>
+    </div>
+  );
+}
+
+function MyNickName() {
+  const [enabled, setEnabled] = useState(false);
+  const toggle = useCallback(() => {
+    setEnabled((enabled) => !enabled);
+  }, []);
+
+  return (
+    <>
+      {enabled ? (
+        <RegisterAiKnowledge description="My internet nick name" value="nvie" />
+      ) : null}
+      <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
+        <label>
+          <input type="checkbox" checked={enabled} onChange={() => toggle()} />
+          <span className="ml-2">Share my nickname</span>
+        </label>
+      </div>
+    </>
+  );
+}
+
+function TodoApp() {
+  const [todos, setTodos] = useState<
+    { id: number; title: string; isCompleted: boolean }[]
+  >([
+    {
+      id: 1,
+      title: "Get groceries",
+      isCompleted: true,
+    },
+    {
+      id: 2,
+      title: "Go to the gym",
+      isCompleted: false,
+    },
+    {
+      id: 3,
+      title: "Cook dinner",
+      isCompleted: false,
+    },
+  ]);
+  const [value, setValue] = useState("");
+
+  return (
+    <div className="flex flex-col mx-auto px-4 max-w-4xl py-8">
+      <RegisterAiKnowledge
+        knowledgeKey="current-view"
+        description="The current view inside my app"
+        value="Todo list"
+      />
+
+      <RegisterAiKnowledge
+        description="A list of todos with id, title and completion status"
+        value={todos}
+      />
+
+      <RegisterAiTool
+        toolName="displayTodo"
+        description="Display todos"
+        parameters={{
+          type: "object",
+          properties: {
+            ids: {
+              type: "array",
+              description: "The ids of the todo to display",
+              items: {
+                type: "number",
+              },
+            },
+          },
+        }}
+        render={({ args }: { args: { ids: number[] } }) => {
+          return (
+            <div className="flex flex-col gap-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-lg p-4 mt-4">
+              {args.ids.map((id) => {
+                const todo = todos.find((t) => t.id === id);
+                if (!todo) return null;
+
+                return <div key={todo.id}>{todo.title}</div>;
+              })}
+            </div>
+          );
+        }}
+      />
+
+      <input
+        type="text"
+        placeholder="Add a todo"
+        value={value}
+        onChange={(e) => {
+          setValue(e.currentTarget.value);
+        }}
+        onKeyDown={(e) => {
+          if (value.length > 0 && e.key === "Enter") {
+            setTodos((todos) => [
+              ...todos,
+              {
+                id: todos.length + 1,
+                title: value,
+                isCompleted: false,
+              },
+            ]);
+            setValue("");
+          }
+        }}
+        className="shadow-[0_0_0_1px_rgb(0_0_0_/_4%),_0_2px_6px_rgb(0_0_0_/_4%),_0_8px_26px_rgb(0_0_0_/_6%)] rounded-lg p-3 w-full border-0 mb-4"
+      />
+
+      {todos.length > 0 && (
+        <ul className="flex flex-col gap-4">
+          {todos.map((todo, index) => {
+            return (
+              <li
+                key={index}
+                className={`flex space-between items-center ${todo.isCompleted ? "line-through opacity-50" : "opacity-100"}`}
+                onClick={() => {
+                  setTodos((todos) =>
+                    todos.map((t) => {
+                      if (t.id === todo.id) {
+                        return { ...todo, isCompleted: !todo.isCompleted };
+                      }
+                      return t;
+                    })
+                  );
+                }}
+              >
+                {todo.title}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function AnotherApp() {
+  return (
+    <div className="flex flex-col mx-auto px-4 max-w-4xl py-8">
+      <RegisterAiKnowledge
+        knowledgeKey="current-view"
+        description="The current view inside my app"
+        value="Another app"
+      />
+      Another part of the app
+    </div>
+  );
+}
+
+function BothApps() {
+  return (
+    <>
+      <TodoApp />
+      <AnotherApp />
+      <RegisterAiKnowledge
+        knowledgeKey="current-view"
+        description="The current view inside my app"
+        value="Both apps"
+      />
+    </>
+  );
+}
+
+export default function Page() {
+  const [selectedTab, setSelectedTab] = useState(1);
+  const [debug, setDebug] = useState(false);
+  return (
+    <LiveblocksProvider
+      authEndpoint="/api/auth/liveblocks"
+      // @ts-expect-error
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
+    >
+      <main className="h-screen w-full">
+        <MyNickName />
+        <DarkModeToggle />
+
+        <div className="flex flex-col px-4 max-w-4xl py-8 border-b-1">
+          <div className="flex gap-4 mx-auto">
+            <button
+              className={
+                selectedTab === 1
+                  ? "cursor-pointer font-bold"
+                  : "cursor-pointer"
+              }
+              onClick={() => setSelectedTab(1)}
+            >
+              Todo app
+            </button>
+            <button
+              className={
+                selectedTab === 2
+                  ? "cursor-pointer font-bold"
+                  : "cursor-pointer"
+              }
+              onClick={() => setSelectedTab(2)}
+            >
+              Another app
+            </button>
+            <button
+              className={
+                selectedTab === 3
+                  ? "cursor-pointer font-bold"
+                  : "cursor-pointer"
+              }
+              onClick={() => setSelectedTab(3)}
+            >
+              Both
+            </button>
+          </div>
+
+          {selectedTab === 1 ? (
+            <TodoApp />
+          ) : selectedTab === 2 ? (
+            <AnotherApp />
+          ) : (
+            <BothApps />
+          )}
+        </div>
+
+        <div className="fixed bottom-8 right-8">
+          <Popover.Root>
+            <Popover.Trigger className="inline-flex items-center justify-center rounded-full p-4 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14]">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width={32}
+                height={32}
+                viewBox="0 0 32 32"
+                fill="hsl(340, 78%, 51%)"
+                strokeWidth={0}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                role="presentation"
+              >
+                <path d="M25.805 19.12c-6.996 2.312-9.325 4.642-11.637 11.638-.19.575-1.003.575-1.193 0-2.312-6.996-4.642-9.326-11.637-11.637-.576-.19-.576-1.004 0-1.194 6.996-2.311 9.325-4.641 11.637-11.637.19-.575 1.003-.575 1.193 0 2.312 6.996 4.642 9.326 11.637 11.637.575.19.575 1.004 0 1.194ZM30.879 7.632c-3.497 1.155-4.663 2.32-5.82 5.82-.094.287-.5.287-.596 0-1.155-3.498-2.32-4.664-5.82-5.82-.287-.095-.287-.501 0-.597 3.498-1.155 4.663-2.32 5.82-5.82a.314.314 0 0 1 .596 0c1.155 3.498 2.321 4.663 5.82 5.82.287.094.287.5 0 .597Z"></path>
+              </svg>
+            </Popover.Trigger>
+            <Popover.Portal>
+              <Popover.Content
+                side="top"
+                align="end"
+                sideOffset={10}
+                className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14] rounded-xl"
+              >
+                <ClientSideSuspense fallback={null}>
+                  <AiChat chatId="todo125" className="rounded-xl" />
+                </ClientSideSuspense>
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+        </div>
+      </main>
+    </LiveblocksProvider>
+  );
+}
