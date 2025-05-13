@@ -170,7 +170,6 @@ function BothApps() {
 
 export default function Page() {
   const [selectedTab, setSelectedTab] = useState(1);
-  const [debug, setDebug] = useState(false);
   return (
     <LiveblocksProvider
       authEndpoint="/api/auth/liveblocks"
