@@ -6,7 +6,8 @@ import {
 } from "@liveblocks/react/suspense";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
-import { AiChat, RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiKnowledge } from "@liveblocks/react";
 
 function DarkModeToggle(_props: { x?: number }) {
   const [mode, setMode] = useState<"light" | "dark">("light");
@@ -80,7 +81,7 @@ function TodoApp() {
   return (
     <div className="flex flex-col mx-auto px-4 max-w-4xl py-8">
       <RegisterAiKnowledge
-        knowledgeKey="current-view"
+        id="current-view"
         description="The current view inside my app"
         value="Todo list"
       />
@@ -145,7 +146,7 @@ function AnotherApp() {
   return (
     <div className="flex flex-col mx-auto px-4 max-w-4xl py-8">
       <RegisterAiKnowledge
-        knowledgeKey="current-view"
+        id="current-view"
         description="The current view inside my app"
         value="Another app"
       />
@@ -160,7 +161,7 @@ function BothApps() {
       <TodoApp />
       <AnotherApp />
       <RegisterAiKnowledge
-        knowledgeKey="current-view"
+        id="current-view"
         description="The current view inside my app"
         value="Both apps"
       />

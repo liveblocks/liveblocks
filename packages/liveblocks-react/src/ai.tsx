@@ -31,34 +31,41 @@ function useRandom() {
  * It can choose to use or ignore this knowledge in its responses.
  */
 export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
-  props: AiKnowledgeSource & { knowledgeKey?: string }
+  props: AiKnowledgeSource & {
+    /**
+     * An optional unique key for this knowledge source. If multiple components
+     * register knowledge under the same key, the last one to mount takes
+     * precedence.
+     */
+    id?: string;
+  }
 ) {
-  const id = useId();
+  const layerId = useId();
   const ai = useAi();
   const { description, value } = props;
-  const rndKey = useRandom();
-  const key = props.knowledgeKey ?? rndKey;
 
-  const [layer, setLayer] = useState<
+  const [layerKey, setLayerKey] = useState<
     ReturnType<typeof ai.registerKnowledgeLayer> | undefined
   >();
 
   // Executes at mount / unmount
   useEffect(() => {
-    const layer = ai.registerKnowledgeLayer(id);
-    setLayer(layer);
+    const layerKey = ai.registerKnowledgeLayer(layerId);
+    setLayerKey(layerKey);
     return () => {
-      ai.deregisterKnowledgeLayer(layer);
-      setLayer(undefined);
+      ai.deregisterKnowledgeLayer(layerKey);
+      setLayerKey(undefined);
     };
-  }, [ai, id]);
+  }, [ai, layerId]);
 
   // Executes every render (if the props have changed)
+  const randomKey = useRandom();
+  const knowledgeKey = props.id ?? randomKey;
   useEffect(() => {
-    if (layer !== undefined) {
-      ai.updateKnowledge(layer, { description, value }, key);
+    if (layerKey !== undefined) {
+      ai.updateKnowledge(layerKey, { description, value }, knowledgeKey);
     }
-  }, [ai, layer, key, description, value]);
+  }, [ai, layerKey, knowledgeKey, description, value]);
 
   return null;
 });
