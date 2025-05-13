@@ -7,6 +7,10 @@
   --lb-button-radius: 9999px;
 }
 
+.lb-ai-chat {
+  --lb-ai-chat-container-width: 896px;
+}
+
 @keyframes pulse-dot {
   0%,
   100% {

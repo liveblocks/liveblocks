@@ -2290,6 +2290,10 @@
     box-decoration-break: clone;
     box-shadow: var(--lb-foreground-subtle) 0 0 0 1px inset;
 
+    /* overflow-block: auto; doesn't work as expected */
+    /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+    overflow-y: auto;
+
     :where(code) {
       padding: 0;
       background: transparent;

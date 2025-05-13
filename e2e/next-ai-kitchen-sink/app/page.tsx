@@ -8,6 +8,9 @@ export default function Home() {
       <h1 className="text-2xl font-bold mb-4">Examples</h1>
 
       <div className="flex flex-col gap-4">
+        <Link href="/simple" className="underline">
+          Simple
+        </Link>
         <Link href="/chats" className="underline">
           Chats
         </Link>
