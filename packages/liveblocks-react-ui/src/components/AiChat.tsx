@@ -55,8 +55,9 @@ export interface AiChatProps extends ComponentProps<"div"> {
   copilotId?: string;
   /**
    * The contextual knowledge to include in the chat. May be used by the assistant when generating responses.
+   * Any knowledge you provide via this prop will be added to any already globally registered knowledge via <RegisterAiKnowledge />.
    */
-  knowledgeSources?: AiKnowledgeSource[];
+  knowledge?: AiKnowledgeSource[];
   /**
    * Tool definitions to make available within this chat. May be used by the assistant when generating responses.
    */
@@ -79,7 +80,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       copilotId,
       autoFocus,
       overrides,
-      knowledgeSources,
+      knowledge,
       tools = {},
       className,
       ...props
@@ -190,8 +191,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         {...props}
         className={classNames("lb-root lb-ai-chat", className)}
       >
-        {knowledgeSources
-          ? knowledgeSources.map((source, index) => (
+        {knowledge
+          ? knowledge.map((source, index) => (
               <RegisterAiKnowledge
                 key={index}
                 description={source.description}
