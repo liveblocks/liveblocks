@@ -367,6 +367,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectType<string | undefined>(err.stack);
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
@@ -405,6 +406,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectType<string | undefined>(err.stack);
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
@@ -443,6 +445,7 @@ ctx.useOthersListener(({ user, type }) => {
     expectType<string | undefined>(err.stack);
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
