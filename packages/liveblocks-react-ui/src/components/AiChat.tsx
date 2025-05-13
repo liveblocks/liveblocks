@@ -6,13 +6,16 @@ import type {
   UiChatMessage,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
-import { useAiChatMessages, useClient } from "@liveblocks/react";
+import {
+  RegisterAiKnowledge,
+  useAiChatMessages,
+  useClient,
+} from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
   forwardRef,
   useEffect,
-  useId,
   useImperativeHandle,
   useRef,
   useState,
@@ -31,7 +34,6 @@ import { classNames } from "../utils/class-names";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
-import { RegisterAiKnowledge } from "./RegisterAiKnowledge";
 
 /**
  * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.

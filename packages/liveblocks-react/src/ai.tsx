@@ -1,7 +1,8 @@
 import type { AiKnowledgeSource } from "@liveblocks/core";
 import { kInternal, nanoid } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
 import { memo, useEffect, useId, useState } from "react";
+
+import { useClient } from "./liveblocks";
 
 function useAi() {
   return useClient()[kInternal].ai;
