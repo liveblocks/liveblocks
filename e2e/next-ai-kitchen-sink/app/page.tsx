@@ -9,16 +9,19 @@ export default function Home() {
 
       <div className="flex flex-col gap-4">
         <Link href="/simple" className="underline">
-          Simple
+          Simple chat
         </Link>
         <Link href="/chats" className="underline">
-          Chats
-        </Link>
-        <Link href="/knowledge" className="underline">
-          Knowledge
+          Multiple chats
         </Link>
         <Link href="/todo" className="underline">
-          Todo
+          Todo list example
+        </Link>
+        <Link href="/knowledge" className="underline">
+          Registering client-side knowledge
+        </Link>
+        <Link href="/markdown" className="underline">
+          Markdown playground
         </Link>
       </div>
     </main>
