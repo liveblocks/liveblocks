@@ -2498,8 +2498,19 @@
 .lb-ai-chat-pending {
   @include truncate;
 
+  min-inline-size: 0;
+  max-inline-size: fit-content;
+  background-image: linear-gradient(
+    to right,
+    var(--lb-foreground-tertiary) 40%,
+    var(--lb-foreground) 60%,
+    var(--lb-foreground-tertiary) 80%
+  );
+  background-clip: text;
+  background-size: 200% auto;
+  color: transparent;
   user-select: none;
-  animation: lb-animation-shimmer-small 8s linear infinite;
+  animation: lb-ai-chat-thinking-animation-shimmer 4s linear infinite;
 }
 
 /*************************************
@@ -2591,6 +2602,16 @@
 
   to {
     mask-position: -200% 0;
+  }
+}
+
+@keyframes lb-ai-chat-thinking-animation-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
   }
 }
 
