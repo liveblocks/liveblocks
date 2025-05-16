@@ -403,7 +403,7 @@ function random(min: number, max: number) {
 export default function Home() {
   const isMounted = useIsMounted();
 
-  const [isReasoning, setReasoning] = useState(false);
+  const [isReasoning, setReasoning] = useState(true);
   const [isStreaming, setStreaming] = useState(false);
   const [streamedMarkdownMessage, setStreamedMarkdownMessage] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -497,12 +497,12 @@ export default function Home() {
                   text={simpleMarkdownMessage}
                 />
                 <div className="lb-ai-chat-message-tool">
-                  <div style={{ background: "rgba(255, 0, 0, 0.1)" }}>
+                  <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A rendered tool
                   </div>
                 </div>
                 <div className="lb-ai-chat-message-tool">
-                  <div style={{ background: "rgba(255, 0, 0, 0.1)" }}>
+                  <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A second rendered tool immediately after the first one
                   </div>
                 </div>
@@ -511,7 +511,7 @@ export default function Home() {
                   text={simpleMarkdownMessage}
                 />
                 <div className="lb-ai-chat-message-tool">
-                  <div style={{ background: "rgba(255, 0, 0, 0.1)" }}>
+                  <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A rendered tool as the last part
                   </div>
                 </div>
