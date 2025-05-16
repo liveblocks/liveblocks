@@ -268,6 +268,7 @@ function ReasoningPart({
           isPending && "lb-ai-chat-pending"
         )}
       >
+        {/* TODO: If `isPending` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
         Reasoning
         <span className="lb-icon-container">
           {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
@@ -275,7 +276,7 @@ function ReasoningPart({
       </CollapsiblePrimitive.Trigger>
 
       <CollapsiblePrimitive.Content className="lb-ai-chat-message-collapsible-content">
-        {text}
+        <TextPart text={text} />
       </CollapsiblePrimitive.Content>
     </CollapsiblePrimitive.Root>
   );

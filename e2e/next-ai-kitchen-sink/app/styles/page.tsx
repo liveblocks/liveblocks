@@ -14,6 +14,11 @@ import {
   BlockToken,
   BlockTokenComp as BlockTokenCompPrimitive,
 } from "../chats/[chatId]/markdown";
+import * as CollapsiblePrimitive from "../chats/[chatId]/collapsible";
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
@@ -34,6 +39,38 @@ function TextPart({
   );
 }
 
+function ReasoningPart({
+  text,
+  isPending,
+}: {
+  text: string;
+  isPending: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <CollapsiblePrimitive.Root
+      className="lb-ai-chat-message-collapsible lb-ai-chat-message-reasoning"
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
+      <CollapsiblePrimitive.Trigger
+        className={`lb-ai-chat-message-collapsible-trigger ${
+          isPending ? "lb-ai-chat-pending" : ""
+        }`}
+      >
+        Reasoning
+        <span className="lb-icon-container">
+          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+        </span>
+      </CollapsiblePrimitive.Trigger>
+
+      <CollapsiblePrimitive.Content className="lb-ai-chat-message-collapsible-content">
+        <TextPart className="lb-ai-chat-message-text" text={text} />
+      </CollapsiblePrimitive.Content>
+    </CollapsiblePrimitive.Root>
+  );
+}
+
 const MemoizedBlockTokenComp = memo(
   function BlockTokenComp({ token }: { token: BlockToken }) {
     return <BlockTokenCompPrimitive token={token} />;
@@ -50,6 +87,46 @@ const MemoizedBlockTokenComp = memo(
     return prevToken.raw === nextToken.raw;
   }
 );
+
+const reasoningMessage = `
+This is a reasoning message, it can also include **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
+
+It can also include multiple paragraphs, headings, blockquotes, lists, code blocks, and more.
+
+> This is a blockquote.
+> It can span multiple lines.
+> It also includes \`code\`, **bold**, and links inside the blockquote.
+
+### Unordered List
+
+- A root item
+  - A nested item
+
+### Ordered List
+
+1. A root item
+2. An item with children
+   1. A long nested item to see how it wraps, with a [link](https://liveblocks.io/), **bold text**, and ~~strikethrough~~
+   2. A nested item
+
+\`\`\`tsx
+const x = 42;
+\`\`\`
+
+\`\`\`json
+{ "name": "my-app", "version": "1.0.0" }
+\`\`\`
+`;
+
+const simpleMarkdownMessage = `
+This is a regular paragraph of text. It includes **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
+
+Here’s a second paragraph to test spacing between multiple paragraphs.
+
+> This is a blockquote.
+> It can span multiple lines.
+> It also includes \`code\`, **bold**, and links inside the blockquote.
+`;
 
 const markdownMessage = `
 # H1 Heading
@@ -326,6 +403,7 @@ function random(min: number, max: number) {
 export default function Home() {
   const isMounted = useIsMounted();
 
+  const [isReasoning, setReasoning] = useState(false);
   const [isStreaming, setStreaming] = useState(false);
   const [streamedMarkdownMessage, setStreamedMarkdownMessage] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -371,8 +449,79 @@ export default function Home() {
           <div className="lb-ai-chat-messages">
             <div className="lb-ai-chat-message lb-ai-chat-user-message">
               <div className="lb-ai-chat-message-content">
+                <div className="lb-ai-chat-message-deleted">
+                  This message has been deleted.
+                </div>
+              </div>
+            </div>
+            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+              <div className="lb-ai-chat-message-deleted">
+                This message has been deleted.
+              </div>
+            </div>
+
+            <div className="lb-ai-chat-message lb-ai-chat-user-message">
+              <div className="lb-ai-chat-message-content">
                 <div className="lb-ai-chat-message-text">
-                  <p>A markdown message</p>
+                  <p>A pending message</p>
+                </div>
+              </div>
+            </div>
+            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+              <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
+                Thinking…
+              </div>
+            </div>
+            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+              <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
+                Thinking but with a longer message to see how flexible the
+                shimmer is…
+              </div>
+            </div>
+
+            <div className="lb-ai-chat-message lb-ai-chat-user-message">
+              <div className="lb-ai-chat-message-content">
+                <div className="lb-ai-chat-message-text">
+                  <p>A reasoning message with tools</p>
+                </div>
+              </div>
+            </div>
+            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+              <div className="lb-ai-chat-message-content">
+                <ReasoningPart
+                  text={reasoningMessage}
+                  isPending={isReasoning}
+                />
+                <TextPart
+                  className="lb-ai-chat-message-text"
+                  text={simpleMarkdownMessage}
+                />
+                <div className="lb-ai-chat-message-tool">
+                  <div style={{ background: "rgba(255, 0, 0, 0.1)" }}>
+                    A rendered tool
+                  </div>
+                </div>
+                <div className="lb-ai-chat-message-tool">
+                  <div style={{ background: "rgba(255, 0, 0, 0.1)" }}>
+                    A second rendered tool immediately after the first one
+                  </div>
+                </div>
+                <TextPart
+                  className="lb-ai-chat-message-text"
+                  text={simpleMarkdownMessage}
+                />
+                <div className="lb-ai-chat-message-tool">
+                  <div style={{ background: "rgba(255, 0, 0, 0.1)" }}>
+                    A rendered tool as the last part
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lb-ai-chat-message lb-ai-chat-user-message">
+              <div className="lb-ai-chat-message-content">
+                <div className="lb-ai-chat-message-text">
+                  <p>A Markdown message</p>
                 </div>
               </div>
             </div>
@@ -384,6 +533,7 @@ export default function Home() {
                 />
               </div>
             </div>
+
             <div className="lb-ai-chat-message lb-ai-chat-user-message">
               <div className="lb-ai-chat-message-content">
                 <div className="lb-ai-chat-message-text">
@@ -412,10 +562,18 @@ export default function Home() {
               <label>
                 <input
                   type="checkbox"
+                  checked={isReasoning}
+                  onChange={(event) => setReasoning(event.target.checked)}
+                />{" "}
+                Currently reasoning
+              </label>
+              <label>
+                <input
+                  type="checkbox"
                   checked={isStreaming}
                   onChange={(event) => setStreaming(event.target.checked)}
                 />{" "}
-                Simulate streaming
+                Simulate Markdown streaming
               </label>
               <label style={{ opacity: 0.5 }}>
                 {/* TODO: Disable all styles for this page except the Liveblocks ones */}

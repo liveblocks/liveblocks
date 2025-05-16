@@ -20,8 +20,8 @@ export default function Home() {
         <Link href="/knowledge" className="underline">
           Registering client-side knowledge
         </Link>
-        <Link href="/markdown" className="underline">
-          Markdown playground
+        <Link href="/styles" className="underline">
+          Default styles playground
         </Link>
       </div>
     </main>
