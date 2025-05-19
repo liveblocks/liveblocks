@@ -1,5 +1,6 @@
 // Private APIs
 
+export { type GlobalComponents, useComponents } from "../components";
 export {
   AiChatAssistantMessage,
   type AiChatAssistantMessageProps,

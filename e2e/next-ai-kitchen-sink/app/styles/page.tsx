@@ -22,7 +22,10 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
+  GlobalComponents,
+  useComponents,
 } from "@liveblocks/react-ui/_private";
+import Link from "next/link";
 
 function TextPart({
   text,
@@ -120,7 +123,15 @@ function CodeBlock({
 
 const MemoizedBlockTokenComp = memo(
   function BlockTokenComp({ token }: { token: BlockToken }) {
-    return <BlockTokenCompPrimitive token={token} components={{ CodeBlock }} />;
+    return (
+      <BlockTokenCompPrimitive
+        token={token}
+        components={{
+          CodeBlock,
+          Anchor: Link,
+        }}
+      />
+    );
   },
   (prevProps, nextProps) => {
     const prevToken = prevProps.token;

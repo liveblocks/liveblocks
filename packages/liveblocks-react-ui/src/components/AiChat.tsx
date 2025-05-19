@@ -21,6 +21,7 @@ import {
   useState,
 } from "react";
 
+import type { GlobalComponents } from "../components";
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { SpinnerIcon } from "../icons/Spinner";
 import {
@@ -71,6 +72,10 @@ export interface AiChatProps extends ComponentProps<"div"> {
       AiChatComposerOverrides &
       AiChatOverrides
   >;
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<GlobalComponents>; // TODO: Add more slots than the global ones over time (Markdown tags, the empty state, etc)
 }
 
 export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
@@ -82,6 +87,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       overrides,
       knowledge,
       tools = {},
+      components,
       className,
       ...props
     },
@@ -89,6 +95,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   ) => {
     const { messages, isLoading, error } = useAiChatMessages(chatId);
     const $ = useOverrides(overrides);
+
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [distanceToBottom, setDistanceToBottom] = useState<number | null>(
       null
@@ -215,6 +222,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               <Messages
                 messages={messages}
                 overrides={$}
+                components={components}
                 onDistanceToBottomChange={scrollToBottomCallbackRef.current}
               />
             </div>
@@ -265,14 +273,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 function Messages({
   messages,
   overrides,
+  components,
   onDistanceToBottomChange,
 }: {
   messages: readonly UiChatMessage[];
-  overrides: Partial<GlobalOverrides & AiChatMessageOverrides>;
+  overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
+  components?: Partial<GlobalComponents>;
   onDistanceToBottomChange: () => void;
 }) {
-  const $ = useOverrides(overrides);
-
   useLayoutEffect(() => {
     onDistanceToBottomChange();
   }, [onDistanceToBottomChange]);
@@ -280,14 +288,19 @@ function Messages({
   return messages.map((message) => {
     if (message.role === "user") {
       return (
-        <AiChatUserMessage key={message.id} message={message} overrides={$} />
+        <AiChatUserMessage
+          key={message.id}
+          message={message}
+          overrides={overrides}
+        />
       );
     } else if (message.role === "assistant") {
       return (
         <AiChatAssistantMessage
           key={message.id}
           message={message}
-          overrides={$}
+          overrides={overrides}
+          components={components}
         />
       );
     } else {

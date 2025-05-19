@@ -18,6 +18,7 @@ import {
 } from "react";
 
 import { Button } from "../../_private";
+import { type GlobalComponents, useComponents } from "../../components";
 import { CheckIcon } from "../../icons/Check";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
 import { CopyIcon } from "../../icons/Copy";
@@ -48,11 +49,16 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
+
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<GlobalComponents>;
 }
 
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
-    ({ message, className, overrides, ...props }, forwardedRef) => {
+    ({ message, className, overrides, components, ...props }, forwardedRef) => {
       const $ = useOverrides(overrides);
 
       let children: ReactNode = null;
@@ -75,6 +81,7 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               content={message.contentSoFar}
               chatId={message.chatId}
+              components={components}
             />
           );
         }
@@ -83,6 +90,7 @@ export const AiChatAssistantMessage = memo(
           <AssistantMessageContent
             content={message.content}
             chatId={message.chatId}
+            components={components}
           />
         );
       } else if (message.status === "failed") {
@@ -92,6 +100,7 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               content={message.contentSoFar}
               chatId={message.chatId}
+              components={components}
             />
           );
         } else {
@@ -100,6 +109,7 @@ export const AiChatAssistantMessage = memo(
               <AssistantMessageContent
                 content={message.contentSoFar}
                 chatId={message.chatId}
+                components={components}
               />
 
               <div className="lb-ai-chat-message-error">
@@ -132,9 +142,11 @@ export const AiChatAssistantMessage = memo(
 function AssistantMessageContent({
   content,
   chatId,
+  components,
 }: {
   content: AiAssistantContentPart[];
   chatId: string;
+  components: Partial<GlobalComponents> | undefined;
 }) {
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
   const isReasoning =
@@ -150,6 +162,7 @@ function AssistantMessageContent({
               <TextPart
                 key={index}
                 text={part.text}
+                components={components}
                 className="lb-ai-chat-message-text"
               />
             );
@@ -170,6 +183,7 @@ function AssistantMessageContent({
                 key={index}
                 text={part.text}
                 isPending={isReasoning}
+                components={components}
               />
             );
           }
@@ -187,10 +201,11 @@ function AssistantMessageContent({
  * -----------------------------------------------------------------------------------------------*/
 interface TextPartProps extends ComponentProps<"div"> {
   text: string;
+  components: Partial<GlobalComponents> | undefined;
 }
 
 const TextPart = forwardRef<HTMLDivElement, TextPartProps>(
-  ({ text, ...props }, forwardedRef) => {
+  ({ text, components, ...props }, forwardedRef) => {
     const tokens = useMemo(() => {
       return new Lexer().lex(text);
     }, [text]);
@@ -199,7 +214,11 @@ const TextPart = forwardRef<HTMLDivElement, TextPartProps>(
       <div ref={forwardedRef} {...props}>
         {tokens.map((token, index) => {
           return (
-            <MemoizedBlockTokenComp token={token as BlockToken} key={index} />
+            <MemoizedBlockTokenComp
+              token={token as BlockToken}
+              key={index}
+              components={components}
+            />
           );
         })}
       </div>
@@ -252,8 +271,21 @@ function CodeBlock({
 }
 
 const MemoizedBlockTokenComp = memo(
-  function BlockTokenComp({ token }: { token: BlockToken }) {
-    return <BlockTokenCompPrimitive token={token} components={{ CodeBlock }} />;
+  function BlockTokenComp({
+    token,
+    components,
+  }: {
+    token: BlockToken;
+    components?: Partial<GlobalComponents>;
+  }) {
+    const { Anchor } = useComponents(components);
+
+    return (
+      <BlockTokenCompPrimitive
+        token={token}
+        components={{ CodeBlock, Anchor }}
+      />
+    );
   },
   (prevProps, nextProps) => {
     const prevToken = prevProps.token;
@@ -300,9 +332,11 @@ function ToolCallPart({
 function ReasoningPart({
   text,
   isPending,
+  components,
 }: {
   text: string;
   isPending: boolean;
+  components: Partial<GlobalComponents> | undefined;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -325,7 +359,7 @@ function ReasoningPart({
       </CollapsiblePrimitive.Trigger>
 
       <CollapsiblePrimitive.Content className="lb-ai-chat-message-collapsible-content">
-        <TextPart text={text} />
+        <TextPart text={text} components={components} />
       </CollapsiblePrimitive.Content>
     </CollapsiblePrimitive.Root>
   );

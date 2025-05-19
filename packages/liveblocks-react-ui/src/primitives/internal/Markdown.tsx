@@ -1,10 +1,16 @@
 import { Lexer, type Tokens } from "marked";
-import { type ComponentType, type ReactNode, useMemo } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  type ComponentType,
+  type ReactNode,
+  useMemo,
+} from "react";
 
 // TODO: Expose all Markdown tags in a holistic way
 //       (e.g. instead of `h1`, `h2`, etc, maybe `Heading` with a `level` prop? Maybe not every inline components should be exposed?)
 export type MarkdownComponents = {
   CodeBlock: ComponentType<{ language: string | null; code: string }>;
+  Anchor: ComponentType<ComponentPropsWithoutRef<"a">> | "a";
 };
 
 export type MarkdownProps = {
@@ -22,6 +28,7 @@ const defaultComponents: MarkdownComponents = {
       </pre>
     );
   },
+  Anchor: "a",
 };
 
 export function Markdown({ content, components }: MarkdownProps) {
@@ -168,7 +175,11 @@ export function BlockTokenComp({
       return (
         <HeadingTag>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp key={index} token={token as InlineToken} />
+            <InlineTokenComp
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
           ))}
         </HeadingTag>
       );
@@ -367,6 +378,7 @@ export function BlockTokenComp({
                       <InlineTokenComp
                         token={token as Tokens.Text}
                         key={index}
+                        components={components}
                       />
                     );
                   }
@@ -394,7 +406,11 @@ export function BlockTokenComp({
       return (
         <p>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp key={index} token={token as InlineToken} />
+            <InlineTokenComp
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
           ))}
         </p>
       );
@@ -411,6 +427,7 @@ export function BlockTokenComp({
                       <InlineTokenComp
                         key={index}
                         token={token as InlineToken}
+                        components={components}
                       />
                     ))}
                   </th>
@@ -429,6 +446,7 @@ export function BlockTokenComp({
                           <InlineTokenComp
                             key={index}
                             token={token as InlineToken}
+                            components={components}
                           />
                         ))}
                       </td>
@@ -467,15 +485,21 @@ type InlineToken =
   | Tokens.Escape;
 function InlineTokenComp({
   token,
+  components,
 }: {
   token: InlineToken | { type: "checkbox"; checked: boolean };
+  components: Partial<MarkdownComponents> | undefined;
 }) {
   switch (token.type) {
     case "strong": {
       return (
         <strong>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp key={index} token={token as InlineToken} />
+            <InlineTokenComp
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
           ))}
         </strong>
       );
@@ -484,7 +508,11 @@ function InlineTokenComp({
       return (
         <em>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp key={index} token={token as InlineToken} />
+            <InlineTokenComp
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
           ))}
         </em>
       );
@@ -499,7 +527,11 @@ function InlineTokenComp({
       return (
         <del>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp key={index} token={token as InlineToken} />
+            <InlineTokenComp
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
           ))}
         </del>
       );
@@ -519,21 +551,31 @@ function InlineTokenComp({
 
       if (href === null) {
         return token.tokens.map((token, index) => (
-          <InlineTokenComp key={index} token={token as InlineToken} />
+          <InlineTokenComp
+            key={index}
+            token={token as InlineToken}
+            components={components}
+          />
         ));
       }
 
+      const Anchor = components?.Anchor ?? defaultComponents.Anchor;
+
       return (
-        <a
+        <Anchor
           href={href}
           title={token.title ? token.title : undefined}
           target="_blank"
           rel="noopener noreferrer"
         >
           {token.tokens.map((token, index) => (
-            <InlineTokenComp key={index} token={token as InlineToken} />
+            <InlineTokenComp
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
           ))}
-        </a>
+        </Anchor>
       );
     }
     case "image": {
@@ -560,7 +602,11 @@ function InlineTokenComp({
     case "text": {
       if (token.tokens !== undefined) {
         return token.tokens.map((token, index) => (
-          <InlineTokenComp key={index} token={token as InlineToken} />
+          <InlineTokenComp
+            key={index}
+            token={token as InlineToken}
+            components={components}
+          />
         ));
       } else {
         return parseHtmlEntities(token.text);
