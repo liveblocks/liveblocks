@@ -2339,15 +2339,6 @@
   }
 }
 
-.lb-ai-chat-assistant-message-collapsible {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  inline-size: 100%;
-  color: var(--lb-foreground-secondary);
-  font-size: 0.875em;
-}
-
 .lb-ai-chat-message-collapsible-trigger {
   @include truncate;
 
@@ -2359,11 +2350,61 @@
 
 .lb-ai-chat-message-collapsible-content {
   display: flex;
+  flex-direction: column;
   gap: calc(0.5 * var(--lb-spacing));
   line-height: var(--lb-line-height);
 
-  &:where([data-state="open"]) {
-    margin-block-start: 0.25em;
+  :where(:first-child) {
+    margin-block-start: calc(0.5 * var(--lb-spacing));
+  }
+}
+
+.lb-ai-chat-message-collapsible-chevron {
+  inline-size: calc(0.8 * var(--lb-icon-size));
+  block-size: calc(0.8 * var(--lb-icon-size));
+  margin-inline-start: -1px;
+  margin-block-start: 1px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (interpolate-size: allow-keywords) {
+    .lb-ai-chat-message-collapsible-content {
+      block-size: 0;
+      opacity: 0;
+      transition-duration: calc(3 * var(--lb-transition-duration));
+      transition-property: block-size, opacity, content-visibility;
+      content-visibility: hidden;
+
+      /* overflow-block: clip; doesn't work as expected */
+      /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+      overflow-y: clip;
+
+      /* interpolate-size is a new-ish property */
+      /* stylelint-disable-next-line */
+      interpolate-size: allow-keywords;
+
+      /* transition-behavior is a new-ish property */
+      /* stylelint-disable-next-line */
+      transition-behavior: allow-discrete;
+
+      &:where([data-state="open"]) {
+        block-size: auto;
+        opacity: 1;
+        content-visibility: auto;
+
+        /* overflow-block: auto; doesn't work as expected */
+        /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+        overflow-y: auto;
+      }
+    }
+  }
+
+  .lb-ai-chat-message-collapsible-chevron {
+    transition-property: transform;
+
+    .lb-ai-chat-message-collapsible:where([data-state="open"]) :where(&) {
+      transform: rotate(90deg);
+    }
   }
 }
 
@@ -2501,9 +2542,13 @@
   animation: lb-animation-shimmer-small 5s linear infinite;
 }
 
-.lb-ai-chat-message-reasoning :where(.lb-ai-chat-message-text) {
-  font-size: 0.9375em;
-  opacity: 0.75;
+.lb-ai-chat-message-reasoning {
+  margin-block-end: calc(0.5 * var(--lb-spacing));
+
+  :where(.lb-ai-chat-message-text) {
+    font-size: 0.875em;
+    opacity: 0.75;
+  }
 }
 
 /*************************************

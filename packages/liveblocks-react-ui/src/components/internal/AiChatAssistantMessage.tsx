@@ -15,7 +15,6 @@ import {
   useState,
 } from "react";
 
-import { ChevronDownIcon } from "../../icons/ChevronDown";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
 import { WarningIcon } from "../../icons/Warning";
 import {
@@ -270,8 +269,8 @@ function ReasoningPart({
       >
         {/* TODO: If `isPending` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
         Reasoning
-        <span className="lb-icon-container">
-          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+        <span className="lb-ai-chat-message-collapsible-chevron lb-icon-container">
+          <ChevronRightIcon />
         </span>
       </CollapsiblePrimitive.Trigger>
 

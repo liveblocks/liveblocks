@@ -15,10 +15,7 @@ import {
   BlockTokenComp as BlockTokenCompPrimitive,
 } from "../chats/[chatId]/markdown";
 import * as CollapsiblePrimitive from "../chats/[chatId]/collapsible";
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-} from "@liveblocks/react-ui/_private";
+import { ChevronRightIcon } from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
@@ -59,8 +56,8 @@ function ReasoningPart({
         }`}
       >
         Reasoning
-        <span className="lb-icon-container">
-          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+        <span className="lb-ai-chat-message-collapsible-chevron lb-icon-container">
+          <ChevronRightIcon />
         </span>
       </CollapsiblePrimitive.Trigger>
 
