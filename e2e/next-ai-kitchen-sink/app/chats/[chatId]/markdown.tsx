@@ -1,5 +1,44 @@
-import { type Tokens } from "marked";
-import { type ReactNode } from "react";
+import { Lexer, type Tokens } from "marked";
+import { type ComponentType, type ReactNode, useMemo } from "react";
+
+// TODO: Expose all Markdown tags in a holistic way
+//       (e.g. instead of `h1`, `h2`, etc, maybe `Heading` with a `level` prop? Maybe not every inline components should be exposed?)
+export type MarkdownComponents = {
+  CodeBlock: ComponentType<{ language: string | null; code: string }>;
+};
+
+export type MarkdownProps = {
+  content: string;
+
+  /** @private */
+  components?: Partial<MarkdownComponents>;
+};
+
+const defaultComponents: MarkdownComponents = {
+  CodeBlock: ({ language, code }) => {
+    return (
+      <pre data-language={language ?? undefined}>
+        <code>{code}</code>
+      </pre>
+    );
+  },
+};
+
+export function Markdown({ content, components }: MarkdownProps) {
+  const tokens = useMemo(() => {
+    return new Lexer().lex(content);
+  }, [content]);
+
+  return tokens.map((token, index) => {
+    return (
+      <BlockTokenComp
+        token={token as BlockToken}
+        key={index}
+        components={components}
+      />
+    );
+  });
+}
 
 /**
  * Block level tokens include:
@@ -24,7 +63,13 @@ export type BlockToken =
   | Tokens.Paragraph
   | Tokens.Table;
 
-export function BlockTokenComp({ token }: { token: BlockToken }) {
+export function BlockTokenComp({
+  token,
+  components,
+}: {
+  token: BlockToken;
+  components: Partial<MarkdownComponents> | undefined;
+}) {
   switch (token.type) {
     case "space": {
       return null;
@@ -34,11 +79,10 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
       if (token.lang !== undefined) {
         language = token.lang.match(/^\S*/)?.[0] ?? null;
       }
-      return (
-        <pre data-language={language || undefined}>
-          <code>{token.text}</code>
-        </pre>
-      );
+
+      const CodeBlock = components?.CodeBlock ?? defaultComponents.CodeBlock;
+
+      return <CodeBlock language={language} code={token.text} />;
     }
     case "blockquote": {
       const tokens: BlockToken[] = [];
@@ -82,7 +126,13 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
       return (
         <blockquote>
           {tokens.map((token, index) => {
-            return <BlockTokenComp token={token} key={index} />;
+            return (
+              <BlockTokenComp
+                token={token}
+                key={index}
+                components={components}
+              />
+            );
           })}
         </blockquote>
       );
@@ -227,7 +277,13 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
                 return (
                   <li key={index}>
                     {items.map((token, index) => {
-                      return <BlockTokenComp token={token} key={index} />;
+                      return (
+                        <BlockTokenComp
+                          token={token}
+                          key={index}
+                          components={components}
+                        />
+                      );
                     })}
                   </li>
                 );
@@ -275,7 +331,13 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
                 return (
                   <li key={index}>
                     {tokens.map((token, index) => {
-                      return <BlockTokenComp token={token} key={index} />;
+                      return (
+                        <BlockTokenComp
+                          token={token}
+                          key={index}
+                          components={components}
+                        />
+                      );
                     })}
                   </li>
                 );
@@ -293,7 +355,11 @@ export function BlockTokenComp({ token }: { token: BlockToken }) {
                   case "paragraph":
                   case "table": {
                     return (
-                      <BlockTokenComp token={token as BlockToken} key={index} />
+                      <BlockTokenComp
+                        token={token as BlockToken}
+                        key={index}
+                        components={components}
+                      />
                     );
                   }
                   case "text": {

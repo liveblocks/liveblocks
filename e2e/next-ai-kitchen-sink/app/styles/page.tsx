@@ -2,6 +2,7 @@
 
 import { Lexer } from "marked";
 import {
+  ComponentProps,
   HTMLAttributes,
   memo,
   useEffect,
@@ -13,9 +14,15 @@ import {
 import {
   BlockToken,
   BlockTokenComp as BlockTokenCompPrimitive,
+  MarkdownComponents,
 } from "../chats/[chatId]/markdown";
 import * as CollapsiblePrimitive from "../chats/[chatId]/collapsible";
-import { ChevronRightIcon } from "@liveblocks/react-ui/_private";
+import {
+  Button,
+  CheckIcon,
+  ChevronRightIcon,
+  CopyIcon,
+} from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
@@ -68,9 +75,52 @@ function ReasoningPart({
   );
 }
 
+function CodeBlock({
+  language,
+  code,
+}: ComponentProps<MarkdownComponents["CodeBlock"]>) {
+  const [isCopied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isCopied) {
+      timeoutRef.current = setTimeout(() => {
+        setCopied(false);
+      }, 1000);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isCopied]);
+
+  return (
+    <div className="lb-code-block">
+      <div className="lb-code-block-header">
+        <span className="lb-code-block-title">{language ?? "Plain text"}</span>
+        <div className="lb-code-block-header-actions">
+          <Button
+            className="lb-code-block-header-action"
+            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
+            onClick={() => {
+              setCopied(true);
+              navigator.clipboard.writeText(code);
+            }}
+          />
+        </div>
+      </div>
+      <pre className="lb-code-block-content">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
 const MemoizedBlockTokenComp = memo(
   function BlockTokenComp({ token }: { token: BlockToken }) {
-    return <BlockTokenCompPrimitive token={token} />;
+    return <BlockTokenCompPrimitive token={token} components={{ CodeBlock }} />;
   },
   (prevProps, nextProps) => {
     const prevToken = prevProps.token;

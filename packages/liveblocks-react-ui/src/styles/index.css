@@ -1889,7 +1889,7 @@
  *************************************/
 
 :is(.lb-root) {
-  :where(code) {
+  :where(code:not(pre > code)) {
     padding: 0.2em 0.4em;
     border-radius: calc(0.75 * var(--lb-radius));
     background: var(--lb-foreground-subtle);
@@ -2146,6 +2146,7 @@
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
   inline-size: fit-content;
+  max-inline-size: 100%;
   color: var(--lb-foreground);
 }
 
@@ -2213,7 +2214,8 @@
   :where(blockquote) {
     position: relative;
     margin-block-start: calc(0.75 * var(--lb-spacing));
-    padding: calc(0.375 * var(--lb-spacing)) calc(1.5 * var(--lb-spacing));
+    padding: calc(0.375 * var(--lb-spacing)) 0 calc(0.375 * var(--lb-spacing))
+      calc(1.5 * var(--lb-spacing));
 
     &::after {
       content: "";
@@ -2275,29 +2277,39 @@
     }
   }
 
-  :where(code) {
-    padding: 0.2em 0.4em;
-    border-radius: calc(0.75 * var(--lb-radius));
-    background: var(--lb-foreground-subtle);
-    box-decoration-break: clone;
-    font-size: 85%;
-    line-height: 1;
-  }
-
-  :where(pre) {
+  :where(.lb-code-block) {
+    min-inline-size: 0;
     margin-block: 0.25em;
-    padding: var(--lb-spacing);
+    border: 1px solid var(--lb-foreground-subtle);
     border-radius: var(--lb-radius);
-    box-decoration-break: clone;
-    box-shadow: var(--lb-foreground-subtle) 0 0 0 1px inset;
 
-    /* overflow-block: auto; doesn't work as expected */
-    /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
-    overflow-y: auto;
+    :where(.lb-code-block-header) {
+      display: flex;
+      align-items: center;
+      padding: calc(0.5 * var(--lb-spacing));
+    }
 
-    :where(code) {
-      padding: 0;
-      background: transparent;
+    :where(.lb-code-block-title) {
+      margin-inline-start: calc(0.5 * var(--lb-spacing));
+      color: var(--lb-foreground-tertiary);
+      font-weight: 600;
+      font-size: 0.675em;
+      text-transform: uppercase;
+    }
+
+    :where(.lb-code-block-header-actions) {
+      margin-inline-start: auto;
+    }
+
+    :where(.lb-code-block-content) {
+      min-inline-size: 0;
+      padding: 0 var(--lb-spacing) calc(0.875 * var(--lb-spacing));
+      font-size: 85%;
+      line-height: 1;
+
+      /* overflow-inline: auto; doesn't work as expected */
+      /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+      overflow-x: auto;
     }
   }
 
@@ -2354,7 +2366,7 @@
   gap: calc(0.5 * var(--lb-spacing));
   line-height: var(--lb-line-height);
 
-  :where(:first-child) {
+  :where(& > *:first-child) {
     margin-block-start: calc(0.5 * var(--lb-spacing));
   }
 }
