@@ -13,6 +13,7 @@ export {
   BlockquoteIcon as Blockquote,
   BoldIcon as Bold,
   CheckIcon as Check,
+  CheckCircleIcon as CheckCircle,
   ChevronDownIcon as ChevronDown,
   ChevronLeftIcon as ChevronLeft,
   ChevronRightIcon as ChevronRight,

@@ -30,8 +30,8 @@ import {
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { BellIcon } from "../icons/Bell";
 import { BellCrossedIcon } from "../icons/BellCrossed";
-import { ResolveIcon } from "../icons/Resolve";
-import { ResolvedIcon } from "../icons/Resolved";
+import { CheckCircleIcon } from "../icons/CheckCircle";
+import { CheckCircleFillIcon } from "../icons/CheckCircleFill";
 import type {
   CommentOverrides,
   ComposerOverrides,
@@ -358,9 +358,9 @@ export const Thread = forwardRef(
                             }
                             icon={
                               thread.resolved ? (
-                                <ResolvedIcon />
+                                <CheckCircleFillIcon />
                               ) : (
-                                <ResolveIcon />
+                                <CheckCircleIcon />
                               )
                             }
                           />

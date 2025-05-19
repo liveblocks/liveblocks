@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 
 import { Icon } from "../components/internal/Icon";
 
-export function ResolveIcon(props: ComponentProps<"svg">) {
+export function CheckCircleIcon(props: ComponentProps<"svg">) {
   return (
     <Icon {...props}>
       <circle cx={10} cy={10} r={7} />
