@@ -2145,8 +2145,6 @@
   display: flex;
   flex-direction: column;
   gap: calc(0.75 * var(--lb-spacing));
-  inline-size: fit-content;
-  max-inline-size: 100%;
   color: var(--lb-foreground);
 }
 
@@ -2552,6 +2550,12 @@
 .lb-ai-chat-pending {
   user-select: none;
   animation: lb-animation-shimmer-small 5s linear infinite;
+}
+
+.lb-ai-chat-message-thinking,
+.lb-ai-chat-message-reasoning {
+  inline-size: fit-content;
+  max-inline-size: 100%;
 }
 
 .lb-ai-chat-message-reasoning {

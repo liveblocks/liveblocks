@@ -22,10 +22,7 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
-  GlobalComponents,
-  useComponents,
 } from "@liveblocks/react-ui/_private";
-import Link from "next/link";
 
 function TextPart({
   text,
@@ -128,7 +125,6 @@ const MemoizedBlockTokenComp = memo(
         token={token}
         components={{
           CodeBlock,
-          Anchor: Link,
         }}
       />
     );
@@ -233,6 +229,14 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
   1. A nested ordered list item with a [link](https://liveblocks.io/), **bold text**, and ~~strikethrough~~s
   2. Another nested ordered list item
 - A unordered list item with **bold text**
+
+### Task List
+
+- [ ] A task list item
+- [x] A completed task list item
+- [ ] A task list item with a [link](https://liveblocks.io/)
+- [x] A completed task list item with **bold text**
+- [ ] A task list item with ~~strikethrough~~
 
 ---
 
