@@ -75,7 +75,7 @@ export function BlockTokenComp({
   components,
 }: {
   token: BlockToken;
-  components: Partial<MarkdownComponents> | undefined;
+  components?: Partial<MarkdownComponents>;
 }) {
   switch (token.type) {
     case "space": {
@@ -488,7 +488,7 @@ function InlineTokenComp({
   components,
 }: {
   token: InlineToken | { type: "checkbox"; checked: boolean };
-  components: Partial<MarkdownComponents> | undefined;
+  components?: Partial<MarkdownComponents>;
 }) {
   switch (token.type) {
     case "strong": {
