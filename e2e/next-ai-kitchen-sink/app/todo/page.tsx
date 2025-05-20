@@ -6,24 +6,24 @@ import {
 } from "@liveblocks/react/suspense";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
-import { AiChat } from "@liveblocks/react-ui";
+import { AiChat, AiToolDebugger } from "@liveblocks/react-ui";
 
 export default function Page() {
   const [todos, setTodos] = useState<
     { id: number; title: string; isCompleted: boolean }[]
   >([
     {
-      id: 1,
+      id: 9823,
       title: "Get groceries",
       isCompleted: true,
     },
     {
-      id: 2,
+      id: 72,
       title: "Go to the gym",
       isCompleted: false,
     },
     {
-      id: 3,
+      id: 1313,
       title: "Cook dinner",
       isCompleted: false,
     },
@@ -116,41 +116,47 @@ export default function Page() {
                 <ClientSideSuspense fallback={null}>
                   <AiChat
                     chatId="todo"
-                    knowledge={[
-                      {
-                        description:
-                          "A list of todos with id, title and completion status",
-                        value: `${JSON.stringify(todos)}`,
-                      },
-                    ]}
                     tools={{
-                      displayTodo: {
-                        description: "Display todos",
+                      listTodos: {
+                        description: "List all todos",
                         parameters: {
                           type: "object",
                           properties: {
                             ids: {
                               type: "array",
-                              description: "The ids of the todo to display",
-                              items: {
-                                type: "number",
-                              },
+                              description: "The requested todo items to list",
+                              items: { type: "number" },
                             },
                           },
                         },
-                        render: ({ args }) => {
+                        execute: (args) => {
                           const ids = args!.ids as number[];
-                          return (
-                            <div className="flex flex-col gap-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-lg p-4 mt-4">
-                              {ids.map((id) => {
-                                const todo = todos.find((t) => t.id === id);
-                                if (!todo) return null;
-
-                                return <div key={todo.id}>{todo.title}</div>;
-                              })}
-                            </div>
-                          );
+                          if (ids.length === 0) {
+                            return todos;
+                          } else {
+                            return todos.filter((t) => ids.includes(t.id));
+                          }
                         },
+                      },
+
+                      toggleTodo: {
+                        description: "Toggle a todo's completion status",
+                        parameters: {
+                          type: "object",
+                          properties: {
+                            id: {
+                              description: "The id of the todo to toggle",
+                              type: "number",
+                            },
+                          },
+                        },
+
+                        execute: (args) => {
+                          const id = args!.id as number;
+                          toggleTodo(id);
+                          return { ok: true };
+                        },
+                        render: AiToolDebugger,
                       },
                     }}
                     className="rounded-xl"
