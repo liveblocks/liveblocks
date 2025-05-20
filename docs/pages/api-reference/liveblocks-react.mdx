@@ -2439,8 +2439,36 @@ import { useThreads } from "@liveblocks/react/suspense";
 const { threads, error, isLoading } = useThreads();
 ```
 
-`useThreads` supports a few options as its first argument, one is `query` and it
-can be used to filter threads based on their metadata or resolved status.
+Use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component to
+render the latest 50 threads with our default UI.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
+
+function Component() {
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+#### Querying threads [#useThreads-query]
+
+It’s possible to return threads that match a certain query with the `query`
+option. You can filter threads based on their resolved status, and metadata.
+Additionally, you can filter for metadata strings that being with certain
+characters using `startsWith`. Returned threads match the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -2464,14 +2492,11 @@ const { threads } = useThreads({
 });
 ```
 
-Another option is `scrollOnLoad`, which is enabled by default. When enabled, if
-the URL’s hash is set to a comment ID (e.g.
-`https://example.com/my-room#cm_xxx`), the page will scroll to that comment once
-the threads are loaded.
+#### Pagination [#useThreads-pagination]
 
 By default, the `useThreads` hook returns up to 50 threads. To fetch more, the
-hook (along with [`useInboxNotifications`][]) provides additional fields for
-pagination.
+hook provides additional fields for pagination, similar to
+[`useInboxNotifications`][].
 
 ```tsx
 import { useThreads } from "@liveblocks/react";
@@ -2482,41 +2507,53 @@ const {
   threads,
 
   +++
-  // Available in Liveblocks 2.9
   fetchMore,
   isFetchingMore,
   hasFetchedAll,
   fetchMoreError,
   +++
-} = useThreads({ query });
+} = useThreads();
 ```
 
-The `hasFetchedAll` field indicates whether all available threads have been
-fetched since the initial load. To load more threads, you can call the
-`fetchMore` function. This function is safe to call even if no more threads are
-available or a fetch is already in progress—it simply won't do anything in that
-case. Therefore, you don't need to check `hasFetchedAll` or `isFetchingMore`
-before calling `fetchMore`.
+- `hasFetchedAll` indicates whether all available inbox notifications have been
+  fetched.
+- `fetchMore` loads up to 50 more notifications, and is always safe to call.
+- `isFetchingMore` indicates whether more notifications are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+##### Pagination example [#useThreads-pagination-example]
 
 The following example demonstrates how to use the `fetchMore` function to
-implement a "Load More" button, which fetches additional threads when clicked.
+implement a “Load More” button, which fetches additional threads when clicked.
 The button is disabled while fetching is in progress.
 
 ```tsx
-<div>
-  {threads.map((thread) => (
-    <Thread key={thread.id} />
-  ))}
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
 
-  {hasFetchedAll ? (
-    <div>🎉 You're all caught up!</div>
-  ) : (
-    <button disabled={isFetchingMore} onClick={fetchMore}>
-      Load more
-    </button>
-  )}
-</div>
+function Threads() {
+  const { threads, hasFetchedAll, fetchMore, isFetchingMore } = useThreads();
+
+  return (
+    <div>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 You've loaded all threads!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
 ```
+
+#### Error handling [#useThreads-error-handling]
 
 Error handling is another important aspect to consider when using the
 `useThreads` hook. The `error` and `fetchMoreError` fields provide information
@@ -2528,34 +2565,51 @@ The following example shows how to display error messages for both initial
 loading errors and errors that occur when fetching more threads.
 
 ```tsx
-import { useThreads } from "@liveblocks/react";
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
 
-const { threads, error, fetchMore, fetchMoreError } = useThreads();
+function Inbox() {
+  const { threads, error, fetchMore, fetchMoreError } = useThreads();
 
-// Handle error if the initial load failed.
-// The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
-if (error) {
+  // Handle error if the initial load failed.
+  // The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+  // +++
+  if (error) {
+    return (
+      <div>
+        <p>Error loading threads: {error.message}</p>
+      </div>
+    );
+  }
+  // +++
+
   return (
     <div>
-      <p>Error loading threads: {error.message}</p>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+
+      {fetchMoreError && (
+        <div>
+          <p>Error loading more threads: {fetchMoreError.message}</p>
+          <button onClick={fetchMore}>Retry</button>
+        </div>
+      )}
     </div>
   );
 }
+```
 
-return (
-  <div>
-    {threads.map((thread) => (
-      <Thread key={thread.id}>...</Thread>
-    ))}
+#### Avoid scrolling to a comment [#useThreads-scroll]
 
-    {fetchMoreError && (
-      <div>
-        <p>Error loading more threads: {fetchMoreError.message}</p>
-        <button onClick={fetchMore}>Retry</button>
-      </div>
-    )}
-  </div>
-);
+By default, `scrollOnLoad`, is enabled. This options scrolls to a comment if the
+URL’s hash is set to a comment ID (e.g.
+`https://example.com/my-room#cm_nNJs9sb...`), the page will scroll to that
+comment once the threads are loaded. To avoid scrolling to a comment, set
+`scrollOnLoad` to `false`.
+
+```tsx
+const { threads } = useThreads({ scrollOnLoad: false });
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
@@ -2819,9 +2873,9 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
-Map through `inboxNotifications`, passing each to
-[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification),
-to render the latest 50 inbox notifications with our default UI components.
+Use the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component to render the latest 50 inbox notifications with our default UI.
 
 ```tsx
 import { InboxNotification } from "@liveblocks/react-ui";
@@ -2946,7 +3000,10 @@ function Inbox() {
   return (
     <div>
       {inboxNotifications.map((notification) => (
-        <InboxNotification key={notification.id}>...</InboxNotification>
+        <InboxNotification
+          key={notification.id}
+          inboxNotification={notification}
+        />
       ))}
 
       {fetchMoreError && (
