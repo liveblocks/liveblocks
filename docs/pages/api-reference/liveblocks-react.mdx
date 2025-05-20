@@ -2819,6 +2819,36 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
+Map through `inboxNotifications`, passing each to
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification),
+to render the latest 50 inbox notifications with our default UI components.
+
+```tsx
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  // +++
+  const { inboxNotifications } = useInboxNotifications();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {inboxNotifications.map((notification) => (
+        <InboxNotification
+          key={notification.id}
+          inboxNotification={notification}
+        />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+#### Pagination [#useInboxNotifications-pagination]
+
 By default, the `useInboxNotifications` hook returns up to 50 notifications. To
 fetch more, the hook provides additional fields for pagination, similar to
 [`useThreads`][].
@@ -2846,7 +2876,7 @@ const {
 - `isFetchingMore` indicates whether more notifications are being fetched.
 - `fetchMoreError` returns error statuses resulting from fetching more.
 
-#### Pagination [#useInboxNotifications-pagination]
+##### Pagination example [#useInboxNotifications-pagination-example]
 
 The following example demonstrates how to use the `fetchMore` function to
 implement a “Load More” button, which fetches additional inbox notifications
@@ -2863,7 +2893,10 @@ function Inbox() {
   return (
     <div>
       {inboxNotifications.map((notification) => (
-        <InboxNotification key={notification.id}>...</InboxNotification>
+        <InboxNotification
+          key={notification.id}
+          inboxNotification={notification}
+        />
       ))}
       // +++
       {hasFetchedAll ? (
