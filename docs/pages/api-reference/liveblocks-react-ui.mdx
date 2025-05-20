@@ -83,14 +83,19 @@ function Chat() {
 
 ##### Compact layout mode
 
-{/* TODO mention the other layout mode */}
+An alternate full-width layout mode is available, ideal for smaller UI
+components such as pop-up windows. Compact layout mode removes the shadow and
+padding on the composer, and displays a border above it.
+
+{/* TODO mention how to use the other layout mode */}
 
 ##### List the user’s chats and switch between them
 
 You can display a list of all chats created by the current user with
 [`useAiChats`](#TODO). For example, you can render a list of buttons that allow
 you to switch between chats. In each button, you can display the chat’s
-automatically generated title, as seen below.
+automatically generated title, as seen below. Chats can be deleted with
+[`useDeleteAiChat`](#TODO).
 
 ```tsx
 import { useState } from "react";
@@ -101,6 +106,7 @@ function Chats() {
   // +++
   const { chats, error, isLoading } = useAiChats();
   const [chatId, setChatId] = useState();
+  const deleteChat = useDeleteAiChat();
   // +++
 
   if (isLoading) {
@@ -120,6 +126,7 @@ function Chats() {
             <button onClick={() => setChatId(chat.id)}>
               {chat.title || "Untitled"}
             </button>
+            <button onClick={() => deleteChat(chat.id)}>❌</button>
           </li>
         ))}
         // +++
