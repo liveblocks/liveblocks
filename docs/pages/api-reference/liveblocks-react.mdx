@@ -1104,9 +1104,10 @@ notifications are not part of rooms, and errors for these will show. See the
 
 ## AI Copilots
 
-### useAiChats
+### useAiChats [@badge=LiveblocksProvider]
 
-Returns a list of all AI chats created by the current user.
+Returns a paginated list of AI chats created by the current user. Initially
+fetches the latest 50 chats.
 
 ```tsx
 import { useAiChats } from "@liveblocks/react";
@@ -1114,9 +1115,185 @@ import { useAiChats } from "@liveblocks/react";
 const { chats, error, isLoading } = useAiChats();
 ```
 
+##### List the user’s chats and switch between them
+
+You can use the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
+component alongside the hook to create an AI chat switcher. Below, each button
+displays the chat’s automatically generated title, and chats can be deleted with
+[`useDeleteAiChat`](#useDeleteAiChat).
+
+```tsx
+import { useState } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+import { useAiChats } from "@liveblocks/react";
+
+function Chats() {
+  // +++
+  const { chats, error, isLoading } = useAiChats();
+  const [chatId, setChatId] = useState();
+  const deleteChat = useDeleteAiChat();
+  // +++
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return (
+    <div style={{ display: "flex" }}>
+      <ul>
+        // +++
+        {chats.map((chat) => (
+          <li key={chat.id}>
+            <button onClick={() => setChatId(chat.id)}>
+              {chat.title || "Untitled"}
+            </button>
+            <button onClick={() => deleteChat(chat.id)}>❌</button>
+          </li>
+        ))}
+        // +++
+      </ul>
+      // +++
+      <AiChat chatId={chatId} />
+      // +++
+    </div>
+  );
+}
+```
+
+#### Pagination [#useAiChats-pagination]
+
+By default, the `useAiChats` hook returns up to 50 chats. To fetch more, the
+hook provides additional fields for pagination, similar to [`useThreads`][].
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+const {
+  chats,
+  isLoading,
+  error,
+
+  +++
+  hasFetchedAll,
+  fetchMore,
+  isFetchingMore,
+  fetchMoreError,
+  +++
+} = useAiChats();
+```
+
+- `hasFetchedAll` indicates whether all available AI chats have been fetched.
+- `fetchMore` loads up to 50 more AI chats, and is always safe to call.
+- `isFetchingMore` indicates whether more AI chats are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+##### Pagination example [#useAiChats-pagination-example]
+
+The following example demonstrates how to use the `fetchMore` function to
+implement a “Load More” button, which fetches additional AI chats when clicked.
+The button is disabled while fetching is in progress.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { useAiChats } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  const { chats, hasFetchedAll, fetchMore, isFetchingMore } = useAiChats();
+
+  return (
+    <div>
+      {chats.map((chat) => (
+        <AiChat key={chat.id} chatId={chat.id} />
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 You're all caught up!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
+```
+
+#### Error handling [#useAiChats-error-handling]
+
+Error handling is another important aspect to consider when using the
+`useAiChats` hook. The `error` and `fetchMoreError` fields provide information
+about any errors that occurred during the initial fetch or subsequent fetch
+operations, respectively. You can use these fields to display appropriate error
+messages to the user and implement retry mechanisms if needed.
+
+The following example shows how to display error messages for both initial
+loading errors and errors that occur when fetching more inbox notifications.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { useAiChats } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  const { chats, error, fetchMore, fetchMoreError } = useAiChats();
+
+  // Handle error if the initial load failed.
+  // The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+  // +++
+  if (error) {
+    return (
+      <div>
+        <p>Error loading AI chats: {error.message}</p>
+      </div>
+    );
+  }
+  // +++
+
+  return (
+    <div>
+      {chats.map((chat) => (
+        <AiChat key={chat.id} chatId={chat.id} />
+      ))}
+
+      {fetchMoreError && (
+        <div>
+          <p>Error loading more AI chats: {fetchMoreError.message}</p>
+          <button onClick={fetchMore}>Retry</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
+
 ### useAiChat
 
+Returns information about an AI chat, for example it’s title and metadata.
+
+```tsx
+import { useAiChat } from "@liveblocks/react/suspense";
+
+const { title, metadata, error, isLoading } = useAiChat("my-chat-id");
+```
+
 ### useDeleteAiChat
+
+Returns a function that deletes an AI chat by its ID.
+
+```tsx
+import { useDeleteAiChat } from "@liveblocks/react/suspense";
+
+const deleteChat = useDeleteAiChat();
+deleteChat("my-chat-id");
+```
 
 ## Room
 
@@ -2431,7 +2608,8 @@ the dependency arrays of your `useMutation` calls:
 
 ### useThreads [@badge=RoomProvider]
 
-Returns the threads within the current room.
+Returns a paginated list of threads within the current room. Initially fetches
+the latest 50 threads.
 
 ```tsx
 import { useThreads } from "@liveblocks/react/suspense";
@@ -2863,7 +3041,8 @@ return a loading state and will throw when there’s an error.
 
 ### useInboxNotifications [@badge=LiveblocksProvider]
 
-Returns the inbox notifications for the current user. Inbox notifications are
+Returns a paginated list of inbox notifications for the current user. Initially
+fetches the latest 50 items. Inbox notifications are
 [project-based](/docs/ready-made-features/notifications/concepts#Project-based),
 meaning notifications from outside the current room are received.
 
