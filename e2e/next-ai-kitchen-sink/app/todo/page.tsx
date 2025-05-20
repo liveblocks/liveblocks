@@ -1,6 +1,5 @@
 "use client";
 
-import { wait } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
@@ -117,79 +116,16 @@ export default function Page() {
                 <ClientSideSuspense fallback={null}>
                   <AiChat
                     chatId="todo"
+                    knowledge={[
+                      {
+                        description:
+                          "A list of todos with id, title and completion status",
+                        value: `${JSON.stringify(todos)}`,
+                      },
+                    ]}
                     tools={{
-                      getWeather: {
-                        description:
-                          "List the weather in the given city or country",
-                        parameters: {
-                          type: "object",
-                          properties: {
-                            city: {
-                              type: "string",
-                              description: "The city to get the weather for",
-                            },
-                            country: {
-                              type: "string",
-                              description: "The country to get the weather for",
-                            },
-                          },
-                        },
-
-                        execute: async ({ args }) => {
-                          await wait(3000);
-                          return {
-                            city: (args as any)?.city,
-                            forecast: [
-                              { date: "2025-05-19", summary: "Windy" },
-                              { date: "2025-05-20", summary: "Cloudy" },
-                              { date: "2025-05-21", summary: "Sunny" },
-                              { date: "2025-05-22", summary: "Sunny" },
-                              { date: "2025-05-23", summary: "Sunny" },
-                              { date: "2025-05-24", summary: "Sunny" },
-                            ],
-                          };
-                        },
-
-                        render: ({ status }) => {
-                          return status === "executing" ? (
-                            <h1>Looking up the weather...</h1>
-                          ) : null;
-                        },
-                      },
-
-                      toggleTodo: {
-                        description:
-                          "Toggles (mark complete or incomplete) the given todo item",
-                        parameters: {
-                          type: "object",
-                          properties: {
-                            id: {
-                              description: "The id of the todo to display",
-                              type: "number",
-                            },
-                          },
-                        },
-
-                        execute: async (args) => {
-                          await wait(500);
-                          toggleTodo(args.id as any);
-                          await wait(500);
-                          return "toggled successfully";
-                        },
-
-                        render: ({ status, args }) => {
-                          return (
-                            <small style={{ color: "yellow" }}>
-                              {status === "executing"
-                                ? "Toggling..."
-                                : `Toggled item ${args?.id ?? "0"}`}
-                            </small>
-                          );
-                        },
-                      },
-
-                      listTodos: {
-                        description: "List all of my todos",
+                      displayTodo: {
+                        description: "Display todos",
                         parameters: {
                           type: "object",
                           properties: {
@@ -202,10 +138,18 @@ export default function Page() {
                             },
                           },
                         },
+                        render: ({ args }) => {
+                          const ids = args!.ids as number[];
+                          return (
+                            <div className="flex flex-col gap-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-lg p-4 mt-4">
+                              {ids.map((id) => {
+                                const todo = todos.find((t) => t.id === id);
+                                if (!todo) return null;
 
-                        execute: async () => {
-                          await wait(1000);
-                          return todos;
+                                return <div key={todo.id}>{todo.title}</div>;
+                              })}
+                            </div>
+                          );
                         },
                       },
                     }}
