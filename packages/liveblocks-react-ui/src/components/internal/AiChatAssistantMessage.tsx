@@ -1,6 +1,7 @@
 import type {
   AiAssistantContentPart,
   AiToolInvocationPart,
+  Json,
   UiAssistantMessage,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
@@ -310,15 +311,18 @@ function ToolInvocationPart({
   part: AiToolInvocationPart;
 }) {
   const client = useClient();
+  const ai = client[kInternal].ai;
 
-  const tool = useSignal(
-    client[kInternal].ai.signals.getToolDefinitionΣ(chatId, part.toolName)
-  );
+  const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
   if (tool === undefined || tool.render === undefined) return null;
 
+  // XXX Get the respond() callback here from somewhere
+  const respond = (_result: Json) => {};
+
+  const { type: _, ...rest } = part;
   return (
     <div className="lb-ai-chat-message-tool">
-      <tool.render {...part} />
+      <tool.render {...rest} respond={respond} />
     </div>
   );
 }

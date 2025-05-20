@@ -13,6 +13,7 @@ import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
 import type { Json, JsonObject } from "./lib/Json";
 import { nanoid } from "./lib/nanoid";
+import type { Resolve } from "./lib/Resolve";
 import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
@@ -72,24 +73,24 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
+type AiToolDefinitionRenderProps = Resolve<
+  DistributiveOmit<AiToolInvocationPart, "type"> & {
+    respond: (result: Json) => void;
+  }
+>;
+
 // TODO[nvie] Come back here and make the input/output types correlated and nicely typed!
 export type AiToolDefinition =
   //  <
   //  // A extends JsonObject = JsonObject,
   //  // R extends JsonObject = JsonObject,
   //  >
-  | {
-      description?: string;
-      parameters: JSONSchema4;
-      execute: (args: JsonObject) => Awaitable<Json>;
-      render?: ComponentType<AiToolInvocationPart>;
-    }
-  | {
-      description?: string;
-      parameters: JSONSchema4;
-      execute?: (args: JsonObject) => Awaitable<Json>;
-      render: ComponentType<AiToolInvocationPart>;
-    };
+  {
+    description?: string;
+    parameters: JSONSchema4;
+    execute?: (args: JsonObject) => Awaitable<Json>;
+    render?: ComponentType<AiToolDefinitionRenderProps>;
+  };
 
 export type UiChatMessage = AiChatMessage & {
   navigation: {
@@ -457,7 +458,7 @@ function createStore_forChatMessages(
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
               console.error(
-                `Error trying to respond to tool-call: ${String(err)} (1)`
+                `Error trying to respond to tool-call: ${String(err)} (in respond())`
               );
             });
           };
@@ -471,7 +472,7 @@ function createStore_forChatMessages(
               respondSync(result);
             })().catch((err) => {
               console.error(
-                `Error trying to respond to tool-call: ${String(err)} (2)`
+                `Error trying to respond to tool-call: ${String(err)} (in execute())`
               );
             });
           }
