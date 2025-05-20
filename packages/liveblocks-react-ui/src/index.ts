@@ -28,7 +28,7 @@ export type { InboxNotificationListProps } from "./components/InboxNotificationL
 export { InboxNotificationList } from "./components/InboxNotificationList";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
-export { LiveblocksUIConfig } from "./config";
+export { LiveblocksUiConfig } from "./config";
 export * as Icon from "./icon";
 export type {
   CommentOverrides,
