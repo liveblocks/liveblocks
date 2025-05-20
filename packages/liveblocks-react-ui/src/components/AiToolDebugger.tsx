@@ -1,4 +1,4 @@
-import type { AiToolInvocationPart } from "@liveblocks/core";
+import type { AiToolDefinitionRenderProps } from "@liveblocks/core";
 
 /**
  * @experimental
@@ -7,7 +7,7 @@ import type { AiToolInvocationPart } from "@liveblocks/core";
  * Simply drop this into your tool definition's `render` property to visually
  * see what's going on with your tool calls.
  */
-export function AiToolDebugger(props: AiToolInvocationPart) {
+export function AiToolDebugger(props: AiToolDefinitionRenderProps) {
   const color =
     props.status === "executed"
       ? "darkgreen"

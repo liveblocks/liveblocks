@@ -73,7 +73,7 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
-type AiToolDefinitionRenderProps = Resolve<
+export type AiToolDefinitionRenderProps = Resolve<
   DistributiveOmit<AiToolInvocationPart, "type"> & {
     respond: (result: Json) => void;
   }

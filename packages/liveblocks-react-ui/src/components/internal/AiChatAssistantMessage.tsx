@@ -2,6 +2,7 @@ import type {
   AiAssistantContentPart,
   AiToolInvocationPart,
   Json,
+  MessageId,
   UiAssistantMessage,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
@@ -13,6 +14,7 @@ import {
   forwardRef,
   memo,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -86,6 +88,7 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               content={message.contentSoFar}
               chatId={message.chatId}
+              messageId={message.id}
               components={components}
             />
           );
@@ -95,6 +98,7 @@ export const AiChatAssistantMessage = memo(
           <AssistantMessageContent
             content={message.content}
             chatId={message.chatId}
+            messageId={message.id}
             components={components}
           />
         );
@@ -105,6 +109,7 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               content={message.contentSoFar}
               chatId={message.chatId}
+              messageId={message.id}
               components={components}
             />
           );
@@ -114,6 +119,7 @@ export const AiChatAssistantMessage = memo(
               <AssistantMessageContent
                 content={message.contentSoFar}
                 chatId={message.chatId}
+                messageId={message.id}
                 components={components}
               />
 
@@ -147,10 +153,12 @@ export const AiChatAssistantMessage = memo(
 function AssistantMessageContent({
   content,
   chatId,
+  messageId,
   components,
 }: {
   content: AiAssistantContentPart[];
   chatId: string;
+  messageId: MessageId;
   components: Partial<GlobalComponents> | undefined;
 }) {
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
@@ -174,7 +182,12 @@ function AssistantMessageContent({
           }
           case "tool-invocation": {
             return (
-              <ToolInvocationPart key={index} chatId={chatId} part={part} />
+              <ToolInvocationPart
+                key={index}
+                chatId={chatId}
+                messageId={messageId}
+                part={part}
+              />
             );
           }
           case "reasoning": {
@@ -300,29 +313,50 @@ const MemoizedBlockTokenComp = memo(
   }
 );
 
+function noop() {
+  // Do nothing
+}
+
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
 function ToolInvocationPart({
   chatId,
+  messageId,
   part,
 }: {
   chatId: string;
+  messageId: MessageId;
   part: AiToolInvocationPart;
 }) {
   const client = useClient();
   const ai = client[kInternal].ai;
-
   const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
-  if (tool === undefined || tool.render === undefined) return null;
+  const respond = useCallback(
+    (result: Json) => {
+      ai.setToolResult(
+        chatId,
+        messageId,
+        part.toolCallId,
+        result
+        // TODO Pass in AiGenerationOptions here?
+      );
+    },
+    [ai, chatId, messageId, part.toolCallId]
+  );
 
-  // XXX Get the respond() callback here from somewhere
-  const respond = (_result: Json) => {};
+  if (tool === undefined || tool.render === undefined) return null;
 
   const { type: _, ...rest } = part;
   return (
     <div className="lb-ai-chat-message-tool">
-      <tool.render {...rest} respond={respond} />
+      <tool.render
+        {...rest}
+        respond={
+          // It only makes sense and is safe to call `respond()` in "executing" state.
+          part.status === "executing" ? respond : noop
+        }
+      />
     </div>
   );
 }

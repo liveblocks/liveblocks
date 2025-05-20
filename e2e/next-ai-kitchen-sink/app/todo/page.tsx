@@ -41,6 +41,21 @@ export default function Page() {
     );
   }, []);
 
+  const addTodo = useCallback((title: string) => {
+    setTodos((todos) => [
+      ...todos,
+      {
+        id: Math.floor(Math.random() * 10000),
+        title,
+        isCompleted: false,
+      },
+    ]);
+  }, []);
+
+  const deleteTodos = useCallback((ids: number[]) => {
+    setTodos((todos) => todos.filter((todo) => !ids.includes(todo.id)));
+  }, []);
+
   return (
     <main className="h-screen w-full">
       <div className="flex flex-col mx-auto px-4 max-w-4xl py-8">
@@ -53,14 +68,7 @@ export default function Page() {
           }}
           onKeyDown={(e) => {
             if (value.length > 0 && e.key === "Enter") {
-              setTodos((todos) => [
-                ...todos,
-                {
-                  id: todos.length + 1,
-                  title: value,
-                  isCompleted: false,
-                },
-              ]);
+              addTodo(value);
               setValue("");
             }
           }}
@@ -139,6 +147,28 @@ export default function Page() {
                         },
                       },
 
+                      addTodos: {
+                        description: "Add a new todo item to the list",
+                        parameters: {
+                          type: "object",
+                          properties: {
+                            titles: {
+                              type: "array",
+                              description:
+                                "The titles of the new items to add to the list",
+                              items: { type: "string" },
+                            },
+                          },
+                        },
+                        execute: (args) => {
+                          const titles = args!.titles as string[];
+                          for (const title of titles) {
+                            addTodo(title);
+                          }
+                          return { ok: true };
+                        },
+                      },
+
                       toggleTodo: {
                         description: "Toggle a todo's completion status",
                         parameters: {
@@ -157,6 +187,113 @@ export default function Page() {
                           return { ok: true };
                         },
                         render: AiToolDebugger,
+                      },
+
+                      deleteTodos: {
+                        description: "Deletes one or more todo items by ID",
+                        parameters: {
+                          type: "object",
+                          properties: {
+                            ids: {
+                              description: "The ids of the todo item to delete",
+                              type: "array",
+                              items: { type: "number" },
+                            },
+                          },
+                        },
+
+                        render: ({ status, args, result, respond }) => {
+                          if (status !== "executed") {
+                            return (
+                              <div
+                                style={{
+                                  borderTop: "4px solid red",
+                                  backgroundColor: "#dfdfdf",
+                                  padding: "1rem",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize: "1.5rem",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  Okay to delete?
+                                </div>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    gap: "1rem",
+                                  }}
+                                >
+                                  <button
+                                    style={{
+                                      padding: "0.5rem",
+                                      borderRadius: "0.5rem",
+                                      backgroundColor: "white",
+                                    }}
+                                    onClick={() => {
+                                      respond({
+                                        ok: false,
+                                        reason: "deny",
+                                        hint: "Do not respond with further text",
+                                      });
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    style={{
+                                      backgroundColor: "red",
+                                      color: "white",
+                                      borderRadius: "0.5rem",
+                                      padding: "0.5rem 1rem",
+                                    }}
+                                    onClick={() => {
+                                      const ids = args!.ids as number[];
+
+                                      const deletedTitles = todos
+                                        .filter((t) => ids.includes(t.id))
+                                        .map((todo) => todo.title);
+
+                                      deleteTodos(ids);
+                                      respond({ ok: true, deletedTitles });
+                                    }}
+                                  >
+                                    Yes, delete!
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          const r = result as {
+                            ok: boolean;
+                            deletedTitles: string[];
+                          };
+                          return (
+                            <div
+                              style={{
+                                backgroundColor: "#dfdfdf",
+                                padding: "1rem",
+                              }}
+                            >
+                              {r.ok ? (
+                                <div>
+                                  Deleted:
+                                  <ul>
+                                    {r.deletedTitles.map((title, i) => (
+                                      <li key={i}>{title}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : (
+                                <div>The request was denied</div>
+                              )}
+                            </div>
+                          );
+                        },
                       },
                     }}
                     className="rounded-xl"

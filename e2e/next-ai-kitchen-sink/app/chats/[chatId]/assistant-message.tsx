@@ -1,11 +1,19 @@
 "use client";
 
 import { useClient } from "@liveblocks/react/suspense";
-import { HTMLAttributes, memo, useEffect, useMemo, useState } from "react";
+import {
+  HTMLAttributes,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   AiAssistantContentPart,
   AiToolInvocationPart,
   CopilotId,
+  Json,
   kInternal,
   MessageId,
   UiAssistantMessage,
@@ -129,6 +137,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         <AssistantMessageContent
           content={message.contentSoFar}
           chatId={message.chatId}
+          messageId={message.id}
         />
       );
     }
@@ -146,6 +155,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         <AssistantMessageContent
           content={message.content}
           chatId={message.chatId}
+          messageId={message.id}
         />
 
         {/* Message actions */}
@@ -167,6 +177,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           <AssistantMessageContent
             content={message.contentSoFar}
             chatId={message.chatId}
+            messageId={message.id}
           />
           {/* Message actions */}
           <MessageActions text={text} />
@@ -179,6 +190,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           <AssistantMessageContent
             content={message.contentSoFar}
             chatId={message.chatId}
+            messageId={message.id}
           />
 
           <div className="flex flex-row gap-4 items-center rounded-lg bg-red-100/50 p-4 text-sm mt-2 text-red-400 dark:bg-red-900/40 dark:text-red-300">
@@ -197,9 +209,11 @@ export const AssistantMessage = memo(function AssistantMessage({
 function AssistantMessageContent({
   content,
   chatId,
+  messageId,
 }: {
   content: AiAssistantContentPart[];
   chatId: string;
+  messageId: MessageId;
 }) {
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
   const isReasoning =
@@ -215,7 +229,12 @@ function AssistantMessageContent({
           }
           case "tool-invocation": {
             return (
-              <ToolInvocationPart key={index} chatId={chatId} part={part} />
+              <ToolInvocationPart
+                key={index}
+                chatId={chatId}
+                messageId={messageId}
+                part={part}
+              />
             );
           }
           case "reasoning": {
@@ -272,23 +291,47 @@ const MemoizedBlockTokenComp = memo(
   }
 );
 
+function noop() {
+  // Do nothing
+}
+
 function ToolInvocationPart({
   chatId,
+  messageId,
   part,
 }: {
   chatId: string;
+  messageId: MessageId;
   part: AiToolInvocationPart;
 }) {
   const client = useClient();
-
-  const tool = useSignal(
-    client[kInternal].ai.signals.getToolDefinitionΣ(chatId, part.toolName)
+  const ai = client[kInternal].ai;
+  const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
+  const respond = useCallback(
+    (result: Json) => {
+      ai.setToolResult(
+        chatId,
+        messageId,
+        part.toolCallId,
+        result
+        // TODO Pass in AiGenerationOptions here?
+      );
+    },
+    [ai, chatId, messageId, part.toolCallId]
   );
-  if (tool?.render === undefined) return null;
 
+  if (tool === undefined || tool.render === undefined) return null;
+
+  const { type: _, ...rest } = part;
   return (
     <div className="lb-ai-chat-message-tool">
-      <tool.render {...part} />
+      <tool.render
+        {...rest}
+        respond={
+          // It only makes sense and is safe to call `respond()` in "executing" state.
+          part.status === "executing" ? respond : noop
+        }
+      />
     </div>
   );
 }
