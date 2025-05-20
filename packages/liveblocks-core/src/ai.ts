@@ -11,6 +11,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
+import type { Json, JsonObject } from "./lib/Json";
 import { nanoid } from "./lib/nanoid";
 import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
@@ -32,9 +33,10 @@ import type {
   AiChat,
   AiChatMessage,
   AiFailedAssistantMessage,
+  AiGeneratingAssistantMessage,
   AiGenerationOptions,
   AiKnowledgeSource,
-  AiPendingAssistantMessage,
+  AiToolInvocationPart,
   AiUserContentPart,
   AiUserMessage,
   AskInChatResponse,
@@ -54,6 +56,7 @@ import type {
   ServerAiMsg,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
+import type { Awaitable } from "./types/Awaitable";
 import type {
   IWebSocket,
   IWebSocketInstance,
@@ -69,11 +72,24 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
-export type ClientToolDefinition = {
-  description?: string;
-  parameters: JSONSchema4;
-  render: ComponentType<{ args: any }>;
-};
+// TODO[nvie] Come back here and make the input/output types correlated and nicely typed!
+export type AiToolDefinition =
+  //  <
+  //  // A extends JsonObject = JsonObject,
+  //  // R extends JsonObject = JsonObject,
+  //  >
+  | {
+      description?: string;
+      parameters: JSONSchema4;
+      execute: (args: JsonObject) => Awaitable<Json>;
+      render?: ComponentType<AiToolInvocationPart>;
+    }
+  | {
+      description?: string;
+      parameters: JSONSchema4;
+      execute?: (args: JsonObject) => Awaitable<Json>;
+      render: ComponentType<AiToolInvocationPart>;
+    };
 
 export type UiChatMessage = AiChatMessage & {
   navigation: {
@@ -225,7 +241,7 @@ function now(): ISODateString {
 function createStore_forTools() {
   const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
     return new DefaultMap((_toolName: string) => {
-      return new Signal<ClientToolDefinition | undefined>(undefined);
+      return new Signal<AiToolDefinition | undefined>(undefined);
     });
   });
 
@@ -236,8 +252,14 @@ function createStore_forTools() {
   function addToolDefinition(
     chatId: string,
     name: string,
-    definition: ClientToolDefinition
+    definition: AiToolDefinition
   ) {
+    if (!definition.execute && !definition.render) {
+      throw new Error(
+        "A tool definition must have an execute() function, a render property, or both."
+      );
+    }
+
     toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(definition);
   }
 
@@ -251,7 +273,7 @@ function createStore_forTools() {
 
   function getToolsForChat(chatId: string): {
     name: string;
-    definition: ClientToolDefinition;
+    definition: AiToolDefinition;
   }[] {
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return [];
@@ -265,19 +287,30 @@ function createStore_forTools() {
       })
       .filter((tool) => tool !== null) as {
       name: string;
-      definition: ClientToolDefinition;
+      definition: AiToolDefinition;
     }[];
   }
 
   return {
-    getToolCallByNameΣ: getToolDefinitionΣ,
+    getToolDefinitionΣ,
     getToolsForChat,
     addToolDefinition,
     removeToolDefinition,
   };
 }
 
-function createStore_forChatMessages() {
+function createStore_forChatMessages(
+  toolsStore: ReturnType<typeof createStore_forTools>,
+  setToolResult: (
+    chatId: string,
+    messageId: MessageId,
+    toolCallId: string,
+    result: Json,
+    options?: AiGenerationOptions
+  ) => Promise<AskInChatResponse>
+) {
+  const seenToolCallIds = new Set<string>();
+
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
   const messagePoolByChatIdΣ = new DefaultMap(
@@ -291,13 +324,13 @@ function createStore_forChatMessages() {
       )
   );
 
-  // Separately from that, we track all _pending_ signals in a separate
-  // administration. Because pending messages are likely to receive
+  // Separately from that, we track all _generating_ signals in a separate
+  // administration. Because generating messages are likely to receive
   // many/frequent updates, updating them in a separate administration makes
   // rendering streaming contents much more efficient than if we had to
   // re-create and re-render the entire chat list on every such update.
-  const pendingMessagesΣ = new MutableSignal(
-    new Map<MessageId, AiPendingAssistantMessage>()
+  const generatingMessagesΣ = new MutableSignal(
+    new Map<MessageId, AiGeneratingAssistantMessage>()
   );
 
   function createOptimistically(
@@ -337,10 +370,10 @@ function createStore_forChatMessages() {
         role,
         parentId,
         createdAt,
-        status: "pending",
+        status: "generating",
         contentSoFar: [],
         _optimistic: true,
-      } satisfies AiPendingAssistantMessage);
+      } satisfies AiGeneratingAssistantMessage);
     }
     return id;
   }
@@ -360,10 +393,7 @@ function createStore_forChatMessages() {
     const existing = chatMsgsΣ.get().get(messageId);
     if (!existing || existing.deletedAt) return;
 
-    if (
-      existing.role === "assistant" &&
-      (existing.status === "pending" || existing.status === "failed")
-    ) {
+    if (existing.role === "assistant" && existing.status !== "completed") {
       upsert({ ...existing, deletedAt: now(), contentSoFar: [] });
     } else {
       upsert({ ...existing, deletedAt: now(), content: [] });
@@ -381,22 +411,77 @@ function createStore_forChatMessages() {
       const chatMsgsΣ = messagePoolByChatIdΣ.getOrCreate(message.chatId);
       chatMsgsΣ.mutate((pool) => pool.upsert(message));
 
-      // If the message is a pending update, write it to the pendingContents
-      // LUT. If not, remove it from there.
-      if (message.role === "assistant" && message.status === "pending") {
-        pendingMessagesΣ.mutate((lut) => {
+      // If the message is a pending update, write it to the generating
+      // messages LUT. If not, remove it from there.
+      if (message.role === "assistant" && message.status === "generating") {
+        generatingMessagesΣ.mutate((lut) => {
           lut.set(message.id, structuredClone(message));
         });
       } else {
-        pendingMessagesΣ.mutate((lut) => {
+        generatingMessagesΣ.mutate((lut) => {
           lut.delete(message.id);
         });
+      }
+
+      //
+      // If this message has "awaiting-tool" status, it may be the client's
+      // move to trigger an action / call an execute function.
+      //
+      // We will automatically invoke execute()...
+      // - only if such function is provided by the user
+      // - at most once (which is why we track it in seenToolCallIds)
+      // - and only if the current client ID is the designated client ID
+      //
+      if (message.role === "assistant" && message.status === "awaiting-tool") {
+        for (const toolCall of message.contentSoFar.filter(
+          (part) =>
+            part.type === "tool-invocation" && part.status === "executing"
+        )) {
+          if (seenToolCallIds.has(toolCall.toolCallId)) {
+            // Do nothing, we already know of it
+            continue;
+          }
+
+          seenToolCallIds.add(toolCall.toolCallId);
+
+          const toolDef = toolsStore
+            .getToolDefinitionΣ(message.chatId, toolCall.toolName)
+            .get();
+
+          const respondSync = (result: Json) => {
+            setToolResult(
+              message.chatId,
+              message.id,
+              toolCall.toolCallId,
+              result
+              // TODO Pass in AiGenerationOptions here, or make the backend use the same options
+            ).catch((err) => {
+              console.error(
+                `Error trying to respond to tool-call: ${String(err)} (1)`
+              );
+            });
+          };
+
+          // XXX The client should not BLINDLY invoke execute() here!
+          // XXX We should only call it if our client ID is the designated client ID!
+          const executeFn = toolDef?.execute;
+          if (executeFn) {
+            (async () => {
+              const result = await executeFn(toolCall.args);
+              respondSync(result);
+            })().catch((err) => {
+              console.error(
+                `Error trying to respond to tool-call: ${String(err)} (2)`
+              );
+            });
+          }
+        }
       }
     });
   }
 
   function addDelta(messageId: MessageId, delta: AiAssistantDeltaUpdate): void {
-    pendingMessagesΣ.mutate((lut) => {
+    generatingMessagesΣ.mutate((lut) => {
       const message = lut.get(messageId);
       if (message === undefined) return false;
 
@@ -406,12 +491,12 @@ function createStore_forChatMessages() {
     });
   }
 
-  function* iterPendingMessages() {
+  function* iterGeneratingMessages() {
     for (const chatMsgsΣ of messagePoolByChatIdΣ.values()) {
       for (const m of chatMsgsΣ.get()) {
         if (
           m.role === "assistant" &&
-          m.status === "pending" &&
+          m.status === "generating" &&
           !m._optimistic
         ) {
           yield m;
@@ -422,7 +507,7 @@ function createStore_forChatMessages() {
 
   function failAllPending(): void {
     batch(() => {
-      pendingMessagesΣ.mutate((lut) => {
+      generatingMessagesΣ.mutate((lut) => {
         let deleted = false;
         for (const [k, v] of lut) {
           if (!v._optimistic) {
@@ -434,7 +519,7 @@ function createStore_forChatMessages() {
       });
 
       upsertMany(
-        Array.from(iterPendingMessages()).map(
+        Array.from(iterGeneratingMessages()).map(
           (message) =>
             ({
               ...message,
@@ -551,17 +636,17 @@ function createStore_forChatMessages() {
       }, shallow2);
 
       return DerivedSignal.from((): UiChatMessage[] => {
-        const pendingMessages = pendingMessagesΣ.get();
+        const generatingMessages = generatingMessagesΣ.get();
         return messagesΣ.get().map((message) => {
-          if (message.role !== "assistant" || message.status !== "pending") {
+          if (message.role !== "assistant" || message.status !== "generating") {
             return message;
           }
-          const pendingMessage = pendingMessages.get(message.id);
-          if (pendingMessage === undefined) return message;
+          const generatingMessage = generatingMessages.get(message.id);
+          if (generatingMessage === undefined) return message;
           return {
             ...message,
-            contentSoFar: pendingMessage.contentSoFar,
-          } satisfies AiPendingAssistantMessage;
+            contentSoFar: generatingMessage.contentSoFar,
+          } satisfies AiGeneratingAssistantMessage;
         });
       }, shallow);
     });
@@ -678,6 +763,14 @@ export type Ai = {
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  setToolResult: (
+    chatId: string,
+    messageId: MessageId,
+    toolCallId: string,
+    result: Json,
+    options?: AiGenerationOptions
+  ) => Promise<AskInChatResponse>;
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
     getChatMessagesForBranchΣ(
@@ -685,10 +778,13 @@ export type Ai = {
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
     getChatById: (chatId: string) => AiChat | undefined;
+
+    // XXX This "tool definition" registry should not be signal-based I think?
+    // XXX We should make it similar to "global knowledge"
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
-    ): Signal<ClientToolDefinition | undefined>;
+    ): Signal<AiToolDefinition | undefined>;
   };
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
@@ -706,7 +802,7 @@ export type Ai = {
   registerChatTool: (
     chatId: string,
     name: string,
-    definition: ClientToolDefinition
+    definition: AiToolDefinition
   ) => void;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   unregisterChatTool: (chatId: string, toolName: string) => void;
@@ -733,8 +829,8 @@ export function createAi(config: AiConfig): Ai {
   const clientId = nanoid(7) as ClientId;
 
   const chatsStore = createStore_forUserAiChats();
-  const messagesStore = createStore_forChatMessages();
   const toolsStore = createStore_forTools();
+  const messagesStore = createStore_forChatMessages(toolsStore, setToolResult);
   const context: AiContext = {
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
@@ -914,6 +1010,12 @@ export function createAi(config: AiConfig): Ai {
           // TODO Not handled yet
           break;
 
+        case "set-tool-result":
+          if (msg.ok) {
+            context.messagesStore.upsert(msg.message);
+          }
+          break;
+
         default:
           return assertNever(msg, "Unhandled case");
       }
@@ -1022,6 +1124,35 @@ export function createAi(config: AiConfig): Ai {
     return context.knowledge.get();
   }
 
+  async function setToolResult(
+    chatId: string,
+    messageId: MessageId,
+    toolCallId: string,
+    result: Json,
+    options?: AiGenerationOptions
+  ): Promise<AskInChatResponse> {
+    const knowledge = context.knowledge.get();
+    return sendClientMsgWithResponse({
+      cmd: "set-tool-result",
+      chatId,
+      messageId,
+      toolCallId,
+      clientId,
+      result,
+      generationOptions: {
+        copilotId: options?.copilotId,
+        stream: options?.stream,
+        timeout: options?.timeout,
+        knowledge: knowledge.length > 0 ? knowledge : undefined,
+        tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
+          name: tool.name,
+          description: tool.definition.description,
+          parameters: tool.definition.parameters,
+        })),
+      },
+    });
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -1085,6 +1216,8 @@ export function createAi(config: AiConfig): Ai {
       abort: (messageId: MessageId) =>
         sendClientMsgWithResponse({ cmd: "abort-ai", messageId }),
 
+      setToolResult,
+
       getStatus: () => managedSocket.getStatus(),
 
       signals: {
@@ -1092,7 +1225,10 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getChatById: context.chatsStore.getChatById,
-        getToolDefinitionΣ: context.toolsStore.getToolCallByNameΣ,
+
+        // XXX This "tool definition" registry should not be signal-based I think?
+        // XXX We should make it similar to "global knowledge"
+        getToolDefinitionΣ: context.toolsStore.getToolDefinitionΣ,
       },
 
       registerKnowledgeLayer,

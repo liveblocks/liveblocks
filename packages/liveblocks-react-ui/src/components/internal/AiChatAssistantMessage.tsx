@@ -1,8 +1,9 @@
-import {
-  type AiAssistantContentPart,
-  kInternal,
-  type UiAssistantMessage,
+import type {
+  AiAssistantContentPart,
+  AiToolInvocationPart,
+  UiAssistantMessage,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Lexer } from "marked";
@@ -69,7 +70,10 @@ export const AiChatAssistantMessage = memo(
             {$.AI_CHAT_MESSAGE_DELETED}
           </div>
         );
-      } else if (message.status === "pending") {
+      } else if (
+        message.status === "generating" ||
+        message.status === "awaiting-tool"
+      ) {
         if (message.contentSoFar.length === 0) {
           children = (
             <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
@@ -167,14 +171,9 @@ function AssistantMessageContent({
               />
             );
           }
-          case "tool-call": {
+          case "tool-invocation": {
             return (
-              <ToolCallPart
-                key={index}
-                chatId={chatId}
-                name={part.toolName}
-                args={part.args}
-              />
+              <ToolInvocationPart key={index} chatId={chatId} part={part} />
             );
           }
           case "reasoning": {
@@ -301,27 +300,25 @@ const MemoizedBlockTokenComp = memo(
 );
 
 /* -------------------------------------------------------------------------------------------------
- * ToolCallPart
+ * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-function ToolCallPart({
+function ToolInvocationPart({
   chatId,
-  name,
-  args,
+  part,
 }: {
   chatId: string;
-  name: string;
-  args: any;
+  part: AiToolInvocationPart;
 }) {
   const client = useClient();
 
   const tool = useSignal(
-    client[kInternal].ai.signals.getToolDefinitionΣ(chatId, name)
+    client[kInternal].ai.signals.getToolDefinitionΣ(chatId, part.toolName)
   );
   if (tool === undefined || tool.render === undefined) return null;
 
   return (
     <div className="lb-ai-chat-message-tool">
-      <tool.render args={args as unknown} />
+      <tool.render {...part} />
     </div>
   );
 }

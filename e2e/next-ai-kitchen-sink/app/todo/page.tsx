@@ -1,10 +1,11 @@
 "use client";
 
+import { wait } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
 } from "@liveblocks/react/suspense";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
 import { AiChat } from "@liveblocks/react-ui";
 
@@ -29,6 +30,17 @@ export default function Page() {
     },
   ]);
   const [value, setValue] = useState("");
+
+  const toggleTodo = useCallback((id: number) => {
+    setTodos((todos) =>
+      todos.map((todo) => {
+        if (todo.id === id) {
+          return { ...todo, isCompleted: !todo.isCompleted };
+        }
+        return todo;
+      })
+    );
+  }, []);
 
   return (
     <main className="h-screen w-full">
@@ -63,16 +75,7 @@ export default function Page() {
                 <li
                   key={index}
                   className={`flex space-between items-center ${todo.isCompleted ? "line-through opacity-50" : "opacity-100"}`}
-                  onClick={() => {
-                    setTodos((todos) =>
-                      todos.map((t) => {
-                        if (t.id === todo.id) {
-                          return { ...todo, isCompleted: !todo.isCompleted };
-                        }
-                        return t;
-                      })
-                    );
-                  }}
+                  onClick={() => toggleTodo(todo.id)}
                 >
                   {todo.title}
                 </li>
@@ -114,16 +117,79 @@ export default function Page() {
                 <ClientSideSuspense fallback={null}>
                   <AiChat
                     chatId="todo"
-                    knowledge={[
-                      {
-                        description:
-                          "A list of todos with id, title and completion status",
-                        value: `${JSON.stringify(todos)}`,
-                      },
-                    ]}
                     tools={{
-                      displayTodo: {
-                        description: "Display todos",
+                      getWeather: {
+                        description:
+                          "List the weather in the given city or country",
+                        parameters: {
+                          type: "object",
+                          properties: {
+                            city: {
+                              type: "string",
+                              description: "The city to get the weather for",
+                            },
+                            country: {
+                              type: "string",
+                              description: "The country to get the weather for",
+                            },
+                          },
+                        },
+
+                        execute: async ({ args }) => {
+                          await wait(3000);
+                          return {
+                            city: (args as any)?.city,
+                            forecast: [
+                              { date: "2025-05-19", summary: "Windy" },
+                              { date: "2025-05-20", summary: "Cloudy" },
+                              { date: "2025-05-21", summary: "Sunny" },
+                              { date: "2025-05-22", summary: "Sunny" },
+                              { date: "2025-05-23", summary: "Sunny" },
+                              { date: "2025-05-24", summary: "Sunny" },
+                            ],
+                          };
+                        },
+
+                        render: ({ status }) => {
+                          return status === "executing" ? (
+                            <h1>Looking up the weather...</h1>
+                          ) : null;
+                        },
+                      },
+
+                      toggleTodo: {
+                        description:
+                          "Toggles (mark complete or incomplete) the given todo item",
+                        parameters: {
+                          type: "object",
+                          properties: {
+                            id: {
+                              description: "The id of the todo to display",
+                              type: "number",
+                            },
+                          },
+                        },
+
+                        execute: async (args) => {
+                          await wait(500);
+                          toggleTodo(args.id as any);
+                          await wait(500);
+                          return "toggled successfully";
+                        },
+
+                        render: ({ status, args }) => {
+                          return (
+                            <small style={{ color: "yellow" }}>
+                              {status === "executing"
+                                ? "Toggling..."
+                                : `Toggled item ${args?.id ?? "0"}`}
+                            </small>
+                          );
+                        },
+                      },
+
+                      listTodos: {
+                        description: "List all of my todos",
                         parameters: {
                           type: "object",
                           properties: {
@@ -136,17 +202,10 @@ export default function Page() {
                             },
                           },
                         },
-                        render: ({ args }: { args: { ids: number[] } }) => {
-                          return (
-                            <div className="flex flex-col gap-2 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-lg p-4 mt-4">
-                              {args.ids.map((id) => {
-                                const todo = todos.find((t) => t.id === id);
-                                if (!todo) return null;
 
-                                return <div key={todo.id}>{todo.title}</div>;
-                              })}
-                            </div>
-                          );
+                        execute: async () => {
+                          await wait(1000);
+                          return todos;
                         },
                       },
                     }}

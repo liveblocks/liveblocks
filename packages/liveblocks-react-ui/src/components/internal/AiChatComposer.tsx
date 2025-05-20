@@ -109,25 +109,25 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
       return lastMessage.id;
     }, []);
 
-    const getPendingMessage = useCallback((messages: UiChatMessage[]) => {
+    const getAbortableMessageId = useCallback((messages: UiChatMessage[]) => {
       return messages.find(
-        (m) => m.role === "assistant" && m.status === "pending"
+        (m) =>
+          m.role === "assistant" &&
+          (m.status === "generating" || m.status === "awaiting-tool")
       )?.id;
     }, []);
 
-    const pendingMessage = useSignal(
-      client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
-      getPendingMessage
+    const messagesΣ = client[kInternal].ai.signals.getChatMessagesForBranchΣ(
+      chatId,
+      branchId
     );
 
-    const lastMessageId = useSignal(
-      client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId),
-      getLastMessageId
-    );
+    const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
+    const lastMessageId = useSignal(messagesΣ, getLastMessageId);
 
     const handleComposerSubmit = useCallback(
       (message: { text: string }, event: FormEvent<HTMLFormElement>) => {
-        if (pendingMessage !== undefined) {
+        if (abortableMessageId !== undefined) {
           event.preventDefault();
           return;
         }
@@ -170,7 +170,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
         client,
         chatId,
         lastMessageId,
-        pendingMessage,
+        abortableMessageId,
         stream,
         copilotId,
       ]
@@ -203,7 +203,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
               </div>
 
               <div className="lb-ai-chat-composer-actions">
-                {pendingMessage === undefined ? (
+                {abortableMessageId === undefined ? (
                   <ShortcutTooltip
                     content={$.AI_CHAT_COMPOSER_SEND}
                     shortcut="Enter"
@@ -225,7 +225,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
                       onPointerDown={(event) => event.preventDefault()}
                       onClick={(event) => {
                         event.stopPropagation();
-                        client[kInternal].ai.abort(pendingMessage);
+                        client[kInternal].ai.abort(abortableMessageId);
                       }}
                       className="lb-ai-chat-composer-action"
                       variant="secondary"

@@ -13,12 +13,12 @@ export function ChatComposer({
   chatId,
   copilotId,
   autoFocus,
-  pendingMessage,
+  abortableMessageId,
   lastMessageId,
   onUserMessageCreate,
 }: {
   chatId: string;
-  pendingMessage: MessageId | null;
+  abortableMessageId: MessageId | null;
   lastMessageId: MessageId | null;
   copilotId?: CopilotId;
   autoFocus?: boolean;
@@ -28,8 +28,7 @@ export function ChatComposer({
 
   const handleComposerSubmit = useCallback(
     (message: { text: string }, event: FormEvent<HTMLFormElement>) => {
-      console.log(pendingMessage);
-      if (pendingMessage !== null) {
+      if (abortableMessageId !== null) {
         event.preventDefault();
         return;
       }
@@ -68,7 +67,7 @@ export function ChatComposer({
       copilotId,
       lastMessageId,
       onUserMessageCreate,
-      pendingMessage,
+      abortableMessageId,
     ]
   );
 
@@ -87,7 +86,7 @@ export function ChatComposer({
 
         <div className="flex items-center px-3 py-4 gap-2">
           <div className="ml-auto">
-            {pendingMessage === null ? (
+            {abortableMessageId === null ? (
               <AiChatComposerSubmit
                 onPointerDown={(event) => event.preventDefault()}
                 aria-label="Send"
@@ -101,7 +100,7 @@ export function ChatComposer({
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={(event) => {
                   event.stopPropagation();
-                  client[kInternal].ai.abort(pendingMessage);
+                  client[kInternal].ai.abort(abortableMessageId);
                 }}
                 className="inline-flex size-7.5 rounded-full items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
                 aria-label="Abort"
