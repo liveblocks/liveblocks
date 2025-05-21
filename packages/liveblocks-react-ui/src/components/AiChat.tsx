@@ -1,6 +1,6 @@
 import type {
   AiKnowledgeSource,
-  ClientToolDefinition,
+  AiToolDefinition,
   CopilotId,
   MessageId,
   UiChatMessage,
@@ -62,7 +62,7 @@ export interface AiChatProps extends ComponentProps<"div"> {
   /**
    * Tool definitions to make available within this chat. May be used by the assistant when generating responses.
    */
-  tools?: Record<string, ClientToolDefinition>;
+  tools?: Record<string, AiToolDefinition>;
   /**
    * Override the component's strings.
    */

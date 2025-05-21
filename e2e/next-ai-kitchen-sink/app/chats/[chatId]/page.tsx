@@ -187,9 +187,11 @@ function Chat({ chatId }: { chatId: string }) {
             chatId={chatId}
             copilotId={copilotId === "default" ? undefined : copilotId}
             lastMessageId={messages[messages.length - 1]?.id ?? null}
-            pendingMessage={
+            abortableMessageId={
               messages.find(
-                (m) => m.role === "assistant" && m.status === "pending"
+                (m) =>
+                  m.role === "assistant" &&
+                  (m.status === "generating" || m.status === "awaiting-tool")
               )?.id ?? null
             }
             onUserMessageCreate={(id) => {

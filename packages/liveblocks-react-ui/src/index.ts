@@ -6,6 +6,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type { AiChatProps } from "./components/AiChat";
 export { AiChat } from "./components/AiChat";
+export { AiToolDebugger } from "./components/AiToolDebugger";
 export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";

@@ -1,8 +1,11 @@
-import {
-  type AiAssistantContentPart,
-  kInternal,
-  type UiAssistantMessage,
+import type {
+  AiAssistantContentPart,
+  AiToolInvocationPart,
+  Json,
+  MessageId,
+  UiAssistantMessage,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Lexer } from "marked";
@@ -11,6 +14,7 @@ import {
   forwardRef,
   memo,
   type ReactNode,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -69,7 +73,10 @@ export const AiChatAssistantMessage = memo(
             {$.AI_CHAT_MESSAGE_DELETED}
           </div>
         );
-      } else if (message.status === "pending") {
+      } else if (
+        message.status === "generating" ||
+        message.status === "awaiting-tool"
+      ) {
         if (message.contentSoFar.length === 0) {
           children = (
             <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
@@ -81,6 +88,7 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               content={message.contentSoFar}
               chatId={message.chatId}
+              messageId={message.id}
               components={components}
             />
           );
@@ -90,6 +98,7 @@ export const AiChatAssistantMessage = memo(
           <AssistantMessageContent
             content={message.content}
             chatId={message.chatId}
+            messageId={message.id}
             components={components}
           />
         );
@@ -100,6 +109,7 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               content={message.contentSoFar}
               chatId={message.chatId}
+              messageId={message.id}
               components={components}
             />
           );
@@ -109,6 +119,7 @@ export const AiChatAssistantMessage = memo(
               <AssistantMessageContent
                 content={message.contentSoFar}
                 chatId={message.chatId}
+                messageId={message.id}
                 components={components}
               />
 
@@ -142,10 +153,12 @@ export const AiChatAssistantMessage = memo(
 function AssistantMessageContent({
   content,
   chatId,
+  messageId,
   components,
 }: {
   content: AiAssistantContentPart[];
   chatId: string;
+  messageId: MessageId;
   components: Partial<GlobalComponents> | undefined;
 }) {
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
@@ -167,13 +180,13 @@ function AssistantMessageContent({
               />
             );
           }
-          case "tool-call": {
+          case "tool-invocation": {
             return (
-              <ToolCallPart
+              <ToolInvocationPart
                 key={index}
                 chatId={chatId}
-                name={part.toolName}
-                args={part.args}
+                messageId={messageId}
+                part={part}
               />
             );
           }
@@ -300,28 +313,50 @@ const MemoizedBlockTokenComp = memo(
   }
 );
 
+function noop() {
+  // Do nothing
+}
+
 /* -------------------------------------------------------------------------------------------------
- * ToolCallPart
+ * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-function ToolCallPart({
+function ToolInvocationPart({
   chatId,
-  name,
-  args,
+  messageId,
+  part,
 }: {
   chatId: string;
-  name: string;
-  args: any;
+  messageId: MessageId;
+  part: AiToolInvocationPart;
 }) {
   const client = useClient();
-
-  const tool = useSignal(
-    client[kInternal].ai.signals.getToolDefinitionΣ(chatId, name)
+  const ai = client[kInternal].ai;
+  const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
+  const respond = useCallback(
+    (result: Json) => {
+      ai.setToolResult(
+        chatId,
+        messageId,
+        part.toolCallId,
+        result
+        // TODO Pass in AiGenerationOptions here?
+      );
+    },
+    [ai, chatId, messageId, part.toolCallId]
   );
+
   if (tool === undefined || tool.render === undefined) return null;
 
+  const { type: _, ...rest } = part;
   return (
     <div className="lb-ai-chat-message-tool">
-      <tool.render args={args as unknown} />
+      <tool.render
+        {...rest}
+        respond={
+          // It only makes sense and is safe to call `respond()` in "executing" state.
+          part.status === "executing" ? respond : noop
+        }
+      />
     </div>
   );
 }

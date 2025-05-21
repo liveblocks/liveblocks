@@ -1,3 +1,9 @@
+///
+/// This module is shared with the back-end.
+/// All types in this file represent _public_ types, observable in the client
+/// or in our protocol.
+///
+
 import { assertNever } from "../lib/assert";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
@@ -41,7 +47,8 @@ type CommandPair =
   | DeleteMessagePair
   | ClearChatPair
   | AskInChatPair
-  | AbortAiPair;
+  | AbortAiPair
+  | SetToolResultPair;
 
 export type ClientCmd<T extends CommandPair = CommandPair> = T[0];
 export type ServerCmdResponse<T extends CommandPair = CommandPair> = T[1];
@@ -54,6 +61,7 @@ export type DeleteMessageCmd = ClientCmd<DeleteMessagePair>;
 export type ClearChatCmd = ClientCmd<ClearChatPair>;
 export type AskInChatCmd = ClientCmd<AskInChatPair>;
 export type AbortAiCmd = ClientCmd<AbortAiPair>;
+export type SetToolResultCmd = ClientCmd<SetToolResultPair>;
 
 export type GetChatsResponse = ServerCmdResponse<GetChatsPair>;
 export type GetOrCreateChatResponse = ServerCmdResponse<GetOrCreateChatPair>;
@@ -63,6 +71,7 @@ export type DeleteMessageResponse = ServerCmdResponse<DeleteMessagePair>;
 export type ClearChatResponse = ServerCmdResponse<ClearChatPair>;
 export type AskInChatResponse = ServerCmdResponse<AskInChatPair>;
 export type AbortAiResponse = ServerCmdResponse<AbortAiPair>;
+export type SetToolResultResponse = ServerCmdResponse<SetToolResultPair>;
 
 type GetChatsPair = DefineCmd<
   "get-chats",
@@ -165,10 +174,21 @@ type AskInChatPair = DefineCmd<
 
 type AbortAiPair = DefineCmd<
   "abort-ai",
-  // TODO Do we want to also be able to abort _all_ pending messages for
-  // a given chat ID? There should be only one at the start though.
   { messageId: MessageId },
   { ok: true }
+>;
+
+type SetToolResultPair = DefineCmd<
+  "set-tool-result",
+  {
+    chatId: ChatId;
+    messageId: MessageId;
+    toolCallId: string;
+    result: Json;
+    clientId: ClientId;
+    generationOptions: AiGenerationOptions;
+  },
+  { ok: true; message: AiChatMessage } | { ok: false }
 >;
 
 // -------------------------------------------------------------------------------------------------
@@ -237,7 +257,10 @@ export type SettleServerEvent = {
   event: "settle";
   /** The client ID that originally made the request that led to this event */
   clientId: ClientId;
-  message: AiCompletedAssistantMessage | AiFailedAssistantMessage;
+  message:
+    | AiAwaitingToolAssistantMessage
+    | AiCompletedAssistantMessage
+    | AiFailedAssistantMessage;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -259,11 +282,36 @@ export type AiToolDefinition = {
   parameters: JsonObject;
 };
 
-export type AiToolCallPart = {
-  type: "tool-call";
+export type AiToolInvocationPart = Relax<
+  | AiReceivingToolInvocationPart
+  | AiExecutingToolInvocationPart
+  | AiExecutedToolInvocationPart
+>;
+
+export type AiReceivingToolInvocationPart = {
+  type: "tool-invocation";
+  status: "receiving";
   toolCallId: string;
   toolName: string;
-  args: unknown;
+  partialArgs: Json;
+};
+
+export type AiExecutingToolInvocationPart = {
+  type: "tool-invocation";
+  status: "executing";
+  toolCallId: string;
+  toolName: string;
+  args: JsonObject;
+};
+
+export type AiExecutedToolInvocationPart = {
+  type: "tool-invocation";
+  status: "executed";
+  toolCallId: string;
+  toolName: string;
+  args: JsonObject;
+  result: Json;
+  // isError: boolean  // TODO Consider adopting this field from AiSDK? Would make "result" be treated as an error value or a success value.
 };
 
 export type AiTextPart = {
@@ -287,7 +335,6 @@ export type AiReasoningDelta = Relax<
 export type AiReasoningPart = {
   type: "reasoning";
   text: string;
-  signature?: string;
 };
 
 export type AiUploadedImagePart = {
@@ -304,12 +351,12 @@ export type AiUserContentPart = AiTextPart | AiUploadedImagePart;
 export type AiAssistantContentPart =
   | AiReasoningPart
   | AiTextPart
-  | AiToolCallPart;
+  | AiToolInvocationPart;
 
 export type AiAssistantDeltaUpdate =
-  | AiAssistantContentPart // a new part
   | AiTextDelta // ...or a delta to append to the last sent part
-  | AiReasoningDelta; // ...or a delta to append to the last sent part
+  | AiReasoningDelta // ...or a delta to append to the last sent part
+  | AiExecutingToolInvocationPart; // ...or a tool invocation chunk
 
 export type AiUserMessage = {
   id: MessageId;
@@ -324,10 +371,39 @@ export type AiUserMessage = {
 };
 
 export type AiAssistantMessage = Relax<
+  | AiGeneratingAssistantMessage
+  | AiAwaitingToolAssistantMessage
   | AiCompletedAssistantMessage
-  | AiPendingAssistantMessage
   | AiFailedAssistantMessage
 >;
+
+export type AiGeneratingAssistantMessage = {
+  id: MessageId;
+  chatId: ChatId;
+  parentId: MessageId | null;
+  role: "assistant";
+  createdAt: ISODateString;
+  deletedAt?: ISODateString;
+
+  status: "generating";
+  contentSoFar: AiAssistantContentPart[];
+  /** @internal */
+  _optimistic?: true; // Only set by clients, never by server
+};
+
+export type AiAwaitingToolAssistantMessage = {
+  id: MessageId;
+  chatId: ChatId;
+  parentId: MessageId | null;
+  role: "assistant";
+  createdAt: ISODateString;
+  deletedAt?: ISODateString;
+
+  status: "awaiting-tool";
+  contentSoFar: AiAssistantContentPart[];
+  /** @internal */
+  _optimistic?: true; // Only set by clients, never by server
+};
 
 export type AiCompletedAssistantMessage = {
   id: MessageId;
@@ -358,20 +434,6 @@ export type AiFailedAssistantMessage = {
   _optimistic?: true; // Only set by clients, never by server
 };
 
-export type AiPendingAssistantMessage = {
-  id: MessageId;
-  chatId: ChatId;
-  parentId: MessageId | null;
-  role: "assistant";
-  createdAt: ISODateString;
-  deletedAt?: ISODateString;
-
-  status: "pending";
-  contentSoFar: AiAssistantContentPart[];
-  /** @internal */
-  _optimistic?: true; // Only set by clients, never by server
-};
-
 export type AiChatMessage = AiUserMessage | AiAssistantMessage;
 
 export type AiKnowledgeSource = {
@@ -392,12 +454,6 @@ export function appendDelta(
   // Otherwise, append a new part type to the array, which we can start
   // writing into
   switch (delta.type) {
-    case "reasoning":
-    case "text":
-    case "tool-call":
-      content.push(delta);
-      break;
-
     case "text-delta":
       if (lastPart?.type === "text") {
         lastPart.text += delta.textDelta;
@@ -409,14 +465,16 @@ export function appendDelta(
     case "reasoning-delta":
       if (lastPart?.type === "reasoning") {
         lastPart.text += delta.textDelta;
-        lastPart.signature ??= delta.signature;
       } else {
         content.push({
           type: "reasoning",
           text: delta.textDelta ?? "",
-          signature: delta.signature,
         });
       }
+      break;
+
+    case "tool-invocation":
+      content.push(delta);
       break;
 
     default:
