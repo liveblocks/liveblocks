@@ -376,24 +376,24 @@ function ReasoningPart({
   const [isOpen, setIsOpen] = useState(false);
   return (
     <CollapsiblePrimitive.Root
-      className="lb-ai-chat-message-collapsible lb-ai-chat-message-reasoning"
+      className="lb-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
       <CollapsiblePrimitive.Trigger
         className={classNames(
-          "lb-ai-chat-message-collapsible-trigger",
+          "lb-collapsible-trigger",
           isPending && "lb-ai-chat-pending"
         )}
       >
         {/* TODO: If `isPending` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
         Reasoning
-        <span className="lb-ai-chat-message-collapsible-chevron lb-icon-container">
+        <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
       </CollapsiblePrimitive.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-ai-chat-message-collapsible-content">
+      <CollapsiblePrimitive.Content className="lb-collapsible-content">
         <TextPart text={text} components={components} />
       </CollapsiblePrimitive.Content>
     </CollapsiblePrimitive.Root>

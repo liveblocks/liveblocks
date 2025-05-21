@@ -39,7 +39,7 @@ import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 /**
  * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
  */
-const MIN_DISTANCE_TO_BOTTOM = 50;
+const MIN_DISTANCE_TO_BOTTOM = 50; // TODO: This should be flexible and not hardcoded
 
 export interface AiChatProps extends ComponentProps<"div"> {
   /**
