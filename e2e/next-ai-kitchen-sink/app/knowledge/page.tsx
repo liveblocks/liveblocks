@@ -3,11 +3,12 @@
 import {
   ClientSideSuspense,
   LiveblocksProvider,
+  RegisterAiKnowledge,
 } from "@liveblocks/react/suspense";
+import { AiChat } from "@liveblocks/react-ui";
+
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
-import { AiChat } from "@liveblocks/react-ui";
-import { RegisterAiKnowledge } from "@liveblocks/react";
 
 function DarkModeToggle(_props: { x?: number }) {
   const [mode, setMode] = useState<"light" | "dark">("light");
