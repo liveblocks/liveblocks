@@ -1,3 +1,4 @@
+import type { Json } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Children,
@@ -10,7 +11,7 @@ import {
 
 import { Button } from "../_private";
 import {
-  CheckCircleIcon,
+  CheckCircleFillIcon,
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
@@ -28,6 +29,20 @@ export interface AiToolProps extends Omit<ComponentProps<"div">, "title"> {
 export type AiToolIconProps = ComponentProps<"div">;
 
 export type AiToolInspectorProps = ComponentProps<"div">;
+
+export interface AiToolConfirmationProps extends ComponentProps<"div"> {
+  // TODO: What params? Also should they be awaitable like execute()?
+  confirm?: () => Json;
+  // TODO: What params? Also should they be awaitable like execute()?
+  cancel?: () => Json;
+  variant?: "default" | "destructive";
+}
+
+function AiToolIcon({ className, ...props }: AiToolIconProps) {
+  return (
+    <div className={classNames("lb-ai-tool-icon", className)} {...props} />
+  );
+}
 
 function CodeBlock({ title, code }: { title: ReactNode; code: string }) {
   const [isCopied, setCopied] = useState(false);
@@ -85,9 +100,45 @@ function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
   );
 }
 
-function AiToolIcon({ className, ...props }: AiToolIconProps) {
+function AiToolConfirmation({
+  children,
+  variant = "default",
+  confirm,
+  cancel,
+  className,
+  ...props
+}: AiToolConfirmationProps) {
+  const { respond } = useAiToolDefinitionRenderContext();
+
+  // if (status === "executed") {
+  //   return null;
+  // }
+
   return (
-    <div className={classNames("lb-ai-tool-icon", className)} {...props} />
+    <div
+      className={classNames("lb-ai-tool-confirmation", className)}
+      {...props}
+    >
+      {children ? (
+        <div className="lb-ai-tool-confirmation-content">{children}</div>
+      ) : null}
+      <div className="lb-ai-tool-confirmation-footer">
+        <div className="lb-ai-tool-confirmation-actions">
+          <Button
+            onClick={() => respond(confirm?.() ?? null)}
+            variant={variant === "destructive" ? "destructive" : "primary"}
+          >
+            Confirm
+          </Button>
+          <Button
+            onClick={() => respond(cancel?.() ?? null)}
+            variant="secondary"
+          >
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -145,7 +196,11 @@ export const AiTool = Object.assign(
                 </span>
               ) : null}
               <div className="lb-ai-tool-header-status">
-                {status === "executed" ? <CheckCircleIcon /> : <SpinnerIcon />}
+                {status === "executed" ? (
+                  <CheckCircleFillIcon />
+                ) : (
+                  <SpinnerIcon />
+                )}
               </div>
             </div>
           </CollapsiblePrimitive.Trigger>
@@ -162,5 +217,6 @@ export const AiTool = Object.assign(
   {
     Icon: AiToolIcon,
     Inspector: AiToolInspector,
+    Confirmation: AiToolConfirmation,
   }
 );
