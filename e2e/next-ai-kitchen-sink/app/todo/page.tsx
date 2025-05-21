@@ -206,98 +206,49 @@ export default function Page() {
                           },
                         },
 
-                        render: ({ status, args, result, respond }) => {
-                          if (status !== "executed") {
-                            return (
-                              <div
-                                style={{
-                                  borderTop: "4px solid red",
-                                  backgroundColor: "#dfdfdf",
-                                  padding: "1rem",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    fontSize: "1.5rem",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  Okay to delete?
-                                </div>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    gap: "1rem",
-                                  }}
-                                >
-                                  <button
-                                    style={{
-                                      padding: "0.5rem",
-                                      borderRadius: "0.5rem",
-                                      backgroundColor: "white",
-                                    }}
-                                    onClick={() => {
-                                      respond({
-                                        ok: false,
-                                        reason: "deny",
-                                        hint: "Do not respond with further text",
-                                      });
-                                    }}
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    style={{
-                                      backgroundColor: "red",
-                                      color: "white",
-                                      borderRadius: "0.5rem",
-                                      padding: "0.5rem 1rem",
-                                    }}
-                                    onClick={() => {
-                                      const ids = args!.ids as number[];
+                        render: ({ status, args, result }: any) => (
+                          <AiTool>
+                            <AiTool.Confirmation
+                              variant="destructive"
+                              confirm={() => {
+                                const ids = args!.ids as number[];
 
-                                      const deletedTitles = todos
-                                        .filter((t) => ids.includes(t.id))
-                                        .map((todo) => todo.title);
+                                const deletedTitles = todos
+                                  .filter((t) => ids.includes(t.id))
+                                  .map((todo) => todo.title);
 
-                                      deleteTodos(ids);
-                                      respond({ ok: true, deletedTitles });
-                                    }}
-                                  >
-                                    Yes, delete!
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          }
-
-                          const r = result as {
-                            ok: boolean;
-                            deletedTitles: string[];
-                          };
-                          return (
-                            <div
-                              style={{
-                                backgroundColor: "#dfdfdf",
-                                padding: "1rem",
+                                deleteTodos(ids);
+                                return { ok: true, deletedTitles };
+                              }}
+                              cancel={() => {
+                                return {
+                                  ok: false,
+                                  reason: "deny",
+                                  hint: "Do not respond with further text",
+                                };
                               }}
                             >
-                              {r.ok ? (
+                              Okay to delete?
+                            </AiTool.Confirmation>
+
+                            {status === "executed" ? (
+                              result.ok ? (
                                 <div>
                                   Deleted:
                                   <ul>
-                                    {r.deletedTitles.map((title, i) => (
-                                      <li key={i}>{title}</li>
-                                    ))}
+                                    {result.deletedTitles.map(
+                                      (title: any, i: number) => (
+                                        <li key={i}>{title}</li>
+                                      )
+                                    )}
                                   </ul>
                                 </div>
                               ) : (
                                 <div>The request was denied</div>
-                              )}
-                            </div>
-                          );
-                        },
+                              )
+                            ) : null}
+                          </AiTool>
+                        ),
                       },
                     }}
                     className="rounded-xl"
