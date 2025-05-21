@@ -1,12 +1,24 @@
 import type { ComponentProps, ReactNode } from "react";
-import { Children, forwardRef, useMemo, useState } from "react";
+import {
+  Children,
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
-import { CheckCircleIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
+import { Button } from "../_private";
+import {
+  CheckCircleIcon,
+  CheckIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  SpinnerIcon,
+} from "../icons";
 import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
 import { classNames } from "../utils/class-names";
 import { useAiToolDefinitionRenderContext } from "./internal/AiChatAssistantMessage";
-
-// TODO: Context with AiToolDefinitionRenderProps
 
 export interface AiToolProps extends Omit<ComponentProps<"div">, "title"> {
   title?: string;
@@ -14,6 +26,64 @@ export interface AiToolProps extends Omit<ComponentProps<"div">, "title"> {
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
+
+export type AiToolInspectorProps = ComponentProps<"div">;
+
+function CodeBlock({ title, code }: { title: ReactNode; code: string }) {
+  const [isCopied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isCopied) {
+      timeoutRef.current = setTimeout(() => {
+        setCopied(false);
+      }, 1000);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isCopied]);
+
+  return (
+    <div className="lb-code-block">
+      <div className="lb-code-block-header">
+        <span className="lb-code-block-title">{title}</span>
+        <div className="lb-code-block-header-actions">
+          <Button
+            className="lb-code-block-header-action"
+            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
+            onClick={() => {
+              setCopied(true);
+              navigator.clipboard.writeText(code);
+            }}
+          />
+        </div>
+      </div>
+      <pre className="lb-code-block-content">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
+  const { args, partialArgs, result } = useAiToolDefinitionRenderContext();
+
+  return (
+    <div className={classNames("lb-ai-tool-inspector", className)} {...props}>
+      <CodeBlock
+        title="Arguments"
+        code={JSON.stringify(args ?? partialArgs, null, 2)}
+      />
+      {result !== undefined ? (
+        <CodeBlock title="Result" code={JSON.stringify(result, null, 2)} />
+      ) : null}
+    </div>
+  );
+}
 
 function AiToolIcon({ className, ...props }: AiToolIconProps) {
   return (
@@ -44,13 +114,9 @@ export const AiTool = Object.assign(
     ({ children, title, icon, className, ...props }, forwardedRef) => {
       const { status, toolName } = useAiToolDefinitionRenderContext();
       const [isOpen, setIsOpen] = useState(true);
-      // TODO: If there are children but they render null
+      // TODO: If there are children but they render null?
+      //       Could we do a 2 levels deep check where we look at `children` and if there are any we look at `children` of the children?
       const hasChildren = Children.count(children) > 0;
-      console.log(
-        children,
-        Children.toArray(children),
-        Children.count(children)
-      );
       const resolvedTitle = useMemo(() => {
         return title ?? prettifyString(toolName);
       }, [title, toolName]);
@@ -95,5 +161,6 @@ export const AiTool = Object.assign(
   ),
   {
     Icon: AiToolIcon,
+    Inspector: AiToolInspector,
   }
 );

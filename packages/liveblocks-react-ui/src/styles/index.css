@@ -2108,6 +2108,45 @@
 }
 
 /*************************************
+ *            Code block             *
+ *************************************/
+
+.lb-code-block {
+  min-inline-size: 0;
+  border: 1px solid var(--lb-foreground-subtle);
+  border-radius: var(--lb-radius);
+
+  :where(.lb-code-block-header) {
+    display: flex;
+    align-items: center;
+    padding: calc(0.5 * var(--lb-spacing));
+  }
+
+  :where(.lb-code-block-title) {
+    margin-inline-start: calc(0.5 * var(--lb-spacing));
+    color: var(--lb-foreground-tertiary);
+    font-weight: 600;
+    font-size: 0.675em;
+    text-transform: uppercase;
+  }
+
+  :where(.lb-code-block-header-actions) {
+    margin-inline-start: auto;
+  }
+
+  :where(.lb-code-block-content) {
+    min-inline-size: 0;
+    padding: 0 var(--lb-spacing) calc(0.875 * var(--lb-spacing));
+    font-size: 85%;
+    line-height: 1;
+
+    /* overflow-inline: auto; doesn't work as expected */
+    /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+    overflow-x: auto;
+  }
+}
+
+/*************************************
  *          Chat Composer            *
  *************************************/
 
@@ -2334,44 +2373,12 @@
     }
   }
 
-  :where(.lb-code-block) {
-    min-inline-size: 0;
-    margin-block: calc(0.5 * var(--lb-spacing));
-    border: 1px solid var(--lb-foreground-subtle);
-    border-radius: var(--lb-radius);
-
-    :where(.lb-code-block-header) {
-      display: flex;
-      align-items: center;
-      padding: calc(0.5 * var(--lb-spacing));
-    }
-
-    :where(.lb-code-block-title) {
-      margin-inline-start: calc(0.5 * var(--lb-spacing));
-      color: var(--lb-foreground-tertiary);
-      font-weight: 600;
-      font-size: 0.675em;
-      text-transform: uppercase;
-    }
-
-    :where(.lb-code-block-header-actions) {
-      margin-inline-start: auto;
-    }
-
-    :where(.lb-code-block-content) {
-      min-inline-size: 0;
-      padding: 0 var(--lb-spacing) calc(0.875 * var(--lb-spacing));
-      font-size: 85%;
-      line-height: 1;
-
-      /* overflow-inline: auto; doesn't work as expected */
-      /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
-      overflow-x: auto;
-    }
-  }
-
   :where(strong) {
     font-weight: 600;
+  }
+
+  :where(.lb-code-block) {
+    margin-block: calc(0.5 * var(--lb-spacing));
   }
 }
 
@@ -2629,6 +2636,12 @@
 
 .lb-ai-tool-content {
   margin: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+}
+
+.lb-ai-tool-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.75 * var(--lb-spacing));
 }
 
 /*************************************
