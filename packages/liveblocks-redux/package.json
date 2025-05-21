@@ -21,6 +21,8 @@
   },
   "files": [
     "dist/**",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "scripts": {
@@ -42,6 +44,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@liveblocks/tsup-config": "*",
     "@reduxjs/toolkit": "^1.7.2",
     "@testing-library/jest-dom": "^6.4.6",
     "msw": "^1.3.5",

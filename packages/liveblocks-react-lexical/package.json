@@ -29,6 +29,8 @@
     "**/*.css.d.cts",
     "**/*.css.d.ts",
     "**/*.css.map",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "scripts": {
