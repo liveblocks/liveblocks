@@ -6,7 +6,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
-import { AiChat, AiToolDebugger } from "@liveblocks/react-ui";
+import { AiChat, AiTool } from "@liveblocks/react-ui";
 
 export default function Page() {
   const [todos, setTodos] = useState<
@@ -186,7 +186,11 @@ export default function Page() {
                           toggleTodo(id);
                           return { ok: true };
                         },
-                        render: AiToolDebugger,
+                        render: () => (
+                          <AiTool>
+                            <AiTool.Inspector />
+                          </AiTool>
+                        ),
                       },
 
                       deleteTodos: {
