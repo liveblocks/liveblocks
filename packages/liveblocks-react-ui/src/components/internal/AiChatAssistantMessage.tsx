@@ -1,5 +1,6 @@
 import type {
   AiAssistantContentPart,
+  AiToolDefinitionRenderProps,
   AiToolInvocationPart,
   Json,
   MessageId,
@@ -11,10 +12,12 @@ import { useSignal } from "@liveblocks/react/_private";
 import { Lexer } from "marked";
 import {
   type ComponentProps,
+  createContext,
   forwardRef,
   memo,
   type ReactNode,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -320,6 +323,21 @@ function noop() {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
+const AiToolDefinitionRenderContext =
+  createContext<AiToolDefinitionRenderProps | null>(null);
+
+export function useAiToolDefinitionRenderContext() {
+  const context = useContext(AiToolDefinitionRenderContext);
+
+  if (context === null) {
+    throw new Error(
+      "This component must be used within a tool's render method."
+    );
+  }
+
+  return context;
+}
+
 function ToolInvocationPart({
   chatId,
   messageId,
@@ -348,15 +366,17 @@ function ToolInvocationPart({
   if (tool === undefined || tool.render === undefined) return null;
 
   const { type: _, ...rest } = part;
+  const props = {
+    ...rest,
+
+    // It only makes sense and is safe to call `respond()` in "executing" state.
+    respond: part.status === "executing" ? respond : noop,
+  };
   return (
     <div className="lb-ai-chat-message-tool">
-      <tool.render
-        {...rest}
-        respond={
-          // It only makes sense and is safe to call `respond()` in "executing" state.
-          part.status === "executing" ? respond : noop
-        }
-      />
+      <AiToolDefinitionRenderContext.Provider value={props}>
+        <tool.render {...props} />
+      </AiToolDefinitionRenderContext.Provider>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import type { ComponentProps, ReactNode } from "react";
 import { Children, forwardRef, useMemo, useState } from "react";
 
-import { ChevronRightIcon, SpinnerIcon } from "../icons";
+import { CheckCircleIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
 import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
 import { classNames } from "../utils/class-names";
+import { useAiToolDefinitionRenderContext } from "./internal/AiChatAssistantMessage";
 
 // TODO: Context with AiToolDefinitionRenderProps
 
@@ -41,7 +42,8 @@ const noop = () => {};
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
     ({ children, title, icon, className, ...props }, forwardedRef) => {
-      const [isOpen, setIsOpen] = useState(false);
+      const { status, toolName } = useAiToolDefinitionRenderContext();
+      const [isOpen, setIsOpen] = useState(true);
       // TODO: If there are children but they render null
       const hasChildren = Children.count(children) > 0;
       console.log(
@@ -50,9 +52,8 @@ export const AiTool = Object.assign(
         Children.count(children)
       );
       const resolvedTitle = useMemo(() => {
-        // TODO: Access toolName
-        return title ?? prettifyString("toolName");
-      }, [title]);
+        return title ?? prettifyString(toolName);
+      }, [title, toolName]);
 
       return (
         <CollapsiblePrimitive.Root
@@ -78,8 +79,7 @@ export const AiTool = Object.assign(
                 </span>
               ) : null}
               <div className="lb-ai-tool-header-status">
-                {/* TODO: Access status */}
-                <SpinnerIcon />
+                {status === "executed" ? <CheckCircleIcon /> : <SpinnerIcon />}
               </div>
             </div>
           </CollapsiblePrimitive.Trigger>
