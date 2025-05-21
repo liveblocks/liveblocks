@@ -108,11 +108,11 @@ function AiToolConfirmation({
   className,
   ...props
 }: AiToolConfirmationProps) {
-  const { respond } = useAiToolDefinitionRenderContext();
+  const { status, respond } = useAiToolDefinitionRenderContext();
 
-  // if (status === "executed") {
-  //   return null;
-  // }
+  if (status === "executed") {
+    return null;
+  }
 
   return (
     <div
