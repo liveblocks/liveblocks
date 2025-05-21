@@ -463,8 +463,8 @@ function createStore_forChatMessages(
             });
           };
 
-          // XXX The client should not BLINDLY invoke execute() here!
-          // XXX We should only call it if our client ID is the designated client ID!
+          // TODO[nvie] The client should not BLINDLY invoke execute() here!
+          // TODO[nvie] We should only call it if our client ID is the designated client ID!
           const executeFn = toolDef?.execute;
           if (executeFn) {
             (async () => {
@@ -779,9 +779,6 @@ export type Ai = {
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
     getChatById: (chatId: string) => AiChat | undefined;
-
-    // XXX This "tool definition" registry should not be signal-based I think?
-    // XXX We should make it similar to "global knowledge"
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
@@ -1226,9 +1223,6 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getChatById: context.chatsStore.getChatById,
-
-        // XXX This "tool definition" registry should not be signal-based I think?
-        // XXX We should make it similar to "global knowledge"
         getToolDefinitionΣ: context.toolsStore.getToolDefinitionΣ,
       },
 
