@@ -1416,7 +1416,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       });
 
       const signal = DerivedSignal.from(() => {
-        const chat = this.#client[kInternal].ai.signals.getChatById(chatId);
+        const chat = this.#client[kInternal].ai.getChatById(chatId);
         if (chat === undefined) {
           const result = resource.get();
           if (result.isLoading || result.error) {
@@ -1424,13 +1424,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
           } else {
             return ASYNC_OK(
               "chat",
-              nn(this.#client[kInternal].ai.signals.getChatById(chatId))
+              nn(this.#client[kInternal].ai.getChatById(chatId))
             );
           }
         } else {
           return ASYNC_OK(
             "chat",
-            nn(this.#client[kInternal].ai.signals.getChatById(chatId))
+            nn(this.#client[kInternal].ai.getChatById(chatId))
           );
         }
       }, shallow);

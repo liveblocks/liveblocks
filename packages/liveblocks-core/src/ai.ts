@@ -778,12 +778,13 @@ export type Ai = {
       chatId: string,
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
-    getChatById: (chatId: string) => AiChat | undefined;
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
     ): Signal<AiToolDefinition | undefined>;
   };
+  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  getChatById: (chatId: string) => AiChat | undefined;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
   /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
@@ -1222,10 +1223,10 @@ export function createAi(config: AiConfig): Ai {
         chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
-        getChatById: context.chatsStore.getChatById,
         getToolDefinitionΣ: context.toolsStore.getToolDefinitionΣ,
       },
 
+      getChatById: context.chatsStore.getChatById,
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,
