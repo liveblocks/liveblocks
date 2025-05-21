@@ -1,2 +1,0 @@
-typeFoo{}
-^ Expected keyword "type" but "t" found
