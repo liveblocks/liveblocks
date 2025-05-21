@@ -13,7 +13,7 @@ export type ProductVariant = {
 type ShopState = {
   id: string;
   name: string;
-  description: string;
+  description: ReactNode;
   startingPrice: number;
   currentPrice: number;
   variants: ProductVariant[];
@@ -31,7 +31,7 @@ type ShopContextType = ShopState & {
 const defaultShopState: ShopState = {
   id: "default-product",
   name: "T-Shirt",
-  description: "A comfortable cotton t-shirt with a modern fit.",
+  description: <>A comfortable cotton t-shirt with a modern fit.</>,
   startingPrice: 29.99,
   currentPrice: 29.99,
   variants: [
@@ -68,7 +68,7 @@ type ShopProviderProps = {
   initialProduct: {
     id: string;
     name: string;
-    description: string;
+    description: ReactNode;
     startingPrice: number;
     variants: ProductVariant[];
   };

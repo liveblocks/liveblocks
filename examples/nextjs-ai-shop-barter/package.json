@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.25.0-aiprivatebeta4",
-    "@liveblocks/node": "^2.25.0-aiprivatebeta4",
-    "@liveblocks/react": "^2.25.0-aiprivatebeta4",
-    "@liveblocks/react-ui": "^2.25.0-aiprivatebeta4",
+    "@liveblocks/client": "^2.25.0-aiprivatebeta8",
+    "@liveblocks/node": "^2.25.0-aiprivatebeta8",
+    "@liveblocks/react": "^2.25.0-aiprivatebeta8",
+    "@liveblocks/react-ui": "^2.25.0-aiprivatebeta8",
     "next": "^15.3.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

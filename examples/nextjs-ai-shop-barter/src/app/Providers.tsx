@@ -50,6 +50,8 @@ const defaultProduct = {
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
+      // @ts-expect-error DEV env for now
+      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!}
       authEndpoint="/api/liveblocks-auth"
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
