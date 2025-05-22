@@ -37,7 +37,7 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { useLiveblocksUIConfig } from "../config";
+import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
@@ -662,7 +662,7 @@ export const Composer = forwardRef(
     const createThread = useCreateRoomThread(roomId);
     const createComment = useCreateRoomComment(roomId);
     const editComment = useEditRoomComment(roomId);
-    const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
+    const { preventUnsavedComposerChanges } = useLiveblocksUiConfig();
     const hasResolveMentionSuggestions =
       useResolveMentionSuggestions() !== undefined;
     const isEmptyRef = useRef(true);

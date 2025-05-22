@@ -65,7 +65,7 @@ import {
   withReact,
 } from "slate-react";
 
-import { useLiveblocksUIConfig } from "../../config";
+import { useLiveblocksUiConfig } from "../../config";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -246,7 +246,7 @@ function ComposerEditorMentionSuggestionsWrapper({
   const editor = useSlateStatic();
   const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const { portalContainer } = useLiveblocksUIConfig();
+  const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const isOpen =
     isFocused && mentionDraft?.range !== undefined && userIds !== undefined;
@@ -364,7 +364,7 @@ function ComposerEditorFloatingToolbarWrapper({
   const editor = useSlateStatic();
   const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const { portalContainer } = useLiveblocksUIConfig();
+  const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
   const isOpen = isFocused && !isPointerDown && hasFloatingToolbarRange;
