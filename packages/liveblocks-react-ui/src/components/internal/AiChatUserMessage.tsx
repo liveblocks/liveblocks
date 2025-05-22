@@ -1,8 +1,9 @@
-import type { UiUserMessage } from "@liveblocks/core";
+import type { AiTextPart, UiUserMessage } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 import { forwardRef, memo } from "react";
 
 import { type GlobalOverrides, useOverrides } from "../../overrides";
+import { AiMessage } from "../../primitives";
 import { classNames } from "../../utils/class-names";
 
 /* -------------------------------------------------------------------------------------------------
@@ -19,14 +20,14 @@ export interface AiChatUserMessageProps extends ComponentProps<"div"> {
   overrides?: Partial<GlobalOverrides>;
 }
 
+function PlainTextPart({ part }: { part: AiTextPart }) {
+  return <p>{part.text}</p>;
+}
+
 export const AiChatUserMessage = memo(
   forwardRef<HTMLDivElement, AiChatUserMessageProps>(
     ({ message, className, overrides }, forwardedRef) => {
       const $ = useOverrides(overrides);
-      const paragraphs = message.content
-        .filter((c) => c.type === "text")
-        .map((c) => c.text);
-
       return (
         <div
           ref={forwardedRef}
@@ -42,10 +43,12 @@ export const AiChatUserMessage = memo(
               </div>
             ) : (
               <div className="lb-ai-chat-message-text">
-                {/* Mimic the structure of assistant messages even though there's no rich text here yet. */}
-                {paragraphs.map((text, index) => (
-                  <p key={index}>{text}</p>
-                ))}
+                <AiMessage.Content
+                  message={message}
+                  components={{
+                    TextPart: PlainTextPart,
+                  }}
+                />
               </div>
             )}
           </div>

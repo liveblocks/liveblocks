@@ -17,9 +17,9 @@ import {
   CopyIcon,
   SpinnerIcon,
 } from "../icons";
+import { useAiToolDefinitionRenderContext } from "../primitives/AiMessage";
 import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
 import { classNames } from "../utils/class-names";
-import { useAiToolDefinitionRenderContext } from "./internal/AiChatAssistantMessage";
 
 export interface AiToolProps extends Omit<ComponentProps<"div">, "title"> {
   title?: string;

@@ -1,23 +1,10 @@
-import type {
-  AiAssistantContentPart,
-  AiToolDefinitionRenderProps,
-  AiToolInvocationPart,
-  Json,
-  MessageId,
-  UiAssistantMessage,
-} from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
-import { useSignal } from "@liveblocks/react/_private";
+import type { UiAssistantMessage } from "@liveblocks/core";
 import { Lexer } from "marked";
 import {
   type ComponentProps,
-  createContext,
   forwardRef,
   memo,
   type ReactNode,
-  useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -35,6 +22,7 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
+import { AiMessage } from "../../primitives";
 import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
 import {
   type BlockToken,
@@ -89,30 +77,21 @@ export const AiChatAssistantMessage = memo(
         } else {
           children = (
             <AssistantMessageContent
-              content={message.contentSoFar}
-              chatId={message.chatId}
-              messageId={message.id}
+              message={message}
               components={components}
             />
           );
         }
       } else if (message.status === "completed") {
         children = (
-          <AssistantMessageContent
-            content={message.content}
-            chatId={message.chatId}
-            messageId={message.id}
-            components={components}
-          />
+          <AssistantMessageContent message={message} components={components} />
         );
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
         if (message.errorReason === "Aborted by user") {
           children = (
             <AssistantMessageContent
-              content={message.contentSoFar}
-              chatId={message.chatId}
-              messageId={message.id}
+              message={message}
               components={components}
             />
           );
@@ -120,9 +99,7 @@ export const AiChatAssistantMessage = memo(
           children = (
             <>
               <AssistantMessageContent
-                content={message.contentSoFar}
-                chatId={message.chatId}
-                messageId={message.id}
+                message={message}
                 components={components}
               />
 
@@ -154,16 +131,14 @@ export const AiChatAssistantMessage = memo(
 );
 
 function AssistantMessageContent({
-  content,
-  chatId,
-  messageId,
+  message,
   components,
 }: {
-  content: AiAssistantContentPart[];
-  chatId: string;
-  messageId: MessageId;
+  message: UiAssistantMessage;
   components: Partial<GlobalComponents> | undefined;
 }) {
+  const content = message.content ?? message.contentSoFar;
+
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
   const isReasoning =
     content.some((part) => part.type === "reasoning") &&
@@ -171,43 +146,26 @@ function AssistantMessageContent({
 
   return (
     <div className="lb-ai-chat-message-content">
-      {content.map((part, index) => {
-        switch (part.type) {
-          case "text": {
-            return (
-              <TextPart
-                key={index}
-                text={part.text}
-                components={components}
-                className="lb-ai-chat-message-text"
-              />
-            );
-          }
-          case "tool-invocation": {
-            return (
-              <ToolInvocationPart
-                key={index}
-                chatId={chatId}
-                messageId={messageId}
-                part={part}
-              />
-            );
-          }
-          case "reasoning": {
-            return (
-              <ReasoningPart
-                key={index}
-                text={part.text}
-                isPending={isReasoning}
-                components={components}
-              />
-            );
-          }
-          default: {
-            return null;
-          }
-        }
-      })}
+      <AiMessage.Content
+        message={message}
+        components={{
+          TextPart: ({ part }) => (
+            <TextPart
+              text={part.text}
+              components={components}
+              className="lb-ai-chat-message-text"
+            />
+          ),
+
+          ReasoningPart: ({ part }) => (
+            <ReasoningPart
+              text={part.text}
+              isPending={isReasoning}
+              components={components}
+            />
+          ),
+        }}
+      />
     </div>
   );
 }
@@ -315,82 +273,6 @@ const MemoizedBlockTokenComp = memo(
     return prevToken.raw === nextToken.raw;
   }
 );
-
-function noop() {
-  // Do nothing
-}
-
-/* -------------------------------------------------------------------------------------------------
- * ToolInvocationPart
- * -----------------------------------------------------------------------------------------------*/
-const AiToolDefinitionRenderContext =
-  createContext<AiToolDefinitionRenderProps | null>(null);
-
-export function useAiToolDefinitionRenderContext() {
-  const context = useContext(AiToolDefinitionRenderContext);
-
-  if (context === null) {
-    throw new Error(
-      "This component must be used within a tool's render method."
-    );
-  }
-
-  return context;
-}
-
-function ToolInvocationPart({
-  chatId,
-  messageId,
-  part,
-}: {
-  chatId: string;
-  messageId: MessageId;
-  part: AiToolInvocationPart;
-}) {
-  const client = useClient();
-  const ai = client[kInternal].ai;
-  const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
-
-  const respond = useCallback(
-    (result: Json) => {
-      if (part.status === "receiving") {
-        console.log(
-          `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) is still receiving`
-        );
-      } else if (part.status === "executed") {
-        console.log(
-          `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) has already executed`
-        );
-      } else {
-        ai.setToolResult(
-          chatId,
-          messageId,
-          part.toolCallId,
-          result
-          // TODO Pass in AiGenerationOptions here?
-        );
-      }
-    },
-    [ai, chatId, messageId, part.status, part.toolName, part.toolCallId]
-  );
-
-  if (tool === undefined || tool.render === undefined) return null;
-
-  const { type: _, ...rest } = part;
-  const props = {
-    ...rest,
-
-    // It only makes sense and is safe to call `respond()` in "executing" state.
-    respond: part.status === "executing" ? respond : noop,
-  };
-  return (
-    <div className="lb-ai-chat-message-tool">
-      <AiToolDefinitionRenderContext.Provider value={props}>
-        <tool.render {...props} />
-      </AiToolDefinitionRenderContext.Provider>
-    </div>
-  );
-}
 
 /* -------------------------------------------------------------------------------------------------
  * ReasoningPart
