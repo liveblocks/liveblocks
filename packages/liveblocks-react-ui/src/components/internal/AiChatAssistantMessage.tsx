@@ -350,17 +350,28 @@ function ToolInvocationPart({
   const client = useClient();
   const ai = client[kInternal].ai;
   const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
+
   const respond = useCallback(
     (result: Json) => {
-      ai.setToolResult(
-        chatId,
-        messageId,
-        part.toolCallId,
-        result
-        // TODO Pass in AiGenerationOptions here?
-      );
+      if (part.status === "receiving") {
+        console.log(
+          `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) is still receiving`
+        );
+      } else if (part.status === "executed") {
+        console.log(
+          `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) has already executed`
+        );
+      } else {
+        ai.setToolResult(
+          chatId,
+          messageId,
+          part.toolCallId,
+          result
+          // TODO Pass in AiGenerationOptions here?
+        );
+      }
     },
-    [ai, chatId, messageId, part.toolCallId]
+    [ai, chatId, messageId, part.status, part.toolName, part.toolCallId]
   );
 
   if (tool === undefined || tool.render === undefined) return null;
