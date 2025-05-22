@@ -2140,16 +2140,16 @@ import { Icon } from "@liveblocks/react-ui";
 Find a full list of available icons in
 [our GitHub repo](https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-ui/src/icon.ts).
 
-#### LiveblocksUIConfig
+#### LiveblocksUiConfig
 
 Set configuration options for all `@liveblocks/react-ui` components, such as
 [overrides](#overrides).
 
 ```tsx
-<LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
+<LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
 ```
 
-##### Props [#LiveblocksUIConfig-props]
+##### Props [#LiveblocksUiConfig-props]
 
 <PropertiesList>
   <PropertiesListItem name="overrides" type="Partial<Overrides>">
@@ -2392,18 +2392,18 @@ ignoring their containers. You can either target specific floating elements
 Overrides can be used to customize components’ strings and localization-related
 properties, such as locale and reading direction.
 
-They can be set globally for all components using `LiveblocksUIConfig`:
+They can be set globally for all components using `LiveblocksUiConfig`:
 
 ```tsx
-import { LiveblocksUIConfig } from "@liveblocks/react-ui";
+import { LiveblocksUiConfig } from "@liveblocks/react-ui";
 
 export function App() {
   return (
-    <LiveblocksUIConfig
+    <LiveblocksUiConfig
       overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
     >
       {/* ... */}
-    </LiveblocksUIConfig>
+    </LiveblocksUiConfig>
   );
 }
 ```

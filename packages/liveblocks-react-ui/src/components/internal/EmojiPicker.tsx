@@ -10,7 +10,7 @@ import {
 import type { ComponentPropsWithoutRef, SyntheticEvent } from "react";
 import { forwardRef, useCallback, useState } from "react";
 
-import { useLiveblocksUIConfig } from "../../config";
+import { useLiveblocksUiConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -77,7 +77,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
     forwardedRef
   ) => {
     const [isOpen, setOpen] = useState(false);
-    const { portalContainer, emojibaseUrl } = useLiveblocksUIConfig();
+    const { portalContainer, emojibaseUrl } = useLiveblocksUiConfig();
     const $ = useOverrides();
 
     const handleOpenChange = useCallback(

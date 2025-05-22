@@ -4,7 +4,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ComponentProps, ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
 
-import { useLiveblocksUIConfig } from "../../config";
+import { useLiveblocksUiConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -75,7 +75,7 @@ function getShortcutKbdFromKeymap(keymap: string) {
 
 export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
   ({ children, content, multiline, className, ...props }, forwardedRef) => {
-    const { portalContainer } = useLiveblocksUIConfig();
+    const { portalContainer } = useLiveblocksUiConfig();
 
     return (
       <TooltipPrimitive.Root disableHoverableContent>
