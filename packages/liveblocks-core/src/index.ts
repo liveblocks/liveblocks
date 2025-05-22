@@ -321,8 +321,12 @@ export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export type {
   AiAssistantContentPart,
   AiChat,
+  AiChatMessage,
   AiKnowledgeSource,
+  AiReasoningPart,
+  AiTextPart,
   AiToolInvocationPart,
+  AiUploadedImagePart,
   CopilotId,
   Cursor,
   MessageId,
