@@ -1,9 +1,10 @@
 "use client";
 
-import type {
-  CommentAttachment,
-  CommentData,
-  CommentReaction as CommentReactionData,
+import {
+  type CommentAttachment,
+  type CommentData,
+  type CommentReaction as CommentReactionData,
+  Permission,
 } from "@liveblocks/core";
 import {
   useAddRoomCommentReaction,
@@ -12,6 +13,7 @@ import {
   useMarkRoomThreadAsRead,
   useRemoveRoomCommentReaction,
   useRoomAttachmentUrl,
+  useRoomPermissions,
 } from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -560,6 +562,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       return separateMediaAttachments(comment.attachments);
     }, [comment.attachments]);
 
+    const permissions = useRoomPermissions(comment.roomId);
+    const canComment =
+      permissions.size > 0
+        ? permissions.has(Permission.CommentsWrite) ||
+          permissions.has(Permission.Write)
+        : true;
+
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
     }, []);
@@ -736,7 +745,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 )}
               >
                 {additionalActions ?? null}
-                {showReactions && (
+                {showReactions && canComment ? (
                   <EmojiPicker
                     onEmojiSelect={handleReactionSelect}
                     onOpenChange={setReactionActionOpen}
@@ -752,7 +761,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       </EmojiPickerTrigger>
                     </Tooltip>
                   </EmojiPicker>
-                )}
+                ) : null}
                 {comment.userId === currentUserId ||
                 additionalDropdownItemsBefore ||
                 additionalDropdownItemsAfter ? (
@@ -899,21 +908,24 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         comment={comment}
                         reaction={reaction}
                         overrides={overrides}
+                        disabled={!canComment}
                       />
                     ))}
-                    <EmojiPicker onEmojiSelect={handleReactionSelect}>
-                      <Tooltip content={$.COMMENT_ADD_REACTION}>
-                        <EmojiPickerTrigger asChild>
-                          <Button
-                            className="lb-comment-reaction lb-comment-reaction-add"
-                            variant="outline"
-                            onClick={stopPropagation}
-                            aria-label={$.COMMENT_ADD_REACTION}
-                            icon={<EmojiPlusIcon />}
-                          />
-                        </EmojiPickerTrigger>
-                      </Tooltip>
-                    </EmojiPicker>
+                    {canComment ? (
+                      <EmojiPicker onEmojiSelect={handleReactionSelect}>
+                        <Tooltip content={$.COMMENT_ADD_REACTION}>
+                          <EmojiPickerTrigger asChild>
+                            <Button
+                              className="lb-comment-reaction lb-comment-reaction-add"
+                              variant="outline"
+                              onClick={stopPropagation}
+                              aria-label={$.COMMENT_ADD_REACTION}
+                              icon={<EmojiPlusIcon />}
+                            />
+                          </EmojiPickerTrigger>
+                        </Tooltip>
+                      </EmojiPicker>
+                    ) : null}
                   </div>
                 )}
               </>

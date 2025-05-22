@@ -1,5 +1,18 @@
 ## vNEXT (not yet published)
 
+## v2.24.2
+
+### `@liveblocks/react-ui`
+
+- Disable or hide actions in `Thread` and `Comment` components for users without
+  permission to perform them, such as adding reactions or (un)resolving threads.
+
+## v2.24.1
+
+### `@liveblocks/yjs`
+
+- Fix for occasional desync issue
+
 ## v2.24.0
 
 We are introducing thread subscriptions to add more granularity to thread
