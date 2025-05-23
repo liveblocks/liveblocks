@@ -17,7 +17,7 @@ import {
   useState,
 } from "react";
 
-import { ChevronRightIcon } from "../../icons";
+import { ChevronDownIcon, ChevronRightIcon } from "../../icons";
 import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
 import { MarkdownWithMemoizedBlocks } from "../internal/Markdown";
 import type {
@@ -42,9 +42,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
       <CollapsiblePrimitive.Root open={isOpen} onOpenChange={setIsOpen}>
         <CollapsiblePrimitive.Trigger>
           Reasoning
-          <span>
-            <ChevronRightIcon />
-          </span>
+          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
         </CollapsiblePrimitive.Trigger>
 
         <CollapsiblePrimitive.Content>
