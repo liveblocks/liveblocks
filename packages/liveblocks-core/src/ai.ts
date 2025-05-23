@@ -73,7 +73,7 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
-export type AiToolDefinitionRenderProps = Resolve<
+export type AiToolInvocationProps = Resolve<
   DistributiveOmit<AiToolInvocationPart, "type"> & {
     respond: (result: Json) => void;
   }
@@ -89,7 +89,7 @@ export type AiToolDefinition =
     description?: string;
     parameters: JSONSchema4;
     execute?: (args: JsonObject) => Awaitable<Json>;
-    render?: ComponentType<AiToolDefinitionRenderProps>;
+    render?: ComponentType<AiToolInvocationProps>;
   };
 
 export type UiChatMessage = AiChatMessage & {

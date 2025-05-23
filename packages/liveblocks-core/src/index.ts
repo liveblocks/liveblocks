@@ -18,7 +18,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
   AiToolDefinition,
-  AiToolDefinitionRenderProps,
+  AiToolInvocationProps,
   UiAssistantMessage,
   UiChatMessage,
   UiUserMessage,

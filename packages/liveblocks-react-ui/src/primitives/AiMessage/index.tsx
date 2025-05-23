@@ -1,6 +1,6 @@
 import type {
-  AiToolDefinitionRenderProps,
   AiToolInvocationPart,
+  AiToolInvocationProps,
   Json,
   MessageId,
 } from "@liveblocks/core";
@@ -58,8 +58,9 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-const AiToolInvocationContext =
-  createContext<AiToolDefinitionRenderProps | null>(null);
+const AiToolInvocationContext = createContext<AiToolInvocationProps | null>(
+  null
+);
 
 export function useAiToolInvocationContext() {
   const context = useContext(AiToolInvocationContext);
