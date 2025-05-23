@@ -8,26 +8,37 @@ import type { ComponentType } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
 
+type TextPartProps = {
+  part: AiTextPart;
+};
+
+type ReasoningPartProps = {
+  part: AiReasoningPart;
+};
+
+/** @internal */
+type ToolInvocationPartProps = {
+  part: AiToolInvocationPart;
+  children: React.ReactNode;
+};
+
 export interface AiMessageContentComponents {
   /**
    * The component used to display text parts.
    */
-  TextPart: ComponentType<{ part: AiTextPart }>;
+  TextPart: ComponentType<TextPartProps>;
 
   /**
    * The component used to display reasoning parts.
    */
-  ReasoningPart: ComponentType<{ part: AiReasoningPart }>;
+  ReasoningPart: ComponentType<ReasoningPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.
    * Tool invocations are typically rendered via the render() method instead.
    * @internal
    */
-  ToolInvocationPart: ComponentType<{
-    part: AiToolInvocationPart;
-    children: React.ReactNode;
-  }>;
+  ToolInvocationPart: ComponentType<ToolInvocationPartProps>;
 }
 
 export interface AiMessageContentProps

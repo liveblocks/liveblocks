@@ -20,8 +20,11 @@ export interface AiChatUserMessageProps extends ComponentProps<"div"> {
   overrides?: Partial<GlobalOverrides>;
 }
 
-// XXX Not now but when it will become public, each part's props type should be exported to avoid { part: AiTextPart } in user code
-function PlainTextPart({ part }: { part: AiTextPart }) {
+type PlainTextPartProps = {
+  part: AiTextPart;
+};
+
+function PlainTextPart({ part }: PlainTextPartProps) {
   return <p>{part.text}</p>;
 }
 
