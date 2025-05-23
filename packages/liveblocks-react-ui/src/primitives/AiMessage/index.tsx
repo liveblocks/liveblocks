@@ -90,13 +90,9 @@ function ToolInvocationPart({
   const { type: _, ...rest } = part;
   const props = { ...rest, respond };
   return (
-    // XXX What to do about this style since this is a primitive?
-    // XXX Nimesh thinks to delete it
-    <div className="lb-ai-chat-message-tool">
-      <AiToolDefinitionRenderContext.Provider value={props}>
-        <tool.render {...props} />
-      </AiToolDefinitionRenderContext.Provider>
-    </div>
+    <AiToolDefinitionRenderContext.Provider value={props}>
+      <tool.render {...props} />
+    </AiToolDefinitionRenderContext.Provider>
   );
 }
 
