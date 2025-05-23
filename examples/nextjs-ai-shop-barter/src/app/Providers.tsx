@@ -3,6 +3,7 @@
 import { LiveblocksProvider } from "@liveblocks/react";
 import { PropsWithChildren } from "react";
 import { ShopProvider } from "../components/ShopProvider";
+import { Toaster } from "sonner";
 
 // Default product data
 const defaultProduct = {
@@ -81,6 +82,7 @@ export function Providers({ children }: PropsWithChildren) {
         return userIds;
       }}
     >
+      <Toaster toastOptions={{ duration: 1500 }} />
       <ShopProvider initialProduct={defaultProduct}>{children}</ShopProvider>
     </LiveblocksProvider>
   );

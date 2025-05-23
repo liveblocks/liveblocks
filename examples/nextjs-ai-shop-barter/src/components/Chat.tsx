@@ -4,6 +4,7 @@ import { AiChat } from "@liveblocks/react-ui";
 import { ProductVariant, useShop } from "./ShopProvider";
 import { useMemo } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { toast } from "sonner";
 
 export function Chat() {
   const {
@@ -26,7 +27,7 @@ export function Chat() {
       },
       {
         description: "The description of the product",
-        value: `${renderToStaticMarkup(description)}`,
+        value: `${renderToStaticMarkup(<>{description}</>)}`,
       },
       {
         description: "The current price of the product",
@@ -43,7 +44,7 @@ export function Chat() {
     ];
   }, [currentPrice, getCurrentVariant, variants]);
 
-  console.log(knowledge);
+  console.table(knowledge);
 
   return (
     <div className="h-full flex flex-col max-h-full">
@@ -55,9 +56,92 @@ export function Chat() {
       <div className="grow shrink min-h-0">
         <AiChat
           chatId={
-            id
+            id + "safdsxssscsdvsgdsxsf-3"
           } /* TODO actions to change product price, variant, and offer to throw in another small product or free delivery */
           knowledge={knowledge}
+          tools={{
+            "change-variant": {
+              description: "Change the variant of the product",
+              parameters: {
+                type: "object",
+                properties: {
+                  variantId: { type: "string" },
+                },
+              },
+              execute: ({ variantId }) => {
+                console.log({ variantId });
+                if (variantId && variants.some((v) => v.id === variantId)) {
+                  setCurrentVariant(variantId);
+                  console.log("setting variant", variantId);
+                  return {
+                    success: true,
+                    hint: `The variant has been changed to ${variantId}. Do not reply to this.`,
+                  };
+                }
+
+                return {
+                  success: false,
+                  hint: "The variant has not been changed",
+                };
+              },
+            },
+            "change-price": {
+              description: "Change the price of the product",
+              parameters: {
+                type: "object",
+                properties: {
+                  price: { type: "number" },
+                },
+              },
+              execute: ({ price }) => {
+                setCurrentPrice(price);
+                return {
+                  success: true,
+                  price,
+                  hint: `The price has been changed to ${price}`,
+                };
+              },
+              render: ({ result, ...other }) => {
+                console.log("render args", result);
+                console.log("other", other);
+                if (result?.success === true) {
+                  toast.success(`Price updated to ${result?.price}`);
+                  return (
+                    <div className="italic font-normal my-3 text-green-700 rounded-l-0 rounded-r-lg bg-green-50 border-green-400 border-l-3 inline-block py-1.5 px-3">
+                      Price updated to{" "}
+                      <span className="font-medium">${result?.price}</span>
+                    </div>
+                  );
+                  // return (
+                  //   <div className="bg-green-50 text-green-700 font-medium border-l-3 border-green-500 my-3 px-3 py-2">
+                  //     Price updated to ${result?.price}
+                  //   </div>
+                  // );
+                }
+                return (
+                  <div className="bg-gray-50 text-gray-700 font-medium border-l-3 border-gray-500 my-3 px-3 py-2">
+                    Price not changed
+                  </div>
+                );
+              },
+            },
+            "buy-button": {
+              description:
+                "Buy button. Show it when the user is ready to purchase.",
+              parameters: {
+                type: "object",
+                properties: {
+                  price: { type: "number" },
+                },
+              },
+              render: BuyButton,
+            },
+          }}
+          // dev other models
+          copilotId="co_8NZRRpZM0dk5Qgs9RpsFs"
+
+          // dev
+          //copilotId="co_0gAplN8pwB451g5MQksZ9"
 
           // prod
           // copilotId="co_EMwwotoh1Z5QlU1xNcY1Q"
@@ -70,6 +154,17 @@ export function Chat() {
         </div>
       </div>
     </div>
+  );
+}
+
+function BuyButton() {
+  return (
+    <button
+      onClick={() => toast.success("Product has been bought")}
+      className="bg-black text-white py-1.5 px-3 font-medium rounded-md hover:bg-gray-800 transition-colors"
+    >
+      Buy now
+    </button>
   );
 }
 

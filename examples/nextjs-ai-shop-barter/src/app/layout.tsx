@@ -26,8 +26,8 @@ export default function RootLayout({
           type="image/png"
         />
       </head>
-      <Providers>
-        <body className="absolute inset-0 flex flex-col overflow-x-hidden overflow-y-auto">
+      <body className="absolute inset-0 flex flex-col overflow-x-hidden overflow-y-auto">
+        <Providers>
           <header className="border-b border-gray-200 px-8 flex items-center justify-between gap-8">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -70,10 +70,10 @@ export default function RootLayout({
               </Link>
             </nav>
           </header>
-          <main className="grow min-h-0">{children}</main>
+          <main className="grow min-h-0 h-full">{children}</main>
           <footer></footer>
-        </body>
-      </Providers>
+        </Providers>
+      </body>
     </html>
   );
 }

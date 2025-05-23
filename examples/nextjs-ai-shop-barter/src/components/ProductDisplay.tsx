@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import { useShop } from "./ShopProvider";
 import Image from "next/image";
 
@@ -182,6 +183,7 @@ export function ProductDisplay() {
             onClick={() => {
               // Add to basket functionality would go here
               console.log(`Added ${name} - ${currentVariant?.name} to basket`);
+              toast.success("Product has been bought");
             }}
           >
             Buy for{" "}

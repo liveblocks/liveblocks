@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Comments
+# AI shop bartering
 
 <p>
   <a href="https://liveblocks.io/examples/comments/nextjs-comments/preview">
@@ -20,7 +20,8 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build comments with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
+This example shows how to build comments with
+[Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments.png" width="536" alt="Comments" />
 
