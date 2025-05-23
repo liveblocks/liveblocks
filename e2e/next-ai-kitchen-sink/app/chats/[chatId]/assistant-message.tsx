@@ -1,19 +1,9 @@
 "use client";
 
 import { useClient } from "@liveblocks/react/suspense";
+import { HTMLAttributes, memo, useEffect, useMemo, useState } from "react";
 import {
-  HTMLAttributes,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import {
-  AiAssistantContentPart,
-  AiToolInvocationPart,
   CopilotId,
-  Json,
   kInternal,
   MessageId,
   UiAssistantMessage,
@@ -23,7 +13,6 @@ import {
   type BlockToken,
   BlockTokenComp as BlockTokenCompPrimitive,
 } from "./markdown";
-import { useSignal } from "@liveblocks/react/_private";
 import * as CollapsiblePrimitive from "./collapsible";
 import { RefreshIcon } from "../../icons/refresh-icon";
 import { CheckIcon } from "../../icons/check-icon";
@@ -33,6 +22,7 @@ import { ChevronRightIcon } from "../../icons/chevron-right-icon";
 import { CopyIcon } from "../../icons/copy-icon";
 import { CircleAlertIcon } from "../../icons/circle-alert-icon";
 import { TrashIcon } from "../../icons/trash-icon";
+import { AiMessage } from "@liveblocks/react-ui/_private";
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -133,13 +123,7 @@ export const AssistantMessage = memo(function AssistantMessage({
         </div>
       );
     } else {
-      return (
-        <AssistantMessageContent
-          content={message.contentSoFar}
-          chatId={message.chatId}
-          messageId={message.id}
-        />
-      );
+      return <AssistantMessageContent message={message} />;
     }
   } else if (message.status === "completed") {
     const text: string = message.content.reduce((acc, part) => {
@@ -152,11 +136,7 @@ export const AssistantMessage = memo(function AssistantMessage({
     return (
       <div className="flex flex-col gap-2 group">
         {/* Message content */}
-        <AssistantMessageContent
-          content={message.content}
-          chatId={message.chatId}
-          messageId={message.id}
-        />
+        <AssistantMessageContent message={message} />
 
         {/* Message actions */}
         <MessageActions text={text} />
@@ -174,11 +154,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       return (
         <div className="flex flex-col gap-2 group">
           {/* Message content */}
-          <AssistantMessageContent
-            content={message.contentSoFar}
-            chatId={message.chatId}
-            messageId={message.id}
-          />
+          <AssistantMessageContent message={message} />
           {/* Message actions */}
           <MessageActions text={text} />
         </div>
@@ -187,11 +163,7 @@ export const AssistantMessage = memo(function AssistantMessage({
       return (
         <div className="flex flex-col gap-2 group">
           {/* Message content */}
-          <AssistantMessageContent
-            content={message.contentSoFar}
-            chatId={message.chatId}
-            messageId={message.id}
-          />
+          <AssistantMessageContent message={message} />
 
           <div className="flex flex-row gap-4 items-center rounded-lg bg-red-100/50 p-4 text-sm mt-2 text-red-400 dark:bg-red-900/40 dark:text-red-300">
             <CircleAlertIcon className="size-4" />
@@ -206,51 +178,31 @@ export const AssistantMessage = memo(function AssistantMessage({
   }
 });
 
-function AssistantMessageContent({
-  content,
-  chatId,
-  messageId,
-}: {
-  content: AiAssistantContentPart[];
-  chatId: string;
-  messageId: MessageId;
-}) {
+function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
+  const content = message.content ?? message.contentSoFar;
+
   // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
   const isReasoning =
     content.some((part) => part.type === "reasoning") &&
     content.every((part) => part.type === "reasoning");
 
   return (
-    <div className="prose whitespace-break-spaces">
-      {content.map((part, index) => {
-        switch (part.type) {
-          case "text": {
-            return <TextPart key={index} text={part.text} className="prose" />;
-          }
-          case "tool-invocation": {
-            return (
-              <ToolInvocationPart
-                key={index}
-                chatId={chatId}
-                messageId={messageId}
-                part={part}
-              />
-            );
-          }
-          case "reasoning": {
-            return (
-              <ReasoningPart
-                key={index}
-                text={part.text}
-                isPending={isReasoning}
-              />
-            );
-          }
-          default: {
-            return null;
-          }
-        }
-      })}
+    <div>
+      <AiMessage.Content
+        message={message}
+        components={{
+          TextPart: ({ part }) => (
+            <TextPart
+              text={part.text}
+              className="prose whitespace-break-spaces"
+            />
+          ),
+
+          ReasoningPart: ({ part }) => (
+            <ReasoningPart text={part.text} isPending={isReasoning} />
+          ),
+        }}
+      />
     </div>
   );
 }
@@ -290,51 +242,6 @@ const MemoizedBlockTokenComp = memo(
     return prevToken.raw === nextToken.raw;
   }
 );
-
-function noop() {
-  // Do nothing
-}
-
-function ToolInvocationPart({
-  chatId,
-  messageId,
-  part,
-}: {
-  chatId: string;
-  messageId: MessageId;
-  part: AiToolInvocationPart;
-}) {
-  const client = useClient();
-  const ai = client[kInternal].ai;
-  const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
-  const respond = useCallback(
-    (result: Json) => {
-      ai.setToolResult(
-        chatId,
-        messageId,
-        part.toolCallId,
-        result
-        // TODO Pass in AiGenerationOptions here?
-      );
-    },
-    [ai, chatId, messageId, part.toolCallId]
-  );
-
-  if (tool === undefined || tool.render === undefined) return null;
-
-  const { type: _, ...rest } = part;
-  return (
-    <div className="lb-ai-chat-message-tool">
-      <tool.render
-        {...rest}
-        respond={
-          // It only makes sense and is safe to call `respond()` in "executing" state.
-          part.status === "executing" ? respond : noop
-        }
-      />
-    </div>
-  );
-}
 
 function ReasoningPart({
   text,

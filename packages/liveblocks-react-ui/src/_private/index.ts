@@ -32,6 +32,7 @@ export type {
   AiChatComposerFormProps,
   AiChatComposerSubmitProps,
 } from "../primitives/AiChatComposer/types";
+export * as AiMessage from "../primitives/AiMessage";
 export { capitalize } from "../utils/capitalize";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";

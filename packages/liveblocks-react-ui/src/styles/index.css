@@ -2403,7 +2403,7 @@
   }
 }
 
-.lb-ai-chat-message-tool {
+.lb-ai-chat-message-tool-invocation {
   margin-block: calc(0.5 * var(--lb-spacing));
 }
 

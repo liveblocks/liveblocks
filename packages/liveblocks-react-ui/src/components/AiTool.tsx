@@ -17,9 +17,9 @@ import {
   CopyIcon,
   SpinnerIcon,
 } from "../icons";
+import { useAiToolInvocationContext } from "../primitives/AiMessage";
 import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
 import { classNames } from "../utils/class-names";
-import { useAiToolDefinitionRenderContext } from "./internal/AiChatAssistantMessage";
 
 export interface AiToolProps
   extends Omit<ComponentProps<"div">, "title" | "children"> {
@@ -111,7 +111,7 @@ function CodeBlock({ title, code }: { title: ReactNode; code: string }) {
 }
 
 function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
-  const { args, partialArgs, result } = useAiToolDefinitionRenderContext();
+  const { args, partialArgs, result } = useAiToolInvocationContext();
 
   return (
     <div className={classNames("lb-ai-tool-inspector", className)} {...props}>
@@ -134,7 +134,7 @@ function AiToolConfirmation({
   className,
   ...props
 }: AiToolConfirmationProps) {
-  const { status, respond } = useAiToolDefinitionRenderContext();
+  const { status, respond } = useAiToolInvocationContext();
 
   if (status === "executed") {
     return null;
@@ -190,7 +190,7 @@ const noop = () => {};
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
     ({ children, title, icon, className, ...props }, forwardedRef) => {
-      const { status, toolName } = useAiToolDefinitionRenderContext();
+      const { status, toolName } = useAiToolInvocationContext();
       const [isOpen, setIsOpen] = useState(true);
       // TODO: This check won't work for cases like:
       //         <AiTool>

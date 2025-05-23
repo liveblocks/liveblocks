@@ -18,7 +18,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
   AiToolDefinition,
-  AiToolDefinitionRenderProps,
+  AiToolInvocationProps,
   UiAssistantMessage,
   UiChatMessage,
   UiUserMessage,
@@ -321,7 +321,10 @@ export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export type {
   AiAssistantContentPart,
   AiChat,
+  AiChatMessage,
   AiKnowledgeSource,
+  AiReasoningPart,
+  AiTextPart,
   AiToolInvocationPart,
   CopilotId,
   Cursor,
