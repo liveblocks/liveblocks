@@ -719,7 +719,7 @@ function createStore_forUserAiChats() {
   };
 }
 
-/** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+/** @private This API will change, and is not considered stable. DO NOT RELY on it. */
 export type Ai = {
   [kInternal]: {
     context: AiContext;
@@ -729,26 +729,26 @@ export type Ai = {
   disconnect: () => void;
   getStatus: () => Status;
 
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getOrCreateChat: (
     /** A unique identifier for the chat. */
     chatId: string,
     options?: CreateChatOptions
   ) => Promise<GetOrCreateChatResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   deleteChat: (chatId: string) => Promise<DeleteChatResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getMessageTree: (chatId: string) => Promise<GetMessageTreeResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   deleteMessage: (
     chatId: string,
     messageId: MessageId
   ) => Promise<DeleteMessageResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   clearChat: (chatId: string) => Promise<ClearChatResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   askUserMessageInChat: (
     chatId: string,
     userMessage:
@@ -761,9 +761,9 @@ export type Ai = {
     targetMessageId: MessageId,
     options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   setToolResult: (
     chatId: string,
     messageId: MessageId,
@@ -771,7 +771,7 @@ export type Ai = {
     result: Json,
     options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
     getChatMessagesForBranchΣ(
@@ -783,27 +783,27 @@ export type Ai = {
       toolName: string
     ): Signal<AiToolDefinition | undefined>;
   };
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   deregisterKnowledgeLayer: (layerKey: LayerKey) => void;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   updateKnowledge: (
     layerKey: LayerKey,
     data: AiKnowledgeSource,
     key?: string
   ) => void;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   debug_getAllKnowledge(): AiKnowledgeSource[];
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerChatTool: (
     chatId: string,
     name: string,
     definition: AiToolDefinition
   ) => void;
-  /** @private This AI will change, and is not considered stable. DO NOT RELY on it. */
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   unregisterChatTool: (chatId: string, toolName: string) => void;
 };
 

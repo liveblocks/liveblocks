@@ -21,15 +21,41 @@ import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
 import { classNames } from "../utils/class-names";
 import { useAiToolDefinitionRenderContext } from "./internal/AiChatAssistantMessage";
 
-export interface AiToolProps extends Omit<ComponentProps<"div">, "title"> {
+export interface AiToolProps
+  extends Omit<ComponentProps<"div">, "title" | "children"> {
+  /**
+   * The tool's title.
+   *
+   * By default, a human-readable version of the tool's name is used:
+   * - `"showTodo"` → "Show todo"
+   * - `"get_weather"` → "Get weather"
+   */
   title?: string;
+
+  /**
+   * An optional icon displayed next to the title.
+   */
   icon?: ReactNode;
+
+  /**
+   * The content shown in the tool.
+   */
+  children?: ReactNode;
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
 
 export type AiToolInspectorProps = ComponentProps<"div">;
 
+// TODO: AiToolConfirmationProps might need a generic since we're outside of the
+//       tool definition so things like inferred args and result types are not
+//       available here for `confirm` and `cancel`
+
+/**
+ * @private This API will change, and is not considered stable. DO NOT RELY on it.
+ *
+ * This component can be used to build human-in-the-loop interfaces.
+ */
 export interface AiToolConfirmationProps extends ComponentProps<"div"> {
   // TODO: What params? Also should they be awaitable like execute()?
   confirm?: () => Json;
@@ -154,6 +180,7 @@ function prettifyString(string: string) {
       // Trim leading and trailing spaces
       .trim()
       // Capitalize first word
+      .toLowerCase()
       .replace(/^\w/, (character) => character.toUpperCase())
   );
 }
@@ -165,9 +192,14 @@ export const AiTool = Object.assign(
     ({ children, title, icon, className, ...props }, forwardedRef) => {
       const { status, toolName } = useAiToolDefinitionRenderContext();
       const [isOpen, setIsOpen] = useState(true);
-      // TODO: If there are children but they render null?
-      //       Could we do a 2 levels deep check where we look at `children` and if there are any we look at `children` of the children?
-      const hasChildren = Children.count(children) > 0;
+      // TODO: This check won't work for cases like:
+      //         <AiTool>
+      //           <ComponentThatRendersNull />
+      //           <ComponentThatAlsoRendersNull />
+      //         </AiTool>
+      //       One solution could be to check the DOM on every render with `useLayoutEffect`
+      //       to see if there's any actual content.
+      const hasContent = Children.count(children) > 0;
       const resolvedTitle = useMemo(() => {
         return title ?? prettifyString(toolName);
       }, [title, toolName]);
@@ -177,11 +209,11 @@ export const AiTool = Object.assign(
           ref={forwardedRef}
           className={classNames("lb-collapsible lb-ai-tool", className)}
           {...props}
-          open={hasChildren ? isOpen : false}
-          onOpenChange={hasChildren ? setIsOpen : noop}
-          disabled={!hasChildren}
+          open={hasContent ? isOpen : false}
+          onOpenChange={hasContent ? setIsOpen : noop}
+          disabled={!hasContent}
         >
-          {/* TODO: <button> vs <div> with attributes */}
+          {/* TODO: <button> vs <div> with attributes? */}
           <CollapsiblePrimitive.Trigger asChild>
             <div
               className={classNames("lb-collapsible-trigger lb-ai-tool-header")}
@@ -190,7 +222,7 @@ export const AiTool = Object.assign(
                 <div className="lb-ai-tool-header-icon-container">{icon}</div>
               ) : null}
               <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
-              {hasChildren ? (
+              {hasContent ? (
                 <span className="lb-collapsible-chevron lb-icon-container">
                   <ChevronRightIcon />
                 </span>
