@@ -58,13 +58,11 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-// XXX Rename to AiToolInvocationContext?
-const AiToolDefinitionRenderContext =
+const AiToolInvocationContext =
   createContext<AiToolDefinitionRenderProps | null>(null);
 
-// XXX Rename to useAiToolInvocationContext?
-export function useAiToolDefinitionRenderContext() {
-  const context = useContext(AiToolDefinitionRenderContext);
+export function useAiToolInvocationContext() {
+  const context = useContext(AiToolInvocationContext);
 
   if (context === null) {
     throw new Error(
@@ -116,9 +114,9 @@ function ToolInvocation({
   const { type: _, ...rest } = part;
   const props = { ...rest, respond };
   return (
-    <AiToolDefinitionRenderContext.Provider value={props}>
+    <AiToolInvocationContext.Provider value={props}>
       <tool.render {...props} />
-    </AiToolDefinitionRenderContext.Provider>
+    </AiToolInvocationContext.Provider>
   );
 }
 

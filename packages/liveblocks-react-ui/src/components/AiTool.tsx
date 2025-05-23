@@ -17,7 +17,7 @@ import {
   CopyIcon,
   SpinnerIcon,
 } from "../icons";
-import { useAiToolDefinitionRenderContext } from "../primitives/AiMessage";
+import { useAiToolInvocationContext } from "../primitives/AiMessage";
 import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
 import { classNames } from "../utils/class-names";
 
@@ -85,7 +85,7 @@ function CodeBlock({ title, code }: { title: ReactNode; code: string }) {
 }
 
 function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
-  const { args, partialArgs, result } = useAiToolDefinitionRenderContext();
+  const { args, partialArgs, result } = useAiToolInvocationContext();
 
   return (
     <div className={classNames("lb-ai-tool-inspector", className)} {...props}>
@@ -108,7 +108,7 @@ function AiToolConfirmation({
   className,
   ...props
 }: AiToolConfirmationProps) {
-  const { status, respond } = useAiToolDefinitionRenderContext();
+  const { status, respond } = useAiToolInvocationContext();
 
   if (status === "executed") {
     return null;
@@ -163,7 +163,7 @@ const noop = () => {};
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
     ({ children, title, icon, className, ...props }, forwardedRef) => {
-      const { status, toolName } = useAiToolDefinitionRenderContext();
+      const { status, toolName } = useAiToolInvocationContext();
       const [isOpen, setIsOpen] = useState(true);
       // TODO: If there are children but they render null?
       //       Could we do a 2 levels deep check where we look at `children` and if there are any we look at `children` of the children?
