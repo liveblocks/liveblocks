@@ -2266,6 +2266,10 @@
 .lb-ai-chat-message-content {
   inline-size: 100%;
   white-space: break-spaces;
+
+  &:where(:empty) {
+    display: contents;
+  }
 }
 
 .lb-ai-chat-user-message {
@@ -2570,6 +2574,12 @@
 .lb-ai-chat-message-reasoning {
   inline-size: fit-content;
   max-inline-size: 100%;
+  color: var(--lb-foreground-tertiary);
+
+  &:where(.lb-ai-chat-pending),
+  :where(.lb-ai-chat-pending) {
+    color: var(--lb-foreground);
+  }
 }
 
 .lb-ai-chat-message-reasoning {
@@ -2595,6 +2605,7 @@
   }
 
   :where(.lb-ai-chat-message-text) {
+    color: var(--lb-foreground);
     font-size: 0.875em;
     opacity: 0.75;
   }
