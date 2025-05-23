@@ -458,7 +458,7 @@ function AiToolbarThinking() {
   const contentRef = useRef<HTMLDivElement>(null);
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
-  const handleCancel = useCallback(() => {
+  const handleAbort = useCallback(() => {
     (editor.commands as unknown as AiCommands).$cancelAiToolbarThinking();
   }, [editor]);
 
@@ -482,13 +482,13 @@ function AiToolbarThinking() {
           {aiName} is thinking…
         </div>
         <div className="lb-tiptap-ai-toolbar-actions">
-          <ShortcutTooltip content="Cancel" shortcut="Escape">
+          <ShortcutTooltip content="Abort response" shortcut="Escape">
             <Button
               className="lb-tiptap-ai-toolbar-action"
               variant="secondary"
-              aria-label="Cancel"
+              aria-label="Abort response"
               icon={<StopIcon />}
-              onClick={handleCancel}
+              onClick={handleAbort}
             />
           </ShortcutTooltip>
         </div>

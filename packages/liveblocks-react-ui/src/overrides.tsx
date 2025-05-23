@@ -216,12 +216,11 @@ export const defaultOverrides: Overrides = {
     "There was an error while getting this version.",
   AI_CHAT_COMPOSER_PLACEHOLDER: "Ask anything…",
   AI_CHAT_COMPOSER_SEND: "Send",
-  AI_CHAT_COMPOSER_ABORT: "Abort response.",
+  AI_CHAT_COMPOSER_ABORT: "Abort response",
   AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
-  AI_CHAT_MESSAGES_ERROR: () => (
-    <>There was an error while getting the messages</>
-  ),
+  AI_CHAT_MESSAGES_ERROR: () =>
+    "There was an error while getting the messages.",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);
