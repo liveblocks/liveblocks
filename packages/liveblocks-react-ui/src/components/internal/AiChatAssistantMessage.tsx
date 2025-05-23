@@ -66,7 +66,7 @@ export const AiChatAssistantMessage = memo(
       ) {
         if (message.contentSoFar.length === 0) {
           children = (
-            <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
+            <div className="lb-ai-chat-message-thinking lb-ai-chat-streaming">
               {$.AI_CHAT_MESSAGE_THINKING}
             </div>
           );
@@ -133,13 +133,6 @@ function AssistantMessageContent({
   message: UiAssistantMessage;
   components: Partial<GlobalComponents> | undefined;
 }) {
-  const content = message.content ?? message.contentSoFar;
-
-  // A message is considered to be in "reasoning" state if it only contains reasoning parts and no other parts.
-  const isReasoning =
-    content.some((part) => part.type === "reasoning") &&
-    content.every((part) => part.type === "reasoning");
-
   return (
     <div className="lb-ai-chat-message-content">
       <AiMessage.Content
@@ -153,10 +146,10 @@ function AssistantMessageContent({
             />
           ),
 
-          ReasoningPart: ({ part }) => (
+          ReasoningPart: ({ part, isStreaming }) => (
             <ReasoningPart
               text={part.text}
-              isPending={isReasoning}
+              isStreaming={isStreaming}
               components={components}
             />
           ),
@@ -242,11 +235,11 @@ function CodeBlock({
  * -----------------------------------------------------------------------------------------------*/
 function ReasoningPart({
   text,
-  isPending,
+  isStreaming,
   components,
 }: {
   text: string;
-  isPending: boolean;
+  isStreaming: boolean;
   components: Partial<GlobalComponents> | undefined;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -259,10 +252,10 @@ function ReasoningPart({
       <CollapsiblePrimitive.Trigger
         className={classNames(
           "lb-collapsible-trigger",
-          isPending && "lb-ai-chat-pending"
+          isStreaming && "lb-ai-chat-streaming"
         )}
       >
-        {/* TODO: If `isPending` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
+        {/* TODO: If `isStreaming` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
         Reasoning
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />

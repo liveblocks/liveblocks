@@ -141,6 +141,9 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
     );
 
     const content = message.content ?? message.contentSoFar;
+    const numParts = content.length;
+    const isGenerating =
+      message.role === "assistant" && message.status === "generating";
     return (
       <Component
         {...props}
@@ -148,14 +151,19 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
         ref={forwardedRef}
       >
         {content.map((part, index) => {
+          // A part is considered to be still "streaming in" if it's the last
+          // part in the content array, and the message is in "generating"
+          // state.
+          const isStreaming = isGenerating && index === numParts - 1;
+          const extra = { index, isStreaming };
           switch (part.type) {
             case "text":
-              return <TextPart key={index} part={part} />;
+              return <TextPart key={index} part={part} {...extra} />;
             case "reasoning":
-              return <ReasoningPart key={index} part={part} />;
+              return <ReasoningPart key={index} part={part} {...extra} />;
             case "tool-invocation":
               return (
-                <ToolInvocationPart key={index} part={part}>
+                <ToolInvocationPart key={index} part={part} {...extra}>
                   <ToolInvocation
                     key={index}
                     part={part}

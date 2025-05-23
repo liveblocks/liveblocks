@@ -2561,7 +2561,7 @@
   }
 }
 
-.lb-ai-chat-pending {
+.lb-ai-chat-streaming {
   user-select: none;
   animation: lb-animation-shimmer-small 5s linear infinite;
 }

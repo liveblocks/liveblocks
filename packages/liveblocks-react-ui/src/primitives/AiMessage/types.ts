@@ -9,15 +9,27 @@ import type { ComponentType } from "react";
 import type { ComponentPropsWithSlot } from "../../types";
 
 type TextPartProps = {
+  /** @internal */
+  index: number;
+  /** @internal */
+  isStreaming: boolean;
   part: AiTextPart;
 };
 
 type ReasoningPartProps = {
+  /** @internal */
+  index: number;
+  /** @internal */
+  isStreaming: boolean;
   part: AiReasoningPart;
 };
 
 /** @internal */
 type ToolInvocationPartProps = {
+  /** @internal */
+  index: number;
+  /** @internal */
+  isStreaming: boolean;
   part: AiToolInvocationPart;
   children: React.ReactNode;
 };
