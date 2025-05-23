@@ -74,6 +74,46 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
+// XXX Need more type-level tests for this helper
+export type InferFromSchema<T extends JSONSchema4> = T extends {
+  type: "object";
+  properties: Record<string, JSONSchema4>;
+  required: readonly string[];
+}
+  ? Resolve<
+      {
+        [K in keyof T["properties"] as K extends string
+          ? K extends Extract<K, T["required"][number]>
+            ? K
+            : never
+          : never]: InferFromSchema<T["properties"][K]>;
+      } & {
+        [K in keyof T["properties"] as K extends string
+          ? K extends Extract<K, T["required"][number]>
+            ? never
+            : K
+          : never]?: InferFromSchema<T["properties"][K]>;
+      }
+    >
+  : T extends {
+        type: "object";
+        properties: Record<string, JSONSchema4>;
+      }
+    ? {
+        [K in keyof T["properties"]]?: InferFromSchema<T["properties"][K]>;
+      }
+    : T extends { type: "string" }
+      ? string
+      : T extends { type: "number" }
+        ? number
+        : T extends { type: "boolean" }
+          ? boolean
+          : T extends { type: "null" }
+            ? null
+            : T extends { type: "array"; items: JSONSchema4 }
+              ? InferFromSchema<T["items"]>[]
+              : unknown;
+
 export type AiToolInvocationProps = Resolve<
   DistributiveOmit<AiToolInvocationPart, "type"> & {
     respond: (result: ToolResultData) => void;
