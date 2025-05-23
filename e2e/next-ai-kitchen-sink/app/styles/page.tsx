@@ -22,6 +22,7 @@ import {
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
+  WarningIcon,
 } from "@liveblocks/react-ui/_private";
 
 function TextPart({
@@ -519,6 +520,39 @@ export default function Home() {
             <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
               <div className="lb-ai-chat-message-deleted">
                 This message has been deleted.
+              </div>
+            </div>
+
+            <div className="lb-ai-chat-message lb-ai-chat-user-message">
+              <div className="lb-ai-chat-message-content">
+                <div className="lb-ai-chat-message-text">
+                  <p>Some errors</p>
+                </div>
+              </div>
+            </div>
+            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+              <div className="lb-ai-chat-message-content">{/* Empty */}</div>
+              <div className="lb-ai-chat-message-error">
+                <span className="lb-icon-container">
+                  <WarningIcon />
+                </span>
+                An error message with no content
+              </div>
+            </div>
+            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+              <div className="lb-ai-chat-message-content">
+                <TextPart
+                  className="lb-ai-chat-message-text"
+                  text={simpleMarkdownMessage}
+                />
+              </div>
+              <div className="lb-ai-chat-message-error">
+                <span className="lb-icon-container">
+                  <WarningIcon />
+                </span>
+                A long error message that wraps across multiple lines and keeps
+                going forever, with a link to the docs too.
+                https://liveblocks.io/docs/errors/cross-linked
               </div>
             </div>
 

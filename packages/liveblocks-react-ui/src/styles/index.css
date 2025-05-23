@@ -2417,21 +2417,16 @@
 }
 
 .lb-ai-chat-message-error {
-  --lb-dynamic-background: var(--lb-background-destructive-subtle);
-
-  position: relative;
   display: flex;
   gap: calc(0.5 * var(--lb-spacing));
-  align-items: center;
+  align-items: flex-start;
   inline-size: 100%;
-  padding: calc(0.75 * var(--lb-spacing));
-  border-radius: var(--lb-radius);
-  background: var(--lb-dynamic-background);
   color: var(--lb-destructive);
   font-size: 0.875em;
   text-wrap: balance;
 
   :where(.lb-icon-container) {
+    block-size: 1lh;
     color: var(--lb-destructive-secondary);
   }
 }
