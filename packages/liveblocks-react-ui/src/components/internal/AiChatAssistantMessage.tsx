@@ -66,7 +66,7 @@ export const AiChatAssistantMessage = memo(
       ) {
         if (message.contentSoFar.length === 0) {
           children = (
-            <div className="lb-ai-chat-message-thinking lb-ai-chat-streaming">
+            <div className="lb-ai-chat-message-thinking lb-ai-chat-pending">
               {$.AI_CHAT_MESSAGE_THINKING}
             </div>
           );
@@ -252,7 +252,7 @@ function ReasoningPart({
       <CollapsiblePrimitive.Trigger
         className={classNames(
           "lb-collapsible-trigger",
-          isStreaming && "lb-ai-chat-streaming"
+          isStreaming && "lb-ai-chat-pending"
         )}
       >
         {/* TODO: If `isStreaming` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
