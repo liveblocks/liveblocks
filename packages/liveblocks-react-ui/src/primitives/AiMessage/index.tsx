@@ -49,10 +49,6 @@ export function useAiToolDefinitionRenderContext() {
   return context;
 }
 
-function noop() {
-  // Do nothing
-}
-
 function ToolInvocationPart({
   chatId,
   messageId,
@@ -92,12 +88,7 @@ function ToolInvocationPart({
   if (tool === undefined || tool.render === undefined) return null;
 
   const { type: _, ...rest } = part;
-  const props = {
-    ...rest,
-
-    // It only makes sense and is safe to call `respond()` in "executing" state.
-    respond: part.status === "executing" ? respond : noop,
-  };
+  const props = { ...rest, respond };
   return (
     // XXX What to do about this style since this is a primitive?
     // XXX Nimesh thinks to delete it
