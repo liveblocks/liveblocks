@@ -2399,6 +2399,10 @@
   }
 }
 
+.lb-ai-chat-message-tool-invocation {
+  margin-block: calc(0.5 * var(--lb-spacing));
+}
+
 .lb-ai-chat-message-deleted {
   position: relative;
   align-items: center;

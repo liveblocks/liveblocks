@@ -11,6 +11,7 @@ import { Slot } from "@radix-ui/react-slot";
 import {
   createContext,
   forwardRef,
+  Fragment,
   useCallback,
   useContext,
   useMemo,
@@ -51,6 +52,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
       </CollapsiblePrimitive.Root>
     );
   },
+  ToolInvocationPart: Fragment,
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -73,7 +75,7 @@ export function useAiToolDefinitionRenderContext() {
   return context;
 }
 
-function ToolInvocationPart({
+function ToolInvocation({
   chatId,
   messageId,
   part,
@@ -134,7 +136,7 @@ function ToolInvocationPart({
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, style, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { TextPart, ReasoningPart } = useMemo(
+    const { TextPart, ReasoningPart, ToolInvocationPart } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
       [components]
     );
@@ -154,12 +156,14 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
               return <ReasoningPart key={index} part={part} />;
             case "tool-invocation":
               return (
-                <ToolInvocationPart
-                  key={index}
-                  part={part}
-                  chatId={message.chatId}
-                  messageId={message.id}
-                />
+                <ToolInvocationPart key={index} part={part}>
+                  <ToolInvocation
+                    key={index}
+                    part={part}
+                    chatId={message.chatId}
+                    messageId={message.id}
+                  />
+                </ToolInvocationPart>
               );
             default:
               return null;

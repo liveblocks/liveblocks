@@ -2,6 +2,7 @@ import type {
   AiChatMessage,
   AiReasoningPart,
   AiTextPart,
+  AiToolInvocationPart,
 } from "@liveblocks/core";
 import type { ComponentType } from "react";
 
@@ -18,10 +19,15 @@ export interface AiMessageContentComponents {
    */
   ReasoningPart: ComponentType<{ part: AiReasoningPart }>;
 
-  // NOTE: There is no ToolInvocationPart! This is not a bug. It's deliberate.
-  // Tool invocations are typically rendered via the render() method that users
-  // implement on the tool definition instead.
-  /* ToolInvocationPart: never */
+  /**
+   * NOTE that ToolInvocationPart is slightly different.
+   * Tool invocations are typically rendered via the render() method instead.
+   * @internal
+   */
+  ToolInvocationPart: ComponentType<{
+    part: AiToolInvocationPart;
+    children: React.ReactNode;
+  }>;
 }
 
 export interface AiMessageContentProps

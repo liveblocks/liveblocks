@@ -161,6 +161,10 @@ function AssistantMessageContent({
               components={components}
             />
           ),
+
+          ToolInvocationPart: ({ children }) => (
+            <div className="lb-ai-chat-message-tool-invocation">{children}</div>
+          ),
         }}
       />
     </div>
