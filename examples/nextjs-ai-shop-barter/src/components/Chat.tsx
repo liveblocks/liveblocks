@@ -138,10 +138,10 @@ export function Chat() {
             },
           }}
           // dev other models
-          copilotId="co_8NZRRpZM0dk5Qgs9RpsFs"
+          //copilotId="co_8NZRRpZM0dk5Qgs9RpsFs"
 
           // dev
-          //copilotId="co_0gAplN8pwB451g5MQksZ9"
+          copilotId="co_0gAplN8pwB451g5MQksZ9"
 
           // prod
           // copilotId="co_EMwwotoh1Z5QlU1xNcY1Q"
