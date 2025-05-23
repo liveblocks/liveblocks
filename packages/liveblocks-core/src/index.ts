@@ -326,7 +326,6 @@ export type {
   AiReasoningPart,
   AiTextPart,
   AiToolInvocationPart,
-  AiUploadedImagePart,
   CopilotId,
   Cursor,
   MessageId,
