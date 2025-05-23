@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 
-import { Button } from "../../_private";
+import { AiMessage, Button } from "../../_private";
 import { type GlobalComponents, useComponents } from "../../components";
 import { CheckIcon } from "../../icons/Check";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
@@ -20,7 +20,6 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
-import { AiMessage } from "../../primitives";
 import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
 import {
   type MarkdownComponents,

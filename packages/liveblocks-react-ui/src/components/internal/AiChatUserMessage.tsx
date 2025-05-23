@@ -2,8 +2,8 @@ import type { AiTextPart, UiUserMessage } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 import { forwardRef, memo } from "react";
 
+import { AiMessage } from "../../_private";
 import { type GlobalOverrides, useOverrides } from "../../overrides";
-import { AiMessage } from "../../primitives";
 import { classNames } from "../../utils/class-names";
 
 /* -------------------------------------------------------------------------------------------------

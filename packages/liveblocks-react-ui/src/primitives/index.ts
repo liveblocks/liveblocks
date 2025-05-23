@@ -1,7 +1,5 @@
 export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
 export * as AiChatComposer from "./AiChatComposer";
-// XXX Move into /internal instead of exposing it as a Primitive here right now?
-export * as AiMessage from "./AiMessage";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,

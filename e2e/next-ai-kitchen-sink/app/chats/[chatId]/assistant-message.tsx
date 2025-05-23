@@ -22,7 +22,7 @@ import { ChevronRightIcon } from "../../icons/chevron-right-icon";
 import { CopyIcon } from "../../icons/copy-icon";
 import { CircleAlertIcon } from "../../icons/circle-alert-icon";
 import { TrashIcon } from "../../icons/trash-icon";
-import { AiMessage } from "@liveblocks/react-ui/primitives";
+import { AiMessage } from "@liveblocks/react-ui/_private";
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
