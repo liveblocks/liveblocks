@@ -1,12 +1,10 @@
 import type { UiAssistantMessage } from "@liveblocks/core";
-import { Lexer } from "marked";
 import {
   type ComponentProps,
   forwardRef,
   memo,
   type ReactNode,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -25,9 +23,8 @@ import {
 import { AiMessage } from "../../primitives";
 import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
 import {
-  type BlockToken,
-  BlockTokenComp as BlockTokenCompPrimitive,
   type MarkdownComponents,
+  MarkdownWithMemoizedBlocks,
 } from "../../primitives/internal/Markdown";
 import { classNames } from "../../utils/class-names";
 
@@ -180,21 +177,14 @@ interface TextPartProps extends ComponentProps<"div"> {
 
 const TextPart = forwardRef<HTMLDivElement, TextPartProps>(
   ({ text, components, ...props }, forwardedRef) => {
-    const tokens = useMemo(() => {
-      return new Lexer().lex(text);
-    }, [text]);
+    const { Anchor } = useComponents(components);
 
     return (
       <div ref={forwardedRef} {...props}>
-        {tokens.map((token, index) => {
-          return (
-            <MemoizedBlockTokenComp
-              token={token as BlockToken}
-              key={index}
-              components={components}
-            />
-          );
-        })}
+        <MarkdownWithMemoizedBlocks
+          content={text}
+          components={{ Anchor, CodeBlock }}
+        />
       </div>
     );
   }
@@ -243,36 +233,6 @@ function CodeBlock({
     </div>
   );
 }
-
-const MemoizedBlockTokenComp = memo(
-  function BlockTokenComp({
-    token,
-    components,
-  }: {
-    token: BlockToken;
-    components?: Partial<GlobalComponents>;
-  }) {
-    const { Anchor } = useComponents(components);
-
-    return (
-      <BlockTokenCompPrimitive
-        token={token}
-        components={{ CodeBlock, Anchor }}
-      />
-    );
-  },
-  (prevProps, nextProps) => {
-    const prevToken = prevProps.token;
-    const nextToken = nextProps.token;
-    if (prevToken.raw.length !== nextToken.raw.length) {
-      return false;
-    }
-    if (prevToken.type !== nextToken.type) {
-      return false;
-    }
-    return prevToken.raw === nextToken.raw;
-  }
-);
 
 /* -------------------------------------------------------------------------------------------------
  * ReasoningPart

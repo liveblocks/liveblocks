@@ -187,12 +187,15 @@ function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
     content.every((part) => part.type === "reasoning");
 
   return (
-    <div className="prose whitespace-break-spaces">
+    <div>
       <AiMessage.Content
         message={message}
         components={{
           TextPart: ({ part }) => (
-            <TextPart text={part.text} className="prose" />
+            <TextPart
+              text={part.text}
+              className="prose whitespace-break-spaces"
+            />
           ),
 
           ReasoningPart: ({ part }) => (

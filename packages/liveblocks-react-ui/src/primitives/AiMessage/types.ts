@@ -2,7 +2,6 @@ import type {
   AiChatMessage,
   AiReasoningPart,
   AiTextPart,
-  AiUploadedImagePart,
 } from "@liveblocks/core";
 import type { ComponentType } from "react";
 
@@ -13,11 +12,6 @@ export interface AiMessageContentComponents {
    * The component used to display text parts.
    */
   TextPart: ComponentType<{ part: AiTextPart }>;
-
-  /**
-   * The component used to display uploaded image parts.
-   */
-  UploadedImagePart: ComponentType<{ part: AiUploadedImagePart }>;
 
   /**
    * The component used to display reasoning parts.

@@ -2,6 +2,7 @@ import { Lexer, type Tokens } from "marked";
 import {
   type ComponentPropsWithoutRef,
   type ComponentType,
+  memo,
   type ReactNode,
   useMemo,
 } from "react";
@@ -31,14 +32,17 @@ const defaultComponents: MarkdownComponents = {
   Anchor: "a",
 };
 
-export function Markdown({ content, components }: MarkdownProps) {
+export function MarkdownWithMemoizedBlocks({
+  content,
+  components,
+}: MarkdownProps) {
   const tokens = useMemo(() => {
     return new Lexer().lex(content);
   }, [content]);
 
   return tokens.map((token, index) => {
     return (
-      <BlockTokenComp
+      <MemoizedBlockTokenComp
         token={token as BlockToken}
         key={index}
         components={components}
@@ -46,6 +50,29 @@ export function Markdown({ content, components }: MarkdownProps) {
     );
   });
 }
+
+const MemoizedBlockTokenComp = memo(
+  function ({
+    token,
+    components,
+  }: {
+    token: BlockToken;
+    components?: Partial<MarkdownComponents>;
+  }) {
+    return <BlockTokenComp token={token} components={components} />;
+  },
+  (prevProps, nextProps) => {
+    const prevToken = prevProps.token;
+    const nextToken = nextProps.token;
+    if (prevToken.raw.length !== nextToken.raw.length) {
+      return false;
+    }
+    if (prevToken.type !== nextToken.type) {
+      return false;
+    }
+    return prevToken.raw === nextToken.raw;
+  }
+);
 
 /**
  * Block level tokens include:

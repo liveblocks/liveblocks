@@ -14,8 +14,12 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useState,
 } from "react";
 
+import { ChevronRightIcon } from "../../icons";
+import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
+import { MarkdownWithMemoizedBlocks } from "../internal/Markdown";
 import type {
   AiMessageContentComponents,
   AiMessageContentProps,
@@ -24,9 +28,31 @@ import type {
 const AI_MESSAGE_CONTENT_NAME = "AiMessageContent";
 
 const defaultMessageContentComponents: AiMessageContentComponents = {
-  TextPart: () => "Default TextPart is not implemented yet",
-  ReasoningPart: () => "Default ReasoningPart is not implemented yet",
-  UploadedImagePart: () => "Default UploadedImagePart is not implemented yet",
+  TextPart: ({ part }) => {
+    return (
+      <div>
+        <MarkdownWithMemoizedBlocks content={part.text} />
+      </div>
+    );
+  },
+  ReasoningPart: ({ part }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+      <CollapsiblePrimitive.Root open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsiblePrimitive.Trigger>
+          Reasoning
+          <span>
+            <ChevronRightIcon />
+          </span>
+        </CollapsiblePrimitive.Trigger>
+
+        <CollapsiblePrimitive.Content>
+          <MarkdownWithMemoizedBlocks content={part.text} />
+        </CollapsiblePrimitive.Content>
+      </CollapsiblePrimitive.Root>
+    );
+  },
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -110,7 +136,7 @@ function ToolInvocationPart({
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, style, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { TextPart, ReasoningPart, UploadedImagePart } = useMemo(
+    const { TextPart, ReasoningPart } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
       [components]
     );
@@ -126,8 +152,6 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
           switch (part.type) {
             case "text":
               return <TextPart key={index} part={part} />;
-            case "image":
-              return <UploadedImagePart key={index} part={part} />;
             case "reasoning":
               return <ReasoningPart key={index} part={part} />;
             case "tool-invocation":
