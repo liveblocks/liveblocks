@@ -1,8 +1,8 @@
 import type {
   AiToolInvocationPart,
   AiToolInvocationProps,
-  Json,
   MessageId,
+  ToolResultData,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
@@ -88,7 +88,7 @@ function ToolInvocation({
   const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
 
   const respond = useCallback(
-    (result: Json) => {
+    (result: ToolResultData) => {
       if (part.status === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) is still receiving`

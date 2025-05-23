@@ -1,4 +1,4 @@
-import type { Json } from "@liveblocks/core";
+import type { ToolResultData } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Children,
@@ -58,9 +58,9 @@ export type AiToolInspectorProps = ComponentProps<"div">;
  */
 export interface AiToolConfirmationProps extends ComponentProps<"div"> {
   // TODO: What params? Also should they be awaitable like execute()?
-  confirm?: () => Json;
+  confirm?: () => ToolResultData;
   // TODO: What params? Also should they be awaitable like execute()?
-  cancel?: () => Json;
+  cancel?: () => ToolResultData;
   variant?: "default" | "destructive";
 }
 

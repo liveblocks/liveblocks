@@ -178,13 +178,17 @@ type AbortAiPair = DefineCmd<
   { ok: true }
 >;
 
+// TODO[nvie] Maybe layer, consider making this a more structured output, like:
+// { ok: true, hintForAi: "bla bla bla", data: { /* for client */ } } ?
+export type ToolResultData = Json;
+
 type SetToolResultPair = DefineCmd<
   "set-tool-result",
   {
     chatId: ChatId;
     messageId: MessageId;
     toolCallId: string;
-    result: Json;
+    result: ToolResultData;
     clientId: ClientId;
     generationOptions: AiGenerationOptions;
   },

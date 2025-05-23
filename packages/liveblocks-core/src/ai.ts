@@ -11,7 +11,7 @@ import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
-import type { Json, JsonObject } from "./lib/Json";
+import type { JsonObject } from "./lib/Json";
 import { nanoid } from "./lib/nanoid";
 import type { Resolve } from "./lib/Resolve";
 import { shallow, shallow2 } from "./lib/shallow";
@@ -55,6 +55,7 @@ import type {
   ISODateString,
   MessageId,
   ServerAiMsg,
+  ToolResultData,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
@@ -75,7 +76,7 @@ const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
 export type AiToolInvocationProps = Resolve<
   DistributiveOmit<AiToolInvocationPart, "type"> & {
-    respond: (result: Json) => void;
+    respond: (result: ToolResultData) => void;
   }
 >;
 
@@ -88,7 +89,7 @@ export type AiToolDefinition =
   {
     description?: string;
     parameters: JSONSchema4;
-    execute?: (args: JsonObject) => Awaitable<Json>;
+    execute?: (args: JsonObject) => Awaitable<ToolResultData>;
     render?: ComponentType<AiToolInvocationProps>;
   };
 
@@ -306,7 +307,7 @@ function createStore_forChatMessages(
     chatId: string,
     messageId: MessageId,
     toolCallId: string,
-    result: Json,
+    result: ToolResultData,
     options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>
 ) {
@@ -449,7 +450,7 @@ function createStore_forChatMessages(
             .getToolDefinitionΣ(message.chatId, toolCall.toolName)
             .get();
 
-          const respondSync = (result: Json) => {
+          const respondSync = (result: ToolResultData) => {
             setToolResult(
               message.chatId,
               message.id,
@@ -768,7 +769,7 @@ export type Ai = {
     chatId: string,
     messageId: MessageId,
     toolCallId: string,
-    result: Json,
+    result: ToolResultData,
     options?: AiGenerationOptions
   ) => Promise<AskInChatResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
@@ -1127,7 +1128,7 @@ export function createAi(config: AiConfig): Ai {
     chatId: string,
     messageId: MessageId,
     toolCallId: string,
-    result: Json,
+    result: ToolResultData,
     options?: AiGenerationOptions
   ): Promise<AskInChatResponse> {
     const knowledge = context.knowledge.get();

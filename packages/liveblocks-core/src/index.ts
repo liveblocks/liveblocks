@@ -329,6 +329,7 @@ export type {
   CopilotId,
   Cursor,
   MessageId,
+  ToolResultData,
 } from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
