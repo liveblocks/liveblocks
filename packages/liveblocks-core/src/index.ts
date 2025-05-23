@@ -24,6 +24,7 @@ export type {
   UiChatMessage,
   UiUserMessage,
 } from "./ai";
+export { tool } from "./ai";
 export type {
   Client,
   ClientOptions,

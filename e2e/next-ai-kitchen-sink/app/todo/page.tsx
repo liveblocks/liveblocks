@@ -1,5 +1,6 @@
 "use client";
 
+import { tool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
@@ -125,7 +126,7 @@ export default function Page() {
                   <AiChat
                     chatId="todo"
                     tools={{
-                      listTodos: {
+                      listTodos: tool({
                         description: "List all todos",
                         parameters: {
                           type: "object",
@@ -136,18 +137,19 @@ export default function Page() {
                               items: { type: "number" },
                             },
                           },
+                          required: ["ids"] as const,
                         },
-                        execute: (args) => {
-                          const ids = args!.ids as number[];
+                        execute: async (args) => {
+                          const { ids } = args;
                           if (ids.length === 0) {
                             return todos;
                           } else {
                             return todos.filter((t) => ids.includes(t.id));
                           }
                         },
-                      },
+                      }),
 
-                      addTodos: {
+                      addTodos: tool({
                         description: "Add a new todo item to the list",
                         parameters: {
                           type: "object",
@@ -159,17 +161,17 @@ export default function Page() {
                               items: { type: "string" },
                             },
                           },
+                          required: ["titles"],
                         },
-                        execute: (args) => {
-                          const titles = args!.titles as string[];
+                        execute: ({ titles }) => {
                           for (const title of titles) {
                             addTodo(title);
                           }
                           return { ok: true };
                         },
-                      },
+                      }),
 
-                      toggleTodo: {
+                      toggleTodo: tool({
                         description: "Toggle a todo's completion status",
                         parameters: {
                           type: "object",
@@ -179,10 +181,9 @@ export default function Page() {
                               type: "number",
                             },
                           },
+                          required: ["id"],
                         },
-
-                        execute: (args) => {
-                          const id = args!.id as number;
+                        execute: ({ id }) => {
                           toggleTodo(id);
                           return { ok: true };
                         },
@@ -191,9 +192,9 @@ export default function Page() {
                             <AiTool.Inspector />
                           </AiTool>
                         ),
-                      },
+                      }),
 
-                      deleteTodos: {
+                      deleteTodos: tool({
                         description: "Deletes one or more todo items by ID",
                         parameters: {
                           type: "object",
@@ -203,6 +204,7 @@ export default function Page() {
                               type: "array",
                               items: { type: "number" },
                             },
+                            required: ["ids"],
                           },
                         },
 
@@ -249,7 +251,7 @@ export default function Page() {
                             ) : null}
                           </AiTool>
                         ),
-                      },
+                      }),
                     }}
                     className="rounded-xl"
                   />

@@ -133,6 +133,15 @@ export type AiToolDefinition =
     render?: ComponentType<AiToolInvocationProps>;
   };
 
+/**
+ * Helper function to help infer the types of `args`, `render`, and `result`.
+ * This function has no runtime implementation and is only needed to make it
+ * possible for TypeScript to infer types.
+ */
+export function tool<T>(def: T): T {
+  return def;
+}
+
 export type UiChatMessage = AiChatMessage & {
   navigation: {
     /**
