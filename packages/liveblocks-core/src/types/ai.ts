@@ -4,6 +4,8 @@
 /// or in our protocol.
 ///
 
+import type { JSONSchema7 } from "json-schema";
+
 import { assertNever } from "../lib/assert";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
@@ -283,7 +285,7 @@ export type AiChat = {
 export type AiToolDescription = {
   name: string;
   description?: string;
-  parameters: JsonObject;
+  parameters: JSONSchema7;
 };
 
 export type AiToolInvocationPart<
