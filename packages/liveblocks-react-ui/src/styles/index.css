@@ -532,6 +532,11 @@
   }
 }
 
+/* Fix default browser styles when `hidden="until-found"` isn't supported. */
+.lb-collapsible-content:where([hidden]:not([hidden="until-found"])) {
+  display: none !important;
+}
+
 /*************************************
  *       Composer suggestions        *
  *************************************/
