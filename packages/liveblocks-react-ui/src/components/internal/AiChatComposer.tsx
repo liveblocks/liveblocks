@@ -180,7 +180,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
       <TooltipProvider>
         <ComposerPrimitive.Form
           className={classNames(
-            "lb-root lb-elevation lb-elevation-moderate lb-ai-chat-composer lb-ai-chat-composer-form",
+            "lb-root lb-ai-chat-composer lb-ai-chat-composer-form",
             className
           )}
           dir={$.dir}

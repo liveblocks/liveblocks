@@ -64,6 +64,10 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   tools?: Record<string, AiToolDefinition>;
   /**
+   * The layout of the chat and its composer.
+   */
+  layout?: "inset" | "compact";
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -87,6 +91,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       overrides,
       knowledge,
       tools = {},
+      layout = "inset",
       components,
       className,
       ...props
@@ -196,7 +201,13 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       <div
         ref={containerRef}
         {...props}
-        className={classNames("lb-root lb-ai-chat", className)}
+        className={classNames(
+          "lb-root lb-ai-chat",
+          layout === "compact"
+            ? "lb-ai-chat:layout-compact"
+            : "lb-ai-chat:layout-inset",
+          className
+        )}
       >
         {knowledge
           ? knowledge.map((source, index) => (
@@ -232,7 +243,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         <div className="lb-ai-chat-footer">
           <div className="lb-ai-chat-footer-actions">
             <div
-              className="lb-root lb-elevation lb-ai-chat-scroll-indicator"
+              className="lb-root lb-elevation lb-elevation-moderate lb-ai-chat-scroll-indicator"
               data-visible={isScrollIndicatorVisible ? "" : undefined}
             >
               <button
@@ -263,6 +274,11 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             overrides={$}
             autoFocus={autoFocus}
             onUserMessageCreate={({ id }) => setLastSendMessageId(id)}
+            className={
+              layout === "inset"
+                ? "lb-elevation lb-elevation-moderate"
+                : undefined
+            }
           />
         </div>
       </div>

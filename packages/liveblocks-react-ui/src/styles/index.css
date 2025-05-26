@@ -2483,6 +2483,36 @@
     inset-block-end: 0;
     z-index: 1;
     margin-block-start: auto;
+  }
+
+  :where(.lb-ai-chat-composer) {
+    margin-inline: auto;
+  }
+}
+
+.lb-ai-chat:where(.lb-ai-chat\:layout-compact) {
+  :where(.lb-ai-chat-footer) {
+    background: var(--lb-dynamic-background);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-block-start: 1px solid var(--lb-foreground-subtle);
+      pointer-events: none;
+    }
+  }
+
+  :where(.lb-ai-chat-composer) {
+    max-inline-size: min(
+      100%,
+      calc(var(--lb-ai-chat-container-width) + var(--lb-spacing))
+    );
+  }
+}
+
+.lb-ai-chat:where(.lb-ai-chat\:layout-inset) {
+  :where(.lb-ai-chat-footer) {
     padding: var(--lb-spacing);
     padding-block-start: 0;
 
@@ -2502,7 +2532,6 @@
 
   :where(.lb-ai-chat-composer) {
     max-inline-size: var(--lb-ai-chat-container-width);
-    margin-inline: auto;
     border-radius: calc(2 * var(--lb-radius));
   }
 }
