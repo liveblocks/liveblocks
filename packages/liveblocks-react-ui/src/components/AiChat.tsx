@@ -13,6 +13,7 @@ import {
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
+  type ComponentType,
   forwardRef,
   useCallback,
   useEffect,
@@ -36,6 +37,12 @@ import { useVisible } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
+
+// TODO: Add Markdown components
+type AiChatComponents = {
+  Empty: ComponentType;
+  Loading: ComponentType;
+};
 
 /**
  * The minimum number of pixels from the bottom of the scrollable area
@@ -81,8 +88,18 @@ export interface AiChatProps extends ComponentProps<"div"> {
   /**
    * Override the component's components.
    */
-  components?: Partial<GlobalComponents>; // TODO: Add more slots than the global ones over time (Markdown tags, the empty state, etc)
+  components?: Partial<GlobalComponents & AiChatComponents>;
 }
+
+const defaultComponents: AiChatComponents = {
+  // TODO: What could we show by default that wouldn't be too opinionated?
+  Empty: () => null,
+  Loading: () => (
+    <div className="lb-loading lb-ai-chat-loading">
+      <SpinnerIcon />
+    </div>
+  ),
+};
 
 export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   (
@@ -102,6 +119,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   ) => {
     const { messages, isLoading, error } = useAiChatMessages(chatId);
     const $ = useOverrides(overrides);
+    const Empty = components?.Empty ?? defaultComponents.Empty;
+    const Loading = components?.Loading ?? defaultComponents.Loading;
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const containerBottomRef = useRef<HTMLDivElement | null>(null);
@@ -171,13 +190,13 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           : null}
         <div className="lb-ai-chat-content">
           {isLoading ? (
-            <div className="lb-loading lb-ai-chat-loading">
-              <SpinnerIcon />
-            </div>
+            <Loading />
           ) : error !== undefined ? (
             <div className="lb-error lb-ai-chat-error">
               {$.AI_CHAT_MESSAGES_ERROR(error)}
             </div>
+          ) : messages.length === 0 ? (
+            <Empty />
           ) : (
             <>
               <AutoScrollToBottomHandler

@@ -2536,6 +2536,11 @@
   }
 }
 
+.lb-ai-chat-content {
+  position: relative;
+  flex: 1 0 auto;
+}
+
 .lb-ai-chat-footer-actions {
   position: absolute;
   inset-inline: 0;
