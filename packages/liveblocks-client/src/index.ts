@@ -81,5 +81,6 @@ export {
   LiveObject,
   shallow,
   stringifyCommentBody,
+  tool,
   toPlainLson,
 } from "@liveblocks/core";
