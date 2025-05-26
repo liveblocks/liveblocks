@@ -1,4 +1,4 @@
-import type { ToolResultData } from "@liveblocks/core";
+import type { Awaitable, ToolResultData } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Children,
@@ -57,10 +57,8 @@ export type AiToolInspectorProps = ComponentProps<"div">;
  * This component can be used to build human-in-the-loop interfaces.
  */
 export interface AiToolConfirmationProps extends ComponentProps<"div"> {
-  // TODO: What params? Also should they be awaitable like execute()?
-  confirm?: () => ToolResultData;
-  // TODO: What params? Also should they be awaitable like execute()?
-  cancel?: () => ToolResultData;
+  confirm: () => Awaitable<ToolResultData>;
+  cancel: () => Awaitable<ToolResultData>;
   variant?: "default" | "destructive";
 }
 
@@ -151,13 +149,13 @@ function AiToolConfirmation({
       <div className="lb-ai-tool-confirmation-footer">
         <div className="lb-ai-tool-confirmation-actions">
           <Button
-            onClick={() => respond(confirm?.() ?? null)}
+            onClick={async () => respond(await confirm())}
             variant={variant === "destructive" ? "destructive" : "primary"}
           >
             Confirm
           </Button>
           <Button
-            onClick={() => respond(cancel?.() ?? null)}
+            onClick={async () => respond(await cancel())}
             variant="secondary"
           >
             Cancel
