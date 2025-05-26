@@ -120,6 +120,9 @@ export type AiToolInvocationProps<R extends ToolResultData> = Resolve<
   }
 >;
 
+// XXX Rename
+export type AiToolInvocationPropsss = AiToolInvocationProps<ToolResultData>;
+
 export type AiToolDefinition<
   S extends JSONSchema4,
   A extends JsonObject,
@@ -130,6 +133,13 @@ export type AiToolDefinition<
   execute?: (args: A) => Awaitable<R>;
   render?: ComponentType<AiToolInvocationProps<R>>;
 };
+
+// XXX Rename
+export type AiToolDefinitionnn = AiToolDefinition<
+  JSONSchema4,
+  JsonObject,
+  ToolResultData
+>;
 
 /**
  * Helper function to help infer the types of `args`, `render`, and `result`.
@@ -294,7 +304,7 @@ function now(): ISODateString {
 function createStore_forTools() {
   const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
     return new DefaultMap((_toolName: string) => {
-      return new Signal<AiToolDefinition | undefined>(undefined);
+      return new Signal<AiToolDefinitionnn | undefined>(undefined);
     });
   });
 
@@ -305,7 +315,7 @@ function createStore_forTools() {
   function addToolDefinition(
     chatId: string,
     name: string,
-    definition: AiToolDefinition
+    definition: AiToolDefinitionnn
   ) {
     if (!definition.execute && !definition.render) {
       throw new Error(
@@ -326,7 +336,7 @@ function createStore_forTools() {
 
   function getToolsForChat(chatId: string): {
     name: string;
-    definition: AiToolDefinition;
+    definition: AiToolDefinitionnn;
   }[] {
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return [];
@@ -340,7 +350,7 @@ function createStore_forTools() {
       })
       .filter((tool) => tool !== null) as {
       name: string;
-      definition: AiToolDefinition;
+      definition: AiToolDefinitionnn;
     }[];
   }
 
@@ -833,7 +843,7 @@ export type Ai = {
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
-    ): Signal<AiToolDefinition | undefined>;
+    ): Signal<AiToolDefinitionnn | undefined>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -853,7 +863,7 @@ export type Ai = {
   registerChatTool: (
     chatId: string,
     name: string,
-    definition: AiToolDefinition
+    definition: AiToolDefinitionnn
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   unregisterChatTool: (chatId: string, toolName: string) => void;
