@@ -96,10 +96,3 @@ export {
   LiveObject,
   stringifyCommentBody,
 } from "@liveblocks/core";
-
-/**
- * @deprecated RoomInfo was renamed to RoomData, to avoid
- * confusion with the globally augmentable RoomInfo type. This
- * alias will be removed in a future version.
- */
-export type RoomInfo = RoomData;
