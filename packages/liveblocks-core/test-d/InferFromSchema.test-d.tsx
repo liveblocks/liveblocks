@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import type {
-  AiToolDefinitionnn,
+  AiOpaqueToolDefinition,
   Awaitable,
   InferFromSchema,
   Json,
@@ -206,7 +206,7 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
 {
   // This tests that tool definitions will get locally inferred, not overridden
   // by the array's *opaque* type they are getting assigned into!
-  const tools: AiToolDefinitionnn[] = [
+  const tools: AiOpaqueToolDefinition[] = [
     tool()({
       description: "First tool (execute, no render)",
       parameters: {

@@ -1,6 +1,6 @@
 import type {
+  AiOpaqueToolInvocationProps,
   AiToolInvocationPart,
-  AiToolInvocationPropsss,
   MessageId,
   ToolResultData,
 } from "@liveblocks/core";
@@ -58,9 +58,8 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-const AiToolInvocationContext = createContext<AiToolInvocationPropsss | null>(
-  null
-);
+const AiToolInvocationContext =
+  createContext<AiOpaqueToolInvocationProps | null>(null);
 
 export function useAiToolInvocationContext() {
   const context = useContext(AiToolInvocationContext);

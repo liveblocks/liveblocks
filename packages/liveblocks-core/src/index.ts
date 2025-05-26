@@ -17,10 +17,10 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  */
 
 export type {
+  AiOpaqueToolDefinition,
+  AiOpaqueToolInvocationProps,
   AiToolDefinition,
-  AiToolDefinitionnn,
   AiToolInvocationProps,
-  AiToolInvocationPropsss,
   InferFromSchema,
   UiAssistantMessage,
   UiChatMessage,

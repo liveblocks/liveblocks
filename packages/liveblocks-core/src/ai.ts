@@ -129,7 +129,7 @@ export type AiToolInvocationProps<
 >;
 
 // XXX Rename to "Opaque"
-export type AiToolInvocationPropsss = AiToolInvocationProps<
+export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
   JsonObject,
   ToolResultData
 >;
@@ -147,7 +147,7 @@ export type AiToolDefinition<
 };
 
 // XXX Rename to "Opaque"
-export type AiToolDefinitionnn = AiToolDefinition<
+export type AiOpaqueToolDefinition = AiToolDefinition<
   JSONSchema4,
   JsonObject,
   ToolResultData
@@ -165,8 +165,8 @@ export function tool<R extends ToolResultData>() {
       InferFromSchema<S> extends JsonObject ? InferFromSchema<S> : JsonObject,
       R
     >
-  ): AiToolDefinitionnn => {
-    return def as AiToolDefinitionnn;
+  ): AiOpaqueToolDefinition => {
+    return def as AiOpaqueToolDefinition;
   };
 }
 
@@ -320,7 +320,7 @@ function now(): ISODateString {
 function createStore_forTools() {
   const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
     return new DefaultMap((_toolName: string) => {
-      return new Signal<AiToolDefinitionnn | undefined>(undefined);
+      return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
     });
   });
 
@@ -331,7 +331,7 @@ function createStore_forTools() {
   function addToolDefinition(
     chatId: string,
     name: string,
-    definition: AiToolDefinitionnn
+    definition: AiOpaqueToolDefinition
   ) {
     if (!definition.execute && !definition.render) {
       throw new Error(
@@ -352,7 +352,7 @@ function createStore_forTools() {
 
   function getToolsForChat(chatId: string): {
     name: string;
-    definition: AiToolDefinitionnn;
+    definition: AiOpaqueToolDefinition;
   }[] {
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return [];
@@ -366,7 +366,7 @@ function createStore_forTools() {
       })
       .filter((tool) => tool !== null) as {
       name: string;
-      definition: AiToolDefinitionnn;
+      definition: AiOpaqueToolDefinition;
     }[];
   }
 
@@ -859,7 +859,7 @@ export type Ai = {
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
-    ): Signal<AiToolDefinitionnn | undefined>;
+    ): Signal<AiOpaqueToolDefinition | undefined>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -879,7 +879,7 @@ export type Ai = {
   registerChatTool: (
     chatId: string,
     name: string,
-    definition: AiToolDefinitionnn
+    definition: AiOpaqueToolDefinition
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   unregisterChatTool: (chatId: string, toolName: string) => void;
