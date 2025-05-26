@@ -40,6 +40,11 @@ import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
 // TODO: Add Markdown components
 type AiChatComponents = {
+  // TODO: These 2 slots don't have any props at the moment, they will turn into
+  // ComponentType<AiChatComponentsEmptyProps> and ComponentType<AiChatComponentsLoadingProps>
+  // when they do, but what props could we pass? I'm hesitant to expose things too early like
+  // for example giving `Empty` a way to submit a message or fill the composer, when both of these
+  // things (message submission and suggestions) are not finalized.
   Empty: ComponentType;
   Loading: ComponentType;
 };
