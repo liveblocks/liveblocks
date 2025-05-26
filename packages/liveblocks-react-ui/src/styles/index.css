@@ -2448,7 +2448,7 @@
   );
   margin-inline: auto;
   padding-block-start: calc(1.5 * var(--lb-spacing));
-  padding-block-end: calc(5 * var(--lb-spacing));
+  padding-block-end: calc(2 * var(--lb-spacing));
 
   :where(.lb-ai-chat-user-message) {
     max-inline-size: 80%;

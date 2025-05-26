@@ -3,7 +3,6 @@ import type {
   AiToolDefinition,
   CopilotId,
   MessageId,
-  UiChatMessage,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import {
@@ -15,6 +14,7 @@ import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -32,14 +32,10 @@ import {
   useOverrides,
 } from "../overrides";
 import { classNames } from "../utils/class-names";
+import { useVisible } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
-
-/**
- * The number of pixels from the bottom of the messages list to trigger the scroll to bottom.
- */
-const MIN_DISTANCE_TO_BOTTOM = 50; // TODO: This should be flexible and not hardcoded
 
 export interface AiChatProps extends ComponentProps<"div"> {
   /**
@@ -102,9 +98,13 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const $ = useOverrides(overrides);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const [distanceToBottom, setDistanceToBottom] = useState<number | null>(
-      null
-    );
+    const containerBottomRef = useRef<HTMLDivElement | null>(null);
+    const isScrollAtBottom = useVisible(containerBottomRef, {
+      enabled: !isLoading && !error,
+    });
+    const isScrollIndicatorVisible =
+      isLoading || error ? false : !isScrollAtBottom;
+
     const client = useClient();
     const ai = client[kInternal].ai;
 
@@ -129,73 +129,15 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       };
     }, [ai, chatId, tools]);
 
-    useEffect(() => {
-      const container = containerRef.current;
-      if (container === null) return;
-      function handleScrollChange() {
-        const container = containerRef.current;
-        if (container === null) return;
-
-        setDistanceToBottom(
-          container.scrollHeight - container.clientHeight - container.scrollTop
-        );
-      }
-      container.addEventListener("scroll", handleScrollChange);
-      return () => {
-        container.removeEventListener("scroll", handleScrollChange);
-      };
-    }, []);
-
-    useEffect(() => {
-      const container = containerRef.current;
-      if (container === null) return;
-
-      setDistanceToBottom(
-        container.scrollHeight - container.clientHeight - container.scrollTop
-      );
-    }, [messages]);
-
-    useEffect(() => {
+    const scrollToBottom = useCallback((behavior: "instant" | "smooth") => {
       const container = containerRef.current;
       if (container === null) return;
 
       container.scrollTo({
         top: container.scrollHeight,
-        behavior: "smooth",
+        behavior,
       });
-    }, [lastSendMessageId]);
-
-    useEffect(() => {
-      const container = containerRef.current;
-      if (container === null) return;
-
-      const observer = new ResizeObserver(() => {
-        const container = containerRef.current;
-        if (container === null) return;
-        setDistanceToBottom(
-          container.scrollHeight - container.clientHeight - container.scrollTop
-        );
-      });
-      observer.observe(container);
-      return () => {
-        observer.disconnect();
-      };
     }, []);
-
-    const scrollToBottomCallbackRef = useRef<() => void>(undefined);
-    if (scrollToBottomCallbackRef.current === undefined) {
-      scrollToBottomCallbackRef.current = function () {
-        const container = containerRef.current;
-        if (container === null) return;
-
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: "instant",
-        });
-      };
-    }
-    const isScrollIndicatorVisible =
-      distanceToBottom !== null && distanceToBottom > MIN_DISTANCE_TO_BOTTOM;
 
     return (
       <div
@@ -229,14 +171,36 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               {$.AI_CHAT_MESSAGES_ERROR(error)}
             </div>
           ) : (
-            <div className="lb-ai-chat-messages">
-              <Messages
-                messages={messages}
-                overrides={$}
-                components={components}
-                onDistanceToBottomChange={scrollToBottomCallbackRef.current}
+            <>
+              <AutoScrollToBottomHandler
+                lastSendMessageId={lastSendMessageId}
+                scrollToBottom={scrollToBottom}
               />
-            </div>
+              <div className="lb-ai-chat-messages">
+                {messages.map((message) => {
+                  if (message.role === "user") {
+                    return (
+                      <AiChatUserMessage
+                        key={message.id}
+                        message={message}
+                        overrides={overrides}
+                      />
+                    );
+                  } else if (message.role === "assistant") {
+                    return (
+                      <AiChatAssistantMessage
+                        key={message.id}
+                        message={message}
+                        overrides={overrides}
+                        components={components}
+                      />
+                    );
+                  } else {
+                    return null;
+                  }
+                })}
+              </div>
+            </>
           )}
         </div>
 
@@ -251,15 +215,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 tabIndex={isScrollIndicatorVisible ? 0 : -1}
                 aria-hidden={!isScrollIndicatorVisible}
                 disabled={!isScrollIndicatorVisible}
-                onClick={() => {
-                  const container = containerRef.current;
-                  if (container === null) return;
-
-                  container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior: "smooth",
-                  });
-                }}
+                onClick={() => scrollToBottom("smooth")}
               >
                 <span className="lb-icon-container">
                   <ArrowDownIcon />
@@ -281,46 +237,40 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             }
           />
         </div>
+        {/* This invisible element is a trick which allows us to use IntersectionObserver to detect when the
+         * scrollable area is fully scrolled to the bottom instead of manually tracking the scroll position
+         * and having to deal with resizes, etc.
+         *
+         * It's positioned at the bottom of the scrollable area and reliably only becomes "visible" to the
+         * IntersectionObserver when the scrollable area is fully scrolled.
+         */}
+        <div
+          ref={containerBottomRef}
+          style={{ position: "sticky", height: 0 }}
+          aria-hidden
+          data-scroll-at-bottom={isScrollAtBottom ? "" : undefined}
+        />
       </div>
     );
   }
 );
 
-function Messages({
-  messages,
-  overrides,
-  components,
-  onDistanceToBottomChange,
+function AutoScrollToBottomHandler({
+  lastSendMessageId,
+  scrollToBottom,
 }: {
-  messages: readonly UiChatMessage[];
-  overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
-  components?: Partial<GlobalComponents>;
-  onDistanceToBottomChange: () => void;
+  lastSendMessageId: MessageId | null;
+  scrollToBottom: (behavior: "instant" | "smooth") => void;
 }) {
+  // Scroll to bottom when the component first mounts
   useLayoutEffect(() => {
-    onDistanceToBottomChange();
-  }, [onDistanceToBottomChange]);
+    scrollToBottom("instant");
+  }, [scrollToBottom]);
 
-  return messages.map((message) => {
-    if (message.role === "user") {
-      return (
-        <AiChatUserMessage
-          key={message.id}
-          message={message}
-          overrides={overrides}
-        />
-      );
-    } else if (message.role === "assistant") {
-      return (
-        <AiChatAssistantMessage
-          key={message.id}
-          message={message}
-          overrides={overrides}
-          components={components}
-        />
-      );
-    } else {
-      return null;
-    }
-  });
+  // Scroll to bottom when sending a new message
+  useEffect(() => {
+    scrollToBottom("smooth");
+  }, [lastSendMessageId, scrollToBottom]);
+
+  return null;
 }
