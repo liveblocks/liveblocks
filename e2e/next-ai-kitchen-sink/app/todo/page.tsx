@@ -126,7 +126,7 @@ export default function Page() {
                   <AiChat
                     chatId="todo"
                     tools={{
-                      listTodos: tool({
+                      listTodos: tool()({
                         description: "List all todos",
                         parameters: {
                           type: "object",
@@ -149,7 +149,7 @@ export default function Page() {
                         },
                       }),
 
-                      addTodos: tool({
+                      addTodos: tool()({
                         description: "Add a new todo item to the list",
                         parameters: {
                           type: "object",
@@ -171,7 +171,7 @@ export default function Page() {
                         },
                       }),
 
-                      toggleTodo: tool({
+                      toggleTodo: tool()({
                         description: "Toggle a todo's completion status",
                         parameters: {
                           type: "object",
@@ -194,7 +194,7 @@ export default function Page() {
                         ),
                       }),
 
-                      deleteTodos: tool({
+                      deleteTodos: tool()({
                         description: "Deletes one or more todo items by ID",
                         parameters: {
                           type: "object",

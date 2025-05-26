@@ -114,32 +114,34 @@ export type InferFromSchema<T extends JSONSchema4> = T extends {
               ? InferFromSchema<T["items"]>[]
               : unknown;
 
-export type AiToolInvocationProps = Resolve<
+export type AiToolInvocationProps<R extends ToolResultData> = Resolve<
   DistributiveOmit<AiToolInvocationPart, "type"> & {
-    respond: (result: ToolResultData) => void;
+    respond: (result: R) => void;
   }
 >;
 
-// TODO[nvie] Come back here and make the input/output types correlated and nicely typed!
-export type AiToolDefinition =
-  //  <
-  //  // A extends JsonObject = JsonObject,
-  //  // R extends JsonObject = JsonObject,
-  //  >
-  {
-    description?: string;
-    parameters: JSONSchema4;
-    execute?: (args: JsonObject) => Awaitable<ToolResultData>;
-    render?: ComponentType<AiToolInvocationProps>;
-  };
+export type AiToolDefinition<
+  S extends JSONSchema4,
+  A extends JsonObject,
+  R extends ToolResultData,
+> = {
+  description?: string;
+  parameters: S;
+  execute?: (args: A) => Awaitable<R>;
+  render?: ComponentType<AiToolInvocationProps<R>>;
+};
 
 /**
  * Helper function to help infer the types of `args`, `render`, and `result`.
  * This function has no runtime implementation and is only needed to make it
  * possible for TypeScript to infer types.
  */
-export function tool<T>(def: T): T {
-  return def;
+export function tool<R extends ToolResultData>() {
+  return <S extends JSONSchema4, A extends JsonObject>(
+    def: AiToolDefinition<S, A, R>
+  ): AiToolDefinition<S, A, R> => {
+    return def;
+  };
 }
 
 export type UiChatMessage = AiChatMessage & {
