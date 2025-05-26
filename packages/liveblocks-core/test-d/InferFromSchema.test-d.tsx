@@ -11,7 +11,7 @@ import { tool } from "@liveblocks/core";
 import type { JSONSchema4 } from "json-schema";
 import { expectType } from "tsd";
 
-function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
+function infer<const T extends JSONSchema4>(x: T): InferFromSchema<T> {
   return x as any;
 }
 
@@ -31,8 +31,7 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
           items: { type: "string" },
         },
       },
-      required: ["name", "age"] as const,
-      //                        ^^^^^^^^ This is super annoying :(
+      required: ["name", "age"],
     })
   );
 }
@@ -50,7 +49,7 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
           items: { type: "number" },
         },
       },
-      required: ["ids"] as const,
+      required: ["ids"],
     })
   );
 }
@@ -67,7 +66,7 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
           items: { type: "number" },
         },
       },
-      required: ["ids"] as const,
+      required: ["ids"],
     },
     execute: async (args) => {
       expectType<{ ids: number[] }>(args);
