@@ -142,17 +142,17 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
 `;
 
 const markdownMessage = `
-# H1 Heading
+# The long and winding road that leads to your door will never disappear, I've seen that road before it always leads me here, lead me to your door
 
-## H2 Heading
+## Here we are, stuck by this river, you and I, underneath the sky that's ever falling down, down, down, ever falling down
 
-### H3 Heading
+### Like a heartbeat drives you mad, in the stillness of remembering, what you had and what you lost, and what you had and what you lost
 
-#### H4 Heading
+#### Kim and Jessie, they have a secret world in the twilight, kids of the woods, they're crazy about romance and illusions
 
-##### H5 Heading
+##### You spent the first five years trying to get with the plan, and the next five years trying to be with your friends again
 
-###### H6 Heading
+###### Because in this city's barren cold, I still remember the first fall of snow, and how it glistened as it fell, I remember it all too well
 
 ---
 
@@ -465,7 +465,7 @@ export default function Home() {
 
   return (
     <main style={{ height: "100vh", width: "100%" }}>
-      <div className="lb-root lb-ai-chat">
+      <div className="lb-root lb-ai-chat lb-ai-chat:layout-inset">
         <div className="lb-ai-chat-content">
           <div className="lb-ai-chat-messages">
             <div className="lb-ai-chat-message lb-ai-chat-user-message">
@@ -603,7 +603,7 @@ export default function Home() {
           </div>
         </div>
         <div className="lb-ai-chat-footer">
-          <div className="lb-root lb-elevation lb-elevation-moderate lb-ai-chat-composer">
+          <div className="lb-root lb-ai-chat-composer lb-ai-chat-composer-form lb-elevation lb-elevation-moderate">
             {/* Debug panel */}
             <div
               style={{

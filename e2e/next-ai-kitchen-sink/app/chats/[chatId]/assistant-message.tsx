@@ -212,30 +212,20 @@ function TextPart({
   return <Markdown content={text} {...props} />;
 }
 
-function ReasoningPart({
-  text,
-  isPending,
-}: {
-  text: string;
-  isPending: boolean;
-}) {
+function ReasoningPart({ text }: { text: string; isPending: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Collapsible.Root
-      className="lb-collapsible lb-ai-chat-message-reasoning"
+      className="flex flex-col"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <Collapsible.Trigger className={`${isPending ? "" : ""}`}>
+      <Collapsible.Trigger className="flex items-center gap-1">
         Reasoning
-        <span className="lb-icon-container">
-          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-        </span>
+        {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
       </Collapsible.Trigger>
 
-      <Collapsible.Content className="lb-collapsible-content">
-        {text}
-      </Collapsible.Content>
+      <Collapsible.Content className="pt-2">{text}</Collapsible.Content>
     </Collapsible.Root>
   );
 }

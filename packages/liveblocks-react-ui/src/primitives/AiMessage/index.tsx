@@ -91,7 +91,7 @@ function ToolInvocation({
  * <AiMessage.Content message={message} components={{ TextPart }} />
  */
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
-  ({ message, components, style, asChild, ...props }, forwardedRef) => {
+  ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const { TextPart, ReasoningPart, ToolInvocationPart } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
@@ -103,11 +103,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
     const isGenerating =
       message.role === "assistant" && message.status === "generating";
     return (
-      <Component
-        {...props}
-        style={{ whiteSpace: "break-spaces", ...style }}
-        ref={forwardedRef}
-      >
+      <Component {...props} ref={forwardedRef}>
         {content.map((part, index) => {
           // A part is considered to be still "streaming in" if it's the last
           // part in the content array, and the message is in "generating"
@@ -120,6 +116,8 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
             case "tool-invocation":
+              // TODO: If the render() method doesn't exist, we should not render the ToolInvocationPart
+              //       or pass it no children so that it can decide to not render?
               return (
                 <ToolInvocationPart key={index} part={part} {...extra}>
                   <ToolInvocation

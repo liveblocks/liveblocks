@@ -126,16 +126,15 @@ export const AiChatAssistantMessage = memo(
 
 function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
   return (
-    <div className="lb-ai-chat-message-content">
-      <AiMessage.Content
-        message={message}
-        components={{
-          TextPart,
-          ReasoningPart,
-          ToolInvocationPart,
-        }}
-      />
-    </div>
+    <AiMessage.Content
+      message={message}
+      components={{
+        TextPart,
+        ReasoningPart,
+        ToolInvocationPart,
+      }}
+      className="lb-ai-chat-message-content"
+    />
   );
 }
 
@@ -245,5 +244,9 @@ function ReasoningPart({
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
 function ToolInvocationPart({ children }: PropsWithChildren) {
+  if (!children) {
+    return null;
+  }
+
   return <div className="lb-ai-chat-message-tool-invocation">{children}</div>;
 }
