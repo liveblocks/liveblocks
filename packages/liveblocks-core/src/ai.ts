@@ -74,55 +74,67 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
-// XXX Need more type-level tests for this helper
-export type InferFromSchema<T extends JSONSchema4> = T extends {
-  type: "object";
-  properties: Record<string, JSONSchema4>;
-  required: readonly string[];
-}
-  ? Resolve<
-      {
-        [K in keyof T["properties"] as K extends string
-          ? K extends Extract<K, T["required"][number]>
-            ? K
-            : never
-          : never]: InferFromSchema<T["properties"][K]>;
-      } & {
-        [K in keyof T["properties"] as K extends string
-          ? K extends Extract<K, T["required"][number]>
-            ? never
-            : K
-          : never]?: InferFromSchema<T["properties"][K]>;
-      }
-    >
-  : T extends {
-        type: "object";
-        properties: Record<string, JSONSchema4>;
-      }
-    ? {
-        [K in keyof T["properties"]]?: InferFromSchema<T["properties"][K]>;
-      }
-    : T extends { type: "string" }
-      ? string
-      : T extends { type: "number" }
-        ? number
-        : T extends { type: "boolean" }
-          ? boolean
-          : T extends { type: "null" }
-            ? null
-            : T extends { type: "array"; items: JSONSchema4 }
-              ? InferFromSchema<T["items"]>[]
-              : unknown;
+export type InferFromSchema<T extends JSONSchema4> =
+  //
+  JSONSchema4 extends T
+    ? JsonObject
+    : T extends {
+          type: "object";
+          properties: Record<string, JSONSchema4>;
+          required: readonly string[];
+        }
+      ? Resolve<
+          {
+            -readonly [K in keyof T["properties"] as K extends string
+              ? K extends Extract<K, T["required"][number]>
+                ? K
+                : never
+              : never]: InferFromSchema<T["properties"][K]>;
+          } & {
+            -readonly [K in keyof T["properties"] as K extends string
+              ? K extends Extract<K, T["required"][number]>
+                ? never
+                : K
+              : never]?: InferFromSchema<T["properties"][K]>;
+          }
+        >
+      : T extends {
+            type: "object";
+            properties: Record<string, JSONSchema4>;
+          }
+        ? {
+            -readonly [K in keyof T["properties"]]?: InferFromSchema<
+              T["properties"][K]
+            >;
+          }
+        : T extends { type: "string" }
+          ? string
+          : T extends { type: "number" }
+            ? number
+            : T extends { type: "boolean" }
+              ? boolean
+              : T extends { type: "null" }
+                ? null
+                : T extends { type: "array"; items: JSONSchema4 }
+                  ? InferFromSchema<T["items"]>[]
+                  : unknown;
 
-export type AiToolInvocationProps<R extends ToolResultData> = Resolve<
-  DistributiveOmit<AiToolInvocationPart, "type"> & {
+export type AiToolInvocationProps<
+  A extends JsonObject,
+  R extends ToolResultData,
+> = Resolve<
+  DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
     respond: (result: R) => void;
   }
 >;
 
-// XXX Rename
-export type AiToolInvocationPropsss = AiToolInvocationProps<ToolResultData>;
+// XXX Rename to "Opaque"
+export type AiToolInvocationPropsss = AiToolInvocationProps<
+  JsonObject,
+  ToolResultData
+>;
 
+// XXX Rename to ToolOptions?
 export type AiToolDefinition<
   S extends JSONSchema4,
   A extends JsonObject,
@@ -131,10 +143,10 @@ export type AiToolDefinition<
   description?: string;
   parameters: S;
   execute?: (args: A) => Awaitable<R>;
-  render?: ComponentType<AiToolInvocationProps<R>>;
+  render?: ComponentType<AiToolInvocationProps<A, R>>;
 };
 
-// XXX Rename
+// XXX Rename to "Opaque"
 export type AiToolDefinitionnn = AiToolDefinition<
   JSONSchema4,
   JsonObject,
@@ -147,10 +159,14 @@ export type AiToolDefinitionnn = AiToolDefinition<
  * possible for TypeScript to infer types.
  */
 export function tool<R extends ToolResultData>() {
-  return <S extends JSONSchema4, A extends JsonObject>(
-    def: AiToolDefinition<S, A, R>
-  ): AiToolDefinition<S, A, R> => {
-    return def;
+  return <const S extends JSONSchema4>(
+    def: AiToolDefinition<
+      S,
+      InferFromSchema<S> extends JsonObject ? InferFromSchema<S> : JsonObject,
+      R
+    >
+  ): AiToolDefinitionnn => {
+    return def as AiToolDefinitionnn;
   };
 }
 

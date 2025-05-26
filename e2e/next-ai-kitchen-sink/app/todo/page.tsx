@@ -137,7 +137,7 @@ export default function Page() {
                               items: { type: "number" },
                             },
                           },
-                          required: ["ids"] as const,
+                          required: ["ids"],
                         },
                         execute: async (args) => {
                           const { ids } = args;
@@ -194,7 +194,10 @@ export default function Page() {
                         ),
                       }),
 
-                      deleteTodos: tool()({
+                      deleteTodos: tool<
+                        | { ok: true; deletedTitles: string[] }
+                        | { ok: false; reason: string; hint: string }
+                      >()({
                         description: "Deletes one or more todo items by ID",
                         parameters: {
                           type: "object",
@@ -204,16 +207,17 @@ export default function Page() {
                               type: "array",
                               items: { type: "number" },
                             },
-                            required: ["ids"],
                           },
+                          required: ["ids"],
                         },
 
-                        render: ({ status, args, result }: any) => (
+                        render: ({ status, args, result }) => (
                           <AiTool>
                             <AiTool.Confirmation
+                              args={args}
                               variant="destructive"
-                              confirm={() => {
-                                const ids = args!.ids as number[];
+                              confirm={({ args }) => {
+                                const ids = args.ids;
 
                                 const deletedTitles = todos
                                   .filter((t) => ids.includes(t.id))
@@ -239,7 +243,7 @@ export default function Page() {
                                   Deleted:
                                   <ul>
                                     {result.deletedTitles.map(
-                                      (title: any, i: number) => (
+                                      (title, i: number) => (
                                         <li key={i}>{title}</li>
                                       )
                                     )}
