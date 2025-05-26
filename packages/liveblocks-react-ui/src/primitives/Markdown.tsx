@@ -1,50 +1,59 @@
+import { Slot } from "@radix-ui/react-slot";
 import { Lexer, type Tokens } from "marked";
 import {
-  type ComponentPropsWithoutRef,
   type ComponentType,
+  forwardRef,
+  memo,
   type ReactNode,
   useMemo,
 } from "react";
 
-// TODO: Expose all Markdown tags in a holistic way
-//       (e.g. instead of `h1`, `h2`, etc, maybe `Heading` with a `level` prop? Maybe not every inline components should be exposed?)
+import type { ComponentPropsWithSlot } from "../types";
+
 export type MarkdownComponents = {
-  CodeBlock: ComponentType<{ language: string | null; code: string }>;
-  Anchor: ComponentType<ComponentPropsWithoutRef<"a">> | "a";
+  CodeBlock: ComponentType<MarkdownComponentsCodeBlockProps>;
+  Link: ComponentType<MarkdownComponentsLinkProps>;
+  Heading: ComponentType<MarkdownComponentsHeadingProps>;
+  Image: ComponentType<MarkdownComponentsImageProps>;
+  Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
+
+  // Paragraph
+  // Inline (text, strong, em, code, del)
+  // Table
+  // List
+  // Separator (hr)
 };
 
-export type MarkdownProps = {
+export interface MarkdownComponentsBlockquoteProps {
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsImageProps {
+  src: string;
+  alt: string;
+  title?: string;
+}
+
+export interface MarkdownComponentsHeadingProps {
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsLinkProps {
+  href: string;
+  title?: string;
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsCodeBlockProps {
+  code: string;
+  language?: string;
+}
+
+export interface MarkdownProps
+  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
   content: string;
-
-  /** @private */
   components?: Partial<MarkdownComponents>;
-};
-
-const defaultComponents: MarkdownComponents = {
-  CodeBlock: ({ language, code }) => {
-    return (
-      <pre data-language={language ?? undefined}>
-        <code>{code}</code>
-      </pre>
-    );
-  },
-  Anchor: "a",
-};
-
-export function Markdown({ content, components }: MarkdownProps) {
-  const tokens = useMemo(() => {
-    return new Lexer().lex(content);
-  }, [content]);
-
-  return tokens.map((token, index) => {
-    return (
-      <BlockTokenComp
-        token={token as BlockToken}
-        key={index}
-        components={components}
-      />
-    );
-  });
 }
 
 /**
@@ -70,21 +79,117 @@ export type BlockToken =
   | Tokens.Paragraph
   | Tokens.Table;
 
+/**
+ * Inline tokens include:
+ * - strong
+ * - em
+ * - codespan
+ * - br
+ * - del
+ * - link
+ * - image
+ * - text
+ */
+type InlineToken =
+  | Tokens.Strong
+  | Tokens.Em
+  | Tokens.Codespan
+  | Tokens.Br
+  | Tokens.Del
+  | Tokens.Link
+  | Tokens.Image
+  | Tokens.Text
+  | Tokens.Escape;
+
+const defaultComponents: MarkdownComponents = {
+  CodeBlock: ({ language, code }) => {
+    return (
+      <pre data-language={language ?? undefined}>
+        <code>{code}</code>
+      </pre>
+    );
+  },
+  Link: ({ href, title, children }) => {
+    return (
+      <a href={href} title={title} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  },
+  Heading: ({ level, children }) => {
+    const Heading = `h${level}` as const;
+
+    return <Heading>{children}</Heading>;
+  },
+  Image: ({ src, alt, title }) => {
+    return <img src={src} alt={alt} title={title} />;
+  },
+  Blockquote: ({ children }) => {
+    return <blockquote>{children}</blockquote>;
+  },
+};
+
+export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
+  ({ content, components, asChild, ...props }, forwardedRef) => {
+    const Component = asChild ? Slot : "div";
+    const tokens = useMemo(() => {
+      return new Lexer().lex(content);
+    }, [content]);
+
+    return (
+      <Component {...props} ref={forwardedRef}>
+        {tokens.map((token, index) => {
+          return (
+            <MemoizedBlockTokenComp
+              token={token as BlockToken}
+              key={index}
+              components={components}
+            />
+          );
+        })}
+      </Component>
+    );
+  }
+);
+
+const MemoizedBlockTokenComp = memo(
+  function ({
+    token,
+    components,
+  }: {
+    token: BlockToken;
+    components?: Partial<MarkdownComponents>;
+  }) {
+    return <BlockTokenComp token={token} components={components} />;
+  },
+  (prevProps, nextProps) => {
+    const prevToken = prevProps.token;
+    const nextToken = nextProps.token;
+    if (prevToken.raw.length !== nextToken.raw.length) {
+      return false;
+    }
+    if (prevToken.type !== nextToken.type) {
+      return false;
+    }
+    return prevToken.raw === nextToken.raw;
+  }
+);
+
 export function BlockTokenComp({
   token,
   components,
 }: {
   token: BlockToken;
-  components?: Partial<MarkdownComponents>;
+  components: Partial<MarkdownComponents> | undefined;
 }) {
   switch (token.type) {
     case "space": {
       return null;
     }
     case "code": {
-      let language: string | null = null;
+      let language: string | undefined = undefined;
       if (token.lang !== undefined) {
-        language = token.lang.match(/^\S*/)?.[0] ?? null;
+        language = token.lang.match(/^\S*/)?.[0] ?? undefined;
       }
 
       const CodeBlock = components?.CodeBlock ?? defaultComponents.CodeBlock;
@@ -130,8 +235,10 @@ export function BlockTokenComp({
         }
       }
 
+      const Blockquote = components?.Blockquote ?? defaultComponents.Blockquote;
+
       return (
-        <blockquote>
+        <Blockquote>
           {tokens.map((token, index) => {
             return (
               <BlockTokenComp
@@ -141,39 +248,21 @@ export function BlockTokenComp({
               />
             );
           })}
-        </blockquote>
+        </Blockquote>
       );
     }
     case "html": {
       return token.text;
     }
     case "heading": {
-      let HeadingTag: "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-      switch (token.depth) {
-        case 1:
-          HeadingTag = "h1";
-          break;
-        case 2:
-          HeadingTag = "h2";
-          break;
-        case 3:
-          HeadingTag = "h3";
-          break;
-        case 4:
-          HeadingTag = "h4";
-          break;
-        case 5:
-          HeadingTag = "h5";
-          break;
-        case 6:
-          HeadingTag = "h6";
-          break;
-        default:
-          HeadingTag = "h1";
-          break;
+      const Heading = components?.Heading ?? defaultComponents.Heading;
+
+      if (token.depth < 1 || token.depth > 6) {
+        return null;
       }
+
       return (
-        <HeadingTag>
+        <Heading level={token.depth as 1 | 2 | 3 | 4 | 5 | 6}>
           {token.tokens.map((token, index) => (
             <InlineTokenComp
               key={index}
@@ -181,7 +270,7 @@ export function BlockTokenComp({
               components={components}
             />
           ))}
-        </HeadingTag>
+        </Heading>
       );
     }
     case "hr": {
@@ -462,33 +551,12 @@ export function BlockTokenComp({
   }
 }
 
-/**
- * Inline tokens include:
- * - strong
- * - em
- * - codespan
- * - br
- * - del
- * - link
- * - image
- * - text
- */
-type InlineToken =
-  | Tokens.Strong
-  | Tokens.Em
-  | Tokens.Codespan
-  | Tokens.Br
-  | Tokens.Del
-  | Tokens.Link
-  | Tokens.Image
-  | Tokens.Text
-  | Tokens.Escape;
 function InlineTokenComp({
   token,
   components,
 }: {
   token: InlineToken | { type: "checkbox"; checked: boolean };
-  components?: Partial<MarkdownComponents>;
+  components: Partial<MarkdownComponents> | undefined;
 }) {
   switch (token.type) {
     case "strong": {
@@ -559,15 +627,10 @@ function InlineTokenComp({
         ));
       }
 
-      const Anchor = components?.Anchor ?? defaultComponents.Anchor;
+      const Link = components?.Link ?? defaultComponents.Link;
 
       return (
-        <Anchor
-          href={href}
-          title={token.title ? token.title : undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <Link href={href} title={token.title ?? undefined}>
           {token.tokens.map((token, index) => (
             <InlineTokenComp
               key={index}
@@ -575,7 +638,7 @@ function InlineTokenComp({
               components={components}
             />
           ))}
-        </Anchor>
+        </Link>
       );
     }
     case "image": {
@@ -595,9 +658,10 @@ function InlineTokenComp({
         return token.text;
       }
 
+      const Image = components?.Image ?? defaultComponents.Image;
+
       return (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={href} alt={token.text} title={token.title ?? undefined} />
+        <Image src={href} alt={token.text} title={token.title ?? undefined} />
       );
     }
     case "text": {
@@ -625,7 +689,7 @@ function InlineTokenComp({
   }
 }
 
-export function parseHtmlEntities(input: string) {
+function parseHtmlEntities(input: string) {
   const document = new DOMParser().parseFromString(
     `<!doctype html><body>${input}`,
     "text/html"

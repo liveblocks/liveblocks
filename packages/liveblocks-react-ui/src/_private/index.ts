@@ -1,18 +1,5 @@
 // Private APIs
 
-export { type GlobalComponents, useComponents } from "../components";
-export {
-  AiChatAssistantMessage,
-  type AiChatAssistantMessageProps,
-} from "../components/internal/AiChatAssistantMessage";
-export {
-  AiChatComposer,
-  type AiChatComposerProps,
-} from "../components/internal/AiChatComposer";
-export {
-  AiChatUserMessage,
-  type AiChatUserMessageProps,
-} from "../components/internal/AiChatUserMessage";
 export { Button, SelectButton } from "../components/internal/Button";
 export { List } from "../components/internal/List";
 export {
@@ -22,17 +9,32 @@ export {
 } from "../components/internal/Tooltip";
 export { User } from "../components/internal/User";
 export * from "../icons";
-export {
-  AiChatComposerEditor,
-  AiChatComposerForm,
-  AiChatComposerSubmit,
-} from "../primitives/AiChatComposer";
+export { capitalize } from "../utils/capitalize";
+export { useInitial } from "../utils/use-initial";
+export { useRefs } from "../utils/use-refs";
+
+// Private primitives (which will be exported from @liveblocks/react-ui/primitives when/if made public)
+
+export * as AiChatComposer from "../primitives/AiChatComposer";
 export type {
   AiChatComposerEditorProps,
   AiChatComposerFormProps,
   AiChatComposerSubmitProps,
 } from "../primitives/AiChatComposer/types";
 export * as AiMessage from "../primitives/AiMessage";
-export { capitalize } from "../utils/capitalize";
-export { useInitial } from "../utils/use-initial";
-export { useRefs } from "../utils/use-refs";
+export type {
+  AiMessageContentComponents,
+  AiMessageContentProps,
+  AiMessageContentReasoningPartProps,
+  AiMessageContentTextPartProps,
+} from "../primitives/AiMessage/types";
+export type {
+  MarkdownComponents,
+  MarkdownComponentsBlockquoteProps,
+  MarkdownComponentsCodeBlockProps,
+  MarkdownComponentsHeadingProps,
+  MarkdownComponentsImageProps,
+  MarkdownComponentsLinkProps,
+  MarkdownProps,
+} from "../primitives/Markdown";
+export { Markdown } from "../primitives/Markdown";

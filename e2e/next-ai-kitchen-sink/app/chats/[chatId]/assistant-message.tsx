@@ -9,10 +9,6 @@ import {
   UiAssistantMessage,
 } from "@liveblocks/core";
 import { Lexer } from "marked";
-import {
-  type BlockToken,
-  BlockTokenComp as BlockTokenCompPrimitive,
-} from "./markdown";
 import * as CollapsiblePrimitive from "./collapsible";
 import { RefreshIcon } from "../../icons/refresh-icon";
 import { CheckIcon } from "../../icons/check-icon";
@@ -22,7 +18,7 @@ import { ChevronRightIcon } from "../../icons/chevron-right-icon";
 import { CopyIcon } from "../../icons/copy-icon";
 import { CircleAlertIcon } from "../../icons/circle-alert-icon";
 import { TrashIcon } from "../../icons/trash-icon";
-import { AiMessage } from "@liveblocks/react-ui/_private";
+import { AiMessage, Markdown } from "@liveblocks/react-ui/_private";
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -211,37 +207,8 @@ function TextPart({
   text,
   ...props
 }: HTMLAttributes<HTMLDivElement> & { text: string }) {
-  const tokens = useMemo(() => {
-    return new Lexer().lex(text);
-  }, [text]);
-
-  return (
-    <div {...props}>
-      {tokens.map((token, index) => {
-        return (
-          <MemoizedBlockTokenComp token={token as BlockToken} key={index} />
-        );
-      })}
-    </div>
-  );
+  return <Markdown content={text} {...props} />;
 }
-
-const MemoizedBlockTokenComp = memo(
-  function BlockTokenComp({ token }: { token: BlockToken }) {
-    return <BlockTokenCompPrimitive token={token} />;
-  },
-  (prevProps, nextProps) => {
-    const prevToken = prevProps.token;
-    const nextToken = nextProps.token;
-    if (prevToken.raw.length !== nextToken.raw.length) {
-      return false;
-    }
-    if (prevToken.type !== nextToken.type) {
-      return false;
-    }
-    return prevToken.raw === nextToken.raw;
-  }
-);
 
 function ReasoningPart({
   text,

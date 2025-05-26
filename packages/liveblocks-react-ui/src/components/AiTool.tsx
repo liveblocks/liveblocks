@@ -62,6 +62,9 @@ export interface AiToolConfirmationProps extends ComponentProps<"div"> {
   // TODO: What params? Also should they be awaitable like execute()?
   cancel?: () => ToolResultData;
   variant?: "default" | "destructive";
+
+  // TODO: Use existing overrides API to allow customizing the "Confirm" and "Cancel" labels
+  // overrides?: Partial<GlobalOverrides & AiToolConfirmationOverrides>;
 }
 
 function AiToolIcon({ className, ...props }: AiToolIconProps) {

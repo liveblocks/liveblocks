@@ -8,7 +8,7 @@ import type { ComponentType } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
 
-type TextPartProps = {
+export type AiMessageContentTextPartProps = {
   /** @internal */
   index: number;
   /** @internal */
@@ -16,7 +16,7 @@ type TextPartProps = {
   part: AiTextPart;
 };
 
-type ReasoningPartProps = {
+export type AiMessageContentReasoningPartProps = {
   /** @internal */
   index: number;
   /** @internal */
@@ -25,7 +25,7 @@ type ReasoningPartProps = {
 };
 
 /** @internal */
-type ToolInvocationPartProps = {
+type AiMessageContentToolInvocationPartProps = {
   /** @internal */
   index: number;
   /** @internal */
@@ -38,19 +38,19 @@ export interface AiMessageContentComponents {
   /**
    * The component used to display text parts.
    */
-  TextPart: ComponentType<TextPartProps>;
+  TextPart: ComponentType<AiMessageContentTextPartProps>;
 
   /**
    * The component used to display reasoning parts.
    */
-  ReasoningPart: ComponentType<ReasoningPartProps>;
+  ReasoningPart: ComponentType<AiMessageContentReasoningPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.
    * Tool invocations are typically rendered via the render() method instead.
    * @internal
    */
-  ToolInvocationPart: ComponentType<ToolInvocationPartProps>;
+  ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
 }
 
 export interface AiMessageContentProps
