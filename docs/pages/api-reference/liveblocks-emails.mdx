@@ -333,9 +333,6 @@ export async function POST(request: Request) {
         // The formatted comment, pass it to React `children`
         body: { /* ... */},
 
-        // Deprecated: the formatted comment, pass it to React `children` (use `body` instead)
-        reactBody: { /* ... */ },
-
         author: {
           id: "aurélien@example.com",
           info: { /* Custom user info you have resolved */ },
@@ -360,9 +357,6 @@ export async function POST(request: Request) {
 
           // The formatted comment, pass it to React `children`
           body: { /* ... */},
-
-          // Deprecated: the formatted comment, pass it to React `children` (use `body` instead)
-          reactBody: { /* ... */ },
 
           author: {
             id: "aurélien@example.com",
@@ -532,7 +526,7 @@ const emailData = await prepareThreadNotificationEmailAsReact(
 console.log(emailData);
 
 // The components are now used in this React body
-console.log(emailData.comment.reactBody);
+console.log(emailData.comment.body);
 ```
 
 ### prepareThreadNotificationEmailAsHtml [#prepare-thread-notification-email-as-html]
@@ -713,9 +707,6 @@ export async function POST(request: Request) {
         // The formatted comment, as an HTML string
         body: "<div>...</div>",
 
-        // Deprecated: the formatted comment, as an HTML string (use `body` instead)
-        htmlBody: "<div>...</div>",
-
         author: {
           id: "aurélien@example.com",
           info: { /* Custom user info you have resolved */ },
@@ -740,9 +731,6 @@ export async function POST(request: Request) {
 
             // The formatted comment, as an HTML string
             body: "<div>...</div>",
-
-            // Deprecated: the formatted comment, as an HTML string (use `body` instead)
-            htmlBody: "<div>...</div>",
 
             author: {
               id: "aurélien@example.com",

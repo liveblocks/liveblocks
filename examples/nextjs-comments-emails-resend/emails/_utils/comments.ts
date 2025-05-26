@@ -24,13 +24,13 @@ const createRepliesPreview = (
     : `${commentCount} new comments in ${roomName}`;
 
 export const getUnreadMentionPreviewText = (
-  comment: Omit<CommentEmailAsReactData, "reactBody">,
+  comment: CommentEmailAsReactData,
   roomName: RoomInfo["name"]
 ): string =>
   createMentionPreview(getDisplayName(comment.author), getRoomName(roomName));
 
 export const getUnreadMentionHeadlineParts = (
-  comment: Omit<CommentEmailAsReactData, "reactBody">,
+  comment: CommentEmailAsReactData,
   roomName: RoomInfo["name"]
 ): HeadlineParts => [
   getDisplayName(comment.author),
@@ -39,7 +39,7 @@ export const getUnreadMentionHeadlineParts = (
 ];
 
 export const getUnreadRepliesPreviewText = (
-  comments: Omit<CommentEmailAsReactData, "reactBody">[],
+  comments: CommentEmailAsReactData[],
   roomName: RoomInfo["name"]
 ): string =>
   createRepliesPreview(
@@ -49,7 +49,7 @@ export const getUnreadRepliesPreviewText = (
   );
 
 export const getUnreadRepliesHeadlineParts = (
-  comments: Omit<CommentEmailAsReactData, "reactBody">[],
+  comments: CommentEmailAsReactData[],
   roomName: RoomInfo["name"]
 ): HeadlineParts => {
   const commentCount = comments.length;
