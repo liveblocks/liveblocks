@@ -112,7 +112,12 @@ function ToolInvocation({
   if (tool === undefined || tool.render === undefined) return null;
 
   const { type: _, ...rest } = part;
-  const props = { ...rest, respond };
+  const props = {
+    ...rest,
+    respond,
+    A: undefined as never,
+    R: undefined as never,
+  };
   return (
     <AiToolInvocationContext.Provider value={props}>
       <tool.render {...props} />

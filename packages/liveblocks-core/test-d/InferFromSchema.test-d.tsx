@@ -177,6 +177,8 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
           respond={(payload) => {
             expectType<Json>(payload);
           }}
+          A={undefined as never}
+          R={undefined as never}
         />
         <myTool.render
           status="executing"
@@ -186,6 +188,8 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
           respond={(payload) => {
             expectType<Json>(payload);
           }}
+          A={undefined as never}
+          R={undefined as never}
         />
         <myTool.render
           status="executed"
@@ -196,6 +200,8 @@ function infer<T extends JSONSchema4>(x: T): InferFromSchema<T> {
           respond={(payload) => {
             expectType<Json>(payload);
           }}
+          A={undefined as never}
+          R={undefined as never}
         />
       </>
     );

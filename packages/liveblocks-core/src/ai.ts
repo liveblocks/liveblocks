@@ -125,6 +125,10 @@ export type AiToolInvocationProps<
 > = Resolve<
   DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
     respond: (result: R) => void;
+
+    // Expose the inferred types, so we can still read them off
+    A: A;
+    R: R;
   }
 >;
 
