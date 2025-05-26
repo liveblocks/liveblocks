@@ -26,7 +26,7 @@
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-highlight-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
   --lb-elevation-shadow: $lb-elevation-shadow;
-  --lb-elevation-shadow-small: $lb-elevation-shadow-small;
+  --lb-elevation-shadow-moderate: $lb-elevation-shadow-moderate;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
   --lb-destructive-contrast: 8%;
@@ -687,6 +687,7 @@
   --lb-background: #222;
   --lb-foreground: #fff;
   --lb-foreground-contrast: 10%;
+  --lb-dynamic-background: var(--lb-background);
 
   position: relative;
   display: flex;
@@ -1942,6 +1943,8 @@
  *************************************/
 
 .lb-elevation {
+  --lb-dynamic-background: var(--lb-background);
+
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
@@ -1956,6 +1959,10 @@
     border-radius: inherit;
     box-shadow: var(--lb-inset-shadow);
     pointer-events: none;
+  }
+
+  &:where(.lb-elevation-moderate) {
+    box-shadow: var(--lb-elevation-shadow-moderate);
   }
 }
 
@@ -2167,6 +2174,12 @@
  *          Chat Composer            *
  *************************************/
 
+.lb-ai-chat-composer {
+  position: relative;
+  inline-size: 100%;
+  color: var(--lb-foreground);
+}
+
 .lb-ai-chat-composer-form:where(
     :has(.lb-ai-chat-composer-editor:not(:focus-visible))
   ) {
@@ -2181,13 +2194,6 @@
       color: var(--lb-accent-foreground);
     }
   }
-}
-
-.lb-ai-chat-composer-form {
-  position: relative;
-  background: var(--lb-dynamic-background);
-  color: var(--lb-foreground);
-  transition-property: background;
 }
 
 .lb-ai-chat-composer-editor {
@@ -2441,7 +2447,7 @@
     calc(100% - 3 * var(--lb-spacing))
   );
   margin-inline: auto;
-  padding-block-start: var(--lb-spacing);
+  padding-block-start: calc(1.5 * var(--lb-spacing));
   padding-block-end: calc(5 * var(--lb-spacing));
 
   :where(.lb-ai-chat-user-message) {
@@ -2498,8 +2504,6 @@
     max-inline-size: var(--lb-ai-chat-container-width);
     margin-inline: auto;
     border-radius: calc(2 * var(--lb-radius));
-    background: var(--lb-dynamic-background);
-    box-shadow: var(--lb-elevation-shadow-small);
   }
 }
 
@@ -2511,11 +2515,6 @@
   justify-content: center;
   pointer-events: none;
   transform: translateY(-100%);
-}
-
-.lb-ai-chat-composer {
-  position: relative;
-  inline-size: 100%;
 }
 
 .lb-ai-chat-scroll-indicator {

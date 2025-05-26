@@ -232,7 +232,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         <div className="lb-ai-chat-footer">
           <div className="lb-ai-chat-footer-actions">
             <div
-              className="lb-elevation lb-ai-chat-scroll-indicator"
+              className="lb-root lb-elevation lb-ai-chat-scroll-indicator"
               data-visible={isScrollIndicatorVisible ? "" : undefined}
             >
               <button

@@ -550,12 +550,12 @@ export default function Home() {
                   className="lb-ai-chat-message-text"
                   text={simpleMarkdownMessage}
                 />
-                <div className="lb-ai-chat-message-tool">
+                <div className="lb-ai-chat-message-tool-invocation">
                   <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A rendered tool
                   </div>
                 </div>
-                <div className="lb-ai-chat-message-tool">
+                <div className="lb-ai-chat-message-tool-invocation">
                   <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A second rendered tool immediately after the first one
                   </div>
@@ -564,7 +564,7 @@ export default function Home() {
                   className="lb-ai-chat-message-text"
                   text={simpleMarkdownMessage}
                 />
-                <div className="lb-ai-chat-message-tool">
+                <div className="lb-ai-chat-message-tool-invocation">
                   <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A rendered tool as the last part
                   </div>
@@ -603,7 +603,7 @@ export default function Home() {
           </div>
         </div>
         <div className="lb-ai-chat-footer">
-          <div className="lb-ai-chat-composer">
+          <div className="lb-elevation lb-ai-chat-composer">
             {/* Debug panel */}
             <div
               style={{
