@@ -17,7 +17,7 @@ import {
   CopyIcon,
   SpinnerIcon,
 } from "../icons";
-import { useAiToolInvocationContext } from "../primitives/AiMessage";
+import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
 

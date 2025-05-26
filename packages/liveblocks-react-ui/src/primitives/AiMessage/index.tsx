@@ -1,6 +1,5 @@
 import type {
   AiToolInvocationPart,
-  AiToolInvocationProps,
   MessageId,
   ToolResultData,
 } from "@liveblocks/core";
@@ -8,16 +7,10 @@ import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import {
-  createContext,
-  forwardRef,
-  Fragment,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react";
+import { forwardRef, Fragment, useCallback, useMemo } from "react";
 
 import { Markdown } from "../Markdown";
+import { AiToolInvocationContext } from "./contexts";
 import type {
   AiMessageContentComponents,
   AiMessageContentProps,
@@ -38,21 +31,6 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-const AiToolInvocationContext = createContext<AiToolInvocationProps | null>(
-  null
-);
-
-export function useAiToolInvocationContext() {
-  const context = useContext(AiToolInvocationContext);
-
-  if (context === null) {
-    throw new Error(
-      "This component must be used within a tool's render method."
-    );
-  }
-
-  return context;
-}
 
 function ToolInvocation({
   chatId,
