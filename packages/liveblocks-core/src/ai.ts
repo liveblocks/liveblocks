@@ -132,13 +132,11 @@ export type AiToolInvocationProps<
   }
 >;
 
-// XXX Rename to "Opaque"
 export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
   JsonObject,
   ToolResultData
 >;
 
-// XXX Rename to ToolOptions?
 export type AiToolDefinition<
   S extends JSONSchema4,
   A extends JsonObject,
@@ -150,7 +148,6 @@ export type AiToolDefinition<
   render?: ComponentType<AiToolInvocationProps<A, R>>;
 };
 
-// XXX Rename to "Opaque"
 export type AiOpaqueToolDefinition = AiToolDefinition<
   JSONSchema4,
   JsonObject,
