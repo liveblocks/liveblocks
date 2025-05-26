@@ -15,7 +15,6 @@ import {
   type ComponentProps,
   type ComponentType,
   forwardRef,
-  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
@@ -161,15 +160,22 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       };
     }, [ai, chatId, tools]);
 
-    const scrollToBottom = useCallback((behavior: "instant" | "smooth") => {
-      const container = containerRef.current;
-      if (container === null) return;
+    const scrollToBottomCallbackRef =
+      useRef<(behavior: "instant" | "smooth") => void>(undefined);
+    if (scrollToBottomCallbackRef.current === undefined) {
+      scrollToBottomCallbackRef.current = function (
+        behavior: "instant" | "smooth"
+      ) {
+        const container = containerRef.current;
+        if (container === null) return;
 
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior,
-      });
-    }, []);
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior,
+        });
+      };
+    }
+    const scrollToBottom = scrollToBottomCallbackRef.current;
 
     return (
       <div
