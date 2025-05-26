@@ -28,6 +28,7 @@ export type {
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
 } from "../primitives/AiMessage/types";
+export * as Collapsible from "../primitives/Collapsible";
 export type {
   MarkdownComponents,
   MarkdownComponentsBlockquoteProps,

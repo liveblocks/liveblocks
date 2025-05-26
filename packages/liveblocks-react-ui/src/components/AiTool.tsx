@@ -18,7 +18,7 @@ import {
   SpinnerIcon,
 } from "../icons";
 import { useAiToolInvocationContext } from "../primitives/AiMessage";
-import * as CollapsiblePrimitive from "../primitives/internal/Collapsible";
+import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
 
 export interface AiToolProps
@@ -208,7 +208,7 @@ export const AiTool = Object.assign(
       }, [title, toolName]);
 
       return (
-        <CollapsiblePrimitive.Root
+        <Collapsible.Root
           ref={forwardedRef}
           className={classNames("lb-collapsible lb-ai-tool", className)}
           {...props}
@@ -217,7 +217,7 @@ export const AiTool = Object.assign(
           disabled={!hasContent}
         >
           {/* TODO: <button> vs <div> with attributes? */}
-          <CollapsiblePrimitive.Trigger asChild>
+          <Collapsible.Trigger asChild>
             <div
               className={classNames("lb-collapsible-trigger lb-ai-tool-header")}
             >
@@ -238,14 +238,14 @@ export const AiTool = Object.assign(
                 )}
               </div>
             </div>
-          </CollapsiblePrimitive.Trigger>
+          </Collapsible.Trigger>
 
           {children ? (
-            <CollapsiblePrimitive.Content className="lb-collapsible-content lb-ai-tool-content-container">
+            <Collapsible.Content className="lb-collapsible-content lb-ai-tool-content-container">
               <div className="lb-ai-tool-content">{children}</div>
-            </CollapsiblePrimitive.Content>
+            </Collapsible.Content>
           ) : null}
-        </CollapsiblePrimitive.Root>
+        </Collapsible.Root>
       );
     }
   ),

@@ -30,7 +30,7 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
-import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
+import * as Collapsible from "../../primitives/Collapsible";
 import {
   Markdown,
   type MarkdownComponentsCodeBlockProps,
@@ -212,12 +212,12 @@ function ReasoningPart({
 }: AiMessageContentReasoningPartProps) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <CollapsiblePrimitive.Root
+    <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CollapsiblePrimitive.Trigger
+      <Collapsible.Trigger
         className={classNames(
           "lb-collapsible-trigger",
           isStreaming && "lb-ai-chat-pending"
@@ -228,16 +228,16 @@ function ReasoningPart({
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
-      </CollapsiblePrimitive.Trigger>
+      </Collapsible.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-collapsible-content">
+      <Collapsible.Content className="lb-collapsible-content">
         <Markdown
           content={part.text}
           components={{ Link, CodeBlock }}
           className="lb-ai-chat-message-text"
         />
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
 

@@ -1,15 +1,13 @@
 "use client";
 
 import { useClient } from "@liveblocks/react/suspense";
-import { HTMLAttributes, memo, useEffect, useMemo, useState } from "react";
+import { HTMLAttributes, memo, useEffect, useState } from "react";
 import {
   CopilotId,
   kInternal,
   MessageId,
   UiAssistantMessage,
 } from "@liveblocks/core";
-import { Lexer } from "marked";
-import * as CollapsiblePrimitive from "./collapsible";
 import { RefreshIcon } from "../../icons/refresh-icon";
 import { CheckIcon } from "../../icons/check-icon";
 import { ChevronDownIcon } from "../../icons/chevron-down-icon";
@@ -18,7 +16,11 @@ import { ChevronRightIcon } from "../../icons/chevron-right-icon";
 import { CopyIcon } from "../../icons/copy-icon";
 import { CircleAlertIcon } from "../../icons/circle-alert-icon";
 import { TrashIcon } from "../../icons/trash-icon";
-import { AiMessage, Markdown } from "@liveblocks/react-ui/_private";
+import {
+  AiMessage,
+  Markdown,
+  Collapsible,
+} from "@liveblocks/react-ui/_private";
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -219,22 +221,22 @@ function ReasoningPart({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <CollapsiblePrimitive.Root
+    <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CollapsiblePrimitive.Trigger className={`${isPending ? "" : ""}`}>
+      <Collapsible.Trigger className={`${isPending ? "" : ""}`}>
         Reasoning
         <span className="lb-icon-container">
           {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
         </span>
-      </CollapsiblePrimitive.Trigger>
+      </Collapsible.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-collapsible-content">
+      <Collapsible.Content className="lb-collapsible-content">
         {text}
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
 

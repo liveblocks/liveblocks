@@ -1,17 +1,12 @@
 "use client";
 
-import { Lexer } from "marked";
 import {
-  ComponentProps,
   HTMLAttributes,
-  memo,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import * as CollapsiblePrimitive from "../chats/[chatId]/collapsible";
 import {
   Button,
   CheckIcon,
@@ -20,6 +15,7 @@ import {
   Markdown,
   MarkdownComponentsCodeBlockProps,
   WarningIcon,
+  Collapsible,
 } from "@liveblocks/react-ui/_private";
 
 function TextPart({
@@ -38,12 +34,12 @@ function ReasoningPart({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <CollapsiblePrimitive.Root
+    <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CollapsiblePrimitive.Trigger
+      <Collapsible.Trigger
         className={`lb-collapsible-trigger ${
           isPending ? "lb-ai-chat-pending" : ""
         }`}
@@ -52,16 +48,16 @@ function ReasoningPart({
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
-      </CollapsiblePrimitive.Trigger>
+      </Collapsible.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-collapsible-content">
+      <Collapsible.Content className="lb-collapsible-content">
         <Markdown
           content={text}
           className="lb-ai-chat-message-text"
           components={{ CodeBlock }}
         />
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
 
