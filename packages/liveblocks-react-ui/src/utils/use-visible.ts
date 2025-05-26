@@ -2,39 +2,126 @@ import { type RefObject, useEffect, useState } from "react";
 
 import { useLatest } from "./use-latest";
 
-type Options = { enabled?: boolean };
+interface ObserveOptions {
+  rootMargin?: string | number;
+  root?: RefObject<Element>;
+}
+
+interface Options extends ObserveOptions {
+  enabled?: boolean;
+}
 
 type IntersectionObserverSingleCallback = (
   entry: IntersectionObserverEntry
 ) => void;
 
-let intersectionObserver: IntersectionObserver | undefined;
-const intersectionCallbacks = new WeakMap<
+let optionlessIntersectionObserver: IntersectionObserver | undefined;
+const optionlessIntersectionCallbacks = new WeakMap<
   Element,
   IntersectionObserverSingleCallback
 >();
 
+const individualIntersectionObservers = new WeakMap<
+  Element,
+  IntersectionObserver
+>();
+
 function observe(
   element: Element,
-  callback: IntersectionObserverSingleCallback
+  callback: IntersectionObserverSingleCallback,
+  options?: ObserveOptions
 ) {
-  if (!intersectionObserver) {
-    intersectionObserver = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        const callback = intersectionCallbacks.get(entry.target);
+  // Observers without options share a common IntersectionObserver instance, ones with options have their own
+  if (!options) {
+    if (!optionlessIntersectionObserver) {
+      optionlessIntersectionObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          const callback = optionlessIntersectionCallbacks.get(entry.target);
 
-        callback?.(entry);
+          callback?.(entry);
+        }
+      });
+    }
+
+    optionlessIntersectionCallbacks.set(element, callback);
+    optionlessIntersectionObserver.observe(element);
+  } else {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          callback?.(entry);
+        }
+      },
+      {
+        root: options.root?.current,
+        rootMargin:
+          typeof options.rootMargin === "number"
+            ? `${options.rootMargin}px`
+            : options.rootMargin,
       }
-    });
-  }
+    );
 
-  intersectionCallbacks.set(element, callback);
-  intersectionObserver.observe(element);
+    individualIntersectionObservers.set(element, observer);
+    observer.observe(element);
+  }
 }
 
-function unobserve(element: Element) {
-  intersectionCallbacks.delete(element);
-  intersectionObserver?.unobserve(element);
+function unobserve(element: Element, options?: ObserveOptions) {
+  if (!options) {
+    optionlessIntersectionCallbacks.delete(element);
+    optionlessIntersectionObserver?.unobserve(element);
+  } else {
+    const observer = individualIntersectionObservers.get(element);
+
+    observer?.unobserve(element);
+    individualIntersectionObservers.delete(element);
+  }
+}
+
+/**
+ * Observe when an element enters or exits the viewport.
+ *
+ * If you only need to get a stateful visibility value, use the higher level hook `useVisible` instead.
+ */
+export function useIntersectionCallback(
+  ref: RefObject<Element>,
+  callback: (isIntersecting: boolean, entry: IntersectionObserverEntry) => void,
+  options?: Options
+) {
+  const enabled = options?.enabled ?? true;
+  const latestCallback = useLatest(callback);
+  const { root, rootMargin } = options ?? {};
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element) {
+      return;
+    }
+
+    const observeOptions: ObserveOptions = {
+      root,
+      rootMargin,
+    };
+
+    if (enabled) {
+      observe(
+        element,
+        (entry) => {
+          // The intersection observer entry might be useful in some cases but the main information
+          // is whether the element is intersecting or not so we pass that as the first argument.
+          latestCallback.current(entry.isIntersecting, entry);
+        },
+        observeOptions
+      );
+    } else {
+      unobserve(element, observeOptions);
+    }
+
+    return () => {
+      unobserve(element, observeOptions);
+    };
+  }, [ref, enabled, latestCallback, root, rootMargin]);
 }
 
 /**
@@ -42,58 +129,12 @@ function unobserve(element: Element) {
  */
 export function useVisible(ref: RefObject<Element>, options?: Options) {
   const [isVisible, setVisible] = useState(false);
-  const enabled = options?.enabled ?? true;
 
-  useEffect(() => {
-    const element = ref.current;
-
-    if (!element) {
-      return;
-    }
-
-    if (enabled) {
-      observe(element, (entry) => {
-        setVisible(entry.isIntersecting);
-      });
-    } else {
-      unobserve(element);
-    }
-
-    return () => {
-      unobserve(element);
-    };
-  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  useIntersectionCallback(
+    ref,
+    (isIntersecting) => setVisible(isIntersecting),
+    options
+  );
 
   return isVisible;
-}
-
-export function useVisibleCallback<T extends (...args: any[]) => void>(
-  ref: RefObject<Element>,
-  callback: T,
-  options?: Options
-) {
-  const enabled = options?.enabled ?? true;
-  const latestCallback = useLatest(callback);
-
-  useEffect(() => {
-    const element = ref.current;
-
-    if (!element) {
-      return;
-    }
-
-    if (enabled) {
-      observe(element, (entry) => {
-        if (entry.isIntersecting) {
-          latestCallback.current();
-        }
-      });
-    } else {
-      unobserve(element);
-    }
-
-    return () => {
-      unobserve(element);
-    };
-  }, [enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 }

@@ -37,6 +37,12 @@ import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
+/**
+ * The minimum number of pixels from the bottom of the scrollable area
+ * before showing the scroll to bottom indicator.
+ */
+const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 50;
+
 export interface AiChatProps extends ComponentProps<"div"> {
   /**
    * The id of the chat the composer belongs to.
@@ -101,6 +107,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const containerBottomRef = useRef<HTMLDivElement | null>(null);
     const isScrollAtBottom = useVisible(containerBottomRef, {
       enabled: !isLoading && !error,
+      root: containerRef,
+      rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR,
     });
     const isScrollIndicatorVisible =
       isLoading || error ? false : !isScrollAtBottom;
