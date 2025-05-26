@@ -140,7 +140,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const client = useClient();
     const ai = client[kInternal].ai;
 
-    const [lastSendMessageId, setLastSendMessageId] =
+    const [lastSentMessageId, setLastSentMessageId] =
       useState<MessageId | null>(null);
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
@@ -205,7 +205,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ) : (
             <>
               <AutoScrollToBottomHandler
-                lastSendMessageId={lastSendMessageId}
+                lastSendMessageId={lastSentMessageId}
                 scrollToBottom={scrollToBottom}
               />
               <div className="lb-ai-chat-messages">
@@ -261,7 +261,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={$}
             autoFocus={autoFocus}
-            onUserMessageCreate={({ id }) => setLastSendMessageId(id)}
+            onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
             className={
               layout === "inset"
                 ? "lb-elevation lb-elevation-moderate"
