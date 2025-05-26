@@ -527,6 +527,14 @@
  *               Emoji               *
  *************************************/
 
+.lb-emoji {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: 1em;
+  white-space: nowrap;
+}
+
 @include safari-only {
   .lb-emoji {
     transform: scale(0.825);
