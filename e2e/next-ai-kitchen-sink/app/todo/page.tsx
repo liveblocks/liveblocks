@@ -211,10 +211,9 @@ export default function Page() {
                           required: ["ids"],
                         },
 
-                        render: ({ status, args, result }) => (
+                        render: ({ status, result }) => (
                           <AiTool>
                             <AiTool.Confirmation
-                              args={args}
                               variant="destructive"
                               confirm={({ args }) => {
                                 const ids = args.ids;

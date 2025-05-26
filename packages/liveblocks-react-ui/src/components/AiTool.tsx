@@ -1,8 +1,9 @@
-import type { Awaitable, ToolResultData } from "@liveblocks/core";
+import type { Awaitable, JsonObject, ToolResultData } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Children,
   forwardRef,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -56,9 +57,13 @@ export type AiToolInspectorProps = ComponentProps<"div">;
  *
  * This component can be used to build human-in-the-loop interfaces.
  */
-export interface AiToolConfirmationProps extends ComponentProps<"div"> {
-  confirm: () => Awaitable<ToolResultData>;
-  cancel: () => Awaitable<ToolResultData>;
+export interface AiToolConfirmationProps<
+  A extends JsonObject,
+  R extends ToolResultData,
+> extends ComponentProps<"div"> {
+  args?: A;
+  confirm: (args: { status: "executing"; args: A }) => Awaitable<R>;
+  cancel: (args: { status: "executing"; args: A }) => Awaitable<R>;
   variant?: "default" | "destructive";
 }
 
@@ -124,15 +129,29 @@ function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
   );
 }
 
-function AiToolConfirmation({
+function AiToolConfirmation<A extends JsonObject, R extends ToolResultData>({
   children,
   variant = "default",
   confirm,
   cancel,
   className,
   ...props
-}: AiToolConfirmationProps) {
-  const { status, respond } = useAiToolInvocationContext();
+}: AiToolConfirmationProps<A, R>) {
+  const { status, args, respond } = useAiToolInvocationContext();
+
+  const enabled = status === "executing";
+
+  const onConfirmClick = useCallback(async () => {
+    if (enabled) {
+      respond(await confirm({ status, args: args as A }));
+    }
+  }, [enabled, status, args, confirm, respond]);
+
+  const onCancelClick = useCallback(async () => {
+    if (enabled) {
+      respond(await cancel({ status, args: args as A }));
+    }
+  }, [enabled, status, args, cancel, respond]);
 
   if (status === "executed") {
     return null;
@@ -149,13 +168,15 @@ function AiToolConfirmation({
       <div className="lb-ai-tool-confirmation-footer">
         <div className="lb-ai-tool-confirmation-actions">
           <Button
-            onClick={async () => respond(await confirm())}
+            disabled={!enabled}
+            onClick={onConfirmClick}
             variant={variant === "destructive" ? "destructive" : "primary"}
           >
             Confirm
           </Button>
           <Button
-            onClick={async () => respond(await cancel())}
+            disabled={!enabled}
+            onClick={onCancelClick}
             variant="secondary"
           >
             Cancel
