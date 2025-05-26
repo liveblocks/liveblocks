@@ -127,7 +127,7 @@ export type AiGenerationOptions = {
    */
   copilotId?: CopilotId;
   stream?: boolean; // default = true
-  tools?: AiToolDefinition[];
+  tools?: AiToolDescription[];
   knowledge?: AiKnowledgeSource[];
   timeout?: number; // in millis
 };
@@ -280,7 +280,7 @@ export type AiChat = {
   deletedAt?: ISODateString; // Optional for soft-deleted chats
 };
 
-export type AiToolDefinition = {
+export type AiToolDescription = {
   name: string;
   description?: string;
   parameters: JsonObject;

@@ -1,4 +1,4 @@
-import type { JSONSchema4 } from "json-schema";
+import type { JSONSchema7 } from "json-schema";
 import type { ComponentType } from "react";
 
 import { getBearerTokenFromAuthValue } from "./api-client";
@@ -74,13 +74,13 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
-export type InferFromSchema<T extends JSONSchema4> =
+export type InferFromSchema<T extends JSONSchema7> =
   //
-  JSONSchema4 extends T
+  JSONSchema7 extends T
     ? JsonObject
     : T extends {
           type: "object";
-          properties: Record<string, JSONSchema4>;
+          properties: Record<string, JSONSchema7>;
           required: readonly string[];
         }
       ? Resolve<
@@ -100,7 +100,7 @@ export type InferFromSchema<T extends JSONSchema4> =
         >
       : T extends {
             type: "object";
-            properties: Record<string, JSONSchema4>;
+            properties: Record<string, JSONSchema7>;
           }
         ? {
             -readonly [K in keyof T["properties"]]?: InferFromSchema<
@@ -115,7 +115,7 @@ export type InferFromSchema<T extends JSONSchema4> =
               ? boolean
               : T extends { type: "null" }
                 ? null
-                : T extends { type: "array"; items: JSONSchema4 }
+                : T extends { type: "array"; items: JSONSchema7 }
                   ? InferFromSchema<T["items"]>[]
                   : unknown;
 
@@ -138,7 +138,7 @@ export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
 >;
 
 export type AiToolDefinition<
-  S extends JSONSchema4,
+  S extends JSONSchema7,
   A extends JsonObject,
   R extends ToolResultData,
 > = {
@@ -149,7 +149,7 @@ export type AiToolDefinition<
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<
-  JSONSchema4,
+  JSONSchema7,
   JsonObject,
   ToolResultData
 >;
@@ -160,7 +160,7 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
  * possible for TypeScript to infer types.
  */
 export function tool<R extends ToolResultData>() {
-  return <const S extends JSONSchema4>(
+  return <const S extends JSONSchema7>(
     def: AiToolDefinition<
       S,
       InferFromSchema<S> extends JsonObject ? InferFromSchema<S> : JsonObject,
@@ -1225,7 +1225,7 @@ export function createAi(config: AiConfig): Ai {
         tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
           name: tool.name,
           description: tool.definition.description,
-          parameters: tool.definition.parameters,
+          parameters: tool.definition.parameters as JsonObject,
         })),
       },
     });
@@ -1285,7 +1285,7 @@ export function createAi(config: AiConfig): Ai {
             tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
               name: tool.name,
               description: tool.definition.description,
-              parameters: tool.definition.parameters,
+              parameters: tool.definition.parameters as JsonObject,
             })),
           },
         });

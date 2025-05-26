@@ -8,10 +8,10 @@ import type {
   JsonObject,
 } from "@liveblocks/core";
 import { tool } from "@liveblocks/core";
-import type { JSONSchema4 } from "json-schema";
+import type { JSONSchema7 } from "json-schema";
 import { expectType } from "tsd";
 
-function infer<const T extends JSONSchema4>(x: T): InferFromSchema<T> {
+function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
   return x as any;
 }
 
