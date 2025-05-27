@@ -158,7 +158,12 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
   expectType<string | undefined>(myTool.description);
   if (myTool.execute) {
-    expectType<(args: JsonObject) => Awaitable<Json>>(myTool.execute);
+    expectType<
+      (
+        args: JsonObject,
+        context: { toolName: string; toolCallId: string }
+      ) => Awaitable<Json>
+    >(myTool.execute);
   } else {
     expectType<undefined>(myTool.execute);
   }

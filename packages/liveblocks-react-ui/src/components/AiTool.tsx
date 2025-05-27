@@ -1,4 +1,8 @@
-import type { Awaitable, JsonObject, ToolResultData } from "@liveblocks/core";
+import type {
+  AiToolExecuteCallback,
+  JsonObject,
+  ToolResultData,
+} from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Children,
@@ -62,8 +66,8 @@ export interface AiToolConfirmationProps<
   R extends ToolResultData,
 > extends ComponentProps<"div"> {
   args?: A;
-  confirm: (args: { status: "executing"; args: A }) => Awaitable<R>;
-  cancel: (args: { status: "executing"; args: A }) => Awaitable<R>;
+  confirm: AiToolExecuteCallback<A, R>;
+  cancel: AiToolExecuteCallback<A, R>;
   variant?: "default" | "destructive";
 }
 
@@ -137,21 +141,27 @@ function AiToolConfirmation<A extends JsonObject, R extends ToolResultData>({
   className,
   ...props
 }: AiToolConfirmationProps<A, R>) {
-  const { status, args, respond } = useAiToolInvocationContext();
+  const { status, args, respond, toolName, toolCallId } =
+    useAiToolInvocationContext();
 
   const enabled = status === "executing";
 
+  const context = useMemo(
+    () => ({ toolName, toolCallId }),
+    [toolName, toolCallId]
+  );
+
   const onConfirmClick = useCallback(async () => {
     if (enabled) {
-      respond(await confirm({ status, args: args as A }));
+      respond(await confirm(args as A, context));
     }
-  }, [enabled, status, args, confirm, respond]);
+  }, [enabled, args, confirm, respond, context]);
 
   const onCancelClick = useCallback(async () => {
     if (enabled) {
-      respond(await cancel({ status, args: args as A }));
+      respond(await cancel(args as A, context));
     }
-  }, [enabled, status, args, cancel, respond]);
+  }, [enabled, args, cancel, respond, context]);
 
   if (status === "executed") {
     return null;

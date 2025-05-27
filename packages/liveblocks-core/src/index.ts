@@ -20,6 +20,8 @@ export type {
   AiOpaqueToolDefinition,
   AiOpaqueToolInvocationProps,
   AiToolDefinition,
+  AiToolExecuteCallback,
+  AiToolExecuteContext,
   AiToolInvocationProps,
   InferFromSchema,
   UiAssistantMessage,

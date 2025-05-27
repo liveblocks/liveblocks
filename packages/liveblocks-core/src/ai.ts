@@ -137,6 +137,16 @@ export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
   ToolResultData
 >;
 
+export type AiToolExecuteContext = {
+  toolName: string;
+  toolCallId: string;
+};
+
+export type AiToolExecuteCallback<
+  A extends JsonObject,
+  R extends ToolResultData,
+> = (args: A, context: AiToolExecuteContext) => Awaitable<R>;
+
 export type AiToolDefinition<
   S extends JSONSchema7,
   A extends JsonObject,
@@ -144,7 +154,7 @@ export type AiToolDefinition<
 > = {
   description?: string;
   parameters: S;
-  execute?: (args: A) => Awaitable<R>;
+  execute?: AiToolExecuteCallback<A, R>;
   render?: ComponentType<AiToolInvocationProps<A, R>>;
 };
 
@@ -547,7 +557,10 @@ function createStore_forChatMessages(
           const executeFn = toolDef?.execute;
           if (executeFn) {
             (async () => {
-              const result = await executeFn(toolCall.args);
+              const result = await executeFn(toolCall.args, {
+                toolName: toolCall.toolName,
+                toolCallId: toolCall.toolCallId,
+              });
               respondSync(result);
             })().catch((err) => {
               console.error(

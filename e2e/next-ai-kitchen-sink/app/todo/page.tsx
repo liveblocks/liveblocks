@@ -215,9 +215,7 @@ export default function Page() {
                           <AiTool>
                             <AiTool.Confirmation<typeof A, typeof R>
                               variant="destructive"
-                              confirm={({ args }) => {
-                                const ids = args.ids;
-
+                              confirm={({ ids }) => {
                                 const deletedTitles = todos
                                   .filter((t) => ids.includes(t.id))
                                   .map((todo) => todo.title);
