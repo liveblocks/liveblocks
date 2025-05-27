@@ -3,14 +3,24 @@ import {
   type ComponentProps,
   forwardRef,
   memo,
+  type PropsWithChildren,
   type ReactNode,
   useEffect,
   useRef,
   useState,
 } from "react";
 
-import { AiMessage, Button } from "../../_private";
-import { type GlobalComponents, useComponents } from "../../components";
+import {
+  AiMessage,
+  type AiMessageContentReasoningPartProps,
+  type AiMessageContentTextPartProps,
+  Button,
+} from "../../_private";
+import {
+  ComponentsProvider,
+  type GlobalComponents,
+  useComponents,
+} from "../../components";
 import { CheckIcon } from "../../icons/Check";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
 import { CopyIcon } from "../../icons/Copy";
@@ -20,11 +30,12 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
-import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
+import * as Collapsible from "../../primitives/Collapsible";
 import {
-  type MarkdownComponents,
-  MarkdownWithMemoizedBlocks,
-} from "../../primitives/internal/Markdown";
+  Markdown,
+  type MarkdownComponentsCodeBlockProps,
+  type MarkdownComponentsLinkProps,
+} from "../../primitives/Markdown";
 import { classNames } from "../../utils/class-names";
 
 /* -------------------------------------------------------------------------------------------------
@@ -71,33 +82,18 @@ export const AiChatAssistantMessage = memo(
             </div>
           );
         } else {
-          children = (
-            <AssistantMessageContent
-              message={message}
-              components={components}
-            />
-          );
+          children = <AssistantMessageContent message={message} />;
         }
       } else if (message.status === "completed") {
-        children = (
-          <AssistantMessageContent message={message} components={components} />
-        );
+        children = <AssistantMessageContent message={message} />;
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
         if (message.errorReason === "Aborted by user") {
-          children = (
-            <AssistantMessageContent
-              message={message}
-              components={components}
-            />
-          );
+          children = <AssistantMessageContent message={message} />;
         } else {
           children = (
             <>
-              <AssistantMessageContent
-                message={message}
-                components={components}
-              />
+              <AssistantMessageContent message={message} />
 
               <div className="lb-ai-chat-message-error">
                 <span className="lb-icon-container">
@@ -119,44 +115,24 @@ export const AiChatAssistantMessage = memo(
           {...props}
           ref={forwardedRef}
         >
-          {children}
+          <ComponentsProvider components={components}>
+            {children}
+          </ComponentsProvider>
         </div>
       );
     }
   )
 );
 
-function AssistantMessageContent({
-  message,
-  components,
-}: {
-  message: UiAssistantMessage;
-  components: Partial<GlobalComponents> | undefined;
-}) {
+function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
   return (
     <div className="lb-ai-chat-message-content">
       <AiMessage.Content
         message={message}
         components={{
-          TextPart: ({ part }) => (
-            <TextPart
-              text={part.text}
-              components={components}
-              className="lb-ai-chat-message-text"
-            />
-          ),
-
-          ReasoningPart: ({ part, isStreaming }) => (
-            <ReasoningPart
-              text={part.text}
-              isStreaming={isStreaming}
-              components={components}
-            />
-          ),
-
-          ToolInvocationPart: ({ children }) => (
-            <div className="lb-ai-chat-message-tool-invocation">{children}</div>
-          ),
+          TextPart,
+          ReasoningPart,
+          ToolInvocationPart,
         }}
       />
     </div>
@@ -166,31 +142,18 @@ function AssistantMessageContent({
 /* -------------------------------------------------------------------------------------------------
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
-interface TextPartProps extends ComponentProps<"div"> {
-  text: string;
-  components: Partial<GlobalComponents> | undefined;
+function TextPart({ part }: AiMessageContentTextPartProps) {
+  return (
+    <Markdown
+      content={part.text}
+      components={{ Link, CodeBlock }}
+      className="lb-ai-chat-message-text"
+    />
+  );
 }
 
-const TextPart = forwardRef<HTMLDivElement, TextPartProps>(
-  ({ text, components, ...props }, forwardedRef) => {
-    const { Anchor } = useComponents(components);
-
-    return (
-      <div ref={forwardedRef} {...props}>
-        <MarkdownWithMemoizedBlocks
-          content={text}
-          components={{ Anchor, CodeBlock }}
-        />
-      </div>
-    );
-  }
-);
-
 // TODO: Improve (better copy handling, tooltips, etc)
-function CodeBlock({
-  language,
-  code,
-}: ComponentProps<MarkdownComponents["CodeBlock"]>) {
+function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
   const [isCopied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -230,26 +193,31 @@ function CodeBlock({
   );
 }
 
+function Link({ href, title, children }: MarkdownComponentsLinkProps) {
+  const { Anchor } = useComponents();
+
+  return (
+    <Anchor href={href} title={title}>
+      {children}
+    </Anchor>
+  );
+}
+
 /* -------------------------------------------------------------------------------------------------
  * ReasoningPart
  * -----------------------------------------------------------------------------------------------*/
 function ReasoningPart({
-  text,
+  part,
   isStreaming,
-  components,
-}: {
-  text: string;
-  isStreaming: boolean;
-  components: Partial<GlobalComponents> | undefined;
-}) {
+}: AiMessageContentReasoningPartProps) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <CollapsiblePrimitive.Root
+    <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CollapsiblePrimitive.Trigger
+      <Collapsible.Trigger
         className={classNames(
           "lb-collapsible-trigger",
           isStreaming && "lb-ai-chat-pending"
@@ -260,11 +228,22 @@ function ReasoningPart({
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
-      </CollapsiblePrimitive.Trigger>
+      </Collapsible.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-collapsible-content">
-        <TextPart text={text} components={components} />
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      <Collapsible.Content className="lb-collapsible-content">
+        <Markdown
+          content={part.text}
+          components={{ Link, CodeBlock }}
+          className="lb-ai-chat-message-text"
+        />
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * ToolInvocationPart
+ * -----------------------------------------------------------------------------------------------*/
+function ToolInvocationPart({ children }: PropsWithChildren) {
+  return <div className="lb-ai-chat-message-tool-invocation">{children}</div>;
 }

@@ -1,8 +1,9 @@
-import type { ComponentPropsWithSlot } from "../../../types";
+import type { ComponentPropsWithSlot } from "../../types";
 
 export interface RootProps extends ComponentPropsWithSlot<"div"> {
-  open: boolean;
-  onOpenChange(open: boolean): void;
+  defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   disabled?: boolean;
 }
 

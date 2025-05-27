@@ -1,5 +1,4 @@
 export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
-export * as AiChatComposer from "./AiChatComposer";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,

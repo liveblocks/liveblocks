@@ -1,47 +1,28 @@
 "use client";
 
-import { Lexer } from "marked";
 import {
-  ComponentProps,
   HTMLAttributes,
-  memo,
   useEffect,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
 import {
-  BlockToken,
-  BlockTokenComp as BlockTokenCompPrimitive,
-  MarkdownComponents,
-} from "../chats/[chatId]/markdown";
-import * as CollapsiblePrimitive from "../chats/[chatId]/collapsible";
-import {
   Button,
   CheckIcon,
   ChevronRightIcon,
   CopyIcon,
+  Markdown,
+  MarkdownComponentsCodeBlockProps,
   WarningIcon,
+  Collapsible,
 } from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
   ...props
 }: HTMLAttributes<HTMLDivElement> & { text: string }) {
-  const tokens = useMemo(() => {
-    return new Lexer().lex(text);
-  }, [text]);
-
-  return (
-    <div {...props}>
-      {tokens.map((token, index) => {
-        return (
-          <MemoizedBlockTokenComp token={token as BlockToken} key={index} />
-        );
-      })}
-    </div>
-  );
+  return <Markdown content={text} {...props} components={{ CodeBlock }} />;
 }
 
 function ReasoningPart({
@@ -53,12 +34,12 @@ function ReasoningPart({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <CollapsiblePrimitive.Root
+    <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <CollapsiblePrimitive.Trigger
+      <Collapsible.Trigger
         className={`lb-collapsible-trigger ${
           isPending ? "lb-ai-chat-pending" : ""
         }`}
@@ -67,19 +48,20 @@ function ReasoningPart({
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
-      </CollapsiblePrimitive.Trigger>
+      </Collapsible.Trigger>
 
-      <CollapsiblePrimitive.Content className="lb-collapsible-content">
-        <TextPart className="lb-ai-chat-message-text" text={text} />
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      <Collapsible.Content className="lb-collapsible-content">
+        <Markdown
+          content={text}
+          className="lb-ai-chat-message-text"
+          components={{ CodeBlock }}
+        />
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
 
-function CodeBlock({
-  language,
-  code,
-}: ComponentProps<MarkdownComponents["CodeBlock"]>) {
+function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
   const [isCopied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -118,30 +100,6 @@ function CodeBlock({
     </div>
   );
 }
-
-const MemoizedBlockTokenComp = memo(
-  function BlockTokenComp({ token }: { token: BlockToken }) {
-    return (
-      <BlockTokenCompPrimitive
-        token={token}
-        components={{
-          CodeBlock,
-        }}
-      />
-    );
-  },
-  (prevProps, nextProps) => {
-    const prevToken = prevProps.token;
-    const nextToken = nextProps.token;
-    if (prevToken.raw.length !== nextToken.raw.length) {
-      return false;
-    }
-    if (prevToken.type !== nextToken.type) {
-      return false;
-    }
-    return prevToken.raw === nextToken.raw;
-  }
-);
 
 const reasoningMessage = `
 This is a reasoning message, it can also include **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
