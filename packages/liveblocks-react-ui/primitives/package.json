@@ -1,4 +1,4 @@
 {
-  "main": "../dist/primitives/index.js",
-  "types": "../dist/primitives/index.d.ts"
+  "main": "../dist/primitives/index.cjs",
+  "types": "../dist/primitives/index.d.cts"
 }
