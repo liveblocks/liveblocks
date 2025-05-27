@@ -474,8 +474,13 @@
 
 .lb-collapsible-trigger {
   all: unset;
+  position: relative;
   box-sizing: inherit;
-  transition: none var(--lb-transition-duration) var(--lb-transition-easing);
+  user-select: none;
+  transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: color, background, opacity;
+  -webkit-tap-highlight-color: transparent;
 
   &:where(:not([data-disabled])) {
     cursor: pointer;
@@ -2687,11 +2692,17 @@
   margin-block-end: calc(0.75 * var(--lb-spacing));
 
   :where(.lb-collapsible-trigger) {
-    @include truncate;
-
     display: flex;
     gap: calc(0.25 * var(--lb-spacing));
     align-items: center;
+
+    &:where(:focus-visible) {
+      color: var(--lb-accent);
+
+      :where(.lb-collapsible-chevron) {
+        color: var(--lb-accent-moderate);
+      }
+    }
   }
 
   :where(.lb-collapsible-content) {
@@ -2713,14 +2724,35 @@
 }
 
 .lb-ai-tool {
-  border: 1px solid var(--lb-foreground-subtle);
+  position: relative;
   border-radius: var(--lb-radius);
+  box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    transition-property: box-shadow;
+  }
+
+  &:where(:has(.lb-ai-tool-header:focus-visible)) {
+    z-index: 1;
+
+    &::after {
+      box-shadow:
+        var(--lb-dynamic-background) 0 0 0 2px,
+        var(--lb-accent) 0 0 0 4px;
+    }
+  }
 }
 
 .lb-ai-tool-header {
   display: flex;
   gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
+  inline-size: 100%;
   block-size: calc($lb-button-size + var(--lb-spacing));
   padding-inline: calc(0.5 * var(--lb-spacing));
 }

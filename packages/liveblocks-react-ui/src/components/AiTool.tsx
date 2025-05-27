@@ -216,27 +216,22 @@ export const AiTool = Object.assign(
           onOpenChange={hasContent ? setIsOpen : noop}
           disabled={!hasContent}
         >
-          {/* TODO: <button> vs <div> with attributes? */}
-          <Collapsible.Trigger asChild>
-            <div
-              className={classNames("lb-collapsible-trigger lb-ai-tool-header")}
-            >
-              {icon ? (
-                <div className="lb-ai-tool-header-icon-container">{icon}</div>
-              ) : null}
-              <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
-              {hasContent ? (
-                <span className="lb-collapsible-chevron lb-icon-container">
-                  <ChevronRightIcon />
-                </span>
-              ) : null}
-              <div className="lb-ai-tool-header-status">
-                {status === "executed" ? (
-                  <CheckCircleFillIcon />
-                ) : (
-                  <SpinnerIcon />
-                )}
-              </div>
+          <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
+            {icon ? (
+              <div className="lb-ai-tool-header-icon-container">{icon}</div>
+            ) : null}
+            <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
+            {hasContent ? (
+              <span className="lb-collapsible-chevron lb-icon-container">
+                <ChevronRightIcon />
+              </span>
+            ) : null}
+            <div className="lb-ai-tool-header-status">
+              {status === "executed" ? (
+                <CheckCircleFillIcon />
+              ) : (
+                <SpinnerIcon />
+              )}
             </div>
           </Collapsible.Trigger>
 
