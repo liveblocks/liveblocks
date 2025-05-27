@@ -20,6 +20,7 @@ import {
 
 import { ChevronDownIcon, ChevronRightIcon } from "../../icons";
 import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
+import { ErrorBoundary } from "../ErrorBoundary";
 import { MarkdownWithMemoizedBlocks } from "../internal/Markdown";
 import type {
   AiMessageContentComponents,
@@ -118,9 +119,18 @@ function ToolInvocation({
     $types: undefined as never,
   };
   return (
-    <AiToolInvocationContext.Provider value={props}>
-      <tool.render {...props} />
-    </AiToolInvocationContext.Provider>
+    <ErrorBoundary
+      fallback={
+        <p style={{ color: "red" }}>
+          Failed to render tool call result for '{part.toolName}'. See console
+          for details.
+        </p>
+      }
+    >
+      <AiToolInvocationContext.Provider value={props}>
+        <tool.render {...props} />
+      </AiToolInvocationContext.Provider>
+    </ErrorBoundary>
   );
 }
 
