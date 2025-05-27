@@ -6,5 +6,5 @@
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
-  "include": ["src", "test-d", "e2e"]
+  "include": ["src", "e2e"]
 }
