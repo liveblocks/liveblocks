@@ -51,7 +51,7 @@ export const AiChatUserMessage = memo(
                 components={{
                   TextPart: PlainTextPart,
                 }}
-                className="lb-ai-chat-message-text"
+                className="lb-prose lb-ai-chat-message-text"
               />
             )}
           </div>

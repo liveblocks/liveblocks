@@ -11,14 +11,16 @@ import {
   ChevronRightIcon,
   WarningIcon,
   Collapsible,
-  AiChatMessageText,
+  Prose,
 } from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
   ...props
 }: HTMLAttributes<HTMLDivElement> & { text: string }) {
-  return <AiChatMessageText content={text} {...props} />;
+  return (
+    <Prose content={text} {...props} className="lb-ai-chat-message-text" />
+  );
 }
 
 function ReasoningPart({
@@ -47,7 +49,7 @@ function ReasoningPart({
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <AiChatMessageText content={text} />
+        <Prose content={text} />
       </Collapsible.Content>
     </Collapsible.Root>
   );

@@ -8,11 +8,7 @@ import {
   useState,
 } from "react";
 
-import {
-  ComponentsProvider,
-  type GlobalComponents,
-  useComponents,
-} from "../../components";
+import { ComponentsProvider, type GlobalComponents } from "../../components";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
 import { WarningIcon } from "../../icons/Warning";
 import {
@@ -26,14 +22,8 @@ import type {
   AiMessageContentTextPartProps,
 } from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
-import {
-  Markdown,
-  type MarkdownComponents,
-  type MarkdownComponentsCodeBlockProps,
-  type MarkdownComponentsLinkProps,
-} from "../../primitives/Markdown";
 import { classNames } from "../../utils/class-names";
-import { CodeBlock as DefaultCodeBlock } from "./CodeBlock";
+import { Prose } from "./Prose";
 
 /* -------------------------------------------------------------------------------------------------
  * AiChatAssistantMessage
@@ -135,40 +125,11 @@ function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
   );
 }
 
-function Link({ href, title, children }: MarkdownComponentsLinkProps) {
-  const { Anchor } = useComponents();
-
-  return (
-    <Anchor href={href} title={title}>
-      {children}
-    </Anchor>
-  );
-}
-
-function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
-  return <DefaultCodeBlock title={language || "Plain text"} code={code} />;
-}
-
-const markdownComponents: Partial<MarkdownComponents> = {
-  Link,
-  CodeBlock,
-};
-
-export function AiChatMessageText({ content }: { content: string }) {
-  return (
-    <Markdown
-      content={content}
-      components={markdownComponents}
-      className="lb-ai-chat-message-text"
-    />
-  );
-}
-
 /* -------------------------------------------------------------------------------------------------
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
 function TextPart({ part }: AiMessageContentTextPartProps) {
-  return <AiChatMessageText content={part.text} />;
+  return <Prose content={part.text} className="lb-ai-chat-message-text" />;
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -199,7 +160,7 @@ function ReasoningPart({
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <AiChatMessageText content={part.text} />
+        <Prose content={part.text} />
       </Collapsible.Content>
     </Collapsible.Root>
   );

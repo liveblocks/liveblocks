@@ -1,8 +1,8 @@
 // Private APIs
 
-export { AiChatMessageText } from "../components/internal/AiChatAssistantMessage";
 export { Button, SelectButton } from "../components/internal/Button";
 export { List } from "../components/internal/List";
+export { Prose } from "../components/internal/Prose";
 export {
   ShortcutTooltip,
   Tooltip,
