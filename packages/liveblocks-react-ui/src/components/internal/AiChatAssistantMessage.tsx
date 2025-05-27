@@ -170,9 +170,5 @@ function ReasoningPart({
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
 function ToolInvocationPart({ children }: PropsWithChildren) {
-  if (!children) {
-    return null;
-  }
-
   return <div className="lb-ai-chat-message-tool-invocation">{children}</div>;
 }

@@ -1,4 +1,4 @@
-import type { JSONSchema4 } from "json-schema";
+import type { JSONSchema7 } from "json-schema";
 import type { ComponentType } from "react";
 
 import { getBearerTokenFromAuthValue } from "./api-client";
@@ -74,24 +74,123 @@ import { PKG_VERSION } from "./version";
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
-export type AiToolInvocationProps = Resolve<
-  DistributiveOmit<AiToolInvocationPart, "type"> & {
-    respond: (result: ToolResultData) => void;
+export type InferFromSchema<T extends JSONSchema7> =
+  //
+  JSONSchema7 extends T
+    ? JsonObject
+    : T extends {
+          type: "object";
+          properties: Record<string, JSONSchema7>;
+          required: readonly string[];
+        }
+      ? Resolve<
+          {
+            -readonly [K in keyof T["properties"] as K extends string
+              ? K extends Extract<K, T["required"][number]>
+                ? K
+                : never
+              : never]: InferFromSchema<T["properties"][K]>;
+          } & {
+            -readonly [K in keyof T["properties"] as K extends string
+              ? K extends Extract<K, T["required"][number]>
+                ? never
+                : K
+              : never]?: InferFromSchema<T["properties"][K]>;
+          }
+        >
+      : T extends {
+            type: "object";
+            properties: Record<string, JSONSchema7>;
+          }
+        ? {
+            -readonly [K in keyof T["properties"]]?: InferFromSchema<
+              T["properties"][K]
+            >;
+          }
+        : T extends { type: "string" }
+          ? string
+          : T extends { type: "number" }
+            ? number
+            : T extends { type: "boolean" }
+              ? boolean
+              : T extends { type: "null" }
+                ? null
+                : T extends { type: "array"; items: JSONSchema7 }
+                  ? InferFromSchema<T["items"]>[]
+                  : unknown;
+
+export type AiToolTypePack<
+  A extends JsonObject = JsonObject,
+  R extends ToolResultData = ToolResultData,
+> = {
+  A: A;
+  R: R;
+};
+
+export type AiToolInvocationProps<
+  A extends JsonObject,
+  R extends ToolResultData,
+> = Resolve<
+  DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
+    respond: (result: R) => void;
+
+    /**
+     * Exposes specific inferred types as a "type pack" which we can pass
+     * around statically to components to "bind" them to specific inferred
+     * A and R values. There is no runtime presence for these.
+     */
+    $types: AiToolTypePack<A, R>;
   }
 >;
 
-// TODO[nvie] Come back here and make the input/output types correlated and nicely typed!
-export type AiToolDefinition =
-  //  <
-  //  // A extends JsonObject = JsonObject,
-  //  // R extends JsonObject = JsonObject,
-  //  >
-  {
-    description?: string;
-    parameters: JSONSchema4;
-    execute?: (args: JsonObject) => Awaitable<ToolResultData>;
-    render?: ComponentType<AiToolInvocationProps>;
+export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
+  JsonObject,
+  ToolResultData
+>;
+
+export type AiToolExecuteContext = {
+  toolName: string;
+  toolCallId: string;
+};
+
+export type AiToolExecuteCallback<
+  A extends JsonObject,
+  R extends ToolResultData,
+> = (args: A, context: AiToolExecuteContext) => Awaitable<R>;
+
+export type AiToolDefinition<
+  S extends JSONSchema7,
+  A extends JsonObject,
+  R extends ToolResultData,
+> = {
+  description?: string;
+  parameters: S;
+  execute?: AiToolExecuteCallback<A, R>;
+  render?: ComponentType<AiToolInvocationProps<A, R>>;
+};
+
+export type AiOpaqueToolDefinition = AiToolDefinition<
+  JSONSchema7,
+  JsonObject,
+  ToolResultData
+>;
+
+/**
+ * Helper function to help infer the types of `args`, `render`, and `result`.
+ * This function has no runtime implementation and is only needed to make it
+ * possible for TypeScript to infer types.
+ */
+export function defineAiTool<R extends ToolResultData>() {
+  return <const S extends JSONSchema7>(
+    def: AiToolDefinition<
+      S,
+      InferFromSchema<S> extends JsonObject ? InferFromSchema<S> : JsonObject,
+      R
+    >
+  ): AiOpaqueToolDefinition => {
+    return def as AiOpaqueToolDefinition;
   };
+}
 
 export type UiChatMessage = AiChatMessage & {
   navigation: {
@@ -243,7 +342,7 @@ function now(): ISODateString {
 function createStore_forTools() {
   const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
     return new DefaultMap((_toolName: string) => {
-      return new Signal<AiToolDefinition | undefined>(undefined);
+      return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
     });
   });
 
@@ -254,7 +353,7 @@ function createStore_forTools() {
   function addToolDefinition(
     chatId: string,
     name: string,
-    definition: AiToolDefinition
+    definition: AiOpaqueToolDefinition
   ) {
     if (!definition.execute && !definition.render) {
       throw new Error(
@@ -275,7 +374,7 @@ function createStore_forTools() {
 
   function getToolsForChat(chatId: string): {
     name: string;
-    definition: AiToolDefinition;
+    definition: AiOpaqueToolDefinition;
   }[] {
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return [];
@@ -289,7 +388,7 @@ function createStore_forTools() {
       })
       .filter((tool) => tool !== null) as {
       name: string;
-      definition: AiToolDefinition;
+      definition: AiOpaqueToolDefinition;
     }[];
   }
 
@@ -469,7 +568,10 @@ function createStore_forChatMessages(
           const executeFn = toolDef?.execute;
           if (executeFn) {
             (async () => {
-              const result = await executeFn(toolCall.args);
+              const result = await executeFn(toolCall.args, {
+                toolName: toolCall.toolName,
+                toolCallId: toolCall.toolCallId,
+              });
               respondSync(result);
             })().catch((err) => {
               console.error(
@@ -782,7 +884,7 @@ export type Ai = {
     getToolDefinitionΣ(
       chatId: string,
       toolName: string
-    ): Signal<AiToolDefinition | undefined>;
+    ): Signal<AiOpaqueToolDefinition | undefined>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -802,7 +904,7 @@ export type Ai = {
   registerChatTool: (
     chatId: string,
     name: string,
-    definition: AiToolDefinition
+    definition: AiOpaqueToolDefinition
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   unregisterChatTool: (chatId: string, toolName: string) => void;

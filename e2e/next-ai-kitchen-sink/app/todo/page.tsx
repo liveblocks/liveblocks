@@ -1,5 +1,6 @@
 "use client";
 
+import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
@@ -126,7 +127,7 @@ export default function Page() {
                     chatId="todo"
                     layout="compact"
                     tools={{
-                      listTodos: {
+                      listTodos: defineAiTool()({
                         description: "List all todos",
                         parameters: {
                           type: "object",
@@ -137,18 +138,19 @@ export default function Page() {
                               items: { type: "number" },
                             },
                           },
+                          required: ["ids"],
                         },
-                        execute: (args) => {
-                          const ids = args!.ids as number[];
+                        execute: async (args) => {
+                          const { ids } = args;
                           if (ids.length === 0) {
                             return todos;
                           } else {
                             return todos.filter((t) => ids.includes(t.id));
                           }
                         },
-                      },
+                      }),
 
-                      addTodos: {
+                      addTodos: defineAiTool()({
                         description: "Add a new todo item to the list",
                         parameters: {
                           type: "object",
@@ -160,17 +162,17 @@ export default function Page() {
                               items: { type: "string" },
                             },
                           },
+                          required: ["titles"],
                         },
-                        execute: (args) => {
-                          const titles = args!.titles as string[];
+                        execute: ({ titles }) => {
                           for (const title of titles) {
                             addTodo(title);
                           }
                           return { ok: true };
                         },
-                      },
+                      }),
 
-                      toggleTodo: {
+                      toggleTodo: defineAiTool()({
                         description: "Toggle a todo's completion status",
                         parameters: {
                           type: "object",
@@ -180,10 +182,9 @@ export default function Page() {
                               type: "number",
                             },
                           },
+                          required: ["id"],
                         },
-
-                        execute: (args) => {
-                          const id = args!.id as number;
+                        execute: ({ id }) => {
                           toggleTodo(id);
                           return { ok: true };
                         },
@@ -192,9 +193,12 @@ export default function Page() {
                             <AiTool.Inspector />
                           </AiTool>
                         ),
-                      },
+                      }),
 
-                      deleteTodos: {
+                      deleteTodos: defineAiTool<
+                        | { ok: true; deletedTitles: string[] }
+                        | { ok: false; reason: string; hint: string }
+                      >()({
                         description: "Deletes one or more todo items by ID",
                         parameters: {
                           type: "object",
@@ -205,15 +209,14 @@ export default function Page() {
                               items: { type: "number" },
                             },
                           },
+                          required: ["ids"],
                         },
 
-                        render: ({ status, args, result }: any) => (
+                        render: ({ status, result, $types }) => (
                           <AiTool>
-                            <AiTool.Confirmation
+                            <AiTool.Confirmation<typeof $types>
                               variant="destructive"
-                              confirm={() => {
-                                const ids = args!.ids as number[];
-
+                              confirm={({ ids }) => {
                                 const deletedTitles = todos
                                   .filter((t) => ids.includes(t.id))
                                   .map((todo) => todo.title);
@@ -238,7 +241,7 @@ export default function Page() {
                                   Deleted:
                                   <ul>
                                     {result.deletedTitles.map(
-                                      (title: any, i: number) => (
+                                      (title, i: number) => (
                                         <li key={i}>{title}</li>
                                       )
                                     )}
@@ -250,7 +253,7 @@ export default function Page() {
                             ) : null}
                           </AiTool>
                         ),
-                      },
+                      }),
                     }}
                     className="rounded-xl"
                   />

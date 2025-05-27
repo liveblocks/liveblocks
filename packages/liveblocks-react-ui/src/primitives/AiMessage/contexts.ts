@@ -1,8 +1,8 @@
-import type { AiToolInvocationProps } from "@liveblocks/core";
+import type { AiOpaqueToolInvocationProps } from "@liveblocks/core";
 import { createContext, useContext } from "react";
 
 export const AiToolInvocationContext =
-  createContext<AiToolInvocationProps | null>(null);
+  createContext<AiOpaqueToolInvocationProps | null>(null);
 
 export function useAiToolInvocationContext() {
   const context = useContext(AiToolInvocationContext);

@@ -140,7 +140,7 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
       <Component {...props} ref={forwardedRef}>
         {tokens.map((token, index) => {
           return (
-            <MemoizedBlockTokenComp
+            <MemoizedMarkdownBlockToken
               token={token as BlockToken}
               key={index}
               components={components}
@@ -152,15 +152,15 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   }
 );
 
-const MemoizedBlockTokenComp = memo(
-  function ({
+const MemoizedMarkdownBlockToken = memo(
+  ({
     token,
     components,
   }: {
     token: BlockToken;
     components?: Partial<MarkdownComponents>;
-  }) {
-    return <BlockTokenComp token={token} components={components} />;
+  }) => {
+    return <MarkdownBlockToken token={token} components={components} />;
   },
   (prevProps, nextProps) => {
     const prevToken = prevProps.token;
@@ -175,7 +175,7 @@ const MemoizedBlockTokenComp = memo(
   }
 );
 
-export function BlockTokenComp({
+export function MarkdownBlockToken({
   token,
   components,
 }: {
@@ -241,7 +241,7 @@ export function BlockTokenComp({
         <Blockquote>
           {tokens.map((token, index) => {
             return (
-              <BlockTokenComp
+              <MarkdownBlockToken
                 token={token}
                 key={index}
                 components={components}
@@ -257,14 +257,10 @@ export function BlockTokenComp({
     case "heading": {
       const Heading = components?.Heading ?? defaultComponents.Heading;
 
-      if (token.depth < 1 || token.depth > 6) {
-        return null;
-      }
-
       return (
-        <Heading level={token.depth as 1 | 2 | 3 | 4 | 5 | 6}>
+        <Heading level={clampHeadingLevel(token.depth)}>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp
+            <MarkdownInlineToken
               key={index}
               token={token as InlineToken}
               components={components}
@@ -378,7 +374,7 @@ export function BlockTokenComp({
                   <li key={index}>
                     {items.map((token, index) => {
                       return (
-                        <BlockTokenComp
+                        <MarkdownBlockToken
                           token={token}
                           key={index}
                           components={components}
@@ -432,7 +428,7 @@ export function BlockTokenComp({
                   <li key={index}>
                     {tokens.map((token, index) => {
                       return (
-                        <BlockTokenComp
+                        <MarkdownBlockToken
                           token={token}
                           key={index}
                           components={components}
@@ -455,7 +451,7 @@ export function BlockTokenComp({
                   case "paragraph":
                   case "table": {
                     return (
-                      <BlockTokenComp
+                      <MarkdownBlockToken
                         token={token as BlockToken}
                         key={index}
                         components={components}
@@ -464,7 +460,7 @@ export function BlockTokenComp({
                   }
                   case "text": {
                     return (
-                      <InlineTokenComp
+                      <MarkdownInlineToken
                         token={token as Tokens.Text}
                         key={index}
                         components={components}
@@ -495,7 +491,7 @@ export function BlockTokenComp({
       return (
         <p>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp
+            <MarkdownInlineToken
               key={index}
               token={token as InlineToken}
               components={components}
@@ -513,7 +509,7 @@ export function BlockTokenComp({
                 return (
                   <th key={index} align={cell.align ?? undefined}>
                     {cell.tokens.map((token, index) => (
-                      <InlineTokenComp
+                      <MarkdownInlineToken
                         key={index}
                         token={token as InlineToken}
                         components={components}
@@ -532,7 +528,7 @@ export function BlockTokenComp({
                     return (
                       <td key={index} align={cell.align ?? undefined}>
                         {cell.tokens.map((token, index) => (
-                          <InlineTokenComp
+                          <MarkdownInlineToken
                             key={index}
                             token={token as InlineToken}
                             components={components}
@@ -551,7 +547,7 @@ export function BlockTokenComp({
   }
 }
 
-function InlineTokenComp({
+function MarkdownInlineToken({
   token,
   components,
 }: {
@@ -563,7 +559,7 @@ function InlineTokenComp({
       return (
         <strong>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp
+            <MarkdownInlineToken
               key={index}
               token={token as InlineToken}
               components={components}
@@ -576,7 +572,7 @@ function InlineTokenComp({
       return (
         <em>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp
+            <MarkdownInlineToken
               key={index}
               token={token as InlineToken}
               components={components}
@@ -595,7 +591,7 @@ function InlineTokenComp({
       return (
         <del>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp
+            <MarkdownInlineToken
               key={index}
               token={token as InlineToken}
               components={components}
@@ -619,7 +615,7 @@ function InlineTokenComp({
 
       if (href === null) {
         return token.tokens.map((token, index) => (
-          <InlineTokenComp
+          <MarkdownInlineToken
             key={index}
             token={token as InlineToken}
             components={components}
@@ -632,7 +628,7 @@ function InlineTokenComp({
       return (
         <Link href={href} title={token.title ?? undefined}>
           {token.tokens.map((token, index) => (
-            <InlineTokenComp
+            <MarkdownInlineToken
               key={index}
               token={token as InlineToken}
               components={components}
@@ -667,7 +663,7 @@ function InlineTokenComp({
     case "text": {
       if (token.tokens !== undefined) {
         return token.tokens.map((token, index) => (
-          <InlineTokenComp
+          <MarkdownInlineToken
             key={index}
             token={token as InlineToken}
             components={components}
@@ -696,4 +692,8 @@ function parseHtmlEntities(input: string) {
   );
 
   return document.body.textContent;
+}
+
+function clampHeadingLevel(level: number) {
+  return Math.max(1, Math.min(6, level)) as 1 | 2 | 3 | 4 | 5 | 6;
 }

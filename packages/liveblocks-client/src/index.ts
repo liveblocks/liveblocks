@@ -73,6 +73,7 @@ export type {
 } from "@liveblocks/core";
 export {
   createClient,
+  defineAiTool,
   getMentionedIdsFromCommentBody,
   isNotificationChannelEnabled,
   LiveblocksError,
