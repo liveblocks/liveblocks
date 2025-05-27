@@ -1,8 +1,14 @@
-import type { Awaitable, ToolResultData } from "@liveblocks/core";
+import type {
+  AiToolExecuteCallback,
+  AiToolTypePack,
+  JsonObject,
+  ToolResultData,
+} from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import {
   Children,
   forwardRef,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -56,9 +62,13 @@ export type AiToolInspectorProps = ComponentProps<"div">;
  *
  * This component can be used to build human-in-the-loop interfaces.
  */
-export interface AiToolConfirmationProps extends ComponentProps<"div"> {
-  confirm: () => Awaitable<ToolResultData>;
-  cancel: () => Awaitable<ToolResultData>;
+export interface AiToolConfirmationProps<
+  A extends JsonObject,
+  R extends ToolResultData,
+> extends ComponentProps<"div"> {
+  args?: A;
+  confirm: AiToolExecuteCallback<A, R>;
+  cancel: AiToolExecuteCallback<A, R>;
   variant?: "default" | "destructive";
 }
 
@@ -124,15 +134,39 @@ function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
   );
 }
 
-function AiToolConfirmation({
+function AiToolConfirmation<
+  TPack extends AiToolTypePack,
+  A extends JsonObject = TPack["A"],
+  R extends ToolResultData = TPack["R"],
+>({
   children,
   variant = "default",
   confirm,
   cancel,
   className,
   ...props
-}: AiToolConfirmationProps) {
-  const { status, respond } = useAiToolInvocationContext();
+}: AiToolConfirmationProps<A, R>) {
+  const { status, args, respond, toolName, toolCallId } =
+    useAiToolInvocationContext();
+
+  const enabled = status === "executing";
+
+  const context = useMemo(
+    () => ({ toolName, toolCallId }),
+    [toolName, toolCallId]
+  );
+
+  const onConfirmClick = useCallback(async () => {
+    if (enabled) {
+      respond(await confirm(args as A, context));
+    }
+  }, [enabled, args, confirm, respond, context]);
+
+  const onCancelClick = useCallback(async () => {
+    if (enabled) {
+      respond(await cancel(args as A, context));
+    }
+  }, [enabled, args, cancel, respond, context]);
 
   if (status === "executed") {
     return null;
@@ -149,13 +183,15 @@ function AiToolConfirmation({
       <div className="lb-ai-tool-confirmation-footer">
         <div className="lb-ai-tool-confirmation-actions">
           <Button
-            onClick={async () => respond(await confirm())}
+            disabled={!enabled}
+            onClick={onConfirmClick}
             variant={variant === "destructive" ? "destructive" : "primary"}
           >
             Confirm
           </Button>
           <Button
-            onClick={async () => respond(await cancel())}
+            disabled={!enabled}
+            onClick={onCancelClick}
             variant="secondary"
           >
             Cancel

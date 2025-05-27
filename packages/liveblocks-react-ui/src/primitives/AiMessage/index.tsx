@@ -1,6 +1,6 @@
 import type {
+  AiOpaqueToolInvocationProps,
   AiToolInvocationPart,
-  AiToolInvocationProps,
   MessageId,
   ToolResultData,
 } from "@liveblocks/core";
@@ -58,9 +58,8 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-const AiToolInvocationContext = createContext<AiToolInvocationProps | null>(
-  null
-);
+const AiToolInvocationContext =
+  createContext<AiOpaqueToolInvocationProps | null>(null);
 
 export function useAiToolInvocationContext() {
   const context = useContext(AiToolInvocationContext);
@@ -113,7 +112,11 @@ function ToolInvocation({
   if (tool === undefined || tool.render === undefined) return null;
 
   const { type: _, ...rest } = part;
-  const props = { ...rest, respond };
+  const props = {
+    ...rest,
+    respond,
+    $types: undefined as never,
+  };
   return (
     <AiToolInvocationContext.Provider value={props}>
       <tool.render {...props} />

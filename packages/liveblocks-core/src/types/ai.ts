@@ -4,6 +4,8 @@
 /// or in our protocol.
 ///
 
+import type { JSONSchema7 } from "json-schema";
+
 import { assertNever } from "../lib/assert";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Relax } from "../lib/Relax";
@@ -127,7 +129,7 @@ export type AiGenerationOptions = {
    */
   copilotId?: CopilotId;
   stream?: boolean; // default = true
-  tools?: AiToolDefinition[];
+  tools?: AiToolDescription[];
   knowledge?: AiKnowledgeSource[];
   timeout?: number; // in millis
 };
@@ -280,16 +282,19 @@ export type AiChat = {
   deletedAt?: ISODateString; // Optional for soft-deleted chats
 };
 
-export type AiToolDefinition = {
+export type AiToolDescription = {
   name: string;
   description?: string;
-  parameters: JsonObject;
+  parameters: JSONSchema7;
 };
 
-export type AiToolInvocationPart = Relax<
+export type AiToolInvocationPart<
+  A extends JsonObject = JsonObject,
+  R extends ToolResultData = ToolResultData,
+> = Relax<
   | AiReceivingToolInvocationPart
-  | AiExecutingToolInvocationPart
-  | AiExecutedToolInvocationPart
+  | AiExecutingToolInvocationPart<A>
+  | AiExecutedToolInvocationPart<A, R>
 >;
 
 export type AiReceivingToolInvocationPart = {
@@ -300,21 +305,24 @@ export type AiReceivingToolInvocationPart = {
   partialArgs: Json;
 };
 
-export type AiExecutingToolInvocationPart = {
+export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
   type: "tool-invocation";
   status: "executing";
   toolCallId: string;
   toolName: string;
-  args: JsonObject;
+  args: A;
 };
 
-export type AiExecutedToolInvocationPart = {
+export type AiExecutedToolInvocationPart<
+  A extends JsonObject = JsonObject,
+  R extends ToolResultData = ToolResultData,
+> = {
   type: "tool-invocation";
   status: "executed";
   toolCallId: string;
   toolName: string;
-  args: JsonObject;
-  result: Json;
+  args: A;
+  result: R;
   // isError: boolean  // TODO Consider adopting this field from AiSDK? Would make "result" be treated as an error value or a success value.
 };
 
