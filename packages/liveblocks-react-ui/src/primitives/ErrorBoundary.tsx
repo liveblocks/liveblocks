@@ -8,7 +8,7 @@ const ErrorBoundaryContext = createContext<{
 
 export interface ErrorBoundaryProps {
   children?: ReactNode;
-  fallback?: ComponentType<{ error: Error }>;
+  fallback?: ReactNode | ComponentType<{ error: Error }>;
 }
 
 interface ErrorBoundaryState {
@@ -41,10 +41,12 @@ export class ErrorBoundary extends Component<
 
     const error = this.state.error;
     const reset = this.reset.bind(this);
-    const FallbackUI = this.props.fallback ?? (() => null);
+    const fallback = this.props.fallback;
+    const Fallback =
+      typeof fallback === "function" ? fallback : () => fallback ?? null;
     return (
       <ErrorBoundaryContext.Provider value={{ error, reset }}>
-        <FallbackUI error={this.state.error} />
+        <Fallback error={this.state.error} />
       </ErrorBoundaryContext.Provider>
     );
   }
