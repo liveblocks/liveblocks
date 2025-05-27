@@ -8,11 +8,7 @@ import {
   MessageId,
   UiUserMessage,
 } from "@liveblocks/core";
-import {
-  AiChatComposerEditor,
-  AiChatComposerForm,
-  AiChatComposerSubmit,
-} from "@liveblocks/react-ui/_private";
+import { AiChatComposer } from "@liveblocks/react-ui/_private";
 import { useClient } from "@liveblocks/react";
 import { ChevronLeftIcon } from "../../icons/chevron-left-icon";
 import { ChevronRightIcon } from "../../icons/chevron-right-icon";
@@ -94,13 +90,13 @@ export const UserMessage = memo(function UserMessage({
   if (isEditing) {
     return (
       <div className="flex flex-col w-full">
-        <AiChatComposerForm
+        <AiChatComposer.Form
           className="shadow ring-1 ring-neutral-950/10 dark:ring-neutral-100/10 bg-white dark:bg-neutral-800 rounded-2xl"
           dir="ltr"
           onComposerSubmit={handleComposerSubmit}
         >
           <div className="">
-            <AiChatComposerEditor
+            <AiChatComposer.Editor
               autoFocus={true}
               className="outline-none [&_[data-placeholder]]:text-neutral-400 px-4 pt-4 max-h-60 overflow-y-auto"
               placeholder="Ask anything…"
@@ -121,17 +117,17 @@ export const UserMessage = memo(function UserMessage({
                   Cancel
                 </button>
 
-                <AiChatComposerSubmit
+                <AiChatComposer.Submit
                   onPointerDown={(event) => event.preventDefault()}
                   aria-label="Send"
                   className="inline-flex rounded-lg items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed text-sm py-2 px-3 font-medium bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
                 >
                   Send
-                </AiChatComposerSubmit>
+                </AiChatComposer.Submit>
               </div>
             </div>
           </div>
-        </AiChatComposerForm>
+        </AiChatComposer.Form>
       </div>
     );
   }

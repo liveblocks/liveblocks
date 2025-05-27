@@ -9,39 +9,58 @@ import {
   useRef,
 } from "react";
 
+import { useControllableState } from "../../utils/use-controllable-state";
 import type { ContentProps, RootProps, TriggerProps } from "./types";
+
+const COLLAPSIBLE_ROOT_NAME = "CollapsibleRoot";
+const COLLAPSIBLE_TRIGGER_NAME = "CollapsibleTrigger";
+const COLLAPSIBLE_CONTENT_NAME = "CollapsibleContent";
+
+const CollapsibleContext = createContext<{
+  open?: boolean;
+  onOpenChange: (open: boolean) => void;
+  disabled: boolean;
+  contentId: string;
+} | null>(null);
 
 /* -------------------------------------------------------------------------------------------------
  * Root
  * -----------------------------------------------------------------------------------------------*/
 
-const RootContext = createContext<{
-  open: boolean;
-  onOpenChange(open: boolean): void;
-
-  disabled: boolean;
-  contentId: string;
-} | null>(null);
-
-export const Root = forwardRef<HTMLDivElement, RootProps>(
+const CollapsibleRoot = forwardRef<HTMLDivElement, RootProps>(
   (
-    { open, onOpenChange, disabled = false, asChild, ...props },
+    {
+      open: controlledOpen,
+      onOpenChange: controlledOnOpenChange,
+      defaultOpen,
+      disabled = false,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
+    const [isOpen, onOpenChange] = useControllableState(
+      // If the collapsible is neither controlled nor uncontrolled, it defaults to controlled as open.
+      controlledOpen === undefined && defaultOpen === undefined
+        ? true
+        : controlledOpen,
+      controlledOnOpenChange,
+      defaultOpen
+    );
     const Component = asChild ? Slot : "div";
     const id = useId();
 
     return (
-      <RootContext.Provider
-        value={{ open, onOpenChange, disabled, contentId: id }}
+      <CollapsibleContext.Provider
+        value={{ open: isOpen, onOpenChange, disabled, contentId: id }}
       >
         <Component
           {...props}
           ref={forwardedRef}
-          data-state={open ? "open" : "closed"}
+          data-state={isOpen ? "open" : "closed"}
           data-disabled={disabled ? "" : undefined}
         />
-      </RootContext.Provider>
+      </CollapsibleContext.Provider>
     );
   }
 );
@@ -50,13 +69,13 @@ export const Root = forwardRef<HTMLDivElement, RootProps>(
  * Trigger
  * -----------------------------------------------------------------------------------------------*/
 
-export const Trigger = forwardRef<HTMLButtonElement, TriggerProps>(
+const CollapsibleTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
   ({ onClick, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const context = useContext(RootContext);
+    const context = useContext(CollapsibleContext);
 
     if (!context) {
-      throw new Error("Collapsible.Trigger must be a descendant of Root");
+      throw new Error("Collapsible.Root is missing from the React tree.");
     }
 
     const { open, disabled, contentId, onOpenChange } = context;
@@ -86,15 +105,17 @@ export const Trigger = forwardRef<HTMLButtonElement, TriggerProps>(
  * Content
  * -----------------------------------------------------------------------------------------------*/
 
-export const Content = forwardRef<HTMLDivElement, ContentProps>(
+const CollapsibleContent = forwardRef<HTMLDivElement, ContentProps>(
   ({ asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const rootContext = useContext(RootContext);
+    const context = useContext(CollapsibleContext);
     const divRef = useRef<HTMLDivElement>(null);
 
-    if (!rootContext) throw new Error("Missing RootContext Provider");
+    if (!context) {
+      throw new Error("Collapsible.Root is missing from the React tree.");
+    }
 
-    const { open, onOpenChange, disabled, contentId } = rootContext;
+    const { open, onOpenChange, disabled, contentId } = context;
 
     useEffect(() => {
       const element = divRef.current;
@@ -149,3 +170,16 @@ export const Content = forwardRef<HTMLDivElement, ContentProps>(
     );
   }
 );
+
+if (process.env.NODE_ENV !== "production") {
+  CollapsibleContent.displayName = COLLAPSIBLE_CONTENT_NAME;
+  CollapsibleRoot.displayName = COLLAPSIBLE_ROOT_NAME;
+  CollapsibleTrigger.displayName = COLLAPSIBLE_TRIGGER_NAME;
+}
+
+// NOTE: Every export from this file will be available publicly as Collapsible.*
+export {
+  CollapsibleContent as Content,
+  CollapsibleRoot as Root,
+  CollapsibleTrigger as Trigger,
+};

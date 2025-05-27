@@ -15,12 +15,9 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useState,
 } from "react";
 
-import { ChevronDownIcon, ChevronRightIcon } from "../../icons";
-import * as CollapsiblePrimitive from "../../primitives/internal/Collapsible";
-import { MarkdownWithMemoizedBlocks } from "../internal/Markdown";
+import { Markdown } from "../Markdown";
 import type {
   AiMessageContentComponents,
   AiMessageContentProps,
@@ -30,27 +27,10 @@ const AI_MESSAGE_CONTENT_NAME = "AiMessageContent";
 
 const defaultMessageContentComponents: AiMessageContentComponents = {
   TextPart: ({ part }) => {
-    return (
-      <div>
-        <MarkdownWithMemoizedBlocks content={part.text} />
-      </div>
-    );
+    return <Markdown content={part.text} />;
   },
   ReasoningPart: ({ part }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-      <CollapsiblePrimitive.Root open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsiblePrimitive.Trigger>
-          Reasoning
-          {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-        </CollapsiblePrimitive.Trigger>
-
-        <CollapsiblePrimitive.Content>
-          <MarkdownWithMemoizedBlocks content={part.text} />
-        </CollapsiblePrimitive.Content>
-      </CollapsiblePrimitive.Root>
-    );
+    return <Markdown content={part.text} />;
   },
   ToolInvocationPart: Fragment,
 };
