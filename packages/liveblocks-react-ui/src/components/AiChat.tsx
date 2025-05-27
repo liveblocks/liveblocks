@@ -210,7 +210,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <Empty />
           ) : (
             <>
-              <AutoScrollToBottomHandler
+              <AutoScrollHandler
                 lastSentMessageId={lastSentMessageId}
                 scrollToBottom={scrollToBottom}
               />
@@ -293,7 +293,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   }
 );
 
-function AutoScrollToBottomHandler({
+function AutoScrollHandler({
   lastSentMessageId,
   scrollToBottom,
 }: {

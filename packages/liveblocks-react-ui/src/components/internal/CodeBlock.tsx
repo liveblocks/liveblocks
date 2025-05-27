@@ -45,7 +45,7 @@ export function CodeBlock({ title, code }: CodeBlockProps) {
         <div className="lb-code-block-header">
           <span className="lb-code-block-title">{title}</span>
           <div className="lb-code-block-header-actions">
-            <Tooltip content={isCopied ? null : "Copy to clipboard"}>
+            <Tooltip content={isCopied ? null : "Copy"}>
               <Button
                 className="lb-code-block-header-action"
                 icon={isCopied ? <CheckIcon /> : <CopyIcon />}
