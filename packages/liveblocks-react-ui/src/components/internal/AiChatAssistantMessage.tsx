@@ -168,13 +168,7 @@ export function AiChatMessageText({ content }: { content: string }) {
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
 function TextPart({ part }: AiMessageContentTextPartProps) {
-  return (
-    <Markdown
-      content={part.text}
-      components={{ Link, CodeBlock }}
-      className="lb-ai-chat-message-text"
-    />
-  );
+  return <AiChatMessageText content={part.text} />;
 }
 
 /* -------------------------------------------------------------------------------------------------
