@@ -1225,7 +1225,7 @@ export function createAi(config: AiConfig): Ai {
         tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
           name: tool.name,
           description: tool.definition.description,
-          parameters: tool.definition.parameters as JsonObject,
+          parameters: tool.definition.parameters,
         })),
       },
     });
@@ -1285,7 +1285,7 @@ export function createAi(config: AiConfig): Ai {
             tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
               name: tool.name,
               description: tool.definition.description,
-              parameters: tool.definition.parameters as JsonObject,
+              parameters: tool.definition.parameters,
             })),
           },
         });
