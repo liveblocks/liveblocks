@@ -1,6 +1,6 @@
 "use client";
 
-import { tool } from "@liveblocks/core";
+import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
@@ -126,7 +126,7 @@ export default function Page() {
                   <AiChat
                     chatId="todo"
                     tools={{
-                      listTodos: tool()({
+                      listTodos: defineAiTool()({
                         description: "List all todos",
                         parameters: {
                           type: "object",
@@ -149,7 +149,7 @@ export default function Page() {
                         },
                       }),
 
-                      addTodos: tool()({
+                      addTodos: defineAiTool()({
                         description: "Add a new todo item to the list",
                         parameters: {
                           type: "object",
@@ -171,7 +171,7 @@ export default function Page() {
                         },
                       }),
 
-                      toggleTodo: tool()({
+                      toggleTodo: defineAiTool()({
                         description: "Toggle a todo's completion status",
                         parameters: {
                           type: "object",
@@ -194,7 +194,7 @@ export default function Page() {
                         ),
                       }),
 
-                      deleteTodos: tool<
+                      deleteTodos: defineAiTool<
                         | { ok: true; deletedTitles: string[] }
                         | { ok: false; reason: string; hint: string }
                       >()({

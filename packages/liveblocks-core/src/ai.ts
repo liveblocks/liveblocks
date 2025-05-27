@@ -180,7 +180,7 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
  * This function has no runtime implementation and is only needed to make it
  * possible for TypeScript to infer types.
  */
-export function tool<R extends ToolResultData>() {
+export function defineAiTool<R extends ToolResultData>() {
   return <const S extends JSONSchema7>(
     def: AiToolDefinition<
       S,

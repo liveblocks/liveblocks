@@ -7,7 +7,7 @@ import type {
   Json,
   JsonObject,
 } from "@liveblocks/core";
-import { tool } from "@liveblocks/core";
+import { defineAiTool } from "@liveblocks/core";
 import type { JSONSchema7 } from "json-schema";
 import { expectType } from "tsd";
 
@@ -55,7 +55,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 }
 
 {
-  tool()({
+  defineAiTool()({
     description: "List all todos",
     parameters: {
       type: "object",
@@ -76,7 +76,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 }
 
 {
-  tool()({
+  defineAiTool()({
     description: "Add a new todo item to the list",
     parameters: {
       type: "object",
@@ -97,7 +97,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 }
 
 {
-  tool()({
+  defineAiTool()({
     description: "Toggle a todo's completion status",
     parameters: {
       type: "object",
@@ -118,7 +118,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 }
 
 {
-  tool()({
+  defineAiTool()({
     description: "Toggle a todo's completion status",
     parameters: {
       type: "object",
@@ -142,7 +142,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
 {
   // Resulting tool definition is opaque
-  const myTool = tool()({
+  const myTool = defineAiTool()({
     description: "First tool",
     parameters: {
       type: "object",
@@ -214,7 +214,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
   // This tests that tool definitions will get locally inferred, not overridden
   // by the array's *opaque* type they are getting assigned into!
   const tools: AiOpaqueToolDefinition[] = [
-    tool()({
+    defineAiTool()({
       description: "First tool (execute, no render)",
       parameters: {
         type: "object",
@@ -226,7 +226,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
     }),
 
-    tool()({
+    defineAiTool()({
       description: "Second tool (execute, no render)",
       parameters: {
         type: "object",
@@ -238,7 +238,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
     }),
 
-    tool()({
+    defineAiTool()({
       description: "Third tool (execute & render)",
       parameters: {
         type: "object",
@@ -269,7 +269,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
     }),
 
-    tool()({
+    defineAiTool()({
       description: "Fourth tool (render, no execute)",
       parameters: {
         type: "object",
