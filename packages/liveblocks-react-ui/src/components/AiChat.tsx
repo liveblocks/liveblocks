@@ -37,15 +37,16 @@ import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
+// No props for now
+type AiChatComponentsEmptyProps = Record<string, never>;
+
+// No props for now
+type AiChatComponentsLoadingProps = Record<string, never>;
+
 // TODO: Add Markdown components
 type AiChatComponents = {
-  // TODO: These 2 slots don't have any props at the moment, they will turn into
-  // ComponentType<AiChatComponentsEmptyProps> and ComponentType<AiChatComponentsLoadingProps>
-  // when they do, but what props could we pass? I'm hesitant to expose things too early like
-  // for example giving `Empty` a way to submit a message or fill the composer, when both of these
-  // things (message submission and suggestions) are not finalized.
-  Empty: ComponentType;
-  Loading: ComponentType;
+  Empty: ComponentType<AiChatComponentsEmptyProps>;
+  Loading: ComponentType<AiChatComponentsLoadingProps>;
 };
 
 /**
@@ -96,7 +97,6 @@ export interface AiChatProps extends ComponentProps<"div"> {
 }
 
 const defaultComponents: AiChatComponents = {
-  // TODO: What could we show by default that wouldn't be too opinionated?
   Empty: () => null,
   Loading: () => (
     <div className="lb-loading lb-ai-chat-loading">
