@@ -211,7 +211,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ) : (
             <>
               <AutoScrollToBottomHandler
-                lastSendMessageId={lastSentMessageId}
+                lastSentMessageId={lastSentMessageId}
                 scrollToBottom={scrollToBottom}
               />
               <div className="lb-ai-chat-messages">
@@ -294,10 +294,10 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 );
 
 function AutoScrollToBottomHandler({
-  lastSendMessageId,
+  lastSentMessageId,
   scrollToBottom,
 }: {
-  lastSendMessageId: MessageId | null;
+  lastSentMessageId: MessageId | null;
   scrollToBottom: (behavior: "instant" | "smooth") => void;
 }) {
   // Scroll to bottom when the component first mounts
@@ -308,7 +308,7 @@ function AutoScrollToBottomHandler({
   // Scroll to bottom when sending a new message
   useEffect(() => {
     scrollToBottom("smooth");
-  }, [lastSendMessageId, scrollToBottom]);
+  }, [lastSentMessageId, scrollToBottom]);
 
   return null;
 }
