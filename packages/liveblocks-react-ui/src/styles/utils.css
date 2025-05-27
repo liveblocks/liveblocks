@@ -1,4 +1,4 @@
-/* Because of `all: unset`, we have to re-define some these values. */
+/* Because of `all: unset`, we have to re-define some of these values. */
 @mixin button-base {
   all: unset;
   position: relative;

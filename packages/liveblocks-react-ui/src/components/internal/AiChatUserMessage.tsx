@@ -46,14 +46,13 @@ export const AiChatUserMessage = memo(
                 {$.AI_CHAT_MESSAGE_DELETED}
               </div>
             ) : (
-              <div className="lb-ai-chat-message-text">
-                <AiMessage.Content
-                  message={message}
-                  components={{
-                    TextPart: PlainTextPart,
-                  }}
-                />
-              </div>
+              <AiMessage.Content
+                message={message}
+                components={{
+                  TextPart: PlainTextPart,
+                }}
+                className="lb-prose lb-ai-chat-message-text"
+              />
             )}
           </div>
           {/* <div className="lb-ai-chat-message-actions" /> */}

@@ -125,6 +125,7 @@ export default function Page() {
                 <ClientSideSuspense fallback={null}>
                   <AiChat
                     chatId="todo"
+                    layout="compact"
                     tools={{
                       listTodos: defineAiTool()({
                         description: "List all todos",

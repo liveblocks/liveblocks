@@ -8,21 +8,19 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
-  Button,
-  CheckIcon,
   ChevronRightIcon,
-  CopyIcon,
-  Markdown,
-  MarkdownComponentsCodeBlockProps,
   WarningIcon,
   Collapsible,
+  Prose,
 } from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
   ...props
 }: HTMLAttributes<HTMLDivElement> & { text: string }) {
-  return <Markdown content={text} {...props} components={{ CodeBlock }} />;
+  return (
+    <Prose content={text} {...props} className="lb-ai-chat-message-text" />
+  );
 }
 
 function ReasoningPart({
@@ -51,53 +49,9 @@ function ReasoningPart({
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Markdown
-          content={text}
-          className="lb-ai-chat-message-text"
-          components={{ CodeBlock }}
-        />
+        <Prose content={text} />
       </Collapsible.Content>
     </Collapsible.Root>
-  );
-}
-
-function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
-  const [isCopied, setCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isCopied) {
-      timeoutRef.current = setTimeout(() => {
-        setCopied(false);
-      }, 1000);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isCopied]);
-
-  return (
-    <div className="lb-code-block">
-      <div className="lb-code-block-header">
-        <span className="lb-code-block-title">{language ?? "Plain text"}</span>
-        <div className="lb-code-block-header-actions">
-          <Button
-            className="lb-code-block-header-action"
-            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-            onClick={() => {
-              setCopied(true);
-              navigator.clipboard.writeText(code);
-            }}
-          />
-        </div>
-      </div>
-      <pre className="lb-code-block-content">
-        <code>{code}</code>
-      </pre>
-    </div>
   );
 }
 
@@ -142,17 +96,17 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
 `;
 
 const markdownMessage = `
-# H1 Heading
+# The long and winding road that leads to your door will never disappear, I've seen that road before it always leads me here, lead me to your door
 
-## H2 Heading
+## Here we are, stuck by this river, you and I, underneath the sky that's ever falling down, down, down, ever falling down
 
-### H3 Heading
+### Like a heartbeat drives you mad, in the stillness of remembering, what you had and what you lost, and what you had and what you lost
 
-#### H4 Heading
+#### Kim and Jessie, they have a secret world in the twilight, kids of the woods, they're crazy about romance and illusions
 
-##### H5 Heading
+##### You spent the first five years trying to get with the plan, and the next five years trying to be with your friends again
 
-###### H6 Heading
+###### Because in this city's barren cold, I still remember the first fall of snow, and how it glistened as it fell, I remember it all too well
 
 ---
 
@@ -465,7 +419,7 @@ export default function Home() {
 
   return (
     <main style={{ height: "100vh", width: "100%" }}>
-      <div className="lb-root lb-ai-chat">
+      <div className="lb-root lb-ai-chat lb-ai-chat:layout-inset">
         <div className="lb-ai-chat-content">
           <div className="lb-ai-chat-messages">
             <div className="lb-ai-chat-message lb-ai-chat-user-message">
@@ -550,12 +504,12 @@ export default function Home() {
                   className="lb-ai-chat-message-text"
                   text={simpleMarkdownMessage}
                 />
-                <div className="lb-ai-chat-message-tool">
+                <div className="lb-ai-chat-message-tool-invocation">
                   <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A rendered tool
                   </div>
                 </div>
-                <div className="lb-ai-chat-message-tool">
+                <div className="lb-ai-chat-message-tool-invocation">
                   <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A second rendered tool immediately after the first one
                   </div>
@@ -564,7 +518,7 @@ export default function Home() {
                   className="lb-ai-chat-message-text"
                   text={simpleMarkdownMessage}
                 />
-                <div className="lb-ai-chat-message-tool">
+                <div className="lb-ai-chat-message-tool-invocation">
                   <div style={{ background: "rgba(255, 120, 120, 0.2)" }}>
                     A rendered tool as the last part
                   </div>
@@ -603,7 +557,7 @@ export default function Home() {
           </div>
         </div>
         <div className="lb-ai-chat-footer">
-          <div className="lb-ai-chat-composer">
+          <div className="lb-root lb-ai-chat-composer lb-ai-chat-composer-form lb-elevation lb-elevation-moderate">
             {/* Debug panel */}
             <div
               style={{

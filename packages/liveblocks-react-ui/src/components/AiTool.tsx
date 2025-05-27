@@ -5,27 +5,14 @@ import type {
   ToolResultData,
 } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
-import {
-  Children,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Children, forwardRef, useCallback, useMemo, useState } from "react";
 
 import { Button } from "../_private";
-import {
-  CheckCircleFillIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CopyIcon,
-  SpinnerIcon,
-} from "../icons";
-import { useAiToolInvocationContext } from "../primitives/AiMessage";
+import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
+import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
+import { CodeBlock } from "./internal/CodeBlock";
 
 export interface AiToolProps
   extends Omit<ComponentProps<"div">, "title" | "children"> {
@@ -78,46 +65,6 @@ export interface AiToolConfirmationProps<
 function AiToolIcon({ className, ...props }: AiToolIconProps) {
   return (
     <div className={classNames("lb-ai-tool-icon", className)} {...props} />
-  );
-}
-
-function CodeBlock({ title, code }: { title: ReactNode; code: string }) {
-  const [isCopied, setCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isCopied) {
-      timeoutRef.current = setTimeout(() => {
-        setCopied(false);
-      }, 1000);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isCopied]);
-
-  return (
-    <div className="lb-code-block">
-      <div className="lb-code-block-header">
-        <span className="lb-code-block-title">{title}</span>
-        <div className="lb-code-block-header-actions">
-          <Button
-            className="lb-code-block-header-action"
-            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-            onClick={() => {
-              setCopied(true);
-              navigator.clipboard.writeText(code);
-            }}
-          />
-        </div>
-      </div>
-      <pre className="lb-code-block-content">
-        <code>{code}</code>
-      </pre>
-    </div>
   );
 }
 
@@ -250,27 +197,22 @@ export const AiTool = Object.assign(
           onOpenChange={hasContent ? setIsOpen : noop}
           disabled={!hasContent}
         >
-          {/* TODO: <button> vs <div> with attributes? */}
-          <Collapsible.Trigger asChild>
-            <div
-              className={classNames("lb-collapsible-trigger lb-ai-tool-header")}
-            >
-              {icon ? (
-                <div className="lb-ai-tool-header-icon-container">{icon}</div>
-              ) : null}
-              <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
-              {hasContent ? (
-                <span className="lb-collapsible-chevron lb-icon-container">
-                  <ChevronRightIcon />
-                </span>
-              ) : null}
-              <div className="lb-ai-tool-header-status">
-                {status === "executed" ? (
-                  <CheckCircleFillIcon />
-                ) : (
-                  <SpinnerIcon />
-                )}
-              </div>
+          <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
+            {icon ? (
+              <div className="lb-ai-tool-header-icon-container">{icon}</div>
+            ) : null}
+            <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
+            {hasContent ? (
+              <span className="lb-collapsible-chevron lb-icon-container">
+                <ChevronRightIcon />
+              </span>
+            ) : null}
+            <div className="lb-ai-tool-header-status">
+              {status === "executed" ? (
+                <CheckCircleFillIcon />
+              ) : (
+                <SpinnerIcon />
+              )}
             </div>
           </Collapsible.Trigger>
 

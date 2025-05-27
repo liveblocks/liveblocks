@@ -26,7 +26,7 @@
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --lb-highlight-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
   --lb-elevation-shadow: $lb-elevation-shadow;
-  --lb-elevation-shadow-small: $lb-elevation-shadow-small;
+  --lb-elevation-shadow-moderate: $lb-elevation-shadow-moderate;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
   --lb-destructive-contrast: 8%;
@@ -469,6 +469,231 @@
 }
 
 /*************************************
+ *            Collapsible            *
+ *************************************/
+
+.lb-collapsible-trigger {
+  all: unset;
+  position: relative;
+  box-sizing: inherit;
+  user-select: none;
+  transition-timing-function: var(--lb-transition-easing);
+  transition-duration: var(--lb-transition-duration);
+  transition-property: color, background, opacity;
+  -webkit-tap-highlight-color: transparent;
+
+  &:where(:not([data-disabled])) {
+    cursor: pointer;
+  }
+}
+
+.lb-collapsible-chevron {
+  inline-size: calc(0.8 * var(--lb-icon-size));
+  block-size: calc(0.8 * var(--lb-icon-size));
+  margin-inline-start: -1px;
+  margin-block-start: 1px;
+  color: var(--lb-foreground-moderate);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (interpolate-size: allow-keywords) {
+    .lb-collapsible-content {
+      block-size: 0;
+      opacity: 0;
+      transition-duration: calc(3 * var(--lb-transition-duration));
+      transition-property: block-size, opacity, content-visibility;
+      content-visibility: hidden;
+
+      /* overflow-block: clip; doesn't work as expected */
+      /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+      overflow-y: clip;
+
+      /* interpolate-size is a new-ish property */
+      /* stylelint-disable-next-line */
+      interpolate-size: allow-keywords;
+
+      /* transition-behavior is a new-ish property */
+      /* stylelint-disable-next-line */
+      transition-behavior: allow-discrete;
+
+      &:where([data-state="open"]) {
+        block-size: auto;
+        opacity: 1;
+        content-visibility: auto;
+
+        /* overflow-block: auto; doesn't work as expected */
+        /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+        overflow-y: auto;
+      }
+    }
+  }
+
+  .lb-collapsible-chevron {
+    transition-property: transform;
+
+    .lb-collapsible:where([data-state="open"]) :where(&) {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+/* Fix default browser styles when `hidden="until-found"` isn't supported. */
+.lb-collapsible-content:where([hidden]:not([hidden="until-found"])) {
+  display: none !important;
+}
+
+/*************************************
+ *              Prose               *
+ *************************************/
+
+.lb-prose {
+  &,
+  * {
+    line-height: var(--lb-line-height);
+  }
+
+  :where(p) {
+    margin-block: 0.75em;
+  }
+
+  :where(p, li) {
+    text-wrap: pretty;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    margin-block-start: 1.5em;
+    margin-block-end: 0.375em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  :where(h1) {
+    font-size: 1.75em;
+    line-height: calc(0.8 * var(--lb-line-height));
+  }
+
+  :where(h2) {
+    font-size: 1.5em;
+    line-height: calc(0.86 * var(--lb-line-height));
+  }
+
+  :where(h3) {
+    font-size: 1.25em;
+    line-height: calc(0.92 * var(--lb-line-height));
+  }
+
+  :where(h4) {
+    font-size: 1.125em;
+    line-height: calc(0.98 * var(--lb-line-height));
+  }
+
+  :where(h5) {
+    font-size: 1em;
+  }
+
+  :where(h6) {
+    font-size: 0.875em;
+  }
+
+  :where(hr) {
+    margin-block: 1.5em;
+    border: none;
+    border-block-start: 1px solid var(--lb-foreground-subtle);
+  }
+
+  :where(ol, ul) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    margin-block: 0.75em;
+    padding-inline-start: 1.5em;
+    list-style-position: outside;
+
+    :where(ol, ul) {
+      margin-block: 0;
+    }
+  }
+
+  :where(ul) {
+    list-style-type: disc;
+  }
+
+  :where(ol) {
+    list-style-type: decimal;
+  }
+
+  :where(li) {
+    margin-block: 0;
+
+    > :where(ol, ul) {
+      margin-block-start: 0.25em;
+    }
+  }
+
+  :where(a) {
+    color: var(--lb-foreground);
+    outline: none;
+    font-weight: 500;
+    transition-property: color, text-decoration-color;
+    text-decoration-line: underline;
+    text-decoration-color: var(--lb-foreground-moderate);
+    text-underline-offset: 2px;
+
+    &:where([href]):where(:hover, :focus-visible) {
+      color: var(--lb-accent);
+      text-decoration-color: var(--lb-accent-moderate);
+    }
+  }
+
+  :where(strong) {
+    font-weight: 600;
+  }
+
+  :where(.lb-code-block) {
+    margin-block: 1em;
+  }
+
+  :where(blockquote) {
+    position: relative;
+    margin-inline: 0;
+    margin-block: 0.75em;
+    padding: 0;
+    padding-inline-start: 1.25em;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset-inline-start: 0;
+      inset-block-start: 0;
+      inline-size: 4px;
+      block-size: 100%;
+      border-radius: calc(0.5 * var(--lb-radius));
+      background: var(--lb-foreground-subtle);
+    }
+
+    &:where(& + &) {
+      margin-block-start: 1em;
+    }
+
+    > :where(:first-child) {
+      margin-block-start: 0;
+    }
+
+    > :where(:last-child) {
+      margin-block-end: 0;
+    }
+  }
+
+  > :where(:first-child) {
+    margin-block-start: 0;
+  }
+
+  > :where(:last-child) {
+    margin-block-end: 0;
+  }
+}
+
+/*************************************
  *       Composer suggestions        *
  *************************************/
 
@@ -526,6 +751,14 @@
 /*************************************
  *               Emoji               *
  *************************************/
+
+.lb-emoji {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: 1em;
+  white-space: nowrap;
+}
 
 @include safari-only {
   .lb-emoji {
@@ -687,6 +920,7 @@
   --lb-background: #222;
   --lb-foreground: #fff;
   --lb-foreground-contrast: 10%;
+  --lb-dynamic-background: var(--lb-background);
 
   position: relative;
   display: flex;
@@ -1942,6 +2176,8 @@
  *************************************/
 
 .lb-elevation {
+  --lb-dynamic-background: var(--lb-background);
+
   position: relative;
   overflow: hidden;
   border-radius: var(--lb-radius);
@@ -1956,6 +2192,10 @@
     border-radius: inherit;
     box-shadow: var(--lb-inset-shadow);
     pointer-events: none;
+  }
+
+  &:where(.lb-elevation-moderate) {
+    box-shadow: var(--lb-elevation-shadow-moderate);
   }
 }
 
@@ -2067,64 +2307,6 @@
 }
 
 /*************************************
- *            Collapsible            *
- *************************************/
-
-.lb-collapsible-trigger:where(:not([data-disabled])) {
-  cursor: pointer;
-}
-
-.lb-collapsible-chevron {
-  inline-size: calc(0.8 * var(--lb-icon-size));
-  block-size: calc(0.8 * var(--lb-icon-size));
-  margin-inline-start: -1px;
-  margin-block-start: 1px;
-  color: var(--lb-foreground-moderate);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (interpolate-size: allow-keywords) {
-    .lb-collapsible-content {
-      block-size: 0;
-      opacity: 0;
-      transition-duration: calc(3 * var(--lb-transition-duration));
-      transition-property: block-size, opacity, content-visibility;
-      content-visibility: hidden;
-
-      /* overflow-block: clip; doesn't work as expected */
-      /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
-      overflow-y: clip;
-
-      /* interpolate-size is a new-ish property */
-      /* stylelint-disable-next-line */
-      interpolate-size: allow-keywords;
-
-      /* transition-behavior is a new-ish property */
-      /* stylelint-disable-next-line */
-      transition-behavior: allow-discrete;
-
-      &:where([data-state="open"]) {
-        block-size: auto;
-        opacity: 1;
-        content-visibility: auto;
-
-        /* overflow-block: auto; doesn't work as expected */
-        /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
-        overflow-y: auto;
-      }
-    }
-  }
-
-  .lb-collapsible-chevron {
-    transition-property: transform;
-
-    .lb-collapsible:where([data-state="open"]) :where(&) {
-      transform: rotate(90deg);
-    }
-  }
-}
-
-/*************************************
  *            Code block             *
  *************************************/
 
@@ -2153,6 +2335,7 @@
 
   :where(.lb-code-block-content) {
     min-inline-size: 0;
+    margin: 0;
     padding: 0 var(--lb-spacing) calc(0.875 * var(--lb-spacing));
     font-size: 85%;
     line-height: 1;
@@ -2166,6 +2349,12 @@
 /*************************************
  *          Chat Composer            *
  *************************************/
+
+.lb-ai-chat-composer {
+  position: relative;
+  inline-size: 100%;
+  color: var(--lb-foreground);
+}
 
 .lb-ai-chat-composer-form:where(
     :has(.lb-ai-chat-composer-editor:not(:focus-visible))
@@ -2181,13 +2370,6 @@
       color: var(--lb-accent-foreground);
     }
   }
-}
-
-.lb-ai-chat-composer-form {
-  position: relative;
-  background: var(--lb-dynamic-background);
-  color: var(--lb-foreground);
-  transition-property: background;
 }
 
 .lb-ai-chat-composer-editor {
@@ -2259,17 +2441,8 @@
 .lb-ai-chat-message {
   display: flex;
   flex-direction: column;
-  gap: calc(0.75 * var(--lb-spacing));
+  gap: var(--lb-spacing);
   color: var(--lb-foreground);
-}
-
-.lb-ai-chat-message-content {
-  inline-size: 100%;
-  white-space: break-spaces;
-
-  &:where(:empty) {
-    display: contents;
-  }
 }
 
 .lb-ai-chat-user-message {
@@ -2281,139 +2454,13 @@
   }
 }
 
-.lb-ai-chat-message-text {
-  display: flex;
-  flex-direction: column;
-
-  &,
-  * {
-    line-height: var(--lb-line-height);
-  }
-
-  :where(p) {
-    margin-block: 0.25em;
-  }
-
-  :where(h1, h2, h3, h4, h5, h6) {
-    margin-block: 0.5em;
-    font-weight: 600;
-  }
-
-  :where(h1) {
-    font-size: 1.75em;
-  }
-
-  :where(h2) {
-    font-size: 1.5em;
-  }
-
-  :where(h3) {
-    font-size: 1.25em;
-  }
-
-  :where(h4) {
-    font-size: 1.125em;
-  }
-
-  :where(h5) {
-    font-size: 1em;
-  }
-
-  :where(h6) {
-    font-size: 0.875em;
-  }
-
-  :where(hr) {
-    margin-block: calc(0.75 * var(--lb-spacing));
-    border-block-start: 1px solid var(--lb-foreground-subtle);
-  }
-
-  :where(blockquote) {
-    position: relative;
-    margin-block-start: calc(0.75 * var(--lb-spacing));
-    padding: calc(0.375 * var(--lb-spacing)) 0 calc(0.375 * var(--lb-spacing))
-      calc(1.5 * var(--lb-spacing));
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset-inline-start: 0;
-      inset-block-start: 0;
-      inline-size: 4px;
-      block-size: 100%;
-      border-radius: calc(0.5 * var(--lb-radius));
-      background: var(--lb-foreground-subtle);
-    }
-  }
-
-  :where(ol, ul) {
-    margin-block: calc(0.75 * var(--lb-spacing));
-    padding-inline-start: calc(1.5 * var(--lb-spacing));
-    list-style-position: outside;
-  }
-
-  :where(ul) {
-    list-style-type: disc;
-  }
-
-  :where(ol) {
-    list-style-type: decimal;
-  }
-
-  :where(li) {
-    margin-block: calc(0.25 * var(--lb-spacing));
-  }
-
-  /**
-   * Merge adjacent inline code elements
-   */
-  :where(span:has(code) + span code) {
-    padding-inline-start: 0;
-    border-start-start-radius: 0;
-    border-end-start-radius: 0;
-  }
-
-  :where(span:has(code):has(+ span code) code) {
-    padding-inline-end: 0;
-    border-start-end-radius: 0;
-    border-end-end-radius: 0;
-  }
-
-  :where(a) {
-    color: var(--lb-foreground);
-    outline: none;
-    font-weight: 500;
-    transition-property: color, text-decoration-color;
-    text-decoration-line: underline;
-    text-decoration-color: var(--lb-foreground-moderate);
-    text-underline-offset: 2px;
-
-    &:where([href]):where(:hover, :focus-visible) {
-      color: var(--lb-accent);
-      text-decoration-color: var(--lb-accent-moderate);
-    }
-  }
-
-  :where(strong) {
-    font-weight: 600;
-  }
-
-  :where(.lb-code-block) {
-    margin-block: calc(0.5 * var(--lb-spacing));
-  }
-}
-
-.lb-ai-chat-message-tool-invocation {
-  margin-block: calc(0.5 * var(--lb-spacing));
-}
-
 .lb-ai-chat-message-deleted {
   position: relative;
   align-items: center;
   inline-size: 100%;
   color: var(--lb-foreground-moderate);
   font-size: 0.875em;
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .lb-ai-chat-message-error {
@@ -2423,7 +2470,8 @@
   inline-size: 100%;
   color: var(--lb-destructive);
   font-size: 0.875em;
-  text-wrap: balance;
+  line-height: var(--lb-line-height);
+  text-wrap: pretty;
 
   :where(.lb-icon-container) {
     block-size: 1lh;
@@ -2431,18 +2479,43 @@
   }
 }
 
+.lb-ai-chat-message-content {
+  inline-size: 100%;
+  white-space: break-spaces;
+
+  &:where(:empty) {
+    display: contents;
+  }
+
+  > :where(.lb-ai-chat-message-text) {
+    margin-block: var(--lb-spacing);
+  }
+
+  > :where(.lb-ai-chat-message-tool-invocation) {
+    margin-block: var(--lb-spacing);
+  }
+
+  > :where(:first-child) {
+    margin-block-start: 0;
+  }
+
+  > :where(:last-child) {
+    margin-block-end: 0;
+  }
+}
+
 .lb-ai-chat-messages {
   display: flex;
   flex-direction: column;
-  gap: calc(0.75 * var(--lb-spacing));
+  gap: var(--lb-spacing);
   inline-size: 100%;
   max-inline-size: min(
     calc(var(--lb-ai-chat-container-width) - var(--lb-spacing)),
     calc(100% - 3 * var(--lb-spacing))
   );
   margin-inline: auto;
-  padding-block-start: var(--lb-spacing);
-  padding-block-end: calc(5 * var(--lb-spacing));
+  padding-block-start: calc(1.5 * var(--lb-spacing));
+  padding-block-end: calc(3 * var(--lb-spacing));
 
   :where(.lb-ai-chat-user-message) {
     max-inline-size: 80%;
@@ -2477,6 +2550,36 @@
     inset-block-end: 0;
     z-index: 1;
     margin-block-start: auto;
+  }
+
+  :where(.lb-ai-chat-composer) {
+    margin-inline: auto;
+  }
+}
+
+.lb-ai-chat:where(.lb-ai-chat\:layout-compact) {
+  :where(.lb-ai-chat-footer) {
+    background: var(--lb-dynamic-background);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-block-start: 1px solid var(--lb-foreground-subtle);
+      pointer-events: none;
+    }
+  }
+
+  :where(.lb-ai-chat-composer) {
+    max-inline-size: min(
+      100%,
+      calc(var(--lb-ai-chat-container-width) + var(--lb-spacing))
+    );
+  }
+}
+
+.lb-ai-chat:where(.lb-ai-chat\:layout-inset) {
+  :where(.lb-ai-chat-footer) {
     padding: var(--lb-spacing);
     padding-block-start: 0;
 
@@ -2496,11 +2599,13 @@
 
   :where(.lb-ai-chat-composer) {
     max-inline-size: var(--lb-ai-chat-container-width);
-    margin-inline: auto;
     border-radius: calc(2 * var(--lb-radius));
-    background: var(--lb-dynamic-background);
-    box-shadow: var(--lb-elevation-shadow-small);
   }
+}
+
+.lb-ai-chat-content {
+  position: relative;
+  flex: 1 0 auto;
 }
 
 .lb-ai-chat-footer-actions {
@@ -2511,11 +2616,6 @@
   justify-content: center;
   pointer-events: none;
   transform: translateY(-100%);
-}
-
-.lb-ai-chat-composer {
-  position: relative;
-  inline-size: 100%;
 }
 
 .lb-ai-chat-scroll-indicator {
@@ -2578,14 +2678,20 @@
 }
 
 .lb-ai-chat-message-reasoning {
-  margin-block-end: calc(0.5 * var(--lb-spacing));
+  margin-block-end: calc(0.75 * var(--lb-spacing));
 
   :where(.lb-collapsible-trigger) {
-    @include truncate;
-
     display: flex;
     gap: calc(0.25 * var(--lb-spacing));
     align-items: center;
+
+    &:where(:focus-visible) {
+      color: var(--lb-accent);
+
+      :where(.lb-collapsible-chevron) {
+        color: var(--lb-accent-moderate);
+      }
+    }
   }
 
   :where(.lb-collapsible-content) {
@@ -2599,7 +2705,7 @@
     }
   }
 
-  :where(.lb-ai-chat-message-text) {
+  :where(.lb-prose) {
     color: var(--lb-foreground);
     font-size: 0.875em;
     opacity: 0.75;
@@ -2607,14 +2713,35 @@
 }
 
 .lb-ai-tool {
-  border: 1px solid var(--lb-foreground-subtle);
+  position: relative;
   border-radius: var(--lb-radius);
+  box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    transition-property: box-shadow;
+  }
+
+  &:where(:has(.lb-ai-tool-header:focus-visible)) {
+    z-index: 1;
+
+    &::after {
+      box-shadow:
+        var(--lb-dynamic-background) 0 0 0 2px,
+        var(--lb-accent) 0 0 0 4px;
+    }
+  }
 }
 
 .lb-ai-tool-header {
   display: flex;
   gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
+  inline-size: 100%;
   block-size: calc($lb-button-size + var(--lb-spacing));
   padding-inline: calc(0.5 * var(--lb-spacing));
 }
