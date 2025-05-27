@@ -9,6 +9,7 @@ import { useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import { forwardRef, Fragment, useCallback, useMemo } from "react";
 
+import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Markdown } from "../Markdown";
 import { AiToolInvocationContext } from "./contexts";
 import type {
@@ -77,9 +78,18 @@ function ToolInvocation({
     $types: undefined as never,
   };
   return (
-    <AiToolInvocationContext.Provider value={props}>
-      <tool.render {...props} />
-    </AiToolInvocationContext.Provider>
+    <ErrorBoundary
+      fallback={
+        <p style={{ color: "red" }}>
+          Failed to render tool call result for '{part.toolName}'. See console
+          for details.
+        </p>
+      }
+    >
+      <AiToolInvocationContext.Provider value={props}>
+        <tool.render {...props} />
+      </AiToolInvocationContext.Provider>
+    </ErrorBoundary>
   );
 }
 
