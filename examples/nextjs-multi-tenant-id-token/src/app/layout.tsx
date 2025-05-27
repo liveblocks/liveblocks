@@ -8,8 +8,6 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const rooms = await getRooms();
-
   return (
     <html lang="en">
       <head>

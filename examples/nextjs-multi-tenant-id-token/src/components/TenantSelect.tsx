@@ -1,15 +1,16 @@
 import { useRouter } from "next/navigation";
 import { useTenants } from "../hooks/useTenants";
 import { useClient } from "@liveblocks/react";
-// Component to select the tenant
+
 export function TenantSelect() {
   const { tenants, activeTenant } = useTenants();
   const { logout } = useClient();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(`/${e.target.value}`);
     logout();
+    router.push(`/${e.target.value}`);
+    router.refresh();
   };
 
   return (

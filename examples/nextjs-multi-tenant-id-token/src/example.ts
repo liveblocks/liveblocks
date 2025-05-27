@@ -37,13 +37,9 @@ export function setExampleId(url: string) {
 
 export function authWithExampleId(endpoint: string) {
   return async (room?: string) => {
-    const params = new URLSearchParams(window.location.search);
     const tenantId = window.location.pathname.split("/")[1];
-    const exampleId = params.get("exampleId") ?? undefined;
-    const examplePreview = Number(params.get("examplePreview"));
+    const userId = getUserId();
 
-    const userId = createExampleUserId(examplePreview, exampleId);
-    console.log("tenantId", tenantId);
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -53,6 +49,15 @@ export function authWithExampleId(endpoint: string) {
     });
     return await response.json();
   };
+}
+
+export function getUserId() {
+  const params = new URLSearchParams(window.location.search);
+  const exampleId = params.get("exampleId") ?? undefined;
+  const examplePreview = Number(params.get("examplePreview"));
+
+  const userId = createExampleUserId(examplePreview, exampleId);
+  return userId;
 }
 
 export function setQueryParams(

@@ -32,7 +32,6 @@ const ROOMS: Liveblocks["RoomInfo"][] = [
   "general",
   "engineering",
   "design",
-  // TODO: add private rooms
 ].map((room) => ({
   id: createExampleRoomId(room),
   slug: room,

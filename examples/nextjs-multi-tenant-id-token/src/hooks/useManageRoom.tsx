@@ -21,7 +21,7 @@ export function useManageRoom(roomId?: string) {
     roomId: string;
     isPrivate: boolean;
     tenantId: string;
-    userId: string;
+    userId?: string;
   }) => {
     const response = await fetch(path(roomId), {
       method: "POST",

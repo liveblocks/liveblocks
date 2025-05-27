@@ -12,9 +12,13 @@ export async function GET(
 ) {
   const { roomId } = params;
 
-  const room = await client.getRoom(roomId);
-
-  return NextResponse.json(room);
+  try {
+    const room = await client.getRoom(roomId);
+    return NextResponse.json(room);
+  } catch (error) {
+    console.error("Error getting room", error);
+    return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  }
 }
 
 export async function POST(

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTenant } from "../../../../database";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { tenantId: string } }
 ) {
   const tenant = await getTenant(params.tenantId);

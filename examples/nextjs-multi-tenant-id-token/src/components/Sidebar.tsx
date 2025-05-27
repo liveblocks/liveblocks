@@ -47,9 +47,6 @@ export function Sidebar({ rooms, className, ...props }: SidebarProps) {
           );
         })}
       </ul>
-      <div className="sidebar-footer">
-        <button className="button">Create Room</button>
-      </div>
     </aside>
   );
 }
