@@ -181,8 +181,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
           respond={(payload) => {
             expectType<Json>(payload);
           }}
-          A={undefined as never}
-          R={undefined as never}
+          $types={undefined as never}
         />
         <myTool.render
           status="executing"
@@ -192,8 +191,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
           respond={(payload) => {
             expectType<Json>(payload);
           }}
-          A={undefined as never}
-          R={undefined as never}
+          $types={undefined as never}
         />
         <myTool.render
           status="executed"
@@ -204,8 +202,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
           respond={(payload) => {
             expectType<Json>(payload);
           }}
-          A={undefined as never}
-          R={undefined as never}
+          $types={undefined as never}
         />
       </>
     );
