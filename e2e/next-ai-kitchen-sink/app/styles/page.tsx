@@ -8,21 +8,17 @@ import {
   useSyncExternalStore,
 } from "react";
 import {
-  Button,
-  CheckIcon,
   ChevronRightIcon,
-  CopyIcon,
-  Markdown,
-  MarkdownComponentsCodeBlockProps,
   WarningIcon,
   Collapsible,
+  AiChatMessageText,
 } from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
   ...props
 }: HTMLAttributes<HTMLDivElement> & { text: string }) {
-  return <Markdown content={text} {...props} components={{ CodeBlock }} />;
+  return <AiChatMessageText content={text} {...props} />;
 }
 
 function ReasoningPart({
@@ -51,53 +47,9 @@ function ReasoningPart({
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Markdown
-          content={text}
-          className="lb-ai-chat-message-text"
-          components={{ CodeBlock }}
-        />
+        <AiChatMessageText content={text} />
       </Collapsible.Content>
     </Collapsible.Root>
-  );
-}
-
-function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
-  const [isCopied, setCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isCopied) {
-      timeoutRef.current = setTimeout(() => {
-        setCopied(false);
-      }, 1000);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isCopied]);
-
-  return (
-    <div className="lb-code-block">
-      <div className="lb-code-block-header">
-        <span className="lb-code-block-title">{language ?? "Plain text"}</span>
-        <div className="lb-code-block-header-actions">
-          <Button
-            className="lb-code-block-header-action"
-            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-            onClick={() => {
-              setCopied(true);
-              navigator.clipboard.writeText(code);
-            }}
-          />
-        </div>
-      </div>
-      <pre className="lb-code-block-content">
-        <code>{code}</code>
-      </pre>
-    </div>
   );
 }
 

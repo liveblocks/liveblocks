@@ -5,38 +5,35 @@ import {
   memo,
   type PropsWithChildren,
   type ReactNode,
-  useEffect,
-  useRef,
   useState,
 } from "react";
 
-import {
-  AiMessage,
-  type AiMessageContentReasoningPartProps,
-  type AiMessageContentTextPartProps,
-  Button,
-} from "../../_private";
 import {
   ComponentsProvider,
   type GlobalComponents,
   useComponents,
 } from "../../components";
-import { CheckIcon } from "../../icons/Check";
 import { ChevronRightIcon } from "../../icons/ChevronRight";
-import { CopyIcon } from "../../icons/Copy";
 import { WarningIcon } from "../../icons/Warning";
 import {
   type AiChatMessageOverrides,
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
+import * as AiMessage from "../../primitives/AiMessage";
+import type {
+  AiMessageContentReasoningPartProps,
+  AiMessageContentTextPartProps,
+} from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
 import {
   Markdown,
+  type MarkdownComponents,
   type MarkdownComponentsCodeBlockProps,
   type MarkdownComponentsLinkProps,
 } from "../../primitives/Markdown";
 import { classNames } from "../../utils/class-names";
+import { CodeBlock as DefaultCodeBlock } from "./CodeBlock";
 
 /* -------------------------------------------------------------------------------------------------
  * AiChatAssistantMessage
@@ -138,6 +135,35 @@ function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
   );
 }
 
+function Link({ href, title, children }: MarkdownComponentsLinkProps) {
+  const { Anchor } = useComponents();
+
+  return (
+    <Anchor href={href} title={title}>
+      {children}
+    </Anchor>
+  );
+}
+
+function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
+  return <DefaultCodeBlock title={language || "Plain text"} code={code} />;
+}
+
+const markdownComponents: Partial<MarkdownComponents> = {
+  Link,
+  CodeBlock,
+};
+
+export function AiChatMessageText({ content }: { content: string }) {
+  return (
+    <Markdown
+      content={content}
+      components={markdownComponents}
+      className="lb-ai-chat-message-text"
+    />
+  );
+}
+
 /* -------------------------------------------------------------------------------------------------
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
@@ -148,57 +174,6 @@ function TextPart({ part }: AiMessageContentTextPartProps) {
       components={{ Link, CodeBlock }}
       className="lb-ai-chat-message-text"
     />
-  );
-}
-
-// TODO: Improve (better copy handling, tooltips, etc)
-function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
-  const [isCopied, setCopied] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isCopied) {
-      timeoutRef.current = setTimeout(() => {
-        setCopied(false);
-      }, 1000);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isCopied]);
-
-  return (
-    <div className="lb-code-block">
-      <div className="lb-code-block-header">
-        <span className="lb-code-block-title">{language ?? "Plain text"}</span>
-        <div className="lb-code-block-header-actions">
-          <Button
-            className="lb-code-block-header-action"
-            icon={isCopied ? <CheckIcon /> : <CopyIcon />}
-            onClick={() => {
-              setCopied(true);
-              navigator.clipboard.writeText(code);
-            }}
-          />
-        </div>
-      </div>
-      <pre className="lb-code-block-content">
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
-}
-
-function Link({ href, title, children }: MarkdownComponentsLinkProps) {
-  const { Anchor } = useComponents();
-
-  return (
-    <Anchor href={href} title={title}>
-      {children}
-    </Anchor>
   );
 }
 
@@ -230,11 +205,7 @@ function ReasoningPart({
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Markdown
-          content={part.text}
-          components={{ Link, CodeBlock }}
-          className="lb-ai-chat-message-text"
-        />
+        <AiChatMessageText content={part.text} />
       </Collapsible.Content>
     </Collapsible.Root>
   );
