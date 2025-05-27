@@ -23,6 +23,7 @@ export type {
   AiToolExecuteCallback,
   AiToolExecuteContext,
   AiToolInvocationProps,
+  AiToolTypePack,
   InferFromSchema,
   UiAssistantMessage,
   UiChatMessage,

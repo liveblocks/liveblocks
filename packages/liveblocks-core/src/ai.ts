@@ -119,6 +119,14 @@ export type InferFromSchema<T extends JSONSchema7> =
                   ? InferFromSchema<T["items"]>[]
                   : unknown;
 
+export type AiToolTypePack<
+  A extends JsonObject = JsonObject,
+  R extends ToolResultData = ToolResultData,
+> = {
+  A: A;
+  R: R;
+};
+
 export type AiToolInvocationProps<
   A extends JsonObject,
   R extends ToolResultData,
@@ -126,9 +134,12 @@ export type AiToolInvocationProps<
   DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
     respond: (result: R) => void;
 
-    // Expose the inferred types, so we can still read them off
-    A: A;
-    R: R;
+    /**
+     * Exposes specific inferred types as a "type pack" which we can pass
+     * around statically to components to "bind" them to specific inferred
+     * A and R values. There is no runtime presence for these.
+     */
+    $types: AiToolTypePack<A, R>;
   }
 >;
 

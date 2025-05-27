@@ -115,8 +115,7 @@ function ToolInvocation({
   const props = {
     ...rest,
     respond,
-    A: undefined as never,
-    R: undefined as never,
+    $types: undefined as never,
   };
   return (
     <AiToolInvocationContext.Provider value={props}>

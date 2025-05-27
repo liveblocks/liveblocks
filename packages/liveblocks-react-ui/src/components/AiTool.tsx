@@ -1,5 +1,6 @@
 import type {
   AiToolExecuteCallback,
+  AiToolTypePack,
   JsonObject,
   ToolResultData,
 } from "@liveblocks/core";
@@ -133,7 +134,11 @@ function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
   );
 }
 
-function AiToolConfirmation<A extends JsonObject, R extends ToolResultData>({
+function AiToolConfirmation<
+  TPack extends AiToolTypePack,
+  A extends JsonObject = TPack["A"],
+  R extends ToolResultData = TPack["R"],
+>({
   children,
   variant = "default",
   confirm,
