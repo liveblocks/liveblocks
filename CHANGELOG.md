@@ -5,7 +5,7 @@
 ### `@liveblocks/react` and `@liveblocks/react-ui`
 
 - Fix an issue with subpath imports (e.g. `@liveblocks/react/suspense`) and
-  CommonJS in our packages which could happen with certain bundlers.
+  CommonJS which could happen with certain bundlers.
 
 ## v2.24.2
 
