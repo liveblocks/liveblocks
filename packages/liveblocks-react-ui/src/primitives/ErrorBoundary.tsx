@@ -1,5 +1,5 @@
-import type { ErrorInfo, ReactNode } from "react";
-import { Component, createContext, createElement, useContext } from "react";
+import type { ComponentType, ErrorInfo, ReactNode } from "react";
+import { Component, createContext, useContext } from "react";
 
 const ErrorBoundaryContext = createContext<{
   error: Error;
@@ -8,7 +8,7 @@ const ErrorBoundaryContext = createContext<{
 
 export interface ErrorBoundaryProps {
   children?: ReactNode;
-  fallback?: ReactNode;
+  fallback?: ComponentType<{ error: Error }>;
 }
 
 interface ErrorBoundaryState {
@@ -39,15 +39,13 @@ export class ErrorBoundary extends Component<
   render(): React.ReactNode {
     if (this.state.error === null) return this.props.children;
 
-    return createElement(
-      ErrorBoundaryContext.Provider,
-      {
-        value: {
-          error: this.state.error,
-          reset: this.reset.bind(this),
-        },
-      },
-      this.props.fallback
+    const error = this.state.error;
+    const reset = this.reset.bind(this);
+    const FallbackUI = this.props.fallback ?? (() => null);
+    return (
+      <ErrorBoundaryContext.Provider value={{ error, reset }}>
+        <FallbackUI error={this.state.error} />
+      </ErrorBoundaryContext.Provider>
     );
   }
 }
