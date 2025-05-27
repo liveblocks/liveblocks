@@ -1,7 +1,7 @@
 "use client";
 
+import { useAiChat } from "@liveblocks/react/suspense";
 import { AiChat } from "@liveblocks/react-ui";
-import { useAiChatMessages } from "@liveblocks/react";
 import { CSSProperties } from "react";
 
 // useAiChat is what I looked for
@@ -16,12 +16,11 @@ import { CSSProperties } from "react";
 // a "no messages yet" message?
 
 export default function Page({ params }: { params: { chatId: string } }) {
-  // this hook is not useful here
-  const { messages } = useAiChatMessages(params.chatId);
+  const { chat } = useAiChat(params.chatId);
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4">Title</div>
+      <div className="p-4">{chat?.title || "Untitled"}</div>
       <AiChat
         chatId={params.chatId}
         className="grow mx-auto"
