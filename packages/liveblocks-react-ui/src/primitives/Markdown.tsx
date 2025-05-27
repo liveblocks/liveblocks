@@ -257,12 +257,8 @@ export function BlockTokenComp({
     case "heading": {
       const Heading = components?.Heading ?? defaultComponents.Heading;
 
-      if (token.depth < 1 || token.depth > 6) {
-        return null;
-      }
-
       return (
-        <Heading level={token.depth as 1 | 2 | 3 | 4 | 5 | 6}>
+        <Heading level={clampHeadingLevel(token.depth)}>
           {token.tokens.map((token, index) => (
             <InlineTokenComp
               key={index}
@@ -696,4 +692,8 @@ function parseHtmlEntities(input: string) {
   );
 
   return document.body.textContent;
+}
+
+function clampHeadingLevel(level: number) {
+  return Math.max(1, Math.min(6, level)) as 1 | 2 | 3 | 4 | 5 | 6;
 }
