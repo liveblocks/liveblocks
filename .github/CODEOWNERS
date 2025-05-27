@@ -24,8 +24,5 @@
 /examples/   @CTNicholas
 /docs/   @CTNicholas
 
-# Schema validation
-/schema-lang/   @nvie
-
 # Scripts
 /scripts/   @nvie

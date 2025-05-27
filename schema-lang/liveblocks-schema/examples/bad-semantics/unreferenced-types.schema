@@ -1,4 +1,0 @@
-type Foo {}
-     ^^^ Type 'Foo' is defined but never used
-
-type Storage {}

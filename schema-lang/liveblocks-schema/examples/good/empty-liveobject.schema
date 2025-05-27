@@ -1,6 +1,0 @@
-type Storage {
-  ok: LiveObject<Thing>
-}
-
-# Types can be forward-referenced
-type Thing {}

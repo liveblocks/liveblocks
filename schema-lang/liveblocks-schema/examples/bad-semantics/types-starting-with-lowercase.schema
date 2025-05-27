@@ -1,3 +1,0 @@
-type Storage { x: falsehood }
-                  ^ Type names should start with an uppercase character
-type falsehood {}
