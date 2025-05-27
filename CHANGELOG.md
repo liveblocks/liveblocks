@@ -2,9 +2,10 @@
 
 ## v2.24.3
 
-This release fixes an issue with subpath imports (e.g.
-`@liveblocks/react/suspense`) and CommonJS in our packages which could happen
-with certain bundlers.
+### `@liveblocks/react` and `@liveblocks/react-ui`
+
+- Fix an issue with subpath imports (e.g. `@liveblocks/react/suspense`) and
+  CommonJS in our packages which could happen with certain bundlers.
 
 ## v2.24.2
 
