@@ -17,7 +17,7 @@ import {
   useMemo,
 } from "react";
 
-import { ErrorBoundary } from "../ErrorBoundary";
+import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Markdown } from "../Markdown";
 import type {
   AiMessageContentComponents,
