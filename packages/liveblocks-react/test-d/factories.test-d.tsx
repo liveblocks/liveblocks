@@ -304,17 +304,6 @@ expectType<[root: LiveObject<MyStorage> | null]>(ctx.suspense.useStorageRoot());
 //                                             as it's used as a building
 //                                             block. This is NOT a bug.
 
-// The useStorageStatus() hook
-{
-  // Classic
-  expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
-    ctx.useStorageStatus()
-  );
-
-  // Suspense
-  expectType<"synchronizing" | "synchronized">(ctx.suspense.useStorageStatus());
-}
-
 // The useOthersListener() hook
 ctx.useOthersListener((event) => {
   expectType<readonly User<P, U>[]>(event.others);

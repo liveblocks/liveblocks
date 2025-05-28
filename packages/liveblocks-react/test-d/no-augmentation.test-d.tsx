@@ -289,16 +289,6 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
-// useStorageStatus()
-{
-  expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
-    classic.useStorageStatus()
-  );
-  expectType<"synchronizing" | "synchronized">(suspense.useStorageStatus());
-}
-
-// ---------------------------------------------------------
-
 // useSelf()
 {
   const me = classic.useSelf();

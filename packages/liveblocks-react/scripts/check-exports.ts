@@ -5,11 +5,7 @@ import { Project, Node, SyntaxKind } from "ts-morph";
 import { sorted } from "itertools";
 
 // Configuration
-const ALLOW_NO_JSDOCS = [
-  "MutationContext",
-  "UseStorageStatusOptions",
-  "UseThreadsOptions",
-];
+const ALLOW_NO_JSDOCS = ["MutationContext", "UseThreadsOptions"];
 
 // Add any hooks here that are allowed to have a different doc string between
 // their classic and suspense versions! Because... they're actually different!
@@ -42,7 +38,6 @@ const ALLOW_NO_FACTORY = [
   "Json",
   "JsonObject",
   "MutationContext",
-  "UseStorageStatusOptions",
   "UseThreadsOptions",
 ];
 
