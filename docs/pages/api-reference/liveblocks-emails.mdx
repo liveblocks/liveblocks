@@ -525,7 +525,7 @@ const emailData = await prepareThreadNotificationEmailAsReact(
 // { type: "unreadMention", comment: { ... }, ... }
 console.log(emailData);
 
-// The components are now used in this React body
+// The previously defined components are used in the body property, now formatted as React nodes.
 console.log(emailData.comment.body);
 ```
 
