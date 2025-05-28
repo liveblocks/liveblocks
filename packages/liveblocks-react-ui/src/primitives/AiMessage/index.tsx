@@ -76,6 +76,9 @@ function ToolInvocation({
     ...rest,
     respond,
     $types: undefined as never,
+    [kInternal]: {
+      execute: tool.execute,
+    },
   };
   return (
     <ErrorBoundary

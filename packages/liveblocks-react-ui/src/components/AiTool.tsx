@@ -1,8 +1,9 @@
-import type {
-  AiToolExecuteCallback,
-  AiToolTypePack,
-  JsonObject,
-  ToolResultData,
+import {
+  type AiToolExecuteCallback,
+  type AiToolTypePack,
+  type JsonObject,
+  kInternal,
+  type ToolResultData,
 } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import { Children, forwardRef, useCallback, useMemo, useState } from "react";
@@ -174,7 +175,11 @@ const noop = () => {};
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
     ({ children, title, icon, className, ...props }, forwardedRef) => {
-      const { status, toolName } = useAiToolInvocationContext();
+      const {
+        status,
+        toolName,
+        [kInternal]: { execute },
+      } = useAiToolInvocationContext();
       const [isOpen, setIsOpen] = useState(true);
       // TODO: This check won't work for cases like:
       //         <AiTool>
@@ -210,9 +215,10 @@ export const AiTool = Object.assign(
             <div className="lb-ai-tool-header-status">
               {status === "executed" ? (
                 <CheckCircleFillIcon />
-              ) : (
+              ) : execute !== undefined ? (
+                // Only show a spinner if the tool has an `execute` method.
                 <SpinnerIcon />
-              )}
+              ) : null}
             </div>
           </Collapsible.Trigger>
 
