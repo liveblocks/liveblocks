@@ -450,8 +450,6 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   largeMessageStrategy?: LargeMessageStrategy;
-  /** @deprecated Use `largeMessageStrategy="experimental-fallback-to-http"` instead. */
-  unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
   /**
    * A function that returns a list of user IDs matching a string.
@@ -661,11 +659,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        largeMessageStrategy:
-          clientOptions.largeMessageStrategy ??
-          (clientOptions.unstable_fallbackToHTTP
-            ? "experimental-fallback-to-http"
-            : undefined),
+        largeMessageStrategy: clientOptions.largeMessageStrategy,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
