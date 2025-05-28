@@ -251,7 +251,6 @@ export type {
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
 export type {
-  RoomNotificationSettings,
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
