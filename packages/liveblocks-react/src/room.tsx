@@ -362,7 +362,6 @@ function makeRoomContextBundle<
     useRoom,
     useStatus,
 
-    useBatch,
     useBroadcastEvent,
     useOthersListener,
     useLostConnectionListener,
@@ -420,7 +419,6 @@ function makeRoomContextBundle<
       useRoom,
       useStatus,
 
-      useBatch,
       useBroadcastEvent,
       useOthersListener,
       useLostConnectionListener,
@@ -822,19 +820,6 @@ function useResolveMentionSuggestions() {
 function useMentionSuggestionsCache() {
   const client = useClient();
   return client[kInternal].mentionSuggestionsCache;
-}
-
-/**
- * @deprecated It's recommended to use `useMutation` for writing to Storage,
- * which will automatically batch all mutations.
- *
- * Returns a function that batches modifications made during the given function.
- * All the modifications are sent to other clients in a single message.
- * All the modifications are merged in a single history item (undo/redo).
- * All the subscribers are called only after the batch is over.
- */
-function useBatch<T>(): (callback: () => T) => T {
-  return useRoom().batch;
 }
 
 function useBroadcastEvent<E extends Json>(): (
@@ -3147,7 +3132,6 @@ export {
   useAddRoomCommentReaction,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
-  useBatch,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,

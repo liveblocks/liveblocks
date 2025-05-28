@@ -29,7 +29,6 @@ export {
   RoomContext,
   RoomProvider,
   useAddReaction,
-  useBatch,
   useBroadcastEvent,
   useCanRedo,
   useCanUndo,
