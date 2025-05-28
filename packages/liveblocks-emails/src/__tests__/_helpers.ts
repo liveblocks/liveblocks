@@ -438,12 +438,7 @@ export const renderToStaticMarkup = (reactNode: ReactNode): string =>
 type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
   string,
   BaseUserMeta,
-  // Keeping backward compatibility with the `reactBody` property
-  // that was used in the previous versions.
-  CommentEmailData<string, BaseUserMeta> & {
-    /** @deprecated */
-    reactBody: string;
-  }
+  CommentEmailData<string, BaseUserMeta>
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
@@ -462,7 +457,6 @@ export const commentBodiesAsReactToStaticMarkup = (
         comment: {
           ...comment,
           body,
-          reactBody: body,
         },
       };
     }
@@ -475,7 +469,6 @@ export const commentBodiesAsReactToStaticMarkup = (
           return {
             ...comment,
             body,
-            reactBody: body,
           };
         }),
       };

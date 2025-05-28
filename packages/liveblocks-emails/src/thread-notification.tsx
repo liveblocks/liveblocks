@@ -152,8 +152,6 @@ export type CommentEmailData<BodyType, U extends BaseUserMeta = DU> = {
 export type ThreadNotificationEmailData<
   BodyType,
   U extends BaseUserMeta = DU,
-  // Keeping backward compatibility with the `reactBody` and `htmlBody` properties
-  // that was used in the previous versions.
   C extends CommentEmailData<BodyType, U> = CommentEmailData<BodyType, U>,
 > = (
   | {
@@ -167,16 +165,10 @@ export type ThreadNotificationEmailData<
 ) & { roomInfo: DRI };
 
 export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> =
-  CommentEmailData<string, U> & {
-    /** @deprecated Use `body` property instead. */
-    htmlBody: string;
-  };
+  CommentEmailData<string, U>;
 
 export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
-  CommentEmailData<ReactNode, U> & {
-    /** @deprecated Use `body` property instead. */
-    reactBody: ReactNode;
-  };
+  CommentEmailData<ReactNode, U>;
 
 type PrepareThreadNotificationEmailOptions<U extends BaseUserMeta = DU> = {
   /**
@@ -476,29 +468,11 @@ export async function prepareThreadNotificationEmailAsHtml(
     "prepareThreadNotificationEmailAsHtml"
   );
 
-  // Keeping backward compatibility with the `htmlBody` property
-  // that was used in the previous versions.
   if (data === null) {
     return null;
   }
 
-  switch (data.type) {
-    case "unreadMention": {
-      return {
-        ...data,
-        comment: { ...data.comment, htmlBody: data.comment.body },
-      };
-    }
-    case "unreadReplies": {
-      return {
-        ...data,
-        comments: data.comments.map((comment) => ({
-          ...comment,
-          htmlBody: comment.body,
-        })),
-      };
-    }
-  }
+  return data;
 }
 
 export type CommentBodyContainerComponentProps = {
@@ -699,27 +673,9 @@ export async function prepareThreadNotificationEmailAsReact(
     "prepareThreadNotificationEmailAsReact"
   );
 
-  // Keeping backward compatibility with the `reactBody` property
-  // that was used in the previous versions.
   if (data === null) {
     return null;
   }
 
-  switch (data.type) {
-    case "unreadMention": {
-      return {
-        ...data,
-        comment: { ...data.comment, reactBody: data.comment.body },
-      };
-    }
-    case "unreadReplies": {
-      return {
-        ...data,
-        comments: data.comments.map((comment) => ({
-          ...comment,
-          reactBody: comment.body,
-        })),
-      };
-    }
-  }
+  return data;
 }
