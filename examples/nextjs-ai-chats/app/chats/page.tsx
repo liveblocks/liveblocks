@@ -4,53 +4,78 @@ import { Timestamp } from "@liveblocks/react-ui/primitives";
 import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ComponentProps } from "react";
+import { ComponentProps, useMemo, useState } from "react";
 
 export default function Chats() {
   const { chats } = useAiChats();
   const deleteAiChat = useDeleteAiChat();
+  const [query, setQuery] = useState("");
 
-  if (!chats) {
-    return (
-      <div className="px-2 py-1.5 italic text-stone-500">No chats yet</div>
+  // Allow filtering chats by title
+  const filteredChats = useMemo(() => {
+    if (!query || !chats) {
+      return chats;
+    }
+
+    return chats.filter(({ title }) =>
+      title.toLowerCase().includes(query.toLowerCase())
     );
-  }
+  }, [query, chats]);
 
-  console.log(chats);
+  if (!chats || !filteredChats) {
+    return <div className="px-2 py-1.5 italic text-stone-500">Loading...</div>;
+  }
 
   return (
     <div style={{ width: "var(--inner-app-width)" }} className="mx-auto pt-16">
       <h1>Your chat history</h1>
+      <input
+        type="text"
+        placeholder="Search your chats…"
+        className="w-full py-2 px-4 border border-stone-300 rounded-lg mt-5 mb-4 outline-[--accent]"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
       <div className="mt-1.5 mb-3 text-stone-600">
-        You have {chats.length} previous chats
+        {query
+          ? `There are ${filteredChats.length} chats matching "${query}"`
+          : `You have ${chats.length} previous chats`}
       </div>
-      <ul className="flex flex-col gap-2 text-sm p-0">
-        {chats.map((chat) => (
-          <li
-            key={chat.id}
-            className="group list-none hover:bg-stone-50 border border-neutral-300 px-5 py-4 rounded-xl flex justify-between isolate relative gap-2  transition-all"
-          >
-            <Link href={`/${chat.id}`} className="absolute inset-0" />
-            <div>
-              <div className="truncate text-lg">{chat.title || "Untitled"}</div>
-              <div className="text-stone-500">
-                Last message{" "}
-                <Timestamp date={chat.lastMessageAt || chat.createdAt} />
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                console.log(chat.id);
-                deleteAiChat(chat.id);
-                redirect(`/${chats[0].id}`);
-              }}
-              className="z-10"
+      {!chats?.length || !filteredChats?.length ? (
+        <div className="px-2 py-1.5 italic text-stone-500">
+          {chats.length === 0 ? "No chats yet" : "No matching chats"}
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2 text-sm p-0">
+          {filteredChats.map((chat) => (
+            <li
+              key={chat.id}
+              className="group list-none hover:bg-stone-50 border border-neutral-300 px-5 py-4 rounded-xl flex justify-between isolate relative gap-2  transition-all"
             >
-              <TrashIcon className="size-[18px] text-red-600 opacity-70 hover:opacity-100 hidden group-hover:block" />
-            </button>
-          </li>
-        ))}
-      </ul>
+              <Link href={`/${chat.id}`} className="absolute inset-0" />
+              <div>
+                <div className="truncate text-lg">
+                  {chat.title || "Untitled"}
+                </div>
+                <div className="text-stone-500">
+                  Last message{" "}
+                  <Timestamp date={chat.lastMessageAt || chat.createdAt} />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  console.log(chat.id);
+                  deleteAiChat(chat.id);
+                  redirect(`/${chats[0].id}`);
+                }}
+                className="z-10"
+              >
+                <TrashIcon className="size-[18px] text-red-600 opacity-70 hover:opacity-100 hidden group-hover:block" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
