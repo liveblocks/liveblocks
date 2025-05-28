@@ -19,7 +19,6 @@ export { isTextFormatActive } from "./is-text-format-active";
 export { liveblocksConfig } from "./liveblocks-config";
 export {
   LiveblocksPlugin,
-  useEditorStatus,
   useIsEditorReady,
 } from "./liveblocks-plugin-provider";
 export type { FloatingToolbarProps } from "./toolbar/floating-toolbar";
