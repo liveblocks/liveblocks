@@ -237,10 +237,12 @@ describe("client", () => {
         http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
           const url = new URL(request.url);
 
-          expect(url.searchParams.size).toEqual(6);
+          expect(url.searchParams.size).toEqual(5);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual("2");
-          expect(url.searchParams.get("metadata.color")).toEqual("blue");
+          expect(url.searchParams.get("query")).toEqual(
+            "roomId^'liveblocks:' metadata['color']:'blue'"
+          );
           expect(url.searchParams.get("userId")).toEqual("user1");
           expect(url.searchParams.get("groupIds")).toEqual("group1");
 
@@ -260,9 +262,13 @@ describe("client", () => {
         client.getRooms({
           limit: 10,
           startingAfter: "2",
-          query: 'roomId^"liveblocks:" AND metadata["color"]:"blue"',
-          metadata: {
-            color: "blue",
+          query: {
+            roomId: {
+              startsWith: "liveblocks:",
+            },
+            metadata: {
+              color: "blue",
+            },
           },
           userId: "user1",
           groupIds: ["group1"],
@@ -330,7 +336,9 @@ describe("client", () => {
           expect(url.searchParams.size).toEqual(2);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual(null);
-          expect(url.searchParams.get("metadata.color")).toEqual("blue");
+          expect(url.searchParams.get("query")).toEqual(
+            "metadata['color']:'blue'"
+          );
           expect(url.searchParams.get("userId")).toEqual(null);
           expect(url.searchParams.get("groupIds")).toEqual(null);
 
@@ -349,8 +357,10 @@ describe("client", () => {
       await expect(
         client.getRooms({
           limit: 10,
-          metadata: {
-            color: "blue",
+          query: {
+            metadata: {
+              color: "blue",
+            },
           },
         })
       ).resolves.toEqual({
@@ -378,8 +388,10 @@ describe("client", () => {
         // Attempt to get, which should fail and throw an error.
         await client.getRooms({
           limit: 10,
-          metadata: {
-            color: "blue",
+          query: {
+            metadata: {
+              color: "blue",
+            },
           },
         });
         // If it doesn't throw, fail the test.

@@ -293,14 +293,6 @@ export type Page<T> = {
 export type GetRoomsOptions =
   & RoomsQueryCriteria
   & PaginationOptions
-  & {
-    // Legacy options
-    /**
-     * @deprecated Use `query` property instead. Support for the `metadata`
-     * field will be removed in a future version.
-     */
-    metadata?: QueryRoomMetadata;
-  };
 
 // prettier-ignore
 export type GetInboxNotificationsOptions =
@@ -607,13 +599,6 @@ export class Liveblocks {
       startingAfter: params.startingAfter,
       userId: params.userId,
       groupIds: params.groupIds ? params.groupIds.join(",") : undefined,
-      // "Flatten" {metadata: {foo: "bar"}} to {"metadata.foo": "bar"}
-      ...Object.fromEntries(
-        Object.entries(params.metadata ?? {}).map(([key, val]) => [
-          `metadata.${key}`,
-          val,
-        ])
-      ),
       query,
     };
 
