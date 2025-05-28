@@ -365,7 +365,9 @@ ctx.useOthersListener(({ user, type }) => {
   ctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+      err.context.code
+    );
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
@@ -389,7 +391,7 @@ ctx.useOthersListener(({ user, type }) => {
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.code);
+      expectAssignable<number | undefined>(err.context.code);
     } else if (err.context.type === "CREATE_THREAD_ERROR") {
       expectType<string>(err.context.roomId);
       expectType<string>(err.context.threadId);
@@ -402,7 +404,9 @@ ctx.useOthersListener(({ user, type }) => {
   lbctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+      err.context.code
+    );
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
@@ -426,7 +430,7 @@ ctx.useOthersListener(({ user, type }) => {
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.code);
+      expectAssignable<number | undefined>(err.context.code);
     } else if (err.context.type === "CREATE_THREAD_ERROR") {
       expectType<string>(err.context.roomId);
       expectType<string>(err.context.threadId);
@@ -439,7 +443,9 @@ ctx.useOthersListener(({ user, type }) => {
   lbctx.suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+      err.context.code
+    );
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
@@ -463,7 +469,7 @@ ctx.useOthersListener(({ user, type }) => {
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.code);
+      expectAssignable<number | undefined>(err.context.code);
     } else if (err.context.type === "CREATE_THREAD_ERROR") {
       expectType<string>(err.context.roomId);
       expectType<string>(err.context.threadId);
