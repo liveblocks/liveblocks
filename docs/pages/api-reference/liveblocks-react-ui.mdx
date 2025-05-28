@@ -1357,7 +1357,7 @@ Use with `attachment.size` to display a human-readable file size.
 
 ```tsx
 import { FileSize } from "@liveblocks/react-ui/primitives";
-import { CommentData } from "@liveblocks/react-ui";
+import { CommentData } from "@liveblocks/client";
 
 function MyComment({ comment }: { comment: CommentData }) {
   return (
@@ -1408,7 +1408,7 @@ your primitive Comments components.
 ```tsx
 import { EmojiPicker } from "frimousse";
 import { useAddReaction } from "@liveblocks/react/suspense";
-import { CommentData } from "@liveblocks/react-ui";
+import { CommentData } from "@liveblocks/client";
 
 export function MyEmojiPicker({ comment }: { comment: CommentData }) {
   const addReaction = useAddReaction();
@@ -1445,7 +1445,7 @@ A list of clickable emoji reactions can be created using the
 and [`useSelf`](/docs/api-reference/liveblocks-react#useSelf) hooks.
 
 ```tsx
-import { CommentData } from "@liveblocks/react-ui";
+import { CommentData } from "@liveblocks/client";
 import {
   useAddReaction,
   useRemoveReaction,
