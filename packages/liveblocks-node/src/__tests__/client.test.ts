@@ -94,7 +94,7 @@ describe("client", () => {
     http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
       return HttpResponse.json(
         {
-          nextPage: "/v2/rooms?startingAfter=1",
+          nextCursor: "1",
           data: [room],
         },
         { status: 200 }
@@ -227,7 +227,7 @@ describe("client", () => {
     test("should return a list of room when getRooms receives a successful response", async () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
       await expect(client.getRooms()).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
     });
@@ -248,7 +248,7 @@ describe("client", () => {
 
           return HttpResponse.json(
             {
-              nextPage: "/v2/rooms?startingAfter=1",
+              nextCursor: "3",
               data: [room],
             },
             { status: 200 }
@@ -274,7 +274,7 @@ describe("client", () => {
           groupIds: ["group1"],
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "3",
         data: [room],
       });
     });
@@ -291,7 +291,7 @@ describe("client", () => {
           expect(url.searchParams.get("query")).toEqual(expectedQuery);
           return HttpResponse.json(
             {
-              nextPage: "/v2/rooms?startingAfter=1",
+              nextCursor: "1",
               data: [room],
             },
             { status: 200 }
@@ -306,7 +306,7 @@ describe("client", () => {
           query: expectedQuery,
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
 
@@ -323,7 +323,7 @@ describe("client", () => {
           },
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
     });
@@ -344,7 +344,7 @@ describe("client", () => {
 
           return HttpResponse.json(
             {
-              nextPage: "/v2/rooms?startingAfter=1",
+              nextCursor: "1",
               data: [room],
             },
             { status: 200 }
@@ -364,7 +364,7 @@ describe("client", () => {
           },
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
     });

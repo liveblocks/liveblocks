@@ -283,8 +283,6 @@ export type PaginationOptions = {
 };
 
 export type Page<T> = {
-  /** @deprecated Prefer to rely on `nextCursor` instead. */
-  nextPage?: string | null;
   nextCursor: string | null;
   data: T[];
 };

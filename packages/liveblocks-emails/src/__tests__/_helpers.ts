@@ -332,7 +332,7 @@ export const server = setupServer(
   http.get(`${SERVER_BASE_URL}/v2/rooms`, () =>
     HttpResponse.json(
       {
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [ROOM_TEST],
       },
       { status: 200 }
