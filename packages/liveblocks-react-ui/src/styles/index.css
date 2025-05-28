@@ -2496,10 +2496,17 @@
 
 .lb-ai-chat-user-message {
   :where(.lb-ai-chat-message-content) {
+    min-block-size: calc(1lh + var(--lb-spacing));
     padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
-    border-radius: calc(3 * var(--lb-radius));
+
+    /**
+     * Exactly half the height (line-height + padding) of a one line bubble,
+     * so that it doesn't change when the text wraps and the bubble becomes taller.
+     */
+    border-radius: calc((1lh + var(--lb-spacing)) / 2);
     background: var(--lb-background-foreground-faint);
     color: var(--lb-foreground);
+    line-height: var(--lb-line-height);
   }
 }
 
@@ -2521,6 +2528,7 @@
   font-size: 0.875em;
   line-height: var(--lb-line-height);
   text-wrap: pretty;
+  word-break: break-word;
 
   :where(.lb-icon-container) {
     block-size: 1lh;

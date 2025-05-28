@@ -423,10 +423,8 @@ export default function Home() {
         <div className="lb-ai-chat-content">
           <div className="lb-ai-chat-messages">
             <div className="lb-ai-chat-message lb-ai-chat-user-message">
-              <div className="lb-ai-chat-message-content">
-                <div className="lb-ai-chat-message-deleted">
-                  This message has been deleted.
-                </div>
+              <div className="lb-ai-chat-message-deleted">
+                This message has been deleted.
               </div>
             </div>
             <div className="lb-ai-chat-message lb-ai-chat-assistant-message">

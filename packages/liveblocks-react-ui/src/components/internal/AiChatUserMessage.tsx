@@ -40,12 +40,12 @@ export const AiChatUserMessage = memo(
             className
           )}
         >
-          <div className="lb-ai-chat-message-content">
-            {message.deletedAt !== undefined ? (
-              <div className="lb-ai-chat-message-deleted">
-                {$.AI_CHAT_MESSAGE_DELETED}
-              </div>
-            ) : (
+          {message.deletedAt !== undefined ? (
+            <div className="lb-ai-chat-message-deleted">
+              {$.AI_CHAT_MESSAGE_DELETED}
+            </div>
+          ) : (
+            <div className="lb-ai-chat-message-content">
               <AiMessage.Content
                 message={message}
                 components={{
@@ -53,9 +53,8 @@ export const AiChatUserMessage = memo(
                 }}
                 className="lb-prose lb-ai-chat-message-text"
               />
-            )}
-          </div>
-          {/* <div className="lb-ai-chat-message-actions" /> */}
+            </div>
+          )}
         </div>
       );
     }
