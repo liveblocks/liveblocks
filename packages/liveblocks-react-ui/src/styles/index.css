@@ -649,6 +649,55 @@
     font-weight: 600;
   }
 
+  :where(table) {
+    inline-size: 100%;
+    min-inline-size: 0;
+    margin-block: 1em;
+    border-collapse: collapse;
+    table-layout: auto;
+    word-break: break-word;
+  }
+
+  :where(thead) {
+    border-block-end: 2px solid var(--lb-foreground-subtle);
+
+    :where(th) {
+      vertical-align: bottom;
+    }
+  }
+
+  :where(tbody) {
+    :where(td) {
+      vertical-align: baseline;
+    }
+
+    :where(tr:not(:last-child)) {
+      border-block-end: 1px solid var(--lb-foreground-subtle);
+    }
+  }
+
+  :where(tfoot) {
+    border-block-start: 2px solid var(--lb-foreground-subtle);
+
+    :where(td) {
+      vertical-align: top;
+    }
+  }
+
+  :where(th, td) {
+    padding-inline: 0.75em;
+    padding-block: 0.5em;
+    text-align: start;
+
+    &:where(:first-child) {
+      padding-inline-start: 0;
+    }
+
+    &:where(:last-child) {
+      padding-inline-end: 0;
+    }
+  }
+
   :where(.lb-code-block) {
     margin-block: 1em;
   }
