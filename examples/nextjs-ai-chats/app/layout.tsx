@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 import { ChatList } from "./chat-list";
 import { redirect } from "next/navigation";
 import { nanoid } from "nanoid";
+import { ComponentProps } from "react";
 import "./globals.css";
 import Link from "next/link";
 
@@ -42,7 +43,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <aside className="w-[260px] bg-stone-100 border-r border-stone-200 shrink-0 flex flex-col gap-4">
               <Link
                 href="/chats"
-                className="p-4 pb-1 text-stone-900 font-medium"
+                className="font-serif text-xl p-4 pb-1 text-stone-900 font-medium"
               >
                 Acme
               </Link>
@@ -68,7 +69,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ChatList />
               </div>
             </aside>
-            <main className="relative grow">{children}</main>
+            <main className="relative grow bg-stone-50">{children}</main>
           </div>
         </Providers>
       </body>
