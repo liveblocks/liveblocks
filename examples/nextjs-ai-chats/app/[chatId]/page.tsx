@@ -1,32 +1,27 @@
 "use client";
 
-import { useAiChat } from "@liveblocks/react/suspense";
-import { AiChat } from "@liveblocks/react-ui";
 import { CSSProperties } from "react";
-
-// useAiChat is what I looked for
-// I want to get metadata, name, etc for the rest of the page
-
-// also the title property needs to be lots more helpful
-
-// a way to edit the title
-
-// a way to delete a chat (e.g. so it's not in useChats)
-
-// a "no messages yet" message?
+import { ClientSideSuspense, useAiChat } from "@liveblocks/react/suspense";
+import { AiChat } from "@liveblocks/react-ui";
 
 export default function Page({ params }: { params: { chatId: string } }) {
-  const { chat } = useAiChat(params.chatId);
-
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4">{chat?.title || "Untitled"}</div>
+      <ClientSideSuspense fallback={null}>
+        <ChatTitle chatId={params.chatId} />
+      </ClientSideSuspense>
+
       <AiChat
         chatId={params.chatId}
         className="grow mx-auto"
-        // Make a width property?
-        style={{ "--lb-ai-chat-container-width": "660px" } as CSSProperties}
+        // The width is set in globals.css with CSS
+        // variable: --lb-ai-chat-container-width
       />
     </div>
   );
+}
+
+function ChatTitle({ chatId }: { chatId: string }) {
+  const { chat } = useAiChat(chatId);
+  return <div className="p-4">{chat?.title || "Untitled"}</div>;
 }

@@ -36,19 +36,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           type="image/png"
         />
       </head>
-      <Providers>
-        <body className={`${inter.className} absolute inset-0 text-stone-900`}>
+      <body className={`${inter.className} absolute inset-0 text-stone-900`}>
+        <Providers>
           <div className="flex h-full">
             <aside className="w-[260px] bg-stone-100 border-r border-stone-200 shrink-0 flex flex-col gap-4">
-              <Link href="/" className="p-4 pb-1 text-stone-900 font-medium">
+              <Link
+                href="/chats"
+                className="p-4 pb-1 text-stone-900 font-medium"
+              >
                 Acme
               </Link>
 
               <form action={newChat} className="block w-full">
-                <button className="p-2 text-sm hover:bg-stone-300/50 rounded-md mx-2 text-left flex items-center gap-1.5 text-orange-700 font-medium justify-self-stretch">
-                  <PlusIcon />
+                <button className="group p-2 text-sm hover:bg-stone-300/50 rounded-md mx-2 text-left flex items-center gap-1.5 text-orange-700 font-medium justify-self-stretch">
+                  <PlusIcon className="opacity-80 group-hover:opacity-100" />
                   New chat
                 </button>
+                <Link
+                  href="/chats"
+                  className="group p-2 text-sm hover:bg-stone-300/50 rounded-md mx-2 text-left flex items-center gap-1.5 justify-self-stretch"
+                >
+                  <ChatsIcon className="opacity-70 group-hover:opacity-90" />
+                  Chats
+                </Link>
               </form>
 
               <div className="p-2">
@@ -60,13 +70,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </aside>
             <main className="relative grow">{children}</main>
           </div>
-        </body>
-      </Providers>
+        </Providers>
+      </body>
     </html>
   );
 }
 
-function PlusIcon() {
+function ChatsIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -78,6 +88,26 @@ function PlusIcon() {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M14 9a2 2 0 01-2 2H6l-4 4V4a2 2 0 012-2h8a2 2 0 012 2zM18 9h2a2 2 0 012 2v11l-4-4h-6a2 2 0 01-2-2v-1" />
+    </svg>
+  );
+}
+
+function PlusIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
     >
       <circle cx={12} cy={12} r={10} />
       <path d="M8 12h8M12 8v8" />
