@@ -7,7 +7,7 @@ import { toast } from "sonner";
 export default function RoomErrors() {
   useErrorListener((error) => {
     console.log(error);
-    switch (error.code) {
+    switch (error.context.code) {
       case -1:
         // Authentication error
         toast.error("You don't have access to this room");

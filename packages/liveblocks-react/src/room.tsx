@@ -13,7 +13,6 @@ import type {
   OthersEvent,
   Room,
   Status,
-  StorageStatus,
   ThreadData,
   User,
 } from "@liveblocks/client";
@@ -91,11 +90,9 @@ import type {
   RoomProviderProps,
   RoomSubscriptionSettingsAsyncResult,
   RoomSubscriptionSettingsAsyncSuccess,
-  StorageStatusSuccess,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   ThreadSubscription,
-  UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
 import type { UmbrellaStore } from "./umbrella-store";
@@ -364,9 +361,7 @@ function makeRoomContextBundle<
 
     useRoom,
     useStatus,
-    useStorageStatus,
 
-    useBatch,
     useBroadcastEvent,
     useOthersListener,
     useLostConnectionListener,
@@ -423,9 +418,7 @@ function makeRoomContextBundle<
 
       useRoom,
       useStatus,
-      useStorageStatus: useStorageStatusSuspense,
 
-      useBatch,
       useBroadcastEvent,
       useOthersListener,
       useLostConnectionListener,
@@ -827,79 +820,6 @@ function useResolveMentionSuggestions() {
 function useMentionSuggestionsCache() {
   const client = useClient();
   return client[kInternal].mentionSuggestionsCache;
-}
-
-/**
- * Returns the current storage status for the Room, and triggers
- * a re-render whenever it changes. Can be used to render a "Saving..."
- * indicator.
- *
- * @deprecated Prefer useSyncStatus()
- */
-function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
-  // Normally the Rules of Hooks™ dictate that you should not call hooks
-  // conditionally. In this case, we're good here, because the same code path
-  // will always be taken on every subsequent render here, because we've frozen
-  // the value.
-  /* eslint-disable react-hooks/rules-of-hooks */
-  const smooth = useInitial(options?.smooth ?? false);
-  if (smooth) {
-    return useStorageStatusSmooth();
-  } else {
-    return useStorageStatusImmediate();
-  }
-  /* eslint-enable react-hooks/rules-of-hooks */
-}
-
-function useStorageStatusImmediate(): StorageStatus {
-  const room = useRoom();
-  const subscribe = room.events.storageStatus.subscribe;
-  const getSnapshot = room.getStorageStatus;
-  const getServerSnapshot = room.getStorageStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-}
-
-function useStorageStatusSmooth(): StorageStatus {
-  const room = useRoom();
-  const [status, setStatus] = useState(room.getStorageStatus);
-  const oldStatus = useLatest(room.getStorageStatus());
-
-  useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const unsub = room.events.storageStatus.subscribe((newStatus) => {
-      if (
-        oldStatus.current === "synchronizing" &&
-        newStatus === "synchronized"
-      ) {
-        // Delay delivery of the "synchronized" event
-        timeoutId = setTimeout(() => setStatus(newStatus), config.SMOOTH_DELAY);
-      } else {
-        clearTimeout(timeoutId);
-        setStatus(newStatus);
-      }
-    });
-
-    // Clean up
-    return () => {
-      clearTimeout(timeoutId);
-      unsub();
-    };
-  }, [room, oldStatus]);
-
-  return status;
-}
-
-/**
- * @deprecated It's recommended to use `useMutation` for writing to Storage,
- * which will automatically batch all mutations.
- *
- * Returns a function that batches modifications made during the given function.
- * All the modifications are sent to other clients in a single message.
- * All the modifications are merged in a single history item (undo/redo).
- * All the subscribers are called only after the batch is over.
- */
-function useBatch<T>(): (callback: () => T) => T {
-  return useRoom().batch;
 }
 
 function useBroadcastEvent<E extends Json>(): (
@@ -2488,20 +2408,6 @@ function useStorageSuspense<S extends LsonObject, T>(
   ) as T;
 }
 
-/**
- * Returns the current storage status for the Room, and triggers
- * a re-render whenever it changes. Can be used to render a "Saving..."
- * indicator.
- *
- * @deprecated Prefer useSyncStatus()
- */
-function useStorageStatusSuspense(
-  options?: UseStorageStatusOptions
-): StorageStatusSuccess {
-  useSuspendUntilStorageReady();
-  return useStorageStatus(options) as StorageStatusSuccess;
-}
-
 function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
@@ -3226,7 +3132,6 @@ export {
   useAddRoomCommentReaction,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
-  useBatch,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
@@ -3285,8 +3190,6 @@ export {
   useStatus,
   _useStorage as useStorage,
   _useStorageRoot as useStorageRoot,
-  useStorageStatus,
-  useStorageStatusSuspense,
   _useStorageSuspense as useStorageSuspense,
   useSubscribeToRoomThread,
   useSubscribeToThread,

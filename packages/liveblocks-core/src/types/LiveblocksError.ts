@@ -101,7 +101,7 @@ export class LiveblocksError extends Error {
     return this.context.roomId;
   }
 
-  /** @deprecated Prefer using `context.code` instead, to enable type narrowing */
+  /** @internal Use `context.code` instead, to enable type narrowing */
   get code(): LiveblocksErrorContext["code"] {
     return this.context.code;
   }

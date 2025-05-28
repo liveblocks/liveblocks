@@ -58,7 +58,6 @@ export type {
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
   Room,
-  RoomNotificationSettings,
   RoomSubscriptionSettings,
   Status,
   StorageStatus,

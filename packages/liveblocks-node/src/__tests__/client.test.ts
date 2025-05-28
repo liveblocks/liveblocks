@@ -94,7 +94,7 @@ describe("client", () => {
     http.get(`${DEFAULT_BASE_URL}/v2/rooms`, () => {
       return HttpResponse.json(
         {
-          nextPage: "/v2/rooms?startingAfter=1",
+          nextCursor: "1",
           data: [room],
         },
         { status: 200 }
@@ -227,7 +227,7 @@ describe("client", () => {
     test("should return a list of room when getRooms receives a successful response", async () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
       await expect(client.getRooms()).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
     });
@@ -237,16 +237,18 @@ describe("client", () => {
         http.get(`${DEFAULT_BASE_URL}/v2/rooms`, ({ request }) => {
           const url = new URL(request.url);
 
-          expect(url.searchParams.size).toEqual(6);
+          expect(url.searchParams.size).toEqual(5);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual("2");
-          expect(url.searchParams.get("metadata.color")).toEqual("blue");
+          expect(url.searchParams.get("query")).toEqual(
+            "roomId^'liveblocks:' metadata['color']:'blue'"
+          );
           expect(url.searchParams.get("userId")).toEqual("user1");
           expect(url.searchParams.get("groupIds")).toEqual("group1");
 
           return HttpResponse.json(
             {
-              nextPage: "/v2/rooms?startingAfter=1",
+              nextCursor: "3",
               data: [room],
             },
             { status: 200 }
@@ -260,15 +262,19 @@ describe("client", () => {
         client.getRooms({
           limit: 10,
           startingAfter: "2",
-          query: 'roomId^"liveblocks:" AND metadata["color"]:"blue"',
-          metadata: {
-            color: "blue",
+          query: {
+            roomId: {
+              startsWith: "liveblocks:",
+            },
+            metadata: {
+              color: "blue",
+            },
           },
           userId: "user1",
           groupIds: ["group1"],
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "3",
         data: [room],
       });
     });
@@ -285,7 +291,7 @@ describe("client", () => {
           expect(url.searchParams.get("query")).toEqual(expectedQuery);
           return HttpResponse.json(
             {
-              nextPage: "/v2/rooms?startingAfter=1",
+              nextCursor: "1",
               data: [room],
             },
             { status: 200 }
@@ -300,7 +306,7 @@ describe("client", () => {
           query: expectedQuery,
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
 
@@ -317,7 +323,7 @@ describe("client", () => {
           },
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
     });
@@ -330,13 +336,15 @@ describe("client", () => {
           expect(url.searchParams.size).toEqual(2);
           expect(url.searchParams.get("limit")).toEqual("10");
           expect(url.searchParams.get("startingAfter")).toEqual(null);
-          expect(url.searchParams.get("metadata.color")).toEqual("blue");
+          expect(url.searchParams.get("query")).toEqual(
+            "metadata['color']:'blue'"
+          );
           expect(url.searchParams.get("userId")).toEqual(null);
           expect(url.searchParams.get("groupIds")).toEqual(null);
 
           return HttpResponse.json(
             {
-              nextPage: "/v2/rooms?startingAfter=1",
+              nextCursor: "1",
               data: [room],
             },
             { status: 200 }
@@ -349,12 +357,14 @@ describe("client", () => {
       await expect(
         client.getRooms({
           limit: 10,
-          metadata: {
-            color: "blue",
+          query: {
+            metadata: {
+              color: "blue",
+            },
           },
         })
       ).resolves.toEqual({
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [room],
       });
     });
@@ -378,8 +388,10 @@ describe("client", () => {
         // Attempt to get, which should fail and throw an error.
         await client.getRooms({
           limit: 10,
-          metadata: {
-            color: "blue",
+          query: {
+            metadata: {
+              color: "blue",
+            },
           },
         });
         // If it doesn't throw, fail the test.

@@ -5,11 +5,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export { ClientSideSuspense } from "./ClientSideSuspense";
-export type {
-  MutationContext,
-  UseStorageStatusOptions,
-  UseThreadsOptions,
-} from "./types";
+export type { MutationContext, UseThreadsOptions } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";
@@ -33,7 +29,6 @@ export {
   RoomContext,
   RoomProvider,
   useAddReaction,
-  useBatch,
   useBroadcastEvent,
   useCanRedo,
   useCanUndo,
@@ -75,7 +70,6 @@ export {
   useOthersMappedSuspense as useOthersMapped,
   useSelfSuspense as useSelf,
   useStorageSuspense as useStorage,
-  useStorageStatusSuspense as useStorageStatus,
   useThreadsSuspense as useThreads,
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,

@@ -13,6 +13,28 @@ TODO: List of changes to document
     `UPDATE_NOTIFICATION_SETTINGS_ERROR`, which was the previous name of
     `UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR`
 - `LiveblocksUIConfig` → `LiveblocksUiConfig`
+- Remove deprecated `RoomInfo` type from `@liveblocks/node`
+  - We already mentioned this change as "breaking" in 2.0? With its own codemod
+    https://liveblocks.io/docs/platform/upgrading/2.0#bc2
+- Remove deprecated `useEditorStatus` hook from `@liveblocks/react-lexical`
+  - TODO: Update/remove its docs section:
+    https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus
+- Remove deprecated `metadata` field from `getRooms` options in
+  `@liveblocks/node`
+- Remove deprecated `nextPage` property from `getRooms` response in
+  `@liveblocks/node`
+  - TODO: Should we also remove `nextPage` from the REST API docs?
+- Remove deprecated `code` property from `LiveblocksError`
+- Remove deprecated `unstable_fallbackToHTTP` client option
+  - `largeMessageStrategy="experimental-fallback-to-http"` can be used instead
+- Remove deprecated `events.storage` event source
+  - TODO: `events` is marked as `@private`, so not a fully breaking change
+- Remove deprecated `useStorageStatus` hook from `@liveblocks/react`
+  - TODO: Update/remove its docs section:
+    https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus
+- Remove deprecated `useBatch` hook from `@liveblocks/react`
+  - TODO: Update/remove its docs section:
+    https://liveblocks.io/docs/api-reference/liveblocks-react#useBatch
 - Removed deprecated `htmlBody` and `reactBody` properties from
   `CommentEmailAsHtmlData` and `CommentEmailAsReactData` types (replaced by
   `body`)

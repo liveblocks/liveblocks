@@ -306,7 +306,9 @@ declare global {
   classic.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+      err.context.code
+    );
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
@@ -330,7 +332,7 @@ declare global {
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.code);
+      expectAssignable<number | undefined>(err.context.code);
     } else if (err.context.type === "CREATE_THREAD_ERROR") {
       expectType<string>(err.context.roomId);
       expectType<string>(err.context.threadId);
@@ -346,7 +348,9 @@ declare global {
   suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(
+      err.context.code
+    );
     expectAssignable<
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
@@ -370,7 +374,7 @@ declare global {
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
-      expectAssignable<number | undefined>(err.code);
+      expectAssignable<number | undefined>(err.context.code);
     } else if (err.context.type === "CREATE_THREAD_ERROR") {
       expectType<string>(err.context.roomId);
       expectType<string>(err.context.threadId);
@@ -379,16 +383,6 @@ declare global {
       // Not going to list them all...
     }
   });
-}
-
-// ---------------------------------------------------------
-
-// useStorageStatus()
-{
-  expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
-    classic.useStorageStatus()
-  );
-  expectType<"synchronizing" | "synchronized">(suspense.useStorageStatus());
 }
 
 // ---------------------------------------------------------
