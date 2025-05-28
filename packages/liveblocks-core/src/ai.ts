@@ -140,6 +140,11 @@ export type AiToolInvocationProps<
      * A and R values. There is no runtime presence for these.
      */
     $types: AiToolTypePack<A, R>;
+
+    // Private APIs
+    [kInternal]: {
+      execute: AiToolExecuteCallback<A, R> | undefined;
+    };
   }
 >;
 
