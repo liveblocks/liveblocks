@@ -1,5 +1,6 @@
 import type {
-  BlockNoteEditor, BlockSchema,
+  BlockNoteEditor,
+  BlockSchema,
   DefaultBlockSchema,
   DefaultInlineContentSchema,
   DefaultStyleSchema,
@@ -13,15 +14,15 @@ type FloatingComposerProps<
   B extends BlockSchema = DefaultBlockSchema,
   I extends InlineContentSchema = DefaultInlineContentSchema,
   S extends StyleSchema = DefaultStyleSchema,
-> = Omit<
-  Parameters<typeof TipTapFloatingComposer>[0],
-  "editor"
-> & {
+> = Omit<Parameters<typeof TipTapFloatingComposer>[0], "editor"> & {
   editor: BlockNoteEditor<B, I, S>;
 };
 
 export function FloatingComposer(props: FloatingComposerProps) {
   return (
-    <TipTapFloatingComposer {...props} editor={props.editor._tiptapEditor as unknown as Editor} />
+    <TipTapFloatingComposer
+      {...props}
+      editor={props.editor._tiptapEditor as unknown as Editor}
+    />
   );
 }

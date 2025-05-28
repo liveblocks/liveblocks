@@ -1,5 +1,6 @@
 import type {
-  BlockNoteEditor, BlockSchema,
+  BlockNoteEditor,
+  BlockSchema,
   DefaultBlockSchema,
   DefaultInlineContentSchema,
   DefaultStyleSchema,
@@ -13,10 +14,7 @@ type HistoryVersionPreviewProps<
   B extends BlockSchema = DefaultBlockSchema,
   I extends InlineContentSchema = DefaultInlineContentSchema,
   S extends StyleSchema = DefaultStyleSchema,
-> = Omit<
-  Parameters<typeof TipTapHistoryVersionPreview>[0],
-  "editor"
-> & {
+> = Omit<Parameters<typeof TipTapHistoryVersionPreview>[0], "editor"> & {
   editor: BlockNoteEditor<B, I, S>;
 };
 
