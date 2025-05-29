@@ -131,8 +131,6 @@ function makeRoomConfig<M extends BaseMetadata>(
       authManager: createAuthManager({
         authEndpoint: "/api/auth",
       }),
-      // XXX: Ask Nimesh: we're passing in a signal here now, but it's never
-      // assigned anywhere
       currentUserId: new Signal<string | undefined>(undefined),
     }),
     // Not used in unit tests (yet)
