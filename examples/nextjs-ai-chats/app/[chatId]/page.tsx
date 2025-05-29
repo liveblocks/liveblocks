@@ -22,7 +22,7 @@ export default function Page({ params }: { params: { chatId: string } }) {
         chatId={params.chatId}
         className="grow mx-auto"
 
-        // Chat width is set in globals.css with variable:
+        // Chat width is set in globals.css with a variable:
         // --lb-ai-chat-container-width
       />
     </div>
