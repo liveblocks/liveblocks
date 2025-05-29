@@ -7,7 +7,7 @@ import type {
   Json,
   JsonObject,
 } from "@liveblocks/core";
-import { defineAiTool } from "@liveblocks/core";
+import { defineAiTool, kInternal } from "@liveblocks/core";
 import type { JSONSchema7 } from "json-schema";
 import { expectType } from "tsd";
 
@@ -170,6 +170,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
   if (!myTool.render) {
     expectType<undefined>(myTool.render);
   } else {
+    const internal = { [kInternal]: { execute: undefined } };
     const jsx = (
       <>
         {/* Test three different invocations */}
@@ -182,6 +183,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
             expectType<Json>(payload);
           }}
           $types={undefined as never}
+          {...internal}
         />
         <myTool.render
           status="executing"
@@ -192,6 +194,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
             expectType<Json>(payload);
           }}
           $types={undefined as never}
+          {...internal}
         />
         <myTool.render
           status="executed"
@@ -203,6 +206,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
             expectType<Json>(payload);
           }}
           $types={undefined as never}
+          {...internal}
         />
       </>
     );
