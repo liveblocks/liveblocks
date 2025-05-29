@@ -26,7 +26,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
   },
-  ToolInvocationPart: () => <Fragment />,
+  ToolInvocationPart: ({ children }) => children,
 };
 
 /* -------------------------------------------------------------------------------------------------
