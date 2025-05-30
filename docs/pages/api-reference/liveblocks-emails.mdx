@@ -981,7 +981,7 @@ if (isTextMentionNotificationEvent(event)) {
       <div>
         @{emailData.mention.author.id} at {emailData.mention.createdAt}
       </div>
-      <div>{emailData.mention.reactContent}</div>
+      <div>{emailData.mention.content}</div>
     </div>
   );
 }
@@ -1044,7 +1044,7 @@ export async function POST(request: Request) {
         <div>
           @{emailData.mention.author.id} at {emailData.mention.createdAt}
         </div>
-        <div>{emailData.mention.reactContent}</div>
+        <div>{emailData.mention.content}</div>
       </div>
     );
 
@@ -1078,7 +1078,7 @@ export async function POST(request: Request) {
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
         // The formatted content, pass it to React `children`
-        reactContent: { /* ... */}
+        content: { /* ... */}
 
         author: {
           id: "vincent@example.com",
@@ -1228,7 +1228,7 @@ const emailData = await prepareThreadNotificationEmailAsReact(
 console.log(emailData);
 
 // The components are now used in this React content
-console.log(emailData.mention.reactContent);
+console.log(emailData.mention.content);
 ``;
 ```
 
@@ -1263,7 +1263,7 @@ if (isTextMentionNotificationEvent(event)) {
       <div>
         @{emailData.mention.author.id} at {emailData.mention.createdAt}
       </div>
-      <div>{emailData.mention.htmlContent}</div>
+      <div>{emailData.mention.content}</div>
     </div>
   );
 }
@@ -1326,7 +1326,7 @@ export async function POST(request: Request) {
       <div>
         @${emailData.mention.author.id} at ${emailData.mention.createdAt}
       </div>
-      <div>${emailData.mention.htmlContent}</div>
+      <div>${emailData.mention.content}</div>
     </div>
     `;
 
@@ -1361,7 +1361,7 @@ export async function POST(request: Request) {
         userId: "user_0"
 
         // The formatted content, as an HTML string
-        htmlContent: { /* ... */}
+        content: { /* ... */}
 
         author: {
           id: "vincent@example.com",
@@ -1504,5 +1504,5 @@ const emailData = await prepareTextMentionNotificationEmailAsHtml(
 console.log(emailData);
 
 // The elements in the mention content are now styled
-console.log(emailData.mention.htmlContent);
+console.log(emailData.mention.content);
 ```
