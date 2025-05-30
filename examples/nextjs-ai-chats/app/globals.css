@@ -4,7 +4,6 @@
 
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
-@import "@liveblocks/react-blocknote/styles.css";
 
 :root {
   --accent: rgb(194 65 12);
