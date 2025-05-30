@@ -273,7 +273,9 @@ export function transformAsLiveblocksTextEditorNodes(
  * @internal
  * Resolves mentioned users in Liveblocks Text Editor node
  */
-const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
+export const resolveUsersInLiveblocksTextEditorNodes = async <
+  U extends BaseUserMeta,
+>(
   nodes: LiveblocksTextEditorNode[],
   resolveUsers?: (
     args: ResolveUsersArgs
