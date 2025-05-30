@@ -38,3 +38,8 @@ TODO: List of changes to document
 - Removed deprecated `htmlBody` and `reactBody` properties from
   `CommentEmailAsHtmlData` and `CommentEmailAsReactData` types (replaced by
   `body`)
+- Implement a new core logic for text mention notification event in
+  `@liveblocks/emails`.
+  - This is a breaking change where `prepareTextMentionNotificationEmail` and
+    `prepareTextMentionNotificationEmailAsHtml` return converted mention content
+    in the property `content` instead of `htmlContent` or `reactContent`

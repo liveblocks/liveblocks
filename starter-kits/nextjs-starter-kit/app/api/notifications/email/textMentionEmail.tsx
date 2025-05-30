@@ -84,7 +84,7 @@ export async function textMentionEmail(
         @{emailData.mention.author.id} at{" "}
         {emailData.mention.createdAt.toString()}
       </div>
-      <div>{emailData.mention.reactContent}</div>
+      <div>{emailData.mention.content}</div>
     </div>
   );
 

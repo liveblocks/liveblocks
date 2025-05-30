@@ -1289,15 +1289,18 @@ ago”) and a short absolute formatting for older ones (e.g. “25 Aug”).
 Use with `comment.createdAt`, `comment.editedAt`, or `comment.deletedAt` to
 display a human-readable time.
 
-```tsx highlight="8"
-import { ThreadData, Timestamp } from "@liveblocks/react-ui";
+```tsx
+import { Timestamp, Comment } from "@liveblocks/react-ui/primitives";
+import { ThreadData } from "@liveblocks/client";
 
 function MyComments({ thread }: { thread: ThreadData }) {
   return (
     <>
       {thread.comments.map((comment) => (
         <div key={comment.id}>
+          // +++
           <Timestamp date={comment.createdAt} />
+          // +++
           <Comment.Body body={comment.body} components={/* ... */} />
         </div>
       ))}
@@ -1353,7 +1356,8 @@ Displays a formatted file size.
 Use with `attachment.size` to display a human-readable file size.
 
 ```tsx
-import { CommentData, FileSize } from "@liveblocks/react-ui";
+import { FileSize } from "@liveblocks/react-ui/primitives";
+import { CommentData } from "@liveblocks/client";
 
 function MyComment({ comment }: { comment: CommentData }) {
   return (
@@ -1404,7 +1408,7 @@ your primitive Comments components.
 ```tsx
 import { EmojiPicker } from "frimousse";
 import { useAddReaction } from "@liveblocks/react/suspense";
-import { CommentData } from "@liveblocks/react-ui";
+import { CommentData } from "@liveblocks/client";
 
 export function MyEmojiPicker({ comment }: { comment: CommentData }) {
   const addReaction = useAddReaction();
@@ -1441,7 +1445,7 @@ A list of clickable emoji reactions can be created using the
 and [`useSelf`](/docs/api-reference/liveblocks-react#useSelf) hooks.
 
 ```tsx
-import { CommentData } from "@liveblocks/react-ui";
+import { CommentData } from "@liveblocks/client";
 import {
   useAddReaction,
   useRemoveReaction,

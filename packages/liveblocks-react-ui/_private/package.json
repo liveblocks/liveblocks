@@ -1,4 +1,4 @@
 {
-  "main": "../dist/_private/index.js",
-  "types": "../dist/_private/index.d.ts"
+  "main": "../dist/_private/index.cjs",
+  "types": "../dist/_private/index.d.cts"
 }

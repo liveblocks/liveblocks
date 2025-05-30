@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v2.24.3
+
+### `@liveblocks/react` and `@liveblocks/react-ui`
+
+- Fix an issue with subpath imports (e.g. `@liveblocks/react/suspense`) and
+  CommonJS which could happen with certain bundlers.
+
 ## v2.24.2
 
 ### `@liveblocks/react-ui`

@@ -551,7 +551,7 @@ export async function POST(request: Request) {
         <div>
           @{emailData.mention.author.id} at {emailData.mention.createdAt}
         </div>
-        <div>{emailData.mention.reactContent}</div>
+        <div>{emailData.mention.content}</div>
       </div>
     );
     // +++
@@ -777,7 +777,7 @@ export async function POST(request: Request) {
         <div>
           @{emailData.mention.author.id} at {emailData.mention.createdAt}
         </div>
-        <div>{emailData.mention.reactContent}</div>
+        <div>{emailData.mention.content}</div>
       </div>
     );
 
