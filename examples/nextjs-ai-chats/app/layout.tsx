@@ -113,8 +113,7 @@ function PlusIcon(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <circle cx={12} cy={12} r={10} />
-      <path d="M8 12h8M12 8v8" />
+      <path d="M7.9 20A9 9 0 104 16.1L2 22zM8 12h8M12 8v8" />
     </svg>
   );
 }
