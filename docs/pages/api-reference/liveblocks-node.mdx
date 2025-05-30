@@ -287,7 +287,7 @@ with the newest room at index `0`. This is a wrapper around the
 the same response.
 
 ```ts
-const { data: rooms, nextCursor, nextPage } = await liveblocks.getRooms();
+const { data: rooms, nextCursor } = await liveblocks.getRooms();
 
 // A list of rooms
 // [{ type: "room", id: "my-room-id", ... }, ...]
@@ -296,21 +296,13 @@ console.log(rooms);
 // A pagination cursor used for retrieving the next page of results with `startingAfter`
 // "L3YyL3Jvb21z..."
 console.log(nextCursor);
-
-// A pagination URL used for retrieving the next page of results with the REST API
-// "/v2/rooms?startingAfter=L3YyL3Jvb21z..."
-console.log(nextPage);
 ```
 
 A number of options are also available, enabling you to filter for certain
 rooms.
 
 ```ts
-const {
-  data: rooms,
-  nextCursor,
-  nextPage,
-} = await liveblocks.getRooms({
+const { data: rooms, nextCursor } = await liveblocks.getRooms({
   // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
   limit: 20,
 
@@ -682,7 +674,7 @@ import { useErrorListener } from "@liveblocks/react/suspense";
 
 function App() {
   useErrorListener((error) => {
-    if (error.code === 4006) {
+    if (error.context.code === 4006) {
       // Room ID has been changed, get the new ID and redirect
       const newRoomId = error.message;
       __redirect__(`https://example.com/document/${newRoomId}}`);

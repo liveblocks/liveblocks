@@ -1810,7 +1810,7 @@ Returns an unsubscribe function. If you’d like to retry connecting, call
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
-  switch (error.code) {
+  switch (error.context.code) {
     case -1:
       // Authentication error
       break;
@@ -1871,7 +1871,7 @@ helpful for implementing a redirect to another page.
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
   // Could not connect because you don't have access to this room
-  if (error.code === 4001)
+  if (error.context.code === 4001)
     return __displayForbiddenEntryDialog__();
   }
 });
@@ -1888,7 +1888,7 @@ or the
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
   // The room ID has changed, get the new room ID
-  if (error.code === 4006)
+  if (error.context.code === 4006)
     const newRoomId = error.message;
     return __redirect__(`/app/${newRoomId}`)
   }

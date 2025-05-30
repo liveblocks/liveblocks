@@ -16,7 +16,7 @@ import {
 type UnreadMentionEmailProps = {
   company: CompanyInfo;
   room: RoomInfo;
-  comment: Omit<CommentEmailAsReactData, "reactBody">;
+  comment: CommentEmailAsReactData;
 };
 
 const previewProps: UnreadMentionEmailProps = {

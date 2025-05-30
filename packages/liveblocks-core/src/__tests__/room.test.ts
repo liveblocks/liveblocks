@@ -167,13 +167,13 @@ describe("room / auth", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     config.errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");
     expect(err.message).toEqual("Unauthorized: No access");
-    expect(err.code).toEqual(-1); // Not a WebSocket close code
+    expect(err.context.code).toEqual(-1); // Not a WebSocket close code
     room.destroy();
   });
 });
@@ -314,7 +314,7 @@ describe("room", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "disconnected");
@@ -322,7 +322,7 @@ describe("room", () => {
     expect(delegates.authenticate).toHaveBeenCalledTimes(1);
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
     expect(err.message).toEqual("room full");
-    expect(err.code).toEqual(
+    expect(err.context.code).toEqual(
       4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
     );
   });
@@ -335,7 +335,7 @@ describe("room", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
@@ -354,7 +354,7 @@ describe("room", () => {
     expect(delegates.authenticate).toHaveBeenCalledTimes(1);
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
     expect(err.message).toEqual("room full");
-    expect(err.code).toEqual(
+    expect(err.context.code).toEqual(
       4005 /* MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM */
     );
   });
@@ -413,7 +413,7 @@ describe("room", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connecting");
@@ -423,7 +423,7 @@ describe("room", () => {
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
 
     expect(err.message).toEqual("whatever");
-    expect(err.code).toEqual(4001 /* NOT_ALLOWED */);
+    expect(err.context.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
   test("should stop trying and disconnect if unauthorized (while connected)", async () => {
@@ -434,7 +434,7 @@ describe("room", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
@@ -453,7 +453,7 @@ describe("room", () => {
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
     expect(err.message).toEqual("whatever");
-    expect(err.code).toEqual(4001 /* NOT_ALLOWED */);
+    expect(err.context.code).toEqual(4001 /* NOT_ALLOWED */);
   });
 
   test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
@@ -467,7 +467,7 @@ describe("room", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     errorEventSource.subscribeOnce((e) => (err = e));
 
     // Will try to reconnect, then gets refused, then disconnects
@@ -477,7 +477,7 @@ describe("room", () => {
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // Only once!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
     expect(err.message).toEqual("whaever");
-    expect(err.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
+    expect(err.context.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
   test("should disconnect if told by server to not try reconnecting again (while connected)", async () => {
@@ -488,7 +488,7 @@ describe("room", () => {
     );
     room.connect();
 
-    let err = {} as any;
+    let err = {} as LiveblocksError;
     errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
@@ -507,7 +507,7 @@ describe("room", () => {
     expect(delegates.authenticate).toHaveBeenCalledTimes(1); // It re-authed!
     expect(delegates.createSocket).toHaveBeenCalledTimes(1);
     expect(err.message).toEqual("wha'er");
-    expect(err.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
+    expect(err.context.code).toEqual(4999 /* CLOSE_WITHOUT_RETRY */);
   });
 
   test("initial presence should be sent once the connection is open", async () => {
@@ -2071,7 +2071,7 @@ describe("room", () => {
       const { room, wss, errorEventSource } = createTestableRoom({ x: 0 });
       room.connect();
 
-      let err = {} as any;
+      let err = {} as LiveblocksError;
       errorEventSource.subscribeOnce((e) => (err = e));
 
       wss.onConnection((conn) => {
@@ -2092,7 +2092,7 @@ describe("room", () => {
         await waitUntilStatus(room, "disconnected");
         expect(wss.connections.size).toBe(1);
         expect(err.message).toEqual("whatever");
-        expect(err.code).toEqual(4042);
+        expect(err.context.code).toEqual(4042);
       } finally {
         jest.useRealTimers();
       }
@@ -2102,7 +2102,7 @@ describe("room", () => {
       const { room, wss, errorEventSource } = createTestableRoom({ x: 0 });
       room.connect();
 
-      let err = {} as any;
+      let err = {} as LiveblocksError;
       errorEventSource.subscribeOnce((e) => (err = e));
 
       // Close the connection 1.111 second after it opened
@@ -2129,7 +2129,7 @@ describe("room", () => {
         await waitUntilStatus(room, "disconnected");
         expect(wss.connections.size).toBe(1);
         expect(err.message).toEqual("whatever");
-        expect(err.code).toEqual(4042);
+        expect(err.context.code).toEqual(4042);
       } finally {
         jest.useRealTimers();
       }

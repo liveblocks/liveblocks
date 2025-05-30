@@ -332,7 +332,7 @@ export const server = setupServer(
   http.get(`${SERVER_BASE_URL}/v2/rooms`, () =>
     HttpResponse.json(
       {
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [ROOM_TEST],
       },
       { status: 200 }
@@ -438,12 +438,7 @@ export const renderToStaticMarkup = (reactNode: ReactNode): string =>
 type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
   string,
   BaseUserMeta,
-  // Keeping backward compatibility with the `reactBody` property
-  // that was used in the previous versions.
-  CommentEmailData<string, BaseUserMeta> & {
-    /** @deprecated */
-    reactBody: string;
-  }
+  CommentEmailData<string, BaseUserMeta>
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
@@ -462,7 +457,6 @@ export const commentBodiesAsReactToStaticMarkup = (
         comment: {
           ...comment,
           body,
-          reactBody: body,
         },
       };
     }
@@ -475,7 +469,6 @@ export const commentBodiesAsReactToStaticMarkup = (
           return {
             ...comment,
             body,
-            reactBody: body,
           };
         }),
       };

@@ -230,7 +230,6 @@ export type {
   NotificationSettings,
   NotificationSettingsPlain,
   PartialNotificationSettings,
-  UserNotificationSettings,
 } from "./protocol/NotificationSettings";
 export {
   createNotificationSettings,
@@ -252,7 +251,6 @@ export type {
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
 export type {
-  RoomNotificationSettings,
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
@@ -361,13 +359,6 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
-import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
-
-// Deprecated APIs
-/** @deprecated Use HttpError instead. */
-export const CommentsApiError = HttpError;
-/** @deprecated Use HttpError instead. */
-export const NotificationsApiError = HttpError;

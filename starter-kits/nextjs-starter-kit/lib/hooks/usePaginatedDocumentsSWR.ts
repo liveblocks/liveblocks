@@ -31,7 +31,7 @@ export function usePaginatedDocumentsSWR(
       return null;
     }
 
-    // `nextPage` is not set, no more pages to retrieve
+    // `nextCursor` is not set, no more pages to retrieve
     if (previousPageData && !previousPageData.nextCursor) {
       setAtEnd(true);
       return null;
@@ -42,7 +42,7 @@ export function usePaginatedDocumentsSWR(
       return [getDocuments, documentsOptions];
     }
 
-    // Current page is a later page, get next documents from `nextPage`
+    // Current page is a later page, get next documents from `nextCursor`
     return [getNextDocuments, { nextCursor: previousPageData.nextCursor }];
   };
 

@@ -32,8 +32,7 @@ function Sandbox() {
   );
   const syncStatus = useSyncStatus({ smooth: true });
   const [synced, setSynced] = useState(false);
-  const [provider, setProvider] =
-    useState<LiveblocksYjsProvider>();
+  const [provider, setProvider] = useState<LiveblocksYjsProvider>();
   const doc = useMemo(() => new Y.Doc(), []);
 
   const updateSubdocContent = useCallback(() => {

@@ -69,7 +69,7 @@ export function AnchoredThreads({
       if (!prev || !next) return false;
       return (
         prev.pluginState?.selectedThreadId ===
-        next.pluginState?.selectedThreadId &&
+          next.pluginState?.selectedThreadId &&
         prev.pluginState?.threadPositions === next.pluginState?.threadPositions
       ); // new map is made each time threadPos updates so shallow equality is fine
     },

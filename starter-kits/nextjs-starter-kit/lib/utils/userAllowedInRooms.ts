@@ -1,4 +1,4 @@
-import { RoomInfo } from "@liveblocks/node";
+import { RoomData } from "@liveblocks/node";
 
 /**
  * Learn more about ID token permissions
@@ -13,11 +13,11 @@ interface UserAccessProps {
 }
 
 type UserAllowedInRoomProps = UserAccessProps & {
-  room: RoomInfo;
+  room: RoomData;
 };
 
 type UserAllowedInRoomsProps = UserAccessProps & {
-  rooms: RoomInfo[];
+  rooms: RoomData[];
 };
 
 /**
