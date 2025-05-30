@@ -7,7 +7,7 @@ import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import { forwardRef, Fragment, useCallback, useMemo } from "react";
+import { forwardRef, useCallback, useMemo } from "react";
 
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Markdown } from "../Markdown";
@@ -84,7 +84,7 @@ function ToolInvocation({
     <ErrorBoundary
       fallback={
         <p style={{ color: "red" }}>
-          Failed to render tool call result for '{part.toolName}'. See console
+          Failed to render tool call result for ‘{part.toolName}’. See console
           for details.
         </p>
       }
