@@ -156,19 +156,6 @@ export const extractTextMentionNotificationData = async ({
   }
 };
 
-export type MentionEmailBaseData = {
-  id: string;
-  roomId: string;
-  userId: string; // Author of the mention
-  textEditorNodes: LiveblocksTextEditorNode[];
-  createdAt: Date;
-};
-
-export type TextMentionNotificationEmailBaseData = {
-  mention: MentionEmailBaseData;
-  roomInfo: DRI;
-};
-
 export type MentionEmailData<ContentType, U extends BaseUserMeta = DU> = {
   id: string;
   roomId: string;
