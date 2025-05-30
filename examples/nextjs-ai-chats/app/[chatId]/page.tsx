@@ -25,6 +25,7 @@ export default function Page({ params }: { params: { chatId: string } }) {
         chatId={params.chatId}
         className="grow mx-auto"
         components={{ Empty }}
+        autoFocus
 
         // Chat width is set in globals.css with a variable:
         // --lb-ai-chat-container-width

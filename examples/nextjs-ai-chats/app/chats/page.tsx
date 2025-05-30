@@ -31,7 +31,7 @@ export default function Chats() {
       <div className="flex justify-between items-center">
         <h1 className="font-serif font-normal text-3xl">Your chat history</h1>
         <Link
-          href={`/${nanoid}`}
+          href={`/${nanoid()}`}
           className="flex items-center gap-1 rounded-lg bg-orange-700 hover:bg-orange-600 text-white px-2.5 py-2 text-sm transition-colors"
         >
           <PlusIcon />
