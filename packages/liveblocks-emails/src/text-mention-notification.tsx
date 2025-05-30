@@ -9,7 +9,7 @@ import type {
   Liveblocks,
   TextMentionNotificationEvent,
 } from "@liveblocks/node";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 import type { LexicalMentionNodeWithContext } from "./lexical-editor";
 import {
@@ -18,11 +18,13 @@ import {
 } from "./lexical-editor";
 import { resolveAuthorsInfo } from "./lib/authors";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import { MENTION_CHARACTER } from "./lib/constants";
 import type { ResolveRoomInfoArgs } from "./lib/types";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
-  ConvertTextEditorNodesAsReactComponents,
+  LiveblocksTextEditorMentionNode,
   LiveblocksTextEditorNode,
+  LiveblocksTextEditorTextNode,
 } from "./liveblocks-text-editor";
 import {
   convertTextEditorNodesAsHtml,
@@ -247,7 +249,7 @@ export type MentionEmailAsReactData<U extends BaseUserMeta = DU> =
 
 export type TextMentionNotificationEmailData<
   ContentType,
-  U extends BaseUserMeta,
+  U extends BaseUserMeta = DU,
   M extends MentionEmailData<ContentType, U> = MentionEmailData<ContentType, U>,
 > = {
   mention: M;
@@ -359,16 +361,87 @@ export async function prepareTextMentionNotificationEmail<
   };
 }
 
+export type TextEditorContainerComponentProps = {
+  /**
+   * The nodes of the text editor
+   */
+  children: ReactNode;
+};
+
+export type TextEditorMentionComponentProps<U extends BaseUserMeta = DU> = {
+  /**
+   * The mention element.
+   */
+  element: LiveblocksTextEditorMentionNode;
+  /**
+   * The mention's user info, if the `resolvedUsers` option was provided.
+   */
+  user?: U["info"];
+};
+
+export type TextEditorTextComponentProps = {
+  /**
+   * The text element.
+   */
+  element: LiveblocksTextEditorTextNode;
+};
+
+export type ConvertTextEditorNodesAsReactComponents<
+  U extends BaseUserMeta = DU,
+> = {
+  /**
+   *
+   * The component used to act as a container to wrap text editor nodes,
+   */
+  Container: ComponentType<TextEditorContainerComponentProps>;
+
+  /**
+   * The component used to display mentions.
+   */
+  Mention: ComponentType<TextEditorMentionComponentProps<U>>;
+
+  /**
+   * The component used to display text nodes.
+   */
+  Text: ComponentType<TextEditorTextComponentProps>;
+};
+
+const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
+  Container: ({ children }) => <div>{children}</div>,
+  Mention: ({ element, user }) => (
+    <span data-mention>
+      {MENTION_CHARACTER}
+      {user?.name ?? element.userId}
+    </span>
+  ),
+  Text: ({ element }) => {
+    // Note: construction following the schema 👇
+    // <code><s><em><strong>{element.text}</strong></s></em></code>
+    let children: ReactNode = element.text;
+
+    if (element.bold) {
+      children = <strong>{children}</strong>;
+    }
+
+    if (element.italic) {
+      children = <em>{children}</em>;
+    }
+
+    if (element.strikethrough) {
+      children = <s>{children}</s>;
+    }
+
+    if (element.code) {
+      children = <code>{children}</code>;
+    }
+
+    return <span>{children}</span>;
+  },
+};
+
 export type PrepareTextMentionNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
-> = PrepareTextMentionNotificationEmailBaseDataOptions & {
-  /**
-   * A function that returns info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
-
+> = PrepareTextMentionNotificationEmailOptions & {
   /**
    * The components used to customize the resulting React nodes. Each components has
    * priority over the base components inherited.
@@ -376,8 +449,9 @@ export type PrepareTextMentionNotificationEmailAsReactOptions<
   components?: Partial<ConvertTextEditorNodesAsReactComponents<U>>;
 };
 
-export type TextMentionNotificationEmailDataAsReact =
-  TextMentionNotificationEmailData<BaseUserMeta, MentionEmailAsReactData>;
+export type TextMentionNotificationEmailDataAsReact<
+  U extends BaseUserMeta = DU,
+> = TextMentionNotificationEmailData<ReactNode, U, MentionEmailAsReactData<U>>;
 
 /**
  * Prepares data from a `TextMentionNotificationEvent` and convert content as React nodes.
@@ -408,58 +482,42 @@ export async function prepareTextMentionNotificationEmailAsReact(
   event: TextMentionNotificationEvent,
   options: PrepareTextMentionNotificationEmailAsReactOptions<BaseUserMeta> = {}
 ): Promise<TextMentionNotificationEmailDataAsReact | null> {
-  const data = await prepareTextMentionNotificationEmailBaseData({
+  const Components = { ...baseComponents, ...options.components };
+  const data = await prepareTextMentionNotificationEmail<
+    ReactNode,
+    BaseUserMeta
+  >(
     client,
     event,
-    options: {
+    {
       resolveRoomInfo: options.resolveRoomInfo,
+      resolveUsers: options.resolveUsers,
     },
-  });
+    {
+      container: ({ children }) => (
+        <Components.Container key="lb-text-editor-container">
+          {children}
+        </Components.Container>
+      ),
+      mention: ({ node, user }, index) => (
+        <Components.Mention
+          key={`lb-text-editor-mention-${index}`}
+          element={node}
+          user={user}
+        />
+      ),
+      text: ({ node }, index) => (
+        <Components.Text key={`lb-text-editor-text-${index}`} element={node} />
+      ),
+    },
+    "prepareTextMentionNotificationEmailAsReact"
+  );
 
   if (data === null) {
     return null;
   }
-  const { mention, roomInfo } = data;
 
-  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
-    resolveUsers: options.resolveUsers,
-    callerName: "prepareTextMentionNotificationEmailAsReact",
-  });
-
-  const authorsInfoPromise = resolveAuthorsInfo({
-    userIds: [mention.userId],
-    resolveUsers: batchUsersResolver.resolveUsers,
-  });
-  const contentPromise = convertTextEditorNodesAsReact(
-    mention.textEditorNodes,
-    {
-      resolveUsers: batchUsersResolver.resolveUsers,
-      components: options.components,
-    }
-  );
-
-  await batchUsersResolver.resolve();
-
-  const [authorsInfo, reactContent] = await Promise.all([
-    authorsInfoPromise,
-    contentPromise,
-  ]);
-
-  const authorInfo = authorsInfo.get(mention.userId);
-
-  return {
-    mention: {
-      id: mention.id,
-      author: {
-        id: mention.userId,
-        info: authorInfo ?? { name: mention.userId },
-      },
-      roomId: mention.roomId,
-      reactContent,
-      createdAt: mention.createdAt,
-    },
-    roomInfo,
-  };
+  return data;
 }
 
 export type PrepareTextMentionNotificationEmailAsHtmlOptions<

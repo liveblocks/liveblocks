@@ -5,18 +5,16 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type { ResolveRoomInfoArgs } from "./lib/types";
+export type { ConvertTextEditorNodesAsHtmlStyles } from "./liveblocks-text-editor";
 export type {
-  ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
-  TextEditorContainerComponentProps,
-  TextEditorMentionComponentProps,
-  TextEditorTextComponentProps,
-} from "./liveblocks-text-editor";
-export type {
   MentionEmailAsHtmlData,
   MentionEmailAsReactData,
   PrepareTextMentionNotificationEmailAsHtmlOptions,
   PrepareTextMentionNotificationEmailAsReactOptions,
+  TextEditorContainerComponentProps,
+  TextEditorMentionComponentProps,
+  TextEditorTextComponentProps,
   TextMentionNotificationEmailDataAsHtml,
   TextMentionNotificationEmailDataAsReact,
 } from "./text-mention-notification";
