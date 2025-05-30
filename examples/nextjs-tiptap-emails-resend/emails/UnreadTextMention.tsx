@@ -38,7 +38,7 @@ const previewProps: UnreadTextMentionProps = {
         avatar: "https://liveblocks.io/avatars/avatar-1.png",
       },
     },
-    reactContent: (
+    content: (
       <Text className="text-sm text-black m-0">
         <span>
           For the user research phase, we'll need{" "}
