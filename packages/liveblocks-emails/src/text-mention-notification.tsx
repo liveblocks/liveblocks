@@ -248,8 +248,9 @@ export type MentionEmailAsReactData<U extends BaseUserMeta = DU> =
 export type TextMentionNotificationEmailData<
   ContentType,
   U extends BaseUserMeta,
+  M extends MentionEmailData<ContentType, U> = MentionEmailData<ContentType, U>,
 > = {
-  mention: MentionEmailData<ContentType, U>;
+  mention: M;
   roomInfo: DRI;
 };
 
