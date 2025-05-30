@@ -69,7 +69,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <ChatList />
               </div>
             </aside>
-            <main className="relative grow bg-stone-50">{children}</main>
+
+            <main className="relative grow bg-stone-50 overflow-y-scroll">
+              {children}
+            </main>
           </div>
         </Providers>
       </body>

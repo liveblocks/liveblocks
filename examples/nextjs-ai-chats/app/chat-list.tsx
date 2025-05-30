@@ -2,14 +2,22 @@
 
 import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
 import Link from "next/link";
-import { redirect, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { ComponentProps } from "react";
 
 export function ChatList() {
   const params = useParams();
 
-  const { chats } = useAiChats();
+  const { chats, isLoading, error } = useAiChats();
   const deleteAiChat = useDeleteAiChat();
+
+  if (error) {
+    return <div>Problem fetching chats</div>;
+  }
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!chats) {
     return (
@@ -28,16 +36,13 @@ export function ChatList() {
         >
           <Link href={`/${chat.id}`} className="absolute inset-0" />
           <span className="truncate">{chat.title || "Untitled"}</span>
-          <button
-            onClick={() => {
-              console.log(chat.id);
-              deleteAiChat(chat.id);
-              redirect(`/${chats[0].id}`);
-            }}
-            className="z-10"
-          >
-            <TrashIcon className="text-red-600 opacity-70 hover:opacity-100 hidden group-hover:block" />
-          </button>
+
+          {/* TODO: Remove this check when `useAiChat` bug is fixed */}
+          {params.chatId !== chat.id ? (
+            <button onClick={() => deleteAiChat(chat.id)} className="z-10">
+              <TrashIcon className="text-red-600 opacity-70 hover:opacity-100 hidden group-hover:block" />
+            </button>
+          ) : null}
         </li>
       ))}
     </ul>

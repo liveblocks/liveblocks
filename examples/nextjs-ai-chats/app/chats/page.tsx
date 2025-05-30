@@ -27,7 +27,7 @@ export default function Chats() {
   }
 
   return (
-    <div style={{ width: "var(--inner-app-width)" }} className="mx-auto pt-16">
+    <div className="w-full mx-auto pt-16 max-w-[--inner-app-width] px-4">
       <div className="flex justify-between items-center">
         <h1 className="font-serif font-normal text-3xl">Your chat history</h1>
         <Link
@@ -54,7 +54,7 @@ export default function Chats() {
       </div>
 
       {!chats?.length || !filteredChats?.length ? (
-        <div className="px-2 py-1.5 italic text-stone-500">
+        <div className="py-1.5 italic text-stone-500">
           {chats.length === 0 ? "No chats yet" : "No matching chats"}
         </div>
       ) : (

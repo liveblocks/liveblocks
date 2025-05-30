@@ -8,9 +8,7 @@ import { getUser } from "../database";
  */
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_DEV_SECRET_KEY!,
-  // @ts-expect-error
-  baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
 export async function POST(request: NextRequest) {
