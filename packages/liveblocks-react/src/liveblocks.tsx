@@ -978,7 +978,8 @@ function useAiChatsSuspense(): AiChatsAsyncSuccess {
 
 function useAiChatMessages(
   chatId: string,
-  branch?: MessageId
+  /** @internal */
+  options?: { branchId?: MessageId }
 ): AiChatMessagesAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
@@ -987,7 +988,7 @@ function useAiChatMessages(
     () =>
       void store.outputs.messagesByChatId
         .getOrCreate(chatId)
-        .getOrCreate(branch ?? null)
+        .getOrCreate(options?.branchId ?? null)
         .waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
@@ -1003,13 +1004,14 @@ function useAiChatMessages(
   return useSignal(
     store.outputs.messagesByChatId
       .getOrCreate(chatId)
-      .getOrCreate(branch ?? null).signal
+      .getOrCreate(options?.branchId ?? null).signal
   );
 }
 
 function useAiChatMessagesSuspense(
   chatId: string,
-  branch?: MessageId
+  /** @internal */
+  options?: { branchId?: MessageId }
 ): AiChatMessagesAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
@@ -1020,11 +1022,11 @@ function useAiChatMessagesSuspense(
   use(
     store.outputs.messagesByChatId
       .getOrCreate(chatId)
-      .getOrCreate(branch ?? null)
+      .getOrCreate(options?.branchId ?? null)
       .waitUntilLoaded()
   );
 
-  const result = useAiChatMessages(chatId, branch);
+  const result = useAiChatMessages(chatId, options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;

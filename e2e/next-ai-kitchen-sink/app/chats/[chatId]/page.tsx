@@ -59,7 +59,7 @@ function Chat({ chatId }: { chatId: string }) {
   const [copilotId, setCopilotId] = useState<CopilotId | "default">("default");
   const [branchId, setBranchId] = useState<MessageId | null>(null);
   // @ts-ignore 'branchId' is an internal property of the useAiChatMessages hook
-  const { messages } = useAiChatMessages(chatId, branchId);
+  const { messages } = useAiChatMessages(chatId, { branchId });
 
   useLayoutEffect(() => {
     const container = containerRef.current;
