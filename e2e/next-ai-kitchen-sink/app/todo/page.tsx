@@ -214,7 +214,8 @@ export default function Page() {
 
                         render: ({ status, result, $types }) => (
                           <AiTool>
-                            <AiTool.Confirmation<typeof $types>
+                            <AiTool.Confirmation
+                              $types={$types}
                               variant="destructive"
                               confirm={({ ids }) => {
                                 const deletedTitles = todos

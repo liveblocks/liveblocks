@@ -3,6 +3,7 @@ import {
   type AiToolTypePack,
   type JsonObject,
   kInternal,
+  type NoInfr,
   type ToolResultData,
 } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
@@ -54,6 +55,7 @@ export interface AiToolConfirmationProps<
   A extends JsonObject,
   R extends ToolResultData,
 > extends ComponentProps<"div"> {
+  $types?: NoInfr<AiToolTypePack<A, R>>;
   args?: A;
   confirm: AiToolExecuteCallback<A, R>;
   cancel: AiToolExecuteCallback<A, R>;
