@@ -24,21 +24,20 @@ import { EditorView } from "prosemirror-view";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { CustomTaskItem } from "./CustomTaskItem";
 import { StaticToolbar, SelectionToolbar } from "./Toolbars";
-import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
-import { AiChat, AiTool } from "@liveblocks/react-ui";
-import { defineAiTool } from "@liveblocks/client";
+import { AiChatPanel } from "./AiChatPanel";
+import styles from "./TextEditor.module.css";
 
 export function TextEditor() {
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      <Editor />
+      <TiptapEditor />
     </ClientSideSuspense>
   );
 }
 
 // Collaborative text editor with simple rich text and live cursors
-export function Editor() {
+export function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
   const room = useRoom();
 
@@ -140,55 +139,21 @@ export function Editor() {
   const { threads } = useThreads();
 
   return (
-    <div className={styles.appContainer}>
-      <div className={styles.container}>
-        <div className={styles.editorHeader}>
-          <StaticToolbar editor={editor} />
-          <Avatars />
-        </div>
+    <div className={styles.container}>
+      <div className={styles.editorHeader}>
+        <StaticToolbar editor={editor} />
+        <Avatars />
+      </div>
+      <div className={styles.panels}>
         <div className={styles.editorPanel}>
           <SelectionToolbar editor={editor} />
           <EditorContent editor={editor} className={styles.editorContainer} />
           <FloatingComposer editor={editor} style={{ width: 350 }} />
           <FloatingThreads threads={threads} editor={editor} />
         </div>
-      </div>
-      <div className={styles.aiContainer}>
-        <AiChat
-          chatId={room.id}
-          layout="compact"
-          knowledge={[
-            {
-              description: "The Tiptap editor's JSON state",
-              value: editor?.getJSON() || "Loading...",
-            },
-          ]}
-          tools={{
-            "insert-text": defineAiTool()({
-              description: "Insert text",
-              parameters: {
-                type: "object",
-                properties: {
-                  position: { type: "number" },
-                  text: { type: "string" },
-                },
-                required: ["position", "text"],
-              },
-              execute: ({ position, text }) => {
-                if (!editor) {
-                  return null;
-                }
-
-                editor.commands.insertContentAt(position, {
-                  type: "text",
-                  text,
-                });
-                return "Text has been added";
-              },
-              render: () => <AiTool />,
-            }),
-          }}
-        />
+        <div className={styles.aiPanel}>
+          <AiChatPanel editor={editor} />
+        </div>
       </div>
     </div>
   );

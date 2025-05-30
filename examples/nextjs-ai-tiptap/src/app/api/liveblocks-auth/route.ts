@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest } from "next/server";
-import { getRandomUser } from "@/database";
+import { getUser } from "@/database";
 
 /**
  * Authenticating your Liveblocks application
@@ -13,7 +13,7 @@ const liveblocks = new Liveblocks({
 
 export async function POST(request: NextRequest) {
   // Get the current user's unique id and info from your database
-  const user = getRandomUser();
+  const user = getUser("quinn.elton@example.com");
 
   // Create a session for the current user
   // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
