@@ -5,8 +5,8 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type { ResolveRoomInfoArgs } from "./lib/types";
-export type { ConvertTextEditorNodesAsHtmlStyles } from "./liveblocks-text-editor";
 export type {
+  ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
   MentionEmailAsHtmlData,
   MentionEmailAsReactData,

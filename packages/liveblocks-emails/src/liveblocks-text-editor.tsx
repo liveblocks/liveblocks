@@ -8,10 +8,8 @@
 import type {
   Awaitable,
   BaseUserMeta,
-  DU,
   ResolveUsersArgs,
 } from "@liveblocks/core";
-import { html, htmlSafe } from "@liveblocks/core";
 
 import type {
   LexicalMentionNodeWithContext,
@@ -19,9 +17,6 @@ import type {
   SerializedLexicalTextNode,
 } from "./lexical-editor";
 import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor";
-import { MENTION_CHARACTER } from "./lib/constants";
-import type { CSSProperties } from "./lib/css-properties";
-import { toInlineCSSString } from "./lib/css-properties";
 import type {
   SerializedTiptapMark,
   SerializedTiptapMarkType,
@@ -305,121 +300,3 @@ export const resolveUsersInLiveblocksTextEditorNodes = async <
   }
   return resolvedUsers;
 };
-
-export type ConvertTextEditorNodesAsHtmlStyles = {
-  /**
-   * The default inline CSS styles used to display container element.
-   */
-  container: CSSProperties;
-  /**
-   * The default inline CSS styles used to display text `<strong />` elements.
-   */
-  strong: CSSProperties;
-  /**
-   * The default inline CSS styles used to display text `<code />` elements.
-   */
-  code: CSSProperties;
-  /**
-   * The default inline CSS styles used to display mentions.
-   */
-  mention: CSSProperties;
-};
-
-export const baseStyles: ConvertTextEditorNodesAsHtmlStyles = {
-  container: {
-    fontSize: "14px",
-  },
-  strong: {
-    fontWeight: 500,
-  },
-  code: {
-    fontFamily:
-      'ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace',
-    backgroundColor: "rgba(0,0,0,0.05)",
-    border: "solid 1px rgba(0,0,0,0.1)",
-    borderRadius: "4px",
-  },
-  mention: {
-    color: "blue",
-  },
-};
-
-export type ConvertTextEditorNodesAsHtmlOptions<U extends BaseUserMeta = DU> = {
-  /**
-   * The styles used to customize the html elements in the resulting html safe string.
-   * Each styles has priority over the base styles inherited.
-   */
-  styles?: Partial<ConvertTextEditorNodesAsHtmlStyles>;
-  /**
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
-};
-
-/**
- * @internal
- *
- * Convert a set of Liveblocks Editor nodes into an html safe string
- * with inline css styles
- */
-export async function convertTextEditorNodesAsHtml(
-  nodes: LiveblocksTextEditorNode[],
-  options?: ConvertTextEditorNodesAsHtmlOptions<BaseUserMeta>
-): Promise<string> {
-  const styles = { ...baseStyles, ...options?.styles };
-  const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
-    nodes,
-    options?.resolveUsers
-  );
-
-  // NOTE: using prettier-ignore to preserve template strings
-  const children = nodes
-    .map((node) => {
-      switch (node.type) {
-        case "mention": {
-          const user = resolvedUsers.get(node.userId);
-          // prettier-ignore
-          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.userId}</span>`
-        }
-        case "text": {
-          // Note: construction following the schema 👇
-          // <code><s><em><strong>{node.text}</strong></s></em></code>
-          let children = node.text;
-          if (!children) {
-            return html`${children}`;
-          }
-
-          if (node.bold) {
-            // prettier-ignore
-            children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
-          }
-
-          if (node.italic) {
-            // prettier-ignore
-            children = html`<em>${children}</em>`;
-          }
-
-          if (node.strikethrough) {
-            // prettier-ignore
-            children = html`<s>${children}</s>`;
-          }
-
-          if (node.code) {
-            // prettier-ignore
-            children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
-          }
-
-          return html`${children}`;
-        }
-      }
-    })
-    .join("");
-
-  const content = [
-    // prettier-ignore
-    html`<div style="${toInlineCSSString(styles.container)}">${htmlSafe(children)}</div>`,
-  ];
-  return content.join("\n"); // Note: to represent a good string
-}

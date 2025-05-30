@@ -1,9 +1,11 @@
-import type {
-  Awaitable,
-  BaseUserMeta,
-  DRI,
-  DU,
-  ResolveUsersArgs,
+import {
+  type Awaitable,
+  type BaseUserMeta,
+  type DRI,
+  type DU,
+  html,
+  htmlSafe,
+  type ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
   Liveblocks,
@@ -19,18 +21,15 @@ import {
 import { resolveAuthorsInfo } from "./lib/authors";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import { MENTION_CHARACTER } from "./lib/constants";
+import type { CSSProperties } from "./lib/css-properties";
+import { toInlineCSSString } from "./lib/css-properties";
 import type { ResolveRoomInfoArgs } from "./lib/types";
 import type {
-  ConvertTextEditorNodesAsHtmlStyles,
   LiveblocksTextEditorMentionNode,
   LiveblocksTextEditorNode,
   LiveblocksTextEditorTextNode,
 } from "./liveblocks-text-editor";
-import {
-  convertTextEditorNodesAsHtml,
-  convertTextEditorNodesAsReact,
-  transformAsLiveblocksTextEditorNodes,
-} from "./liveblocks-text-editor";
+import { transformAsLiveblocksTextEditorNodes } from "./liveblocks-text-editor";
 import {
   convertMentionContent,
   type ConvertMentionContentElements,
@@ -165,72 +164,9 @@ export type MentionEmailBaseData = {
   createdAt: Date;
 };
 
-type PrepareTextMentionNotificationEmailBaseDataOptions = {
-  /**
-   * A function that returns room info from room IDs.
-   */
-  resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
-};
-
 export type TextMentionNotificationEmailBaseData = {
   mention: MentionEmailBaseData;
   roomInfo: DRI;
-};
-
-/** @internal */
-export const prepareTextMentionNotificationEmailBaseData = async ({
-  client,
-  event,
-  options = {},
-}: {
-  client: Liveblocks;
-  event: TextMentionNotificationEvent;
-  options?: PrepareTextMentionNotificationEmailBaseDataOptions;
-}): Promise<TextMentionNotificationEmailBaseData | null> => {
-  const { roomId, mentionId } = event.data;
-  const roomInfo = options.resolveRoomInfo
-    ? await options.resolveRoomInfo({ roomId })
-    : undefined;
-
-  const resolvedRoomInfo: DRI = {
-    ...roomInfo,
-    name: roomInfo?.name ?? roomId,
-  };
-
-  const data = await extractTextMentionNotificationData({ client, event });
-  if (data === null) {
-    return null;
-  }
-
-  let textEditorNodes: LiveblocksTextEditorNode[] = [];
-
-  switch (data.editor) {
-    case "lexical": {
-      textEditorNodes = transformAsLiveblocksTextEditorNodes({
-        editor: "lexical",
-        mention: data.mentionNodeWithContext,
-      });
-      break;
-    }
-    case "tiptap": {
-      textEditorNodes = transformAsLiveblocksTextEditorNodes({
-        editor: "tiptap",
-        mention: data.mentionNodeWithContext,
-      });
-      break;
-    }
-  }
-
-  return {
-    mention: {
-      id: mentionId,
-      roomId,
-      textEditorNodes,
-      createdAt: data.createdAt,
-      userId: data.userId,
-    },
-    roomInfo: resolvedRoomInfo,
-  };
 };
 
 export type MentionEmailData<ContentType, U extends BaseUserMeta = DU> = {
@@ -520,25 +456,56 @@ export async function prepareTextMentionNotificationEmailAsReact(
   return data;
 }
 
-export type PrepareTextMentionNotificationEmailAsHtmlOptions<
-  U extends BaseUserMeta = DU,
-> = PrepareTextMentionNotificationEmailBaseDataOptions & {
+export type ConvertTextEditorNodesAsHtmlStyles = {
   /**
-   * A function that returns info from user IDs.
+   * The default inline CSS styles used to display container element.
    */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>;
-
+  container: CSSProperties;
   /**
-   * The styles used to customize the html elements in the resulting html safe string.
-   * Each styles has priority over the base styles inherited.
+   * The default inline CSS styles used to display text `<strong />` elements.
    */
-  styles?: Partial<ConvertTextEditorNodesAsHtmlStyles>;
+  strong: CSSProperties;
+  /**
+   * The default inline CSS styles used to display text `<code />` elements.
+   */
+  code: CSSProperties;
+  /**
+   * The default inline CSS styles used to display mentions.
+   */
+  mention: CSSProperties;
 };
 
-export type TextMentionNotificationEmailDataAsHtml =
-  TextMentionNotificationEmailData<BaseUserMeta, MentionEmailAsHtmlData>;
+export const baseStyles: ConvertTextEditorNodesAsHtmlStyles = {
+  container: {
+    fontSize: "14px",
+  },
+  strong: {
+    fontWeight: 500,
+  },
+  code: {
+    fontFamily:
+      'ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace',
+    backgroundColor: "rgba(0,0,0,0.05)",
+    border: "solid 1px rgba(0,0,0,0.1)",
+    borderRadius: "4px",
+  },
+  mention: {
+    color: "blue",
+  },
+};
+
+export type PrepareTextMentionNotificationEmailAsHtmlOptions =
+  PrepareTextMentionNotificationEmailOptions & {
+    /**
+     * The styles used to customize the html elements in the resulting html safe string.
+     * Each styles has priority over the base styles inherited.
+     */
+    styles?: Partial<ConvertTextEditorNodesAsHtmlStyles>;
+  };
+
+export type TextMentionNotificationEmailDataAsHtml<
+  U extends BaseUserMeta = DU,
+> = TextMentionNotificationEmailData<string, U, MentionEmailAsHtmlData<U>>;
 
 /**
  * Prepares data from a `TextMentionNotificationEvent` and convert content  as an html safe string.
@@ -567,56 +534,66 @@ export type TextMentionNotificationEmailDataAsHtml =
 export async function prepareTextMentionNotificationEmailAsHtml(
   client: Liveblocks,
   event: TextMentionNotificationEvent,
-  options: PrepareTextMentionNotificationEmailAsHtmlOptions<BaseUserMeta> = {}
+  options: PrepareTextMentionNotificationEmailAsHtmlOptions = {}
 ): Promise<TextMentionNotificationEmailDataAsHtml | null> {
-  const data = await prepareTextMentionNotificationEmailBaseData({
+  const styles = { ...baseStyles, ...options.styles };
+  const data = await prepareTextMentionNotificationEmail<string, BaseUserMeta>(
     client,
     event,
-    options: {
+    {
       resolveRoomInfo: options.resolveRoomInfo,
+      resolveUsers: options.resolveUsers,
     },
-  });
+    {
+      container: ({ children }) => {
+        const content = [
+          // prettier-ignore
+          html`<div style="${toInlineCSSString(styles.container)}">${htmlSafe(children.join(""))}</div>`,
+        ];
+
+        return content.join("\n"); //NOTE: to represent a valid HTML string
+      },
+      mention: ({ node, user }) => {
+        // prettier-ignore
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.userId}</span>`
+      },
+      text: ({ node }) => {
+        // Note: construction following the schema 👇
+        // <code><s><em><strong>{node.text}</strong></s></em></code>
+        let children = node.text;
+        if (!children) {
+          return html`${children}`;
+        }
+
+        if (node.bold) {
+          // prettier-ignore
+          children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
+        }
+
+        if (node.italic) {
+          // prettier-ignore
+          children = html`<em>${children}</em>`;
+        }
+
+        if (node.strikethrough) {
+          // prettier-ignore
+          children = html`<s>${children}</s>`;
+        }
+
+        if (node.code) {
+          // prettier-ignore
+          children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
+        }
+
+        return html`${children}`;
+      },
+    },
+    "prepareTextMentionNotificationEmailAsHtml"
+  );
 
   if (data === null) {
     return null;
   }
-  const { mention, roomInfo } = data;
 
-  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
-    resolveUsers: options.resolveUsers,
-    callerName: "prepareTextMentionNotificationEmailAsHtml",
-  });
-
-  const authorsInfoPromise = resolveAuthorsInfo({
-    userIds: [mention.userId],
-    resolveUsers: batchUsersResolver.resolveUsers,
-  });
-
-  const contentPromise = convertTextEditorNodesAsHtml(mention.textEditorNodes, {
-    resolveUsers: batchUsersResolver.resolveUsers,
-    styles: options.styles,
-  });
-
-  await batchUsersResolver.resolve();
-
-  const [authorsInfo, htmlContent] = await Promise.all([
-    authorsInfoPromise,
-    contentPromise,
-  ]);
-
-  const authorInfo = authorsInfo.get(mention.userId);
-
-  return {
-    mention: {
-      id: mention.id,
-      author: {
-        id: mention.userId,
-        info: authorInfo ?? { name: mention.userId },
-      },
-      roomId: mention.roomId,
-      htmlContent,
-      createdAt: mention.createdAt,
-    },
-    roomInfo,
-  };
+  return data;
 }
