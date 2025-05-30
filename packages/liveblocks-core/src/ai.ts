@@ -164,7 +164,7 @@ export type AiToolExecuteCallback<
 > = (args: A, context: AiToolExecuteContext) => Awaitable<R>;
 
 export type AiToolDefinition<
-  S extends JSONSchema7,
+  S extends JSONObjectSchema7,
   A extends JsonObject,
   R extends ToolResultData,
 > = {
@@ -175,10 +175,12 @@ export type AiToolDefinition<
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<
-  JSONSchema7,
+  JSONObjectSchema7,
   JsonObject,
   ToolResultData
 >;
+
+type JSONObjectSchema7 = JSONSchema7 & { type: "object" };
 
 /**
  * Helper function to help infer the types of `args`, `render`, and `result`.
@@ -186,7 +188,7 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
  * possible for TypeScript to infer types.
  */
 export function defineAiTool<R extends ToolResultData>() {
-  return <const S extends JSONSchema7>(
+  return <const S extends JSONObjectSchema7>(
     def: AiToolDefinition<
       S,
       InferFromSchema<S> extends JsonObject ? InferFromSchema<S> : JsonObject,
