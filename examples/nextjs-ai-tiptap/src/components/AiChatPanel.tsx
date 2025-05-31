@@ -6,6 +6,9 @@ import { useState, useEffect } from "react";
 import DOMPurify from "dompurify";
 import { diffWords } from "diff";
 
+// Cancel should not add a message after. Or option to not do this.
+// AI will keep repeating
+
 export function AiChatPanel({ editor }: { editor: Editor | null }) {
   const room = useRoom();
 
