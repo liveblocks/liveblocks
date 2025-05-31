@@ -2,17 +2,37 @@ import { AiChat, AiTool } from "@liveblocks/react-ui";
 import { defineAiTool } from "@liveblocks/client";
 import { Editor } from "@tiptap/core";
 import { useRoom } from "@liveblocks/react";
+import { useState, useEffect } from "react";
 import DOMPurify from "dompurify";
 import { diffWords } from "diff";
 
 export function AiChatPanel({ editor }: { editor: Editor | null }) {
   const room = useRoom();
 
-  console.log(editor?.getJSON());
+  const [html, setHtml] = useState("");
+  const [json, setJson] = useState({});
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const updateHandler = ({ editor }: { editor: Editor }) => {
+      setHtml(editor.getHTML());
+      setJson(editor.getJSON());
+    };
+
+    editor.on("update", updateHandler);
+    updateHandler({ editor });
+
+    return () => {
+      editor.off("update", updateHandler);
+    };
+  }, [editor]);
+
+  console.log({ json, html });
 
   return (
     <AiChat
-      chatId={room.id + "-10"}
+      chatId={room.id + "-12"}
       // Open AI
       // copilotId="co_A8popM5c8htZ49tMwMgtE"
 
@@ -22,16 +42,16 @@ export function AiChatPanel({ editor }: { editor: Editor | null }) {
       knowledge={[
         {
           description: "The Tiptap editor's JSON state",
-          value: editor?.getJSON() || "Loading...",
+          value: json || "Loading...",
         },
         {
           description: "The Tiptap editor's HTML state",
-          value: editor?.getHTML() || "Loading...",
+          value: html || "Loading...",
         },
-        {
-          description: "The Tiptap editor's text state",
-          value: editor?.getText() || "Loading...",
-        },
+        // {
+        //   description: "The Tiptap editor's text state",
+        //   value: editor?.getText() || "Loading...",
+        // },
         // {
         //   description: "How to get `to` and `from` values",
         //   value: positionGuidance,
@@ -288,41 +308,66 @@ export function getDiffSnippet(
 ): string {
   const diffs = diffWordsWithSpace(oldHtml, newHtml);
 
-  // Build full string while tracking change positions
-  let fullText = "";
-  let changeStart: number | null = null;
-  let changeEnd: number | null = null;
+  let fullHtml = "";
+  let changeRanges: { start: number; end: number }[] = [];
 
   diffs.forEach((part) => {
-    const startPos = fullText.length;
+    const before = fullHtml.length;
+    const html = part.added
+      ? `<ins style="background:#d4fcbc;">${part.value}</ins>`
+      : part.removed
+        ? `<del style="background:#fbb6c2;">${part.value}</del>`
+        : part.value;
 
-    let output = part.value;
-    if (part.added) {
-      output = `<ins style="background:#d4fcbc;">${part.value}</ins>`;
-    } else if (part.removed) {
-      output = `<del style="background:#fbb6c2;">${part.value}</del>`;
-    }
-
-    fullText += output;
+    fullHtml += html;
 
     if (part.added || part.removed) {
-      if (changeStart === null) changeStart = startPos;
-      changeEnd = fullText.length;
+      changeRanges.push({ start: before, end: fullHtml.length });
     }
   });
 
-  if (changeStart === null) {
-    return ""; // no diff
+  if (changeRanges.length === 0) return "";
+
+  // Merge nearby changes into ranges with context
+  const merged: { start: number; end: number }[] = [];
+  for (const range of changeRanges) {
+    const start = Math.max(0, range.start - charContext);
+    const end = Math.min(fullHtml.length, range.end + charContext);
+
+    if (merged.length && start <= merged[merged.length - 1].end + charContext) {
+      // Merge with previous
+      merged[merged.length - 1].end = Math.max(
+        end,
+        merged[merged.length - 1].end
+      );
+    } else {
+      merged.push({ start, end });
+    }
   }
 
-  // Calculate final slice range
-  const start = Math.max(0, changeStart - charContext);
-  const end = Math.min(fullText.length, changeEnd + charContext);
+  // Assemble result
+  const snippets: string[] = [];
+  for (let i = 0; i < merged.length; i++) {
+    const { start, end } = merged[i];
+    const snippet = fullHtml.slice(start, end).trim();
+    snippets.push(snippet);
 
-  const prefix = start > 0 ? "…" : "";
-  const suffix = end < fullText.length ? "…" : "";
+    // Add vertical gap if there's a gap before the next
+    const next = merged[i + 1];
+    if (next && next.start - end > charContext * 2) {
+      snippets.push("...<br><br>...");
+    }
+  }
 
-  return prefix + fullText.slice(start, end) + suffix;
+  // Add ellipses if needed at start/end
+  if (merged[0].start > 0) {
+    snippets.unshift("...");
+  }
+  if (merged[merged.length - 1].end < fullHtml.length) {
+    snippets.push("...");
+  }
+
+  return snippets.join("");
 }
 
 function getDiffHtml(oldHtml: string, newHtml: string): string {
