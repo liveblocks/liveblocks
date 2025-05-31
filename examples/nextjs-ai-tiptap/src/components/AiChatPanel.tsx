@@ -1,27 +1,447 @@
 import { AiChat, AiTool } from "@liveblocks/react-ui";
 import { defineAiTool } from "@liveblocks/client";
 import { Editor } from "@tiptap/core";
-import DOMPurify from "dompurify";
 import { useRoom } from "@liveblocks/react";
+import DOMPurify from "dompurify";
+import { diffWords } from "diff";
 
 export function AiChatPanel({ editor }: { editor: Editor | null }) {
   const room = useRoom();
 
+  console.log(editor?.getJSON());
+
   return (
     <AiChat
-      chatId={room.id + "-3"}
+      chatId={room.id + "-10"}
+      // Open AI
+      // copilotId="co_A8popM5c8htZ49tMwMgtE"
+
+      //Claude
+      copilotId="co_0RYsR9kFoQd91sRI8Apwd"
       layout="compact"
       knowledge={[
         {
           description: "The Tiptap editor's JSON state",
           value: editor?.getJSON() || "Loading...",
         },
+        {
+          description: "The Tiptap editor's HTML state",
+          value: editor?.getHTML() || "Loading...",
+        },
+        {
+          description: "The Tiptap editor's text state",
+          value: editor?.getText() || "Loading...",
+        },
+        // {
+        //   description: "How to get `to` and `from` values",
+        //   value: positionGuidance,
+        // },
       ]}
       tools={{
+        "insert-at-top": defineAiTool()({
+          description: `Inserts HTML content at the very beginning of the document.`,
+          parameters: {
+            type: "object",
+            properties: {
+              html: { type: "string" },
+            },
+            required: ["html"],
+          },
+          render: ({ $types, args }) => (
+            <AiTool title={`Insert at top`}>
+              <div>
+                <div
+                  className="lb-prose"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(args?.html || ""),
+                  }}
+                />
+              </div>
+              <AiTool.Confirmation<typeof $types>
+                confirm={({ html }) => {
+                  if (!editor) return null;
+                  editor.commands.focus("start");
+                  editor.commands.insertContent(html);
+                  return {
+                    ok: true,
+                    message: "Content inserted at top",
+                    line: 1,
+                  };
+                }}
+                cancel={() => ({
+                  ok: false,
+                  message: "Cancelled insert at top",
+                })}
+              />
+            </AiTool>
+          ),
+        }),
+        "insert-at-bottom": defineAiTool()({
+          description: `Inserts HTML content at the very end of the document.`,
+          parameters: {
+            type: "object",
+            properties: {
+              html: { type: "string" },
+            },
+            required: ["html"],
+          },
+          render: ({ $types, args }) => (
+            <AiTool title={`Insert at bottom`}>
+              <div
+                className="lb-prose"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(args?.html || ""),
+                }}
+              />
+              <AiTool.Confirmation<typeof $types>
+                confirm={({ html }) => {
+                  if (!editor) return null;
+                  editor.commands.focus("end");
+                  editor.commands.insertContent(html);
+                  const pos = editor.state.doc.content.size;
+                  return {
+                    ok: true,
+                    message: "Content inserted at bottom",
+                    line: getLineAtPosition(editor, pos),
+                  };
+                }}
+                cancel={() => ({
+                  ok: false,
+                  message: "Cancelled insert at bottom",
+                })}
+              />
+            </AiTool>
+          ),
+        }),
+        "replace-entire-document": defineAiTool()({
+          description: `Replaces the entire document with the provided HTML content.`,
+          parameters: {
+            type: "object",
+            properties: {
+              html: { type: "string" },
+            },
+            required: ["html"],
+          },
+          render: ({ $types, args, status }) => {
+            let diff = "";
+
+            if (status !== "executed" && editor && args?.html) {
+              const diffHtml = getDiffSnippet(editor.getHTML(), args.html);
+              diff = DOMPurify.sanitize(diffHtml, {
+                ALLOWED_TAGS: [
+                  "p",
+                  "br",
+                  "ins",
+                  "del",
+                  "strong",
+                  "em",
+                  "u",
+                  "code",
+                  "pre",
+                  "blockquote",
+                  "ul",
+                  "ol",
+                  "li",
+                  "span",
+                ],
+                ALLOWED_ATTR: ["style"],
+              });
+              console.log(diff);
+            }
+
+            return (
+              <AiTool title={`Replace entire document`}>
+                {status !== "executed" ? (
+                  <div
+                    className="lb-prose"
+                    dangerouslySetInnerHTML={{
+                      // __html: DOMPurify.sanitize(args?.html || ""),
+                      __html: diff,
+                    }}
+                  />
+                ) : null}
+                <AiTool.Confirmation<typeof $types>
+                  confirm={({ html }) => {
+                    if (!editor) return null;
+                    editor.commands.setContent(html);
+                    return {
+                      ok: true,
+                      message: "Document replaced",
+                      line: 1,
+                    };
+                  }}
+                  cancel={() => ({
+                    ok: false,
+                    message: "Cancelled document replacement",
+                  })}
+                />
+              </AiTool>
+            );
+          },
+        }),
+        "insert-at-position": defineAiTool()({
+          description: `Inserts HTML content at a specific JSON position in the document.`,
+          parameters: {
+            type: "object",
+            properties: {
+              position: { type: "number" },
+              html: { type: "string" },
+            },
+            required: ["position", "html"],
+          },
+          render: ({ $types, args }) => (
+            <AiTool title={`Insert at position ${args?.position}`}>
+              <div
+                className="lb-prose"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(args?.html || ""),
+                }}
+              />
+              <AiTool.Confirmation<typeof $types>
+                confirm={({ position, html }) => {
+                  if (!editor) {
+                    return {
+                      ok: false,
+                      message: "Editor not available",
+                    };
+                  }
+
+                  const docSize = editor.state.doc.content.size;
+
+                  if (position < 0 || position > docSize) {
+                    return {
+                      ok: false,
+                      message: `Invalid position: ${position} (doc size = ${docSize})`,
+                    };
+                  }
+
+                  editor.commands.insertContentAt(position, html);
+
+                  return {
+                    ok: true,
+                    message: "Content inserted",
+                    line: getLineAtPosition(editor, position),
+                  };
+                }}
+                cancel={() => ({
+                  ok: false,
+                  message: "Insertion cancelled",
+                })}
+              />
+            </AiTool>
+          ),
+        }),
+      }}
+    />
+  );
+}
+
+function getLineTextAtPosition(editor: Editor | null, position: number) {
+  if (!editor) {
+    return null;
+  }
+  const resolvedPos = editor.state.doc.resolve(position);
+  const blockNode = resolvedPos.node(resolvedPos.depth); // usually the paragraph or block element
+  return blockNode;
+}
+
+function getSurroundingText(
+  editor: Editor,
+  position: number,
+  contextLength = 100
+) {
+  if (!editor) {
+    return null;
+  }
+  const start = Math.max(0, position - contextLength);
+  const end = Math.min(editor.state.doc.content.size, position + contextLength);
+  return editor.state.doc.textBetween(start, end, " ");
+}
+
+function getLineAtPosition(editor: Editor | null, position: number) {
+  if (!editor) {
+    return null;
+  }
+  let line = 0;
+  let currentPos = 0;
+
+  editor.state.doc.descendants((node, pos) => {
+    if (node.isBlock) {
+      line++;
+      // Check if the position is inside this block
+      if (pos <= position && position < pos + node.nodeSize) {
+        return false; // stop traversal
+      }
+    }
+    return true;
+  });
+
+  return line;
+}
+
+import { diffWordsWithSpace } from "diff";
+
+export function getDiffSnippet(
+  oldHtml: string,
+  newHtml: string,
+  charContext = 70
+): string {
+  const diffs = diffWordsWithSpace(oldHtml, newHtml);
+
+  // Build full string while tracking change positions
+  let fullText = "";
+  let changeStart: number | null = null;
+  let changeEnd: number | null = null;
+
+  diffs.forEach((part) => {
+    const startPos = fullText.length;
+
+    let output = part.value;
+    if (part.added) {
+      output = `<ins style="background:#d4fcbc;">${part.value}</ins>`;
+    } else if (part.removed) {
+      output = `<del style="background:#fbb6c2;">${part.value}</del>`;
+    }
+
+    fullText += output;
+
+    if (part.added || part.removed) {
+      if (changeStart === null) changeStart = startPos;
+      changeEnd = fullText.length;
+    }
+  });
+
+  if (changeStart === null) {
+    return ""; // no diff
+  }
+
+  // Calculate final slice range
+  const start = Math.max(0, changeStart - charContext);
+  const end = Math.min(fullText.length, changeEnd + charContext);
+
+  const prefix = start > 0 ? "…" : "";
+  const suffix = end < fullText.length ? "…" : "";
+
+  return prefix + fullText.slice(start, end) + suffix;
+}
+
+function getDiffHtml(oldHtml: string, newHtml: string): string {
+  const oldText = DOMPurify.sanitize(oldHtml, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "ins",
+      "del",
+      "strong",
+      "em",
+      "u",
+      "code",
+      "pre",
+      "blockquote",
+      "ul",
+      "ol",
+      "li",
+      "span",
+    ],
+    ALLOWED_ATTR: ["style"],
+  });
+  const newText = DOMPurify.sanitize(newHtml, {
+    ALLOWED_TAGS: [
+      "p",
+      "br",
+      "ins",
+      "del",
+      "strong",
+      "em",
+      "u",
+      "code",
+      "pre",
+      "blockquote",
+      "ul",
+      "ol",
+      "li",
+      "span",
+    ],
+    ALLOWED_ATTR: ["style"],
+  });
+
+  const diffs = diffWords(oldText, newText);
+
+  return diffs
+    .map((part) => {
+      if (part.added)
+        return `<ins style="background: #d4fcbc;">${part.value}</ins>`;
+      if (part.removed)
+        return `<del style="background: #fbb6c2;">${part.value}</del>`;
+      return `<span>${part.value}</span>`;
+    })
+    .join("");
+}
+
+const positionGuidance = `
+How to find \`from\` and \`to\` for a specific text node in Tiptap (ProseMirror) JSON
+
+Given a Tiptap (ProseMirror-based) JSON document, calculate the \`from\` and \`to\` positions of a specific text node (e.g., \`"apples, bananas, cherries"\`).
+
+## How Position Calculation Works
+
+In Tiptap/ProseMirror:
+
+- Positions are 1-based (start at 1).
+- Each text node contributes the number of characters in its \`text\`.
+- Each block node (like \`paragraph\`, \`bulletList\`, \`listItem\`, etc.) adds +1 for the start and +1 for the end — a total of +2.
+- Traverse the document in depth-first order, summing character lengths and node boundaries as you go.
+
+## Example Document
+
+\`\`\`json
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Lemons are yellow." }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "Oranges are orange." }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        { "type": "text", "text": "apples, bananas, cherries" }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+## Target Text
+
+\`\`\`text
+"apples, bananas, cherries"
+\`\`\`
+
+## Expected Output
+
+\`\`\`json
+{
+  "from": 61,
+  "to": 86
+}
+\`\`\`
+`;
+
+/* PREVIOUS TOOLS
+
+
+tools={{
         "move-block": defineAiTool()({
-          description: `Moves a block of content from one range to a new position.
-          
-          ${positionGuidance}`,
+          description: `Moves a block of content from one range to a new position.`,
           parameters: {
             type: "object",
             properties: {
@@ -121,70 +541,6 @@ export function AiChatPanel({ editor }: { editor: Editor | null }) {
           ),
         }),
 
-        "insert-after-heading": defineAiTool()({
-          description: `Inserts HTML content after the first heading that matches given text.`,
-          parameters: {
-            type: "object",
-            properties: {
-              headingText: { type: "string" },
-              html: { type: "string" },
-            },
-            required: ["headingText", "html"],
-          },
-          render: ({ $types, args }) => (
-            <AiTool title={`Insert after heading: ${args?.headingText}`}>
-              <div
-                className="lb-prose"
-                dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(args?.html || ""),
-                }}
-              />
-              <AiTool.Confirmation<typeof $types>
-                confirm={({ headingText, html }) => {
-                  if (!editor) return null;
-                  const pos = findPositionAfterHeading(editor, headingText);
-                  if (pos === null)
-                    return { ok: false, message: "Heading not found" };
-                  editor.commands.insertContentAt(pos, html);
-                  return {
-                    ok: true,
-                    message: "Inserted after heading",
-                    line: getLineAtPosition(editor, pos),
-                  };
-                }}
-                cancel={() => ({ ok: false, message: "Insertion cancelled" })}
-              />
-            </AiTool>
-          ),
-        }),
-
-        "normalize-formatting": defineAiTool()({
-          description: `Normalizes content formatting to consistent HTML tags (e.g., <b> → <strong>).`,
-          parameters: {
-            type: "object",
-            properties: {},
-          },
-          render: ({ $types }) => (
-            <AiTool title={`Normalize formatting`}>
-              <p>Apply consistent semantic formatting to the document?</p>
-              <AiTool.Confirmation<typeof $types>
-                confirm={() => {
-                  if (!editor) return null;
-                  normalizeFormatting(editor); // Custom function needed
-                  return {
-                    ok: true,
-                    message: "Formatting normalized",
-                  };
-                }}
-                cancel={() => ({
-                  ok: false,
-                  message: "Cancelled normalization",
-                })}
-              />
-            </AiTool>
-          ),
-        }),
-
         "convert-to-list": defineAiTool()({
           description: `Converts selected text into a list.`,
           parameters: {
@@ -221,6 +577,7 @@ export function AiChatPanel({ editor }: { editor: Editor | null }) {
                   message: "Cancelled list conversion",
                 })}
               />
+              <AiTool.Inspector />
             </AiTool>
           ),
         }),
@@ -525,85 +882,5 @@ The \'line\' is just for display.`,
           ),
         }),
       }}
-    />
-  );
-}
 
-function getLineTextAtPosition(editor: Editor | null, position: number) {
-  if (!editor) {
-    return null;
-  }
-  const resolvedPos = editor.state.doc.resolve(position);
-  const blockNode = resolvedPos.node(resolvedPos.depth); // usually the paragraph or block element
-  return blockNode;
-}
-
-function getSurroundingText(
-  editor: Editor,
-  position: number,
-  contextLength = 100
-) {
-  if (!editor) {
-    return null;
-  }
-  const start = Math.max(0, position - contextLength);
-  const end = Math.min(editor.state.doc.content.size, position + contextLength);
-  return editor.state.doc.textBetween(start, end, " ");
-}
-
-function getLineAtPosition(editor: Editor | null, position: number) {
-  if (!editor) {
-    return null;
-  }
-  let line = 0;
-  let currentPos = 0;
-
-  editor.state.doc.descendants((node, pos) => {
-    if (node.isBlock) {
-      line++;
-      // Check if the position is inside this block
-      if (pos <= position && position < pos + node.nodeSize) {
-        return false; // stop traversal
-      }
-    }
-    return true;
-  });
-
-  return line;
-}
-
-const positionGuidance = `
-📌 How to use \`from\` and \`to\` positions in Tiptap (ProseMirror):
-
-- \`from\` and \`to\` define the start and end of a range of content.
-- They are numeric positions inside the document — like character offsets.
-- This is not related to HTML
-- \`from\` must be **less than** \`to\` (i.e., \`to - from > 0\`)
-- Both must be within bounds of the document (0 <= from < to <= docSize)
-- The range should cover meaningful content (e.g., a sentence, paragraph, node)
-- Empty selections (where \`from === to\`) will not trigger any changes.
-
-Examples:
-
-✅ Move a full paragraph:
-- from: 20
-- to: 58
-
-✅ Replace a heading:
-- from: 0
-- to: 15
-
-✅ Wrap a sentence:
-- from: 100
-- to: 112
-
-❌ Invalid (empty range):
-- from: 30
-- to: 30
-
-Tips:
-- You can use \`editor.state.doc.textBetween(from, to)\` to inspect what’s in the range.
-- If it’s empty or just whitespace, don’t proceed.
-- Prefer selecting complete nodes (like paragraphs or headings), not partial HTML tags.
-
-`;
+      */

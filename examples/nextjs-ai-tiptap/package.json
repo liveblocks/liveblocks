@@ -36,6 +36,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.2.5",
     "clsx": "^2.0.0",
+    "diff": "^8.0.2",
     "dompurify": "^3.2.6",
     "next": "^14.2.16",
     "react": "^18.2.0",
