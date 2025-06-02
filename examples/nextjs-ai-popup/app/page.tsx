@@ -22,7 +22,7 @@ export default function Page() {
 
 function ChatPopup() {
   // TODO fetch the latest chatId after the suspense bug is resolved
-  const [chatId, setChatId] = useState(() => nanoid());
+  const [chatId, setChatId] = useState(getDefaultChatId);
   const [showListing, setShowListing] = useState(false);
 
   const goToChat = useCallback((id: string) => {
@@ -195,4 +195,9 @@ function Title({ chatId }: { chatId: string }) {
 
   // TODO this will work after a bug fix
   return <>{chat?.title || "Untitled"}</>;
+}
+
+// Creating a new chat every hour
+function getDefaultChatId() {
+  return new Date().toISOString().slice(0, 13);
 }
