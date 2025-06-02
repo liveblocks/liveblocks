@@ -55,6 +55,7 @@ import type {
   ISODateString,
   MessageId,
   ServerAiMsg,
+  SetToolResultResponse,
   ToolResultData,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
@@ -880,7 +881,7 @@ export type Ai = {
     toolCallId: string,
     result: ToolResultData,
     options?: AiGenerationOptions
-  ) => Promise<AskInChatResponse>;
+  ) => Promise<SetToolResultResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
@@ -1239,7 +1240,7 @@ export function createAi(config: AiConfig): Ai {
     toolCallId: string,
     result: ToolResultData,
     options?: AiGenerationOptions
-  ): Promise<AskInChatResponse> {
+  ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
     return sendClientMsgWithResponse({
       cmd: "set-tool-result",
