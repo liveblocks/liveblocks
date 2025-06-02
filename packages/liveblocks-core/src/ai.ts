@@ -139,7 +139,7 @@ export type AiToolInvocationProps<
      * around statically to components to "bind" them to specific inferred
      * A and R values. There is no runtime presence for these.
      */
-    $types: AiToolTypePack<A, R>;
+    types: AiToolTypePack<A, R>;
 
     // Private APIs
     [kInternal]: {

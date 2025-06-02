@@ -55,7 +55,7 @@ export interface AiToolConfirmationProps<
   A extends JsonObject,
   R extends ToolResultData,
 > extends ComponentProps<"div"> {
-  $types?: NoInfr<AiToolTypePack<A, R>>;
+  types?: NoInfr<AiToolTypePack<A, R>>;
   args?: A;
   confirm: AiToolExecuteCallback<A, R>;
   cancel: AiToolExecuteCallback<A, R>;
