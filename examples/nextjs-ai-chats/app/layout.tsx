@@ -37,17 +37,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           type="image/png"
         />
       </head>
-      <body className={`${inter.className} absolute inset-0 text-stone-900`}>
+      <body
+        className={`${inter.className} absolute inset-0 text-stone-900 flex justify-center items-center bg-stone-200`}
+      >
         <Providers>
-          <div className="flex h-full">
-            <aside className="w-[260px] bg-stone-100 border-r border-stone-200 shrink-0 flex flex-col gap-4">
-              <Link
-                href="/chats"
-                className="font-serif text-xl p-4 pb-1 text-stone-900 font-medium"
-              >
-                Acme
-              </Link>
-
+          <div className="flex h-full max-h-[700px] w-full max-w-[1000px] shadow-lg rounded-lg overflow-hidden">
+            <aside className="w-[260px] bg-stone-100 border-r border-stone-200 shrink-0 flex flex-col gap-4 py-2">
               <form action={newChat} className="block w-full">
                 <button className="group p-2 text-sm hover:bg-stone-300/50 rounded-md mx-2 text-left flex items-center gap-1.5 text-orange-700 font-medium justify-self-stretch">
                   <PlusIcon className="opacity-80 group-hover:opacity-100" />
