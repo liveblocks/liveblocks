@@ -50,22 +50,18 @@ user...
 
 ##### Adjusting the chat’s width
 
-{/* TODO add in name of layout below */}
-
-When using the default `TODO` layout, it’s possible to adjust the chat’s width
+When using the default `inset` layout, it’s possible to adjust the chat’s width
 by setting the `--lb-ai-chat-container-width` CSS variable. This allows the
 chat’s scroll window to stay full width, whilst keeping the composer and
 messages centered in the middle.
 
 ```css
-.lb-root {
+.lb-ai-chat {
   --lb-ai-chat-container-width: 600px;
 }
 ```
 
-You can also set this property directly on the `AiChat` component.
-
-```tsx
+```tsx title="Set variable in React" isCollapsable isCollapsed
 import { CSSProperties } from "react";
 import { AiChat } from "@liveblocks/react-ui";
 
@@ -76,12 +72,19 @@ function Chat() {
       // +++
       style={{ "--lb-ai-chat-container-width": 600 } as CSSProperties}
       // +++
+
+      // Or with Tailwind CSS
+      // className="[--lb-ai-chat-container-width:600px]"
     />
   );
 }
 ```
 
-It’s also possible with Tailwind CSS.
+##### Compact layout mode
+
+An alternate `compact` layout mode is available, ideal for smaller UI components
+such as pop-up windows. Compact layout mode removes the shadow and padding on
+the composer, makes it full-width, and displays a border above it.
 
 ```tsx
 import { AiChat } from "@liveblocks/react-ui";
@@ -91,20 +94,42 @@ function Chat() {
     <AiChat
       chatId="my-chat-id"
       // +++
-      className="[--lb-ai-chat-container-width:600px]"
+      layout="compact"
       // +++
     />
   );
 }
 ```
 
-##### Compact layout mode
+##### Change background color
 
-An alternate full-width layout mode is available, ideal for smaller UI
-components such as pop-up windows. Compact layout mode removes the shadow and
-padding on the composer, and displays a border above it.
+You can change the background color of the chat by setting the `--lb-background`
+CSS variable on `.lb-ai-chat`.
 
-{/* TODO mention how to use the other layout mode */}
+```css
+.lb-ai-chat {
+  --lb-background: #eeeeee;
+}
+```
+
+```tsx title="Set variable in React" isCollapsable isCollapsed
+import { CSSProperties } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      style={{ "--lb-background": "#EEEEEE" } as CSSProperties}
+      // +++
+
+      // Or with Tailwind CSS
+      // className="[--lb-background:#EEEEEE]"
+    />
+  );
+}
+```
 
 ##### List the user’s chats and switch between them
 
@@ -119,6 +144,7 @@ Chats can be deleted with
 import { useState } from "react";
 import { AiChat } from "@liveblocks/react-ui";
 import { useAiChats } from "@liveblocks/react";
+import { Timestamp } from "@liveblocks/react-ui/primitives";
 
 function Chats() {
   // +++
@@ -144,6 +170,7 @@ function Chats() {
             <button onClick={() => setChatId(chat.id)}>
               {chat.title || "Untitled"}
             </button>
+            <Timestamp date={chat.lastMessageAt || chat.createdAt} />
             <button onClick={() => deleteChat(chat.id)}>❌</button>
           </li>
         ))}
@@ -205,7 +232,85 @@ default markdown components with your own custom components by...
 
 {/* TODO props table */}
 
-#### TODO knowledge source component
+#### AiTool
+
+Displays AI tool progress and results. Can be customized for many different UIs.
+
+{/* TODO AI tool image */}
+
+```tsx
+<AiTool />
+```
+
+By default, `AiTool` will display the name of the current tool, and a loading
+spinner as it runs.
+
+```tsx
+// TODO show usage with RegisterAiTool
+```
+
+Optionally, you can provide a `title` and `icon` to render the UI differently.
+
+```tsx
+// Title
+render: () => <AiTool title="Event booked" />
+
+// Title and a collapsible description
+render: () => <AiTool title="Event booked">We've booked the event!</AiTool>,
+
+// Title and emoji icon
+render: () => <AiTool title="Event booked" icon="📅" />,
+
+// Title and icon component
+render: () => <AiTool title="Event booked" icon={<Icon.Calendar />} />,
+
+// Props are passed to the inner `div`
+render: () => (
+  <AiTool
+    title="Event booked"
+    style={{ marginLeft: 10 }}
+    className="event-booked-tool"
+    onMouseOver={() => console.log("Hovered")}
+  />
+),
+```
+
+##### Props [#AiTool-props]
+
+{/* TODO props table */}
+
+##### AiTool.Confirmation
+
+Displays an AI tool with a confirmation dialog. This allows you to create
+actions that users must confirm or cancel before they’re run.
+
+```tsx
+<AiTool>
+  <AiTool.Confirmation confirm={() => /* ... */} cancel={() => /* ... */} />
+</AiTool>
+```
+
+{/* TODO ai tool confirmation image */}
+
+Use the `confirm` and `cancel` props to define which actions should be taken
+when the users clicks the buttons. You must return information that helps the AI
+understand what has taken place, in any format. This will never be shown in the
+chat, but it will be stored in the AI’s memory. Returning a JS object often
+helps the AI understand the result better.
+
+```tsx
+// TODO show usage with RegisterAiTool
+```
+
+`AiTool.Confirmation` dialog will display different content depending on the
+status of the tool. For example, the confirm and cancel buttons will disappear
+when clicked.
+
+###### Props [#AiTool.Confirmation-props]
+
+{/* TODO ai tool confiramtion props table */}
+
+#### TODO RegisterAiKnowledgeSource (check name)
 
 {/* TODO knowledge source */}
 
@@ -213,7 +318,7 @@ default markdown components with your own custom components by...
 
 {/* TODO knowledge source props table */}
 
-#### TODO tool component
+#### TODO RegisterAiTool (check name)
 
 {/* TODO tool */}
 
