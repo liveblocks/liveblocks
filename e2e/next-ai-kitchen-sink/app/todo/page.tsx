@@ -139,6 +139,7 @@ export default function Page() {
                             },
                           },
                           required: ["ids"],
+                          additionalProperties: false,
                         },
                         execute: async (args) => {
                           const { ids } = args;
@@ -163,6 +164,7 @@ export default function Page() {
                             },
                           },
                           required: ["titles"],
+                          additionalProperties: false,
                         },
                         execute: ({ titles }) => {
                           for (const title of titles) {
@@ -183,6 +185,7 @@ export default function Page() {
                             },
                           },
                           required: ["id"],
+                          additionalProperties: false,
                         },
                         execute: ({ id }) => {
                           toggleTodo(id);
@@ -210,6 +213,7 @@ export default function Page() {
                             },
                           },
                           required: ["ids"],
+                          additionalProperties: false,
                         },
 
                         render: ({ status, result, $types }) => (

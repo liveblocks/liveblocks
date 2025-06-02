@@ -23,7 +23,7 @@ export interface AiChatComposerFormProps
 }
 
 export interface AiChatComposerEditorProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue"> {
+  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
   /**
    * The editor's initial value.
    */

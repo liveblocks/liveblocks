@@ -2846,7 +2846,7 @@
 }
 
 .lb-ai-tool-content {
-  margin: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+  padding: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
 }
 
 .lb-ai-tool-inspector {

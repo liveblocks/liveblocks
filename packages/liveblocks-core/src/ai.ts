@@ -43,7 +43,6 @@ import type {
   AskInChatResponse,
   ClearChatResponse,
   ClientAiMsg,
-  ClientId,
   CmdId,
   CreateChatOptions,
   Cursor,
@@ -55,6 +54,7 @@ import type {
   ISODateString,
   MessageId,
   ServerAiMsg,
+  SetToolResultResponse,
   ToolResultData,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
@@ -164,7 +164,7 @@ export type AiToolExecuteCallback<
 > = (args: A, context: AiToolExecuteContext) => Awaitable<R>;
 
 export type AiToolDefinition<
-  S extends JSONSchema7,
+  S extends JSONObjectSchema7,
   A extends JsonObject,
   R extends ToolResultData,
 > = {
@@ -175,10 +175,12 @@ export type AiToolDefinition<
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<
-  JSONSchema7,
+  JSONObjectSchema7,
   JsonObject,
   ToolResultData
 >;
+
+type JSONObjectSchema7 = JSONSchema7 & { type: "object" };
 
 /**
  * Helper function to help infer the types of `args`, `render`, and `result`.
@@ -186,7 +188,7 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
  * possible for TypeScript to infer types.
  */
 export function defineAiTool<R extends ToolResultData>() {
-  return <const S extends JSONSchema7>(
+  return <const S extends JSONObjectSchema7>(
     def: AiToolDefinition<
       S,
       InferFromSchema<S> extends JsonObject ? InferFromSchema<S> : JsonObject,
@@ -413,8 +415,12 @@ function createStore_forChatMessages(
     toolCallId: string,
     result: ToolResultData,
     options?: AiGenerationOptions
-  ) => Promise<AskInChatResponse>
+  ) => Promise<SetToolResultResponse>
 ) {
+  // Keeps track of all message IDs that this client instance is allowed to
+  // auto-execute the execute() function for.
+  const autoExecutableMessages = new Set<MessageId>();
+
   const seenToolCallIds = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
@@ -568,10 +574,8 @@ function createStore_forChatMessages(
             });
           };
 
-          // TODO[nvie] The client should not BLINDLY invoke execute() here!
-          // TODO[nvie] We should only call it if our client ID is the designated client ID!
           const executeFn = toolDef?.execute;
-          if (executeFn) {
+          if (executeFn && autoExecutableMessages.has(message.id)) {
             (async () => {
               const result = await executeFn(toolCall.args, {
                 toolName: toolCall.toolName,
@@ -585,6 +589,8 @@ function createStore_forChatMessages(
             });
           }
         }
+      } else {
+        autoExecutableMessages.delete(message.id);
       }
     });
   }
@@ -780,6 +786,10 @@ function createStore_forChatMessages(
     removeByChatId,
     addDelta,
     failAllPending,
+
+    allowAutoExecuteToolCall(messageId: MessageId) {
+      autoExecutableMessages.add(messageId);
+    },
   };
 }
 
@@ -878,7 +888,7 @@ export type Ai = {
     toolCallId: string,
     result: ToolResultData,
     options?: AiGenerationOptions
-  ) => Promise<AskInChatResponse>;
+  ) => Promise<SetToolResultResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
@@ -933,7 +943,6 @@ export function createAi(config: AiConfig): Ai {
     config.enableDebugLogging,
     false // AI doesn't have actors (yet, but it will)
   );
-  const clientId = nanoid(7) as ClientId;
 
   const chatsStore = createStore_forUserAiChats();
   const toolsStore = createStore_forTools();
@@ -1237,14 +1246,13 @@ export function createAi(config: AiConfig): Ai {
     toolCallId: string,
     result: ToolResultData,
     options?: AiGenerationOptions
-  ): Promise<AskInChatResponse> {
+  ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
-    return sendClientMsgWithResponse({
+    const resp: SetToolResultResponse = await sendClientMsgWithResponse({
       cmd: "set-tool-result",
       chatId,
       messageId,
       toolCallId,
-      clientId,
       result,
       generationOptions: {
         copilotId: options?.copilotId,
@@ -1258,6 +1266,10 @@ export function createAi(config: AiConfig): Ai {
         })),
       },
     });
+    if (resp.ok) {
+      messagesStore.allowAutoExecuteToolCall(resp.message.id);
+    }
+    return resp;
   }
 
   return Object.defineProperty(
@@ -1274,10 +1286,7 @@ export function createAi(config: AiConfig): Ai {
       getOrCreateChat,
 
       deleteChat: (chatId: string) => {
-        return sendClientMsgWithResponse({
-          cmd: "delete-chat",
-          chatId,
-        });
+        return sendClientMsgWithResponse({ cmd: "delete-chat", chatId });
       },
 
       getMessageTree,
@@ -1300,12 +1309,11 @@ export function createAi(config: AiConfig): Ai {
         options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
-        return sendClientMsgWithResponse({
+        const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
           sourceMessage: userMessage,
           targetMessageId,
-          clientId,
           generationOptions: {
             copilotId: options?.copilotId,
             stream: options?.stream,
@@ -1318,6 +1326,8 @@ export function createAi(config: AiConfig): Ai {
             })),
           },
         });
+        messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
+        return resp;
       },
 
       abort: (messageId: MessageId) =>

@@ -105,7 +105,7 @@ export interface ComposerEditorComponents {
 }
 
 export interface ComposerEditorProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue"> {
+  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
   /**
    * The reading direction of the editor and related elements.
    */
