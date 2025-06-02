@@ -1,5 +1,4 @@
 import type { JSONSchema7 } from "json-schema";
-import type { ComponentType } from "react";
 
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
@@ -171,7 +170,7 @@ export type AiToolDefinition<
   description?: string;
   parameters: S;
   execute?: AiToolExecuteCallback<A, R>;
-  render?: ComponentType<AiToolInvocationProps<A, R>>;
+  render?: (props: AiToolInvocationProps<A, R>) => unknown;
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<

@@ -1,5 +1,7 @@
 import type {
   AiToolInvocationPart,
+  AiToolInvocationProps,
+  JsonObject,
   MessageId,
   ToolResultData,
 } from "@liveblocks/core";
@@ -7,6 +9,7 @@ import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
+import type { ComponentType } from "react";
 import { forwardRef, useCallback, useMemo } from "react";
 
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
@@ -70,6 +73,9 @@ function ToolInvocation({
   );
 
   if (tool === undefined || tool.render === undefined) return null;
+  const RenderFn = tool.render as ComponentType<
+    AiToolInvocationProps<JsonObject, ToolResultData>
+  >;
 
   const { type: _, ...rest } = part;
   const props = {
@@ -90,7 +96,7 @@ function ToolInvocation({
       }
     >
       <AiToolInvocationContext.Provider value={props}>
-        <tool.render {...props} />
+        <RenderFn {...props} />
       </AiToolInvocationContext.Provider>
     </ErrorBoundary>
   );
