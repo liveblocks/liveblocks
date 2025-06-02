@@ -418,6 +418,10 @@ function createStore_forChatMessages(
     options?: AiGenerationOptions
   ) => Promise<SetToolResultResponse>
 ) {
+  // Keeps track of all message IDs that this client instance is allowed to
+  // auto-execute the execute() function for.
+  const autoExecutableMessages = new Set<MessageId>();
+
   const seenToolCallIds = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
@@ -571,10 +575,8 @@ function createStore_forChatMessages(
             });
           };
 
-          // TODO[nvie] The client should not BLINDLY invoke execute() here!
-          // TODO[nvie] We should only call it if our client ID is the designated client ID!
           const executeFn = toolDef?.execute;
-          if (executeFn) {
+          if (executeFn && autoExecutableMessages.has(message.id)) {
             (async () => {
               const result = await executeFn(toolCall.args, {
                 toolName: toolCall.toolName,
@@ -588,6 +590,8 @@ function createStore_forChatMessages(
             });
           }
         }
+      } else {
+        autoExecutableMessages.delete(message.id);
       }
     });
   }
@@ -783,6 +787,10 @@ function createStore_forChatMessages(
     removeByChatId,
     addDelta,
     failAllPending,
+
+    allowAutoExecuteToolCall(messageId: MessageId) {
+      autoExecutableMessages.add(messageId);
+    },
   };
 }
 
@@ -1242,7 +1250,7 @@ export function createAi(config: AiConfig): Ai {
     options?: AiGenerationOptions
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
-    return sendClientMsgWithResponse({
+    const resp: SetToolResultResponse = await sendClientMsgWithResponse({
       cmd: "set-tool-result",
       chatId,
       messageId,
@@ -1261,6 +1269,10 @@ export function createAi(config: AiConfig): Ai {
         })),
       },
     });
+    if (resp.ok) {
+      messagesStore.allowAutoExecuteToolCall(resp.message.id);
+    }
+    return resp;
   }
 
   return Object.defineProperty(
@@ -1300,7 +1312,7 @@ export function createAi(config: AiConfig): Ai {
         options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
-        return sendClientMsgWithResponse({
+        const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
           sourceMessage: userMessage,
@@ -1318,6 +1330,8 @@ export function createAi(config: AiConfig): Ai {
             })),
           },
         });
+        messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
+        return resp;
       },
 
       abort: (messageId: MessageId) =>
