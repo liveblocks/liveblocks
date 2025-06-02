@@ -2,11 +2,29 @@ import { console } from "@liveblocks/core";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useControllableState<T>(
+  /**
+   * The value used as an uncontrolled fallback if neither `value` nor `defaultValue` are provided.
+   */
+  fallbackValue: T,
+
+  /**
+   * The controlled value.
+   */
   value?: T,
+
+  /**
+   * The event handler called when the value changes, if the value is controlled.
+   */
   onChange?: (value: T) => void,
+
+  /**
+   * The default uncontrolled value.
+   */
   defaultValue?: T
 ) {
-  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
+  const [uncontrolledValue, setUncontrolledValue] = useState(
+    defaultValue ?? fallbackValue
+  );
   const isControlled = value !== undefined;
   const wasControlled = useRef(isControlled);
 

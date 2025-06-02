@@ -6,13 +6,14 @@ import {
   type ToolResultData,
 } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
-import { Children, forwardRef, useCallback, useMemo, useState } from "react";
+import { Children, forwardRef, useCallback, useMemo } from "react";
 
 import { Button } from "../_private";
 import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
 import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
+import { useControllableState } from "../utils/use-controllable-state";
 import { CodeBlock } from "./internal/CodeBlock";
 
 export interface AiToolProps
@@ -35,15 +36,26 @@ export interface AiToolProps
    * The content shown in the tool.
    */
   children?: ReactNode;
+
+  /**
+   * Whether the collapsible content is initially open. Setting a value will make it uncontrolled.
+   */
+  defaultOpen?: boolean;
+
+  /**
+   * Whether the collapsible content is currently open. Setting a value will make it controlled, use `onOpenChange` to.
+   */
+  open?: boolean;
+
+  /**
+   * The event handler called when the collapsible content is opened or closed.
+   */
+  onOpenChange?: (open: boolean) => void;
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
 
 export type AiToolInspectorProps = ComponentProps<"div">;
-
-// TODO: AiToolConfirmationProps might need a generic since we're outside of the
-//       tool definition so things like inferred args and result types are not
-//       available here for `confirm` and `cancel`
 
 /**
  * @private This API will change, and is not considered stable. DO NOT RELY on it.
@@ -170,17 +182,32 @@ function prettifyString(string: string) {
   );
 }
 
-const noop = () => {};
-
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
-    ({ children, title, icon, className, ...props }, forwardedRef) => {
+    (
+      {
+        children,
+        title,
+        icon,
+        defaultOpen,
+        open: controlledOpen,
+        onOpenChange: controlledOnOpenChange,
+        className,
+        ...props
+      },
+      forwardedRef
+    ) => {
       const {
         status,
         toolName,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
-      const [isOpen, setIsOpen] = useState(true);
+      const [isOpen, onOpenChange] = useControllableState(
+        true,
+        controlledOpen,
+        controlledOnOpenChange,
+        defaultOpen
+      );
       // TODO: This check won't work for cases like:
       //         <AiTool>
       //           <ComponentThatRendersNull />
@@ -198,8 +225,9 @@ export const AiTool = Object.assign(
           ref={forwardedRef}
           className={classNames("lb-collapsible lb-ai-tool", className)}
           {...props}
+          // Regardless of the controlled/uncontrolled props, the collapsible is closed if there's no content.
           open={hasContent ? isOpen : false}
-          onOpenChange={hasContent ? setIsOpen : noop}
+          onOpenChange={onOpenChange}
           disabled={!hasContent}
         >
           <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
@@ -222,7 +250,7 @@ export const AiTool = Object.assign(
             </div>
           </Collapsible.Trigger>
 
-          {children ? (
+          {hasContent ? (
             <Collapsible.Content className="lb-collapsible-content lb-ai-tool-content-container">
               <div className="lb-ai-tool-content">{children}</div>
             </Collapsible.Content>

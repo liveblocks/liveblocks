@@ -668,10 +668,8 @@ export const Composer = forwardRef(
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);
     const [isCollapsed, onCollapsedChange] = useControllableState(
-      // If the composer is neither controlled nor uncontrolled, it defaults to controlled as uncollapsed.
-      controlledCollapsed === undefined && defaultCollapsed === undefined
-        ? false
-        : controlledCollapsed,
+      false,
+      controlledCollapsed,
       controlledOnCollapsedChange,
       defaultCollapsed
     );
