@@ -1,5 +1,38 @@
 ## vNEXT (not yet published)
 
+## v3.0.0
+
+For full upgrade instructions and codemods, see the
+[3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
+
+### All packages
+
+- Remove deprecated APIs, see
+  [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
+  in the upgrade guide to learn more.
+
+### `@liveblocks/react`
+
+- Rename `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` to
+  `UPDATE_NOTIFICATION_SETTINGS_ERROR` when using
+  [`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
+  or
+  [`useUpdateNotificationSettings`](/docs/api-reference/liveblocks-react#useUpdateNotificationSettings).
+
+### `@liveblocks/emails`
+
+- Remove deprecated `htmlBody`/`reactBody` properties from
+  `prepareThreadNotificationEmailAsHtml`/`prepareThreadNotificationEmailAsReact`,
+  use `body` instead.
+- Remove `htmlContent`/`reactContent` properties from
+  `prepareTextMentionNotificationEmailAsHtml`/`prepareTextMentionNotificationEmailAsReact`,
+  use `content` instead.
+
+### `@liveblocks/react-ui`
+
+- Rename `LiveblocksUIConfig` to `LiveblocksUiConfig` for consistency with other
+  Liveblocks APIs.
+
 ## v2.24.3
 
 ### `@liveblocks/react` and `@liveblocks/react-ui`
