@@ -15,9 +15,8 @@
   --lb-accent: var(--accent);
 }
 
-.lb-ai-chat,
-.lb-ai-chat-footer::before {
-  background: theme("colors.stone.50");
+.lb-ai-chat {
+  --lb-background: theme("colors.stone.50");
 }
 
 .lb-ai-chat-composer {
