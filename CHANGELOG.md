@@ -2,6 +2,11 @@
 
 ## v3.0.0
 
+Liveblocks 3.0 is our third major release, focusing on our newest product,
+[AI Copilots](https://liveblocks.io/blog/meet-liveblocks-3-0-the-fastest-way-to-let-your-users-collaborate-with-ai-in-your-product).
+We’ve used this as an opportunity to tidy up some of our existing APIs, ensuring
+consistency throughout our offering.
+
 For full upgrade instructions and codemods, see the
 [3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
 
