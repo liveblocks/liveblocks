@@ -37,7 +37,7 @@ export type {
   StringifyCommentBodyOptions,
 } from "./comments/comment-body";
 export {
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   html,
   htmlSafe,
   isCommentBodyLink,

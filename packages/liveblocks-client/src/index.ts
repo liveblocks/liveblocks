@@ -71,7 +71,7 @@ export type {
 } from "@liveblocks/core";
 export {
   createClient,
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   isNotificationChannelEnabled,
   LiveblocksError,
   LiveList,
