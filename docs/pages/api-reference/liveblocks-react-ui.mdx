@@ -39,7 +39,21 @@ function Chat() {
 }
 ```
 
-##### Show placeholder content in new chats
+##### Assigning a copilot [#AiChat-copilot]
+
+Use a custom copilot in your chat. You can define copilots with custom prompts &
+settings in the [Liveblocks dashboard](/dashboard), passing your API key from
+OpenAI, Anthropic, or Google. Copy the copilot’s ID and pass it to the
+`copilotId` prop.
+
+```tsx
+<AiChat chatId="my-chat-id" copilotId="co_a7Gd3x..." />
+```
+
+Dynamically switching copilots is possible, and messages will use whichever
+`copilotId` is set when a message is sent.
+
+##### Show placeholder content in new chats [#AiChat-placeholder]
 
 In chats without messages, you can display placeholder content to guide the
 user...
@@ -48,7 +62,7 @@ user...
 
 {/* TODO show initial suggestions if it's supported */}
 
-##### Adjusting the chat’s width
+##### Adjusting the chat’s width [#AiChat-width]
 
 When using the default `inset` layout, it’s possible to adjust the chat’s width
 by setting the `--lb-ai-chat-container-width` CSS variable. This allows the
@@ -80,7 +94,7 @@ function Chat() {
 }
 ```
 
-##### Compact layout mode
+##### Compact layout mode [#AiChat-compact-layout]
 
 An alternate `compact` layout mode is available, ideal for smaller UI components
 such as pop-up windows. Compact layout mode removes the shadow and padding on
@@ -101,7 +115,7 @@ function Chat() {
 }
 ```
 
-##### Change background color
+##### Change background color [#AiChat-background]
 
 You can change the background color of the chat by setting the `--lb-background`
 CSS variable on `.lb-ai-chat`.
@@ -131,7 +145,7 @@ function Chat() {
 }
 ```
 
-##### List the user’s chats and switch between them
+##### List the user’s chats and switch between them [#AiChat-chat-listing]
 
 You can display a list of all chats created by the current user with
 [`useAiChats`](/docs/api-reference/liveblocks-react#useAiChats). For example,
@@ -184,7 +198,7 @@ function Chats() {
 }
 ```
 
-##### Display the chat’s title
+##### Display the chat’s title [#AiChat-title]
 
 {/* TODO mention metadata too, if supported */}
 
@@ -221,7 +235,7 @@ function ChatWithTitle({ chatId: { chatId: string } }) {
 }
 ```
 
-##### Use custom markdown components in the chat
+##### Use custom markdown components in the chat [#AiChat-markdown]
 
 AI can use markdown to display text, lists, and more. You can replace the
 default markdown components with your own custom components by...
