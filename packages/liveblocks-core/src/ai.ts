@@ -43,7 +43,6 @@ import type {
   AskInChatResponse,
   ClearChatResponse,
   ClientAiMsg,
-  ClientId,
   CmdId,
   CreateChatOptions,
   Cursor,
@@ -944,7 +943,6 @@ export function createAi(config: AiConfig): Ai {
     config.enableDebugLogging,
     false // AI doesn't have actors (yet, but it will)
   );
-  const clientId = nanoid(7) as ClientId;
 
   const chatsStore = createStore_forUserAiChats();
   const toolsStore = createStore_forTools();
@@ -1255,7 +1253,6 @@ export function createAi(config: AiConfig): Ai {
       chatId,
       messageId,
       toolCallId,
-      clientId,
       result,
       generationOptions: {
         copilotId: options?.copilotId,
@@ -1317,7 +1314,6 @@ export function createAi(config: AiConfig): Ai {
           chatId,
           sourceMessage: userMessage,
           targetMessageId,
-          clientId,
           generationOptions: {
             copilotId: options?.copilotId,
             stream: options?.stream,
