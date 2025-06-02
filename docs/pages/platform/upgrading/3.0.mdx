@@ -5,41 +5,137 @@ meta:
   description: "Guide to upgrade to Liveblocks version 3.0"
 ---
 
-TODO: List of changes to document
+- TODO: Should we also remove/deprecate `nextPage` from the REST API docs?
+- TODO: Docs to remove or update:
+  - https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus
+  - https://liveblocks.io/docs/api-reference/liveblocks-react#useBatch
+  - https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus
+  - https://liveblocks.io/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings
 
-- Removed deprecated things from
-  [the 2.24 "notification settings"/"subscription settings" renames](https://liveblocks.io/docs/platform/upgrading/2.24)
-  - Related, the `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` is now called
-    `UPDATE_NOTIFICATION_SETTINGS_ERROR`, which was the previous name of
-    `UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR`
-- `LiveblocksUIConfig` → `LiveblocksUiConfig`
-- Remove deprecated `RoomInfo` type from `@liveblocks/node`
-  - We already mentioned this change as "breaking" in 2.0? With its own codemod
-    https://liveblocks.io/docs/platform/upgrading/2.0#bc2
-- Remove deprecated `useEditorStatus` hook from `@liveblocks/react-lexical`
-  - TODO: Update/remove its docs section:
-    https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus
-- Remove deprecated `metadata` field from `getRooms` options in
-  `@liveblocks/node`
-- Remove deprecated `nextPage` property from `getRooms` response in
-  `@liveblocks/node`
-  - TODO: Should we also remove `nextPage` from the REST API docs?
-- Remove deprecated `code` property from `LiveblocksError`
-- Remove deprecated `unstable_fallbackToHTTP` client option
-  - `largeMessageStrategy="experimental-fallback-to-http"` can be used instead
-- Remove deprecated `events.storage` event source
-  - TODO: `events` is marked as `@private`, so not a fully breaking change
-- Remove deprecated `useStorageStatus` hook from `@liveblocks/react`
-  - TODO: Update/remove its docs section:
-    https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus
-- Remove deprecated `useBatch` hook from `@liveblocks/react`
-  - TODO: Update/remove its docs section:
-    https://liveblocks.io/docs/api-reference/liveblocks-react#useBatch
-- Removed deprecated `htmlBody` and `reactBody` properties from
-  `CommentEmailAsHtmlData` and `CommentEmailAsReactData` types (replaced by
-  `body`)
-- Implement a new core logic for text mention notification event in
-  `@liveblocks/emails`.
-  - This is a breaking change where `prepareTextMentionNotificationEmail` and
-    `prepareTextMentionNotificationEmailAsHtml` return converted mention content
-    in the property `content` instead of `htmlContent` or `reactContent`
+## How to upgrade [#how-to-upgrade]
+
+First of all, let’s upgrade all Liveblocks dependencies to their latest
+versions. The easiest way to do that is to run the following command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+There are also some **breaking changes** in this update.
+
+### `@liveblocks/emails`
+
+The functions which prepare HTML/React emails are now more consistent, using the
+same `body` and `content` properties instead of `reactBody`/`htmlBody` and
+`reactContent`/`htmlContent`.
+
+```tsx
+// ❌ Before
+prepareThreadNotificationEmailAsReact(liveblocks, event);
+// { comment: { reactBody: ReactNode, ... }, ... }
+prepareThreadNotificationEmailAsHtml(liveblocks, event);
+// { comment: { htmlBody: string, ... }, ... }
+prepareTextMentionNotificationEmailAsReact(liveblocks, event);
+// { mention: { reactContent: ReactNode, ... }, ... }
+prepareTextMentionNotificationEmailAsHtml(liveblocks, event);
+// { mention: { htmlContent: string, ... }, ... }
+
+// ✅ After
+prepareThreadNotificationEmailAsReact(liveblocks, event);
+// { comment: { body: ReactNode, ... }, ... }
+prepareThreadNotificationEmailAsHtml(liveblocks, event);
+// { comment: { body: string, ... }, ... }
+prepareTextMentionNotificationEmailAsReact(liveblocks, event);
+// { mention: { content: ReactNode, ... }, ... }
+prepareTextMentionNotificationEmailAsHtml(liveblocks, event);
+// { mention: { content: string, ... }, ... }
+```
+
+### Notification settings
+
+2.24 [introduced a few naming changes](/docs/platform/upgrading/2.24) around the
+concepts of "notification settings" and "subscription settings" to improve
+clarity. 3.0 [removes the aliases for the previous names](#deprecated) but it
+also introduces one change that we couldn’t make in 2.24:
+
+The `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` error has been renamed to
+`UPDATE_NOTIFICATION_SETTINGS_ERROR`.
+
+```tsx
+// ❌ Before
+useErrorListener((error) =>
+  // +++
+  if (error.context.type === "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR") {
+    // +++
+    /* ... */
+  }
+);
+
+// ✅ After
+useErrorListener((error) =>
+  // +++
+  if (error.context.type === "UPDATE_NOTIFICATION_SETTINGS_ERROR") {
+    // +++
+    /* ... */
+  }
+);
+```
+
+### `LiveblocksUIConfig`
+
+The
+[`LiveblocksUIConfig`](/docs/api-reference/liveblocks-react-ui#LiveblocksUiConfig)
+utility has been renamed to `LiveblocksUiConfig` (`UI` → `Ui`) for consistency
+with other Liveblocks APIs.
+
+Run the following **codemod** or manually make the changes:
+
+```bash
+npx @liveblocks/codemod@latest liveblocks-ui-config
+```
+
+### Removed deprecated APIs [#deprecated]
+
+All of the following APIs have been removed in 3.0, as they were deprecated
+multiple versions ago.
+
+**Affecting all packages:**
+
+- The `code` property has been removed from `LiveblocksError`, use
+  `LiveblocksError.context.code` instead for better TypeScript support.
+- The deprecated aliases from the
+  [2.24 naming changes](/docs/platform/upgrading/2.24) have been removed, use
+  their new names instead. There’s a codemod available to automatically use the
+  new names: `npx @liveblocks/codemod@latest rename-notification-settings`.
+
+**Affecting `@liveblocks/client`:**
+
+- The `unstable_fallbackToHTTP` client option has been removed, set
+  `largeMessageStrategy` to `"experimental-fallback-to-http"` instead.
+
+**Affecting `@liveblocks/node`:**
+
+- The `metadata` option has been removed from the [`getRooms`][] method, use
+  `query.metadata` instead.
+- The `nextPage` property has been removed from the [`getRooms`][] method’s
+  response, use `query.nextPage` instead.
+- The `RoomData` type has been removed, use `RoomInfo` instead. There’s a
+  codemod available to automatically use the new type:
+  `npx @liveblocks/codemod@latest room-info-to-room-data`.
+
+**Affecting `@liveblocks/react`:**
+
+- The `useBatch` hook has been removed, use [`useMutation`][] instead for
+  writing to Storage, which will automatically batch all mutations.
+- The `useStorageStatus` hook has been removed, use [`useSyncStatus`][] instead
+  for tracking sync status, it reflects the sync status of all parts of
+  Liveblocks.
+
+**Affecting `@liveblocks/react-lexical`:**
+
+- The `useEditorStatus` hook has been removed, use [`useSyncStatus`][] instead
+  for tracking sync status, it reflects the sync status of all parts of
+  Liveblocks.
+
+[`getRooms`]: /docs/api-reference/liveblocks-node#get-rooms
+[`useSyncStatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
