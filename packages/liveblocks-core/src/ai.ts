@@ -416,7 +416,7 @@ function createStore_forChatMessages(
     toolCallId: string,
     result: ToolResultData,
     options?: AiGenerationOptions
-  ) => Promise<AskInChatResponse>
+  ) => Promise<SetToolResultResponse>
 ) {
   const seenToolCallIds = new Set<string>();
 
@@ -1277,10 +1277,7 @@ export function createAi(config: AiConfig): Ai {
       getOrCreateChat,
 
       deleteChat: (chatId: string) => {
-        return sendClientMsgWithResponse({
-          cmd: "delete-chat",
-          chatId,
-        });
+        return sendClientMsgWithResponse({ cmd: "delete-chat", chatId });
       },
 
       getMessageTree,
