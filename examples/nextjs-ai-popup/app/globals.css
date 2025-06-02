@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+.lb-ai-chat-composer {
+  box-shadow:
+    0 0 0 1px rgb(231 229 228),
+    0 2px 6px #0000000f;
+}
+
+.lb-portal {
+  @apply z-30;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+blockquote {
+  box-sizing: border-box;
+  border-left: 0.25rem solid rgba(209, 213, 219);
+  padding-left: 1rem;
+}
+
+ul {
+  display: block;
+  list-style-type: disc;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  padding-inline-start: 40px;
+  unicode-bidi: isolate;
+}
+
+ol {
+  display: block;
+  list-style-type: decimal;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  padding-inline-start: 40px;
+  unicode-bidi: isolate;
+}
+
+li {
+  display: list-item;
+  text-align: -webkit-match-parent;
+  unicode-bidi: isolate;
+}
+
+li::marker {
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  text-indent: 0px !important;
+  text-align: start !important;
+  text-align-last: start !important;
+}
