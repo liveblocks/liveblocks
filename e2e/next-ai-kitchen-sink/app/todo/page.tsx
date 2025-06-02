@@ -216,9 +216,10 @@ export default function Page() {
                           additionalProperties: false,
                         },
 
-                        render: ({ status, result, $types }) => (
+                        render: ({ status, result, types }) => (
                           <AiTool>
-                            <AiTool.Confirmation<typeof $types>
+                            <AiTool.Confirmation
+                              types={types}
                               variant="destructive"
                               confirm={({ ids }) => {
                                 const deletedTitles = todos

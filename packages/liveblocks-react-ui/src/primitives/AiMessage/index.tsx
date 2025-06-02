@@ -81,7 +81,7 @@ function ToolInvocation({
   const props = {
     ...rest,
     respond,
-    $types: undefined as never,
+    types: undefined as never,
     [kInternal]: {
       execute: tool.execute,
     },
