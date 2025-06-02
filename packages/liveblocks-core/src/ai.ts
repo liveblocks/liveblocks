@@ -135,9 +135,13 @@ export type AiToolInvocationProps<
     respond: (result: R) => void;
 
     /**
-     * Exposes specific inferred types as a "type pack" which we can pass
-     * around statically to components to "bind" them to specific inferred
-     * A and R values. There is no runtime presence for these.
+     * These are the inferred types for your tool call which you can pass down
+     * to UI components, like so:
+     *
+     *     <AiTool.Confirmation<typeof types> />
+     *
+     * This will make your AiTool.Confirmation component aware of the types for
+     * `args` and `result`.
      */
     types: AiToolTypePack<A, R>;
 
