@@ -38,19 +38,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body
-        className={`${inter.className} absolute inset-0 text-stone-900 flex justify-center items-center bg-stone-200`}
+        className={`${inter.className} absolute antialiased inset-0 text-neutral-900 flex justify-center items-center bg-neutral-200 px-4`}
       >
         <Providers>
-          <div className="flex h-full max-h-[700px] w-full max-w-[1000px] shadow-lg rounded-lg overflow-hidden">
-            <aside className="w-[260px] bg-stone-100 border-r border-stone-200 shrink-0 flex flex-col gap-4 py-2">
+          <div className="flex h-full max-h-[700px] w-full max-w-[1000px] shadow-[0px_100px_80px_0px_rgba(0,0,0,0.03),0px_41.778px_33.422px_0px_rgba(0,0,0,0.02),0px_22.336px_17.869px_0px_rgba(0,0,0,0.02),0px_12.522px_10.017px_0px_rgba(0,0,0,0.01),0px_6.65px_5.32px_0px_rgba(0,0,0,0.01),0px_2.767px_2.214px_0px_rgba(0,0,0,0.01)] rounded-xl overflow-hidden ring-1 ring-neutral-950/5">
+            <aside className="w-[260px] bg-neutral-100 border-r border-neutral-200 shrink-0 flex flex-col gap-2 py-2">
               <form action={newChat} className="block w-full">
-                <button className="group p-2 text-sm hover:bg-stone-300/50 rounded-md mx-2 text-left flex items-center gap-1.5 text-orange-700 font-medium justify-self-stretch">
+                <button className="group p-2 text-sm hover:bg-neutral-300/40 rounded-md mx-2 text-left flex items-center gap-2 text-blue-700 font-medium justify-self-stretch">
                   <PlusIcon className="opacity-80 group-hover:opacity-100" />
                   New chat
                 </button>
                 <Link
                   href="/chats"
-                  className="group p-2 text-sm hover:bg-stone-300/50 rounded-md mx-2 text-left flex items-center gap-1.5 justify-self-stretch"
+                  className="group p-2 text-sm hover:bg-neutral-300/40 rounded-md mx-2 text-left flex items-center gap-2 justify-self-stretch"
                 >
                   <ChatsIcon className="opacity-70 group-hover:opacity-90" />
                   Chats
@@ -58,14 +58,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </form>
 
               <div className="p-2">
-                <div className="p-2 pb-1 text-stone-600 font-medium text-xs">
+                <div className="p-2 pb-1 text-neutral-600 font-medium text-xs">
                   Recents
                 </div>
                 <ChatList />
               </div>
             </aside>
 
-            <main className="relative grow bg-stone-50 overflow-y-scroll">
+            <main className="relative grow bg-neutral-50 overflow-y-scroll">
               {children}
             </main>
           </div>

@@ -21,7 +21,7 @@ export function ChatList() {
 
   if (!chats) {
     return (
-      <div className="px-2 py-1.5 italic text-stone-500">No chats yet</div>
+      <div className="px-2 py-1.5 italic text-neutral-500">No chats yet</div>
     );
   }
 
@@ -30,8 +30,8 @@ export function ChatList() {
       {chats.map((chat) => (
         <li
           key={chat.id}
-          className={`group list-none px-2 py-1.5 hover:bg-stone-300/50 transition-colors rounded flex justify-between isolate relative gap-2 ${
-            params.chatId === chat.id ? "bg-stone-300/50" : ""
+          className={`group list-none px-2 py-1.5 hover:bg-neutral-300/40 transition-colors rounded flex justify-between isolate relative gap-2 ${
+            params.chatId === chat.id ? "bg-neutral-300/40" : ""
           }`}
         >
           <Link href={`/${chat.id}`} className="absolute inset-0" />
@@ -40,7 +40,7 @@ export function ChatList() {
           {/* TODO: Remove this check when `useAiChat` bug is fixed */}
           {params.chatId !== chat.id ? (
             <button onClick={() => deleteAiChat(chat.id)} className="z-10">
-              <TrashIcon className="text-red-600 opacity-70 hover:opacity-100 hidden group-hover:block" />
+              <TrashIcon className="text-red-600 size-3.5 hidden group-hover:block" />
             </button>
           ) : null}
         </li>
@@ -53,19 +53,20 @@ function TrashIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={18}
-      height={18}
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      className="lucide lucide-trash-icon lucide-trash"
       {...props}
     >
-      <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-      <path d="M10 11L10 17" />
-      <path d="M14 11L14 17" />
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
     </svg>
   );
 }

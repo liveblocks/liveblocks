@@ -12,7 +12,7 @@ export default function Page({ params }: { params: { chatId: string } }) {
           fallback={
             // Loading placeholder around title
             <div className="shrink-0 h-14 p-4 relative flex items-center">
-              <div className="h-6 rounded-lg w-[240px] bg-stone-100 animate-pulse"></div>
+              <div className="h-6 rounded-lg w-[240px] bg-neutral-100 animate-pulse"></div>
             </div>
           }
         >
@@ -38,7 +38,9 @@ export default function Page({ params }: { params: { chatId: string } }) {
 function ChatTitle({ chatId }: { chatId: string }) {
   const { chat } = useAiChat(chatId);
 
-  return <div className="shrink-0 h-14 p-4">{chat?.title || "Untitled"}</div>;
+  return (
+    <div className="shrink-0 h-14 p-4 text-sm">{chat?.title || "Untitled"}</div>
+  );
 }
 
 // Overriding the empty chat state
