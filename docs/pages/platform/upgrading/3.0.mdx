@@ -31,24 +31,16 @@ same `body` and `content` properties instead of `reactBody`/`htmlBody` and
 
 ```tsx
 // ❌ Before
-prepareThreadNotificationEmailAsReact(liveblocks, event);
-// { comment: { reactBody: ReactNode, ... }, ... }
-prepareThreadNotificationEmailAsHtml(liveblocks, event);
-// { comment: { htmlBody: string, ... }, ... }
-prepareTextMentionNotificationEmailAsReact(liveblocks, event);
-// { mention: { reactContent: ReactNode, ... }, ... }
-prepareTextMentionNotificationEmailAsHtml(liveblocks, event);
-// { mention: { htmlContent: string, ... }, ... }
+prepareThreadNotificationEmailAsReact(liveblocks, event); // { comment: { reactBody: ReactNode, ... }, ... }
+prepareThreadNotificationEmailAsHtml(liveblocks, event); // { comment: { htmlBody: string, ... }, ... }
+prepareTextMentionNotificationEmailAsReact(liveblocks, event); // { mention: { reactContent: ReactNode, ... }, ... }
+prepareTextMentionNotificationEmailAsHtml(liveblocks, event); // { mention: { htmlContent: string, ... }, ... }
 
 // ✅ After
-prepareThreadNotificationEmailAsReact(liveblocks, event);
-// { comment: { body: ReactNode, ... }, ... }
-prepareThreadNotificationEmailAsHtml(liveblocks, event);
-// { comment: { body: string, ... }, ... }
-prepareTextMentionNotificationEmailAsReact(liveblocks, event);
-// { mention: { content: ReactNode, ... }, ... }
-prepareTextMentionNotificationEmailAsHtml(liveblocks, event);
-// { mention: { content: string, ... }, ... }
+prepareThreadNotificationEmailAsReact(liveblocks, event); // { comment: { body: ReactNode, ... }, ... }
+prepareThreadNotificationEmailAsHtml(liveblocks, event); // { comment: { body: string, ... }, ... }
+prepareTextMentionNotificationEmailAsReact(liveblocks, event); // { mention: { content: ReactNode, ... }, ... }
+prepareTextMentionNotificationEmailAsHtml(liveblocks, event); // { mention: { content: string, ... }, ... }
 ```
 
 ### Notification settings
