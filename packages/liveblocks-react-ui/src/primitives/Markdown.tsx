@@ -50,8 +50,7 @@ export interface MarkdownComponentsCodeBlockProps {
   language?: string;
 }
 
-export interface MarkdownProps
-  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
+export interface MarkdownProps extends ComponentPropsWithSlot<"div"> {
   content: string;
   components?: Partial<MarkdownComponents>;
 }

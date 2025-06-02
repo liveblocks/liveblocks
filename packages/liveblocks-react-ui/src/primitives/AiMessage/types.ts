@@ -53,8 +53,7 @@ export interface AiMessageContentComponents {
   ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
 }
 
-export interface AiMessageContentProps
-  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
+export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {
   /**
    * The message contents to display.
    */
