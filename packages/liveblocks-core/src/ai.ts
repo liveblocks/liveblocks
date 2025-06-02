@@ -138,7 +138,12 @@ export type AiToolInvocationProps<
      * These are the inferred types for your tool call which you can pass down
      * to UI components, like so:
      *
-     *     <AiTool.Confirmation<typeof types> />
+     *     <AiTool.Confirmation
+     *       types={types}
+     *       confirm={
+     *         // Now fully type-safe!
+     *         (args) => result
+     *       } />
      *
      * This will make your AiTool.Confirmation component aware of the types for
      * `args` and `result`.
