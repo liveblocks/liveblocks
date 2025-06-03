@@ -16,11 +16,10 @@ export type { Json, JsonObject } from "@liveblocks/client";
 export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
+export { ClientContext, useClient } from "./contexts";
 export { RegisterAiKnowledge } from "./ai";
 export {
-  ClientContext,
   LiveblocksProvider,
-  useClient,
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,

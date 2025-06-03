@@ -62,7 +62,13 @@ import {
 } from "react";
 
 import { config } from "./config";
-import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
+import {
+  RoomContext,
+  useClient,
+  useClientOrNull,
+  useIsInsideRoom,
+  useRoomOrNull,
+} from "./contexts";
 import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -71,8 +77,6 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
-  useClient,
-  useClientOrNull,
 } from "./liveblocks";
 import type {
   AttachmentUrlAsyncResult,
