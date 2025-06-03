@@ -14,7 +14,7 @@ import { Popover } from "radix-ui";
 
 function DarkModeToggle() {
   const [exposed, setExposed] = useState<boolean>(true);
-  const [mode, setMode] = useState<string>("light");
+  const [mode, setMode] = useState<"dark" | "light">("light");
 
   const toggleExposeTool = useCallback(() => {
     setExposed((exposeTool) => !exposeTool);
@@ -52,7 +52,7 @@ function DarkModeToggle() {
               properties: {
                 mode: {
                   type: "string",
-                  // enum: ["light", "dark"],
+                  enum: ["light", "dark"],
                 },
               },
               required: ["mode"],

@@ -107,17 +107,22 @@ export type InferFromSchema<T extends JSONSchema7> =
               T["properties"][K]
             >;
           }
-        : T extends { type: "string" }
-          ? string
-          : T extends { type: "number" }
-            ? number
-            : T extends { type: "boolean" }
-              ? boolean
-              : T extends { type: "null" }
-                ? null
-                : T extends { type: "array"; items: JSONSchema7 }
-                  ? InferFromSchema<T["items"]>[]
-                  : unknown;
+        : T extends {
+              type: "string" | "number" | "boolean";
+              enum: readonly (infer U)[];
+            }
+          ? U
+          : T extends { type: "string" }
+            ? string
+            : T extends { type: "number" }
+              ? number
+              : T extends { type: "boolean" }
+                ? boolean
+                : T extends { type: "null" }
+                  ? null
+                  : T extends { type: "array"; items: JSONSchema7 }
+                    ? InferFromSchema<T["items"]>[]
+                    : unknown;
 
 export type AiToolTypePack<
   A extends JsonObject = JsonObject,
