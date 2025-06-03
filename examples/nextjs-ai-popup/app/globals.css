@@ -5,10 +5,20 @@
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
-.lb-ai-chat-composer {
-  box-shadow:
-    0 0 0 1px rgb(231 229 228),
-    0 2px 6px #0000000f;
+:root {
+  --accent: theme("colors.blue.500");
+  --inner-app-width: 36rem;
+}
+
+.lb-root {
+  --lb-ai-chat-container-width: var(--inner-app-width);
+  --lb-accent: var(--accent);
+  --lb-background: theme("colors.white");
+  --lb-foreground: theme("colors.neutral.900");
+}
+
+.lb-ai-chat {
+  --lb-background: theme("colors.neutral.50");
 }
 
 .lb-portal {

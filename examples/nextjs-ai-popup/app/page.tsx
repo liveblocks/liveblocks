@@ -9,7 +9,7 @@ import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
 import { nanoid } from "nanoid";
 import Link from "next/link";
-import { CSSProperties, useCallback, useState } from "react";
+import { ComponentProps, CSSProperties, useCallback, useState } from "react";
 import { useAiChat } from "@liveblocks/react/suspense";
 
 export default function Page() {
@@ -36,11 +36,11 @@ function ChatPopup() {
         <PopoverPrimitives.Trigger asChild>
           <button
             className={
-              "flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-black shadow-lg transition-all fixed bottom-8 right-8 z-40 duration-200"
+              "flex size-14 items-center ring-1 ring-neutral-200 justify-center rounded-full bg-white hover:bg-neutral-50 shadow-[0px_100px_150px_0px_rgba(0,0,0,0.02),0px_41.778px_62.666px_0px_rgba(0,0,0,0.01),0px_22.336px_33.504px_0px_rgba(0,0,0,0.01),0px_12.522px_18.782px_0px_rgba(0,0,0,0.01),0px_6.65px_9.975px_0px_rgba(0,0,0,0.01),0px_2.767px_4.151px_0px_rgba(0,0,0,0.01)] transition-all fixed bottom-8 right-8 z-40 duration-200"
             }
             aria-label="Open AI Assistant"
           >
-            ✨
+            <SparklesIcon className="fill-blue-500 size-7" />
           </button>
         </PopoverPrimitives.Trigger>
         <PopoverPrimitives.Portal>
@@ -52,16 +52,19 @@ function ChatPopup() {
               // Don't close when clicking outside
               e.preventDefault();
             }}
-            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl will-change-[transform,opacity]"
+            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-neutral-200 bg-white shadow-[0px_100px_150px_0px_rgba(0,0,0,0.02),0px_41.778px_62.666px_0px_rgba(0,0,0,0.01),0px_22.336px_33.504px_0px_rgba(0,0,0,0.01),0px_12.522px_18.782px_0px_rgba(0,0,0,0.01),0px_6.65px_9.975px_0px_rgba(0,0,0,0.01),0px_2.767px_4.151px_0px_rgba(0,0,0,0.01)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
-              <div className="flex h-11 shrink-0 items-center justify-between pl-3 pr-3 pt-3">
+              <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
                 <button
                   onClick={() => setShowListing(!showListing)}
-                  className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm font-medium hover:bg-gray-100"
+                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100"
                 >
                   {showListing ? (
-                    <>← Back</>
+                    <>
+                      <ChevronLeftIcon className="size-4 opacity-70 -ml-1" />
+                      <span>Back</span>
+                    </>
                   ) : (
                     // <ClientSideSuspense fallback={null}>
                     <Title chatId={chatId} />
@@ -69,16 +72,17 @@ function ChatPopup() {
                   )}
                 </button>
 
-                <span className="flex items-center gap-0.5">
+                <span className="flex items-center gap-1.5">
                   <button
                     onClick={() => goToChat(nanoid())}
-                    className="flex h-8 items-center gap-1 rounded-lg px-2 text-sm font-medium hover:bg-gray-100"
+                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100"
                   >
-                    new chat
+                    <PlusIcon className="size-4 -ml-1 opacity-70" />
+                    <span>New chat</span>
                   </button>
-                  <PopoverPrimitives.Close className="hover:bg-gray-100 hover:dark:bg-gray-800 flex size-8 items-center justify-center rounded-full hover:bg-product-surface-raised">
+                  <PopoverPrimitives.Close className="bg-neutral-50 hover:bg-neutral-100 flex size-8 items-center justify-center rounded-full">
                     <span className="sr-only">Close</span>
-                    close
+                    <CloseIcon className="size-4 opacity-70" />
                   </PopoverPrimitives.Close>
                 </span>
               </div>
@@ -104,10 +108,46 @@ function Chat({ chatId }: { chatId: string }) {
         layout="compact"
         chatId={chatId}
         components={{
-          // TODO make a pretty empty state
-          // pretend we have a function that lets you add a message
-          // to the chat e.g. sendAiMessage
-          Empty: () => <div className="p-4">Empty state</div>,
+          Empty: () => (
+            <div className="p-4 h-full flex flex-col gap-5 justify-end">
+              <h3>How can I help you?</h3>
+              {/* Soon you will be able to add messages to the chat programmatically */}
+              <div className="flex flex-wrap items-start gap-2">
+                <button
+                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                  onClick={() => {
+                    // TODO: Use sendAiMessage when available
+                  }}
+                >
+                  Check weather
+                </button>
+                <button
+                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                  onClick={() => {
+                    // TODO: Use sendAiMessage when available
+                  }}
+                >
+                  Write a story
+                </button>
+                <button
+                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                  onClick={() => {
+                    // TODO: Use sendAiMessage when available
+                  }}
+                >
+                  Explain quantum computing
+                </button>
+                <button
+                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                  onClick={() => {
+                    // TODO: Use sendAiMessage when available
+                  }}
+                >
+                  Plan weekly meals
+                </button>
+              </div>
+            </div>
+          ),
 
           // TODO default spinner is probably fine?
           // Loading: () => <div>loading... </div>,
@@ -149,20 +189,22 @@ function ChatListing({
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-5">
-      <div className="text-sm font-medium text-gray-600">Chat history</div>
-      <ul className="flex flex-col gap-3 text-sm pl-0">
+    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-4">
+      <ul className="flex flex-col gap-2 text-sm pl-0">
         {chats.map((chat) => (
-          <li key={chat.id} className="flex items-center justify-between">
+          <li
+            key={chat.id}
+            className="group relative flex items-center justify-between p-3 pr-4 border border-neutral-200 rounded-md hover:bg-neutral-50"
+          >
             <div className="flex flex-col gap-0.5">
               {/* TODO hover, full width, chat icon at left, etc */}
               <button
                 onClick={() => onSelectChat(chat.id)}
-                className="text-left font-medium"
+                className="text-left font-medium before:absolute before:inset-0"
               >
                 {chat.title || "Untitled"}
               </button>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-neutral-400">
                 {new Date(chat.lastMessageAt || chat.createdAt).toLocaleString(
                   "en-US",
                   {
@@ -173,15 +215,16 @@ function ChatListing({
                 )}
               </div>
             </div>
-            <button onClick={() => deleteAiChat(chat.id)}>delete</button>
+            <button
+              onClick={() => deleteAiChat(chat.id)}
+              className="relative hidden group-hover:block"
+              title="Delete chat"
+            >
+              <TrashIcon className="text-red-600 size-4" />
+            </button>
           </li>
         ))}
       </ul>
-
-      {/* TODO not sure if we need this */}
-      <button onClick={() => onSelectChat(nanoid())} className="mt-2 shrink-0">
-        new chat
-      </button>
     </div>
   );
 }
@@ -200,4 +243,99 @@ function Title({ chatId }: { chatId: string }) {
 // Creating a new chat every hour
 function getDefaultChatId() {
   return new Date().toISOString().slice(0, 13);
+}
+
+function CloseIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      {...props}
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+function SparklesIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+    >
+      <path d="M17.617 14.034c-4.172 1.378-5.561 2.768-6.94 6.94a.375.375 0 0 1-.711 0c-1.379-4.172-2.768-5.561-6.94-6.94a.375.375 0 0 1 0-.712c4.172-1.378 5.561-2.767 6.94-6.939a.375.375 0 0 1 .711 0c1.379 4.172 2.768 5.561 6.94 6.94a.375.375 0 0 1 0 .711ZM21.102 6.723c-2.085.689-2.78 1.384-3.47 3.47a.187.187 0 0 1-.356 0c-.688-2.085-1.383-2.78-3.47-3.47-.17-.056-.17-.298 0-.355 2.086-.689 2.781-1.384 3.47-3.47.057-.172.3-.172.356 0 .689 2.085 1.384 2.78 3.47 3.47.171.056.171.298 0 .355Z" />
+    </svg>
+  );
+}
+
+function PlusIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+function TrashIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    </svg>
+  );
 }
