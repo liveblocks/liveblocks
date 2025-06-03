@@ -362,14 +362,41 @@ const kWILDCARD = Symbol("*");
 function createStore_forTools() {
   const toolsByChatIdΣ = new DefaultMap(
     (_chatId: string | typeof kWILDCARD) => {
-      return new DefaultMap((_toolName: string) => {
+      return new DefaultMap((_name: string) => {
         return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
       });
     }
   );
 
-  function getToolDefinitionΣ(chatId: string, toolName: string) {
-    return toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(toolName);
+  //
+  // TODO This administration is pretty ugly at the moment.
+  // Would be nice to have some kind of helper for constructing these
+  // structures. Maintaining them in all these different DefaultMaps is pretty
+  // getting pretty tricky. Ideas are very welcomed!
+  //
+  // Key here is: '["my-tool","my-chat"]' or just '["my-tool"]' (for global tools)
+  //
+  const globalOrScopedToolΣ = new DefaultMap((nameAndChat: string) => {
+    const [name, chatId] = tryParseJson(nameAndChat) as [
+      string,
+      string | undefined,
+    ];
+    return DerivedSignal.from(() => {
+      return (
+        // A tool that's registered and scoped to a specific chat ID...
+        (chatId !== undefined
+          ? toolsByChatIdΣ.get(chatId)?.get(name)
+          : undefined
+        )?.get() ??
+        // ...or a globally registered tool
+        toolsByChatIdΣ.getOrCreate(kWILDCARD).get(name)?.get()
+      );
+    });
+  });
+
+  function getToolΣ(name: string, chatId?: string) {
+    const key = JSON.stringify(chatId !== undefined ? [name, chatId] : [name]);
+    return globalOrScopedToolΣ.getOrCreate(key);
   }
 
   function registerTool(
@@ -424,7 +451,7 @@ function createStore_forTools() {
   return {
     getToolDescriptions,
 
-    getToolDefinitionΣ,
+    getToolΣ,
     registerTool,
   };
 }
@@ -579,7 +606,7 @@ function createStore_forChatMessages(
           seenToolCallIds.add(toolCall.toolCallId);
 
           const toolDef = toolsStore
-            .getToolDefinitionΣ(message.chatId, toolCall.toolName)
+            .getToolΣ(toolCall.toolName, message.chatId)
             .get();
 
           const respondSync = (result: ToolResultData) => {
@@ -918,10 +945,10 @@ export type Ai = {
       chatId: string,
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
-    getToolDefinitionΣ(
-      chatId: string,
-      toolName: string
-    ): Signal<AiOpaqueToolDefinition | undefined>;
+    getToolΣ(
+      name: string,
+      chatId?: string
+    ): DerivedSignal<AiOpaqueToolDefinition | undefined>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -1357,7 +1384,7 @@ export function createAi(config: AiConfig): Ai {
         chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
-        getToolDefinitionΣ: context.toolsStore.getToolDefinitionΣ,
+        getToolΣ: context.toolsStore.getToolΣ,
       },
 
       getChatById: context.chatsStore.getChatById,
