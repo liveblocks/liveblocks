@@ -5,22 +5,22 @@ import type {
   ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
-import {
-  type AsyncResult,
-  type BaseRoomInfo,
-  type CopilotId,
-  type DM,
-  type DU,
-  HttpError,
-  type LiveblocksError,
-  type MessageId,
-  type OpaqueClient,
-  type PartialNotificationSettings,
-  type SyncStatus,
+import type {
+  AsyncResult,
+  BaseRoomInfo,
+  CopilotId,
+  DM,
+  DU,
+  LiveblocksError,
+  MessageId,
+  OpaqueClient,
+  PartialNotificationSettings,
+  SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
   createClient,
+  HttpError,
   kInternal,
   makePoller,
   raise,
@@ -28,17 +28,21 @@ import {
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
 } from "react";
 
+import { RegisterAiKnowledge } from "./ai";
 import { config } from "./config";
-import { useIsInsideRoom } from "./contexts";
+import {
+  ClientContext,
+  useClient,
+  useClientOrNull,
+  useIsInsideRoom,
+} from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
 import { ensureNotServerSide } from "./lib/ssr";
@@ -70,14 +74,6 @@ import type {
 import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
-
-/**
- * Raw access to the React context where the LiveblocksProvider stores the
- * current client. Exposed for advanced use cases only.
- *
- * @private This is a private/advanced API. Do not rely on it.
- */
-export const ClientContext = createContext<OpaqueClient | null>(null);
 
 function missingUserError(userId: string) {
   return new Error(`resolveUsers didn't return anything for user '${userId}'`);
@@ -1070,6 +1066,16 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
   return result;
 }
 
+/**
+ * Returns a function that creates an AI chat.
+ *
+ * If you do not pass a title for the chat, it will be automatically computed
+ * after the first AI response.
+ *
+ * @example
+ * const createAiChat = useCreateAiChat();
+ * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
+ */
 function useCreateAiChat() {
   const client = useClient();
 
@@ -1089,6 +1095,13 @@ function useCreateAiChat() {
   );
 }
 
+/**
+ * Returns a function that deletes the AI chat with the specified id.
+ *
+ * @example
+ * const deleteAiChat = useDeleteAiChat();
+ * deleteAiChat("ai-chat-id");
+ */
 function useDeleteAiChat() {
   const client = useClient();
 
@@ -1169,6 +1182,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
     },
     suspense: {
       useClient,
@@ -1178,6 +1192,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
     },
   };
 }
@@ -1192,23 +1207,6 @@ function useEnsureNoLiveblocksProvider(options?: { allowNesting?: boolean }) {
       "You cannot nest multiple LiveblocksProvider instances in the same React tree."
     );
   }
-}
-
-/**
- * @private This is an internal API.
- */
-export function useClientOrNull<U extends BaseUserMeta>() {
-  return useContext(ClientContext) as Client<U> | null;
-}
-
-/**
- * Obtains a reference to the current Liveblocks client.
- */
-export function useClient<U extends BaseUserMeta>() {
-  return (
-    useClientOrNull<U>() ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
 }
 
 /**

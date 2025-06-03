@@ -162,7 +162,7 @@ export default {
         "All modules in types/ must have no other dependencies apart from protocol/ or lib/.",
       severity: "error",
       from: { path: "^src/types/" },
-      to: { pathNot: "^src/(globals|types|protocol|lib)/" },
+      to: { pathNot: "(^src/(globals|types|protocol|lib)/|json-schema)" },
     },
 
     // "Swimlane 3" - refs/

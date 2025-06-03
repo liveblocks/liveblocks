@@ -113,7 +113,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       expectType<{ id?: number }>(args);
       return { ok: true };
     },
-    render: () => <h1>JSX</h1>,
+    render: () => null,
   });
 }
 
@@ -171,46 +171,46 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     expectType<undefined>(myTool.render);
   } else {
     const internal = { [kInternal]: { execute: undefined } };
-    const jsx = (
-      <>
-        {/* Test three different invocations */}
-        <myTool.render
-          status="receiving"
-          toolName="callMyTool"
-          toolCallId="tc_abc123"
-          partialArgs={{}}
-          respond={(payload) => {
-            expectType<Json>(payload);
-          }}
-          types={undefined as never}
-          {...internal}
-        />
-        <myTool.render
-          status="executing"
-          toolName="callMyTool"
-          toolCallId="tc_abc123"
-          args={{ a: 1 }}
-          respond={(payload) => {
-            expectType<Json>(payload);
-          }}
-          types={undefined as never}
-          {...internal}
-        />
-        <myTool.render
-          status="executed"
-          toolName="callMyTool"
-          toolCallId="tc_abc123"
-          args={{ a: 1 }}
-          result={{ b: 2 }}
-          respond={(payload) => {
-            expectType<Json>(payload);
-          }}
-          types={undefined as never}
-          {...internal}
-        />
-      </>
-    );
-    console.log(jsx);
+
+    // Possible JSX rendering invocation 1
+    myTool.render({
+      status: "receiving",
+      toolName: "callMyTool",
+      toolCallId: "tc_abc123",
+      partialArgs: {},
+      respond: (payload) => {
+        expectType<Json>(payload);
+      },
+      types: undefined as never,
+      ...internal,
+    });
+
+    // Possible JSX rendering invocation 2
+    myTool.render({
+      status: "executing",
+      toolName: "callMyTool",
+      toolCallId: "tc_abc123",
+      args: { a: 1 },
+      respond: (payload) => {
+        expectType<Json>(payload);
+      },
+      types: undefined as never,
+      ...internal,
+    });
+
+    // Possible JSX rendering invocation 3
+    myTool.render({
+      status: "executed",
+      toolName: "callMyTool",
+      toolCallId: "tc_abc123",
+      args: { a: 1 },
+      result: { b: 2 },
+      respond: (payload) => {
+        expectType<Json>(payload);
+      },
+      types: undefined as never,
+      ...internal,
+    });
   }
 }
 
