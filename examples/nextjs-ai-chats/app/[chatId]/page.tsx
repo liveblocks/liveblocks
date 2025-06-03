@@ -52,7 +52,6 @@ function Empty({ chatId }: AiChatComponentsEmptyProps) {
     <div className="size-full mx-auto max-w-[--inner-app-width] flex items-end pb-[calc(3*var(--lb-spacing))]">
       <div className="flex flex-col gap-5">
         <h3>How can I help you?</h3>
-        {/* Soon you will be able to add messages to the chat programmatically */}
         <div className="flex flex-wrap items-start gap-2">
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
