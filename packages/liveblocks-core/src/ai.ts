@@ -36,6 +36,7 @@ import type {
   AiGeneratingAssistantMessage,
   AiGenerationOptions,
   AiKnowledgeSource,
+  AiToolDescription,
   AiToolInvocationPart,
   AiUserContentPart,
   AiUserMessage,
@@ -397,29 +398,21 @@ function createStore_forTools() {
     tool.set(undefined);
   }
 
-  function getToolsForChat(chatId: string): {
-    name: string;
-    tool: AiOpaqueToolDefinition;
-  }[] {
+  function getToolDescriptionsForChat(chatId: string): AiToolDescription[] {
     const toolsByNameΣ = toolsByChatIdΣ.get(chatId);
     if (toolsByNameΣ === undefined) return [];
-    return Array.from(toolsByNameΣ.entries())
-      .map(([name, toolΣ]) => {
-        if (toolΣ.get() === undefined) return null;
-        return {
-          name,
-          tool: toolΣ.get(),
-        };
-      })
-      .filter((tool) => tool !== null) as {
-      name: string;
-      tool: AiOpaqueToolDefinition;
-    }[];
+    return Array.from(toolsByNameΣ.entries()).flatMap(([name, toolΣ]) => {
+      const tool = toolΣ.get();
+      return tool
+        ? [{ name, description: tool.description, parameters: tool.parameters }]
+        : [];
+    });
   }
 
   return {
+    getToolDescriptionsForChat,
+
     getToolDefinitionΣ,
-    getToolsForChat,
     addToolDefinition,
     removeToolDefinition,
   };
@@ -1271,13 +1264,7 @@ export function createAi(config: AiConfig): Ai {
         stream: options?.stream,
         timeout: options?.timeout,
         knowledge: knowledge.length > 0 ? knowledge : undefined,
-        tools: context.toolsStore
-          .getToolsForChat(chatId)
-          .map(({ name, tool }) => ({
-            name,
-            description: tool.description,
-            parameters: tool.parameters,
-          })),
+        tools: context.toolsStore.getToolDescriptionsForChat(chatId),
       },
     });
     if (resp.ok) {
@@ -1333,13 +1320,7 @@ export function createAi(config: AiConfig): Ai {
             stream: options?.stream,
             timeout: options?.timeout,
             knowledge: knowledge.length > 0 ? knowledge : undefined,
-            tools: context.toolsStore
-              .getToolsForChat(chatId)
-              .map(({ name, tool }) => ({
-                name,
-                description: tool.description,
-                parameters: tool.parameters,
-              })),
+            tools: context.toolsStore.getToolDescriptionsForChat(chatId),
           },
         });
         messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
