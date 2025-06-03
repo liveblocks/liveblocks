@@ -12,6 +12,15 @@ function useRandom() {
   return useState(nanoid)[0];
 }
 
+export type RegisterAiKnowledgeProps = AiKnowledgeSource & {
+  /**
+   * An optional unique key for this knowledge source. If multiple components
+   * register knowledge under the same key, the last one to mount takes
+   * precedence.
+   */
+  id?: string;
+};
+
 /**
  * Make knowledge about your application state available to any AI used in
  * a chat or a one-off request.
@@ -31,14 +40,7 @@ function useRandom() {
  * It can choose to use or ignore this knowledge in its responses.
  */
 export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
-  props: AiKnowledgeSource & {
-    /**
-     * An optional unique key for this knowledge source. If multiple components
-     * register knowledge under the same key, the last one to mount takes
-     * precedence.
-     */
-    id?: string;
-  }
+  props: RegisterAiKnowledgeProps
 ) {
   const layerId = useId();
   const ai = useAi();
@@ -69,6 +71,10 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
 
   return null;
 });
+
+export type RegisterAiToolProps = {
+  name: string;
+};
 
 export const RegisterAiTool = memo(function RegisterAiTool(props: {
   name: string;
