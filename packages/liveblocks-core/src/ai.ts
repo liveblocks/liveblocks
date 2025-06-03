@@ -922,8 +922,6 @@ export type Ai = {
     key?: string
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  debug_getAllKnowledge(): AiKnowledgeSource[];
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerChatTool: (
     chatId: string,
     name: string,
@@ -1244,10 +1242,6 @@ export function createAi(config: AiConfig): Ai {
     context.knowledge.updateKnowledge(layerKey, key, data);
   }
 
-  function debug_getAllKnowledge() {
-    return context.knowledge.get();
-  }
-
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
@@ -1356,7 +1350,6 @@ export function createAi(config: AiConfig): Ai {
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,
-      debug_getAllKnowledge,
 
       registerChatTool: context.toolsStore.addToolDefinition,
       unregisterChatTool: context.toolsStore.removeToolDefinition,
