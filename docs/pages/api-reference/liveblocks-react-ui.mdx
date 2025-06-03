@@ -62,89 +62,6 @@ user...
 
 {/* TODO show initial suggestions if it's supported */}
 
-##### Adjusting the chat’s width [#AiChat-width]
-
-When using the default `inset` layout, it’s possible to adjust the chat’s width
-by setting the `--lb-ai-chat-container-width` CSS variable. This allows the
-chat’s scroll window to stay full width, whilst keeping the composer and
-messages centered in the middle.
-
-```css
-.lb-ai-chat {
-  --lb-ai-chat-container-width: 600px;
-}
-```
-
-```tsx title="Set variable in React" isCollapsable isCollapsed
-import { CSSProperties } from "react";
-import { AiChat } from "@liveblocks/react-ui";
-
-function Chat() {
-  return (
-    <AiChat
-      chatId="my-chat-id"
-      // +++
-      style={{ "--lb-ai-chat-container-width": 600 } as CSSProperties}
-      // +++
-
-      // Or with Tailwind CSS
-      // className="[--lb-ai-chat-container-width:600px]"
-    />
-  );
-}
-```
-
-##### Compact layout mode [#AiChat-compact-layout]
-
-An alternate `compact` layout mode is available, ideal for smaller UI components
-such as pop-up windows. Compact layout mode removes the shadow and padding on
-the composer, makes it full-width, and displays a border above it.
-
-```tsx
-import { AiChat } from "@liveblocks/react-ui";
-
-function Chat() {
-  return (
-    <AiChat
-      chatId="my-chat-id"
-      // +++
-      layout="compact"
-      // +++
-    />
-  );
-}
-```
-
-##### Change background color [#AiChat-background]
-
-You can change the background color of the chat by setting the `--lb-background`
-CSS variable on `.lb-ai-chat`.
-
-```css
-.lb-ai-chat {
-  --lb-background: #eeeeee;
-}
-```
-
-```tsx title="Set variable in React" isCollapsable isCollapsed
-import { CSSProperties } from "react";
-import { AiChat } from "@liveblocks/react-ui";
-
-function Chat() {
-  return (
-    <AiChat
-      chatId="my-chat-id"
-      // +++
-      style={{ "--lb-background": "#EEEEEE" } as CSSProperties}
-      // +++
-
-      // Or with Tailwind CSS
-      // className="[--lb-background:#EEEEEE]"
-    />
-  );
-}
-```
-
 ##### List the user’s chats and switch between them [#AiChat-chat-listing]
 
 You can display a list of all chats created by the current user with
@@ -231,6 +148,139 @@ function ChatWithTitle({ chatId: { chatId: string } }) {
       // +++
       <AiChat chatId={chatId} />
     </div>
+  );
+}
+```
+
+##### Add front end knowledge [#AiChat-front-endknowledge]
+
+You can add front end knowledge to chats, meaning the AI will understand the
+information you pass, and will answers question or call tools based on it. This
+is particular helpful for passing user info, app state, and other small
+contextual knowledge.
+
+It’s generally recommedned to use [`RegisterAiKnowledge`](#RegisterAiKnowledge)
+for adding knowledge, as this will add knowledge to all AI features on the page.
+However, if you’d like knowledge that is specific to one chat, you can add it
+with the `knowledge` prop on `AiChat`. No other chats will have access to this
+knowledge.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      knowledge={[
+        { description: "The current user's payment plan", value: "Enterprise" },
+        {
+          description: "The current user's info",
+          value: JSON.stringify({
+            name: "Jody Hekla",
+            email: "jody@liveblocks.io",
+            teams: ["Engineering", "Product"],
+          }),
+        },
+      ]}
+      // +++
+    />
+  );
+}
+```
+
+##### Add back end knowledge [#AiChat-back-endknowledge]
+
+You can add back end knowledge to chats, meaning the AI will understand the
+information you pass, and can answer questions or call tools based on it. This
+is a way to pass large amounts of project-wide information, for example complex
+documentation.
+
+When creating or editing a copilot in the [Liveblocks dashboard](/dashboard)
+navigate to the Knowledge tab. Within here you can upload any relevant files, or
+submit websites for indexing. Your copilot will internalize this knowledge using
+retrieval-augmented generation (RAG).
+
+##### Adjusting the chat’s width [#AiChat-width]
+
+When using the default `inset` layout, it’s possible to adjust the chat’s width
+by setting the `--lb-ai-chat-container-width` CSS variable. This allows the
+chat’s scroll window to stay full width, whilst keeping the composer and
+messages centered in the middle.
+
+```css
+.lb-ai-chat {
+  --lb-ai-chat-container-width: 600px;
+}
+```
+
+```tsx title="Set variable in React" isCollapsable isCollapsed
+import { CSSProperties } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      style={{ "--lb-ai-chat-container-width": 600 } as CSSProperties}
+      // +++
+
+      // Or with Tailwind CSS
+      // className="[--lb-ai-chat-container-width:600px]"
+    />
+  );
+}
+```
+
+##### Compact layout mode [#AiChat-compact-layout]
+
+An alternate `compact` layout mode is available, ideal for smaller UI components
+such as pop-up windows. Compact layout mode removes the shadow and padding on
+the composer, makes it full-width, and displays a border above it.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      layout="compact"
+      // +++
+    />
+  );
+}
+```
+
+##### Change background color [#AiChat-background]
+
+You can change the background color of the chat by setting the `--lb-background`
+CSS variable on `.lb-ai-chat`.
+
+```css
+.lb-ai-chat {
+  --lb-background: #eeeeee;
+}
+```
+
+```tsx title="Set variable in React" isCollapsable isCollapsed
+import { CSSProperties } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      style={{ "--lb-background": "#EEEEEE" } as CSSProperties}
+      // +++
+
+      // Or with Tailwind CSS
+      // className="[--lb-background:#EEEEEE]"
+    />
   );
 }
 ```
@@ -346,7 +396,188 @@ developers.
 
 {/* TODO ai tool inspector props table */}
 
-#### TODO RegisterAiKnowledgeSource (check name)
+#### RegisterAiKnowledge
+
+Adds knowledge to all AI features on the page. AI will understand the
+information you pass, and will answers question or call tools based on it. This
+is particularly helpful for passing user info, app state, and other small
+contextual knowledge.
+
+```tsx
+<RegisterAiKnowledge
+  description="The current user's payment plan"
+  value="Enterprise"
+/>
+```
+
+Each knowledge source has a `description` and a `value`, both strings. You can
+also pass JSON data with `JSON.stringify`, and AI will understand it These
+components can be placed anywhere in your app, so long as they’re under
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx
+import { AiChat, RegisterAiKnowledge } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <>
+      // +++
+      <RegisterAiKnowledge
+        description="The current user's payment plan"
+        value="Enterprise"
+      />
+      <RegisterAiKnowledge
+        description="The current user's info"
+        value={JSON.stringify({
+          name: "Jody Hekla",
+          email: "jody@liveblocks.io",
+          teams: ["Engineering", "Product"],
+        })}
+      />
+      // +++
+      <AiChat chatId="my-chat-id" />
+    </>
+  );
+}
+```
+
+##### Pass in user data [#RegisterAiKnowledge-user]
+
+You can pass in knowledge from your auth provider, for example with
+[`useUser`](https://clerk.com/docs/hooks/use-user) [Clerk](https://clerk.com).
+You can tell AI that the state is loading in a simple string, and it will
+understand.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { useUser } from "@clerk/clerk-react";
+
+function Chat() {
+  // +++
+  const { isSignedIn, user, isLoaded } = useUser();
+  // +++
+
+  return (
+    // +++
+    <RegisterAiKnowledge
+      description="The current user's info"
+      value={
+        isLoaded
+          ? isSignedIn
+            ? JSON.stringify(user)
+            : "Not signed in"
+          : "Loading..."
+      }
+    />
+    // +++
+  );
+}
+```
+
+##### Pass in data from fetching hooks [#RegisterAiKnowledge-fetching]
+
+You can pass in knowledge from data fetching hooks such as with
+[`useSWR`](https://swr.vercel.app/docs/getting-started) from
+[SWR](https://swr.vercel.app/). You can tell AI that the state is loading in a
+simple string, and it will understand.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import useSWR from "swr";
+
+function Chat() {
+  // +++
+  const { data, error, isLoading } = useSWR(`/important-data`, fetcher);
+  // +++
+
+  return (
+    // +++
+    <RegisterAiKnowledge
+      description="Important data"
+      value={
+        isLoading
+          ? "Loading..."
+          : error
+            ? "Problem fetching data"
+            : JSON.stringify(data)
+      }
+    />
+    // +++
+  );
+}
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
+```
+
+##### Pass in text editor data [#RegisterAiKnowledge-text-editor]
+
+You can pass in knowledge from your text editor, for example when using
+[Liveblocks Tiptap](/docs/api-reference/liveblocks-react-tiptap).
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  // +++
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The current document's tiptap state"
+        value={editor.getJSON()}
+      />
+      // +++
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+As well as `editor.getJSON()`, `editor.getText()` and `editor.getHTML()` are
+also available when using Tiptap. Its worth trying them all, in case your AI
+model understands one of them better than the others.
+
+##### Pass in storage data [#RegisterAiKnowledge-storage]
+
+You can also pass in knowledge from your custom Liveblocks storage app with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage).
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { useStorage } from "@liveblocks/react/suspense";
+
+function Whiteboard() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The current shapes on the whiteboard"
+        value={JSON.stringify(shapes)}
+      />
+      // +++
+      {shapes.map((shape) => (
+        // ...
+      )}
+    </div>
+  );
+}
+```
 
 {/* TODO knowledge source */}
 
