@@ -4,6 +4,7 @@ import {
   ClientSideSuspense,
   useAiChats,
   useDeleteAiChat,
+  useSendAiMessage,
 } from "@liveblocks/react";
 import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
@@ -106,46 +107,44 @@ function Chat({ chatId }: { chatId: string }) {
         layout="compact"
         chatId={chatId}
         components={{
-          Empty: () => (
-            <div className="p-[var(--spacing)] h-full flex flex-col gap-5 justify-end">
-              <h3>How can I help you?</h3>
-              {/* Soon you will be able to add messages to the chat programmatically */}
-              <div className="flex flex-wrap items-start gap-2">
-                <button
-                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                  onClick={() => {
-                    // TODO: Use sendAiMessage when available
-                  }}
-                >
-                  Check weather
-                </button>
-                <button
-                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                  onClick={() => {
-                    // TODO: Use sendAiMessage when available
-                  }}
-                >
-                  Write a story
-                </button>
-                <button
-                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                  onClick={() => {
-                    // TODO: Use sendAiMessage when available
-                  }}
-                >
-                  Explain quantum computing
-                </button>
-                <button
-                  className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                  onClick={() => {
-                    // TODO: Use sendAiMessage when available
-                  }}
-                >
-                  Plan weekly meals
-                </button>
+          Empty: ({ chatId }) => {
+            const sendMessage = useSendAiMessage(chatId);
+
+            return (
+              <div className="p-[var(--spacing)] h-full flex flex-col gap-5 justify-end">
+                <h3>How can I help you?</h3>
+                {/* Soon you will be able to add messages to the chat programmatically */}
+                <div className="flex flex-wrap items-start gap-2">
+                  <button
+                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                    onClick={() => sendMessage("Check the weather in Paris")}
+                  >
+                    Check weather
+                  </button>
+                  <button
+                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                    onClick={() =>
+                      sendMessage("Write a story about a brave knight")
+                    }
+                  >
+                    Write a story
+                  </button>
+                  <button
+                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                    onClick={() => sendMessage("Explain quantum computing")}
+                  >
+                    Explain quantum computing
+                  </button>
+                  <button
+                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+                    onClick={() => sendMessage("Plan weekly meals")}
+                  >
+                    Plan weekly meals
+                  </button>
+                </div>
               </div>
-            </div>
-          ),
+            );
+          },
 
           // TODO default spinner is probably fine?
           // Loading: () => <div>loading... </div>,

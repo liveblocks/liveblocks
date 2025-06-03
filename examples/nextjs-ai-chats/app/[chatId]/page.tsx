@@ -1,8 +1,9 @@
 "use client";
 
 import { ClientSideSuspense, useAiChat } from "@liveblocks/react/suspense";
-import { AiChat } from "@liveblocks/react-ui";
+import { AiChat, AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
 import { ErrorBoundary } from "react-error-boundary";
+import { useSendAiMessage } from "@liveblocks/react";
 
 export default function Page({ params }: { params: { chatId: string } }) {
   return (
@@ -44,7 +45,9 @@ function ChatTitle({ chatId }: { chatId: string }) {
 }
 
 // Overriding the empty chat state
-function Empty() {
+function Empty({ chatId }: AiChatComponentsEmptyProps) {
+  const sendMessage = useSendAiMessage(chatId);
+
   return (
     <div className="size-full mx-auto max-w-[--inner-app-width] flex items-end pb-[calc(3*var(--lb-spacing))]">
       <div className="flex flex-col gap-5">
@@ -53,33 +56,25 @@ function Empty() {
         <div className="flex flex-wrap items-start gap-2">
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => {
-              // TODO: Use sendAiMessage when available
-            }}
+            onClick={() => sendMessage("Check the weather in Paris")}
           >
             Check weather
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => {
-              // TODO: Use sendAiMessage when available
-            }}
+            onClick={() => sendMessage("Write a story about a brave knight")}
           >
             Write a story
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => {
-              // TODO: Use sendAiMessage when available
-            }}
+            onClick={() => sendMessage("Explain quantum computing")}
           >
             Explain quantum computing
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => {
-              // TODO: Use sendAiMessage when available
-            }}
+            onClick={() => sendMessage("Plan weekly meals")}
           >
             Plan weekly meals
           </button>
