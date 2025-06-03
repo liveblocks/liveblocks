@@ -7,14 +7,13 @@
 
 :root {
   --accent: theme("colors.blue.500");
-  --inner-app-width: 660px;
 }
 
 .lb-root {
-  --lb-ai-chat-container-width: var(--inner-app-width);
   --lb-accent: var(--accent);
   --lb-background: theme("colors.white");
   --lb-foreground: theme("colors.neutral.900");
+  --lb-radius: theme("borderRadius.sm");
 }
 
 .lb-ai-chat {
