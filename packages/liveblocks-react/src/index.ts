@@ -96,6 +96,7 @@ export {
   useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,
+  useAiChat,
   useAiChats,
   useAiChatMessages,
 } from "./liveblocks";
