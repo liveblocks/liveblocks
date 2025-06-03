@@ -8,17 +8,16 @@
 :root {
   --accent: theme("colors.blue.500");
   --inner-app-width: 36rem;
+  --spacing: 1em;
 }
 
 .lb-root {
   --lb-ai-chat-container-width: var(--inner-app-width);
   --lb-accent: var(--accent);
-  --lb-background: theme("colors.white");
-  --lb-foreground: theme("colors.neutral.900");
-}
-
-.lb-ai-chat {
+  --lb-spacing: var(--spacing);
   --lb-background: theme("colors.neutral.50");
+  --lb-dynamic-background: theme("colors.white");
+  --lb-foreground: theme("colors.neutral.900");
 }
 
 .lb-portal {

@@ -27,7 +27,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body
-        className={`${inter.className} absolute inset-0 text-neutral-900 flex justify-center items-center bg-neutral-50 antialiased`}
+        className={`${inter.className} absolute inset-0 text-neutral-900 flex justify-center items-center bg-neutral-100 antialiased`}
       >
         <Providers>{children}</Providers>
       </body>

@@ -36,7 +36,7 @@ function ChatPopup() {
         <PopoverPrimitives.Trigger asChild>
           <button
             className={
-              "flex size-14 items-center ring-1 ring-neutral-200 justify-center rounded-full bg-white hover:bg-neutral-50 shadow-[0px_100px_150px_0px_rgba(0,0,0,0.02),0px_41.778px_62.666px_0px_rgba(0,0,0,0.01),0px_22.336px_33.504px_0px_rgba(0,0,0,0.01),0px_12.522px_18.782px_0px_rgba(0,0,0,0.01),0px_6.65px_9.975px_0px_rgba(0,0,0,0.01),0px_2.767px_4.151px_0px_rgba(0,0,0,0.01)] transition-all fixed bottom-8 right-8 z-40 duration-200"
+              "flex size-14 items-center border border-neutral-200 justify-center rounded-full bg-white hover:bg-neutral-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
             }
             aria-label="Open AI Assistant"
           >
@@ -52,7 +52,7 @@ function ChatPopup() {
               // Don't close when clicking outside
               e.preventDefault();
             }}
-            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-neutral-200 bg-white shadow-[0px_100px_150px_0px_rgba(0,0,0,0.02),0px_41.778px_62.666px_0px_rgba(0,0,0,0.01),0px_22.336px_33.504px_0px_rgba(0,0,0,0.01),0px_12.522px_18.782px_0px_rgba(0,0,0,0.01),0px_6.65px_9.975px_0px_rgba(0,0,0,0.01),0px_2.767px_4.151px_0px_rgba(0,0,0,0.01)] will-change-[transform,opacity]"
+            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-neutral-200 bg-neutral-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
@@ -60,11 +60,9 @@ function ChatPopup() {
                   onClick={() => setShowListing(!showListing)}
                   className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100"
                 >
+                  <ChevronLeftIcon className="size-4 opacity-70 -ml-1" />
                   {showListing ? (
-                    <>
-                      <ChevronLeftIcon className="size-4 opacity-70 -ml-1" />
-                      <span>Back</span>
-                    </>
+                    <span>Back</span>
                   ) : (
                     // <ClientSideSuspense fallback={null}>
                     <Title chatId={chatId} />
@@ -109,7 +107,7 @@ function Chat({ chatId }: { chatId: string }) {
         chatId={chatId}
         components={{
           Empty: () => (
-            <div className="p-4 h-full flex flex-col gap-5 justify-end">
+            <div className="p-[var(--spacing)] h-full flex flex-col gap-5 justify-end">
               <h3>How can I help you?</h3>
               {/* Soon you will be able to add messages to the chat programmatically */}
               <div className="flex flex-wrap items-start gap-2">
@@ -157,12 +155,6 @@ function Chat({ chatId }: { chatId: string }) {
           ),
         }}
         className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
-        style={
-          {
-            "--lb-background": "#fff",
-            "--lb-elevation-shadow-small": "0 0 0 1px rgba(0, 0, 0, 0.1)",
-          } as CSSProperties
-        }
       />
     </div>
   );
@@ -189,12 +181,12 @@ function ChatListing({
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-4">
+    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-[var(--spacing)]">
       <ul className="flex flex-col gap-2 text-sm pl-0">
         {chats.map((chat) => (
           <li
             key={chat.id}
-            className="group relative flex items-center justify-between p-3 pr-4 border border-neutral-200 rounded-md hover:bg-neutral-50"
+            className="group relative flex items-center justify-between p-[var(--spacing)] bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
           >
             <div className="flex flex-col gap-0.5">
               {/* TODO hover, full width, chat icon at left, etc */}
