@@ -5,6 +5,7 @@ import {
   type DU,
   html,
   htmlSafe,
+  type MentionData,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
@@ -156,8 +157,11 @@ export const extractTextMentionNotificationData = async ({
   }
 };
 
-export type MentionEmailData<ContentType, U extends BaseUserMeta = DU> = {
-  id: string;
+export type MentionEmailData<
+  ContentType,
+  U extends BaseUserMeta = DU,
+> = MentionData & {
+  textMentionId: string;
   roomId: string;
   author: U; // Author of the mention
   createdAt: Date;
@@ -271,7 +275,10 @@ export async function prepareTextMentionNotificationEmail<
 
   return {
     mention: {
-      id: mentionId,
+      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated
+      kind: "user",
+      id: data.userId,
+      textMentionId: mentionId,
       roomId,
       author: {
         id: data.userId,
