@@ -342,6 +342,24 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
 
+    /**
+     * Make knowledge about your application state available to any AI used in
+     * a chat or a one-off request.
+     *
+     * For example:
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current mode of my application"
+     *        value="dark" />
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current list of todos"
+     *        value={todos} />
+     *
+     * By mounting this component, the AI will get access to this knwoledge.
+     * By unmounting this component, the AI will no longer have access to it.
+     * It can choose to use or ignore this knowledge in its responses.
+     */
     RegisterAiKnowledge: ComponentType<
       AiKnowledgeSource & {
         /**
@@ -408,6 +426,24 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
 
+    /**
+     * Make knowledge about your application state available to any AI used in
+     * a chat or a one-off request.
+     *
+     * For example:
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current mode of my application"
+     *        value="dark" />
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current list of todos"
+     *        value={todos} />
+     *
+     * By mounting this component, the AI will get access to this knwoledge.
+     * By unmounting this component, the AI will no longer have access to it.
+     * It can choose to use or ignore this knowledge in its responses.
+     */
     RegisterAiKnowledge: ComponentType<
       AiKnowledgeSource & {
         /**

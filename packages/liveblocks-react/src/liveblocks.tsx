@@ -1068,6 +1068,16 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
   return result;
 }
 
+/**
+ * Returns a function that creates an AI chat.
+ *
+ * If you do not pass a title for the chat, it will be automatically computed
+ * after the first AI response.
+ *
+ * @example
+ * const createAiChat = useCreateAiChat();
+ * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
+ */
 function useCreateAiChat() {
   const client = useClient();
 
@@ -1087,6 +1097,13 @@ function useCreateAiChat() {
   );
 }
 
+/**
+ * Returns a function that deletes the AI chat with the specified id.
+ *
+ * @example
+ * const deleteAiChat = useDeleteAiChat();
+ * deleteAiChat("ai-chat-id");
+ */
 function useDeleteAiChat() {
   const client = useClient();
 
