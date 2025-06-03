@@ -4,13 +4,16 @@ import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
+  RegisterAiKnowledge,
   useSendAiMessage,
 } from "@liveblocks/react/suspense";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
-import { AiChat, AiTool } from "@liveblocks/react-ui";
-import { PlusIcon } from "../icons/plus-icon";
-import { ListIcon } from "../icons/list-icon";
+import {
+  AiChat,
+  AiChatComponentsEmptyProps,
+  AiTool,
+} from "@liveblocks/react-ui";
 
 export default function Page() {
   const [todos, setTodos] = useState<
@@ -268,6 +271,11 @@ export default function Page() {
                     }}
                     className="rounded-xl"
                   />
+
+                  <RegisterAiKnowledge
+                    description="A list of todos"
+                    value={todos}
+                  />
                 </ClientSideSuspense>
               </LiveblocksProvider>
             </Popover.Content>
@@ -278,26 +286,44 @@ export default function Page() {
   );
 }
 
-function AiChatEmptyComponent({ chatId }: { chatId: string }) {
+const CHAT_SUGGESTIONS = [
+  {
+    label: "List all todos",
+    message: "List all my todos",
+  },
+  {
+    label: "Add new todo",
+    message: "Add a todo titled 'Buy milk'",
+  },
+  {
+    label: "List completed todos",
+    message: "List all completed todos",
+  },
+  {
+    label: "Delete todos",
+    message: "Delete the second and third todos",
+  },
+];
+
+function AiChatEmptyComponent({ chatId }: AiChatComponentsEmptyProps) {
   const sendMessage = useSendAiMessage(chatId);
 
   return (
-    <div className="flex flex-col px-6 py-4 h-full justify-end gap-3">
-      <button
-        onClick={() => sendMessage("List all todos")}
-        className="inline-flex items-center justify-center gap-2 border border-[var(--lb-foreground-subtle)] px-2 py-2 rounded-lg cursor-pointer"
-      >
-        <ListIcon className="size-4" />
-        List all todos
-      </button>
+    <div className="justify-end h-full flex flex-col gap-4 px-6 pb-4">
+      <h2 className="text-xl font-semibold">How can I help you?</h2>
 
-      <button
-        onClick={() => sendMessage("Add a todo titled 'Buy milk'")}
-        className="inline-flex items-center justify-center gap-2 border border-[var(--lb-foreground-subtle)] px-2 py-2 rounded-lg cursor-pointer"
-      >
-        <PlusIcon className="size-4" />
-        Add new todo
-      </button>
+      {/* Suggestion Tags */}
+      <div className="flex flex-wrap gap-2">
+        {CHAT_SUGGESTIONS.map(({ label, message }) => (
+          <button
+            key={label}
+            onClick={() => sendMessage(message)}
+            className="text-sm rounded-full border border-[var(--lb-foreground-subtle)] px-4 py-2 font-medium"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
