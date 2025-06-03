@@ -925,13 +925,13 @@ export type Ai = {
     key?: string
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  registerChatTool: (
+  registerTool: (
     chatId: string,
     name: string,
     tool: AiOpaqueToolDefinition
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  unregisterChatTool: (chatId: string, tool: string) => void;
+  unregisterTool: (chatId: string, tool: string) => void;
 };
 
 /** @internal */
@@ -1346,8 +1346,8 @@ export function createAi(config: AiConfig): Ai {
       deregisterKnowledgeLayer,
       updateKnowledge,
 
-      registerChatTool: context.toolsStore.addToolDefinition,
-      unregisterChatTool: context.toolsStore.removeToolDefinition,
+      registerTool: context.toolsStore.addToolDefinition,
+      unregisterTool: context.toolsStore.removeToolDefinition,
     } satisfies Ai,
     kInternal,
     { enumerable: false }
