@@ -404,11 +404,6 @@ function createStore_forTools() {
     tool: AiOpaqueToolDefinition,
     chatId?: string
   ) {
-    if (String(true)) {
-      // XXX Remove again later
-      console.warn(`👋 Getting here in addToolDefinition: ${name}`);
-    }
-
     if (!tool.execute && !tool.render) {
       throw new Error(
         "A tool definition must have an execute() function, a render() function, or both."
@@ -422,11 +417,6 @@ function createStore_forTools() {
   }
 
   function unregisterTool(chatId: string | typeof kWILDCARD, name: string) {
-    if (String(true)) {
-      // XXX Remove again later
-      console.warn(`💨 Getting here in removeToolDefinition: ${name}`);
-    }
-
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return;
     const tool = tools.get(name);
