@@ -202,11 +202,12 @@ function ComposerEditorMentionWrapper({
   element,
 }: ComposerEditorMentionWrapperProps) {
   const isSelected = useSelected();
+  const { children: _, ...mention } = element;
 
   return (
     <span {...attributes}>
       {element.id ? (
-        <Mention userId={element.id} isSelected={isSelected} />
+        <Mention mention={mention} isSelected={isSelected} />
       ) : null}
       {children}
     </span>
@@ -817,11 +818,11 @@ const defaultEditorComponents: ComposerEditorComponents = {
   Link: ({ href, children }) => {
     return <ComposerLink href={href}>{children}</ComposerLink>;
   },
-  Mention: ({ userId }) => {
+  Mention: ({ mention }) => {
     return (
       <ComposerMention>
         {MENTION_CHARACTER}
-        {userId}
+        {mention.id}
       </ComposerMention>
     );
   },

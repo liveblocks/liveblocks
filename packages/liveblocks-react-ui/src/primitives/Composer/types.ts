@@ -33,9 +33,9 @@ export interface ComposerEditorMentionProps {
   isSelected: boolean;
 
   /**
-   * The mention's user ID.
+   * The mention.
    */
-  userId: string;
+  mention: MentionData;
 }
 
 export interface ComposerEditorLinkProps {

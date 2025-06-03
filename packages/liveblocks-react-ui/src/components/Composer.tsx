@@ -331,13 +331,19 @@ function ComposerAttachFilesEditorAction({
   );
 }
 
-function ComposerMention({ userId }: ComposerEditorMentionProps) {
-  return (
-    <ComposerPrimitive.Mention className="lb-composer-mention">
-      {MENTION_CHARACTER}
-      <User userId={userId} />
-    </ComposerPrimitive.Mention>
-  );
+function ComposerMention({ mention }: ComposerEditorMentionProps) {
+  switch (mention.kind) {
+    case "user":
+      return (
+        <ComposerPrimitive.Mention className="lb-composer-mention">
+          {MENTION_CHARACTER}
+          <User userId={mention.id} />
+        </ComposerPrimitive.Mention>
+      );
+
+    default:
+      return assertNever(mention.kind, "Unhandled mention kind");
+  }
 }
 
 function ComposerMentionSuggestions({
