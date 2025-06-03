@@ -58,7 +58,12 @@ export type TextMentionNotificationData = (
     }
 ) & {
   createdAt: Date;
-  userId: string; // Author of the mention
+
+  // The user ID mentioned
+  userId: string;
+
+  // The user ID who created the mention
+  createdBy: string;
 };
 
 /** @internal */
@@ -105,7 +110,7 @@ export const extractTextMentionNotificationData = async ({
   // to represent the creation date as we have currently
   // a 1 - 1 notification <> activity
   const mentionCreatedAt = inboxNotification.notifiedAt;
-  // In context of a text mention notification `createdBy` is a `userId`
+  // In context of a text mention notification `createdBy` is a user ID
   const mentionAuthorUserId = inboxNotification.createdBy;
 
   const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
@@ -131,7 +136,8 @@ export const extractTextMentionNotificationData = async ({
         editor: "lexical",
         mentionNodeWithContext,
         createdAt: mentionCreatedAt,
-        userId: mentionAuthorUserId,
+        userId,
+        createdBy: mentionAuthorUserId,
       };
     }
     case "tiptap": {
@@ -151,7 +157,8 @@ export const extractTextMentionNotificationData = async ({
         editor: "tiptap",
         mentionNodeWithContext,
         createdAt: mentionCreatedAt,
-        userId: mentionAuthorUserId,
+        userId,
+        createdBy: mentionAuthorUserId,
       };
     }
   }
@@ -233,7 +240,7 @@ export async function prepareTextMentionNotificationEmail<
   });
 
   const authorsInfoPromise = resolveAuthorsInfo({
-    userIds: [data.userId],
+    userIds: [data.createdBy],
     resolveUsers: batchUsersResolver.resolveUsers,
   });
 
@@ -271,7 +278,7 @@ export async function prepareTextMentionNotificationEmail<
     contentPromise,
   ]);
 
-  const authorInfo = authorsInfo.get(data.userId);
+  const authorInfo = authorsInfo.get(data.createdBy);
 
   return {
     mention: {
@@ -281,8 +288,8 @@ export async function prepareTextMentionNotificationEmail<
       textMentionId: mentionId,
       roomId,
       author: {
-        id: data.userId,
-        info: authorInfo ?? { name: data.userId },
+        id: data.createdBy,
+        info: authorInfo ?? { name: data.createdBy },
       } as U,
       content,
       createdAt: data.createdAt,

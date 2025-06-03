@@ -222,7 +222,8 @@ describe("text mention notification", () => {
         editor: "tiptap",
         mentionNodeWithContext,
         createdAt: inboxNotification.notifiedAt,
-        userId: inboxNotification.createdBy,
+        userId: MENTIONED_USER_ID_TIPTAP,
+        createdBy: inboxNotification.createdBy,
       };
 
       expect(extracted).toEqual(expected);
