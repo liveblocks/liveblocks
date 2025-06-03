@@ -383,6 +383,8 @@ function createStore_forTools() {
     }
 
     toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(tool);
+
+    return () => removeToolDefinition(chatId, name);
   }
 
   function removeToolDefinition(chatId: string, name: string) {
@@ -414,7 +416,6 @@ function createStore_forTools() {
 
     getToolDefinitionΣ,
     addToolDefinition,
-    removeToolDefinition,
   };
 }
 
@@ -929,9 +930,7 @@ export type Ai = {
     chatId: string,
     name: string,
     tool: AiOpaqueToolDefinition
-  ) => void;
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  unregisterTool: (chatId: string, tool: string) => void;
+  ) => () => void;
 };
 
 /** @internal */
@@ -1357,7 +1356,6 @@ export function createAi(config: AiConfig): Ai {
       updateKnowledge,
 
       registerTool: context.toolsStore.addToolDefinition,
-      unregisterTool: context.toolsStore.removeToolDefinition,
     } satisfies Ai,
     kInternal,
     { enumerable: false }

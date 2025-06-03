@@ -92,10 +92,7 @@ export const RegisterAiTool = memo(function RegisterAiTool({
   const client = useClient();
   const ai = client[kInternal].ai;
   useEffect(() => {
-    ai.registerTool(chatId, name, tool);
-    return () => {
-      ai.unregisterTool(chatId, name);
-    };
+    return ai.registerTool(chatId, name, tool);
   }, [ai, chatId, name, tool]);
 
   return null;
