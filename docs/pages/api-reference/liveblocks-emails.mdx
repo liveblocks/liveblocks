@@ -460,7 +460,9 @@ Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
-into their name, and show their name in the email.
+into their name, and show their name in the email. This function receives a list
+of user IDs and you should return a list of user objects of the same size, in
+the same order.
 
 ```tsx
 const emailData = await prepareThreadNotificationEmailAsReact(
@@ -828,7 +830,9 @@ Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
-into their name, and show their name in the email.
+into their name, and show their name in the email. This function receives a list
+of user IDs and you should return a list of user objects of the same size, in
+the same order.
 
 ```tsx
 const emailData = await prepareThreadNotificationEmailAsHtml(
@@ -1172,7 +1176,9 @@ Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
-into their name, and show their name in the email.
+into their name, and show their name in the email. This function receives a list
+of user IDs and you should return a list of user objects of the same size, in
+the same order.
 
 ```tsx
 const emailData = await prepareTextMentionNotificationEmailAsReact(
@@ -1453,7 +1459,9 @@ Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
 [room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
-into their name, and show their name in the email.
+into their name, and show their name in the email. This function receives a list
+of user IDs and you should return a list of user objects of the same size, in
+the same order.
 
 ```tsx
 const emailData = await prepareTextMentionNotificationEmailAsHtml(
