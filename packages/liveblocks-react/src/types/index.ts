@@ -54,6 +54,13 @@ export type UseSyncStatusOptions = {
   smooth?: boolean;
 };
 
+export type SendAiMessageOptions = {
+  /**
+   * The id of the copilot to use to send the message.
+   */
+  copilotId?: string;
+};
+
 export type UseStorageStatusOptions = UseSyncStatusOptions;
 
 export type StorageStatusSuccess = Exclude<
@@ -1282,7 +1289,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    */
   useSendAiMessage(
     chatId: string,
-    options?: { copilotId?: string }
+    options?: SendAiMessageOptions
   ): (message: string) => void;
 };
 
