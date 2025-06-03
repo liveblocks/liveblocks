@@ -1,4 +1,4 @@
-import { stableStringify } from "@liveblocks/core";
+import { type MentionData, stableStringify } from "@liveblocks/core";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -9,13 +9,37 @@ import {
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
 /**
+ * Normalize mention suggestions as `MentionData[]`.
+ *
+ * Mention suggestions were previously typed as `string[]`, a list of user IDs,
+ * but to support multiple mention kinds (user, group, etc), they're now
+ * typed as `MentionData[]`.
+ */
+function normalizeMentionSuggestions(
+  suggestions: string[] | MentionData[]
+): MentionData[] {
+  if (suggestions.length === 0) {
+    return [];
+  }
+
+  if (typeof suggestions[0] === "string") {
+    return (suggestions as string[]).map((id) => ({
+      kind: "user" as const,
+      id,
+    }));
+  }
+
+  return suggestions as MentionData[];
+}
+
+/**
  * @private For internal use only. Do not rely on this hook.
  *
  * Simplistic debounced search, we don't need to worry too much about deduping
  * and race conditions as there can only be one search at a time.
  */
 export function useMentionSuggestions(roomId: string, search?: string) {
-  const [mentionSuggestions, setMentionSuggestions] = useState<string[]>();
+  const [mentionSuggestions, setMentionSuggestions] = useState<MentionData[]>();
   const lastInvokedAt = useRef<number>();
 
   const resolveMentionSuggestions = useResolveMentionSuggestions();
@@ -36,15 +60,18 @@ export function useMentionSuggestions(roomId: string, search?: string) {
     const getMentionSuggestions = async () => {
       try {
         lastInvokedAt.current = performance.now();
-        const mentionSuggestions = await resolveMentionSuggestions(
+        const rawMentionSuggestions = await resolveMentionSuggestions(
           resolveMentionSuggestionsArgs
         );
 
         if (!isCanceled) {
-          setMentionSuggestions(mentionSuggestions);
+          const normalizedSuggestions = normalizeMentionSuggestions(
+            rawMentionSuggestions
+          );
+          setMentionSuggestions(normalizedSuggestions);
           mentionSuggestionsCache.set(
             mentionSuggestionsCacheKey,
-            mentionSuggestions
+            normalizedSuggestions
           );
         }
       } catch (error) {
@@ -54,9 +81,10 @@ export function useMentionSuggestions(roomId: string, search?: string) {
 
     if (mentionSuggestionsCache.has(mentionSuggestionsCacheKey)) {
       // If there are already cached mention suggestions, use them immediately.
-      setMentionSuggestions(
-        mentionSuggestionsCache.get(mentionSuggestionsCacheKey)
+      const cachedSuggestions = mentionSuggestionsCache.get(
+        mentionSuggestionsCacheKey
       );
+      setMentionSuggestions(cachedSuggestions);
     } else if (
       !lastInvokedAt.current ||
       Math.abs(performance.now() - lastInvokedAt.current) >
