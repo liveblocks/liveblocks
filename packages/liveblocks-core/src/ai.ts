@@ -432,7 +432,7 @@ function createStore_forChatMessages(
     messageId: MessageId,
     toolCallId: string,
     result: ToolResultData,
-    options?: AiGenerationOptions
+    options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
   ) => Promise<SetToolResultResponse>
 ) {
   // Keeps track of all message IDs that this client instance is allowed to
@@ -895,7 +895,7 @@ export type Ai = {
           content: AiUserContentPart[];
         },
     targetMessageId: MessageId,
-    options?: AiGenerationOptions
+    options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
   ) => Promise<AskInChatResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
@@ -905,7 +905,7 @@ export type Ai = {
     messageId: MessageId,
     toolCallId: string,
     result: ToolResultData,
-    options?: AiGenerationOptions
+    options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
   ) => Promise<SetToolResultResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
@@ -1257,7 +1257,7 @@ export function createAi(config: AiConfig): Ai {
     messageId: MessageId,
     toolCallId: string,
     result: ToolResultData,
-    options?: AiGenerationOptions
+    options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
     const resp: SetToolResultResponse = await sendClientMsgWithResponse({
@@ -1320,7 +1320,7 @@ export function createAi(config: AiConfig): Ai {
               content: AiUserContentPart[];
             },
         targetMessageId: MessageId,
-        options?: AiGenerationOptions
+        options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
