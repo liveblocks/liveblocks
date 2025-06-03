@@ -12,7 +12,7 @@ import { AiChat, AiTool } from "@liveblocks/react-ui";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
 
-function DarkModeToggle(_props: { x?: number }) {
+function DarkModeToggle() {
   const [exposed, setExposed] = useState<boolean>(true);
   const [mode, setMode] = useState<string>("light");
 
