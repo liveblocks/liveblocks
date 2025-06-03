@@ -1117,6 +1117,13 @@ function useDeleteAiChat() {
   );
 }
 
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendMessage = useSendAiMessage(chatId);
+ * sendMessage("Hello, Liveblocks AI!");
+ */
 function useSendAiMessage(
   chatId: string,
   options?: { copilotId?: string }
