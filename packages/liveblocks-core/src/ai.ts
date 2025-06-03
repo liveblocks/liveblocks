@@ -372,7 +372,7 @@ function createStore_forTools() {
   ) {
     if (!definition.execute && !definition.render) {
       throw new Error(
-        "A tool definition must have an execute() function, a render property, or both."
+        "A tool definition must have an execute() function, a render() function, or both."
       );
     }
 
