@@ -15,7 +15,13 @@ import { useAiChat } from "@liveblocks/react/suspense";
 
 export default function Page() {
   return (
-    <ClientSideSuspense fallback={null}>
+    <ClientSideSuspense
+      fallback={
+        <div className="flex size-14 items-center border border-neutral-200 justify-center rounded-full bg-white shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200">
+          <SparklesIcon className="fill-neutral-400 size-7" />
+        </div>
+      }
+    >
       <ChatPopup />
     </ClientSideSuspense>
   );
