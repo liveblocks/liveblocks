@@ -370,6 +370,11 @@ function createStore_forTools() {
     name: string,
     definition: AiOpaqueToolDefinition
   ) {
+    if (String(true)) {
+      // XXX Remove again later
+      console.warn(`👋 Getting here in addToolDefinition: ${name}`);
+    }
+
     if (!definition.execute && !definition.render) {
       throw new Error(
         "A tool definition must have an execute() function, a render() function, or both."
@@ -380,6 +385,11 @@ function createStore_forTools() {
   }
 
   function removeToolDefinition(chatId: string, toolName: string) {
+    if (String(true)) {
+      // XXX Remove again later
+      console.warn(`💨 Getting here in removeToolDefinition: ${name}`);
+    }
+
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return;
     const tool = tools.get(toolName);
