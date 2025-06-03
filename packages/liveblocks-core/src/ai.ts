@@ -1253,6 +1253,8 @@ export function createAi(config: AiConfig): Ai {
     options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
+    const tools = context.toolsStore.getToolDescriptionsForChat(chatId);
+
     const resp: SetToolResultResponse = await sendClientMsgWithResponse({
       cmd: "set-tool-result",
       chatId,
@@ -1263,8 +1265,11 @@ export function createAi(config: AiConfig): Ai {
         copilotId: options?.copilotId,
         stream: options?.stream,
         timeout: options?.timeout,
+
+        // Knowledge and tools aren't coming from the options, but retrieved
+        // from the global context
         knowledge: knowledge.length > 0 ? knowledge : undefined,
-        tools: context.toolsStore.getToolDescriptionsForChat(chatId),
+        tools: tools.length > 0 ? tools : undefined,
       },
     });
     if (resp.ok) {
@@ -1310,6 +1315,8 @@ export function createAi(config: AiConfig): Ai {
         options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
+        const tools = context.toolsStore.getToolDescriptionsForChat(chatId);
+
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -1319,8 +1326,11 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream: options?.stream,
             timeout: options?.timeout,
+
+            // Knowledge and tools aren't coming from the options, but retrieved
+            // from the global context
             knowledge: knowledge.length > 0 ? knowledge : undefined,
-            tools: context.toolsStore.getToolDescriptionsForChat(chatId),
+            tools: tools.length > 0 ? tools : undefined,
           },
         });
         messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
