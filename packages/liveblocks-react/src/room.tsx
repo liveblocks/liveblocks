@@ -3384,7 +3384,6 @@ const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
-  RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
   useAddRoomCommentReaction,
