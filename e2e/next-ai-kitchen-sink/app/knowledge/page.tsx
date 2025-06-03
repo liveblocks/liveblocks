@@ -12,7 +12,7 @@ import { AiChat, AiTool } from "@liveblocks/react-ui";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
 
-function DarkModeSubApp(_props: { x?: number }) {
+function DarkModeToggle(_props: { x?: number }) {
   const [exposed, setExposed] = useState<boolean>(true);
   const [mode, setMode] = useState<string>("light");
 
@@ -223,7 +223,7 @@ export default function Page() {
     >
       <main className="h-screen w-full">
         <MyNickName />
-        <DarkModeSubApp />
+        <DarkModeToggle />
 
         <div className="flex flex-col px-4 max-w-4xl py-8 border-b-1">
           <div className="flex gap-4 mx-auto">
