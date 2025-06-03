@@ -1,4 +1,7 @@
-import type { AiKnowledgeSource } from "@liveblocks/core";
+import type {
+  AiKnowledgeSource,
+  AiOpaqueToolDefinition,
+} from "@liveblocks/core";
 import { kInternal, nanoid } from "@liveblocks/core";
 import { memo, useEffect, useId, useState } from "react";
 
@@ -74,38 +77,26 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
 
 export type RegisterAiToolProps = {
   name: string;
+  tool: AiOpaqueToolDefinition;
+
+  // XXX Remove this chatId prop?
+  chatId: string;
 };
 
-export const RegisterAiTool = memo(function RegisterAiTool(props: {
-  name: string;
-}) {
-  console.error(`TODO: Register tool named "${props.name}" here`);
-  // const layerId = useId();
-  // const ai = useAi();
-  // const { description, value } = props;
-  //
-  // const [layerKey, setLayerKey] = useState<
-  //   ReturnType<typeof ai.registerKnowledgeLayer> | undefined
-  // >();
-  //
-  // // Executes at mount / unmount
-  // useEffect(() => {
-  //   const layerKey = ai.registerKnowledgeLayer(layerId);
-  //   setLayerKey(layerKey);
-  //   return () => {
-  //     ai.deregisterKnowledgeLayer(layerKey);
-  //     setLayerKey(undefined);
-  //   };
-  // }, [ai, layerId]);
-  //
-  // // Executes every render (if the props have changed)
-  // const randomKey = useRandom();
-  // const knowledgeKey = props.id ?? randomKey;
-  // useEffect(() => {
-  //   if (layerKey !== undefined) {
-  //     ai.updateKnowledge(layerKey, { description, value }, knowledgeKey);
-  //   }
-  // }, [ai, layerKey, knowledgeKey, description, value]);
+export const RegisterAiTool = memo(function RegisterAiTool({
+  chatId,
+  name,
+  tool,
+}: RegisterAiToolProps) {
+  // Register the provided tools to the chat on mount and unregister them on unmount
+  const client = useClient();
+  const ai = client[kInternal].ai;
+  useEffect(() => {
+    ai.registerChatTool(chatId, name, tool);
+    return () => {
+      ai.unregisterChatTool(chatId, name);
+    };
+  }, [ai, chatId, name, tool]);
 
   return null;
 });
