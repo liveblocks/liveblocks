@@ -79,8 +79,12 @@ export type RegisterAiToolProps = {
   name: string;
   tool: AiOpaqueToolDefinition;
 
-  // XXX Remove this chatId prop?
-  chatId: string;
+  /**
+   * When provided, the tool will only be available for this chatId. If not
+   * provided, this tool will globally be made available to any AiChat
+   * instance.
+   */
+  chatId?: string;
 };
 
 export const RegisterAiTool = memo(function RegisterAiTool({
@@ -92,7 +96,7 @@ export const RegisterAiTool = memo(function RegisterAiTool({
   const client = useClient();
   const ai = client[kInternal].ai;
   useEffect(() => {
-    return ai.registerTool(chatId, name, tool);
+    return ai.registerTool(name, tool, chatId);
   }, [ai, chatId, name, tool]);
 
   return null;

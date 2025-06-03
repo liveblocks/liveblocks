@@ -355,21 +355,27 @@ function now(): ISODateString {
   return new Date().toISOString() as ISODateString;
 }
 
+// Symbol used to register tools globally. These tools are not scoped to
+// a particular chatId and made available to any AiChat instance.
+const kWILDCARD = Symbol("*");
+
 function createStore_forTools() {
-  const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
-    return new DefaultMap((_toolName: string) => {
-      return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
-    });
-  });
+  const toolsByChatIdΣ = new DefaultMap(
+    (_chatId: string | typeof kWILDCARD) => {
+      return new DefaultMap((_toolName: string) => {
+        return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
+      });
+    }
+  );
 
   function getToolDefinitionΣ(chatId: string, toolName: string) {
     return toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(toolName);
   }
 
   function addToolDefinition(
-    chatId: string,
     name: string,
-    tool: AiOpaqueToolDefinition
+    tool: AiOpaqueToolDefinition,
+    chatId?: string
   ) {
     if (String(true)) {
       // XXX Remove again later
@@ -382,12 +388,16 @@ function createStore_forTools() {
       );
     }
 
-    toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(tool);
+    const key = chatId ?? kWILDCARD;
+    toolsByChatIdΣ.getOrCreate(key).getOrCreate(name).set(tool);
 
-    return () => removeToolDefinition(chatId, name);
+    return () => removeToolDefinition(key, name);
   }
 
-  function removeToolDefinition(chatId: string, name: string) {
+  function removeToolDefinition(
+    chatId: string | typeof kWILDCARD,
+    name: string
+  ) {
     if (String(true)) {
       // XXX Remove again later
       console.warn(`💨 Getting here in removeToolDefinition: ${name}`);
@@ -927,9 +937,9 @@ export type Ai = {
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerTool: (
-    chatId: string,
     name: string,
-    tool: AiOpaqueToolDefinition
+    tool: AiOpaqueToolDefinition,
+    chatId?: string
   ) => () => void;
 };
 
