@@ -9,7 +9,7 @@ import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
 import { nanoid } from "nanoid";
 import Link from "next/link";
-import { ComponentProps, CSSProperties, useCallback, useState } from "react";
+import { ComponentProps, useCallback, useState } from "react";
 import { useAiChat } from "@liveblocks/react/suspense";
 
 export default function Page() {
@@ -165,8 +165,9 @@ function ChatListing({
 }: {
   onSelectChat: (chatId: string) => void;
 }) {
-  const { chats, error, isLoading } = useAiChats();
   const deleteAiChat = useDeleteAiChat();
+  const { chats, error, isLoading, hasFetchedAll, fetchMore, isFetchingMore } =
+    useAiChats();
 
   if (isLoading) {
     return (
@@ -216,6 +217,15 @@ function ChatListing({
             </button>
           </li>
         ))}
+        {hasFetchedAll ? null : (
+          <button
+            disabled={isFetchingMore}
+            onClick={fetchMore}
+            className="text-sm py-2 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+          >
+            Load more
+          </button>
+        )}
       </ul>
     </div>
   );
