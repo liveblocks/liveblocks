@@ -377,6 +377,8 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
         id?: string;
       }
     >;
+
+    RegisterAiTool: ComponentType<{ name: string }>;
   };
 
   suspense: {
@@ -461,6 +463,8 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
         id?: string;
       }
     >;
+
+    RegisterAiTool: ComponentType<{ name: string }>;
   };
 };
 

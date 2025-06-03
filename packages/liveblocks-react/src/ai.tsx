@@ -69,3 +69,37 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
 
   return null;
 });
+
+export const RegisterAiTool = memo(function RegisterAiTool(props: {
+  name: string;
+}) {
+  console.error(`TODO: Register tool named "${props.name}" here`);
+  // const layerId = useId();
+  // const ai = useAi();
+  // const { description, value } = props;
+  //
+  // const [layerKey, setLayerKey] = useState<
+  //   ReturnType<typeof ai.registerKnowledgeLayer> | undefined
+  // >();
+  //
+  // // Executes at mount / unmount
+  // useEffect(() => {
+  //   const layerKey = ai.registerKnowledgeLayer(layerId);
+  //   setLayerKey(layerKey);
+  //   return () => {
+  //     ai.deregisterKnowledgeLayer(layerKey);
+  //     setLayerKey(undefined);
+  //   };
+  // }, [ai, layerId]);
+  //
+  // // Executes every render (if the props have changed)
+  // const randomKey = useRandom();
+  // const knowledgeKey = props.id ?? randomKey;
+  // useEffect(() => {
+  //   if (layerKey !== undefined) {
+  //     ai.updateKnowledge(layerKey, { description, value }, knowledgeKey);
+  //   }
+  // }, [ai, layerKey, knowledgeKey, description, value]);
+
+  return null;
+});
