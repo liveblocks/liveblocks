@@ -372,7 +372,7 @@ function createStore_forTools() {
     return toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(toolName);
   }
 
-  function addToolDefinition(
+  function registerTool(
     name: string,
     tool: AiOpaqueToolDefinition,
     chatId?: string
@@ -391,13 +391,10 @@ function createStore_forTools() {
     const key = chatId ?? kWILDCARD;
     toolsByChatIdΣ.getOrCreate(key).getOrCreate(name).set(tool);
 
-    return () => removeToolDefinition(key, name);
+    return () => unregisterTool(key, name);
   }
 
-  function removeToolDefinition(
-    chatId: string | typeof kWILDCARD,
-    name: string
-  ) {
+  function unregisterTool(chatId: string | typeof kWILDCARD, name: string) {
     if (String(true)) {
       // XXX Remove again later
       console.warn(`💨 Getting here in removeToolDefinition: ${name}`);
@@ -428,7 +425,7 @@ function createStore_forTools() {
     getToolDescriptions,
 
     getToolDefinitionΣ,
-    addToolDefinition,
+    registerTool,
   };
 }
 
@@ -1368,7 +1365,7 @@ export function createAi(config: AiConfig): Ai {
       deregisterKnowledgeLayer,
       updateKnowledge,
 
-      registerTool: context.toolsStore.addToolDefinition,
+      registerTool: context.toolsStore.registerTool,
     } satisfies Ai,
     kInternal,
     { enumerable: false }
