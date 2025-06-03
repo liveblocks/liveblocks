@@ -410,10 +410,13 @@ function createStore_forTools() {
     tool.set(undefined);
   }
 
-  function getToolDescriptionsForChat(chatId: string): AiToolDescription[] {
-    const toolsByNameΣ = toolsByChatIdΣ.get(chatId);
-    if (toolsByNameΣ === undefined) return [];
-    return Array.from(toolsByNameΣ.entries()).flatMap(([name, toolΣ]) => {
+  function getToolDescriptions(chatId: string): AiToolDescription[] {
+    const globalToolsΣ = toolsByChatIdΣ.get(kWILDCARD);
+    const scopedToolsΣ = toolsByChatIdΣ.get(chatId);
+    return Array.from([
+      ...(globalToolsΣ?.entries() ?? []),
+      ...(scopedToolsΣ?.entries() ?? []),
+    ]).flatMap(([name, toolΣ]) => {
       const tool = toolΣ.get();
       return tool
         ? [{ name, description: tool.description, parameters: tool.parameters }]
@@ -422,7 +425,7 @@ function createStore_forTools() {
   }
 
   return {
-    getToolDescriptionsForChat,
+    getToolDescriptions,
 
     getToolDefinitionΣ,
     addToolDefinition,
@@ -1262,7 +1265,7 @@ export function createAi(config: AiConfig): Ai {
     options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
-    const tools = context.toolsStore.getToolDescriptionsForChat(chatId);
+    const tools = context.toolsStore.getToolDescriptions(chatId);
 
     const resp: SetToolResultResponse = await sendClientMsgWithResponse({
       cmd: "set-tool-result",
@@ -1324,7 +1327,7 @@ export function createAi(config: AiConfig): Ai {
         options?: AiGenerationOptions // XXX Rename to AskUserMessageInChatOptions!
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
-        const tools = context.toolsStore.getToolDescriptionsForChat(chatId);
+        const tools = context.toolsStore.getToolDescriptions(chatId);
 
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
