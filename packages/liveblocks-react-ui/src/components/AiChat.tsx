@@ -37,15 +37,28 @@ import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
-// No props for now
-type AiChatComponentsEmptyProps = Record<string, never>;
+export type AiChatComponentsEmptyProps = {
+  /**
+   * The chat id provided to the `AiChat` component.
+   */
+  chatId: string;
+  /**
+   * The copilot id provided to the `AiChat` component.
+   */
+  copilotId?: string;
+};
 
-// No props for now
-type AiChatComponentsLoadingProps = Record<string, never>;
+export type AiChatComponentsLoadingProps = Record<string, never>;
 
 // TODO: Add Markdown components
-type AiChatComponents = {
+export type AiChatComponents = {
+  /**
+   * The component used to render the empty state of the chat.
+   */
   Empty: ComponentType<AiChatComponentsEmptyProps>;
+  /**
+   * The component used to render the loading state of the chat.
+   */
   Loading: ComponentType<AiChatComponentsLoadingProps>;
 };
 
@@ -207,7 +220,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               {$.AI_CHAT_MESSAGES_ERROR(error)}
             </div>
           ) : messages.length === 0 ? (
-            <Empty />
+            <Empty chatId={chatId} copilotId={copilotId} />
           ) : (
             <>
               <AutoScrollHandler

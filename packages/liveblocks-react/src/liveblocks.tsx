@@ -8,6 +8,7 @@ import type {
 import type {
   AsyncResult,
   BaseRoomInfo,
+  CopilotId,
   DM,
   DU,
   LiveblocksError,
@@ -379,6 +380,7 @@ function makeLiveblocksContextBundle<
     useAiChatMessages,
     useCreateAiChat,
     useDeleteAiChat,
+    useSendAiMessage,
 
     ...shared.classic,
 
@@ -409,6 +411,7 @@ function makeLiveblocksContextBundle<
       useAiChatMessages: useAiChatMessagesSuspense,
       useCreateAiChat,
       useDeleteAiChat,
+      useSendAiMessage,
 
       ...shared.suspense,
     },
@@ -1114,6 +1117,60 @@ function useDeleteAiChat() {
   );
 }
 
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendMessage = useSendAiMessage(chatId);
+ * sendMessage("Hello, Liveblocks AI!");
+ */
+function useSendAiMessage(
+  chatId: string,
+  options?: { copilotId?: string }
+): (message: string) => void {
+  const client = useClient();
+  const copilotId = options?.copilotId;
+
+  return useCallback(
+    (message: string) => {
+      const messages = client[kInternal].ai.signals
+        .getChatMessagesForBranchΣ(chatId)
+        .get();
+
+      const lastMessageId = messages[messages.length - 1]?.id ?? null;
+
+      const content = [{ type: "text" as const, text: message }];
+      const newMessageId = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.createOptimistically(
+        chatId,
+        "user",
+        lastMessageId,
+        content
+      );
+
+      const targetMessageId = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.createOptimistically(
+        chatId,
+        "assistant",
+        newMessageId
+      );
+
+      void client[kInternal].ai.askUserMessageInChat(
+        chatId,
+        { id: newMessageId, parentMessageId: lastMessageId, content },
+        targetMessageId,
+        {
+          stream: false,
+          copilotId: copilotId as CopilotId | undefined,
+        }
+      );
+    },
+    [client, chatId, copilotId]
+  );
+}
+
 /** @internal */
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
@@ -1739,4 +1796,5 @@ export {
   _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
   useCreateAiChat,
   useDeleteAiChat,
+  useSendAiMessage,
 };

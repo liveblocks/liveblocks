@@ -28,6 +28,7 @@ export {
   useUpdateNotificationSettings,
   useCreateAiChat,
   useDeleteAiChat,
+  useSendAiMessage,
   useSyncStatus,
   useErrorListener,
 } from "./liveblocks";

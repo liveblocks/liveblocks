@@ -60,6 +60,13 @@ export type UseSyncStatusOptions = {
   smooth?: boolean;
 };
 
+export type SendAiMessageOptions = {
+  /**
+   * The id of the copilot to use to send the message.
+   */
+  copilotId?: string;
+};
+
 export type UseStorageStatusOptions = UseSyncStatusOptions;
 
 export type StorageStatusSuccess = Exclude<
@@ -1336,6 +1343,18 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * deleteAiChat("ai-chat-id");
    */
   useDeleteAiChat(): (chatId: string) => void;
+
+  /**
+   * Returns a function to send a message in an AI chat.
+   *
+   * @example
+   * const sendMessage = useSendAiMessage(chatId);
+   * sendMessage("Hello, Liveblocks AI!");
+   */
+  useSendAiMessage(
+    chatId: string,
+    options?: SendAiMessageOptions
+  ): (message: string) => void;
 };
 
 export type LiveblocksContextBundle<
