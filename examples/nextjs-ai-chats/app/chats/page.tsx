@@ -23,18 +23,45 @@ export default function Chats() {
   }, [query, chats]);
 
   if (!chats || !filteredChats) {
-    return <div className="px-2 py-1.5 italic text-neutral-500">Loading…</div>;
+    return (
+      <div className="p-4 flex flex-col justify-center items-center h-full text-neutral-500">
+        Loading…
+      </div>
+    );
+  }
+
+  if (!chats.length) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-4">
+        <div className="flex justify-center items-center flex-col max-w-sm text-center gap-1">
+          <p className="font-medium">Start your first conversation</p>
+          <p className="text-neutral-500 text-sm">
+            Ask anything, explore ideas, or think out loud. This space will fill
+            up as you go. Your chats will appear here.
+          </p>
+        </div>
+        <Link
+          href={`/${nanoid()}`}
+          className="flex items-center gap-1 rounded-lg font-medium bg-blue-700 hover:bg-blue-800 text-white px-2.5 py-2 text-sm transition-colors mt-4"
+        >
+          <PlusIcon className="opacity-70 -ml-0.5" />
+          New chat
+        </Link>
+      </div>
+    );
   }
 
   return (
     <div className="w-full mx-auto pt-12 max-w-[--inner-app-width] px-4">
       <div className="flex justify-between items-center">
-        <h1 className="font-semibold text-xl">Your chat history</h1>
+        <h1 className="font-semibold text-xl tracking-[-0.01em]">
+          Your chat history
+        </h1>
         <Link
           href={`/${nanoid()}`}
           className="flex items-center gap-1 rounded-lg font-medium bg-blue-700 hover:bg-blue-800 text-white px-2.5 py-2 text-sm transition-colors"
         >
-          <PlusIcon />
+          <PlusIcon className="opacity-70 -ml-0.5" />
           New chat
         </Link>
       </div>
@@ -48,16 +75,18 @@ export default function Chats() {
       />
 
       <div className="mt-1.5 mb-3 text-neutral-600 text-sm">
-        {query
-          ? `There are ${filteredChats.length} chats matching "${query}"`
-          : `You have ${chats.length} previous chats`}
+        {query ? (
+          <span>
+            Found {filteredChats.length} chats matching "{query}"
+          </span>
+        ) : (
+          <span>
+            {chats.length} previous chat{chats.length > 1 && "s"}
+          </span>
+        )}
       </div>
 
-      {!chats?.length || !filteredChats?.length ? (
-        <div className="py-1.5 italic text-neutral-500">
-          {chats.length === 0 ? "No chats yet" : "No matching chats"}
-        </div>
-      ) : (
+      {filteredChats.length > 0 && (
         <ul className="flex flex-col gap-3 p-0">
           {filteredChats.map((chat) => (
             <li
