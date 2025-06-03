@@ -17,11 +17,10 @@ export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
 export { RegisterAiKnowledge } from "./ai";
+export { ClientContext, RoomContext, useClient } from "./contexts";
 export {
-  ClientContext,
   createLiveblocksContext,
   LiveblocksProvider,
-  useClient,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
   useErrorListener,
@@ -32,7 +31,6 @@ export {
 } from "./liveblocks";
 export {
   createRoomContext,
-  RoomContext,
   RoomProvider,
   useAddReaction,
   useBatch,
@@ -97,6 +95,7 @@ export {
   useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,
+  useAiChat,
   useAiChats,
   useAiChatMessages,
 } from "./liveblocks";
