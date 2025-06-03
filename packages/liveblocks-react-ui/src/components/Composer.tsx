@@ -341,27 +341,33 @@ function ComposerMention({ userId }: ComposerEditorMentionProps) {
 }
 
 function ComposerMentionSuggestions({
-  userIds,
+  mentions,
 }: ComposerEditorMentionSuggestionsProps) {
-  return userIds.length > 0 ? (
+  return mentions.length > 0 ? (
     <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
-        {userIds.map((userId) => (
-          <ComposerPrimitive.SuggestionsListItem
-            key={userId}
-            className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
-            value={userId}
-          >
-            <Avatar
-              userId={userId}
-              className="lb-composer-mention-suggestion-avatar"
-            />
-            <User
-              userId={userId}
-              className="lb-composer-mention-suggestion-user"
-            />
-          </ComposerPrimitive.SuggestionsListItem>
-        ))}
+        {mentions.map((mention) => {
+          if (mention.kind === "user") {
+            return (
+              <ComposerPrimitive.SuggestionsListItem
+                key={mention.id}
+                className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+                value={mention.id}
+              >
+                <Avatar
+                  userId={mention.id}
+                  className="lb-composer-mention-suggestion-avatar"
+                />
+                <User
+                  userId={mention.id}
+                  className="lb-composer-mention-suggestion-user"
+                />
+              </ComposerPrimitive.SuggestionsListItem>
+            );
+          }
+
+          return null;
+        })}
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
   ) : null;

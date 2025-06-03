@@ -1,4 +1,4 @@
-import type { CommentAttachment } from "@liveblocks/core";
+import type { CommentAttachment, Relax } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 
 export type Direction = "ltr" | "rtl";
@@ -43,8 +43,11 @@ export type ComposerBodyCustomLink = {
   children: ComposerBodyText[];
 };
 
-export type ComposerBodyMention = {
+export type ComposerBodyMention = Relax<ComposerBodyUserMention>;
+
+type ComposerBodyUserMention = {
   type: "mention";
+  kind: "user";
   id: string;
   children: [ComposerBodyEmptyText];
 };

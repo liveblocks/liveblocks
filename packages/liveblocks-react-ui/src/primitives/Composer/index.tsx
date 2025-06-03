@@ -7,6 +7,7 @@ import {
   createCommentAttachmentId,
   type EventSource,
   makeEventSource,
+  type MentionData,
 } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
@@ -233,9 +234,9 @@ function ComposerEditorLinkWrapper({
 function ComposerEditorMentionSuggestionsWrapper({
   id,
   itemId,
-  userIds,
-  selectedUserId,
-  setSelectedUserId,
+  mentions,
+  selectedMentionId,
+  setSelectedMentionId,
   mentionDraft,
   setMentionDraft,
   onItemSelect,
@@ -249,7 +250,7 @@ function ComposerEditorMentionSuggestionsWrapper({
   const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const isOpen =
-    isFocused && mentionDraft?.range !== undefined && userIds !== undefined;
+    isFocused && mentionDraft?.range !== undefined && mentions !== undefined;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -311,7 +312,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [userIds?.length, isOpen, elements.floating, update]);
+  }, [mentions?.length, isOpen, elements.floating, update]);
 
   return (
     <Persist>
@@ -320,8 +321,8 @@ function ComposerEditorMentionSuggestionsWrapper({
           value={{
             id,
             itemId,
-            selectedValue: selectedUserId,
-            setSelectedValue: setSelectedUserId,
+            selectedValue: selectedMentionId,
+            setSelectedValue: setSelectedMentionId,
             onItemSelect,
             placement,
             dir,
@@ -343,8 +344,8 @@ function ComposerEditorMentionSuggestionsWrapper({
             }}
           >
             <MentionSuggestions
-              userIds={userIds}
-              selectedUserId={selectedUserId}
+              mentions={mentions}
+              selectedMentionId={selectedMentionId}
             />
           </Portal>
         </ComposerSuggestionsContext.Provider>
@@ -824,13 +825,13 @@ const defaultEditorComponents: ComposerEditorComponents = {
       </ComposerMention>
     );
   },
-  MentionSuggestions: ({ userIds }) => {
-    return userIds.length > 0 ? (
+  MentionSuggestions: ({ mentions }) => {
+    return mentions.length > 0 ? (
       <ComposerSuggestions>
         <ComposerSuggestionsList>
-          {userIds.map((userId) => (
-            <ComposerSuggestionsListItem key={userId} value={userId}>
-              {userId}
+          {mentions.map((mention) => (
+            <ComposerSuggestionsListItem key={mention.id} value={mention.id}>
+              {mention.id}
             </ComposerSuggestionsListItem>
           ))}
         </ComposerSuggestionsList>
@@ -932,13 +933,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     );
 
     const createMention = useCallback(
-      (userId?: string) => {
-        if (!mentionDraft || !userId) {
+      (mention?: MentionData) => {
+        if (!mentionDraft || !mention) {
           return;
         }
 
         SlateTransforms.select(editor, mentionDraft.range);
-        insertMention(editor, userId);
+        insertMention(editor, mention);
         setMentionDraft(undefined);
         setSelectedMentionSuggestionIndex(0);
       },
@@ -980,8 +981,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           if (isKey(event, "Enter") || isKey(event, "Tab")) {
             event.preventDefault();
 
-            const userId = mentionSuggestions?.[selectedMentionSuggestionIndex];
-            createMention(userId);
+            const mention =
+              mentionSuggestions?.[selectedMentionSuggestionIndex];
+            createMention(mention);
           }
 
           // Close the suggestions on Escape
@@ -1084,13 +1086,14 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [onBlur, setFocused]
     );
 
-    const selectedMentionSuggestionUserId = useMemo(
-      () => mentionSuggestions?.[selectedMentionSuggestionIndex],
-      [selectedMentionSuggestionIndex, mentionSuggestions]
-    );
-    const setSelectedMentionSuggestionUserId = useCallback(
-      (userId: string) => {
-        const index = mentionSuggestions?.indexOf(userId);
+    const selectedMention =
+      mentionSuggestions?.[selectedMentionSuggestionIndex];
+    const selectedMentionId = selectedMention?.id;
+    const setSelectedMentionId = useCallback(
+      (mentionId: string) => {
+        const index = mentionSuggestions?.findIndex(
+          (mention) => mention.id === mentionId
+        );
 
         if (index !== undefined && index >= 0) {
           setSelectedMentionSuggestionIndex(index);
@@ -1107,9 +1110,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
               "aria-autocomplete": "list",
               "aria-expanded": true,
               "aria-controls": suggestionsListId,
-              "aria-activedescendant": suggestionsListItemId(
-                selectedMentionSuggestionUserId
-              ),
+              "aria-activedescendant": suggestionsListItemId(selectedMentionId),
             }
           : hasFloatingToolbarRange
             ? {
@@ -1121,7 +1122,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         mentionDraft,
         suggestionsListId,
         suggestionsListItemId,
-        selectedMentionSuggestionUserId,
+        selectedMentionId,
         hasFloatingToolbarRange,
         floatingToolbarId,
       ]
@@ -1145,6 +1146,17 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         select();
       }
     }, [editor, select, isFocused]);
+
+    const handleMentionSelect = useCallback(
+      (mentionId: string) => {
+        const mention = mentionSuggestions?.find(
+          (mention) => mention.id === mentionId
+        );
+
+        createMention(mention);
+      },
+      [createMention, mentionSuggestions]
+    );
 
     return (
       <Slate
@@ -1175,12 +1187,12 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             dir={dir}
             mentionDraft={mentionDraft}
             setMentionDraft={setMentionDraft}
-            selectedUserId={selectedMentionSuggestionUserId}
-            setSelectedUserId={setSelectedMentionSuggestionUserId}
-            userIds={mentionSuggestions}
+            selectedMentionId={selectedMentionId}
+            setSelectedMentionId={setSelectedMentionId}
+            mentions={mentionSuggestions}
             id={suggestionsListId}
             itemId={suggestionsListItemId}
-            onItemSelect={createMention}
+            onItemSelect={handleMentionSelect}
             MentionSuggestions={MentionSuggestions}
           />
         )}
