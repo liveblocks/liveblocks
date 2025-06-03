@@ -1,11 +1,11 @@
 ---
 meta:
   title: "Lexical"
-  parentTitle: "Text Editor"
-  description: "Learn about using Lexical text editor"
+  parentTitle: "Multiplayer Editing"
+  description: "Learn about using Multiplayer Editing for Lexical"
 ---
 
-A quick overview of the Text Editor packages for Lexical.
+A quick overview of the packages for Lexical.
 
 ## Concepts
 
@@ -333,7 +333,7 @@ function DocumentHistory() {
         {selectedVersion ? (
           <HistoryVersionPreview
             version={selectedVersion}
-            className="w-full h-full"
+            className="h-full w-full"
             onVersionRestore={onVersionRestore}
           />
         ) : (

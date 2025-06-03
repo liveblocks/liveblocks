@@ -1,38 +1,42 @@
 ---
 meta:
-  title: "Text Editor"
+  title: "Multiplayer Editing"
   parentTitle: "Ready-made features"
   description:
-    "Embed a customizable text editing experience into your product to enable
-    people to collaborate."
+    "Add realtime collaboration to any surface in your product—from text editors
+    to whiteboards, forms, and beyond."
 ---
 
-Embed a text editing experience into your product, enabling collaboration
-between your users. Liveblocks Text Editor is fully customizable, allowing you
-to create a range of editing experiences that look and feel like your product.
-Easily enable collaborative rich-text editing, with integrated threads,
-comments, and mentions powered by
-[Liveblocks Comments](/docs/ready-made-features/comments).
+Enable realtime collaboration across any surface in your product—just like in
+Figma, Notion, or Linear. With Liveblocks Multiplayer Editing, you can make
+anything multiplayer: rich text editors, whiteboards, flowcharts, forms,
+spreadsheets, or fully custom interfaces.
 
-Text Editor is a permanent store for your Tiptap, BlockNote, and Lexical
-documents, meaning you do not need to synchronize, scale, or maintain any
-infrastructure.
+Liveblocks provides a permanent, realtime data store for your collaborative
+state—so you don’t need to synchronize, scale, or maintain any infrastructure
+yourself. All the hard parts of multiplayer—conflict resolution, presence,
+history, and storage—are handled for you.
 
-## Overview
+Depending on what you’re building, you can use purpose-built SDKs for rich text
+editors (like Tiptap, Lexical, or BlockNote), or more general packages like
+`@liveblocks/client`, `@liveblocks/react`, `@liveblocks/zustand`, or
+`@liveblocks/redux`.
+
+## Text editor integrations
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
     title="Tiptap"
-    href="/docs/ready-made-features/text-editor/tiptap"
-    description="Add collaboration to Tiptap"
+    href="/docs/ready-made-features/multiplayer-editing/tiptap"
+    description="Add multiplayer editing to Tiptap"
     visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="BlockNote"
-    href="/docs/ready-made-features/text-editor/blocknote"
-    description="Add collaboration to BlockNote"
+    href="/docs/ready-made-features/multiplayer-editing/blocknote"
+    description="Add multiplayer editing to BlockNote"
     visual={
       <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
     }
@@ -40,13 +44,17 @@ infrastructure.
   <DocsCard
     type="technology"
     title="Lexical"
-    href="/docs/ready-made-features/text-editor/lexical"
-    description="Add collaboration to Lexical"
+    href="/docs/ready-made-features/multiplayer-editing/lexical"
+    description="Add multiplayer editing to Lexical"
     visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
-## Text Editor API Reference
+## Multiplayer Editing API Reference
+
+### Text editor SDKs
+
+_Use these SDKs to add multiplayer editing to rich text editors._
 
 <ListGrid columns={2}>
   <DocsCard
@@ -86,7 +94,43 @@ infrastructure.
   />
 </ListGrid>
 
-## Examples using Text Editor
+### Multiplayer Editing SDKs
+
+_Use these SDKs to add multiplayer editing to whiteboards, forms, tables, or any
+custom UI._
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="React"
+    href="/docs/api-reference/liveblocks-react"
+    description="@liveblocks/react"
+    visual={<DocsReactIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Client"
+    href="/docs/api-reference/liveblocks-client"
+    description="@liveblocks/client"
+    visual={<DocsApiIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Zustand"
+    href="/docs/api-reference/liveblocks-zustand"
+    description="@liveblocks/zustand"
+    visual={<DocsApiIcon />}
+  />
+  <DocsCard
+    type="technology"
+    title="Redux"
+    href="/docs/api-reference/liveblocks-redux"
+    description="@liveblocks/redux"
+    visual={<DocsApiIcon />}
+  />
+</ListGrid>
+
+## Examples using Multiplayer Editing
 
 <ListGrid columns={2}>
   <ExampleCard
@@ -121,6 +165,15 @@ infrastructure.
       title: "Notion-like AI editor",
       slug: "notion-like-ai-editor",
       image: "/images/examples/thumbnails/notion-like-ai-editor.png",
+    }}
+    technologies={["nextjs"]}
+    openInNewWindow
+  />
+  <ExampleCard
+    example={{
+      title: "Tldraw whiteboard",
+      slug: "tldraw-whiteboard",
+      image: "/images/examples/thumbnails/tldraw-whiteboard.png",
     }}
     technologies={["nextjs"]}
     openInNewWindow
