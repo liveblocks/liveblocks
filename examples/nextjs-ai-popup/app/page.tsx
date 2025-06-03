@@ -221,7 +221,7 @@ function ChatListing({
           <button
             disabled={isFetchingMore}
             onClick={fetchMore}
-            className="text-sm py-2 bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+            className="text-sm py-2 bg-white border border-neutral-200 rounded-md font-medium hover:bg-neutral-50"
           >
             Load more
           </button>
