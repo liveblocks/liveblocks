@@ -28,14 +28,14 @@ editors (like Tiptap, Lexical, or BlockNote), or more general packages like
   <DocsCard
     type="technology"
     title="Tiptap"
-    href="/docs/ready-made-features/multiplayer-editing/tiptap"
+    href="/docs/ready-made-features/multiplayer-editing/text-editor/tiptap"
     description="Add multiplayer editing to Tiptap"
     visual={<DocsTiptapIcon className="fill-product-icon-brand h-auto w-6" />}
   />
   <DocsCard
     type="technology"
     title="BlockNote"
-    href="/docs/ready-made-features/multiplayer-editing/blocknote"
+    href="/docs/ready-made-features/multiplayer-editing/text-editor/blocknote"
     description="Add multiplayer editing to BlockNote"
     visual={
       <DocsBlocknotejsIcon className="fill-product-icon-brand h-auto w-6" />
@@ -44,9 +44,28 @@ editors (like Tiptap, Lexical, or BlockNote), or more general packages like
   <DocsCard
     type="technology"
     title="Lexical"
-    href="/docs/ready-made-features/multiplayer-editing/lexical"
+    href="/docs/ready-made-features/multiplayer-editing/text-editor/lexical"
     description="Add multiplayer editing to Lexical"
     visual={<DocsLexicalIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+</ListGrid>
+
+## Sync engine integrations
+
+<ListGrid columns={2}>
+  <DocsCard
+    type="technology"
+    title="Liveblocks Yjs"
+    href="/docs/ready-made-features/multiplayer-editing/sync-engine/liveblocks-yjs"
+    description="Build custom multiplayer experiences"
+    visual={<DocsYjsIcon className="fill-product-icon-brand h-auto w-6" />}
+  />
+  <DocsCard
+    type="technology"
+    title="Liveblocks Storage"
+    href="/docs/ready-made-features/multiplayer-editing/sync-engine/liveblocks-storage"
+    description="Build custom multiplayer experiences"
+    visual={<DocsStorageIcon className="fill-product-icon-brand h-auto w-6" />}
   />
 </ListGrid>
 
@@ -54,7 +73,7 @@ editors (like Tiptap, Lexical, or BlockNote), or more general packages like
 
 ### Text editor SDKs
 
-_Use these SDKs to add multiplayer editing to rich text editors._
+Use these SDKs to add multiplayer editing to rich text editors.
 
 <ListGrid columns={2}>
   <DocsCard
@@ -94,10 +113,13 @@ _Use these SDKs to add multiplayer editing to rich text editors._
   />
 </ListGrid>
 
-### Multiplayer Editing SDKs
+### Sync engine SDKs
 
-_Use these SDKs to add multiplayer editing to whiteboards, forms, tables, or any
-custom UI._
+Use these SDKs to add multiplayer editing to whiteboards, forms, tables, or any
+custom UI. These SDKs integrate directly with
+[Liveblocks Storage](/docs/ready-made-features/multiplayer-editing/sync-engine/liveblocks-storage)
+and
+[Liveblocks Yjs](/docs/ready-made-features/multiplayer-editing/sync-engine/liveblocks-yjs).
 
 <ListGrid columns={2}>
   <DocsCard
@@ -173,7 +195,7 @@ custom UI._
     example={{
       title: "Tldraw whiteboard",
       slug: "tldraw-whiteboard",
-      image: "/images/examples/thumbnails/tldraw-whiteboard.png",
+      image: "/images/examples/thumbnails/tldraw-whiteboard.jpg",
     }}
     technologies={["nextjs"]}
     openInNewWindow
