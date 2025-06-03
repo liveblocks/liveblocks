@@ -6,7 +6,7 @@ import type {
   CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
-import { Permission } from "@liveblocks/core";
+import { assertNever, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
@@ -347,26 +347,28 @@ function ComposerMentionSuggestions({
     <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {mentions.map((mention) => {
-          if (mention.kind === "user") {
-            return (
-              <ComposerPrimitive.SuggestionsListItem
-                key={mention.id}
-                className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
-                value={mention.id}
-              >
-                <Avatar
-                  userId={mention.id}
-                  className="lb-composer-mention-suggestion-avatar"
-                />
-                <User
-                  userId={mention.id}
-                  className="lb-composer-mention-suggestion-user"
-                />
-              </ComposerPrimitive.SuggestionsListItem>
-            );
-          }
+          switch (mention.kind) {
+            case "user":
+              return (
+                <ComposerPrimitive.SuggestionsListItem
+                  key={mention.id}
+                  className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+                  value={mention.id}
+                >
+                  <Avatar
+                    userId={mention.id}
+                    className="lb-composer-mention-suggestion-avatar"
+                  />
+                  <User
+                    userId={mention.id}
+                    className="lb-composer-mention-suggestion-user"
+                  />
+                </ComposerPrimitive.SuggestionsListItem>
+              );
 
-          return null;
+            default:
+              return assertNever(mention.kind, "Unhandled mention kind");
+          }
         })}
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
