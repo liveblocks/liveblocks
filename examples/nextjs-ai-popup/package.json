@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.25.0-aiprivatebeta10",
-    "@liveblocks/node": "^2.25.0-aiprivatebeta10",
-    "@liveblocks/react": "^2.25.0-aiprivatebeta10",
-    "@liveblocks/react-ui": "^2.25.0-aiprivatebeta10",
+    "@liveblocks/client": "2.25.0-aiprivatebeta10",
+    "@liveblocks/node": "2.25.0-aiprivatebeta10",
+    "@liveblocks/react": "2.25.0-aiprivatebeta10",
+    "@liveblocks/react-ui": "2.25.0-aiprivatebeta10",
     "@radix-ui/react-popover": "^1.1.14",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
