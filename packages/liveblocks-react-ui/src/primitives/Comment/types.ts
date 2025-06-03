@@ -1,4 +1,4 @@
-import type { CommentBody } from "@liveblocks/core";
+import type { CommentBody, MentionData } from "@liveblocks/core";
 import type { ComponentType, ReactNode } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
@@ -7,9 +7,9 @@ export type CommentMentionProps = ComponentPropsWithSlot<"span">;
 
 export type CommentBodyMentionProps = {
   /**
-   * The mention's user ID.
+   * The mention.
    */
-  userId: string;
+  mention: MentionData;
 };
 
 export type CommentLinkProps = ComponentPropsWithSlot<"a">;

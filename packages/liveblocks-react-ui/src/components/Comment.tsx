@@ -1,9 +1,11 @@
 "use client";
 
 import {
+  assertNever,
   type CommentAttachment,
   type CommentData,
   type CommentReaction as CommentReactionData,
+  type MentionData,
   Permission,
 } from "@liveblocks/core";
 import {
@@ -141,7 +143,10 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * The event handler called when clicking on a mention.
    */
-  onMentionClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
+  onMentionClick?: (
+    mention: MentionData,
+    event: MouseEvent<HTMLElement>
+  ) => void;
 
   /**
    * The event handler called when clicking on a comment's attachment.
@@ -207,21 +212,28 @@ interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
 }
 
 export function CommentMention({
-  userId,
+  mention,
   className,
   ...props
 }: CommentBodyMentionProps & CommentMentionProps) {
   const currentId = useCurrentUserId();
-  return (
-    <CommentPrimitive.Mention
-      className={classNames("lb-comment-mention", className)}
-      data-self={userId === currentId ? "" : undefined}
-      {...props}
-    >
-      {MENTION_CHARACTER}
-      <User userId={userId} />
-    </CommentPrimitive.Mention>
-  );
+
+  switch (mention.kind) {
+    case "user":
+      return (
+        <CommentPrimitive.Mention
+          className={classNames("lb-comment-mention", className)}
+          data-self={mention.id === currentId ? "" : undefined}
+          {...props}
+        >
+          {MENTION_CHARACTER}
+          <User userId={mention.id} />
+        </CommentPrimitive.Mention>
+      );
+
+    default:
+      return assertNever(mention.kind, "Unhandled mention kind");
+  }
 }
 
 export function CommentLink({
@@ -875,10 +887,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     className="lb-comment-body"
                     body={comment.body}
                     components={{
-                      Mention: ({ userId }) => (
+                      Mention: ({ mention }) => (
                         <CommentMention
-                          userId={userId}
-                          onClick={(event) => onMentionClick?.(userId, event)}
+                          mention={mention}
+                          onClick={(event) => onMentionClick?.(mention, event)}
                         />
                       ),
                       Link: CommentLink,
