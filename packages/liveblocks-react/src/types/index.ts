@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChat,
+  AiKnowledgeSource,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -42,7 +43,12 @@ import type {
   ToImmutable,
   UiChatMessage,
 } from "@liveblocks/core";
-import type { Context, PropsWithChildren, ReactNode } from "react";
+import type {
+  ComponentType,
+  Context,
+  PropsWithChildren,
+  ReactNode,
+} from "react";
 
 export type UseSyncStatusOptions = {
   /**
@@ -335,6 +341,17 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    RegisterAiKnowledge: ComponentType<
+      AiKnowledgeSource & {
+        /**
+         * An optional unique key for this knowledge source. If multiple components
+         * register knowledge under the same key, the last one to mount takes
+         * precedence.
+         */
+        id?: string;
+      }
+    >;
   };
 
   suspense: {
@@ -390,6 +407,17 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    RegisterAiKnowledge: ComponentType<
+      AiKnowledgeSource & {
+        /**
+         * An optional unique key for this knowledge source. If multiple components
+         * register knowledge under the same key, the last one to mount takes
+         * precedence.
+         */
+        id?: string;
+      }
+    >;
   };
 };
 

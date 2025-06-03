@@ -36,6 +36,7 @@ import {
   useSyncExternalStore,
 } from "react";
 
+import { RegisterAiKnowledge } from "./ai";
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
@@ -1119,6 +1120,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
     },
     suspense: {
       useClient,
@@ -1128,6 +1130,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
     },
   };
 }
