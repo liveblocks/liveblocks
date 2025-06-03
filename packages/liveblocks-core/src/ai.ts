@@ -368,23 +368,23 @@ function createStore_forTools() {
   function addToolDefinition(
     chatId: string,
     name: string,
-    definition: AiOpaqueToolDefinition
+    tool: AiOpaqueToolDefinition
   ) {
     if (String(true)) {
       // XXX Remove again later
       console.warn(`👋 Getting here in addToolDefinition: ${name}`);
     }
 
-    if (!definition.execute && !definition.render) {
+    if (!tool.execute && !tool.render) {
       throw new Error(
         "A tool definition must have an execute() function, a render() function, or both."
       );
     }
 
-    toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(definition);
+    toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(tool);
   }
 
-  function removeToolDefinition(chatId: string, toolName: string) {
+  function removeToolDefinition(chatId: string, name: string) {
     if (String(true)) {
       // XXX Remove again later
       console.warn(`💨 Getting here in removeToolDefinition: ${name}`);
@@ -392,28 +392,28 @@ function createStore_forTools() {
 
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return;
-    const tool = tools.get(toolName);
+    const tool = tools.get(name);
     if (tool === undefined) return;
     tool.set(undefined);
   }
 
   function getToolsForChat(chatId: string): {
     name: string;
-    definition: AiOpaqueToolDefinition;
+    tool: AiOpaqueToolDefinition;
   }[] {
-    const tools = toolsByChatIdΣ.get(chatId);
-    if (tools === undefined) return [];
-    return Array.from(tools.entries())
-      .map(([name, tool]) => {
-        if (tool.get() === undefined) return null;
+    const toolsByNameΣ = toolsByChatIdΣ.get(chatId);
+    if (toolsByNameΣ === undefined) return [];
+    return Array.from(toolsByNameΣ.entries())
+      .map(([name, toolΣ]) => {
+        if (toolΣ.get() === undefined) return null;
         return {
           name,
-          definition: tool.get(),
+          tool: toolΣ.get(),
         };
       })
       .filter((tool) => tool !== null) as {
       name: string;
-      definition: AiOpaqueToolDefinition;
+      tool: AiOpaqueToolDefinition;
     }[];
   }
 
@@ -935,10 +935,10 @@ export type Ai = {
   registerChatTool: (
     chatId: string,
     name: string,
-    definition: AiOpaqueToolDefinition
+    tool: AiOpaqueToolDefinition
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  unregisterChatTool: (chatId: string, toolName: string) => void;
+  unregisterChatTool: (chatId: string, tool: string) => void;
 };
 
 /** @internal */
@@ -1271,11 +1271,13 @@ export function createAi(config: AiConfig): Ai {
         stream: options?.stream,
         timeout: options?.timeout,
         knowledge: knowledge.length > 0 ? knowledge : undefined,
-        tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-          name: tool.name,
-          description: tool.definition.description,
-          parameters: tool.definition.parameters,
-        })),
+        tools: context.toolsStore
+          .getToolsForChat(chatId)
+          .map(({ name, tool }) => ({
+            name,
+            description: tool.description,
+            parameters: tool.parameters,
+          })),
       },
     });
     if (resp.ok) {
@@ -1331,11 +1333,13 @@ export function createAi(config: AiConfig): Ai {
             stream: options?.stream,
             timeout: options?.timeout,
             knowledge: knowledge.length > 0 ? knowledge : undefined,
-            tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-              name: tool.name,
-              description: tool.definition.description,
-              parameters: tool.definition.parameters,
-            })),
+            tools: context.toolsStore
+              .getToolsForChat(chatId)
+              .map(({ name, tool }) => ({
+                name,
+                description: tool.description,
+                parameters: tool.parameters,
+              })),
           },
         });
         messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
