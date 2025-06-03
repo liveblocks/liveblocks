@@ -47,7 +47,18 @@ OpenAI, Anthropic, or Google. Copy the copilot’s ID and pass it to the
 `copilotId` prop.
 
 ```tsx
-<AiChat chatId="my-chat-id" copilotId="co_a7Gd3x..." />
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      copilotId="co_a7Gd3x..."
+      // +++
+    />
+  );
+}
 ```
 
 Dynamically switching copilots is possible, and messages will use whichever
@@ -55,10 +66,60 @@ Dynamically switching copilots is possible, and messages will use whichever
 
 ##### Show placeholder content in new chats [#AiChat-placeholder]
 
-In chats without messages, you can display placeholder content to guide the
-user...
+In chats without messages, you can display placeholder content to welcome and
+guide the user. To set this content, use the `Empty` property under
+`components`.
 
-{/* TODO the API we figure out */}
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      components={{ Empty: <div>I'm an empty chat!</div> }}
+      // +++
+    />
+  );
+}
+```
+
+Additionally, you can add suggestion buttons which will automatically submit new
+messages to the chat when clicked. Create them with
+[`useSendAiMessage`](/docs/api-reference/liveblocks-react#useSendAiMessage).
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat({ chatId }: { chatId: string }) {
+  // +++
+  const sendAiMessage = useSendAiMessage(chatId);
+  // +++
+
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      components={{
+        Empty: (
+          <div>
+            <div>Suggestions</div>
+            // +++
+            <button onClick={() => sendAiMessage("What's new?")}>
+              Update me
+            </button>
+            <button onClick={() => sendAiMessage("Create a new document")}>
+              Draft a document
+            </button>
+            // +++
+          </div>
+        ),
+      }}
+    />
+  );
+}
+```
 
 {/* TODO show initial suggestions if it's supported */}
 
@@ -441,7 +502,7 @@ function Chat() {
 }
 ```
 
-##### Pass in user data [#RegisterAiKnowledge-user]
+##### Pass in user data from your auth provider [#RegisterAiKnowledge-user]
 
 You can pass in knowledge from your auth provider, for example with
 [`useUser`](https://clerk.com/docs/hooks/use-user) [Clerk](https://clerk.com).
@@ -474,7 +535,7 @@ function Chat() {
 }
 ```
 
-##### Pass in data from fetching hooks [#RegisterAiKnowledge-fetching]
+##### Pass in assorted data from fetching hooks [#RegisterAiKnowledge-fetching]
 
 You can pass in knowledge from data fetching hooks such as with
 [`useSWR`](https://swr.vercel.app/docs/getting-started) from
@@ -509,7 +570,7 @@ function Chat() {
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 ```
 
-##### Pass in text editor data [#RegisterAiKnowledge-text-editor]
+##### Pass in text editor document data [#RegisterAiKnowledge-text-editor]
 
 You can pass in knowledge from your text editor, for example when using
 [Liveblocks Tiptap](/docs/api-reference/liveblocks-react-tiptap).
@@ -549,10 +610,48 @@ As well as `editor.getJSON()`, `editor.getText()` and `editor.getHTML()` are
 also available when using Tiptap. Its worth trying them all, in case your AI
 model understands one of them better than the others.
 
+##### Pass in comment data [#RegisterAiKnowledge-storage]
+
+You can also pass in knowledge from your custom Liveblocks Comments app with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads). This way, your
+AI chat will understand the context in the current room.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
+
+function Comments() {
+  // +++
+  const { threads, isLoading, error } = useThreads();
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The comment threads in the current document"
+        value={
+          isLoading
+            ? "Loading..."
+            : error
+              ? "Problem fetching threads"
+              : JSON.stringify(threads)
+        }
+      />
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      )}
+    </div>
+  );
+}
+```
+
 ##### Pass in storage data [#RegisterAiKnowledge-storage]
 
 You can also pass in knowledge from your custom Liveblocks storage app with
-[`useStorage`](/docs/api-reference/liveblocks-react#useStorage).
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage). This way, your
+AI chat will understand the context in the current room.
 
 ```tsx
 import { RegisterAiKnowledge } from "@liveblocks/react-ui";

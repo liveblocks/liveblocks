@@ -1295,6 +1295,17 @@ const deleteChat = useDeleteAiChat();
 deleteChat("my-chat-id");
 ```
 
+### useSendAiMessage
+
+Returns a function that sends a message to an AI chat, indentified by its ID.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+
+const sendAiMessage = useSendAiMessage("my-chat-id");
+sendAiMessage("Hello!");
+```
+
 ## Room
 
 ### RoomProvider
