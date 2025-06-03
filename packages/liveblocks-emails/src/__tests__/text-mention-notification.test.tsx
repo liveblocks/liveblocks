@@ -278,7 +278,9 @@ describe("text mention notification", () => {
 
       const base: Omit<TextMentionNotificationEmailData<string>, "roomInfo"> = {
         mention: {
-          id: MENTION_ID_TIPTAP,
+          textMentionId: MENTION_ID_TIPTAP,
+          id: MENTIONED_USER_ID_TIPTAP,
+          kind: "user",
           roomId: room.id,
           author: {
             id: "user-nimesh",
@@ -329,7 +331,9 @@ describe("text mention notification", () => {
 
     const expected1: TextMentionNotificationEmailDataAsHtml = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "user-1" } },
         createdAt: inboxNotification.notifiedAt,
@@ -343,7 +347,9 @@ describe("text mention notification", () => {
 
     const expected2: TextMentionNotificationEmailDataAsHtml = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "Mislav Abha" } },
         createdAt: inboxNotification.notifiedAt,
@@ -411,7 +417,9 @@ describe("text mention notification", () => {
 
     const expected1: TextMentionNotificationEmailDataAsReact = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "user-1" } },
         createdAt: inboxNotification.notifiedAt,
