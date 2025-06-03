@@ -1,0 +1,68 @@
+---
+meta:
+  title: "Default components"
+  parentTitle: "AI Copilots"
+  description: "Ready-to-use customizable components"
+---
+
+The default components included in AI Copilots are a great way to start building
+AI into your application. With these components you can render advanced AI
+chats, that understand your application state, modify it with actions, and
+render custom in-chat components.
+
+- Fully styled AI chat components, with an optional dark mode.
+- Pass in knowledge, add actions, and render custom components.
+- Customize through CSS variables and class names.
+- Localize and modify strings with overrides.
+
+## AiChat
+
+The [`AiChat`][] component renders an AI chat, with a chat history, a composer
+for adding new messages, and a toolbar for adding AI actions.
+
+{/* TODO AiChat image */}
+
+### Usage
+
+Get started by importing the component, and passing in a unique chat ID.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+
+function Component() {
+  return <AiChat chatId="my-chat-id" />;
+}
+```
+
+This will render an AI chat on the page, with a chat history, and a composer for
+adding new messages. Each chat is stored permanently, and can be accessed again
+later.
+
+{/* TODO list everything you can do with it */}
+
+## AiTool
+
+The [`AiTool`][] component renders a button that can be used to add an AI action
+to the chat.
+
+{/* TODO AiTool image */}
+
+### Usage
+
+{/* TODO usage */}
+
+## Customization
+
+It’s possible to style and localize the default components:
+
+- Import dark mode styles.
+- Modify the style with CSS variables and class names.
+- Use overrides to change default text used in the components.
+
+{/* TODO page */}
+
+Learn more under
+[styling and customization](/docs/ready-made-features/comments/styling-and-customization).
+
+[`AiChat`]: /docs/api-reference/liveblocks-react-ui#AiChat
+[`AiTool`]: /docs/api-reference/liveblocks-react-ui#AiTool
