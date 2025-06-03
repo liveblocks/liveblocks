@@ -7,13 +7,15 @@
 
 :root {
   --accent: theme("colors.blue.500");
+  --inner-app-width: 36rem;
 }
 
 .lb-root {
+  --lb-ai-chat-container-width: var(--inner-app-width);
   --lb-accent: var(--accent);
   --lb-background: theme("colors.white");
   --lb-foreground: theme("colors.neutral.900");
-  --lb-radius: theme("borderRadius.sm");
+  --lb-radius: theme("borderRadius.DEFAULT");
 }
 
 .lb-ai-chat {
@@ -21,9 +23,7 @@
 }
 
 .lb-ai-chat-composer {
-  box-shadow:
-    0 0 0 1px rgb(231 229 228),
-    0 2px 6px #0000000f;
+  @apply shadow-sm ring-neutral-200 ring-1;
 }
 
 .lb-portal {
@@ -46,6 +46,7 @@ h3 {
   font-size: 1.25rem;
   font-weight: 600;
   line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 h4 {

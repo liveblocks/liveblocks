@@ -46,9 +46,45 @@ function ChatTitle({ chatId }: { chatId: string }) {
 // Overriding the empty chat state
 function Empty() {
   return (
-    <div className="w-full h-full mx-auto max-w-[--inner-app-width] flex items-end pb-12">
-      {/* Soon you will be able to add messages to the chat programmatically */}
-      {/* <button onClick={() => sendAiMessage("How's the weather in my area?")}>Check weather</button> */}
+    <div className="size-full mx-auto max-w-[--inner-app-width] flex items-end pb-[calc(3*var(--lb-spacing))]">
+      <div className="flex flex-col gap-5">
+        <h3>How can I help you?</h3>
+        {/* Soon you will be able to add messages to the chat programmatically */}
+        <div className="flex flex-col items-start gap-2">
+          <button
+            className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+            onClick={() => {
+              // TODO: Use sendAiMessage when available
+            }}
+          >
+            Check weather
+          </button>
+          <button
+            className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+            onClick={() => {
+              // TODO: Use sendAiMessage when available
+            }}
+          >
+            Write a story
+          </button>
+          <button
+            className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+            onClick={() => {
+              // TODO: Use sendAiMessage when available
+            }}
+          >
+            Explain quantum computing
+          </button>
+          <button
+            className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+            onClick={() => {
+              // TODO: Use sendAiMessage when available
+            }}
+          >
+            Plan weekly meals
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
