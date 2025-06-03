@@ -1272,6 +1272,18 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * deleteAiChat("ai-chat-id");
    */
   useDeleteAiChat(): (chatId: string) => void;
+
+  /**
+   * Returns a function to send a message in an AI chat.
+   *
+   * @example
+   * const sendMessage = useSendAiMessage(chatId);
+   * sendMessage("Hello, Liveblocks AI!");
+   */
+  useSendAiMessage(
+    chatId: string,
+    options?: { copilotId?: string }
+  ): (message: string) => void;
 };
 
 export type LiveblocksContextBundle<

@@ -92,6 +92,7 @@ export {
   useUpdateNotificationSettings,
   useCreateAiChat,
   useDeleteAiChat,
+  useSendAiMessage,
   useUserThreads_experimental as useUserThreads_experimental,
   useRoomInfo,
   useUnreadInboxNotificationsCount,

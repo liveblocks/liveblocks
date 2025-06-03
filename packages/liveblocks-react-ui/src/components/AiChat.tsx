@@ -37,8 +37,10 @@ import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
-// No props for now
-type AiChatComponentsEmptyProps = Record<string, never>;
+export type AiChatComponentsEmptyProps = {
+  chatId: string;
+  copilotId?: string;
+};
 
 // No props for now
 type AiChatComponentsLoadingProps = Record<string, never>;
@@ -207,7 +209,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               {$.AI_CHAT_MESSAGES_ERROR(error)}
             </div>
           ) : messages.length === 0 ? (
-            <Empty />
+            <Empty chatId={chatId} copilotId={copilotId} />
           ) : (
             <>
               <AutoScrollHandler

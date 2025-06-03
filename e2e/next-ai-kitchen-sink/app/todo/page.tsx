@@ -4,10 +4,13 @@ import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
+  useSendAiMessage,
 } from "@liveblocks/react/suspense";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
 import { AiChat, AiTool } from "@liveblocks/react-ui";
+import { PlusIcon } from "../icons/plus-icon";
+import { ListIcon } from "../icons/list-icon";
 
 export default function Page() {
   const [todos, setTodos] = useState<
@@ -115,7 +118,7 @@ export default function Page() {
               side="top"
               align="end"
               sideOffset={10}
-              className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14] rounded-xl"
+              className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-xl"
             >
               <LiveblocksProvider
                 authEndpoint="/api/auth/liveblocks"
@@ -126,6 +129,9 @@ export default function Page() {
                   <AiChat
                     chatId="todo"
                     layout="compact"
+                    components={{
+                      Empty: AiChatEmptyComponent,
+                    }}
                     tools={{
                       listTodos: defineAiTool()({
                         description: "List all todos",
@@ -269,5 +275,29 @@ export default function Page() {
         </Popover.Root>
       </div>
     </main>
+  );
+}
+
+function AiChatEmptyComponent({ chatId }: { chatId: string }) {
+  const sendMessage = useSendAiMessage(chatId);
+
+  return (
+    <div className="flex flex-col px-6 py-4 h-full justify-end gap-3">
+      <button
+        onClick={() => sendMessage("List all todos")}
+        className="inline-flex items-center justify-center gap-2 border border-[var(--lb-foreground-subtle)] px-2 py-2 rounded-lg cursor-pointer"
+      >
+        <ListIcon className="size-4" />
+        List all todos
+      </button>
+
+      <button
+        onClick={() => sendMessage("Add a todo titled 'Buy milk'")}
+        className="inline-flex items-center justify-center gap-2 border border-[var(--lb-foreground-subtle)] px-2 py-2 rounded-lg cursor-pointer"
+      >
+        <PlusIcon className="size-4" />
+        Add new todo
+      </button>
+    </div>
   );
 }
