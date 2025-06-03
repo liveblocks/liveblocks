@@ -1,17 +1,24 @@
 "use client";
 
+import { defineAiTool } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
   RegisterAiKnowledge,
+  RegisterAiTool,
 } from "@liveblocks/react/suspense";
-import { AiChat } from "@liveblocks/react-ui";
+import { AiChat, AiTool } from "@liveblocks/react-ui";
 
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
 
-function DarkModeToggle(_props: { x?: number }) {
-  const [mode, setMode] = useState<"light" | "dark">("light");
+function DarkModeSubApp(_props: { x?: number }) {
+  const [exposed, setExposed] = useState<boolean>(true);
+  const [mode, setMode] = useState<string>("light");
+
+  const toggleExposeTool = useCallback(() => {
+    setExposed((exposeTool) => !exposeTool);
+  }, []);
 
   const toggleDarkMode = useCallback(() => {
     setMode(mode === "dark" ? "light" : "dark");
@@ -19,10 +26,46 @@ function DarkModeToggle(_props: { x?: number }) {
 
   return (
     <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
-      <RegisterAiKnowledge
-        description="The current mode of the app"
-        value={mode}
-      />
+      <label>
+        <input
+          type="checkbox"
+          checked={exposed}
+          onChange={() => toggleExposeTool()}
+        />{" "}
+        Expose dark mode as knowledge & tool
+      </label>
+
+      {exposed ? (
+        <RegisterAiKnowledge
+          description="The current mode of the app"
+          value={mode}
+        />
+      ) : null}
+
+      {exposed ? (
+        <RegisterAiTool
+          name="changeDarkMode"
+          tool={defineAiTool()({
+            description: "Change the dark mode of the app",
+            parameters: {
+              type: "object",
+              properties: {
+                mode: {
+                  type: "string",
+                  // enum: ["light", "dark"],
+                },
+              },
+              required: ["mode"],
+              additionalProperties: false,
+            },
+            execute: ({ mode }) => {
+              setMode(mode);
+              return { ok: true, message: `Dark mode changed to ${mode}` };
+            },
+            render: () => <AiTool />,
+          })}
+        />
+      ) : null}
 
       <label>
         <input
@@ -180,7 +223,7 @@ export default function Page() {
     >
       <main className="h-screen w-full">
         <MyNickName />
-        <DarkModeToggle />
+        <DarkModeSubApp />
 
         <div className="flex flex-col px-4 max-w-4xl py-8 border-b-1">
           <div className="flex gap-4 mx-auto">
