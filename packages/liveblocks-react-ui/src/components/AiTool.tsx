@@ -39,19 +39,19 @@ export interface AiToolProps
   children?: ReactNode;
 
   /**
-   * Whether the collapsible content is initially open. Setting a value will make it uncontrolled.
+   * Whether the content is initially collapsed. Setting a value will make it uncontrolled.
    */
-  defaultOpen?: boolean;
+  defaultCollapsed?: boolean;
 
   /**
-   * Whether the collapsible content is currently open. Setting a value will make it controlled, use `onOpenChange` to.
+   * Whether the content is currently collapsed. Setting a value will make it controlled, use `onCollapsedChange` to update it.
    */
-  open?: boolean;
+  collapsed?: boolean;
 
   /**
-   * The event handler called when the collapsible content is opened or closed.
+   * The event handler called when the content is collapsed or expanded.
    */
-  onOpenChange?: (open: boolean) => void;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
@@ -191,9 +191,9 @@ export const AiTool = Object.assign(
         children,
         title,
         icon,
-        defaultOpen,
-        open: controlledOpen,
-        onOpenChange: controlledOnOpenChange,
+        defaultCollapsed,
+        collapsed: controlledCollapsed,
+        onCollapsedChange: controlledOnCollapsedChange,
         className,
         ...props
       },
@@ -204,11 +204,11 @@ export const AiTool = Object.assign(
         toolName,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
-      const [isOpen, onOpenChange] = useControllableState(
-        true,
-        controlledOpen,
-        controlledOnOpenChange,
-        defaultOpen
+      const [isCollapsed, onCollapsedChange] = useControllableState(
+        false,
+        controlledCollapsed,
+        controlledOnCollapsedChange,
+        defaultCollapsed
       );
       // TODO: This check won't work for cases like:
       //         <AiTool>
@@ -222,14 +222,23 @@ export const AiTool = Object.assign(
         return title ?? prettifyString(toolName);
       }, [title, toolName]);
 
+      // `AiTool` uses "collapsed" instead of "open" (like the `Composer` component) because "open"
+      // makes sense next to something called "Collapsible" but less so for something called "AiTool".
+      const handleCollapsibleOpenChange = useCallback(
+        (open: boolean) => {
+          onCollapsedChange(!open);
+        },
+        [onCollapsedChange]
+      );
+
       return (
         <Collapsible.Root
           ref={forwardedRef}
           className={classNames("lb-collapsible lb-ai-tool", className)}
           {...props}
           // Regardless of the controlled/uncontrolled props, the collapsible is closed if there's no content.
-          open={hasContent ? isOpen : false}
-          onOpenChange={onOpenChange}
+          open={hasContent ? !isCollapsed : false}
+          onOpenChange={handleCollapsibleOpenChange}
           disabled={!hasContent}
         >
           <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
