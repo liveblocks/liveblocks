@@ -8,6 +8,8 @@ import { kInternal } from "./internal";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";
+import type { Observable } from "./lib/EventSource";
+import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import { isDefined } from "./lib/guards";
 import type { JsonObject } from "./lib/Json";
@@ -813,6 +815,8 @@ function createStore_forUserAiChats() {
     Array.from(allChatsInclDeletedΣ.get()).filter((c) => !c.deletedAt)
   );
 
+  const chatDeleted = makeEventSource</* chatId */ string>();
+
   function upsertMany(chats: AiChat[]) {
     allChatsInclDeletedΣ.mutate((list) => {
       for (const chat of chats) {
@@ -837,6 +841,7 @@ function createStore_forUserAiChats() {
       if (!chat) return false;
 
       upsert({ ...chat, deletedAt: now() });
+      chatDeleted.notify(chat.id);
       return undefined;
     });
   }
@@ -855,6 +860,11 @@ function createStore_forUserAiChats() {
     upsert,
     upsertMany,
     markDeleted,
+
+    // Event sources
+    events: {
+      chatDeleted,
+    },
   };
 }
 
@@ -921,6 +931,9 @@ export type Ai = {
       chatId: string,
       toolName: string
     ): Signal<AiOpaqueToolDefinition | undefined>;
+  };
+  events: {
+    chatDeleted: Observable<string>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -1357,6 +1370,9 @@ export function createAi(config: AiConfig): Ai {
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getToolDefinitionΣ: context.toolsStore.getToolDefinitionΣ,
+      },
+      events: {
+        chatDeleted: context.chatsStore.events.chatDeleted.observable,
       },
 
       getChatById: context.chatsStore.getChatById,
