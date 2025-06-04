@@ -28,24 +28,229 @@ npx create-liveblocks-app@latest --upgrade
 
 There are also some **breaking changes** in this update.
 
-### `@liveblocks/emails`
+### Mentions
 
-The functions which prepare HTML/React emails are now more consistent, using the
-same `body` and `content` properties instead of `reactBody`/`htmlBody` and
-`reactContent`/`htmlContent`.
+We’re making some changes to mentions in Comments and Text Editor to support
+different mention kinds in future releases: user mentions, group mentions, etc.
+
+#### Components
+
+The `onMentionClick` prop on `Comment` now receives a `MentionData` object as
+its first argument instead of a `userId` string.
 
 ```tsx
 // ❌ Before
-prepareThreadNotificationEmailAsReact(liveblocks, event); // { comment: { reactBody: ReactNode, ... }, ... }
-prepareThreadNotificationEmailAsHtml(liveblocks, event); // { comment: { htmlBody: string, ... }, ... }
-prepareTextMentionNotificationEmailAsReact(liveblocks, event); // { mention: { reactContent: ReactNode, ... }, ... }
-prepareTextMentionNotificationEmailAsHtml(liveblocks, event); // { mention: { htmlContent: string, ... }, ... }
+onMentionClick(userId: string, event: MouseEvent<HTMLElement>) => void;
+// userId: "user-0"
 
 // ✅ After
-prepareThreadNotificationEmailAsReact(liveblocks, event); // { comment: { body: ReactNode, ... }, ... }
-prepareThreadNotificationEmailAsHtml(liveblocks, event); // { comment: { body: string, ... }, ... }
-prepareTextMentionNotificationEmailAsReact(liveblocks, event); // { mention: { content: ReactNode, ... }, ... }
-prepareTextMentionNotificationEmailAsHtml(liveblocks, event); // { mention: { content: string, ... }, ... }
+onMentionClick(mention: MentionData, event: MouseEvent<HTMLElement>) => void;
+// mention: { kind: "user", id: "user-0" }
+```
+
+### Primitives
+
+When customizing the `Mention` component on the `Comment.Body` and
+`Composer.Editor` primitives, the `userId` prop has been replaced by a `mention`
+one which is a `MentionData` object.
+
+```tsx
+import { Comment, Composer } from "@liveblocks/react-ui/primitives";
+
+// ❌ Before
+<Comment.Body
+  components={{
+    // +++
+    Mention: ({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>,
+    // +++
+  }}
+/>;
+<Composer.Editor
+  components={{
+    // +++
+    Mention: ({ userId, isSelected }) => (
+      <Composer.Mention>@{userId}</Composer.Mention>
+    ),
+    // +++
+  }}
+/>;
+
+// ✅ After
+<Comment.Body
+  components={{
+    // +++
+    Mention: ({ mention }) => <Comment.Mention>@{mention.id}</Comment.Mention>,
+    // +++
+  }}
+/>;
+<Composer.Editor
+  components={{
+    // +++
+    Mention: ({ mention, isSelected }) => (
+      <Composer.Mention>@{mention.id}</Composer.Mention>
+    ),
+    // +++
+  }}
+/>;
+```
+
+When customizing the `MentionSuggestions` component on the `Composer.Editor`
+primitive, the `userIds` prop has been replaced by a `mentions` one which is an
+array of `MentionData` objects, and the `selectedUserId` prop has been renamed
+to `selectedMentionId`.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui/primitives";
+
+// ❌ Before
+<Composer.Editor
+  components={{
+    // +++
+    MentionSuggestions: ({ userIds, selectedUserId }) => (
+      // +++
+      <Composer.Suggestions>
+        <Composer.SuggestionsList>
+          // +++
+          {userIds.map((userId) => (
+            <Composer.SuggestionsListItem key={userId} value={userId}>
+              {userId}
+            </Composer.SuggestionsListItem>
+          ))}
+          // +++
+        </Composer.SuggestionsList>
+      </Composer.Suggestions>
+    ),
+  }}
+/>;
+
+// ✅ After
+<Composer.Editor
+  components={{
+    // +++
+    MentionSuggestions: ({ mentions, selectedMentionId }) => (
+      // +++
+      <Composer.Suggestions>
+        <Composer.SuggestionsList>
+          // +++
+          {mentions.map((mention) => (
+            <Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+              {mention.id}
+            </Composer.SuggestionsListItem>
+          ))}
+          // +++
+        </Composer.SuggestionsList>
+      </Composer.Suggestions>
+    ),
+  }}
+/>;
+```
+
+### `@liveblocks/emails`
+
+The `prepareTextMentionNotificationEmailAsReact` and
+`prepareTextMentionNotificationEmailAsHtml` functions’ returned data changed
+slightly:
+
+- The `id` property is now named `textMentionId`, it refers to the mention’s
+  Text Mention ID, not the user ID used for the mention
+- The `id` property now refers to the mention’s ID, as in the user ID used for
+  the mention
+- The `kind` property now indicates the mention’s kind (e.g. `"user"`,
+  `"group"`, etc.)
+
+```tsx
+await prepareTextMentionNotificationEmailAsReact(liveblocks, event);
+
+// ❌ Before
+// {
+//   mention: {
+// +++
+//     id: "in_xxx",
+// +++
+//     roomId: "123",
+//     createdAt: new Date(),
+//     author: {
+//       id: "user-who-created-the-mention",
+//       info: {
+//         name: "Aurélien",
+//       },
+//     },
+//     content: /* The rendered content */,
+//   },
+//   ...
+// }
+
+// ✅ After
+// {
+//   mention: {
+// +++
+//     textMentionId: "in_xxx",
+//     id: "user-who-is-mentioned",
+//     kind: "user",
+// +++
+//     roomId: "123",
+//     createdAt: new Date(),
+//     author: {
+//       id: "user-who-created-the-mention",
+//       info: {
+//         name: "Aurélien",
+//       },
+//     },
+//     content: /* The rendered content */,
+//   },
+//   ...
+// }
+```
+
+When customizing the `Mention` component in the
+`prepareTextMentionNotificationEmailAsReact` function, the `element` prop’s
+`userId` property has been renamed to `id`, and `element.kind` now indicates the
+mention’s kind.
+
+```tsx
+await prepareThreadNotificationEmailAsReact(liveblocks, webhookEvent, {
+  components: {
+    // ❌ Before
+    Mention: ({ element, user }) => (
+      // +++
+      <span style={{ color: "red" }}>@{element.userId}</span>
+      // +++
+    ),
+
+    // ✅ After
+    Mention: ({ element, user }) => (
+      // +++
+      <span style={{ color: "red" }}>@{element.id}</span>
+      // +++
+    ),
+  },
+});
+```
+
+#### Utilities
+
+The `getMentionedIdsFromCommentBody` utility (from `@liveblocks/client` and
+`@liveblocks/node`) has been replaced by `getMentionsFromCommentBody`.
+
+```tsx
+// ❌ Before
+getMentionedIdsFromCommentBody(commentBody);
+// ["user-1", "user-2"]
+
+// ✅ After
+getMentionsFromCommentBody(commentBody, (mention) => mention.kind === "user");
+// [{ type: "mention", kind: "user", id: "user-1" }, { type: "mention", kind: "user", id: "user-2" }]
+```
+
+By default, if the optional second argument is not provided, all mentions are
+returned, including future mention kinds (e.g. group mentions in the future).
+
+```tsx
+// All mentions
+getMentionsFromCommentBody(commentBody);
+
+// Only user mentions
+getMentionsFromCommentBody(commentBody, (mention) => mention.kind === "user");
 ```
 
 ### Notification settings
@@ -76,6 +281,26 @@ useErrorListener((error) =>
     /* ... */
   }
 );
+```
+
+### `@liveblocks/emails`
+
+The functions which prepare HTML/React emails are now more consistent, using the
+same `body` and `content` properties instead of `reactBody`/`htmlBody` and
+`reactContent`/`htmlContent`.
+
+```tsx
+// ❌ Before
+prepareThreadNotificationEmailAsReact(liveblocks, event); // { comment: { reactBody: ReactNode, ... }, ... }
+prepareThreadNotificationEmailAsHtml(liveblocks, event); // { comment: { htmlBody: string, ... }, ... }
+prepareTextMentionNotificationEmailAsReact(liveblocks, event); // { mention: { reactContent: ReactNode, ... }, ... }
+prepareTextMentionNotificationEmailAsHtml(liveblocks, event); // { mention: { htmlContent: string, ... }, ... }
+
+// ✅ After
+prepareThreadNotificationEmailAsReact(liveblocks, event); // { comment: { body: ReactNode, ... }, ... }
+prepareThreadNotificationEmailAsHtml(liveblocks, event); // { comment: { body: string, ... }, ... }
+prepareTextMentionNotificationEmailAsReact(liveblocks, event); // { mention: { content: ReactNode, ... }, ... }
+prepareTextMentionNotificationEmailAsHtml(liveblocks, event); // { mention: { content: string, ... }, ... }
 ```
 
 ### `LiveblocksUiConfig`
