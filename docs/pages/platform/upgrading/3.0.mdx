@@ -6,6 +6,8 @@ meta:
 ---
 
 - TODO: Should we also remove/deprecate `nextPage` from the REST API docs?
+- TODO: Do a pass on deprecated sections in the docs, see which ones still make
+  sense to keep
 - TODO: Docs to remove or update:
   - https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus
   - https://liveblocks.io/docs/api-reference/liveblocks-react#useBatch
@@ -35,8 +37,8 @@ different mention kinds in future releases: user mentions, group mentions, etc.
 
 #### Components
 
-The `onMentionClick` prop on `Comment` now receives a `MentionData` object as
-its first argument instead of a `userId` string.
+The `onMentionClick` prop on [`Thread`][] and [`Comment`][] now receives a
+`MentionData` object as its first argument instead of a `userId` string.
 
 ```tsx
 // ❌ Before
@@ -50,9 +52,11 @@ onMentionClick(mention: MentionData, event: MouseEvent<HTMLElement>) => void;
 
 ### Primitives
 
-When customizing the `Mention` component on the `Comment.Body` and
-`Composer.Editor` primitives, the `userId` prop has been replaced by a `mention`
-one which is a `MentionData` object.
+When customizing the
+[`Mention`](/docs/api-reference/liveblocks-react-ui#primitives-Comment.Body-Mention)
+component on the [`Comment.Body`][] and [`Composer.Editor`][] primitives, the
+`userId` prop has been replaced by a `mention` one which is a `MentionData`
+object.
 
 ```tsx
 import { Comment, Composer } from "@liveblocks/react-ui/primitives";
@@ -94,10 +98,11 @@ import { Comment, Composer } from "@liveblocks/react-ui/primitives";
 />;
 ```
 
-When customizing the `MentionSuggestions` component on the `Composer.Editor`
-primitive, the `userIds` prop has been replaced by a `mentions` one which is an
-array of `MentionData` objects, and the `selectedUserId` prop has been renamed
-to `selectedMentionId`.
+When customizing the
+[`MentionSuggestions`](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Editor-MentionSuggestions)
+component on the [`Composer.Editor`][] primitive, the `userIds` prop has been
+replaced by a `mentions` one which is an array of `MentionData` objects, and the
+`selectedUserId` prop has been renamed to `selectedMentionId`.
 
 ```tsx
 import { Composer } from "@liveblocks/react-ui/primitives";
@@ -147,8 +152,8 @@ import { Composer } from "@liveblocks/react-ui/primitives";
 
 ### `@liveblocks/emails`
 
-The `prepareTextMentionNotificationEmailAsReact` and
-`prepareTextMentionNotificationEmailAsHtml` functions’ returned data changed
+The [`prepareTextMentionNotificationEmailAsReact`][] and
+[`prepareTextMentionNotificationEmailAsHtml`][] functions’ returned data changed
 slightly:
 
 - The `id` property is now named `textMentionId`, it refers to the mention’s
@@ -202,10 +207,11 @@ await prepareTextMentionNotificationEmailAsReact(liveblocks, event);
 // }
 ```
 
-When customizing the `Mention` component in the
-`prepareTextMentionNotificationEmailAsReact` function, the `element` prop’s
-`userId` property has been renamed to `id`, and `element.kind` now indicates the
-mention’s kind.
+When customizing the
+[`Mention`](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react-customizing-components)
+component in the [`prepareTextMentionNotificationEmailAsReact`][] function, the
+`element` prop’s `userId` property has been renamed to `id`, and `element.kind`
+now indicates the mention’s kind.
 
 ```tsx
 await prepareThreadNotificationEmailAsReact(liveblocks, webhookEvent, {
@@ -229,8 +235,10 @@ await prepareThreadNotificationEmailAsReact(liveblocks, webhookEvent, {
 
 #### Utilities
 
-The `getMentionedIdsFromCommentBody` utility (from `@liveblocks/client` and
-`@liveblocks/node`) has been replaced by `getMentionsFromCommentBody`.
+The `getMentionedIdsFromCommentBody` utility (from
+[`@liveblocks/client`](/docs/api-reference/liveblocks-client) and
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node)) has been replaced by
+[`getMentionsFromCommentBody`](/docs/api-reference/liveblocks-client#get-mentions-from-comment-body).
 
 ```tsx
 // ❌ Before
@@ -256,7 +264,7 @@ getMentionsFromCommentBody(commentBody, (mention) => mention.kind === "user");
 ### Notification settings
 
 2.24 [introduced a few naming changes](/docs/platform/upgrading/2.24) around the
-concepts of "notification settings" and "subscription settings" to improve
+concepts of “notification settings” and “subscription settings” to improve
 clarity. 3.0 [removes the aliases for the previous names](#deprecated) but it
 also introduces one change that we couldn’t make in 2.24:
 
@@ -285,7 +293,7 @@ useErrorListener((error) =>
 
 ### `@liveblocks/emails`
 
-The functions which prepare HTML/React emails are now more consistent, using the
+The functions to prepare HTML/React emails are now more consistent, using the
 same `body` and `content` properties instead of `reactBody`/`htmlBody` and
 `reactContent`/`htmlContent`.
 
@@ -359,6 +367,16 @@ multiple versions ago.
   for tracking sync status, it reflects the sync status of all parts of
   Liveblocks.
 
+[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
+[`Comment`]: /docs/api-reference/liveblocks-react-ui#Comment
+[`Comment.Body`]:
+  /docs/api-reference/liveblocks-react-ui#primitives-Comment.Body
+[`Composer.Editor`]:
+  /docs/api-reference/liveblocks-react-ui#primitives-Composer.Editor
+[`prepareTextMentionNotificationEmailAsReact`]:
+  /docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react
+[`prepareTextMentionNotificationEmailAsHtml`]:
+  /docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-html
 [`getRooms`]: /docs/api-reference/liveblocks-node#get-rooms
 [`useSyncStatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
 [`useMutation`]: /docs/api-reference/liveblocks-react#useMutation
