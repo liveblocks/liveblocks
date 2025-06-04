@@ -55,6 +55,22 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 }
 
 {
+  expectType<{
+    mode: "dark" | "light";
+    favNumber: 3 | 7 | 13 | 42;
+  }>(
+    infer({
+      type: "object",
+      properties: {
+        mode: { type: "string", enum: ["dark", "light"] },
+        favNumber: { type: "number", enum: [3, 7, 13, 42] },
+      },
+      required: ["mode", "favNumber"],
+    })
+  );
+}
+
+{
   defineAiTool()({
     description: "List all todos",
     parameters: {

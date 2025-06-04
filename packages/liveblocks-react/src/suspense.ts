@@ -17,7 +17,11 @@ export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
 export { ClientContext, RoomContext, useClient } from "./contexts";
-export { RegisterAiKnowledge, useAiChatDeletedListener } from "./ai";
+export {
+  RegisterAiKnowledge,
+  RegisterAiTool,
+  useAiChatDeletedListener,
+} from "./ai";
 export {
   LiveblocksProvider,
   useInboxNotificationThread,

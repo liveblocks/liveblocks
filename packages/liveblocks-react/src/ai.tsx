@@ -1,4 +1,7 @@
-import type { AiKnowledgeSource } from "@liveblocks/core";
+import type {
+  AiKnowledgeSource,
+  AiOpaqueToolDefinition,
+} from "@liveblocks/core";
 import { kInternal, nanoid } from "@liveblocks/core";
 import { memo, useEffect, useId, useState } from "react";
 
@@ -12,6 +15,15 @@ function useAi() {
 function useRandom() {
   return useState(nanoid)[0];
 }
+
+export type RegisterAiKnowledgeProps = AiKnowledgeSource & {
+  /**
+   * An optional unique key for this knowledge source. If multiple components
+   * register knowledge under the same key, the last one to mount takes
+   * precedence.
+   */
+  id?: string;
+};
 
 /**
  * Make knowledge about your application state available to any AI used in
@@ -32,14 +44,7 @@ function useRandom() {
  * It can choose to use or ignore this knowledge in its responses.
  */
 export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
-  props: AiKnowledgeSource & {
-    /**
-     * An optional unique key for this knowledge source. If multiple components
-     * register knowledge under the same key, the last one to mount takes
-     * precedence.
-     */
-    id?: string;
-  }
+  props: RegisterAiKnowledgeProps
 ) {
   const layerId = useId();
   const ai = useAi();
@@ -67,6 +72,33 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
       ai.updateKnowledge(layerKey, { description, value }, knowledgeKey);
     }
   }, [ai, layerKey, knowledgeKey, description, value]);
+
+  return null;
+});
+
+export type RegisterAiToolProps = {
+  name: string;
+  tool: AiOpaqueToolDefinition;
+
+  /**
+   * When provided, the tool will only be available for this chatId. If not
+   * provided, this tool will globally be made available to any AiChat
+   * instance.
+   */
+  chatId?: string;
+};
+
+export const RegisterAiTool = memo(function RegisterAiTool({
+  chatId,
+  name,
+  tool,
+}: RegisterAiToolProps) {
+  // Register the provided tools to the chat on mount and unregister them on unmount
+  const client = useClient();
+  const ai = client[kInternal].ai;
+  useEffect(() => {
+    return ai.registerTool(name, tool, chatId);
+  }, [ai, chatId, name, tool]);
 
   return null;
 });
