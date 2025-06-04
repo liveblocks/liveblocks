@@ -1,7 +1,0 @@
-type Storage {
-  name: string
-  age: number
-  height: number
-  hasSiblings: boolean
-  naught: null
-}
