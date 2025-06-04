@@ -47,7 +47,7 @@ function ToolInvocation({
 }) {
   const client = useClient();
   const ai = client[kInternal].ai;
-  const tool = useSignal(ai.signals.getToolDefinitionΣ(chatId, part.toolName));
+  const tool = useSignal(ai.signals.getToolΣ(part.toolName, chatId));
 
   const respond = useCallback(
     (result: ToolResultData) => {

@@ -4,11 +4,10 @@ import type {
   CopilotId,
   MessageId,
 } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
 import {
   RegisterAiKnowledge,
+  RegisterAiTool,
   useAiChatMessages,
-  useClient,
 } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
@@ -149,9 +148,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const isScrollIndicatorVisible =
       isLoading || error ? false : !isScrollAtBottom;
 
-    const client = useClient();
-    const ai = client[kInternal].ai;
-
     const [lastSentMessageId, setLastSentMessageId] =
       useState<MessageId | null>(null);
 
@@ -160,18 +156,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       () => containerRef.current,
       []
     );
-
-    // Register the provided tools to the chat on mount and unregister them on unmount
-    useEffect(() => {
-      Object.entries(tools).map(([key, value]) =>
-        ai.registerChatTool(chatId, key, value)
-      );
-      return () => {
-        Object.entries(tools).map(([key]) =>
-          ai.unregisterChatTool(chatId, key)
-        );
-      };
-    }, [ai, chatId, tools]);
 
     const scrollToBottomCallbackRef =
       useRef<(behavior: "instant" | "smooth") => void>(undefined);
@@ -212,6 +196,11 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               />
             ))
           : null}
+
+        {Object.entries(tools).map(([name, tool]) => (
+          <RegisterAiTool key={name} chatId={chatId} name={name} tool={tool} />
+        ))}
+
         <div className="lb-ai-chat-content">
           {isLoading ? (
             <Loading />
