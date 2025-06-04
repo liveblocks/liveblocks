@@ -38,7 +38,7 @@ export async function sendTextMentionNotificationEmail(
           ),
           Mention: ({ element, user }) => (
             <span className="text-email-accent font-medium">
-              @{user?.name ?? element.userId}
+              @{user?.name ?? element.id}
             </span>
           ),
         },

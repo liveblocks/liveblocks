@@ -348,7 +348,7 @@ const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
   Mention: ({ element, user }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.userId}
+      {user?.name ?? element.id}
     </span>
   ),
   Text: ({ element }) => {
@@ -556,7 +556,7 @@ export async function prepareTextMentionNotificationEmailAsHtml(
       },
       mention: ({ node, user }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.userId}</span>`
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
       },
       text: ({ node }) => {
         // Note: construction following the schema 👇

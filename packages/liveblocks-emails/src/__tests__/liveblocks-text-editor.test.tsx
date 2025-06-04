@@ -31,7 +31,8 @@ describe("liveblocks text editor", () => {
         },
         {
           type: "mention",
-          userId,
+          kind: "user",
+          id: userId,
         },
         {
           type: "text",
@@ -87,7 +88,8 @@ describe("liveblocks text editor", () => {
         },
         {
           type: "mention",
-          userId,
+          kind: "user",
+          id: userId,
         },
         {
           type: "text",
