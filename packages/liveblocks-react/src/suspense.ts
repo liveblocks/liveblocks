@@ -22,6 +22,7 @@ export {
   RegisterAiTool,
   useAiChatDeletedListener,
 } from "./ai";
+export type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
 export {
   LiveblocksProvider,
   useInboxNotificationThread,

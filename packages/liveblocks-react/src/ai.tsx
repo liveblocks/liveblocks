@@ -88,6 +88,32 @@ export type RegisterAiToolProps = {
   chatId?: string;
 };
 
+/**
+ * Make a tool available to your AI chat or a one-off request.
+ * A tool is a piece of functionality that the AI can call to perform an action
+ * or look up information on the user's behalf.
+ *
+ * Also, tools are used to render custom UIs for tool invocations, which are
+ * embedded inside the AI chat.
+ *
+ * For example:
+ *
+ *   <RegisterAiTool
+ *     name="list-todos"
+ *     tool={defineAiTool()({ ... })}
+ *     />
+ *
+ * Or scoped to a specific chat:
+ *
+ *   <RegisterAiTool
+ *     name="list-todos"
+ *     tool={defineAiTool()({ ... })}
+ *     chatId="chat-1234"
+ *     />
+ *
+ * By mounting this component, the tool is made available.
+ * By unmounting this component, the tool will no longer be available.
+ */
 export const RegisterAiTool = memo(function RegisterAiTool({
   chatId,
   name,
