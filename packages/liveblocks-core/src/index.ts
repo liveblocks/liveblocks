@@ -24,7 +24,6 @@ export type {
   AiToolExecuteContext,
   AiToolInvocationProps,
   AiToolTypePack,
-  InferFromSchema,
   UiAssistantMessage,
   UiChatMessage,
   UiUserMessage,
@@ -340,6 +339,7 @@ export type {
 } from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
+export type { InferFromSchema } from "./types/InferFromSchema";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
