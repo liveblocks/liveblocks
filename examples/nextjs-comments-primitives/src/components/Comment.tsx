@@ -84,12 +84,12 @@ export function Comment({ comment, className, ...props }: CommentProps) {
         body={comment.body}
         className="prose mt-1.5"
         components={{
-          Mention: ({ userId }) => {
+          Mention: ({ mention }) => {
             return (
               <CommentPrimitive.Mention className="font-semibold text-blue-500">
                 @
-                <Suspense fallback={userId}>
-                  <User userId={userId} />
+                <Suspense fallback={mention.id}>
+                  <User userId={mention.id} />
                 </Suspense>
               </CommentPrimitive.Mention>
             );

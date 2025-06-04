@@ -600,7 +600,7 @@ function ComposerEditorPlaceholder({
  * Displays mentions within `Composer.Editor`.
  *
  * @example
- * <Composer.Mention>@{userId}</Composer.Mention>
+ * <Composer.Mention>@{mention.id}</Composer.Mention>
  */
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
@@ -690,9 +690,9 @@ const ComposerSuggestions = forwardRef<
  *
  * @example
  * <Composer.SuggestionsList>
- *   {userIds.map((userId) => (
- *     <Composer.SuggestionsListItem key={userId} value={userId}>
- *       @{userId}
+ *   {mentions.map((mention) => (
+ *     <Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+ *       @{mention.id}
  *     </Composer.SuggestionsListItem>
  *   ))}
  * </Composer.SuggestionsList>
@@ -721,8 +721,8 @@ const ComposerSuggestionsList = forwardRef<
  * Displays a suggestion within `Composer.SuggestionsList`.
  *
  * @example
- * <Composer.SuggestionsListItem key={userId} value={userId}>
- *   @{userId}
+ * <Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+ *   @{mention.id}
  * </Composer.SuggestionsListItem>
  */
 const ComposerSuggestionsListItem = forwardRef<
@@ -907,8 +907,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const floatingToolbarId = `liveblocks-floating-toolbar-${id}`;
     const suggestionsListId = `liveblocks-suggestions-list-${id}`;
     const suggestionsListItemId = useCallback(
-      (userId?: string) =>
-        userId ? `liveblocks-suggestions-list-item-${id}-${userId}` : undefined,
+      (mentionId?: string) =>
+        mentionId
+          ? `liveblocks-suggestions-list-item-${id}-${mentionId}`
+          : undefined,
       [id]
     );
 

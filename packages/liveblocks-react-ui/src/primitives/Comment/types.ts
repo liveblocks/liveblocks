@@ -7,7 +7,7 @@ export type CommentMentionProps = ComponentPropsWithSlot<"span">;
 
 export type CommentBodyMentionProps = {
   /**
-   * The mention.
+   * The mention to display.
    */
   mention: MentionData;
 };

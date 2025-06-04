@@ -1073,7 +1073,9 @@ export async function POST(request: Request) {
         url: "https://my-room-url.io"
       },
       mention: {
-        id: "in_oiujhdg...",
+        kind: "user",
+        textMentionId: "in_oiujhdg...",
+        id: "user-0",
         roomId: "my-room-id",
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
 
@@ -1355,10 +1357,11 @@ export async function POST(request: Request) {
         url: "https://my-room-url.io"
       },
       mention: {
-        id: "in_oiujhdg...",
+        kind: "user",
+        textMentionId: "in_oiujhdg...",
+        id: "user-0",
         roomId: "my-room-id",
         createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
-        userId: "user_0"
 
         // The formatted content, as an HTML string
         content: { /* ... */}

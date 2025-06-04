@@ -33,7 +33,7 @@ export interface ComposerEditorMentionProps {
   isSelected: boolean;
 
   /**
-   * The mention.
+   * The mention to display.
    */
   mention: MentionData;
 }
