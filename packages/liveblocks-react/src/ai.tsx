@@ -72,6 +72,8 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
 });
 
 /**
+ * Register a callback to be invoked when a particular chat is deleted.
+ *
  * This hook is EXPERIMENTAL. We haven't committed to this API yet.
  * @experimental
  */
