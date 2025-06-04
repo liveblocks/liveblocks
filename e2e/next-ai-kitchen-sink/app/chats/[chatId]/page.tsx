@@ -123,10 +123,17 @@ function Chat({ chatId }: { chatId: string }) {
     };
   }, []);
 
+  const title = chat.title || "Untitled";
+  const titleClasses = chat.deletedAt
+    ? "line-through opacity-50"
+    : chat.title === undefined
+      ? "opacity-50"
+      : "";
+
   return (
     <div className="relative flex flex-col h-full">
       <div className="sticky top-0 border-b p-4 flex flex-row items-center gap-2 justify-between border-b-neutral-900/5 dark:border-neutral-50/10">
-        <div className="text-sm">{chat.title}</div>
+        <div className={`text-sm ${titleClasses}`}>{title}</div>
 
         <CopilotSelect copilotId={copilotId} onCopilotIdChange={setCopilotId} />
       </div>
