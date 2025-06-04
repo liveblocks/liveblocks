@@ -1,5 +1,4 @@
 import type { JSONSchema7 } from "json-schema";
-import type { ComponentType } from "react";
 
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
@@ -43,7 +42,6 @@ import type {
   AskInChatResponse,
   ClearChatResponse,
   ClientAiMsg,
-  ClientId,
   CmdId,
   CreateChatOptions,
   Cursor,
@@ -136,11 +134,20 @@ export type AiToolInvocationProps<
     respond: (result: R) => void;
 
     /**
-     * Exposes specific inferred types as a "type pack" which we can pass
-     * around statically to components to "bind" them to specific inferred
-     * A and R values. There is no runtime presence for these.
+     * These are the inferred types for your tool call which you can pass down
+     * to UI components, like so:
+     *
+     *     <AiTool.Confirmation
+     *       types={types}
+     *       confirm={
+     *         // Now fully type-safe!
+     *         (args) => result
+     *       } />
+     *
+     * This will make your AiTool.Confirmation component aware of the types for
+     * `args` and `result`.
      */
-    $types: AiToolTypePack<A, R>;
+    types: AiToolTypePack<A, R>;
 
     // Private APIs
     [kInternal]: {
@@ -172,7 +179,7 @@ export type AiToolDefinition<
   description?: string;
   parameters: S;
   execute?: AiToolExecuteCallback<A, R>;
-  render?: ComponentType<AiToolInvocationProps<A, R>>;
+  render?: (props: AiToolInvocationProps<A, R>) => unknown;
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<
@@ -418,6 +425,10 @@ function createStore_forChatMessages(
     options?: AiGenerationOptions
   ) => Promise<SetToolResultResponse>
 ) {
+  // Keeps track of all message IDs that this client instance is allowed to
+  // auto-execute the execute() function for.
+  const autoExecutableMessages = new Set<MessageId>();
+
   const seenToolCallIds = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
@@ -571,10 +582,8 @@ function createStore_forChatMessages(
             });
           };
 
-          // TODO[nvie] The client should not BLINDLY invoke execute() here!
-          // TODO[nvie] We should only call it if our client ID is the designated client ID!
           const executeFn = toolDef?.execute;
-          if (executeFn) {
+          if (executeFn && autoExecutableMessages.has(message.id)) {
             (async () => {
               const result = await executeFn(toolCall.args, {
                 toolName: toolCall.toolName,
@@ -588,6 +597,8 @@ function createStore_forChatMessages(
             });
           }
         }
+      } else {
+        autoExecutableMessages.delete(message.id);
       }
     });
   }
@@ -783,6 +794,10 @@ function createStore_forChatMessages(
     removeByChatId,
     addDelta,
     failAllPending,
+
+    allowAutoExecuteToolCall(messageId: MessageId) {
+      autoExecutableMessages.add(messageId);
+    },
   };
 }
 
@@ -907,8 +922,6 @@ export type Ai = {
     key?: string
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  debug_getAllKnowledge(): AiKnowledgeSource[];
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerChatTool: (
     chatId: string,
     name: string,
@@ -936,7 +949,6 @@ export function createAi(config: AiConfig): Ai {
     config.enableDebugLogging,
     false // AI doesn't have actors (yet, but it will)
   );
-  const clientId = nanoid(7) as ClientId;
 
   const chatsStore = createStore_forUserAiChats();
   const toolsStore = createStore_forTools();
@@ -1230,10 +1242,6 @@ export function createAi(config: AiConfig): Ai {
     context.knowledge.updateKnowledge(layerKey, key, data);
   }
 
-  function debug_getAllKnowledge() {
-    return context.knowledge.get();
-  }
-
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
@@ -1242,12 +1250,11 @@ export function createAi(config: AiConfig): Ai {
     options?: AiGenerationOptions
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
-    return sendClientMsgWithResponse({
+    const resp: SetToolResultResponse = await sendClientMsgWithResponse({
       cmd: "set-tool-result",
       chatId,
       messageId,
       toolCallId,
-      clientId,
       result,
       generationOptions: {
         copilotId: options?.copilotId,
@@ -1261,6 +1268,10 @@ export function createAi(config: AiConfig): Ai {
         })),
       },
     });
+    if (resp.ok) {
+      messagesStore.allowAutoExecuteToolCall(resp.message.id);
+    }
+    return resp;
   }
 
   return Object.defineProperty(
@@ -1300,12 +1311,11 @@ export function createAi(config: AiConfig): Ai {
         options?: AiGenerationOptions
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
-        return sendClientMsgWithResponse({
+        const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
           sourceMessage: userMessage,
           targetMessageId,
-          clientId,
           generationOptions: {
             copilotId: options?.copilotId,
             stream: options?.stream,
@@ -1318,6 +1328,8 @@ export function createAi(config: AiConfig): Ai {
             })),
           },
         });
+        messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
+        return resp;
       },
 
       abort: (messageId: MessageId) =>
@@ -1338,7 +1350,6 @@ export function createAi(config: AiConfig): Ai {
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,
-      debug_getAllKnowledge,
 
       registerChatTool: context.toolsStore.addToolDefinition,
       unregisterChatTool: context.toolsStore.removeToolDefinition,

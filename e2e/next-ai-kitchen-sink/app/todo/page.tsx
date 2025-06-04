@@ -4,10 +4,16 @@ import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   LiveblocksProvider,
+  RegisterAiKnowledge,
+  useSendAiMessage,
 } from "@liveblocks/react/suspense";
 import { useCallback, useState } from "react";
 import { Popover } from "radix-ui";
-import { AiChat, AiTool } from "@liveblocks/react-ui";
+import {
+  AiChat,
+  AiChatComponentsEmptyProps,
+  AiTool,
+} from "@liveblocks/react-ui";
 
 export default function Page() {
   const [todos, setTodos] = useState<
@@ -115,7 +121,7 @@ export default function Page() {
               side="top"
               align="end"
               sideOffset={10}
-              className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14] rounded-xl"
+              className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] rounded-xl"
             >
               <LiveblocksProvider
                 authEndpoint="/api/auth/liveblocks"
@@ -126,6 +132,9 @@ export default function Page() {
                   <AiChat
                     chatId="todo"
                     layout="compact"
+                    components={{
+                      Empty: AiChatEmptyComponent,
+                    }}
                     tools={{
                       listTodos: defineAiTool()({
                         description: "List all todos",
@@ -216,9 +225,10 @@ export default function Page() {
                           additionalProperties: false,
                         },
 
-                        render: ({ status, result, $types }) => (
+                        render: ({ status, result, types }) => (
                           <AiTool>
-                            <AiTool.Confirmation<typeof $types>
+                            <AiTool.Confirmation
+                              types={types}
                               variant="destructive"
                               confirm={({ ids }) => {
                                 const deletedTitles = todos
@@ -261,6 +271,11 @@ export default function Page() {
                     }}
                     className="rounded-xl"
                   />
+
+                  <RegisterAiKnowledge
+                    description="A list of todos"
+                    value={todos}
+                  />
                 </ClientSideSuspense>
               </LiveblocksProvider>
             </Popover.Content>
@@ -268,5 +283,47 @@ export default function Page() {
         </Popover.Root>
       </div>
     </main>
+  );
+}
+
+const CHAT_SUGGESTIONS = [
+  {
+    label: "List all todos",
+    message: "List all my todos",
+  },
+  {
+    label: "Add new todo",
+    message: "Add a todo titled 'Buy milk'",
+  },
+  {
+    label: "List completed todos",
+    message: "List all completed todos",
+  },
+  {
+    label: "Delete todos",
+    message: "Delete the second and third todos",
+  },
+];
+
+function AiChatEmptyComponent({ chatId }: AiChatComponentsEmptyProps) {
+  const sendMessage = useSendAiMessage(chatId);
+
+  return (
+    <div className="justify-end h-full flex flex-col gap-4 px-6 pb-4">
+      <h2 className="text-xl font-semibold">How can I help you?</h2>
+
+      {/* Suggestion Tags */}
+      <div className="flex flex-wrap gap-2">
+        {CHAT_SUGGESTIONS.map(({ label, message }) => (
+          <button
+            key={label}
+            onClick={() => sendMessage(message)}
+            className="text-sm rounded-full border border-[var(--lb-foreground-subtle)] px-4 py-2 font-medium"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

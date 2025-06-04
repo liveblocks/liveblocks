@@ -5,21 +5,22 @@ import type {
   ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
-import {
-  type AsyncResult,
-  type BaseRoomInfo,
-  type DM,
-  type DU,
-  HttpError,
-  type LiveblocksError,
-  type MessageId,
-  type OpaqueClient,
-  type PartialNotificationSettings,
-  type SyncStatus,
+import type {
+  AsyncResult,
+  BaseRoomInfo,
+  CopilotId,
+  DM,
+  DU,
+  LiveblocksError,
+  MessageId,
+  OpaqueClient,
+  PartialNotificationSettings,
+  SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
   createClient,
+  HttpError,
   kInternal,
   makePoller,
   raise,
@@ -27,17 +28,21 @@ import {
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
 } from "react";
 
+import { RegisterAiKnowledge } from "./ai";
 import { config } from "./config";
-import { useIsInsideRoom } from "./contexts";
+import {
+  ClientContext,
+  useClient,
+  useClientOrNull,
+  useIsInsideRoom,
+} from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
 import { ensureNotServerSide } from "./lib/ssr";
@@ -69,14 +74,6 @@ import type {
 import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
-
-/**
- * Raw access to the React context where the LiveblocksProvider stores the
- * current client. Exposed for advanced use cases only.
- *
- * @private This is a private/advanced API. Do not rely on it.
- */
-export const ClientContext = createContext<OpaqueClient | null>(null);
 
 function missingUserError(userId: string) {
   return new Error(`resolveUsers didn't return anything for user '${userId}'`);
@@ -383,6 +380,7 @@ function makeLiveblocksContextBundle<
     useAiChatMessages,
     useCreateAiChat,
     useDeleteAiChat,
+    useSendAiMessage,
 
     ...shared.classic,
 
@@ -413,6 +411,7 @@ function makeLiveblocksContextBundle<
       useAiChatMessages: useAiChatMessagesSuspense,
       useCreateAiChat,
       useDeleteAiChat,
+      useSendAiMessage,
 
       ...shared.suspense,
     },
@@ -1067,6 +1066,16 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
   return result;
 }
 
+/**
+ * Returns a function that creates an AI chat.
+ *
+ * If you do not pass a title for the chat, it will be automatically computed
+ * after the first AI response.
+ *
+ * @example
+ * const createAiChat = useCreateAiChat();
+ * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
+ */
 function useCreateAiChat() {
   const client = useClient();
 
@@ -1076,16 +1085,28 @@ function useCreateAiChat() {
       title?: string;
       metadata?: Record<string, string | string[]>;
     }) => {
-      client[kInternal].ai.getOrCreateChat(options.id, options).catch((err) => {
-        console.error(
-          `Failed to create chat with ID "${options.id}": ${String(err)}`
-        );
-      });
+      client[kInternal].ai
+        .getOrCreateChat(options.id, {
+          title: options.title,
+          metadata: options.metadata,
+        })
+        .catch((err) => {
+          console.error(
+            `Failed to create chat with ID "${options.id}": ${String(err)}`
+          );
+        });
     },
     [client]
   );
 }
 
+/**
+ * Returns a function that deletes the AI chat with the specified id.
+ *
+ * @example
+ * const deleteAiChat = useDeleteAiChat();
+ * deleteAiChat("ai-chat-id");
+ */
 function useDeleteAiChat() {
   const client = useClient();
 
@@ -1098,6 +1119,60 @@ function useDeleteAiChat() {
       });
     },
     [client]
+  );
+}
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendMessage = useSendAiMessage(chatId);
+ * sendMessage("Hello, Liveblocks AI!");
+ */
+function useSendAiMessage(
+  chatId: string,
+  options?: { copilotId?: string }
+): (message: string) => void {
+  const client = useClient();
+  const copilotId = options?.copilotId;
+
+  return useCallback(
+    (message: string) => {
+      const messages = client[kInternal].ai.signals
+        .getChatMessagesForBranchΣ(chatId)
+        .get();
+
+      const lastMessageId = messages[messages.length - 1]?.id ?? null;
+
+      const content = [{ type: "text" as const, text: message }];
+      const newMessageId = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.createOptimistically(
+        chatId,
+        "user",
+        lastMessageId,
+        content
+      );
+
+      const targetMessageId = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.createOptimistically(
+        chatId,
+        "assistant",
+        newMessageId
+      );
+
+      void client[kInternal].ai.askUserMessageInChat(
+        chatId,
+        { id: newMessageId, parentMessageId: lastMessageId, content },
+        targetMessageId,
+        {
+          stream: false,
+          copilotId: copilotId as CopilotId | undefined,
+        }
+      );
+    },
+    [client, chatId, copilotId]
   );
 }
 
@@ -1119,6 +1194,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
     },
     suspense: {
       useClient,
@@ -1128,6 +1204,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
     },
   };
 }
@@ -1142,23 +1219,6 @@ function useEnsureNoLiveblocksProvider(options?: { allowNesting?: boolean }) {
       "You cannot nest multiple LiveblocksProvider instances in the same React tree."
     );
   }
-}
-
-/**
- * @private This is an internal API.
- */
-export function useClientOrNull<U extends BaseUserMeta>() {
-  return useContext(ClientContext) as Client<U> | null;
-}
-
-/**
- * Obtains a reference to the current Liveblocks client.
- */
-export function useClient<U extends BaseUserMeta>() {
-  return (
-    useClientOrNull<U>() ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
 }
 
 /**
@@ -1741,4 +1801,5 @@ export {
   _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
   useCreateAiChat,
   useDeleteAiChat,
+  useSendAiMessage,
 };

@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChat,
+  AiKnowledgeSource,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -42,7 +43,12 @@ import type {
   ToImmutable,
   UiChatMessage,
 } from "@liveblocks/core";
-import type { Context, PropsWithChildren, ReactNode } from "react";
+import type {
+  ComponentType,
+  Context,
+  PropsWithChildren,
+  ReactNode,
+} from "react";
 
 export type UseSyncStatusOptions = {
   /**
@@ -52,6 +58,13 @@ export type UseSyncStatusOptions = {
    * build a "Saving changes..." style UI, prefer setting `smooth: true`.
    */
   smooth?: boolean;
+};
+
+export type SendAiMessageOptions = {
+  /**
+   * The id of the copilot to use to send the message.
+   */
+  copilotId?: string;
 };
 
 export type UseStorageStatusOptions = UseSyncStatusOptions;
@@ -335,6 +348,35 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    /**
+     * Make knowledge about your application state available to any AI used in
+     * a chat or a one-off request.
+     *
+     * For example:
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current mode of my application"
+     *        value="dark" />
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current list of todos"
+     *        value={todos} />
+     *
+     * By mounting this component, the AI will get access to this knwoledge.
+     * By unmounting this component, the AI will no longer have access to it.
+     * It can choose to use or ignore this knowledge in its responses.
+     */
+    RegisterAiKnowledge: ComponentType<
+      AiKnowledgeSource & {
+        /**
+         * An optional unique key for this knowledge source. If multiple components
+         * register knowledge under the same key, the last one to mount takes
+         * precedence.
+         */
+        id?: string;
+      }
+    >;
   };
 
   suspense: {
@@ -390,6 +432,35 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    /**
+     * Make knowledge about your application state available to any AI used in
+     * a chat or a one-off request.
+     *
+     * For example:
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current mode of my application"
+     *        value="dark" />
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current list of todos"
+     *        value={todos} />
+     *
+     * By mounting this component, the AI will get access to this knwoledge.
+     * By unmounting this component, the AI will no longer have access to it.
+     * It can choose to use or ignore this knowledge in its responses.
+     */
+    RegisterAiKnowledge: ComponentType<
+      AiKnowledgeSource & {
+        /**
+         * An optional unique key for this knowledge source. If multiple components
+         * register knowledge under the same key, the last one to mount takes
+         * precedence.
+         */
+        id?: string;
+      }
+    >;
   };
 };
 
@@ -1272,6 +1343,18 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * deleteAiChat("ai-chat-id");
    */
   useDeleteAiChat(): (chatId: string) => void;
+
+  /**
+   * Returns a function to send a message in an AI chat.
+   *
+   * @example
+   * const sendMessage = useSendAiMessage(chatId);
+   * sendMessage("Hello, Liveblocks AI!");
+   */
+  useSendAiMessage(
+    chatId: string,
+    options?: SendAiMessageOptions
+  ): (message: string) => void;
 };
 
 export type LiveblocksContextBundle<

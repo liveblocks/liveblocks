@@ -4,7 +4,12 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
-export type { AiChatProps } from "./components/AiChat";
+export type {
+  AiChatComponents,
+  AiChatComponentsEmptyProps,
+  AiChatComponentsLoadingProps,
+  AiChatProps,
+} from "./components/AiChat";
 export { AiChat } from "./components/AiChat";
 export type { AiToolIconProps, AiToolProps } from "./components/AiTool";
 export { AiTool } from "./components/AiTool";
