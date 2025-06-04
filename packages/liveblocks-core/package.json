@@ -20,6 +20,8 @@
   },
   "files": [
     "dist/**",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "keywords": [
@@ -49,6 +51,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@liveblocks/tsup-config": "*",
     "@liveblocks/query-parser": "^0.1.1",
     "@types/ws": "^8.5.10",
     "dotenv": "^16.4.5",

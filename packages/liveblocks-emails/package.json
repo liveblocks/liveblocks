@@ -21,6 +21,8 @@
   },
   "files": [
     "dist/**",
+    "!**/*.d.ts.map",
+    "!**/*.d.cts.map",
     "README.md"
   ],
   "scripts": {
@@ -44,6 +46,7 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
+    "@liveblocks/tsup-config": "*",
     "csstype": "3.0.2",
     "msw": "^2.7.0"
   },
