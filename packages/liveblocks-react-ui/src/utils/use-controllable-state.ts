@@ -3,28 +3,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useControllableState<T>(
   /**
-   * The value used as an uncontrolled fallback if neither `value` nor `defaultValue` are provided.
+   * The default uncontrolled value.
    */
-  fallbackValue: T,
+  defaultValue: T,
 
   /**
    * The controlled value.
+   *
+   * If `undefined`, the returned value is uncontrolled.
+   * If set, this controlled value is used and returned as is.
    */
-  value?: T,
+  value: T | undefined,
 
   /**
-   * The event handler called when the value changes, if the value is controlled.
+   * The event handler called when the value changes.
    */
-  onChange?: (value: T) => void,
-
-  /**
-   * The default uncontrolled value.
-   */
-  defaultValue?: T
+  onChange: ((value: T) => void) | undefined
 ) {
-  const [uncontrolledValue, setUncontrolledValue] = useState(
-    defaultValue ?? fallbackValue
-  );
+  const [uncontrolledValue, setUncontrolledValue] = useState(defaultValue);
   const isControlled = value !== undefined;
   const wasControlled = useRef(isControlled);
 

@@ -668,10 +668,9 @@ export const Composer = forwardRef(
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);
     const [isCollapsed, onCollapsedChange] = useControllableState(
-      false,
+      defaultCollapsed ?? false,
       controlledCollapsed,
-      controlledOnCollapsedChange,
-      defaultCollapsed
+      controlledOnCollapsedChange
     );
 
     const canCommentFallback = useSyncExternalStore(

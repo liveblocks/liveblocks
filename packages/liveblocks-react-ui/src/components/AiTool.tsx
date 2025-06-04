@@ -205,10 +205,9 @@ export const AiTool = Object.assign(
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
       const [isCollapsed, onCollapsedChange] = useControllableState(
-        false,
+        defaultCollapsed ?? false,
         controlledCollapsed,
-        controlledOnCollapsedChange,
-        defaultCollapsed
+        controlledOnCollapsedChange
       );
       // TODO: This check won't work for cases like:
       //         <AiTool>
