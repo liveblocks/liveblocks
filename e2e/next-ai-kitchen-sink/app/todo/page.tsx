@@ -7,13 +7,31 @@ import {
   RegisterAiKnowledge,
   useSendAiMessage,
 } from "@liveblocks/react/suspense";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Popover } from "radix-ui";
 import {
   AiChat,
   AiChatComponentsEmptyProps,
   AiTool,
 } from "@liveblocks/react-ui";
+
+// A list of many colors
+// prettier-ignore
+const colors = [
+  "#FF5733", "#33FF57", "#3357FF", "#F1C40F", "#E74C3C", "#8E44AD", "#3498DB", "#2ECC71",
+  "#1ABC9C", "#F39C12", "#D35400", "#9B59B6", "#34495E", "#7F8C8D", "#BDC3C7", "#2C3E50",
+  "#16A085", "#27AE60", "#2980B9", "#8E44AD", "#F1C40F", "#E67E22", "#ECF0F1", "#95A5A6",
+  "#7D3C98", "#D35400", "#C0392B", "#27AE60", "#2980B9", "#8E44AD", "#2ECC71", "#3498DB",
+  "#9B59B6", "#34495E", "#16A085", "#F39C12", "#D35400", "#ECF0F1", "#95A5A6", "#7D3C98",
+  "#C0392B", "#27AE60", "#2980B9", "#8E44AD", "#F1C40F", "#E67E22", "#ECF0F1", "#95A5A6",
+  "#7D3C98", "#C0392B", "#16A085", "#27AE60", "#3498DB", "#2ECC71", "#9B59B6", "#34495E",
+];
+
+let i = 0;
+
+function nextColor() {
+  return colors[i++ % colors.length];
+}
 
 export default function Page() {
   const [todos, setTodos] = useState<
@@ -62,6 +80,8 @@ export default function Page() {
   const deleteTodos = useCallback((ids: number[]) => {
     setTodos((todos) => todos.filter((todo) => !ids.includes(todo.id)));
   }, []);
+
+  const [color] = useState(() => nextColor());
 
   return (
     <main className="h-screen w-full">
@@ -132,6 +152,7 @@ export default function Page() {
                   <AiChat
                     chatId="todo"
                     layout="compact"
+                    style={{ backgroundColor: color }}
                     components={{
                       Empty: AiChatEmptyComponent,
                     }}
@@ -200,11 +221,19 @@ export default function Page() {
                           toggleTodo(id);
                           return { ok: true };
                         },
-                        render: () => (
-                          <AiTool>
-                            <AiTool.Inspector />
-                          </AiTool>
-                        ),
+                        render: function MyTool({ toolCallId }) {
+                          const renderKey = useRef(0);
+                          const [color] = useState(() => nextColor());
+                          renderKey.current++;
+                          return (
+                            <AiTool
+                              style={{ backgroundColor: color }}
+                              title={`toolCallId:...${toolCallId.slice(-4)} render:${renderKey.current}`}
+                            >
+                              <AiTool.Inspector />
+                            </AiTool>
+                          );
+                        },
                       }),
 
                       deleteTodos: defineAiTool<
