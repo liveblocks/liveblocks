@@ -1,5 +1,3 @@
-import type { JSONSchema7 } from "json-schema";
-
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
 import type { Delegates, Status } from "./connection";
@@ -60,6 +58,10 @@ import type {
 import { appendDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type {
+  InferFromSchema,
+  JSONObjectSchema7,
+} from "./types/InferFromSchema";
+import type {
   IWebSocket,
   IWebSocketInstance,
   IWebSocketMessageEvent,
@@ -73,56 +75,6 @@ import { PKG_VERSION } from "./version";
 // which must happen within 4 seconds. In practice it should only take a few
 // milliseconds at most.
 const DEFAULT_REQUEST_TIMEOUT = 4_000;
-
-export type InferFromSchema<T extends JSONSchema7> =
-  //
-  JSONSchema7 extends T
-    ? JsonObject
-    : T extends {
-          type: "object";
-          properties: Record<string, JSONSchema7>;
-          required: readonly string[];
-        }
-      ? Resolve<
-          {
-            -readonly [K in keyof T["properties"] as K extends string
-              ? K extends Extract<K, T["required"][number]>
-                ? K
-                : never
-              : never]: InferFromSchema<T["properties"][K]>;
-          } & {
-            -readonly [K in keyof T["properties"] as K extends string
-              ? K extends Extract<K, T["required"][number]>
-                ? never
-                : K
-              : never]?: InferFromSchema<T["properties"][K]>;
-          }
-        >
-      : T extends {
-            type: "object";
-            properties: Record<string, JSONSchema7>;
-          }
-        ? {
-            -readonly [K in keyof T["properties"]]?: InferFromSchema<
-              T["properties"][K]
-            >;
-          }
-        : T extends {
-              type: "string" | "number" | "boolean";
-              enum: readonly (infer U)[];
-            }
-          ? U
-          : T extends { type: "string" }
-            ? string
-            : T extends { type: "number" }
-              ? number
-              : T extends { type: "boolean" }
-                ? boolean
-                : T extends { type: "null" }
-                  ? null
-                  : T extends { type: "array"; items: JSONSchema7 }
-                    ? InferFromSchema<T["items"]>[]
-                    : unknown;
 
 export type AiToolTypePack<
   A extends JsonObject = JsonObject,
@@ -203,8 +155,6 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
   JsonObject,
   ToolResultData
 >;
-
-type JSONObjectSchema7 = JSONSchema7 & { type: "object" };
 
 /**
  * Helper function to help infer the types of `args`, `render`, and `result`.
