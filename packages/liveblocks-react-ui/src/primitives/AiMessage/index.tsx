@@ -9,7 +9,7 @@ import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import type { ComponentType } from "react";
+import type { FunctionComponent } from "react";
 import { forwardRef, useCallback, useMemo } from "react";
 
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
@@ -73,7 +73,7 @@ function ToolInvocation({
   );
 
   if (tool === undefined || tool.render === undefined) return null;
-  const RenderFn = tool.render as ComponentType<
+  const RenderFn = tool.render as FunctionComponent<
     AiToolInvocationProps<JsonObject, ToolResultData>
   >;
 
