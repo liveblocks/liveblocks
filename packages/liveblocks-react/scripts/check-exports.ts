@@ -9,6 +9,8 @@ const ALLOW_NO_JSDOCS = [
   "MutationContext",
   "UseStorageStatusOptions",
   "UseThreadsOptions",
+  "RegisterAiKnowledgeProps",
+  "RegisterAiToolProps",
 ];
 
 // Add any hooks here that are allowed to have a different doc string between
@@ -44,6 +46,8 @@ const ALLOW_NO_FACTORY = [
   "MutationContext",
   "UseStorageStatusOptions",
   "UseThreadsOptions",
+  "RegisterAiKnowledgeProps",
+  "RegisterAiToolProps",
 ];
 
 /**

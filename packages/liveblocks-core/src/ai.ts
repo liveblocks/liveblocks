@@ -852,17 +852,17 @@ function createStore_forUserAiChats() {
   // one-off updates to). But externally we expose a derived signal that
   // produces a new lazy "object" copy of this map any time it changes. This
   // plays better with React APIs.
-  const mutableΣ = new MutableSignal(
+  const allChatsInclDeletedΣ = new MutableSignal(
     SortedList.with<AiChat>((x, y) => y.createdAt < x.createdAt)
   );
-  const chatsΣ = DerivedSignal.from(() =>
-    Array.from(mutableΣ.get()).filter((c) => !c.deletedAt)
+  const nonDeletedChatsΣ = DerivedSignal.from(() =>
+    Array.from(allChatsInclDeletedΣ.get()).filter((c) => !c.deletedAt)
   );
 
   function upsertMany(chats: AiChat[]) {
-    mutableΣ.mutate((list) => {
+    allChatsInclDeletedΣ.mutate((list) => {
       for (const chat of chats) {
-        remove(chat.id);
+        list.removeBy((c) => c.id === chat.id, 1);
         list.add(chat);
       }
     });
@@ -872,22 +872,35 @@ function createStore_forUserAiChats() {
     upsertMany([chat]);
   }
 
-  function remove(chatId: string) {
-    mutableΣ.mutate((list) => list.removeBy((c) => c.id === chatId, 1));
+  /**
+   * "Just" deleting a chat we already know about might break assumptions in
+   * clients that are currently displaying the chat on-screen. So instead,
+   * we'll re-render those so they can display the chat is deleted.
+   */
+  function markDeleted(chatId: string) {
+    allChatsInclDeletedΣ.mutate((list) => {
+      const chat = list.find((c) => c.id === chatId);
+      if (!chat) return false;
+
+      upsert({ ...chat, deletedAt: now() });
+      return undefined;
+    });
   }
 
   function getChatById(chatId: string) {
-    return Array.from(mutableΣ.get()).find((chat) => chat.id === chatId);
+    return Array.from(allChatsInclDeletedΣ.get()).find(
+      (chat) => chat.id === chatId
+    );
   }
 
   return {
-    chatsΣ,
+    chatsΣ: nonDeletedChatsΣ,
     getChatById,
 
     // Mutations
     upsert,
     upsertMany,
-    remove,
+    markDeleted,
   };
 }
 
@@ -1115,7 +1128,7 @@ export function createAi(config: AiConfig): Ai {
               context.messagesStore.remove(m.chatId, m.id);
             }
             for (const chatId of msg["-chats"] ?? []) {
-              context.chatsStore.remove(chatId);
+              context.chatsStore.markDeleted(chatId);
               context.messagesStore.removeByChatId(chatId);
             }
             for (const chatId of msg.clear ?? []) {
@@ -1146,7 +1159,7 @@ export function createAi(config: AiConfig): Ai {
           break;
 
         case "delete-chat":
-          context.chatsStore.remove(msg.chatId);
+          context.chatsStore.markDeleted(msg.chatId);
           context.messagesStore.removeByChatId(msg.chatId);
           break;
 
