@@ -140,13 +140,17 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const containerBottomRef = useRef<HTMLDivElement | null>(null);
+    const isScrollIndicatorEnabled = !isLoading && !error;
     const isScrollAtBottom = useVisible(containerBottomRef, {
-      enabled: !isLoading && !error,
+      enabled: isScrollIndicatorEnabled,
       root: containerRef,
       rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR,
+      initialValue: null,
     });
     const isScrollIndicatorVisible =
-      isLoading || error ? false : !isScrollAtBottom;
+      isScrollIndicatorEnabled && isScrollAtBottom !== null
+        ? !isScrollAtBottom
+        : false;
 
     const [lastSentMessageId, setLastSentMessageId] =
       useState<MessageId | null>(null);
