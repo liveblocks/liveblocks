@@ -28,14 +28,27 @@ export default function Page() {
 }
 
 function ChatPopup() {
-  // TODO fetch the latest chatId after the suspense bug is resolved
   const [chatId, setChatId] = useState(getDefaultChatId);
   const [showListing, setShowListing] = useState(false);
+  const { chat, isLoading } = useAiChat(chatId);
+  const deleteAiChat = useDeleteAiChat();
 
   const goToChat = useCallback((id: string) => {
     setChatId(id);
     setShowListing(false);
   }, []);
+
+  const deleteChat = useCallback(
+    (id: string) => {
+      deleteAiChat(id);
+
+      // If current chat is deleted, create a new one
+      if (chat.id === id) {
+        setChatId(nanoid());
+      }
+    },
+    [chat, deleteAiChat, nanoid]
+  );
 
   return (
     <div className="ai-widget-container">
@@ -55,29 +68,26 @@ function ChatPopup() {
             sideOffset={16}
             side="top"
             align="end"
-            onInteractOutside={(e) => {
-              // Don't close when clicking outside
-              e.preventDefault();
-            }}
+            onInteractOutside={(e) => e.preventDefault()} // Don't close when clicking outside
             className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-neutral-200 bg-neutral-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
-              <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
+              <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4 truncate">
                 <button
                   onClick={() => setShowListing(!showListing)}
-                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100"
+                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 grow shrink truncate"
                 >
-                  <ChevronLeftIcon className="size-4 opacity-70 -ml-1" />
+                  <ChevronLeftIcon className="size-4 opacity-70 -ml-1 shrink-0 grow-0" />
                   {showListing ? (
                     <span>Back</span>
                   ) : (
-                    // <ClientSideSuspense fallback={null}>
-                    <Title chatId={chatId} />
-                    // </ClientSideSuspense>
+                    <span className="truncate">
+                      {isLoading ? null : chat?.title || "Untitled"}
+                    </span>
                   )}
                 </button>
 
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => goToChat(nanoid())}
                     className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100"
@@ -93,7 +103,10 @@ function ChatPopup() {
               </div>
               <div className="relative flex-grow">
                 {showListing ? (
-                  <ChatListing onSelectChat={goToChat} />
+                  <ChatListing
+                    onSelectChat={goToChat}
+                    onDeleteChat={deleteChat}
+                  />
                 ) : (
                   <Chat chatId={chatId} />
                 )}
@@ -151,9 +164,6 @@ function Chat({ chatId }: { chatId: string }) {
             );
           },
 
-          // TODO default spinner is probably fine?
-          // Loading: () => <div>loading... </div>,
-
           Anchor: (props) => (
             <Link href={props.href || ""}>{props.children}</Link>
           ),
@@ -166,8 +176,10 @@ function Chat({ chatId }: { chatId: string }) {
 
 function ChatListing({
   onSelectChat,
+  onDeleteChat,
 }: {
   onSelectChat: (chatId: string) => void;
+  onDeleteChat: (chatId: string) => void;
 }) {
   const deleteAiChat = useDeleteAiChat();
   const { chats, error, isLoading, hasFetchedAll, fetchMore, isFetchingMore } =
@@ -194,10 +206,9 @@ function ChatListing({
             className="group relative flex items-center justify-between p-[var(--spacing)] bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
           >
             <div className="flex flex-col gap-0.5">
-              {/* TODO hover, full width, chat icon at left, etc */}
               <button
                 onClick={() => onSelectChat(chat.id)}
-                className="text-left font-medium before:absolute before:inset-0"
+                className="text-left font-medium before:absolute before:inset-0 truncate"
               >
                 {chat.title || "Untitled"}
               </button>
@@ -213,7 +224,7 @@ function ChatListing({
               </div>
             </div>
             <button
-              onClick={() => deleteAiChat(chat.id)}
+              onClick={() => onDeleteChat(chat.id)}
               className="relative hidden group-hover:block"
               title="Delete chat"
             >
@@ -233,17 +244,6 @@ function ChatListing({
       </ul>
     </div>
   );
-}
-
-function Title({ chatId }: { chatId: string }) {
-  const { chat, error, isLoading } = useAiChat(chatId);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  // TODO this will work after a bug fix
-  return <>{chat?.title || "Untitled"}</>;
 }
 
 // Creating a new chat every hour

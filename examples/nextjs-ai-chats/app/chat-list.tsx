@@ -2,11 +2,12 @@
 
 import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ComponentProps } from "react";
 
 export function ChatList() {
   const params = useParams();
+  const router = useRouter();
 
   const { chats, isLoading, error } = useAiChats();
   const deleteAiChat = useDeleteAiChat();
@@ -27,7 +28,7 @@ export function ChatList() {
 
   return (
     <ul className="p-0 m-0 flex flex-col gap-px text-sm">
-      {chats.map((chat) => (
+      {chats.map((chat, index) => (
         <li
           key={chat.id}
           className={`group list-none px-2 py-1.5 hover:bg-neutral-300/40 transition-colors rounded flex justify-between isolate relative gap-2 ${
@@ -37,12 +38,18 @@ export function ChatList() {
           <Link href={`/${chat.id}`} className="absolute inset-0" />
           <span className="truncate">{chat.title || "Untitled"}</span>
 
-          {/* TODO: Remove this check when `useAiChat` bug is fixed */}
-          {params.chatId !== chat.id ? (
-            <button onClick={() => deleteAiChat(chat.id)} className="z-10">
-              <TrashIcon className="text-red-600 size-3.5 hidden group-hover:block" />
-            </button>
-          ) : null}
+          <button
+            onClick={() => {
+              deleteAiChat(chat.id);
+              if (params.chatId === chat.id) {
+                const newestChat = chats[index === 0 ? 1 : 0];
+                router.push(`/${newestChat.id}`);
+              }
+            }}
+            className="z-10"
+          >
+            <TrashIcon className="text-red-600 size-3.5 hidden group-hover:block" />
+          </button>
         </li>
       ))}
     </ul>
