@@ -1,12 +1,13 @@
-import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
+import { useAiChats } from "@liveblocks/react";
 import { ComponentProps } from "react";
 
 export function ChatListing({
   onSelectChat,
+  onDeleteChat,
 }: {
   onSelectChat: (chatId: string) => void;
+  onDeleteChat: (chatId: string) => void;
 }) {
-  const deleteAiChat = useDeleteAiChat();
   const { chats, error, isLoading, hasFetchedAll, fetchMore, isFetchingMore } =
     useAiChats();
 
@@ -50,7 +51,7 @@ export function ChatListing({
               </div>
             </div>
             <button
-              onClick={() => deleteAiChat(chat.id)}
+              onClick={() => onDeleteChat(chat.id)}
               className="relative hidden group-hover:block"
               title="Delete chat"
             >

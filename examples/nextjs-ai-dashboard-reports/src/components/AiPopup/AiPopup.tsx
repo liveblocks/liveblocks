@@ -4,6 +4,7 @@ import {
   ClientSideSuspense,
   RegisterAiTool,
   RegisterAiKnowledge,
+  useDeleteAiChat,
 } from "@liveblocks/react";
 import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
@@ -33,11 +34,19 @@ function ChatPopup() {
   const [chatId, setChatId] = useState(getDefaultChatId);
   const [showListing, setShowListing] = useState(false);
   const { chat, isLoading } = useAiChat(chatId);
+  const deleteAiChat = useDeleteAiChat();
 
   const goToChat = useCallback((id: string) => {
     setChatId(id);
     setShowListing(false);
   }, []);
+
+  const deleteChat = useCallback(
+    (id: string) => {
+      deleteAiChat(id);
+    },
+    [deleteAiChat]
+  );
 
   return (
     <div className="ai-widget-container">
@@ -63,7 +72,13 @@ function ChatPopup() {
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
                 <button
-                  onClick={() => setShowListing(!showListing)}
+                  onClick={() => {
+                    // If the current chat is deleted, don't go back to it, create a new one
+                    if (chat?.deletedAt) {
+                      setChatId(nanoid());
+                    }
+                    setShowListing(!showListing);
+                  }}
                   className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 truncate"
                 >
                   <ChevronLeftIcon className="size-4 opacity-70 -ml-1 shrink-0" />
@@ -92,7 +107,10 @@ function ChatPopup() {
               </div>
               <div className="relative flex-grow">
                 {showListing ? (
-                  <ChatListing onSelectChat={goToChat} />
+                  <ChatListing
+                    onSelectChat={goToChat}
+                    onDeleteChat={deleteChat}
+                  />
                 ) : (
                   <Chat chatId={chatId} />
                 )}
