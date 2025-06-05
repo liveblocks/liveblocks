@@ -139,12 +139,7 @@ export function useSemiControllableState<T>(
   /**
    * The event handler called when the uncontrolled value changes.
    */
-  onChange: ((value: T) => void) | undefined,
-
-  /**
-   * An optional comparison function.
-   */
-  isEqual: (a: T, b: T) => boolean = Object.is
+  onChange: ((value: T) => void) | undefined
 ) {
   const [uncontrolledValue, setUncontrolledValue] = useState(value);
   const lastChange = useRef<"uncontrolled" | "controlled">("controlled");
@@ -153,7 +148,7 @@ export function useSemiControllableState<T>(
 
   // Listen to `value` changes during the render phase to avoid
   // having to always sync `uncontrolledValue` on every change.
-  if (!isEqual(lastValue.current, value)) {
+  if (!Object.is(lastValue.current, value)) {
     lastValue.current = value;
     lastChange.current = "controlled";
   }
