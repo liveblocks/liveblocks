@@ -11,6 +11,10 @@ interface Options extends ObserveOptions {
   enabled?: boolean;
 }
 
+interface VisibleOptions<T = boolean> extends Options {
+  initialValue?: T;
+}
+
 type IntersectionObserverSingleCallback = (
   entry: IntersectionObserverEntry
 ) => void;
@@ -127,8 +131,13 @@ export function useIntersectionCallback(
 /**
  * Observe whether an element is currently visible or not.
  */
-export function useVisible(ref: RefObject<Element>, options?: Options) {
-  const [isVisible, setVisible] = useState(false);
+export function useVisible<T extends boolean | null = boolean>(
+  ref: RefObject<Element>,
+  options?: VisibleOptions<T>
+) {
+  const [isVisible, setVisible] = useState(
+    options?.initialValue !== undefined ? options.initialValue : false
+  );
 
   useIntersectionCallback(
     ref,

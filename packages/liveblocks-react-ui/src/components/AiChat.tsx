@@ -4,11 +4,10 @@ import type {
   CopilotId,
   MessageId,
 } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
 import {
   RegisterAiKnowledge,
+  RegisterAiTool,
   useAiChatMessages,
-  useClient,
 } from "@liveblocks/react";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
@@ -141,16 +140,17 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     const containerBottomRef = useRef<HTMLDivElement | null>(null);
+    const isScrollIndicatorEnabled = !isLoading && !error;
     const isScrollAtBottom = useVisible(containerBottomRef, {
-      enabled: !isLoading && !error,
+      enabled: isScrollIndicatorEnabled,
       root: containerRef,
       rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR,
+      initialValue: null,
     });
     const isScrollIndicatorVisible =
-      isLoading || error ? false : !isScrollAtBottom;
-
-    const client = useClient();
-    const ai = client[kInternal].ai;
+      isScrollIndicatorEnabled && isScrollAtBottom !== null
+        ? !isScrollAtBottom
+        : false;
 
     const [lastSentMessageId, setLastSentMessageId] =
       useState<MessageId | null>(null);
@@ -160,18 +160,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       () => containerRef.current,
       []
     );
-
-    // Register the provided tools to the chat on mount and unregister them on unmount
-    useEffect(() => {
-      Object.entries(tools).map(([key, value]) =>
-        ai.registerChatTool(chatId, key, value)
-      );
-      return () => {
-        Object.entries(tools).map(([key]) =>
-          ai.unregisterChatTool(chatId, key)
-        );
-      };
-    }, [ai, chatId, tools]);
 
     const scrollToBottomCallbackRef =
       useRef<(behavior: "instant" | "smooth") => void>(undefined);
@@ -212,6 +200,11 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               />
             ))
           : null}
+
+        {Object.entries(tools).map(([name, tool]) => (
+          <RegisterAiTool key={name} chatId={chatId} name={name} tool={tool} />
+        ))}
+
         <div className="lb-ai-chat-content">
           {isLoading ? (
             <Loading />

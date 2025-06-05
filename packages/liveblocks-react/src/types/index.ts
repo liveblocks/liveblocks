@@ -15,7 +15,6 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChat,
-  AiKnowledgeSource,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -49,6 +48,8 @@ import type {
   PropsWithChildren,
   ReactNode,
 } from "react";
+
+import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "../ai";
 
 export type UseSyncStatusOptions = {
   /**
@@ -367,16 +368,9 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * By unmounting this component, the AI will no longer have access to it.
      * It can choose to use or ignore this knowledge in its responses.
      */
-    RegisterAiKnowledge: ComponentType<
-      AiKnowledgeSource & {
-        /**
-         * An optional unique key for this knowledge source. If multiple components
-         * register knowledge under the same key, the last one to mount takes
-         * precedence.
-         */
-        id?: string;
-      }
-    >;
+    RegisterAiKnowledge: ComponentType<RegisterAiKnowledgeProps>;
+
+    RegisterAiTool: ComponentType<RegisterAiToolProps>;
   };
 
   suspense: {
@@ -451,16 +445,9 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * By unmounting this component, the AI will no longer have access to it.
      * It can choose to use or ignore this knowledge in its responses.
      */
-    RegisterAiKnowledge: ComponentType<
-      AiKnowledgeSource & {
-        /**
-         * An optional unique key for this knowledge source. If multiple components
-         * register knowledge under the same key, the last one to mount takes
-         * precedence.
-         */
-        id?: string;
-      }
-    >;
+    RegisterAiKnowledge: ComponentType<RegisterAiKnowledgeProps>;
+
+    RegisterAiTool: ComponentType<RegisterAiToolProps>;
   };
 };
 

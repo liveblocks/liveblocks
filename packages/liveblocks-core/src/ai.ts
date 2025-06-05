@@ -36,6 +36,7 @@ import type {
   AiGeneratingAssistantMessage,
   AiGenerationOptions,
   AiKnowledgeSource,
+  AiToolDescription,
   AiToolInvocationPart,
   AiUserContentPart,
   AiUserMessage,
@@ -106,17 +107,22 @@ export type InferFromSchema<T extends JSONSchema7> =
               T["properties"][K]
             >;
           }
-        : T extends { type: "string" }
-          ? string
-          : T extends { type: "number" }
-            ? number
-            : T extends { type: "boolean" }
-              ? boolean
-              : T extends { type: "null" }
-                ? null
-                : T extends { type: "array"; items: JSONSchema7 }
-                  ? InferFromSchema<T["items"]>[]
-                  : unknown;
+        : T extends {
+              type: "string" | "number" | "boolean";
+              enum: readonly (infer U)[];
+            }
+          ? U
+          : T extends { type: "string" }
+            ? string
+            : T extends { type: "number" }
+              ? number
+              : T extends { type: "boolean" }
+                ? boolean
+                : T extends { type: "null" }
+                  ? null
+                  : T extends { type: "array"; items: JSONSchema7 }
+                    ? InferFromSchema<T["items"]>[]
+                    : unknown;
 
 export type AiToolTypePack<
   A extends JsonObject = JsonObject,
@@ -125,6 +131,16 @@ export type AiToolTypePack<
   A: A;
   R: R;
 };
+
+export type AskUserMessageInChatOptions = Omit<
+  AiGenerationOptions,
+  "tools" | "knowledge"
+>;
+
+export type SetToolResultOptions = Omit<
+  AiGenerationOptions,
+  "tools" | "knowledge"
+>;
 
 export type AiToolInvocationProps<
   A extends JsonObject,
@@ -354,64 +370,94 @@ function now(): ISODateString {
   return new Date().toISOString() as ISODateString;
 }
 
+// Symbol used to register tools globally. These tools are not scoped to
+// a particular chatId and made available to any AiChat instance.
+const kWILDCARD = Symbol("*");
+
 function createStore_forTools() {
-  const toolsByChatIdΣ = new DefaultMap((_chatId: string) => {
-    return new DefaultMap((_toolName: string) => {
-      return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
+  const toolsByChatIdΣ = new DefaultMap(
+    (_chatId: string | typeof kWILDCARD) => {
+      return new DefaultMap((_name: string) => {
+        return new Signal<AiOpaqueToolDefinition | undefined>(undefined);
+      });
+    }
+  );
+
+  //
+  // TODO This administration is pretty ugly at the moment.
+  // Would be nice to have some kind of helper for constructing these
+  // structures. Maintaining them in all these different DefaultMaps is pretty
+  // getting pretty tricky. Ideas are very welcomed!
+  //
+  // Key here is: '["my-tool","my-chat"]' or just '["my-tool"]' (for global tools)
+  //
+  const globalOrScopedToolΣ = new DefaultMap((nameAndChat: string) => {
+    const [name, chatId] = tryParseJson(nameAndChat) as [
+      string,
+      string | undefined,
+    ];
+    return DerivedSignal.from(() => {
+      return (
+        // A tool that's registered and scoped to a specific chat ID...
+        (chatId !== undefined
+          ? toolsByChatIdΣ.get(chatId)?.get(name)
+          : undefined
+        )?.get() ??
+        // ...or a globally registered tool
+        toolsByChatIdΣ.getOrCreate(kWILDCARD).get(name)?.get()
+      );
     });
   });
 
-  function getToolDefinitionΣ(chatId: string, toolName: string) {
-    return toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(toolName);
+  function getToolΣ(name: string, chatId?: string) {
+    const key = JSON.stringify(chatId !== undefined ? [name, chatId] : [name]);
+    return globalOrScopedToolΣ.getOrCreate(key);
   }
 
-  function addToolDefinition(
-    chatId: string,
+  function registerTool(
     name: string,
-    definition: AiOpaqueToolDefinition
+    tool: AiOpaqueToolDefinition,
+    chatId?: string
   ) {
-    if (!definition.execute && !definition.render) {
+    if (!tool.execute && !tool.render) {
       throw new Error(
-        "A tool definition must have an execute() function, a render property, or both."
+        "A tool definition must have an execute() function, a render() function, or both."
       );
     }
 
-    toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name).set(definition);
+    const key = chatId ?? kWILDCARD;
+    toolsByChatIdΣ.getOrCreate(key).getOrCreate(name).set(tool);
+
+    return () => unregisterTool(key, name);
   }
 
-  function removeToolDefinition(chatId: string, toolName: string) {
+  function unregisterTool(chatId: string | typeof kWILDCARD, name: string) {
     const tools = toolsByChatIdΣ.get(chatId);
     if (tools === undefined) return;
-    const tool = tools.get(toolName);
+    const tool = tools.get(name);
     if (tool === undefined) return;
     tool.set(undefined);
   }
 
-  function getToolsForChat(chatId: string): {
-    name: string;
-    definition: AiOpaqueToolDefinition;
-  }[] {
-    const tools = toolsByChatIdΣ.get(chatId);
-    if (tools === undefined) return [];
-    return Array.from(tools.entries())
-      .map(([name, tool]) => {
-        if (tool.get() === undefined) return null;
-        return {
-          name,
-          definition: tool.get(),
-        };
-      })
-      .filter((tool) => tool !== null) as {
-      name: string;
-      definition: AiOpaqueToolDefinition;
-    }[];
+  function getToolDescriptions(chatId: string): AiToolDescription[] {
+    const globalToolsΣ = toolsByChatIdΣ.get(kWILDCARD);
+    const scopedToolsΣ = toolsByChatIdΣ.get(chatId);
+    return Array.from([
+      ...(globalToolsΣ?.entries() ?? []),
+      ...(scopedToolsΣ?.entries() ?? []),
+    ]).flatMap(([name, toolΣ]) => {
+      const tool = toolΣ.get();
+      return tool
+        ? [{ name, description: tool.description, parameters: tool.parameters }]
+        : [];
+    });
   }
 
   return {
-    getToolDefinitionΣ,
-    getToolsForChat,
-    addToolDefinition,
-    removeToolDefinition,
+    getToolDescriptions,
+
+    getToolΣ,
+    registerTool,
   };
 }
 
@@ -422,7 +468,7 @@ function createStore_forChatMessages(
     messageId: MessageId,
     toolCallId: string,
     result: ToolResultData,
-    options?: AiGenerationOptions
+    options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>
 ) {
   // Keeps track of all message IDs that this client instance is allowed to
@@ -565,7 +611,7 @@ function createStore_forChatMessages(
           seenToolCallIds.add(toolCall.toolCallId);
 
           const toolDef = toolsStore
-            .getToolDefinitionΣ(message.chatId, toolCall.toolName)
+            .getToolΣ(toolCall.toolName, message.chatId)
             .get();
 
           const respondSync = (result: ToolResultData) => {
@@ -885,7 +931,7 @@ export type Ai = {
           content: AiUserContentPart[];
         },
     targetMessageId: MessageId,
-    options?: AiGenerationOptions
+    options?: AskUserMessageInChatOptions
   ) => Promise<AskInChatResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   abort: (messageId: MessageId) => Promise<AbortAiResponse>;
@@ -895,7 +941,7 @@ export type Ai = {
     messageId: MessageId,
     toolCallId: string,
     result: ToolResultData,
-    options?: AiGenerationOptions
+    options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
@@ -904,10 +950,10 @@ export type Ai = {
       chatId: string,
       branch?: MessageId
     ): DerivedSignal<UiChatMessage[]>;
-    getToolDefinitionΣ(
-      chatId: string,
-      toolName: string
-    ): Signal<AiOpaqueToolDefinition | undefined>;
+    getToolΣ(
+      name: string,
+      chatId?: string
+    ): DerivedSignal<AiOpaqueToolDefinition | undefined>;
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
@@ -922,13 +968,11 @@ export type Ai = {
     key?: string
   ) => void;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  registerChatTool: (
-    chatId: string,
+  registerTool: (
     name: string,
-    definition: AiOpaqueToolDefinition
-  ) => void;
-  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  unregisterChatTool: (chatId: string, toolName: string) => void;
+    tool: AiOpaqueToolDefinition,
+    chatId?: string
+  ) => () => void;
 };
 
 /** @internal */
@@ -1247,9 +1291,11 @@ export function createAi(config: AiConfig): Ai {
     messageId: MessageId,
     toolCallId: string,
     result: ToolResultData,
-    options?: AiGenerationOptions
+    options?: SetToolResultOptions
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
+    const tools = context.toolsStore.getToolDescriptions(chatId);
+
     const resp: SetToolResultResponse = await sendClientMsgWithResponse({
       cmd: "set-tool-result",
       chatId,
@@ -1260,12 +1306,11 @@ export function createAi(config: AiConfig): Ai {
         copilotId: options?.copilotId,
         stream: options?.stream,
         timeout: options?.timeout,
+
+        // Knowledge and tools aren't coming from the options, but retrieved
+        // from the global context
         knowledge: knowledge.length > 0 ? knowledge : undefined,
-        tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-          name: tool.name,
-          description: tool.definition.description,
-          parameters: tool.definition.parameters,
-        })),
+        tools: tools.length > 0 ? tools : undefined,
       },
     });
     if (resp.ok) {
@@ -1308,9 +1353,11 @@ export function createAi(config: AiConfig): Ai {
               content: AiUserContentPart[];
             },
         targetMessageId: MessageId,
-        options?: AiGenerationOptions
+        options?: AskUserMessageInChatOptions
       ): Promise<AskInChatResponse> => {
         const knowledge = context.knowledge.get();
+        const tools = context.toolsStore.getToolDescriptions(chatId);
+
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -1320,12 +1367,11 @@ export function createAi(config: AiConfig): Ai {
             copilotId: options?.copilotId,
             stream: options?.stream,
             timeout: options?.timeout,
+
+            // Knowledge and tools aren't coming from the options, but retrieved
+            // from the global context
             knowledge: knowledge.length > 0 ? knowledge : undefined,
-            tools: context.toolsStore.getToolsForChat(chatId).map((tool) => ({
-              name: tool.name,
-              description: tool.definition.description,
-              parameters: tool.definition.parameters,
-            })),
+            tools: tools.length > 0 ? tools : undefined,
           },
         });
         messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
@@ -1343,7 +1389,7 @@ export function createAi(config: AiConfig): Ai {
         chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
-        getToolDefinitionΣ: context.toolsStore.getToolDefinitionΣ,
+        getToolΣ: context.toolsStore.getToolΣ,
       },
 
       getChatById: context.chatsStore.getChatById,
@@ -1351,8 +1397,7 @@ export function createAi(config: AiConfig): Ai {
       deregisterKnowledgeLayer,
       updateKnowledge,
 
-      registerChatTool: context.toolsStore.addToolDefinition,
-      unregisterChatTool: context.toolsStore.removeToolDefinition,
+      registerTool: context.toolsStore.registerTool,
     } satisfies Ai,
     kInternal,
     { enumerable: false }
