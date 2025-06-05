@@ -137,17 +137,17 @@ function AiToolConfirmation<
         <div className="lb-ai-tool-confirmation-actions">
           <Button
             disabled={!enabled}
-            onClick={onConfirmClick}
-            variant={variant === "destructive" ? "destructive" : "primary"}
-          >
-            Confirm
-          </Button>
-          <Button
-            disabled={!enabled}
             onClick={onCancelClick}
             variant="secondary"
           >
             Cancel
+          </Button>
+          <Button
+            disabled={!enabled}
+            onClick={onConfirmClick}
+            variant={variant === "destructive" ? "destructive" : "primary"}
+          >
+            Confirm
           </Button>
         </div>
       </div>
