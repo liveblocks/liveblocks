@@ -41,13 +41,8 @@ function ChatPopup() {
   const deleteChat = useCallback(
     (id: string) => {
       deleteAiChat(id);
-
-      // If current chat is deleted, create a new one
-      if (chat.id === id) {
-        setChatId(nanoid());
-      }
     },
-    [chat, deleteAiChat, nanoid]
+    [deleteAiChat]
   );
 
   return (
@@ -74,7 +69,14 @@ function ChatPopup() {
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4 truncate">
                 <button
-                  onClick={() => setShowListing(!showListing)}
+                  onClick={() => {
+                    // If the current chat is deleted, don't go back to it, create a new one
+                    if (chat?.deletedAt) {
+                      setChatId(nanoid());
+                    }
+
+                    setShowListing(!showListing);
+                  }}
                   className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 grow shrink truncate"
                 >
                   <ChevronLeftIcon className="size-4 opacity-70 -ml-1 shrink-0 grow-0" />
