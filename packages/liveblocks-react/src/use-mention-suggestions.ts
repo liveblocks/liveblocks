@@ -15,21 +15,15 @@ const MENTION_SUGGESTIONS_DEBOUNCE = 500;
  * but to support multiple mention kinds (user, group, etc), they're now
  * typed as `MentionData[]`.
  */
-function normalizeMentionSuggestions(
-  suggestions: string[] | MentionData[]
+function normalizeMentionSuggestions<T extends string[] | MentionData[]>(
+  suggestions: T
 ): MentionData[] {
-  if (suggestions.length === 0) {
-    return [];
-  }
-
-  if (typeof suggestions[0] === "string") {
-    return (suggestions as string[]).map((id) => ({
-      kind: "user" as const,
-      id,
-    }));
-  }
-
-  return suggestions as MentionData[];
+  return suggestions.map(
+    (suggestion): MentionData =>
+      typeof suggestion === "string"
+        ? { kind: "user" as const, id: suggestion }
+        : suggestion
+  );
 }
 
 /**
