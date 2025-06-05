@@ -1,5 +1,6 @@
 {
-  "name": "template-insights",
+  "name": "nextjs-ai-dashboard-reports",
+  "description": "How to build a pop-up AI inside a dashboard with Liveblocks and Next.js",
   "version": "0.1.0",
   "private": true,
   "scripts": {

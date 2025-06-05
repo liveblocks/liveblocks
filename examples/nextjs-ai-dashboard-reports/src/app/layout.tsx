@@ -1,12 +1,12 @@
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import React from "react";
-import "./globals.css";
 import { siteConfig } from "./siteConfig";
 import { Providers } from "./providers";
 import { AiWidget } from "@/components/AiWidget";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
+import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://yoururl.com"),

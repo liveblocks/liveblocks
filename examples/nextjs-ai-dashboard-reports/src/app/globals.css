@@ -3,5 +3,18 @@
 @tailwind utilities;
 
 .lb-root {
+  --lb-accent: theme("colors.blue.500");
   font-size: 15px;
+}
+
+.lb-ai-chat {
+  --lb-background: theme("colors.neutral.50");
+  --lb-dynamic-background: theme("colors.white");
+  --lb-foreground: theme("colors.neutral.900");
+}
+
+.dark .lb-ai-chat {
+  --lb-background: theme("colors.neutral.800");
+  --lb-dynamic-background: theme("colors.neutral.900");
+  --lb-foreground: theme("colors.neutral.50");
 }
