@@ -371,14 +371,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     RegisterAiKnowledge: ComponentType<RegisterAiKnowledgeProps>;
 
     RegisterAiTool: ComponentType<RegisterAiToolProps>;
-
-    /**
-     * Register a callback to be invoked when a particular chat is deleted.
-     *
-     * This hook is EXPERIMENTAL. We haven't committed to this API yet.
-     * @experimental
-     */
-    useAiChatDeletedListener(chatId: string, callback: () => void): void;
   };
 
   suspense: {
@@ -456,14 +448,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     RegisterAiKnowledge: ComponentType<RegisterAiKnowledgeProps>;
 
     RegisterAiTool: ComponentType<RegisterAiToolProps>;
-
-    /**
-     * Register a callback to be invoked when a particular chat is deleted.
-     *
-     * This hook is EXPERIMENTAL. We haven't committed to this API yet.
-     * @experimental
-     */
-    useAiChatDeletedListener(chatId: string, callback: () => void): void;
   };
 };
 

@@ -6,7 +6,6 @@ import { kInternal, nanoid } from "@liveblocks/core";
 import { memo, useEffect, useId, useState } from "react";
 
 import { useClient } from "./contexts";
-import { useLatest } from "./lib/use-latest";
 
 function useAi() {
   return useClient()[kInternal].ai;
@@ -128,26 +127,3 @@ export const RegisterAiTool = memo(function RegisterAiTool({
 
   return null;
 });
-
-/**
- * Register a callback to be invoked when a particular chat is deleted.
- *
- * This hook is EXPERIMENTAL. We haven't committed to this API yet.
- * @experimental
- */
-export function useAiChatDeletedListener(
-  chatId: string,
-  callback: () => void
-): void {
-  const ai = useAi();
-  const savedCallback = useLatest(callback);
-
-  useEffect(
-    () =>
-      ai.events.chatDeleted.subscribe((deletedChatId) => {
-        if (deletedChatId !== chatId) return /* Do nothing */;
-        savedCallback.current();
-      }),
-    [ai, savedCallback, chatId]
-  );
-}

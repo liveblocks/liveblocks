@@ -35,11 +35,7 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import {
-  RegisterAiKnowledge,
-  RegisterAiTool,
-  useAiChatDeletedListener,
-} from "./ai";
+import { RegisterAiKnowledge, RegisterAiTool } from "./ai";
 import { config } from "./config";
 import {
   ClientContext,
@@ -1200,7 +1196,6 @@ export function createSharedContext<U extends BaseUserMeta>(
       useSyncStatus,
       RegisterAiKnowledge,
       RegisterAiTool,
-      useAiChatDeletedListener,
     },
     suspense: {
       useClient,
@@ -1212,7 +1207,6 @@ export function createSharedContext<U extends BaseUserMeta>(
       useSyncStatus,
       RegisterAiKnowledge,
       RegisterAiTool,
-      useAiChatDeletedListener,
     },
   };
 }
