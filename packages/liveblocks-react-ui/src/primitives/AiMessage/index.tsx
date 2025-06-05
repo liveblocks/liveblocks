@@ -13,6 +13,7 @@ import type { FunctionComponent } from "react";
 import { forwardRef, useCallback, useMemo } from "react";
 
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
+import { getStableRenderFn } from "../../utils/stableRenderFunction";
 import { Markdown } from "../Markdown";
 import { AiToolInvocationContext } from "./contexts";
 import type {
@@ -73,9 +74,17 @@ function ToolInvocation({
   );
 
   if (tool === undefined || tool.render === undefined) return null;
-  const RenderFn = tool.render as FunctionComponent<
-    AiToolInvocationProps<JsonObject, ToolResultData>
-  >;
+
+  // Return a stable render function that will stays referentially identical
+  // for the entire lifetime of a toolCallId. This is important because if we
+  // don't do this, then React will think it's a new component every time, and
+  // will unmount/remount it, causing it to lose its state.
+  const StableRenderFn = getStableRenderFn(
+    part.toolCallId,
+    tool.render as FunctionComponent<
+      AiToolInvocationProps<JsonObject, ToolResultData>
+    >
+  );
 
   const { type: _, ...rest } = part;
   const props = {
@@ -96,7 +105,7 @@ function ToolInvocation({
       }
     >
       <AiToolInvocationContext.Provider value={props}>
-        <RenderFn {...props} />
+        <StableRenderFn {...props} />
       </AiToolInvocationContext.Provider>
     </ErrorBoundary>
   );
