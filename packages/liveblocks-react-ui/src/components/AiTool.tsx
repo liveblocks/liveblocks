@@ -14,7 +14,7 @@ import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
 import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
-import { useControllableState } from "../utils/use-controllable-state";
+import { useSemiControllableState } from "../utils/use-controllable-state";
 import { CodeBlock } from "./internal/CodeBlock";
 
 export interface AiToolProps
@@ -39,17 +39,15 @@ export interface AiToolProps
   children?: ReactNode;
 
   /**
-   * Whether the content is initially collapsed. Setting a value will make it uncontrolled.
-   */
-  defaultCollapsed?: boolean;
-
-  /**
-   * Whether the content is currently collapsed. Setting a value will make it controlled, use `onCollapsedChange` to update it.
+   * Whether the content is currently collapsed.
+   * It is not a traditional controlled value, as in if you set it to `true` it would only stay expanded.
+   * Instead, it is "semi-controlled", meaning that setting it to `true` will expand it, but it
+   * can still be collapsed/expanded by clicking on it.
    */
   collapsed?: boolean;
 
   /**
-   * The event handler called when the content is collapsed or expanded.
+   * The event handler called when the content is collapsed or expanded by clicking on it.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
 }
@@ -191,9 +189,8 @@ export const AiTool = Object.assign(
         children,
         title,
         icon,
-        defaultCollapsed,
-        collapsed: controlledCollapsed,
-        onCollapsedChange: controlledOnCollapsedChange,
+        collapsed,
+        onCollapsedChange,
         className,
         ...props
       },
@@ -204,11 +201,8 @@ export const AiTool = Object.assign(
         toolName,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
-      const [isCollapsed, onCollapsedChange] = useControllableState(
-        defaultCollapsed ?? false,
-        controlledCollapsed,
-        controlledOnCollapsedChange
-      );
+      const [semiControlledCollapsed, onSemiControlledCollapsed] =
+        useSemiControllableState(collapsed ?? false, onCollapsedChange);
       // TODO: This check won't work for cases like:
       //         <AiTool>
       //           <ComponentThatRendersNull />
@@ -225,9 +219,9 @@ export const AiTool = Object.assign(
       // makes sense next to something called "Collapsible" but less so for something called "AiTool".
       const handleCollapsibleOpenChange = useCallback(
         (open: boolean) => {
-          onCollapsedChange(!open);
+          onSemiControlledCollapsed(!open);
         },
-        [onCollapsedChange]
+        [onSemiControlledCollapsed]
       );
 
       return (
@@ -235,8 +229,8 @@ export const AiTool = Object.assign(
           ref={forwardedRef}
           className={classNames("lb-collapsible lb-ai-tool", className)}
           {...props}
-          // Regardless of the controlled/uncontrolled props, the collapsible is closed if there's no content.
-          open={hasContent ? !isCollapsed : false}
+          // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
+          open={hasContent ? !semiControlledCollapsed : false}
           onOpenChange={handleCollapsibleOpenChange}
           disabled={!hasContent}
         >
