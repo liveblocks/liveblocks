@@ -17,8 +17,8 @@ export function AiWidget() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="flex size-14 items-center border border-neutral-200 justify-center rounded-full bg-white shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200">
-          <SparklesIcon className="fill-neutral-400 size-7" />
+        <div className="flex size-14 items-center border border-gray-200 justify-center rounded-full bg-white shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200">
+          <SparklesIcon className="fill-gray-400 size-7" />
         </div>
       }
     >
@@ -43,7 +43,7 @@ function ChatPopup() {
         <PopoverPrimitives.Trigger asChild>
           <button
             className={
-              "flex size-14 items-center border border-neutral-200 justify-center rounded-full bg-white hover:bg-neutral-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
+              "flex size-14 items-center border border-gray-200 justify-center rounded-full bg-white hover:bg-gray-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
             }
             aria-label="Open AI Assistant"
           >
@@ -59,13 +59,13 @@ function ChatPopup() {
               // Don't close when clicking outside
               e.preventDefault();
             }}
-            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-neutral-200 dark:ring-neutral-700 bg-neutral-50 dark:bg-neutral-800 dark:border-neutral-700 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
+            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
                 <button
                   onClick={() => setShowListing(!showListing)}
-                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-700 truncate"
+                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 truncate"
                 >
                   <ChevronLeftIcon className="size-4 opacity-70 -ml-1 shrink-0" />
                   {showListing ? (
@@ -80,12 +80,12 @@ function ChatPopup() {
                 <span className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => goToChat(nanoid())}
-                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-700"
+                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <PlusIcon className="size-4 -ml-1 opacity-70" />
                     <span>New chat</span>
                   </button>
-                  <PopoverPrimitives.Close className="bg-neutral-50 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 flex size-8 items-center justify-center rounded-full">
+                  <PopoverPrimitives.Close className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex size-8 items-center justify-center rounded-full">
                     <span className="sr-only">Close</span>
                     <CloseIcon className="size-4 opacity-70" />
                   </PopoverPrimitives.Close>
@@ -133,7 +133,7 @@ function Chat({ chatId }: { chatId: string }) {
                   {SUGGESTIONS.map(({ text, prompt }) => (
                     <button
                       key={text}
-                      className="px-3.5 py-1.5 rounded-full flex items-center gap-2 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      className="px-3.5 py-1.5 rounded-full flex items-center gap-2 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 border text-sm font-medium shadow-xs hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => sendMessage(prompt)}
                     >
                       {text}
@@ -184,7 +184,7 @@ function ChatListing({
         {chats.map((chat) => (
           <li
             key={chat.id}
-            className="group relative flex items-center justify-between p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800"
+            className="group relative flex items-center justify-between p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <div className="flex flex-col gap-0.5">
               {/* TODO hover, full width, chat icon at left, etc */}
@@ -194,7 +194,7 @@ function ChatListing({
               >
                 {chat.title || "Untitled"}
               </button>
-              <div className="text-xs text-neutral-400">
+              <div className="text-xs text-gray-400">
                 {new Date(chat.lastMessageAt || chat.createdAt).toLocaleString(
                   "en-US",
                   {
@@ -218,7 +218,7 @@ function ChatListing({
           <button
             disabled={isFetchingMore}
             onClick={fetchMore}
-            className="text-sm py-2 bg-white border border-neutral-200 rounded-md font-medium hover:bg-neutral-50"
+            className="text-sm py-2 bg-white border border-gray-200 rounded-md font-medium hover:bg-gray-50"
           >
             Load more
           </button>

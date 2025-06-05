@@ -8,13 +8,13 @@
 }
 
 .lb-ai-chat {
-  --lb-background: theme("colors.neutral.50");
+  --lb-background: theme("colors.gray.50");
   --lb-dynamic-background: theme("colors.white");
-  --lb-foreground: theme("colors.neutral.900");
+  --lb-foreground: theme("colors.gray.900");
 }
 
 .dark .lb-ai-chat {
-  --lb-background: theme("colors.neutral.800");
-  --lb-dynamic-background: theme("colors.neutral.900");
-  --lb-foreground: theme("colors.neutral.50");
+  --lb-background: theme("colors.gray.800");
+  --lb-dynamic-background: theme("colors.gray.900");
+  --lb-foreground: theme("colors.gray.50");
 }
