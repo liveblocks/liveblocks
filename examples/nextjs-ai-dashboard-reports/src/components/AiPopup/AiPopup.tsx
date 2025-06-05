@@ -15,13 +15,15 @@ import { useAiChat } from "@liveblocks/react/suspense";
 import { ChatListing } from "./AiChatListing";
 import { AiChatPlaceholder } from "./AiChatPlaceholder";
 import { TOOLS } from "./AiChatTools";
+import { RiRobot2Line } from "@remixicon/react";
 
 export function AiPopup() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="flex size-14 items-center border border-gray-200 justify-center rounded-full bg-white shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200">
-          <SparklesIcon className="fill-gray-400 size-7" />
+        <div className="flex size-14 items-center border border-gray-200 justify-center rounded-full bg-gray-300 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200">
+          {/* <SparklesIcon className="fill-gray-400 size-7" /> */}
+          <RiRobot2Line className="size-7 text-white" />
         </div>
       }
     >
@@ -54,11 +56,12 @@ function ChatPopup() {
         <PopoverPrimitives.Trigger asChild>
           <button
             className={
-              "flex size-14 items-center border border-gray-200 justify-center rounded-full bg-white hover:bg-gray-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
+              "flex size-14 items-center border border-gray-200 justify-center rounded-full bg-blue-600 hover:bg-blue-500 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
             }
             aria-label="Open AI Assistant"
           >
-            <SparklesIcon className="fill-blue-600 size-7" />
+            {/* <SparklesIcon className="fill-blue-600 size-7" /> */}
+            <RiRobot2Line className="size-7 text-white" />
           </button>
         </PopoverPrimitives.Trigger>
         <PopoverPrimitives.Portal>
@@ -131,6 +134,14 @@ const SITEMAP = [
 ];
 
 function Chat({ chatId }: { chatId: string }) {
+  // TODO
+  // const { data: contexts } = useSWR(
+  //   "/api/liveblocks-ai-context",
+  //   (resource: string, init: RequestInit) =>
+  //     fetch(resource, init).then((res) => res.json())
+  // );
+  // copilotId="co_wFdUQ9c0kxhQ0BAlkct0B"
+
   return (
     <div className="absolute inset-0 flex flex-col">
       <RegisterAiKnowledge

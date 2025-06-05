@@ -79,6 +79,7 @@ export const TOOLS = {
       required: ["transactionId"],
     },
     render: ({ args }) => {
+      if (!args) return null;
       return <TransactionTool transactionId={args.transactionId} />;
     },
   }),
@@ -92,8 +93,9 @@ export const TOOLS = {
       additionalProperties: false,
       required: ["email"],
     },
-    render: ({ args: { email } }) => {
-      return <MemberTool email={email} />;
+    render: ({ args }) => {
+      if (!args) return null;
+      return <MemberTool email={args.email} />;
     },
   }),
 };
