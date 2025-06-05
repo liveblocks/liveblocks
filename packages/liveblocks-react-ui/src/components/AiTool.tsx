@@ -121,7 +121,9 @@ function AiToolConfirmation<
     }
   }, [enabled, args, cancel, respond, context]);
 
-  if (status === "executed") {
+  // If there's no content and the tool has been executed (so there's no
+  // confirmation UI displayed either), don't render anything.
+  if (status === "executed" && !children) {
     return null;
   }
 
@@ -133,24 +135,26 @@ function AiToolConfirmation<
       {children ? (
         <div className="lb-ai-tool-confirmation-content">{children}</div>
       ) : null}
-      <div className="lb-ai-tool-confirmation-footer">
-        <div className="lb-ai-tool-confirmation-actions">
-          <Button
-            disabled={!enabled}
-            onClick={onCancelClick}
-            variant="secondary"
-          >
-            Cancel
-          </Button>
-          <Button
-            disabled={!enabled}
-            onClick={onConfirmClick}
-            variant={variant === "destructive" ? "destructive" : "primary"}
-          >
-            Confirm
-          </Button>
+      {status !== "executed" && (
+        <div className="lb-ai-tool-confirmation-footer">
+          <div className="lb-ai-tool-confirmation-actions">
+            <Button
+              disabled={!enabled}
+              onClick={onCancelClick}
+              variant="secondary"
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={!enabled}
+              onClick={onConfirmClick}
+              variant={variant === "destructive" ? "destructive" : "primary"}
+            >
+              Confirm
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
