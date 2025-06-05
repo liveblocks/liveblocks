@@ -1,11 +1,8 @@
-import type {
-  AiKnowledgeSource,
-  AiOpaqueToolDefinition,
-} from "@liveblocks/core";
 import { kInternal, nanoid } from "@liveblocks/core";
 import { memo, useEffect, useId, useState } from "react";
 
 import { useClient } from "./contexts";
+import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./types/ai";
 
 function useAi() {
   return useClient()[kInternal].ai;
@@ -14,15 +11,6 @@ function useAi() {
 function useRandom() {
   return useState(nanoid)[0];
 }
-
-export type RegisterAiKnowledgeProps = AiKnowledgeSource & {
-  /**
-   * An optional unique key for this knowledge source. If multiple components
-   * register knowledge under the same key, the last one to mount takes
-   * precedence.
-   */
-  id?: string;
-};
 
 /**
  * Make knowledge about your application state available to any AI used in
@@ -74,18 +62,6 @@ export const RegisterAiKnowledge = memo(function RegisterAiKnowledge(
 
   return null;
 });
-
-export type RegisterAiToolProps = {
-  name: string;
-  tool: AiOpaqueToolDefinition;
-
-  /**
-   * When provided, the tool will only be available for this chatId. If not
-   * provided, this tool will globally be made available to any AiChat
-   * instance.
-   */
-  chatId?: string;
-};
 
 /**
  * Make a tool available to your AI chat or a one-off request.

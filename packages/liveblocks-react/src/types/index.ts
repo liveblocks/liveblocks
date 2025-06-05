@@ -49,7 +49,7 @@ import type {
   ReactNode,
 } from "react";
 
-import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "../ai";
+import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
 
 export type UseSyncStatusOptions = {
   /**
