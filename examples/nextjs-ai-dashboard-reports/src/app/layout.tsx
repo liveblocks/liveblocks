@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import React from "react";
 import { siteConfig } from "./siteConfig";
 import { Providers } from "./providers";
-import { AiWidget } from "@/components/AiWidget";
+import { AiPopup } from "@/components/AiPopup/AiPopup";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
 import "./globals.css";
@@ -45,7 +45,7 @@ export default function RootLayout({
       >
         <Providers>
           <div>{children}</div>
-          <AiWidget />
+          <AiPopup />
         </Providers>
       </body>
     </html>

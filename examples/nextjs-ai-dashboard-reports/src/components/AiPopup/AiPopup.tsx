@@ -2,9 +2,8 @@
 
 import {
   ClientSideSuspense,
-  useAiChats,
-  useDeleteAiChat,
-  useSendAiMessage,
+  RegisterAiTool,
+  RegisterAiKnowledge,
 } from "@liveblocks/react";
 import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
@@ -12,8 +11,11 @@ import { nanoid } from "nanoid";
 import Link from "next/link";
 import { ComponentProps, useCallback, useState } from "react";
 import { useAiChat } from "@liveblocks/react/suspense";
+import { ChatListing } from "./AiChatListing";
+import { AiChatPlaceholder } from "./AiChatPlaceholder";
+import { TOOLS } from "./AiChatTools";
 
-export function AiWidget() {
+export function AiPopup() {
   return (
     <ClientSideSuspense
       fallback={
@@ -28,9 +30,9 @@ export function AiWidget() {
 }
 
 function ChatPopup() {
-  // TODO fetch the latest chatId after the suspense bug is resolved
   const [chatId, setChatId] = useState(getDefaultChatId);
   const [showListing, setShowListing] = useState(false);
+  const { chat, isLoading } = useAiChat(chatId);
 
   const goToChat = useCallback((id: string) => {
     setChatId(id);
@@ -55,10 +57,7 @@ function ChatPopup() {
             sideOffset={16}
             side="top"
             align="end"
-            onInteractOutside={(e) => {
-              // Don't close when clicking outside
-              e.preventDefault();
-            }}
+            onInteractOutside={(e) => e.preventDefault()} // Don't close when clicking outside
             className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
@@ -72,7 +71,7 @@ function ChatPopup() {
                     <span>Back</span>
                   ) : (
                     <div className="truncate grow shrink">
-                      <Title chatId={chatId} />
+                      {isLoading ? null : chat?.title || "Untitled"}
                     </div>
                   )}
                 </button>
@@ -106,137 +105,38 @@ function ChatPopup() {
   );
 }
 
-const SUGGESTIONS = [
-  { text: "Check the weather", prompt: "Check the weather in Paris" },
-  {
-    text: "Write a story",
-    prompt: "Write a story about a brave knight",
-  },
-  { text: "Explain quantum computing", prompt: "Explain quantum computing" },
-  { text: "Plan weekly meals", prompt: "Plan weekly meals" },
+const SITEMAP = [
+  "/reports",
+  "/transactions",
+  "/settings/billing",
+  "/settings/users",
 ];
 
 function Chat({ chatId }: { chatId: string }) {
   return (
     <div className="absolute inset-0 flex flex-col">
+      <RegisterAiKnowledge
+        description="Pages you can navigate to"
+        value={SITEMAP}
+      />
+      <RegisterAiKnowledge
+        description="How to use tools"
+        value="Don't tell the user the names of any tools. Just say you're doing the action."
+      />
       <AiChat
         layout="compact"
         chatId={chatId}
+        className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
         components={{
-          Empty: ({ chatId }) => {
-            const sendMessage = useSendAiMessage(chatId);
-
-            return (
-              <div className="p-4 h-full flex flex-col gap-5 justify-end">
-                <h3>How can I help you?</h3>
-                <div className="flex flex-wrap items-start gap-2">
-                  {SUGGESTIONS.map(({ text, prompt }) => (
-                    <button
-                      key={text}
-                      className="px-3.5 py-1.5 rounded-full flex items-center gap-2 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 border text-sm font-medium shadow-xs hover:bg-gray-50 dark:hover:bg-gray-800"
-                      onClick={() => sendMessage(prompt)}
-                    >
-                      {text}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          },
-
-          // TODO default spinner is probably fine?
-          // Loading: () => <div>loading... </div>,
-
+          Empty: AiChatPlaceholder,
           Anchor: (props) => (
             <Link href={props.href || ""}>{props.children}</Link>
           ),
         }}
-        className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
+        tools={TOOLS}
       />
     </div>
   );
-}
-
-function ChatListing({
-  onSelectChat,
-}: {
-  onSelectChat: (chatId: string) => void;
-}) {
-  const deleteAiChat = useDeleteAiChat();
-  const { chats, error, isLoading, hasFetchedAll, fetchMore, isFetchingMore } =
-    useAiChats();
-
-  if (isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        loading...{" "}
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div>error: {error.message}</div>;
-  }
-
-  return (
-    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-4">
-      <ul className="flex flex-col gap-2 text-sm pl-0">
-        {chats.map((chat) => (
-          <li
-            key={chat.id}
-            className="group relative flex items-center justify-between p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            <div className="flex flex-col gap-0.5">
-              {/* TODO hover, full width, chat icon at left, etc */}
-              <button
-                onClick={() => onSelectChat(chat.id)}
-                className="text-left font-medium before:absolute before:inset-0 truncate"
-              >
-                {chat.title || "Untitled"}
-              </button>
-              <div className="text-xs text-gray-400">
-                {new Date(chat.lastMessageAt || chat.createdAt).toLocaleString(
-                  "en-US",
-                  {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  }
-                )}
-              </div>
-            </div>
-            <button
-              onClick={() => deleteAiChat(chat.id)}
-              className="relative hidden group-hover:block"
-              title="Delete chat"
-            >
-              <TrashIcon className="text-red-600 size-4" />
-            </button>
-          </li>
-        ))}
-        {hasFetchedAll ? null : (
-          <button
-            disabled={isFetchingMore}
-            onClick={fetchMore}
-            className="text-sm py-2 bg-white border border-gray-200 rounded-md font-medium hover:bg-gray-50"
-          >
-            Load more
-          </button>
-        )}
-      </ul>
-    </div>
-  );
-}
-
-function Title({ chatId }: { chatId: string }) {
-  const { chat, error, isLoading } = useAiChat(chatId);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  // TODO this will work after a bug fix
-  return <>{chat?.title || "Untitled"}</>;
 }
 
 // Creating a new chat every hour
@@ -314,27 +214,6 @@ function ChevronLeftIcon(props: ComponentProps<"svg">) {
       {...props}
     >
       <path d="m15 18-6-6 6-6" />
-    </svg>
-  );
-}
-
-function TrashIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
     </svg>
   );
 }
