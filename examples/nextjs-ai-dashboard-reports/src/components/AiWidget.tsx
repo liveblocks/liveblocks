@@ -106,6 +106,16 @@ function ChatPopup() {
   );
 }
 
+const SUGGESTIONS = [
+  { text: "Check the weather", prompt: "Check the weather in Paris" },
+  {
+    text: "Write a story",
+    prompt: "Write a story about a brave knight",
+  },
+  { text: "Explain quantum computing", prompt: "Explain quantum computing" },
+  { text: "Plan weekly meals", prompt: "Plan weekly meals" },
+];
+
 function Chat({ chatId }: { chatId: string }) {
   return (
     <div className="absolute inset-0 flex flex-col">
@@ -120,32 +130,15 @@ function Chat({ chatId }: { chatId: string }) {
               <div className="p-4 h-full flex flex-col gap-5 justify-end">
                 <h3>How can I help you?</h3>
                 <div className="flex flex-wrap items-start gap-2">
-                  <button
-                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                    onClick={() => sendMessage("Check the weather in Paris")}
-                  >
-                    Check weather
-                  </button>
-                  <button
-                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                    onClick={() =>
-                      sendMessage("Write a story about a brave knight")
-                    }
-                  >
-                    Write a story
-                  </button>
-                  <button
-                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                    onClick={() => sendMessage("Explain quantum computing")}
-                  >
-                    Explain quantum computing
-                  </button>
-                  <button
-                    className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-                    onClick={() => sendMessage("Plan weekly meals")}
-                  >
-                    Plan weekly meals
-                  </button>
+                  {SUGGESTIONS.map(({ text, prompt }) => (
+                    <button
+                      key={text}
+                      className="px-3.5 py-1.5 rounded-full flex items-center gap-2 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                      onClick={() => sendMessage(prompt)}
+                    >
+                      {text}
+                    </button>
+                  ))}
                 </div>
               </div>
             );
