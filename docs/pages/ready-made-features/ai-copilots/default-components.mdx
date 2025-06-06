@@ -40,6 +40,46 @@ later.
 
 {/* TODO list everything you can do with it */}
 
+##### Props [#AiChat-props]
+
+<PropertiesList>
+  <PropertiesListItem name="chatId" type="string" required>
+    The id of the chat the composer belongs to.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the chat composer on mount.
+  </PropertiesListItem>
+  <PropertiesListItem name="layout" type='"inset" | "compact"'>
+    The layout of the chat and its composer.
+  </PropertiesListItem>
+  <PropertiesListItem name="copilotId" type="string">
+    The id of the Copilot to use to send the message. Copilots are configured in
+    the Liveblocks dashboard.
+  </PropertiesListItem>
+  <PropertiesListItem name="knowledge" type="AiKnowledgeSource[]">
+    The contextual knowledge to include in the chat. May be used by the
+    assistant when generating responses. Any knowledge you provide via this prop
+    will be added to any already globally registered knowledge via{" "}
+    <RegisterAiKnowledge />.
+  </PropertiesListItem>
+  <PropertiesListItem name="tools" type="Record<string, ToolDefinition>">
+    Tool definitions to make available within this chat. May be used by the
+    assistant when generating responses.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & AiChatMessageOverrides & AiChatComposerOverrides & AiChatOverrides>"
+  >
+    Override the component's strings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<GlobalComponents & AiChatComponents>"
+  >
+    Override the component's components.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## AiTool
 
 The [`AiTool`][] component renders a button that can be used to add an AI action
@@ -63,6 +103,23 @@ It’s possible to style and localize the default components:
 
 Learn more under
 [styling and customization](/docs/ready-made-features/comments/styling-and-customization).
+
+##### Props [#AiTool-props]
+
+<PropertiesList>
+  <PropertiesListItem name="title" type="string">
+    A title to display for this tool. If not specified, it will get inferred
+    from the tool's name, e.g. "list-todos" will become "List todos".
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed next to the title. Can be an emoji, an SVG, or
+    any other React node.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content shown in the tool. If specified, the tool will become
+    collapsible.
+  </PropertiesListItem>
+</PropertiesList>
 
 [`AiChat`]: /docs/api-reference/liveblocks-react-ui#AiChat
 [`AiTool`]: /docs/api-reference/liveblocks-react-ui#AiTool
