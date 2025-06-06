@@ -25,6 +25,7 @@ export interface GlobalOverrides {
   EMOJI_PICKER_CHANGE_SKIN_TONE: string;
   ATTACHMENT_TOO_LARGE: (maxSize?: string) => string;
   ATTACHMENT_ERROR: (error: Error) => string;
+  COPY_TO_CLIPBOARD: string;
 }
 
 export interface CommentOverrides {
@@ -221,6 +222,7 @@ export const defaultOverrides: Overrides = {
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
   AI_CHAT_MESSAGES_ERROR: () =>
     "There was an error while getting the messages.",
+  COPY_TO_CLIPBOARD: "Copy",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

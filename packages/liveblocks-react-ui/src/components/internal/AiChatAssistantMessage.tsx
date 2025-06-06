@@ -14,6 +14,7 @@ import { WarningIcon } from "../../icons/Warning";
 import {
   type AiChatMessageOverrides,
   type GlobalOverrides,
+  OverridesProvider,
   useOverrides,
 } from "../../overrides";
 import * as AiMessage from "../../primitives/AiMessage";
@@ -102,9 +103,11 @@ export const AiChatAssistantMessage = memo(
           {...props}
           ref={forwardedRef}
         >
-          <ComponentsProvider components={components}>
-            {children}
-          </ComponentsProvider>
+          <OverridesProvider overrides={overrides}>
+            <ComponentsProvider components={components}>
+              {children}
+            </ComponentsProvider>
+          </OverridesProvider>
         </div>
       );
     }
