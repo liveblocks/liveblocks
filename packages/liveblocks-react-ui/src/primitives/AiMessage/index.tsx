@@ -36,7 +36,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
 
-function CustomTool(props: {
+function StableRenderFn(props: {
   renderFn: FunctionComponent<
     AiToolInvocationProps<JsonObject, ToolResultData>
   >;
@@ -104,7 +104,7 @@ function ToolInvocation({
       }
     >
       <AiToolInvocationContext.Provider value={props}>
-        <CustomTool
+        <StableRenderFn
           renderFn={
             tool.render as FunctionComponent<
               AiToolInvocationProps<JsonObject, ToolResultData>
