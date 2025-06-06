@@ -12,7 +12,7 @@ import type {
 } from "@liveblocks/core";
 import {
   generateCommentUrl,
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   html,
   htmlSafe,
 } from "@liveblocks/core";
@@ -89,8 +89,11 @@ export const getLastUnreadCommentWithMention = ({
       .reverse()
       .filter((c) => c.userId !== mentionedUserId)
       .find((c) => {
-        const mentionedUserIds = getMentionedIdsFromCommentBody(c.body);
-        return mentionedUserIds.includes(mentionedUserId);
+        const mentions = getMentionsFromCommentBody(
+          c.body,
+          (mention) => mention.kind === "user" && mention.id === mentionedUserId
+        );
+        return mentions.length > 0;
       }) ?? null
   );
 };

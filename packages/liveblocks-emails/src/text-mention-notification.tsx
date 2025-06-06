@@ -5,6 +5,7 @@ import {
   type DU,
   html,
   htmlSafe,
+  type MentionData,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
@@ -57,7 +58,12 @@ export type TextMentionNotificationData = (
     }
 ) & {
   createdAt: Date;
-  userId: string; // Author of the mention
+
+  // The user ID mentioned
+  userId: string;
+
+  // The user ID who created the mention
+  createdBy: string;
 };
 
 /** @internal */
@@ -104,7 +110,7 @@ export const extractTextMentionNotificationData = async ({
   // to represent the creation date as we have currently
   // a 1 - 1 notification <> activity
   const mentionCreatedAt = inboxNotification.notifiedAt;
-  // In context of a text mention notification `createdBy` is a `userId`
+  // In context of a text mention notification `createdBy` is a user ID
   const mentionAuthorUserId = inboxNotification.createdBy;
 
   const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
@@ -130,7 +136,8 @@ export const extractTextMentionNotificationData = async ({
         editor: "lexical",
         mentionNodeWithContext,
         createdAt: mentionCreatedAt,
-        userId: mentionAuthorUserId,
+        userId,
+        createdBy: mentionAuthorUserId,
       };
     }
     case "tiptap": {
@@ -150,14 +157,18 @@ export const extractTextMentionNotificationData = async ({
         editor: "tiptap",
         mentionNodeWithContext,
         createdAt: mentionCreatedAt,
-        userId: mentionAuthorUserId,
+        userId,
+        createdBy: mentionAuthorUserId,
       };
     }
   }
 };
 
-export type MentionEmailData<ContentType, U extends BaseUserMeta = DU> = {
-  id: string;
+export type MentionEmailData<
+  ContentType,
+  U extends BaseUserMeta = DU,
+> = MentionData & {
+  textMentionId: string;
   roomId: string;
   author: U; // Author of the mention
   createdAt: Date;
@@ -229,7 +240,7 @@ export async function prepareTextMentionNotificationEmail<
   });
 
   const authorsInfoPromise = resolveAuthorsInfo({
-    userIds: [data.userId],
+    userIds: [data.createdBy],
     resolveUsers: batchUsersResolver.resolveUsers,
   });
 
@@ -267,15 +278,18 @@ export async function prepareTextMentionNotificationEmail<
     contentPromise,
   ]);
 
-  const authorInfo = authorsInfo.get(data.userId);
+  const authorInfo = authorsInfo.get(data.createdBy);
 
   return {
     mention: {
-      id: mentionId,
+      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated
+      kind: "user",
+      id: data.userId,
+      textMentionId: mentionId,
       roomId,
       author: {
-        id: data.userId,
-        info: authorInfo ?? { name: data.userId },
+        id: data.createdBy,
+        info: authorInfo ?? { name: data.createdBy },
       } as U,
       content,
       createdAt: data.createdAt,
@@ -334,7 +348,7 @@ const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
   Mention: ({ element, user }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.userId}
+      {user?.name ?? element.id}
     </span>
   ),
   Text: ({ element }) => {
@@ -542,7 +556,7 @@ export async function prepareTextMentionNotificationEmailAsHtml(
       },
       mention: ({ node, user }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.userId}</span>`
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
       },
       text: ({ node }) => {
         // Note: construction following the schema 👇

@@ -222,7 +222,8 @@ describe("text mention notification", () => {
         editor: "tiptap",
         mentionNodeWithContext,
         createdAt: inboxNotification.notifiedAt,
-        userId: inboxNotification.createdBy,
+        userId: MENTIONED_USER_ID_TIPTAP,
+        createdBy: inboxNotification.createdBy,
       };
 
       expect(extracted).toEqual(expected);
@@ -233,7 +234,7 @@ describe("text mention notification", () => {
     const elements: ConvertMentionContentElements<string, BaseUserMeta> = {
       container: ({ children }) => children.join(""),
       mention: ({ node, user }) =>
-        `${MENTION_CHARACTER}${user?.name ?? node.userId}`,
+        `${MENTION_CHARACTER}${user?.name ?? node.id}`,
       text: ({ node }) => node.text,
     };
 
@@ -278,7 +279,9 @@ describe("text mention notification", () => {
 
       const base: Omit<TextMentionNotificationEmailData<string>, "roomInfo"> = {
         mention: {
-          id: MENTION_ID_TIPTAP,
+          textMentionId: MENTION_ID_TIPTAP,
+          id: MENTIONED_USER_ID_TIPTAP,
+          kind: "user",
           roomId: room.id,
           author: {
             id: "user-nimesh",
@@ -329,7 +332,9 @@ describe("text mention notification", () => {
 
     const expected1: TextMentionNotificationEmailDataAsHtml = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "user-1" } },
         createdAt: inboxNotification.notifiedAt,
@@ -343,7 +348,9 @@ describe("text mention notification", () => {
 
     const expected2: TextMentionNotificationEmailDataAsHtml = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "Mislav Abha" } },
         createdAt: inboxNotification.notifiedAt,
@@ -411,7 +418,9 @@ describe("text mention notification", () => {
 
     const expected1: TextMentionNotificationEmailDataAsReact = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "user-1" } },
         createdAt: inboxNotification.notifiedAt,

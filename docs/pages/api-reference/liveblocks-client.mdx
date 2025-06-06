@@ -4820,24 +4820,40 @@ client.resolvers.invalidateMentionSuggestions();
 
 ## Utilities
 
-### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
+### getMentionsFromCommentBody [#get-mentions-from-comment-body]
 
-Returns an array of each user’s ID that has been mentioned in a `CommentBody`
-(found under `comment.body`).
+Returns an array of mentions from a `CommentBody` (found under `comment.body`).
 
 ```ts
-import { getMentionedIdsFromCommentBody } from "@liveblocks/client";
+import { getMentionsFromCommentBody } from "@liveblocks/client";
 
-const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+const mentions = getMentionsFromCommentBody(comment.body);
+```
+
+An optional second argument can be used to filter the returned mentions. By
+default, if it’s not provided, all mentions are returned, including future
+mention kinds (e.g. group mentions in the future).
+
+```tsx
+// All mentions (same as `getMentionsFromCommentBody(commentBody)`)
+getMentionsFromCommentBody(commentBody);
+
+// Only user mentions with an ID of "123"
+getMentionsFromCommentBody(
+  commentBody,
+  (mention) => mention.kind === "user" && mention.id === "123"
+);
+
+// Only mentions with an ID which starts with "prefix:"
+getMentionsFromCommentBody(commentBody, (mention) => (
+  mention.id.startsWith("prefix:")
+);
 ```
 
 Here’s an example with a custom `CommentBody`.
 
 ```ts
-import {
-  CommentBody,
-  getMentionedIdsFromCommentBody,
-} from "@liveblocks/client";
+import { CommentBody, getMentionsFromCommentBody } from "@liveblocks/client";
 
 // Create a custom `CommentBody`
 const commentBody: CommentBody = {
@@ -4854,16 +4870,16 @@ const commentBody: CommentBody = {
 };
 
 // Get the mentions inside the comment's body
-const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
+const mentions = getMentionsFromCommentBody(commentBody);
 
-// ["chris@example.com"]
-console.log(mentionedIds);
+// [{ kind: "user", id: "chris@example.com" }]
+console.log(mentions);
 ```
 
 <Banner title="Also available from @liveblocks/node">
 
 If you’d like to use this on the server side, it's also available from
-[`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentions-from-comment-body).
 
 </Banner>
 

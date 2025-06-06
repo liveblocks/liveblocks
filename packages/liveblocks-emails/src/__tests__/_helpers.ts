@@ -83,7 +83,7 @@ export const buildCommentBodyWithMention = ({
       children: [
         { text: "Hello" },
         { text: " " },
-        { type: "mention", id: mentionedUserId },
+        { type: "mention", kind: "user", id: mentionedUserId },
         { text: " " },
         { text: "!" },
       ],

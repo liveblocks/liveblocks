@@ -24,6 +24,18 @@ For full upgrade instructions and codemods, see the
   or
   [`useUpdateNotificationSettings`](/docs/api-reference/liveblocks-react#useUpdateNotificationSettings).
 
+### `@liveblocks/react-ui`
+
+- The `onMentionClick` prop on `Thread` and `Comment` now receives a
+  `MentionData` object instead of a `userId` string.
+- The `Mention` component on the `Comment.Body` and `Composer.Editor` primitives
+  now receives a `mention` prop instead of a `userId` one.
+- The `MentionSuggestions` component on the `Composer.Editor` primitive now
+  receives a `mentions` prop instead of a `userIds` one, and the
+  `selectedUserId` prop has been renamed to `selectedMentionId`.
+- Rename `LiveblocksUIConfig` to `LiveblocksUiConfig` for consistency with other
+  Liveblocks APIs.
+
 ### `@liveblocks/emails`
 
 - Remove deprecated `htmlBody`/`reactBody` properties from
@@ -32,11 +44,21 @@ For full upgrade instructions and codemods, see the
 - Remove `htmlContent`/`reactContent` properties from
   `prepareTextMentionNotificationEmailAsHtml`/`prepareTextMentionNotificationEmailAsReact`,
   use `content` instead.
+- The `prepareTextMentionNotificationEmailAsReact` and
+  `prepareTextMentionNotificationEmailAsHtml` functions’ returned data changed
+  slightly:
+  - The `id` property is now named `textMentionId`, it refers to the mention’s
+    Text Mention ID, not the user ID used for the mention
+  - The `id` property now refers to the mention’s ID, as in the user ID used for
+    the mention
+- The `element` prop received by the `Mention` component in
+  `prepareTextMentionNotificationEmailAsReact` now contains an `id` property
+  instead of `userId`, and a new `kind` property to indicate the mention’s kind.
 
-### `@liveblocks/react-ui`
+### `@liveblocks/client` and `@liveblocks/node`
 
-- Rename `LiveblocksUIConfig` to `LiveblocksUiConfig` for consistency with other
-  Liveblocks APIs.
+- The `getMentionedIdsFromCommentBody` utility has been replaced by
+  `getMentionsFromCommentBody`.
 
 ## v2.24.3
 

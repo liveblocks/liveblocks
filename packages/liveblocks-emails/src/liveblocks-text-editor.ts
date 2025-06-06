@@ -8,6 +8,7 @@
 import type {
   Awaitable,
   BaseUserMeta,
+  Relax,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 
@@ -38,9 +39,13 @@ export type LiveblocksTextEditorTextNode = {
   text: string;
 } & LiveblocksTextEditorTextFormat;
 
-export type LiveblocksTextEditorMentionNode = {
+export type LiveblocksTextEditorMentionNode =
+  Relax<LiveblocksTextEditorUserMentionNode>;
+
+type LiveblocksTextEditorUserMentionNode = {
   type: "mention";
-  userId: string;
+  kind: "user";
+  id: string;
 };
 
 /**
@@ -149,7 +154,8 @@ const transformLexicalMentionNodeWithContext = (
       ) {
         textEditorNodes.push({
           type: "mention",
-          userId: node.attributes.__userId,
+          kind: "user",
+          id: node.attributes.__userId,
         });
       }
     }
@@ -158,7 +164,8 @@ const transformLexicalMentionNodeWithContext = (
   transform(before);
   textEditorNodes.push({
     type: "mention",
-    userId: mention.attributes.__userId,
+    kind: "user",
+    id: mention.attributes.__userId,
   });
   transform(after);
 
@@ -213,7 +220,8 @@ const transformTiptapMentionNodeWithContext = (
       } else if (isSerializedTiptapMentionNode(node)) {
         textEditorNodes.push({
           type: "mention",
-          userId: node.attrs.id,
+          kind: "user",
+          id: node.attrs.id,
         });
       }
     }
@@ -222,7 +230,8 @@ const transformTiptapMentionNodeWithContext = (
   transform(before);
   textEditorNodes.push({
     type: "mention",
-    userId: mention.attrs.id,
+    kind: "user",
+    id: mention.attrs.id,
   });
   transform(after);
 
@@ -282,8 +291,8 @@ export const resolveUsersInLiveblocksTextEditorNodes = async <
 
   const mentionedUserIds = new Set<string>();
   for (const node of nodes) {
-    if (node.type === "mention") {
-      mentionedUserIds.add(node.userId);
+    if (node.type === "mention" && node.kind === "user") {
+      mentionedUserIds.add(node.id);
     }
   }
 

@@ -88,7 +88,7 @@ export type {
   User,
 } from "@liveblocks/core";
 export {
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   isNotificationChannelEnabled,
   LiveList,
   LiveMap,

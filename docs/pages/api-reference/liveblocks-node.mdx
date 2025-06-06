@@ -714,8 +714,7 @@ await liveblocks.broadcastEvent("my-room-id", customEvent);
 ```
 
 You can respond to custom events on the front end with
-[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener)
-and
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener) and
 [`room.subscribe("event")`](/docs/api-reference/liveblocks-client#Room.subscribe.event).
 When receiving an event sent with `Liveblocks.broadcastEvent`, `user` will be
 `null` and `connectionId` will be `-1`.
@@ -2434,15 +2433,34 @@ try {
 
 ## Utilities
 
-### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
+### getMentionsFromCommentBody [#get-mentions-from-comment-body]
 
-Returns an array of each user’s ID that has been mentioned in a `CommentBody`
-(found under `comment.body`).
+Returns an array of mentions from a `CommentBody` (found under `comment.body`).
 
 ```ts
-import { getMentionedIdsFromCommentBody } from "@liveblocks/node";
+import { getMentionsFromCommentBody } from "@liveblocks/node";
 
-const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+const mentions = getMentionsFromCommentBody(comment.body);
+```
+
+An optional second argument can be used to filter the returned mentions. By
+default, if it’s not provided, all mentions are returned, including future
+mention kinds (e.g. group mentions in the future).
+
+```tsx
+// All mentions (same as `getMentionsFromCommentBody(commentBody)`)
+getMentionsFromCommentBody(commentBody);
+
+// Only user mentions with an ID of "123"
+getMentionsFromCommentBody(
+  commentBody,
+  (mention) => mention.kind === "user" && mention.id === "123"
+);
+
+// Only mentions with an ID which starts with "prefix:"
+getMentionsFromCommentBody(commentBody, (mention) => (
+  mention.id.startsWith("prefix:")
+);
 ```
 
 This is most commonly used in combination with the
@@ -2450,7 +2468,7 @@ This is most commonly used in combination with the
 example [`getComment`](/docs/api-reference/liveblocks-node#get-comment).
 
 ```ts
-import { Liveblocks, getMentionedIdsFromCommentBody } from "@liveblocks/node";
+import { Liveblocks, getMentionsFromCommentBody } from "@liveblocks/node";
 
 // Create a node client
 const liveblocks = new Liveblocks({
@@ -2465,16 +2483,16 @@ const comment = await liveblocks.getComment({
 });
 
 // Get the mentions inside the comment's body
-const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+const mentions = getMentionsFromCommentBody(comment.body);
 
-// ["marc@example.com", "vincent@example.com", ...]
-console.log(mentionedIds);
+// [{ kind: "user", id: "marc@example.com" }, { kind: "user", id: "vincent@example.com" }, ...]
+console.log(mentions);
 ```
 
 Here’s an example with a custom `CommentBody`.
 
 ```ts
-import { CommentBody, getMentionedIdsFromCommentBody } from "@liveblocks/node";
+import { CommentBody, getMentionsFromCommentBody } from "@liveblocks/node";
 
 // Create a custom `CommentBody`
 const commentBody: CommentBody = {
@@ -2491,16 +2509,16 @@ const commentBody: CommentBody = {
 };
 
 // Get the mentions inside the comment's body
-const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
+const mentions = getMentionsFromCommentBody(commentBody);
 
-// ["chris@example.com"]
-console.log(mentionedIds);
+// [{ kind: "user", id: "chris@example.com" }]
+console.log(mentions);
 ```
 
 <Banner title="Also available from @liveblocks/client">
 
 If you’d like to use this on the client side, it's also available from
-[`@liveblocks/client`](/docs/api-reference/liveblocks-client#get-mentioned-ids-from-comment-body).
+[`@liveblocks/client`](/docs/api-reference/liveblocks-client#get-mentions-from-comment-body).
 
 </Banner>
 

@@ -28,7 +28,9 @@ const previewProps: UnreadTextMentionProps = {
     url: "https://liveblocks.io/comments?room_id=project-proposal-q4",
   },
   mention: {
-    id: "in_1",
+    kind: "user",
+    id: "user-7",
+    textMentionId: "in_1",
     createdAt: new Date(2024, 2, 4, 4, 6, 47),
     author: {
       id: "user-0",

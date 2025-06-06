@@ -23,7 +23,8 @@ const buildMentionTextEditorNodes = ({
   },
   {
     type: "mention",
-    userId: mentionedUserId,
+    kind: "user",
+    id: mentionedUserId,
   },
   {
     type: "text",
@@ -47,7 +48,7 @@ describe("convert mention content", () => {
     },
     mention: ({ node, user }) => {
       // prettier-ignore
-      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.userId}</span>`
+      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
     },
     text: ({ node }) => {
       // Note: construction following the schema 👇
@@ -104,7 +105,8 @@ describe("convert mention content", () => {
       },
       {
         type: "mention",
-        userId: "user-dracula",
+        kind: "user",
+        id: "user-dracula",
       },
       {
         type: "text",
@@ -136,7 +138,8 @@ describe("convert mention content", () => {
       },
       {
         type: "mention",
-        userId: "user-dracula",
+        kind: "user",
+        id: "user-dracula",
       },
       {
         type: "text",
@@ -181,7 +184,8 @@ describe("convert mention content", () => {
         },
         {
           type: "mention",
-          userId: "user-dracula",
+          kind: "user",
+          id: "user-dracula",
         },
       ];
 

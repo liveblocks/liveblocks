@@ -4,6 +4,7 @@ import type {
   DU,
   ResolveUsersArgs,
 } from "@liveblocks/core";
+import { assertNever } from "@liveblocks/core";
 
 import {
   type LiveblocksTextEditorMentionNode,
@@ -86,8 +87,12 @@ export async function convertMentionContent<T, U extends BaseUserMeta = DU>(
   const blocks: T[] = nodes.map((node, index) => {
     switch (node.type) {
       case "mention": {
+        if (node.kind !== "user") {
+          return assertNever(node.kind, "Unknown mention kind");
+        }
+
         return options.elements.mention(
-          { node, user: resolvedUsers.get(node.userId) },
+          { node, user: resolvedUsers.get(node.id) },
           index
         );
       }

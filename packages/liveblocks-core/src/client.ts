@@ -56,6 +56,7 @@ import {
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
+import type { MentionData } from "./types/MentionData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -158,7 +159,7 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserId: Signal<string | undefined>;
-  readonly mentionSuggestionsCache: Map<string, string[]>;
+  readonly mentionSuggestionsCache: Map<string, MentionData[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
@@ -452,11 +453,11 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   largeMessageStrategy?: LargeMessageStrategy;
   unstable_streamData?: boolean;
   /**
-   * A function that returns a list of user IDs matching a string.
+   * A function that returns a list of mention suggestions matching a string.
    */
   resolveMentionSuggestions?: (
     args: ResolveMentionSuggestionsArgs
-  ) => Awaitable<string[]>;
+  ) => Awaitable<string[] | MentionData[]>;
 
   /**
    * A function that returns user info from user IDs.
@@ -767,7 +768,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     roomsInfoStore.invalidate(roomIds);
   }
 
-  const mentionSuggestionsCache = new Map<string, string[]>();
+  const mentionSuggestionsCache = new Map<string, MentionData[]>();
 
   function invalidateResolvedMentionSuggestions() {
     mentionSuggestionsCache.clear();
