@@ -40,12 +40,9 @@ const CollapsibleRoot = forwardRef<HTMLDivElement, RootProps>(
     forwardedRef
   ) => {
     const [isOpen, onOpenChange] = useControllableState(
-      // If the collapsible is neither controlled nor uncontrolled, it defaults to controlled as open.
-      controlledOpen === undefined && defaultOpen === undefined
-        ? true
-        : controlledOpen,
-      controlledOnOpenChange,
-      defaultOpen
+      defaultOpen ?? true,
+      controlledOpen,
+      controlledOnOpenChange
     );
     const Component = asChild ? Slot : "div";
     const id = useId();

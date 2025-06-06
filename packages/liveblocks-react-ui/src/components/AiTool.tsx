@@ -7,7 +7,7 @@ import {
   type ToolResultData,
 } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
-import { Children, forwardRef, useCallback, useMemo, useState } from "react";
+import { Children, forwardRef, useCallback, useMemo } from "react";
 
 import { Button } from "../_private";
 import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
@@ -19,6 +19,7 @@ import {
 import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
+import { useSemiControllableState } from "../utils/use-controllable-state";
 import { CodeBlock } from "./internal/CodeBlock";
 
 export interface AiToolProps
@@ -41,15 +42,24 @@ export interface AiToolProps
    * The content shown in the tool.
    */
   children?: ReactNode;
+
+  /**
+   * Whether the content is currently collapsed.
+   * It is not a traditional controlled value, as in if you set it to `true` it would only stay expanded.
+   * Instead, it is "semi-controlled", meaning that setting it to `true` will expand it, but it
+   * can still be collapsed/expanded by clicking on it.
+   */
+  collapsed?: boolean;
+
+  /**
+   * The event handler called when the content is collapsed or expanded by clicking on it.
+   */
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
 
 export type AiToolInspectorProps = ComponentProps<"div">;
-
-// TODO: AiToolConfirmationProps might need a generic since we're outside of the
-//       tool definition so things like inferred args and result types are not
-//       available here for `confirm` and `cancel`
 
 /**
  * @private This API will change, and is not considered stable. DO NOT RELY on it.
@@ -181,17 +191,27 @@ function prettifyString(string: string) {
   );
 }
 
-const noop = () => {};
-
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
-    ({ children, title, icon, className, ...props }, forwardedRef) => {
+    (
+      {
+        children,
+        title,
+        icon,
+        collapsed,
+        onCollapsedChange,
+        className,
+        ...props
+      },
+      forwardedRef
+    ) => {
       const {
         status,
         toolName,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
-      const [isOpen, setIsOpen] = useState(true);
+      const [semiControlledCollapsed, onSemiControlledCollapsed] =
+        useSemiControllableState(collapsed ?? false, onCollapsedChange);
       // TODO: This check won't work for cases like:
       //         <AiTool>
       //           <ComponentThatRendersNull />
@@ -206,13 +226,23 @@ export const AiTool = Object.assign(
         return title ?? prettifyString(toolName);
       }, [title, toolName]);
 
+      // `AiTool` uses "collapsed" instead of "open" (like the `Composer` component) because "open"
+      // makes sense next to something called "Collapsible" but less so for something called "AiTool".
+      const handleCollapsibleOpenChange = useCallback(
+        (open: boolean) => {
+          onSemiControlledCollapsed(!open);
+        },
+        [onSemiControlledCollapsed]
+      );
+
       return (
         <Collapsible.Root
           ref={forwardedRef}
           className={classNames("lb-collapsible lb-ai-tool", className)}
           {...props}
-          open={hasContent ? isOpen : false}
-          onOpenChange={hasContent ? setIsOpen : noop}
+          // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
+          open={hasContent ? !semiControlledCollapsed : false}
+          onOpenChange={handleCollapsibleOpenChange}
           disabled={!hasContent}
         >
           <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
@@ -235,7 +265,7 @@ export const AiTool = Object.assign(
             </div>
           </Collapsible.Trigger>
 
-          {children ? (
+          {hasContent ? (
             <Collapsible.Content className="lb-collapsible-content lb-ai-tool-content-container">
               <div className="lb-ai-tool-content">{children}</div>
             </Collapsible.Content>
