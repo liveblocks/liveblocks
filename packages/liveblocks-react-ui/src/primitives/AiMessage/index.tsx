@@ -93,7 +93,7 @@ function ToolInvocation({
     };
   }, [part, respond, tool?.execute]);
 
-  if (tool === undefined || tool.render === undefined) return null;
+  if (tool?.render === undefined) return null;
   return (
     <ErrorBoundary
       fallback={
