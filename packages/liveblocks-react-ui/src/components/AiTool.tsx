@@ -11,6 +11,11 @@ import { Children, forwardRef, useCallback, useMemo, useState } from "react";
 
 import { Button } from "../_private";
 import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
+import {
+  type AiToolConfirmationOverrides,
+  type GlobalOverrides,
+  useOverrides,
+} from "../overrides";
 import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
 import { classNames } from "../utils/class-names";
@@ -60,9 +65,7 @@ export interface AiToolConfirmationProps<
   confirm: AiToolExecuteCallback<A, R>;
   cancel: AiToolExecuteCallback<A, R>;
   variant?: "default" | "destructive";
-
-  // TODO: Use existing overrides API to allow customizing the "Confirm" and "Cancel" labels
-  // overrides?: Partial<GlobalOverrides & AiToolConfirmationOverrides>;
+  overrides?: Partial<GlobalOverrides & AiToolConfirmationOverrides>;
 }
 
 function AiToolIcon({ className, ...props }: AiToolIconProps) {
@@ -96,11 +99,13 @@ function AiToolConfirmation<
   variant = "default",
   confirm,
   cancel,
+  overrides,
   className,
   ...props
 }: AiToolConfirmationProps<A, R>) {
   const { status, args, respond, toolName, toolCallId } =
     useAiToolInvocationContext();
+  const $ = useOverrides(overrides);
 
   const enabled = status === "executing";
 
@@ -143,14 +148,14 @@ function AiToolConfirmation<
               onClick={onCancelClick}
               variant="secondary"
             >
-              Cancel
+              {$.AI_TOOL_CONFIRMATION_CANCEL}
             </Button>
             <Button
               disabled={!enabled}
               onClick={onConfirmClick}
               variant={variant === "destructive" ? "destructive" : "primary"}
             >
-              Confirm
+              {$.AI_TOOL_CONFIRMATION_CONFIRM}
             </Button>
           </div>
         </div>
@@ -194,6 +199,8 @@ export const AiTool = Object.assign(
       //         </AiTool>
       //       One solution could be to check the DOM on every render with `useLayoutEffect`
       //       to see if there's any actual content.
+      //       For now we're limiting the visual issues caused by the above by using CSS's
+      //       `:empty` pseudo-class to make the content 0px high if it's actually empty.
       const hasContent = Children.count(children) > 0;
       const resolvedTitle = useMemo(() => {
         return title ?? prettifyString(toolName);
