@@ -130,8 +130,8 @@ export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
 >;
 
 export type AiToolExecuteContext = {
-  toolName: string;
-  toolCallId: string;
+  name: string;
+  invocationId: string;
 };
 
 export type AiToolExecuteCallback<
@@ -416,7 +416,7 @@ function createStore_forChatMessages(
   setToolResult: (
     chatId: string,
     messageId: MessageId,
-    toolCallId: string,
+    invocationId: string,
     result: ToolResultData,
     options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>
@@ -553,22 +553,22 @@ function createStore_forChatMessages(
           (part) =>
             part.type === "tool-invocation" && part.status === "executing"
         )) {
-          if (seenToolCallIds.has(toolCall.toolCallId)) {
+          if (seenToolCallIds.has(toolCall.invocationId)) {
             // Do nothing, we already know of it
             continue;
           }
 
-          seenToolCallIds.add(toolCall.toolCallId);
+          seenToolCallIds.add(toolCall.invocationId);
 
           const toolDef = toolsStore
-            .getToolΣ(toolCall.toolName, message.chatId)
+            .getToolΣ(toolCall.name, message.chatId)
             .get();
 
           const respondSync = (result: ToolResultData) => {
             setToolResult(
               message.chatId,
               message.id,
-              toolCall.toolCallId,
+              toolCall.invocationId,
               result
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
@@ -582,8 +582,8 @@ function createStore_forChatMessages(
           if (executeFn && autoExecutableMessages.has(message.id)) {
             (async () => {
               const result = await executeFn(toolCall.args, {
-                toolName: toolCall.toolName,
-                toolCallId: toolCall.toolCallId,
+                name: toolCall.name,
+                invocationId: toolCall.invocationId,
               });
               respondSync(result);
             })().catch((err) => {
@@ -902,7 +902,7 @@ export type Ai = {
   setToolResult: (
     chatId: string,
     messageId: MessageId,
-    toolCallId: string,
+    invocationId: string,
     result: ToolResultData,
     options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>;
@@ -1256,7 +1256,7 @@ export function createAi(config: AiConfig): Ai {
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
-    toolCallId: string,
+    invocationId: string,
     result: ToolResultData,
     options?: SetToolResultOptions
   ): Promise<SetToolResultResponse> {
@@ -1267,7 +1267,7 @@ export function createAi(config: AiConfig): Ai {
       cmd: "set-tool-result",
       chatId,
       messageId,
-      toolCallId,
+      invocationId,
       result,
       generationOptions: {
         copilotId: options?.copilotId,
@@ -1388,7 +1388,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v1"; // Do we need this?
+    url.pathname = "/ai/v2";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

@@ -56,29 +56,29 @@ function ToolInvocation({
 }) {
   const client = useClient();
   const ai = client[kInternal].ai;
-  const tool = useSignal(ai.signals.getToolΣ(part.toolName, chatId));
+  const tool = useSignal(ai.signals.getToolΣ(part.name, chatId));
 
   const respond = useCallback(
     (result: ToolResultData) => {
       if (part.status === "receiving") {
         console.log(
-          `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) is still receiving`
+          `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
         );
       } else if (part.status === "executed") {
         console.log(
-          `Ignoring respond(): tool '${part.toolName}' (${part.toolCallId}) has already executed`
+          `Ignoring respond(): tool '${part.name}' (${part.invocationId}) has already executed`
         );
       } else {
         ai.setToolResult(
           chatId,
           messageId,
-          part.toolCallId,
+          part.invocationId,
           result
           // TODO Pass in AiGenerationOptions here?
         );
       }
     },
-    [ai, chatId, messageId, part.status, part.toolName, part.toolCallId]
+    [ai, chatId, messageId, part.status, part.name, part.invocationId]
   );
 
   const props = useMemo(() => {
@@ -98,7 +98,7 @@ function ToolInvocation({
     <ErrorBoundary
       fallback={
         <p style={{ color: "red" }}>
-          Failed to render tool call result for ‘{part.toolName}’. See console
+          Failed to render tool call result for ‘{part.name}’. See console
           for details.
         </p>
       }

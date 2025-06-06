@@ -458,7 +458,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     expectType<
       (
         args: JsonObject,
-        context: { toolName: string; toolCallId: string }
+        context: { name: string; invocationId: string }
       ) => Awaitable<Json>
     >(myTool.execute);
   } else {
@@ -472,8 +472,8 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     // Possible JSX rendering invocation 1
     myTool.render({
       status: "receiving",
-      toolName: "callMyTool",
-      toolCallId: "tc_abc123",
+      name: "callMyTool",
+      invocationId: "tc_abc123",
       partialArgs: {},
       respond: (payload) => {
         expectType<Json>(payload);
@@ -485,8 +485,8 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     // Possible JSX rendering invocation 2
     myTool.render({
       status: "executing",
-      toolName: "callMyTool",
-      toolCallId: "tc_abc123",
+      name: "callMyTool",
+      invocationId: "tc_abc123",
       args: { a: 1 },
       respond: (payload) => {
         expectType<Json>(payload);
@@ -498,8 +498,8 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     // Possible JSX rendering invocation 3
     myTool.render({
       status: "executed",
-      toolName: "callMyTool",
-      toolCallId: "tc_abc123",
+      name: "callMyTool",
+      invocationId: "tc_abc123",
       args: { a: 1 },
       result: { b: 2 },
       respond: (payload) => {
