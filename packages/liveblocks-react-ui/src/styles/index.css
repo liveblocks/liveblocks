@@ -2845,7 +2845,7 @@
   color: var(--lb-foreground-moderate);
 }
 
-.lb-ai-tool-content {
+.lb-ai-tool-content:where(:not(:empty)) {
   padding: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
 }
 
