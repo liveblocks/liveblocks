@@ -9,7 +9,7 @@ import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import type { ComponentType } from "react";
+import type { FunctionComponent } from "react";
 import { forwardRef, useCallback, useMemo } from "react";
 
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
@@ -35,6 +35,15 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
+
+function StableRenderFn(props: {
+  renderFn: FunctionComponent<
+    AiToolInvocationProps<JsonObject, ToolResultData>
+  >;
+  props: AiToolInvocationProps<JsonObject, ToolResultData>;
+}) {
+  return props.renderFn(props.props);
+}
 
 function ToolInvocation({
   chatId,
@@ -72,20 +81,19 @@ function ToolInvocation({
     [ai, chatId, messageId, part.status, part.toolName, part.toolCallId]
   );
 
-  if (tool === undefined || tool.render === undefined) return null;
-  const RenderFn = tool.render as ComponentType<
-    AiToolInvocationProps<JsonObject, ToolResultData>
-  >;
+  const props = useMemo(() => {
+    const { type: _, ...rest } = part;
+    return {
+      ...rest,
+      respond,
+      types: undefined as never,
+      [kInternal]: {
+        execute: tool?.execute,
+      },
+    };
+  }, [part, respond, tool?.execute]);
 
-  const { type: _, ...rest } = part;
-  const props = {
-    ...rest,
-    respond,
-    types: undefined as never,
-    [kInternal]: {
-      execute: tool.execute,
-    },
-  };
+  if (tool?.render === undefined) return null;
   return (
     <ErrorBoundary
       fallback={
@@ -96,7 +104,14 @@ function ToolInvocation({
       }
     >
       <AiToolInvocationContext.Provider value={props}>
-        <RenderFn {...props} />
+        <StableRenderFn
+          renderFn={
+            tool.render as FunctionComponent<
+              AiToolInvocationProps<JsonObject, ToolResultData>
+            >
+          }
+          props={props}
+        />
       </AiToolInvocationContext.Provider>
     </ErrorBoundary>
   );
