@@ -35,7 +35,6 @@ import type {
   Relax,
   Resolve,
   RoomEventMessage,
-  StorageStatus,
   SyncStatus,
   ThreadData,
   ToImmutable,
@@ -51,13 +50,6 @@ export type UseSyncStatusOptions = {
    */
   smooth?: boolean;
 };
-
-export type UseStorageStatusOptions = UseSyncStatusOptions;
-
-export type StorageStatusSuccess = Exclude<
-  StorageStatus,
-  "not-loaded" | "loading"
->;
 
 export type ThreadsQuery<M extends BaseMetadata> = {
   /**
@@ -418,17 +410,6 @@ type RoomContextBundleCommon<
    * a re-render whenever it changes. Can be used to render a status badge.
    */
   useStatus(): Status;
-
-  /**
-   * @deprecated It's recommended to use `useMutation` for writing to Storage,
-   * which will automatically batch all mutations.
-   *
-   * Returns a function that batches modifications made during the given function.
-   * All the modifications are sent to other clients in a single message.
-   * All the modifications are merged in a single history item (undo/redo).
-   * All the subscribers are called only after the batch is over.
-   */
-  useBatch<T>(): (callback: () => T) => T;
 
   /**
    * Returns a callback that lets you broadcast custom events to other users in the room
@@ -834,16 +815,6 @@ type RoomContextBundleCommon<
   useRemoveReaction(): (options: CommentReactionOptions) => void;
 
   /**
-   * @deprecated Renamed to `useUpdateRoomSubscriptionSettings`
-   *
-   * Returns a function that updates the user's subscription settings
-   * for the current room.
-   */
-  useUpdateRoomNotificationSettings(): (
-    settings: Partial<RoomSubscriptionSettings>
-  ) => void;
-
-  /**
    * Returns a function that updates the user's subscription settings
    * for the current room.
    *
@@ -883,15 +854,6 @@ export type RoomContextBundle<
 > = Resolve<
   RoomContextBundleCommon<P, S, U, E, M> &
     SharedContextBundle<U>["classic"] & {
-      /**
-       * Returns the current storage status for the Room, and triggers
-       * a re-render whenever it changes. Can be used to render a "Saving..."
-       * indicator.
-       *
-       * @deprecated Prefer useSyncStatus()
-       */
-      useStorageStatus(options?: UseStorageStatusOptions): StorageStatus;
-
       /**
        * Extract arbitrary data from the Liveblocks Storage state, using an
        * arbitrary selector function.
@@ -964,17 +926,6 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
 
       /**
-       * @deprecated Renamed to `useRoomSubscriptionSettings`
-       *
-       * Returns the user's notification settings for the current room
-       * and a function to update them.
-       */
-      useRoomNotificationSettings(): [
-        RoomSubscriptionSettingsAsyncResult,
-        (settings: Partial<RoomSubscriptionSettings>) => void,
-      ];
-
-      /**
        * Returns the user's subscription settings for the current room
        * and a function to update them.
        *
@@ -1013,17 +964,6 @@ export type RoomContextBundle<
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
-            /**
-             * Returns the current storage status for the Room, and triggers
-             * a re-render whenever it changes. Can be used to render a "Saving..."
-             * indicator.
-             *
-             * @deprecated Prefer useSyncStatus()
-             */
-            useStorageStatus(
-              options?: UseStorageStatusOptions
-            ): StorageStatusSuccess;
-
             /**
              * Extract arbitrary data from the Liveblocks Storage state, using an
              * arbitrary selector function.
@@ -1104,17 +1044,6 @@ export type RoomContextBundle<
             //  * const { data } = useHistoryVersionData(version.id);
             //  */
             // useHistoryVersionData(versionId: string): HistoryVersionDataState;
-
-            /**
-             * @deprecated Renamed to `useRoomSubscriptionSettings`
-             *
-             * Returns the user's notification settings for the current room
-             * and a function to update them.
-             */
-            useRoomNotificationSettings(): [
-              RoomSubscriptionSettingsAsyncSuccess,
-              (settings: Partial<RoomSubscriptionSettings>) => void,
-            ];
 
             /**
              * Returns the user's subscription settings for the current room

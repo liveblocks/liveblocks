@@ -1,3 +1,4 @@
+import type { MentionData } from "@liveblocks/core";
 import type { Node as SlateNode } from "slate";
 import {
   Editor as SlateEditor,
@@ -72,15 +73,15 @@ export function isComposerBodyMention(
   return SlateElement.isElement(node) && node.type === "mention";
 }
 
-export function insertMention(editor: SlateEditor, userId: string) {
-  const mention: ComposerBodyMention = {
+export function insertMention(editor: SlateEditor, mention: MentionData) {
+  const mentionNode: ComposerBodyMention = {
     type: "mention",
-    id: userId,
+    ...mention,
     children: [{ text: "" }],
   };
 
   // Insert the mention
-  SlateTransforms.insertNodes(editor, mention);
+  SlateTransforms.insertNodes(editor, mentionNode);
   SlateTransforms.move(editor);
 
   const afterCharacter = editor.selection

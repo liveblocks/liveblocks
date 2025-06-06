@@ -34,7 +34,7 @@ import {
   createNotificationSettings,
   DefaultMap,
   DerivedSignal,
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   getSubscriptionKey,
   kInternal,
   MutableSignal,
@@ -2420,9 +2420,12 @@ function isThreadParticipant<M extends BaseMetadata>(
       break;
     }
 
-    const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+    const mentions = getMentionsFromCommentBody(
+      comment.body,
+      (mention) => mention.kind === "user" && mention.id === userId
+    );
 
-    if (mentionedIds.includes(userId)) {
+    if (mentions.length > 0) {
       isParticipant = true;
 
       break;

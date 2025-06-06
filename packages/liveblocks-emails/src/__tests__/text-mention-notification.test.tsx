@@ -1,21 +1,25 @@
-import { Liveblocks } from "@liveblocks/node";
+import type {
+  BaseUserMeta,
+  InboxNotificationTextMentionData,
+} from "@liveblocks/core";
+import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
+import { MENTION_CHARACTER } from "../lib/constants";
+import type { ConvertMentionContentElements } from "../mention-content";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
-} from "../liveblocks-text-editor";
-import type {
   TextMentionNotificationData,
-  TextMentionNotificationEmailBaseData,
+  TextMentionNotificationEmailData,
   TextMentionNotificationEmailDataAsHtml,
   TextMentionNotificationEmailDataAsReact,
 } from "../text-mention-notification";
 import {
   extractTextMentionNotificationData,
+  prepareTextMentionNotificationEmail,
   prepareTextMentionNotificationEmailAsHtml,
   prepareTextMentionNotificationEmailAsReact,
-  prepareTextMentionNotificationEmailBaseData,
 } from "../text-mention-notification";
 import {
   generateInboxNotificationId,
@@ -46,6 +50,34 @@ describe("text mention notification", () => {
   afterAll(() => server.close());
 
   const client = new Liveblocks({ secret: "sk_xxx" });
+
+  const setServerHandlers = ({
+    room,
+    inboxNotification,
+    docBinaries,
+  }: {
+    room: RoomData;
+    inboxNotification: InboxNotificationTextMentionData;
+    docBinaries?: ArrayBuffer;
+  }): void => {
+    server.use(
+      http.get(
+        `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+        () => HttpResponse.json(inboxNotification, { status: 200 })
+      ),
+      http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
+        HttpResponse.json(room, { status: 200 })
+      )
+    );
+
+    if (docBinaries) {
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
+          HttpResponse.arrayBuffer(docBinaries)
+        )
+      );
+    }
+  };
 
   describe("internals utils", () => {
     it("should extract `null` - bad bad notification kind", async () => {
@@ -104,19 +136,7 @@ describe("text mention notification", () => {
       });
 
       const room = makeRoomWithTextEditor();
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
-          HttpResponse.json(room, { status: 200 })
-        )
-      );
+      setServerHandlers({ room, inboxNotification });
 
       const event = makeTextMentionNotificationEvent({
         userId: "user-2",
@@ -144,18 +164,7 @@ describe("text mention notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
-          HttpResponse.json(ROOM_TEST, { status: 200 })
-        )
-      );
+      setServerHandlers({ room: ROOM_TEST, inboxNotification });
 
       const event = makeTextMentionNotificationEvent({
         userId: "user-1",
@@ -186,24 +195,11 @@ describe("text mention notification", () => {
 
       const room = makeRoomWithTextEditor({ editor: "tiptap" });
 
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
-          HttpResponse.json(room, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
-          HttpResponse.arrayBuffer(docUpdateBufferTiptap)
-        )
-      );
+      setServerHandlers({
+        room,
+        inboxNotification,
+        docBinaries: docUpdateBufferTiptap,
+      });
 
       const event = makeTextMentionNotificationEvent({
         userId: MENTIONED_USER_ID_TIPTAP,
@@ -226,14 +222,22 @@ describe("text mention notification", () => {
         editor: "tiptap",
         mentionNodeWithContext,
         createdAt: inboxNotification.notifiedAt,
-        userId: inboxNotification.createdBy,
+        userId: MENTIONED_USER_ID_TIPTAP,
+        createdBy: inboxNotification.createdBy,
       };
 
       expect(extracted).toEqual(expected);
     });
   });
 
-  describe("prepare text mention notification email base data", () => {
+  describe("prepare text mention notification email", () => {
+    const elements: ConvertMentionContentElements<string, BaseUserMeta> = {
+      container: ({ children }) => children.join(""),
+      mention: ({ node, user }) =>
+        `${MENTION_CHARACTER}${user?.name ?? node.id}`,
+      text: ({ node }) => node.text,
+    };
+
     it("should extract mention and nodes and prepare base email data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
@@ -242,25 +246,11 @@ describe("text mention notification", () => {
       });
 
       const room = makeRoomWithTextEditor({ editor: "tiptap" });
-
-      server.use(
-        http.get(
-          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-          () => HttpResponse.json(inboxNotification, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
-          HttpResponse.json(room, { status: 200 })
-        )
-      );
-
-      server.use(
-        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
-          HttpResponse.arrayBuffer(docUpdateBufferTiptap)
-        )
-      );
+      setServerHandlers({
+        room,
+        inboxNotification,
+        docBinaries: docUpdateBufferTiptap,
+      });
 
       const event = makeTextMentionNotificationEvent({
         userId: MENTIONED_USER_ID_TIPTAP,
@@ -271,71 +261,44 @@ describe("text mention notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareTextMentionNotificationEmailBaseData({
+          prepareTextMentionNotificationEmail(
             client,
             event,
-          }),
-          prepareTextMentionNotificationEmailBaseData({
+            {},
+            elements,
+            "test-suite"
+          ),
+          prepareTextMentionNotificationEmail(
             client,
             event,
-            options: { resolveRoomInfo },
-          }),
+            { resolveRoomInfo },
+            elements,
+            "test-suite"
+          ),
         ]);
 
-      const base: Omit<TextMentionNotificationEmailBaseData, "roomInfo"> = {
+      const base: Omit<TextMentionNotificationEmailData<string>, "roomInfo"> = {
         mention: {
-          id: MENTION_ID_TIPTAP,
+          textMentionId: MENTION_ID_TIPTAP,
+          id: MENTIONED_USER_ID_TIPTAP,
+          kind: "user",
           roomId: room.id,
-          userId: inboxNotification.createdBy,
-          textEditorNodes: [
-            {
-              type: "text",
-              text: "Hey this a tip tap ",
-              bold: false,
-              italic: false,
-              strikethrough: false,
-              code: false,
-            },
-            {
-              type: "text",
-              text: "example",
-              bold: true,
-              italic: true,
-              strikethrough: false,
-              code: false,
-            },
-            {
-              type: "text",
-              text: " hiha! ",
-              bold: false,
-              italic: false,
-              strikethrough: false,
-              code: false,
-            },
-            {
-              type: "mention",
-              userId: MENTIONED_USER_ID_TIPTAP,
-            },
-            {
-              type: "text",
-              text: " fun right?",
-              bold: false,
-              italic: false,
-              strikethrough: false,
-              code: false,
-            },
-          ],
+          author: {
+            id: "user-nimesh",
+            info: { name: "user-nimesh" },
+          },
+          content: `Hey this a tip tap example hiha! @${MENTIONED_USER_ID_TIPTAP} fun right?`,
           createdAt: inboxNotification.notifiedAt,
         },
       };
 
-      const expected1: TextMentionNotificationEmailBaseData = {
+      const expected1: TextMentionNotificationEmailData<string> = {
         ...base,
         roomInfo: {
           name: ROOM_ID_TEST,
         },
       };
-      const expected2: TextMentionNotificationEmailBaseData = {
+      const expected2: TextMentionNotificationEmailData<string> = {
         ...base,
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
@@ -369,11 +332,13 @@ describe("text mention notification", () => {
 
     const expected1: TextMentionNotificationEmailDataAsHtml = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "user-1" } },
         createdAt: inboxNotification.notifiedAt,
-        htmlContent:
+        content:
           '<div style="font-size:16px;">Hey this a tip tap <em><strong style="font-weight:500;">example</strong></em> hiha! <span data-mention style="color:blue;">@user-0</span> fun right?</div>',
       },
       roomInfo: {
@@ -383,11 +348,13 @@ describe("text mention notification", () => {
 
     const expected2: TextMentionNotificationEmailDataAsHtml = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "Mislav Abha" } },
         createdAt: inboxNotification.notifiedAt,
-        htmlContent:
+        content:
           '<div style="font-size:16px;">Hey this a tip tap <em><strong style="font-weight:500;">example</strong></em> hiha! <span data-mention style="color:blue;">@Charlie Layne</span> fun right?</div>',
       },
       roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -417,24 +384,11 @@ describe("text mention notification", () => {
     ])(
       "should return text mention as html with resolvers: $withResolvers",
       async ({ promise, expected }) => {
-        server.use(
-          http.get(
-            `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-            () => HttpResponse.json(inboxNotification, { status: 200 })
-          )
-        );
-
-        server.use(
-          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
-            HttpResponse.json(room, { status: 200 })
-          )
-        );
-
-        server.use(
-          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
-            HttpResponse.arrayBuffer(docUpdateBufferTiptap)
-          )
-        );
+        setServerHandlers({
+          room,
+          inboxNotification,
+          docBinaries: docUpdateBufferTiptap,
+        });
 
         const textMentionNotificationEmailAsHtml = await promise();
         expect(textMentionNotificationEmailAsHtml).toEqual(expected);
@@ -464,11 +418,13 @@ describe("text mention notification", () => {
 
     const expected1: TextMentionNotificationEmailDataAsReact = {
       mention: {
-        id: MENTION_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
+        id: MENTIONED_USER_ID_TIPTAP,
+        kind: "user",
         roomId: room.id,
         author: { id: "user-1", info: { name: "user-1" } },
         createdAt: inboxNotification.notifiedAt,
-        reactContent: (
+        content: (
           <main>
             <span>Hey this a tip tap </span>
             <span>
@@ -503,24 +459,11 @@ describe("text mention notification", () => {
     ])(
       "should return text mention as React with resolvers: $withResolvers",
       async ({ promise, expected }) => {
-        server.use(
-          http.get(
-            `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
-            () => HttpResponse.json(inboxNotification, { status: 200 })
-          )
-        );
-
-        server.use(
-          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
-            HttpResponse.json(room, { status: 200 })
-          )
-        );
-
-        server.use(
-          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
-            HttpResponse.arrayBuffer(docUpdateBufferTiptap)
-          )
-        );
+        setServerHandlers({
+          room,
+          inboxNotification,
+          docBinaries: docUpdateBufferTiptap,
+        });
 
         const emailData = await promise();
 

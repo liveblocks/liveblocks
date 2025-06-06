@@ -9,6 +9,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { assertNever, type MentionData } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateTextMention,
@@ -43,7 +44,7 @@ import {
 import * as Suggestions from "./suggestions";
 import {
   OnResetMatchCallbackContext,
-  OnValueSelectCallbackContext,
+  OnSuggestionSelectCallbackContext,
   SuggestionsContext,
 } from "./suggestions";
 import { User } from "./user";
@@ -295,8 +296,8 @@ export function MentionPlugin() {
     );
   }, [editor]);
 
-  const handleValueSelect = useCallback(
-    (userId: string) => {
+  const handleSuggestionSelect = useCallback(
+    (mention: MentionData) => {
       function $onValueSelect() {
         if (match === null) return;
 
@@ -321,7 +322,17 @@ export function MentionPlugin() {
         const startOffset = selectionOffset - queryOffset;
         if (startOffset < 0) return;
 
-        const mentionNode = $createMentionNode(userId);
+        let mentionNode: MentionNode;
+
+        // Other mention kinds will be different nodes: GroupMentionNode, etc.
+        switch (mention.kind) {
+          case "user":
+            mentionNode = $createMentionNode(mention.id);
+            break;
+
+          default:
+            return assertNever(mention.kind, "Unhandled mention kind");
+        }
 
         // Split the anchor (text) node and create a new text node only containing matched text.
         if (startOffset === 0) {
@@ -348,7 +359,9 @@ export function MentionPlugin() {
 
   return createPortal(
     <SuggestionsContext.Provider value={suggestions}>
-      <OnValueSelectCallbackContext.Provider value={handleValueSelect}>
+      <OnSuggestionSelectCallbackContext.Provider
+        value={handleSuggestionSelect}
+      >
         <OnResetMatchCallbackContext.Provider value={() => setMatch(null)}>
           <SuggestionsPortal
             range={range}
@@ -356,26 +369,34 @@ export function MentionPlugin() {
             key={matchingString}
           >
             <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
-              {suggestions.map((userId) => (
-                <Suggestions.Item
-                  key={userId}
-                  value={userId}
-                  className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
-                >
-                  <Avatar
-                    userId={userId}
-                    className="lb-lexical-mention-suggestion-avatar"
-                  />
-                  <User
-                    userId={userId}
-                    className="lb-lexical-mention-suggestion-user"
-                  />
-                </Suggestions.Item>
-              ))}
+              {suggestions.map((mention) => {
+                switch (mention.kind) {
+                  case "user":
+                    return (
+                      <Suggestions.Item
+                        key={mention.id}
+                        value={mention.id}
+                        className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
+                      >
+                        <Avatar
+                          userId={mention.id}
+                          className="lb-lexical-mention-suggestion-avatar"
+                        />
+                        <User
+                          userId={mention.id}
+                          className="lb-lexical-mention-suggestion-user"
+                        />
+                      </Suggestions.Item>
+                    );
+
+                  default:
+                    return assertNever(mention.kind, "Unhandled mention kind");
+                }
+              })}
             </Suggestions.List>
           </SuggestionsPortal>
         </OnResetMatchCallbackContext.Provider>
-      </OnValueSelectCallbackContext.Provider>
+      </OnSuggestionSelectCallbackContext.Provider>
     </SuggestionsContext.Provider>,
     document.body
   );

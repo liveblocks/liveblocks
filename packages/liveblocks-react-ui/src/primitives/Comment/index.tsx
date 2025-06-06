@@ -23,7 +23,7 @@ const COMMENT_LINK_NAME = "CommentLink";
  * Displays mentions within `Comment.Body`.
  *
  * @example
- * <Comment.Mention>@{userId}</Comment.Mention>
+ * <Comment.Mention>@{mention.id}</Comment.Mention>
  */
 const CommentMention = forwardRef<HTMLSpanElement, CommentMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
@@ -61,11 +61,11 @@ const CommentLink = forwardRef<HTMLAnchorElement, CommentLinkProps>(
 );
 
 const defaultBodyComponents: CommentBodyComponents = {
-  Mention: ({ userId }) => {
+  Mention: ({ mention }) => {
     return (
       <CommentMention>
         {MENTION_CHARACTER}
-        {userId}
+        {mention.id}
       </CommentMention>
     );
   },
@@ -105,8 +105,10 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                 <p key={index} style={{ minHeight: "1lh" }}>
                   {block.children.map((inline, index) => {
                     if (isCommentBodyMention(inline)) {
-                      return inline.id ? (
-                        <Mention userId={inline.id} key={index} />
+                      const { type: _, ...mention } = inline;
+
+                      return mention.id ? (
+                        <Mention mention={mention} key={index} />
                       ) : null;
                     }
 

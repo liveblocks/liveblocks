@@ -95,7 +95,7 @@ export type ConvertCommentBodyElements<T, U extends BaseUserMeta = DU> = {
   mention: (args: CommentBodyMentionElementArgs<U>, index: number) => T;
 };
 
-export type ConvertCommentBody<T, U extends BaseUserMeta = DU> = {
+export type ConvertCommentBodyOptions<T, U extends BaseUserMeta = DU> = {
   /**
    * A function that returns user info from user IDs.
    * You should return a list of user objects of the same size, in the same order.
@@ -115,7 +115,7 @@ export type ConvertCommentBody<T, U extends BaseUserMeta = DU> = {
  */
 export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
   body: CommentBody,
-  options: ConvertCommentBody<T, U>
+  options: ConvertCommentBodyOptions<T, U>
 ): Promise<T> {
   const resolvedUsers = await resolveUsersInCommentBody(
     body,

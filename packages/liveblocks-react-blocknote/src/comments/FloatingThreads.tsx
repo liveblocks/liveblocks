@@ -1,5 +1,6 @@
 import type {
-  BlockNoteEditor, BlockSchema,
+  BlockNoteEditor,
+  BlockSchema,
   DefaultBlockSchema,
   DefaultInlineContentSchema,
   DefaultStyleSchema,
@@ -13,15 +14,15 @@ type FloatingThreadsProps<
   B extends BlockSchema = DefaultBlockSchema,
   I extends InlineContentSchema = DefaultInlineContentSchema,
   S extends StyleSchema = DefaultStyleSchema,
-> = Omit<
-  Parameters<typeof TipTapFloatingThreads>[0],
-  "editor"
-> & {
+> = Omit<Parameters<typeof TipTapFloatingThreads>[0], "editor"> & {
   editor: BlockNoteEditor<B, I, S>;
 };
 
 export function FloatingThreads(props: FloatingThreadsProps) {
   return (
-    <TipTapFloatingThreads {...props} editor={props.editor._tiptapEditor as unknown as Editor} />
+    <TipTapFloatingThreads
+      {...props}
+      editor={props.editor._tiptapEditor as unknown as Editor}
+    />
   );
 }

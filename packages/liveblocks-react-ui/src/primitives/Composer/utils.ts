@@ -66,10 +66,9 @@ import type { FloatingAlignment, FloatingPosition } from "./types";
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
 ): CommentBodyMention {
-  return {
-    type: "mention",
-    id: mention.id,
-  };
+  const { children: _, ...commentBodyMention } = mention;
+
+  return commentBodyMention;
 }
 
 export function composerBodyAutoLinkToCommentBodyLink(
@@ -95,8 +94,7 @@ export function commentBodyMentionToComposerBodyMention(
   mention: CommentBodyMention
 ): ComposerBodyMention {
   return {
-    type: "mention",
-    id: mention.id,
+    ...mention,
     children: [{ text: "" }],
   };
 }

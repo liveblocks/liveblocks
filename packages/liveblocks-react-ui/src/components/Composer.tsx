@@ -6,7 +6,7 @@ import type {
   CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
-import { Permission } from "@liveblocks/core";
+import { assertNever, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
@@ -37,7 +37,7 @@ import {
   useSyncExternalStore,
 } from "react";
 
-import { useLiveblocksUIConfig } from "../config";
+import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
@@ -331,37 +331,51 @@ function ComposerAttachFilesEditorAction({
   );
 }
 
-function ComposerMention({ userId }: ComposerEditorMentionProps) {
-  return (
-    <ComposerPrimitive.Mention className="lb-composer-mention">
-      {MENTION_CHARACTER}
-      <User userId={userId} />
-    </ComposerPrimitive.Mention>
-  );
+function ComposerMention({ mention }: ComposerEditorMentionProps) {
+  switch (mention.kind) {
+    case "user":
+      return (
+        <ComposerPrimitive.Mention className="lb-composer-mention">
+          {MENTION_CHARACTER}
+          <User userId={mention.id} />
+        </ComposerPrimitive.Mention>
+      );
+
+    default:
+      return assertNever(mention.kind, "Unhandled mention kind");
+  }
 }
 
 function ComposerMentionSuggestions({
-  userIds,
+  mentions,
 }: ComposerEditorMentionSuggestionsProps) {
-  return userIds.length > 0 ? (
+  return mentions.length > 0 ? (
     <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
-        {userIds.map((userId) => (
-          <ComposerPrimitive.SuggestionsListItem
-            key={userId}
-            className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
-            value={userId}
-          >
-            <Avatar
-              userId={userId}
-              className="lb-composer-mention-suggestion-avatar"
-            />
-            <User
-              userId={userId}
-              className="lb-composer-mention-suggestion-user"
-            />
-          </ComposerPrimitive.SuggestionsListItem>
-        ))}
+        {mentions.map((mention) => {
+          switch (mention.kind) {
+            case "user":
+              return (
+                <ComposerPrimitive.SuggestionsListItem
+                  key={mention.id}
+                  className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+                  value={mention.id}
+                >
+                  <Avatar
+                    userId={mention.id}
+                    className="lb-composer-mention-suggestion-avatar"
+                  />
+                  <User
+                    userId={mention.id}
+                    className="lb-composer-mention-suggestion-user"
+                  />
+                </ComposerPrimitive.SuggestionsListItem>
+              );
+
+            default:
+              return assertNever(mention.kind, "Unhandled mention kind");
+          }
+        })}
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
   ) : null;
@@ -662,7 +676,7 @@ export const Composer = forwardRef(
     const createThread = useCreateRoomThread(roomId);
     const createComment = useCreateRoomComment(roomId);
     const editComment = useEditRoomComment(roomId);
-    const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
+    const { preventUnsavedComposerChanges } = useLiveblocksUiConfig();
     const hasResolveMentionSuggestions =
       useResolveMentionSuggestions() !== undefined;
     const isEmptyRef = useRef(true);

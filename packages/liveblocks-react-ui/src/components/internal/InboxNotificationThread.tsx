@@ -4,7 +4,7 @@ import type {
   InboxNotificationThreadData,
   ThreadData,
 } from "@liveblocks/core";
-import { getMentionedIdsFromCommentBody } from "@liveblocks/core";
+import { getMentionsFromCommentBody } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 
 import {
@@ -144,9 +144,12 @@ function findLastCommentWithMentionedId(
     }
 
     if (comment.body) {
-      const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+      const mentions = getMentionsFromCommentBody(
+        comment.body,
+        (mention) => mention.kind === "user" && mention.id === mentionedId
+      );
 
-      if (mentionedIds.includes(mentionedId)) {
+      if (mentions.length > 0) {
         return comment;
       }
     }

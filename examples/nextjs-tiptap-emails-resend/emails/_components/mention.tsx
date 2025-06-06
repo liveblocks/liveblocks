@@ -10,7 +10,7 @@ type MentionProps = MentionEmailAsReactData & {
 export function Mention({
   createdAt,
   author,
-  reactContent,
+  content,
   className,
   roomUrl,
 }: MentionProps) {
@@ -49,7 +49,7 @@ export function Mention({
       <Row>
         <Column className="w-10" />
         <Column>
-          {reactContent}
+          {content}
           <Button
             className={cn(
               "rounded px-3.5 py-2 text-sm font-medium w-max mt-4",

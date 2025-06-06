@@ -55,14 +55,6 @@ const kPlain = Symbol("notification-settings-plain");
 type ProxiedNotificationSettings = NotificationSettingsPlain;
 
 /**
- * @deprecated Renamed to `NotificationSettings`
- *
- * Notification settings.
- * One channel for one set of settings.
- */
-export type UserNotificationSettings = NotificationSettings;
-
-/**
  * Notification settings.
  * One channel for one set of settings.
  */
