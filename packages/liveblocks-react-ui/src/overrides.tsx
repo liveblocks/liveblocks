@@ -66,6 +66,7 @@ export interface AiChatComposerOverrides {
 export interface AiChatMessageOverrides {
   AI_CHAT_MESSAGE_DELETED: string;
   AI_CHAT_MESSAGE_THINKING: string;
+  AI_CHAT_MESSAGE_REASONING: (isStreaming: boolean) => string;
 }
 
 export interface AiChatOverrides {
@@ -220,6 +221,8 @@ export const defaultOverrides: Overrides = {
   AI_CHAT_COMPOSER_ABORT: "Abort response",
   AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
+  AI_CHAT_MESSAGE_REASONING: (isStreaming) =>
+    isStreaming ? "Reasoning…" : "Reasoning",
   AI_CHAT_MESSAGES_ERROR: () =>
     "There was an error while getting the messages.",
   COPY_TO_CLIPBOARD: "Copy",

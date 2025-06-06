@@ -143,6 +143,8 @@ function ReasoningPart({
   isStreaming,
 }: AiMessageContentReasoningPartProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const $ = useOverrides();
+
   return (
     <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
@@ -155,8 +157,8 @@ function ReasoningPart({
           isStreaming && "lb-ai-chat-pending"
         )}
       >
-        {/* TODO: If `isStreaming` is true, show "Reasoning…"/"Thinking…", otherwise show "Reasoned/thought for x seconds"? */}
-        Reasoning
+        {/* TODO: Show duration as "Reasoned for x seconds"? */}
+        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)}
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
