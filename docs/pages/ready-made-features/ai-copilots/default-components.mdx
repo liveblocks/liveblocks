@@ -1,0 +1,125 @@
+---
+meta:
+  title: "Default components"
+  parentTitle: "AI Copilots"
+  description: "Ready-to-use customizable components"
+---
+
+The default components included in AI Copilots are a great way to start building
+AI into your application. With these components you can render advanced AI
+chats, that understand your application state, modify it with actions, and
+render custom in-chat components.
+
+- Fully styled AI chat components, with an optional dark mode.
+- Pass in knowledge, add actions, and render custom components.
+- Customize through CSS variables and class names.
+- Localize and modify strings with overrides.
+
+## AiChat
+
+The [`AiChat`][] component renders an AI chat, with a chat history, a composer
+for adding new messages, and a toolbar for adding AI actions.
+
+{/* TODO AiChat image */}
+
+### Usage
+
+Get started by importing the component, and passing in a unique chat ID.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+
+function Component() {
+  return <AiChat chatId="my-chat-id" />;
+}
+```
+
+This will render an AI chat on the page, with a chat history, and a composer for
+adding new messages. Each chat is stored permanently, and can be accessed again
+later.
+
+{/* TODO list everything you can do with it */}
+
+##### Props [#AiChat-props]
+
+<PropertiesList>
+  <PropertiesListItem name="chatId" type="string" required>
+    The id of the chat the composer belongs to.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the chat composer on mount.
+  </PropertiesListItem>
+  <PropertiesListItem name="layout" type='"inset" | "compact"'>
+    The layout of the chat and its composer.
+  </PropertiesListItem>
+  <PropertiesListItem name="copilotId" type="string">
+    The id of the Copilot to use to send the message. Copilots are configured in
+    the Liveblocks dashboard.
+  </PropertiesListItem>
+  <PropertiesListItem name="knowledge" type="AiKnowledgeSource[]">
+    The contextual knowledge to include in the chat. May be used by the
+    assistant when generating responses. Any knowledge you provide via this prop
+    will be added to any already globally registered knowledge via{" "}
+    <RegisterAiKnowledge />.
+  </PropertiesListItem>
+  <PropertiesListItem name="tools" type="Record<string, ToolDefinition>">
+    Tool definitions to make available within this chat. May be used by the
+    assistant when generating responses.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & AiChatMessageOverrides & AiChatComposerOverrides & AiChatOverrides>"
+  >
+    Override the component's strings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<GlobalComponents & AiChatComponents>"
+  >
+    Override the component's components.
+  </PropertiesListItem>
+</PropertiesList>
+
+## AiTool
+
+The [`AiTool`][] component renders a button that can be used to add an AI action
+to the chat.
+
+{/* TODO AiTool image */}
+
+### Usage
+
+{/* TODO usage */}
+
+## Customization
+
+It’s possible to style and localize the default components:
+
+- Import dark mode styles.
+- Modify the style with CSS variables and class names.
+- Use overrides to change default text used in the components.
+
+{/* TODO page */}
+
+Learn more under
+[styling and customization](/docs/ready-made-features/comments/styling-and-customization).
+
+##### Props [#AiTool-props]
+
+<PropertiesList>
+  <PropertiesListItem name="title" type="string">
+    A title to display for this tool. If not specified, it will get inferred
+    from the tool's name, e.g. "list-todos" will become "List todos".
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    An optional icon displayed next to the title. Can be an emoji, an SVG, or
+    any other React node.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    The content shown in the tool. If specified, the tool will become
+    collapsible.
+  </PropertiesListItem>
+</PropertiesList>
+
+[`AiChat`]: /docs/api-reference/liveblocks-react-ui#AiChat
+[`AiTool`]: /docs/api-reference/liveblocks-react-ui#AiTool
