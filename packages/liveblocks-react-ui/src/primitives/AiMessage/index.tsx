@@ -81,17 +81,19 @@ function ToolInvocation({
     [ai, chatId, messageId, part.status, part.toolName, part.toolCallId]
   );
 
-  if (tool === undefined || tool.render === undefined) return null;
+  const props = useMemo(() => {
+    const { type: _, ...rest } = part;
+    return {
+      ...rest,
+      respond,
+      types: undefined as never,
+      [kInternal]: {
+        execute: tool?.execute,
+      },
+    };
+  }, [part, respond, tool?.execute]);
 
-  const { type: _, ...rest } = part;
-  const props = {
-    ...rest,
-    respond,
-    types: undefined as never,
-    [kInternal]: {
-      execute: tool.execute,
-    },
-  };
+  if (tool === undefined || tool.render === undefined) return null;
   return (
     <ErrorBoundary
       fallback={
