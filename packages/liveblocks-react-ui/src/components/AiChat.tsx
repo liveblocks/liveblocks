@@ -271,7 +271,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             key={chatId}
             chatId={chatId}
             copilotId={copilotId as CopilotId}
-            overrides={$}
+            overrides={overrides}
             autoFocus={autoFocus}
             onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
             className={

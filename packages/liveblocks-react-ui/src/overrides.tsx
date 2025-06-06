@@ -25,6 +25,7 @@ export interface GlobalOverrides {
   EMOJI_PICKER_CHANGE_SKIN_TONE: string;
   ATTACHMENT_TOO_LARGE: (maxSize?: string) => string;
   ATTACHMENT_ERROR: (error: Error) => string;
+  COPY_TO_CLIPBOARD: string;
 }
 
 export interface CommentOverrides {
@@ -56,6 +57,11 @@ export interface ComposerOverrides {
   COMPOSER_TOGGLE_MARK: (mark: ComposerBodyMark) => string;
 }
 
+export interface AiToolConfirmationOverrides {
+  AI_TOOL_CONFIRMATION_CONFIRM: string;
+  AI_TOOL_CONFIRMATION_CANCEL: string;
+}
+
 export interface AiChatComposerOverrides {
   AI_CHAT_COMPOSER_PLACEHOLDER: string;
   AI_CHAT_COMPOSER_SEND: string;
@@ -65,6 +71,7 @@ export interface AiChatComposerOverrides {
 export interface AiChatMessageOverrides {
   AI_CHAT_MESSAGE_DELETED: string;
   AI_CHAT_MESSAGE_THINKING: string;
+  AI_CHAT_MESSAGE_REASONING: (isStreaming: boolean) => string;
 }
 
 export interface AiChatOverrides {
@@ -117,7 +124,8 @@ export type Overrides = LocalizationOverrides &
   HistoryVersionPreviewOverrides &
   AiChatComposerOverrides &
   AiChatMessageOverrides &
-  AiChatOverrides;
+  AiChatOverrides &
+  AiToolConfirmationOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -128,6 +136,7 @@ export const defaultOverrides: Overrides = {
   dir: "ltr",
   USER_SELF: "you",
   USER_UNKNOWN: "Anonymous",
+  COPY_TO_CLIPBOARD: "Copy",
   LIST_REMAINING: (count) => `${count} more`,
   LIST_REMAINING_USERS: (count) => `${count} ${pluralize(count, "other")}`,
   LIST_REMAINING_COMMENTS: (count) =>
@@ -219,8 +228,12 @@ export const defaultOverrides: Overrides = {
   AI_CHAT_COMPOSER_ABORT: "Abort response",
   AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
+  AI_CHAT_MESSAGE_REASONING: (isStreaming) =>
+    isStreaming ? "Reasoning…" : "Reasoning",
   AI_CHAT_MESSAGES_ERROR: () =>
     "There was an error while getting the messages.",
+  AI_TOOL_CONFIRMATION_CONFIRM: "Confirm",
+  AI_TOOL_CONFIRMATION_CANCEL: "Cancel",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);
