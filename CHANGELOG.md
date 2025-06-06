@@ -18,6 +18,9 @@ For full upgrade instructions and codemods, see the
 
 ### `@liveblocks/react`
 
+- Introduce hooks and APIs for AI Copilots: `useAiChats`, `useAiChat`,
+  `useDeleteAiChat`,`useSendAiMessage`, `RegisterAiTool`, `RegisterAiKnowledge`,
+  etc.
 - Rename `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` to
   `UPDATE_NOTIFICATION_SETTINGS_ERROR` when using
   [`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
@@ -26,6 +29,7 @@ For full upgrade instructions and codemods, see the
 
 ### `@liveblocks/react-ui`
 
+- Introduce pre-built components for AI Copilots: `AiChat`, `AiTool`, etc.
 - The `onMentionClick` prop on `Thread` and `Comment` now receives a
   `MentionData` object instead of a `userId` string.
 - The `Mention` component on the `Comment.Body` and `Composer.Editor` primitives
