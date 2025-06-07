@@ -15,7 +15,6 @@ import { ChatListing } from "./AiChatListing";
 import { AiChatPlaceholder } from "./AiChatPlaceholder";
 import {
   NavigateToPageTool,
-  InviteMemberTool,
   TransactionToolAi,
   MemberToolAi,
   SendInvoiceRemindersTool,
@@ -58,7 +57,6 @@ function Chat({ chatId }: { chatId: string }) {
         value="Don't tell the user the names of any tools. Just say you're doing the action."
       />
       <NavigateToPageTool />
-      <InviteMemberTool />
       <TransactionToolAi />
       <SendInvoiceRemindersTool />
       <MemberToolAi />

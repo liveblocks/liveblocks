@@ -33,10 +33,40 @@ import {
 import { departments } from "@/data/data";
 import { users } from "@/data/users";
 import { Plus, Trash2 } from "lucide-react";
+import { InviteMemberTool } from "@/components/AiPopup/AiChatTools";
+import { useState } from "react";
 
 export default function Users() {
+  // Temporary because this is just a demo
+  const [invitedUsers, setInvitedUsers] = useState<typeof users>([]);
+
   return (
     <section aria-labelledby="members-heading">
+      <InviteMemberTool
+        onInvite={(user) => {
+          setInvitedUsers((prev) => [
+            {
+              name: user.name,
+              email: user.email,
+              initials:
+                user.name.split(" ").length > 1
+                  ? user.name.split(" ")[0][0] + user.name.split(" ")[1][0]
+                  : user.name[0],
+              permission: "admin",
+              color: "blue",
+              avatar: "",
+              status: "pending",
+              dateAdded: new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+              lastActive: "--",
+            },
+            ...prev,
+          ]);
+        }}
+      />
       <form>
         <div className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
           <div>
@@ -158,18 +188,26 @@ export default function Users() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {users.map((item) => (
-                    <TableRow key={item.name}>
+                  {[...invitedUsers, ...users].map((item) => (
+                    <TableRow key={item.name + item.email + item.dateAdded}>
                       <TableCell className="w-full">
                         {item.status === "pending" ? (
                           <div className="flex items-center gap-4">
-                            <Image
-                              src={item.avatar}
-                              alt={`${item.name}'s avatar`}
-                              width={36}
-                              height={36}
-                              className="size-9 rounded-full border border-dashed border-gray-300 object-cover dark:border-gray-700"
-                            />
+                            {item.avatar ? (
+                              <Image
+                                src={item.avatar}
+                                alt={`${item.name}'s avatar`}
+                                width={36}
+                                height={36}
+                                className="size-9 rounded-full border border-dashed border-gray-300 object-cover dark:border-gray-700"
+                              />
+                            ) : (
+                              <div className="size-9 rounded-full border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                  {item.initials}
+                                </span>
+                              </div>
+                            )}
                             <div>
                               <div className="flex items-center gap-2">
                                 <div className="text-sm font-medium text-gray-900 dark:text-gray-50">

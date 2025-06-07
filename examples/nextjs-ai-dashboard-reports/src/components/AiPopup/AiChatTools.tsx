@@ -196,19 +196,25 @@ export function SendInvoiceRemindersTool() {
   );
 }
 
-export function InviteMemberTool() {
+export function InviteMemberTool({
+  onInvite,
+}: {
+  onInvite: ({ name, email }: { name: string; email: string }) => void;
+}) {
   return (
     <RegisterAiTool
       name="invite-member"
       tool={defineAiTool()({
-        description: "Invite a new member to the team",
+        description:
+          "Invite a new member to the team. Always ask for an email address. If they don't provide a name, guess what it is from the email.",
         parameters: {
           type: "object",
           properties: {
             email: { type: "string" },
+            name: { type: "string" },
           },
           additionalProperties: false,
-          required: ["email"],
+          required: ["email", "name"],
         },
         render: ({ args }) => {
           if (!args) return null;
@@ -217,10 +223,11 @@ export function InviteMemberTool() {
               <AiTool.Confirmation
                 confirm={() => {
                   toast.success(`${args.email} has been invited`);
-                  return "Invited to the team";
+                  onInvite({ name: args.name, email: args.email });
+                  return `The user confirmed inviting ${args.email} to the team`;
                 }}
                 cancel={() => {
-                  return "The user cancelled the invite";
+                  return `The user cancelled inviting ${args.email} to the team`;
                 }}
               >
                 Invite <code>{args.email}</code> to the team?
