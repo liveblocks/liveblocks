@@ -8,9 +8,12 @@ import Image from "next/image";
 import { defineAiTool } from "@liveblocks/client";
 import { useRouter } from "next/navigation";
 import { AiTool } from "@liveblocks/react-ui";
+import { Timestamp } from "@liveblocks/react-ui/primitives";
 import { toast } from "sonner";
 import { RegisterAiTool } from "@liveblocks/react";
 import { ChevronDownIcon } from "lucide-react";
+import { formatters } from "@/lib/utils";
+import useSWR from "swr";
 
 export function NavigateToPageTool() {
   const router = useRouter();
@@ -46,13 +49,29 @@ export function NavigateToPageTool() {
   );
 }
 
+// Custom hook to fetch invoices by IDs
+function useInvoicesByIds(invoiceIds: string[]) {
+  return useSWR(
+    invoiceIds && invoiceIds.length > 0 ? ["invoices", ...invoiceIds] : null,
+    async () => {
+      const res = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceIds }),
+      });
+      if (!res.ok) throw new Error("Failed to fetch invoices");
+      return res.json();
+    }
+  );
+}
+
 export function SendInvoiceRemindersTool() {
   return (
     <RegisterAiTool
       name="send-invoice-reminders"
       tool={defineAiTool()({
         description:
-          "Send invoice reminders for unpaid invoices. Provide a lsit of companies, each with a list of invoice IDs",
+          "Send invoice reminders for unpaid invoices. Provide a list of companies, each with a list of invoice IDs, If a company has multiple invoices, merge them into one object.",
         parameters: {
           type: "object",
           properties: {
@@ -73,11 +92,16 @@ export function SendInvoiceRemindersTool() {
         },
 
         render: ({ args }) => {
+          const allInvoiceIds = args?.companies
+            ? args.companies.flatMap((c: any) => c.invoice_ids)
+            : [];
+          const { data, isLoading, error } = useInvoicesByIds(allInvoiceIds);
           if (!args) return null;
+
           return (
             <AiTool title="Send invoice reminders">
               <AiTool.Confirmation
-                confirm={() => {
+                confirm={async () => {
                   // Simulating sending emails
                   const promise = () =>
                     new Promise((resolve) => setTimeout(resolve, 2500));
@@ -94,43 +118,75 @@ export function SendInvoiceRemindersTool() {
                   return "The user cancelled the invite";
                 }}
               >
-                {/* <div className="font-semibold">
-                  {args.companies.map((c) => c.name).join(", ")}
-                </div> */}
-                {/* <ul className="flex flex-col gap-2">
-                  {args.companies.map((company) => (
-                    <li key={company.name}>
-                      <div className="font-semibold">{company.name}</div>
-                      <div className="text-xs text-gray-500">
-                        {company.invoice_ids.length} invoice
-                        {company.invoice_ids.length === 1 ? "" : "s"}
-                      </div>
-                    </li>
-                  ))}
-                </ul> */}
-                <ul className="flex flex-col gap-2">
-                  {args.companies.map((company) => (
-                    <li key={company.name}>
-                      <details className="group">
-                        <summary className="cursor-pointer flex items-center justify-between select-none">
-                          <div className="font-semibold flex flex-col items-start">
-                            {company.name}
-                            <div className="text-xs font-normal text-gray-500">
-                              {company.invoice_ids.length} invoice
-                              {company.invoice_ids.length === 1 ? "" : "s"}
-                            </div>
-                          </div>
+                {isLoading && (
+                  <div className="text-xs text-gray-500">
+                    Loading invoice details...
+                  </div>
+                )}
+                {error && (
+                  <div className="text-xs text-red-500 font-semibold">
+                    Error
+                  </div>
+                )}
+                {!isLoading && !error && (
+                  <ul className="flex flex-col gap-2">
+                    {args.companies.map((company) => (
+                      <li key={company.name + company.invoice_ids.join(",")}>
+                        <details className="group">
+                          <summary className="cursor-pointer flex items-center justify-between select-none">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="font-semibold">
+                                {company.name}
+                              </span>
 
-                          <ChevronDownIcon className="size-4 opacity-70 group-open:rotate-180 transition-transform mt-0.5" />
-                        </summary>
-                        <div className="text-xs text-gray-500 mt-1 pl-4">
-                          {company.invoice_ids.length} invoice
-                          {company.invoice_ids.length === 1 ? "" : "s"}
-                        </div>
-                      </details>
-                    </li>
-                  ))}
-                </ul>
+                              <span className="text-xs font-normal text-gray-500">
+                                {company.invoice_ids.length} unpaid
+                              </span>
+                            </div>
+                            <ChevronDownIcon className="size-4 opacity-70 group-open:rotate-180 transition-transform mt-0.5" />
+                          </summary>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {isLoading &&
+                              company.invoice_ids.map((id: string) => (
+                                <div key={id} className="mb-2 animate-pulse">
+                                  <div className="h-4 bg-gray-200 rounded w-40 mb-1" />
+                                  <div className="h-3 bg-gray-200 rounded w-24 mb-1" />
+                                  <div className="h-3 bg-gray-200 rounded w-28" />
+                                </div>
+                              ))}
+                            {error && (
+                              <div className="text-xs text-red-500 font-semibold">
+                                Error
+                              </div>
+                            )}
+                            {!isLoading &&
+                              !error &&
+                              company.invoice_ids.map((id: string) => {
+                                const invoice = data?.invoices?.[id];
+                                if (!invoice)
+                                  return (
+                                    <div key={id} className="text-red-500">
+                                      Invoice not found: {id}
+                                    </div>
+                                  );
+                                return (
+                                  <div key={id} className="mb-2">
+                                    <div>
+                                      {formatters.currency({
+                                        number: invoice.amount,
+                                      })}
+                                      , due{" "}
+                                      <Timestamp date={invoice.due_date} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </AiTool.Confirmation>
             </AiTool>
           );
