@@ -1,6 +1,6 @@
 {
   "name": "nextjs-ai-dashboard-reports",
-  "description": "How to build a pop-up AI inside a dashboard with Liveblocks and Next.js",
+  "description": "How to build a pop-up AI chat inside a dashboard with Liveblocks, Tremor, and Next.js",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:transactions": "tsx --tsconfig ./tsconfig.scripts.json ./src/data/generateData.ts"
+    "generate:all": "tsx --tsconfig ./tsconfig.scripts.json ./src/data/generateData.ts"
   },
   "dependencies": {
     "@internationalized/date": "^3.7.0",
