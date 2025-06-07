@@ -2,7 +2,6 @@
 
 import {
   ClientSideSuspense,
-  RegisterAiTool,
   RegisterAiKnowledge,
   useDeleteAiChat,
 } from "@liveblocks/react";
@@ -17,6 +16,7 @@ import { AiChatPlaceholder } from "./AiChatPlaceholder";
 import { TOOLS } from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
 import { siteConfig } from "@/app/siteConfig";
+import { NavigateToPageTool } from "./AiChatTools";
 
 export function AiPopup() {
   return (
@@ -146,6 +146,7 @@ function Chat({ chatId }: { chatId: string }) {
         description="How to use tools"
         value="Don't tell the user the names of any tools. Just say you're doing the action."
       />
+      <NavigateToPageTool />
       <AiChat
         layout="compact"
         chatId={chatId}

@@ -12,41 +12,43 @@ import { defineAiTool } from "@liveblocks/client";
 import { useRouter } from "next/navigation";
 import { AiTool } from "@liveblocks/react-ui";
 import { toast } from "sonner";
+import { RegisterAiTool } from "@liveblocks/react";
+
+export function NavigateToPageTool() {
+  const router = useRouter();
+
+  return (
+    <RegisterAiTool
+      name="navigate-to-page"
+      tool={defineAiTool()({
+        description:
+          "Redirect the user to a page. Just say you've found the page, or you can't find it, then do it",
+        parameters: {
+          type: "object",
+          properties: {
+            relativeUrl: { type: "string" },
+          },
+          additionalProperties: false,
+          required: ["relativeUrl"],
+        },
+        execute: ({ relativeUrl }) => {
+          router.push(relativeUrl);
+          toast(`Redirecting to ${relativeUrl}...`, {
+            action: {
+              label: "Go back",
+              onClick: () => router.back(),
+            },
+          });
+          return "Redirecting user to the page. Do not write anything else.";
+        },
+        render: ({ args }) =>
+          args ? <AiTool title={`Redirected to ${args.relativeUrl}`} /> : null,
+      })}
+    />
+  );
+}
 
 export const TOOLS = {
-  "navigate-to-page": defineAiTool()({
-    description:
-      "Redirect the user to a page. Just say you've found the page, or you can't find it, then do it",
-    parameters: {
-      type: "object",
-      properties: {
-        relativeUrl: { type: "string" },
-      },
-      additionalProperties: false,
-      required: ["relativeUrl"],
-    },
-    render: function Render({ status, args, respond }) {
-      const router = useRouter();
-
-      if (status === "receiving") {
-        return null;
-      }
-
-      // TODO check for double notification after updating package
-      if (status === "executing") {
-        toast(`Redirecting to ${args.relativeUrl}...`, {
-          action: {
-            label: "Go back",
-            onClick: () => router.back(),
-          },
-        });
-        respond("Redirecting user to the page. Do not write anything else.");
-        router.push(args.relativeUrl);
-      }
-
-      return <AiTool title={`Redirected to ${args.relativeUrl}`} />;
-    },
-  }),
   "invite-member": defineAiTool()({
     description: "Invite a new member to the team",
     parameters: {
