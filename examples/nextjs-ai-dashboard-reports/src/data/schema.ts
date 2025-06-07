@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const transactionSchema = z.object({
   transaction_id: z.string(),
@@ -12,9 +12,26 @@ export const transactionSchema = z.object({
   lastEdited: z.string(),
   continent: z.string(),
   country: z.string(),
-})
+});
 
-export type Transaction = z.infer<typeof transactionSchema>
+export type Transaction = z.infer<typeof transactionSchema>;
+
+export const invoiceSchema = z.object({
+  invoice_id: z.string(),
+  invoice_date: z.string(),
+  due_date: z.string(),
+  client: z.string(),
+  invoice_status: z.string(),
+  linked_transaction_id: z.string().optional(),
+  amount: z.number(),
+  currency: z.string(),
+  description: z.string(),
+  lastEdited: z.string(),
+  continent: z.string(),
+  country: z.string(),
+});
+
+export type Invoice = z.infer<typeof invoiceSchema>;
 
 export const categories = [
   "Office Supplies",
@@ -37,7 +54,7 @@ export const categories = [
   "Shipping & Delivery",
   "Inventory",
   "Advertising",
-]
+];
 
 export const merchants = [
   "Adobe",
@@ -65,7 +82,7 @@ export const merchants = [
   "United Airlines",
   "USPS",
   "Walmart",
-]
+];
 
 export const expense_statuses = [
   {
@@ -92,7 +109,34 @@ export const expense_statuses = [
     variant: "warning",
     weight: 0.01,
   },
-]
+];
+
+export const invoice_statuses = [
+  {
+    value: "paid",
+    label: "Paid",
+    variant: "success",
+    weight: 0.5,
+  },
+  {
+    value: "unpaid",
+    label: "Unpaid",
+    variant: "neutral",
+    weight: 0.25,
+  },
+  {
+    value: "overdue",
+    label: "Overdue",
+    variant: "error",
+    weight: 0.15,
+  },
+  {
+    value: "draft",
+    label: "Draft",
+    variant: "warning",
+    weight: 0.1,
+  },
+];
 
 export const payment_statuses = [
   {
@@ -105,7 +149,7 @@ export const payment_statuses = [
     label: "Cleared",
     weight: 0.99,
   },
-]
+];
 
 export const currencies = [
   {
@@ -118,7 +162,7 @@ export const currencies = [
     label: "EUR",
     weight: 0.15,
   },
-]
+];
 
 export const locations = [
   {
@@ -205,4 +249,4 @@ export const locations = [
     countries: ["Australia", "New Zealand", "Fiji"],
     weight: 10,
   },
-]
+];

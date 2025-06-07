@@ -1,17 +1,15 @@
 export const siteConfig = {
-  name: "Insights",
-  url: "https://insights.tremor.so",
+  name: "Liveblocks",
+  url: "https://nextjs-ai-dashboard-reports.liveblocks.app",
   description: "The only reporting and audit dashboard you will ever need.",
   baseLinks: {
     reports: "/reports",
     transactions: "/transactions",
+    invoices: "/invoices",
     settings: {
-      // audit: "/settings/audit",
       users: "/settings/users",
       billing: "/settings/billing",
     },
-    login: "/login",
-    onboarding: "/onboarding/products",
   },
 };
 

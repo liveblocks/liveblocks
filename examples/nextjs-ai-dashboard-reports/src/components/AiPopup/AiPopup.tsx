@@ -16,6 +16,7 @@ import { ChatListing } from "./AiChatListing";
 import { AiChatPlaceholder } from "./AiChatPlaceholder";
 import { TOOLS } from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
+import { siteConfig } from "@/app/siteConfig";
 
 export function AiPopup() {
   return (
@@ -126,13 +127,6 @@ function ChatPopup() {
   );
 }
 
-const SITEMAP = [
-  "/reports",
-  "/transactions",
-  "/settings/billing",
-  "/settings/users",
-];
-
 function Chat({ chatId }: { chatId: string }) {
   // TODO
   // const { data: contexts } = useSWR(
@@ -146,7 +140,7 @@ function Chat({ chatId }: { chatId: string }) {
     <div className="absolute inset-0 flex flex-col">
       <RegisterAiKnowledge
         description="Pages you can navigate to"
-        value={SITEMAP}
+        value={siteConfig.baseLinks}
       />
       <RegisterAiKnowledge
         description="How to use tools"

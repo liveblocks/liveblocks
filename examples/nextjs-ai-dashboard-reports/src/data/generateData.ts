@@ -8,11 +8,14 @@ import {
   locations,
   merchants,
   payment_statuses,
+  invoice_statuses,
 } from "./schema";
+
+const TRANSACTION_COUNT = 1800;
+const INVOICE_COUNT = 1000;
 
 // Helper function to get a weighted random continent and country
 const getWeightedLocation = (): { continent: string; country: string } => {
-  // Total weight for weighted random selection
   const totalWeight = locations.reduce((sum, loc) => sum + loc.weight, 0);
   let random = Math.random() * totalWeight;
 
@@ -24,7 +27,6 @@ const getWeightedLocation = (): { continent: string; country: string } => {
     random -= loc.weight;
   }
 
-  // Fallback in case of error
   const fallbackContinent = locations[0];
   return {
     continent: fallbackContinent.name,
@@ -32,7 +34,21 @@ const getWeightedLocation = (): { continent: string; country: string } => {
   };
 };
 
-const transactions = Array.from({ length: 1800 }, () => {
+// === Custom invoice description helper ===
+const generateInvoiceDescription = (client: string): string => {
+  const templates = [
+    `Monthly service subscription for ${client}`,
+    `Consulting services rendered to ${client}`,
+    `Invoice for development work with ${client}`,
+    `Professional support fees charged to ${client}`,
+    `Marketing services delivered to ${client}`,
+    `Technical setup and onboarding for ${client}`,
+  ];
+  return faker.helpers.arrayElement(templates);
+};
+
+// === Generate Transactions ===
+const transactions = Array.from({ length: TRANSACTION_COUNT }, () => {
   const location = getWeightedLocation();
   return {
     transaction_id: `tx-${faker.string.nanoid()}`,
@@ -59,9 +75,57 @@ const sortedTransactions = transactions.sort(
     new Date(a.transaction_date).getTime()
 );
 
-const finalArray = `import { Transaction } from "./schema";
+// === Generate Invoices ===
+const invoices = Array.from({ length: INVOICE_COUNT }, () => {
+  const location = getWeightedLocation();
+  const invoice_status = faker.helpers.weightedArrayElement(invoice_statuses);
+  const client = faker.helpers.arrayElement(merchants);
+
+  const linkedTx =
+    invoice_status === "paid"
+      ? faker.helpers.arrayElement(transactions).transaction_id
+      : undefined;
+
+  const invoiceDate = faker.date.between({
+    from: "2024-05-01T00:00:00Z",
+    to: "2025-03-10T00:00:00Z",
+  });
+
+  const dueDate = faker.date.soon({ days: 30, refDate: invoiceDate });
+
+  return {
+    invoice_id: `inv-${faker.string.nanoid()}`,
+    invoice_date: invoiceDate.toISOString(),
+    due_date: dueDate.toISOString(),
+    client,
+    invoice_status,
+    linked_transaction_id: linkedTx,
+    amount: parseFloat(faker.finance.amount({ min: 50, max: 15000 })),
+    currency: faker.helpers.weightedArrayElement(currencies),
+    description: generateInvoiceDescription(client),
+    lastEdited: faker.date
+      .between({ from: invoiceDate, to: dueDate })
+      .toISOString(),
+    continent: location.continent,
+    country: location.country,
+  };
+});
+
+// === Write Transactions File ===
+const finalTransactionOutput = `import { Transaction } from "./schema";
 export const transactions: Transaction[] = ${JSON.stringify(sortedTransactions, null, 2)};
 `;
 
-fs.writeFileSync(path.join(__dirname, "transactions.ts"), finalArray);
-console.log("Data generated and sorted by date, newest first.");
+fs.writeFileSync(
+  path.join(__dirname, "transactions.ts"),
+  finalTransactionOutput
+);
+
+// === Write Invoices File ===
+const finalInvoiceOutput = `import { Invoice } from "./schema";
+export const invoices: Invoice[] = ${JSON.stringify(invoices, null, 2)};
+`;
+
+fs.writeFileSync(path.join(__dirname, "invoices.ts"), finalInvoiceOutput);
+
+console.log("✅ Transactions and Invoices generated successfully.");

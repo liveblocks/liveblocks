@@ -5,6 +5,7 @@ import { cx, focusRing } from "@/lib/utils";
 import {
   BarChartBig,
   Compass,
+  FileText,
   PanelRightClose,
   PanelRightOpen,
   Settings2,
@@ -21,6 +22,11 @@ const navigation = [
     name: "Transactions",
     href: siteConfig.baseLinks.transactions,
     icon: Table2,
+  },
+  {
+    name: "Invoices",
+    href: siteConfig.baseLinks.invoices,
+    icon: FileText,
   },
   {
     name: "Settings",
