@@ -12,6 +12,11 @@
         "href": "/get-started",
         "routes": [
           {
+            "title": "AI Copilots",
+            "path": "/get-started/ai-copilots",
+            "hidden": true
+          },
+          {
             "title": "Next.js",
             "path": "/get-started/nextjs",
             "hidden": true
