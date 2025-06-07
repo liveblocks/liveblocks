@@ -18,6 +18,7 @@ import {
   InviteMemberTool,
   TransactionToolAi,
   MemberToolAi,
+  SendInvoiceRemindersTool,
 } from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
 import { siteConfig } from "@/app/siteConfig";
@@ -35,6 +36,50 @@ export function AiPopup() {
       <ChatPopup />
     </ClientSideSuspense>
   );
+}
+
+function Chat({ chatId }: { chatId: string }) {
+  // TODO
+  // const { data: contexts } = useSWR(
+  //   "/api/liveblocks-ai-context",
+  //   (resource: string, init: RequestInit) =>
+  //     fetch(resource, init).then((res) => res.json())
+  // );
+  // copilotId="co_wFdUQ9c0kxhQ0BAlkct0B"
+
+  return (
+    <div className="absolute inset-0 flex flex-col">
+      <RegisterAiKnowledge
+        description="Pages you can navigate to"
+        value={siteConfig.baseLinks}
+      />
+      <RegisterAiKnowledge
+        description="How to use tools"
+        value="Don't tell the user the names of any tools. Just say you're doing the action."
+      />
+      <NavigateToPageTool />
+      <InviteMemberTool />
+      <TransactionToolAi />
+      <SendInvoiceRemindersTool />
+      <MemberToolAi />
+      <AiChat
+        layout="compact"
+        chatId={chatId}
+        className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
+        components={{
+          Empty: AiChatPlaceholder,
+          Anchor: (props) => (
+            <Link href={props.href || ""}>{props.children}</Link>
+          ),
+        }}
+      />
+    </div>
+  );
+}
+
+// Creating a new chat every hour
+function getDefaultChatId() {
+  return new Date().toISOString().slice(0, 13);
 }
 
 function ChatPopup() {
@@ -129,49 +174,6 @@ function ChatPopup() {
       </PopoverPrimitives.Root>
     </div>
   );
-}
-
-function Chat({ chatId }: { chatId: string }) {
-  // TODO
-  // const { data: contexts } = useSWR(
-  //   "/api/liveblocks-ai-context",
-  //   (resource: string, init: RequestInit) =>
-  //     fetch(resource, init).then((res) => res.json())
-  // );
-  // copilotId="co_wFdUQ9c0kxhQ0BAlkct0B"
-
-  return (
-    <div className="absolute inset-0 flex flex-col">
-      <RegisterAiKnowledge
-        description="Pages you can navigate to"
-        value={siteConfig.baseLinks}
-      />
-      <RegisterAiKnowledge
-        description="How to use tools"
-        value="Don't tell the user the names of any tools. Just say you're doing the action."
-      />
-      <NavigateToPageTool />
-      <InviteMemberTool />
-      <TransactionToolAi />
-      <MemberToolAi />
-      <AiChat
-        layout="compact"
-        chatId={chatId}
-        className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
-        components={{
-          Empty: AiChatPlaceholder,
-          Anchor: (props) => (
-            <Link href={props.href || ""}>{props.children}</Link>
-          ),
-        }}
-      />
-    </div>
-  );
-}
-
-// Creating a new chat every hour
-function getDefaultChatId() {
-  return new Date().toISOString().slice(0, 13);
 }
 
 function CloseIcon(props: ComponentProps<"svg">) {

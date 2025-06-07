@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { AiTool } from "@liveblocks/react-ui";
 import { toast } from "sonner";
 import { RegisterAiTool } from "@liveblocks/react";
+import { ChevronDownIcon } from "lucide-react";
 
 export function NavigateToPageTool() {
   const router = useRouter();
@@ -40,6 +41,100 @@ export function NavigateToPageTool() {
         },
         render: ({ args }) =>
           args ? <AiTool title={`Redirected to ${args.relativeUrl}`} /> : null,
+      })}
+    />
+  );
+}
+
+export function SendInvoiceRemindersTool() {
+  return (
+    <RegisterAiTool
+      name="send-invoice-reminders"
+      tool={defineAiTool()({
+        description:
+          "Send invoice reminders for unpaid invoices. Provide a lsit of companies, each with a list of invoice IDs",
+        parameters: {
+          type: "object",
+          properties: {
+            companies: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  invoice_ids: { type: "array", items: { type: "string" } },
+                },
+                required: ["name", "invoice_ids"],
+              },
+            },
+          },
+          additionalProperties: false,
+          required: ["companies"],
+        },
+
+        render: ({ args }) => {
+          if (!args) return null;
+          return (
+            <AiTool title="Send invoice reminders">
+              <AiTool.Confirmation
+                confirm={() => {
+                  // Simulating sending emails
+                  const promise = () =>
+                    new Promise((resolve) => setTimeout(resolve, 2500));
+
+                  toast.promise(promise, {
+                    loading: "Sending invoices reminders...",
+                    success: () => {
+                      return `Invoice reminders sent`;
+                    },
+                  });
+                  return "Invoice reminders sent";
+                }}
+                cancel={() => {
+                  return "The user cancelled the invite";
+                }}
+              >
+                {/* <div className="font-semibold">
+                  {args.companies.map((c) => c.name).join(", ")}
+                </div> */}
+                {/* <ul className="flex flex-col gap-2">
+                  {args.companies.map((company) => (
+                    <li key={company.name}>
+                      <div className="font-semibold">{company.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {company.invoice_ids.length} invoice
+                        {company.invoice_ids.length === 1 ? "" : "s"}
+                      </div>
+                    </li>
+                  ))}
+                </ul> */}
+                <ul className="flex flex-col gap-2">
+                  {args.companies.map((company) => (
+                    <li key={company.name}>
+                      <details className="group">
+                        <summary className="cursor-pointer flex items-center justify-between select-none">
+                          <div className="font-semibold flex flex-col items-start">
+                            {company.name}
+                            <div className="text-xs font-normal text-gray-500">
+                              {company.invoice_ids.length} invoice
+                              {company.invoice_ids.length === 1 ? "" : "s"}
+                            </div>
+                          </div>
+
+                          <ChevronDownIcon className="size-4 opacity-70 group-open:rotate-180 transition-transform mt-0.5" />
+                        </summary>
+                        <div className="text-xs text-gray-500 mt-1 pl-4">
+                          {company.invoice_ids.length} invoice
+                          {company.invoice_ids.length === 1 ? "" : "s"}
+                        </div>
+                      </details>
+                    </li>
+                  ))}
+                </ul>
+              </AiTool.Confirmation>
+            </AiTool>
+          );
+        },
       })}
     />
   );
@@ -128,6 +223,7 @@ export function MemberToolAi() {
   );
 }
 
+// TODO make this work
 function TransactionToolUi({ transactionId }: { transactionId: string }) {
   const transaction = transactions.find(
     (transaction) => transaction.transaction_id === transactionId

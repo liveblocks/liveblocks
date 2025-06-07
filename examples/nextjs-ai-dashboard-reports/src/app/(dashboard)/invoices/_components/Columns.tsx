@@ -93,7 +93,6 @@ export const getColumns = ({
         const status = invoice_statuses.find(
           (item) => item.value === statusValue
         );
-        console.log(row.original, statusValue, status);
         if (!status) {
           return statusValue; // Fallback to displaying the raw status
         }
