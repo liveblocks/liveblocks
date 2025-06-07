@@ -1,8 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import { Badge } from "@/components/Badge";
-import { Button } from "@/components/Button";
-import { Input } from "@/components/Input";
-import { Label } from "@/components/Label";
 import { transactions } from "@/data/transactions";
 import { format } from "date-fns";
 import { expense_statuses } from "@/data/schema";
@@ -22,7 +19,7 @@ export function NavigateToPageTool() {
       name="navigate-to-page"
       tool={defineAiTool()({
         description:
-          "Redirect the user to a page. Just say you've found the page, or you can't find it, then do it",
+          "Redirect the user to a page. Only navigate if the user has directly asked you to do it. Never assume they want to. Just say you've found the page, or you can't find it, then do it.",
         parameters: {
           type: "object",
           properties: {
@@ -48,94 +45,86 @@ export function NavigateToPageTool() {
   );
 }
 
-export const TOOLS = {
-  "invite-member": defineAiTool()({
-    description: "Invite a new member to the team",
-    parameters: {
-      type: "object",
-      properties: {
-        email: { type: "string" },
-      },
-      additionalProperties: false,
-      required: ["email"],
-    },
-    render: ({ args }) => {
-      if (!args) return null;
-
-      return (
-        <AiTool title="Invite member">
-          <AiTool.Confirmation
-            confirm={() => {
-              toast.success(`${args.email} has been invited`);
-              return "Invited to the team";
-            }}
-            cancel={() => {
-              return "The user cancelled the invite";
-            }}
-          >
-            Invite <code>{args.email}</code> to the team?
-          </AiTool.Confirmation>
-        </AiTool>
-      );
-    },
-  }),
-  transaction: defineAiTool()({
-    description: "Display the transaction details",
-    parameters: {
-      type: "object",
-      properties: {
-        transactionId: { type: "string" },
-      },
-      additionalProperties: false,
-      required: ["transactionId"],
-    },
-    render: ({ args }) => {
-      if (!args) return null;
-      return <TransactionTool transactionId={args.transactionId} />;
-    },
-  }),
-  member: defineAiTool()({
-    description: "Display the member details",
-    parameters: {
-      type: "object",
-      properties: {
-        email: { type: "string" },
-      },
-      additionalProperties: false,
-      required: ["email"],
-    },
-    render: ({ args }) => {
-      if (!args) return null;
-      return <MemberTool email={args.email} />;
-    },
-  }),
-};
-
-function InviteMemberFormTool({ email, id }: { email: string; id: string }) {
-  const [emailValue, setEmailValue] = useState(email);
-
+export function InviteMemberTool() {
   return (
-    <div className="my-2 pt-2.5 pb-4 px-4 rounded bg-neutral-100 w-full">
-      <Label htmlFor={id} className="font-medium pb-4 grow">
-        Invite a team member
-      </Label>
-      <div className="flex gap-2 w-full mt-1.5">
-        <Input
-          className="grow"
-          id={id}
-          value={emailValue}
-          onChange={(e) => setEmailValue(e.target.value)}
-        />
-        <Button
-          onClick={() => {
-            // TODO
-            console.log(emailValue);
-          }}
-        >
-          Invite
-        </Button>
-      </div>
-    </div>
+    <RegisterAiTool
+      name="invite-member"
+      tool={defineAiTool()({
+        description: "Invite a new member to the team",
+        parameters: {
+          type: "object",
+          properties: {
+            email: { type: "string" },
+          },
+          additionalProperties: false,
+          required: ["email"],
+        },
+        render: ({ args }) => {
+          if (!args) return null;
+          return (
+            <AiTool title="Invite member">
+              <AiTool.Confirmation
+                confirm={() => {
+                  toast.success(`${args.email} has been invited`);
+                  return "Invited to the team";
+                }}
+                cancel={() => {
+                  return "The user cancelled the invite";
+                }}
+              >
+                Invite <code>{args.email}</code> to the team?
+              </AiTool.Confirmation>
+            </AiTool>
+          );
+        },
+      })}
+    />
+  );
+}
+
+export function TransactionToolAi() {
+  return (
+    <RegisterAiTool
+      name="transaction"
+      tool={defineAiTool()({
+        description: "Display the transaction details",
+        parameters: {
+          type: "object",
+          properties: {
+            transactionId: { type: "string" },
+          },
+          additionalProperties: false,
+          required: ["transactionId"],
+        },
+        render: ({ args }) => {
+          if (!args) return null;
+          return <TransactionTool transactionId={args.transactionId} />;
+        },
+      })}
+    />
+  );
+}
+
+export function MemberToolAi() {
+  return (
+    <RegisterAiTool
+      name="member"
+      tool={defineAiTool()({
+        description: "Display the member details",
+        parameters: {
+          type: "object",
+          properties: {
+            email: { type: "string" },
+          },
+          additionalProperties: false,
+          required: ["email"],
+        },
+        render: ({ args }) => {
+          if (!args) return null;
+          return <MemberTool email={args.email} />;
+        },
+      })}
+    />
   );
 }
 

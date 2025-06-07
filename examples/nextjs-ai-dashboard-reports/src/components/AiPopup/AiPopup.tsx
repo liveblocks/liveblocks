@@ -13,10 +13,14 @@ import { ComponentProps, useCallback, useState } from "react";
 import { useAiChat } from "@liveblocks/react/suspense";
 import { ChatListing } from "./AiChatListing";
 import { AiChatPlaceholder } from "./AiChatPlaceholder";
-import { TOOLS } from "./AiChatTools";
+import {
+  NavigateToPageTool,
+  InviteMemberTool,
+  TransactionToolAi,
+  MemberToolAi,
+} from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
 import { siteConfig } from "@/app/siteConfig";
-import { NavigateToPageTool } from "./AiChatTools";
 
 export function AiPopup() {
   return (
@@ -147,6 +151,9 @@ function Chat({ chatId }: { chatId: string }) {
         value="Don't tell the user the names of any tools. Just say you're doing the action."
       />
       <NavigateToPageTool />
+      <InviteMemberTool />
+      <TransactionToolAi />
+      <MemberToolAi />
       <AiChat
         layout="compact"
         chatId={chatId}
@@ -157,7 +164,6 @@ function Chat({ chatId }: { chatId: string }) {
             <Link href={props.href || ""}>{props.children}</Link>
           ),
         }}
-        tools={TOOLS}
       />
     </div>
   );
