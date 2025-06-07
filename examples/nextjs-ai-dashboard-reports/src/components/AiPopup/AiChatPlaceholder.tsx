@@ -2,7 +2,7 @@ import { useSendAiMessage } from "@liveblocks/react";
 import { AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
 
 const SUGGESTIONS = [
-  { text: "Take me to the users page", prompt: "Navigate to the users page" },
+  { text: "Take me to billing", prompt: "Navigate to the billing page" },
   {
     text: "Invite a member",
     prompt: "Invite a member to the team",
@@ -16,7 +16,13 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
 
   return (
     <div className="p-4 h-full flex flex-col gap-5 justify-end">
-      <h3>How can I help you?</h3>
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xl font-medium">How can I help you?</h3>
+        <p className="text-gray-500">
+          Ask me anything about reports or transactions. I can answer questions
+          and help you work.
+        </p>
+      </div>
       <div className="flex flex-wrap items-start gap-2">
         {SUGGESTIONS.map(({ text, prompt }) => (
           <button

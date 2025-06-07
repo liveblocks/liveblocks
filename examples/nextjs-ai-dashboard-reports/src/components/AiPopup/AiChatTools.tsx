@@ -11,6 +11,7 @@ import Image from "next/image";
 import { defineAiTool } from "@liveblocks/client";
 import { useRouter } from "next/navigation";
 import { AiTool } from "@liveblocks/react-ui";
+import { toast } from "sonner";
 
 export const TOOLS = {
   "navigate-to-page": defineAiTool()({
@@ -31,12 +32,19 @@ export const TOOLS = {
         return null;
       }
 
+      // TODO check for double notification after updating package
       if (status === "executing") {
+        toast(`Redirecting to ${args.relativeUrl}...`, {
+          action: {
+            label: "Go back",
+            onClick: () => router.back(),
+          },
+        });
         respond("Redirecting user to the page. Do not write anything else.");
         router.push(args.relativeUrl);
       }
 
-      return <AiTool title={`Redirecting to ${args.relativeUrl}...`} />;
+      return <AiTool title={`Redirected to ${args.relativeUrl}`} />;
     },
   }),
   "invite-member": defineAiTool()({
@@ -56,6 +64,7 @@ export const TOOLS = {
         <AiTool title="Invite member">
           <AiTool.Confirmation
             confirm={() => {
+              toast.success(`${args.email} has been invited`);
               return "Invited to the team";
             }}
             cancel={() => {
