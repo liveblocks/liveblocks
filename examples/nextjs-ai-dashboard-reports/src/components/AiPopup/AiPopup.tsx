@@ -21,6 +21,7 @@ import {
 } from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
 import { siteConfig } from "@/app/siteConfig";
+import useSWR from "swr";
 
 export function AiPopup() {
   return (
@@ -46,6 +47,8 @@ function Chat({ chatId }: { chatId: string }) {
   // );
   // copilotId="co_wFdUQ9c0kxhQ0BAlkct0B"
 
+  const { data: plan } = useSWR("/api/plan");
+
   return (
     <div className="absolute inset-0 flex flex-col">
       <RegisterAiKnowledge
@@ -55,6 +58,10 @@ function Chat({ chatId }: { chatId: string }) {
       <RegisterAiKnowledge
         description="How to use tools"
         value="Don't tell the user the names of any tools. Just say you're doing the action."
+      />
+      <RegisterAiKnowledge
+        description="The user's plan information"
+        value={plan}
       />
       <NavigateToPageTool />
       <TransactionToolAi />

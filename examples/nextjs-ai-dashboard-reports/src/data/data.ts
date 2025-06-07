@@ -15,7 +15,7 @@ export const departments: { value: string; label: string }[] = [
     value: "marketing",
     label: "Marketing",
   },
-]
+];
 
 export const roles: { value: string; label: string }[] = [
   {
@@ -34,4 +34,16 @@ export const roles: { value: string; label: string }[] = [
     value: "contributor",
     label: "Contributor",
   },
-]
+];
+
+export const currentPlan = {
+  plan: "Team",
+  planLabel: "Starter Tier (Start-Up Discount)",
+  price: 100,
+  priceUnit: "month",
+  priceCurrency: "USD",
+  billingPeriod: "monthly",
+  billingPeriodRenewal: "2023-08-20",
+  seatsUsed: 5,
+  seatsLimit: 25,
+};
