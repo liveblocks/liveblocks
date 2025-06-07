@@ -10,11 +10,15 @@ const SUGGESTIONS = [
     text: "Which merchants bought this month?",
     prompt: "List all merchants from this month",
   },
-  { text: "Take me to billing", prompt: "Navigate to the billing page" },
   {
-    text: "Invite a member",
-    prompt: "Invite a member to the team",
+    text: "How many seats do I have?",
+    prompt: "How many seats do I have?",
   },
+  { text: "Take me to billing", prompt: "Navigate to the billing page" },
+  // {
+  //   text: "Invite a member",
+  //   prompt: "Invite a member to the team",
+  // },
 ];
 
 export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {

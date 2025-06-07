@@ -52,7 +52,8 @@ function Chat({ chatId }: { chatId: string }) {
   return (
     <div className="absolute inset-0 flex flex-col">
       <RegisterAiKnowledge
-        description="Pages you can navigate to"
+        // TODO figure out why this doesn't work
+        description="Pages you can navigate to. Use markdown to add hyperlinks to your answers, and always link when appropriate. For example: `[Billing page](/settings/billing)`."
         value={siteConfig.baseLinks}
       />
       <RegisterAiKnowledge
@@ -60,7 +61,7 @@ function Chat({ chatId }: { chatId: string }) {
         value="Don't tell the user the names of any tools. Just say you're doing the action."
       />
       <RegisterAiKnowledge
-        description="The user's plan information"
+        description="The user's plan information. There's more information in the billing page, add a link to it with markdown."
         value={plan}
       />
       <NavigateToPageTool />
@@ -73,9 +74,9 @@ function Chat({ chatId }: { chatId: string }) {
         className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
         components={{
           Empty: AiChatPlaceholder,
-          Anchor: (props) => (
-            <Link href={props.href || ""}>{props.children}</Link>
-          ),
+          // Anchor: (props) => (
+          //   <Link href={props.href || ""}>{props.children}</Link>
+          // ),
         }}
       />
     </div>

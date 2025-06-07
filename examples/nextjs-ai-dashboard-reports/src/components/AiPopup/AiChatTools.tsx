@@ -107,7 +107,7 @@ export function SendInvoiceRemindersTool() {
                     new Promise((resolve) => setTimeout(resolve, 2500));
 
                   toast.promise(promise, {
-                    loading: "Sending invoices reminders...",
+                    loading: "Sending invoice reminders...",
                     success: () => {
                       return `Invoice reminders sent`;
                     },
