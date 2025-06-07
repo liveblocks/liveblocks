@@ -98,7 +98,7 @@ export function TransactionToolAi() {
         },
         render: ({ args }) => {
           if (!args) return null;
-          return <TransactionTool transactionId={args.transactionId} />;
+          return <TransactionToolUi transactionId={args.transactionId} />;
         },
       })}
     />
@@ -128,7 +128,7 @@ export function MemberToolAi() {
   );
 }
 
-function TransactionTool({ transactionId }: { transactionId: string }) {
+function TransactionToolUi({ transactionId }: { transactionId: string }) {
   const transaction = transactions.find(
     (transaction) => transaction.transaction_id === transactionId
   );

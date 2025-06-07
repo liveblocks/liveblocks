@@ -216,7 +216,7 @@ export default function Users() {
                             Resend
                           </Button>
                         ) : (
-                          <Select defaultValue={item.permission}>
+                          <Select defaultValue={item.permission} disabled>
                             <SelectTrigger
                               className="sm:w-36"
                               aria-label={`Change permission for ${item.name}`}

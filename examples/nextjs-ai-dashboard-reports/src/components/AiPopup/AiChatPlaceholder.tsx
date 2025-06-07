@@ -2,13 +2,19 @@ import { useSendAiMessage } from "@liveblocks/react";
 import { AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
 
 const SUGGESTIONS = [
+  {
+    text: "Send invoice reminders",
+    prompt: "Send invoice reminders to all companies with overdue invoices",
+  },
+  {
+    text: "Which merchants bought this month?",
+    prompt: "List all merchants from this month",
+  },
   { text: "Take me to billing", prompt: "Navigate to the billing page" },
   {
     text: "Invite a member",
     prompt: "Invite a member to the team",
   },
-  { text: "Explain quantum computing", prompt: "Explain quantum computing" },
-  { text: "Plan weekly meals", prompt: "Plan weekly meals" },
 ];
 
 export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {

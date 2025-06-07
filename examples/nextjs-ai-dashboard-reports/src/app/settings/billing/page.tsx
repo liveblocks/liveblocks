@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/Table";
 import { CircleCheck, Plus } from "lucide-react";
+import { ProgressBar } from "@/components/ProgressBar";
 
 const data = [
   {
@@ -88,98 +89,71 @@ export default function Billing() {
               id="billing-overview-heading"
               className="scroll-mt-10 font-semibold text-gray-900 dark:text-gray-50"
             >
-              Billing
+              Plan
             </h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              Overview of current billing cycle based on fixed and on-demand
-              charges.
+              Overview of current plan, billing cycle, and seat usage.
             </p>
           </div>
           <div className="md:col-span-2">
-            <h3
-              id="current-cycle-heading"
-              className="text-sm font-semibold text-gray-900 dark:text-gray-50"
-            >
-              Current billing cycle (Aug 31 – Sep 30, 2024)
-            </h3>
-            <TableRoot className="mt-4" aria-labelledby="current-cycle-heading">
-              <Table className="border-transparent dark:border-transparent">
-                <TableCaption className="text-left text-xs">
-                  ¹Includes 10,000 trackable expenses/month, USD 0.10 for each
-                  additional expense.
-                </TableCaption>
-                <TableHead>
-                  <TableRow>
-                    <TableHeaderCell className="text-xs font-medium uppercase">
-                      Item
-                    </TableHeaderCell>
-                    <TableHeaderCell className="text-right text-xs font-medium uppercase">
-                      Quantity
-                    </TableHeaderCell>
-                    <TableHeaderCell className="text-right text-xs font-medium uppercase">
-                      Unit price
-                    </TableHeaderCell>
-                    <TableHeaderCell className="text-right text-xs font-medium uppercase">
-                      Price
-                    </TableHeaderCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.map((member) => (
-                    <TableRow key={member.name}>
-                      <TableCell className="py-2.5">{member.name}</TableCell>
-                      <TableCell className="py-2.5 text-right">
-                        {member.quantity}
-                      </TableCell>
-                      <TableCell className="py-2.5 text-right">
-                        {member.unit}
-                      </TableCell>
-                      <TableCell className="py-2.5 text-right">
-                        {member.price}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFoot>
-                  <TableRow>
-                    <TableHeaderCell
-                      scope="row"
-                      colSpan={3}
-                      className="border-transparent pb-1.5 text-right font-normal text-gray-600 dark:border-transparent dark:text-gray-400"
-                    >
-                      Subtotal
-                    </TableHeaderCell>
-                    <TableCell className="pb-1.5 text-right font-normal">
-                      $205.00
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell
-                      scope="row"
-                      colSpan={3}
-                      className="border-transparent py-1.5 text-right font-normal text-gray-600 dark:border-transparent dark:text-gray-400"
-                    >
-                      VAT (7.7%)
-                    </TableHeaderCell>
-                    <TableCell className="py-1.5 text-right font-normal">
-                      $15.80
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell
-                      scope="row"
-                      colSpan={3}
-                      className="border-transparent py-1.5 text-right dark:border-transparent dark:text-gray-300"
-                    >
-                      Total
-                    </TableHeaderCell>
-                    <TableCell className="py-1.5 text-right text-gray-900 dark:text-gray-300">
-                      $220.80
-                    </TableCell>
-                  </TableRow>
-                </TableFoot>
-              </Table>
-            </TableRoot>
+            <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <p className="flex items-center space-x-2">
+                  <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
+                    Team
+                  </span>
+                  <span className="inline-flex items-center self-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    Annual
+                  </span>
+                </p>
+                <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-50">
+                  $100/month <span className="font-normal">(incl. VAT)</span>
+                </p>
+                <a
+                  href="#"
+                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600 mt-6"
+                  tremor-id="tremor-raw"
+                >
+                  Manage plans
+                </a>
+              </div>
+              <div>
+                <p className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
+                  Billing period
+                </p>
+                <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-50">
+                  Monthly <span className="font-normal">(renews 20/08/23)</span>
+                </p>
+                <a
+                  href="#"
+                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600 mt-6"
+                  tremor-id="tremor-raw"
+                >
+                  Change billing period
+                </a>
+              </div>
+            </div>
+            <p className="mt-12 text-sm font-medium text-gray-900 dark:text-gray-50">
+              Remaining seats
+            </p>
+            <ProgressBar value={20} className="mt-2" />
+            <div className="mt-3 flex items-center justify-between">
+              <p className="flex items-center space-x-2">
+                <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-900 dark:bg-gray-800 dark:text-gray-50">
+                  5
+                </span>{" "}
+                <span className="text-sm text-gray-500 dark:text-gray-500">
+                  of 25 seats used
+                </span>
+              </p>
+              <a
+                href="#"
+                className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600"
+                tremor-id="tremor-raw"
+              >
+                Manage seats
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -403,6 +377,7 @@ export default function Billing() {
                   autoComplete="address-line1"
                   value="8272 Postal Way"
                   className="mt-2"
+                  readOnly
                 />
               </div>
               <div>
@@ -415,6 +390,7 @@ export default function Billing() {
                   placeholder="Address line 2"
                   autoComplete="address-line2"
                   className="mt-2"
+                  readOnly
                 />
               </div>
               <div>
@@ -428,6 +404,7 @@ export default function Billing() {
                   autoComplete="address-level2"
                   value="Denver"
                   className="mt-2"
+                  readOnly
                 />
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -436,7 +413,11 @@ export default function Billing() {
                     State
                   </Label>
                   <Select defaultValue={states[0].value}>
-                    <SelectTrigger id="state" name="state" className="mt-2">
+                    <SelectTrigger
+                      id="state"
+                      name="state"
+                      className="mt-2 pointer-events-none"
+                    >
                       <SelectValue placeholder="State" />
                     </SelectTrigger>
                     <SelectContent>
@@ -462,6 +443,7 @@ export default function Billing() {
                     autoComplete="postal-code"
                     value="63001"
                     className="mt-2"
+                    readOnly
                   />
                 </div>
               </div>
