@@ -6,7 +6,6 @@
 @import "@liveblocks/react-ui/styles/dark/attributes.css";
 
 :root {
-  --accent: theme("colors.blue.500");
   --inner-app-width: 36rem;
   --spacing: 1em;
 }
