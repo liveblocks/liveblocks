@@ -257,17 +257,19 @@ export default function Page() {
   );
 }
 
-function PreviewChat({ title, description, suggestions, theme, copilotId, accentColor }: {
+function SharedAiChat({ title, description, suggestions, theme, copilotId, accentColor, chatId = "preview-chat", className = "h-full" }: {
   title: string;
   description: string;
   suggestions: string[];
   theme: "light" | "dark";
   copilotId?: string;
   accentColor?: string;
+  chatId?: string;
+  className?: string;
 }) {
   const aiChatProps: any = {
     layout: "compact" as const,
-    chatId: "preview-chat",
+    chatId,
     ...(copilotId ? { copilotId } : {})
   };
 
@@ -280,16 +282,18 @@ function PreviewChat({ title, description, suggestions, theme, copilotId, accent
           Empty: ({ chatId }) => {
             const sendMessage = useSendAiMessage(chatId);
             return (
-              <div className="p-4 h-full flex flex-col gap-4 justify-end">
+              <div className="p-[var(--spacing)] h-full flex flex-col gap-5 justify-end">
                 <div>
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">{title}</h3>
-                  {description && <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{description}</p>}
+                  <h3 className="text-neutral-900 dark:text-neutral-100">{title}</h3>
+                  {description && (
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{description}</p>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-start gap-2">
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={index}
-                      className="px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+                      className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 border text-sm font-medium shadow-xs hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
                       onClick={() => sendMessage(suggestion)}
                     >
                       {suggestion}
@@ -300,8 +304,30 @@ function PreviewChat({ title, description, suggestions, theme, copilotId, accent
             );
           }
         }}
-        className="h-full"
+        className={className}
       />
     </div>
+  );
+}
+
+function PreviewChat({ title, description, suggestions, theme, copilotId, accentColor }: {
+  title: string;
+  description: string;
+  suggestions: string[];
+  theme: "light" | "dark";
+  copilotId?: string;
+  accentColor?: string;
+}) {
+  return (
+    <SharedAiChat
+      title={title}
+      description={description}
+      suggestions={suggestions}
+      theme={theme}
+      copilotId={copilotId}
+      accentColor={accentColor}
+      chatId="preview-chat"
+      className="h-full"
+    />
   );
 }
