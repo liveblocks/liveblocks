@@ -74,9 +74,9 @@ function Chat({ chatId }: { chatId: string }) {
         className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
         components={{
           Empty: AiChatPlaceholder,
-          // Anchor: (props) => (
-          //   <Link href={props.href || ""}>{props.children}</Link>
-          // ),
+          Anchor: (props) => (
+            <Link href={props.href || ""}>{props.children}</Link>
+          ),
         }}
       />
     </div>
