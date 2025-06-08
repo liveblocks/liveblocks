@@ -16,7 +16,9 @@ export default function Page() {
     theme: "light" as "light" | "dark",
     title: "",
     description: "",
-    suggestions: [""]
+    suggestions: [""],
+    copilotId: "",
+    accentColor: ""
   });
 
   const addSuggestion = () => {
@@ -54,19 +56,27 @@ export default function Page() {
       description: formData.description,
       suggestions: JSON.stringify(formData.suggestions.filter(s => s.trim()))
     });
+    
+    if (formData.copilotId.trim()) {
+      params.set("copilotId", formData.copilotId.trim());
+    }
+    if (formData.accentColor.trim()) {
+      params.set("accentColor", formData.accentColor.trim());
+    }
+    
     router.push(`/preview?${params.toString()}`);
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 p-8">
+    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 p-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h1 className="text-2xl font-bold mb-6">Customize AI Chat Popup</h1>
+        <div className="bg-white dark:bg-neutral-800 rounded-xl p-6 shadow-sm">
+          <h1 className="text-2xl font-bold mb-6 text-neutral-900 dark:text-neutral-100">Customize AI Chat Popup</h1>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Content Type</label>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Content Type</label>
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center text-neutral-900 dark:text-neutral-100">
                   <input
                     type="radio"
                     name="urlType"
@@ -77,7 +87,7 @@ export default function Page() {
                   />
                   Iframe URL
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center text-neutral-900 dark:text-neutral-100">
                   <input
                     type="radio"
                     name="urlType"
@@ -92,7 +102,7 @@ export default function Page() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">
                 {formData.urlType === "iframe" ? "Iframe URL" : "Picture URL"}
               </label>
               <input
@@ -102,15 +112,15 @@ export default function Page() {
                   ...prev,
                   [formData.urlType === "iframe" ? "iframeUrl" : "pictureUrl"]: e.target.value
                 }))}
-                className="w-full px-3 py-2 border border-neutral-200 rounded-md"
+                className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                 placeholder={formData.urlType === "iframe" ? "https://example.com" : "https://example.com/image.jpg"}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Theme</label>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Theme</label>
               <div className="space-y-2">
-                <label className="flex items-center">
+                <label className="flex items-center text-neutral-900 dark:text-neutral-100">
                   <input
                     type="radio"
                     name="theme"
@@ -121,7 +131,7 @@ export default function Page() {
                   />
                   Light
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center text-neutral-900 dark:text-neutral-100">
                   <input
                     type="radio"
                     name="theme"
@@ -136,43 +146,43 @@ export default function Page() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Title</label>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Title</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-neutral-200 rounded-md"
+                className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                 placeholder="How can I help you?"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Description</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full px-3 py-2 border border-neutral-200 rounded-md"
+                className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                 rows={3}
                 placeholder="Ask me anything..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Suggestions</label>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Suggestions</label>
               {formData.suggestions.map((suggestion, index) => (
                 <div key={index} className="flex gap-2 mb-2">
                   <input
                     type="text"
                     value={suggestion}
                     onChange={(e) => updateSuggestion(index, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-neutral-200 rounded-md"
+                    className="flex-1 px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                     placeholder="Try asking about..."
                   />
                   {formData.suggestions.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeSuggestion(index)}
-                      className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md"
+                      className="px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md"
                     >
                       Remove
                     </button>
@@ -183,31 +193,61 @@ export default function Page() {
                 <button
                   type="button"
                   onClick={addSuggestion}
-                  className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md"
+                  className="px-3 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md"
                 >
                   + Add Suggestion
                 </button>
               )}
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Copilot ID (optional)</label>
+              <input
+                type="text"
+                value={formData.copilotId}
+                onChange={(e) => setFormData(prev => ({ ...prev, copilotId: e.target.value }))}
+                className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                placeholder="co_1234567890123456789012"
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                Optional copilot ID starting with "co_" (24 characters)
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2 text-neutral-900 dark:text-neutral-100">Accent Color (optional)</label>
+              <input
+                type="text"
+                value={formData.accentColor}
+                onChange={(e) => setFormData(prev => ({ ...prev, accentColor: e.target.value }))}
+                className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                placeholder="#4f46e5"
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                Hex color value (e.g., #4f46e5, #44f)
+              </p>
+            </div>
+
             <button
               type="submit"
-              className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+              className="w-full bg-blue-500 dark:bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-600 dark:hover:bg-blue-700"
             >
               Preview Chat
             </button>
           </form>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Preview</h2>
-          <div className="relative h-96 bg-neutral-50 rounded-lg overflow-hidden">
+        <div className="bg-white dark:bg-neutral-800 rounded-xl p-6 shadow-sm">
+          <h2 className="text-xl font-semibold mb-4 text-neutral-900 dark:text-neutral-100">Preview</h2>
+          <div className="relative h-96 bg-neutral-50 dark:bg-neutral-900 rounded-lg overflow-hidden">
             <ClientSideSuspense fallback={<div>Loading...</div>}>
               <PreviewChat
                 title={formData.title || "How can I help you?"}
                 description={formData.description}
                 suggestions={formData.suggestions.filter(s => s.trim())}
                 theme={formData.theme}
+                copilotId={formData.copilotId}
+                accentColor={formData.accentColor}
               />
             </ClientSideSuspense>
           </div>
@@ -217,31 +257,39 @@ export default function Page() {
   );
 }
 
-function PreviewChat({ title, description, suggestions, theme }: {
+function PreviewChat({ title, description, suggestions, theme, copilotId, accentColor }: {
   title: string;
   description: string;
   suggestions: string[];
   theme: "light" | "dark";
+  copilotId?: string;
+  accentColor?: string;
 }) {
+  const aiChatProps: any = {
+    layout: "compact" as const,
+    chatId: "preview-chat",
+    ...(copilotId ? { copilotId } : {})
+  };
+
   return (
     <div className={`h-full ${theme === "dark" ? "dark" : ""}`}>
       <AiChat
-        layout="compact"
-        chatId="preview-chat"
+        {...aiChatProps}
+        style={accentColor ? { "--lb-accent": accentColor } as React.CSSProperties : undefined}
         components={{
           Empty: ({ chatId }) => {
             const sendMessage = useSendAiMessage(chatId);
             return (
               <div className="p-4 h-full flex flex-col gap-4 justify-end">
                 <div>
-                  <h3 className="font-semibold">{title}</h3>
-                  {description && <p className="text-sm text-neutral-600 mt-1">{description}</p>}
+                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">{title}</h3>
+                  {description && <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">{description}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={index}
-                      className="px-3 py-1.5 text-sm bg-white border border-neutral-200 rounded-full hover:bg-neutral-50"
+                      className="px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
                       onClick={() => sendMessage(suggestion)}
                     >
                       {suggestion}
