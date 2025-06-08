@@ -93,11 +93,17 @@ function PreviewPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    document.body.className = config.theme === "dark" ? "dark" : "";
+    if (config.theme === "dark") {
+      document.body.classList.add("dark");
+      document.body.classList.remove("light");
+    } else {
+      document.body.classList.add("light");
+      document.body.classList.remove("dark");
+    }
   }, [config.theme]);
 
   return (
-    <div className="relative h-screen overflow-hidden">
+    <div className={`relative h-screen overflow-hidden bg-neutral-100 dark:bg-neutral-900 ${config.theme === "dark" ? "dark" : ""}`}>
       <div className="absolute inset-0">
         {config.url && config.urlType === "iframe" ? (
           <iframe
