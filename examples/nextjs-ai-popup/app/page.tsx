@@ -67,7 +67,7 @@ function ChatPopup() {
             className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-neutral-200 bg-neutral-50 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
-              <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4 truncate">
+              <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
                 <button
                   onClick={() => {
                     // If the current chat is deleted, don't go back to it, create a new one
