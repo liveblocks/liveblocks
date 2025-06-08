@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AiChat } from "@liveblocks/react-ui";
 import { useSendAiMessage } from "@liveblocks/react";
 import { ClientSideSuspense } from "@liveblocks/react";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
 
 export default function Page() {
   const router = useRouter();

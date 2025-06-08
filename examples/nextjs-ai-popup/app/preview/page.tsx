@@ -7,6 +7,7 @@ import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
 import { nanoid } from "nanoid";
 import { useAiChat } from "@liveblocks/react/suspense";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
 
 function PreviewPageContent() {
   const searchParams = useSearchParams();
