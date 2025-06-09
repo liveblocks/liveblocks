@@ -24,9 +24,7 @@ export type {
   AiToolExecuteContext,
   AiToolInvocationProps,
   AiToolTypePack,
-  UiAssistantMessage,
-  UiChatMessage,
-  UiUserMessage,
+  WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
 export type {
@@ -326,12 +324,14 @@ export type {
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export type {
   AiAssistantContentPart,
+  AiAssistantMessage,
   AiChat,
   AiChatMessage,
   AiKnowledgeSource,
   AiReasoningPart,
   AiTextPart,
   AiToolInvocationPart,
+  AiUserMessage,
   CopilotId,
   Cursor,
   MessageId,

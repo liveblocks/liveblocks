@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChat,
+  AiChatMessage,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -40,7 +41,7 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
-  UiChatMessage,
+  WithNavigation,
 } from "@liveblocks/core";
 import type {
   ComponentType,
@@ -50,6 +51,8 @@ import type {
 } from "react";
 
 import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+
+type UiChatMessage = WithNavigation<AiChatMessage>;
 
 export type UseSyncStatusOptions = {
   /**

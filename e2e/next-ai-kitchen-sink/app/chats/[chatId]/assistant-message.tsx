@@ -3,10 +3,11 @@
 import { useClient } from "@liveblocks/react/suspense";
 import { HTMLAttributes, memo, useEffect, useState } from "react";
 import {
+  AiAssistantMessage,
   CopilotId,
   kInternal,
   MessageId,
-  UiAssistantMessage,
+  WithNavigation,
 } from "@liveblocks/core";
 import { RefreshIcon } from "../../icons/refresh-icon";
 import { CheckIcon } from "../../icons/check-icon";
@@ -21,6 +22,8 @@ import {
   Markdown,
   Collapsible,
 } from "@liveblocks/react-ui/_private";
+
+type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
