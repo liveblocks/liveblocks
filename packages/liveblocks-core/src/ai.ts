@@ -1063,8 +1063,12 @@ export function createAi(config: AiConfig): Ai {
           break;
         }
 
+        case "warning":
+          console.warn(msg.message);
+          break;
+
         case "error":
-          // TODO Handle generic server error
+          console.error(msg.error);
           break;
 
         case "rebooted":

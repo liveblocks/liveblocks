@@ -194,6 +194,7 @@ type SetToolResultPair = DefineCmd<
 export type ServerEvent =
   | RebootedEvent
   | CmdFailedEvent
+  | WarningServerEvent
   | ErrorServerEvent
   | SyncServerEvent
   | DeltaServerEvent
@@ -214,10 +215,8 @@ export type CmdFailedEvent = {
   error: string;
 };
 
-export type ErrorServerEvent = {
-  event: "error";
-  error: string;
-};
+export type WarningServerEvent = { event: "warning"; message: string };
+export type ErrorServerEvent = { event: "error"; error: string };
 
 export type SyncServerEvent = {
   event: "sync";
