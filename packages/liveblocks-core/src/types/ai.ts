@@ -180,7 +180,7 @@ type SetToolResultPair = DefineCmd<
   {
     chatId: ChatId;
     messageId: MessageId;
-    toolCallId: string;
+    invocationId: string;
     result: ToolResultData;
     generationOptions: AiGenerationOptions;
   },
@@ -285,16 +285,16 @@ export type AiToolInvocationPart<
 export type AiReceivingToolInvocationPart = {
   type: "tool-invocation";
   status: "receiving";
-  toolCallId: string;
-  toolName: string;
+  invocationId: string;
+  name: string;
   partialArgs: Json;
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
   type: "tool-invocation";
   status: "executing";
-  toolCallId: string;
-  toolName: string;
+  invocationId: string;
+  name: string;
   args: A;
 };
 
@@ -304,8 +304,8 @@ export type AiExecutedToolInvocationPart<
 > = {
   type: "tool-invocation";
   status: "executed";
-  toolCallId: string;
-  toolName: string;
+  invocationId: string;
+  name: string;
   args: A;
   result: R;
   // isError: boolean  // TODO Consider adopting this field from AiSDK? Would make "result" be treated as an error value or a success value.

@@ -113,16 +113,13 @@ function AiToolConfirmation<
   className,
   ...props
 }: AiToolConfirmationProps<A, R>) {
-  const { status, args, respond, toolName, toolCallId } =
+  const { status, args, respond, name, invocationId } =
     useAiToolInvocationContext();
   const $ = useOverrides(overrides);
 
   const enabled = status === "executing";
 
-  const context = useMemo(
-    () => ({ toolName, toolCallId }),
-    [toolName, toolCallId]
-  );
+  const context = useMemo(() => ({ name, invocationId }), [name, invocationId]);
 
   const onConfirmClick = useCallback(async () => {
     if (enabled) {
@@ -207,7 +204,7 @@ export const AiTool = Object.assign(
     ) => {
       const {
         status,
-        toolName,
+        name,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
       const [semiControlledCollapsed, onSemiControlledCollapsed] =
@@ -223,8 +220,8 @@ export const AiTool = Object.assign(
       //       `:empty` pseudo-class to make the content 0px high if it's actually empty.
       const hasContent = Children.count(children) > 0;
       const resolvedTitle = useMemo(() => {
-        return title ?? prettifyString(toolName);
-      }, [title, toolName]);
+        return title ?? prettifyString(name);
+      }, [title, name]);
 
       // `AiTool` uses "collapsed" instead of "open" (like the `Composer` component) because "open"
       // makes sense next to something called "Collapsible" but less so for something called "AiTool".
