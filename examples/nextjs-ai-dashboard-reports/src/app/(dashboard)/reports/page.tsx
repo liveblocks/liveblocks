@@ -1,5 +1,5 @@
-import Header from "./_components/Header"
-import { TransactionChart } from "./_components/TransactionChart"
+import Header from "./_components/Header";
+import { TransactionChart } from "./_components/TransactionChart";
 
 export default function Page() {
   return (
@@ -36,5 +36,5 @@ export default function Page() {
         </div>
       </section>
     </>
-  )
+  );
 }
