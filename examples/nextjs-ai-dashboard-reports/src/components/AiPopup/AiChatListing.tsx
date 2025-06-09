@@ -12,15 +12,11 @@ export function ChatListing({
     useAiChats();
 
   if (isLoading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        loading...{" "}
-      </div>
-    );
+    return null;
   }
 
   if (error) {
-    return <div>error: {error.message}</div>;
+    return <div>Error: {error.message}</div>;
   }
 
   return (
@@ -37,7 +33,7 @@ export function ChatListing({
                 onClick={() => onSelectChat(chat.id)}
                 className="text-left font-medium before:absolute before:inset-0 truncate"
               >
-                {chat.title || "Untitled"}
+                {chat.title || "Untitled chat"}
               </button>
               <div className="text-xs text-gray-400">
                 {new Date(chat.lastMessageAt || chat.createdAt).toLocaleString(

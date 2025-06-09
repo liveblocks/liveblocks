@@ -61,6 +61,9 @@ function useInvoicesByIds(invoiceIds: string[]) {
       });
       if (!res.ok) throw new Error("Failed to fetch invoices");
       return res.json();
+    },
+    {
+      refreshInterval: 20000,
     }
   );
 }
@@ -91,7 +94,7 @@ export function SendInvoiceRemindersTool() {
           required: ["companies"],
         },
 
-        render: ({ args }) => {
+        render: function Render({ args, status }) {
           const allInvoiceIds = args?.companies
             ? args.companies.flatMap((c: any) => c.invoice_ids)
             : [];
@@ -99,7 +102,10 @@ export function SendInvoiceRemindersTool() {
           if (!args) return null;
 
           return (
-            <AiTool title="Send invoice reminders">
+            <AiTool
+              title="Send invoice reminders"
+              collapsed={status === "executed"}
+            >
               <AiTool.Confirmation
                 confirm={async () => {
                   // Simulating sending emails
@@ -216,10 +222,11 @@ export function InviteMemberTool({
           additionalProperties: false,
           required: ["email", "name"],
         },
-        render: ({ args }) => {
+        render: ({ args, status }) => {
           if (!args) return null;
+
           return (
-            <AiTool title="Invite member">
+            <AiTool title="Invite member" collapsed={status === "executed"}>
               <AiTool.Confirmation
                 confirm={() => {
                   toast.success(`${args.email} has been invited`);
