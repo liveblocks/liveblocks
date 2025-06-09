@@ -60,11 +60,11 @@ function ToolInvocation({
 
   const respond = useCallback(
     (result: ToolResultData) => {
-      if (part.status === "receiving") {
+      if (part.stage === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
         );
-      } else if (part.status === "executed") {
+      } else if (part.stage === "executed") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) has already executed`
         );
@@ -78,7 +78,7 @@ function ToolInvocation({
         );
       }
     },
-    [ai, chatId, messageId, part.status, part.name, part.invocationId]
+    [ai, chatId, messageId, part.stage, part.name, part.invocationId]
   );
 
   const props = useMemo(() => {
@@ -98,8 +98,8 @@ function ToolInvocation({
     <ErrorBoundary
       fallback={
         <p style={{ color: "red" }}>
-          Failed to render tool call result for ‘{part.name}’. See console
-          for details.
+          Failed to render tool call result for ‘{part.name}’. See console for
+          details.
         </p>
       }
     >

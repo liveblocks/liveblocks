@@ -518,7 +518,7 @@ function createStore_forChatMessages(
       if (message.role === "assistant" && message.status === "awaiting-tool") {
         for (const toolCall of message.contentSoFar.filter(
           (part) =>
-            part.type === "tool-invocation" && part.status === "executing"
+            part.type === "tool-invocation" && part.stage === "executing"
         )) {
           if (seenToolCallIds.has(toolCall.invocationId)) {
             // Do nothing, we already know of it
@@ -1355,7 +1355,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v2";
+    url.pathname = "/ai/v3";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

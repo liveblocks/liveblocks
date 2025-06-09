@@ -225,7 +225,7 @@ export default function Page() {
                           additionalProperties: false,
                         },
 
-                        render: ({ status, result, types }) => (
+                        render: ({ stage, result, types }) => (
                           <AiTool>
                             <AiTool.Confirmation
                               types={types}
@@ -249,7 +249,7 @@ export default function Page() {
                               Okay to delete?
                             </AiTool.Confirmation>
 
-                            {status === "executed" ? (
+                            {stage === "executed" ? (
                               result.ok ? (
                                 <div>
                                   Deleted:
