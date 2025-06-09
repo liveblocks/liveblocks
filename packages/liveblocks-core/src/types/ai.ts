@@ -284,7 +284,7 @@ export type AiToolInvocationPart<
 
 export type AiReceivingToolInvocationPart = {
   type: "tool-invocation";
-  status: "receiving";
+  stage: "receiving";
   invocationId: string;
   name: string;
   partialArgs: Json;
@@ -292,7 +292,7 @@ export type AiReceivingToolInvocationPart = {
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
   type: "tool-invocation";
-  status: "executing";
+  stage: "executing";
   invocationId: string;
   name: string;
   args: A;
@@ -303,7 +303,7 @@ export type AiExecutedToolInvocationPart<
   R extends ToolResultData = ToolResultData,
 > = {
   type: "tool-invocation";
-  status: "executed";
+  stage: "executed";
   invocationId: string;
   name: string;
   args: A;

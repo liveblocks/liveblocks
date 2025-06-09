@@ -113,11 +113,11 @@ function AiToolConfirmation<
   className,
   ...props
 }: AiToolConfirmationProps<A, R>) {
-  const { status, args, respond, name, invocationId } =
+  const { stage, args, respond, name, invocationId } =
     useAiToolInvocationContext();
   const $ = useOverrides(overrides);
 
-  const enabled = status === "executing";
+  const enabled = stage === "executing";
 
   const context = useMemo(() => ({ name, invocationId }), [name, invocationId]);
 
@@ -135,7 +135,7 @@ function AiToolConfirmation<
 
   // If there's no content and the tool has been executed (so there's no
   // confirmation UI displayed either), don't render anything.
-  if (status === "executed" && !children) {
+  if (stage === "executed" && !children) {
     return null;
   }
 
@@ -147,7 +147,7 @@ function AiToolConfirmation<
       {children ? (
         <div className="lb-ai-tool-confirmation-content">{children}</div>
       ) : null}
-      {status !== "executed" && (
+      {stage !== "executed" && (
         <div className="lb-ai-tool-confirmation-footer">
           <div className="lb-ai-tool-confirmation-actions">
             <Button
@@ -203,7 +203,7 @@ export const AiTool = Object.assign(
       forwardedRef
     ) => {
       const {
-        status,
+        stage,
         name,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
@@ -253,7 +253,7 @@ export const AiTool = Object.assign(
               </span>
             ) : null}
             <div className="lb-ai-tool-header-status">
-              {status === "executed" ? (
+              {stage === "executed" ? (
                 <CheckCircleFillIcon />
               ) : execute !== undefined ? (
                 // Only show a spinner if the tool has an `execute` method.
