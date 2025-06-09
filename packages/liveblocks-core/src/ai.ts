@@ -53,6 +53,7 @@ import type {
   ServerAiMsg,
   SetToolResultResponse,
   ToolResultData,
+  ToolResultResponse,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
@@ -98,7 +99,7 @@ export type AiToolInvocationProps<
   R extends ToolResultData,
 > = Resolve<
   DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
-    respond: (result: R) => void;
+    respond: (result: ToolResultResponse<R>) => void;
 
     /**
      * These are the inferred types for your tool call which you can pass down
@@ -136,7 +137,10 @@ export type AiToolExecuteContext = {
 export type AiToolExecuteCallback<
   A extends JsonObject,
   R extends ToolResultData,
-> = (args: A, context: AiToolExecuteContext) => Awaitable<R>;
+> = (
+  args: A,
+  context: AiToolExecuteContext
+) => Awaitable<ToolResultResponse<R>>;
 
 export type AiToolDefinition<
   S extends JSONObjectSchema7,
@@ -531,12 +535,14 @@ function createStore_forChatMessages(
             .getToolΣ(toolCall.name, message.chatId)
             .get();
 
-          const respondSync = (result: ToolResultData) => {
+          const respondSync = <R extends ToolResultData>(
+            result: ToolResultResponse<R>
+          ) => {
             setToolResult(
               message.chatId,
               message.id,
               toolCall.invocationId,
-              result
+              result.data
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
               console.error(

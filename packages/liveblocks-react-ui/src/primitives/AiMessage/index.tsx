@@ -4,6 +4,7 @@ import type {
   JsonObject,
   MessageId,
   ToolResultData,
+  ToolResultResponse,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
@@ -59,7 +60,7 @@ function ToolInvocation({
   const tool = useSignal(ai.signals.getToolΣ(part.name, chatId));
 
   const respond = useCallback(
-    (result: ToolResultData) => {
+    (result: ToolResultResponse<ToolResultData>) => {
       if (part.stage === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
@@ -73,7 +74,7 @@ function ToolInvocation({
           chatId,
           messageId,
           part.invocationId,
-          result
+          result.data
           // TODO Pass in AiGenerationOptions here?
         );
       }

@@ -153,9 +153,13 @@ export default function Page() {
                         execute: async (args) => {
                           const { ids } = args;
                           if (ids.length === 0) {
-                            return todos;
+                            return { data: { todos } };
                           } else {
-                            return todos.filter((t) => ids.includes(t.id));
+                            return {
+                              data: {
+                                todos: todos.filter((t) => ids.includes(t.id)),
+                              },
+                            };
                           }
                         },
                       }),
@@ -179,7 +183,7 @@ export default function Page() {
                           for (const title of titles) {
                             addTodo(title);
                           }
-                          return { ok: true };
+                          return { data: { ok: true } };
                         },
                       }),
 
@@ -198,7 +202,7 @@ export default function Page() {
                         },
                         execute: ({ id }) => {
                           toggleTodo(id);
-                          return { ok: true };
+                          return { data: { ok: true } };
                         },
                         render: () => (
                           <AiTool>
@@ -236,13 +240,15 @@ export default function Page() {
                                   .map((todo) => todo.title);
 
                                 deleteTodos(ids);
-                                return { ok: true, deletedTitles };
+                                return { data: { ok: true, deletedTitles } };
                               }}
                               cancel={() => {
                                 return {
-                                  ok: false,
-                                  reason: "deny",
-                                  hint: "Do not respond with further text",
+                                  data: {
+                                    ok: false,
+                                    reason: "deny",
+                                    hint: "Do not respond with further text",
+                                  },
                                 };
                               }}
                             >
