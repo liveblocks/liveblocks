@@ -336,6 +336,7 @@ export type {
   Cursor,
   MessageId,
   ToolResultData,
+  ToolResultResponse,
 } from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
