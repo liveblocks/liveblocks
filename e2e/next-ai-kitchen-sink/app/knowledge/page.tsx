@@ -60,7 +60,9 @@ function DarkModeToggle() {
             },
             execute: ({ mode }) => {
               setMode(mode);
-              return { ok: true, message: `Dark mode changed to ${mode}` };
+              return {
+                data: { ok: true, message: `Dark mode changed to ${mode}` },
+              };
             },
             render: () => <AiTool />,
           })}
