@@ -1,10 +1,16 @@
-import type { AiTextPart, UiUserMessage } from "@liveblocks/core";
+import type {
+  AiTextPart,
+  AiUserMessage,
+  WithNavigation,
+} from "@liveblocks/core";
 import type { ComponentProps } from "react";
 import { forwardRef, memo } from "react";
 
 import { AiMessage } from "../../_private";
 import { type GlobalOverrides, useOverrides } from "../../overrides";
 import { classNames } from "../../utils/class-names";
+
+type UiUserMessage = WithNavigation<AiUserMessage>;
 
 /* -------------------------------------------------------------------------------------------------
  * AiChatUserMessage

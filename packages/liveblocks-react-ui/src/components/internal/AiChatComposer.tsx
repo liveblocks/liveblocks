@@ -1,4 +1,9 @@
-import type { CopilotId, MessageId, UiChatMessage } from "@liveblocks/core";
+import type {
+  AiChatMessage,
+  CopilotId,
+  MessageId,
+  WithNavigation,
+} from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
@@ -20,6 +25,8 @@ import * as ComposerPrimitive from "../../primitives/AiChatComposer";
 import { classNames } from "../../utils/class-names";
 import { Button } from "./Button";
 import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
+
+type UiChatMessage = WithNavigation<AiChatMessage>;
 
 /* -------------------------------------------------------------------------------------------------
  * AiChatComposer

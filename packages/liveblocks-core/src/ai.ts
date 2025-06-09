@@ -27,7 +27,6 @@ import type {
 import type {
   AbortAiResponse,
   AiAssistantDeltaUpdate,
-  AiAssistantMessage,
   AiChat,
   AiChatMessage,
   AiFailedAssistantMessage,
@@ -173,56 +172,24 @@ export function defineAiTool<R extends ToolResultData>() {
   };
 }
 
-export type UiChatMessage = AiChatMessage & {
-  navigation: {
-    /**
-     * The message ID of the parent message, or null if there is no parent.
-     */
-    parent: MessageId | null;
-    /**
-     * The message ID of the left sibling message, or null if there is no left sibling.
-     */
-    prev: MessageId | null;
-    /**
-     * The message ID of the right sibling message, or null if there is no right sibling.
-     */
-    next: MessageId | null;
-  };
+type NavigationInfo = {
+  /**
+   * The message ID of the parent message, or null if there is no parent.
+   */
+  parent: MessageId | null;
+  /**
+   * The message ID of the left sibling message, or null if there is no left sibling.
+   */
+  prev: MessageId | null;
+  /**
+   * The message ID of the right sibling message, or null if there is no right sibling.
+   */
+  next: MessageId | null;
 };
 
-export type UiUserMessage = AiUserMessage & {
-  navigation: {
-    /**
-     * The message ID of the parent message, or null if there is no parent.
-     */
-    parent: MessageId | null;
-    /**
-     * The message ID of the left sibling message, or null if there is no left sibling.
-     */
-    prev: MessageId | null;
-    /**
-     * The message ID of the right sibling message, or null if there is no right sibling.
-     */
-    next: MessageId | null;
-  };
-};
+export type WithNavigation<T> = T & { navigation: NavigationInfo };
 
-export type UiAssistantMessage = AiAssistantMessage & {
-  navigation: {
-    /**
-     * The message ID of the parent message, or null if there is no parent.
-     */
-    parent: MessageId | null;
-    /**
-     * The message ID of the left sibling message, or null if there is no left sibling.
-     */
-    prev: MessageId | null;
-    /**
-     * The message ID of the right sibling message, or null if there is no right sibling.
-     */
-    next: MessageId | null;
-  };
-};
+type UiChatMessage = WithNavigation<AiChatMessage>;
 
 type AiContext = {
   staticSessionInfoSig: Signal<StaticSessionInfo | null>;

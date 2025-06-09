@@ -1,4 +1,4 @@
-import type { UiAssistantMessage } from "@liveblocks/core";
+import type { AiAssistantMessage, WithNavigation } from "@liveblocks/core";
 import {
   type ComponentProps,
   forwardRef,
@@ -25,6 +25,8 @@ import type {
 import * as Collapsible from "../../primitives/Collapsible";
 import { classNames } from "../../utils/class-names";
 import { Prose } from "./Prose";
+
+type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
 
 /* -------------------------------------------------------------------------------------------------
  * AiChatAssistantMessage

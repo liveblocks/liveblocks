@@ -1,18 +1,21 @@
-import { memo, useState, useEffect, useCallback, FormEvent } from "react";
+import { memo, useState, useEffect, useCallback } from "react";
 import { CheckIcon } from "../../icons/check-icon";
 import { CopyIcon } from "../../icons/copy-icon";
 import { PencilIcon } from "../../icons/pencil-icon";
 import {
+  AiUserMessage,
   CopilotId,
   kInternal,
   MessageId,
-  UiUserMessage,
+  WithNavigation,
 } from "@liveblocks/core";
 import { AiChatComposer } from "@liveblocks/react-ui/_private";
 import { useClient } from "@liveblocks/react";
 import { ChevronLeftIcon } from "../../icons/chevron-left-icon";
 import { ChevronRightIcon } from "../../icons/chevron-right-icon";
 import { TrashIcon } from "../../icons/trash-icon";
+
+type UiUserMessage = WithNavigation<AiUserMessage>;
 
 export const UserMessage = memo(function UserMessage({
   message,
