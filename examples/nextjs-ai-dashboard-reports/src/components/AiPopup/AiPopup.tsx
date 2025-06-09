@@ -9,7 +9,7 @@ import { AiChat } from "@liveblocks/react-ui";
 import * as PopoverPrimitives from "@radix-ui/react-popover";
 import { nanoid } from "nanoid";
 import Link from "next/link";
-import { ComponentProps, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { useAiChat } from "@liveblocks/react/suspense";
 import { ChatListing } from "./AiChatListing";
 import { AiChatPlaceholder } from "./AiChatPlaceholder";
@@ -18,6 +18,7 @@ import {
   TransactionToolAi,
   MemberToolAi,
   SendInvoiceRemindersTool,
+  InviteMemberTool,
 } from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
 import { siteConfig } from "@/app/siteConfig";
@@ -77,6 +78,8 @@ function Chat({ chatId }: { chatId: string }) {
       <TransactionToolAi />
       <SendInvoiceRemindersTool />
       <MemberToolAi />
+      {/* TODO figure out how to get the onInvite function to work */}
+      <InviteMemberTool onInvite={() => {}} />
       <AiChat
         layout="compact"
         chatId={chatId}
@@ -121,7 +124,7 @@ function ChatPopup() {
         <PopoverPrimitives.Trigger asChild>
           <button
             className={
-              "flex size-14 items-center border border-gray-200 justify-center rounded-full bg-blue-600 hover:bg-blue-500 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
+              "flex size-14 items-center border border-gray-200 dark:border-gray-800 justify-center rounded-full bg-blue-600 hover:bg-blue-500 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
             }
             aria-label="Open AI Assistant"
           >
