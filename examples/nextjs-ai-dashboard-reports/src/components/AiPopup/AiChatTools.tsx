@@ -2,7 +2,14 @@ import React from "react";
 import { Badge } from "@/components/Badge";
 import { transactions } from "@/data/transactions";
 import { format } from "date-fns";
-import { expense_statuses } from "@/data/schema";
+import {
+  expense_statuses,
+  payment_statuses,
+  locations,
+  currencies,
+  categories,
+  merchants,
+} from "@/data/schema";
 import { users } from "@/data/users";
 import Image from "next/image";
 import { defineAiTool } from "@liveblocks/client";
@@ -14,6 +21,143 @@ import { RegisterAiTool } from "@liveblocks/react";
 import { ChevronDownIcon } from "lucide-react";
 import { formatters } from "@/lib/utils";
 import useSWR from "swr";
+import { fetchTransactions } from "@/lib/transactionsApi";
+import { fetchInvoices } from "@/lib/invoicesApi";
+import type { InvoiceQueryParams } from "@/lib/invoicesApi";
+
+export function QueryTransactionTool() {
+  return (
+    <RegisterAiTool
+      name="query-transaction"
+      tool={defineAiTool()({
+        description: `Query the transaction details. 
+        You can query by date, currency, continent, country, min amount, max amount, expense status, payment status, and limit. 
+        You can also query by multiple of these parameters. 
+        Here are some types you should know.
+        
+        expenseStatus: ${JSON.stringify(expense_statuses)}
+        paymentStatus: ${JSON.stringify(payment_statuses)}
+        locations: ${JSON.stringify(locations)}
+        currencies: ${JSON.stringify(currencies)}
+        categories: ${JSON.stringify(categories)}
+        merchants: ${JSON.stringify(merchants)}
+        `,
+        parameters: {
+          type: "object",
+          properties: {
+            dateFrom: { type: ["string", "null"] },
+            dateTo: { type: ["string", "null"] },
+            currency: { type: ["string", "null"] },
+            continent: { type: ["string", "null"] },
+            country: { type: ["string", "null"] },
+            minAmount: { type: ["number", "null"] },
+            maxAmount: { type: ["number", "null"] },
+            expenseStatus: { type: ["string", "null"] },
+            paymentStatus: { type: ["string", "null"] },
+            limit: { type: ["number", "null"] },
+          },
+          required: [
+            "dateFrom",
+            "dateTo",
+            "currency",
+            "continent",
+            "country",
+            "minAmount",
+            "maxAmount",
+            "expenseStatus",
+            "paymentStatus",
+            "limit",
+          ],
+        },
+        execute: async (args) => {
+          const { transactions } = await fetchTransactions(
+            Object.fromEntries(
+              Object.entries(args).map(([key, value]) => [
+                key,
+                value === null ? undefined : value,
+              ])
+            )
+          );
+          console.log(
+            args,
+            Object.fromEntries(
+              Object.entries(args).map(([key, value]) => [
+                key,
+                value === null ? undefined : value,
+              ])
+            ),
+            transactions
+          );
+          return {
+            data: {
+              transactions,
+            },
+          };
+        },
+        render: ({ args }) =>
+          args ? <AiTool title={`Transaction query`} /> : null,
+      })}
+    />
+  );
+}
+
+export function QueryInvoiceTool() {
+  return (
+    <RegisterAiTool
+      name="query-invoice"
+      tool={defineAiTool()({
+        description: "Query the invoice details",
+        parameters: {
+          type: "object",
+          properties: {
+            dateFrom: { type: ["string", "null"] },
+            dateTo: { type: ["string", "null"] },
+            currency: { type: ["string", "null"] },
+            continent: { type: ["string", "null"] },
+            country: { type: ["string", "null"] },
+            minAmount: { type: ["number", "null"] },
+            maxAmount: { type: ["number", "null"] },
+            invoiceStatus: { type: ["string", "null"] },
+            limit: { type: ["number", "null"] },
+          },
+          required: [
+            "dateFrom",
+            "dateTo",
+            "currency",
+            "continent",
+            "country",
+            "minAmount",
+            "maxAmount",
+            "invoiceStatus",
+            "limit",
+          ],
+        },
+        execute: async (args) => {
+          const { invoices } = await fetchInvoices(
+            Object.fromEntries(
+              Object.entries(args).map(([key, value]) => [
+                key,
+                value == null ? undefined : value,
+              ])
+            )
+          );
+          console.log(args, invoices);
+          return {
+            data: {
+              invoices,
+            },
+          };
+        },
+        render: ({ args }) =>
+          args ? (
+            <AiTool title={`Invoice query`} collapsed={true}>
+              <AiTool.Inspector />
+            </AiTool>
+          ) : null,
+      })}
+    />
+  );
+}
 
 export function NavigateToPageTool() {
   const router = useRouter();

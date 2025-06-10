@@ -19,6 +19,8 @@ import {
   MemberToolAi,
   SendInvoiceRemindersTool,
   InviteMemberTool,
+  QueryTransactionTool,
+  QueryInvoiceTool,
 } from "./AiChatTools";
 import { RiRobot2Line } from "@remixicon/react";
 import { siteConfig } from "@/app/siteConfig";
@@ -74,16 +76,18 @@ function Chat({ chatId }: { chatId: string }) {
         description="The team's information. There's more information in the users page, add a link to it with markdown."
         value={team}
       />
+      <QueryTransactionTool />
+      <QueryInvoiceTool />
       <NavigateToPageTool />
       <TransactionToolAi />
-      <SendInvoiceRemindersTool />
+      {/* <SendInvoiceRemindersTool /> */}
       <MemberToolAi />
       {/* TODO figure out how to get the onInvite function to work */}
       <InviteMemberTool onInvite={() => {}} />
       <AiChat
         layout="compact"
         chatId={chatId}
-        copilotId="co_9QANcYlAxs84cIcMxMAkZ"
+        // copilotId="co_9QANcYlAxs84cIcMxMAkZ"
         className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
         components={{
           Empty: AiChatPlaceholder,
