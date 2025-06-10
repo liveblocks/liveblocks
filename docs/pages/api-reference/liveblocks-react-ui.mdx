@@ -355,7 +355,48 @@ default markdown components with your own custom components by...
 
 ##### Props [#AiChat-props]
 
-{/* TODO props table */}
+<PropertiesList>
+  <PropertiesListItem name="chatId" type="string" isRequired>
+    The unique identifier for the chat. Each chat is stored permanently and is
+    only visible to the authenticated user who created it.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to automatically focus the composer input when the chat loads.
+    Defaults to `false`.
+  </PropertiesListItem>
+  <PropertiesListItem name="copilotId" type="string">
+    The ID of the custom copilot to use for this chat. Copy this from your
+    copilot configuration in the [Liveblocks
+    dashboard](https://liveblocks.io/dashboard/copilots).
+  </PropertiesListItem>
+  <PropertiesListItem name="knowledge" type="AiKnowledgeSource[]">
+    Array of knowledge sources specific to this chat. This knowledge will only
+    be available to this chat instance and not to other AI features on the page.
+  </PropertiesListItem>
+  <PropertiesListItem name="tools" type="Record<string, AiToolDefinition>">
+    Object mapping tool names to tool definitions that should be available in
+    this chat.
+  </PropertiesListItem>
+  <PropertiesListItem name="layout" type="'inset' | 'compact'">
+    The layout mode for the chat. Use `'inset'` (default) for standalone chats,
+    or `'compact'` for embedded scenarios like pop-up windows.
+  </PropertiesListItem>
+  <PropertiesListItem name="overrides" type="AiChatOverrides">
+    Advanced customization options for overriding default chat behavior and
+    styling.
+  </PropertiesListItem>
+  <PropertiesListItem name="components" type="AiChatComponents">
+    Custom components to override specific parts of the chat UI, such as the
+    `Empty` placeholder component.
+  </PropertiesListItem>
+  <PropertiesListItem name="className" type="string">
+    CSS class name to apply to the chat container.
+  </PropertiesListItem>
+  <PropertiesListItem name="style" type="CSSProperties">
+    Inline styles to apply to the chat container. Useful for setting CSS custom
+    properties.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### AiTool
 
@@ -402,7 +443,40 @@ render: () => (
 
 ##### Props [#AiTool-props]
 
-{/* TODO props table */}
+<PropertiesList>
+  <PropertiesListItem name="title" type="string">
+    The title to display for the tool. If not provided, the tool name will be
+    formatted as a human-readable string.
+  </PropertiesListItem>
+  <PropertiesListItem name="icon" type="ReactNode">
+    Icon to display alongside the tool title. Can be an emoji string, React
+    component, or any ReactNode.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    Content to display inside the tool container. Typically used for
+    tool-specific UI or descriptions.
+  </PropertiesListItem>
+  <PropertiesListItem name="collapsed" type="boolean">
+    Whether the tool content should be collapsed. When collapsed, only the title
+    and icon are visible.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCollapsedChange"
+    type="(collapsed: boolean) => void"
+  >
+    Callback fired when the collapsed state changes. Use this to control the
+    collapsed state externally.
+  </PropertiesListItem>
+  <PropertiesListItem name="className" type="string">
+    CSS class name to apply to the tool container.
+  </PropertiesListItem>
+  <PropertiesListItem name="style" type="CSSProperties">
+    Inline styles to apply to the tool container.
+  </PropertiesListItem>
+</PropertiesList>
+
+All other HTML `div` props are also supported and will be passed through to the
+underlying container element.
 
 ##### AiTool.Confirmation
 
@@ -424,7 +498,57 @@ chat, but it will be stored in the AI’s memory. Returning a JS object often
 helps the AI understand the result better.
 
 ```tsx
-// TODO show usage with RegisterAiTool
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool, AiTool } from "@liveblocks/react-ui";
+
+const deleteFileTool = defineAiTool<{ success: boolean; message: string }>()({
+  description: "Delete a file from the user's workspace",
+  parameters: {
+    type: "object",
+    properties: {
+      fileName: { type: "string", description: "Name of the file to delete" },
+    },
+    required: ["fileName"],
+    additionalProperties: false,
+  },
+  render: ({ stage, args, result }) => {
+    if (stage === "receiving") {
+      return "Loading...";
+    }
+    return (
+      <AiTool title="Delete File" icon="🗑️">
+        {!result ? (
+          <AiTool.Confirmation
+            confirm={async ({ filename }) => {
+              await deleteFile(fileName);
+              return {
+                data: { success: true, message: `Deleted ${fileName}` },
+              };
+            }}
+            cancel={async () => {
+              return {
+                data: { success: false, message: "User cancelled deletion" },
+              };
+            }}
+          >
+            Are you sure you want to delete {args.fileName}?
+          </AiTool.Confirmation>
+        ) : (
+          <div>{result.message}</div>
+        )}
+      </AiTool>
+    );
+  },
+});
+
+function App() {
+  return (
+    <>
+      <RegisterAiTool name="delete-file" tool={deleteFileTool} />
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
 ```
 
 `AiTool.Confirmation` dialog will display different content depending on the
@@ -433,7 +557,34 @@ when clicked.
 
 ###### Props [#AiTool.Confirmation-props]
 
-{/* TODO ai tool confiramtion props table */}
+<PropertiesList>
+  <PropertiesListItem
+    name="confirm"
+    type="(args: TArgs) => Promise<{ data: TResult }>"
+    isRequired
+  >
+    Function called when the user clicks the confirm button. Must return a
+    promise with structured data that helps the AI understand the result.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="cancel"
+    type="() => Promise<{ data: TResult }>"
+    isRequired
+  >
+    Function called when the user clicks the cancel button. Should return data
+    indicating the action was cancelled.
+  </PropertiesListItem>
+  <PropertiesListItem name="children" type="ReactNode">
+    Content to display in the confirmation dialog. Typically a question or
+    description of the action being confirmed.
+  </PropertiesListItem>
+  <PropertiesListItem name="confirmText" type="string">
+    Text to display on the confirm button. Defaults to "Confirm".
+  </PropertiesListItem>
+  <PropertiesListItem name="cancelText" type="string">
+    Text to display on the cancel button. Defaults to "Cancel".
+  </PropertiesListItem>
+</PropertiesList>
 
 ##### AiTool.Inspector
 
@@ -680,17 +831,91 @@ function Whiteboard() {
 
 {/* TODO knowledge source */}
 
-##### Props [#TODO-props]
+##### Props [#RegisterAiKnowledge-props]
 
-{/* TODO knowledge source props table */}
+<PropertiesList>
+  <PropertiesListItem name="description" type="string" isRequired>
+    A clear description of what this knowledge represents. This helps the AI
+    understand the context and relevance of the provided information.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="string" isRequired>
+    The knowledge content as a string. Can be plain text, JSON, or any string
+    format that provides useful context to the AI.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    Optional unique identifier for this knowledge source. If provided,
+    subsequent updates with the same ID will replace the previous knowledge.
+  </PropertiesListItem>
+</PropertiesList>
 
-#### TODO RegisterAiTool (check name)
+#### RegisterAiTool
 
-{/* TODO tool */}
+Registers an AI tool globally, making it available to all AI features on the
+page. Tools registered this way can be used by any [`AiChat`](#AiChat) component
+or other AI interfaces.
 
-##### Props [#TODO-props]
+```tsx
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool, AiChat } from "@liveblocks/react-ui";
 
-{/* TODO tool props table */}
+const weatherTool = defineAiTool()({
+  description: "Get current weather information",
+  parameters: {
+    type: "object",
+    properties: {
+      location: { type: "string", description: "City name" },
+    },
+    required: ["location"],
+    additionalProperties: false,
+  },
+  execute: async (args) => {
+    const { temperature, condition } = await getWeather(args.location);
+    return { data: { temperature, condition } };
+  },
+  render: ({ result }) => (
+    <AiTool title="Weather Lookup" icon="🌤️">
+      {result ? (
+        <div>
+          {result.temperature}°F - {result.condition}
+        </div>
+      ) : null}
+    </AiTool>
+  ),
+});
+
+function App() {
+  return (
+    <>
+      <RegisterAiTool name="get-weather" tool={weatherTool} />
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
+```
+
+Tools can be scoped to specific chats by providing a `chatId` prop. When scoped,
+the tool will only be available to that specific chat.
+
+```tsx
+<RegisterAiTool name="private-tool" tool={myTool} chatId="specific-chat-id" />
+```
+
+##### Props [#RegisterAiTool-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" isRequired>
+    Unique name for the tool. This is used internally to identify and manage the
+    tool.
+  </PropertiesListItem>
+  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" isRequired>
+    The tool definition created with
+    [`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool).
+  </PropertiesListItem>
+  <PropertiesListItem name="chatId" type="string">
+    Optional chat ID to scope this tool to a specific chat. If provided, the
+    tool will only be available to that chat.
+  </PropertiesListItem>
+</PropertiesList>
 
 ### Primitives [#AI-Copilots-Primitives]
 
