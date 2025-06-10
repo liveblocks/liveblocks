@@ -40,7 +40,12 @@ export function NavigateToPageTool() {
               onClick: () => router.back(),
             },
           });
-          return "Redirecting user to the page. Do not write anything else.";
+          return {
+            data: {
+              message:
+                "Redirecting user to the page. Do not write anything else.",
+            },
+          };
         },
         render: ({ args }) =>
           args ? <AiTool title={`Redirected to ${args.relativeUrl}`} /> : null,
@@ -94,7 +99,7 @@ export function SendInvoiceRemindersTool() {
           required: ["companies"],
         },
 
-        render: function Render({ args, status }) {
+        render: function Render({ args, stage }) {
           const allInvoiceIds = args?.companies
             ? args.companies.flatMap((c: any) => c.invoice_ids)
             : [];
@@ -104,7 +109,7 @@ export function SendInvoiceRemindersTool() {
           return (
             <AiTool
               title="Send invoice reminders"
-              collapsed={status === "executed"}
+              collapsed={stage === "executed"}
             >
               <AiTool.Confirmation
                 confirm={async () => {
@@ -118,10 +123,18 @@ export function SendInvoiceRemindersTool() {
                       return `Invoice reminders sent`;
                     },
                   });
-                  return "Invoice reminders sent";
+                  return {
+                    data: {
+                      message: "Invoice reminders sent",
+                    },
+                  };
                 }}
-                cancel={() => {
-                  return "The user cancelled the invite";
+                cancel={async () => {
+                  return {
+                    data: {
+                      message: "The user cancelled the invite",
+                    },
+                  };
                 }}
               >
                 {isLoading && (
@@ -222,19 +235,27 @@ export function InviteMemberTool({
           additionalProperties: false,
           required: ["email", "name"],
         },
-        render: ({ args, status }) => {
+        render: ({ args, stage }) => {
           if (!args) return null;
 
           return (
-            <AiTool title="Invite member" collapsed={status === "executed"}>
+            <AiTool title="Invite member" collapsed={stage === "executed"}>
               <AiTool.Confirmation
                 confirm={() => {
                   toast.success(`${args.email} has been invited`);
                   onInvite({ name: args.name, email: args.email });
-                  return `The user confirmed inviting ${args.email} to the team`;
+                  return {
+                    data: {
+                      message: `The user confirmed inviting ${args.email} to the team`,
+                    },
+                  };
                 }}
                 cancel={() => {
-                  return `The user cancelled inviting ${args.email} to the team`;
+                  return {
+                    data: {
+                      message: `The user cancelled inviting ${args.email} to the team`,
+                    },
+                  };
                 }}
               >
                 Invite <code>{args.email}</code> to the team?

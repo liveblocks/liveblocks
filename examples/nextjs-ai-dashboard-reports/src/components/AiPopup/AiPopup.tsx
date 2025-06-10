@@ -83,6 +83,7 @@ function Chat({ chatId }: { chatId: string }) {
       <AiChat
         layout="compact"
         chatId={chatId}
+        copilotId="co_9QANcYlAxs84cIcMxMAkZ"
         className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
         components={{
           Empty: AiChatPlaceholder,
