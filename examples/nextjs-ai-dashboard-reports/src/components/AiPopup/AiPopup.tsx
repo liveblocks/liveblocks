@@ -48,12 +48,11 @@ function Chat({ chatId }: { chatId: string }) {
   // Knowledge about the current user's plan
   const { data: plan } = useSWR("/api/plan");
 
-  // copilotId="co_wFdUQ9c0kxhQ0BAlkct0B"
   return (
     <div className="absolute inset-0 flex flex-col">
       <RegisterAiKnowledge
         description="The current date and time for the user's timezone"
-        value={new Date().toLocaleString()}
+        value={new Date().toString()}
       />
       <RegisterAiKnowledge
         description="The page the user is currently on"
@@ -80,14 +79,13 @@ function Chat({ chatId }: { chatId: string }) {
       <QueryInvoiceTool />
       <NavigateToPageTool />
       <TransactionToolAi />
-      {/* <SendInvoiceRemindersTool /> */}
+      <SendInvoiceRemindersTool />
       <MemberToolAi />
-      {/* TODO figure out how to get the onInvite function to work */}
       <InviteMemberTool onInvite={() => {}} />
       <AiChat
         layout="compact"
         chatId={chatId}
-        // copilotId="co_9QANcYlAxs84cIcMxMAkZ"
+        copilotId="co_hw4Yw8JB0ZMgUgw1BB9AI"
         className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
         components={{
           Empty: AiChatPlaceholder,

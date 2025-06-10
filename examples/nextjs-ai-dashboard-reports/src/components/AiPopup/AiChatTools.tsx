@@ -222,33 +222,49 @@ export function SendInvoiceRemindersTool() {
     <RegisterAiTool
       name="send-invoice-reminders"
       tool={defineAiTool()({
-        description:
-          "Send invoice reminders for unpaid invoices. Provide a list of companies, each with a list of invoice IDs, If a company has multiple invoices, merge them into one object.",
+        description: "Send invoice reminders for unpaid invoices.",
         parameters: {
           type: "object",
-          properties: {
-            companies: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  invoice_ids: { type: "array", items: { type: "string" } },
-                },
-                required: ["name", "invoice_ids"],
-              },
-            },
-          },
           additionalProperties: false,
-          required: ["companies"],
+          required: [],
         },
 
-        render: function Render({ args, stage }) {
-          const allInvoiceIds = args?.companies
-            ? args.companies.flatMap((c: any) => c.invoice_ids)
-            : [];
-          const { data, isLoading, error } = useInvoicesByIds(allInvoiceIds);
-          if (!args) return null;
+        render: function Render({ stage }) {
+          const {
+            data: unpaidInvoices,
+            isLoading: isLoadingUnpaid,
+            error: errorUnpaid,
+          } = useSWR(
+            "unpaid-invoices",
+            async () => {
+              const response = await fetchInvoices({
+                invoiceStatus: "unpaid",
+              });
+              return response.invoices;
+            },
+            {
+              refreshInterval: 20000,
+            }
+          );
+
+          // Group invoices by company, attaching full invoice objects
+          const clients =
+            unpaidInvoices?.reduce((acc: any[], invoice) => {
+              const existingCompany = acc.find(
+                (c) => c.name === invoice.client
+              );
+              if (existingCompany) {
+                existingCompany.invoices.push(invoice);
+              } else {
+                acc.push({
+                  name: invoice.client,
+                  invoices: [invoice],
+                });
+              }
+              return acc;
+            }, []) || [];
+
+          if (!clients) return null;
 
           return (
             <AiTool
@@ -281,70 +297,55 @@ export function SendInvoiceRemindersTool() {
                   };
                 }}
               >
-                {isLoading && (
+                {isLoadingUnpaid && (
                   <div className="text-xs text-gray-500">
                     Loading invoice details...
                   </div>
                 )}
-                {error && (
+                {errorUnpaid && (
                   <div className="text-xs text-red-500 font-semibold">
                     Error
                   </div>
                 )}
-                {!isLoading && !error && (
+                {!isLoadingUnpaid && !errorUnpaid && (
                   <ul className="flex flex-col gap-2">
-                    {args.companies.map((company) => (
-                      <li key={company.name + company.invoice_ids.join(",")}>
+                    {clients.map((client) => (
+                      <li
+                        key={
+                          client.name +
+                          client.invoices
+                            .map((inv: any) => inv.invoice_id)
+                            .join(",")
+                        }
+                      >
                         <details className="group">
                           <summary className="cursor-pointer flex items-center justify-between select-none">
                             <div className="flex items-baseline gap-1.5">
                               <span className="font-semibold">
-                                {company.name}
+                                {client.name}
                               </span>
 
                               <span className="text-xs font-normal text-gray-500">
-                                {company.invoice_ids.length} unpaid
+                                {client.invoices.length} unpaid
                               </span>
                             </div>
                             <ChevronDownIcon className="size-4 opacity-70 group-open:rotate-180 transition-transform mt-0.5" />
                           </summary>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {isLoading &&
-                              company.invoice_ids.map((id: string) => (
-                                <div key={id} className="mb-2 animate-pulse">
-                                  <div className="h-4 bg-gray-200 rounded w-40 mb-1" />
-                                  <div className="h-3 bg-gray-200 rounded w-24 mb-1" />
-                                  <div className="h-3 bg-gray-200 rounded w-28" />
+                          <ul className="text-xs text-gray-500 mt-1">
+                            {client.invoices.map((invoice: any) => (
+                              <li
+                                key={invoice.invoice_id}
+                                className="mb-2 mt-1.5 ml-3.5 list-disc"
+                              >
+                                <div>
+                                  {formatters.currency({
+                                    number: invoice.amount,
+                                  })}
+                                  , due <Timestamp date={invoice.due_date} />
                                 </div>
-                              ))}
-                            {error && (
-                              <div className="text-xs text-red-500 font-semibold">
-                                Error
-                              </div>
-                            )}
-                            {!isLoading &&
-                              !error &&
-                              company.invoice_ids.map((id: string) => {
-                                const invoice = data?.invoices?.[id];
-                                if (!invoice)
-                                  return (
-                                    <div key={id} className="text-red-500">
-                                      Invoice not found: {id}
-                                    </div>
-                                  );
-                                return (
-                                  <div key={id} className="mb-2">
-                                    <div>
-                                      {formatters.currency({
-                                        number: invoice.amount,
-                                      })}
-                                      , due{" "}
-                                      <Timestamp date={invoice.due_date} />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                          </div>
+                              </li>
+                            ))}
+                          </ul>
                         </details>
                       </li>
                     ))}
