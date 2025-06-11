@@ -644,11 +644,11 @@ function Chat() {
 }
 ```
 
-##### Pass in the current context [#RegisterAiKnowledge-context]
+##### Pass in assorted context [#RegisterAiKnowledge-context]
 
-Passing the AI context about the current datetime, the page the user’s visiting,
-and navigable pages on your website, is a very effective method for improving
-the usefulness of your chat.
+Passing the AI context about the current datetime, the user’s language, the page
+the user’s visiting, and navigable pages on your website, is an effective method
+for improving your chat’s replies.
 
 ```tsx
 import { RegisterAiKnowledge } from "@liveblocks/react-ui";
@@ -660,6 +660,10 @@ function Chat() {
       <RegisterAiKnowledge
         description="The current date and time"
         value={new Date()}
+      />
+      <RegisterAiKnowledge
+        description="The user's preferred language"
+        value={navigator.language}
       />
       <RegisterAiKnowledge
         description="The current URL"
@@ -675,8 +679,8 @@ function Chat() {
 }
 ```
 
-When building your app, it’s worth considering what context you can pass in to
-your AI chat.
+When building your app, it’s worth considering which app-specific context will
+be helpful, for example the user’s payment plan, or a list of their projects.
 
 ##### Pass in user data from your auth provider [#RegisterAiKnowledge-user]
 
