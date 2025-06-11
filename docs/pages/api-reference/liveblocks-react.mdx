@@ -1276,17 +1276,44 @@ initial load failed.
 
 ### useAiChat
 
-Returns information about an AI chat, for example it’s title and metadata.
+Returns information about an AI chat, for example it’s title. Titles are
+automatically generated from the content of the first user message in a chat,
+and the AI’s response.
 
 ```tsx
 import { useAiChat } from "@liveblocks/react/suspense";
 
-const { title, metadata, error, isLoading } = useAiChat("my-chat-id");
+const { chat, error, isLoading } = useAiChat("my-chat-id");
+```
+
+#### Displaying a default title
+
+If `chat.title` is `undefined` after an `isLoading` check, that means the title
+has not been set yet. You can display a default title in this case, and the
+title will be displayed once generated.
+
+```tsx
+import { useAiChat } from "@liveblocks/react/suspense";
+
+function ChatTitle() {
+  const { chat, error, isLoading } = useAiChat("my-chat-id");
+
+  if (isLoading || error) {
+    return null;
+  }
+
+  // +++
+  return <div>{chat.title || "Untitled chat"}</div>;
+  // +++
+}
 ```
 
 ### useDeleteAiChat
 
-Returns a function that deletes an AI chat by its ID.
+Returns a function that deletes an AI chat by its ID. Use in conjunction with
+[`useAiChats`](#useAiChats) to
+[loop through each chat](/docs/api-reference/liveblocks-react#List-the-user's-chats-and-switch-between-them)
+and add a delete button.
 
 ```tsx
 import { useDeleteAiChat } from "@liveblocks/react/suspense";
@@ -1298,6 +1325,9 @@ deleteChat("my-chat-id");
 ### useSendAiMessage
 
 Returns a function that sends a message to an AI chat, indentified by its ID.
+Useful for
+[creating suggestions in empty inside chats](/docs/api-reference/liveblocks-react-ui#AiChat-placeholder)
+and sending messages on behalf of the user.
 
 ```tsx
 import { useSendAiMessage } from "@liveblocks/react";
