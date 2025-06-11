@@ -183,7 +183,6 @@ export default function Page() {
                           for (const title of titles) {
                             addTodo(title);
                           }
-                          return { data: { ok: true } };
                         },
                       }),
 
@@ -202,7 +201,8 @@ export default function Page() {
                         },
                         execute: ({ id }) => {
                           toggleTodo(id);
-                          return { data: { ok: true } };
+                          // If there is nothing to return, just return nothing
+                          // result in render will then become `{ type: 'success', data: {} }`
                         },
                         render: () => (
                           <AiTool>
@@ -211,10 +211,7 @@ export default function Page() {
                         ),
                       }),
 
-                      deleteTodos: defineAiTool<
-                        | { ok: true; deletedTitles: string[] }
-                        | { ok: false; reason: string; hint: string }
-                      >()({
+                      deleteTodos: defineAiTool<{ deletedTitles: string[] }>()({
                         description: "Deletes one or more todo items by ID",
                         parameters: {
                           type: "object",
@@ -229,50 +226,93 @@ export default function Page() {
                           additionalProperties: false,
                         },
 
-                        render: ({ stage, result, types }) => (
-                          <AiTool>
-                            <AiTool.Confirmation
-                              types={types}
-                              variant="destructive"
-                              confirm={({ ids }) => {
-                                const deletedTitles = todos
-                                  .filter((t) => ids.includes(t.id))
-                                  .map((todo) => todo.title);
+                        execute: () => {
+                          return {
+                            // type: 'success',   // Would be implicit
+                            data: { deletedTitles: [] },
+                          };
+                        },
 
-                                deleteTodos(ids);
-                                return { data: { ok: true, deletedTitles } };
-                              }}
-                              cancel={() => {
-                                return {
-                                  data: {
-                                    ok: false,
-                                    reason: "deny",
-                                    hint: "Do not respond with further text",
-                                  },
-                                };
-                              }}
-                            >
-                              Okay to delete?
-                            </AiTool.Confirmation>
+                        // followUp: true,
+                        render: ({ stage, result, types }) => {
+                          //
+                          // Result would have:
+                          // type: "success" | "error" | "cancelled"
+                          // data: T         (if type === "success")
+                          // message: string (if type === "error")
+                          // -               (if type === "cancelled")
+                          //
+                          // Benefits:
+                          // - We can catch errors in execute()!
+                          // - Users can still *return* an error too
+                          // - Users can return a "cancelled"
+                          // - Because it's first class, we can customize the UI of AiTool (❌, ✅, 😐)
+                          // - Users will no longer have to manually add ok/not-ok states to their
+                          //   results manually if they want to programmatically distinguish
+                          //
+                          // Downsides:
+                          // - `result` → `result.data` in all existing cases
+                          // - Chris needs to maybe re-record videos :(
+                          //
+                          if (result.type === "success") {
+                            // result.message :: undefined
+                            // result.data :: { deletedTitles: string[] }
+                          } else if (result.type === "error") {
+                            // result.message :: string
+                            // result.data :: undefined
+                          } else if (result.type === "cancelled") {
+                            // result.message :: undefined
+                            // result.data :: undefined
+                          } else {
+                            // Never happens
+                          }
 
-                            {stage === "executed" ? (
-                              result.ok ? (
-                                <div>
-                                  Deleted:
-                                  <ul>
-                                    {result.deletedTitles.map(
-                                      (title, i: number) => (
-                                        <li key={i}>{title}</li>
-                                      )
-                                    )}
-                                  </ul>
-                                </div>
-                              ) : (
-                                <div>The request was denied</div>
-                              )
-                            ) : null}
-                          </AiTool>
-                        ),
+                          return (
+                            <AiTool>
+                              <AiTool.Confirmation
+                                types={types}
+                                variant="destructive"
+                                confirm={({ ids }) => {
+                                  const deletedTitles = todos
+                                    .filter((t) => ids.includes(t.id))
+                                    .map((todo) => todo.title);
+
+                                  deleteTodos(ids);
+                                  return {
+                                    type: "success", // implicit default
+                                    data: { deletedTitles },
+                                    description: "Please don't try again", // optional
+                                  };
+                                }}
+                                cancel={() => {
+                                  return {
+                                    type: "cancelled",
+                                    // No extra fields on cancelled result
+                                  };
+                                }}
+                              >
+                                Okay to delete?
+                              </AiTool.Confirmation>
+
+                              {stage === "executed" ? (
+                                result.type === "success" ? (
+                                  <div>
+                                    Deleted:
+                                    <ul>
+                                      {result.data.deletedTitles.map(
+                                        (title, i: number) => (
+                                          <li key={i}>{title}</li>
+                                        )
+                                      )}
+                                    </ul>
+                                  </div>
+                                ) : (
+                                  <div>The request was denied</div>
+                                )
+                              ) : null}
+                            </AiTool>
+                          );
+                        },
                       }),
                     }}
                     className="rounded-xl"
