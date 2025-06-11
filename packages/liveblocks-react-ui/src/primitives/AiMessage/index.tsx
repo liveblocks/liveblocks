@@ -1,8 +1,8 @@
 import type {
+  AiChatMessage,
   AiToolInvocationPart,
   AiToolInvocationProps,
   JsonObject,
-  MessageId,
   ToolResultData,
   ToolResultResponse,
 } from "@liveblocks/core";
@@ -22,6 +22,7 @@ import type {
 } from "./types";
 
 const AI_MESSAGE_CONTENT_NAME = "AiMessageContent";
+const AI_MESSAGE_TOOL_INVOCATION_NAME = "AiMessageToolInvocation";
 
 const defaultMessageContentComponents: AiMessageContentComponents = {
   TextPart: ({ part }) => {
@@ -30,7 +31,13 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
   },
-  ToolInvocationPart: ({ children }) => children,
+  ToolInvocationPart: ({ part, message }) => {
+    return (
+      <ErrorBoundary fallback={null}>
+        <AiMessageToolInvocation part={part} message={message} />
+      </ErrorBoundary>
+    );
+  },
 };
 
 /* -------------------------------------------------------------------------------------------------
@@ -46,18 +53,19 @@ function StableRenderFn(props: {
   return props.renderFn(props.props);
 }
 
-function ToolInvocation({
-  chatId,
-  messageId,
+/**
+ * @internal
+ */
+function AiMessageToolInvocation({
+  message,
   part,
 }: {
-  chatId: string;
-  messageId: MessageId;
+  message: AiChatMessage;
   part: AiToolInvocationPart;
 }) {
   const client = useClient();
   const ai = client[kInternal].ai;
-  const tool = useSignal(ai.signals.getToolΣ(part.name, chatId));
+  const tool = useSignal(ai.signals.getToolΣ(part.name, message.chatId));
 
   const respond = useCallback(
     (result: ToolResultResponse<ToolResultData>) => {
@@ -71,15 +79,15 @@ function ToolInvocation({
         );
       } else {
         ai.setToolResult(
-          chatId,
-          messageId,
+          message.chatId,
+          message.id,
           part.invocationId,
           result.data
           // TODO Pass in AiGenerationOptions here?
         );
       }
     },
-    [ai, chatId, messageId, part.stage, part.name, part.invocationId]
+    [ai, message.chatId, message.id, part.stage, part.name, part.invocationId]
   );
 
   const props = useMemo(() => {
@@ -96,25 +104,16 @@ function ToolInvocation({
 
   if (tool?.render === undefined) return null;
   return (
-    <ErrorBoundary
-      fallback={
-        <p style={{ color: "red" }}>
-          Failed to render tool call result for ‘{part.name}’. See console for
-          details.
-        </p>
-      }
-    >
-      <AiToolInvocationContext.Provider value={props}>
-        <StableRenderFn
-          renderFn={
-            tool.render as FunctionComponent<
-              AiToolInvocationProps<JsonObject, ToolResultData>
-            >
-          }
-          props={props}
-        />
-      </AiToolInvocationContext.Provider>
-    </ErrorBoundary>
+    <AiToolInvocationContext.Provider value={props}>
+      <StableRenderFn
+        renderFn={
+          tool.render as FunctionComponent<
+            AiToolInvocationProps<JsonObject, ToolResultData>
+          >
+        }
+        props={props}
+      />
+    </AiToolInvocationContext.Provider>
   );
 }
 
@@ -155,17 +154,13 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
             case "tool-invocation":
-              // TODO: If the render() method doesn't exist, we should not render the ToolInvocationPart
-              //       or pass it no children so that it can decide to not render?
               return (
-                <ToolInvocationPart key={index} part={part} {...extra}>
-                  <ToolInvocation
-                    key={index}
-                    part={part}
-                    chatId={message.chatId}
-                    messageId={message.id}
-                  />
-                </ToolInvocationPart>
+                <ToolInvocationPart
+                  key={index}
+                  part={part}
+                  {...extra}
+                  message={message}
+                />
               );
             default:
               return null;
@@ -178,7 +173,11 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
 
 if (process.env.NODE_ENV !== "production") {
   AiMessageContent.displayName = AI_MESSAGE_CONTENT_NAME;
+  AiMessageToolInvocation.displayName = AI_MESSAGE_TOOL_INVOCATION_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as AiMessage.*
-export { AiMessageContent as Content };
+export {
+  AiMessageContent as Content,
+  AiMessageToolInvocation as ToolInvocation,
+};
