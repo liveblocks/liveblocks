@@ -28,7 +28,6 @@ export function ChatListing({
             className="group relative flex items-center justify-between p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
           >
             <div className="flex flex-col gap-0.5">
-              {/* TODO hover, full width, chat icon at left, etc */}
               <button
                 onClick={() => onSelectChat(chat.id)}
                 className="text-left font-medium before:absolute before:inset-0 truncate"

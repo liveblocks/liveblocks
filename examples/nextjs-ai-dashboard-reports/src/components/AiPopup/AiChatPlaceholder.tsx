@@ -7,18 +7,18 @@ const SUGGESTIONS = [
     prompt: "Send invoice reminders to all companies with overdue invoices",
   },
   {
-    text: "Which merchants bought this month?",
-    prompt: "List all merchants from this month",
+    text: "Which merchants bought last year?",
+    prompt: "List all merchants from the previous year",
   },
   {
     text: "How many seats do I have?",
     prompt: "How many seats do I have?",
   },
   { text: "Take me to billing", prompt: "Navigate to the billing page" },
-  // {
-  //   text: "Invite a member",
-  //   prompt: "Invite a member to the team",
-  // },
+  {
+    text: "Invite a member",
+    prompt: "Invite a member to the team",
+  },
 ];
 
 export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {

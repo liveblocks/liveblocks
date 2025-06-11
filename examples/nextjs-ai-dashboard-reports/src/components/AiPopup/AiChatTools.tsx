@@ -23,7 +23,6 @@ import { formatters } from "@/lib/utils";
 import useSWR from "swr";
 import { fetchTransactions } from "@/lib/transactionsApi";
 import { fetchInvoices } from "@/lib/invoicesApi";
-import type { InvoiceQueryParams } from "@/lib/invoicesApi";
 
 export function QueryTransactionTool() {
   return (
@@ -70,6 +69,7 @@ export function QueryTransactionTool() {
           ],
         },
         execute: async (args) => {
+          // OpenAI forces `required` therefore we're using `null` instead, then removing it here
           const { transactions } = await fetchTransactions(
             Object.fromEntries(
               Object.entries(args).map(([key, value]) => [
@@ -77,16 +77,6 @@ export function QueryTransactionTool() {
                 value === null ? undefined : value,
               ])
             )
-          );
-          console.log(
-            args,
-            Object.fromEntries(
-              Object.entries(args).map(([key, value]) => [
-                key,
-                value === null ? undefined : value,
-              ])
-            ),
-            transactions
           );
           return {
             data: {
@@ -133,6 +123,7 @@ export function QueryInvoiceTool() {
           ],
         },
         execute: async (args) => {
+          // OpenAI forces `required` therefore we're using `null` instead, then removing it here
           const { invoices } = await fetchInvoices(
             Object.fromEntries(
               Object.entries(args).map(([key, value]) => [
@@ -141,7 +132,6 @@ export function QueryInvoiceTool() {
               ])
             )
           );
-          console.log(args, invoices);
           return {
             data: {
               invoices,
