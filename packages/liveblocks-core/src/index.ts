@@ -17,6 +17,17 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  */
 
 export type {
+  AiOpaqueToolDefinition,
+  AiOpaqueToolInvocationProps,
+  AiToolDefinition,
+  AiToolExecuteCallback,
+  AiToolExecuteContext,
+  AiToolInvocationProps,
+  AiToolTypePack,
+  WithNavigation,
+} from "./ai";
+export { defineAiTool } from "./ai";
+export type {
   Client,
   ClientOptions,
   EnterOptions,
@@ -309,8 +320,25 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
+export type {
+  AiAssistantContentPart,
+  AiAssistantMessage,
+  AiChat,
+  AiChatMessage,
+  AiKnowledgeSource,
+  AiReasoningPart,
+  AiTextPart,
+  AiToolInvocationPart,
+  AiUserMessage,
+  CopilotId,
+  Cursor,
+  MessageId,
+  ToolResultData,
+  ToolResultResponse,
+} from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
+export type { InferFromSchema } from "./types/InferFromSchema";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,

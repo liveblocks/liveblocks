@@ -1,3 +1,4 @@
+import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
@@ -170,6 +171,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
+  ai: Ai;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -558,6 +560,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const httpClient = createApiClient({
     baseUrl,
     fetchPolyfill,
+    currentUserId,
     authManager,
   });
 
@@ -567,6 +570,23 @@ export function createClient<U extends BaseUserMeta = DU>(
   };
 
   const roomsById = new Map<string, RoomDetails>();
+
+  const ai = createAi({
+    userId: currentUserId.get(),
+    lostConnectionTimeout,
+    backgroundKeepAliveTimeout: getBackgroundKeepAliveTimeout(
+      clientOptions.backgroundKeepAliveTimeout
+    ),
+    polyfills: clientOptions.polyfills,
+    delegates: {
+      createSocket: makeCreateSocketDelegateForAi(
+        baseUrl,
+        clientOptions.polyfills?.WebSocket
+      ),
+      authenticate: makeAuthDelegateForRoom("default", authManager),
+      canZombie: () => true,
+    },
+  });
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -902,6 +922,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       [kInternal]: {
         currentUserId,
         mentionSuggestionsCache,
+        ai,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,

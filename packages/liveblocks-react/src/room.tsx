@@ -61,7 +61,13 @@ import {
 } from "react";
 
 import { config } from "./config";
-import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
+import {
+  RoomContext,
+  useClient,
+  useClientOrNull,
+  useIsInsideRoom,
+  useRoomOrNull,
+} from "./contexts";
 import { ensureNotServerSide } from "./lib/ssr";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -70,8 +76,6 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
-  useClient,
-  useClientOrNull,
 } from "./liveblocks";
 import type {
   AttachmentUrlAsyncResult,
@@ -2530,18 +2534,13 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   } as const;
 }
 
-const NO_PERMISSIONS = new Set();
-
 /**
  * @private For internal use only. Do not rely on this hook.
  */
 function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-  return useSignal(
-    store.permissionHints.signal,
-    (hints) => hints.get(roomId) ?? NO_PERMISSIONS
-  );
+  return useSignal(store.permissionHints.getPermissionForRoomΣ(roomId));
 }
 
 /**
@@ -3126,7 +3125,6 @@ const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
-  RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
   useAddRoomCommentReaction,

@@ -212,6 +212,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       err.context.code
     );
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
@@ -254,6 +255,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
       err.context.code
     );
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"

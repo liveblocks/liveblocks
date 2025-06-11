@@ -54,7 +54,7 @@ import { withHistory } from "slate-history";
 import type {
   RenderElementProps,
   RenderElementSpecificProps,
-  RenderLeafProps,
+  RenderLeafSpecificProps,
   RenderPlaceholderProps,
 } from "slate-react";
 import {
@@ -67,27 +67,7 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUiConfig } from "../../config";
-import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
-import { withAutoLinks } from "../../slate/plugins/auto-links";
-import { withCustomLinks } from "../../slate/plugins/custom-links";
-import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
-import type { MentionDraft } from "../../slate/plugins/mentions";
-import {
-  getMentionDraftAtSelection,
-  insertMention,
-  insertMentionCharacter,
-  MENTION_CHARACTER,
-  withMentions,
-} from "../../slate/plugins/mentions";
-import { withNormalize } from "../../slate/plugins/normalize";
-import { withPaste } from "../../slate/plugins/paste";
-import { getDOMRange } from "../../slate/utils/get-dom-range";
-import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
-import {
-  getMarks,
-  leaveMarkEdge,
-  toggleMark as toggleEditorMark,
-} from "../../slate/utils/marks";
+import { MENTION_CHARACTER } from "../../constants";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -95,6 +75,7 @@ import type {
   ComposerBodyMark,
   ComposerBodyMarks,
   ComposerBodyMention,
+  ComposerBodyText,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
@@ -105,6 +86,15 @@ import { useInitial } from "../../utils/use-initial";
 import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
+import { withEmptyClearFormatting } from "../slate/plugins/empty-clear-formatting";
+import { withNormalize } from "../slate/plugins/normalize";
+import { getDOMRange } from "../slate/utils/get-dom-range";
+import { isEmpty as isEditorEmpty } from "../slate/utils/is-empty";
+import {
+  getComposerBodyMarks,
+  leaveMarkEdge,
+  toggleMark as toggleEditorMark,
+} from "../slate/utils/marks";
 import {
   ComposerAttachmentsContext,
   ComposerContext,
@@ -117,6 +107,17 @@ import {
   useComposerFloatingToolbarContext,
   useComposerSuggestionsContext,
 } from "./contexts";
+import { withAutoFormatting } from "./slate/plugins/auto-formatting";
+import { withAutoLinks } from "./slate/plugins/auto-links";
+import { withCustomLinks } from "./slate/plugins/custom-links";
+import type { MentionDraft } from "./slate/plugins/mentions";
+import {
+  getMentionDraftAtSelection,
+  insertMention,
+  insertMentionCharacter,
+  withMentions,
+} from "./slate/plugins/mentions";
+import { withPaste } from "./slate/plugins/paste";
 import type {
   ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
@@ -563,7 +564,11 @@ function ComposerEditorElement({
 }
 
 // <code><s><em><strong>text</strong></s></em></code>
-function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
+function ComposerEditorLeaf({
+  attributes,
+  children,
+  leaf,
+}: RenderLeafSpecificProps<ComposerBodyText>) {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
   }
@@ -1287,7 +1292,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
-    const [marks, setMarks] = useState<ComposerBodyMarks>(getMarks);
+    const [marks, setMarks] = useState<ComposerBodyMarks>(getComposerBodyMarks);
 
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
@@ -1539,7 +1544,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     useObservable(onEditorChange, () => {
-      setMarks(getMarks(editor));
+      setMarks(getComposerBodyMarks(editor));
     });
 
     return (

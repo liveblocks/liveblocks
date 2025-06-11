@@ -6,11 +6,13 @@ import type {
   CommentData,
   CommentReaction,
   CommentUserReaction,
+  Cursor,
   DistributiveOmit,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
   ISignal,
+  MessageId,
   NotificationSettings,
   OpaqueClient,
   PartialNotificationSettings,
@@ -53,6 +55,9 @@ import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  AiChatAsyncResult,
+  AiChatMessagesAsyncResult,
+  AiChatsAsyncResult,
   HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   NotificationSettingsAsyncResult,
@@ -579,8 +584,6 @@ type RoomSubscriptionSettingsByRoomId = Record<
 
 type SubscriptionsByKey = Record<SubscriptionKey, SubscriptionData>;
 
-type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
-
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
   CleanThreads<M> &
@@ -828,25 +831,30 @@ function createStore_forHistoryVersions() {
 }
 
 function createStore_forPermissionHints() {
-  const signal = new MutableSignal<PermissionHintsLUT>(
-    new DefaultMap(() => new Set())
+  const permissionsByRoomId = new DefaultMap(
+    () => new Signal<Set<Permission>>(new Set())
   );
 
   function update(newHints: Record<string, Permission[]>) {
-    signal.mutate((lut) => {
-      for (const [roomId, newPermissions] of Object.entries(newHints)) {
+    batch(() => {
+      for (const [roomId, permissions] of Object.entries(newHints)) {
+        const signal = permissionsByRoomId.getOrCreate(roomId);
         // Get the existing set of permissions for the room and only ever add permission to this set
-        const existing = lut.getOrCreate(roomId);
-        // Add the new permissions to the set of existing permissions
-        for (const permission of newPermissions) {
-          existing.add(permission);
+        const existingPermissions = new Set(signal.get());
+        for (const permission of permissions) {
+          existingPermissions.add(permission);
         }
+        signal.set(existingPermissions);
       }
     });
   }
 
+  function getPermissionForRoomΣ(roomId: string): ISignal<Set<Permission>> {
+    return permissionsByRoomId.getOrCreate(roomId);
+  }
+
   return {
-    signal: signal.asReadonly(),
+    getPermissionForRoomΣ,
 
     // Mutations
     update,
@@ -1007,6 +1015,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<HistoryVersionsAsyncResult>
     >;
     readonly notificationSettings: LoadableResource<NotificationSettingsAsyncResult>;
+    readonly aiChats: LoadableResource<AiChatsAsyncResult>;
+    readonly messagesByChatId: DefaultMap<
+      string,
+      DefaultMap<MessageId | null, LoadableResource<AiChatMessagesAsyncResult>>
+    >;
+    readonly aiChatById: DefaultMap<
+      string,
+      LoadableResource<AiChatAsyncResult>
+    >;
   };
 
   // Notifications
@@ -1024,6 +1041,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Notification Settings
   #notificationSettings: SinglePageResource;
+
+  // Copilot chats
+  #aiChats: PaginatedResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -1063,6 +1083,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.#notificationSettings = new SinglePageResource(
       notificationSettingsFetcher
     );
+
+    this.#aiChats = new PaginatedResource(async (cursor?: string) => {
+      const result = await this.#client[kInternal].ai.getChats({
+        cursor: cursor as Cursor,
+      });
+      return result.nextCursor;
+    });
 
     this.threads = new ThreadDB();
 
@@ -1336,6 +1363,81 @@ export class UmbrellaStore<M extends BaseMetadata> {
         waitUntilLoaded: this.#notificationSettings.waitUntilLoaded,
       };
 
+    const aiChats: LoadableResource<AiChatsAsyncResult> = {
+      signal: DerivedSignal.from((): AiChatsAsyncResult => {
+        const result = this.#aiChats.get();
+        if (result.isLoading || result.error) {
+          return result;
+        }
+
+        return {
+          isLoading: false,
+          chats: this.#client[kInternal].ai.signals.chatsΣ.get(),
+          hasFetchedAll: result.data.hasFetchedAll,
+          isFetchingMore: result.data.isFetchingMore,
+          fetchMore: result.data.fetchMore,
+          fetchMoreError: result.data.fetchMoreError,
+        };
+      }, shallow),
+      waitUntilLoaded: this.#aiChats.waitUntilLoaded,
+    };
+
+    const messagesByChatId = new DefaultMap((chatId: string) => {
+      const resourceΣ = new SinglePageResource(async () => {
+        await this.#client[kInternal].ai.getMessageTree(chatId);
+      });
+
+      return new DefaultMap(
+        (
+          branch: MessageId | null
+        ): LoadableResource<AiChatMessagesAsyncResult> => {
+          const signal = DerivedSignal.from((): AiChatMessagesAsyncResult => {
+            const result = resourceΣ.get();
+            if (result.isLoading || result.error) {
+              return result;
+            }
+
+            return ASYNC_OK(
+              "messages",
+              this.#client[kInternal].ai.signals
+                .getChatMessagesForBranchΣ(chatId, branch ?? undefined)
+                .get()
+            );
+          });
+
+          return { signal, waitUntilLoaded: resourceΣ.waitUntilLoaded };
+        }
+      );
+    });
+
+    const aiChatById = new DefaultMap((chatId: string) => {
+      const resource = new SinglePageResource(async () => {
+        await this.#client[kInternal].ai.getOrCreateChat(chatId);
+      });
+
+      const signal = DerivedSignal.from(() => {
+        const chat = this.#client[kInternal].ai.getChatById(chatId);
+        if (chat === undefined) {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          } else {
+            return ASYNC_OK(
+              "chat",
+              nn(this.#client[kInternal].ai.getChatById(chatId))
+            );
+          }
+        } else {
+          return ASYNC_OK(
+            "chat",
+            nn(this.#client[kInternal].ai.getChatById(chatId))
+          );
+        }
+      }, shallow);
+
+      return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+    });
+
     this.outputs = {
       threadifications,
       threads,
@@ -1347,9 +1449,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versionsByRoomId,
       notificationSettings,
       threadSubscriptions,
+      aiChats,
+      messagesByChatId,
+      aiChatById,
     };
 
-    // Auto-bind all of this class’ methods here, so we can use stable
+    // Auto-bind all of this class' methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     autobind(this);
   }

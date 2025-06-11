@@ -358,6 +358,7 @@ ctx.useOthersListener(({ user, type }) => {
       err.context.code
     );
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
@@ -397,6 +398,7 @@ ctx.useOthersListener(({ user, type }) => {
       err.context.code
     );
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"
@@ -436,6 +438,7 @@ ctx.useOthersListener(({ user, type }) => {
       err.context.code
     );
     expectAssignable<
+      | "AI_CONNECTION_ERROR"
       | "ROOM_CONNECTION_ERROR"
       | "CREATE_THREAD_ERROR"
       | "DELETE_THREAD_ERROR"

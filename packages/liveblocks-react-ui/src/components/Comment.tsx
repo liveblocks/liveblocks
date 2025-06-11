@@ -41,6 +41,7 @@ import {
   type GlobalComponents,
   useComponents,
 } from "../components";
+import { MENTION_CHARACTER } from "../constants";
 import { CheckIcon } from "../icons/Check";
 import { CrossIcon } from "../icons/Cross";
 import { DeleteIcon } from "../icons/Delete";
@@ -64,12 +65,11 @@ import type {
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { CommentAttachmentArgs } from "../types";
 import { classNames } from "../utils/class-names";
 import { download } from "../utils/download";
 import { useRefs } from "../utils/use-refs";
-import { useVisibleCallback } from "../utils/use-visible";
+import { useIntersectionCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
 import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
@@ -521,10 +521,12 @@ function AutoMarkReadThreadIdHandler({
   const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
   const isWindowFocused = useWindowFocus();
 
-  useVisibleCallback(
+  useIntersectionCallback(
     commentRef,
-    () => {
-      markThreadAsRead(threadId);
+    (isIntersecting) => {
+      if (isIntersecting) {
+        markThreadAsRead(threadId);
+      }
     },
     {
       // The underlying IntersectionObserver is only enabled when the window is focused

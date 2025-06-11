@@ -38,7 +38,7 @@ import {
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
-import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
+import { FLOATING_ELEMENT_SIDE_OFFSET, MENTION_CHARACTER } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
 import { CodeIcon } from "../icons/Code";
@@ -66,7 +66,6 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
-import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -683,12 +682,9 @@ export const Composer = forwardRef(
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);
     const [isCollapsed, onCollapsedChange] = useControllableState(
-      // If the composer is neither controlled nor uncontrolled, it defaults to controlled as uncollapsed.
-      controlledCollapsed === undefined && defaultCollapsed === undefined
-        ? false
-        : controlledCollapsed,
-      controlledOnCollapsedChange,
-      defaultCollapsed
+      defaultCollapsed ?? false,
+      controlledCollapsed,
+      controlledOnCollapsedChange
     );
 
     const canCommentFallback = useSyncExternalStore(

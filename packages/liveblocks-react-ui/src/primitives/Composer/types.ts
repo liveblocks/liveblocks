@@ -16,7 +16,6 @@ import type {
   RenderElementSpecificProps,
 } from "slate-react";
 
-import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
   ComposerBodyAutoLink,
@@ -25,6 +24,7 @@ import type {
   ComposerBodyMention,
   Direction,
 } from "../../types";
+import type { MentionDraft } from "./slate/plugins/mentions";
 
 export interface ComposerEditorMentionProps {
   /**
@@ -109,7 +109,7 @@ export interface ComposerEditorComponents {
 }
 
 export interface ComposerEditorProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue"> {
+  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
   /**
    * The reading direction of the editor and related elements.
    */

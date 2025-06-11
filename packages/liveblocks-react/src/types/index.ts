@@ -14,6 +14,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AiChat,
+  AiChatMessage,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -38,8 +40,18 @@ import type {
   SyncStatus,
   ThreadData,
   ToImmutable,
+  WithNavigation,
 } from "@liveblocks/core";
-import type { Context, PropsWithChildren, ReactNode } from "react";
+import type {
+  ComponentType,
+  Context,
+  PropsWithChildren,
+  ReactNode,
+} from "react";
+
+import type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./ai";
+
+type UiChatMessage = WithNavigation<AiChatMessage>;
 
 export type UseSyncStatusOptions = {
   /**
@@ -49,6 +61,13 @@ export type UseSyncStatusOptions = {
    * build a "Saving changes..." style UI, prefer setting `smooth: true`.
    */
   smooth?: boolean;
+};
+
+export type SendAiMessageOptions = {
+  /**
+   * The id of the copilot to use to send the message.
+   */
+  copilotId?: string;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
@@ -172,6 +191,15 @@ export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
+
+export type AiChatsAsyncSuccess = PagedAsyncSuccess<AiChat[], "chats">; // prettier-ignore
+export type AiChatsAsyncResult = PagedAsyncResult<AiChat[], "chats">; // prettier-ignore
+
+export type AiChatAsyncSuccess = AsyncSuccess<AiChat, "chat">; // prettier-ignore
+export type AiChatAsyncResult = AsyncResult<AiChat, "chat">; // prettier-ignore
+
+export type AiChatMessagesAsyncSuccess = AsyncSuccess<readonly UiChatMessage[], "messages">; // prettier-ignore
+export type AiChatMessagesAsyncResult = AsyncResult<readonly UiChatMessage[], "messages">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -316,6 +344,28 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    /**
+     * Make knowledge about your application state available to any AI used in
+     * a chat or a one-off request.
+     *
+     * For example:
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current mode of my application"
+     *        value="dark" />
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current list of todos"
+     *        value={todos} />
+     *
+     * By mounting this component, the AI will get access to this knwoledge.
+     * By unmounting this component, the AI will no longer have access to it.
+     * It can choose to use or ignore this knowledge in its responses.
+     */
+    RegisterAiKnowledge: ComponentType<RegisterAiKnowledgeProps>;
+
+    RegisterAiTool: ComponentType<RegisterAiToolProps>;
   };
 
   suspense: {
@@ -371,6 +421,28 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    /**
+     * Make knowledge about your application state available to any AI used in
+     * a chat or a one-off request.
+     *
+     * For example:
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current mode of my application"
+     *        value="dark" />
+     *
+     *     <RegisterAiKnowledge
+     *        description="The current list of todos"
+     *        value={todos} />
+     *
+     * By mounting this component, the AI will get access to this knwoledge.
+     * By unmounting this component, the AI will no longer have access to it.
+     * It can choose to use or ignore this knowledge in its responses.
+     */
+    RegisterAiKnowledge: ComponentType<RegisterAiKnowledgeProps>;
+
+    RegisterAiTool: ComponentType<RegisterAiToolProps>;
   };
 };
 
@@ -1165,6 +1237,43 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const syncStatus = useSyncStatus({ smooth: true });
    */
   useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+  /**
+   * Returns a function that creates an AI chat.
+   *
+   * If you do not pass a title for the chat, it will be automatically computed
+   * after the first AI response.
+   *
+   * @example
+   * const createAiChat = useCreateAiChat();
+   * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
+   */
+  useCreateAiChat(): (options: {
+    id: string;
+    title?: string;
+    metadata?: Record<string, string | string[]>;
+  }) => void;
+
+  /**
+   * Returns a function that deletes the AI chat with the specified id.
+   *
+   * @example
+   * const deleteAiChat = useDeleteAiChat();
+   * deleteAiChat("ai-chat-id");
+   */
+  useDeleteAiChat(): (chatId: string) => void;
+
+  /**
+   * Returns a function to send a message in an AI chat.
+   *
+   * @example
+   * const sendMessage = useSendAiMessage(chatId);
+   * sendMessage("Hello, Liveblocks AI!");
+   */
+  useSendAiMessage(
+    chatId: string,
+    options?: SendAiMessageOptions
+  ): (message: string) => void;
 };
 
 export type LiveblocksContextBundle<
@@ -1198,6 +1307,30 @@ export type LiveblocksContextBundle<
       useUserThreads_experimental(
         options?: UseUserThreadsOptions<M>
       ): ThreadsAsyncResult<M>;
+
+      /**
+       * (Private beta)  Returns the chats for the current user.
+       *
+       * @example
+       * const { chats, error, isLoading } = useAiChats();
+       */
+      useAiChats(): AiChatsAsyncResult;
+
+      /**
+       * (Private beta)  Returns the messages in the given chat.
+       *
+       * @example
+       * const { messages, error, isLoading } = useAiChatMessages("my-chat");
+       */
+      useAiChatMessages(chatId: string): AiChatMessagesAsyncResult;
+
+      /**
+       * (Private beta)  Returns the information of the given chat.
+       *
+       * @example
+       * const { chat, error, isLoading } = useAiChat("my-chat");
+       */
+      useAiChat(chatId: string): AiChatAsyncResult;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1238,6 +1371,30 @@ export type LiveblocksContextBundle<
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
             ): ThreadsAsyncSuccess<M>;
+
+            /**
+             * (Private beta)  Returns the chats for the current user.
+             *
+             * @example
+             * const { chats } = useAiChats();
+             */
+            useAiChats(): AiChatsAsyncSuccess;
+
+            /**
+             * (Private beta) Returns the messages in the given chat.
+             *
+             * @example
+             * const { messages } = useAiChatMessages("my-chat");
+             */
+            useAiChatMessages(chatId: string): AiChatMessagesAsyncSuccess;
+
+            /**
+             * (Private beta)  Returns the information of the given chat.
+             *
+             * @example
+             * const { chat, error, isLoading } = useAiChat("my-chat");
+             */
+            useAiChat(chatId: string): AiChatAsyncSuccess;
           }
       >;
     }

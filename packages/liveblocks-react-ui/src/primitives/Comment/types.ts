@@ -42,8 +42,7 @@ export interface CommentBodyComponents {
   Link: ComponentType<CommentBodyLinkProps>;
 }
 
-export interface CommentBodyProps
-  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
+export interface CommentBodyProps extends ComponentPropsWithSlot<"div"> {
   /**
    * The comment body to display.
    * If not defined, the component will render `null`.
