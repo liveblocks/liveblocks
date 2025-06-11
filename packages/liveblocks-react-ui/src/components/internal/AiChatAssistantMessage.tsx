@@ -17,6 +17,7 @@ import {
   useOverrides,
 } from "../../overrides";
 import * as AiMessage from "../../primitives/AiMessage";
+import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
@@ -198,7 +199,7 @@ function ToolInvocationPart({
           ) : null
         }
       >
-        <AiMessage.ToolInvocation part={part} message={message} />
+        <AiMessageToolInvocation part={part} message={message} />
       </ErrorBoundary>
     </div>
   );
