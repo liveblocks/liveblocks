@@ -1,5 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { users } from "@/data/users";
 
 /**
@@ -28,9 +28,9 @@ export async function POST() {
   // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`${user.email}`, {
     userInfo: {
-      id: user.email,
       name: user.name,
       avatar: user.avatar,
+      color: user.color,
     },
   });
 

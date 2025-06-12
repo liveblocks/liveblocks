@@ -188,25 +188,6 @@ export function NavigateToPageTool() {
   );
 }
 
-// Custom hook to fetch invoices by IDs
-function useInvoicesByIds(invoiceIds: string[]) {
-  return useSWR(
-    invoiceIds && invoiceIds.length > 0 ? ["invoices", ...invoiceIds] : null,
-    async () => {
-      const res = await fetch("/api/invoices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceIds }),
-      });
-      if (!res.ok) throw new Error("Failed to fetch invoices");
-      return res.json();
-    },
-    {
-      refreshInterval: 20000,
-    }
-  );
-}
-
 export function SendInvoiceRemindersTool() {
   return (
     <RegisterAiTool

@@ -24,9 +24,7 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFoot,
   TableHead,
   TableHeaderCell,
   TableRoot,
@@ -36,27 +34,6 @@ import { CircleCheck, Plus } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
 import useSWR from "swr";
 import { formatters } from "@/lib/utils";
-
-const data = [
-  {
-    name: "Starter Tier (Start-Up Discount)¹",
-    quantity: 1,
-    unit: "$90",
-    price: "$90",
-  },
-  {
-    name: "Bank & CPA Integration",
-    quantity: 1,
-    unit: "$25",
-    price: "$25",
-  },
-  {
-    name: "Corporate Card (VISA World Elite)",
-    quantity: 2,
-    unit: "$45",
-    price: "$90",
-  },
-];
 
 const states = [
   {

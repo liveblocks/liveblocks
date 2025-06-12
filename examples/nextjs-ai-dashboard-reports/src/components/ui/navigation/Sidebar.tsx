@@ -4,7 +4,6 @@ import { Tooltip } from "@/components/Tooltip";
 import { cx, focusRing } from "@/lib/utils";
 import {
   BarChartBig,
-  Compass,
   FileText,
   PanelRightClose,
   PanelRightOpen,
@@ -43,7 +42,7 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
   const pathname = usePathname();
   const isActive = (itemHref: string) => {
-    if (itemHref === siteConfig.baseLinks.settings.audit) {
+    if (itemHref === siteConfig.baseLinks.settings.billing) {
       return pathname.startsWith("/settings");
     }
     return pathname === itemHref || pathname.startsWith(itemHref);
