@@ -188,7 +188,7 @@ export type RenderableToolResultResponse<
 > = Relax<
   | { type: "success"; data: R }
   | { type: "error"; error: string }
-  | { type: "cancelled" }
+  | { type: "cancelled"; cancelled: true }
 >;
 
 type SetToolResultPair = DefineCmd<
