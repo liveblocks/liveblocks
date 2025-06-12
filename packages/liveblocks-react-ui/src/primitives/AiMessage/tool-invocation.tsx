@@ -13,11 +13,14 @@ import { type FunctionComponent, useCallback, useMemo } from "react";
 
 import { AiToolInvocationContext } from "./contexts";
 
+type OpaqueAiToolInvocationProps = AiToolInvocationProps<
+  JsonObject,
+  ToolResultData
+>;
+
 function StableRenderFn(props: {
-  renderFn: FunctionComponent<
-    AiToolInvocationProps<JsonObject, ToolResultData>
-  >;
-  props: AiToolInvocationProps<JsonObject, ToolResultData>;
+  renderFn: FunctionComponent<OpaqueAiToolInvocationProps>;
+  props: OpaqueAiToolInvocationProps;
 }) {
   return props.renderFn(props.props);
 }
@@ -41,7 +44,7 @@ export function AiMessageToolInvocation({
   const tool = useSignal(ai.signals.getToolΣ(part.name, message.chatId));
 
   const respond = useCallback(
-    (result: ToolResultResponse<ToolResultData>) => {
+    (result: ToolResultResponse) => {
       if (part.stage === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
@@ -79,11 +82,7 @@ export function AiMessageToolInvocation({
   return (
     <AiToolInvocationContext.Provider value={props}>
       <StableRenderFn
-        renderFn={
-          tool.render as FunctionComponent<
-            AiToolInvocationProps<JsonObject, ToolResultData>
-          >
-        }
+        renderFn={tool.render as FunctionComponent<OpaqueAiToolInvocationProps>}
         props={props}
       />
     </AiToolInvocationContext.Provider>
