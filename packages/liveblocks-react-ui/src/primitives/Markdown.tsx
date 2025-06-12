@@ -602,9 +602,16 @@ function MarkdownInlineToken({
     case "link": {
       let href: string | null;
       try {
-        const url = new URL(token.href);
+        const url = new URL(token.href, window.location.href);
         if (url.protocol === "http:" || url.protocol === "https:") {
-          href = url.toString();
+          // If the link is relative to the current origin, we use the pathname, search, and hash to create a relative link.
+          if (url.origin === window.location.origin) {
+            href = url.pathname + url.search + url.hash;
+          }
+          // If the link is absolute, we use the full URL.
+          else {
+            href = url.toString();
+          }
         } else {
           href = null;
         }
