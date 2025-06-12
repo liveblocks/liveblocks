@@ -24,11 +24,15 @@ import { expectAssignable, expectNotAssignable } from "tsd";
   expectNotAssignable<ToolResultResponse>({ data: [1, 2, 3] });
 
   expectNotAssignable<ToolResultResponse>({ error: 123 });
-  expectNotAssignable<ToolResultResponse>({ error: { oops: "oh noes" } });
+  expectNotAssignable<ToolResultResponse>({
+    error: { code: 403, message: "Not authorized" },
+  });
 
   expectNotAssignable<ToolResultResponse>({ cancel: 1 });
   expectNotAssignable<ToolResultResponse>({ cancel: false });
   expectNotAssignable<ToolResultResponse>({ cancel: null });
+  expectNotAssignable<ToolResultResponse>({ cancel: [] });
+  expectNotAssignable<ToolResultResponse>({ cancel: {} });
 }
 
 // ✅ Valid return values for execute()
@@ -54,7 +58,16 @@ import { expectAssignable, expectNotAssignable } from "tsd";
 {
   expectAssignable<ToolResultResponse>({ cancel: true });
   expectAssignable<ToolResultResponse>({
+    cancel: "I want to cancel the operation",
+  });
+  expectAssignable<ToolResultResponse>({
     cancel: true,
+    description: "cancelled by user",
+  });
+
+  // This case is technically possible, but also a bit weird/confusing? Maybe we should disallow it?
+  expectAssignable<ToolResultResponse>({
+    cancel: "I want to cancel the operation",
     description: "cancelled by user",
   });
 }

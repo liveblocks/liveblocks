@@ -181,7 +181,7 @@ export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
     (
       | { data: R }
       | { error: string }
-      | { cancel: true }
+      | { cancel: true | /* reason */ string }
     )
     & {
       // Optional description of the result
@@ -197,7 +197,7 @@ export type RenderableToolResultResponse<
 > = Relax<
   | { type: "success"; data: R }
   | { type: "error"; error: NonEmptyString<string> }
-  | { type: "cancelled"; cancelled: true }
+  | { type: "cancelled"; cancelled: true; reason?: string }
 >;
 
 type SetToolResultPair = DefineCmd<
