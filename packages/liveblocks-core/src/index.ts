@@ -333,6 +333,7 @@ export type {
   CopilotId,
   Cursor,
   MessageId,
+  RenderableToolResultResponse,
   ToolResultData,
   ToolResultResponse,
 } from "./types/ai";

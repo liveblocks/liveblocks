@@ -58,7 +58,7 @@ export function AiMessageToolInvocation({
           message.chatId,
           message.id,
           part.invocationId,
-          result.data
+          result
           // TODO Pass in AiGenerationOptions here?
         );
       }

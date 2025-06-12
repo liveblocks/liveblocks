@@ -183,6 +183,7 @@ export default function Page() {
                           for (const title of titles) {
                             addTodo(title);
                           }
+                          return { data: {} }; // XXX Allow "undefined" as shorthand for this
                         },
                       }),
 
@@ -202,7 +203,7 @@ export default function Page() {
                         execute: ({ id }) => {
                           toggleTodo(id);
                           // If there is nothing to return, just return nothing
-                          // result in render will then become `{ type: 'success', data: {} }`
+                          return { data: {} }; // XXX Allow "undefined" as shorthand for this
                         },
                         render: () => (
                           <AiTool>
@@ -227,10 +228,7 @@ export default function Page() {
                         },
 
                         execute: () => {
-                          return {
-                            // type: 'success',   // Would be implicit
-                            data: { deletedTitles: [] },
-                          };
+                          return { data: { deletedTitles: [] } };
                         },
 
                         // followUp: true,
@@ -254,17 +252,17 @@ export default function Page() {
                           // - `result` → `result.data` in all existing cases
                           // - Chris needs to maybe re-record videos :(
                           //
-                          if (result.type === "success") {
+                          if (result?.type === "success") {
                             // result.message :: undefined
                             // result.data :: { deletedTitles: string[] }
-                          } else if (result.type === "error") {
+                          } else if (result?.type === "error") {
                             // result.message :: string
                             // result.data :: undefined
-                          } else if (result.type === "cancelled") {
+                          } else if (result?.type === "cancelled") {
                             // result.message :: undefined
                             // result.data :: undefined
                           } else {
-                            // Never happens
+                            // If we get here, then stage isn't "executed"
                           }
 
                           return (
@@ -279,23 +277,20 @@ export default function Page() {
 
                                   deleteTodos(ids);
                                   return {
-                                    type: "success", // implicit default
                                     data: { deletedTitles },
                                     description: "Please don't try again", // optional
                                   };
                                 }}
                                 cancel={() => {
-                                  return {
-                                    type: "cancelled",
-                                    // No extra fields on cancelled result
-                                  };
+                                  // No extra fields on cancelled result
+                                  return { cancel: true };
                                 }}
                               >
                                 Okay to delete?
                               </AiTool.Confirmation>
 
                               {stage === "executed" ? (
-                                result.type === "success" ? (
+                                result?.type === "success" ? (
                                   <div>
                                     Deleted:
                                     <ul>

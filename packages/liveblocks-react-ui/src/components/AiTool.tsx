@@ -10,7 +10,13 @@ import type { ComponentProps, ReactNode } from "react";
 import { Children, forwardRef, useCallback, useMemo } from "react";
 
 import { Button } from "../_private";
-import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
+import {
+  CheckCircleFillIcon,
+  ChevronRightIcon,
+  CrossIcon,
+  SpinnerIcon,
+  StopIcon,
+} from "../icons";
 import {
   type AiToolConfirmationOverrides,
   type GlobalOverrides,
@@ -204,6 +210,7 @@ export const AiTool = Object.assign(
     ) => {
       const {
         stage,
+        result,
         name,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
@@ -254,7 +261,13 @@ export const AiTool = Object.assign(
             ) : null}
             <div className="lb-ai-tool-header-status">
               {stage === "executed" ? (
-                <CheckCircleFillIcon />
+                result.type === "success" ? (
+                  <CheckCircleFillIcon />
+                ) : result.type === "error" ? (
+                  <CrossIcon />
+                ) : result.type === "cancelled" ? (
+                  <StopIcon />
+                ) : null
               ) : execute !== undefined ? (
                 // Only show a spinner if the tool has an `execute` method.
                 <SpinnerIcon />

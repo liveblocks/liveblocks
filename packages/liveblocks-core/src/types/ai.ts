@@ -174,10 +174,24 @@ type AbortAiPair = DefineCmd<
 // TODO[nvie] Maybe layer, consider making this a more structured output, like:
 // { ok: true, hintForAi: "bla bla bla", data: { /* for client */ } } ?
 // TODO[nvie] When done refactoring things in front- and backend, remove the ToolResultData type
+// This is the type that users are allowed to return from the `execute()` method
 export type ToolResultData = JsonObject;
-export type ToolResultResponse<R extends ToolResultData = ToolResultData> = {
-  data: R;
-};
+export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
+  Relax<
+    ({ data: R } | { error: string } | { cancel: true }) & {
+      description?: string;
+    } // Optional description of the result
+  >;
+
+// NOTE: Same as ToolResultResponse, but with the type field always set explicitly
+// This is the type that will get passed to the `render()` method
+export type RenderableToolResultResponse<
+  R extends ToolResultData = ToolResultData,
+> = Relax<
+  | { type: "success"; data: R }
+  | { type: "error"; error: string }
+  | { type: "cancelled" }
+>;
 
 type SetToolResultPair = DefineCmd<
   "set-tool-result",
@@ -185,7 +199,7 @@ type SetToolResultPair = DefineCmd<
     chatId: ChatId;
     messageId: MessageId;
     invocationId: string;
-    result: JsonObject; // TODO Change to ToolResultResponse in protocol V4 soon
+    result: ToolResultResponse;
     generationOptions: AiGenerationOptions;
   },
   { ok: true; message: AiChatMessage } | { ok: false }
@@ -311,8 +325,7 @@ export type AiExecutedToolInvocationPart<
   invocationId: string;
   name: string;
   args: A;
-  result: R;
-  // isError: boolean  // TODO Consider adopting this field from AiSDK? Would make "result" be treated as an error value or a success value.
+  result: RenderableToolResultResponse<R>;
 };
 
 export type AiTextPart = {

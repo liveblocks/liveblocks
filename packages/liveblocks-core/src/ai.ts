@@ -388,7 +388,7 @@ function createStore_forChatMessages(
     chatId: string,
     messageId: MessageId,
     invocationId: string,
-    result: ToolResultData,
+    result: ToolResultResponse,
     options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>
 ) {
@@ -542,7 +542,7 @@ function createStore_forChatMessages(
               message.chatId,
               message.id,
               toolCall.invocationId,
-              result.data
+              result
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
               console.error(
@@ -876,7 +876,7 @@ export type Ai = {
     chatId: string,
     messageId: MessageId,
     invocationId: string,
-    result: ToolResultData,
+    result: ToolResultResponse,
     options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
@@ -1230,7 +1230,7 @@ export function createAi(config: AiConfig): Ai {
     chatId: string,
     messageId: MessageId,
     invocationId: string,
-    result: ToolResultData,
+    result: ToolResultResponse,
     options?: SetToolResultOptions
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
@@ -1361,7 +1361,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v3";
+    url.pathname = "/ai/v4";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

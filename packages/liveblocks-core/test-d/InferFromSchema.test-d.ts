@@ -6,7 +6,7 @@ import type {
   InferFromSchema,
   Json,
   JsonObject,
-  ToolResultData,
+  RenderableToolResultResponse,
   ToolResultResponse,
 } from "@liveblocks/core";
 import { defineAiTool, kInternal } from "@liveblocks/core";
@@ -503,7 +503,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       name: "callMyTool",
       invocationId: "tc_abc123",
       args: { a: 1 },
-      result: { b: 2 },
+      result: { type: "success", data: { b: 2 } },
       respond: (payload) => {
         expectType<ToolResultResponse>(payload);
       },
@@ -569,7 +569,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         } else {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
-          expectType<ToolResultData>(result); // <-- This will soon be ToolResultResponse!
+          expectType<RenderableToolResultResponse>(result);
         }
         return null;
       },
@@ -597,7 +597,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         } else {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
-          expectType<ToolResultData>(result); // <-- This will soon be ToolResultResponse!
+          expectType<RenderableToolResultResponse>(result);
         }
         return null;
       },
