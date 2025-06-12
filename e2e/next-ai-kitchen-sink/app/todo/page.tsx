@@ -258,14 +258,6 @@ export default function Page() {
                                     description: "Please don't try again", // optional
                                   };
                                 }}
-                                // Note: this could become the default implementation for cancel(),
-                                // because a cancellation takes no extra data anyway. Although you
-                                // could of course still set an extra `description` field. But 95%
-                                // of users shouldn't have to even specify a `cancel()` callback here.
-                                cancel={() => {
-                                  // No extra fields on cancelled result
-                                  return { cancel: true };
-                                }}
                               >
                                 Okay to delete?
                               </AiTool.Confirmation>

@@ -79,7 +79,7 @@ export interface AiToolConfirmationProps<
   types?: NoInfr<AiToolTypePack<A, R>>;
   args?: A;
   confirm: AiToolExecuteCallback<A, R>;
-  cancel: AiToolExecuteCallback<A, R>;
+  cancel?: AiToolExecuteCallback<A, R>;
   variant?: "default" | "destructive";
   overrides?: Partial<GlobalOverrides & AiToolConfirmationOverrides>;
 }
@@ -135,7 +135,11 @@ function AiToolConfirmation<
 
   const onCancelClick = useCallback(async () => {
     if (enabled) {
-      respond(await cancel(args as A, context));
+      if (cancel === undefined) {
+        respond({ cancel: true });
+      } else {
+        respond(await cancel(args as A, context));
+      }
     }
   }, [enabled, args, cancel, respond, context]);
 
