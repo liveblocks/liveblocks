@@ -182,12 +182,14 @@ export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
     } // Optional description of the result
   >;
 
+type NonEmptyString<T extends string> = T & { __nonEmpty: true };
+
 // This is the type that will get passed back into the `render()` method for further inspection
 export type RenderableToolResultResponse<
   R extends ToolResultData = ToolResultData,
 > = Relax<
   | { type: "success"; data: R }
-  | { type: "error"; error: string }
+  | { type: "error"; error: NonEmptyString<string> }
   | { type: "cancelled"; cancelled: true }
 >;
 

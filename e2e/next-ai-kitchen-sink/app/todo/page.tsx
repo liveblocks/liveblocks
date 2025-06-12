@@ -233,11 +233,11 @@ export default function Page() {
 
                         // followUp: true,
                         render: ({ stage, result, types }) => {
-                          if (result?.type === "success") {
+                          if (result?.data) {
                             console.log(result.data.deletedTitles);
-                          } else if (result?.type === "error") {
+                          } else if (result?.error) {
                             console.error(result.error);
-                          } else if (result?.type === "cancelled") {
+                          } else if (result?.cancelled) {
                             // No extra fields available here
                           } else {
                             // If we get here, then stage isn't "executed"
