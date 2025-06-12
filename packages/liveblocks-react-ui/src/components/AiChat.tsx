@@ -274,6 +274,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             overrides={overrides}
             autoFocus={autoFocus}
             onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
+            disabled={isLoading || error !== undefined}
             className={
               layout === "inset"
                 ? "lb-elevation lb-elevation-moderate"
