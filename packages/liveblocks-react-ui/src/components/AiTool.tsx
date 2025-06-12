@@ -14,8 +14,8 @@ import {
   CheckCircleFillIcon,
   ChevronRightIcon,
   CrossIcon,
+  MinusIcon,
   SpinnerIcon,
-  StopIcon,
 } from "../icons";
 import {
   type AiToolConfirmationOverrides,
@@ -270,7 +270,7 @@ export const AiTool = Object.assign(
                 ) : result.type === "error" ? (
                   <CrossIcon />
                 ) : result.type === "cancelled" ? (
-                  <StopIcon />
+                  <MinusIcon />
                 ) : null
               ) : execute !== undefined ? (
                 // Only show a spinner if the tool has an `execute` method.
