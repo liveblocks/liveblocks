@@ -57,7 +57,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
           "ease transform-gpu transition-all duration-100 will-change-transform"
         )}
       >
-        <aside className="flex grow flex-col gap-y-4 overflow-y-auto whitespace-nowrap px-3 py-4">
+        <aside className="flex grow flex-col gap-y-4 overflow-y-auto overflow-x-hidden whitespace-nowrap px-3 py-4">
           <div>
             <div className="flex items-center gap-x-1.5">
               <button
@@ -82,9 +82,9 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                   isCollapsed ? "opacity-0" : "opacity-100"
                 )}
               >
-                <a aria-label="Home Link" href="/">
+                <Link aria-label="Home Link" href="/">
                   Acme Corp.
-                </a>
+                </Link>
               </span>
             </div>
           </div>
