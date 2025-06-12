@@ -233,38 +233,15 @@ export default function Page() {
 
                         // followUp: true,
                         render: ({ stage, result, types }) => {
-                          //
-                          // Result would have:
-                          // type: "success" | "error" | "cancelled"
-                          // data: T         (if type === "success")
-                          // message: string (if type === "error")
-                          // -               (if type === "cancelled")
-                          //
-                          // Benefits:
-                          // - We can catch errors in execute()!
-                          // - Users can still *return* an error too
-                          // - Users can return a "cancelled"
-                          // - Because it's first class, we can customize the UI of AiTool (❌, ✅, 😐)
-                          // - Users will no longer have to manually add ok/not-ok states to their
-                          //   results manually if they want to programmatically distinguish
-                          //
-                          // Downsides:
-                          // - `result` → `result.data` in all existing cases
-                          // - Chris needs to maybe re-record videos :(
-                          //
                           if (result?.type === "success") {
-                            // result.message :: undefined
-                            // result.data :: { deletedTitles: string[] }
+                            console.log(result.data.deletedTitles);
                           } else if (result?.type === "error") {
-                            // result.message :: string
-                            // result.data :: undefined
+                            console.error(result.error);
                           } else if (result?.type === "cancelled") {
-                            // result.message :: undefined
-                            // result.data :: undefined
+                            // No extra fields available here
                           } else {
                             // If we get here, then stage isn't "executed"
                           }
-
                           return (
                             <AiTool>
                               <AiTool.Confirmation
@@ -281,6 +258,10 @@ export default function Page() {
                                     description: "Please don't try again", // optional
                                   };
                                 }}
+                                // Note: this could become the default implementation for cancel(),
+                                // because a cancellation takes no extra data anyway. Although you
+                                // could of course still set an extra `description` field. But 95%
+                                // of users shouldn't have to even specify a `cancel()` callback here.
                                 cancel={() => {
                                   // No extra fields on cancelled result
                                   return { cancel: true };
