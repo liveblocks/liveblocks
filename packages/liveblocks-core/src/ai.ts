@@ -20,6 +20,7 @@ import { raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
+  OptionalTupleUnless,
   Polyfills,
   StaticSessionInfo,
   TimeoutID,
@@ -99,7 +100,9 @@ export type AiToolInvocationProps<
   R extends ToolResultData,
 > = Resolve<
   DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
-    respond: (result: ToolResultResponse<R>) => void;
+    respond: (
+      ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
+    ) => void;
 
     /**
      * These are the inferred types for your tool call which you can pass down
@@ -140,7 +143,9 @@ export type AiToolExecuteCallback<
 > = (
   args: A,
   context: AiToolExecuteContext
-) => Awaitable<ToolResultResponse<R>>;
+) => Record<string, never> extends R
+  ? Awaitable<ToolResultResponse<R> | undefined | void>
+  : Awaitable<ToolResultResponse<R>>;
 
 export type AiToolDefinition<
   S extends JSONObjectSchema7,
@@ -536,13 +541,14 @@ function createStore_forChatMessages(
             .get();
 
           const respondSync = <R extends ToolResultData>(
-            result: ToolResultResponse<R>
+            ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
           ) => {
+            const [result] = args;
             setToolResult(
               message.chatId,
               message.id,
               toolCall.invocationId,
-              result
+              result ?? { data: {} }
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
               console.error(
@@ -558,7 +564,7 @@ function createStore_forChatMessages(
                 name: toolCall.name,
                 invocationId: toolCall.invocationId,
               });
-              respondSync(result);
+              respondSync(result ?? undefined);
             })().catch((err) => {
               console.error(
                 `Error trying to respond to tool-call: ${String(err)} (in execute())`

@@ -129,7 +129,8 @@ function AiToolConfirmation<
 
   const onConfirmClick = useCallback(async () => {
     if (enabled) {
-      respond(await confirm(args as A, context));
+      const result = await confirm(args as A, context);
+      respond(result ?? undefined);
     }
   }, [enabled, args, confirm, respond, context]);
 
@@ -138,7 +139,8 @@ function AiToolConfirmation<
       if (cancel === undefined) {
         respond({ cancel: true });
       } else {
-        respond(await cancel(args as A, context));
+        const result = await cancel(args as A, context);
+        respond(result ?? undefined);
       }
     }
   }, [enabled, args, cancel, respond, context]);

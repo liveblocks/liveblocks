@@ -3,16 +3,6 @@
 import type { ToolResultResponse } from "@liveblocks/core";
 import { expectAssignable, expectNotAssignable } from "tsd";
 
-// 🤔 These don't work RIGHT NOW, but it would be nice if these were accepted
-// as shorthands for successful data responses
-{
-  // XXX TODO Actually allow these for convenience!
-  expectNotAssignable<ToolResultResponse>(undefined);
-  expectNotAssignable<ToolResultResponse>(null);
-  expectNotAssignable<ToolResultResponse>({});
-  expectNotAssignable<ToolResultResponse>({ description: "all good" });
-}
-
 // ❌ Invalid return values for execute()
 {
   expectNotAssignable<ToolResultResponse>(123);
