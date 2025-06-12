@@ -60,7 +60,7 @@ function ToolInvocation({
   const tool = useSignal(ai.signals.getToolΣ(part.name, chatId));
 
   const respond = useCallback(
-    (result: ToolResultResponse<ToolResultData>) => {
+    (result: ToolResultResponse) => {
       if (part.stage === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
