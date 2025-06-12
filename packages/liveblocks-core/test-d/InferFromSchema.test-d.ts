@@ -6,6 +6,8 @@ import type {
   InferFromSchema,
   Json,
   JsonObject,
+  ToolResultData,
+  ToolResultResponse,
 } from "@liveblocks/core";
 import { defineAiTool, kInternal } from "@liveblocks/core";
 import type { JSONSchema7 } from "json-schema";
@@ -363,7 +365,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     },
     execute: async (args) => {
       expectType<{ ids: number[] }>(args);
-      return { ok: true };
+      return { data: { ok: true } };
     },
   });
 }
@@ -385,7 +387,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     },
     execute: (args) => {
       expectType<{ titles: string[] }>(args);
-      return { ok: true };
+      return { data: { ok: true } };
     },
   });
 }
@@ -406,7 +408,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     },
     execute: (args) => {
       expectType<{ id?: number }>(args);
-      return { ok: true };
+      return { data: { ok: true } };
     },
     render: () => null,
   });
@@ -423,7 +425,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     },
     execute: (args) => {
       expectType<{ id: number }>(args);
-      return { ok: true };
+      return { data: { ok: true } };
     },
     render: ({ args, partialArgs }) => {
       if (partialArgs !== undefined) {
@@ -449,7 +451,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
     },
     execute: (args) => {
       expectType<{ foo?: number }>(args);
-      return { ok: true };
+      return { data: { ok: true } };
     },
   });
 
@@ -459,7 +461,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       (
         args: JsonObject,
         context: { name: string; invocationId: string }
-      ) => Awaitable<Json>
+      ) => Awaitable<ToolResultResponse>
     >(myTool.execute);
   } else {
     expectType<undefined>(myTool.execute);
@@ -471,12 +473,12 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
     // Possible JSX rendering invocation 1
     myTool.render({
-      status: "receiving",
+      stage: "receiving",
       name: "callMyTool",
       invocationId: "tc_abc123",
       partialArgs: {},
       respond: (payload) => {
-        expectType<Json>(payload);
+        expectType<ToolResultResponse>(payload);
       },
       types: undefined as never,
       ...internal,
@@ -484,12 +486,12 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
     // Possible JSX rendering invocation 2
     myTool.render({
-      status: "executing",
+      stage: "executing",
       name: "callMyTool",
       invocationId: "tc_abc123",
       args: { a: 1 },
       respond: (payload) => {
-        expectType<Json>(payload);
+        expectType<ToolResultResponse>(payload);
       },
       types: undefined as never,
       ...internal,
@@ -497,13 +499,13 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
     // Possible JSX rendering invocation 3
     myTool.render({
-      status: "executed",
+      stage: "executed",
       name: "callMyTool",
       invocationId: "tc_abc123",
       args: { a: 1 },
       result: { b: 2 },
       respond: (payload) => {
-        expectType<Json>(payload);
+        expectType<ToolResultResponse>(payload);
       },
       types: undefined as never,
       ...internal,
@@ -524,7 +526,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
       execute: (args) => {
         expectType<{ foo?: number }>(args);
-        return { ok: true };
+        return { data: { ok: true } };
       },
     }),
 
@@ -537,7 +539,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
       execute: (args) => {
         expectType<{ bar?: string }>(args);
-        return { ok: true };
+        return { data: { ok: true } };
       },
     }),
 
@@ -550,24 +552,24 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
       execute: (args) => {
         expectType<{ bar?: string }>(args);
-        return { ok: true };
+        return { data: { ok: true } };
       },
-      render: ({ status, partialArgs, args, result, respond }) => {
-        expectType<(payload: Json) => void>(respond);
+      render: ({ stage, partialArgs, args, result, respond }) => {
+        expectType<(payload: ToolResultResponse) => void>(respond);
 
-        expectType<"receiving" | "executing" | "executed">(status);
-        if (status === "receiving") {
+        expectType<"receiving" | "executing" | "executed">(stage);
+        if (stage === "receiving") {
           expectType<Json>(partialArgs);
           expectType<undefined>(args);
           expectType<undefined>(result);
-        } else if (status === "executing") {
+        } else if (stage === "executing") {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
           expectType<undefined>(result);
         } else {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
-          expectType<Json>(result);
+          expectType<ToolResultData>(result); // <-- This will soon be ToolResultResponse!
         }
         return null;
       },
@@ -580,22 +582,22 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         properties: { bar: { type: "string" } },
         additionalProperties: false,
       },
-      render: ({ status, partialArgs, args, result, respond }) => {
-        expectType<(payload: Json) => void>(respond);
+      render: ({ stage, partialArgs, args, result, respond }) => {
+        expectType<(payload: ToolResultResponse) => void>(respond);
 
-        expectType<"receiving" | "executing" | "executed">(status);
-        if (status === "receiving") {
+        expectType<"receiving" | "executing" | "executed">(stage);
+        if (stage === "receiving") {
           expectType<Json>(partialArgs);
           expectType<undefined>(args);
           expectType<undefined>(result);
-        } else if (status === "executing") {
+        } else if (stage === "executing") {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
           expectType<undefined>(result);
         } else {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
-          expectType<Json>(result);
+          expectType<ToolResultData>(result); // <-- This will soon be ToolResultResponse!
         }
         return null;
       },
