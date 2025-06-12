@@ -227,60 +227,42 @@ export default function Page() {
                           additionalProperties: false,
                         },
 
-                        execute: () => {
-                          return { data: { deletedTitles: [] } };
-                        },
+                        // TODO Add followUp: true here later?
+                        render: ({ stage, result, types }) => (
+                          <AiTool>
+                            <AiTool.Confirmation
+                              types={types}
+                              variant="destructive"
+                              confirm={({ ids }) => {
+                                const deletedTitles = todos
+                                  .filter((t) => ids.includes(t.id))
+                                  .map((todo) => todo.title);
 
-                        // followUp: true,
-                        render: ({ stage, result, types }) => {
-                          if (result?.data) {
-                            console.log(result.data.deletedTitles);
-                          } else if (result?.error) {
-                            console.error(result.error);
-                          } else if (result?.cancelled) {
-                            // No extra fields available here
-                          } else {
-                            // If we get here, then stage isn't "executed"
-                          }
-                          return (
-                            <AiTool>
-                              <AiTool.Confirmation
-                                types={types}
-                                variant="destructive"
-                                confirm={({ ids }) => {
-                                  const deletedTitles = todos
-                                    .filter((t) => ids.includes(t.id))
-                                    .map((todo) => todo.title);
+                                deleteTodos(ids);
+                                return { data: { ok: true, deletedTitles } };
+                              }}
+                            >
+                              Okay to delete?
+                            </AiTool.Confirmation>
 
-                                  deleteTodos(ids);
-                                  return {
-                                    data: { deletedTitles },
-                                    description: "Please don't try again", // optional
-                                  };
-                                }}
-                              >
-                                Okay to delete?
-                              </AiTool.Confirmation>
-
-                              {stage === "executed" ? (
-                                result?.type === "success" ? (
-                                  <div>
-                                    Deleted:
-                                    <ul>
-                                      {result.data.deletedTitles.map(
-                                        (title, i: number) => (
-                                          <li key={i}>{title}</li>
-                                        )
-                                      )}
-                                    </ul>
-                                  </div>
-                                ) : (
-                                  <div>The request was denied</div>
-                                )
-                              ) : null}
-                            </AiTool>
-                          );
-                        },
+                            {stage === "executed" ? (
+                              result?.data ? (
+                                <div>
+                                  Deleted:
+                                  <ul>
+                                    {result.data.deletedTitles?.map(
+                                      (title, i: number) => (
+                                        <li key={i}>{title}</li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              ) : (
+                                <div>The request was denied</div>
+                              )
+                            ) : null}
+                          </AiTool>
+                        ),
                       }),
                     }}
                     className="rounded-xl"
