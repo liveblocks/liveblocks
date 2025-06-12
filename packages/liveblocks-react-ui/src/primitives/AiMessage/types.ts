@@ -25,13 +25,14 @@ export type AiMessageContentReasoningPartProps = {
 };
 
 /** @internal */
-type AiMessageContentToolInvocationPartProps = {
+export type AiMessageContentToolInvocationPartProps = {
   /** @internal */
   index: number;
   /** @internal */
   isStreaming: boolean;
+  /** @internal */
+  message: AiChatMessage;
   part: AiToolInvocationPart;
-  children: React.ReactNode;
 };
 
 export interface AiMessageContentComponents {

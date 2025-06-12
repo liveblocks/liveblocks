@@ -2534,6 +2534,10 @@
     block-size: 1lh;
     color: var(--lb-destructive-secondary);
   }
+
+  :where(code:not(pre > code)) {
+    background: var(--lb-destructive-subtle);
+  }
 }
 
 .lb-ai-chat-message-content {

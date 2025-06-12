@@ -3,7 +3,6 @@ import {
   type ComponentProps,
   forwardRef,
   memo,
-  type PropsWithChildren,
   type ReactNode,
   useState,
 } from "react";
@@ -18,12 +17,15 @@ import {
   useOverrides,
 } from "../../overrides";
 import * as AiMessage from "../../primitives/AiMessage";
+import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
+  AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
 import { classNames } from "../../utils/class-names";
+import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
@@ -176,6 +178,29 @@ function ReasoningPart({
 /* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
-function ToolInvocationPart({ children }: PropsWithChildren) {
-  return <div className="lb-ai-chat-message-tool-invocation">{children}</div>;
+function ToolInvocationPart({
+  part,
+  message,
+}: AiMessageContentToolInvocationPartProps) {
+  return (
+    <div className="lb-ai-chat-message-tool-invocation">
+      <ErrorBoundary
+        fallback={
+          process.env.NODE_ENV !== "production" ? (
+            <div className="lb-ai-chat-message-error">
+              <span className="lb-icon-container">
+                <WarningIcon />
+              </span>
+              <p>
+                Failed to render tool call result for <code>{part.name}</code>.
+                See console for details.
+              </p>
+            </div>
+          ) : null
+        }
+      >
+        <AiMessageToolInvocation part={part} message={message} />
+      </ErrorBoundary>
+    </div>
+  );
 }
