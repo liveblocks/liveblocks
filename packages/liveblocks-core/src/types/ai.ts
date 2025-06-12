@@ -179,17 +179,13 @@ export type ToolResultData = JsonObject;
 export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
   Relax<
     (
-      | { data: R }
+      | { data: R; description?: string; }
       | { error: string }
       | { cancel: true | /* reason */ string }
     )
-    & {
-      // Optional description of the result
-      description?: string;
-    }
   >;
 
-type NonEmptyString<T extends string> = T & { __nonEmpty: true };
+export type NonEmptyString<T extends string> = T & { __nonEmpty: true };
 
 // This is the type that will get passed back into the `render()` method for further inspection
 export type RenderableToolResultResponse<

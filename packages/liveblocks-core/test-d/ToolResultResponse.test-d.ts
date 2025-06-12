@@ -35,6 +35,25 @@ import { expectAssignable, expectNotAssignable } from "tsd";
   expectNotAssignable<ToolResultResponse>({ cancel: {} });
 }
 
+// ❌ For now, don't allow description on error/cancelled results.
+//    It's a bit confusing.
+//    Besides, adding it back in later is still possible, but removing it
+//    is not, so this is the least risky option to launch with initially.
+{
+  expectNotAssignable<ToolResultResponse>({
+    error: "oops",
+    description: "something went wrong",
+  });
+  expectNotAssignable<ToolResultResponse>({
+    cancel: true,
+    description: "cancelled by user",
+  });
+  expectNotAssignable<ToolResultResponse>({
+    cancel: "I want to cancel the operation",
+    description: "cancelled by user",
+  });
+}
+
 // ✅ Valid return values for execute()
 {
   // All of these are interpreted as type: "success" cases
@@ -49,25 +68,11 @@ import { expectAssignable, expectNotAssignable } from "tsd";
 
 {
   expectAssignable<ToolResultResponse>({ error: "oops" });
-  expectAssignable<ToolResultResponse>({
-    error: "oops",
-    description: "something went wrong",
-  });
 }
 
 {
   expectAssignable<ToolResultResponse>({ cancel: true });
   expectAssignable<ToolResultResponse>({
     cancel: "I want to cancel the operation",
-  });
-  expectAssignable<ToolResultResponse>({
-    cancel: true,
-    description: "cancelled by user",
-  });
-
-  // This case is technically possible, but also a bit weird/confusing? Maybe we should disallow it?
-  expectAssignable<ToolResultResponse>({
-    cancel: "I want to cancel the operation",
-    description: "cancelled by user",
   });
 }
