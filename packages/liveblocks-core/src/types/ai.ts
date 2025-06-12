@@ -171,11 +171,10 @@ type AbortAiPair = DefineCmd<
   { ok: true }
 >;
 
-// TODO[nvie] Maybe layer, consider making this a more structured output, like:
-// { ok: true, hintForAi: "bla bla bla", data: { /* for client */ } } ?
-// TODO[nvie] When done refactoring things in front- and backend, remove the ToolResultData type
-// This is the type that users are allowed to return from the `execute()` method
+// XXX[nvie] Remove this type alias eventually?
 export type ToolResultData = JsonObject;
+
+// This is the type that users are supposed to return from the `execute()` method (or call respond() or confirm() with)
 export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
   Relax<
     ({ data: R } | { error: string } | { cancel: true }) & {
@@ -183,8 +182,7 @@ export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
     } // Optional description of the result
   >;
 
-// NOTE: Same as ToolResultResponse, but with the type field always set explicitly
-// This is the type that will get passed to the `render()` method
+// This is the type that will get passed back into the `render()` method for further inspection
 export type RenderableToolResultResponse<
   R extends ToolResultData = ToolResultData,
 > = Relax<
