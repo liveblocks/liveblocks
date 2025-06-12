@@ -175,11 +175,18 @@ type AbortAiPair = DefineCmd<
 export type ToolResultData = JsonObject;
 
 // This is the type that users are supposed to return from the `execute()` method (or call respond() or confirm() with)
+// prettier-ignore
 export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
   Relax<
-    ({ data: R } | { error: string } | { cancel: true }) & {
+    (
+      | { data: R }
+      | { error: string }
+      | { cancel: true }
+    )
+    & {
+      // Optional description of the result
       description?: string;
-    } // Optional description of the result
+    }
   >;
 
 type NonEmptyString<T extends string> = T & { __nonEmpty: true };
