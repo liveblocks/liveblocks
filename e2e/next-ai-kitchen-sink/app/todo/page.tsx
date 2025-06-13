@@ -236,7 +236,7 @@ export default function Page() {
                                   .map((todo) => todo.title);
 
                                 deleteTodos(ids);
-                                return { data: { ok: true, deletedTitles } };
+                                return { data: { deletedTitles } };
                               }}
                             >
                               Okay to delete?
