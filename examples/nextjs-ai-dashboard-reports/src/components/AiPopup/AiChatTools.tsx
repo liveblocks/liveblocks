@@ -41,6 +41,7 @@ export function SeatsTool() {
           required: ["seatsLimit", "seatsUsed"],
           additionalProperties: false,
         },
+        execute: () => {},
         render: ({ args }) => {
           if (!args) return null;
 
