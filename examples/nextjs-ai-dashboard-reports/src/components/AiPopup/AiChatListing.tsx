@@ -25,7 +25,7 @@ export function ChatListing({
         {chats.map((chat) => (
           <li
             key={chat.id}
-            className="group relative flex items-center justify-between p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="group relative flex items-center justify-between p-4 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900"
           >
             <div className="flex flex-col gap-0.5">
               <button

@@ -23,6 +23,53 @@ import { formatters } from "@/lib/utils";
 import useSWR from "swr";
 import { fetchTransactions } from "@/lib/transactionsApi";
 import { fetchInvoices } from "@/lib/invoicesApi";
+import { ProgressBar } from "../ProgressBar";
+
+export function SeatsTool() {
+  return (
+    <RegisterAiTool
+      name="seats"
+      tool={defineAiTool()({
+        description:
+          "Show a visual of the remaining seats. Place in the current seat limit and seats used.",
+        parameters: {
+          type: "object",
+          properties: {
+            seatsLimit: { type: "number" },
+            seatsUsed: { type: "number" },
+          },
+          required: ["seatsLimit", "seatsUsed"],
+          additionalProperties: false,
+        },
+        render: ({ args }) => {
+          if (!args) return null;
+
+          return (
+            <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 pt-4.5">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                Remaining seats
+              </p>
+              <ProgressBar
+                value={(args.seatsUsed / args.seatsLimit) * 100 || 0}
+                className="mt-2"
+              />
+              <div className="mt-3 flex items-center justify-between">
+                <p className="flex items-center space-x-2">
+                  <span className="rounded-lg bg-gray-200 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-900  dark:text-gray-50">
+                    {args.seatsUsed}
+                  </span>{" "}
+                  <span className="text-sm text-gray-500 dark:text-gray-500">
+                    of {args.seatsLimit} seats used
+                  </span>
+                </p>
+              </div>
+            </div>
+          );
+        },
+      })}
+    />
+  );
+}
 
 export function QueryTransactionTool() {
   return (

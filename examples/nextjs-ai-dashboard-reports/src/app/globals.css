@@ -14,7 +14,7 @@
 }
 
 .dark .lb-ai-chat {
-  --lb-background: theme("colors.gray.800");
+  --lb-background: theme("colors.gray.950");
   --lb-dynamic-background: theme("colors.gray.900");
   --lb-foreground: theme("colors.gray.50");
 }

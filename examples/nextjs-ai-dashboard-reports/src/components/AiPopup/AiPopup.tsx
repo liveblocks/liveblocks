@@ -14,6 +14,7 @@ import { useAiChat } from "@liveblocks/react/suspense";
 import { ChatListing } from "./AiChatListing";
 import { AiChatPlaceholder } from "./AiChatPlaceholder";
 import {
+  SeatsTool,
   NavigateToPageTool,
   TransactionToolAi,
   MemberToolAi,
@@ -75,6 +76,7 @@ function Chat({ chatId }: { chatId: string }) {
         description="The team's information. There's more information in the users page, add a link to it with markdown."
         value={team}
       />
+      <SeatsTool />
       <QueryTransactionTool />
       <QueryInvoiceTool />
       <NavigateToPageTool />
@@ -127,7 +129,7 @@ function ChatPopup() {
         <PopoverPrimitives.Trigger asChild>
           <button
             className={
-              "flex size-14 items-center border border-gray-200 dark:border-gray-800 justify-center rounded-full bg-blue-600 hover:bg-blue-500 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
+              "flex size-14 items-center border border-blue-400/60 dark:border-blue-700/60 justify-center rounded-full bg-blue-600 hover:bg-blue-500 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all fixed bottom-8 right-8 z-40 duration-200"
             }
             aria-label="Open AI Assistant"
           >
@@ -140,7 +142,7 @@ function ChatPopup() {
             side="top"
             align="end"
             onInteractOutside={(e) => e.preventDefault()} // Don't close when clicking outside
-            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
+            className="fixed bottom-0 right-0 z-50 h-[700px] max-h-[75vh] w-[420px] max-w-[90vw] overflow-hidden rounded-xl ring-1 ring-gray-200 dark:ring-gray-800 bg-gray-50 dark:bg-gray-950 dark:border-gray-800 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] will-change-[transform,opacity]"
           >
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
@@ -152,7 +154,7 @@ function ChatPopup() {
                     }
                     setShowListing(!showListing);
                   }}
-                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700 truncate"
+                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800 truncate"
                 >
                   <ArrowLeftIcon className="size-4 opacity-70 -ml-1 shrink-0" />
                   {showListing ? (
@@ -167,12 +169,12 @@ function ChatPopup() {
                 <span className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => goToChat(nanoid())}
-                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <PlusIcon className="size-4 -ml-1 opacity-70" />
                     <span>New chat</span>
                   </button>
-                  <PopoverPrimitives.Close className="bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 flex size-8 items-center justify-center rounded-full">
+                  <PopoverPrimitives.Close className="hover:bg-gray-100 dark:hover:bg-gray-800 flex size-8 items-center justify-center rounded-full">
                     <span className="sr-only">Close</span>
                     <XIcon className="size-4 opacity-70" />
                   </PopoverPrimitives.Close>
