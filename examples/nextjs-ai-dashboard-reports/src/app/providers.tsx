@@ -9,11 +9,7 @@ import { SWRConfig } from "swr";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
-      // @ts-expect-error DEV env for now
-      baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!}
-    >
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
       <SWRConfig
         value={{
           refreshInterval: 3000,

@@ -60,7 +60,6 @@ function Chat({ chatId }: { chatId: string }) {
         value={window.location.pathname}
       />
       <RegisterAiKnowledge
-        // TODO figure out why AI won't write markdown links
         description="Pages you can navigate to. Use markdown to add hyperlinks to your answers, and always link when appropriate. For example: `[Billing page](/settings/billing)`."
         value={siteConfig.baseLinks}
       />

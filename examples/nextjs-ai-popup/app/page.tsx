@@ -125,8 +125,9 @@ function Chat({ chatId }: { chatId: string }) {
   return (
     <div className="absolute inset-0 flex flex-col">
       <AiChat
-        layout="compact"
         chatId={chatId}
+        copilotId={process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined}
+        layout="compact"
         components={{
           Empty: ({ chatId }) => {
             const sendMessage = useSendAiMessage(chatId);
