@@ -225,7 +225,7 @@ export default function Page() {
                         },
 
                         // TODO Add followUp: true here later?
-                        render: ({ stage, result, types }) => (
+                        render: ({ result, types }) => (
                           <AiTool>
                             <AiTool.Confirmation
                               types={types}
@@ -242,21 +242,19 @@ export default function Page() {
                               Okay to delete?
                             </AiTool.Confirmation>
 
-                            {stage === "executed" ? (
-                              result?.data ? (
-                                <div>
-                                  Deleted:
-                                  <ul>
-                                    {result.data.deletedTitles?.map(
-                                      (title, i: number) => (
-                                        <li key={i}>{title}</li>
-                                      )
-                                    )}
-                                  </ul>
-                                </div>
-                              ) : (
-                                <div>The request was denied</div>
-                              )
+                            {result?.data ? (
+                              <div>
+                                Deleted:
+                                <ul>
+                                  {result.data.deletedTitles?.map(
+                                    (title, i: number) => (
+                                      <li key={i}>{title}</li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            ) : result?.cancelled ? (
+                              <div>The request was denied</div>
                             ) : null}
                           </AiTool>
                         ),
