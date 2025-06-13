@@ -132,7 +132,7 @@ export function QueryTransactionTool() {
           };
         },
         render: ({ args }) =>
-          args ? <AiTool title={`Transaction query`} /> : null,
+          args ? <AiTool title="Transaction query" /> : null,
       })}
     />
   );
@@ -187,7 +187,7 @@ export function QueryInvoiceTool() {
         },
         render: ({ args }) =>
           args ? (
-            <AiTool title={`Invoice query`} collapsed={true}>
+            <AiTool title="Invoice query" collapsed={true}>
               <AiTool.Inspector />
             </AiTool>
           ) : null,
