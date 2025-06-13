@@ -183,7 +183,6 @@ export default function Page() {
                           for (const title of titles) {
                             addTodo(title);
                           }
-                          return { data: {} }; // XXX Allow "undefined" as shorthand for this
                         },
                       }),
 
@@ -202,8 +201,6 @@ export default function Page() {
                         },
                         execute: ({ id }) => {
                           toggleTodo(id);
-                          // If there is nothing to return, just return nothing
-                          return { data: {} }; // XXX Allow "undefined" as shorthand for this
                         },
                         render: () => (
                           <AiTool>
