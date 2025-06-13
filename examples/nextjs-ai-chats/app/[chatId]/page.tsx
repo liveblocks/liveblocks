@@ -24,6 +24,7 @@ export default function Page({ params }: { params: { chatId: string } }) {
       <AiChat
         // Each chat is stored permanently and has a unique ID
         chatId={params.chatId}
+        copilotId={process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined}
         className="grow mx-auto"
         components={{ Empty }}
         autoFocus
