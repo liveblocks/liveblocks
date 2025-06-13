@@ -222,10 +222,8 @@ export function NavigateToPageTool() {
             },
           });
           return {
-            data: {
-              message:
-                "Redirecting user to the page. Do not write anything else.",
-            },
+            description: "Redirected the user to the page. Do not write anything else.",
+            data: {},
           };
         },
         render: ({ args }) =>
@@ -301,17 +299,11 @@ export function SendInvoiceRemindersTool() {
                       return `Invoice reminders sent`;
                     },
                   });
+
+                  await promise;
                   return {
-                    data: {
-                      message: "Invoice reminders sent",
-                    },
-                  };
-                }}
-                cancel={async () => {
-                  return {
-                    data: {
-                      message: "The user cancelled the invite",
-                    },
+                    description: "Invoice reminders sent",
+                    data: {},
                   };
                 }}
               >
@@ -408,16 +400,8 @@ export function InviteMemberTool({
                   toast.success(`${args.email} has been invited`);
                   onInvite({ name: args.name, email: args.email });
                   return {
-                    data: {
-                      message: `The user confirmed inviting ${args.email} to the team`,
-                    },
-                  };
-                }}
-                cancel={() => {
-                  return {
-                    data: {
-                      message: `The user cancelled inviting ${args.email} to the team`,
-                    },
+                    description: `The user confirmed inviting ${args.email} to the team`,
+                    data: {},
                   };
                 }}
               >
