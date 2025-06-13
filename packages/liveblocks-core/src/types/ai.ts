@@ -171,12 +171,9 @@ type AbortAiPair = DefineCmd<
   { ok: true }
 >;
 
-// XXX[nvie] Remove this type alias eventually?
-export type ToolResultData = JsonObject;
-
 // This is the type that users are supposed to return from the `execute()` method (or call respond() or confirm() with)
 // prettier-ignore
-export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
+export type ToolResultResponse<R extends JsonObject = JsonObject> =
   Relax<
     (
       | { data: R; description?: string; }
@@ -188,13 +185,12 @@ export type ToolResultResponse<R extends ToolResultData = ToolResultData> =
 export type NonEmptyString<T extends string> = T & { __nonEmpty: true };
 
 // This is the type that will get passed back into the `render()` method for further inspection
-export type RenderableToolResultResponse<
-  R extends ToolResultData = ToolResultData,
-> = Relax<
-  | { type: "success"; data: R }
-  | { type: "error"; error: NonEmptyString<string> }
-  | { type: "cancelled"; cancelled: true; reason?: string }
->;
+export type RenderableToolResultResponse<R extends JsonObject = JsonObject> =
+  Relax<
+    | { type: "success"; data: R }
+    | { type: "error"; error: NonEmptyString<string> }
+    | { type: "cancelled"; cancelled: true; reason?: string }
+  >;
 
 type SetToolResultPair = DefineCmd<
   "set-tool-result",
@@ -296,7 +292,7 @@ export type AiToolDescription = {
 
 export type AiToolInvocationPart<
   A extends JsonObject = JsonObject,
-  R extends ToolResultData = ToolResultData,
+  R extends JsonObject = JsonObject,
 > = Relax<
   | AiReceivingToolInvocationPart
   | AiExecutingToolInvocationPart<A>
@@ -321,7 +317,7 @@ export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
 
 export type AiExecutedToolInvocationPart<
   A extends JsonObject = JsonObject,
-  R extends ToolResultData = ToolResultData,
+  R extends JsonObject = JsonObject,
 > = {
   type: "tool-invocation";
   stage: "executed";

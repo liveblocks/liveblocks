@@ -334,7 +334,6 @@ export type {
   Cursor,
   MessageId,
   RenderableToolResultResponse,
-  ToolResultData,
   ToolResultResponse,
 } from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";

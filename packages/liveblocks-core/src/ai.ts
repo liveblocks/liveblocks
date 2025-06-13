@@ -53,7 +53,6 @@ import type {
   MessageId,
   ServerAiMsg,
   SetToolResultResponse,
-  ToolResultData,
   ToolResultResponse,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
@@ -79,7 +78,7 @@ const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
 export type AiToolTypePack<
   A extends JsonObject = JsonObject,
-  R extends ToolResultData = ToolResultData,
+  R extends JsonObject = JsonObject,
 > = {
   A: A;
   R: R;
@@ -97,7 +96,7 @@ export type SetToolResultOptions = Omit<
 
 export type AiToolInvocationProps<
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > = Resolve<
   DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
     respond: (
@@ -129,7 +128,7 @@ export type AiToolInvocationProps<
 
 export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
   JsonObject,
-  ToolResultData
+  JsonObject
 >;
 
 export type AiToolExecuteContext = {
@@ -139,7 +138,7 @@ export type AiToolExecuteContext = {
 
 export type AiToolExecuteCallback<
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > = (
   args: A,
   context: AiToolExecuteContext
@@ -150,7 +149,7 @@ export type AiToolExecuteCallback<
 export type AiToolDefinition<
   S extends JSONObjectSchema7,
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > = {
   description?: string;
   parameters: S;
@@ -161,7 +160,7 @@ export type AiToolDefinition<
 export type AiOpaqueToolDefinition = AiToolDefinition<
   JSONObjectSchema7,
   JsonObject,
-  ToolResultData
+  JsonObject
 >;
 
 /**
@@ -169,7 +168,7 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
  * This function has no runtime implementation and is only needed to make it
  * possible for TypeScript to infer types.
  */
-export function defineAiTool<R extends ToolResultData>() {
+export function defineAiTool<R extends JsonObject>() {
   return <const S extends JSONObjectSchema7>(
     def: AiToolDefinition<
       S,
@@ -540,7 +539,7 @@ function createStore_forChatMessages(
             .getToolΣ(toolCall.name, message.chatId)
             .get();
 
-          const respondSync = <R extends ToolResultData>(
+          const respondSync = <R extends JsonObject>(
             ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
           ) => {
             const [result] = args;

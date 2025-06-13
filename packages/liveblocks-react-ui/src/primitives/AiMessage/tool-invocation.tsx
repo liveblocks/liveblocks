@@ -1,12 +1,11 @@
-import {
-  type AiChatMessage,
-  type AiToolInvocationPart,
-  type AiToolInvocationProps,
-  type JsonObject,
-  kInternal,
-  type ToolResultData,
-  type ToolResultResponse,
+import type {
+  AiChatMessage,
+  AiToolInvocationPart,
+  AiToolInvocationProps,
+  JsonObject,
+  ToolResultResponse,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { type FunctionComponent, useCallback, useMemo } from "react";
@@ -15,7 +14,7 @@ import { AiToolInvocationContext } from "./contexts";
 
 type OpaqueAiToolInvocationProps = AiToolInvocationProps<
   JsonObject,
-  ToolResultData
+  JsonObject
 >;
 
 function StableRenderFn(props: {

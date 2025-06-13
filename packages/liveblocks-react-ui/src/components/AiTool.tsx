@@ -1,11 +1,10 @@
-import {
-  type AiToolExecuteCallback,
-  type AiToolTypePack,
-  type JsonObject,
-  kInternal,
-  type NoInfr,
-  type ToolResultData,
+import type {
+  AiToolExecuteCallback,
+  AiToolTypePack,
+  JsonObject,
+  NoInfr,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import { Children, forwardRef, useCallback, useMemo } from "react";
 
@@ -74,7 +73,7 @@ export type AiToolInspectorProps = ComponentProps<"div">;
  */
 export interface AiToolConfirmationProps<
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > extends ComponentProps<"div"> {
   types?: NoInfr<AiToolTypePack<A, R>>;
   args?: A;
@@ -109,7 +108,7 @@ function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
 function AiToolConfirmation<
   TPack extends AiToolTypePack,
   A extends JsonObject = TPack["A"],
-  R extends ToolResultData = TPack["R"],
+  R extends JsonObject = TPack["R"],
 >({
   children,
   variant = "default",
