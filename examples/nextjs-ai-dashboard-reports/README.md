@@ -18,14 +18,13 @@
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
-  <img src="https://img.shields.io/badge/blocknote-message?style=flat&color=07f" alt="BlockNote" />
 </p>
 
 This example shows how to build a pop-up AI chat inside a reports dashboard with
 [Liveblocks](https://liveblocks.io), [Tremor](https://tremor.so/), and
 [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/text-editor.png" width="536" alt="Collaborative Text Editor" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/ai-reports-dashboard.png" width="536" alt="AI reports dashboard" />
 
 ## Getting started
 
