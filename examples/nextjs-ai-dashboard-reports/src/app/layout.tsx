@@ -2,7 +2,7 @@ import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 import React from "react";
 import { Providers } from "./providers";
-import { AiPopup } from "@/components/AiPopup/AiPopup";
+import { AiPopup } from "@/ai-popup/AiPopup";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
 import "./globals.css";

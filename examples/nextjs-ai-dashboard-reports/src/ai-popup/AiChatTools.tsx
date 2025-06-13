@@ -23,7 +23,7 @@ import { formatters } from "@/lib/utils";
 import useSWR from "swr";
 import { fetchTransactions } from "@/lib/transactionsApi";
 import { fetchInvoices } from "@/lib/invoicesApi";
-import { ProgressBar } from "../ProgressBar";
+import { ProgressBar } from "../components/ProgressBar";
 
 export function SeatsTool() {
   return (
@@ -223,7 +223,8 @@ export function NavigateToPageTool() {
             },
           });
           return {
-            description: "Redirected the user to the page. Do not write anything else.",
+            description:
+              "Redirected the user to the page. Do not write anything else.",
             data: {},
           };
         },

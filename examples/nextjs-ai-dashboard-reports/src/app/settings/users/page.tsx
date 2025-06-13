@@ -33,7 +33,7 @@ import {
 import { departments } from "@/data/data";
 import { users } from "@/data/users";
 import { Plus, Trash2 } from "lucide-react";
-import { InviteMemberTool } from "@/components/AiPopup/AiChatTools";
+import { InviteMemberTool } from "@/ai-popup/AiChatTools";
 import { useState } from "react";
 
 export default function Users() {
