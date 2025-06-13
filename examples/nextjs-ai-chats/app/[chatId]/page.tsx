@@ -55,27 +55,31 @@ function Empty({ chatId }: AiChatComponentsEmptyProps) {
         <div className="flex flex-wrap items-start gap-2">
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => sendMessage("Check the weather in Paris")}
+            onClick={() => sendMessage("How can I use Liveblocks AI Copilots?")}
           >
-            Check weather
+            What's AI Copilots for?
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => sendMessage("Write a story about a brave knight")}
+            onClick={() =>
+              sendMessage("Which components does Liveblocks AI Copilots have?")
+            }
           >
-            Write a story
+            It has components?
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => sendMessage("Explain quantum computing")}
+            onClick={() =>
+              sendMessage("Write a short code sample using <AiChat />")
+            }
           >
-            Explain quantum computing
+            Show me code
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => sendMessage("Plan weekly meals")}
+            onClick={() => sendMessage("Which models does it support?")}
           >
-            Plan weekly meals
+            Which AI models?
           </button>
         </div>
       </div>
