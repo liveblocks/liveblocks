@@ -1,16 +1,21 @@
-import {
-  type AiToolExecuteCallback,
-  type AiToolTypePack,
-  type JsonObject,
-  kInternal,
-  type NoInfr,
-  type ToolResultData,
+import type {
+  AiToolExecuteCallback,
+  AiToolTypePack,
+  JsonObject,
+  NoInfr,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import type { ComponentProps, ReactNode } from "react";
 import { Children, forwardRef, useCallback, useMemo } from "react";
 
 import { Button } from "../_private";
-import { CheckCircleFillIcon, ChevronRightIcon, SpinnerIcon } from "../icons";
+import {
+  CheckCircleFillIcon,
+  ChevronRightIcon,
+  CrossIcon,
+  MinusIcon,
+  SpinnerIcon,
+} from "../icons";
 import {
   type AiToolConfirmationOverrides,
   type GlobalOverrides,
@@ -68,12 +73,12 @@ export type AiToolInspectorProps = ComponentProps<"div">;
  */
 export interface AiToolConfirmationProps<
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > extends ComponentProps<"div"> {
   types?: NoInfr<AiToolTypePack<A, R>>;
   args?: A;
   confirm: AiToolExecuteCallback<A, R>;
-  cancel: AiToolExecuteCallback<A, R>;
+  cancel?: AiToolExecuteCallback<A, R>;
   variant?: "default" | "destructive";
   overrides?: Partial<GlobalOverrides & AiToolConfirmationOverrides>;
 }
@@ -103,7 +108,7 @@ function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
 function AiToolConfirmation<
   TPack extends AiToolTypePack,
   A extends JsonObject = TPack["A"],
-  R extends ToolResultData = TPack["R"],
+  R extends JsonObject = TPack["R"],
 >({
   children,
   variant = "default",
@@ -123,13 +128,19 @@ function AiToolConfirmation<
 
   const onConfirmClick = useCallback(async () => {
     if (enabled) {
-      respond(await confirm(args as A, context));
+      const result = await confirm(args as A, context);
+      respond(result ?? undefined);
     }
   }, [enabled, args, confirm, respond, context]);
 
   const onCancelClick = useCallback(async () => {
     if (enabled) {
-      respond(await cancel(args as A, context));
+      if (cancel === undefined) {
+        respond({ cancel: true });
+      } else {
+        const result = await cancel(args as A, context);
+        respond(result ?? undefined);
+      }
     }
   }, [enabled, args, cancel, respond, context]);
 
@@ -204,6 +215,7 @@ export const AiTool = Object.assign(
     ) => {
       const {
         stage,
+        result,
         name,
         [kInternal]: { execute },
       } = useAiToolInvocationContext();
@@ -254,7 +266,13 @@ export const AiTool = Object.assign(
             ) : null}
             <div className="lb-ai-tool-header-status">
               {stage === "executed" ? (
-                <CheckCircleFillIcon />
+                result.type === "success" ? (
+                  <CheckCircleFillIcon />
+                ) : result.type === "error" ? (
+                  <CrossIcon />
+                ) : result.type === "cancelled" ? (
+                  <MinusIcon />
+                ) : null
               ) : execute !== undefined ? (
                 // Only show a spinner if the tool has an `execute` method.
                 <SpinnerIcon />

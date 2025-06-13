@@ -1,12 +1,11 @@
-import {
-  type AiChatMessage,
-  type AiToolInvocationPart,
-  type AiToolInvocationProps,
-  type JsonObject,
-  kInternal,
-  type ToolResultData,
-  type ToolResultResponse,
+import type {
+  AiChatMessage,
+  AiToolInvocationPart,
+  AiToolInvocationProps,
+  JsonObject,
+  ToolResultResponse,
 } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import { useSignal } from "@liveblocks/react/_private";
 import { type FunctionComponent, useCallback, useMemo } from "react";
@@ -15,7 +14,7 @@ import { AiToolInvocationContext } from "./contexts";
 
 type OpaqueAiToolInvocationProps = AiToolInvocationProps<
   JsonObject,
-  ToolResultData
+  JsonObject
 >;
 
 function StableRenderFn(props: {
@@ -44,7 +43,7 @@ export function AiMessageToolInvocation({
   const tool = useSignal(ai.signals.getToolΣ(part.name, message.chatId));
 
   const respond = useCallback(
-    (result: ToolResultResponse) => {
+    (result: ToolResultResponse | undefined) => {
       if (part.stage === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
@@ -58,7 +57,7 @@ export function AiMessageToolInvocation({
           message.chatId,
           message.id,
           part.invocationId,
-          result.data
+          result ?? { data: {} }
           // TODO Pass in AiGenerationOptions here?
         );
       }

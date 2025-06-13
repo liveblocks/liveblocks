@@ -333,7 +333,7 @@ export type {
   CopilotId,
   Cursor,
   MessageId,
-  ToolResultData,
+  RenderableToolResultResponse,
   ToolResultResponse,
 } from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";

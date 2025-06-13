@@ -183,7 +183,6 @@ export default function Page() {
                           for (const title of titles) {
                             addTodo(title);
                           }
-                          return { data: { ok: true } };
                         },
                       }),
 
@@ -202,7 +201,6 @@ export default function Page() {
                         },
                         execute: ({ id }) => {
                           toggleTodo(id);
-                          return { data: { ok: true } };
                         },
                         render: () => (
                           <AiTool>
@@ -211,10 +209,7 @@ export default function Page() {
                         ),
                       }),
 
-                      deleteTodos: defineAiTool<
-                        | { ok: true; deletedTitles: string[] }
-                        | { ok: false; reason: string; hint: string }
-                      >()({
+                      deleteTodos: defineAiTool<{ deletedTitles: string[] }>()({
                         description: "Deletes one or more todo items by ID",
                         parameters: {
                           type: "object",
@@ -229,7 +224,8 @@ export default function Page() {
                           additionalProperties: false,
                         },
 
-                        render: ({ stage, result, types }) => (
+                        // TODO Add followUp: true here later?
+                        render: ({ result, types }) => (
                           <AiTool>
                             <AiTool.Confirmation
                               types={types}
@@ -240,36 +236,25 @@ export default function Page() {
                                   .map((todo) => todo.title);
 
                                 deleteTodos(ids);
-                                return { data: { ok: true, deletedTitles } };
-                              }}
-                              cancel={() => {
-                                return {
-                                  data: {
-                                    ok: false,
-                                    reason: "deny",
-                                    hint: "Do not respond with further text",
-                                  },
-                                };
+                                return { data: { deletedTitles } };
                               }}
                             >
                               Okay to delete?
                             </AiTool.Confirmation>
 
-                            {stage === "executed" ? (
-                              result.ok ? (
-                                <div>
-                                  Deleted:
-                                  <ul>
-                                    {result.deletedTitles.map(
-                                      (title, i: number) => (
-                                        <li key={i}>{title}</li>
-                                      )
-                                    )}
-                                  </ul>
-                                </div>
-                              ) : (
-                                <div>The request was denied</div>
-                              )
+                            {result?.data ? (
+                              <div>
+                                Deleted:
+                                <ul>
+                                  {result.data.deletedTitles?.map(
+                                    (title, i: number) => (
+                                      <li key={i}>{title}</li>
+                                    )
+                                  )}
+                                </ul>
+                              </div>
+                            ) : result?.cancelled ? (
+                              <div>The request was denied</div>
                             ) : null}
                           </AiTool>
                         ),

@@ -20,6 +20,7 @@ import { raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
+  OptionalTupleUnless,
   Polyfills,
   StaticSessionInfo,
   TimeoutID,
@@ -52,7 +53,6 @@ import type {
   MessageId,
   ServerAiMsg,
   SetToolResultResponse,
-  ToolResultData,
   ToolResultResponse,
 } from "./types/ai";
 import { appendDelta } from "./types/ai";
@@ -78,7 +78,7 @@ const DEFAULT_REQUEST_TIMEOUT = 4_000;
 
 export type AiToolTypePack<
   A extends JsonObject = JsonObject,
-  R extends ToolResultData = ToolResultData,
+  R extends JsonObject = JsonObject,
 > = {
   A: A;
   R: R;
@@ -96,10 +96,12 @@ export type SetToolResultOptions = Omit<
 
 export type AiToolInvocationProps<
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > = Resolve<
   DistributiveOmit<AiToolInvocationPart<A, R>, "type"> & {
-    respond: (result: ToolResultResponse<R>) => void;
+    respond: (
+      ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
+    ) => void;
 
     /**
      * These are the inferred types for your tool call which you can pass down
@@ -126,7 +128,7 @@ export type AiToolInvocationProps<
 
 export type AiOpaqueToolInvocationProps = AiToolInvocationProps<
   JsonObject,
-  ToolResultData
+  JsonObject
 >;
 
 export type AiToolExecuteContext = {
@@ -136,16 +138,18 @@ export type AiToolExecuteContext = {
 
 export type AiToolExecuteCallback<
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > = (
   args: A,
   context: AiToolExecuteContext
-) => Awaitable<ToolResultResponse<R>>;
+) => Record<string, never> extends R
+  ? Awaitable<ToolResultResponse<R> | undefined | void>
+  : Awaitable<ToolResultResponse<R>>;
 
 export type AiToolDefinition<
   S extends JSONObjectSchema7,
   A extends JsonObject,
-  R extends ToolResultData,
+  R extends JsonObject,
 > = {
   description?: string;
   parameters: S;
@@ -156,7 +160,7 @@ export type AiToolDefinition<
 export type AiOpaqueToolDefinition = AiToolDefinition<
   JSONObjectSchema7,
   JsonObject,
-  ToolResultData
+  JsonObject
 >;
 
 /**
@@ -164,7 +168,7 @@ export type AiOpaqueToolDefinition = AiToolDefinition<
  * This function has no runtime implementation and is only needed to make it
  * possible for TypeScript to infer types.
  */
-export function defineAiTool<R extends ToolResultData>() {
+export function defineAiTool<R extends JsonObject>() {
   return <const S extends JSONObjectSchema7>(
     def: AiToolDefinition<
       S,
@@ -388,7 +392,7 @@ function createStore_forChatMessages(
     chatId: string,
     messageId: MessageId,
     invocationId: string,
-    result: ToolResultData,
+    result: ToolResultResponse,
     options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>
 ) {
@@ -535,14 +539,15 @@ function createStore_forChatMessages(
             .getToolΣ(toolCall.name, message.chatId)
             .get();
 
-          const respondSync = <R extends ToolResultData>(
-            result: ToolResultResponse<R>
+          const respondSync = <R extends JsonObject>(
+            ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
           ) => {
+            const [result] = args;
             setToolResult(
               message.chatId,
               message.id,
               toolCall.invocationId,
-              result.data
+              result ?? { data: {} }
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
               console.error(
@@ -558,7 +563,7 @@ function createStore_forChatMessages(
                 name: toolCall.name,
                 invocationId: toolCall.invocationId,
               });
-              respondSync(result);
+              respondSync(result ?? undefined);
             })().catch((err) => {
               console.error(
                 `Error trying to respond to tool-call: ${String(err)} (in execute())`
@@ -876,7 +881,7 @@ export type Ai = {
     chatId: string,
     messageId: MessageId,
     invocationId: string,
-    result: ToolResultData,
+    result: ToolResultResponse,
     options?: SetToolResultOptions
   ) => Promise<SetToolResultResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
@@ -1230,7 +1235,7 @@ export function createAi(config: AiConfig): Ai {
     chatId: string,
     messageId: MessageId,
     invocationId: string,
-    result: ToolResultData,
+    result: ToolResultResponse,
     options?: SetToolResultOptions
   ): Promise<SetToolResultResponse> {
     const knowledge = context.knowledge.get();
@@ -1361,7 +1366,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v3";
+    url.pathname = "/ai/v4";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

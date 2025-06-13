@@ -6,12 +6,12 @@ import type {
   InferFromSchema,
   Json,
   JsonObject,
-  ToolResultData,
+  RenderableToolResultResponse,
   ToolResultResponse,
 } from "@liveblocks/core";
 import { defineAiTool, kInternal } from "@liveblocks/core";
 import type { JSONSchema7 } from "json-schema";
-import { expectType } from "tsd";
+import { expectError, expectType } from "tsd";
 
 function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
   return x as any;
@@ -461,7 +461,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       (
         args: JsonObject,
         context: { name: string; invocationId: string }
-      ) => Awaitable<ToolResultResponse>
+      ) => Awaitable<ToolResultResponse | undefined | void>
     >(myTool.execute);
   } else {
     expectType<undefined>(myTool.execute);
@@ -478,7 +478,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       invocationId: "tc_abc123",
       partialArgs: {},
       respond: (payload) => {
-        expectType<ToolResultResponse>(payload);
+        expectType<ToolResultResponse | undefined>(payload);
       },
       types: undefined as never,
       ...internal,
@@ -491,7 +491,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       invocationId: "tc_abc123",
       args: { a: 1 },
       respond: (payload) => {
-        expectType<ToolResultResponse>(payload);
+        expectType<ToolResultResponse | undefined>(payload);
       },
       types: undefined as never,
       ...internal,
@@ -503,9 +503,9 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       name: "callMyTool",
       invocationId: "tc_abc123",
       args: { a: 1 },
-      result: { b: 2 },
+      result: { type: "success", data: { b: 2 } },
       respond: (payload) => {
-        expectType<ToolResultResponse>(payload);
+        expectType<ToolResultResponse | undefined>(payload);
       },
       types: undefined as never,
       ...internal,
@@ -555,7 +555,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         return { data: { ok: true } };
       },
       render: ({ stage, partialArgs, args, result, respond }) => {
-        expectType<(payload: ToolResultResponse) => void>(respond);
+        expectType<(payload?: ToolResultResponse) => void>(respond);
 
         expectType<"receiving" | "executing" | "executed">(stage);
         if (stage === "receiving") {
@@ -569,7 +569,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         } else {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
-          expectType<ToolResultData>(result); // <-- This will soon be ToolResultResponse!
+          expectType<RenderableToolResultResponse>(result);
         }
         return null;
       },
@@ -583,7 +583,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         additionalProperties: false,
       },
       render: ({ stage, partialArgs, args, result, respond }) => {
-        expectType<(payload: ToolResultResponse) => void>(respond);
+        expectType<(payload?: ToolResultResponse) => void>(respond);
 
         expectType<"receiving" | "executing" | "executed">(stage);
         if (stage === "receiving") {
@@ -597,7 +597,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
         } else {
           expectType<undefined>(partialArgs);
           expectType<{ bar?: string }>(args);
-          expectType<ToolResultData>(result); // <-- This will soon be ToolResultResponse!
+          expectType<RenderableToolResultResponse>(result);
         }
         return null;
       },
@@ -692,4 +692,66 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       },
     })
   );
+}
+
+{
+  // No type annotation of result type means `undefined` can be responded with
+  defineAiTool()({
+    parameters: { type: "object" },
+    render: ({ respond }) => {
+      expectType<(payload?: ToolResultResponse) => void>(respond);
+      respond();
+      return null;
+    },
+  });
+
+  // Same for execute!
+  defineAiTool()({
+    parameters: { type: "object" },
+    execute: () => {},
+  });
+}
+
+// But the same is no longer true if there is an explicit return type!
+{
+  expectError(
+    defineAiTool<{ foo: string }>()({
+      parameters: { type: "object" },
+      execute: () => {
+        /* cannot be empty, _must_ return `{ foo: string }` */
+      },
+    })
+  );
+
+  defineAiTool<{ foo: string }>()({
+    parameters: { type: "object" },
+    render: ({ respond }) => {
+      expectType<(payload: ToolResultResponse<{ foo: string }>) => void>(
+        respond
+      );
+      expectError(respond(/* missing { foo: string }, so an error */));
+      return null;
+    },
+  });
+}
+
+// However, it's fine again if all fields are optional...!
+{
+  defineAiTool<{ foo?: string }>()({
+    parameters: { type: "object" },
+    execute: () => {
+      /* it's fine to return nothing */
+    },
+  });
+
+  defineAiTool<{ foo?: string }>()({
+    parameters: { type: "object" },
+    render: ({ respond }) => {
+      expectType<(payload?: ToolResultResponse<{ foo?: string }>) => void>(
+        respond
+      );
+      respond();
+      return null;
+    },
+  });
 }

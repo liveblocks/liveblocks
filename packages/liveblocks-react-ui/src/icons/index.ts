@@ -31,6 +31,7 @@ export { LengthenIcon } from "./Lengthen";
 export { ListOrderedIcon } from "./ListOrdered";
 export { ListUnorderedIcon } from "./ListUnordered";
 export { MentionIcon } from "./Mention";
+export { MinusIcon } from "./Minus";
 export { QuestionMarkIcon } from "./QuestionMark";
 export { RedoIcon } from "./Redo";
 export { RestoreIcon } from "./Restore";
