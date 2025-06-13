@@ -44,7 +44,7 @@ export function AiMessageToolInvocation({
   const tool = useSignal(ai.signals.getToolΣ(part.name, message.chatId));
 
   const respond = useCallback(
-    (result: ToolResultResponse) => {
+    (result: ToolResultResponse | undefined) => {
       if (part.stage === "receiving") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
@@ -58,7 +58,7 @@ export function AiMessageToolInvocation({
           message.chatId,
           message.id,
           part.invocationId,
-          result
+          result ?? { data: {} }
           // TODO Pass in AiGenerationOptions here?
         );
       }
