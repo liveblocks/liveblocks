@@ -16,8 +16,8 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  // Get the current user's unique id and info from your database
-  const user = getUser("quinn.elton@example.com");
+  // Get the current user's auth info from your database
+  const user = await getSession(request);
 
   if (!user) {
     return new NextResponse("User not found", { status: 404 });
@@ -35,4 +35,18 @@ export async function POST(request: NextRequest) {
   const { status, body } = await session.authorize();
 
   return new NextResponse(body, { status });
+}
+
+// Imagine this is your auth setup
+async function getSession(request: NextRequest) {
+  // Used to deploy to https://liveblocks.io/examples
+  const { userId } = await request.json();
+
+  const user = getUser("quinn.elton@example.com");
+
+  if (!user) {
+    return null;
+  }
+
+  return { ...user, id: (userId as string) || user.id };
 }
