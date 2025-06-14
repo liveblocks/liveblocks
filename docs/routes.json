@@ -341,6 +341,20 @@
     "title": "Ready-made features",
     "routes": [
       {
+        "title": "AI Copilots",
+        "path": "/ready-made-features/ai-copilots",
+        "routes": [
+          {
+            "title": "Features",
+            "path": "/ready-made-features/ai-copilots/features"
+          },
+          {
+            "title": "Default components",
+            "path": "/ready-made-features/ai-copilots/default-components"
+          }
+        ]
+      },
+      {
         "title": "Comments",
         "path": "/ready-made-features/comments",
         "routes": [
@@ -425,16 +439,6 @@
       {
         "title": "Presence",
         "path": "/ready-made-features/presence"
-      },
-      {
-        "title": "AI Copilots",
-        "path": "/ready-made-features/ai-copilots",
-        "routes": [
-          {
-            "title": "Features",
-            "path": "/ready-made-features/ai-copilots/features"
-          }
-        ]
       }
     ]
   },
