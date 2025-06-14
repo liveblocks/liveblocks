@@ -16,7 +16,7 @@ import {
 type UnreadRepliesEmailProps = {
   company: CompanyInfo;
   room: RoomInfo;
-  comments: Omit<CommentEmailAsReactData, "reactBody">[];
+  comments: CommentEmailAsReactData[];
 };
 
 const previewProps: UnreadRepliesEmailProps = {

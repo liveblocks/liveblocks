@@ -75,24 +75,24 @@ export function Composer({
         placeholder={placeholder}
         className="prose prose-sm min-h-[theme(spacing.9)] max-w-none flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 [&_[data-placeholder]]:opacity-50"
         components={{
-          Mention: ({ userId }) => {
+          Mention: ({ mention }) => {
             return (
               <ComposerPrimitive.Mention className="rounded bg-blue-50 px-1 py-0.5 font-semibold text-blue-500 data-[selected]:bg-blue-500 data-[selected]:text-white">
                 @
-                <Suspense fallback={userId}>
-                  <User userId={userId} />
+                <Suspense fallback={mention.id}>
+                  <User userId={mention.id} />
                 </Suspense>
               </ComposerPrimitive.Mention>
             );
           },
-          MentionSuggestions: ({ userIds }) => {
+          MentionSuggestions: ({ mentions }) => {
             return (
               <ComposerPrimitive.Suggestions className="rounded-lg bg-white p-1 shadow-xl">
                 <ComposerPrimitive.SuggestionsList>
-                  {userIds.map((userId) => (
+                  {mentions.map((mention) => (
                     <ComposerPrimitive.SuggestionsListItem
-                      key={userId}
-                      value={userId}
+                      key={mention.id}
+                      value={mention.id}
                       className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm data-[selected]:bg-gray-100"
                     >
                       <Suspense
@@ -100,10 +100,10 @@ export function Composer({
                           <div className="relative aspect-square w-6 flex-none animate-pulse rounded-full bg-gray-100" />
                         }
                       >
-                        <Avatar userId={userId} className="w-5 flex-none" />
+                        <Avatar userId={mention.id} className="w-5 flex-none" />
                       </Suspense>
-                      <Suspense fallback={userId}>
-                        <User userId={userId} />
+                      <Suspense fallback={mention.id}>
+                        <User userId={mention.id} />
                       </Suspense>
                     </ComposerPrimitive.SuggestionsListItem>
                   ))}

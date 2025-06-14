@@ -8,7 +8,7 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import { createInboxNotificationId } from "@liveblocks/core";
+import { assertNever, createInboxNotificationId } from "@liveblocks/core";
 import { useRoom, useUser } from "@liveblocks/react";
 import {
   useLayoutEffect,
@@ -99,12 +99,22 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
     }, [setReference, props.clientRect]);
 
     const selectItem = (index: number) => {
-      const item = (suggestions ?? [])[index];
-      if (item) {
-        props.command({
-          id: item,
-          notificationId: createInboxNotificationId(),
-        });
+      const mention = (suggestions ?? [])[index];
+
+      if (!mention) {
+        return;
+      }
+
+      switch (mention.kind) {
+        case "user":
+          props.command({
+            id: mention.id,
+            notificationId: createInboxNotificationId(),
+          });
+          break;
+
+        default:
+          return assertNever(mention.kind, "Unhandled mention kind");
       }
     };
 
@@ -180,25 +190,33 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
         }}
       >
         <div className="lb-tiptap-suggestions-list lb-tiptap-mention-suggestions-list">
-          {suggestions.map((item, index) => (
-            <div
-              className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
-              key={index}
-              role="option"
-              data-highlighted={index === selectedIndex || undefined}
-              onMouseEnter={handleMouseEnter(index)}
-              onClick={handleClick(index)}
-            >
-              <Avatar
-                userId={item}
-                className="lb-tiptap-mention-suggestion-avatar"
-              />
-              <User
-                userId={item}
-                className="lb-tiptap-mention-suggestion-user"
-              />
-            </div>
-          ))}
+          {suggestions.map((mention, index) => {
+            switch (mention.kind) {
+              case "user":
+                return (
+                  <div
+                    className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
+                    key={index}
+                    role="option"
+                    data-highlighted={index === selectedIndex || undefined}
+                    onMouseEnter={handleMouseEnter(index)}
+                    onClick={handleClick(index)}
+                  >
+                    <Avatar
+                      userId={mention.id}
+                      className="lb-tiptap-mention-suggestion-avatar"
+                    />
+                    <User
+                      userId={mention.id}
+                      className="lb-tiptap-mention-suggestion-user"
+                    />
+                  </div>
+                );
+
+              default:
+                return assertNever(mention.kind, "Unhandled mention kind");
+            }
+          })}
         </div>
       </div>
     );

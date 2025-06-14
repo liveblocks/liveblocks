@@ -1,7 +1,7 @@
 import type { ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../protocol/Comments";
 import {
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   stringifyCommentBody,
 } from "../comment-body";
 
@@ -18,7 +18,7 @@ const commentBody: CommentBody = {
         { text: "Hello " },
         { text: "world", bold: true },
         { text: " and " },
-        { type: "mention", id: "chris" },
+        { type: "mention", kind: "user", id: "chris" },
       ],
     },
   ],
@@ -33,7 +33,7 @@ const commentBodyWithMultipleParagraphs: CommentBody = {
         { text: "Hello " },
         { text: "world", italic: true, bold: true },
         { text: " and " },
-        { type: "mention", id: "vincent" },
+        { type: "mention", kind: "user", id: "vincent" },
       ],
     },
     {
@@ -138,14 +138,14 @@ const commentBodyWithMentions: CommentBody = {
       type: "paragraph",
       children: [
         { text: "Hello " },
-        { type: "mention", id: "chris" },
+        { type: "mention", kind: "user", id: "chris" },
         { text: " and " },
-        { type: "mention", id: "vincent" },
+        { type: "mention", kind: "user", id: "vincent" },
       ],
     },
     {
       type: "paragraph",
-      children: [{ type: "mention", id: "nimesh" }],
+      children: [{ type: "mention", kind: "user", id: "nimesh" }],
     },
   ],
 };
@@ -158,12 +158,12 @@ function resolveUsers({ userIds }: ResolveUsersArgs) {
   });
 }
 
-describe("getMentionedIdsFromCommentBody", () => {
-  test("returns an array of all mentions' IDs", () => {
-    expect(getMentionedIdsFromCommentBody(commentBodyWithMentions)).toEqual([
-      "chris",
-      "vincent",
-      "nimesh",
+describe("getMentionsFromCommentBody", () => {
+  test("returns an array of all mentions", () => {
+    expect(getMentionsFromCommentBody(commentBodyWithMentions)).toEqual([
+      { type: "mention", kind: "user", id: "chris" },
+      { type: "mention", kind: "user", id: "vincent" },
+      { type: "mention", kind: "user", id: "nimesh" },
     ]);
   });
 
@@ -186,9 +186,7 @@ describe("getMentionedIdsFromCommentBody", () => {
       ],
     };
 
-    expect(getMentionedIdsFromCommentBody(commentBodyWithoutMentions)).toEqual(
-      []
-    );
+    expect(getMentionsFromCommentBody(commentBodyWithoutMentions)).toEqual([]);
   });
 });
 
@@ -307,7 +305,7 @@ describe("stringifyCommentBody", () => {
           children: [
             { text: "Hello" },
             { text: " " },
-            { type: "mention", id: "user-0" },
+            { type: "mention", kind: "user", id: "user-0" },
             { text: " " },
             { text: "!" },
           ],

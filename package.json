@@ -7,7 +7,8 @@
     "packages/*",
     "tools/*",
     "schema-lang/*",
-    "e2e/next-sandbox"
+    "e2e/next-sandbox",
+    "e2e/next-ai-kitchen-sink"
   ],
   "scripts": {
     "build": "turbo run build",
@@ -21,6 +22,8 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.3",
     "@types/node": "^18.19.70",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
     "dependency-cruiser": "^16.9.0",
     "prettier": "^3.4.2",
     "publint": "^0.3.6",
@@ -34,6 +37,8 @@
     "node": ">=22.x"
   },
   "overrides": {
-    "@types/node": "$@types/node"
+    "@types/node": "$@types/node",
+    "@types/react": "$@types/react",
+    "@types/react-dom": "$@types/react-dom"
   }
 }

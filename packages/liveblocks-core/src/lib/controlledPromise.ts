@@ -1,3 +1,9 @@
+export type ControlledPromise<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason: unknown) => void;
+};
+
 /**
  * Returns a pair of a Promise, and a resolve function that can be passed
  * around to resolve the promise "from anywhere".
@@ -26,11 +32,7 @@ export function controlledPromise<T>(): [
 /**
  * Drop-in replacement for the ES2024 Promise.withResolvers() API.
  */
-export function Promise_withResolvers<T>(): {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason: unknown) => void;
-} {
+export function Promise_withResolvers<T>(): ControlledPromise<T> {
   const [promise, resolve, reject] = controlledPromise<T>();
   return { promise, resolve, reject };
 }

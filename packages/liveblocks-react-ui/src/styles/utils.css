@@ -1,5 +1,5 @@
-/* Because of `all: unset`, we have to re-define some these values. */
-@mixin button {
+/* Because of `all: unset`, we have to re-define some of these values. */
+@mixin button-base {
   all: unset;
   position: relative;
   box-sizing: inherit;
@@ -8,8 +8,13 @@
   user-select: none;
   transition-timing-function: var(--lb-transition-easing);
   transition-duration: var(--lb-transition-duration);
-  transition-property: background, color, opacity;
   -webkit-tap-highlight-color: transparent;
+}
+
+@mixin button {
+  @include button-base;
+
+  transition-property: background, color, opacity;
 
   &::after {
     content: "";

@@ -1,5 +1,69 @@
 ## vNEXT (not yet published)
 
+## v3.0.0
+
+Liveblocks 3.0 is our third major release, focusing on our newest product,
+[AI Copilots](https://liveblocks.io/blog/meet-liveblocks-3-0-the-fastest-way-to-let-your-users-collaborate-with-ai-in-your-product).
+We’ve used this as an opportunity to tidy up some of our existing APIs, ensuring
+consistency throughout our offering.
+
+For full upgrade instructions and codemods, see the
+[3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
+
+### All packages
+
+- Remove deprecated APIs, see
+  [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
+  in the upgrade guide to learn more.
+
+### `@liveblocks/react`
+
+- Introduce hooks and APIs for AI Copilots: `useAiChats`, `useAiChat`,
+  `useDeleteAiChat`,`useSendAiMessage`, `RegisterAiTool`, `RegisterAiKnowledge`,
+  etc.
+- Rename `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` to
+  `UPDATE_NOTIFICATION_SETTINGS_ERROR` when using
+  [`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
+  or
+  [`useUpdateNotificationSettings`](/docs/api-reference/liveblocks-react#useUpdateNotificationSettings).
+
+### `@liveblocks/react-ui`
+
+- Introduce pre-built components for AI Copilots: `AiChat`, `AiTool`, etc.
+- The `onMentionClick` prop on `Thread` and `Comment` now receives a
+  `MentionData` object instead of a `userId` string.
+- The `Mention` component on the `Comment.Body` and `Composer.Editor` primitives
+  now receives a `mention` prop instead of a `userId` one.
+- The `MentionSuggestions` component on the `Composer.Editor` primitive now
+  receives a `mentions` prop instead of a `userIds` one, and the
+  `selectedUserId` prop has been renamed to `selectedMentionId`.
+- Rename `LiveblocksUIConfig` to `LiveblocksUiConfig` for consistency with other
+  Liveblocks APIs.
+
+### `@liveblocks/emails`
+
+- Remove deprecated `htmlBody`/`reactBody` properties from
+  `prepareThreadNotificationEmailAsHtml`/`prepareThreadNotificationEmailAsReact`,
+  use `body` instead.
+- Remove `htmlContent`/`reactContent` properties from
+  `prepareTextMentionNotificationEmailAsHtml`/`prepareTextMentionNotificationEmailAsReact`,
+  use `content` instead.
+- The `prepareTextMentionNotificationEmailAsReact` and
+  `prepareTextMentionNotificationEmailAsHtml` functions’ returned data changed
+  slightly:
+  - The `id` property is now named `textMentionId`, it refers to the mention’s
+    Text Mention ID, not the user ID used for the mention
+  - The `id` property now refers to the mention’s ID, as in the user ID used for
+    the mention
+- The `element` prop received by the `Mention` component in
+  `prepareTextMentionNotificationEmailAsReact` now contains an `id` property
+  instead of `userId`, and a new `kind` property to indicate the mention’s kind.
+
+### `@liveblocks/client` and `@liveblocks/node`
+
+- The `getMentionedIdsFromCommentBody` utility has been replaced by
+  `getMentionsFromCommentBody`.
+
 ## v2.24.3
 
 ### `@liveblocks/react` and `@liveblocks/react-ui`

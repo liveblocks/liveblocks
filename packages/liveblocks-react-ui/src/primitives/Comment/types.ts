@@ -1,4 +1,4 @@
-import type { CommentBody } from "@liveblocks/core";
+import type { CommentBody, MentionData } from "@liveblocks/core";
 import type { ComponentType, ReactNode } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
@@ -7,9 +7,9 @@ export type CommentMentionProps = ComponentPropsWithSlot<"span">;
 
 export type CommentBodyMentionProps = {
   /**
-   * The mention's user ID.
+   * The mention to display.
    */
-  userId: string;
+  mention: MentionData;
 };
 
 export type CommentLinkProps = ComponentPropsWithSlot<"a">;
@@ -42,8 +42,7 @@ export interface CommentBodyComponents {
   Link: ComponentType<CommentBodyLinkProps>;
 }
 
-export interface CommentBodyProps
-  extends Omit<ComponentPropsWithSlot<"div">, "children"> {
+export interface CommentBodyProps extends ComponentPropsWithSlot<"div"> {
   /**
    * The comment body to display.
    * If not defined, the component will render `null`.

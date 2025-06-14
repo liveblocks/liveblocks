@@ -4,6 +4,12 @@ import type { BaseMetadata, CommentBody } from "../protocol/Comments";
 import type { Patchable } from "./Patchable";
 
 // All possible error originating from using Presence, Storage, or Yjs
+
+type AiConnectionErrorContext = {
+  type: "AI_CONNECTION_ERROR";
+  code: -1 | 4001 | (number & {}); // eslint-disable-line @typescript-eslint/ban-types
+};
+
 type RoomConnectionErrorContext = {
   type: "ROOM_CONNECTION_ERROR";
   code: -1 | 4001 | 4005 | 4006 | (number & {}); // eslint-disable-line @typescript-eslint/ban-types
@@ -74,23 +80,18 @@ type CommentsOrNotificationsErrorContext =
         | "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR"
         | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR";
     }
-  // TODO: Deprecated, remove this once "room notification settings" hooks are removed
-  | {
-      type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
-      roomId: string;
-    }
   | {
       type: "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR";
       roomId: string;
     }
-  // TODO: Rename this to "UPDATE_NOTIFICATION_SETTINGS_ERROR" once the current "UPDATE_NOTIFICATION_SETTINGS_ERROR" is removed
   | {
-      type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR";
+      type: "UPDATE_NOTIFICATION_SETTINGS_ERROR";
     };
 
 export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
-  | CommentsOrNotificationsErrorContext // from Comments or Notifications
+  | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
+  | AiConnectionErrorContext // from AI
 >;
 
 export class LiveblocksError extends Error {
@@ -107,7 +108,7 @@ export class LiveblocksError extends Error {
     return this.context.roomId;
   }
 
-  /** @deprecated Prefer using `context.code` instead, to enable type narrowing */
+  /** @internal Use `context.code` instead, to enable type narrowing */
   get code(): LiveblocksErrorContext["code"] {
     return this.context.code;
   }
@@ -131,11 +132,18 @@ export class LiveblocksError extends Error {
 function defaultMessageFromContext(context: LiveblocksErrorContext): string {
   // prettier-ignore
   switch (context.type) {
-    case "ROOM_CONNECTION_ERROR": {
+      case "ROOM_CONNECTION_ERROR": {
+        switch (context.code) {
+          case 4001: return "Not allowed to connect to the room";
+          case 4005: return "Room is already full";
+          case 4006: return "Kicked out of the room, because the room ID changed";
+          default:   return "Could not connect to the room";
+        }
+      }
+
+    case "AI_CONNECTION_ERROR": {
       switch (context.code) {
-        case 4001: return "Not allowed to connect to the room";
-        case 4005: return "Room is already full";
-        case 4006: return "Kicked out of the room, because the room ID changed";
+        case 4001: return "Not allowed to connect to ai";
         default:   return "Could not connect to the room";
       }
     }
@@ -156,9 +164,8 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "DELETE_INBOX_NOTIFICATION_ERROR": return "Could not delete inbox notification";
     case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR": return "Could not mark all inbox notifications as read";
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
-    case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
     case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
-    case "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
+    case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
 
     default:
       return assertNever(context, "Unhandled case");

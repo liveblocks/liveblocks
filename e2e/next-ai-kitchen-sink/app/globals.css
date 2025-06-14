@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@import "./typography.css";
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-ui/styles/dark/media-query.css";
+
+.lb-ai-chat {
+  --lb-ai-chat-container-width: 896px;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}

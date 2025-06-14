@@ -8,12 +8,8 @@ import type {
 } from "@liveblocks/core";
 import { HttpError, nanoid, Permission } from "@liveblocks/core";
 import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
-import {
-  type ResponseResolver,
-  rest,
-  type RestContext,
-  type RestRequest,
-} from "msw";
+import type { ResponseResolver, RestContext, RestRequest } from "msw";
+import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";

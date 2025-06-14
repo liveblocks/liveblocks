@@ -476,7 +476,7 @@ test.describe("Composer", () => {
       const output = await getOutputJson(page);
       expect(output?.body.content[0].children).toEqual([
         { text: "Hello " },
-        { type: "mention", id: "user-3" },
+        { type: "mention", kind: "user", id: "user-3" },
         { text: " !" },
       ]);
     });
@@ -511,7 +511,7 @@ test.describe("Composer", () => {
       const output = await getOutputJson(page);
       expect(output?.body.content[0].children).toEqual([
         { text: "" },
-        { type: "mention", id: "user-2" },
+        { type: "mention", kind: "user", id: "user-2" },
         { text: " " },
       ]);
     });

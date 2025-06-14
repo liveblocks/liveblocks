@@ -60,9 +60,9 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
       ]
     );
 
-    expect(result.email.thread).toBe(true);
-    expect(result.email.textMention).toBe(false);
-    expect(result.email.$fileUploaded).toBe(true);
+    expect(result.email!.thread).toBe(true);
+    expect(result.email!.textMention).toBe(false);
+    expect(result.email!.$fileUploaded).toBe(true);
     expect(result).not.toBe(defaultSettings); // Check immutability
   });
 
@@ -133,9 +133,9 @@ describe("applyOptimisticUpdates_forNotificationSettings", () => {
       ]
     );
 
-    expect(result.email.thread).toBe(true);
-    expect(result.email.textMention).toBe(false);
-    expect(result.email.$fileUploaded).toBe(false);
+    expect(result.email!.thread).toBe(true);
+    expect(result.email!.textMention).toBe(false);
+    expect(result.email!.$fileUploaded).toBe(false);
   });
 
   it("should handle empty channel updates", () => {

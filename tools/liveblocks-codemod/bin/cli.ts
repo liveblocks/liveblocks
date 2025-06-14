@@ -52,6 +52,10 @@ const TRANSFORMER_INQUIRER_CHOICES = [
     name: 'rename-notification-settings: Renames "room notification settings" (types, hooks, methods, etc.) to "room subscription settings" and "user notification settings" to "notification settings", and updates all imports and usages accordingly.',
     value: "rename-notification-settings",
   },
+  {
+    name: "liveblocks-ui-config: Renames `LiveblocksUIConfig` to `LiveblocksUiConfig`.",
+    value: "liveblocks-ui-config",
+  },
 ];
 
 export const jscodeshiftExecutable = require.resolve(".bin/jscodeshift");

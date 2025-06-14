@@ -8,15 +8,13 @@ export type { ResolveRoomInfoArgs } from "./lib/types";
 export type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
-  TextEditorContainerComponentProps,
-  TextEditorMentionComponentProps,
-  TextEditorTextComponentProps,
-} from "./liveblocks-text-editor";
-export type {
   MentionEmailAsHtmlData,
   MentionEmailAsReactData,
   PrepareTextMentionNotificationEmailAsHtmlOptions,
   PrepareTextMentionNotificationEmailAsReactOptions,
+  TextEditorContainerComponentProps,
+  TextEditorMentionComponentProps,
+  TextEditorTextComponentProps,
   TextMentionNotificationEmailDataAsHtml,
   TextMentionNotificationEmailDataAsReact,
 } from "./text-mention-notification";

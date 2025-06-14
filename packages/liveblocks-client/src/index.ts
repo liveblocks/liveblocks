@@ -58,7 +58,6 @@ export type {
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
   Room,
-  RoomNotificationSettings,
   RoomSubscriptionSettings,
   Status,
   StorageStatus,
@@ -69,11 +68,11 @@ export type {
   ToImmutable,
   UploadAttachmentOptions,
   User,
-  UserNotificationSettings,
 } from "@liveblocks/core";
 export {
   createClient,
-  getMentionedIdsFromCommentBody,
+  defineAiTool,
+  getMentionsFromCommentBody,
   isNotificationChannelEnabled,
   LiveblocksError,
   LiveList,

@@ -1686,30 +1686,6 @@ function Editor() {
 }
 ```
 
-### useEditorStatus
-
-<Banner title="Deprecated">
-
-Deprecated. Starting with 2.12.0, we recommend using [`useSyncStatus`][] instead
-for tracking sync status, because it will reflect sync status of all parts of
-Liveblocks, not just Storage.
-
-</Banner>
-
-Returns the current editor status.
-
-```ts
-import { useEditorStatus } from "@liveblocks/react-lexical";
-
-const status = useEditorStatus();
-```
-
-The possible values are:
-
-- `not-loaded`: Initial editor state when entering the room.
-- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
-- `synchronized`: The editor state is sync with Liveblocks servers.
-
 ### useIsThreadActive
 
 Accepts a thread id and returns whether the thread annotation for this thread is
@@ -1859,6 +1835,32 @@ import "@liveblocks/react-lexical/styles.css";
 Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
 learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
+
+## Deprecated
+
+### useEditorStatus
+
+<Banner title="Deprecated">
+
+This is no longer supported. Starting with 2.12.0, we recommend using
+[`useSyncStatus`][] instead for tracking sync status, because it will reflect
+sync status of all parts of Liveblocks, not just Storage.
+
+</Banner>
+
+Returns the current editor status.
+
+```ts
+import { useEditorStatus } from "@liveblocks/react-lexical";
+
+const status = useEditorStatus();
+```
+
+The possible values are:
+
+- `not-loaded`: Initial editor state when entering the room.
+- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
+- `synchronized`: The editor state is sync with Liveblocks servers.
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
 [`LexicalComposer`]: https://lexical.dev/docs/react/plugins

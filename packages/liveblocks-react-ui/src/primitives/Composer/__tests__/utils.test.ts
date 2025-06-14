@@ -18,7 +18,7 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
               { text: "Hello " },
               { text: "world", bold: true },
               { text: " and " },
-              { type: "mention", id: "chris" },
+              { type: "mention", kind: "user", id: "chris" },
             ],
           },
         ],
@@ -40,6 +40,7 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
             },
             {
               type: "mention",
+              kind: "user",
               id: "chris",
               children: [
                 {
@@ -64,7 +65,7 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
               { text: "Hello " },
               { text: "world", italic: true, bold: true },
               { text: " and " },
-              { type: "mention", id: "vincent" },
+              { type: "mention", kind: "user", id: "vincent" },
             ],
           },
           {
@@ -106,6 +107,7 @@ const commentBodyToComposerBodyFixtures: [string, CommentBody, ComposerBody][] =
             },
             {
               type: "mention",
+              kind: "user",
               id: "vincent",
               children: [
                 {
@@ -295,6 +297,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
             },
             {
               type: "mention",
+              kind: "user",
               id: "chris",
               children: [
                 {
@@ -315,7 +318,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
               { text: "Hello " },
               { text: "world", bold: true },
               { text: " and " },
-              { type: "mention", id: "chris" },
+              { type: "mention", kind: "user", id: "chris" },
             ],
           },
         ],
@@ -342,6 +345,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
             },
             {
               type: "mention",
+              kind: "user",
               id: "vincent",
               children: [
                 {
@@ -390,7 +394,7 @@ const composerBodyToCommentBodyFixtures: [string, ComposerBody, CommentBody][] =
               { text: "Hello " },
               { text: "world", italic: true, bold: true },
               { text: " and " },
-              { type: "mention", id: "vincent" },
+              { type: "mention", kind: "user", id: "vincent" },
             ],
           },
           {

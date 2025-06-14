@@ -18,6 +18,7 @@ import type { DateToString } from "./lib/DateToString";
 import { DefaultMap } from "./lib/DefaultMap";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
+import type { Signal } from "./lib/signals";
 import { stringifyOrLog as stringify } from "./lib/stringify";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
@@ -281,6 +282,21 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 
   getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
+  uploadChatAttachment({
+    chatId,
+    attachment,
+    signal,
+  }: {
+    chatId: string;
+    attachment: { id: string; file: File };
+    signal?: AbortSignal;
+  }): Promise<void>;
+
+  getOrCreateChatAttachmentUrlsStore(
+    chatId: string
+  ): BatchStore<string, string>;
+  getChatAttachmentUrl(options: { attachmentId: string }): Promise<string>;
+
   // Text editor
   createTextMention({
     roomId,
@@ -470,10 +486,12 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
 export function createApiClient<M extends BaseMetadata>({
   baseUrl,
   authManager,
+  currentUserId,
   fetchPolyfill,
 }: {
   baseUrl: string;
   authManager: AuthManager;
+  currentUserId: Signal<string | undefined>;
   fetchPolyfill: typeof fetch;
 }): LiveblocksHttpApi<M> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
@@ -1088,6 +1106,142 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
+   * Attachments (Chat level)
+   * -----------------------------------------------------------------------------------------------*/
+  async function uploadChatAttachment(options: {
+    chatId: string;
+    attachment: {
+      id: string;
+      file: File;
+    };
+    signal?: AbortSignal;
+  }): Promise<void> {
+    const { chatId, attachment, signal } = options;
+    const userId = currentUserId.get();
+    if (userId === undefined) {
+      throw new Error("Attachment upload requires an authenticated user.");
+    }
+    const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+
+    if (options.attachment.file.size <= ATTACHMENT_PART_SIZE) {
+      await httpClient.putBlob(
+        url`/v2/c/chats/${chatId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.file.name)}`,
+        await authManager.getAuthValue({ requestedScope: "comments:read" }),
+        attachment.file,
+        { fileSize: attachment.file.size },
+        { signal }
+      );
+    } else {
+      const multipartUpload = await httpClient.post<{
+        uploadId: string;
+        key: string;
+      }>(
+        url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.file.name)}`,
+        await authManager.getAuthValue({ requestedScope: "comments:read" }),
+        undefined,
+        { signal },
+        { fileSize: attachment.file.size }
+      );
+
+      try {
+        const uploadedParts: { etag: string; number: number }[] = [];
+
+        const parts: { number: number; part: Blob }[] = [];
+        let start = 0;
+        while (start < attachment.file.size) {
+          const end = Math.min(
+            start + ATTACHMENT_PART_SIZE,
+            attachment.file.size
+          );
+          parts.push({
+            number: parts.length + 1,
+            part: attachment.file.slice(start, end),
+          });
+          start = end;
+        }
+
+        uploadedParts.push(
+          ...(await Promise.all(
+            parts.map(async ({ number, part }) => {
+              return await httpClient.putBlob<{
+                etag: string;
+                number: number;
+              }>(
+                url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/${String(number)}`,
+                await authManager.getAuthValue({
+                  requestedScope: "comments:read",
+                }),
+                part,
+                undefined,
+                { signal }
+              );
+            })
+          ))
+        );
+
+        await httpClient.post(
+          url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}/complete`,
+          await authManager.getAuthValue({ requestedScope: "comments:read" }),
+          { parts: uploadedParts.sort((a, b) => a.number - b.number) },
+          { signal }
+        );
+      } catch (err) {
+        try {
+          await httpClient.delete(
+            url`/v2/c/chats/${chatId}/attachments/${attachment.id}/multipart/${multipartUpload.uploadId}`,
+            await authManager.getAuthValue({ requestedScope: "comments:read" })
+          );
+        } catch (err) {
+          // Ignore the error, we are probably offline
+        }
+        throw err;
+      }
+    }
+  }
+
+  const attachmentUrlsBatchStoresByChat = new DefaultMap<
+    string,
+    BatchStore<string, string>
+  >((chatId) => {
+    const batch = new Batch<string, string>(
+      async (batchedAttachmentIds) => {
+        const attachmentIds = batchedAttachmentIds.flat();
+        const { urls } = await httpClient.post<{
+          urls: (string | null)[];
+        }>(
+          url`/v2/c/chats/${chatId}/attachments/presigned-urls`,
+          await authManager.getAuthValue({
+            requestedScope: "comments:read",
+          }),
+          { attachmentIds }
+        );
+
+        return urls.map(
+          (url) =>
+            url ??
+            new Error("There was an error while getting this attachment's URL")
+        );
+      },
+      { delay: 50 }
+    );
+    return createBatchStore(batch);
+  });
+
+  function getOrCreateChatAttachmentUrlsStore(
+    chatId: string
+  ): BatchStore<string, string> {
+    return attachmentUrlsBatchStoresByChat.getOrCreate(chatId);
+  }
+
+  function getChatAttachmentUrl(options: {
+    chatId: string;
+    attachmentId: string;
+  }) {
+    const batch = getOrCreateChatAttachmentUrlsStore(options.chatId).batch;
+    return batch.get(options.attachmentId);
+  }
+
+  /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
   async function getSubscriptionSettings(options: {
@@ -1631,6 +1785,10 @@ export function createApiClient<M extends BaseMetadata>({
     getAttachmentUrl,
     uploadAttachment,
     getOrCreateAttachmentUrlsStore,
+    // User attachments
+    uploadChatAttachment,
+    getOrCreateChatAttachmentUrlsStore,
+    getChatAttachmentUrl,
     // Room storage
     streamStorage,
     sendMessages,

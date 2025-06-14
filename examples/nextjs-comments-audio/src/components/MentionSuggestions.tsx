@@ -9,13 +9,13 @@ import { Avatar } from "./Avatar";
 import { User } from "./User";
 
 export function MentionSuggestions({
-  userIds,
+  mentions,
 }: ComposerEditorMentionSuggestionsProps) {
   return (
     <Composer.Suggestions className="p-1 bg-white border border-neutral-200 shadow-sm rounded-lg">
       <Composer.SuggestionsList>
-        {userIds.map((userId) => (
-          <MentionSuggestion key={userId} userId={userId} />
+        {mentions.map((mention) => (
+          <MentionSuggestion key={mention.id} userId={mention.id} />
         ))}
       </Composer.SuggestionsList>
     </Composer.Suggestions>

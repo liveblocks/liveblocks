@@ -4,6 +4,15 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
+export type {
+  AiChatComponents,
+  AiChatComponentsEmptyProps,
+  AiChatComponentsLoadingProps,
+  AiChatProps,
+} from "./components/AiChat";
+export { AiChat } from "./components/AiChat";
+export type { AiToolIconProps, AiToolProps } from "./components/AiTool";
+export { AiTool } from "./components/AiTool";
 export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";
@@ -28,7 +37,7 @@ export type { InboxNotificationListProps } from "./components/InboxNotificationL
 export { InboxNotificationList } from "./components/InboxNotificationList";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
-export { LiveblocksUIConfig } from "./config";
+export { LiveblocksUiConfig } from "./config";
 export * as Icon from "./icon";
 export type {
   CommentOverrides,

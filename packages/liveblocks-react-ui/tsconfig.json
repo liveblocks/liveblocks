@@ -4,5 +4,12 @@
   "compilerOptions": {
     "lib": ["dom", "es2022"]
   },
-  "include": ["primitives", "plugins", "src", "styles", "rollup.config.js"]
+  "include": [
+    "_private",
+    "primitives",
+    "plugins",
+    "src",
+    "styles",
+    "rollup.config.js"
+  ]
 }

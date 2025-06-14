@@ -7,7 +7,13 @@ import { ChevronDownIcon } from "../../icons/ChevronDown";
 import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {
-  variant?: "default" | "toolbar" | "outline" | "primary" | "secondary";
+  variant?:
+    | "default"
+    | "toolbar"
+    | "outline"
+    | "primary"
+    | "secondary"
+    | "destructive";
   size?: "default" | "large";
   disableable?: boolean;
   icon?: ReactNode;

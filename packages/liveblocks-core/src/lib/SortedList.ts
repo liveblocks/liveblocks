@@ -40,7 +40,14 @@ export class SortedList<T> {
     this.#data = alreadySortedList;
   }
 
-  public static from<T>(arr: T[], lt: (a: T, b: T) => boolean): SortedList<T> {
+  public static with<T>(lt: (a: T, b: T) => boolean): SortedList<T> {
+    return SortedList.fromAlreadySorted([], lt);
+  }
+
+  public static from<T>(
+    arr: readonly T[],
+    lt: (a: T, b: T) => boolean
+  ): SortedList<T> {
     const sorted = new SortedList([], lt);
     for (const item of arr) {
       sorted.add(item);
@@ -71,9 +78,44 @@ export class SortedList<T> {
   }
 
   /**
+   * Removes all values from the sorted list, making it empty again.
+   * Returns whether the list was mutated or not.
+   */
+  clear(): boolean {
+    const hadData = this.#data.length > 0;
+    this.#data.length = 0;
+    return hadData;
+  }
+
+  /**
+   * Removes the first value matching the predicate.
+   * Returns whether the list was mutated or not.
+   */
+  removeBy(
+    predicate: (item: T) => boolean,
+    limit: number = Number.POSITIVE_INFINITY
+  ): boolean {
+    let deleted = 0;
+    for (let i = 0; i < this.#data.length; i++) {
+      if (predicate(this.#data[i])) {
+        this.#data.splice(i, 1);
+        deleted++;
+        if (deleted >= limit) {
+          break;
+        } else {
+          i--;
+        }
+      }
+    }
+    return deleted > 0;
+  }
+
+  /**
    * Removes the given value from the sorted list, if it exists. The given
    * value must be `===` to one of the list items. Only the first entry will be
    * removed if the element exists in the sorted list multiple times.
+   *
+   * Returns whether the list was mutated or not.
    */
   remove(value: T): boolean {
     const idx = this.#data.indexOf(value);
@@ -82,6 +124,10 @@ export class SortedList<T> {
       return true;
     }
     return false;
+  }
+
+  at(index: number): T | undefined {
+    return this.#data[index];
   }
 
   get length(): number {
@@ -96,7 +142,73 @@ export class SortedList<T> {
     }
   }
 
+  // XXXX If we keep this, add unit tests. Or remove it.
+  *findAllRight(
+    predicate: (value: T, index: number) => unknown
+  ): IterableIterator<T> {
+    for (let i = this.#data.length - 1; i >= 0; i--) {
+      const item = this.#data[i];
+      if (predicate(item, i)) {
+        yield item;
+      }
+    }
+  }
+
   [Symbol.iterator](): IterableIterator<T> {
     return this.#data[Symbol.iterator]();
+  }
+
+  *iterReversed(): IterableIterator<T> {
+    for (let i = this.#data.length - 1; i >= 0; i--) {
+      yield this.#data[i];
+    }
+  }
+
+  /** Finds the leftmost item that matches the predicate. */
+  find(
+    predicate: (value: T, index: number) => unknown,
+    start?: number
+  ): T | undefined {
+    const idx = this.findIndex(predicate, start);
+    return idx > -1 ? this.#data.at(idx)! : undefined; // eslint-disable-line no-restricted-syntax
+  }
+
+  /** Finds the leftmost index that matches the predicate. */
+  findIndex(
+    predicate: (value: T, index: number) => unknown,
+    start = 0
+  ): number {
+    for (let i = Math.max(0, start); i < this.#data.length; i++) {
+      if (predicate(this.#data[i], i)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /** Finds the rightmost item that matches the predicate. */
+  findRight(
+    predicate: (value: T, index: number) => unknown,
+    start?: number
+  ): T | undefined {
+    const idx = this.findIndexRight(predicate, start);
+    return idx > -1 ? this.#data.at(idx)! : undefined; // eslint-disable-line no-restricted-syntax
+  }
+
+  /** Finds the rightmost index that matches the predicate. */
+  findIndexRight(
+    predicate: (value: T, index: number) => unknown,
+    start = this.#data.length - 1
+  ): number {
+    for (let i = Math.min(start, this.#data.length - 1); i >= 0; i--) {
+      if (predicate(this.#data[i], i)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  get rawArray(): readonly T[] {
+    return this.#data;
   }
 }

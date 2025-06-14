@@ -100,3 +100,16 @@ Adds an array to empty `LiveList` constructors.
 ```shell
 npx @liveblocks/codemod@latest live-list-constructor
 ```
+
+### 3.0 (breaking changes)
+
+See the [upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0) to
+learn more about the changes.
+
+#### `liveblocks-ui-config`
+
+Renames `LiveblocksUIConfig` to `LiveblocksUiConfig`.
+
+```shell
+npx @liveblocks/codemod@latest liveblocks-ui-config
+```

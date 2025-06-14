@@ -4,7 +4,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { Children, forwardRef, useRef } from "react";
 
 import { classNames } from "../utils/class-names";
-import { useVisibleCallback } from "../utils/use-visible";
+import { useIntersectionCallback } from "../utils/use-visible";
 
 export interface InboxNotificationListProps
   extends ComponentPropsWithoutRef<"ol"> {
@@ -26,9 +26,17 @@ function ReachEndMarker({
 }) {
   const markerRef = useRef<HTMLDivElement>(null);
 
-  useVisibleCallback(markerRef, onReachEnd, {
-    enabled,
-  });
+  useIntersectionCallback(
+    markerRef,
+    (isIntersecting) => {
+      if (isIntersecting) {
+        onReachEnd();
+      }
+    },
+    {
+      enabled,
+    }
+  );
 
   return <div ref={markerRef} style={{ height: 0 }} />;
 }

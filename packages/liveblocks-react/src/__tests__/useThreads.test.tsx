@@ -15,12 +15,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { addSeconds } from "date-fns";
-import {
-  type ResponseResolver,
-  rest,
-  type RestContext,
-  type RestRequest,
-} from "msw";
+import type { ResponseResolver, RestContext, RestRequest } from "msw";
+import { rest } from "msw";
 import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
 import { createContext, Suspense, useContext, useState } from "react";

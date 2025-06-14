@@ -17,6 +17,17 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
  */
 
 export type {
+  AiOpaqueToolDefinition,
+  AiOpaqueToolInvocationProps,
+  AiToolDefinition,
+  AiToolExecuteCallback,
+  AiToolExecuteContext,
+  AiToolInvocationProps,
+  AiToolTypePack,
+  WithNavigation,
+} from "./ai";
+export { defineAiTool } from "./ai";
+export type {
   Client,
   ClientOptions,
   EnterOptions,
@@ -37,7 +48,7 @@ export type {
   StringifyCommentBodyOptions,
 } from "./comments/comment-body";
 export {
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   html,
   htmlSafe,
   isCommentBodyLink,
@@ -230,7 +241,6 @@ export type {
   NotificationSettings,
   NotificationSettingsPlain,
   PartialNotificationSettings,
-  UserNotificationSettings,
 } from "./protocol/NotificationSettings";
 export {
   createNotificationSettings,
@@ -252,7 +262,6 @@ export type {
 } from "./protocol/Op";
 export { ackOp, OpCode } from "./protocol/Op";
 export type {
-  RoomNotificationSettings,
   RoomSubscriptionSettings,
   UserRoomSubscriptionSettings,
 } from "./protocol/RoomSubscriptionSettings";
@@ -311,8 +320,25 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
+export type {
+  AiAssistantContentPart,
+  AiAssistantMessage,
+  AiChat,
+  AiChatMessage,
+  AiKnowledgeSource,
+  AiReasoningPart,
+  AiTextPart,
+  AiToolInvocationPart,
+  AiUserMessage,
+  CopilotId,
+  Cursor,
+  MessageId,
+  RenderableToolResultResponse,
+  ToolResultResponse,
+} from "./types/ai";
 export type { Awaitable } from "./types/Awaitable";
 export type { Immutable } from "./types/Immutable";
+export type { InferFromSchema } from "./types/InferFromSchema";
 export type {
   IWebSocket,
   IWebSocketCloseEvent,
@@ -336,6 +362,7 @@ export type {
 } from "./types/PlainLson";
 export type { User } from "./types/User";
 export { detectDupes };
+export type { MentionData, UserMentionData } from "./types/MentionData";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
@@ -361,13 +388,6 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
-import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
-
-// Deprecated APIs
-/** @deprecated Use HttpError instead. */
-export const CommentsApiError = HttpError;
-/** @deprecated Use HttpError instead. */
-export const NotificationsApiError = HttpError;

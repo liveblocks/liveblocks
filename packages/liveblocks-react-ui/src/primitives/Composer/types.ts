@@ -1,4 +1,8 @@
-import type { CommentAttachment, CommentBody } from "@liveblocks/core";
+import type {
+  CommentAttachment,
+  CommentBody,
+  MentionData,
+} from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
@@ -12,7 +16,6 @@ import type {
   RenderElementSpecificProps,
 } from "slate-react";
 
-import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
   ComposerBodyAutoLink,
@@ -21,6 +24,7 @@ import type {
   ComposerBodyMention,
   Direction,
 } from "../../types";
+import type { MentionDraft } from "./slate/plugins/mentions";
 
 export interface ComposerEditorMentionProps {
   /**
@@ -29,9 +33,9 @@ export interface ComposerEditorMentionProps {
   isSelected: boolean;
 
   /**
-   * The mention's user ID.
+   * The mention to display.
    */
-  userId: string;
+  mention: MentionData;
 }
 
 export interface ComposerEditorLinkProps {
@@ -52,14 +56,14 @@ export interface ComposerEditorLinkProps {
 
 export type ComposerEditorMentionSuggestionsProps = {
   /**
-   * The list of suggested user IDs.
+   * The list of mention suggestions.
    */
-  userIds: string[];
+  mentions: MentionData[];
 
   /**
-   * The currently selected user ID.
+   * The currently selected mention's ID.
    */
-  selectedUserId?: string;
+  selectedMentionId?: string;
 };
 
 export type ComposerEditorFloatingToolbarProps = Record<string, never>;
@@ -105,7 +109,7 @@ export interface ComposerEditorComponents {
 }
 
 export interface ComposerEditorProps
-  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue"> {
+  extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
   /**
    * The reading direction of the editor and related elements.
    */
@@ -223,14 +227,14 @@ export interface ComposerEditorElementProps extends RenderElementProps {
 export interface ComposerEditorMentionSuggestionsWrapperProps {
   dir?: ComposerEditorProps["dir"];
   id: string;
-  itemId: (userId?: string) => string | undefined;
+  itemId: (mentionId?: string) => string | undefined;
   mentionDraft?: MentionDraft;
   setMentionDraft: Dispatch<SetStateAction<MentionDraft | undefined>>;
-  userIds?: string[];
-  selectedUserId?: string;
-  setSelectedUserId: (userId: string) => void;
+  mentions?: MentionData[];
+  selectedMentionId?: string;
+  setSelectedMentionId: (mentionId: string) => void;
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
-  onItemSelect: (userId: string) => void;
+  onItemSelect: (mentionId: string) => void;
   position?: FloatingPosition;
   inset?: number;
 }

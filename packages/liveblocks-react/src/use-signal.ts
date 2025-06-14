@@ -1,4 +1,5 @@
 import type { ISignal } from "@liveblocks/core";
+import { MutableSignal } from "@liveblocks/core";
 
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
@@ -15,6 +16,11 @@ export function useSignal<T, V>(
   selector?: (value: T) => V,
   isEqual?: (a: V, b: V) => boolean
 ): T | V {
+  if (signal instanceof MutableSignal) {
+    throw new Error(
+      "Using a mutable Signal with useSignal will likely not work as expected."
+    );
+  }
   return useSyncExternalStoreWithSelector(
     signal.subscribe,
     signal.get,

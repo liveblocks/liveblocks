@@ -10,13 +10,13 @@ import { Suspense } from "react";
 import { User } from "./User";
 
 export function MentionSuggestions({
-  userIds,
+  mentions,
 }: ComposerEditorMentionSuggestionsProps) {
   return (
     <Composer.Suggestions className={styles.suggestions}>
       <Composer.SuggestionsList>
-        {userIds.map((userId) => (
-          <MentionSuggestion key={userId} userId={userId} />
+        {mentions.map((mention) => (
+          <MentionSuggestion key={mention.id} userId={mention.id} />
         ))}
       </Composer.SuggestionsList>
     </Composer.Suggestions>

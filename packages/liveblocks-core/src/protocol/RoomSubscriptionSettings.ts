@@ -10,8 +10,3 @@ export type RoomSubscriptionSettings = {
 export type UserRoomSubscriptionSettings = {
   roomId: string;
 } & RoomSubscriptionSettings;
-
-/**
- * @deprecated Renamed to `RoomSubscriptionSettings`
- */
-export type RoomNotificationSettings = RoomSubscriptionSettings;

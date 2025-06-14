@@ -179,6 +179,7 @@ const comment: CommentData = {
           },
           {
             type: "mention",
+            kind: "user",
             id: "user-0",
           },
           {
