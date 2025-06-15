@@ -388,7 +388,7 @@ export function InviteMemberTool({
       name="invite-member"
       tool={defineAiTool()({
         description:
-          "Invite a new member to the team. Always ask for an email address. If they don't provide a name, guess what it is from the email.",
+          "Invite a new member to the team. Always ask for an email address, but do not ask for a game. If they don't provide a name, guess what it is from the email. For example, if the email is pierre@example.com, the name should be Pierre.",
         parameters: {
           type: "object",
           properties: {
