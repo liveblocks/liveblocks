@@ -1,0 +1,31 @@
+{
+  "name": "@liveblocks-examples/nextjs-ai-chats",
+  "description": "This example shows how to build a collaborative AI app with Liveblocks and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^2.25.0-aiprivatebeta17",
+    "@liveblocks/node": "^2.25.0-aiprivatebeta17",
+    "@liveblocks/react": "^2.25.0-aiprivatebeta17",
+    "@liveblocks/react-ui": "^2.25.0-aiprivatebeta17",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "next": "^14.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-error-boundary": "^6.0.0",
+    "typescript": "^5.2.2"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
+  }
+}
