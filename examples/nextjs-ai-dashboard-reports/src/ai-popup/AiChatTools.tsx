@@ -393,7 +393,11 @@ export function InviteMemberTool({
           type: "object",
           properties: {
             email: { type: "string" },
-            name: { type: "string" },
+            name: {
+              type: "string",
+              description:
+                "The name of the user. If not provided, then guess what it is from the email.",
+            },
           },
           additionalProperties: false,
           required: ["email", "name"],
