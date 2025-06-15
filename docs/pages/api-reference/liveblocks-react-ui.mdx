@@ -867,54 +867,152 @@ function Whiteboard() {
 
 #### RegisterAiTool
 
-Registers an AI tool globally, making it available to all AI features on the
-page. Tools registered this way can be used by any [`AiChat`](#AiChat) component
-or other AI interfaces.
+Registers a tool that can be used by [AI chats](#AiChat) on the page. Tools
+allow AI to autonomously run actions, render custom components, and show
+confirm/cancel dialogs within the chat.
 
 ```tsx
+import { RegisterAiTool } from "@liveblocks/react-ui";
 import { defineAiTool } from "@liveblocks/client";
-import { RegisterAiTool, AiChat } from "@liveblocks/react-ui";
 
-const weatherTool = defineAiTool()({
-  description: "Get current weather information",
-  parameters: {
-    type: "object",
-    properties: {
-      location: { type: "string", description: "City name" },
-    },
-    required: ["location"],
-    additionalProperties: false,
-  },
-  execute: async (args) => {
-    const { temperature, condition } = await getWeather(args.location);
-    return { data: { temperature, condition } };
-  },
-  render: ({ result }) => (
-    <AiTool title="Weather Lookup" icon="🌤️">
-      {result ? (
-        <div>
-          {result.temperature}°F - {result.condition}
-        </div>
-      ) : null}
-    </AiTool>
-  ),
-});
+<RegisterAiTool
+  name="my-tool"
+  tool={defineAiTool()({
+    // Tool definition
+    // ...
+  })}
+/>;
+```
 
+{/* TODO lots more info */}
+
+[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) is used to
+create a tool definition, and you can supply `parameters` in
+[JSON Schema](https://json-schema.org/) that the AI can fill in. If you supply
+an `execute` function the AI will call it. `render` is used to show UI inside
+the chat. Below is an example of a tool that lets AI get the current weather in
+a given location, then renders a compoennt in the chat.
+
+{/* TODO this all needs to be explained better */}
+
+```tsx
 function App() {
   return (
     <>
-      <RegisterAiTool name="get-weather" tool={weatherTool} />
+      // +++
+      <RegisterAiTool
+        name="get-weather"
+        tool={defineAiTool()({
+          description: "Get current weather information",
+          parameters: {
+            type: "object",
+            properties: {
+              location: { type: "string", description: "City name" },
+            },
+            required: ["location"],
+            additionalProperties: false,
+          },
+          execute: async (args) => {
+            const { temperature, condition } = await __getWeather__(
+              args.location
+            );
+            return { data: { temperature, condition } };
+          },
+          render: ({ result }) => (
+            <AiTool title="Weather Lookup" icon="🌤️">
+              {result ? (
+                <div>
+                  {result.temperature}°F - {result.condition}
+                </div>
+              ) : null}
+            </AiTool>
+          ),
+        })}
+      />
+      // +++
       <AiChat chatId="my-chat" />
     </>
   );
 }
 ```
 
+##### Action that sends a toast notification
+
+The following snippet shows a tool that lets AI send a toast notification with
+[Sonner](https://sonner.emilkowal.ski/), then adds a message in the chat with
+[`AiTool`](#AiTool), letting the user know that a toast was sent.
+
+```tsx
+import { AiChat, RegisterAiTool } from "@liveblocks/react-ui";
+import { defineAiTool } from "@liveblocks/client";
+import { toast, Toaster } from "sonner";
+
+function Chat() {
+  return (
+    <>
+      <RegisterAiTool
+        name="send-toast-notification"
+        tool={defineAiTool()({
+          description: "Send a toast notification",
+
+          parameters: {
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+                description: "The message to display in the toast",
+              },
+            },
+            required: ["message"],
+            additionalProperties: false,
+          },
+
+          execute: async ({ message }) => {
+            toast(message);
+            return {
+              data: { message },
+              description: "You sent a toast",
+            };
+          },
+
+          render: ({ result }) => <AiTool title="Toast sent" icon="🍞" />,
+        })}
+      />
+      <AiChat chatId="my-chat-id" />
+      <Toaster />
+    </>
+  );
+}
+```
+
+##### Scoping a tool to a specific chat
+
 Tools can be scoped to specific chats by providing a `chatId` prop. When scoped,
 the tool will only be available to that specific chat.
 
 ```tsx
-<RegisterAiTool name="private-tool" tool={myTool} chatId="specific-chat-id" />
+import { RegisterAiTool, AiChat } from "@liveblocks/react-ui";
+import { defineAiTool } from "@liveblocks/client";
+
+function Chat() {
+  return (
+    <>
+      <RegisterAiTool
+        name="private-tool"
+        tool={defineAiTool()({
+          // Tool definition
+          // ...
+        })}
+        // +++
+        chatId="my-chat"
+        // +++
+      />
+      // +++
+      <AiChat chatId="my-chat" />
+      // +++
+    </>
+  );
+}
 ```
 
 ##### Props [#RegisterAiTool-props]

@@ -873,7 +873,13 @@ Note that the function should be called like this `defineAiTool()({ ... })`
 
 </Banner>
 
-<PropertiesList>
+<PropertiesList title="Returns">
+  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition">
+    An AI tool.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
   <PropertiesListItem name="description" type="string">
     A clear description of what the tool does. Used by AI to understand when to
     call this tool.
@@ -5226,7 +5232,7 @@ type ToolDefinition<TArgs = any, TResult = any> = {
 };
 ```
 
-<PropertiesList>
+<PropertiesList title="Properties">
   <PropertiesListItem name="description" type="string">
     A clear description of what the tool does. Used by AI to understand when to
     call this tool.
@@ -5258,14 +5264,17 @@ type AiKnowledgeSource = {
 };
 ```
 
-<PropertiesList>
+<PropertiesList title="Properties">
   <PropertiesListItem name="description" type="string">
     A clear description of what this knowledge represents (e.g., "Current user's
     profile", "Application settings").
   </PropertiesListItem>
-  <PropertiesListItem name="value" type="string">
-    The knowledge content as a string. Can be plain text, JSON, or any string
-    format that provides context to the AI.
+  <PropertiesListItem
+    name="value"
+    type="string | object | array | number | boolean | null"
+  >
+    The knowledge content. Can be any JSON-compatible format that provides
+    context to the AI.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -5278,7 +5287,7 @@ via the `knowledge` prop.
 // Example knowledge sources
 const userKnowledge: AiKnowledgeSource = {
   description: "Current user information",
-  value: JSON.stringify({ name: "John Doe", role: "admin" }),
+  value: { name: "John Doe", role: "admin" },
 };
 
 const appStateKnowledge: AiKnowledgeSource = {
