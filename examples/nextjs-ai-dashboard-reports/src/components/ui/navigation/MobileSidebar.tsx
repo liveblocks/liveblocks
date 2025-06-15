@@ -1,5 +1,5 @@
-import { siteConfig } from "@/app/siteConfig"
-import { Button } from "@/components/Button"
+import { siteConfig } from "@/app/siteConfig";
+import { Button } from "@/components/Button";
 import {
   Drawer,
   DrawerBody,
@@ -8,19 +8,12 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/Drawer"
-import { cx, focusRing } from "@/lib/utils"
+} from "@/components/Drawer";
+import { cx, focusRing } from "@/lib/utils";
 
-import {
-  BarChartBig,
-  Compass,
-  FileText,
-  Menu,
-  Settings2,
-  Table2,
-} from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { BarChartBig, FileText, Menu, Settings2, Table2 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navigation = [
   { name: "Reports", href: siteConfig.baseLinks.reports, icon: BarChartBig },
@@ -39,16 +32,16 @@ const navigation = [
     href: siteConfig.baseLinks.settings.billing,
     icon: Settings2,
   },
-] as const
+] as const;
 
 export default function MobileSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
   const isActive = (itemHref: string) => {
     if (itemHref === siteConfig.baseLinks.settings.billing) {
-      return pathname.startsWith("/settings")
+      return pathname.startsWith("/settings");
     }
-    return pathname === itemHref || pathname.startsWith(itemHref)
-  }
+    return pathname === itemHref || pathname.startsWith(itemHref);
+  };
   return (
     <>
       <Drawer>
@@ -76,7 +69,7 @@ export default function MobileSidebar() {
               <div>
                 <span
                   className={cx(
-                    "block h-6 text-xs leading-6 font-medium text-neutral-500 transition-opacity dark:text-neutral-400",
+                    "block h-6 text-xs leading-6 font-medium text-neutral-500 transition-opacity dark:text-neutral-400"
                   )}
                 >
                   Platform
@@ -92,7 +85,7 @@ export default function MobileSidebar() {
                               ? "text-black dark:text-white"
                               : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50",
                             "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition hover:bg-neutral-50 sm:text-sm dark:hover:bg-neutral-900",
-                            focusRing,
+                            focusRing
                           )}
                         >
                           <item.icon
@@ -140,5 +133,5 @@ export default function MobileSidebar() {
         </DrawerContent>
       </Drawer>
     </>
-  )
+  );
 }
