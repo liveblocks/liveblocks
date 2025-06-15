@@ -828,6 +828,74 @@ Use this function if you have a single page application (SPA) and you wish to
 log your user out, and reauthenticate them. This is a way to update your user’s
 `info` after a connection has begun.
 
+## AI Copilots
+
+### defineAiTool
+
+Create a custom tool for your AI copilot to use. Defining tools allow the AI
+copilot to look up information on-demand or perform actions in your application
+on behalf of the current user, such as creating content, updating the
+application state, or interacting with external services.
+
+```tsx
+import { defineAiTool } from "@liveblocks/client";
+
+const myTool = defineAiTool()({
+  description: "Fetch user information by ID",
+  parameters: {
+    type: "object",
+    properties: {
+      userId: { type: "string", description: "The user's unique identifier" },
+    },
+    required: ["userId"],
+    additionalProperties: false,
+  },
+  execute: async ({ userId }) => {
+    const user = await getUserById(userId);
+    return { data: { success: true, user } };
+  },
+  render: ({ result }) => (
+    <AiTool title="User Lookup" icon="👤">
+      {!result ? (
+        <div>Looking up user...</div>
+      ) : (
+        <div>Found user: {result.user.name}</div>
+      )}
+    </AiTool>
+  ),
+});
+```
+
+<Banner>
+
+Note that the function should be called like this `defineAiTool()({ ... })`
+(double-parens). This allows TypeScript's inference to work correctly.
+
+</Banner>
+
+<PropertiesList>
+  <PropertiesListItem name="description" type="string">
+    A clear description of what the tool does. Used by AI to understand when to
+    call this tool.
+  </PropertiesListItem>
+  <PropertiesListItem name="parameters" type="JSONSchema7">
+    JSON Schema defining the tool's input parameters. The AI will validate
+    arguments against this schema.
+  </PropertiesListItem>
+  <PropertiesListItem name="execute" type="function">
+    Async function that performs the tool's action. Receives validated arguments
+    and execution context, returns structured data.
+  </PropertiesListItem>
+  <PropertiesListItem name="render" type="function">
+    React component function that renders the tool's UI during different
+    execution stages.
+  </PropertiesListItem>
+</PropertiesList>
+
+Tools can be registered globally with
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react-ui#RegisterAiTool) or
+passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat).
+
 ## Room
 
 Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
@@ -5138,6 +5206,85 @@ You can also pass types to
 const { room, leave } = client.getRoom<Presence, Storage, UserMeta, RoomEvent>(
   "my-room-id"
 );
+```
+
+### ToolDefinition
+
+Type definition for AI tools that can be executed by the AI. This type
+represents the structure of a tool that can be registered and used in AI
+interactions.
+
+```ts
+type ToolDefinition<TArgs = any, TResult = any> = {
+  description: string;
+  parameters: JSONSchema7;
+  execute: (
+    args: TArgs,
+    context: ToolExecutionContext
+  ) => Promise<{ data: TResult }>;
+  render: (props: ToolRenderProps<TArgs, TResult>) => ReactNode;
+};
+```
+
+<PropertiesList>
+  <PropertiesListItem name="description" type="string">
+    A clear description of what the tool does. Used by AI to understand when to
+    call this tool.
+  </PropertiesListItem>
+  <PropertiesListItem name="parameters" type="JSONSchema7">
+    JSON Schema defining the tool's input parameters. The AI will validate
+    arguments against this schema.
+  </PropertiesListItem>
+  <PropertiesListItem name="execute" type="function">
+    Async function that performs the tool's action. Receives validated arguments
+    and execution context, returns structured data.
+  </PropertiesListItem>
+  <PropertiesListItem name="render" type="function">
+    React component function that renders the tool's UI during different
+    execution stages.
+  </PropertiesListItem>
+</PropertiesList>
+
+### AiKnowledgeSource
+
+Type definition for knowledge sources that provide contextual information to AI.
+Knowledge sources help the AI understand your application's current state and
+make more informed responses.
+
+```ts
+type AiKnowledgeSource = {
+  description: string;
+  value: string;
+};
+```
+
+<PropertiesList>
+  <PropertiesListItem name="description" type="string">
+    A clear description of what this knowledge represents (e.g., "Current user's
+    profile", "Application settings").
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="string">
+    The knowledge content as a string. Can be plain text, JSON, or any string
+    format that provides context to the AI.
+  </PropertiesListItem>
+</PropertiesList>
+
+Knowledge sources can be registered using
+[`RegisterAiKnowledge`](/docs/api-reference/liveblocks-react-ui#RegisterAiKnowledge)
+or passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
+via the `knowledge` prop.
+
+```ts
+// Example knowledge sources
+const userKnowledge: AiKnowledgeSource = {
+  description: "Current user information",
+  value: JSON.stringify({ name: "John Doe", role: "admin" }),
+};
+
+const appStateKnowledge: AiKnowledgeSource = {
+  description: "Current application state",
+  value: "The user is currently editing a document in dark mode",
+};
 ```
 
 ### User [#user-type]
