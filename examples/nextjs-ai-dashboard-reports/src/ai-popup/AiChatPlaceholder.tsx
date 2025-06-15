@@ -1,6 +1,7 @@
-import { useSendAiMessage } from "@liveblocks/react"
-import { AiChatComponentsEmptyProps } from "@liveblocks/react-ui"
+import { useSendAiMessage } from "@liveblocks/react";
+import { AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
 
+// Clickable suggestions in the placeholder
 const SUGGESTIONS = [
   {
     text: "Send invoice reminders",
@@ -19,10 +20,11 @@ const SUGGESTIONS = [
     text: "Invite a member",
     prompt: "Invite a member to the team",
   },
-]
+];
 
+// Placeholder that's displayed when there's no messages in the chat
 export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
-  const sendMessage = useSendAiMessage(chatId)
+  const sendMessage = useSendAiMessage(chatId);
 
   return (
     <div className="flex h-full flex-col justify-end gap-5 p-4">
@@ -47,5 +49,5 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
         ))}
       </div>
     </div>
-  )
+  );
 }

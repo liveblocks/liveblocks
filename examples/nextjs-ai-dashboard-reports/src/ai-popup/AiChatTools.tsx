@@ -1,7 +1,7 @@
-import React from "react"
-import { Badge } from "@/components/Badge"
-import { transactions } from "@/data/transactions"
-import { format } from "date-fns"
+import React from "react";
+import { Badge } from "@/components/Badge";
+import { transactions } from "@/data/transactions";
+import { format } from "date-fns";
 import {
   expense_statuses,
   payment_statuses,
@@ -9,22 +9,23 @@ import {
   currencies,
   categories,
   merchants,
-} from "@/data/schema"
-import { users } from "@/data/users"
-import Image from "next/image"
-import { defineAiTool } from "@liveblocks/client"
-import { useRouter } from "next/navigation"
-import { AiTool } from "@liveblocks/react-ui"
-import { Timestamp } from "@liveblocks/react-ui/primitives"
-import { toast } from "sonner"
-import { RegisterAiTool } from "@liveblocks/react"
-import { ChevronDownIcon } from "lucide-react"
-import { formatters } from "@/lib/utils"
-import useSWR from "swr"
-import { fetchTransactions } from "@/lib/transactionsApi"
-import { fetchInvoices } from "@/lib/invoicesApi"
-import { ProgressBar } from "../components/ProgressBar"
+} from "@/data/schema";
+import { users } from "@/data/users";
+import Image from "next/image";
+import { defineAiTool } from "@liveblocks/client";
+import { useRouter } from "next/navigation";
+import { AiTool } from "@liveblocks/react-ui";
+import { Timestamp } from "@liveblocks/react-ui/primitives";
+import { toast } from "sonner";
+import { RegisterAiTool } from "@liveblocks/react";
+import { ChevronDownIcon } from "lucide-react";
+import { formatters } from "@/lib/utils";
+import useSWR from "swr";
+import { fetchTransactions } from "@/lib/transactionsApi";
+import { fetchInvoices } from "@/lib/invoicesApi";
+import { ProgressBar } from "../components/ProgressBar";
 
+// Shows a bar highlighting the remaining seats, along with text
 export function SeatsTool() {
   return (
     <RegisterAiTool
@@ -43,7 +44,7 @@ export function SeatsTool() {
         },
         execute: () => {},
         render: ({ args }) => {
-          if (!args) return null
+          if (!args) return null;
 
           return (
             <div className="rounded-lg bg-neutral-100 p-4 pt-4.5 dark:bg-neutral-900">
@@ -65,13 +66,14 @@ export function SeatsTool() {
                 </p>
               </div>
             </div>
-          )
+          );
         },
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to query various transaction details, and it will save the results internally
 export function QueryTransactionTool() {
   return (
     <RegisterAiTool
@@ -123,22 +125,23 @@ export function QueryTransactionTool() {
               Object.entries(args).map(([key, value]) => [
                 key,
                 value === null ? undefined : value,
-              ]),
-            ),
-          )
+              ])
+            )
+          );
           return {
             data: {
               transactions,
             },
-          }
+          };
         },
         render: ({ args }) =>
           args ? <AiTool title="Transaction query" /> : null,
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to query various invoice details, and it will save the results internally
 export function QueryInvoiceTool() {
   return (
     <RegisterAiTool
@@ -177,14 +180,14 @@ export function QueryInvoiceTool() {
               Object.entries(args).map(([key, value]) => [
                 key,
                 value == null ? undefined : value,
-              ]),
-            ),
-          )
+              ])
+            )
+          );
           return {
             data: {
               invoices,
             },
-          }
+          };
         },
         render: ({ args }) =>
           args ? (
@@ -194,11 +197,12 @@ export function QueryInvoiceTool() {
           ) : null,
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to navigate to a page, showing a toast notification as it does it
 export function NavigateToPageTool() {
-  const router = useRouter()
+  const router = useRouter();
 
   return (
     <RegisterAiTool
@@ -215,26 +219,27 @@ export function NavigateToPageTool() {
           required: ["relativeUrl"],
         },
         execute: ({ relativeUrl }) => {
-          router.push(relativeUrl)
+          router.push(relativeUrl);
           toast(`Redirecting to ${relativeUrl}...`, {
             action: {
               label: "Go back",
               onClick: () => router.back(),
             },
-          })
+          });
           return {
             description:
               "Redirected the user to the page. Do not write anything else.",
             data: {},
-          }
+          };
         },
         render: ({ args }) =>
           args ? <AiTool title={`Redirected to ${args.relativeUrl}`} /> : null,
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to fetch all companies with unpaid invoices, and send invoice reminders to them (or in this demo, just show a toast)
 export function SendInvoiceRemindersTool() {
   return (
     <RegisterAiTool
@@ -257,30 +262,32 @@ export function SendInvoiceRemindersTool() {
             async () => {
               const response = await fetchInvoices({
                 invoiceStatus: "unpaid",
-              })
-              return response.invoices
+              });
+              return response.invoices;
             },
             {
               refreshInterval: 20000,
-            },
-          )
+            }
+          );
 
           // Group invoices by company, attaching full invoice objects
           const clients =
             unpaidInvoices?.reduce((acc: any[], invoice) => {
-              const existingCompany = acc.find((c) => c.name === invoice.client)
+              const existingCompany = acc.find(
+                (c) => c.name === invoice.client
+              );
               if (existingCompany) {
-                existingCompany.invoices.push(invoice)
+                existingCompany.invoices.push(invoice);
               } else {
                 acc.push({
                   name: invoice.client,
                   invoices: [invoice],
-                })
+                });
               }
-              return acc
-            }, []) || []
+              return acc;
+            }, []) || [];
 
-          if (!clients) return null
+          if (!clients) return null;
 
           return (
             <AiTool
@@ -291,20 +298,20 @@ export function SendInvoiceRemindersTool() {
                 confirm={async () => {
                   // Simulating sending emails
                   const promise = () =>
-                    new Promise((resolve) => setTimeout(resolve, 2500))
+                    new Promise((resolve) => setTimeout(resolve, 2500));
 
                   toast.promise(promise, {
                     loading: "Sending invoice reminders...",
                     success: () => {
-                      return `Invoice reminders sent`
+                      return `Invoice reminders sent`;
                     },
-                  })
+                  });
 
-                  await promise
+                  await promise;
                   return {
                     description: "Invoice reminders sent",
                     data: {},
-                  }
+                  };
                 }}
               >
                 {isLoadingUnpaid && (
@@ -363,17 +370,18 @@ export function SendInvoiceRemindersTool() {
                 )}
               </AiTool.Confirmation>
             </AiTool>
-          )
+          );
         },
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to invite a new member to the team with a confirm/cancel dialog. In this demo, inviting just means showing a toast.
 export function InviteMemberTool({
   onInvite,
 }: {
-  onInvite: ({ name, email }: { name: string; email: string }) => void
+  onInvite: ({ name, email }: { name: string; email: string }) => void;
 }) {
   return (
     <RegisterAiTool
@@ -391,30 +399,31 @@ export function InviteMemberTool({
           required: ["email", "name"],
         },
         render: ({ args, stage }) => {
-          if (!args) return null
+          if (!args) return null;
 
           return (
             <AiTool title="Invite member" collapsed={stage === "executed"}>
               <AiTool.Confirmation
                 confirm={() => {
-                  toast.success(`${args.email} has been invited`)
-                  onInvite({ name: args.name, email: args.email })
+                  toast.success(`${args.email} has been invited`);
+                  onInvite({ name: args.name, email: args.email });
                   return {
                     description: `The user confirmed inviting ${args.email} to the team`,
                     data: {},
-                  }
+                  };
                 }}
               >
                 Invite <code>{args.email}</code> to the team?
               </AiTool.Confirmation>
             </AiTool>
-          )
+          );
         },
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to display the details of a transaction
 export function TransactionToolAi() {
   return (
     <RegisterAiTool
@@ -430,14 +439,15 @@ export function TransactionToolAi() {
           required: ["transactionId"],
         },
         render: ({ args }) => {
-          if (!args) return null
-          return <TransactionToolUi transactionId={args.transactionId} />
+          if (!args) return null;
+          return <TransactionToolUi transactionId={args.transactionId} />;
         },
       })}
     />
-  )
+  );
 }
 
+// Allows the AI to display the avatar and name of a team member
 export function MemberToolAi() {
   return (
     <RegisterAiTool
@@ -453,27 +463,26 @@ export function MemberToolAi() {
           required: ["email"],
         },
         render: ({ args }) => {
-          if (!args) return null
-          return <MemberTool email={args.email} />
+          if (!args) return null;
+          return <MemberTool email={args.email} />;
         },
       })}
     />
-  )
+  );
 }
 
-// TODO make this work
 function TransactionToolUi({ transactionId }: { transactionId: string }) {
   const transaction = transactions.find(
-    (transaction) => transaction.transaction_id === transactionId,
-  )
+    (transaction) => transaction.transaction_id === transactionId
+  );
 
   if (!transaction) {
-    return <div>Transaction not found</div>
+    return <div>Transaction not found</div>;
   }
 
   const status = expense_statuses.find(
-    (item) => item.value === transaction.expense_status,
-  )
+    (item) => item.value === transaction.expense_status
+  );
 
   return (
     <div className="my-2 w-full rounded-sm bg-neutral-100 px-4 pt-3.5 pb-4">
@@ -506,14 +515,14 @@ function TransactionToolUi({ transactionId }: { transactionId: string }) {
         {transaction.amount.toLocaleString()}
       </div>
     </div>
-  )
+  );
 }
 
 function MemberTool({ email }: { email: string }) {
-  const user = users.find((user) => user.email === email)
+  const user = users.find((user) => user.email === email);
 
   if (!user) {
-    return <div>User not found</div>
+    return <div>User not found</div>;
   }
 
   return (
@@ -534,5 +543,5 @@ function MemberTool({ email }: { email: string }) {
         </p>
       </div>
     </div>
-  )
+  );
 }

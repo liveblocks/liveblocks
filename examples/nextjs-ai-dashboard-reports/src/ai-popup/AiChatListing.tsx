@@ -1,22 +1,24 @@
-import { useAiChats } from "@liveblocks/react"
-import { ComponentProps } from "react"
+import { useAiChats } from "@liveblocks/react";
+import { ComponentProps } from "react";
 
+// Show a list of all chats the current user has created, with a delete button for each
 export function ChatListing({
   onSelectChat,
   onDeleteChat,
 }: {
-  onSelectChat: (chatId: string) => void
-  onDeleteChat: (chatId: string) => void
+  onSelectChat: (chatId: string) => void;
+  onDeleteChat: (chatId: string) => void;
 }) {
+  // 50 chats loaded by default, more can be fetched with `fetchMore`
   const { chats, error, isLoading, hasFetchedAll, fetchMore, isFetchingMore } =
-    useAiChats()
+    useAiChats();
 
   if (isLoading) {
-    return null
+    return null;
   }
 
   if (error) {
-    return <div>Error: {error.message}</div>
+    return <div>Error: {error.message}</div>;
   }
 
   return (
@@ -41,7 +43,7 @@ export function ChatListing({
                     year: "numeric",
                     month: "short",
                     day: "numeric",
-                  },
+                  }
                 )}
               </div>
             </div>
@@ -65,7 +67,7 @@ export function ChatListing({
         )}
       </ul>
     </div>
-  )
+  );
 }
 
 function TrashIcon(props: ComponentProps<"svg">) {
@@ -86,5 +88,5 @@ function TrashIcon(props: ComponentProps<"svg">) {
       <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
       <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
     </svg>
-  )
+  );
 }
