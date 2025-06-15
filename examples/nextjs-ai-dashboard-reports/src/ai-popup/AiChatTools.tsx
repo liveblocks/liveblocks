@@ -83,6 +83,7 @@ export function QueryTransactionTool() {
         You can query by date, currency, continent, country, min amount, max amount, expense status, payment status, and limit. 
         You can also query by multiple of these parameters. 
         Here are some types you should know.
+        Use the correct formatting for the currency, e.g. with the symbol.
         
         expenseStatus: ${JSON.stringify(expense_statuses)}
         paymentStatus: ${JSON.stringify(payment_statuses)}
@@ -395,8 +396,6 @@ export function InviteMemberTool({
             email: { type: "string" },
             name: {
               type: "string",
-              description:
-                "The name of the user. If not provided, then guess what it is from the email.",
             },
           },
           additionalProperties: false,
@@ -466,8 +465,9 @@ export function MemberToolAi() {
           additionalProperties: false,
           required: ["email"],
         },
-        render: ({ args }) => {
+        render: ({ args, respond }) => {
           if (!args) return null;
+          respond();
           return <MemberTool email={args.email} />;
         },
       })}
