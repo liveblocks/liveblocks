@@ -1,11 +1,11 @@
 ---
 meta:
   title: "BlockNote"
-  parentTitle: "Text Editor"
-  description: "Learn about using BlockNote text editor"
+  parentTitle: "Text editor"
+  description: "Learn about using Multiplayer Editing for Blocknote"
 ---
 
-A quick overview of the Text Editor packages for BlockNote.
+A quick overview of the packages for BlockNote.
 
 ## Concepts
 
@@ -18,7 +18,12 @@ the cloud, visible on [your dashboard](/dashboard), and are integrated into
 other Liveblocks products such as [Comments](/docs/ready-made-features/comments)
 and [Notifications](/docs/ready-made-features/notifications).
 
-## Users and mentions
+### Permanent storage
+
+All documents created with BlockNote are **permanently stored**. You don’t need
+to sync, scale, or maintain any infrastructure.
+
+### Users and mentions
 
 Users can be added to your document, and you can tag others inline. You can also
 easily enable mention suggestions.
@@ -58,7 +63,7 @@ function App() {
 }
 ```
 
-## Real-time editing
+### Realtime editing
 
 Your document can be edited in real-time by multiple users at once. Each user
 renders a cursors on screen that updates live as they move, select, and edit.
@@ -84,7 +89,7 @@ userInfo: {
 }
 ```
 
-## Annotations and comments
+### Annotations and comments
 
 Add [Comments](/docs/ready-made-features/comments) to your text editor, allowing
 others to select words in the editor, and leave annotations. Each annotation
@@ -133,7 +138,7 @@ alongside the editor which is great on desktop. To create a new thread use the
 button in the BlockNote toolbar, or
 [build a button yourself](/docs/api-reference/liveblocks-react-blocknote#Opening-the-composer).
 
-## Notifications
+### Notifications
 
 Add a [Notifications](/docs/ready-made-features/notifications) UI to your
 application, and automatically notify users when they’ve been mentioned.
@@ -176,7 +181,7 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
-## Multiple editors
+### Multiple editors
 
 It’s possible to use multiple BlockNote editors on a single page, and each
 editor having its own collaboration and extensions. You can enable this by
@@ -200,7 +205,7 @@ function TextEditor() {
 Learn more about
 [using multiple editors](/docs/api-reference/liveblocks-react-blocknote#Multiple-editors).
 
-## Offline support
+### Offline support
 
 Liveblocks BlockNote has an experimental option that enables offline support.
 Offline support means that once a document has been opened, it’s saved locally
@@ -225,7 +230,7 @@ function TextEditor() {
 Learn more about
 [offline support](/docs/api-reference/liveblocks-react-blocknote#Offline-support).
 
-## Version History
+### Version History
 
 <Banner title="Private beta">
 
@@ -269,7 +274,7 @@ function DocumentHistory() {
         {selectedVersion ? (
           <HistoryVersionPreview
             version={selectedVersion}
-            className="w-full h-full"
+            className="h-full w-full"
             onVersionRestore={onVersionRestore}
           />
         ) : (
