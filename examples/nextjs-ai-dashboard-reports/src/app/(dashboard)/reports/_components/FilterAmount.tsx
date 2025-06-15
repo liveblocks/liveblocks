@@ -112,7 +112,7 @@ function FilterAmount() {
   return (
     <div>
       <Label htmlFor="amount-filter" className="font-medium">
-        Transaction Amount
+        Transaction amount
       </Label>
       <Popover>
         <PopoverTrigger asChild id="amount-filter">
@@ -128,7 +128,7 @@ function FilterAmount() {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="z-50 min-w-[calc(var(--radix-popover-trigger-width))] max-w-[calc(var(--radix-popover-trigger-width))] p-4 sm:min-w-72 sm:max-w-72"
+          className="z-50 max-w-[calc(var(--radix-popover-trigger-width))] min-w-[calc(var(--radix-popover-trigger-width))] p-4 sm:max-w-72 sm:min-w-72"
           align="end"
         >
           <div className="flex h-12 items-end space-x-0.5">
@@ -152,7 +152,7 @@ function FilterAmount() {
             />
           </div>
           <div className="mt-4 space-y-2">
-            <p className="text-base sm:text-sm font-medium text-gray-900 dark:text-gray-50">
+            <p className="text-base font-medium text-gray-900 sm:text-sm dark:text-gray-50">
               Popular ranges:
             </p>
             {presetOptions.map((option) => (
@@ -167,7 +167,7 @@ function FilterAmount() {
             ))}
           </div>
           <div className="mt-4 space-y-2">
-            <p className="text-base sm:text-sm font-medium text-gray-900 dark:text-gray-50">
+            <p className="text-base font-medium text-gray-900 sm:text-sm dark:text-gray-50">
               Custom range:
             </p>
             <div className="flex w-full items-center gap-2">

@@ -5,10 +5,10 @@ const LoadingPage = () => {
         <div className="h-4 w-48 animate-pulse rounded-sm bg-gray-200 dark:bg-gray-800"></div>
         <div className="flex space-x-2">
           {[
-            "Date Range",
+            "Date range",
             "Locations",
-            "Expense Status",
-            "Transaction Amount",
+            "Expense status",
+            "Transaction amount",
           ].map((_, index) => (
             <div
               key={index}

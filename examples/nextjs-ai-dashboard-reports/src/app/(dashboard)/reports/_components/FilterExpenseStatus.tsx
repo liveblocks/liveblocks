@@ -38,7 +38,7 @@ function FilterExpenseStatus() {
   return (
     <div>
       <Label htmlFor="expense-filter" className="font-medium">
-        Expense Status
+        Expense status
       </Label>
       <Select value={status} onValueChange={handleValueChange}>
         <SelectTrigger id="expense-filter" className="mt-2 w-full md:w-44">
