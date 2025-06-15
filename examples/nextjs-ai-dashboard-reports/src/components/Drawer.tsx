@@ -52,7 +52,7 @@ const DrawerOverlay = React.forwardRef<
         // background color
         "bg-black/30 dark:bg-black/60",
         // transition
-        "data-[state=closed]:animate-hide data-[state=open]:animate-dialogOverlayShow",
+        "data-[state=closed]:animate-hide data-[state=open]:animate-dialog-overlay-show",
         className,
       )}
       {...props}
@@ -77,13 +77,13 @@ const DrawerContent = React.forwardRef<
           ref={forwardedRef}
           className={cx(
             // base
-            "fixed inset-y-2 mx-auto flex w-[95vw] flex-1 flex-col overflow-y-auto rounded-md border p-4 shadow-lg focus:outline-none max-sm:inset-x-2 sm:inset-y-2 sm:right-2 sm:max-w-lg sm:p-6",
+            "fixed inset-y-2 mx-auto flex w-[95vw] flex-1 flex-col overflow-y-auto rounded-md border p-4 shadow-lg focus:outline-hidden max-sm:inset-x-2 sm:inset-y-2 sm:right-2 sm:max-w-lg sm:p-6",
             // border color
             "border-gray-200 dark:border-gray-900",
             // background color
             "bg-white dark:bg-[#090E1A]",
             // transition
-            "data-[state=closed]:animate-drawerSlideRightAndFade data-[state=open]:animate-drawerSlideLeftAndFade",
+            "data-[state=closed]:animate-drawer-slide-right-and-fade data-[state=open]:animate-drawer-slide-left-and-fade",
             focusRing,
             className,
           )}
@@ -112,7 +112,7 @@ const DrawerHeader = React.forwardRef<
       <DrawerPrimitives.Close asChild>
         <Button
           variant="ghost"
-          className="aspect-square p-1 text-gray-500 hover:bg-gray-100 hover:dark:bg-gray-400/10"
+          className="aspect-square p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-400/10"
         >
           <RiCloseLine className="size-6" aria-hidden="true" />
         </Button>

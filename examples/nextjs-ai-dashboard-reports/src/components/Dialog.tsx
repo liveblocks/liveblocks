@@ -37,7 +37,7 @@ const DialogOverlay = React.forwardRef<
         // background color
         "bg-black/70",
         // transition
-        "data-[state=open]:animate-dialogOverlayShow",
+        "data-[state=open]:animate-dialog-overlay-show",
         className,
       )}
       {...props}
@@ -64,7 +64,7 @@ const DialogContent = React.forwardRef<
             // background color
             "bg-white dark:bg-[#090E1A]",
             // transition
-            "data-[state=open]:animate-dialogContentShow",
+            "data-[state=open]:animate-dialog-content-show",
             focusRing,
             className,
           )}

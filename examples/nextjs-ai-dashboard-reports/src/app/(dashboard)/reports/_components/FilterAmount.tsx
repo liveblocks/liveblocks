@@ -120,7 +120,7 @@ function FilterAmount() {
             variant="secondary"
             className={cx(
               focusRing,
-              "mt-2 block w-full text-left font-normal tabular-nums md:w-36 dark:bg-[#090E1A] hover:dark:bg-gray-950/50",
+              "mt-2 block w-full text-left font-normal tabular-nums md:w-36 dark:bg-[#090E1A] dark:hover:bg-gray-950/50",
             )}
           >
             {formatters.currency({ number: localMin, maxFractionDigits: 0 })} -{" "}
@@ -135,7 +135,7 @@ function FilterAmount() {
             {distributionData.map((bin, index) => (
               <div
                 key={index}
-                className={`w-full rounded-sm ${bin.isInRange ? "bg-blue-500 dark:bg-blue-500" : "bg-gray-200 dark:bg-gray-800"} transition-all`}
+                className={`w-full rounded-xs ${bin.isInRange ? "bg-blue-500 dark:bg-blue-500" : "bg-gray-200 dark:bg-gray-800"} transition-all`}
                 style={{ height: `${bin.height}%` }}
               />
             ))}

@@ -478,7 +478,7 @@ function TransactionToolUi({ transactionId }: { transactionId: string }) {
   );
 
   return (
-    <div className="my-2 pt-3.5 pb-4 px-4 rounded bg-neutral-100 w-full">
+    <div className="my-2 pt-3.5 pb-4 px-4 rounded-sm bg-neutral-100 w-full">
       <div className="flex justify-between items-center">
         <div className="font-semibold flex items-center gap-1">
           {transaction.merchant}{" "}
@@ -519,7 +519,7 @@ function MemberTool({ email }: { email: string }) {
   }
 
   return (
-    <div className="flex items-center gap-2 my-2 bg-neutral-100 p-4 rounded">
+    <div className="flex items-center gap-2 my-2 bg-neutral-100 p-4 rounded-sm">
       <Image
         src={user.avatar}
         alt={`${user.name}'s avatar`}

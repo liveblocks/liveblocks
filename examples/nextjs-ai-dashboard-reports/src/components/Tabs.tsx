@@ -66,29 +66,29 @@ function getVariantStyles(tabVariant: TabsListVariant) {
         // text color
         "text-gray-500 dark:text-gray-500",
         // hover
-        "hover:text-gray-700 hover:dark:text-gray-400",
+        "hover:text-gray-700 dark:hover:text-gray-400",
         // border hover
-        "hover:border-gray-300 hover:dark:border-gray-400",
+        "hover:border-gray-300 dark:hover:border-gray-400",
         // selected
         "data-[state=active]:border-gray-900 data-[state=active]:text-gray-900",
-        "data-[state=active]:dark:border-gray-50 data-[state=active]:dark:text-gray-50",
+        "dark:data-[state=active]:border-gray-50 dark:data-[state=active]:text-gray-50",
         // disabled
         "disabled:pointer-events-none",
-        "disabled:text-gray-300 disabled:dark:text-gray-700",
+        "disabled:text-gray-300 dark:disabled:text-gray-700",
       )
     case "solid":
       return cx(
         // base
-        "inline-flex items-center justify-center whitespace-nowrap rounded px-3 py-1 text-sm font-medium transition-all",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium transition-all",
         // text color
         "text-gray-500 dark:text-gray-400",
         // hover
-        "hover:text-gray-700 hover:dark:text-gray-200",
+        "hover:text-gray-700 dark:hover:text-gray-200",
         // selected
-        "data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow",
-        "data-[state=active]:dark:bg-gray-900 data-[state=active]:dark:text-gray-50",
+        "data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm",
+        "dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-gray-50",
         // disabled
-        "disabled:pointer-events-none disabled:text-gray-400 disabled:opacity-50 disabled:dark:text-gray-600",
+        "disabled:pointer-events-none disabled:text-gray-400 disabled:opacity-50 dark:disabled:text-gray-600",
       )
   }
 }
@@ -117,7 +117,7 @@ const TabsContent = React.forwardRef<
 >(({ className, ...props }, forwardedRef) => (
   <TabsPrimitives.Content
     ref={forwardedRef}
-    className={cx("outline-none", focusRing, className)}
+    className={cx("outline-hidden", focusRing, className)}
     {...props}
   />
 ))

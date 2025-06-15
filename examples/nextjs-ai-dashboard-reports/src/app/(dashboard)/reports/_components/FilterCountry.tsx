@@ -162,11 +162,11 @@ function FilterCountry() {
           <Button
             variant="secondary"
             className={cx(
-              "flex justify-start gap-1.5 font-normal md:justify-center dark:bg-[#090E1A] hover:dark:bg-gray-950/50",
+              "flex justify-start gap-1.5 font-normal md:justify-center dark:bg-[#090E1A] dark:hover:bg-gray-950/50",
             )}
           >
             Selected Locations
-            <span className="flex shrink-0 items-center justify-center rounded bg-gray-200 px-1 tabular-nums text-gray-900 dark:bg-gray-800 dark:text-gray-50">
+            <span className="flex shrink-0 items-center justify-center rounded-sm bg-gray-200 px-1 tabular-nums text-gray-900 dark:bg-gray-800 dark:text-gray-50">
               {selectedCountries.length}
             </span>
           </Button>
@@ -182,7 +182,7 @@ function FilterCountry() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="sm:[&>input]:py-1.5"
             />
-            <div className="flex-grow overflow-y-auto">
+            <div className="grow overflow-y-auto">
               <div className={filteredContinents.length > 0 ? "space-y-4" : ""}>
                 {filteredContinents.length > 0 ? (
                   filteredContinents.map((continent) => (

@@ -43,7 +43,7 @@ export function DropdownUserProfile({
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
         <DropdownMenuContent
           align={align}
-          className="!min-w-[calc(var(--radix-dropdown-menu-trigger-width))]"
+          className="min-w-[calc(var(--radix-dropdown-menu-trigger-width))]!"
         >
           <DropdownMenuLabel>{users[0].email}</DropdownMenuLabel>
           <DropdownMenuGroup>

@@ -248,7 +248,7 @@ export default function Users() {
                         {item.status === "pending" ? (
                           <Button
                             variant="secondary"
-                            className="justify-center sm:w-36 dark:border dark:border-gray-800 dark:bg-[#090E1A] hover:dark:bg-gray-950/50"
+                            className="justify-center sm:w-36 dark:border dark:border-gray-800 dark:bg-[#090E1A] dark:hover:bg-gray-950/50"
                             disabled
                           >
                             Resend
@@ -276,7 +276,7 @@ export default function Users() {
                           <DialogTrigger asChild>
                             <Button
                               variant="ghost"
-                              className="p-2.5 text-gray-600 transition-all hover:border hover:border-gray-300 hover:bg-gray-50 hover:text-red-500 dark:text-gray-400 hover:dark:border-gray-800 hover:dark:bg-gray-900 hover:dark:text-red-500"
+                              className="p-2.5 text-gray-600 transition-all hover:border hover:border-gray-300 hover:bg-gray-50 hover:text-red-500 dark:text-gray-400 dark:hover:border-gray-800 dark:hover:bg-gray-900 dark:hover:text-red-500"
                               aria-label={`Delete ${item.name}`}
                               disabled
                             >

@@ -15,7 +15,7 @@ export default function Layout({
     setIsCollapsed(!isCollapsed);
   };
   return (
-    <div className="mx-auto max-w-screen-2xl">
+    <div className="mx-auto max-w-(--breakpoint-2xl)">
       <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
       <main
         className={cx(

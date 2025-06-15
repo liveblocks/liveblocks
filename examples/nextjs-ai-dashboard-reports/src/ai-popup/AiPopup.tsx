@@ -87,7 +87,7 @@ function Chat({ chatId }: { chatId: string }) {
         layout="compact"
         chatId={chatId}
         copilotId={process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined}
-        className="min-h-0 flex-shrink flex-grow overflow-x-hidden overflow-y-scroll"
+        className="min-h-0 shrink grow overflow-x-hidden overflow-y-scroll"
         components={{
           Empty: AiChatPlaceholder,
           Anchor: (props) => (
@@ -179,7 +179,7 @@ function ChatPopup() {
                   </PopoverPrimitives.Close>
                 </span>
               </div>
-              <div className="relative flex-grow">
+              <div className="relative grow">
                 {showListing ? (
                   <ChatListing
                     onSelectChat={goToChat}

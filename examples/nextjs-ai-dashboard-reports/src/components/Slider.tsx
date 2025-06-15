@@ -27,7 +27,7 @@ const Slider = React.forwardRef<
         "data-[orientation='horizontal']:w-full data-[orientation='horizontal']:items-center",
         "data-[orientation='vertical']:h-full data-[orientation='vertical']:w-fit data-[orientation='vertical']:justify-center",
         // disabled
-        "data-[disabled]:pointer-events-none",
+        "data-disabled:pointer-events-none",
         className,
       )}
       tremor-id="tremor-raw"
@@ -50,7 +50,7 @@ const Slider = React.forwardRef<
             "data-[orientation='horizontal']:h-full",
             "data-[orientation='vertical']:w-full",
             // disabled
-            "data-[disabled]:bg-gray-300 dark:data-[disabled]:bg-gray-700",
+            "data-disabled:bg-gray-300 dark:data-disabled:bg-gray-700",
           )}
         />
       </SliderPrimitive.Track>
@@ -59,13 +59,13 @@ const Slider = React.forwardRef<
           key={index}
           className={cx(
             // base
-            "block size-[17px] shrink-0 rounded-full border shadow transition-all",
+            "block size-[17px] shrink-0 rounded-full border shadow-sm transition-all",
             // boder color
             "border-gray-400 dark:border-gray-500",
             // background color
             "bg-white",
             // disabled
-            "data-[disabled]:pointer-events-none data-[disabled]:bg-gray-200 dark:data-[disabled]:border-gray-800 dark:data-[disabled]:bg-gray-600",
+            "data-disabled:pointer-events-none data-disabled:bg-gray-200 dark:data-disabled:border-gray-800 dark:data-disabled:bg-gray-600",
             focusRing,
             "outline-offset-0",
           )}

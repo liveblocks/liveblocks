@@ -45,19 +45,19 @@ const NavigationButton = React.forwardRef<
         type="button"
         disabled={disabled}
         className={cx(
-          "flex size-8 shrink-0 select-none items-center justify-center rounded border p-1 outline-none transition sm:size-[30px]",
+          "flex size-8 shrink-0 select-none items-center justify-center rounded-sm border p-1 outline-hidden transition sm:size-[30px]",
           // text color
           "text-gray-600 hover:text-gray-800",
-          "dark:text-gray-400 hover:dark:text-gray-200",
+          "dark:text-gray-400 dark:hover:text-gray-200",
           // border color
           "border-gray-200 dark:border-gray-700",
           // background color
           "hover:bg-gray-50 active:bg-gray-100",
-          "hover:dark:bg-gray-900 active:dark:bg-gray-800",
+          "dark:hover:bg-gray-900 dark:active:bg-gray-800",
           // disabled
           "disabled:pointer-events-none",
-          "disabled:border-gray-200 disabled:dark:border-gray-800",
-          "disabled:text-gray-400 disabled:dark:text-gray-600",
+          "disabled:border-gray-200 dark:disabled:border-gray-800",
+          "disabled:text-gray-400 dark:disabled:text-gray-600",
           focusRing,
         )}
         onClick={onClick}
@@ -123,26 +123,26 @@ const Calendar = ({
           "text-gray-900 dark:text-gray-50",
         ),
         day: cx(
-          "size-9 rounded text-sm text-gray-900 dark:text-gray-50",
-          "hover:bg-gray-200 hover:dark:bg-gray-700",
+          "size-9 rounded-sm text-sm text-gray-900 dark:text-gray-50",
+          "hover:bg-gray-200 dark:hover:bg-gray-700",
           focusRing,
         ),
         day_today: "font-semibold",
         day_selected: cx(
-          "rounded",
+          "rounded-sm",
           "aria-selected:bg-blue-500 aria-selected:text-gray-50",
           "dark:aria-selected:bg-blue-500 dark:aria-selected:text-gray-50",
         ),
         day_disabled:
-          "!text-gray-300 dark:!text-gray-700 line-through disabled:hover:bg-transparent",
+          "text-gray-300! dark:text-gray-700! line-through disabled:hover:bg-transparent",
         day_outside: "text-gray-400 dark:text-gray-600",
         day_range_middle: cx(
-          "!rounded-none",
-          "aria-selected:!bg-gray-100 aria-selected:!text-gray-900",
-          "dark:aria-selected:!bg-gray-900 dark:aria-selected:!text-gray-50",
+          "rounded-none!",
+          "aria-selected:bg-gray-100! aria-selected:text-gray-900!",
+          "dark:aria-selected:bg-gray-900! dark:aria-selected:text-gray-50!",
         ),
-        day_range_start: "rounded-r-none !rounded-l",
-        day_range_end: "rounded-l-none !rounded-r",
+        day_range_start: "rounded-r-none rounded-l!",
+        day_range_end: "rounded-l-none rounded-r!",
         day_hidden: "invisible",
         ...classNames,
       }}
@@ -296,8 +296,8 @@ const Calendar = ({
                     "absolute inset-x-1/2 bottom-1.5 h-0.5 w-4 -translate-x-1/2 rounded-[2px]",
                     {
                       "bg-blue-500 dark:bg-blue-500": !selected,
-                      "!bg-white dark:!bg-gray-950": selected,
-                      "!bg-gray-400 dark:!bg-gray-600":
+                      "bg-white! dark:bg-gray-950!": selected,
+                      "bg-gray-400! dark:bg-gray-600!":
                         selected && range_middle,
                       "bg-gray-400 text-gray-400 dark:bg-gray-400 dark:text-gray-600":
                         disabled,

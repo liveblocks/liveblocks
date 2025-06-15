@@ -25,7 +25,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
           <div
             className={cx(
               // base
-              "h-[1px] w-full",
+              "h-px w-full",
               // background color
               "bg-gray-200 dark:bg-gray-800",
             )}
@@ -34,7 +34,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
           <div
             className={cx(
               // base
-              "h-[1px] w-full",
+              "h-px w-full",
               // background color
               "bg-gray-200 dark:bg-gray-800",
             )}
@@ -44,7 +44,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
         <div
           className={cx(
             // base
-            "h-[1px] w-full",
+            "h-px w-full",
             // backround color
             "bg-gray-200 dark:bg-gray-800",
           )}

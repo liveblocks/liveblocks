@@ -23,14 +23,14 @@ export const UserProfileDesktop = ({
         className={cx(
           isCollapsed ? "justify-center" : "justify-between",
           focusRing,
-          "group flex w-full items-center rounded-md px-1 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200/50 data-[state=open]:bg-gray-200/50 hover:dark:bg-gray-800/50 data-[state=open]:dark:bg-gray-900"
+          "group flex w-full items-center rounded-md px-1 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200/50 data-[state=open]:bg-gray-200/50 dark:hover:bg-gray-800/50 dark:data-[state=open]:bg-gray-900"
         )}
       >
         {isCollapsed ? (
           // h-8 to avoid layout shift with icon shown in isCollapsibled == false
           <div className="flex h-8 items-center">
             <User
-              className="size-5 shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-500 group-hover:dark:text-gray-300"
+              className="size-5 shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-gray-300"
               aria-hidden="true"
             />
           </div>
@@ -54,7 +54,7 @@ export const UserProfileDesktop = ({
         )}
         {!isCollapsed && (
           <ChevronsUpDown
-            className="size-4 shrink-0 text-gray-500 group-hover:text-gray-700 group-hover:dark:text-gray-400"
+            className="size-4 shrink-0 text-gray-500 group-hover:text-gray-700 dark:group-hover:text-gray-400"
             aria-hidden="true"
           />
         )}
@@ -70,7 +70,7 @@ export const UserProfileMobile = () => {
         aria-label="User settings"
         variant="ghost"
         className={cx(
-          "group flex items-center rounded-md p-0.5 sm:p-1 text-sm font-medium text-gray-900 hover:bg-gray-200/50 data-[state=open]:bg-gray-200/50 hover:dark:bg-gray-800/50 data-[state=open]:dark:bg-gray-800/50"
+          "group flex items-center rounded-md p-0.5 sm:p-1 text-sm font-medium text-gray-900 hover:bg-gray-200/50 data-[state=open]:bg-gray-200/50 dark:hover:bg-gray-800/50 dark:data-[state=open]:bg-gray-800/50"
         )}
       >
         <Image

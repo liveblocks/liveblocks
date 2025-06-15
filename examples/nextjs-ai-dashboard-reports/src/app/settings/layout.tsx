@@ -25,7 +25,7 @@ export default function Layout({
   };
   const pathname = usePathname();
   return (
-    <div className="mx-auto max-w-screen-2xl">
+    <div className="mx-auto max-w-(--breakpoint-2xl)">
       <Sidebar isCollapsed={isCollapsed} toggleSidebar={toggleSidebar} />
       <div
         className={cx(

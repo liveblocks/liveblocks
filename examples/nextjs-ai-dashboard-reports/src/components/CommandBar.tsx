@@ -44,7 +44,7 @@ const CommandBar = ({
           className={cx(
             "z-50",
             "data-[state=closed]:animate-hide",
-            "data-[side=top]:animate-slideUpAndFade",
+            "data-[side=top]:animate-slide-up-and-fade",
           )}
         >
           {children}
@@ -147,7 +147,7 @@ const CommandBarCommand = React.forwardRef<HTMLButtonElement, CommandProps>(
     return (
       <span
         className={cx(
-          "flex items-center gap-x-2 rounded-lg bg-gray-900 p-1 text-base font-medium text-gray-50 outline-none transition focus:z-10 sm:text-sm",
+          "flex items-center gap-x-2 rounded-lg bg-gray-900 p-1 text-base font-medium text-gray-50 outline-hidden transition focus:z-10 sm:text-sm",
           "sm:last-of-type:-mr-1",
           className,
         )}

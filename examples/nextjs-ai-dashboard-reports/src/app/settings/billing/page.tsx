@@ -84,11 +84,11 @@ export default function Billing() {
                   <>
                     <p className="flex items-center space-x-2 pt-[3px]">
                       <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
-                        <span className="inline-block h-4 mt-0 w-24 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                        <span className="inline-block h-4 mt-0 w-24 bg-gray-100 dark:bg-gray-900 rounded-sm animate-pulse" />
                       </span>
                     </p>
                     <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-50">
-                      <span className="inline-block h-4 w-40 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                      <span className="inline-block h-4 w-40 bg-gray-100 dark:bg-gray-900 rounded-sm animate-pulse" />
                     </p>
                   </>
                 ) : (
@@ -115,7 +115,7 @@ export default function Billing() {
                 )}
                 <a
                   href="#"
-                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600 mt-6"
+                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-xs transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline-solid outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 dark:disabled:text-gray-600 mt-6"
                   tremor-id="tremor-raw"
                 >
                   Manage plans
@@ -126,11 +126,11 @@ export default function Billing() {
                   <>
                     <p className="flex items-center space-x-2 pt-[3px]">
                       <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
-                        <span className="inline-block h-4 mt-0 w-24 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                        <span className="inline-block h-4 mt-0 w-24 bg-gray-100 dark:bg-gray-900 rounded-sm animate-pulse" />
                       </span>
                     </p>
                     <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-50">
-                      <span className="inline-block h-4 w-40 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                      <span className="inline-block h-4 w-40 bg-gray-100 dark:bg-gray-900 rounded-sm animate-pulse" />
                     </p>
                   </>
                 ) : (
@@ -152,7 +152,7 @@ export default function Billing() {
 
                 <a
                   href="#"
-                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600 mt-6"
+                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-xs transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline-solid outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 dark:disabled:text-gray-600 mt-6"
                   tremor-id="tremor-raw"
                 >
                   Change billing period
@@ -173,7 +173,7 @@ export default function Billing() {
             <div className="mt-3 flex items-center justify-between">
               <p className="flex items-center space-x-2">
                 {isLoading ? (
-                  <span className="inline-block h-4 w-36 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                  <span className="inline-block h-4 w-36 bg-gray-100 dark:bg-gray-900 rounded-sm animate-pulse" />
                 ) : error ? (
                   <span className="text-red-500 font-semibold">
                     Error loading seats
@@ -191,7 +191,7 @@ export default function Billing() {
               </p>
               <a
                 href="#"
-                className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600"
+                className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-xs transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline-solid outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 dark:disabled:text-gray-600"
                 tremor-id="tremor-raw"
               >
                 Manage seats

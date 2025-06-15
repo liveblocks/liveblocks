@@ -61,17 +61,17 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
           <div>
             <div className="flex items-center gap-x-1.5">
               <button
-                className="group inline-flex rounded-md p-2 hover:bg-gray-200/50 hover:dark:bg-gray-900"
+                className="group inline-flex rounded-md p-2 hover:bg-gray-200/50 dark:hover:bg-gray-900"
                 onClick={toggleSidebar}
               >
                 {isCollapsed ? (
                   <PanelRightClose
-                    className="size-5 shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-500 group-hover:dark:text-gray-300"
+                    className="size-5 shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-gray-300"
                     aria-hidden="true"
                   />
                 ) : (
                   <PanelRightOpen
-                    className="size-5 shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-500 group-hover:dark:text-gray-300"
+                    className="size-5 shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-gray-300"
                     aria-hidden="true"
                   />
                 )}
@@ -111,7 +111,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                         content={item.name}
                         sideOffset={6}
                         showArrow={false}
-                        className="z-[999]"
+                        className="z-999"
                       >
                         <Link
                           href={item.href}
@@ -119,7 +119,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                             isActive(item.href)
                               ? "text-blue-600 dark:text-blue-500"
                               : "text-gray-700 dark:text-gray-300",
-                            "inline-flex items-center rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 hover:dark:bg-gray-900",
+                            "inline-flex items-center rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 dark:hover:bg-gray-900",
                             focusRing
                           )}
                         >
@@ -136,7 +136,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                           isActive(item.href)
                             ? "text-blue-600 dark:text-blue-500"
                             : "text-gray-700 dark:text-gray-300",
-                          "flex items-center gap-x-2.5 rounded-md p-2 text-sm font-medium transition-opacity hover:bg-gray-200/50 hover:dark:bg-gray-900",
+                          "flex items-center gap-x-2.5 rounded-md p-2 text-sm font-medium transition-opacity hover:bg-gray-200/50 dark:hover:bg-gray-900",
                           focusRing
                         )}
                       >
@@ -169,7 +169,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                       content="Onboarding"
                       sideOffset={6}
                       showArrow={false}
-                      className="z-[999]"
+                      className="z-999"
                     >
                       <Link
                         href={siteConfig.baseLinks.onboarding}
@@ -177,7 +177,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                           isActive("/onboarding")
                             ? "text-blue-600 dark:text-blue-500"
                             : "text-gray-700 dark:text-gray-300",
-                          "inline-flex items-center rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 hover:dark:bg-gray-900",
+                          "inline-flex items-center rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 dark:hover:bg-gray-900",
                           focusRing,
                         )}
                       >
@@ -194,7 +194,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
                         isActive("/onboarding")
                           ? "text-blue-600 dark:text-blue-500"
                           : "text-gray-700 dark:text-gray-300",
-                        "flex items-center gap-x-2.5 rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 hover:dark:bg-gray-900",
+                        "flex items-center gap-x-2.5 rounded-md p-2 text-sm font-medium transition hover:bg-gray-200/50 dark:hover:bg-gray-900",
                         focusRing,
                       )}
                     >
@@ -212,7 +212,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
         </aside>
       </nav>
       {/* top navbar (xs-lg) */}
-      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-sm sm:px-6 lg:hidden dark:border-gray-800 dark:bg-gray-950">
+      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 shadow-xs sm:px-6 lg:hidden dark:border-gray-800 dark:bg-gray-950">
         <span
           className={cx(
             "font-semibold text-gray-900 sm:text-sm dark:text-gray-50",

@@ -88,7 +88,7 @@ export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    className="group select-none hover:bg-gray-50 hover:dark:bg-gray-900"
+                    className="group select-none hover:bg-gray-50 dark:hover:bg-gray-900"
                   >
                     {row.getVisibleCells().map((cell, index) => (
                       <TableCell

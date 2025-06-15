@@ -53,12 +53,12 @@ export function DataTableDrawer({
   const filesList = files.map((file) => (
     <li
       key={file.name}
-      className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-[#090E1A]"
+      className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-xs dark:border-gray-800 dark:bg-[#090E1A]"
     >
       <div className="absolute right-4 top-1/2 -translate-y-1/2">
         <button
           type="button"
-          className="rounded-md p-2 text-gray-400 transition-all hover:text-rose-500 dark:text-gray-600 hover:dark:text-rose-500"
+          className="rounded-md p-2 text-gray-400 transition-all hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-500"
           aria-label="Remove file"
           onClick={() =>
             setFiles((prevFiles) =>
@@ -70,7 +70,7 @@ export function DataTableDrawer({
         </button>
         <button
           type="button"
-          className="rounded-md p-2 text-gray-400 transition-all hover:text-gray-500 dark:text-gray-600 hover:dark:text-gray-500"
+          className="rounded-md p-2 text-gray-400 transition-all hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-500"
           aria-label="Download file"
         >
           <Download className="size-5 shrink-0" aria-hidden="true" />
