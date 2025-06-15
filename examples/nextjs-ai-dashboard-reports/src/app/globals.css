@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.lb-root {
+  --lb-accent: theme("colors.blue.500");
+  font-size: 15px;
+}
+
+.lb-ai-chat {
+  --lb-background: theme("colors.gray.50");
+  --lb-dynamic-background: theme("colors.white");
+  --lb-foreground: theme("colors.gray.900");
+}
+
+.dark .lb-ai-chat {
+  --lb-background: theme("colors.gray.950");
+  --lb-dynamic-background: theme("colors.gray.900");
+  --lb-foreground: theme("colors.gray.50");
+}
