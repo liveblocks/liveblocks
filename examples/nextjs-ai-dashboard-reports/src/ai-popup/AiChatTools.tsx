@@ -441,8 +441,9 @@ export function TransactionToolAi() {
           additionalProperties: false,
           required: ["transactionId"],
         },
-        render: ({ args }) => {
+        render: ({ args, respond }) => {
           if (!args) return null;
+          respond();
           return <TransactionToolUi transactionId={args.transactionId} />;
         },
       })}
