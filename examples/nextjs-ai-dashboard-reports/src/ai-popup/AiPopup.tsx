@@ -23,17 +23,34 @@ import {
   QueryTransactionTool,
   QueryInvoiceTool,
 } from "./AiChatTools"
-import { RiRobot2Line } from "@remixicon/react"
 import { siteConfig } from "@/app/siteConfig"
 import useSWR from "swr"
 import { ArrowLeftIcon, PlusIcon, XIcon } from "lucide-react"
+
+const CopilotIcon = ({ className }: { className?: string }) => {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M16.0841 12.203C11.5641 13.696 10.0601 15.201 8.56711 19.721C8.54009 19.8018 8.48838 19.872 8.41929 19.9217C8.3502 19.9714 8.26723 19.9982 8.18211 19.9982C8.09698 19.9982 8.01401 19.9714 7.94493 19.9217C7.87584 19.872 7.82413 19.8018 7.79711 19.721C6.30311 15.201 4.79711 13.696 0.279108 12.203C0.198026 12.1763 0.127456 12.1246 0.0774348 12.0554C0.0274136 11.9862 0.000488281 11.9029 0.000488281 11.8175C0.000488281 11.7322 0.0274136 11.6489 0.0774348 11.5797C0.127456 11.5105 0.198026 11.4588 0.279108 11.432C4.79911 9.93805 6.30311 8.43305 7.79611 3.91405C7.82313 3.83333 7.87484 3.76314 7.94393 3.71341C8.01301 3.66369 8.09598 3.63693 8.18111 3.63693C8.26623 3.63693 8.3492 3.66369 8.41829 3.71341C8.48738 3.76314 8.53909 3.83333 8.56611 3.91405C10.0601 8.43405 11.5661 9.93805 16.0841 11.432C16.1657 11.4583 16.2368 11.5098 16.2873 11.5791C16.3378 11.6483 16.365 11.7318 16.365 11.8175C16.365 11.9033 16.3378 11.9867 16.2873 12.056C16.2368 12.1253 16.1657 12.1768 16.0841 12.203ZM19.8601 4.28305C17.6011 5.03005 16.8481 5.78305 16.1011 8.04305C16.0411 8.22805 15.7781 8.22805 15.7161 8.04305C14.9701 5.78305 14.2161 5.03105 11.9561 4.28305C11.7711 4.22305 11.7711 3.96005 11.9561 3.89905C14.2161 3.15305 14.9691 2.39905 15.7161 0.139046C15.7296 0.0986863 15.7555 0.0635938 15.79 0.0387298C15.8246 0.0138659 15.866 0.000488281 15.9086 0.000488281C15.9512 0.000488281 15.9927 0.0138659 16.0272 0.0387298C16.0617 0.0635938 16.0876 0.0986863 16.1011 0.139046C16.8471 2.39905 17.6011 3.15205 19.8611 3.89905C20.0461 3.95905 20.0461 4.22205 19.8611 4.28405L19.8601 4.28305Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
 
 export function AiPopup() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="fixed right-8 bottom-8 z-40 flex size-14 items-center justify-center rounded-full border bg-white shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all duration-200 dark:border-transparent">
-          <RiRobot2Line className="size-6 text-black" />
+        <div className="fixed right-6 bottom-6 z-40 flex size-14 items-center justify-center rounded-full border bg-white [filter:drop-shadow(0px_2.767px_2.214px_rgba(0,0,0,0.01))_drop-shadow(0px_6.65px_5.32px_rgba(0,0,0,0.01))_drop-shadow(0px_12.522px_10.017px_rgba(0,0,0,0.01))_drop-shadow(0px_22.336px_17.869px_rgba(0,0,0,0.02))_drop-shadow(0px_41.778px_33.422px_rgba(0,0,0,0.02))_drop-shadow(0px_100px_80px_rgba(0,0,0,0.03))] transition-all duration-200 dark:border-neutral-900 dark:bg-neutral-950">
+          <CopilotIcon className="size-6 text-pink-500" />
         </div>
       }
     >
@@ -127,12 +144,10 @@ function ChatPopup() {
       <PopoverPrimitives.Root defaultOpen={true}>
         <PopoverPrimitives.Trigger asChild>
           <button
-            className={
-              "fixed right-8 bottom-8 z-40 flex size-14 items-center justify-center rounded-full border border-blue-400/60 bg-blue-600 shadow-[0px_36px_49px_0px_rgba(0,0,0,0.01),0px_15.04px_20.471px_0px_rgba(0,0,0,0.01),0px_8.041px_10.945px_0px_rgba(0,0,0,0.01),0px_4.508px_6.136px_0px_rgba(0,0,0,0.00),0px_2.394px_3.259px_0px_rgba(0,0,0,0.00),0px_0.996px_1.356px_0px_rgba(0,0,0,0.00)] transition-all duration-200 hover:bg-black dark:border-blue-700/60"
-            }
+            className="fixed right-6 bottom-6 z-40 flex size-14 items-center justify-center rounded-full border bg-white [filter:drop-shadow(0px_2.767px_2.214px_rgba(0,0,0,0.01))_drop-shadow(0px_6.65px_5.32px_rgba(0,0,0,0.01))_drop-shadow(0px_12.522px_10.017px_rgba(0,0,0,0.01))_drop-shadow(0px_22.336px_17.869px_rgba(0,0,0,0.02))_drop-shadow(0px_41.778px_33.422px_rgba(0,0,0,0.02))_drop-shadow(0px_100px_80px_rgba(0,0,0,0.03))] transition-all duration-200 dark:border-neutral-900 dark:bg-neutral-950"
             aria-label="Open AI Assistant"
           >
-            <RiRobot2Line className="size-7 text-white" />
+            <CopilotIcon className="size-6 text-pink-500" />
           </button>
         </PopoverPrimitives.Trigger>
         <PopoverPrimitives.Portal>
