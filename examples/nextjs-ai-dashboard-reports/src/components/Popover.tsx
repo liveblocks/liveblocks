@@ -41,7 +41,7 @@ const PopoverClose = React.forwardRef<
 PopoverClose.displayName = "PopoverClose"
 
 interface ContentProps
-  extends React.ComponentPropsWithoutRef<typeof PopoverPrimitives.Content> { }
+  extends React.ComponentPropsWithoutRef<typeof PopoverPrimitives.Content> {}
 
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitives.Content>,
@@ -72,11 +72,11 @@ const PopoverContent = React.forwardRef<
             // base
             "max-h-(--radix-popper-available-height) min-w-60 overflow-hidden rounded-md border p-2.5 text-sm shadow-md",
             // border color
-            "border-gray-200 dark:border-gray-800",
+            "border-neutral-200 dark:border-neutral-800",
             // text color
-            "text-gray-900 dark:text-gray-50",
+            "text-neutral-900 dark:text-neutral-50",
             // background color
-            "bg-white dark:bg-gray-950",
+            "bg-white dark:bg-neutral-950",
             // transition
             "will-change-[transform,opacity]",
             "data-[state=closed]:animate-hide",

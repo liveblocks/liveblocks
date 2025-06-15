@@ -3,8 +3,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-gray-925: #050814;
-
   --animate-accordion-open: accordionOpen 150ms cubic-bezier(0.87, 0, 0.13, 1);
   --animate-accordion-close: accordionClose 150ms cubic-bezier(0.87, 0, 0.13, 1);
   --animate-hide: hide 150ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -145,7 +143,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-neutral-200, currentcolor);
   }
 }
 
@@ -155,13 +153,13 @@
 }
 
 .lb-ai-chat {
-  --lb-background: var(--color-gray-50);
+  --lb-background: var(--color-neutral-50);
   --lb-dynamic-background: var(--color-white);
-  --lb-foreground: var(--color-gray-900);
+  --lb-foreground: var(--color-neutral-900);
 }
 
 .dark .lb-ai-chat {
-  --lb-background: var(--color-gray-950);
-  --lb-dynamic-background: var(--color-gray-900);
-  --lb-foreground: var(--color-gray-50);
+  --lb-background: var(--color-neutral-950);
+  --lb-dynamic-background: var(--color-neutral-900);
+  --lb-foreground: var(--color-neutral-50);
 }

@@ -15,7 +15,7 @@ type ExpenseStatus = (typeof expense_statuses)[number]
 const statusColorMap: {
   [key in ExpenseStatus["value"]]?: string
 } = {
-  pending: "bg-gray-500 dark:bg-gray-500",
+  pending: "bg-neutral-500 dark:bg-neutral-500",
   approved: "bg-emerald-600 dark:bg-emerald-500",
   actionRequired: "bg-rose-600 dark:bg-rose-500",
   inAudit: "bg-yellow-600 dark:bg-yellow-500",
@@ -54,7 +54,7 @@ function FilterExpenseStatus() {
                 <span
                   className={cx(
                     statusColorMap[status.value] ||
-                      "bg-gray-600 dark:bg-gray-500",
+                      "bg-neutral-600 dark:bg-neutral-500",
                     "inline-block size-2 shrink-0 rounded-full",
                   )}
                   aria-hidden="true"

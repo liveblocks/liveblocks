@@ -66,13 +66,16 @@ const ContinentCheckbox = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="sticky top-0 z-50 flex items-center gap-2 rounded-md bg-gray-100 px-1 py-1 dark:bg-gray-900">
+      <div className="sticky top-0 z-50 flex items-center gap-2 rounded-md bg-neutral-100 px-1 py-1 dark:bg-neutral-900">
         <Checkbox
           id={continent.name}
           checked={allSelected ? true : someSelected ? "indeterminate" : false}
           onCheckedChange={handleContinentChange}
         />
-        <Label className="w-full text-base sm:text-sm font-medium" htmlFor={continent.name}>
+        <Label
+          className="w-full text-base font-medium sm:text-sm"
+          htmlFor={continent.name}
+        >
           {continent.name}
         </Label>
       </div>
@@ -86,7 +89,10 @@ const ContinentCheckbox = ({
                 handleCountryChange(country.name, checked)
               }
             />
-            <Label className="text-base sm:text-sm w-full" htmlFor={country.name}>
+            <Label
+              className="w-full text-base sm:text-sm"
+              htmlFor={country.name}
+            >
               {country.name}
             </Label>
           </div>
@@ -162,17 +168,17 @@ function FilterCountry() {
           <Button
             variant="secondary"
             className={cx(
-              "flex justify-start gap-1.5 font-normal md:justify-center dark:bg-[#090E1A] dark:hover:bg-gray-950/50",
+              "flex justify-start gap-1.5 font-normal md:justify-center dark:bg-neutral-950 dark:hover:bg-neutral-950/50",
             )}
           >
             Selected Locations
-            <span className="flex shrink-0 items-center justify-center rounded-sm bg-gray-200 px-1 tabular-nums text-gray-900 dark:bg-gray-800 dark:text-gray-50">
+            <span className="flex shrink-0 items-center justify-center rounded-sm bg-neutral-200 px-1 text-neutral-900 tabular-nums dark:bg-neutral-800 dark:text-neutral-50">
               {selectedCountries.length}
             </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="z-50 min-w-[calc(var(--radix-popover-trigger-width))] max-w-[calc(var(--radix-popover-trigger-width))] sm:min-w-56 sm:max-w-56"
+          className="z-50 max-w-[calc(var(--radix-popover-trigger-width))] min-w-[calc(var(--radix-popover-trigger-width))] sm:max-w-56 sm:min-w-56"
           align="end"
         >
           <div className="flex h-full max-h-96 flex-col gap-3">
@@ -193,7 +199,7 @@ function FilterCountry() {
                     />
                   ))
                 ) : (
-                  <span className="mt-2 block text-base sm:text-sm text-gray-500 dark:text-gray-500">
+                  <span className="mt-2 block text-base text-neutral-500 sm:text-sm dark:text-neutral-500">
                     No results found
                   </span>
                 )}

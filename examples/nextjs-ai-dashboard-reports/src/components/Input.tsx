@@ -11,22 +11,22 @@ const inputStyles = tv({
     // base
     "relative block w-full appearance-none rounded-md border px-2.5 py-2 shadow-xs outline-hidden transition sm:text-sm",
     // border color
-    "border-gray-300 dark:border-gray-800",
+    "border-neutral-300 dark:border-neutral-800",
     // text color
-    "text-gray-900 dark:text-gray-50",
+    "text-neutral-900 dark:text-neutral-50",
     // placeholder color
-    "placeholder-gray-400 dark:placeholder-gray-500",
+    "placeholder-neutral-400 dark:placeholder-neutral-500",
     // background color
-    "bg-white dark:bg-[#090E1A]",
+    "bg-white dark:bg-neutral-950",
     // disabled
-    "disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400",
-    "dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500",
+    "disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-400",
+    "dark:disabled:border-neutral-700 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-500",
     // file
     [
       "file:-my-2 file:-ml-2.5 file:cursor-pointer file:rounded-l-[5px] file:rounded-r-none file:border-0 file:px-3 file:py-2 file:outline-hidden focus:outline-hidden disabled:pointer-events-none file:disabled:pointer-events-none",
-      "file:border-solid file:border-gray-300 file:bg-gray-50 file:text-gray-500 file:hover:bg-gray-100 dark:file:border-gray-800 dark:file:bg-gray-950 dark:file:hover:bg-gray-900/20 dark:file:disabled:border-gray-700",
-      "file:[border-inline-end-width:1px] file:me-3",
-      "file:disabled:bg-gray-100 file:disabled:text-gray-500 dark:file:disabled:bg-gray-800",
+      "file:border-solid file:border-neutral-300 file:bg-neutral-50 file:text-neutral-500 file:hover:bg-neutral-100 dark:file:border-neutral-800 dark:file:bg-neutral-950 dark:file:hover:bg-neutral-900/20 dark:file:disabled:border-neutral-700",
+      "file:me-3 file:[border-inline-end-width:1px]",
+      "file:disabled:bg-neutral-100 file:disabled:text-neutral-500 dark:file:disabled:bg-neutral-800",
     ],
     // focus
     focusInput,
@@ -49,7 +49,7 @@ const inputStyles = tv({
 
 interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
-  VariantProps<typeof inputStyles> {
+    VariantProps<typeof inputStyles> {
   inputClassName?: string
 }
 
@@ -91,19 +91,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               // base
               "pointer-events-none absolute bottom-0 left-2 flex h-full items-center justify-center",
               // text color
-              "text-gray-400 dark:text-gray-600",
+              "text-neutral-400 dark:text-neutral-600",
             )}
           >
-            <RiSearchLine
-              className="size-4.5 shrink-0"
-              aria-hidden="true"
-            />
+            <RiSearchLine className="size-4.5 shrink-0" aria-hidden="true" />
           </div>
         )}
         {isPassword && (
           <div
             className={cx(
-              "absolute bottom-0 right-0 flex h-full items-center justify-center px-3",
+              "absolute right-0 bottom-0 flex h-full items-center justify-center px-3",
             )}
           >
             <button
@@ -112,9 +109,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 // base
                 "h-fit w-fit rounded-xs outline-hidden transition-all",
                 // text
-                "text-gray-400 dark:text-gray-600",
+                "text-neutral-400 dark:text-neutral-600",
                 // hover
-                "hover:text-gray-500 dark:hover:text-gray-500",
+                "hover:text-neutral-500 dark:hover:text-neutral-500",
                 focusRing,
               )}
               type="button"

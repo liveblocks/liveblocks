@@ -32,14 +32,14 @@ const RadioCardItem = React.forwardRef<
         // base
         "group relative w-full rounded-md border p-4 text-left shadow-xs transition focus:outline-hidden",
         // background color
-        "bg-white dark:bg-[#090E1A]",
+        "bg-white dark:bg-neutral-950",
         // border color
-        "border-gray-300 dark:border-gray-800",
+        "border-neutral-300 dark:border-neutral-800",
         "data-[state=checked]:border-blue-500",
         "dark:data-[state=checked]:border-blue-500",
         // disabled
-        "data-disabled:border-gray-100 dark:data-disabled:border-gray-800",
-        "data-disabled:bg-gray-50 data-disabled:shadow-none dark:data-disabled:bg-gray-900",
+        "data-disabled:border-neutral-100 dark:data-disabled:border-neutral-800",
+        "data-disabled:bg-neutral-50 data-disabled:shadow-none dark:data-disabled:bg-neutral-900",
         focusInput,
         className,
       )}
@@ -62,14 +62,14 @@ const RadioCardIndicator = React.forwardRef<
         // base
         "relative flex size-4 shrink-0 appearance-none items-center justify-center rounded-full border shadow-xs outline-hidden",
         // border color
-        "border-gray-300 dark:border-gray-800",
+        "border-neutral-300 dark:border-neutral-800",
         // background color
-        "bg-white dark:bg-gray-950",
+        "bg-white dark:bg-neutral-950",
         // checked
-        "group-data-[state=checked]:border-0 group-data-[state=checked]:border-transparent group-data-[state=checked]:bg-blue-500",
+        "group-data-[state=checked]:border-0 group-data-[state=checked]:border-transparent group-data-[state=checked]:bg-black",
         // disabled
-        "group-data-disabled:border-gray-300 group-data-disabled:bg-gray-100 group-data-disabled:text-gray-400",
-        "dark:group-data-disabled:border-gray-700 dark:group-data-disabled:bg-gray-800",
+        "group-data-disabled:border-neutral-300 group-data-disabled:bg-neutral-100 group-data-disabled:text-neutral-400",
+        "dark:group-data-disabled:border-neutral-700 dark:group-data-disabled:bg-neutral-800",
         // focus
         focusRing,
         className,
@@ -87,7 +87,7 @@ const RadioCardIndicator = React.forwardRef<
             // indicator
             "bg-white",
             // disabled
-            "group-data-disabled:bg-gray-400 dark:group-data-disabled:bg-gray-500",
+            "group-data-disabled:bg-neutral-400 dark:group-data-disabled:bg-neutral-500",
           )}
         />
       </RadioGroupPrimitives.Indicator>

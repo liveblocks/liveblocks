@@ -53,12 +53,12 @@ export function DataTableDrawer({
   const filesList = files.map((file) => (
     <li
       key={file.name}
-      className="relative rounded-lg border border-gray-300 bg-white p-4 shadow-xs dark:border-gray-800 dark:bg-[#090E1A]"
+      className="relative rounded-lg border border-neutral-300 bg-white p-4 shadow-xs dark:border-neutral-800 dark:bg-neutral-950"
     >
-      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+      <div className="absolute top-1/2 right-4 -translate-y-1/2">
         <button
           type="button"
-          className="rounded-md p-2 text-gray-400 transition-all hover:text-rose-500 dark:text-gray-600 dark:hover:text-rose-500"
+          className="rounded-md p-2 text-neutral-400 transition-all hover:text-rose-500 dark:text-neutral-600 dark:hover:text-rose-500"
           aria-label="Remove file"
           onClick={() =>
             setFiles((prevFiles) =>
@@ -70,24 +70,24 @@ export function DataTableDrawer({
         </button>
         <button
           type="button"
-          className="rounded-md p-2 text-gray-400 transition-all hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-500"
+          className="rounded-md p-2 text-neutral-400 transition-all hover:text-neutral-500 dark:text-neutral-600 dark:hover:text-neutral-500"
           aria-label="Download file"
         >
           <Download className="size-5 shrink-0" aria-hidden="true" />
         </button>
       </div>
       <div className="flex items-center space-x-3 truncate">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-neutral-100 dark:bg-neutral-800">
           <File
-            className="size-5 text-gray-700 dark:text-gray-300"
+            className="size-5 text-neutral-700 dark:text-neutral-300"
             aria-hidden={true}
           />
         </span>
         <div className="truncate pr-20">
-          <p className="truncate text-xs font-medium text-gray-900 hover:underline hover:underline-offset-4 dark:text-gray-50">
+          <p className="truncate text-xs font-medium text-neutral-900 hover:underline hover:underline-offset-4 dark:text-neutral-50">
             <a href="#">{file.name}</a>
           </p>
-          <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-500">
+          <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-500">
             {file.size} bytes
           </p>
         </div>
@@ -98,14 +98,14 @@ export function DataTableDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       {datas ? (
-        <DrawerContent className="overflow-x-hidden sm:max-w-lg dark:bg-gray-925">
+        <DrawerContent className="overflow-x-hidden sm:max-w-lg dark:bg-neutral-950">
           <DrawerHeader className="-px-6 w-full">
             <DrawerTitle className="flex w-full items-center justify-between">
               <span>{datas.merchant}</span>
               <span>{formatters.currency({ number: datas.amount })}</span>
             </DrawerTitle>
             <div className="mt-1 flex items-center justify-between">
-              <span className="text-left text-sm text-gray-500 dark:text-gray-500">
+              <span className="text-left text-sm text-neutral-500 dark:text-neutral-500">
                 {format(
                   new Date(datas.transaction_date),
                   "MMM dd, yyyy 'at' hh:mm",
@@ -131,16 +131,16 @@ export function DataTableDrawer({
                   <Label htmlFor="file" className="font-medium">
                     Upload receipt
                   </Label>
-                  <div className="relative mt-2 flex h-36 items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                  <div className="relative mt-2 flex h-36 items-center justify-center rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700">
                     <div>
                       <File
-                        className="mx-auto size-9 text-gray-400 dark:text-gray-600"
+                        className="mx-auto size-9 text-neutral-400 dark:text-neutral-600"
                         aria-hidden={true}
                       />
                       <div className="mt-2">
                         <label
                           htmlFor="file-upload"
-                          className="cursor-pointer rounded-md text-sm text-gray-700 dark:text-gray-300"
+                          className="cursor-pointer rounded-md text-sm text-neutral-700 dark:text-neutral-300"
                         >
                           {/* Extend link target to entire card */}
                           <span
@@ -156,10 +156,10 @@ export function DataTableDrawer({
                             className="sr-only"
                           />
                         </label>
-                        <span className="pl-1 text-sm text-gray-700 dark:text-gray-300">
+                        <span className="pl-1 text-sm text-neutral-700 dark:text-neutral-300">
                           to browse or drag receipt here
                         </span>
-                        <p className="text-center text-xs text-gray-500 dark:text-gray-500">
+                        <p className="text-center text-xs text-neutral-500 dark:text-neutral-500">
                           PDF, JPG, PNG, XML
                         </p>
                       </div>
@@ -167,7 +167,7 @@ export function DataTableDrawer({
                   </div>
                   {filesList.length > 0 && (
                     <>
-                      <h4 className="mt-6 text-sm font-medium text-gray-900 dark:text-gray-50">
+                      <h4 className="mt-6 text-sm font-medium text-neutral-900 dark:text-neutral-50">
                         File(s) to upload
                       </h4>
                       <ul role="list" className="mt-2 space-y-4">
@@ -207,14 +207,14 @@ export function DataTableDrawer({
                 </div>
               </TabsContent>
               <TabsContent value="accounting" className="space-y-6 px-6">
-                <h3 className="mt-6 text-sm font-medium text-gray-900 dark:text-gray-50">
+                <h3 className="mt-6 text-sm font-medium text-neutral-900 dark:text-neutral-50">
                   Audit trail
                 </h3>
                 <DataTableDrawerFeed />
               </TabsContent>
             </Tabs>
           </DrawerBody>
-          <DrawerFooter className="-mx-6 -mb-2 gap-2 bg-white px-6 dark:bg-gray-925">
+          <DrawerFooter className="-mx-6 -mb-2 gap-2 bg-white px-6 dark:bg-neutral-950">
             <DrawerClose>
               <Button variant="secondary" className="w-full">
                 Dispute

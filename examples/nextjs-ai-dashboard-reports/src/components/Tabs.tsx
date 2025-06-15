@@ -28,15 +28,15 @@ const variantStyles: Record<TabsListVariant, string> = {
     // base
     "flex items-center justify-start border-b",
     // border color
-    "border-gray-200 dark:border-gray-800",
+    "border-neutral-200 dark:border-neutral-800",
   ),
   solid: cx(
     // base
     "inline-flex items-center justify-center rounded-md p-1",
     // border color
-    // "border-gray-200 dark:border-gray-800",
+    // "border-neutral-200 dark:border-neutral-800",
     // background color
-    "bg-gray-100 dark:bg-gray-800",
+    "bg-neutral-100 dark:bg-neutral-800",
   ),
 }
 
@@ -62,33 +62,33 @@ function getVariantStyles(tabVariant: TabsListVariant) {
     case "line":
       return cx(
         // base
-        "-mb-px items-center justify-center whitespace-nowrap border-b-2 border-transparent px-3 pb-3 text-sm font-medium transition-all",
+        "-mb-px items-center justify-center border-b-2 border-transparent px-3 pb-3 text-sm font-medium whitespace-nowrap transition-all",
         // text color
-        "text-gray-500 dark:text-gray-500",
+        "text-neutral-500 dark:text-neutral-500",
         // hover
-        "hover:text-gray-700 dark:hover:text-gray-400",
+        "hover:text-neutral-700 dark:hover:text-neutral-400",
         // border hover
-        "hover:border-gray-300 dark:hover:border-gray-400",
+        "hover:border-neutral-300 dark:hover:border-neutral-400",
         // selected
-        "data-[state=active]:border-gray-900 data-[state=active]:text-gray-900",
-        "dark:data-[state=active]:border-gray-50 dark:data-[state=active]:text-gray-50",
+        "data-[state=active]:border-neutral-900 data-[state=active]:text-neutral-900",
+        "dark:data-[state=active]:border-neutral-50 dark:data-[state=active]:text-neutral-50",
         // disabled
         "disabled:pointer-events-none",
-        "disabled:text-gray-300 dark:disabled:text-gray-700",
+        "disabled:text-neutral-300 dark:disabled:text-neutral-700",
       )
     case "solid":
       return cx(
         // base
-        "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium transition-all",
+        "inline-flex items-center justify-center rounded-sm px-3 py-1 text-sm font-medium whitespace-nowrap transition-all",
         // text color
-        "text-gray-500 dark:text-gray-400",
+        "text-neutral-500 dark:text-neutral-400",
         // hover
-        "hover:text-gray-700 dark:hover:text-gray-200",
+        "hover:text-neutral-700 dark:hover:text-neutral-200",
         // selected
-        "data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm",
-        "dark:data-[state=active]:bg-gray-900 dark:data-[state=active]:text-gray-50",
+        "data-[state=active]:bg-white data-[state=active]:text-neutral-900 data-[state=active]:shadow-sm",
+        "dark:data-[state=active]:bg-neutral-900 dark:data-[state=active]:text-neutral-50",
         // disabled
-        "disabled:pointer-events-none disabled:text-gray-400 disabled:opacity-50 dark:disabled:text-gray-600",
+        "disabled:pointer-events-none disabled:text-neutral-400 disabled:opacity-50 dark:disabled:text-neutral-600",
       )
   }
 }

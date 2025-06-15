@@ -17,29 +17,28 @@ export function DataTableColumnHeader<TData, TValue>({
   if (!column.getCanSort()) {
     return <div className={cx(className)}>{title}</div>
   }
-
   return (
     <div
       onClick={column.getToggleSortingHandler()}
       className={cx(
         column.columnDef.enableSorting === true
-          ? "-mx-2 inline-flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? "-mx-2 inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 select-none hover:bg-neutral-100 dark:hover:bg-neutral-800"
           : "",
       )}
     >
       <span>{title}</span>
       {column.getCanSort() ? (
-        <div className="-space-y-2">
+        <div className="scale-80 -space-y-2">
           <ChevronUp
             className={cx(
-              "size-3.5 text-gray-900 dark:text-gray-50",
+              "size-3.5 text-neutral-500",
               column.getIsSorted() === "desc" ? "opacity-30" : "",
             )}
             aria-hidden="true"
           />
           <ChevronDown
             className={cx(
-              "size-3.5 text-gray-900 dark:text-gray-50",
+              "size-3.5 text-neutral-500",
               column.getIsSorted() === "asc" ? "opacity-30" : "",
             )}
             aria-hidden="true"

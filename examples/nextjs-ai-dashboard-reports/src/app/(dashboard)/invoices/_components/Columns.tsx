@@ -1,21 +1,21 @@
-"use client";
+"use client"
 
-import { Badge, BadgeProps } from "@/components/Badge";
-import { Button } from "@/components/Button";
-import { Checkbox } from "@/components/Checkbox";
-import { Invoice, invoice_statuses } from "@/data/schema";
-import { formatters } from "@/lib/utils";
-import { ColumnDef, createColumnHelper, Row } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { Ellipsis } from "lucide-react";
-import { DataTableColumnHeader } from "./DataTableColumnHeader";
+import { Badge, BadgeProps } from "@/components/Badge"
+import { Button } from "@/components/Button"
+import { Checkbox } from "@/components/Checkbox"
+import { Invoice, invoice_statuses } from "@/data/schema"
+import { formatters } from "@/lib/utils"
+import { ColumnDef, createColumnHelper, Row } from "@tanstack/react-table"
+import { format } from "date-fns"
+import { Ellipsis } from "lucide-react"
+import { DataTableColumnHeader } from "./DataTableColumnHeader"
 
-const columnHelper = createColumnHelper<Invoice>();
+const columnHelper = createColumnHelper<Invoice>()
 
 export const getColumns = ({
   onEditClick,
 }: {
-  onEditClick: (row: Row<Invoice>) => void;
+  onEditClick: (row: Row<Invoice>) => void
 }) =>
   [
     columnHelper.display({
@@ -54,8 +54,8 @@ export const getColumns = ({
         <DataTableColumnHeader column={column} title="Issue date" />
       ),
       cell: ({ getValue }) => {
-        const date = getValue();
-        return format(new Date(date), "MMM dd, yyyy");
+        const date = getValue()
+        return format(new Date(date), "MMM dd, yyyy")
       },
       enableSorting: true,
       enableHiding: false,
@@ -69,8 +69,8 @@ export const getColumns = ({
         <DataTableColumnHeader column={column} title="Due date" />
       ),
       cell: ({ getValue }) => {
-        const date = getValue();
-        return format(new Date(date), "MMM dd, yyyy");
+        const date = getValue()
+        return format(new Date(date), "MMM dd, yyyy")
       },
       enableSorting: true,
       enableHiding: false,
@@ -89,18 +89,18 @@ export const getColumns = ({
         displayName: "Status",
       },
       cell: ({ row }) => {
-        const statusValue = row.getValue("invoice_status");
+        const statusValue = row.getValue("invoice_status")
         const status = invoice_statuses.find(
-          (item) => item.value === statusValue
-        );
+          (item) => item.value === statusValue,
+        )
         if (!status) {
-          return statusValue; // Fallback to displaying the raw status
+          return statusValue // Fallback to displaying the raw status
         }
         return (
           <Badge variant={status.variant as BadgeProps["variant"]}>
             {status.label}
           </Badge>
-        );
+        )
       },
     }),
     columnHelper.accessor("client", {
@@ -129,7 +129,7 @@ export const getColumns = ({
           <span className="font-medium">
             {formatters.currency({ number: getValue() })}
           </span>
-        );
+        )
       },
     }),
     columnHelper.accessor("description", {
@@ -156,14 +156,14 @@ export const getColumns = ({
           <Button
             variant="ghost"
             onClick={() => onEditClick?.(row)}
-            className="group aspect-square p-1.5 hover:border hover:border-gray-300 data-[state=open]:border-gray-300 data-[state=open]:bg-gray-50 dark:hover:border-gray-700 dark:data-[state=open]:border-gray-700 dark:data-[state=open]:bg-gray-900"
+            className="group aspect-square p-1.5 hover:border hover:border-neutral-300 data-[state=open]:border-neutral-300 data-[state=open]:bg-neutral-50 dark:hover:border-neutral-700 dark:data-[state=open]:border-neutral-700 dark:data-[state=open]:bg-neutral-900"
           >
             <Ellipsis
-              className="size-4 shrink-0 text-gray-500 group-hover:text-gray-700 group-data-[state=open]:text-gray-700 dark:group-hover:text-gray-300 dark:group-data-[state=open]:text-gray-300"
+              className="size-4 shrink-0 text-neutral-500 group-hover:text-neutral-700 group-data-[state=open]:text-neutral-700 dark:group-hover:text-neutral-300 dark:group-data-[state=open]:text-neutral-300"
               aria-hidden="true"
             />
           </Button>
-        );
+        )
       },
     }),
-  ] as ColumnDef<Invoice>[];
+  ] as ColumnDef<Invoice>[]

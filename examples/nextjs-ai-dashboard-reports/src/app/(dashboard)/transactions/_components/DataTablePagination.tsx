@@ -57,18 +57,18 @@ export function DataTablePagination<TData>({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="text-sm tabular-nums text-gray-500">
+      <div className="text-sm text-neutral-500 tabular-nums">
         {table.getFilteredSelectedRowModel().rows.length} of {totalRows} row(s)
         selected.
       </div>
       <div className="flex items-center gap-x-6 lg:gap-x-8">
-        <p className="hidden text-sm tabular-nums text-gray-500 sm:block">
+        <p className="hidden text-sm text-neutral-500 tabular-nums sm:block">
           Showing{" "}
-          <span className="font-medium text-gray-900 dark:text-gray-50">
+          <span className="font-medium text-neutral-900 dark:text-neutral-50">
             {firstRowIndex}-{lastRowIndex}
           </span>{" "}
           of{" "}
-          <span className="font-medium text-gray-900 dark:text-gray-50">
+          <span className="font-medium text-neutral-900 dark:text-neutral-50">
             {formatters.unit(totalRows)}
           </span>
         </p>

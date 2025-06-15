@@ -140,10 +140,10 @@ export const getColumns = ({
           <Button
             variant="ghost"
             onClick={() => onEditClick?.(row)}
-            className="group aspect-square p-1.5 hover:border hover:border-gray-300 data-[state=open]:border-gray-300 data-[state=open]:bg-gray-50 dark:hover:border-gray-700 dark:data-[state=open]:border-gray-700 dark:data-[state=open]:bg-gray-900"
+            className="group aspect-square p-1.5 hover:border hover:border-neutral-300 data-[state=open]:border-neutral-300 data-[state=open]:bg-neutral-50 dark:hover:border-neutral-700 dark:data-[state=open]:border-neutral-700 dark:data-[state=open]:bg-neutral-900"
           >
             <Ellipsis
-              className="size-4 shrink-0 text-gray-500 group-hover:text-gray-700 group-data-[state=open]:text-gray-700 dark:group-hover:text-gray-300 dark:group-data-[state=open]:text-gray-300"
+              className="size-4 shrink-0 text-neutral-500 group-hover:text-neutral-700 group-data-[state=open]:text-neutral-700 dark:group-hover:text-neutral-300 dark:group-data-[state=open]:text-neutral-300"
               aria-hidden="true"
             />
           </Button>

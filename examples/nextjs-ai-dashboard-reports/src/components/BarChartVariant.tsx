@@ -138,9 +138,9 @@ const LegendItem = ({
     <li
       className={cx(
         // base
-        "group inline-flex flex-nowrap items-center gap-1.5 whitespace-nowrap rounded-sm px-2 py-1 transition",
+        "group inline-flex flex-nowrap items-center gap-1.5 rounded-sm px-2 py-1 whitespace-nowrap transition",
         hasOnValueChange
-          ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? "cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800"
           : "cursor-default",
       )}
       onClick={(e) => {
@@ -159,11 +159,11 @@ const LegendItem = ({
       <p
         className={cx(
           // base
-          "truncate whitespace-nowrap text-xs",
+          "truncate text-xs whitespace-nowrap",
           // text color
-          "text-gray-700 dark:text-gray-300",
+          "text-neutral-700 dark:text-neutral-300",
           hasOnValueChange &&
-          "group-hover:text-gray-900 dark:group-hover:text-gray-50",
+            "group-hover:text-neutral-900 dark:group-hover:text-neutral-50",
           activeLegend && activeLegend !== name ? "opacity-40" : "opacity-100",
         )}
       >
@@ -209,8 +209,8 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
         // base
         "group inline-flex size-5 items-center truncate rounded-sm transition",
         disabled
-          ? "cursor-not-allowed text-gray-400 dark:text-gray-600"
-          : "cursor-pointer text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-50",
+          ? "cursor-not-allowed text-neutral-400 dark:text-neutral-600"
+          : "cursor-pointer text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
       )}
       disabled={disabled}
       onClick={(e) => {
@@ -352,7 +352,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
           "flex h-full",
           enableLegendSlider
             ? hasScroll?.right || hasScroll?.left
-              ? "snap-mandatory items-center overflow-auto pl-4 pr-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              ? "snap-mandatory items-center overflow-auto pr-12 pl-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               : ""
             : "flex-wrap",
         )}
@@ -372,9 +372,9 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
           <div
             className={cx(
               // base
-              "absolute bottom-0 right-0 top-0 flex h-full items-center justify-center pr-1",
+              "absolute top-0 right-0 bottom-0 flex h-full items-center justify-center pr-1",
               // background color
-              "bg-white dark:bg-gray-950",
+              "bg-white dark:bg-neutral-950",
             )}
           >
             <ScrollButton
@@ -486,9 +486,9 @@ const ChartTooltip = ({
           // base
           "w-44 rounded-md border text-sm shadow-md",
           // border color
-          "border-gray-200 dark:border-gray-800",
+          "border-neutral-200 dark:border-neutral-800",
           // background color
-          "bg-white dark:bg-gray-950",
+          "bg-white dark:bg-neutral-950",
         )}
       >
         {/* unhide to show x-axis value, also uncomment label in line 465 */}
@@ -499,7 +499,7 @@ const ChartTooltip = ({
               // base
               "font-medium",
               // text color
-              "text-gray-900 dark:text-gray-50",
+              "text-neutral-900 dark:text-neutral-50",
             )}
           >
             {xValueFormatter ? xValueFormatter(label) : label}
@@ -523,9 +523,9 @@ const ChartTooltip = ({
                 <p
                   className={cx(
                     // base
-                    "whitespace-nowrap text-right",
+                    "text-right whitespace-nowrap",
                     // text color
-                    "text-gray-700 dark:text-gray-300",
+                    "text-neutral-700 dark:text-neutral-300",
                   )}
                 >
                   {category}
@@ -534,9 +534,9 @@ const ChartTooltip = ({
               <p
                 className={cx(
                   // base
-                  "whitespace-nowrap text-right font-medium tabular-nums",
+                  "text-right font-medium whitespace-nowrap tabular-nums",
                   // text color
-                  "text-gray-900 dark:text-gray-50",
+                  "text-neutral-900 dark:text-neutral-50",
                 )}
               >
                 {valueFormatter(value)}
@@ -698,10 +698,10 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
             onClick={
               hasOnValueChange && (activeLegend || activeBar)
                 ? () => {
-                  setActiveBar(undefined)
-                  setActiveLegend(undefined)
-                  onValueChange?.(null)
-                }
+                    setActiveBar(undefined)
+                    setActiveLegend(undefined)
+                    onValueChange?.(null)
+                  }
                 : undefined
             }
             margin={{
@@ -717,7 +717,9 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
           >
             {showGridLines ? (
               <CartesianGrid
-                className={cx("stroke-gray-100 stroke-1 dark:stroke-gray-900")}
+                className={cx(
+                  "stroke-neutral-100 stroke-1 dark:stroke-neutral-900",
+                )}
                 horizontal={layout !== "vertical"}
                 vertical={layout === "vertical"}
               />
@@ -734,7 +736,7 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
                 // base
                 "text-xs",
                 // text fill
-                "mt-4 fill-gray-500 dark:fill-gray-500",
+                "mt-4 fill-neutral-500 dark:fill-neutral-500",
               )}
               tickLine={false}
               axisLine={false}
@@ -742,29 +744,29 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
               tickFormatter={xValueFormatter}
               {...(layout !== "vertical"
                 ? {
-                  padding: {
-                    left: paddingValue,
-                    right: paddingValue,
-                  },
-                  dataKey: index,
-                  interval: startEndOnly ? "preserveStartEnd" : intervalType,
-                  ticks: startEndOnly
-                    ? [data[0][index], data[data.length - 1][index]]
-                    : undefined,
-                }
+                    padding: {
+                      left: paddingValue,
+                      right: paddingValue,
+                    },
+                    dataKey: index,
+                    interval: startEndOnly ? "preserveStartEnd" : intervalType,
+                    ticks: startEndOnly
+                      ? [data[0][index], data[data.length - 1][index]]
+                      : undefined,
+                  }
                 : {
-                  type: "number",
-                  domain: yAxisDomain as AxisDomain,
-                  tickFormatter:
-                    type === "percent" ? valueToPercent : valueFormatter,
-                  allowDecimals: allowDecimals,
-                })}
+                    type: "number",
+                    domain: yAxisDomain as AxisDomain,
+                    tickFormatter:
+                      type === "percent" ? valueToPercent : valueFormatter,
+                    allowDecimals: allowDecimals,
+                  })}
             >
               {xAxisLabel && (
                 <Label
                   position="insideBottom"
                   offset={-20}
-                  className="fill-gray-800 text-sm font-medium dark:fill-gray-200"
+                  className="fill-neutral-800 text-sm font-medium dark:fill-neutral-200"
                 >
                   {xAxisLabel}
                 </Label>
@@ -782,7 +784,7 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
                 // base
                 "text-xs",
                 // text fill
-                "fill-gray-500 stroke-gray-800 dark:fill-gray-500 dark:stroke-gray-300",
+                "fill-neutral-500 stroke-neutral-800 dark:fill-neutral-500 dark:stroke-neutral-300",
               )}
               tick={{
                 transform:
@@ -792,20 +794,20 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
               }}
               {...(layout !== "vertical"
                 ? {
-                  type: "number",
-                  domain: yAxisDomain as AxisDomain,
-                  tickFormatter:
-                    type === "percent" ? valueToPercent : valueFormatter,
-                  allowDecimals: allowDecimals,
-                }
+                    type: "number",
+                    domain: yAxisDomain as AxisDomain,
+                    tickFormatter:
+                      type === "percent" ? valueToPercent : valueFormatter,
+                    allowDecimals: allowDecimals,
+                  }
                 : {
-                  dataKey: index,
-                  ticks: startEndOnly
-                    ? [data[0][index], data[data.length - 1][index]]
-                    : undefined,
-                  type: "category",
-                  interval: "equidistantPreserveStart",
-                })}
+                    dataKey: index,
+                    ticks: startEndOnly
+                      ? [data[0][index], data[data.length - 1][index]]
+                      : undefined,
+                    type: "category",
+                    interval: "equidistantPreserveStart",
+                  })}
             >
               {yAxisLabel && (
                 <Label
@@ -813,7 +815,7 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
                   style={{ textAnchor: "middle" }}
                   angle={-90}
                   offset={-15}
-                  className="fill-gray-800 text-sm font-medium dark:fill-gray-200"
+                  className="fill-neutral-800 text-sm font-medium dark:fill-neutral-200"
                 >
                   {yAxisLabel}
                 </Label>
@@ -832,15 +834,15 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
               content={({ active, payload, label }) => {
                 const cleanPayload: TooltipProps["payload"] = payload
                   ? payload.map((item: any) => ({
-                    category: item.dataKey,
-                    value: item.value,
-                    index: item.payload[index],
-                    color: categoryColors.get(
-                      item.dataKey,
-                    ) as AvailableChartColorsKeys,
-                    type: item.type,
-                    payload: item.payload,
-                  }))
+                      category: item.dataKey,
+                      value: item.value,
+                      index: item.payload[index],
+                      color: categoryColors.get(
+                        item.dataKey,
+                      ) as AvailableChartColorsKeys,
+                      type: item.type,
+                      payload: item.payload,
+                    }))
                   : []
 
                 if (
@@ -884,7 +886,7 @@ const BarChartVariant = React.forwardRef<HTMLDivElement, BarChartProps>(
                     activeLegend,
                     hasOnValueChange
                       ? (clickedLegendItem: string) =>
-                        onCategoryClick(clickedLegendItem)
+                          onCategoryClick(clickedLegendItem)
                       : undefined,
                     enableLegendSlider,
                     legendPosition,

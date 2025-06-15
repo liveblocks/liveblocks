@@ -17,19 +17,19 @@ const Checkbox = React.forwardRef<
         // base
         "relative inline-flex size-4 shrink-0 appearance-none items-center justify-center rounded-sm border shadow-xs outline-hidden transition duration-100 enabled:cursor-pointer",
         // text color
-        "text-white dark:text-gray-50",
+        "text-white dark:text-neutral-50",
         // background color
-        "bg-white dark:bg-[#090E1A]",
+        "bg-white dark:bg-neutral-950",
         // border color
-        "border-gray-300 dark:border-gray-800",
+        "border-neutral-300 dark:border-neutral-800",
         // disabled
-        "data-disabled:border-gray-300 data-disabled:bg-gray-100 data-disabled:text-gray-400",
-        "dark:data-disabled:border-gray-700 dark:data-disabled:bg-gray-800 dark:data-disabled:text-gray-500",
-        // "dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500",
+        "data-disabled:border-neutral-300 data-disabled:bg-neutral-100 data-disabled:text-neutral-400",
+        "dark:data-disabled:border-neutral-700 dark:data-disabled:bg-neutral-800 dark:data-disabled:text-neutral-500",
+        // "dark:disabled:border-neutral-700 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-500",
         // checked and enabled
-        "enabled:data-[state=checked]:border-0 enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-blue-500",
+        "text-white enabled:data-[state=checked]:border-0 enabled:data-[state=checked]:border-transparent enabled:data-[state=checked]:bg-black dark:text-black dark:enabled:data-[state=checked]:bg-white",
         // indeterminate
-        "enabled:data-[state=indeterminate]:border-0 enabled:data-[state=indeterminate]:border-transparent enabled:data-[state=indeterminate]:bg-blue-500",
+        "enabled:data-[state=indeterminate]:border-0 enabled:data-[state=indeterminate]:border-transparent enabled:data-[state=indeterminate]:bg-black dark:enabled:data-[state=indeterminate]:bg-white",
         // focus
         focusRing,
         className,

@@ -30,20 +30,19 @@ export default function Layout({
       <div
         className={cx(
           isCollapsed ? "lg:pl-[60px]" : "lg:pl-64",
-          "ease transform-gpu overflow-x-hidden transition-all duration-100 will-change-transform lg:bg-gray-50 lg:py-3 lg:pr-3 lg:dark:bg-gray-950",
+          "ease transform-gpu overflow-x-hidden transition-all duration-100 will-change-transform lg:bg-neutral-50 lg:py-3 lg:pr-3 lg:dark:bg-neutral-950",
         )}
       >
-        <div className="dark:bg-gray-925 min-h-dvh bg-white p-4 sm:p-6 lg:rounded-lg lg:border lg:border-gray-200 lg:dark:border-gray-900">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+        <div className="min-h-dvh bg-white p-4 sm:p-6 lg:rounded-lg lg:border lg:border-neutral-200 dark:bg-neutral-950 lg:dark:border-neutral-900">
+          <h1 className="text-lg font-semibold tracking-[-0.015em] text-neutral-900 dark:text-neutral-50">
             Settings
           </h1>
-          <TabNavigation className="mt-6">
+          <TabNavigation className="mt-6 gap-4">
             {navigationSettings.map((item) => (
               <TabNavigationLink
                 key={item.name}
                 asChild
                 active={pathname === item.href}
-                className="px-5"
               >
                 <Link href={item.href}>{item.name}</Link>
               </TabNavigationLink>

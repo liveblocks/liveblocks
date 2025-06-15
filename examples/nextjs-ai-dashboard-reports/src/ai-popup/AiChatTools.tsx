@@ -1,7 +1,7 @@
-import React from "react";
-import { Badge } from "@/components/Badge";
-import { transactions } from "@/data/transactions";
-import { format } from "date-fns";
+import React from "react"
+import { Badge } from "@/components/Badge"
+import { transactions } from "@/data/transactions"
+import { format } from "date-fns"
 import {
   expense_statuses,
   payment_statuses,
@@ -9,21 +9,21 @@ import {
   currencies,
   categories,
   merchants,
-} from "@/data/schema";
-import { users } from "@/data/users";
-import Image from "next/image";
-import { defineAiTool } from "@liveblocks/client";
-import { useRouter } from "next/navigation";
-import { AiTool } from "@liveblocks/react-ui";
-import { Timestamp } from "@liveblocks/react-ui/primitives";
-import { toast } from "sonner";
-import { RegisterAiTool } from "@liveblocks/react";
-import { ChevronDownIcon } from "lucide-react";
-import { formatters } from "@/lib/utils";
-import useSWR from "swr";
-import { fetchTransactions } from "@/lib/transactionsApi";
-import { fetchInvoices } from "@/lib/invoicesApi";
-import { ProgressBar } from "../components/ProgressBar";
+} from "@/data/schema"
+import { users } from "@/data/users"
+import Image from "next/image"
+import { defineAiTool } from "@liveblocks/client"
+import { useRouter } from "next/navigation"
+import { AiTool } from "@liveblocks/react-ui"
+import { Timestamp } from "@liveblocks/react-ui/primitives"
+import { toast } from "sonner"
+import { RegisterAiTool } from "@liveblocks/react"
+import { ChevronDownIcon } from "lucide-react"
+import { formatters } from "@/lib/utils"
+import useSWR from "swr"
+import { fetchTransactions } from "@/lib/transactionsApi"
+import { fetchInvoices } from "@/lib/invoicesApi"
+import { ProgressBar } from "../components/ProgressBar"
 
 export function SeatsTool() {
   return (
@@ -43,11 +43,11 @@ export function SeatsTool() {
         },
         execute: () => {},
         render: ({ args }) => {
-          if (!args) return null;
+          if (!args) return null
 
           return (
-            <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 pt-4.5">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+            <div className="rounded-lg bg-neutral-100 p-4 pt-4.5 dark:bg-neutral-900">
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
                 Remaining seats
               </p>
               <ProgressBar
@@ -56,20 +56,20 @@ export function SeatsTool() {
               />
               <div className="mt-3 flex items-center justify-between">
                 <p className="flex items-center space-x-2">
-                  <span className="rounded-lg bg-gray-200 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-900  dark:text-gray-50">
+                  <span className="rounded-lg bg-neutral-200 px-2 py-1 text-xs font-medium text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">
                     {args.seatsUsed}
                   </span>{" "}
-                  <span className="text-sm text-gray-500 dark:text-gray-500">
+                  <span className="text-sm text-neutral-500 dark:text-neutral-500">
                     of {args.seatsLimit} seats used
                   </span>
                 </p>
               </div>
             </div>
-          );
+          )
         },
       })}
     />
-  );
+  )
 }
 
 export function QueryTransactionTool() {
@@ -123,20 +123,20 @@ export function QueryTransactionTool() {
               Object.entries(args).map(([key, value]) => [
                 key,
                 value === null ? undefined : value,
-              ])
-            )
-          );
+              ]),
+            ),
+          )
           return {
             data: {
               transactions,
             },
-          };
+          }
         },
         render: ({ args }) =>
           args ? <AiTool title="Transaction query" /> : null,
       })}
     />
-  );
+  )
 }
 
 export function QueryInvoiceTool() {
@@ -177,14 +177,14 @@ export function QueryInvoiceTool() {
               Object.entries(args).map(([key, value]) => [
                 key,
                 value == null ? undefined : value,
-              ])
-            )
-          );
+              ]),
+            ),
+          )
           return {
             data: {
               invoices,
             },
-          };
+          }
         },
         render: ({ args }) =>
           args ? (
@@ -194,11 +194,11 @@ export function QueryInvoiceTool() {
           ) : null,
       })}
     />
-  );
+  )
 }
 
 export function NavigateToPageTool() {
-  const router = useRouter();
+  const router = useRouter()
 
   return (
     <RegisterAiTool
@@ -215,24 +215,24 @@ export function NavigateToPageTool() {
           required: ["relativeUrl"],
         },
         execute: ({ relativeUrl }) => {
-          router.push(relativeUrl);
+          router.push(relativeUrl)
           toast(`Redirecting to ${relativeUrl}...`, {
             action: {
               label: "Go back",
               onClick: () => router.back(),
             },
-          });
+          })
           return {
             description:
               "Redirected the user to the page. Do not write anything else.",
             data: {},
-          };
+          }
         },
         render: ({ args }) =>
           args ? <AiTool title={`Redirected to ${args.relativeUrl}`} /> : null,
       })}
     />
-  );
+  )
 }
 
 export function SendInvoiceRemindersTool() {
@@ -257,32 +257,30 @@ export function SendInvoiceRemindersTool() {
             async () => {
               const response = await fetchInvoices({
                 invoiceStatus: "unpaid",
-              });
-              return response.invoices;
+              })
+              return response.invoices
             },
             {
               refreshInterval: 20000,
-            }
-          );
+            },
+          )
 
           // Group invoices by company, attaching full invoice objects
           const clients =
             unpaidInvoices?.reduce((acc: any[], invoice) => {
-              const existingCompany = acc.find(
-                (c) => c.name === invoice.client
-              );
+              const existingCompany = acc.find((c) => c.name === invoice.client)
               if (existingCompany) {
-                existingCompany.invoices.push(invoice);
+                existingCompany.invoices.push(invoice)
               } else {
                 acc.push({
                   name: invoice.client,
                   invoices: [invoice],
-                });
+                })
               }
-              return acc;
-            }, []) || [];
+              return acc
+            }, []) || []
 
-          if (!clients) return null;
+          if (!clients) return null
 
           return (
             <AiTool
@@ -293,29 +291,29 @@ export function SendInvoiceRemindersTool() {
                 confirm={async () => {
                   // Simulating sending emails
                   const promise = () =>
-                    new Promise((resolve) => setTimeout(resolve, 2500));
+                    new Promise((resolve) => setTimeout(resolve, 2500))
 
                   toast.promise(promise, {
                     loading: "Sending invoice reminders...",
                     success: () => {
-                      return `Invoice reminders sent`;
+                      return `Invoice reminders sent`
                     },
-                  });
+                  })
 
-                  await promise;
+                  await promise
                   return {
                     description: "Invoice reminders sent",
                     data: {},
-                  };
+                  }
                 }}
               >
                 {isLoadingUnpaid && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-neutral-500">
                     Loading invoice details...
                   </div>
                 )}
                 {errorUnpaid && (
-                  <div className="text-xs text-red-500 font-semibold">
+                  <div className="text-xs font-semibold text-red-500">
                     Error
                   </div>
                 )}
@@ -331,23 +329,23 @@ export function SendInvoiceRemindersTool() {
                         }
                       >
                         <details className="group">
-                          <summary className="cursor-pointer flex items-center justify-between select-none">
+                          <summary className="flex cursor-pointer items-center justify-between select-none">
                             <div className="flex items-baseline gap-1.5">
                               <span className="font-semibold">
                                 {client.name}
                               </span>
 
-                              <span className="text-xs font-normal text-gray-500">
+                              <span className="text-xs font-normal text-neutral-500">
                                 {client.invoices.length} unpaid
                               </span>
                             </div>
-                            <ChevronDownIcon className="size-4 opacity-70 group-open:rotate-180 transition-transform mt-0.5" />
+                            <ChevronDownIcon className="mt-0.5 size-4 opacity-70 transition-transform group-open:rotate-180" />
                           </summary>
-                          <ul className="text-xs text-gray-500 mt-1">
+                          <ul className="mt-1 text-xs text-neutral-500">
                             {client.invoices.map((invoice: any) => (
                               <li
                                 key={invoice.invoice_id}
-                                className="mb-2 mt-1.5 ml-3.5 list-disc"
+                                className="mt-1.5 mb-2 ml-3.5 list-disc"
                               >
                                 <div>
                                   {formatters.currency({
@@ -365,17 +363,17 @@ export function SendInvoiceRemindersTool() {
                 )}
               </AiTool.Confirmation>
             </AiTool>
-          );
+          )
         },
       })}
     />
-  );
+  )
 }
 
 export function InviteMemberTool({
   onInvite,
 }: {
-  onInvite: ({ name, email }: { name: string; email: string }) => void;
+  onInvite: ({ name, email }: { name: string; email: string }) => void
 }) {
   return (
     <RegisterAiTool
@@ -393,28 +391,28 @@ export function InviteMemberTool({
           required: ["email", "name"],
         },
         render: ({ args, stage }) => {
-          if (!args) return null;
+          if (!args) return null
 
           return (
             <AiTool title="Invite member" collapsed={stage === "executed"}>
               <AiTool.Confirmation
                 confirm={() => {
-                  toast.success(`${args.email} has been invited`);
-                  onInvite({ name: args.name, email: args.email });
+                  toast.success(`${args.email} has been invited`)
+                  onInvite({ name: args.name, email: args.email })
                   return {
                     description: `The user confirmed inviting ${args.email} to the team`,
                     data: {},
-                  };
+                  }
                 }}
               >
                 Invite <code>{args.email}</code> to the team?
               </AiTool.Confirmation>
             </AiTool>
-          );
+          )
         },
       })}
     />
-  );
+  )
 }
 
 export function TransactionToolAi() {
@@ -432,12 +430,12 @@ export function TransactionToolAi() {
           required: ["transactionId"],
         },
         render: ({ args }) => {
-          if (!args) return null;
-          return <TransactionToolUi transactionId={args.transactionId} />;
+          if (!args) return null
+          return <TransactionToolUi transactionId={args.transactionId} />
         },
       })}
     />
-  );
+  )
 }
 
 export function MemberToolAi() {
@@ -455,36 +453,36 @@ export function MemberToolAi() {
           required: ["email"],
         },
         render: ({ args }) => {
-          if (!args) return null;
-          return <MemberTool email={args.email} />;
+          if (!args) return null
+          return <MemberTool email={args.email} />
         },
       })}
     />
-  );
+  )
 }
 
 // TODO make this work
 function TransactionToolUi({ transactionId }: { transactionId: string }) {
   const transaction = transactions.find(
-    (transaction) => transaction.transaction_id === transactionId
-  );
+    (transaction) => transaction.transaction_id === transactionId,
+  )
 
   if (!transaction) {
-    return <div>Transaction not found</div>;
+    return <div>Transaction not found</div>
   }
 
   const status = expense_statuses.find(
-    (item) => item.value === transaction.expense_status
-  );
+    (item) => item.value === transaction.expense_status,
+  )
 
   return (
-    <div className="my-2 pt-3.5 pb-4 px-4 rounded-sm bg-neutral-100 w-full">
-      <div className="flex justify-between items-center">
-        <div className="font-semibold flex items-center gap-1">
+    <div className="my-2 w-full rounded-sm bg-neutral-100 px-4 pt-3.5 pb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 font-semibold">
           {transaction.merchant}{" "}
           <a href="#">
             <svg
-              className="text-blue-600 w-4 h-4"
+              className="h-4 w-4 text-blue-600"
               xmlns="http://www.w3.org/2000/svg"
               width="16"
               height="16"
@@ -503,38 +501,38 @@ function TransactionToolUi({ transactionId }: { transactionId: string }) {
         <Badge variant={status?.variant as any}>{status?.label}</Badge>
       </div>
 
-      <div className="text-xs flex gap-1.5 mt-0.5 items-center">
+      <div className="mt-0.5 flex items-center gap-1.5 text-xs">
         {format(transaction.transaction_date, "MMM d yyyy")}, $
         {transaction.amount.toLocaleString()}
       </div>
     </div>
-  );
+  )
 }
 
 function MemberTool({ email }: { email: string }) {
-  const user = users.find((user) => user.email === email);
+  const user = users.find((user) => user.email === email)
 
   if (!user) {
-    return <div>User not found</div>;
+    return <div>User not found</div>
   }
 
   return (
-    <div className="flex items-center gap-2 my-2 bg-neutral-100 p-4 rounded-sm">
+    <div className="my-2 flex items-center gap-2 rounded-sm bg-neutral-100 p-4">
       <Image
         src={user.avatar}
         alt={`${user.name}'s avatar`}
         width={36}
         height={36}
-        className="size-9 rounded-full border border-gray-300 object-cover dark:border-gray-700"
+        className="size-9 rounded-full border border-neutral-300 object-cover dark:border-neutral-700"
       />
       <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
           {user?.name}
         </p>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-neutral-600 dark:text-neutral-400">
           {user?.email}
         </p>
       </div>
     </div>
-  );
+  )
 }

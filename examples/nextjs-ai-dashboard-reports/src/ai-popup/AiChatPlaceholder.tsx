@@ -1,5 +1,5 @@
-import { useSendAiMessage } from "@liveblocks/react";
-import { AiChatComponentsEmptyProps } from "@liveblocks/react-ui";
+import { useSendAiMessage } from "@liveblocks/react"
+import { AiChatComponentsEmptyProps } from "@liveblocks/react-ui"
 
 const SUGGESTIONS = [
   {
@@ -19,16 +19,16 @@ const SUGGESTIONS = [
     text: "Invite a member",
     prompt: "Invite a member to the team",
   },
-];
+]
 
 export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
-  const sendMessage = useSendAiMessage(chatId);
+  const sendMessage = useSendAiMessage(chatId)
 
   return (
-    <div className="p-4 h-full flex flex-col gap-5 justify-end">
+    <div className="flex h-full flex-col justify-end gap-5 p-4">
       <div className="flex flex-col gap-3">
         <h3 className="text-xl font-medium">How can I help you?</h3>
-        <p className="text-gray-500">
+        <p className="text-neutral-500">
           Ask me anything about reports or transactions. I can answer questions
           and help you work.
         </p>
@@ -37,7 +37,7 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
         {SUGGESTIONS.map(({ text, prompt }) => (
           <button
             key={text}
-            className="px-3.5 py-1.5 rounded-full flex items-center gap-2 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 border text-sm font-medium shadow-2xs hover:bg-gray-50 dark:hover:bg-gray-800"
+            className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-sm font-medium shadow-2xs hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
             onClick={() => sendMessage(prompt)}
           >
             {text}
@@ -45,5 +45,5 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
         ))}
       </div>
     </div>
-  );
+  )
 }

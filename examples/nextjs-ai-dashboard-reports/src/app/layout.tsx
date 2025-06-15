@@ -37,7 +37,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.className} overflow-x-hidden overflow-y-scroll scroll-auto bg-gray-50 antialiased selection:bg-blue-100 selection:text-blue-700 dark:bg-gray-950`}
+        className={`${inter.className} overflow-x-hidden overflow-y-scroll scroll-auto bg-neutral-50 antialiased selection:bg-blue-100 selection:text-blue-700 dark:bg-neutral-950`}
       >
         <Providers>
           <div>{children}</div>

@@ -11,16 +11,16 @@ const inputStyles = tv({
     // base
     "relative block w-full appearance-none rounded-md border px-2.5 py-2 shadow-xs outline-hidden transition sm:text-sm",
     // border color
-    "border-gray-300 dark:border-gray-800",
+    "border-neutral-300 dark:border-neutral-800",
     // text color
-    "text-gray-900 dark:text-gray-50",
+    "text-neutral-900 dark:text-neutral-50",
     // placeholder color
-    "placeholder-gray-400 dark:placeholder-gray-500",
+    "placeholder-neutral-400 dark:placeholder-neutral-500",
     // background color
-    "bg-white dark:bg-gray-950",
+    "bg-white dark:bg-neutral-950",
     // disabled
-    "disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400",
-    "dark:disabled:border-gray-700 dark:disabled:bg-gray-800 dark:disabled:text-gray-500",
+    "disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-400",
+    "dark:disabled:border-neutral-700 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-500",
     // focus
     focusInput,
     // invalid (optional)
@@ -37,7 +37,7 @@ const inputStyles = tv({
 
 interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
-  VariantProps<typeof inputStyles> {
+    VariantProps<typeof inputStyles> {
   inputClassName?: string
 }
 

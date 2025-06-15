@@ -18,7 +18,7 @@ export default function NotFound() {
         </div>
       </Link>
       <div className="mt-6 flex flex-col">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+        <h1 className="text-lg font-semibold tracking-[-0.015em] text-neutral-900 dark:text-neutral-50">
           Insights
         </h1>
       </div>
@@ -28,10 +28,10 @@ export default function NotFound() {
       >
         404
       </p>
-      <h2 className="mt-4 text-2xl font-semibold text-gray-900 dark:text-gray-50">
+      <h2 className="mt-4 text-2xl font-medium tracking-tight text-neutral-900 dark:text-neutral-50">
         Page not found
       </h2>
-      <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+      <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
         Sorry, we could not find the page you are looking for.
       </p>
       <Button asChild className="group mt-8" variant="light">

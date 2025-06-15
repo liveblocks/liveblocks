@@ -4,7 +4,7 @@ import React from "react"
 
 import { cx } from "@/lib/utils"
 
-interface DividerProps extends React.ComponentPropsWithoutRef<"div"> { }
+interface DividerProps extends React.ComponentPropsWithoutRef<"div"> {}
 
 const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
   ({ className, children, ...props }, forwardedRef) => (
@@ -14,7 +14,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
         // base
         "mx-auto my-6 flex w-full items-center justify-between gap-3 text-sm",
         // text color
-        "text-gray-500 dark:text-gray-500",
+        "text-neutral-500 dark:text-neutral-500",
         className,
       )}
       tremor-id="tremor-raw"
@@ -27,7 +27,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
               // base
               "h-px w-full",
               // background color
-              "bg-gray-200 dark:bg-gray-800",
+              "bg-neutral-200 dark:bg-neutral-800",
             )}
           />
           <div className="whitespace-nowrap text-inherit">{children}</div>
@@ -36,7 +36,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
               // base
               "h-px w-full",
               // background color
-              "bg-gray-200 dark:bg-gray-800",
+              "bg-neutral-200 dark:bg-neutral-800",
             )}
           />
         </>
@@ -46,7 +46,7 @@ const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
             // base
             "h-px w-full",
             // backround color
-            "bg-gray-200 dark:bg-gray-800",
+            "bg-neutral-200 dark:bg-neutral-800",
           )}
         />
       )}
