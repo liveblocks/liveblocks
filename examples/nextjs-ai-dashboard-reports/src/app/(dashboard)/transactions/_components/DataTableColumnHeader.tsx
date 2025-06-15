@@ -22,7 +22,7 @@ export function DataTableColumnHeader<TData, TValue>({
       onClick={column.getToggleSortingHandler()}
       className={cx(
         column.columnDef.enableSorting === true
-          ? "-mx-2 inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 select-none hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          ? "-mx-2 inline-flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 select-none hover:bg-neutral-50 dark:hover:bg-neutral-900"
           : "",
       )}
     >

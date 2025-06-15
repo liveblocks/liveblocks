@@ -37,7 +37,7 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
         {SUGGESTIONS.map(({ text, prompt }) => (
           <button
             key={text}
-            className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-sm font-medium shadow-2xs hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+            className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-sm font-medium shadow-2xs hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-900"
             onClick={() => sendMessage(prompt)}
           >
             {text}

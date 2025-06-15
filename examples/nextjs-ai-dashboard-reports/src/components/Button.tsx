@@ -39,7 +39,7 @@ const buttonVariants = tv({
         // background color
         "bg-white dark:bg-neutral-900",
         //hover color
-        "hover:bg-neutral-50 dark:hover:bg-neutral-800/30",
+        "hover:bg-neutral-50 dark:hover:bg-neutral-900/30",
         // disabled
         "disabled:text-neutral-400",
         "dark:disabled:text-neutral-600",
@@ -54,7 +54,7 @@ const buttonVariants = tv({
         // background color
         "bg-neutral-200 dark:bg-neutral-900",
         // hover color
-        "hover:bg-neutral-300/70 dark:hover:bg-neutral-800/80",
+        "hover:bg-neutral-300/70 dark:hover:bg-neutral-900/80",
         // disabled
         "disabled:bg-neutral-100 disabled:text-neutral-400",
         "dark:disabled:bg-neutral-800 dark:disabled:text-neutral-600",
@@ -67,7 +67,7 @@ const buttonVariants = tv({
         // text color
         "text-neutral-900 dark:text-neutral-50",
         // hover color
-        "bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800/80",
+        "bg-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900/80",
         // disabled
         "disabled:text-neutral-400",
         "dark:disabled:text-neutral-600",

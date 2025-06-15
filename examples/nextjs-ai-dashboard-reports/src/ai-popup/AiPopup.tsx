@@ -153,7 +153,7 @@ function ChatPopup() {
                     }
                     setShowListing(!showListing)
                   }}
-                  className="flex h-8 items-center gap-1.5 truncate rounded-md px-3 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  className="flex h-8 items-center gap-1.5 truncate rounded-md px-3 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900"
                 >
                   <ArrowLeftIcon className="-ml-1 size-4 shrink-0 opacity-70" />
                   {showListing ? (
@@ -168,12 +168,12 @@ function ChatPopup() {
                 <span className="flex shrink-0 items-center gap-1.5">
                   <button
                     onClick={() => goToChat(nanoid())}
-                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900"
                   >
                     <PlusIcon className="-ml-1 size-4 opacity-70" />
                     <span>New chat</span>
                   </button>
-                  <PopoverPrimitives.Close className="flex size-8 items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800">
+                  <PopoverPrimitives.Close className="flex size-8 items-center justify-center rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-900">
                     <span className="sr-only">Close</span>
                     <XIcon className="size-4 opacity-70" />
                   </PopoverPrimitives.Close>

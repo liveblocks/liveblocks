@@ -23,7 +23,7 @@ export const UserProfileDesktop = ({
         className={cx(
           isCollapsed ? "justify-center" : "justify-between",
           focusRing,
-          "group flex w-full items-center rounded-md px-1 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200/50 data-[state=open]:bg-neutral-200/50 dark:hover:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-900",
+          "group flex w-full items-center rounded-md px-1 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200/50 data-[state=open]:bg-neutral-200/50 dark:hover:bg-neutral-900/50 dark:data-[state=open]:bg-neutral-900",
         )}
       >
         {isCollapsed ? (
@@ -70,7 +70,7 @@ export const UserProfileMobile = () => {
         aria-label="User settings"
         variant="ghost"
         className={cx(
-          "group flex items-center rounded-md p-0.5 text-sm font-medium text-neutral-900 hover:bg-neutral-200/50 data-[state=open]:bg-neutral-200/50 sm:p-1 dark:hover:bg-neutral-800/50 dark:data-[state=open]:bg-neutral-800/50",
+          "group flex items-center rounded-md p-0.5 text-sm font-medium text-neutral-900 hover:bg-neutral-200/50 data-[state=open]:bg-neutral-200/50 sm:p-1 dark:hover:bg-neutral-900/50 dark:data-[state=open]:bg-neutral-800/50",
         )}
       >
         <Image

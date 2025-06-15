@@ -112,7 +112,7 @@ const DrawerHeader = React.forwardRef<
       <DrawerPrimitives.Close asChild>
         <Button
           variant="ghost"
-          className="aspect-square p-1 text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-400/10"
+          className="aspect-square p-1 text-neutral-500 hover:bg-neutral-50 dark:hover:bg-neutral-400/10"
         >
           <RiCloseLine className="size-5" aria-hidden="true" />
         </Button>

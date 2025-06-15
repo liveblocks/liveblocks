@@ -140,7 +140,7 @@ const LegendItem = ({
         // base
         "group inline-flex flex-nowrap items-center gap-1.5 rounded-sm px-2 py-1 whitespace-nowrap transition",
         hasOnValueChange
-          ? "cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          ? "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900"
           : "cursor-default",
       )}
       onClick={(e) => {
@@ -210,7 +210,7 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
         "group inline-flex size-5 items-center truncate rounded-sm transition",
         disabled
           ? "cursor-not-allowed text-neutral-400 dark:text-neutral-600"
-          : "cursor-pointer text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
+          : "cursor-pointer text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-neutral-50",
       )}
       disabled={disabled}
       onClick={(e) => {

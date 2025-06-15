@@ -148,8 +148,8 @@
 }
 
 .lb-root {
-  --lb-accent: var(--color-blue-500);
-  font-size: 15px;
+  --lb-accent: var(--color-black);
+  font-size: 14px;
 }
 
 .lb-ai-chat {
@@ -159,6 +159,7 @@
 }
 
 .dark .lb-ai-chat {
+  --lb-accent: var(--color-white);
   --lb-background: var(--color-neutral-950);
   --lb-dynamic-background: var(--color-neutral-900);
   --lb-foreground: var(--color-neutral-50);

@@ -30,7 +30,7 @@ export default function Layout({
       <div
         className={cx(
           isCollapsed ? "lg:pl-[60px]" : "lg:pl-64",
-          "ease transform-gpu overflow-x-hidden transition-all duration-100 will-change-transform lg:bg-neutral-50 lg:py-3 lg:pr-3 lg:dark:bg-neutral-950",
+          "ease transform-gpu overflow-x-hidden transition-all duration-100 will-change-transform lg:bg-neutral-50 lg:py-3 lg:pr-3 lg:dark:bg-black",
         )}
       >
         <div className="min-h-dvh bg-white p-4 sm:p-6 lg:rounded-lg lg:border lg:border-neutral-200 dark:bg-neutral-950 lg:dark:border-neutral-900">

@@ -56,7 +56,7 @@ export default function MobileSidebar() {
           <Button
             variant="ghost"
             aria-label="open sidebar"
-            className="group flex items-center rounded-md p-1.5 text-sm font-medium hover:bg-neutral-100 data-[state=open]:bg-neutral-100 data-[state=open]:bg-neutral-400/10 dark:hover:bg-neutral-400/10"
+            className="group flex items-center rounded-md p-1.5 text-sm font-medium hover:bg-neutral-50 data-[state=open]:bg-neutral-100 data-[state=open]:bg-neutral-400/10 dark:hover:bg-neutral-400/10"
           >
             <Menu
               className="size-6 shrink-0 text-neutral-600 dark:text-neutral-400"
@@ -91,7 +91,7 @@ export default function MobileSidebar() {
                             isActive(item.href)
                               ? "text-black dark:text-white"
                               : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50",
-                            "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition hover:bg-neutral-100 sm:text-sm dark:hover:bg-neutral-900",
+                            "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition hover:bg-neutral-50 sm:text-sm dark:hover:bg-neutral-900",
                             focusRing,
                           )}
                         >
@@ -122,7 +122,7 @@ export default function MobileSidebar() {
                         isActive("/onboarding")
                           ? "text-black dark:text-white"
                           : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-50",
-                        "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-base font-medium transition hover:bg-neutral-100 sm:text-sm dark:hover:bg-neutral-900",
+                        "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-base font-medium transition hover:bg-neutral-50 sm:text-sm dark:hover:bg-neutral-900",
                         focusRing,
                       )}
                     >
