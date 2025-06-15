@@ -9,22 +9,22 @@ import { cx, focusInput, hasErrorInput } from "@/lib/utils"
 const inputStyles = tv({
   base: [
     // base
-    "relative block w-full appearance-none rounded-md border px-2.5 py-2 shadow-sm outline-none transition sm:text-sm",
+    "relative block w-full appearance-none rounded-md border px-2.5 py-2 shadow-xs outline-hidden transition sm:text-sm",
     // border color
-    "border-gray-300 dark:border-gray-800",
+    "border-neutral-300 dark:border-neutral-800",
     // text color
-    "text-gray-900 dark:text-gray-50",
+    "text-neutral-900 dark:text-neutral-50",
     // placeholder color
-    "placeholder-gray-400 dark:placeholder-gray-500",
+    "placeholder-neutral-400 dark:placeholder-neutral-500",
     // background color
-    "bg-white dark:bg-gray-950",
+    "bg-white dark:bg-neutral-950",
     // disabled
-    "disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400",
-    "disabled:dark:border-gray-700 disabled:dark:bg-gray-800 disabled:dark:text-gray-500",
+    "disabled:border-neutral-300 disabled:bg-neutral-100 disabled:text-neutral-400",
+    "dark:disabled:border-neutral-700 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-500",
     // focus
     focusInput,
     // invalid (optional)
-    // "aria-[invalid=true]:dark:ring-red-400/20 aria-[invalid=true]:ring-2 aria-[invalid=true]:ring-red-200 aria-[invalid=true]:border-red-500 invalid:ring-2 invalid:ring-red-200 invalid:border-red-500"
+    // "dark:aria-invalid:ring-red-400/20 aria-invalid:ring-2 aria-invalid:ring-red-200 aria-invalid:border-red-500 invalid:ring-2 invalid:ring-red-200 invalid:border-red-500"
     // remove search cancel button (optional)
     "[&::--webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden",
   ],
@@ -37,7 +37,7 @@ const inputStyles = tv({
 
 interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
-  VariantProps<typeof inputStyles> {
+    VariantProps<typeof inputStyles> {
   inputClassName?: string
 }
 
@@ -51,12 +51,12 @@ const KeywordInput = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={forwardedRef}
           type={type}
-          className={cx("block !pl-8", inputStyles({ hasError }))}
+          className={cx("block pl-8!", inputStyles({ hasError }))}
           {...props}
         />
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
           <span
-            className="size-2 rounded-sm bg-rose-600 dark:bg-rose-500"
+            className="size-2 rounded-xs bg-rose-600 dark:bg-rose-500"
             aria-hidden="true"
           />
         </div>

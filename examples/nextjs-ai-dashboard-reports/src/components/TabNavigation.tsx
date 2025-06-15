@@ -1,9 +1,9 @@
 // Tremor Raw TabNavigation [v0.0.1]
 
-import * as NavigationMenuPrimitives from "@radix-ui/react-navigation-menu";
-import React from "react";
+import * as NavigationMenuPrimitives from "@radix-ui/react-navigation-menu"
+import React from "react"
 
-import { cx, focusRing } from "@/lib/utils";
+import { cx, focusRing } from "@/lib/utils"
 
 function getSubtree(
   options: { asChild: boolean | undefined; children: React.ReactNode },
@@ -38,9 +38,9 @@ const TabNavigation = React.forwardRef<
     <NavigationMenuPrimitives.List
       className={cx(
         // base
-        "flex items-center justify-start whitespace-nowrap border-b [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        "flex items-center justify-start border-b whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         // border color
-        "border-gray-200 dark:border-gray-800",
+        "border-neutral-200 dark:border-neutral-800",
         className,
       )}
     >
@@ -62,11 +62,11 @@ const TabNavigationLink = React.forwardRef<
     <NavigationMenuPrimitives.Link
       aria-disabled={disabled}
       className={cx(
-        "group relative flex shrink-0 select-none items-center justify-center",
+        "group relative flex shrink-0 items-center justify-center select-none",
         disabled ? "pointer-events-none" : "",
       )}
       ref={forwardedRef}
-      onSelect={() => { }}
+      onSelect={() => {}}
       asChild={asChild}
       {...props}
     >
@@ -74,19 +74,19 @@ const TabNavigationLink = React.forwardRef<
         <span
           className={cx(
             // base
-            "-mb-px flex items-center justify-center whitespace-nowrap border-b-2 border-transparent px-3 pb-2 text-sm font-medium transition-all",
+            "-mb-px flex items-center justify-center border-b-2 border-transparent pb-2 text-sm font-medium whitespace-nowrap transition-all",
             // text color
-            "text-gray-500 dark:text-gray-500",
+            "text-neutral-500 dark:text-neutral-500",
             // hover
-            "group-hover:text-gray-700 group-hover:dark:text-gray-400",
+            "group-hover:text-neutral-700 dark:group-hover:text-neutral-400",
             // border hover
-            "group-hover:border-gray-300 group-hover:dark:border-gray-400",
+            "group-hover:border-neutral-300 dark:group-hover:border-neutral-400",
             // selected
-            "group-data-[active]:border-blue-600 group-data-[active]:text-blue-600",
-            "group-data-[active]:dark:border-blue-500 group-data-[active]:dark:text-blue-500",
+            "group-data-active:border-black group-data-active:text-black",
+            "dark:group-data-active:border-white dark:group-data-active:text-white",
             // disabled
             disabled
-              ? "pointer-events-none text-gray-300 dark:text-gray-700"
+              ? "pointer-events-none text-neutral-300 dark:text-neutral-700"
               : "",
             focusRing,
             className,
@@ -101,5 +101,4 @@ const TabNavigationLink = React.forwardRef<
 
 TabNavigationLink.displayName = "TabNavigationLink"
 
-export { TabNavigation, TabNavigationLink };
-
+export { TabNavigation, TabNavigationLink }

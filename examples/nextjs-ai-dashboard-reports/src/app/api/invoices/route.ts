@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   const maxAmount = searchParams.get("maxAmount");
   const invoiceStatus = searchParams.get("invoiceStatus");
   const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const client = searchParams.get("client");
 
   let filtered = invoices;
 
@@ -51,6 +52,9 @@ export async function GET(req: NextRequest) {
     filtered = filtered.filter(
       (i: Invoice) => i.invoice_status === invoiceStatus
     );
+  }
+  if (client) {
+    filtered = filtered.filter((i: Invoice) => i.client === client);
   }
 
   // Sort by date descending (most recent first)

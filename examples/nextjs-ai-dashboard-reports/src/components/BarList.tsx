@@ -68,27 +68,27 @@ function BarListInner<T>(
             }}
             className={cx(
               // base
-              "group w-full rounded",
+              "group w-full rounded-sm",
               // focus
               focusRing,
               onValueChange
                 ? [
-                  "!-m-0 cursor-pointer",
-                  // hover
-                  "hover:bg-gray-50 hover:dark:bg-gray-900",
-                ]
+                    "-m-0! cursor-pointer",
+                    // hover
+                    "hover:bg-neutral-50 dark:hover:bg-neutral-900",
+                  ]
                 : "",
             )}
           >
             <div
               className={cx(
                 // base
-                "flex items-center rounded transition-all",
+                "flex items-center rounded-sm transition-all",
                 rowHeight,
                 // background color
-                "bg-blue-200 dark:bg-blue-900",
+                "bg-neutral-200 dark:bg-neutral-900",
                 onValueChange
-                  ? "group-hover:bg-blue-300 group-hover:dark:bg-blue-800"
+                  ? "group-hover:bg-neutral-300 dark:group-hover:bg-neutral-800"
                   : "",
                 // margin and duration
                 {
@@ -104,9 +104,9 @@ function BarListInner<T>(
                     href={item.href}
                     className={cx(
                       // base
-                      "truncate whitespace-nowrap rounded text-sm",
+                      "truncate rounded-sm text-sm whitespace-nowrap",
                       // text color
-                      "text-gray-900 dark:text-gray-50",
+                      "text-neutral-900 dark:text-neutral-50",
                       // hover
                       "hover:underline hover:underline-offset-2",
                       // focus
@@ -122,9 +122,9 @@ function BarListInner<T>(
                   <p
                     className={cx(
                       // base
-                      "truncate whitespace-nowrap text-sm",
+                      "truncate text-sm whitespace-nowrap",
                       // text color
-                      "text-gray-900 dark:text-gray-50",
+                      "text-neutral-900 dark:text-neutral-50",
                     )}
                   >
                     {item.name}
@@ -148,9 +148,9 @@ function BarListInner<T>(
             <p
               className={cx(
                 // base
-                "truncate whitespace-nowrap text-sm leading-none",
+                "truncate text-sm leading-none whitespace-nowrap",
                 // text color
-                "text-gray-900 dark:text-gray-50",
+                "text-neutral-900 dark:text-neutral-50",
               )}
             >
               {valueFormatter(item.value)}

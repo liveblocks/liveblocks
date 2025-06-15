@@ -13,12 +13,12 @@ const progressBarVariants = tv({
   variants: {
     variant: {
       default: {
-        background: "bg-blue-200 dark:bg-blue-500/30",
-        bar: "bg-blue-500 dark:bg-blue-500",
+        background: "bg-neutral-200 dark:bg-white/30",
+        bar: "bg-black dark:bg-white",
       },
       neutral: {
-        background: "bg-gray-200 dark:bg-gray-500/40",
-        bar: "bg-gray-500 dark:bg-gray-500",
+        background: "bg-neutral-200 dark:bg-neutral-500/40",
+        bar: "bg-neutral-500 dark:bg-neutral-500",
       },
       warning: {
         background: "bg-yellow-200 dark:bg-yellow-500/30",
@@ -41,7 +41,7 @@ const progressBarVariants = tv({
 
 interface ProgressBarProps
   extends React.HTMLProps<HTMLDivElement>,
-  VariantProps<typeof progressBarVariants> {
+    VariantProps<typeof progressBarVariants> {
   value?: number
   max?: number
   showAnimation?: boolean
@@ -84,7 +84,7 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
               "h-full flex-col rounded-full",
               bar(),
               showAnimation &&
-              "transform-gpu transition-all duration-300 ease-in-out",
+                "transform-gpu transition-all duration-300 ease-in-out",
             )}
             style={{
               width: max ? `${(safeValue / max) * 100}%` : `${safeValue}%`,
@@ -95,9 +95,9 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
           <span
             className={cx(
               // base
-              "ml-2 whitespace-nowrap text-sm font-medium leading-none",
+              "ml-2 text-sm leading-none font-medium whitespace-nowrap",
               // text color
-              "text-gray-900 dark:text-gray-50",
+              "text-neutral-900 dark:text-neutral-50",
             )}
           >
             {label}

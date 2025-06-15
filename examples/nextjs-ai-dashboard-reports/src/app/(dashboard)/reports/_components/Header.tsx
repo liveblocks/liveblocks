@@ -34,7 +34,7 @@ function FormattedDate() {
   }, [])
 
   return (
-    <p className="whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+    <p className="text-sm whitespace-nowrap text-neutral-600 dark:text-neutral-400">
       Last refresh: {dateString}
     </p>
   )
@@ -59,15 +59,15 @@ export default function Header() {
     <section
       aria-labelledby="reports-title"
       className={cx(
-        "sticky top-16 z-50 -my-6 flex flex-col gap-6 bg-white py-6 md:flex-row md:flex-wrap md:items-center md:justify-between lg:top-0 dark:bg-gray-925",
+        "sticky top-16 z-50 -my-6 flex flex-col gap-6 bg-white py-6 md:flex-row md:flex-wrap md:items-center md:justify-between lg:top-0 dark:bg-neutral-950",
         scrolled &&
-          "border-b border-gray-200 transition-all dark:border-gray-900",
+          "border-b border-neutral-200 transition-all dark:border-neutral-900",
       )}
     >
       <div className="space-y-1">
         <h1
           id="reports-title"
-          className="text-lg font-semibold text-gray-900 dark:text-gray-50"
+          className="text-lg font-semibold tracking-[-0.01em] text-neutral-900 dark:text-neutral-50"
         >
           Reports
         </h1>
@@ -84,7 +84,7 @@ export default function Header() {
               <FilterAmount />
               <Button
                 variant="light"
-                className="h-fit dark:border-gray-800"
+                className="h-fit dark:border-neutral-800"
                 onClick={handleResetFilters}
               >
                 Reset
@@ -100,7 +100,7 @@ export default function Header() {
         <FilterAmount />
         <Button
           variant="light"
-          className="h-fit dark:border-gray-800"
+          className="h-fit dark:border-neutral-800"
           onClick={handleResetFilters}
         >
           Reset

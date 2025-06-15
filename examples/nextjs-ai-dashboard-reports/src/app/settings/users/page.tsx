@@ -33,50 +33,23 @@ import {
 import { departments } from "@/data/data";
 import { users } from "@/data/users";
 import { Plus, Trash2 } from "lucide-react";
-import { InviteMemberTool } from "@/ai-popup/AiChatTools";
-import { useState } from "react";
+import { useInvitedUsers } from "@/lib/useInvitedUsers";
 
 export default function Users() {
-  // Temporary because this is just a demo
-  const [invitedUsers, setInvitedUsers] = useState<typeof users>([]);
+  const { invitedUsers } = useInvitedUsers();
 
   return (
     <section aria-labelledby="members-heading">
-      <InviteMemberTool
-        onInvite={(user) => {
-          setInvitedUsers((prev) => [
-            {
-              name: user.name,
-              email: user.email,
-              initials:
-                user.name.split(" ").length > 1
-                  ? user.name.split(" ")[0][0] + user.name.split(" ")[1][0]
-                  : user.name[0],
-              permission: "admin",
-              color: "blue",
-              avatar: "",
-              status: "pending",
-              dateAdded: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }),
-              lastActive: "--",
-            },
-            ...prev,
-          ]);
-        }}
-      />
       <form>
         <div className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
           <div>
             <h2
               id="members-heading"
-              className="scroll-mt-10 font-semibold text-gray-900 dark:text-gray-50"
+              className="scroll-mt-10 font-medium text-neutral-900 dark:text-neutral-50"
             >
               Members
             </h2>
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
               Invite employees to Insights and manage their permissions to
               streamline expense management.
             </p>
@@ -85,7 +58,7 @@ export default function Users() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <h3
                 id="users-list-heading"
-                className="text-sm font-medium text-gray-900 dark:text-gray-50"
+                className="text-sm font-medium text-neutral-900 dark:text-neutral-50"
               >
                 Users with approval rights
               </h3>
@@ -199,25 +172,25 @@ export default function Users() {
                                 alt={`${item.name}'s avatar`}
                                 width={36}
                                 height={36}
-                                className="size-9 rounded-full border border-dashed border-gray-300 object-cover dark:border-gray-700"
+                                className="size-9 rounded-full border border-dashed border-neutral-300 object-cover dark:border-neutral-700"
                               />
                             ) : (
-                              <div className="size-9 rounded-full border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                              <div className="flex size-9 items-center justify-center rounded-full border border-dashed border-neutral-300 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800">
+                                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">
                                   {item.initials}
                                 </span>
                               </div>
                             )}
                             <div>
                               <div className="flex items-center gap-2">
-                                <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
                                   {item.name}
                                 </div>
-                                <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-400/10 dark:text-gray-300">
+                                <span className="rounded-md bg-neutral-100 px-1.5 py-0.5 text-xs font-medium text-neutral-600 dark:bg-neutral-400/10 dark:text-neutral-300">
                                   pending
                                 </span>
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-500">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-500">
                                 {item.email}
                               </div>
                             </div>
@@ -229,13 +202,13 @@ export default function Users() {
                               alt={`${item.name}'s avatar`}
                               width={36}
                               height={36}
-                              className="size-9 rounded-full object-cover ring-1 ring-gray-300 dark:ring-gray-700"
+                              className="size-9 rounded-full object-cover"
                             />
                             <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                              <div className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
                                 {item.name}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-500">
+                              <div className="text-xs text-neutral-500 dark:text-neutral-500">
                                 {item.email}
                               </div>
                             </div>
@@ -248,7 +221,7 @@ export default function Users() {
                         {item.status === "pending" ? (
                           <Button
                             variant="secondary"
-                            className="justify-center sm:w-36 dark:border dark:border-gray-800 dark:bg-[#090E1A] hover:dark:bg-gray-950/50"
+                            className="justify-center sm:w-36 dark:border dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-950/50"
                             disabled
                           >
                             Resend
@@ -276,7 +249,7 @@ export default function Users() {
                           <DialogTrigger asChild>
                             <Button
                               variant="ghost"
-                              className="p-2.5 text-gray-600 transition-all hover:border hover:border-gray-300 hover:bg-gray-50 hover:text-red-500 dark:text-gray-400 hover:dark:border-gray-800 hover:dark:bg-gray-900 hover:dark:text-red-500"
+                              className="p-2.5 text-neutral-600 transition-all hover:border hover:border-neutral-300 hover:bg-neutral-50 hover:text-red-500 dark:text-neutral-400 dark:hover:border-neutral-800 dark:hover:bg-neutral-900 dark:hover:text-red-500"
                               aria-label={`Delete ${item.name}`}
                               disabled
                             >

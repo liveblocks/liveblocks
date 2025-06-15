@@ -1,10 +1,10 @@
 export const DATE_RANGES = {
-  "7": { days: 7, label: "Last 7 Days" },
-  "30": { days: 30, label: "Last 30 Days" },
-  "60": { days: 60, label: "Last 60 Days" },
-  "90": { days: 90, label: "Last 90 Days" },
-  "180": { days: 180, label: "Last 180 Days" },
-  "365": { days: 365, label: "Last 365 Days" },
+  "7": { days: 7, label: "Last 7 days" },
+  "30": { days: 30, label: "Last 30 days" },
+  "60": { days: 60, label: "Last 60 days" },
+  "90": { days: 90, label: "Last 90 days" },
+  "180": { days: 180, label: "Last 180 days" },
+  "365": { days: 365, label: "Last 365 days" },
 } as const
 
 export type RangeKey = keyof typeof DATE_RANGES

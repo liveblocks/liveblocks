@@ -50,9 +50,9 @@ const LegendItem = ({
     <li
       className={cx(
         // base
-        "group inline-flex flex-nowrap items-center gap-1.5 whitespace-nowrap rounded px-2 py-1 transition",
+        "group inline-flex flex-nowrap items-center gap-1.5 rounded-sm px-2 py-1 whitespace-nowrap transition",
         hasOnValueChange
-          ? "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900"
           : "cursor-default",
       )}
       onClick={(e) => {
@@ -71,11 +71,11 @@ const LegendItem = ({
       <p
         className={cx(
           // base
-          "truncate whitespace-nowrap text-xs",
+          "truncate text-xs whitespace-nowrap",
           // text color
-          "text-gray-700 dark:text-gray-300",
+          "text-neutral-700 dark:text-neutral-300",
           hasOnValueChange &&
-          "group-hover:text-gray-900 dark:group-hover:text-gray-50",
+            "group-hover:text-neutral-900 dark:group-hover:text-neutral-50",
           activeLegend && activeLegend !== name ? "opacity-40" : "opacity-100",
         )}
       >
@@ -119,10 +119,10 @@ const ScrollButton = ({ icon, onClick, disabled }: ScrollButtonProps) => {
       type="button"
       className={cx(
         // base
-        "group inline-flex size-5 items-center truncate rounded transition",
+        "group inline-flex size-5 items-center truncate rounded-sm transition",
         disabled
-          ? "cursor-not-allowed text-gray-400 dark:text-gray-600"
-          : "cursor-pointer text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-50",
+          ? "cursor-not-allowed text-neutral-400 dark:text-neutral-600"
+          : "cursor-pointer text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-900 dark:hover:text-neutral-50",
       )}
       disabled={disabled}
       onClick={(e) => {
@@ -264,7 +264,7 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
           "flex h-full",
           enableLegendSlider
             ? hasScroll?.right || hasScroll?.left
-              ? "snap-mandatory items-center overflow-auto pl-4 pr-12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              ? "snap-mandatory items-center overflow-auto pr-12 pl-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               : ""
             : "flex-wrap",
         )}
@@ -284,9 +284,9 @@ const Legend = React.forwardRef<HTMLOListElement, LegendProps>((props, ref) => {
           <div
             className={cx(
               // base
-              "absolute bottom-0 right-0 top-0 flex h-full items-center justify-center pr-1",
+              "absolute top-0 right-0 bottom-0 flex h-full items-center justify-center pr-1",
               // background color
-              "bg-white dark:bg-gray-950",
+              "bg-white dark:bg-neutral-950",
             )}
           >
             <ScrollButton
@@ -394,9 +394,9 @@ const ChartTooltip = ({
           // base
           "rounded-md border text-sm shadow-md",
           // border color
-          "border-gray-200 dark:border-gray-800",
+          "border-neutral-200 dark:border-neutral-800",
           // background color
-          "bg-white dark:bg-gray-950",
+          "bg-white dark:bg-neutral-950",
         )}
       >
         <div className={cx("border-b border-inherit px-4 py-2")}>
@@ -405,7 +405,7 @@ const ChartTooltip = ({
               // base
               "font-medium",
               // text color
-              "text-gray-900 dark:text-gray-50",
+              "text-neutral-900 dark:text-neutral-50",
             )}
           >
             {label}
@@ -428,9 +428,9 @@ const ChartTooltip = ({
                 <p
                   className={cx(
                     // base
-                    "whitespace-nowrap text-right",
+                    "text-right whitespace-nowrap",
                     // text color
-                    "text-gray-700 dark:text-gray-300",
+                    "text-neutral-700 dark:text-neutral-300",
                   )}
                 >
                   {category}
@@ -439,9 +439,9 @@ const ChartTooltip = ({
               <p
                 className={cx(
                   // base
-                  "whitespace-nowrap text-right font-medium tabular-nums",
+                  "text-right font-medium whitespace-nowrap tabular-nums",
                   // text color
-                  "text-gray-900 dark:text-gray-50",
+                  "text-neutral-900 dark:text-neutral-50",
                 )}
               >
                 {valueFormatter(value)}
@@ -654,10 +654,10 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
             onClick={
               hasOnValueChange && (activeLegend || activeDot)
                 ? () => {
-                  setActiveDot(undefined)
-                  setActiveLegend(undefined)
-                  onValueChange?.(null)
-                }
+                    setActiveDot(undefined)
+                    setActiveLegend(undefined)
+                    onValueChange?.(null)
+                  }
                 : undefined
             }
             margin={{
@@ -670,7 +670,9 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
           >
             {showGridLines ? (
               <CartesianGrid
-                className={cx("stroke-gray-200 stroke-1 dark:stroke-gray-800")}
+                className={cx(
+                  "stroke-neutral-200 stroke-1 dark:stroke-neutral-800",
+                )}
                 horizontal={true}
                 vertical={false}
               />
@@ -692,7 +694,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 // base
                 "text-xs",
                 // text fill
-                "fill-gray-500 dark:fill-gray-500",
+                "fill-neutral-500 dark:fill-neutral-500",
               )}
               tickLine={false}
               axisLine={false}
@@ -702,7 +704,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 <Label
                   position="insideBottom"
                   offset={-20}
-                  className="fill-gray-800 text-sm font-medium dark:fill-gray-200"
+                  className="fill-neutral-800 text-sm font-medium dark:fill-neutral-200"
                 >
                   {xAxisLabel}
                 </Label>
@@ -722,7 +724,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                 // base
                 "text-xs",
                 // text fill
-                "fill-gray-500 dark:fill-gray-500",
+                "fill-neutral-500 dark:fill-neutral-500",
               )}
               tickFormatter={
                 type === "percent" ? valueToPercent : valueFormatter
@@ -735,7 +737,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                   style={{ textAnchor: "middle" }}
                   angle={-90}
                   offset={-15}
-                  className="fill-gray-800 text-sm font-medium dark:fill-gray-200"
+                  className="fill-neutral-800 text-sm font-medium dark:fill-neutral-200"
                 >
                   {yAxisLabel}
                 </Label>
@@ -751,15 +753,15 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
               content={({ active, payload, label }) => {
                 const cleanPayload: TooltipProps["payload"] = payload
                   ? payload.map((item: any) => ({
-                    category: item.dataKey,
-                    value: item.value,
-                    index: item.payload[index],
-                    color: categoryColors.get(
-                      item.dataKey,
-                    ) as AvailableChartColorsKeys,
-                    type: item.type,
-                    payload: item.payload,
-                  }))
+                      category: item.dataKey,
+                      value: item.value,
+                      index: item.payload[index],
+                      color: categoryColors.get(
+                        item.dataKey,
+                      ) as AvailableChartColorsKeys,
+                      type: item.type,
+                      payload: item.payload,
+                    }))
                   : []
 
                 if (
@@ -803,7 +805,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                     activeLegend,
                     hasOnValueChange
                       ? (clickedLegendItem: string) =>
-                        onCategoryClick(clickedLegendItem)
+                          onCategoryClick(clickedLegendItem)
                       : undefined,
                     enableLegendSlider,
                     legendPosition,
@@ -868,7 +870,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                       return (
                         <Dot
                           className={cx(
-                            "stroke-white dark:stroke-gray-950",
+                            "stroke-white dark:stroke-neutral-950",
                             onValueChange ? "cursor-pointer" : "",
                             getColorClassName(
                               categoryColors.get(
@@ -922,7 +924,7 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
                             strokeLinejoin={strokeLinejoin}
                             strokeWidth={strokeWidth}
                             className={cx(
-                              "stroke-white dark:stroke-gray-950",
+                              "stroke-white dark:stroke-neutral-950",
                               onValueChange ? "cursor-pointer" : "",
                               getColorClassName(
                                 categoryColors.get(
@@ -955,26 +957,26 @@ const AreaChart = React.forwardRef<HTMLDivElement, AreaChartProps>(
             {/* hidden lines to increase clickable target area */}
             {onValueChange
               ? categories.map((category) => (
-                <Line
-                  className={cx("cursor-pointer")}
-                  strokeOpacity={0}
-                  key={category}
-                  name={category}
-                  type="linear"
-                  dataKey={category}
-                  stroke="transparent"
-                  fill="transparent"
-                  legendType="none"
-                  tooltipType="none"
-                  strokeWidth={12}
-                  connectNulls={connectNulls}
-                  onClick={(props: any, event) => {
-                    event.stopPropagation()
-                    const { name } = props
-                    onCategoryClick(name)
-                  }}
-                />
-              ))
+                  <Line
+                    className={cx("cursor-pointer")}
+                    strokeOpacity={0}
+                    key={category}
+                    name={category}
+                    type="linear"
+                    dataKey={category}
+                    stroke="transparent"
+                    fill="transparent"
+                    legendType="none"
+                    tooltipType="none"
+                    strokeWidth={12}
+                    connectNulls={connectNulls}
+                    onClick={(props: any, event) => {
+                      event.stopPropagation()
+                      const { name } = props
+                      onCategoryClick(name)
+                    }}
+                  />
+                ))
               : null}
           </RechartsAreaChart>
         </ResponsiveContainer>
