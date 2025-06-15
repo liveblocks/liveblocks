@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Button } from "@/components/Button"
+import Image from "next/image";
+import { Button } from "@/components/Button";
 import {
   Dialog,
   DialogClose,
@@ -11,16 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog"
-import { Input } from "@/components/Input"
-import { Label } from "@/components/Label"
+} from "@/components/Dialog";
+import { Input } from "@/components/Input";
+import { Label } from "@/components/Label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/Select"
+} from "@/components/Select";
 import {
   Table,
   TableBody,
@@ -29,44 +29,17 @@ import {
   TableHeaderCell,
   TableRoot,
   TableRow,
-} from "@/components/Table"
-import { departments } from "@/data/data"
-import { users } from "@/data/users"
-import { Plus, Trash2 } from "lucide-react"
-import { InviteMemberTool } from "@/ai-popup/AiChatTools"
-import { useState } from "react"
+} from "@/components/Table";
+import { departments } from "@/data/data";
+import { users } from "@/data/users";
+import { Plus, Trash2 } from "lucide-react";
+import { useInvitedUsers } from "@/lib/useInvitedUsers";
 
 export default function Users() {
-  // Temporary because this is just a demo
-  const [invitedUsers, setInvitedUsers] = useState<typeof users>([])
+  const { invitedUsers } = useInvitedUsers();
 
   return (
     <section aria-labelledby="members-heading">
-      <InviteMemberTool
-        onInvite={(user) => {
-          setInvitedUsers((prev) => [
-            {
-              name: user.name,
-              email: user.email,
-              initials:
-                user.name.split(" ").length > 1
-                  ? user.name.split(" ")[0][0] + user.name.split(" ")[1][0]
-                  : user.name[0],
-              permission: "admin",
-              color: "blue",
-              avatar: "",
-              status: "pending",
-              dateAdded: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }),
-              lastActive: "--",
-            },
-            ...prev,
-          ])
-        }}
-      />
       <form>
         <div className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
           <div>
@@ -324,5 +297,5 @@ export default function Users() {
         </div>
       </form>
     </section>
-  )
+  );
 }

@@ -27,6 +27,7 @@ import {
 import { siteConfig } from "@/app/siteConfig";
 import useSWR from "swr";
 import { ArrowLeftIcon, PlusIcon, XIcon } from "lucide-react";
+import { useInvitedUsers } from "@/lib/useInvitedUsers";
 
 export function AiPopup() {
   return (
@@ -48,6 +49,8 @@ function Chat({ chatId }: { chatId: string }) {
 
   // Knowledge about the current user's plan
   const { data: plan } = useSWR("/api/plan");
+
+  const { inviteUser } = useInvitedUsers();
 
   return (
     <div className="absolute inset-0 flex flex-col">
@@ -83,7 +86,7 @@ function Chat({ chatId }: { chatId: string }) {
       <SendInvoiceRemindersTool />
       <SendOneUnpaidReminderTool />
       <MemberToolAi />
-      <InviteMemberTool onInvite={() => {}} />
+      <InviteMemberTool onInvite={inviteUser} />
       <AiChat
         layout="compact"
         chatId={chatId}
