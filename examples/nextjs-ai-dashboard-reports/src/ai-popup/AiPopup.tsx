@@ -49,8 +49,8 @@ export function AiPopup() {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="fixed right-6 bottom-6 z-40 flex size-14 items-center justify-center rounded-full border bg-white [filter:drop-shadow(0px_2.767px_2.214px_rgba(0,0,0,0.01))_drop-shadow(0px_6.65px_5.32px_rgba(0,0,0,0.01))_drop-shadow(0px_12.522px_10.017px_rgba(0,0,0,0.01))_drop-shadow(0px_22.336px_17.869px_rgba(0,0,0,0.02))_drop-shadow(0px_41.778px_33.422px_rgba(0,0,0,0.02))_drop-shadow(0px_100px_80px_rgba(0,0,0,0.03))] transition-all duration-200 dark:border-neutral-900 dark:bg-neutral-950">
-          <CopilotIcon className="size-6 text-pink-500" />
+        <div className="fixed right-6 bottom-6 z-40 flex size-12 items-center justify-center rounded-full border bg-white [filter:drop-shadow(0px_2.767px_2.214px_rgba(0,0,0,0.01))_drop-shadow(0px_6.65px_5.32px_rgba(0,0,0,0.01))_drop-shadow(0px_12.522px_10.017px_rgba(0,0,0,0.01))_drop-shadow(0px_22.336px_17.869px_rgba(0,0,0,0.02))_drop-shadow(0px_41.778px_33.422px_rgba(0,0,0,0.02))_drop-shadow(0px_100px_80px_rgba(0,0,0,0.03))] transition-all duration-200 dark:border-neutral-900 dark:bg-neutral-950">
+          <CopilotIcon className="size-5 text-pink-500" />
         </div>
       }
     >
@@ -144,10 +144,10 @@ function ChatPopup() {
       <PopoverPrimitives.Root defaultOpen={true}>
         <PopoverPrimitives.Trigger asChild>
           <button
-            className="fixed right-6 bottom-6 z-40 flex size-14 items-center justify-center rounded-full border bg-white [filter:drop-shadow(0px_2.767px_2.214px_rgba(0,0,0,0.01))_drop-shadow(0px_6.65px_5.32px_rgba(0,0,0,0.01))_drop-shadow(0px_12.522px_10.017px_rgba(0,0,0,0.01))_drop-shadow(0px_22.336px_17.869px_rgba(0,0,0,0.02))_drop-shadow(0px_41.778px_33.422px_rgba(0,0,0,0.02))_drop-shadow(0px_100px_80px_rgba(0,0,0,0.03))] transition-all duration-200 dark:border-neutral-900 dark:bg-neutral-950"
+            className="fixed right-6 bottom-6 z-40 flex size-12 items-center justify-center rounded-full border bg-white [filter:drop-shadow(0px_2.767px_2.214px_rgba(0,0,0,0.01))_drop-shadow(0px_6.65px_5.32px_rgba(0,0,0,0.01))_drop-shadow(0px_12.522px_10.017px_rgba(0,0,0,0.01))_drop-shadow(0px_22.336px_17.869px_rgba(0,0,0,0.02))_drop-shadow(0px_41.778px_33.422px_rgba(0,0,0,0.02))_drop-shadow(0px_100px_80px_rgba(0,0,0,0.03))] transition-all duration-200 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
             aria-label="Open AI Assistant"
           >
-            <CopilotIcon className="size-6 text-pink-500" />
+            <CopilotIcon className="size-5 text-pink-500" />
           </button>
         </PopoverPrimitives.Trigger>
         <PopoverPrimitives.Portal>
@@ -160,35 +160,35 @@ function ChatPopup() {
           >
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
-                <button
-                  onClick={() => {
-                    // If the current chat is deleted, don't go back to it, create a new one
-                    if (chat?.deletedAt) {
-                      setChatId(nanoid())
-                    }
-                    setShowListing(!showListing)
-                  }}
-                  className="flex h-8 items-center gap-1.5 truncate rounded-md px-3 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900"
-                >
-                  <ArrowLeftIcon className="-ml-1 size-4 shrink-0 opacity-70" />
-                  {showListing ? (
-                    <span>Back</span>
-                  ) : (
-                    <div className="shrink grow truncate">
-                      {isLoading ? null : chat?.title || "Untitled chat"}
-                    </div>
-                  )}
-                </button>
+                {!showListing ? (
+                  <button
+                    onClick={() => {
+                      // If the current chat is deleted, don't go back to it, create a new one
+                      if (chat?.deletedAt) {
+                        setChatId(nanoid())
+                      }
+                      setShowListing(!showListing)
+                    }}
+                    className="-ml-1 flex h-8 items-center gap-1.5 truncate rounded-md px-3 text-sm font-medium hover:bg-neutral-200/50 dark:hover:bg-neutral-800"
+                  >
+                    <ArrowLeftIcon className="-ml-1 size-4 shrink-0 opacity-70" />
+                    {showListing ? (
+                      <span>{isLoading ? null : chat?.title || "Back"}</span>
+                    ) : (
+                      <div className="shrink grow truncate">Chats</div>
+                    )}
+                  </button>
+                ) : null}
 
-                <span className="flex shrink-0 items-center gap-1.5">
+                <span className="ml-auto flex shrink-0 items-center gap-1">
                   <button
                     onClick={() => goToChat(nanoid())}
-                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-900"
+                    className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-200/50 dark:hover:bg-neutral-800"
                   >
                     <PlusIcon className="-ml-1 size-4 opacity-70" />
                     <span>New chat</span>
                   </button>
-                  <PopoverPrimitives.Close className="flex size-8 items-center justify-center rounded-full hover:bg-neutral-50 dark:hover:bg-neutral-900">
+                  <PopoverPrimitives.Close className="flex size-8 items-center justify-center rounded-md hover:bg-neutral-200/50 dark:hover:bg-neutral-800">
                     <span className="sr-only">Close</span>
                     <XIcon className="size-4 opacity-70" />
                   </PopoverPrimitives.Close>

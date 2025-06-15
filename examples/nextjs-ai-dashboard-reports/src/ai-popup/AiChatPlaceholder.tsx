@@ -26,9 +26,11 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
 
   return (
     <div className="flex h-full flex-col justify-end gap-5 p-4">
-      <div className="flex flex-col gap-3">
-        <h3 className="text-xl font-medium">How can I help you?</h3>
-        <p className="text-neutral-500">
+      <div className="flex flex-col gap-2">
+        <h3 className="text-xl font-semibold tracking-[-0.01em]">
+          How can I help you?
+        </h3>
+        <p className="text-balance text-neutral-500">
           Ask me anything about reports or transactions. I can answer questions
           and help you work.
         </p>
@@ -37,7 +39,7 @@ export function AiChatPlaceholder({ chatId }: AiChatComponentsEmptyProps) {
         {SUGGESTIONS.map(({ text, prompt }) => (
           <button
             key={text}
-            className="flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3.5 py-1.5 text-sm font-medium shadow-2xs hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-900"
+            className="flex items-center gap-2 rounded-full border bg-white px-3.5 py-1.5 text-sm font-medium transition-colors duration-150 ease-out hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
             onClick={() => sendMessage(prompt)}
           >
             {text}

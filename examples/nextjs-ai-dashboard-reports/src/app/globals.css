@@ -147,8 +147,13 @@
   }
 }
 
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
 .lb-root {
-  --lb-accent: var(--color-black);
+  --lb-accent: var(--color-pink-500);
   font-size: 14px;
 }
 
@@ -159,7 +164,6 @@
 }
 
 .dark .lb-ai-chat {
-  --lb-accent: var(--color-white);
   --lb-background: var(--color-neutral-950);
   --lb-dynamic-background: var(--color-neutral-900);
   --lb-foreground: var(--color-neutral-50);

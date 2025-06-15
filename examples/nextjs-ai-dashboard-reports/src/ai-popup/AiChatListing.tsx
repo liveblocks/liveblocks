@@ -21,13 +21,13 @@ export function ChatListing({
 
   return (
     <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-4">
-      <ul className="flex flex-col gap-2 pl-0 text-sm">
+      <ul className="flex flex-col gap-3 pl-0 text-sm">
         {chats.map((chat) => (
           <li
             key={chat.id}
             className="group relative flex items-center justify-between rounded-md border border-neutral-200 bg-white p-4 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
           >
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <button
                 onClick={() => onSelectChat(chat.id)}
                 className="truncate text-left font-medium before:absolute before:inset-0"

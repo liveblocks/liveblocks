@@ -18,7 +18,7 @@ export default function NotFound() {
         </div>
       </Link>
       <div className="mt-6 flex flex-col">
-        <h1 className="text-lg font-semibold tracking-[-0.015em] text-neutral-900 dark:text-neutral-50">
+        <h1 className="text-lg font-semibold tracking-[-0.01em] text-neutral-900 dark:text-neutral-50">
           Insights
         </h1>
       </div>

@@ -67,7 +67,7 @@ export default function Header() {
       <div className="space-y-1">
         <h1
           id="reports-title"
-          className="text-lg font-semibold tracking-[-0.015em] text-neutral-900 dark:text-neutral-50"
+          className="text-lg font-semibold tracking-[-0.01em] text-neutral-900 dark:text-neutral-50"
         >
           Reports
         </h1>

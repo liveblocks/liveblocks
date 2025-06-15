@@ -34,7 +34,7 @@ export default function Layout({
         )}
       >
         <div className="min-h-dvh bg-white p-4 sm:p-6 lg:rounded-lg lg:border lg:border-neutral-200 dark:bg-neutral-950 lg:dark:border-neutral-900">
-          <h1 className="text-lg font-semibold tracking-[-0.015em] text-neutral-900 dark:text-neutral-50">
+          <h1 className="text-lg font-semibold tracking-[-0.01em] text-neutral-900 dark:text-neutral-50">
             Settings
           </h1>
           <TabNavigation className="mt-6 gap-4">

@@ -10,7 +10,7 @@ export default function Example() {
 
   return (
     <>
-      <h1 className="text-lg font-semibold tracking-[-0.015em] text-neutral-900 sm:text-xl dark:text-neutral-50">
+      <h1 className="text-lg font-semibold tracking-[-0.01em] text-neutral-900 sm:text-xl dark:text-neutral-50">
         Invoices
       </h1>
       <div className="mt-4 sm:mt-6 lg:mt-10">
