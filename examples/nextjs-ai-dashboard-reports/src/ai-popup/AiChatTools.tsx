@@ -485,7 +485,7 @@ function TransactionToolUi({ transactionId }: { transactionId: string }) {
   );
 
   return (
-    <div className="my-2 w-full rounded-sm bg-neutral-100 px-4 pt-3.5 pb-4">
+    <div className="my-2 w-full rounded-sm bg-neutral-100 dark:bg-neutral-900 px-4 pt-3.5 pb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 font-semibold">
           {transaction.merchant}{" "}
