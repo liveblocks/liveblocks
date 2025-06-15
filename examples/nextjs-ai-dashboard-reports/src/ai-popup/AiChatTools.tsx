@@ -105,6 +105,7 @@ export function QueryTransactionTool() {
             expenseStatus: { type: ["string", "null"] },
             paymentStatus: { type: ["string", "null"] },
             limit: { type: ["number", "null"] },
+            merchant: { type: ["string", "null"] },
           },
           required: [
             "dateFrom",
@@ -117,6 +118,7 @@ export function QueryTransactionTool() {
             "expenseStatus",
             "paymentStatus",
             "limit",
+            "merchant",
           ],
         },
         execute: async (args) => {
@@ -161,6 +163,7 @@ export function QueryInvoiceTool() {
             maxAmount: { type: ["number", "null"] },
             invoiceStatus: { type: ["string", "null"] },
             limit: { type: ["number", "null"] },
+            client: { type: ["string", "null"] },
           },
           required: [
             "dateFrom",
@@ -172,6 +175,7 @@ export function QueryInvoiceTool() {
             "maxAmount",
             "invoiceStatus",
             "limit",
+            "client",
           ],
         },
         execute: async (args) => {
@@ -292,8 +296,12 @@ export function SendInvoiceRemindersTool() {
 
           return (
             <AiTool
-              title="Send invoice reminders"
-              collapsed={stage === "executed"}
+              title={
+                stage === "executed"
+                  ? "Invoice reminders sent"
+                  : "Send invoice reminders?"
+              }
+              collapsed={false}
             >
               <AiTool.Confirmation
                 confirm={async () => {
@@ -378,6 +386,75 @@ export function SendInvoiceRemindersTool() {
   );
 }
 
+// Allows the AI to send one unpaid reminder by submitting company name, invoice number, and due date
+export function SendOneUnpaidReminderTool() {
+  return (
+    <RegisterAiTool
+      name="send-an-invoice-reminder"
+      tool={defineAiTool()({
+        description:
+          "Send one unpaid invoice reminder. You must submit the client and due date.",
+        parameters: {
+          type: "object",
+          properties: {
+            client: { type: "string" },
+            dueDate: { type: "string" },
+          },
+          required: ["client", "dueDate"],
+          additionalProperties: false,
+        },
+        render: ({ args, stage }) => {
+          if (stage === "receiving") return null;
+          return (
+            <AiTool
+              title={
+                stage === "executing"
+                  ? `Send invoice reminder?`
+                  : `Invoice reminder sent`
+              }
+              collapsed={false}
+            >
+              <AiTool.Confirmation
+                confirm={async () => {
+                  // Simulating sending emails
+                  const promise = () =>
+                    new Promise((resolve) => setTimeout(resolve, 2500));
+
+                  toast.promise(promise, {
+                    loading: `Sending invoice reminder to ${args.client}...`,
+                    success: () => {
+                      return `Invoice reminder sent to ${args.client}`;
+                    },
+                  });
+
+                  await promise;
+                  return {
+                    description: `Invoice reminder sent to ${args.client}`,
+                    data: {},
+                  };
+                }}
+              >
+                <div className="w-full rounded-sm bg-neutral-100 dark:bg-neutral-900 px-4 pt-3.5 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 font-semibold">
+                      {args.client}
+                    </div>
+                    <Badge variant="warning">Unpaid</Badge>
+                  </div>
+
+                  <div className="mt-0 flex items-center gap-1.5 text-xs">
+                    Due on {format(args.dueDate, "MMM d yyyy")}{" "}
+                  </div>
+                </div>
+              </AiTool.Confirmation>
+            </AiTool>
+          );
+        },
+      })}
+    />
+  );
+}
+
 // Allows the AI to invite a new member to the team with a confirm/cancel dialog. In this demo, inviting just means showing a toast.
 export function InviteMemberTool({
   onInvite,
@@ -402,10 +479,15 @@ export function InviteMemberTool({
           required: ["email", "name"],
         },
         render: ({ args, stage }) => {
-          if (!args) return null;
+          if (stage === "receiving") return null;
 
           return (
-            <AiTool title="Invite member" collapsed={stage === "executed"}>
+            <AiTool
+              title={
+                stage === "executing" ? "Invite member?" : "Member invited"
+              }
+              collapsed={false}
+            >
               <AiTool.Confirmation
                 confirm={() => {
                   toast.success(`${args.email} has been invited`);

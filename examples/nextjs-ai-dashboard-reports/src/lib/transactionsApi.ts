@@ -11,6 +11,7 @@ export type TransactionQueryParams = {
   expenseStatus?: Transaction["expense_status"];
   paymentStatus?: Transaction["payment_status"];
   limit?: number;
+  merchant?: Transaction["merchant"];
 };
 
 export type TransactionResponse = {

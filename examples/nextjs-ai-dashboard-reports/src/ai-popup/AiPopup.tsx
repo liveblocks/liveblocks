@@ -22,6 +22,7 @@ import {
   InviteMemberTool,
   QueryTransactionTool,
   QueryInvoiceTool,
+  SendOneUnpaidReminderTool,
 } from "./AiChatTools";
 import { siteConfig } from "@/app/siteConfig";
 import useSWR from "swr";
@@ -80,6 +81,7 @@ function Chat({ chatId }: { chatId: string }) {
       <NavigateToPageTool />
       <TransactionToolAi />
       <SendInvoiceRemindersTool />
+      <SendOneUnpaidReminderTool />
       <MemberToolAi />
       <InviteMemberTool onInvite={() => {}} />
       <AiChat
