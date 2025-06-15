@@ -169,7 +169,7 @@ function ChatPopup() {
                       }
                       setShowListing(!showListing)
                     }}
-                    className="-ml-1 flex h-8 items-center gap-1.5 truncate rounded-md px-3 text-sm font-medium hover:bg-neutral-200/50 dark:hover:bg-neutral-800"
+                    className="flex h-8 items-center gap-1.5 truncate rounded-md px-3 text-sm font-medium hover:bg-neutral-200/50 dark:hover:bg-neutral-800"
                   >
                     <ArrowLeftIcon className="-ml-1 size-4 shrink-0 opacity-70" />
                     {showListing ? (
