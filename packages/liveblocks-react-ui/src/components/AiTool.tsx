@@ -12,8 +12,8 @@ import { Button } from "../_private";
 import {
   CheckCircleFillIcon,
   ChevronRightIcon,
-  CrossIcon,
-  MinusIcon,
+  CrossCircleFillIcon,
+  MinusCircleIcon,
   SpinnerIcon,
 } from "../icons";
 import {
@@ -351,9 +351,9 @@ export const AiTool = Object.assign(
                 result.type === "success" ? (
                   <CheckCircleFillIcon />
                 ) : result.type === "error" ? (
-                  <CrossIcon />
+                  <CrossCircleFillIcon />
                 ) : result.type === "cancelled" ? (
-                  <MinusIcon />
+                  <MinusCircleIcon />
                 ) : null
               ) : execute !== undefined ? (
                 // Only show a spinner if the tool has an `execute` method.
