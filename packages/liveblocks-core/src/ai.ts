@@ -400,7 +400,9 @@ function createStore_forChatMessages(
   // auto-execute the execute() function for.
   const autoExecutableMessages = new Set<MessageId>();
 
-  const seenToolCallIds = new Set<string>();
+  // Used to keep track of any tool invocation that should be kicked off by
+  // this client instance.
+  const seenToolInvocationIds = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
@@ -528,12 +530,12 @@ function createStore_forChatMessages(
           (part) =>
             part.type === "tool-invocation" && part.stage === "executing"
         )) {
-          if (seenToolCallIds.has(toolCall.invocationId)) {
+          if (seenToolInvocationIds.has(toolCall.invocationId)) {
             // Do nothing, we already know of it
             continue;
           }
 
-          seenToolCallIds.add(toolCall.invocationId);
+          seenToolInvocationIds.add(toolCall.invocationId);
 
           const toolDef = toolsStore
             .getToolΣ(toolCall.name, message.chatId)
