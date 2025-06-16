@@ -6,9 +6,8 @@
     "shared/*",
     "packages/*",
     "tools/*",
-    "schema-lang/*",
-    "e2e/next-sandbox",
-    "e2e/next-ai-kitchen-sink"
+    "e2e/next-ai-kitchen-sink",
+    "e2e/next-sandbox"
   ],
   "scripts": {
     "build": "turbo run build",

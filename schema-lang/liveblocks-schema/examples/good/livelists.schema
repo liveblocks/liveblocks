@@ -1,7 +1,0 @@
-type Storage { foo: LiveList<LiveList<LiveList<string>>> }
----
-type Foo { bar: LiveList<LiveObject<Bar>> }
-type Bar { qux: LiveList<number> }
-type Storage { foo: LiveList<LiveObject<Foo>> }
----
-type Storage { foo: LiveList<{ x: number }> }
