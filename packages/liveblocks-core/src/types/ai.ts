@@ -447,7 +447,7 @@ export type AiFailedAssistantMessage = {
   _optimistic?: true; // Only set by clients, never by server
 };
 
-export type AiChatMessage = AiUserMessage | AiAssistantMessage;
+export type AiChatMessage = Relax<AiUserMessage | AiAssistantMessage>;
 
 export type AiKnowledgeSource = {
   description: string;

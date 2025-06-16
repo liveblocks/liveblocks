@@ -394,7 +394,7 @@ function createStore_forChatMessages(
     invocationId: string,
     result: ToolResultResponse,
     options?: SetToolResultOptions
-  ) => Promise<SetToolResultResponse>
+  ) => Promise<void>
 ) {
   // Keeps track of all message IDs that this client instance is allowed to
   // auto-execute the execute() function for.
@@ -403,11 +403,6 @@ function createStore_forChatMessages(
   // Used to keep track of any tool invocation that should be kicked off by
   // this client instance.
   const seenToolInvocationIds = new Set<string>();
-
-  // Used to keep track of any tool invocation that has been kicked off by
-  // this client instance. Subsequent calls to respond() for this tool
-  // invocation ID should be no-ops.
-  const executedToolInvocationIds = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
@@ -550,15 +545,6 @@ function createStore_forChatMessages(
             ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
           ) => {
             const [result] = args;
-            if (executedToolInvocationIds.has(toolInvocation.invocationId)) {
-              console.warn(
-                `Ignoring respond(): tool '${toolInvocation.name}' (${toolInvocation.invocationId}) has already executed`
-              );
-              return;
-            } else {
-              executedToolInvocationIds.add(toolInvocation.invocationId);
-            }
-
             setToolResult(
               message.chatId,
               message.id,
@@ -566,7 +552,6 @@ function createStore_forChatMessages(
               result ?? { data: {} }
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
-              executedToolInvocationIds.delete(toolInvocation.invocationId); // Allow retrying
               console.error(
                 `Error trying to respond to tool-call: ${String(err)} (in respond())`
               );
@@ -900,7 +885,7 @@ export type Ai = {
     invocationId: string,
     result: ToolResultResponse,
     options?: SetToolResultOptions
-  ) => Promise<SetToolResultResponse>;
+  ) => Promise<void>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
@@ -1248,37 +1233,54 @@ export function createAi(config: AiConfig): Ai {
     context.knowledge.updateKnowledge(layerKey, key, data);
   }
 
+  // Used to keep track of any tool invocation that has been kicked off by
+  // this client instance. Subsequent calls to respond() for this tool
+  // invocation ID should be no-ops.
+  const executedToolInvocationIds = new Set<string>();
+
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
     invocationId: string,
     result: ToolResultResponse,
     options?: SetToolResultOptions
-  ): Promise<SetToolResultResponse> {
+  ): Promise<void> {
+    if (executedToolInvocationIds.has(invocationId)) {
+      console.warn(
+        `Ignoring respond(): invocation '${invocationId}' has already executed`
+      );
+      return;
+    } else {
+      executedToolInvocationIds.add(invocationId);
+    }
+
     const knowledge = context.knowledge.get();
     const tools = context.toolsStore.getToolDescriptions(chatId);
 
-    const resp: SetToolResultResponse = await sendClientMsgWithResponse({
-      cmd: "set-tool-result",
-      chatId,
-      messageId,
-      invocationId,
-      result,
-      generationOptions: {
-        copilotId: options?.copilotId,
-        stream: options?.stream,
-        timeout: options?.timeout,
+    try {
+      const resp: SetToolResultResponse = await sendClientMsgWithResponse({
+        cmd: "set-tool-result",
+        chatId,
+        messageId,
+        invocationId,
+        result,
+        generationOptions: {
+          copilotId: options?.copilotId,
+          stream: options?.stream,
+          timeout: options?.timeout,
 
-        // Knowledge and tools aren't coming from the options, but retrieved
-        // from the global context
-        knowledge: knowledge.length > 0 ? knowledge : undefined,
-        tools: tools.length > 0 ? tools : undefined,
-      },
-    });
-    if (resp.ok) {
-      messagesStore.allowAutoExecuteToolCall(resp.message.id);
+          // Knowledge and tools aren't coming from the options, but retrieved
+          // from the global context
+          knowledge: knowledge.length > 0 ? knowledge : undefined,
+          tools: tools.length > 0 ? tools : undefined,
+        },
+      });
+      if (resp.ok) {
+        messagesStore.allowAutoExecuteToolCall(resp.message.id);
+      }
+    } catch (err) {
+      executedToolInvocationIds.delete(invocationId);
     }
-    return resp;
   }
 
   return Object.defineProperty(
