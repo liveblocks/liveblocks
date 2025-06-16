@@ -526,19 +526,19 @@ function createStore_forChatMessages(
       // - and only if the current client ID is the designated client ID
       //
       if (message.role === "assistant" && message.status === "awaiting-tool") {
-        for (const toolCall of message.contentSoFar.filter(
+        for (const toolInvocation of message.contentSoFar.filter(
           (part) =>
             part.type === "tool-invocation" && part.stage === "executing"
         )) {
-          if (seenToolInvocationIds.has(toolCall.invocationId)) {
+          if (seenToolInvocationIds.has(toolInvocation.invocationId)) {
             // Do nothing, we already know of it
             continue;
           }
 
-          seenToolInvocationIds.add(toolCall.invocationId);
+          seenToolInvocationIds.add(toolInvocation.invocationId);
 
           const toolDef = toolsStore
-            .getToolΣ(toolCall.name, message.chatId)
+            .getToolΣ(toolInvocation.name, message.chatId)
             .get();
 
           const respondSync = <R extends JsonObject>(
@@ -548,7 +548,7 @@ function createStore_forChatMessages(
             setToolResult(
               message.chatId,
               message.id,
-              toolCall.invocationId,
+              toolInvocation.invocationId,
               result ?? { data: {} }
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
@@ -561,9 +561,9 @@ function createStore_forChatMessages(
           const executeFn = toolDef?.execute;
           if (executeFn && autoExecutableMessages.has(message.id)) {
             (async () => {
-              const result = await executeFn(toolCall.args, {
-                name: toolCall.name,
-                invocationId: toolCall.invocationId,
+              const result = await executeFn(toolInvocation.args, {
+                name: toolInvocation.name,
+                invocationId: toolInvocation.invocationId,
               });
               respondSync(result ?? undefined);
             })().catch((err) => {
