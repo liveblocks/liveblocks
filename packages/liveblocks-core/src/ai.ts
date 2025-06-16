@@ -396,9 +396,10 @@ function createStore_forChatMessages(
     options?: SetToolResultOptions
   ) => Promise<void>
 ) {
-  // Keeps track of all message IDs that this client instance is allowed to
-  // auto-execute the execute() function for.
-  const autoExecutableMessages = new Set<MessageId>();
+  // Keeps track of all message IDs that are originated from this client. We
+  // use this concept of "ownership" to determine which client instance is
+  // allowed to auto-execute tool invocations for this message.
+  const myMessages = new Set<MessageId>();
 
   // Used to keep track of any tool invocation that should be kicked off by
   // this client instance.
@@ -559,7 +560,7 @@ function createStore_forChatMessages(
           };
 
           const executeFn = toolDef?.execute;
-          if (executeFn && autoExecutableMessages.has(message.id)) {
+          if (executeFn && myMessages.has(message.id)) {
             (async () => {
               const result = await executeFn(toolInvocation.args, {
                 name: toolInvocation.name,
@@ -574,7 +575,7 @@ function createStore_forChatMessages(
           }
         }
       } else {
-        autoExecutableMessages.delete(message.id);
+        myMessages.delete(message.id);
       }
     });
   }
@@ -771,8 +772,8 @@ function createStore_forChatMessages(
     addDelta,
     failAllPending,
 
-    allowAutoExecuteToolCall(messageId: MessageId) {
-      autoExecutableMessages.add(messageId);
+    markMine(messageId: MessageId) {
+      myMessages.add(messageId);
     },
   };
 }
@@ -1276,7 +1277,7 @@ export function createAi(config: AiConfig): Ai {
         },
       });
       if (resp.ok) {
-        messagesStore.allowAutoExecuteToolCall(resp.message.id);
+        messagesStore.markMine(resp.message.id);
       }
     } catch (err) {
       executedToolInvocationIds.delete(invocationId);
@@ -1338,7 +1339,7 @@ export function createAi(config: AiConfig): Ai {
             tools: tools.length > 0 ? tools : undefined,
           },
         });
-        messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
+        messagesStore.markMine(resp.targetMessage.id);
         return resp;
       },
 
