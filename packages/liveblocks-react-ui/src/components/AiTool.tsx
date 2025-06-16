@@ -70,12 +70,47 @@ export interface AiToolConfirmationProps<
   A extends JsonObject,
   R extends JsonObject,
 > extends ComponentProps<"div"> {
-  types?: NoInfr<AiToolTypePack<A, R>>;
-  args?: A;
+  /**
+   * The callback invoked when the user clicks the confirm button.
+   */
   confirm: AiToolExecuteCallback<A, R>;
+
+  /**
+   * The callback invoked when the user clicks the cancel button.
+   */
   cancel?: AiToolExecuteCallback<A, R>;
+
+  /**
+   * The visual appearance.
+   */
   variant?: "default" | "destructive";
+
+  /**
+   * Override the component's strings.
+   */
   overrides?: Partial<GlobalOverrides & AiToolConfirmationOverrides>;
+
+  /**
+   * The tool's result type, to be used with the `types` prop in the `render` method.
+   *
+   * @example
+   * defineAiTool<{ value: number }>()({
+   *   // ...
+   *   render: ({ types }) => (
+   *     <AiTool.Confirmation
+   *       types={types}
+   *       confirm={() => {
+   *         return {
+   *           // Using `types` makes the result type-safe
+   *           // based on the tool's definition
+   *           data: { value: 123 },
+   *         };
+   *       }}
+   *     />
+   *   ),
+   * })
+   */
+  types?: NoInfr<AiToolTypePack<A, R>>;
 }
 
 function AiToolIcon({ className, ...props }: AiToolIconProps) {
