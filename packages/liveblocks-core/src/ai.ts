@@ -1224,11 +1224,6 @@ export function createAi(config: AiConfig): Ai {
     context.knowledge.updateKnowledge(layerKey, key, data);
   }
 
-  // Keeps track of any tool invocations that have been respond()'ed to by this
-  // client already. Each tool invocation should be responded to only once.
-  // Subsequent calls to respond() should effectively be no-ops.
-  const executedToolInvocationIds = new Set<string>();
-
   async function setToolResult(
     chatId: string,
     messageId: MessageId,
@@ -1236,41 +1231,28 @@ export function createAi(config: AiConfig): Ai {
     result: ToolResultResponse,
     options?: SetToolResultOptions
   ): Promise<void> {
-    if (executedToolInvocationIds.has(invocationId)) {
-      console.warn(
-        `Ignoring respond(): invocation '${invocationId}' has already executed`
-      );
-      return;
-    } else {
-      executedToolInvocationIds.add(invocationId);
-    }
-
     const knowledge = context.knowledge.get();
     const tools = context.toolsStore.getToolDescriptions(chatId);
 
-    try {
-      const resp: SetToolResultResponse = await sendClientMsgWithResponse({
-        cmd: "set-tool-result",
-        chatId,
-        messageId,
-        invocationId,
-        result,
-        generationOptions: {
-          copilotId: options?.copilotId,
-          stream: options?.stream,
-          timeout: options?.timeout,
+    const resp: SetToolResultResponse = await sendClientMsgWithResponse({
+      cmd: "set-tool-result",
+      chatId,
+      messageId,
+      invocationId,
+      result,
+      generationOptions: {
+        copilotId: options?.copilotId,
+        stream: options?.stream,
+        timeout: options?.timeout,
 
-          // Knowledge and tools aren't coming from the options, but retrieved
-          // from the global context
-          knowledge: knowledge.length > 0 ? knowledge : undefined,
-          tools: tools.length > 0 ? tools : undefined,
-        },
-      });
-      if (resp.ok) {
-        messagesStore.markMine(resp.message.id);
-      }
-    } catch (err) {
-      executedToolInvocationIds.delete(invocationId);
+        // Knowledge and tools aren't coming from the options, but retrieved
+        // from the global context
+        knowledge: knowledge.length > 0 ? knowledge : undefined,
+        tools: tools.length > 0 ? tools : undefined,
+      },
+    });
+    if (resp.ok) {
+      messagesStore.markMine(resp.message.id);
     }
   }
 
