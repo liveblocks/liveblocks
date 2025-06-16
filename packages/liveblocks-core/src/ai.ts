@@ -388,7 +388,7 @@ function createStore_forTools() {
 
 function createStore_forChatMessages(
   toolsStore: ReturnType<typeof createStore_forTools>,
-  setToolResult: (
+  setToolResultFn: (
     chatId: string,
     messageId: MessageId,
     invocationId: string,
@@ -546,7 +546,7 @@ function createStore_forChatMessages(
             ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
           ) => {
             const [result] = args;
-            setToolResult(
+            setToolResultFn(
               message.chatId,
               message.id,
               toolInvocation.invocationId,
