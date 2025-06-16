@@ -59,7 +59,7 @@ export function Sidebar({ isCollapsed, toggleSidebar }: SidebarProps) {
       >
         <aside className="flex grow flex-col gap-y-4 overflow-x-hidden overflow-y-auto px-3 py-4 whitespace-nowrap">
           <div>
-            <div className="flex items-center gap-x-1.5">
+            <div className="flex items-center gap-x-1">
               <button
                 className="group inline-flex rounded-md p-2 hover:bg-neutral-200/50 dark:hover:bg-neutral-900"
                 onClick={toggleSidebar}
