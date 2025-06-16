@@ -404,6 +404,11 @@ function createStore_forChatMessages(
   // this client instance.
   const seenToolInvocationIds = new Set<string>();
 
+  // Used to keep track of any tool invocation that has been kicked off by
+  // this client instance. Subsequent calls to respond() for this tool
+  // invocation ID should be no-ops.
+  const executedToolInvocationIds = new Set<string>();
+
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
   const messagePoolByChatIdΣ = new DefaultMap(
@@ -545,6 +550,15 @@ function createStore_forChatMessages(
             ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
           ) => {
             const [result] = args;
+            if (executedToolInvocationIds.has(toolInvocation.invocationId)) {
+              console.warn(
+                `Ignoring respond(): tool '${toolInvocation.name}' (${toolInvocation.invocationId}) has already executed`
+              );
+              return;
+            } else {
+              executedToolInvocationIds.add(toolInvocation.invocationId);
+            }
+
             setToolResult(
               message.chatId,
               message.id,
@@ -552,6 +566,7 @@ function createStore_forChatMessages(
               result ?? { data: {} }
               // TODO Pass in AiGenerationOptions here, or make the backend use the same options
             ).catch((err) => {
+              executedToolInvocationIds.delete(toolInvocation.invocationId); // Allow retrying
               console.error(
                 `Error trying to respond to tool-call: ${String(err)} (in respond())`
               );
