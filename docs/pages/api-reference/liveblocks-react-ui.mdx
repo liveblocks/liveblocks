@@ -18,8 +18,8 @@ more.
 
 #### AiChat
 
-Displays an interactive AI chat. AI can [use knowledge](#RegisterAiKnowledge),
-[run actions](#TODO) and [display tools](#TODO).
+Displays an interactive AI chat. AI can [use knowledge](#RegisterAiKnowledge)
+and [run and display tools](#RegisterAiTool).
 
 ```tsx
 <AiChat chatId="my-chat-id" />
@@ -209,7 +209,7 @@ function ChatWithTitle({ chatId }: { chatId: string }) {
 }
 ```
 
-##### Add front end knowledge [#AiChat-front-endknowledge]
+##### Add front end knowledge [#AiChat-front-end-knowledge]
 
 You can add front end knowledge to chats, meaning the AI will understand the
 information you pass, and will answer questions or call tools based on it. This
@@ -247,7 +247,7 @@ function Chat() {
 }
 ```
 
-##### Add back end knowledge [#AiChat-back-endknowledge]
+##### Add back end knowledge [#AiChat-back-end-knowledge]
 
 You can add back end knowledge to chats, meaning the AI will understand the
 information you pass, and can answer questions or call tools based on it. This
@@ -391,7 +391,8 @@ function Chat() {
 
 #### AiTool
 
-Displays AI tool progress and results. Can be customized for many different UIs.
+Displays [AI tool calls](/docs/ready-made-features/ai-copilots/features#tools)
+and their progress. Can be customized for many different UIs.
 
 {/* TODO AI tool image */}
 
@@ -471,8 +472,8 @@ underlying container element.
 
 ##### AiTool.Confirmation
 
-Displays an AI tool with a confirmation dialog. This allows you to create
-actions that users must confirm or cancel before they’re run.
+Displays an AI tool with a confirmation UI. This allows you to create actions
+that users must confirm or cancel before they’re run.
 
 ```tsx
 <AiTool>
@@ -483,16 +484,15 @@ actions that users must confirm or cancel before they’re run.
 {/* TODO ai tool confirmation image */}
 
 Use the `confirm` and `cancel` props to define which actions should be taken
-when the users clicks the buttons. You must return information that helps the AI
-understand what has taken place, in any format. This will never be shown in the
-chat, but it will be stored in the AI’s memory. Returning a JS object often
-helps the AI understand the result better.
+when the users clicks the buttons. You can return information that helps the AI
+understand what has taken place, and data which you can use in `render` after
+the tool is called.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
 import { RegisterAiTool, AiTool } from "@liveblocks/react-ui";
 
-const deleteFileTool = defineAiTool<{ success: boolean; message: string }>()({
+const deleteFileTool = defineAiTool<{ deletedFileName: string }>()({
   description: "Delete a file from the user's workspace",
   parameters: {
     type: "object",
@@ -502,7 +502,7 @@ const deleteFileTool = defineAiTool<{ success: boolean; message: string }>()({
     required: ["fileName"],
     additionalProperties: false,
   },
-  render: ({ stage, args, result }) => {
+  render: ({ stage, args, result, types }) => {
     if (stage === "receiving") {
       return "Loading...";
     }
@@ -510,22 +510,19 @@ const deleteFileTool = defineAiTool<{ success: boolean; message: string }>()({
       <AiTool title="Delete File" icon="🗑️">
         {!result ? (
           <AiTool.Confirmation
-            confirm={async ({ filename }) => {
+            // Make `confirm` and `cancel` type-safe
+            types={types}
+            confirm={async ({ fileName }) => {
               await deleteFile(fileName);
               return {
-                data: { success: true, message: `Deleted ${fileName}` },
-              };
-            }}
-            cancel={async () => {
-              return {
-                data: { success: false, message: "User cancelled deletion" },
+                data: { deletedFileName: fileName },
               };
             }}
           >
             Are you sure you want to delete {args.fileName}?
           </AiTool.Confirmation>
         ) : (
-          <div>{result.message}</div>
+          <div>Deleted {result.data.deletedFileName}</div>
         )}
       </AiTool>
     );
@@ -542,40 +539,46 @@ function App() {
 }
 ```
 
-`AiTool.Confirmation` dialog will display different content depending on the
-status of the tool. For example, the confirm and cancel buttons will disappear
-when clicked.
+`AiTool.Confirmation` will display different content depending on the stage of
+the tool. For example, the confirm and cancel buttons will disappear when
+clicked.
 
 ###### Props [#AiTool.Confirmation-props]
 
 <PropertiesList>
   <PropertiesListItem
     name="confirm"
-    type="(args: TArgs) => Promise<{ data: TResult }>"
+    type="(args: TArgs) => Promise<ToolResultResponse>"
     isRequired
   >
-    Function called when the user clicks the confirm button. Must return a
-    promise with structured data that helps the AI understand the result.
+    Function called when the user clicks the confirm button. It can return data
+    which will be stored and accessible in `render`, and optionally also a
+    description for the AI to understand the result: `{ data: { formId: 123 }, description: "The user accepted and submitted the form" }`
   </PropertiesListItem>
   <PropertiesListItem
     name="cancel"
-    type="() => Promise<{ data: TResult }>"
-    isRequired
+    type="(args: TArgs) => Promise<ToolResultResponse>"
   >
-    Function called when the user clicks the cancel button. Should return data
-    indicating the action was cancelled.
+    Function called when the user clicks the cancel button.
   </PropertiesListItem>
   <PropertiesListItem name="children" type="ReactNode">
-    Content to display in the confirmation dialog. Typically a question or
+    Content to display in the confirmation UI. Typically a question or
     description of the action being confirmed.
   </PropertiesListItem>
-  <PropertiesListItem name="confirmText" type="string">
-    Text to display on the confirm button. Defaults to "Confirm".
+  <PropertiesListItem name="variant" type="'destructive' | 'default'">
+    The visual appearance of the confirmation UI.
   </PropertiesListItem>
-  <PropertiesListItem name="cancelText" type="string">
-    Text to display on the cancel button. Defaults to "Cancel".
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & AiToolConfirmationOverrides>"
+  >
+    Override the component’s strings. It can be used the change the "confirm"
+    and "cancel" labels.
   </PropertiesListItem>
 </PropertiesList>
+
+All other HTML `div` props are also supported and will be passed through to the
+underlying element.
 
 ##### AiTool.Inspector
 
@@ -596,8 +599,6 @@ developers.
 ```
 
 ###### Props [#AiTool.Inspector-props]
-
-{/* TODO ai tool inspector props table */}
 
 #### RegisterAiKnowledge
 
@@ -869,7 +870,7 @@ function Whiteboard() {
 
 Registers a tool that can be used by [AI chats](#AiChat) on the page. Tools
 allow AI to autonomously run actions, render custom components, and show
-confirm/cancel dialogs within the chat.
+confirmation or human-in-the-loop UIs within the chat.
 
 ```tsx
 import { RegisterAiTool } from "@liveblocks/react-ui";

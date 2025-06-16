@@ -33,11 +33,11 @@ learn more about the project in
  
 ## Features
 
-{/* - **[One-off prompts](#one-off-prompts)**: Create AI buttons for various tasks, with support for actions, context, more. */}
+{/* - **[One-off prompts](#one-off-prompts)**: Create AI buttons for various tasks, with support for tools, context, more. */}
 
 - **[Persistent chats](#persistent-chats)**: No database is required, each
   user’s chats are stored permanently.
-- **[Actions](#actions)**: Easily allow AI to interact with your application and
+- **[Tools](#tools)**: Easily allow AI to interact with your application and
   modify its state.
 - **[Knowledge](#knowledge)**: Feed text and files into the AI so it understands
   the current context.
@@ -86,29 +86,32 @@ When the page refreshes, each user’s previous chats will load for them, and ca
 be continued. If a user has your app open in multiple browser tabs, each tab
 will correctly display chats, and update in real-time.
 
-## Actions [#actions]
+## Tools [#tools]
 
-Actions are a way to allow AI to modify your application state and interact with
-your front end. You can use them to extend the capabilities of AI Copilots
-beyond simple text-based interactions. For example, you may have actions that
-create new documents in your app, automatically fill in form data, search the
-web for data, or anything else you like.
+Tools are a way to allow AI to make actions, modify your application state,
+interact with your front end, or render custom content with your own components.
+You can use them to extend the capabilities of AI Copilots beyond simple
+text-based interactions. For example, you may have tools that create new
+documents in your app, automatically fill in form data, search the web for data,
+or anything else you like.
+
+{/* TODO Better explain tools for non-AI/non-technical readers: action === tool, generative UI ==== tool, etc. */}
 
 <Figure>
   <Image
     src="/assets/ai-copilots/document-changes.png"
-    alt="An example of a document with a chat app in the corner. The chat has run an action, and has edited the document."
+    alt="An example of a document with a chat app in the corner. The chat has run a tool, and has edited the document."
     width={768}
     height={512}
   />
 </Figure>
 
-Actions are defined in your code, and are executed when the AI requests to use
-them.
+Tools are defined in your code, and are executed and/or rendered when the AI
+requests to use them.
 
-### Actions work with our other products
+### Tools work with our other products
 
-Through actions, you can integrate AI Copilots into our other products, such as
+Through tools, you can integrate AI Copilots into our other products, such as
 [Comments](/docs/ready-made-features/comments),
 [Notifications](/docs/ready-made-features/notifications), and
 [Sync Datastore](/docs/platform/sync-datastore). For example, you can allow AI
@@ -240,11 +243,11 @@ show their thought processes.
 
 ## One-off prompts [#one-off-prompts]
 
-One-off prompts are a way to add assorted AI features to your app, specifcally
+One-off prompts are a way to add assorted AI features to your app, specifically
 features that don’t require a chat, such as an AI button on a page.
-[Actions](#actions) and [context](#knowledge) are supported, allowing AI to
-interact with your application, and understand its state. An example use case
-for a one-off prompt is a button that uses AI to fill in a form.
+[Tools](#tools) and [context](#knowledge) are supported, allowing AI to interact
+with your application, and understand its state. An example use case for a
+one-off prompt is a button that uses AI to fill in a form.
 
 <Figure>
   <Image

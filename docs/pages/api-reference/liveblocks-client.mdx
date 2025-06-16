@@ -833,9 +833,10 @@ log your user out, and reauthenticate them. This is a way to update your user’
 ### defineAiTool
 
 Create a custom tool for your AI copilot to use. Defining tools allow the AI
-copilot to look up information on-demand or perform actions in your application
-on behalf of the current user, such as creating content, updating the
-application state, or interacting with external services.
+copilot to look up information on-demand, render your own components based on
+the tool’s arguments, or perform actions in your application on behalf of the
+current user, such as creating content, updating the application state, or
+interacting with external services.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
