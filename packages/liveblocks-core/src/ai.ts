@@ -401,9 +401,10 @@ function createStore_forChatMessages(
   // allowed to auto-execute tool invocations for this message.
   const myMessages = new Set<MessageId>();
 
-  // Used to keep track of any tool invocation that should be kicked off by
-  // this client instance.
-  const seenToolInvocationIds = new Set<string>();
+  // Keeps track of any tool invocations that have been auto-executed by this
+  // client. Note that this can also record invocations that don't have an
+  // execute() function. In that case, we also handled it (by kicking off nothing).
+  const handledInvocations = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
@@ -527,51 +528,40 @@ function createStore_forChatMessages(
       // - and only if the current client ID is the designated client ID
       //
       if (message.role === "assistant" && message.status === "awaiting-tool") {
-        for (const toolInvocation of message.contentSoFar.filter(
-          (part) =>
-            part.type === "tool-invocation" && part.stage === "executing"
-        )) {
-          if (seenToolInvocationIds.has(toolInvocation.invocationId)) {
-            // Do nothing, we already know of it
-            continue;
-          }
+        if (myMessages.has(message.id)) {
+          for (const toolInvocation of message.contentSoFar.filter(
+            (part) =>
+              part.type === "tool-invocation" && part.stage === "executing"
+          )) {
+            if (!handledInvocations.has(toolInvocation.invocationId)) {
+              handledInvocations.add(toolInvocation.invocationId);
+            } else {
+              // Do nothing, we already kicked this one off
+              continue;
+            }
 
-          seenToolInvocationIds.add(toolInvocation.invocationId);
-
-          const toolDef = toolsStore
-            .getToolΣ(toolInvocation.name, message.chatId)
-            .get();
-
-          const respondSync = <R extends JsonObject>(
-            ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
-          ) => {
-            const [result] = args;
-            setToolResultFn(
-              message.chatId,
-              message.id,
-              toolInvocation.invocationId,
-              result ?? { data: {} }
-              // TODO Pass in AiGenerationOptions here, or make the backend use the same options
-            ).catch((err) => {
-              console.error(
-                `Error trying to respond to tool-call: ${String(err)} (in respond())`
-              );
-            });
-          };
-
-          const executeFn = toolDef?.execute;
-          if (executeFn && myMessages.has(message.id)) {
-            (async () => {
-              const result = await executeFn(toolInvocation.args, {
-                name: toolInvocation.name,
-                invocationId: toolInvocation.invocationId,
+            const executeFn = toolsStore
+              .getToolΣ(toolInvocation.name, message.chatId)
+              .get()?.execute;
+            if (executeFn) {
+              (async () => {
+                const result = await executeFn(toolInvocation.args, {
+                  name: toolInvocation.name,
+                  invocationId: toolInvocation.invocationId,
+                });
+                return await setToolResultFn(
+                  message.chatId,
+                  message.id,
+                  toolInvocation.invocationId,
+                  result ?? { data: {} }
+                  // TODO Pass in AiGenerationOptions here, or make the backend use the same options
+                );
+              })().catch((err) => {
+                console.error(
+                  `Error trying to respond to tool-call: ${String(err)} (in execute())`
+                );
               });
-              respondSync(result ?? undefined);
-            })().catch((err) => {
-              console.error(
-                `Error trying to respond to tool-call: ${String(err)} (in execute())`
-              );
-            });
+            }
           }
         }
       } else {
@@ -1234,9 +1224,9 @@ export function createAi(config: AiConfig): Ai {
     context.knowledge.updateKnowledge(layerKey, key, data);
   }
 
-  // Used to keep track of any tool invocation that has been kicked off by
-  // this client instance. Subsequent calls to respond() for this tool
-  // invocation ID should be no-ops.
+  // Keeps track of any tool invocations that have been respond()'ed to by this
+  // client already. Each tool invocation should be responded to only once.
+  // Subsequent calls to respond() should effectively be no-ops.
   const executedToolInvocationIds = new Set<string>();
 
   async function setToolResult(
