@@ -609,7 +609,7 @@ function MemberTool({ email }: { email: string }) {
   const user = users.find((user) => user.email === email);
 
   if (!user) {
-    return <div>User not found</div>;
+    return null;
   }
 
   return (
