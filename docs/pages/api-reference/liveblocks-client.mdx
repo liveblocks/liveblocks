@@ -833,9 +833,10 @@ log your user out, and reauthenticate them. This is a way to update your user’
 ### defineAiTool
 
 Create a custom tool for your AI copilot to use. Defining tools allow the AI
-copilot to look up information on-demand or perform actions in your application
-on behalf of the current user, such as creating content, updating the
-application state, or interacting with external services.
+copilot to look up information on-demand, render your own components based on
+the tool’s arguments, or perform actions in your application on behalf of the
+current user, such as creating content, updating the application state, or
+interacting with external services.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
@@ -899,7 +900,7 @@ Note that the function should be called like this `defineAiTool()({ ... })`
 </PropertiesList>
 
 Tools can be registered globally with
-[`RegisterAiTool`](/docs/api-reference/liveblocks-react-ui#RegisterAiTool) or
+[`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool) or
 passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat).
 
 ## Room
@@ -5279,7 +5280,7 @@ type AiKnowledgeSource = {
 </PropertiesList>
 
 Knowledge sources can be registered using
-[`RegisterAiKnowledge`](/docs/api-reference/liveblocks-react-ui#RegisterAiKnowledge)
+[`RegisterAiKnowledge`](/docs/api-reference/liveblocks-react#RegisterAiKnowledge)
 or passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
 via the `knowledge` prop.
 

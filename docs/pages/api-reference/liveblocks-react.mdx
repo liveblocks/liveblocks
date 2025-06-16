@@ -1336,6 +1336,442 @@ const sendAiMessage = useSendAiMessage("my-chat-id");
 sendAiMessage("Hello!");
 ```
 
+### RegisterAiKnowledge
+
+Adds knowledge to all AI features on the page. AI will understand the
+information you pass, and will answer questions or call tools based on it. This
+is particularly helpful for passing user info, app state, and other small
+contextual knowledge.
+
+```tsx
+<RegisterAiKnowledge
+  description="The current user's payment plan"
+  value="Enterprise"
+/>
+```
+
+Each knowledge source has a `description` string, and a `value` which can be
+either a string, object or array. These components can be placed anywhere in
+your app, so long as they’re under
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiKnowledge } from "@liveblocks/react";
+
+function Chat() {
+  return (
+    <>
+      // +++
+      <RegisterAiKnowledge
+        description="The current user's payment plan"
+        value="Enterprise"
+      />
+      <RegisterAiKnowledge
+        description="The current user's info"
+        value={{
+          name: "Jody Hekla",
+          email: "jody@liveblocks.io",
+          teams: ["Engineering", "Product"],
+        }}
+      />
+      // +++
+      <AiChat chatId="my-chat-id" />
+    </>
+  );
+}
+```
+
+#### Pass in assorted context [#RegisterAiKnowledge-context]
+
+Passing the AI context about the current datetime, the user’s language, the page
+the user’s visiting, and navigable pages on your website, is an effective method
+for improving your chat’s replies.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+
+function Chat() {
+  return (
+    <>
+      // +++
+      <RegisterAiKnowledge
+        description="The current date and time"
+        value={new Date()}
+      />
+      <RegisterAiKnowledge
+        description="The user's preferred language"
+        value={navigator.language}
+      />
+      <RegisterAiKnowledge
+        description="The current URL"
+        value={window.location.href}
+      />
+      <RegisterAiKnowledge
+        description="URLs on this website"
+        value={["/dashboard", "/billing", "/settings"]}
+      />
+      // +++
+    </>
+  );
+}
+```
+
+When building your app, it’s worth considering which app-specific context will
+be helpful, for example the user’s payment plan, or a list of their projects.
+
+#### Pass in user data from your auth provider [#RegisterAiKnowledge-user]
+
+You can pass in knowledge from your auth provider, for example with
+[`useUser`](https://clerk.com/docs/hooks/use-user) from
+[Clerk](https://clerk.com). You can tell AI that the state is loading in a
+simple string, and it will understand.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { useUser } from "@clerk/clerk-react";
+
+function Chat() {
+  // +++
+  const { isSignedIn, user, isLoaded } = useUser();
+  // +++
+
+  return (
+    // +++
+    <RegisterAiKnowledge
+      description="The current user's info"
+      value={isLoaded ? (isSignedIn ? user : "Not signed in") : "Loading..."}
+    />
+    // +++
+  );
+}
+```
+
+#### Pass in assorted data from fetching hooks [#RegisterAiKnowledge-fetching]
+
+You can pass in knowledge from data fetching hooks such as with
+[`useSWR`](https://swr.vercel.app/docs/getting-started) from
+[SWR](https://swr.vercel.app/). You can tell AI that the state is loading in a
+simple string, and it will understand.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import useSWR from "swr";
+
+function Chat() {
+  // +++
+  const { data, error, isLoading } = useSWR(`/important-data`, fetcher);
+  // +++
+
+  return (
+    // +++
+    <RegisterAiKnowledge
+      description="Important data"
+      value={isLoading ? "Loading..." : error ? "Problem fetching data" : data}
+    />
+    // +++
+  );
+}
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
+```
+
+#### Pass in text editor document data [#RegisterAiKnowledge-text-editor]
+
+You can pass in knowledge from your text editor, for example when using
+[Liveblocks Tiptap](/docs/api-reference/liveblocks-react-tiptap).
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  // +++
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The current document's Tiptap state"
+        value={editor.getHTML()}
+      />
+      // +++
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+As well as `editor.getHTML()`, `editor.getJSON()` and `editor.getText()` are
+also available when using Tiptap. Its worth trying them all, in case your AI
+model understands one of them better than the others.
+
+{/* TODO how to make tools where you can write to the text editor */}
+
+#### Pass in comment data [#RegisterAiKnowledge-storage]
+
+You can also pass in knowledge from your custom Liveblocks Comments app with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads). This way, your
+AI chat will understand the context in the current room.
+
+```tsx
+import { RegisterAiKnowledge, useThreads } from "@liveblocks/react";
+
+function Comments() {
+  // +++
+  const { threads, isLoading, error } = useThreads();
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The comment threads in the current document"
+        value={
+          isLoading
+            ? "Loading..."
+            : error
+              ? "Problem fetching threads"
+              : threads
+        }
+      />
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      )}
+    </div>
+  );
+}
+```
+
+#### Pass in storage data [#RegisterAiKnowledge-storage]
+
+You can also pass in knowledge from your custom Liveblocks storage app with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage). This way, your
+AI chat will understand the context in the current room.
+
+```tsx
+import { RegisterAiKnowledge, useStorage } from "@liveblocks/react/suspense";
+
+function Whiteboard() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The current shapes on the whiteboard"
+        value={shapes}
+      />
+      // +++
+      {shapes.map((shape) => (
+        // ...
+      )}
+    </div>
+  );
+}
+```
+
+#### Props [#RegisterAiKnowledge-props]
+
+<PropertiesList>
+  <PropertiesListItem name="description" type="string" isRequired>
+    A clear description of what this knowledge represents. This helps the AI
+    understand the context and relevance of the provided information.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="string" isRequired>
+    The knowledge content as a string. Can be plain text, JSON, or any string
+    format that provides useful context to the AI.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    Optional unique identifier for this knowledge source. If provided,
+    subsequent updates with the same ID will replace the previous knowledge.
+  </PropertiesListItem>
+</PropertiesList>
+
+### RegisterAiTool
+
+Registers a tool that can be used by
+[AI chats](/docs/api-reference/liveblocks-react-ui#AiChat) on the page. Tools
+allow AI to autonomously run actions, render custom components, and show
+confirmation or human-in-the-loop UIs within the chat.
+
+```tsx
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+
+<RegisterAiTool
+  name="my-tool"
+  tool={defineAiTool()({
+    // Tool definition
+    // ...
+  })}
+/>;
+```
+
+{/* TODO lots more info */}
+
+[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) is used to
+create a tool definition, and you can supply `parameters` as a
+[JSON Schema](https://json-schema.org/) that the AI can fill in. If you supply
+an `execute` function the AI will call it. `render` is used to show UI inside
+the chat. Below is an example of a tool that lets AI get the current weather in
+a given location, then renders a compoennt in the chat.
+
+{/* TODO this all needs to be explained better */}
+
+```tsx
+function App() {
+  return (
+    <>
+      // +++
+      <RegisterAiTool
+        name="get-weather"
+        tool={defineAiTool()({
+          description: "Get current weather information",
+          parameters: {
+            type: "object",
+            properties: {
+              location: { type: "string", description: "City name" },
+            },
+            required: ["location"],
+            additionalProperties: false,
+          },
+          execute: async (args) => {
+            const { temperature, condition } = await __getWeather__(
+              args.location
+            );
+            return { data: { temperature, condition } };
+          },
+          render: ({ result }) => (
+            <AiTool title="Weather Lookup" icon="🌤️">
+              {result ? (
+                <div>
+                  {result.temperature}°F - {result.condition}
+                </div>
+              ) : null}
+            </AiTool>
+          ),
+        })}
+      />
+      // +++
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
+```
+
+#### Tool that sends a toast notification
+
+The following snippet shows a tool that lets AI send a toast notification with
+[Sonner](https://sonner.emilkowal.ski/), then adds a message in the chat with
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool), letting the user
+know that a toast was sent.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { toast, Toaster } from "sonner";
+
+function Chat() {
+  return (
+    <>
+      <RegisterAiTool
+        name="send-toast-notification"
+        tool={defineAiTool()({
+          description: "Send a toast notification",
+
+          parameters: {
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+                description: "The message to display in the toast",
+              },
+            },
+            required: ["message"],
+            additionalProperties: false,
+          },
+
+          execute: async ({ message }) => {
+            toast(message);
+            return {
+              data: { message },
+              description: "You sent a toast",
+            };
+          },
+
+          render: ({ result }) => <AiTool title="Toast sent" icon="🍞" />,
+        })}
+      />
+      <AiChat chatId="my-chat-id" />
+      <Toaster />
+    </>
+  );
+}
+```
+
+#### Scoping a tool to a specific chat
+
+Tools can be scoped to specific chats by providing a `chatId` prop. When scoped,
+the tool will only be available to that specific chat.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+
+function Chat() {
+  return (
+    <>
+      <RegisterAiTool
+        name="private-tool"
+        tool={defineAiTool()({
+          // Tool definition
+          // ...
+        })}
+        // +++
+        chatId="my-chat"
+        // +++
+      />
+      // +++
+      <AiChat chatId="my-chat" />
+      // +++
+    </>
+  );
+}
+```
+
+#### Props [#RegisterAiTool-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" isRequired>
+    Unique name for the tool. This is used internally to identify and manage the
+    tool.
+  </PropertiesListItem>
+  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" isRequired>
+    The tool definition created with
+    [`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool).
+  </PropertiesListItem>
+  <PropertiesListItem name="chatId" type="string">
+    Optional chat ID to scope this tool to a specific chat. If provided, the
+    tool will only be available to that chat.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Room
 
 ### RoomProvider
@@ -1343,8 +1779,8 @@ sendAiMessage("Hello!");
 Makes a [`Room`][] available in the component hierarchy below. Joins the room
 when the component is mounted, and automatically leaves the room when the
 component is unmounted. When using
-[Sync Datastore](/docs/platform/sync-datastore), initial Presence
-values for each user, and Storage values for the room can be set.
+[Sync Datastore](/docs/platform/sync-datastore), initial Presence values for
+each user, and Storage values for the room can be set.
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
