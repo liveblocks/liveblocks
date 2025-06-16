@@ -1,3 +1,0 @@
-type Storage {
-  # No field here is fine
-}

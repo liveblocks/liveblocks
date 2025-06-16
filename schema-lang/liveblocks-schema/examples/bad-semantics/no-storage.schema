@@ -1,2 +1,0 @@
-type Thing { name: string }
-^| Missing root object type definition named 'Storage'

@@ -6,7 +6,6 @@
     "shared/*",
     "packages/*",
     "tools/*",
-    "schema-lang/*",
     "e2e/next-sandbox"
   ],
   "scripts": {
