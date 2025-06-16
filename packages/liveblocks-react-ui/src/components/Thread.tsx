@@ -1,14 +1,16 @@
 "use client";
 
-import type {
-  BaseMetadata,
-  CommentData,
-  DM,
-  ThreadData,
+import {
+  type BaseMetadata,
+  type CommentData,
+  type DM,
+  Permission,
+  type ThreadData,
 } from "@liveblocks/core";
 import {
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
+  useRoomPermissions,
   useRoomThreadSubscription,
 } from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
@@ -241,6 +243,13 @@ export const Thread = forwardRef(
       }
     }, [unreadIndex]);
 
+    const permissions = useRoomPermissions(thread.roomId);
+    const canComment =
+      permissions.size > 0
+        ? permissions.has(Permission.CommentsWrite) ||
+          permissions.has(Permission.Write)
+        : true;
+
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
     }, []);
@@ -363,6 +372,7 @@ export const Thread = forwardRef(
                                 <ResolveIcon />
                               )
                             }
+                            disabled={!canComment}
                           />
                         </TogglePrimitive.Root>
                       </Tooltip>

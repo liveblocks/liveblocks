@@ -722,7 +722,7 @@ await liveblocks.broadcastEvent("my-room-id", customEvent);
 ```
 
 You can respond to custom events on the front end with
-[`useBroadcastEvent`](/docs/api-reference/liveblocks-react#useBroadcastEvent)
+[`useEventListener`](/docs/api-reference/liveblocks-react#useEventListener)
 and
 [`room.subscribe("event")`](/docs/api-reference/liveblocks-client#Room.subscribe.event).
 When receiving an event sent with `Liveblocks.broadcastEvent`, `user` will be
