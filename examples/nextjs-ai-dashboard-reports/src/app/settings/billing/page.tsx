@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/Button";
+import { Button } from "@/components/Button"
 import {
   Dialog,
   DialogClose,
@@ -10,17 +10,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog";
-import { Divider } from "@/components/Divider";
-import { Input } from "@/components/Input";
-import { Label } from "@/components/Label";
+} from "@/components/Dialog"
+import { Divider } from "@/components/Divider"
+import { Input } from "@/components/Input"
+import { Label } from "@/components/Label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/Select";
+} from "@/components/Select"
 import {
   Table,
   TableBody,
@@ -29,11 +29,11 @@ import {
   TableHeaderCell,
   TableRoot,
   TableRow,
-} from "@/components/Table";
-import { CircleCheck, Plus } from "lucide-react";
-import { ProgressBar } from "@/components/ProgressBar";
-import useSWR from "swr";
-import { formatters } from "@/lib/utils";
+} from "@/components/Table"
+import { CircleCheck, Plus } from "lucide-react"
+import { ProgressBar } from "@/components/ProgressBar"
+import useSWR from "swr"
+import { formatters } from "@/lib/utils"
 
 const states = [
   {
@@ -56,11 +56,11 @@ const states = [
     value: "hawaii",
     label: "Hawaii",
   },
-];
+]
 
 export default function Billing() {
   // Fetch plan info from API
-  const { data: plan, isLoading, error } = useSWR("/api/plan");
+  const { data: plan, isLoading, error } = useSWR("/api/plan")
 
   return (
     <div className="space-y-10">
@@ -69,11 +69,11 @@ export default function Billing() {
           <div>
             <h2
               id="billing-overview-heading"
-              className="scroll-mt-10 font-semibold text-gray-900 dark:text-gray-50"
+              className="scroll-mt-10 font-medium text-neutral-900 dark:text-neutral-50"
             >
               Plan
             </h2>
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
               Overview of current plan, billing cycle, and seat usage.
             </p>
           </div>
@@ -83,20 +83,20 @@ export default function Billing() {
                 {isLoading || error ? (
                   <>
                     <p className="flex items-center space-x-2 pt-[3px]">
-                      <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
-                        <span className="inline-block h-4 mt-0 w-24 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                      <span className="text-sm/8 font-medium text-neutral-900 dark:text-neutral-50">
+                        <span className="mt-0 inline-block h-4 w-24 animate-pulse rounded-sm bg-neutral-100 dark:bg-neutral-900" />
                       </span>
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-50">
-                      <span className="inline-block h-4 w-40 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                    <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-50">
+                      <span className="inline-block h-4 w-40 animate-pulse rounded-sm bg-neutral-100 dark:bg-neutral-900" />
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="flex items-center space-x-2">
-                      <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
+                      <span className="text-sm/8 font-medium text-neutral-900 dark:text-neutral-50">
                         {plan?.plan || "-"}
-                        <span className="ml-2 inline-flex items-center self-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                        <span className="ml-2 inline-flex items-center self-center rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
                           {plan?.billingPeriod
                             ? plan.billingPeriod.charAt(0).toUpperCase() +
                               plan.billingPeriod.slice(1)
@@ -104,7 +104,7 @@ export default function Billing() {
                         </span>
                       </span>
                     </p>
-                    <p className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-50">
+                    <p className="mt-2 text-sm font-medium text-neutral-900 dark:text-neutral-50">
                       {`${formatters.currency({
                         number: plan.price,
                         currency: plan.currency,
@@ -115,7 +115,7 @@ export default function Billing() {
                 )}
                 <a
                   href="#"
-                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600 mt-6"
+                  className="relative mt-6 inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-3 py-2 text-center text-sm font-medium whitespace-nowrap text-neutral-900 shadow-xs outline-0 outline-offset-2 outline-blue-500 transition-all duration-100 ease-in-out outline-solid hover:bg-neutral-50 focus-visible:outline-2 disabled:pointer-events-none disabled:text-neutral-400 disabled:shadow-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:outline-blue-500 dark:hover:bg-neutral-900/60 dark:disabled:text-neutral-600"
                   tremor-id="tremor-raw"
                 >
                   Manage plans
@@ -125,22 +125,22 @@ export default function Billing() {
                 {isLoading || error ? (
                   <>
                     <p className="flex items-center space-x-2 pt-[3px]">
-                      <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
-                        <span className="inline-block h-4 mt-0 w-24 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                      <span className="text-sm/8 font-medium text-neutral-900 dark:text-neutral-50">
+                        <span className="mt-0 inline-block h-4 w-24 animate-pulse rounded-sm bg-neutral-100 dark:bg-neutral-900" />
                       </span>
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-50">
-                      <span className="inline-block h-4 w-40 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                    <p className="mt-1 text-sm font-medium text-neutral-900 dark:text-neutral-50">
+                      <span className="inline-block h-4 w-40 animate-pulse rounded-sm bg-neutral-100 dark:bg-neutral-900" />
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="flex items-center space-x-2">
-                      <span className="text-sm/8 font-medium text-gray-900 dark:text-gray-50">
+                      <span className="text-sm/8 font-medium text-neutral-900 dark:text-neutral-50">
                         Billing period
                       </span>
                     </p>
-                    <p className="mt-2 text-sm text-gray-900 dark:text-gray-50">
+                    <p className="mt-2 text-sm text-neutral-900 dark:text-neutral-50">
                       <span className="font-semibold">
                         {plan.billingPeriod.charAt(0).toUpperCase() +
                           plan.billingPeriod.slice(1)}
@@ -152,14 +152,14 @@ export default function Billing() {
 
                 <a
                   href="#"
-                  className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600 mt-6"
+                  className="relative mt-6 inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-3 py-2 text-center text-sm font-medium whitespace-nowrap text-neutral-900 shadow-xs outline-0 outline-offset-2 outline-blue-500 transition-all duration-100 ease-in-out outline-solid hover:bg-neutral-50 focus-visible:outline-2 disabled:pointer-events-none disabled:text-neutral-400 disabled:shadow-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:outline-blue-500 dark:hover:bg-neutral-900/60 dark:disabled:text-neutral-600"
                   tremor-id="tremor-raw"
                 >
                   Change billing period
                 </a>
               </div>
             </div>
-            <p className="mt-12 text-sm font-medium text-gray-900 dark:text-gray-50">
+            <p className="mt-8 text-sm font-medium text-neutral-900 dark:text-neutral-50">
               Remaining seats
             </p>
             <ProgressBar
@@ -173,17 +173,17 @@ export default function Billing() {
             <div className="mt-3 flex items-center justify-between">
               <p className="flex items-center space-x-2">
                 {isLoading ? (
-                  <span className="inline-block h-4 w-36 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+                  <span className="inline-block h-4 w-36 animate-pulse rounded-sm bg-neutral-100 dark:bg-neutral-900" />
                 ) : error ? (
-                  <span className="text-red-500 font-semibold">
+                  <span className="font-semibold text-red-500">
                     Error loading seats
                   </span>
                 ) : (
                   <>
-                    <span className="rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-gray-900 dark:bg-gray-800 dark:text-gray-50">
+                    <span className="rounded-lg bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">
                       {plan?.seatsUsed}
                     </span>{" "}
-                    <span className="text-sm text-gray-500 dark:text-gray-500">
+                    <span className="text-sm text-neutral-500 dark:text-neutral-500">
                       of {plan?.seatsLimit} seats used
                     </span>
                   </>
@@ -191,7 +191,7 @@ export default function Billing() {
               </p>
               <a
                 href="#"
-                className="relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out disabled:pointer-events-none disabled:shadow-none outline outline-offset-2 outline-0 focus-visible:outline-2 outline-blue-500 dark:outline-blue-500 border-gray-300 dark:border-gray-800 text-gray-900 dark:text-gray-50 bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900/60 disabled:text-gray-400 disabled:dark:text-gray-600"
+                className="relative inline-flex items-center justify-center rounded-md border border-neutral-300 bg-white px-3 py-2 text-center text-sm font-medium whitespace-nowrap text-neutral-900 shadow-xs outline-0 outline-offset-2 outline-blue-500 transition-all duration-100 ease-in-out outline-solid hover:bg-neutral-50 focus-visible:outline-2 disabled:pointer-events-none disabled:text-neutral-400 disabled:shadow-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-50 dark:outline-blue-500 dark:hover:bg-neutral-900/60 dark:disabled:text-neutral-600"
                 tremor-id="tremor-raw"
               >
                 Manage seats
@@ -206,11 +206,11 @@ export default function Billing() {
           <div>
             <h2
               id="payment-method-heading"
-              className="scroll-mt-10 font-semibold text-gray-900 dark:text-gray-50"
+              className="scroll-mt-10 font-medium text-neutral-900 dark:text-neutral-50"
             >
               Payment method
             </h2>
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
               Payments will be taken from the card(s) listed below. You can add
               additional credit cards.
             </p>
@@ -219,7 +219,7 @@ export default function Billing() {
             <div className="flex items-center justify-between">
               <h3
                 id="cards-heading"
-                className="text-sm font-semibold text-gray-900 dark:text-gray-50"
+                className="text-sm font-medium text-neutral-900 dark:text-neutral-50"
               >
                 Cards
               </h3>
@@ -333,7 +333,7 @@ export default function Billing() {
             <TableRoot className="mt-4" aria-labelledby="cards-heading">
               <Table>
                 <TableHead>
-                  <TableRow className="border-b border-gray-200 dark:border-gray-800">
+                  <TableRow className="border-b border-neutral-200 dark:border-neutral-800">
                     <TableHeaderCell className="text-xs font-medium uppercase">
                       Provider
                     </TableHeaderCell>
@@ -370,7 +370,7 @@ export default function Billing() {
                     <TableCell className="py-2.5 text-right">
                       <a
                         href="#"
-                        className="font-medium text-blue-600 dark:text-blue-500"
+                        className="font-medium text-black dark:text-white"
                         aria-label="Edit MasterCard ending in 1234"
                       >
                         Edit
@@ -389,11 +389,11 @@ export default function Billing() {
           <div>
             <h2
               id="billing-address-heading"
-              className="scroll-mt-10 font-semibold text-gray-900 dark:text-gray-50"
+              className="scroll-mt-10 font-medium text-neutral-900 dark:text-neutral-50"
             >
               Billing address
             </h2>
-            <p className="mt-2 text-sm leading-6 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
               If you would like to add a postal address to every invoice, enter
               it here.
             </p>
@@ -401,7 +401,7 @@ export default function Billing() {
           <div className="md:col-span-2">
             <h3
               id="update-address-heading"
-              className="text-sm font-semibold text-gray-900 dark:text-gray-50"
+              className="text-sm font-medium text-neutral-900 dark:text-neutral-50"
             >
               Update address
             </h3>
@@ -459,7 +459,7 @@ export default function Billing() {
                     <SelectTrigger
                       id="state"
                       name="state"
-                      className="mt-2 pointer-events-none"
+                      className="pointer-events-none mt-2"
                     >
                       <SelectValue placeholder="State" />
                     </SelectTrigger>
@@ -498,5 +498,5 @@ export default function Billing() {
         </div>
       </section>
     </div>
-  );
+  )
 }

@@ -10,6 +10,7 @@ export type InvoiceQueryParams = {
   maxAmount?: Invoice["amount"];
   invoiceStatus?: Invoice["invoice_status"];
   limit?: number;
+  client?: Invoice["client"];
 };
 
 export type InvoiceResponse = {

@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
   const expenseStatus = searchParams.get("expenseStatus");
   const paymentStatus = searchParams.get("paymentStatus");
   const limit = parseInt(searchParams.get("limit") || "20", 10);
+  const merchant = searchParams.get("merchant");
 
   let filtered = transactions;
 
@@ -57,6 +58,9 @@ export async function GET(req: NextRequest) {
     filtered = filtered.filter(
       (t: Transaction) => t.payment_status === paymentStatus
     );
+  }
+  if (merchant) {
+    filtered = filtered.filter((t: Transaction) => t.merchant === merchant);
   }
 
   // Sort by date descending (most recent first)

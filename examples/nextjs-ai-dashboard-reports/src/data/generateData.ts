@@ -53,7 +53,7 @@ const transactions = Array.from({ length: TRANSACTION_COUNT }, () => {
   return {
     transaction_id: `tx-${faker.string.nanoid()}`,
     transaction_date: faker.date
-      .between({ from: "2024-06-01T00:00:00Z", to: "2025-03-17T00:00:00Z" })
+      .between({ from: "2024-06-01T00:00:00Z", to: "2025-06-18T00:00:00Z" })
       .toISOString(),
     expense_status: faker.helpers.weightedArrayElement(expense_statuses),
     payment_status: faker.helpers.weightedArrayElement(payment_statuses),
@@ -62,7 +62,7 @@ const transactions = Array.from({ length: TRANSACTION_COUNT }, () => {
     amount: parseFloat(faker.finance.amount({ min: 0, max: 12000 })),
     currency: faker.helpers.weightedArrayElement(currencies),
     lastEdited: faker.date
-      .between({ from: "2024-06-01T00:00:00Z", to: "2025-03-17T00:00:00Z" })
+      .between({ from: "2024-06-01T00:00:00Z", to: "2025-06-17T00:00:00Z" })
       .toISOString(),
     continent: location.continent,
     country: location.country,
@@ -87,8 +87,8 @@ const invoices = Array.from({ length: INVOICE_COUNT }, () => {
       : undefined;
 
   const invoiceDate = faker.date.between({
-    from: "2024-05-01T00:00:00Z",
-    to: "2025-03-10T00:00:00Z",
+    from: "2024-06-01T00:00:00Z",
+    to: "2025-06-18T00:00:00Z",
   });
 
   const dueDate = faker.date.soon({ days: 30, refDate: invoiceDate });

@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   DropdownMenu,
@@ -13,29 +13,29 @@ import {
   DropdownMenuSubMenuContent,
   DropdownMenuSubMenuTrigger,
   DropdownMenuTrigger,
-} from "@/components/DropdownMenu";
-import { ArrowUpRight, Monitor, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
-import * as React from "react";
-import { users } from "@/data/users";
+} from "@/components/DropdownMenu"
+import { ArrowUpRight, Monitor, Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
+import * as React from "react"
+import { users } from "@/data/users"
 
 export type DropdownUserProfileProps = {
-  children: React.ReactNode;
-  align?: "center" | "start" | "end";
-};
+  children: React.ReactNode
+  align?: "center" | "start" | "end"
+}
 
 export function DropdownUserProfile({
   children,
   align = "start",
 }: DropdownUserProfileProps) {
-  const [mounted, setMounted] = React.useState(false);
-  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false)
+  const { theme, setTheme } = useTheme()
   React.useEffect(() => {
-    setMounted(true);
-  }, []);
+    setMounted(true)
+  }, [])
 
   if (!mounted) {
-    return null;
+    return null
   }
   return (
     <>
@@ -43,7 +43,7 @@ export function DropdownUserProfile({
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
         <DropdownMenuContent
           align={align}
-          className="!min-w-[calc(var(--radix-dropdown-menu-trigger-width))]"
+          className="min-w-[calc(var(--radix-dropdown-menu-trigger-width))]!"
         >
           <DropdownMenuLabel>{users[0].email}</DropdownMenuLabel>
           <DropdownMenuGroup>
@@ -53,11 +53,11 @@ export function DropdownUserProfile({
                 <DropdownMenuRadioGroup
                   value={theme}
                   onValueChange={(value) => {
-                    setTheme(value);
+                    setTheme(value)
                   }}
                 >
                   <DropdownMenuRadioItem
-                    aria-label="Switch to Light Mode"
+                    aria-label="Switch to light mode"
                     value="light"
                     iconType="check"
                   >
@@ -65,7 +65,7 @@ export function DropdownUserProfile({
                     Light
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem
-                    aria-label="Switch to Dark Mode"
+                    aria-label="Switch to dark mode"
                     value="dark"
                     iconType="check"
                   >
@@ -73,7 +73,7 @@ export function DropdownUserProfile({
                     Dark
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem
-                    aria-label="Switch to System Mode"
+                    aria-label="Switch to system mode"
                     value="system"
                     iconType="check"
                   >
@@ -89,21 +89,21 @@ export function DropdownUserProfile({
             <DropdownMenuItem>
               Changelog
               <ArrowUpRight
-                className="mb-1 ml-1 size-3 shrink-0 text-gray-500 dark:text-gray-500"
+                className="mb-1 ml-1 size-3 shrink-0 text-neutral-500 dark:text-neutral-500"
                 aria-hidden="true"
               />
             </DropdownMenuItem>
             <DropdownMenuItem>
               Documentation
               <ArrowUpRight
-                className="mb-1 ml-1 size-3 shrink-0 text-gray-500"
+                className="mb-1 ml-1 size-3 shrink-0 text-neutral-500"
                 aria-hidden="true"
               />
             </DropdownMenuItem>
             <DropdownMenuItem>
               Join Slack community
               <ArrowUpRight
-                className="mb-1 ml-1 size-3 shrink-0 text-gray-500"
+                className="mb-1 ml-1 size-3 shrink-0 text-neutral-500"
                 aria-hidden="true"
               />
             </DropdownMenuItem>
@@ -119,5 +119,5 @@ export function DropdownUserProfile({
         </DropdownMenuContent>
       </DropdownMenu>
     </>
-  );
+  )
 }

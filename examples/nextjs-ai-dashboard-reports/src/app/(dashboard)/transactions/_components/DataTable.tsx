@@ -64,13 +64,13 @@ export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="border-y border-gray-200 dark:border-gray-800"
+                  className="border-y border-neutral-200 dark:border-neutral-800"
                 >
                   {headerGroup.headers.map((header) => (
                     <TableHeaderCell
                       key={header.id}
                       className={cx(
-                        "whitespace-nowrap py-1",
+                        "py-1 whitespace-nowrap",
                         header.column.columnDef.meta?.className,
                       )}
                     >
@@ -88,21 +88,21 @@ export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    className="group select-none hover:bg-gray-50 hover:dark:bg-gray-900"
+                    className="group select-none hover:bg-neutral-50 dark:hover:bg-neutral-900"
                   >
                     {row.getVisibleCells().map((cell, index) => (
                       <TableCell
                         key={cell.id}
                         className={cx(
                           row.getIsSelected()
-                            ? "bg-gray-50 dark:bg-gray-900"
+                            ? "bg-neutral-50 dark:bg-neutral-900"
                             : "",
-                          "relative whitespace-nowrap py-2 text-gray-700 first:w-10 dark:text-gray-300",
+                          "relative py-2 whitespace-nowrap text-neutral-700 first:w-10 dark:text-neutral-300",
                           cell.column.columnDef.meta?.className,
                         )}
                       >
                         {index === 0 && row.getIsSelected() && (
-                          <div className="absolute inset-y-0 left-0 w-0.5 bg-blue-500 dark:bg-blue-500" />
+                          <div className="absolute inset-y-0 left-0 w-0.5 bg-black dark:bg-white" />
                         )}
                         {flexRender(
                           cell.column.columnDef.cell,

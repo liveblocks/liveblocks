@@ -10,8 +10,8 @@ const TableRoot = React.forwardRef<
 >(({ className, children, ...props }, forwardedRef) => (
   <div
     ref={forwardedRef}
-  // Activate if table is used in a float environment
-  // className="flow-root"
+    // Activate if table is used in a float environment
+    // className="flow-root"
   >
     <div
       // make table scrollable on mobile
@@ -36,7 +36,7 @@ const Table = React.forwardRef<
       // base
       "w-full caption-bottom border-b",
       // border color
-      "border-gray-200 dark:border-gray-800",
+      "border-neutral-200 dark:border-neutral-800",
       className,
     )}
     {...props}
@@ -64,9 +64,9 @@ const TableHeaderCell = React.forwardRef<
       // base
       "border-b px-4 py-3.5 text-left text-sm font-semibold",
       // text color
-      "text-gray-900 dark:text-gray-50",
+      "text-neutral-900 dark:text-neutral-50",
       // border color
-      "border-gray-200 dark:border-gray-800",
+      "border-neutral-200 dark:border-neutral-800",
       className,
     )}
     {...props}
@@ -85,7 +85,7 @@ const TableBody = React.forwardRef<
       // base
       "divide-y",
       // divide color
-      "divide-gray-200 dark:divide-gray-800",
+      "divide-neutral-200 dark:divide-neutral-800",
       className,
     )}
     {...props}
@@ -121,7 +121,7 @@ const TableCell = React.forwardRef<
       // base
       "p-4 text-sm",
       // text color
-      "text-gray-600 dark:text-gray-400",
+      "text-neutral-600 dark:text-neutral-400",
       className,
     )}
     {...props}
@@ -141,9 +141,9 @@ const TableFoot = React.forwardRef<
         // base
         "border-t text-left font-medium",
         // text color
-        "text-gray-900 dark:text-gray-50",
+        "text-neutral-900 dark:text-neutral-50",
         // border color
-        "border-gray-200 dark:border-gray-800",
+        "border-neutral-200 dark:border-neutral-800",
         className,
       )}
       {...props}
@@ -163,7 +163,7 @@ const TableCaption = React.forwardRef<
       // base
       "mt-3 px-3 text-center text-sm",
       // text color
-      "text-gray-500 dark:text-gray-500",
+      "text-neutral-500 dark:text-neutral-500",
       className,
     )}
     {...props}
@@ -181,6 +181,5 @@ export {
   TableHead,
   TableHeaderCell,
   TableRoot,
-  TableRow
+  TableRow,
 }
-

@@ -23,9 +23,9 @@ const FilterDate = () => {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-3">
       <Label htmlFor="date-range" className="font-medium">
-        Date Range
+        Date range
       </Label>
       <Select value={range} onValueChange={handleValueChange}>
         <SelectTrigger id="date-range" className="w-full md:w-36">

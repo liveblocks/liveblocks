@@ -25,6 +25,7 @@ import { fetchTransactions } from "@/lib/transactionsApi";
 import { fetchInvoices } from "@/lib/invoicesApi";
 import { ProgressBar } from "../components/ProgressBar";
 
+// Shows a bar highlighting the remaining seats, along with text
 export function SeatsTool() {
   return (
     <RegisterAiTool
@@ -46,8 +47,8 @@ export function SeatsTool() {
           if (!args) return null;
 
           return (
-            <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-4 pt-4.5">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+            <div className="rounded-lg bg-neutral-100 p-4 pt-4.5 dark:bg-neutral-900">
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
                 Remaining seats
               </p>
               <ProgressBar
@@ -56,10 +57,10 @@ export function SeatsTool() {
               />
               <div className="mt-3 flex items-center justify-between">
                 <p className="flex items-center space-x-2">
-                  <span className="rounded-lg bg-gray-200 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-900  dark:text-gray-50">
+                  <span className="rounded-lg bg-neutral-200 px-2 py-1 text-xs font-medium text-neutral-900 dark:bg-neutral-800 dark:text-neutral-50">
                     {args.seatsUsed}
                   </span>{" "}
-                  <span className="text-sm text-gray-500 dark:text-gray-500">
+                  <span className="text-sm text-neutral-500 dark:text-neutral-500">
                     of {args.seatsLimit} seats used
                   </span>
                 </p>
@@ -72,6 +73,7 @@ export function SeatsTool() {
   );
 }
 
+// Allows the AI to query various transaction details, and it will save the results internally
 export function QueryTransactionTool() {
   return (
     <RegisterAiTool
@@ -81,6 +83,7 @@ export function QueryTransactionTool() {
         You can query by date, currency, continent, country, min amount, max amount, expense status, payment status, and limit. 
         You can also query by multiple of these parameters. 
         Here are some types you should know.
+        Use the correct formatting for the currency, e.g. with the symbol.
         
         expenseStatus: ${JSON.stringify(expense_statuses)}
         paymentStatus: ${JSON.stringify(payment_statuses)}
@@ -102,6 +105,7 @@ export function QueryTransactionTool() {
             expenseStatus: { type: ["string", "null"] },
             paymentStatus: { type: ["string", "null"] },
             limit: { type: ["number", "null"] },
+            merchant: { type: ["string", "null"] },
           },
           required: [
             "dateFrom",
@@ -114,6 +118,7 @@ export function QueryTransactionTool() {
             "expenseStatus",
             "paymentStatus",
             "limit",
+            "merchant",
           ],
         },
         execute: async (args) => {
@@ -139,6 +144,7 @@ export function QueryTransactionTool() {
   );
 }
 
+// Allows the AI to query various invoice details, and it will save the results internally
 export function QueryInvoiceTool() {
   return (
     <RegisterAiTool
@@ -157,6 +163,7 @@ export function QueryInvoiceTool() {
             maxAmount: { type: ["number", "null"] },
             invoiceStatus: { type: ["string", "null"] },
             limit: { type: ["number", "null"] },
+            client: { type: ["string", "null"] },
           },
           required: [
             "dateFrom",
@@ -168,6 +175,7 @@ export function QueryInvoiceTool() {
             "maxAmount",
             "invoiceStatus",
             "limit",
+            "client",
           ],
         },
         execute: async (args) => {
@@ -197,6 +205,7 @@ export function QueryInvoiceTool() {
   );
 }
 
+// Allows the AI to navigate to a page, showing a toast notification as it does it
 export function NavigateToPageTool() {
   const router = useRouter();
 
@@ -235,6 +244,7 @@ export function NavigateToPageTool() {
   );
 }
 
+// Allows the AI to fetch all companies with unpaid invoices, and send invoice reminders to them (or in this demo, just show a toast)
 export function SendInvoiceRemindersTool() {
   return (
     <RegisterAiTool
@@ -286,8 +296,12 @@ export function SendInvoiceRemindersTool() {
 
           return (
             <AiTool
-              title="Send invoice reminders"
-              collapsed={stage === "executed"}
+              title={
+                stage === "executed"
+                  ? "Invoice reminders sent"
+                  : "Send invoice reminders?"
+              }
+              collapsed={false}
             >
               <AiTool.Confirmation
                 confirm={async () => {
@@ -310,12 +324,12 @@ export function SendInvoiceRemindersTool() {
                 }}
               >
                 {isLoadingUnpaid && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-neutral-500">
                     Loading invoice details...
                   </div>
                 )}
                 {errorUnpaid && (
-                  <div className="text-xs text-red-500 font-semibold">
+                  <div className="text-xs font-semibold text-red-500">
                     Error
                   </div>
                 )}
@@ -331,23 +345,23 @@ export function SendInvoiceRemindersTool() {
                         }
                       >
                         <details className="group">
-                          <summary className="cursor-pointer flex items-center justify-between select-none">
+                          <summary className="flex cursor-pointer items-center justify-between select-none">
                             <div className="flex items-baseline gap-1.5">
                               <span className="font-semibold">
                                 {client.name}
                               </span>
 
-                              <span className="text-xs font-normal text-gray-500">
+                              <span className="text-xs font-normal text-neutral-500">
                                 {client.invoices.length} unpaid
                               </span>
                             </div>
-                            <ChevronDownIcon className="size-4 opacity-70 group-open:rotate-180 transition-transform mt-0.5" />
+                            <ChevronDownIcon className="mt-0.5 size-4 opacity-70 transition-transform group-open:rotate-180" />
                           </summary>
-                          <ul className="text-xs text-gray-500 mt-1">
+                          <ul className="mt-1 text-xs text-neutral-500">
                             {client.invoices.map((invoice: any) => (
                               <li
                                 key={invoice.invoice_id}
-                                className="mb-2 mt-1.5 ml-3.5 list-disc"
+                                className="mt-1.5 mb-2 ml-3.5 list-disc"
                               >
                                 <div>
                                   {formatters.currency({
@@ -372,6 +386,76 @@ export function SendInvoiceRemindersTool() {
   );
 }
 
+// Allows the AI to send one unpaid reminder by submitting company name, invoice number, and due date
+export function SendOneUnpaidReminderTool() {
+  return (
+    <RegisterAiTool
+      name="send-an-invoice-reminder"
+      tool={defineAiTool()({
+        description:
+          "Send one unpaid invoice reminder. You must submit the client and due date.",
+        parameters: {
+          type: "object",
+          properties: {
+            client: { type: "string" },
+            dueDate: { type: "string" },
+          },
+          required: ["client", "dueDate"],
+          additionalProperties: false,
+        },
+        render: ({ args, stage }) => {
+          if (stage === "receiving") return null;
+          return (
+            <AiTool
+              title={
+                stage === "executing"
+                  ? `Send invoice reminder?`
+                  : `Invoice reminder sent`
+              }
+              collapsed={false}
+            >
+              <AiTool.Confirmation
+                confirm={async () => {
+                  // Simulating sending emails
+                  const promise = () =>
+                    new Promise((resolve) => setTimeout(resolve, 2500));
+
+                  toast.promise(promise, {
+                    loading: `Sending invoice reminder to ${args.client}...`,
+                    success: () => {
+                      return `Invoice reminder sent to ${args.client}`;
+                    },
+                  });
+
+                  await promise;
+                  return {
+                    description: `Invoice reminder sent to ${args.client}`,
+                    data: {},
+                  };
+                }}
+              >
+                <div className="w-full rounded-sm bg-neutral-100 dark:bg-neutral-900 px-4 pt-3.5 pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 font-semibold">
+                      {args.client}
+                    </div>
+                    <Badge variant="warning">Unpaid</Badge>
+                  </div>
+
+                  <div className="mt-0 flex items-center gap-1.5 text-xs">
+                    Due on {format(args.dueDate, "MMM d yyyy")}{" "}
+                  </div>
+                </div>
+              </AiTool.Confirmation>
+            </AiTool>
+          );
+        },
+      })}
+    />
+  );
+}
+
+// Allows the AI to invite a new member to the team with a confirm/cancel dialog. In this demo, inviting just means showing a toast.
 export function InviteMemberTool({
   onInvite,
 }: {
@@ -382,21 +466,28 @@ export function InviteMemberTool({
       name="invite-member"
       tool={defineAiTool()({
         description:
-          "Invite a new member to the team. Always ask for an email address. If they don't provide a name, guess what it is from the email.",
+          "Invite a new member to the team. Always ask for an email address, but do not ask for a game. If they don't provide a name, guess what it is from the email. For example, if the email is pierre@example.com, the name should be Pierre.",
         parameters: {
           type: "object",
           properties: {
             email: { type: "string" },
-            name: { type: "string" },
+            name: {
+              type: "string",
+            },
           },
           additionalProperties: false,
           required: ["email", "name"],
         },
         render: ({ args, stage }) => {
-          if (!args) return null;
+          if (stage === "receiving") return null;
 
           return (
-            <AiTool title="Invite member" collapsed={stage === "executed"}>
+            <AiTool
+              title={
+                stage === "executing" ? "Invite member?" : "Member invited"
+              }
+              collapsed={false}
+            >
               <AiTool.Confirmation
                 confirm={() => {
                   toast.success(`${args.email} has been invited`);
@@ -417,6 +508,7 @@ export function InviteMemberTool({
   );
 }
 
+// Allows the AI to display the details of a transaction
 export function TransactionToolAi() {
   return (
     <RegisterAiTool
@@ -431,8 +523,9 @@ export function TransactionToolAi() {
           additionalProperties: false,
           required: ["transactionId"],
         },
-        render: ({ args }) => {
+        render: ({ args, respond }) => {
           if (!args) return null;
+          respond();
           return <TransactionToolUi transactionId={args.transactionId} />;
         },
       })}
@@ -440,6 +533,7 @@ export function TransactionToolAi() {
   );
 }
 
+// Allows the AI to display the avatar and name of a team member
 export function MemberToolAi() {
   return (
     <RegisterAiTool
@@ -454,8 +548,9 @@ export function MemberToolAi() {
           additionalProperties: false,
           required: ["email"],
         },
-        render: ({ args }) => {
+        render: ({ args, respond }) => {
           if (!args) return null;
+          respond();
           return <MemberTool email={args.email} />;
         },
       })}
@@ -463,7 +558,6 @@ export function MemberToolAi() {
   );
 }
 
-// TODO make this work
 function TransactionToolUi({ transactionId }: { transactionId: string }) {
   const transaction = transactions.find(
     (transaction) => transaction.transaction_id === transactionId
@@ -478,13 +572,13 @@ function TransactionToolUi({ transactionId }: { transactionId: string }) {
   );
 
   return (
-    <div className="my-2 pt-3.5 pb-4 px-4 rounded bg-neutral-100 w-full">
-      <div className="flex justify-between items-center">
-        <div className="font-semibold flex items-center gap-1">
+    <div className="my-2 w-full rounded-sm bg-neutral-100 dark:bg-neutral-900 px-4 pt-3.5 pb-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1 font-semibold">
           {transaction.merchant}{" "}
           <a href="#">
             <svg
-              className="text-blue-600 w-4 h-4"
+              className="h-4 w-4 text-blue-600"
               xmlns="http://www.w3.org/2000/svg"
               width="16"
               height="16"
@@ -503,7 +597,7 @@ function TransactionToolUi({ transactionId }: { transactionId: string }) {
         <Badge variant={status?.variant as any}>{status?.label}</Badge>
       </div>
 
-      <div className="text-xs flex gap-1.5 mt-0.5 items-center">
+      <div className="mt-0.5 flex items-center gap-1.5 text-xs">
         {format(transaction.transaction_date, "MMM d yyyy")}, $
         {transaction.amount.toLocaleString()}
       </div>
@@ -515,23 +609,23 @@ function MemberTool({ email }: { email: string }) {
   const user = users.find((user) => user.email === email);
 
   if (!user) {
-    return <div>User not found</div>;
+    return null;
   }
 
   return (
-    <div className="flex items-center gap-2 my-2 bg-neutral-100 p-4 rounded">
+    <div className="my-2 flex items-center gap-2 rounded-sm bg-neutral-100 p-4">
       <Image
         src={user.avatar}
         alt={`${user.name}'s avatar`}
         width={36}
         height={36}
-        className="size-9 rounded-full border border-gray-300 object-cover dark:border-gray-700"
+        className="size-9 rounded-full border border-neutral-300 object-cover dark:border-neutral-700"
       />
       <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-50">
+        <p className="text-sm font-medium text-neutral-900 dark:text-neutral-50">
           {user?.name}
         </p>
-        <p className="text-xs text-gray-600 dark:text-gray-400">
+        <p className="text-xs text-neutral-600 dark:text-neutral-400">
           {user?.email}
         </p>
       </div>

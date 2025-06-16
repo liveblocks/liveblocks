@@ -112,7 +112,7 @@ function FilterAmount() {
   return (
     <div>
       <Label htmlFor="amount-filter" className="font-medium">
-        Transaction Amount
+        Transaction amount
       </Label>
       <Popover>
         <PopoverTrigger asChild id="amount-filter">
@@ -120,7 +120,7 @@ function FilterAmount() {
             variant="secondary"
             className={cx(
               focusRing,
-              "mt-2 block w-full text-left font-normal tabular-nums md:w-36 dark:bg-[#090E1A] hover:dark:bg-gray-950/50",
+              "mt-2 block w-full text-left font-normal tabular-nums md:w-36 dark:bg-neutral-950 dark:hover:bg-neutral-950/50",
             )}
           >
             {formatters.currency({ number: localMin, maxFractionDigits: 0 })} -{" "}
@@ -128,14 +128,14 @@ function FilterAmount() {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="z-50 min-w-[calc(var(--radix-popover-trigger-width))] max-w-[calc(var(--radix-popover-trigger-width))] p-4 sm:min-w-72 sm:max-w-72"
+          className="z-50 max-w-[calc(var(--radix-popover-trigger-width))] min-w-[calc(var(--radix-popover-trigger-width))] p-4 sm:max-w-72 sm:min-w-72"
           align="end"
         >
           <div className="flex h-12 items-end space-x-0.5">
             {distributionData.map((bin, index) => (
               <div
                 key={index}
-                className={`w-full rounded-sm ${bin.isInRange ? "bg-blue-500 dark:bg-blue-500" : "bg-gray-200 dark:bg-gray-800"} transition-all`}
+                className={`w-full rounded-xs ${bin.isInRange ? "bg-black dark:bg-white" : "bg-neutral-200 dark:bg-neutral-800"} transition-all`}
                 style={{ height: `${bin.height}%` }}
               />
             ))}
@@ -152,14 +152,14 @@ function FilterAmount() {
             />
           </div>
           <div className="mt-4 space-y-2">
-            <p className="text-base sm:text-sm font-medium text-gray-900 dark:text-gray-50">
+            <p className="text-base font-medium text-neutral-900 sm:text-sm dark:text-neutral-50">
               Popular ranges:
             </p>
             {presetOptions.map((option) => (
               <Button
                 key={option.label}
                 variant="secondary"
-                className="w-full justify-start font-normal dark:bg-gray-950"
+                className="w-full justify-start font-normal dark:bg-neutral-950"
                 onClick={() => handlePresetClick(option.min, option.max)}
               >
                 {option.label}
@@ -167,7 +167,7 @@ function FilterAmount() {
             ))}
           </div>
           <div className="mt-4 space-y-2">
-            <p className="text-base sm:text-sm font-medium text-gray-900 dark:text-gray-50">
+            <p className="text-base font-medium text-neutral-900 sm:text-sm dark:text-neutral-50">
               Custom range:
             </p>
             <div className="flex w-full items-center gap-2">
@@ -181,7 +181,7 @@ function FilterAmount() {
                 enableStepper={false} // has to be false because of URL change rate limits
               />
               <>
-                <span className="text-xs font-medium text-gray-500">–</span>
+                <span className="text-xs font-medium text-neutral-500">–</span>
                 <Input
                   name="Maximum Amount"
                   type="number"

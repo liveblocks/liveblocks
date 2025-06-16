@@ -10,7 +10,7 @@ import { cx, focusRing } from "@/lib/utils"
 const buttonVariants = tv({
   base: [
     // base
-    "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center font-medium shadow-sm transition-all duration-100 ease-in-out text-base sm:text-sm",
+    "relative inline-flex items-center justify-center rounded-md border px-3 py-2 text-center text-base font-medium whitespace-nowrap shadow-xs transition-all duration-100 ease-in-out sm:text-sm",
     // disabled
     "disabled:pointer-events-none disabled:shadow-none",
     // focus
@@ -22,27 +22,27 @@ const buttonVariants = tv({
         // border
         "border-transparent",
         // text color
-        "text-white dark:text-white",
+        "text-white dark:text-black",
         // background color
-        "bg-blue-500 dark:bg-blue-500",
+        "bg-black dark:bg-white",
         // hover color
-        "hover:bg-blue-600 dark:hover:bg-blue-600",
+        "hover:bg-neutral-900 dark:hover:bg-neutral-100",
         // disabled
-        "disabled:bg-gray-100 disabled:text-gray-400",
-        "disabled:dark:bg-gray-800 disabled:dark:text-gray-600",
+        "disabled:bg-neutral-100 disabled:text-neutral-400",
+        "dark:disabled:bg-neutral-800 dark:disabled:text-neutral-600",
       ],
       secondary: [
         // border
-        "border-gray-300 dark:border-gray-800",
+        "border-neutral-300 dark:border-neutral-800",
         // text color
-        "text-gray-900 dark:text-gray-50",
+        "text-neutral-900 dark:text-neutral-50",
         // background color
-        "bg-white dark:bg-gray-900",
+        "bg-white dark:bg-neutral-900",
         //hover color
-        "hover:bg-gray-50 dark:hover:bg-gray-800/30",
+        "hover:bg-neutral-50 dark:hover:bg-neutral-900/30",
         // disabled
-        "disabled:text-gray-400",
-        "disabled:dark:text-gray-600",
+        "disabled:text-neutral-400",
+        "dark:disabled:text-neutral-600",
       ],
       light: [
         // base
@@ -50,14 +50,14 @@ const buttonVariants = tv({
         // border
         "border-transparent",
         // text color
-        "text-gray-900 dark:text-gray-50",
+        "text-neutral-900 dark:text-neutral-50",
         // background color
-        "bg-gray-200 dark:bg-gray-900",
+        "bg-neutral-200 dark:bg-neutral-900",
         // hover color
-        "hover:bg-gray-300/70 dark:hover:bg-gray-800/80",
+        "hover:bg-neutral-300/70 dark:hover:bg-neutral-900/80",
         // disabled
-        "disabled:bg-gray-100 disabled:text-gray-400",
-        "disabled:dark:bg-gray-800 disabled:dark:text-gray-600",
+        "disabled:bg-neutral-100 disabled:text-neutral-400",
+        "dark:disabled:bg-neutral-800 dark:disabled:text-neutral-600",
       ],
       ghost: [
         // base
@@ -65,12 +65,12 @@ const buttonVariants = tv({
         // border
         "border-transparent",
         // text color
-        "text-gray-900 dark:text-gray-50",
+        "text-neutral-900 dark:text-neutral-50",
         // hover color
-        "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/80",
+        "bg-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900/80",
         // disabled
-        "disabled:text-gray-400",
-        "disabled:dark:text-gray-600",
+        "disabled:text-neutral-400",
+        "dark:disabled:text-neutral-600",
       ],
       destructive: [
         // text color
@@ -83,7 +83,7 @@ const buttonVariants = tv({
         "hover:bg-red-700 dark:hover:bg-red-600",
         // disabled
         "disabled:bg-red-300 disabled:text-white",
-        "disabled:dark:bg-red-950 disabled:dark:text-red-400",
+        "dark:disabled:bg-red-950 dark:disabled:text-red-400",
       ],
     },
   },
@@ -94,7 +94,7 @@ const buttonVariants = tv({
 
 interface ButtonProps
   extends React.ComponentPropsWithoutRef<"button">,
-  VariantProps<typeof buttonVariants> {
+    VariantProps<typeof buttonVariants> {
   asChild?: boolean
   isLoading?: boolean
   loadingText?: string

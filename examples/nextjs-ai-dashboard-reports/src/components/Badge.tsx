@@ -7,7 +7,7 @@ import { cx } from "@/lib/utils"
 
 const badgeVariants = tv({
   base: cx(
-    "inline-flex items-center gap-x-1 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
+    "inline-flex items-center gap-x-1 rounded-md px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
   ),
   variants: {
     variant: {
@@ -16,8 +16,8 @@ const badgeVariants = tv({
         "dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30",
       ],
       neutral: [
-        "bg-gray-50 text-gray-900 ring-gray-500/30",
-        "dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20",
+        "bg-neutral-50 text-neutral-900 ring-neutral-500/30",
+        "dark:bg-neutral-400/10 dark:text-neutral-400 dark:ring-neutral-400/20",
       ],
       success: [
         "bg-emerald-50 text-emerald-900 ring-emerald-600/30",
@@ -40,7 +40,7 @@ const badgeVariants = tv({
 
 interface BadgeProps
   extends React.ComponentPropsWithoutRef<"span">,
-  VariantProps<typeof badgeVariants> { }
+    VariantProps<typeof badgeVariants> {}
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant, ...props }: BadgeProps, forwardedRef) => {

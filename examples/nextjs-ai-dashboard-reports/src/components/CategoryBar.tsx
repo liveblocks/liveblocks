@@ -58,7 +58,7 @@ const BarLabels = ({ values }: { values: number[] }) => {
         // base
         "relative mb-2 flex h-5 w-full text-sm font-medium",
         // text color
-        "text-gray-700 dark:text-gray-300",
+        "text-neutral-700 dark:text-neutral-300",
       )}
     >
       {values.map((widthPercentage, index) => {
@@ -95,7 +95,7 @@ const BarLabels = ({ values }: { values: number[] }) => {
         )
       })}
       <div className="absolute bottom-0 left-0 flex items-center">0</div>
-      <div className="absolute bottom-0 right-0 flex items-center">
+      <div className="absolute right-0 bottom-0 flex items-center">
         {sumValues}
       </div>
     </div>
@@ -177,7 +177,7 @@ const CategoryBar = React.forwardRef<HTMLDivElement, CategoryBarProps>(
               className={cx(
                 "absolute w-2 -translate-x-1/2",
                 marker.showAnimation &&
-                "transform-gpu transition-all duration-300 ease-in-out",
+                  "transform-gpu transition-all duration-300 ease-in-out",
               )}
               style={{
                 left: `${markerPositionLeft}%`,
@@ -189,7 +189,7 @@ const CategoryBar = React.forwardRef<HTMLDivElement, CategoryBarProps>(
                     aria-hidden="true"
                     className={cx(
                       "relative mx-auto h-4 w-1 rounded-full ring-2",
-                      "ring-white dark:ring-gray-950",
+                      "ring-white dark:ring-neutral-950",
                       markerBgColor,
                     )}
                   >
@@ -203,7 +203,7 @@ const CategoryBar = React.forwardRef<HTMLDivElement, CategoryBarProps>(
                 <div
                   className={cx(
                     "mx-auto h-4 w-1 rounded-full ring-2",
-                    "ring-white dark:ring-gray-950",
+                    "ring-white dark:ring-neutral-950",
                     markerBgColor,
                   )}
                 />

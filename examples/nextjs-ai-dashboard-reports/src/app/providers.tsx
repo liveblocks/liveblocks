@@ -6,29 +6,32 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import { SWRConfig } from "swr";
+import { InvitedUsersProvider } from "@/lib/useInvitedUsers";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <LiveblocksProvider
-      authEndpoint={authWithExampleId("/api/liveblocks-auth")}
-    >
-      <SWRConfig
-        value={{
-          refreshInterval: 3000,
-          fetcher: (resource, init) =>
-            fetch(resource, init).then((res) => res.json()),
-        }}
+    <InvitedUsersProvider>
+      <LiveblocksProvider
+        authEndpoint={authWithExampleId("/api/liveblocks-auth")}
       >
-        <ThemeProvider
-          defaultTheme="system"
-          disableTransitionOnChange
-          attribute="class"
+        <SWRConfig
+          value={{
+            refreshInterval: 3000,
+            fetcher: (resource, init) =>
+              fetch(resource, init).then((res) => res.json()),
+          }}
         >
-          <Toaster position="top-right" richColors />
-          <NuqsAdapter>{children}</NuqsAdapter>
-        </ThemeProvider>
-      </SWRConfig>
-    </LiveblocksProvider>
+          <ThemeProvider
+            defaultTheme="system"
+            disableTransitionOnChange
+            attribute="class"
+          >
+            <Toaster position="top-right" richColors />
+            <NuqsAdapter>{children}</NuqsAdapter>
+          </ThemeProvider>
+        </SWRConfig>
+      </LiveblocksProvider>
+    </InvitedUsersProvider>
   );
 }
 
