@@ -11,7 +11,9 @@ import { InvitedUsersProvider } from "@/lib/useInvitedUsers";
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <InvitedUsersProvider>
-      <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <LiveblocksProvider
+        authEndpoint={authWithExampleId("/api/liveblocks-auth")}
+      >
         <SWRConfig
           value={{
             refreshInterval: 3000,
@@ -31,4 +33,23 @@ export function Providers({ children }: { children: ReactNode }) {
       </LiveblocksProvider>
     </InvitedUsersProvider>
   );
+}
+
+// Not needed, just used to deploy to https://liveblocks.io/examples
+function authWithExampleId(endpoint: string) {
+  return async (room?: string) => {
+    let userId = localStorage.getItem("liveblocks-example-id");
+    if (!userId) {
+      userId = Math.random().toString(36).substring(2);
+      localStorage.setItem("liveblocks-example-id", userId);
+    }
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ room, userId }),
+    });
+    return await response.json();
+  };
 }
