@@ -258,7 +258,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 className="lb-ai-chat-scroll-indicator-button"
                 tabIndex={isScrollIndicatorVisible ? 0 : -1}
                 aria-hidden={!isScrollIndicatorVisible}
-                disabled={!isScrollIndicatorVisible}
+                aria-disabled={!isScrollIndicatorVisible}
                 onClick={() => scrollToBottom("smooth")}
               >
                 <span className="lb-icon-container">
