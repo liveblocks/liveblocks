@@ -2849,6 +2849,22 @@
   color: var(--lb-foreground-moderate);
 }
 
+.lb-ai-tool:where([data-result="error"]) {
+  box-shadow: inset 0 0 0 1px var(--lb-destructive-moderate);
+
+  &:where(:has(.lb-ai-tool-header:focus-visible)) {
+    &::after {
+      box-shadow:
+        var(--lb-dynamic-background) 0 0 0 2px,
+        var(--lb-destructive) 0 0 0 4px;
+    }
+  }
+
+  :where(.lb-ai-tool-header-status) {
+    color: var(--lb-destructive);
+  }
+}
+
 .lb-ai-tool-content:where(:not(:empty)) {
   padding: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
 }

@@ -335,6 +335,8 @@ export const AiTool = Object.assign(
           open={hasContent ? !semiControlledCollapsed : false}
           onOpenChange={handleCollapsibleOpenChange}
           disabled={!hasContent}
+          data-result={result?.type}
+          data-stage={stage}
         >
           <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
             {icon ? (
