@@ -1011,7 +1011,7 @@ export type Room<
   ): Promise<RoomSubscriptionSettings>;
 
   /**
-   * @deprecated Renamed to `getSubscriptionSettings`
+   * @deprecated Renamed to `updateSubscriptionSettings`
    *
    * Updates the user's subscription settings for the current room.
    */
