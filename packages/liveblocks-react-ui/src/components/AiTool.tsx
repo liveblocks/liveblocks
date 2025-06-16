@@ -12,8 +12,8 @@ import { Button } from "../_private";
 import {
   CheckCircleFillIcon,
   ChevronRightIcon,
-  CrossIcon,
-  MinusIcon,
+  CrossCircleFillIcon,
+  MinusCircleIcon,
   SpinnerIcon,
 } from "../icons";
 import {
@@ -66,11 +66,6 @@ export type AiToolIconProps = ComponentProps<"div">;
 
 export type AiToolInspectorProps = ComponentProps<"div">;
 
-/**
- * @private This API will change, and is not considered stable. DO NOT RELY on it.
- *
- * This component can be used to build human-in-the-loop interfaces.
- */
 export interface AiToolConfirmationProps<
   A extends JsonObject,
   R extends JsonObject,
@@ -199,6 +194,93 @@ function prettifyString(string: string) {
   );
 }
 
+/**
+ * A pre-built component which displays a tool call.
+ *
+ * By default, a human-readable version of the tool's name is used as a title:
+ * - `"showTodo"` → "Show todo"
+ * - `"get_weather"` → "Get weather"
+ *
+ * @example
+ * defineAiTool()({
+ *   // ...
+ *   render: () => (
+ *     <AiTool />
+ *   ),
+ * })
+ *
+ * It can be customized in various ways:
+ * - adding an icon
+ * - customizing the title (even dynamically)
+ * - adding custom content inside it
+ * - collapsing it conditionally
+ * - etc.
+ *
+ * @example
+ * defineAiTool()({
+ *   // ...
+ *   render: ({ stage, result }) => (
+ *     <AiTool
+ *       icon="🔍"
+ *
+ *       // Override the default title based on the tool's stage
+ *       title={stage === "executing" ? "Searching…" : "Search results"}
+ *
+ *       // Start open and automatically collapse after it is executed
+ *       // The user can still expand/collapse it manually at any time
+ *       collapsed={stage === "executed"}
+ *     >
+ *       <SearchResults data={result.data} />
+ *     </AiTool>
+ *   ),
+ * })
+ *
+ * It also comes with a few built-in sub-components:
+ * - `AiTool.Confirmation` to display a human-in-the-loop confirmation step
+ *   which can be accepted or cancelled by the user.
+ * - `AiTool.Inspector` to display the tool's arguments and result which can
+ *   be useful during development.
+ *
+ * @example
+ * defineAiTool()({
+ *   // ...
+ *   render: () => (
+ *     <AiTool>
+ *       <AiTool.Confirmation
+ *         // Use a destructive visual appearance
+ *         variant="destructive"
+ *
+ *         // The tool's arguments can be directly accessed like in `execute`
+ *         confirm={({ pageIds }) => {
+ *           const deletedPageTitles = pages
+ *             .filter((p) => pageIds.includes(p.id))
+ *             .map((page) => page.title);
+ *
+ *           deletePages(pageIds);
+ *
+ *           // This result will be available as `result` in the tool's `render` props
+ *           return { data: { deletedPageTitles } };
+ *         }}
+ *
+ *         // If needed, `cancel={() => ...}` would work similarly
+ *       >
+ *         Do you want to delete these pages?
+ *         <PagesPreviews />
+ *       </AiTool.Confirmation>
+ *     </AiTool>
+ *   ),
+ * })
+ *
+ * @example
+ * defineAiTool()({
+ *   // ...
+ *   render: () => (
+ *     <AiTool>
+ *       <AiTool.Inspector />
+ *     </AiTool>
+ *   ),
+ * })
+ */
 export const AiTool = Object.assign(
   forwardRef<HTMLDivElement, AiToolProps>(
     (
@@ -253,6 +335,8 @@ export const AiTool = Object.assign(
           open={hasContent ? !semiControlledCollapsed : false}
           onOpenChange={handleCollapsibleOpenChange}
           disabled={!hasContent}
+          data-result={result?.type}
+          data-stage={stage}
         >
           <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
             {icon ? (
@@ -269,9 +353,9 @@ export const AiTool = Object.assign(
                 result.type === "success" ? (
                   <CheckCircleFillIcon />
                 ) : result.type === "error" ? (
-                  <CrossIcon />
+                  <CrossCircleFillIcon />
                 ) : result.type === "cancelled" ? (
-                  <MinusIcon />
+                  <MinusCircleIcon />
                 ) : null
               ) : execute !== undefined ? (
                 // Only show a spinner if the tool has an `execute` method.
@@ -290,8 +374,62 @@ export const AiTool = Object.assign(
     }
   ),
   {
+    /**
+     * Display an icon in a container.
+     *
+     * @example
+     * <AiTool
+     *   icon={
+     *     <AiTool.Icon>🔍</AiTool.Icon>
+     *   }
+     * />
+     */
     Icon: AiToolIcon,
+
+    /**
+     * Display the tool's arguments and result, which can be useful during
+     * development.
+     *
+     * @example
+     * <AiTool>
+     *   <AiTool.Inspector />
+     * </AiTool>
+     */
     Inspector: AiToolInspector,
+
+    /**
+     * Display a human-in-the-loop confirmation step which can be accepted
+     * or cancelled by the user.
+     *
+     * The `confirm` and `cancel` callbacks work like `execute` in tool definitions: they can
+     * perform side-effects, be async if needed, and return a result. The tool call will stay
+     * pending until either `confirm` or `cancel` is called.
+     *
+     * @example
+     * <AiTool>
+     *   <AiTool.Confirmation
+     *     // Use a destructive visual appearance
+     *     variant="destructive"
+     *
+     *     // The tool's arguments can be directly accessed like in `execute`
+     *     confirm={({ pageIds }) => {
+     *       const deletedPageTitles = pages
+     *         .filter((p) => pageIds.includes(p.id))
+     *         .map((page) => page.title);
+     *
+     *       deletePages(pageIds);
+     *
+     *       // This result will be available as `result` in the tool's `render` props
+     *       return { data: { deletedPageTitles } };
+     *     }}
+     *
+     *     // If needed, `cancel={() => ...}` would work similarly
+     *   >
+     *     Do you want to delete these pages?
+     *     <PagesPreviews />
+     *   </AiTool.Confirmation>
+     * </AiTool>
+     */
     Confirmation: AiToolConfirmation,
   }
 );
