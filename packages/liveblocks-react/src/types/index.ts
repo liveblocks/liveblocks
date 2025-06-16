@@ -63,11 +63,17 @@ export type UseSyncStatusOptions = {
   smooth?: boolean;
 };
 
-export type SendAiMessageOptions = {
+export type UseSendAiMessageOptions = {
   /**
    * The id of the copilot to use to send the message.
    */
   copilotId?: string;
+
+  /** Stream the response as it is being generated. Defaults to true. */
+  stream?: boolean;
+
+  /** The maximum timeout for the answer to be generated. */
+  timeout?: number;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
@@ -1272,7 +1278,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    */
   useSendAiMessage(
     chatId: string,
-    options?: SendAiMessageOptions
+    options?: UseSendAiMessageOptions
   ): (message: string) => void;
 };
 

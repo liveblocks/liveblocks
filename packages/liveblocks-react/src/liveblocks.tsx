@@ -62,6 +62,7 @@ import type {
   NotificationSettingsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
+  UseSendAiMessageOptions,
   SharedContextBundle,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
@@ -1131,7 +1132,7 @@ function useDeleteAiChat() {
  */
 function useSendAiMessage(
   chatId: string,
-  options?: { copilotId?: string }
+  options?: UseSendAiMessageOptions
 ): (message: string) => void {
   const client = useClient();
   const copilotId = options?.copilotId;
@@ -1167,12 +1168,13 @@ function useSendAiMessage(
         { id: newMessageId, parentMessageId: lastMessageId, content },
         targetMessageId,
         {
-          stream: false,
+          stream: options?.stream,
           copilotId: copilotId as CopilotId | undefined,
+          timeout: options?.timeout,
         }
       );
     },
-    [client, chatId, copilotId]
+    [client, chatId, copilotId, options?.stream, options?.timeout]
   );
 }
 
