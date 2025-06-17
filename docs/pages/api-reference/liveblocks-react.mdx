@@ -1276,9 +1276,9 @@ initial load failed.
 
 ### useAiChat
 
-Returns information about an AI chat, for example it’s title. Titles are
-automatically generated from the content of the first user message in a chat,
-and the AI’s response.
+Returns information about an AI chat, for example its title and metadata. Titles
+are automatically generated from the content of the first user message in a
+chat, and the AI’s response.
 
 ```tsx
 import { useAiChat } from "@liveblocks/react/suspense";
@@ -1312,6 +1312,37 @@ function ChatTitle() {
 }
 ```
 
+### useCreateAiChat
+
+Returns a function that creates an AI chat.
+
+```tsx
+import { useCreateAiChat } from "@liveblocks/react/suspense";
+
+const createAiChat = useCreateAiChat();
+createAiChat({ id: "my-ai-chat" });
+```
+
+You can optionally set a `title`, which prevents the AI auto-generating a title
+from the first messages. Additionally, you can choose to set custom `metadata`
+for the chat, strings or arrays of strings.
+
+```tsx
+import { useCreateAiChat } from "@liveblocks/react/suspense";
+
+const createAiChat = useCreateAiChat();
+createAiChat({
+  id: "my-ai-chat",
+  // +++
+  title: "My AI Chat",
+  metadata: {
+    color: "red",
+    tags: ["product", "engineering"],
+  },
+  // +++
+});
+```
+
 ### useDeleteAiChat
 
 Returns a function that deletes an AI chat by its ID. Use in conjunction with
@@ -1338,6 +1369,17 @@ import { useSendAiMessage } from "@liveblocks/react";
 
 const sendAiMessage = useSendAiMessage("my-chat-id");
 sendAiMessage("Hello!");
+```
+
+### useAiChatMessages
+
+Returns a list of every message sent to an AI chat, identified by its ID.
+Updates in realtime using WebSockets.
+
+```tsx
+import { useAiChatMessages } from "@liveblocks/react";
+
+const { messages, error, isLoading } = useAiChatMessages("my-chat-id");
 ```
 
 ### RegisterAiKnowledge
