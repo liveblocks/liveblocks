@@ -652,9 +652,9 @@ underlying element.
 
 ##### AiTool.Inspector
 
-Displays code snippets of the JSON values returned and sent by AI in the current
-tool call, helpful for debugging or for showing the internals of your app to
-developers.
+Displays formatted view of the JSON arguments sent to and results returned by
+the AI during the current tool invocation. This is useful for debugging or for
+providing developers with insight into the data exchanged within your app.
 
 ```tsx
 <AiTool>
@@ -662,8 +662,8 @@ developers.
 </AiTool>
 ```
 
-Simply place `<AiTool.Inspector />` within an `<AiTool />` component to display
-the tool's arguments and results.
+To use, simply include <AiTool.Inspector /> inside an <AiTool /> component to
+display the tool’s input arguments and resulting output.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
