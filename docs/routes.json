@@ -346,6 +346,20 @@
     "title": "Ready-made features",
     "routes": [
       {
+        "title": "AI Copilots",
+        "path": "/ready-made-features/ai-copilots",
+        "routes": [
+          {
+            "title": "Features",
+            "path": "/ready-made-features/ai-copilots/features"
+          },
+          {
+            "title": "Default components",
+            "path": "/ready-made-features/ai-copilots/default-components"
+          }
+        ]
+      },
+      {
         "title": "Comments",
         "path": "/ready-made-features/comments",
         "routes": [
@@ -384,6 +398,44 @@
         ]
       },
       {
+        "title": "Multiplayer Editing",
+        "path": "/ready-made-features/multiplayer-editing",
+        "routes": [
+          {
+            "title": "Text editor",
+            "path": "/ready-made-features/multiplayer-editing/text-editor",
+            "routes": [
+              {
+                "title": "Tiptap",
+                "path": "/ready-made-features/multiplayer-editing/text-editor/tiptap"
+              },
+              {
+                "title": "BlockNote",
+                "path": "/ready-made-features/multiplayer-editing/text-editor/blocknote"
+              },
+              {
+                "title": "Lexical",
+                "path": "/ready-made-features/multiplayer-editing/text-editor/lexical"
+              }
+            ]
+          },
+          {
+            "title": "Sync engine",
+            "path": "/ready-made-features/multiplayer-editing/sync-engine",
+            "routes": [
+              {
+                "title": "Yjs",
+                "path": "/ready-made-features/multiplayer-editing/sync-engine/liveblocks-yjs"
+              },
+              {
+                "title": "Storage",
+                "path": "/ready-made-features/multiplayer-editing/sync-engine/liveblocks-storage"
+              }
+            ]
+          }
+        ]
+      },
+      {
         "title": "Notifications",
         "path": "/ready-made-features/notifications",
         "routes": [
@@ -410,36 +462,8 @@
         ]
       },
       {
-        "title": "Text Editor",
-        "path": "/ready-made-features/text-editor",
-        "routes": [
-          {
-            "title": "Tiptap",
-            "path": "/ready-made-features/text-editor/tiptap"
-          },
-          {
-            "title": "BlockNote",
-            "path": "/ready-made-features/text-editor/blocknote"
-          },
-          {
-            "title": "Lexical",
-            "path": "/ready-made-features/text-editor/lexical"
-          }
-        ]
-      },
-      {
         "title": "Presence",
         "path": "/ready-made-features/presence"
-      },
-      {
-        "title": "AI Copilots",
-        "path": "/ready-made-features/ai-copilots",
-        "routes": [
-          {
-            "title": "Features",
-            "path": "/ready-made-features/ai-copilots/features"
-          }
-        ]
       }
     ]
   },
@@ -595,20 +619,6 @@
   {
     "title": "Platform",
     "routes": [
-      {
-        "title": "Sync datastore",
-        "path": "/platform/sync-datastore",
-        "routes": [
-          {
-            "title": "Liveblocks Yjs",
-            "path": "/platform/sync-datastore/liveblocks-yjs"
-          },
-          {
-            "title": "Liveblocks Storage",
-            "path": "/platform/sync-datastore/liveblocks-storage"
-          }
-        ]
-      },
       {
         "title": "WebSocket infrastructure",
         "path": "/platform/websocket-infrastructure"

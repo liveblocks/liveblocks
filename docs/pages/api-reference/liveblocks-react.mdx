@@ -1102,6 +1102,684 @@ notifications are not part of rooms, and errors for these will show. See the
 
 </Banner>
 
+## AI Copilots
+
+### useAiChats [@badge=LiveblocksProvider]
+
+Returns a paginated list of AI chats created by the current user. Initially
+fetches the latest 50 chats.
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+const { chats, error, isLoading } = useAiChats();
+```
+
+##### List the user’s chats and switch between them
+
+You can use the [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat)
+component alongside the hook to create an AI chat switcher. Below, each button
+displays the chat’s automatically generated title, and chats can be deleted with
+[`useDeleteAiChat`](#useDeleteAiChat).
+
+```tsx
+import { useState } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+import { useAiChats } from "@liveblocks/react";
+
+function Chats() {
+  // +++
+  const { chats, error, isLoading } = useAiChats();
+  const [chatId, setChatId] = useState();
+  const deleteChat = useDeleteAiChat();
+  // +++
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  return (
+    <div style={{ display: "flex" }}>
+      <ul>
+        // +++
+        {chats.map((chat) => (
+          <li key={chat.id}>
+            <button onClick={() => setChatId(chat.id)}>
+              {chat.title || "Untitled"}
+            </button>
+            <button onClick={() => deleteChat(chat.id)}>❌</button>
+          </li>
+        ))}
+        // +++
+      </ul>
+      // +++
+      <AiChat chatId={chatId} />
+      // +++
+    </div>
+  );
+}
+```
+
+#### Pagination [#useAiChats-pagination]
+
+By default, the `useAiChats` hook returns up to 50 chats. To fetch more, the
+hook provides additional fields for pagination, similar to [`useThreads`][].
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+const {
+  chats,
+  isLoading,
+  error,
+
+  +++
+  hasFetchedAll,
+  fetchMore,
+  isFetchingMore,
+  fetchMoreError,
+  +++
+} = useAiChats();
+```
+
+- `hasFetchedAll` indicates whether all available AI chats have been fetched.
+- `fetchMore` loads up to 50 more AI chats, and is always safe to call.
+- `isFetchingMore` indicates whether more AI chats are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+##### Pagination example [#useAiChats-pagination-example]
+
+The following example demonstrates how to use the `fetchMore` function to
+implement a “Load More” button, which fetches additional AI chats when clicked.
+The button is disabled while fetching is in progress.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { useAiChats } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  const { chats, hasFetchedAll, fetchMore, isFetchingMore } = useAiChats();
+
+  return (
+    <div>
+      {chats.map((chat) => (
+        <AiChat key={chat.id} chatId={chat.id} />
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 All chats loaded!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
+```
+
+#### Error handling [#useAiChats-error-handling]
+
+Error handling is another important aspect to consider when using the
+`useAiChats` hook. The `error` and `fetchMoreError` fields provide information
+about any errors that occurred during the initial fetch or subsequent fetch
+operations, respectively. You can use these fields to display appropriate error
+messages to the user and implement retry mechanisms if needed.
+
+The following example shows how to display error messages for both initial
+loading errors and errors that occur when fetching more inbox notifications.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { useAiChats } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  const { chats, error, fetchMore, fetchMoreError } = useAiChats();
+
+  // Handle error if the initial load failed.
+  // The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+  // +++
+  if (error) {
+    return (
+      <div>
+        <p>Error loading AI chats: {error.message}</p>
+      </div>
+    );
+  }
+  // +++
+
+  return (
+    <div>
+      {chats.map((chat) => (
+        <AiChat key={chat.id} chatId={chat.id} />
+      ))}
+
+      {fetchMoreError && (
+        <div>
+          <p>Error loading more AI chats: {fetchMoreError.message}</p>
+          <button onClick={fetchMore}>Retry</button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest `ErrorBoundary` if
+initial load failed.
+
+### useAiChat
+
+Returns information about an AI chat, for example it’s title. Titles are
+automatically generated from the content of the first user message in a chat,
+and the AI’s response.
+
+```tsx
+import { useAiChat } from "@liveblocks/react/suspense";
+
+const { chat, error, isLoading } = useAiChat("my-chat-id");
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
+
+#### Displaying a default title
+
+If `chat.title` is `undefined` after an `isLoading` check, that means the title
+has not been set yet. You can display a default title in this case, and the
+title will be displayed once generated.
+
+```tsx
+import { useAiChat } from "@liveblocks/react/suspense";
+
+function ChatTitle() {
+  const { chat, error, isLoading } = useAiChat("my-chat-id");
+
+  if (isLoading || error) {
+    return null;
+  }
+
+  // +++
+  return <div>{chat.title || "Untitled chat"}</div>;
+  // +++
+}
+```
+
+### useDeleteAiChat
+
+Returns a function that deletes an AI chat by its ID. Use in conjunction with
+[`useAiChats`](#useAiChats) to
+[loop through each chat](/docs/api-reference/liveblocks-react#List-the-user's-chats-and-switch-between-them)
+and add a delete button.
+
+```tsx
+import { useDeleteAiChat } from "@liveblocks/react/suspense";
+
+const deleteChat = useDeleteAiChat();
+deleteChat("my-chat-id");
+```
+
+### useSendAiMessage
+
+Returns a function that sends a message to an AI chat, indentified by its ID.
+Useful for
+[creating suggestions in empty inside chats](/docs/api-reference/liveblocks-react-ui#AiChat-placeholder)
+and sending messages on behalf of the user.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+
+const sendAiMessage = useSendAiMessage("my-chat-id");
+sendAiMessage("Hello!");
+```
+
+### RegisterAiKnowledge
+
+Adds knowledge to all AI features on the page. AI will understand the
+information you pass, and will answer questions or call tools based on it. This
+is particularly helpful for passing user info, app state, and other small
+contextual knowledge.
+
+```tsx
+<RegisterAiKnowledge
+  description="The current user's payment plan"
+  value="Enterprise"
+/>
+```
+
+Each knowledge source has a `description` string, and a `value` which can be
+either a string, object, array or JSON-serializable value that provides
+meaningful context for your use case. The AI uses this data, along with the
+accompanying description, to better understand and respond to user queries or
+perform actions based on the supplied context. These components can be placed
+anywhere in your app, so long as they’re under
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiKnowledge } from "@liveblocks/react";
+
+function Chat() {
+  return (
+    <>
+      // +++
+      <RegisterAiKnowledge
+        description="The current user's payment plan"
+        value="Enterprise"
+      />
+      <RegisterAiKnowledge
+        description="The current user's info"
+        value={{
+          name: "Jody Hekla",
+          email: "jody@liveblocks.io",
+          teams: ["Engineering", "Product"],
+        }}
+      />
+      // +++
+      <AiChat chatId="my-chat-id" />
+    </>
+  );
+}
+```
+
+#### Pass in assorted context [#RegisterAiKnowledge-context]
+
+Passing the AI context about the current datetime, the user’s language, the page
+the user’s visiting, and navigable pages on your website, is an effective method
+for improving your chat’s replies.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+
+function Chat() {
+  return (
+    <>
+      // +++
+      <RegisterAiKnowledge
+        description="The current date and time"
+        value={new Date()}
+      />
+      <RegisterAiKnowledge
+        description="The user's preferred language"
+        value={navigator.language}
+      />
+      <RegisterAiKnowledge
+        description="The current URL"
+        value={window.location.href}
+      />
+      <RegisterAiKnowledge
+        description="URLs on this website"
+        value={["/dashboard", "/billing", "/settings"]}
+      />
+      // +++
+    </>
+  );
+}
+```
+
+When building your app, it’s worth considering which app-specific context will
+be helpful, for example the user’s payment plan, or a list of their projects.
+
+#### Pass in user data from your auth provider [#RegisterAiKnowledge-user]
+
+You can pass in knowledge from your auth provider, for example with
+[`useUser`](https://clerk.com/docs/hooks/use-user) from
+[Clerk](https://clerk.com). You can tell AI that the state is loading in a
+simple string, and it will understand.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import { useUser } from "@clerk/clerk-react";
+
+function Chat() {
+  // +++
+  const { isSignedIn, user, isLoaded } = useUser();
+  // +++
+
+  return (
+    // +++
+    <RegisterAiKnowledge
+      description="The current user's info"
+      value={isLoaded ? (isSignedIn ? user : "Not signed in") : "Loading..."}
+    />
+    // +++
+  );
+}
+```
+
+#### Pass in assorted data from fetching hooks [#RegisterAiKnowledge-fetching]
+
+You can pass in knowledge from data fetching hooks such as with
+[`useSWR`](https://swr.vercel.app/docs/getting-started) from
+[SWR](https://swr.vercel.app/). You can tell AI that the state is loading in a
+simple string, and it will understand.
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react";
+import useSWR from "swr";
+
+function Chat() {
+  // +++
+  const { data, error, isLoading } = useSWR(`/important-data`, fetcher);
+  // +++
+
+  return (
+    // +++
+    <RegisterAiKnowledge
+      description="Important data"
+      value={isLoading ? "Loading..." : error ? "Problem fetching data" : data}
+    />
+    // +++
+  );
+}
+
+const fetcher = (...args) => fetch(...args).then((res) => res.json());
+```
+
+#### Pass in text editor document data [#RegisterAiKnowledge-text-editor]
+
+You can pass in knowledge from your text editor, for example when using
+[Liveblocks Tiptap](/docs/api-reference/liveblocks-react-tiptap).
+
+```tsx
+import { RegisterAiKnowledge } from "@liveblocks/react-ui";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  // +++
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The current document's Tiptap state"
+        value={editor.getHTML()}
+      />
+      // +++
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+As well as `editor.getHTML()`, `editor.getJSON()` and `editor.getText()` are
+also available when using Tiptap. Its worth trying them all, in case your AI
+model understands one of them better than the others.
+
+{/* TODO how to make tools where you can write to the text editor */}
+
+#### Pass in comment data [#RegisterAiKnowledge-storage]
+
+You can also pass in knowledge from your custom Liveblocks Comments app with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads). This way, your
+AI chat will understand the context in the current room.
+
+```tsx
+import { RegisterAiKnowledge, useThreads } from "@liveblocks/react";
+
+function Comments() {
+  // +++
+  const { threads, isLoading, error } = useThreads();
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The comment threads in the current document"
+        value={
+          isLoading
+            ? "Loading..."
+            : error
+              ? "Problem fetching threads"
+              : threads
+        }
+      />
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      )}
+    </div>
+  );
+}
+```
+
+#### Pass in storage data [#RegisterAiKnowledge-storage]
+
+You can also pass in knowledge from your custom Liveblocks storage app with
+[`useStorage`](/docs/api-reference/liveblocks-react#useStorage). This way, your
+AI chat will understand the context in the current room.
+
+```tsx
+import { RegisterAiKnowledge, useStorage } from "@liveblocks/react/suspense";
+
+function Whiteboard() {
+  // +++
+  const shapes = useStorage((root) => root.shapes);
+  // +++
+
+  return (
+    <div>
+      // +++
+      <RegisterAiKnowledge
+        description="The current shapes on the whiteboard"
+        value={shapes}
+      />
+      // +++
+      {shapes.map((shape) => (
+        // ...
+      )}
+    </div>
+  );
+}
+```
+
+#### Props [#RegisterAiKnowledge-props]
+
+<PropertiesList>
+  <PropertiesListItem name="description" type="string" isRequired>
+    A clear description of what this knowledge represents. This helps the AI
+    understand the context and relevance of the provided information.
+  </PropertiesListItem>
+  <PropertiesListItem name="value" type="Json" isRequired>
+    The actual data or information to share with the AI. Can be a string,
+    object, array, or any JSON-serializable information that offers context
+    relevant to your application or user.
+  </PropertiesListItem>
+  <PropertiesListItem name="id" type="string">
+    Optional unique identifier for this knowledge source. If provided,
+    subsequent updates with the same ID will replace the previous knowledge.
+  </PropertiesListItem>
+</PropertiesList>
+
+### RegisterAiTool
+
+Registers a tool that can be used by
+[AI chats](/docs/api-reference/liveblocks-react-ui#AiChat) on the page. Tools
+allow AI to autonomously run actions, render custom components, and show
+confirmation or human-in-the-loop UIs within the chat.
+
+```tsx
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+
+<RegisterAiTool
+  name="my-tool"
+  tool={defineAiTool()({
+    // Tool definition
+    // ...
+  })}
+/>;
+```
+
+{/* TODO lots more info */}
+
+[`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool) is used to
+create a tool definition, and you can supply `parameters` as a
+[JSON Schema](https://json-schema.org/) that the AI can fill in. If you supply
+an `execute` function the AI will call it. `render` is used to show UI inside
+the chat. Below is an example of a tool that lets AI get the current weather in
+a given location, then renders a compoennt in the chat.
+
+{/* TODO this all needs to be explained better */}
+
+```tsx
+function App() {
+  return (
+    <>
+      // +++
+      <RegisterAiTool
+        name="get-weather"
+        tool={defineAiTool()({
+          description: "Get current weather information",
+          parameters: {
+            type: "object",
+            properties: {
+              location: { type: "string", description: "City name" },
+            },
+            required: ["location"],
+            additionalProperties: false,
+          },
+          execute: async (args) => {
+            const { temperature, condition } = await __getWeather__(
+              args.location
+            );
+            return { data: { temperature, condition } };
+          },
+          render: ({ result }) => (
+            <AiTool title="Weather Lookup" icon="🌤️">
+              {result ? (
+                <div>
+                  {result.temperature}°F - {result.condition}
+                </div>
+              ) : null}
+            </AiTool>
+          ),
+        })}
+      />
+      // +++
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
+```
+
+#### Tool that sends a toast notification
+
+The following snippet shows a tool that lets AI send a toast notification with
+[Sonner](https://sonner.emilkowal.ski/), then adds a message in the chat with
+[`AiTool`](/docs/api-reference/liveblocks-react-ui#AiTool), letting the user
+know that a toast was sent.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+import { toast, Toaster } from "sonner";
+
+function Chat() {
+  return (
+    <>
+      <RegisterAiTool
+        name="send-toast-notification"
+        tool={defineAiTool()({
+          description: "Send a toast notification",
+
+          parameters: {
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+                description: "The message to display in the toast",
+              },
+            },
+            required: ["message"],
+            additionalProperties: false,
+          },
+
+          execute: async ({ message }) => {
+            toast(message);
+            return {
+              data: { message },
+              description: "You sent a toast",
+            };
+          },
+
+          render: ({ result }) => <AiTool title="Toast sent" icon="🍞" />,
+        })}
+      />
+      <AiChat chatId="my-chat-id" />
+      <Toaster />
+    </>
+  );
+}
+```
+
+#### Scoping a tool to a specific chat
+
+Tools can be scoped to specific chats by providing a `chatId` prop. When scoped,
+the tool will only be available to that specific chat.
+
+```tsx
+import { AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { defineAiTool } from "@liveblocks/client";
+
+function Chat() {
+  return (
+    <>
+      <RegisterAiTool
+        name="private-tool"
+        tool={defineAiTool()({
+          // Tool definition
+          // ...
+        })}
+        // +++
+        chatId="my-chat"
+        // +++
+      />
+      // +++
+      <AiChat chatId="my-chat" />
+      // +++
+    </>
+  );
+}
+```
+
+#### Props [#RegisterAiTool-props]
+
+<PropertiesList>
+  <PropertiesListItem name="name" type="string" isRequired>
+    Unique name for the tool. This is used internally to identify and manage the
+    tool.
+  </PropertiesListItem>
+  <PropertiesListItem name="tool" type="AiOpaqueToolDefinition" isRequired>
+    The tool definition created with
+    [`defineAiTool`](/docs/api-reference/liveblocks-client#defineAiTool).
+  </PropertiesListItem>
+  <PropertiesListItem name="chatId" type="string">
+    Optional chat ID to scope this tool to a specific chat. If provided, the
+    tool will only be available to that chat.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Room
 
 ### RoomProvider
@@ -1109,8 +1787,8 @@ notifications are not part of rooms, and errors for these will show. See the
 Makes a [`Room`][] available in the component hierarchy below. Joins the room
 when the component is mounted, and automatically leaves the room when the
 component is unmounted. When using
-[Sync Datastore](/docs/platform/sync-datastore), initial Presence
-values for each user, and Storage values for the room can be set.
+[Sync Datastore](/docs/platform/sync-datastore), initial Presence values for
+each user, and Storage values for the room can be set.
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
@@ -2415,7 +3093,8 @@ the dependency arrays of your `useMutation` calls:
 
 ### useThreads [@badge=RoomProvider]
 
-Returns the threads within the current room.
+Returns a paginated list of threads within the current room. Initially fetches
+the latest 50 threads.
 
 ```tsx
 import { useThreads } from "@liveblocks/react/suspense";
@@ -2423,8 +3102,36 @@ import { useThreads } from "@liveblocks/react/suspense";
 const { threads, error, isLoading } = useThreads();
 ```
 
-`useThreads` supports a few options as its first argument, one is `query` and it
-can be used to filter threads based on their metadata or resolved status.
+Use the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component to
+render the latest 50 threads with our default UI.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
+
+function Component() {
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+#### Querying threads [#useThreads-query]
+
+It’s possible to return threads that match a certain query with the `query`
+option. You can filter threads based on their resolved status, and metadata.
+Additionally, you can filter for metadata strings that being with certain
+characters using `startsWith`. Returned threads match the entire query.
 
 ```tsx
 // Returns threads that match the entire `query`, e.g. { color: "blue", pinned: true, ... }
@@ -2448,14 +3155,11 @@ const { threads } = useThreads({
 });
 ```
 
-Another option is `scrollOnLoad`, which is enabled by default. When enabled, if
-the URL’s hash is set to a comment ID (e.g.
-`https://example.com/my-room#cm_xxx`), the page will scroll to that comment once
-the threads are loaded.
+#### Pagination [#useThreads-pagination]
 
 By default, the `useThreads` hook returns up to 50 threads. To fetch more, the
-hook (along with [`useInboxNotifications`][]) provides additional fields for
-pagination.
+hook provides additional fields for pagination, similar to
+[`useInboxNotifications`][].
 
 ```tsx
 import { useThreads } from "@liveblocks/react";
@@ -2466,41 +3170,53 @@ const {
   threads,
 
   +++
-  // Available in Liveblocks 2.9
   fetchMore,
   isFetchingMore,
   hasFetchedAll,
   fetchMoreError,
   +++
-} = useThreads({ query });
+} = useThreads();
 ```
 
-The `hasFetchedAll` field indicates whether all available threads have been
-fetched since the initial load. To load more threads, you can call the
-`fetchMore` function. This function is safe to call even if no more threads are
-available or a fetch is already in progress—it simply won't do anything in that
-case. Therefore, you don't need to check `hasFetchedAll` or `isFetchingMore`
-before calling `fetchMore`.
+- `hasFetchedAll` indicates whether all available inbox notifications have been
+  fetched.
+- `fetchMore` loads up to 50 more notifications, and is always safe to call.
+- `isFetchingMore` indicates whether more notifications are being fetched.
+- `fetchMoreError` returns error statuses resulting from fetching more.
+
+##### Pagination example [#useThreads-pagination-example]
 
 The following example demonstrates how to use the `fetchMore` function to
-implement a "Load More" button, which fetches additional threads when clicked.
+implement a “Load More” button, which fetches additional threads when clicked.
 The button is disabled while fetching is in progress.
 
 ```tsx
-<div>
-  {threads.map((thread) => (
-    <Thread key={thread.id} />
-  ))}
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
 
-  {hasFetchedAll ? (
-    <div>🎉 You're all caught up!</div>
-  ) : (
-    <button disabled={isFetchingMore} onClick={fetchMore}>
-      Load more
-    </button>
-  )}
-</div>
+function Threads() {
+  const { threads, hasFetchedAll, fetchMore, isFetchingMore } = useThreads();
+
+  return (
+    <div>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+      {hasFetchedAll ? (
+        <div>🎉 You've loaded all threads!</div>
+      ) : (
+        <button disabled={isFetchingMore} onClick={fetchMore}>
+          Load more
+        </button>
+      )}
+      // +++
+    </div>
+  );
+}
 ```
+
+#### Error handling [#useThreads-error-handling]
 
 Error handling is another important aspect to consider when using the
 `useThreads` hook. The `error` and `fetchMoreError` fields provide information
@@ -2512,38 +3228,55 @@ The following example shows how to display error messages for both initial
 loading errors and errors that occur when fetching more threads.
 
 ```tsx
-import { useThreads } from "@liveblocks/react";
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "@liveblocks/react/suspense";
 
-const { threads, error, fetchMore, fetchMoreError } = useThreads();
+function Inbox() {
+  const { threads, error, fetchMore, fetchMoreError } = useThreads();
 
-// Handle error if the initial load failed.
-// The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
-if (error) {
+  // Handle error if the initial load failed.
+  // The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+  // +++
+  if (error) {
+    return (
+      <div>
+        <p>Error loading threads: {error.message}</p>
+      </div>
+    );
+  }
+  // +++
+
   return (
     <div>
-      <p>Error loading threads: {error.message}</p>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+
+      {fetchMoreError && (
+        <div>
+          <p>Error loading more threads: {fetchMoreError.message}</p>
+          <button onClick={fetchMore}>Retry</button>
+        </div>
+      )}
     </div>
   );
 }
+```
 
-return (
-  <div>
-    {threads.map((thread) => (
-      <Thread key={thread.id}>...</Thread>
-    ))}
+#### Avoid scrolling to a comment [#useThreads-scroll]
 
-    {fetchMoreError && (
-      <div>
-        <p>Error loading more threads: {fetchMoreError.message}</p>
-        <button onClick={fetchMore}>Retry</button>
-      </div>
-    )}
-  </div>
-);
+By default, `scrollOnLoad`, is enabled. This options scrolls to a comment if the
+URL’s hash is set to a comment ID (e.g.
+`https://example.com/my-room#cm_nNJs9sb...`), the page will scroll to that
+comment once the threads are loaded. To avoid scrolling to a comment, set
+`scrollOnLoad` to `false`.
+
+```tsx
+const { threads } = useThreads({ scrollOnLoad: false });
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
+return a loading state and will throw error to the nearest `ErrorBoundary` if
 initial load failed.
 
 ### useCreateThread [@badge=RoomProvider]
@@ -2793,7 +3526,8 @@ return a loading state and will throw when there’s an error.
 
 ### useInboxNotifications [@badge=LiveblocksProvider]
 
-Returns the inbox notifications for the current user. Inbox notifications are
+Returns a paginated list of inbox notifications for the current user. Initially
+fetches the latest 50 items. Inbox notifications are
 [project-based](/docs/ready-made-features/notifications/concepts#Project-based),
 meaning notifications from outside the current room are received.
 
@@ -2802,6 +3536,36 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
+
+Use the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component to render the latest 50 inbox notifications with our default UI.
+
+```tsx
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
+function Inbox() {
+  // +++
+  const { inboxNotifications } = useInboxNotifications();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {inboxNotifications.map((notification) => (
+        <InboxNotification
+          key={notification.id}
+          inboxNotification={notification}
+        />
+      ))}
+      // +++
+    </div>
+  );
+}
+```
+
+#### Pagination [#useInboxNotifications-pagination]
 
 By default, the `useInboxNotifications` hook returns up to 50 notifications. To
 fetch more, the hook provides additional fields for pagination, similar to
@@ -2830,7 +3594,7 @@ const {
 - `isFetchingMore` indicates whether more notifications are being fetched.
 - `fetchMoreError` returns error statuses resulting from fetching more.
 
-#### Pagination [#useInboxNotifications-pagination]
+##### Pagination example [#useInboxNotifications-pagination-example]
 
 The following example demonstrates how to use the `fetchMore` function to
 implement a “Load More” button, which fetches additional inbox notifications
@@ -2847,7 +3611,10 @@ function Inbox() {
   return (
     <div>
       {inboxNotifications.map((notification) => (
-        <InboxNotification key={notification.id}>...</InboxNotification>
+        <InboxNotification
+          key={notification.id}
+          inboxNotification={notification}
+        />
       ))}
       // +++
       {hasFetchedAll ? (
@@ -2897,7 +3664,10 @@ function Inbox() {
   return (
     <div>
       {inboxNotifications.map((notification) => (
-        <InboxNotification key={notification.id}>...</InboxNotification>
+        <InboxNotification
+          key={notification.id}
+          inboxNotification={notification}
+        />
       ))}
 
       {fetchMoreError && (
