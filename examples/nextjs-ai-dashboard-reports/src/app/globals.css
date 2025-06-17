@@ -153,7 +153,7 @@ button,
 }
 
 .lb-root {
-  --lb-accent: var(--color-pink-500);
+  --lb-accent: var(--color-pink-600);
   font-size: 14px;
 }
 
