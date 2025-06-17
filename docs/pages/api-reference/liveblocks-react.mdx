@@ -1271,7 +1271,7 @@ function Inbox() {
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
+return a loading state and will throw error to the nearest `ErrorBoundary` if
 initial load failed.
 
 ### useAiChat
@@ -1285,6 +1285,10 @@ import { useAiChat } from "@liveblocks/react/suspense";
 
 const { chat, error, isLoading } = useAiChat("my-chat-id");
 ```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 #### Displaying a default title
 
@@ -3272,7 +3276,7 @@ const { threads } = useThreads({ scrollOnLoad: false });
 ```
 
 👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
+return a loading state and will throw error to the nearest `ErrorBoundary` if
 initial load failed.
 
 ### useCreateThread [@badge=RoomProvider]
