@@ -1199,7 +1199,7 @@ The button is disabled while fetching is in progress.
 
 ```tsx
 import { AiChat } from "@liveblocks/react-ui";
-import { useAiChats } from "@liveblocks/react/suspense";
+import { useAiChats } from "@liveblocks/react";
 
 function Inbox() {
   const { chats, hasFetchedAll, fetchMore, isFetchingMore } = useAiChats();
@@ -1236,7 +1236,7 @@ loading errors and errors that occur when fetching more inbox notifications.
 
 ```tsx
 import { AiChat } from "@liveblocks/react-ui";
-import { useAiChats } from "@liveblocks/react/suspense";
+import { useAiChats } from "@liveblocks/react";
 
 function Inbox() {
   const { chats, error, fetchMore, fetchMoreError } = useAiChats();
