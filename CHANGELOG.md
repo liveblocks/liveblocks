@@ -22,10 +22,8 @@ For full upgrade instructions and codemods, see the
   `useDeleteAiChat`,`useSendAiMessage`, `RegisterAiTool`, `RegisterAiKnowledge`,
   etc.
 - Rename `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` to
-  `UPDATE_NOTIFICATION_SETTINGS_ERROR` when using
-  [`useNotificationSettings`](/docs/api-reference/liveblocks-react#useNotificationSettings)
-  or
-  [`useUpdateNotificationSettings`](/docs/api-reference/liveblocks-react#useUpdateNotificationSettings).
+  `UPDATE_NOTIFICATION_SETTINGS_ERROR` when using `useNotificationSettings` or
+  `useUpdateNotificationSettings`.
 
 ### `@liveblocks/react-ui`
 
