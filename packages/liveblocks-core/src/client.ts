@@ -588,15 +588,16 @@ export function createClient<U extends BaseUserMeta = DU>(
           requestedScope: "room:read",
         });
         if (resp.type === "public") {
-          // TODO Make error message more instructive, include a link to docs
-          throw new StopRetrying("Cannot use AI Copilots with a public token");
+          throw new StopRetrying(
+            "Cannot use AI Copilots with a public API key"
+          );
         } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
-          // TODO Make error message more instructive, include a link to docs
-          throw new StopRetrying("Cannot use AI Copilots with legacy tokens");
+          throw new StopRetrying("AI Copilots requires an ID or Access token");
         } else {
           if (!resp.token.parsed.ai) {
-            // TODO Make error message more instructive, include a link to docs
-            throw new StopRetrying("AI Copilots not enabled for this account");
+            throw new StopRetrying(
+              "AI Copilots is not yet enabled for this account. To get started, see https://liveblocks.io/docs/get-started/ai-copilots#Quickstart"
+            );
           }
         }
         return resp;
