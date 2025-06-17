@@ -433,7 +433,8 @@ spinner as it runs.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
-import { RegisterAiTool, AiTool, AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { AiTool, AiChat } from "@liveblocks/react-ui";
 
 function App() {
   return (
@@ -558,7 +559,8 @@ the tool is called.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
-import { RegisterAiTool, AiTool } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { AiTool } from "@liveblocks/react-ui";
 
 const deleteFileTool = defineAiTool<{ deletedFileName: string }>()({
   description: "Delete a file from the user's workspace",
@@ -667,7 +669,8 @@ to display the tool’s input arguments and resulting output.
 
 ```tsx
 import { defineAiTool } from "@liveblocks/client";
-import { RegisterAiTool, AiTool, AiChat } from "@liveblocks/react-ui";
+import { RegisterAiTool } from "@liveblocks/react";
+import { AiTool, AiChat } from "@liveblocks/react-ui";
 
 function App() {
   return (
