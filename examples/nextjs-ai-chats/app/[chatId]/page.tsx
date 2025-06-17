@@ -56,15 +56,15 @@ function Empty({ chatId }: AiChatComponentsEmptyProps) {
         <div className="flex flex-wrap items-start gap-2">
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => sendMessage("Check the weather in Paris")}
-          >
-            Check weather
-          </button>
-          <button
-            className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
             onClick={() => sendMessage("Write a story about a brave knight")}
           >
             Write a story
+          </button>
+          <button
+            className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
+            onClick={() => sendMessage("Check the weather in Paris")}
+          >
+            Teach me React
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
