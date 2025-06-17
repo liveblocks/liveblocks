@@ -287,9 +287,22 @@ function Chat() {
       // +++
       style={{ "--lb-ai-chat-container-width": 600 } as CSSProperties}
       // +++
+    />
+  );
+}
+```
 
-      // Or with Tailwind CSS
-      // className="[--lb-ai-chat-container-width:600px]"
+```tsx title="Set variable in Tailwind CSS" isCollapsable isCollapsed
+import { CSSProperties } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      className="[--lb-ai-chat-container-width:600px]"
+      // +++
     />
   );
 }
@@ -338,9 +351,22 @@ function Chat() {
       // +++
       style={{ "--lb-background": "#EEEEEE" } as CSSProperties}
       // +++
+    />
+  );
+}
+```
 
-      // Or with Tailwind CSS
-      // className="[--lb-background:#EEEEEE]"
+```tsx title="Set variable in Tailwind CSS" isCollapsable isCollapsed
+import { CSSProperties } from "react";
+import { AiChat } from "@liveblocks/react-ui";
+
+function Chat() {
+  return (
+    <AiChat
+      chatId="my-chat-id"
+      // +++
+      className="[--lb-background:#EEEEEE]"
+      // +++
     />
   );
 }
