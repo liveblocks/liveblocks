@@ -55,7 +55,7 @@ function ChatPopup() {
             }
             aria-label="Open AI Assistant"
           >
-            <SparklesIcon className="fill-blue-500 size-7" />
+            <SparklesIcon className="fill-[--accent] size-7" />
           </button>
         </PopoverPrimitives.Trigger>
         <PopoverPrimitives.Portal>
@@ -68,28 +68,17 @@ function ChatPopup() {
           >
             <div className="relative flex h-full w-full flex-col gap-1">
               <div className="flex h-11 shrink-0 items-center justify-between px-4 pt-4">
-                <button
-                  onClick={() => {
-                    // If the current chat is deleted, don't go back to it, create a new one
-                    if (chat?.deletedAt) {
-                      setChatId(nanoid());
-                    }
+                {!showListing ? (
+                  <button
+                    onClick={() => setShowListing(!showListing)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 truncate"
+                  >
+                    <ChevronLeftIcon className="size-4 opacity-70 -ml-1 shrink-0 grow-0" />
+                    <span>Chats</span>
+                  </button>
+                ) : null}
 
-                    setShowListing(!showListing);
-                  }}
-                  className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100 grow shrink truncate"
-                >
-                  <ChevronLeftIcon className="size-4 opacity-70 -ml-1 shrink-0 grow-0" />
-                  {showListing ? (
-                    <span>Back</span>
-                  ) : (
-                    <span className="truncate">
-                      {isLoading ? null : chat?.title || "Untitled"}
-                    </span>
-                  )}
-                </button>
-
-                <span className="flex items-center gap-1.5 shrink-0">
+                <span className="ml-auto flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => goToChat(nanoid())}
                     className="flex h-8 items-center gap-1.5 rounded-md px-3 text-sm font-medium hover:bg-neutral-100"
@@ -133,7 +122,7 @@ function Chat({ chatId }: { chatId: string }) {
             const sendMessage = useSendAiMessage(chatId);
 
             return (
-              <div className="p-[var(--spacing)] h-full flex flex-col gap-5 justify-end">
+              <div className="p-[--spacing] h-full flex flex-col gap-5 justify-end">
                 <h3>How can I help you?</h3>
                 <div className="flex flex-wrap items-start gap-2">
                   <button
@@ -201,12 +190,12 @@ function ChatListing({
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-[var(--spacing)]">
-      <ul className="flex flex-col gap-2 text-sm pl-0">
+    <div className="absolute inset-0 flex flex-col gap-2 overflow-auto p-[--spacing]">
+      <ul className="flex flex-col gap-3 text-sm pl-0">
         {chats.map((chat) => (
           <li
             key={chat.id}
-            className="group relative flex items-center justify-between p-[var(--spacing)] bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
+            className="group relative flex items-center justify-between p-[--spacing] bg-white border border-neutral-200 rounded-md hover:bg-neutral-50"
           >
             <div className="flex flex-col gap-0.5">
               <button
@@ -215,7 +204,7 @@ function ChatListing({
               >
                 {chat.title || "Untitled"}
               </button>
-              <div className="text-xs text-neutral-400">
+              <div className="text-xs text-neutral-500">
                 {new Date(chat.lastMessageAt || chat.createdAt).toLocaleString(
                   "en-US",
                   {
