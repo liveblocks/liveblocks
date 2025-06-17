@@ -4,6 +4,7 @@ import { useAiChats, useDeleteAiChat } from "@liveblocks/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ComponentProps } from "react";
+import { nanoid } from "nanoid";
 
 export function ChatList() {
   const params = useParams();
@@ -41,8 +42,16 @@ export function ChatList() {
           <button
             onClick={() => {
               deleteAiChat(chat.id);
+
+              // If this chat was deleted, redirect to the newest chat
               if (params.chatId === chat.id) {
                 const newestChat = chats[index === 0 ? 1 : 0];
+
+                // If all chats are deleted, create a new one
+                if (!newestChat) {
+                  return router.push(nanoid());
+                }
+
                 router.push(`/${newestChat.id}`);
               }
             }}
