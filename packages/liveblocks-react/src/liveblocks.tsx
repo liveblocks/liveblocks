@@ -222,6 +222,25 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   };
 }
 
+// Connect to the AI socket whenever this hook is called, to use in all AI-related hooks.
+//
+// The internal `ManagedSocket` no-ops when calling `connect()` if it is already connected,
+// so we don't need any conditional logic here. And we don't call `disconnect()` in cleanup
+// here because we don't want to disconnect whenever a single hook unmounts, instead we
+// disconnect when `LiveblocksProvider` unmounts.
+//
+// This is a short-term solution to avoid always asking for an auth token on mount
+// even when AI isn't used.
+//
+// - We maybe could disconnect whenever the last AI-related hook unmounts
+// - We maybe could avoid connecting if we already have a token (from another Liveblocks feature),
+//   and already know that the user doesn't have AI enabled
+function useEnsureAiConnection(client: OpaqueClient) {
+  useEffect(() => {
+    client[kInternal].ai.connectInitially();
+  }, [client]);
+}
+
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
@@ -945,6 +964,8 @@ function useAiChats(): AiChatsAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
+  useEnsureAiConnection(client);
+
   useEffect(
     () => void store.outputs.aiChats.waitUntilLoaded()
 
@@ -968,6 +989,8 @@ function useAiChatsSuspense(): AiChatsAsyncSuccess {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
+  useEnsureAiConnection(client);
+
   use(store.outputs.aiChats.waitUntilLoaded());
 
   const result = useAiChats();
@@ -983,6 +1006,8 @@ function useAiChatMessages(
 ): AiChatMessagesAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
 
   useEffect(
     () =>
@@ -1019,6 +1044,8 @@ function useAiChatMessagesSuspense(
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
+  useEnsureAiConnection(client);
+
   use(
     store.outputs.messagesByChatId
       .getOrCreate(chatId)
@@ -1035,6 +1062,8 @@ function useAiChatMessagesSuspense(
 function useAiChat(chatId: string): AiChatAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
 
   useEffect(
     () => void store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded()
@@ -1058,6 +1087,8 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
 
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
 
   use(store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded());
 
@@ -1292,9 +1323,9 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => createClient<U>(options), []);
 
-  // TODO: only do this if ai feature enabled
+  // The AI socket is connected to via `useEnsureAiConnection` whenever at least one
+  // AI-related hook is used. We only handle disconnecting here when `LiveblocksProvider` unmounts.
   useEffect(() => {
-    client[kInternal].ai.connect();
     return () => {
       client[kInternal].ai.disconnect();
     };

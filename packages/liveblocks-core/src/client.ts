@@ -2,7 +2,7 @@ import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
-import { isIdle } from "./connection";
+import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
@@ -583,8 +583,26 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         clientOptions.polyfills?.WebSocket
       ),
-      authenticate: makeAuthDelegateForRoom("default", authManager),
-      canZombie: () => true,
+      authenticate: async () => {
+        const resp = await authManager.getAuthValue({
+          requestedScope: "room:read",
+        });
+        if (resp.type === "public") {
+          throw new StopRetrying(
+            "Cannot use AI Copilots with a public API key"
+          );
+        } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
+          throw new StopRetrying("AI Copilots requires an ID or Access token");
+        } else {
+          if (!resp.token.parsed.ai) {
+            throw new StopRetrying(
+              "AI Copilots is not yet enabled for this account. To get started, see https://liveblocks.io/docs/get-started/ai-copilots#Quickstart"
+            );
+          }
+        }
+        return resp;
+      },
+      canZombie: () => false,
     },
   });
 
