@@ -830,8 +830,9 @@ export type Ai = {
   [kInternal]: {
     context: AiContext;
   };
-  connect: () => void;
-  reconnect: () => void;
+  connectInitially: () => void;
+  // connect: () => void;
+  // reconnect: () => void;
   disconnect: () => void;
   getStatus: () => Status;
 
@@ -1144,9 +1145,16 @@ export function createAi(config: AiConfig): Ai {
     }
   });
 
+  function connectInitially() {
+    if (managedSocket.getStatus() === "initial") {
+      managedSocket.connect();
+    }
+  }
+
   async function sendClientMsgWithResponse<T extends ServerAiMsg>(
     msg: DistributiveOmit<ClientAiMsg, "cmdId">
   ): Promise<T> {
+    connectInitially();
     if (managedSocket.getStatus() !== "connected") {
       await managedSocket.events.didConnect.waitUntil();
     }
@@ -1262,8 +1270,8 @@ export function createAi(config: AiConfig): Ai {
         context,
       },
 
-      connect: () => managedSocket.connect(),
-      reconnect: () => managedSocket.reconnect(),
+      connectInitially,
+      // reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
 
       getChats,

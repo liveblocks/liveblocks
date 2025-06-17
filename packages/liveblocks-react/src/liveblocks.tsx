@@ -237,7 +237,7 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
 //   and already know that the user doesn't have AI enabled
 function useEnsureAiConnection(client: OpaqueClient) {
   useEffect(() => {
-    client[kInternal].ai.connect();
+    client[kInternal].ai.connectInitially();
   }, [client]);
 }
 
