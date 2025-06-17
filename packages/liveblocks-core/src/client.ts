@@ -586,7 +586,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       authenticate: async () => {
         return authManager.getAuthValue({
           requestedScope: "room:read",
-          roomId: "default",
         });
       },
       canZombie: () => false,
