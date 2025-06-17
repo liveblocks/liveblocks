@@ -5,20 +5,22 @@ import type {
   ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
-import {
-  type AsyncResult,
-  type BaseRoomInfo,
-  type DM,
-  type DU,
-  HttpError,
-  type LiveblocksError,
-  type OpaqueClient,
-  type PartialNotificationSettings,
-  type SyncStatus,
+import type {
+  AsyncResult,
+  BaseRoomInfo,
+  CopilotId,
+  DM,
+  DU,
+  LiveblocksError,
+  MessageId,
+  OpaqueClient,
+  PartialNotificationSettings,
+  SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
   createClient,
+  HttpError,
   kInternal,
   makePoller,
   raise,
@@ -26,17 +28,21 @@ import {
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
 } from "react";
 
+import { RegisterAiKnowledge, RegisterAiTool } from "./ai";
 import { config } from "./config";
-import { useIsInsideRoom } from "./contexts";
+import {
+  ClientContext,
+  useClient,
+  useClientOrNull,
+  useIsInsideRoom,
+} from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
 import { ensureNotServerSide } from "./lib/ssr";
@@ -44,6 +50,12 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  AiChatAsyncResult,
+  AiChatAsyncSuccess,
+  AiChatMessagesAsyncResult,
+  AiChatMessagesAsyncSuccess,
+  AiChatsAsyncResult,
+  AiChatsAsyncSuccess,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   NotificationSettingsAsyncResult,
@@ -56,20 +68,13 @@ import type {
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
+  UseSendAiMessageOptions,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
 import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
-
-/**
- * Raw access to the React context where the LiveblocksProvider stores the
- * current client. Exposed for advanced use cases only.
- *
- * @private This is a private/advanced API. Do not rely on it.
- */
-export const ClientContext = createContext<OpaqueClient | null>(null);
 
 function missingUserError(userId: string) {
   return new Error(`resolveUsers didn't return anything for user '${userId}'`);
@@ -215,6 +220,25 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   return extras as unknown as Omit<typeof extras, "store"> & {
     store: UmbrellaStore<M>;
   };
+}
+
+// Connect to the AI socket whenever this hook is called, to use in all AI-related hooks.
+//
+// The internal `ManagedSocket` no-ops when calling `connect()` if it is already connected,
+// so we don't need any conditional logic here. And we don't call `disconnect()` in cleanup
+// here because we don't want to disconnect whenever a single hook unmounts, instead we
+// disconnect when `LiveblocksProvider` unmounts.
+//
+// This is a short-term solution to avoid always asking for an auth token on mount
+// even when AI isn't used.
+//
+// - We maybe could disconnect whenever the last AI-related hook unmounts
+// - We maybe could avoid connecting if we already have a token (from another Liveblocks feature),
+//   and already know that the user doesn't have AI enabled
+function useEnsureAiConnection(client: OpaqueClient) {
+  useEffect(() => {
+    client[kInternal].ai.connectInitially();
+  }, [client]);
 }
 
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
@@ -371,6 +395,13 @@ function makeLiveblocksContextBundle<
     useInboxNotificationThread,
     useUserThreads_experimental,
 
+    useAiChats,
+    useAiChat,
+    useAiChatMessages,
+    useCreateAiChat,
+    useDeleteAiChat,
+    useSendAiMessage,
+
     ...shared.classic,
 
     suspense: {
@@ -394,6 +425,13 @@ function makeLiveblocksContextBundle<
       useUpdateNotificationSettings,
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
+
+      useAiChats: useAiChatsSuspense,
+      useAiChat: useAiChatSuspense,
+      useAiChatMessages: useAiChatMessagesSuspense,
+      useCreateAiChat,
+      useDeleteAiChat,
+      useSendAiMessage,
 
       ...shared.suspense,
     },
@@ -669,7 +707,7 @@ function useUpdateNotificationSettings_withClient(
 
             client[kInternal].emitError(
               {
-                type: "UPDATE_USER_NOTIFICATION_SETTINGS_ERROR",
+                type: "UPDATE_NOTIFICATION_SETTINGS_ERROR",
               },
               err
             );
@@ -916,6 +954,261 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   } as const;
 }
 
+/**
+ * (Private beta)  Returns the chats for the current user.
+ *
+ * @example
+ * const { chats } = useAiChats();
+ */
+function useAiChats(): AiChatsAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  useEffect(
+    () => void store.outputs.aiChats.waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.aiChats.signal, identity, shallow);
+}
+
+function useAiChatsSuspense(): AiChatsAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  use(store.outputs.aiChats.waitUntilLoaded());
+
+  const result = useAiChats();
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+function useAiChatMessages(
+  chatId: string,
+  /** @internal */
+  options?: { branchId?: MessageId }
+): AiChatMessagesAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  useEffect(
+    () =>
+      void store.outputs.messagesByChatId
+        .getOrCreate(chatId)
+        .getOrCreate(options?.branchId ?? null)
+        .waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(
+    store.outputs.messagesByChatId
+      .getOrCreate(chatId)
+      .getOrCreate(options?.branchId ?? null).signal
+  );
+}
+
+function useAiChatMessagesSuspense(
+  chatId: string,
+  /** @internal */
+  options?: { branchId?: MessageId }
+): AiChatMessagesAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  use(
+    store.outputs.messagesByChatId
+      .getOrCreate(chatId)
+      .getOrCreate(options?.branchId ?? null)
+      .waitUntilLoaded()
+  );
+
+  const result = useAiChatMessages(chatId, options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+function useAiChat(chatId: string): AiChatAsyncResult {
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  useEffect(
+    () => void store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded()
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
+
+  return useSignal(store.outputs.aiChatById.getOrCreate(chatId).signal);
+}
+
+function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
+  // Throw error if we're calling this hook server side
+  ensureNotServerSide();
+
+  const client = useClient();
+  const store = getUmbrellaStoreForClient(client);
+
+  useEnsureAiConnection(client);
+
+  use(store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded());
+
+  const result = useAiChat(chatId);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+/**
+ * Returns a function that creates an AI chat.
+ *
+ * If you do not pass a title for the chat, it will be automatically computed
+ * after the first AI response.
+ *
+ * @example
+ * const createAiChat = useCreateAiChat();
+ * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
+ */
+function useCreateAiChat() {
+  const client = useClient();
+
+  return useCallback(
+    (options: {
+      id: string;
+      title?: string;
+      metadata?: Record<string, string | string[]>;
+    }) => {
+      client[kInternal].ai
+        .getOrCreateChat(options.id, {
+          title: options.title,
+          metadata: options.metadata,
+        })
+        .catch((err) => {
+          console.error(
+            `Failed to create chat with ID "${options.id}": ${String(err)}`
+          );
+        });
+    },
+    [client]
+  );
+}
+
+/**
+ * Returns a function that deletes the AI chat with the specified id.
+ *
+ * @example
+ * const deleteAiChat = useDeleteAiChat();
+ * deleteAiChat("ai-chat-id");
+ */
+function useDeleteAiChat() {
+  const client = useClient();
+
+  return useCallback(
+    (chatId: string) => {
+      client[kInternal].ai.deleteChat(chatId).catch((err) => {
+        console.error(
+          `Failed to delete chat with ID "${chatId}": ${String(err)}`
+        );
+      });
+    },
+    [client]
+  );
+}
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendMessage = useSendAiMessage(chatId);
+ * sendMessage("Hello, Liveblocks AI!");
+ */
+function useSendAiMessage(
+  chatId: string,
+  options?: UseSendAiMessageOptions
+): (message: string) => void {
+  const client = useClient();
+  const copilotId = options?.copilotId;
+
+  return useCallback(
+    (message: string) => {
+      const messages = client[kInternal].ai.signals
+        .getChatMessagesForBranchΣ(chatId)
+        .get();
+
+      const lastMessageId = messages[messages.length - 1]?.id ?? null;
+
+      const content = [{ type: "text" as const, text: message }];
+      const newMessageId = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.createOptimistically(
+        chatId,
+        "user",
+        lastMessageId,
+        content
+      );
+
+      const targetMessageId = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.createOptimistically(
+        chatId,
+        "assistant",
+        newMessageId
+      );
+
+      void client[kInternal].ai.askUserMessageInChat(
+        chatId,
+        { id: newMessageId, parentMessageId: lastMessageId, content },
+        targetMessageId,
+        {
+          stream: options?.stream,
+          copilotId: copilotId as CopilotId | undefined,
+          timeout: options?.timeout,
+        }
+      );
+    },
+    [client, chatId, copilotId, options?.stream, options?.timeout]
+  );
+}
+
 /** @internal */
 export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
@@ -934,6 +1227,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
+      RegisterAiTool,
     },
     suspense: {
       useClient,
@@ -943,6 +1238,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useErrorListener,
       useSyncStatus,
+      RegisterAiKnowledge,
+      RegisterAiTool,
     },
   };
 }
@@ -957,23 +1254,6 @@ function useEnsureNoLiveblocksProvider(options?: { allowNesting?: boolean }) {
       "You cannot nest multiple LiveblocksProvider instances in the same React tree."
     );
   }
-}
-
-/**
- * @private This is an internal API.
- */
-export function useClientOrNull<U extends BaseUserMeta>() {
-  return useContext(ClientContext) as Client<U> | null;
-}
-
-/**
- * Obtains a reference to the current Liveblocks client.
- */
-export function useClient<U extends BaseUserMeta>() {
-  return (
-    useClientOrNull<U>() ??
-    raise("LiveblocksProvider is missing from the React tree.")
-  );
 }
 
 /**
@@ -1018,7 +1298,6 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     backgroundKeepAliveTimeout: useInitial(o.backgroundKeepAliveTimeout),
     polyfills: useInitial(o.polyfills),
     largeMessageStrategy: useInitial(o.largeMessageStrategy),
-    unstable_fallbackToHTTP: useInitial(o.unstable_fallbackToHTTP),
     unstable_streamData: useInitial(o.unstable_streamData),
     preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
 
@@ -1043,6 +1322,15 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   // to recreate a client instance after the first render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => createClient<U>(options), []);
+
+  // The AI socket is connected to via `useEnsureAiConnection` whenever at least one
+  // AI-related hook is used. We only handle disconnecting here when `LiveblocksProvider` unmounts.
+  useEffect(() => {
+    return () => {
+      client[kInternal].ai.disconnect();
+    };
+  }, [client]);
+
   return (
     <LiveblocksProviderWithClient client={client}>
       {children}
@@ -1376,6 +1664,57 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
 
+/**
+ * (Private beta)  Returns the chats for the current user.
+ *
+ * @example
+ * const { chats, error, isLoading } = useAiChats();
+ */
+const _useAiChats: TypedBundle["useAiChats"] = useAiChats;
+
+/**
+ * (Private beta)  Returns the chats for the current user.
+ *
+ * @example
+ * const { chats, error, isLoading } = useAiChats();
+ */
+const _useAiChatsSuspense: TypedBundle["suspense"]["useAiChats"] =
+  useAiChatsSuspense;
+
+/**
+ * (Private beta)  Returns the information of the given chat.
+ *
+ * @example
+ * const { chat, error, isLoading } = useAiChat("my-chat");
+ */
+const _useAiChat: TypedBundle["useAiChat"] = useAiChat;
+
+/**
+ * (Private beta)  Returns the information of the given chat.
+ *
+ * @example
+ * const { chat, error, isLoading } = useAiChat("my-chat");
+ */
+const _useAiChatSuspense: TypedBundle["suspense"]["useAiChat"] =
+  useAiChatSuspense;
+
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages, error, isLoading } = useAiChatMessages("my-chat");
+ */
+const _useAiChatMessages: TypedBundle["useAiChatMessages"] = useAiChatMessages;
+
+/**
+ * (Private beta)  Returns the messages in the given chat.
+ *
+ * @example
+ * const { messages, error, isLoading } = useAiChatMessages("my-chat");
+ */
+const _useAiChatMessagesSuspense: TypedBundle["suspense"]["useAiChatMessages"] =
+  useAiChatMessagesSuspense;
+
 function useSyncStatus_withClient(
   client: OpaqueClient,
   options?: UseSyncStatusOptions
@@ -1488,4 +1827,13 @@ export {
   useUpdateNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
+  _useAiChats as useAiChats,
+  _useAiChatsSuspense as useAiChatsSuspense,
+  _useAiChat as useAiChat,
+  _useAiChatSuspense as useAiChatSuspense,
+  _useAiChatMessages as useAiChatMessages,
+  _useAiChatMessagesSuspense as useAiChatMessagesSuspense,
+  useCreateAiChat,
+  useDeleteAiChat,
+  useSendAiMessage,
 };

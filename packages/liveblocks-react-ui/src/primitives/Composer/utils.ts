@@ -39,10 +39,6 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
-import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
-import { isComposerBodyMention } from "../../slate/plugins/mentions";
-import { isText } from "../../slate/utils/is-text";
 import type {
   ComposerBody,
   ComposerBodyAutoLink,
@@ -60,16 +56,19 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
+import { isText } from "../slate/utils/is-text";
 import { useComposer, useComposerAttachmentsContext } from "./contexts";
+import { isComposerBodyAutoLink } from "./slate/plugins/auto-links";
+import { isComposerBodyCustomLink } from "./slate/plugins/custom-links";
+import { isComposerBodyMention } from "./slate/plugins/mentions";
 import type { FloatingAlignment, FloatingPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
 ): CommentBodyMention {
-  return {
-    type: "mention",
-    id: mention.id,
-  };
+  const { children: _, ...commentBodyMention } = mention;
+
+  return commentBodyMention;
 }
 
 export function composerBodyAutoLinkToCommentBodyLink(
@@ -95,8 +94,7 @@ export function commentBodyMentionToComposerBodyMention(
   mention: CommentBodyMention
 ): ComposerBodyMention {
   return {
-    type: "mention",
-    id: mention.id,
+    ...mention,
     children: [{ text: "" }],
   };
 }

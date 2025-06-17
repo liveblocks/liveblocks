@@ -18,13 +18,18 @@
   --lb-inset-shadow: inset 0 0 0 1px rgb(255 255 255 / 6%);
   --lb-highlight-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
   --lb-elevation-shadow: $lb-elevation-shadow;
+  --lb-elevation-shadow-moderate: $lb-elevation-shadow-moderate;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
 
   color-scheme: dark;
 
-  &.lb-elevation,
-  &.lb-tooltip {
+  &:where(.lb-elevation, .lb-tooltip) {
     --lb-background: #333;
+    --lb-foreground-contrast: 10%;
+  }
+
+  &:where(.lb-elevation-moderate) {
+    --lb-background: #2a2a2a;
     --lb-foreground-contrast: 10%;
   }
 }

@@ -1,4 +1,4 @@
-import { RoomInfo } from "@liveblocks/node";
+import { RoomData } from "@liveblocks/node";
 import { DocumentGroup } from "@/types";
 import { getGroup } from "../database";
 import { roomAccessesToDocumentAccess } from "./convertAccessType";
@@ -8,7 +8,7 @@ import { roomAccessesToDocumentAccess } from "./convertAccessType";
  *
  * @param result - Liveblocks getRoomById() result
  */
-export async function buildDocumentGroups(result: RoomInfo) {
+export async function buildDocumentGroups(result: RoomData) {
   const groups: DocumentGroup[] = [];
 
   for (const [id, accessValue] of Object.entries(result.groupsAccesses)) {

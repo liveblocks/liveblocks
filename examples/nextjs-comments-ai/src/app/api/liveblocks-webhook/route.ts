@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import {
   CommentBodyInlineElement,
   CommentBodyText,
-  getMentionedIdsFromCommentBody,
+  getMentionsFromCommentBody,
   Liveblocks,
   stringifyCommentBody,
 } from "@liveblocks/node";
@@ -58,8 +58,11 @@ export async function POST(request: Request) {
   }
 
   // If AI not mentioned in comment, ignore
-  const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
-  if (!mentionedIds.includes(AI_USER_ID)) {
+  const mentions = getMentionsFromCommentBody(
+    comment.body,
+    (mention) => mention.id === AI_USER_ID
+  );
+  if (mentions.length === 0) {
     return new Response("", { status: 200 });
   }
 

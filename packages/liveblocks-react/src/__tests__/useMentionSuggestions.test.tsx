@@ -9,6 +9,13 @@ import { act, createContextsForTest } from "./_utils";
 async function defaultResolveMentionSuggestions({
   text,
 }: ResolveMentionSuggestionsArgs) {
+  return text.split("").map((id) => ({ kind: "user" as const, id }));
+}
+
+// eslint-disable-next-line @typescript-eslint/require-await
+async function legacyResolveMentionSuggestions({
+  text,
+}: ResolveMentionSuggestionsArgs) {
   return text.split("");
 }
 
@@ -47,7 +54,11 @@ describe("useMentionSuggestions", () => {
       expect(result.current.mentionSuggestions).not.toBeUndefined()
     );
 
-    expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"]);
+    expect(result.current.mentionSuggestions).toEqual([
+      { kind: "user", id: "a" },
+      { kind: "user", id: "b" },
+      { kind: "user", id: "c" },
+    ]);
 
     unmount();
   });
@@ -74,18 +85,34 @@ describe("useMentionSuggestions", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
-    expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"]);
+    expect(result.current.mentionSuggestions).toEqual([
+      { kind: "user", id: "a" },
+      { kind: "user", id: "b" },
+      { kind: "user", id: "c" },
+    ]);
 
     rerender({ text: "123" });
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["1", "2", "3"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "1" },
+        { kind: "user", id: "2" },
+        { kind: "user", id: "3" },
+      ])
     );
 
-    expect(result.current.mentionSuggestions).toEqual(["1", "2", "3"]);
+    expect(result.current.mentionSuggestions).toEqual([
+      { kind: "user", id: "1" },
+      { kind: "user", id: "2" },
+      { kind: "user", id: "3" },
+    ]);
 
     unmount();
   });
@@ -94,7 +121,8 @@ describe("useMentionSuggestions", () => {
     const roomId = nanoid();
 
     const resolveMentionSuggestions = jest.fn(
-      ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
+      ({ text }: ResolveMentionSuggestionsArgs) =>
+        text.split("").map((id) => ({ kind: "user" as const, id }))
     );
     const {
       room: { RoomProvider },
@@ -115,7 +143,11 @@ describe("useMentionSuggestions", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
     expect(resolveMentionSuggestions).toHaveBeenCalledWith({
@@ -130,7 +162,8 @@ describe("useMentionSuggestions", () => {
     const roomId = nanoid();
 
     const resolveMentionSuggestions = jest.fn(
-      ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
+      ({ text }: ResolveMentionSuggestionsArgs) =>
+        text.split("").map((id) => ({ kind: "user" as const, id }))
     );
     const {
       room: { RoomProvider },
@@ -151,20 +184,32 @@ describe("useMentionSuggestions", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
     rerender({ text: "123" });
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["1", "2", "3"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "1" },
+        { kind: "user", id: "2" },
+        { kind: "user", id: "3" },
+      ])
     );
 
     // "abc" was already resolved so resolveMentionSuggestions should not be called again
     rerender({ text: "abc" });
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
     expect(resolveMentionSuggestions).toHaveBeenCalledTimes(2);
@@ -186,7 +231,8 @@ describe("useMentionSuggestions", () => {
     const roomId = nanoid();
 
     const resolveMentionSuggestions = jest.fn(
-      ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
+      ({ text }: ResolveMentionSuggestionsArgs) =>
+        text.split("").map((id) => ({ kind: "user" as const, id }))
     );
     const {
       client,
@@ -208,13 +254,21 @@ describe("useMentionSuggestions", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
     rerender({ text: "123" });
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["1", "2", "3"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "1" },
+        { kind: "user", id: "2" },
+        { kind: "user", id: "3" },
+      ])
     );
 
     // Invalidate all mention suggestions
@@ -223,7 +277,11 @@ describe("useMentionSuggestions", () => {
     rerender({ text: "abc" });
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
     expect(resolveMentionSuggestions).toHaveBeenCalledTimes(3);
@@ -250,7 +308,8 @@ describe("useMentionSuggestions", () => {
     const roomId = nanoid();
 
     const resolveMentionSuggestions = jest.fn(
-      ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
+      ({ text }: ResolveMentionSuggestionsArgs) =>
+        text.split("").map((id) => ({ kind: "user" as const, id }))
     );
     const {
       room: { RoomProvider },
@@ -279,7 +338,11 @@ describe("useMentionSuggestions", () => {
     rerender({ text: "abc" });
 
     await waitFor(() =>
-      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+      expect(result.current.mentionSuggestions).toEqual([
+        { kind: "user", id: "a" },
+        { kind: "user", id: "b" },
+        { kind: "user", id: "c" },
+      ])
     );
 
     expect(resolveMentionSuggestions).toHaveBeenCalledTimes(2);
@@ -293,6 +356,42 @@ describe("useMentionSuggestions", () => {
       text: "abc",
       roomId,
     });
+
+    unmount();
+  });
+
+  test("should still support returning string[] for backward compatibility", async () => {
+    const roomId = nanoid();
+
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions: legacyResolveMentionSuggestions,
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        mentionSuggestions: useMentionSuggestions(roomId, "abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current.mentionSuggestions).toBeUndefined();
+
+    await waitFor(() =>
+      expect(result.current.mentionSuggestions).not.toBeUndefined()
+    );
+
+    // Even though the resolver returns string[], the hook should normalize to MentionData[]
+    expect(result.current.mentionSuggestions).toEqual([
+      { kind: "user", id: "a" },
+      { kind: "user", id: "b" },
+      { kind: "user", id: "c" },
+    ]);
 
     unmount();
   });

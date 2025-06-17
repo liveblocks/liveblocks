@@ -29,11 +29,12 @@ import {
   useState,
 } from "react";
 
+import type { GlobalComponents } from "../components";
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { BellIcon } from "../icons/Bell";
 import { BellCrossedIcon } from "../icons/BellCrossed";
-import { ResolveIcon } from "../icons/Resolve";
-import { ResolvedIcon } from "../icons/Resolved";
+import { CheckCircleIcon } from "../icons/CheckCircle";
+import { CheckCircleFillIcon } from "../icons/CheckCircleFill";
 import type {
   CommentOverrides,
   ComposerOverrides,
@@ -145,6 +146,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   overrides?: Partial<
     GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides
   >;
+
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<GlobalComponents>;
 }
 
 /**
@@ -179,6 +185,7 @@ export const Thread = forwardRef(
       onAttachmentClick,
       onComposerSubmit,
       overrides,
+      components,
       className,
       ...props
     }: ThreadProps<M>,
@@ -335,6 +342,7 @@ export const Thread = forwardRef(
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
                   onAttachmentClick={onAttachmentClick}
+                  components={components}
                   autoMarkReadThreadId={
                     index === lastCommentIndex && isUnread
                       ? thread.id
@@ -367,9 +375,9 @@ export const Thread = forwardRef(
                             }
                             icon={
                               thread.resolved ? (
-                                <ResolvedIcon />
+                                <CheckCircleFillIcon />
                               ) : (
-                                <ResolveIcon />
+                                <CheckCircleIcon />
                               )
                             }
                             disabled={!canComment}

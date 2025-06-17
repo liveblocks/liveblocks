@@ -7,6 +7,7 @@ import {
   createCommentAttachmentId,
   type EventSource,
   makeEventSource,
+  type MentionData,
 } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
@@ -53,7 +54,7 @@ import { withHistory } from "slate-history";
 import type {
   RenderElementProps,
   RenderElementSpecificProps,
-  RenderLeafProps,
+  RenderLeafSpecificProps,
   RenderPlaceholderProps,
 } from "slate-react";
 import {
@@ -65,28 +66,8 @@ import {
   withReact,
 } from "slate-react";
 
-import { useLiveblocksUIConfig } from "../../config";
-import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
-import { withAutoLinks } from "../../slate/plugins/auto-links";
-import { withCustomLinks } from "../../slate/plugins/custom-links";
-import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
-import type { MentionDraft } from "../../slate/plugins/mentions";
-import {
-  getMentionDraftAtSelection,
-  insertMention,
-  insertMentionCharacter,
-  MENTION_CHARACTER,
-  withMentions,
-} from "../../slate/plugins/mentions";
-import { withNormalize } from "../../slate/plugins/normalize";
-import { withPaste } from "../../slate/plugins/paste";
-import { getDOMRange } from "../../slate/utils/get-dom-range";
-import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
-import {
-  getMarks,
-  leaveMarkEdge,
-  toggleMark as toggleEditorMark,
-} from "../../slate/utils/marks";
+import { useLiveblocksUiConfig } from "../../config";
+import { MENTION_CHARACTER } from "../../constants";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
@@ -94,6 +75,7 @@ import type {
   ComposerBodyMark,
   ComposerBodyMarks,
   ComposerBodyMention,
+  ComposerBodyText,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
@@ -104,6 +86,15 @@ import { useInitial } from "../../utils/use-initial";
 import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
+import { withEmptyClearFormatting } from "../slate/plugins/empty-clear-formatting";
+import { withNormalize } from "../slate/plugins/normalize";
+import { getDOMRange } from "../slate/utils/get-dom-range";
+import { isEmpty as isEditorEmpty } from "../slate/utils/is-empty";
+import {
+  getComposerBodyMarks,
+  leaveMarkEdge,
+  toggleMark as toggleEditorMark,
+} from "../slate/utils/marks";
 import {
   ComposerAttachmentsContext,
   ComposerContext,
@@ -116,6 +107,17 @@ import {
   useComposerFloatingToolbarContext,
   useComposerSuggestionsContext,
 } from "./contexts";
+import { withAutoFormatting } from "./slate/plugins/auto-formatting";
+import { withAutoLinks } from "./slate/plugins/auto-links";
+import { withCustomLinks } from "./slate/plugins/custom-links";
+import type { MentionDraft } from "./slate/plugins/mentions";
+import {
+  getMentionDraftAtSelection,
+  insertMention,
+  insertMentionCharacter,
+  withMentions,
+} from "./slate/plugins/mentions";
+import { withPaste } from "./slate/plugins/paste";
 import type {
   ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
@@ -201,11 +203,12 @@ function ComposerEditorMentionWrapper({
   element,
 }: ComposerEditorMentionWrapperProps) {
   const isSelected = useSelected();
+  const { children: _, ...mention } = element;
 
   return (
     <span {...attributes}>
       {element.id ? (
-        <Mention userId={element.id} isSelected={isSelected} />
+        <Mention mention={mention} isSelected={isSelected} />
       ) : null}
       {children}
     </span>
@@ -233,9 +236,9 @@ function ComposerEditorLinkWrapper({
 function ComposerEditorMentionSuggestionsWrapper({
   id,
   itemId,
-  userIds,
-  selectedUserId,
-  setSelectedUserId,
+  mentions,
+  selectedMentionId,
+  setSelectedMentionId,
   mentionDraft,
   setMentionDraft,
   onItemSelect,
@@ -246,10 +249,10 @@ function ComposerEditorMentionSuggestionsWrapper({
   const editor = useSlateStatic();
   const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const { portalContainer } = useLiveblocksUIConfig();
+  const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const isOpen =
-    isFocused && mentionDraft?.range !== undefined && userIds !== undefined;
+    isFocused && mentionDraft?.range !== undefined && mentions !== undefined;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -311,7 +314,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     return () => {
       cancelAnimationFrame(animationFrame);
     };
-  }, [userIds?.length, isOpen, elements.floating, update]);
+  }, [mentions?.length, isOpen, elements.floating, update]);
 
   return (
     <Persist>
@@ -320,8 +323,8 @@ function ComposerEditorMentionSuggestionsWrapper({
           value={{
             id,
             itemId,
-            selectedValue: selectedUserId,
-            setSelectedValue: setSelectedUserId,
+            selectedValue: selectedMentionId,
+            setSelectedValue: setSelectedMentionId,
             onItemSelect,
             placement,
             dir,
@@ -343,8 +346,8 @@ function ComposerEditorMentionSuggestionsWrapper({
             }}
           >
             <MentionSuggestions
-              userIds={userIds}
-              selectedUserId={selectedUserId}
+              mentions={mentions}
+              selectedMentionId={selectedMentionId}
             />
           </Portal>
         </ComposerSuggestionsContext.Provider>
@@ -364,7 +367,7 @@ function ComposerEditorFloatingToolbarWrapper({
   const editor = useSlateStatic();
   const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const { portalContainer } = useLiveblocksUIConfig();
+  const { portalContainer } = useLiveblocksUiConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
   const isOpen = isFocused && !isPointerDown && hasFloatingToolbarRange;
@@ -561,7 +564,11 @@ function ComposerEditorElement({
 }
 
 // <code><s><em><strong>text</strong></s></em></code>
-function ComposerEditorLeaf({ attributes, children, leaf }: RenderLeafProps) {
+function ComposerEditorLeaf({
+  attributes,
+  children,
+  leaf,
+}: RenderLeafSpecificProps<ComposerBodyText>) {
   if (leaf.bold) {
     children = <strong>{children}</strong>;
   }
@@ -598,7 +605,7 @@ function ComposerEditorPlaceholder({
  * Displays mentions within `Composer.Editor`.
  *
  * @example
- * <Composer.Mention>@{userId}</Composer.Mention>
+ * <Composer.Mention>@{mention.id}</Composer.Mention>
  */
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
@@ -688,9 +695,9 @@ const ComposerSuggestions = forwardRef<
  *
  * @example
  * <Composer.SuggestionsList>
- *   {userIds.map((userId) => (
- *     <Composer.SuggestionsListItem key={userId} value={userId}>
- *       @{userId}
+ *   {mentions.map((mention) => (
+ *     <Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+ *       @{mention.id}
  *     </Composer.SuggestionsListItem>
  *   ))}
  * </Composer.SuggestionsList>
@@ -719,8 +726,8 @@ const ComposerSuggestionsList = forwardRef<
  * Displays a suggestion within `Composer.SuggestionsList`.
  *
  * @example
- * <Composer.SuggestionsListItem key={userId} value={userId}>
- *   @{userId}
+ * <Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+ *   @{mention.id}
  * </Composer.SuggestionsListItem>
  */
 const ComposerSuggestionsListItem = forwardRef<
@@ -816,21 +823,21 @@ const defaultEditorComponents: ComposerEditorComponents = {
   Link: ({ href, children }) => {
     return <ComposerLink href={href}>{children}</ComposerLink>;
   },
-  Mention: ({ userId }) => {
+  Mention: ({ mention }) => {
     return (
       <ComposerMention>
         {MENTION_CHARACTER}
-        {userId}
+        {mention.id}
       </ComposerMention>
     );
   },
-  MentionSuggestions: ({ userIds }) => {
-    return userIds.length > 0 ? (
+  MentionSuggestions: ({ mentions }) => {
+    return mentions.length > 0 ? (
       <ComposerSuggestions>
         <ComposerSuggestionsList>
-          {userIds.map((userId) => (
-            <ComposerSuggestionsListItem key={userId} value={userId}>
-              {userId}
+          {mentions.map((mention) => (
+            <ComposerSuggestionsListItem key={mention.id} value={mention.id}>
+              {mention.id}
             </ComposerSuggestionsListItem>
           ))}
         </ComposerSuggestionsList>
@@ -905,8 +912,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const floatingToolbarId = `liveblocks-floating-toolbar-${id}`;
     const suggestionsListId = `liveblocks-suggestions-list-${id}`;
     const suggestionsListItemId = useCallback(
-      (userId?: string) =>
-        userId ? `liveblocks-suggestions-list-item-${id}-${userId}` : undefined,
+      (mentionId?: string) =>
+        mentionId
+          ? `liveblocks-suggestions-list-item-${id}-${mentionId}`
+          : undefined,
       [id]
     );
 
@@ -932,13 +941,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     );
 
     const createMention = useCallback(
-      (userId?: string) => {
-        if (!mentionDraft || !userId) {
+      (mention?: MentionData) => {
+        if (!mentionDraft || !mention) {
           return;
         }
 
         SlateTransforms.select(editor, mentionDraft.range);
-        insertMention(editor, userId);
+        insertMention(editor, mention);
         setMentionDraft(undefined);
         setSelectedMentionSuggestionIndex(0);
       },
@@ -980,8 +989,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           if (isKey(event, "Enter") || isKey(event, "Tab")) {
             event.preventDefault();
 
-            const userId = mentionSuggestions?.[selectedMentionSuggestionIndex];
-            createMention(userId);
+            const mention =
+              mentionSuggestions?.[selectedMentionSuggestionIndex];
+            createMention(mention);
           }
 
           // Close the suggestions on Escape
@@ -1084,13 +1094,14 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [onBlur, setFocused]
     );
 
-    const selectedMentionSuggestionUserId = useMemo(
-      () => mentionSuggestions?.[selectedMentionSuggestionIndex],
-      [selectedMentionSuggestionIndex, mentionSuggestions]
-    );
-    const setSelectedMentionSuggestionUserId = useCallback(
-      (userId: string) => {
-        const index = mentionSuggestions?.indexOf(userId);
+    const selectedMention =
+      mentionSuggestions?.[selectedMentionSuggestionIndex];
+    const selectedMentionId = selectedMention?.id;
+    const setSelectedMentionId = useCallback(
+      (mentionId: string) => {
+        const index = mentionSuggestions?.findIndex(
+          (mention) => mention.id === mentionId
+        );
 
         if (index !== undefined && index >= 0) {
           setSelectedMentionSuggestionIndex(index);
@@ -1107,9 +1118,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
               "aria-autocomplete": "list",
               "aria-expanded": true,
               "aria-controls": suggestionsListId,
-              "aria-activedescendant": suggestionsListItemId(
-                selectedMentionSuggestionUserId
-              ),
+              "aria-activedescendant": suggestionsListItemId(selectedMentionId),
             }
           : hasFloatingToolbarRange
             ? {
@@ -1121,7 +1130,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         mentionDraft,
         suggestionsListId,
         suggestionsListItemId,
-        selectedMentionSuggestionUserId,
+        selectedMentionId,
         hasFloatingToolbarRange,
         floatingToolbarId,
       ]
@@ -1145,6 +1154,17 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         select();
       }
     }, [editor, select, isFocused]);
+
+    const handleMentionSelect = useCallback(
+      (mentionId: string) => {
+        const mention = mentionSuggestions?.find(
+          (mention) => mention.id === mentionId
+        );
+
+        createMention(mention);
+      },
+      [createMention, mentionSuggestions]
+    );
 
     return (
       <Slate
@@ -1175,12 +1195,12 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             dir={dir}
             mentionDraft={mentionDraft}
             setMentionDraft={setMentionDraft}
-            selectedUserId={selectedMentionSuggestionUserId}
-            setSelectedUserId={setSelectedMentionSuggestionUserId}
-            userIds={mentionSuggestions}
+            selectedMentionId={selectedMentionId}
+            setSelectedMentionId={setSelectedMentionId}
+            mentions={mentionSuggestions}
             id={suggestionsListId}
             itemId={suggestionsListItemId}
-            onItemSelect={createMention}
+            onItemSelect={handleMentionSelect}
             MentionSuggestions={MentionSuggestions}
           />
         )}
@@ -1272,7 +1292,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
-    const [marks, setMarks] = useState<ComposerBodyMarks>(getMarks);
+    const [marks, setMarks] = useState<ComposerBodyMarks>(getComposerBodyMarks);
 
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
@@ -1524,7 +1544,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     useObservable(onEditorChange, () => {
-      setMarks(getMarks(editor));
+      setMarks(getComposerBodyMarks(editor));
     });
 
     return (

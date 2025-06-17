@@ -106,7 +106,7 @@ import type { Patchable } from "./types/Patchable";
 import type { User } from "./types/User";
 import { PKG_VERSION } from "./version";
 
-type TimeoutID = ReturnType<typeof setTimeout>;
+export type TimeoutID = ReturnType<typeof setTimeout>;
 
 //
 // NOTE:
@@ -649,11 +649,6 @@ export type Room<
     readonly self: Observable<User<P, U>>;
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
-    /**
-     * @deprecated Renamed to `storageBatch`. The `storage` event source will
-     * soon be replaced by another/incompatible API.
-     */
-    readonly storage: Observable<StorageUpdate[]>;
     readonly storageBatch: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
 
@@ -992,15 +987,6 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
-   * @deprecated Renamed to `getSubscriptionSettings`
-   *
-   * Gets the user's subscription settings for the current room.
-   */
-  getNotificationSettings(
-    options?: GetSubscriptionSettingsOptions
-  ): Promise<RoomSubscriptionSettings>;
-
-  /**
    * Gets the user's subscription settings for the current room.
    *
    * @example
@@ -1008,15 +994,6 @@ export type Room<
    */
   getSubscriptionSettings(
     options?: GetSubscriptionSettingsOptions
-  ): Promise<RoomSubscriptionSettings>;
-
-  /**
-   * @deprecated Renamed to `updateSubscriptionSettings`
-   *
-   * Updates the user's subscription settings for the current room.
-   */
-  updateNotificationSettings(
-    settings: Partial<RoomSubscriptionSettings>
   ): Promise<RoomSubscriptionSettings>;
 
   /**
@@ -1146,12 +1123,12 @@ type HistoryOp<P extends JsonObject> =
 
 type IdFactory = () => string;
 
-type StaticSessionInfo = {
+export type StaticSessionInfo = {
   readonly userId?: string;
   readonly userInfo?: IUserInfo;
 };
 
-type DynamicSessionInfo = {
+export type DynamicSessionInfo = {
   readonly actor: number;
   readonly nonce: string;
   readonly scopes: string[];
@@ -2853,8 +2830,6 @@ export function createRoom<
     others: eventHub.others.observable,
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
-    /** @deprecated */
-    storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
     history: eventHub.history.observable,
     storageDidLoad: eventHub.storageDidLoad.observable,

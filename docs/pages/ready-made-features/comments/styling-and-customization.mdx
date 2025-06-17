@@ -80,15 +80,15 @@ localization. In this example, we’re globally switching the word _Anonymous_ t
 _Anonyme_ for French users.
 
 ```tsx
-import { LiveblocksUIConfig } from "@liveblocks/react-ui";
+import { LiveblocksUiConfig } from "@liveblocks/react-ui";
 
 export function App() {
   return (
-    <LiveblocksUIConfig
+    <LiveblocksUiConfig
       overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
     >
       {/* ... */}
-    </LiveblocksUIConfig>
+    </LiveblocksUiConfig>
   );
 }
 ```

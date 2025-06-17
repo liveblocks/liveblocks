@@ -24,7 +24,7 @@ import ReactDOMServer from "react-dom/server";
 
 import type { CommentDataWithBody } from "../comment-with-body";
 import type {
-  MentionEmailBaseData,
+  MentionEmailData,
   TextMentionNotificationEmailData,
   TextMentionNotificationEmailDataAsReact,
 } from "../text-mention-notification";
@@ -83,7 +83,7 @@ export const buildCommentBodyWithMention = ({
       children: [
         { text: "Hello" },
         { text: " " },
-        { type: "mention", id: mentionedUserId },
+        { type: "mention", kind: "user", id: mentionedUserId },
         { text: " " },
         { text: "!" },
       ],
@@ -332,7 +332,7 @@ export const server = setupServer(
   http.get(`${SERVER_BASE_URL}/v2/rooms`, () =>
     HttpResponse.json(
       {
-        nextPage: "/v2/rooms?startingAfter=1",
+        nextCursor: "1",
         data: [ROOM_TEST],
       },
       { status: 200 }
@@ -438,12 +438,7 @@ export const renderToStaticMarkup = (reactNode: ReactNode): string =>
 type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
   string,
   BaseUserMeta,
-  // Keeping backward compatibility with the `reactBody` property
-  // that was used in the previous versions.
-  CommentEmailData<string, BaseUserMeta> & {
-    /** @deprecated */
-    reactBody: string;
-  }
+  CommentEmailData<string, BaseUserMeta>
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
@@ -462,7 +457,6 @@ export const commentBodiesAsReactToStaticMarkup = (
         comment: {
           ...comment,
           body,
-          reactBody: body,
         },
       };
     }
@@ -475,7 +469,6 @@ export const commentBodiesAsReactToStaticMarkup = (
           return {
             ...comment,
             body,
-            reactBody: body,
           };
         }),
       };
@@ -545,16 +538,14 @@ export const makeTextMentionInboxNotification = ({
 
 // Note: Rendering React contents as a string (e.g static markup)
 // to ease testing and avoid unnecessary operations.
-type MentionEmailAsStaticMarkupData<U extends BaseUserMeta> = Omit<
-  MentionEmailBaseData,
-  "userId" | "textEditorNodes"
-> & {
-  author: U;
-  reactContent: string;
-};
+type MentionEmailAsStaticMarkupData<U extends BaseUserMeta> = MentionEmailData<
+  string,
+  U
+>;
 
 type TextMentionNotificationEmailDataAsStaticMarkup =
   TextMentionNotificationEmailData<
+    string,
     BaseUserMeta,
     MentionEmailAsStaticMarkupData<BaseUserMeta>
   >;
@@ -567,12 +558,12 @@ export const textMentionContentAsReactToStaticMarkup = (
   }
 
   const { mention, ...rest } = emailData;
-  const { reactContent, ...restMention } = mention;
+  const { content, ...restMention } = mention;
 
   return {
     mention: {
       ...restMention,
-      reactContent: renderToStaticMarkup(reactContent),
+      content: renderToStaticMarkup(content),
     },
     ...rest,
   };

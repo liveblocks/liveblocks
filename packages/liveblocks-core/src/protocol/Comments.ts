@@ -110,8 +110,11 @@ export type CommentBodyParagraph = {
   children: CommentBodyInlineElement[];
 };
 
-export type CommentBodyMention = {
+export type CommentBodyMention = Relax<CommentBodyUserMention>;
+
+type CommentBodyUserMention = {
   type: "mention";
+  kind: "user";
   id: string;
 };
 

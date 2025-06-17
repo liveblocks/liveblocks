@@ -7,7 +7,7 @@ import { type Components, ComponentsProvider } from "./components";
 import type { Overrides } from "./overrides";
 import { OverridesProvider } from "./overrides";
 
-type LiveblocksUIConfigProps = PropsWithChildren<{
+type LiveblocksUiConfigProps = PropsWithChildren<{
   /**
    * Override the components' strings.
    */
@@ -52,35 +52,35 @@ type LiveblocksUIConfigProps = PropsWithChildren<{
   emojibaseUrl?: string;
 }>;
 
-interface LiveblocksUIConfigContext {
+interface LiveblocksUiConfigContext {
   portalContainer?: HTMLElement;
   preventUnsavedComposerChanges?: boolean;
   emojibaseUrl?: string;
 }
 
-const LiveblocksUIConfigContext = createContext<LiveblocksUIConfigContext>({});
+const LiveblocksUiConfigContext = createContext<LiveblocksUiConfigContext>({});
 
-export function useLiveblocksUIConfig() {
-  return useContext(LiveblocksUIConfigContext);
+export function useLiveblocksUiConfig() {
+  return useContext(LiveblocksUiConfigContext);
 }
 
 /**
  * Set configuration options for all components.
  *
  * @example
- * <LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
+ * <LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme", ... }}>
  *   <App />
- * </LiveblocksUIConfig>
+ * </LiveblocksUiConfig>
  */
-export function LiveblocksUIConfig({
+export function LiveblocksUiConfig({
   overrides,
   components,
   portalContainer,
   preventUnsavedComposerChanges = true,
   emojibaseUrl,
   children,
-}: LiveblocksUIConfigProps) {
-  const liveblocksUIConfig = useMemo(
+}: LiveblocksUiConfigProps) {
+  const liveblocksUiConfig = useMemo(
     () => ({
       portalContainer,
       preventUnsavedComposerChanges,
@@ -90,12 +90,12 @@ export function LiveblocksUIConfig({
   );
 
   return (
-    <LiveblocksUIConfigContext.Provider value={liveblocksUIConfig}>
+    <LiveblocksUiConfigContext.Provider value={liveblocksUiConfig}>
       <OverridesProvider overrides={overrides}>
         <ComponentsProvider components={components}>
           {children}
         </ComponentsProvider>
       </OverridesProvider>
-    </LiveblocksUIConfigContext.Provider>
+    </LiveblocksUiConfigContext.Provider>
   );
 }

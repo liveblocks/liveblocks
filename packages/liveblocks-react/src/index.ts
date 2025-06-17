@@ -7,7 +7,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 export { ClientSideSuspense } from "./ClientSideSuspense";
 export type {
   MutationContext,
-  UseStorageStatusOptions,
+  UseSendAiMessageOptions,
   UseThreadsOptions,
 } from "./types";
 
@@ -16,11 +16,12 @@ export type { Json, JsonObject } from "@liveblocks/client";
 export { shallow, isNotificationChannelEnabled } from "@liveblocks/client";
 
 // Export all the top-level hooks
+export { RegisterAiKnowledge, RegisterAiTool } from "./ai";
+export type { RegisterAiKnowledgeProps, RegisterAiToolProps } from "./types/ai";
+export { ClientContext, RoomContext, useClient } from "./contexts";
 export {
-  ClientContext,
   createLiveblocksContext,
   LiveblocksProvider,
-  useClient,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
   useErrorListener,
@@ -31,10 +32,8 @@ export {
 } from "./liveblocks";
 export {
   createRoomContext,
-  RoomContext,
   RoomProvider,
   useAddReaction,
-  useBatch,
   useBroadcastEvent,
   useCanRedo,
   useCanUndo,
@@ -64,7 +63,6 @@ export {
   useThreadSubscription,
   useUndo,
   useUpdateMyPresence,
-  useUpdateRoomNotificationSettings,
   useUpdateRoomSubscriptionSettings,
   useHistoryVersionData,
 } from "./room";
@@ -78,19 +76,23 @@ export {
   useOthersMapped,
   useSelf,
   useStorage,
-  useStorageStatus,
   useThreads,
   useAttachmentUrl,
   useHistoryVersions,
-  useRoomNotificationSettings,
   useRoomSubscriptionSettings,
 } from "./room";
 export {
   useInboxNotifications,
   useNotificationSettings,
   useUpdateNotificationSettings,
+  useCreateAiChat,
+  useDeleteAiChat,
+  useSendAiMessage,
   useUserThreads_experimental as useUserThreads_experimental,
   useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,
+  useAiChat,
+  useAiChats,
+  useAiChatMessages,
 } from "./liveblocks";

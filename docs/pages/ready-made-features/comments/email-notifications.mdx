@@ -114,7 +114,7 @@ switch (emailData.type) {
         <div>
           @{emailData.comment.author.id} at {emailData.comment.createdAt}
         </div>
-        <div>{emailData.comment.reactBody}</div>
+        <div>{emailData.comment.body}</div>
       </div>
       // +++
     );
@@ -131,7 +131,7 @@ switch (emailData.type) {
             <div>
               @{comment.author.id} at {comment.createdAt}
             </div>
-            <div>{comment.reactBody}</div>
+            <div>{comment.body}</div>
           </div>
         ))}
       </div>
@@ -306,7 +306,7 @@ export async function POST(request: Request) {
             <div>
               @{emailData.comment.author.id} at {emailData.comment.createdAt}
             </div>
-            <div>{emailData.comment.reactBody}</div>
+            <div>{emailData.comment.body}</div>
           </div>
         );
         break;
@@ -320,7 +320,7 @@ export async function POST(request: Request) {
                 <div>
                   @{comment.author.id} at {comment.createdAt}
                 </div>
-                <div>{comment.reactBody}</div>
+                <div>{comment.body}</div>
               </div>
             ))}
           </div>

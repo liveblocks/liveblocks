@@ -59,9 +59,7 @@ export async function textMentionEmail(
 
           // `user` is the optional data returned from `resolveUsers`
           Mention: ({ element, user }) => (
-            <span style={{ color: "red" }}>
-              @{user?.name ?? element.userId}
-            </span>
+            <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
           ),
         },
       }
@@ -84,7 +82,7 @@ export async function textMentionEmail(
         @{emailData.mention.author.id} at{" "}
         {emailData.mention.createdAt.toString()}
       </div>
-      <div>{emailData.mention.reactContent}</div>
+      <div>{emailData.mention.content}</div>
     </div>
   );
 
