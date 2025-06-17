@@ -2,7 +2,7 @@ import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
-import { isIdle } from "./connection";
+import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
@@ -584,9 +584,22 @@ export function createClient<U extends BaseUserMeta = DU>(
         clientOptions.polyfills?.WebSocket
       ),
       authenticate: async () => {
-        return authManager.getAuthValue({
+        const resp = await authManager.getAuthValue({
           requestedScope: "room:read",
         });
+        if (resp.type === "public") {
+          // TODO Make error message more instructive, include a link to docs
+          throw new StopRetrying("Cannot use AI Copilots with a public token");
+        } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
+          // TODO Make error message more instructive, include a link to docs
+          throw new StopRetrying("Cannot use AI Copilots with legacy tokens");
+        } else {
+          if (!resp.token.parsed.ai) {
+            // TODO Make error message more instructive, include a link to docs
+            throw new StopRetrying("AI Copilots not enabled for this account");
+          }
+        }
+        return resp;
       },
       canZombie: () => false,
     },
