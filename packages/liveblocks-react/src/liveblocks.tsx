@@ -1063,6 +1063,8 @@ function useAiChat(chatId: string): AiChatAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
 
+  useEnsureAiConnection(client);
+
   useEffect(
     () => void store.outputs.aiChatById.getOrCreate(chatId).waitUntilLoaded()
 
