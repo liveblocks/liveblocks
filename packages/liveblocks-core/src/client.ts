@@ -583,7 +583,12 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         clientOptions.polyfills?.WebSocket
       ),
-      authenticate: makeAuthDelegateForRoom("default", authManager),
+      authenticate: async () => {
+        return authManager.getAuthValue({
+          requestedScope: "room:read",
+          roomId: "default",
+        });
+      },
       canZombie: () => false,
     },
   });
