@@ -6,7 +6,7 @@
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
 :root {
-  --accent: theme("colors.pink.500");
+  --accent: theme("colors.pink.600");
   --inner-app-width: 36rem;
   --spacing: 1em;
 }

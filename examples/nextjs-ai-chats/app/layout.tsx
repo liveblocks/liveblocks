@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex h-full max-h-[700px] w-full max-w-[1000px] shadow-[0px_100px_80px_0px_rgba(0,0,0,0.03),0px_41.778px_33.422px_0px_rgba(0,0,0,0.02),0px_22.336px_17.869px_0px_rgba(0,0,0,0.02),0px_12.522px_10.017px_0px_rgba(0,0,0,0.01),0px_6.65px_5.32px_0px_rgba(0,0,0,0.01),0px_2.767px_2.214px_0px_rgba(0,0,0,0.01)] rounded-xl overflow-hidden ring-1 ring-neutral-950/5">
             <aside className="w-[260px] bg-neutral-100 border-r border-neutral-200 shrink-0 flex flex-col gap-2 py-2">
               <form action={newChat} className="block w-full">
-                <button className="group p-2 text-sm hover:bg-neutral-300/40 rounded-md mx-2 text-left flex items-center gap-2 text-blue-700 font-medium justify-self-stretch">
+                <button className="group p-2 text-sm hover:bg-neutral-300/40 rounded-md mx-2 text-left flex items-center gap-2 text-pink-600 font-medium justify-self-stretch">
                   <PlusIcon className="opacity-80 group-hover:opacity-100" />
                   New chat
                 </button>

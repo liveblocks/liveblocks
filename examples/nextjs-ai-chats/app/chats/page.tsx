@@ -42,7 +42,7 @@ export default function Chats() {
         </div>
         <Link
           href={`/${nanoid()}`}
-          className="flex items-center gap-1 rounded-lg font-medium bg-blue-700 hover:bg-blue-800 text-white px-2.5 py-2 text-sm transition-colors mt-4"
+          className="flex items-center gap-1 rounded-lg font-medium bg-pink-600 hover:bg-pink-700 text-white px-2.5 py-2 text-sm transition-colors mt-4"
         >
           <PlusIcon className="opacity-70 -ml-0.5" />
           New chat
@@ -59,7 +59,7 @@ export default function Chats() {
         </h1>
         <Link
           href={`/${nanoid()}`}
-          className="flex items-center gap-1 rounded-lg font-medium bg-blue-700 hover:bg-blue-800 text-white px-2.5 py-2 text-sm transition-colors"
+          className="flex items-center gap-1 rounded-lg font-medium bg-pink-600 hover:bg-pink-700 text-white px-2.5 py-2 text-sm transition-colors"
         >
           <PlusIcon className="opacity-70 -ml-0.5" />
           New chat
