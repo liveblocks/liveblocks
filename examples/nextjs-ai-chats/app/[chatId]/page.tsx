@@ -62,7 +62,7 @@ function Empty({ chatId }: AiChatComponentsEmptyProps) {
           </button>
           <button
             className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-            onClick={() => sendMessage("Check the weather in Paris")}
+            onClick={() => sendMessage("Teach me React")}
           >
             Teach me React
           </button>
