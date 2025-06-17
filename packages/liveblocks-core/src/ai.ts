@@ -388,19 +388,23 @@ function createStore_forTools() {
 
 function createStore_forChatMessages(
   toolsStore: ReturnType<typeof createStore_forTools>,
-  setToolResult: (
+  setToolResultFn: (
     chatId: string,
     messageId: MessageId,
     invocationId: string,
     result: ToolResultResponse,
     options?: SetToolResultOptions
-  ) => Promise<SetToolResultResponse>
+  ) => Promise<void>
 ) {
-  // Keeps track of all message IDs that this client instance is allowed to
-  // auto-execute the execute() function for.
-  const autoExecutableMessages = new Set<MessageId>();
+  // Keeps track of all message IDs that are originated from this client. We
+  // use this concept of "ownership" to determine which client instance is
+  // allowed to auto-execute tool invocations for this message.
+  const myMessages = new Set<MessageId>();
 
-  const seenToolCallIds = new Set<string>();
+  // Keeps track of any tool invocations that have been auto-executed by this
+  // client. Note that this can also record invocations that don't have an
+  // execute() function. In that case, we also handled it (by kicking off nothing).
+  const handledInvocations = new Set<string>();
 
   // We maintain a Map with mutable signals. Each such signal contains
   // a mutable automatically-sorted list of chat messages by chat ID.
@@ -524,55 +528,44 @@ function createStore_forChatMessages(
       // - and only if the current client ID is the designated client ID
       //
       if (message.role === "assistant" && message.status === "awaiting-tool") {
-        for (const toolCall of message.contentSoFar.filter(
-          (part) =>
-            part.type === "tool-invocation" && part.stage === "executing"
-        )) {
-          if (seenToolCallIds.has(toolCall.invocationId)) {
-            // Do nothing, we already know of it
-            continue;
-          }
+        if (myMessages.has(message.id)) {
+          for (const toolInvocation of message.contentSoFar.filter(
+            (part) =>
+              part.type === "tool-invocation" && part.stage === "executing"
+          )) {
+            if (!handledInvocations.has(toolInvocation.invocationId)) {
+              handledInvocations.add(toolInvocation.invocationId);
+            } else {
+              // Do nothing, we already kicked this one off
+              continue;
+            }
 
-          seenToolCallIds.add(toolCall.invocationId);
-
-          const toolDef = toolsStore
-            .getToolΣ(toolCall.name, message.chatId)
-            .get();
-
-          const respondSync = <R extends JsonObject>(
-            ...args: OptionalTupleUnless<R, [result: ToolResultResponse<R>]>
-          ) => {
-            const [result] = args;
-            setToolResult(
-              message.chatId,
-              message.id,
-              toolCall.invocationId,
-              result ?? { data: {} }
-              // TODO Pass in AiGenerationOptions here, or make the backend use the same options
-            ).catch((err) => {
-              console.error(
-                `Error trying to respond to tool-call: ${String(err)} (in respond())`
-              );
-            });
-          };
-
-          const executeFn = toolDef?.execute;
-          if (executeFn && autoExecutableMessages.has(message.id)) {
-            (async () => {
-              const result = await executeFn(toolCall.args, {
-                name: toolCall.name,
-                invocationId: toolCall.invocationId,
+            const executeFn = toolsStore
+              .getToolΣ(toolInvocation.name, message.chatId)
+              .get()?.execute;
+            if (executeFn) {
+              (async () => {
+                const result = await executeFn(toolInvocation.args, {
+                  name: toolInvocation.name,
+                  invocationId: toolInvocation.invocationId,
+                });
+                return await setToolResultFn(
+                  message.chatId,
+                  message.id,
+                  toolInvocation.invocationId,
+                  result ?? { data: {} }
+                  // TODO Pass in AiGenerationOptions here, or make the backend use the same options
+                );
+              })().catch((err) => {
+                console.error(
+                  `Error trying to respond to tool-call: ${String(err)} (in execute())`
+                );
               });
-              respondSync(result ?? undefined);
-            })().catch((err) => {
-              console.error(
-                `Error trying to respond to tool-call: ${String(err)} (in execute())`
-              );
-            });
+            }
           }
         }
       } else {
-        autoExecutableMessages.delete(message.id);
+        myMessages.delete(message.id);
       }
     });
   }
@@ -769,8 +762,8 @@ function createStore_forChatMessages(
     addDelta,
     failAllPending,
 
-    allowAutoExecuteToolCall(messageId: MessageId) {
-      autoExecutableMessages.add(messageId);
+    markMine(messageId: MessageId) {
+      myMessages.add(messageId);
     },
   };
 }
@@ -883,7 +876,7 @@ export type Ai = {
     invocationId: string,
     result: ToolResultResponse,
     options?: SetToolResultOptions
-  ) => Promise<SetToolResultResponse>;
+  ) => Promise<void>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
     chatsΣ: DerivedSignal<AiChat[]>;
@@ -1237,7 +1230,7 @@ export function createAi(config: AiConfig): Ai {
     invocationId: string,
     result: ToolResultResponse,
     options?: SetToolResultOptions
-  ): Promise<SetToolResultResponse> {
+  ): Promise<void> {
     const knowledge = context.knowledge.get();
     const tools = context.toolsStore.getToolDescriptions(chatId);
 
@@ -1259,9 +1252,8 @@ export function createAi(config: AiConfig): Ai {
       },
     });
     if (resp.ok) {
-      messagesStore.allowAutoExecuteToolCall(resp.message.id);
+      messagesStore.markMine(resp.message.id);
     }
-    return resp;
   }
 
   return Object.defineProperty(
@@ -1319,7 +1311,7 @@ export function createAi(config: AiConfig): Ai {
             tools: tools.length > 0 ? tools : undefined,
           },
         });
-        messagesStore.allowAutoExecuteToolCall(resp.targetMessage.id);
+        messagesStore.markMine(resp.targetMessage.id);
         return resp;
       },
 

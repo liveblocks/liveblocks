@@ -44,10 +44,12 @@ export function AiMessageToolInvocation({
 
   const respond = useCallback(
     (result: ToolResultResponse | undefined) => {
-      if (part.stage === "receiving") {
-        console.log(
-          `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
-        );
+      if (message.status !== "awaiting-tool") {
+        // console.log("Ignoring respond(): message not awaiting tool result");
+      } else if (part.stage === "receiving") {
+        // console.log(
+        //   `Ignoring respond(): tool '${part.name}' (${part.invocationId}) is still receiving`
+        // );
       } else if (part.stage === "executed") {
         console.log(
           `Ignoring respond(): tool '${part.name}' (${part.invocationId}) has already executed`
@@ -62,7 +64,15 @@ export function AiMessageToolInvocation({
         );
       }
     },
-    [ai, message.chatId, message.id, part.stage, part.name, part.invocationId]
+    [
+      ai,
+      message.chatId,
+      message.id,
+      message.status,
+      part.invocationId,
+      part.name,
+      part.stage,
+    ]
   );
 
   const props = useMemo(() => {
