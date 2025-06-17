@@ -52,7 +52,49 @@ inside it.
 
 ### Usage
 
-{/* TODO usage */}
+```tsx
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool, AiTool, AiChat } from "@liveblocks/react-ui";
+
+function App() {
+  return (
+    <>
+      <RegisterAiTool
+        name="get-weather"
+        tool={defineAiTool()({
+          description: "Get current weather information",
+          parameters: {
+            type: "object",
+            properties: {
+              location: { type: "string", description: "City name" },
+            },
+            required: ["location"],
+            additionalProperties: false,
+          },
+          execute: async (args) => {
+            const { temperature, condition } = await __getWeather__(
+              args.location
+            );
+            return { data: { temperature, condition } };
+          },
+          render: ({ result }) => (
+            // +++
+            <AiTool>
+              {result ? (
+                <div>
+                  {result.temperature}°F - {result.condition}
+                </div>
+              ) : null}
+            </AiTool>
+            // +++
+          ),
+        })}
+      />
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
+```
 
 ## Customization
 

@@ -210,9 +210,9 @@ function ChatWithTitle({ chatId }: { chatId: string }) {
 }
 ```
 
-##### Add front end knowledge [#AiChat-front-end-knowledge]
+##### Add front-end knowledge [#AiChat-front-end-knowledge]
 
-You can add front end knowledge to chats, meaning the AI will understand the
+You can add front-end knowledge to chats, meaning the AI will understand the
 information you pass, and will answer questions or call tools based on it. This
 is particularly helpful for passing user info, app state, and small contextual
 knowledge.
@@ -249,9 +249,9 @@ function Chat() {
 }
 ```
 
-##### Add back end knowledge [#AiChat-back-end-knowledge]
+##### Add back-end knowledge [#AiChat-back-end-knowledge]
 
-You can add back end knowledge to chats, meaning the AI will understand the
+You can add back-end knowledge to chats, meaning the AI will understand the
 information you pass, and can answer questions or call tools based on it. This
 is a way to pass large amounts of project-wide information, for example complex
 documentation.
@@ -406,7 +406,47 @@ By default, `AiTool` will display the name of the current tool, and a loading
 spinner as it runs.
 
 ```tsx
-// TODO show usage with RegisterAiTool
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool, AiTool, AiChat } from "@liveblocks/react-ui";
+
+function App() {
+  return (
+    <>
+      <RegisterAiTool
+        name="get-weather"
+        tool={defineAiTool()({
+          description: "Get current weather information",
+          parameters: {
+            type: "object",
+            properties: {
+              location: { type: "string", description: "City name" },
+            },
+            required: ["location"],
+            additionalProperties: false,
+          },
+          execute: async (args) => {
+            const { temperature, condition } = await __getWeather__(
+              args.location
+            );
+            return { data: { temperature, condition } };
+          },
+          render: ({ result }) => (
+            // +++
+            <AiTool>
+              {result ? (
+                <div>
+                  {result.temperature}°F - {result.condition}
+                </div>
+              ) : null}
+            </AiTool>
+            // +++
+          ),
+        })}
+      />
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
 ```
 
 Optionally, you can provide a `title` and `icon` to render the UI differently.
@@ -511,6 +551,7 @@ const deleteFileTool = defineAiTool<{ deletedFileName: string }>()({
     return (
       <AiTool title="Delete File" icon="🗑️">
         {!result ? (
+          // +++
           <AiTool.Confirmation
             // Make `confirm` and `cancel` type-safe
             types={types}
@@ -524,6 +565,7 @@ const deleteFileTool = defineAiTool<{ deletedFileName: string }>()({
             Are you sure you want to delete {args.fileName}?
           </AiTool.Confirmation>
         ) : (
+          // +++
           <div>Deleted {result.data.deletedFileName}</div>
         )}
       </AiTool>
@@ -594,10 +636,47 @@ developers.
 </AiTool>
 ```
 
-{/* TODO ai tool inspector image */}
+Simply place `<AiTool.Inspector />` within an `<AiTool />` component to display
+the tool's arguments and results.
 
 ```tsx
-// TODO show usage with RegisterAiTool
+import { defineAiTool } from "@liveblocks/client";
+import { RegisterAiTool, AiTool, AiChat } from "@liveblocks/react-ui";
+
+function App() {
+  return (
+    <>
+      <RegisterAiTool
+        name="toggle-todo"
+        tool={defineAiTool()({
+          description: "Toggle a todo's completion status",
+          parameters: {
+            type: "object",
+            properties: {
+              id: {
+                description: "The id of the todo to toggle",
+                type: "number",
+              },
+            },
+            required: ["id"],
+            additionalProperties: false,
+          },
+          execute: ({ id }) => {
+            toggleTodo(id);
+          },
+          render: () => (
+            <AiTool>
+              // +++
+              <AiTool.Inspector />
+              // +++
+            </AiTool>
+          ),
+        })}
+      />
+      <AiChat chatId="my-chat" />
+    </>
+  );
+}
 ```
 
 ###### Props [#AiTool.Inspector-props]

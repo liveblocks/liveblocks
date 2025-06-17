@@ -1351,8 +1351,11 @@ contextual knowledge.
 ```
 
 Each knowledge source has a `description` string, and a `value` which can be
-either a string, object or array. These components can be placed anywhere in
-your app, so long as they’re under
+either a string, object, array or JSON-serializable value that provides
+meaningful context for your use case. The AI uses this data, along with the
+accompanying description, to better understand and respond to user queries or
+perform actions based on the supplied context. These components can be placed
+anywhere in your app, so long as they’re under
 [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider).
 
 ```tsx
@@ -1591,9 +1594,10 @@ function Whiteboard() {
     A clear description of what this knowledge represents. This helps the AI
     understand the context and relevance of the provided information.
   </PropertiesListItem>
-  <PropertiesListItem name="value" type="string" isRequired>
-    The knowledge content as a string. Can be plain text, JSON, or any string
-    format that provides useful context to the AI.
+  <PropertiesListItem name="value" type="Json" isRequired>
+    The actual data or information to share with the AI. Can be a string,
+    object, array, or any JSON-serializable information that offers context
+    relevant to your application or user.
   </PropertiesListItem>
   <PropertiesListItem name="id" type="string">
     Optional unique identifier for this knowledge source. If provided,
