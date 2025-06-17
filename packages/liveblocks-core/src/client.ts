@@ -584,7 +584,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         clientOptions.polyfills?.WebSocket
       ),
       authenticate: makeAuthDelegateForRoom("default", authManager),
-      canZombie: () => true,
+      canZombie: () => false,
     },
   });
 
