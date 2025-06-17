@@ -1,7 +1,0 @@
-type Storage { foo: LiveMap<string, LiveMap<string, LiveMap<string, string>>> }
----
-type Foo { bar: LiveMap<string, LiveObject<Bar>> }
-type Bar { qux: LiveMap<string, number> }
-type Storage { foo: LiveMap<string, LiveObject<Foo>> }
----
-type Storage { foo: LiveMap<string, { x: number }> }

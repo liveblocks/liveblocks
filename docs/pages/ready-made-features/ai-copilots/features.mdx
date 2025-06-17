@@ -5,11 +5,13 @@ meta:
   description: "Learn about AI Copilots"
 ---
 
-Liveblocks AI Copilots allows you to add a variety of AI experiences to your
-application, such as AI chat interfaces and toolbars, that can interact with
-your application and modify its state. For example, if your product contains a
-dashboard, you could ask AI to create a new project for you, or question it
-about certain statistics on the page.
+Liveblocks AI Copilots provides customizable UI components that let your users
+interact with AI in a way that feels native to your product. Unlike basic chat
+widgets, Copilots are context-aware, collaborative, and capable of performing
+real tasks—such as editing content, navigating your app, or answering
+product-specific questions. They’re built for React developers, work with your
+chosen LLM, and integrate directly into your existing UI using flexible APIs and
+fully themeable components.
 
 <Figure>
   <Image
@@ -28,17 +30,17 @@ learn more about the project in
 [our blog post](/blog/introducing-ai-copilots-ready-made-interfaces-for-human-like-collaboration).
 
 </Banner>
-
+ 
 ## Features
 
-- **[One-off prompts](#one-off-prompts)**: Create AI buttons for various tasks,
-  with support for actions, context, more.
+{/* - **[One-off prompts](#one-off-prompts)**: Create AI buttons for various tasks, with support for tools, context, more. */}
+
 - **[Persistent chats](#persistent-chats)**: No database is required, each
   user’s chats are stored permanently.
-- **[Actions](#actions)**: Easily allow AI to interact with your application and
+- **[Tools](#tools)**: Easily allow AI to interact with your application and
   modify its state.
-- **[Context](#context)**: Feed text and files into the AI so it understands the
-  current context.
+- **[Knowledge](#knowledge)**: Feed text and files into the AI so it understands
+  the current context.
 - **[Ready-made UI](#ready-made-ui)**: Polished, easily customizable React
   components to add to your app.
 - **[Custom chat components](#custom-chat-components)**: Register React
@@ -48,25 +50,8 @@ learn more about the project in
 - **[Manage AI copilots](#manage-ai-copilots)**: Configure AI providers and
   system prompts from our dashboard.
 - **[Supported AI providers](#supported-ai-providers)**: Anthropic, OpenAI,
-  Google Gemini, LangGraph, CrewAI, and more.
-- **[Coming soon](#coming-soon)**: Attachments, RAG, MCP servers.
-
-## One-off prompts [#one-off-prompts]
-
-One-off prompts are a way to add assorted AI features to your app, specifcally
-features that don’t require a chat, such as an AI button on a page.
-[Actions](#actions) and [context](#context) are supported, allowing AI to
-interact with your application, and understand its state. An example use case
-for a one-off prompt is a button that uses AI to fill in a form.
-
-<Figure>
-  <Image
-    src="/assets/ai-copilots/one-off-prompts.png"
-    alt="An example use for a one-off prompt, an AI button that fills in a table for you."
-    width={768}
-    height={512}
-  />
-</Figure>
+  Google Gemini, and more.
+- **[Coming soon](#coming-soon)**: One-off prompts, attachments, MCP servers.
 
 ## Persistent chats [#persistent-chats]
 
@@ -101,39 +86,43 @@ When the page refreshes, each user’s previous chats will load for them, and ca
 be continued. If a user has your app open in multiple browser tabs, each tab
 will correctly display chats, and update in real-time.
 
-## Actions [#actions]
+## Tools [#tools]
 
-Actions are a way to allow AI to modify your application state and interact with
-your front end. You can use them to extend the capabilities of AI Copilots
-beyond simple text-based interactions. For example, you may have actions that
-create new documents in your app, automatically fill in form data, search the
-web for data, or anything else you like.
+Tools are a way to allow AI to make actions, modify your application state,
+interact with your front end, or render custom content with your own components.
+You can use them to extend the capabilities of AI Copilots beyond simple
+text-based interactions. For example, you may have tools that create new
+documents in your app, automatically fill in form data, search the web for data,
+or anything else you like.
+
+{/* TODO Better explain tools for non-AI/non-technical readers: action === tool, generative UI ==== tool, etc. */}
 
 <Figure>
   <Image
     src="/assets/ai-copilots/document-changes.png"
-    alt="An example of a document with a chat app in the corner. The chat has run an action, and has edited the document."
+    alt="An example of a document with a chat app in the corner. The chat has run a tool, and has edited the document."
     width={768}
     height={512}
   />
 </Figure>
 
-Actions are defined in your code, and are executed when the AI requests to use
-them.
+Tools are defined in your code, and are executed and/or rendered when the AI
+requests to use them.
 
-### Actions work with our other products
+### Tools work with our other products
 
-Through actions, you can integrate AI Copilots into our other products, such as
+Through tools, you can integrate AI Copilots into our other products, such as
 [Comments](/docs/ready-made-features/comments),
 [Notifications](/docs/ready-made-features/notifications), and
 [Sync Datastore](/docs/platform/sync-datastore). For example, you can allow AI
 to add comments to your application, send notifications to other users, or add
 shapes to a collaborative drawing app.
 
-## Context [#context]
+## Knowledge [#knowledge]
 
 It’s simple to add context to your AI, so that is understands the current
-document or page.
+document or page. You can also submit webpages and files, such as documentation,
+that the copilot will deeply internalize, allowing it to reply intelligently.
 
 <Figure>
   <Image
@@ -165,21 +154,21 @@ allow you to create your own custom chat components.
 ## Custom chat components [#custom-chat-components]
 
 Inside your chat, you can register custom React components that the AI can
-choose to render as a response. For example, if your app contains playlists, AI
-can choose to render a custom playlist component instead of a message. If you
-have multiple components, AI can choose which one to render.
+choose to render as a response. For example, if your app contains charts, AI can
+choose to render a custom chart component instead of a message. If you have
+multiple components, AI can choose which one to render.
 
 <Figure>
   <Image
     src="/assets/ai-copilots/custom-component.png"
-    alt="An example of the AI rendering a custom chat component instead of a message. It's a playlist component, with a play button."
+    alt="An example of the AI rendering a custom chat component instead of a message. It's a graph component."
     width={768}
     height={512}
   />
 </Figure>
 
-These components can be fully interactive, for example a playlist component
-could have a play button that the AI can use to play a song.
+These components can be fully interactive, for example this chart component
+could have a button that lets you save it, and add it to a project.
 
 ## Text editor toolbar
 
@@ -252,6 +241,23 @@ show their thought processes.
 
 ## Coming soon [#coming-soon]
 
+## One-off prompts [#one-off-prompts]
+
+One-off prompts are a way to add assorted AI features to your app, specifically
+features that don’t require a chat, such as an AI button on a page.
+[Tools](#tools) and [context](#knowledge) are supported, allowing AI to interact
+with your application, and understand its state. An example use case for a
+one-off prompt is a button that uses AI to fill in a form.
+
+<Figure>
+  <Image
+    src="/assets/ai-copilots/one-off-prompts.png"
+    alt="An example use for a one-off prompt, an AI button that fills in a table for you."
+    width={768}
+    height={512}
+  />
+</Figure>
+
 ### Chat attachments
 
 Upload files into the chat, which AI can modify, or use for extra context. These
@@ -266,16 +272,6 @@ understand. Files are automatically stored by Liveblocks.
     height={512}
   />
 </Figure>
-
-### RAG support
-
-Retrieval-Augmented Generation (RAG) is a technique that allows AI to retrieve
-information from a knowledge base and use it to generate responses. In future,
-AI Copilots will use this to support:
-
-- Contextual chat history retrieval
-- Knowledge base integration
-- Document context awareness
 
 ### MCP server integration
 
