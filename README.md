@@ -33,17 +33,13 @@ and AI‑ready. All without derailing your roadmap.**
 
 Liveblocks provides ready‑to‑use features through customizable pre‑built
 components that can easily be dropped into your product to boost growth:
-[Comments](https://liveblocks.io/docs/ready-made-features/comments),
-[Text Editor](https://liveblocks.io/docs/ready-made-features/text-editor),
 [AI Copilots](https://liveblocks.io/docs/ready-made-features/ai-copilots),
+[Comments](https://liveblocks.io/docs/ready-made-features/comments),
+[Multiplayer Editing](https://liveblocks.io/docs/ready-made-features/multiplayer-editing),
 [Presence](https://liveblocks.io/docs/ready-made-features/presence), and
 [Notifications](https://liveblocks.io/docs/ready-made-features/notifications).
 You can decide features which you want to use based on your requirements and the
 collaborative experiences you’re looking to add.
-
-If you have more advanced needs, you can also leverage Liveblocks to
-[host and scale local-first sync engines](https://liveblocks.io/docs/platform/sync-datastore)
-such as Liveblocks Storage and Yjs.
 
 ### Packages and SDKs
 
@@ -56,6 +52,7 @@ notifications, and more.
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
 - [`@liveblocks/react-ui`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
 - [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
+- [`@liveblocks/react-blocknote`](https://liveblocks.io/docs/api-reference/liveblocks-react-blocknote)
 - [`@liveblocks/node-prosemirror`](https://liveblocks.io/docs/api-reference/liveblocks-node-prosemirror)
 - [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical)
 - [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
