@@ -75,6 +75,7 @@ import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { Group } from "./internal/Group";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -345,8 +346,16 @@ function ComposerMention({ mention }: ComposerEditorMentionProps) {
         </ComposerPrimitive.Mention>
       );
 
+    case "group":
+      return (
+        <ComposerPrimitive.Mention className="lb-composer-mention">
+          {MENTION_CHARACTER}
+          <Group groupId={mention.id} />
+        </ComposerPrimitive.Mention>
+      );
+
     default:
-      return assertNever(mention.kind, "Unhandled mention kind");
+      return assertNever(mention, "Unhandled mention kind");
   }
 }
 
@@ -376,8 +385,26 @@ function ComposerMentionSuggestions({
                 </ComposerPrimitive.SuggestionsListItem>
               );
 
+            case "group":
+              return (
+                <ComposerPrimitive.SuggestionsListItem
+                  key={mention.id}
+                  className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+                  value={mention.id}
+                >
+                  <Avatar
+                    userId={mention.id}
+                    className="lb-composer-mention-suggestion-avatar"
+                  />
+                  <Group
+                    groupId={mention.id}
+                    className="lb-composer-mention-suggestion-group"
+                  />
+                </ComposerPrimitive.SuggestionsListItem>
+              );
+
             default:
-              return assertNever(mention.kind, "Unhandled mention kind");
+              return assertNever(mention, "Unhandled mention kind");
           }
         })}
       </ComposerPrimitive.SuggestionsList>
