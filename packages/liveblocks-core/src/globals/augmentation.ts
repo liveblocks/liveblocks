@@ -1,6 +1,7 @@
 import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseActivitiesData } from "../protocol/BaseActivitiesData";
+import type { BaseGroupInfo } from "../protocol/BaseGroupInfo";
 import type { BaseRoomInfo } from "../protocol/BaseRoomInfo";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { BaseMetadata } from "../protocol/Comments";
@@ -23,6 +24,7 @@ type ExtendableTypes =
   | "RoomEvent"
   | "ThreadMetadata"
   | "RoomInfo"
+  | "GroupInfo"
   | "ActivitiesData";
 
 type MakeErrorString<
@@ -76,6 +78,9 @@ export type DE = GetOverride<"RoomEvent", Json, "is not a valid JSON value">;
 export type DM = GetOverride<"ThreadMetadata", BaseMetadata>;
 
 export type DRI = GetOverride<"RoomInfo", BaseRoomInfo>;
+
+export type DGI = GetOverride<"GroupInfo", BaseGroupInfo>;
+
 export type DAD = GetOverrideOrErrorValue<
   "ActivitiesData",
   BaseActivitiesData,

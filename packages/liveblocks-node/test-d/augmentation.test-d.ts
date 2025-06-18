@@ -47,6 +47,12 @@ declare global {
       url?: string;
       type: "public" | "private";
     };
+
+    GroupInfo: {
+      name: string;
+      avatar?: string;
+      type: "open" | "closed";
+    };
   }
 }
 
