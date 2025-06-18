@@ -12,12 +12,8 @@ declare global {
   }
 }
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
-
-overrideApiKey();
-
 const client = createClient({
-  publicApiKey: PUBLIC_KEY,
+  publicApiKey: import.meta.env.VITE_LIVEBLOCKS_PUBLIC_KEY,
 });
 
 type Todo = {
@@ -59,16 +55,3 @@ const useStore = create<WithLiveblocks<State>>()(
   )
 );
 export default useStore;
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function overrideApiKey() {
-  const query = new URLSearchParams(window?.location?.search);
-  const apiKey = query.get("apiKey");
-
-  if (apiKey) {
-    PUBLIC_KEY = apiKey;
-  }
-}

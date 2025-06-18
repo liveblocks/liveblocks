@@ -2,39 +2,25 @@
   "name": "@liveblocks-examples/zustand-todo-list",
   "description": "This example shows how to build a collaborative to-do list with Liveblocks, React and Zustand.",
   "license": "Apache-2.0",
-  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "@liveblocks/client": "^3.0.0",
     "@liveblocks/zustand": "^3.0.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.11.45",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.0.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
     "zustand": "^5.0.1"
   },
-  "scripts": {
-    "dev": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  },
   "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.4",
     "prettier": "^3.3.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vite": "^4.5.9"
   }
 }
