@@ -54,6 +54,7 @@ export type {
   NotificationSettings,
   OthersEvent,
   PlainLsonObject,
+  ResolveGroupsInfoArgs,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,

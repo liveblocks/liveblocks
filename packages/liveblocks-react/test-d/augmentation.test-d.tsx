@@ -40,6 +40,12 @@ declare global {
       url?: string;
       type: "public" | "private";
     };
+
+    GroupInfo: {
+      name: string;
+      avatar?: string;
+      type: "open" | "closed";
+    };
   }
 }
 
@@ -611,6 +617,30 @@ declare global {
   expectType<string>(info.name);
   expectType<string | undefined>(info.url);
   expectType<"public" | "private">(info?.type);
+  expectError(info?.nonexisting);
+  expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
+// The useGroupInfo() hook
+{
+  const { info, error, isLoading } = classic.useGroupInfo("group-id");
+  expectType<boolean>(isLoading);
+  expectType<string>(info!.name);
+  expectType<string | undefined>(info!.avatar);
+  expectType<"open" | "closed" | undefined>(info?.type);
+  expectError(info?.nonexisting);
+  expectType<Error | undefined>(error);
+}
+
+// The useGroupInfo() hook (suspense)
+{
+  const { info, error, isLoading } = suspense.useGroupInfo("group-id");
+  expectType<false>(isLoading);
+  expectType<string>(info.name);
+  expectType<string | undefined>(info.avatar);
+  expectType<"open" | "closed">(info?.type);
   expectError(info?.nonexisting);
   expectType<undefined>(error);
 }
