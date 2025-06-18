@@ -88,6 +88,7 @@ export function createNoOpProvider(): Provider {
   return {
     awareness: {
       getLocalState: () => null,
+      setLocalStateField: emptyFunction,
       getStates: () => new Map(),
       off: emptyFunction,
       on: emptyFunction,
