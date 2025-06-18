@@ -257,14 +257,14 @@ prioritize verification in your integration. We recommend using the
 
 </Steps>
 
-### Manually verify
+### Manually verify in Node.js
 
-It’s also possible to manually verify your webhooks, though it’s unlikely
-this’ll be necessary.
+It’s also possible to manually verify your webhooks in Node.js, though it’s
+unlikely this’ll be necessary.
 
 <details>
 
-<summary>How to manually verify webhook events</summary>
+<summary>How to manually verify webhook events in Node.js</summary>
 
 <Steps>
 
@@ -361,6 +361,229 @@ this’ll be necessary.
     </StepContent>
 
   </Step>
+
+</Steps>
+
+</details>
+
+### Manually verify in Elixir
+
+It’s also possible to manually verify your webhooks in Elixir using
+Plug/Phoenix, especially if you want to validate Liveblocks webhooks before
+parsing the request body.
+
+<details>
+
+<summary>How to manually verify webhook events in Elixir</summary>
+
+<Steps>
+
+<Step>
+<StepTitle>Construct the signed content</StepTitle>
+<StepContent>
+
+The signed content is composed by concatenating the webhook ID, timestamp, and
+request body, separated by dots (`.`). In Elixir, it looks like this:
+
+```elixir
+signed_content = "#{webhook_id}.#{webhook_timestamp}.#{body}"
+```
+
+- `webhook_id` comes from the `"webhook-id"` header.
+- `webhook_timestamp` comes from the `"webhook-timestamp"` header.
+- `body` is the raw request body.
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Generate the signature</StepTitle>
+<StepContent>
+
+Liveblocks signs webhooks using HMAC with SHA-256. You need to use the
+base64-decoded portion of your secret (after the `whsec_` prefix) as the key.
+
+Example in Elixir:
+
+```elixir
+secret = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw"
+
+# Extract and decode the base64 part of the secret
+secret_bytes =
+  secret
+  |> String.split("_")
+  |> Enum.at(1)
+  |> Base.decode64!()
+
+# Compute the signature
+signature =
+  :crypto.mac(:hmac, :sha256, secret_bytes, signed_content)
+  |> Base.encode64()
+```
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Validate the signature</StepTitle>
+<StepContent>
+
+The signature you just generated should match one of the signatures from the
+`webhook-signature` header. That header contains space-separated values like:
+
+```
+v1,abc123= v1,def456= v2,ghi789=
+```
+
+You should extract just the Base64-encoded signature (the part after the comma):
+
+```elixir
+signature_header = get_req_header(conn, "webhook-signature") |> List.first()
+
+webhook_signatures =
+  signature_header
+  |> String.split(" ")
+  |> Enum.map(fn entry ->
+    entry |> String.split(",") |> Enum.at(1)
+  end)
+```
+
+Then check if your generated signature is in the list:
+
+```elixir
+if signature in webhook_signatures do
+  # Valid signature
+end
+```
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Verify the timestamp</StepTitle>
+<StepContent>
+
+Liveblocks includes a `webhook-timestamp` header to help prevent replay attacks.
+You should check that the timestamp is within a reasonable window (e.g., 5
+minutes):
+
+```elixir
+tolerance = 5 * 60
+now = :os.system_time(:second)
+
+case Integer.parse(webhook_timestamp) do
+  {ts, _} when abs(now - ts) <= tolerance -> true
+  _ -> false
+end
+```
+
+</StepContent>
+</Step>
+
+<Step>
+<StepTitle>Full example</StepTitle>
+<StepContent>
+
+Here’s the full code, as detailed to far.
+
+```elixir title="Plug example" isCollapsed isCollapsable
+defmodule App.Plugs.RequestValidator do
+  require Logger
+
+  def init(_), do: []
+
+  def call(%Plug.Conn{request_path: "/webhook/liveblocks"} = conn, _opts) do
+    webhook_secret = Application.get_env(:api, :liveblocks)[:webhook_secret]
+    webhook_id = conn |> Plug.Conn.get_req_header("webhook-id") |> List.first()
+    webhook_timestamp = conn |> Plug.Conn.get_req_header("webhook-timestamp") |> List.first()
+
+    webhook_signatures =
+      conn
+      |> Plug.Conn.get_req_header("webhook-signature")
+      |> List.first()
+      |> String.split(" ")
+      |> Enum.map(&(&1 |> String.split(",") |> Enum.at(1)))
+
+    {:ok, body, conn} = Plug.Conn.read_body(conn)
+
+    signed_content = "#{webhook_id}.#{webhook_timestamp}.#{body}"
+
+    secret_bytes =
+      webhook_secret
+      |> String.split("_")
+      |> Enum.at(1)
+      |> Base.decode64!()
+
+    signature =
+      :hmac
+      |> :crypto.mac(:sha256, secret_bytes, signed_content)
+      |> Base.encode64()
+
+    if signature in webhook_signatures do
+      if liveblocks_timestamp_valid?(webhook_timestamp) do
+        params = Jason.decode!(body)
+
+        conn
+        |> Plug.Conn.assign(:request_validated, true)
+        |> struct(%{body_params: params})
+      else
+        Logger.warning("[RequestValidator] Liveblocks webhook timestamp is not valid", %{
+          timestamp: webhook_timestamp
+        })
+
+        conn
+        |> Plug.Conn.put_status(:unauthorized)
+        |> Phoenix.Controller.text("Incorrect timestamp")
+        |> Plug.Conn.halt()
+      end
+    else
+      Logger.warning("[RequestValidator] Liveblocks webhook signatures don't match", %{
+        header_signature: webhook_signatures,
+        calculated_signature: signature
+      })
+
+      conn
+      |> Plug.Conn.put_status(:unauthorized)
+      |> Phoenix.Controller.text("Incorrect signature")
+      |> Plug.Conn.halt()
+    end
+  end
+
+  def call(conn, _), do: conn
+
+  defp liveblocks_timestamp_valid?(timestamp) do
+    allowed_age = Application.get_env(:api, :liveblocks)[:webhook_timestamp_tolerance] || 5 * 60
+    now = :os.system_time(:second)
+
+    case Integer.parse(timestamp) do
+      {ts, _} ->
+        age = abs(now - ts)
+        age <= allowed_age
+
+      _ ->
+        false
+    end
+  end
+end
+```
+
+</StepContent>
+</Step>
+
+<Step lastStep>
+<StepTitle>Add to your endpoint module</StepTitle>
+<StepContent>
+
+Finally, to use the validator to your endpoint module, place it before
+`Plug.parsers`.
+
+```elixir
+plug(App.Plugs.RequestValidator)
+plug(Plug.Parsers, ...)
+```
+
+</StepContent>
+</Step>
 
 </Steps>
 
