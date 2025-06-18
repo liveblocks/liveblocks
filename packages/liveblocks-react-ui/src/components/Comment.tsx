@@ -83,6 +83,7 @@ import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { Group } from "./internal/Group";
 import { List } from "./internal/List";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
@@ -231,8 +232,21 @@ export function CommentMention({
         </CommentPrimitive.Mention>
       );
 
+    case "group":
+      return (
+        <CommentPrimitive.Mention
+          className={classNames("lb-comment-mention", className)}
+          // TODO: If we have access to the user IDs, we can check if the current user is in the group
+          // data-self={mention.id === currentId ? "" : undefined}
+          {...props}
+        >
+          {MENTION_CHARACTER}
+          <Group groupId={mention.id} />
+        </CommentPrimitive.Mention>
+      );
+
     default:
-      return assertNever(mention.kind, "Unhandled mention kind");
+      return assertNever(mention, "Unhandled mention kind");
   }
 }
 
