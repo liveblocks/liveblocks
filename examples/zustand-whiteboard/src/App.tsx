@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import useStore, { Shape } from "./store";
-import "./App.css";
 
 let roomId = "zustand-whiteboard";
 

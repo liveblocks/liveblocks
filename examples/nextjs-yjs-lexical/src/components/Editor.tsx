@@ -78,7 +78,7 @@ export default function Editor() {
               // Set up Liveblocks Yjs provider
               const provider = getYjsProviderForRoom(room);
               yjsDocMap.set(id, provider.getYDoc());
-              return provider;
+              return provider as Provider;
             }}
             initialEditorState={initialEditorState}
             shouldBootstrap={true}

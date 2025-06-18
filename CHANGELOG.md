@@ -12,6 +12,7 @@ For full upgrade instructions and codemods, see the
 
 ### All packages
 
+- TypeScript 5.0 is now the minimum supported version.
 - Remove deprecated APIs, see
   [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
   in the upgrade guide to learn more.

@@ -1,8 +1,8 @@
+import { PointerEvent } from "react";
 import { create } from "zustand";
 import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
-import React from "react";
 
 declare global {
   interface Liveblocks {
@@ -13,19 +13,8 @@ declare global {
   }
 }
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
-
-overrideApiKey();
-
-if (!/^pk_/.test(PUBLIC_KEY)) {
-  console.warn(
-    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-whiteboard#getting-started.`
-  );
-}
-
 const client = createClient({
-  publicApiKey: PUBLIC_KEY,
+  publicApiKey: import.meta.env.VITE_LIVEBLOCKS_PUBLIC_KEY,
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
@@ -48,7 +37,7 @@ type Store = {
   onShapePointerDown: (shapeId: string) => void;
   deleteShape: () => void;
   onCanvasPointerUp: () => void;
-  onCanvasPointerMove: (e: React.PointerEvent) => void;
+  onCanvasPointerMove: (e: PointerEvent) => void;
 };
 
 const useStore = create<WithLiveblocks<Store>>()(
@@ -126,16 +115,3 @@ const useStore = create<WithLiveblocks<Store>>()(
   )
 );
 export default useStore;
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function overrideApiKey() {
-  const query = new URLSearchParams(window?.location?.search);
-  const apiKey = query.get("apiKey");
-
-  if (apiKey) {
-    PUBLIC_KEY = apiKey;
-  }
-}

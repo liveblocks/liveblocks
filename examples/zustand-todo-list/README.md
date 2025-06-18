@@ -28,56 +28,15 @@ As users edit the list, changes will be automatically persisted and synced—all
 
 ## Getting started
 
-Run the following command to try this example locally:
-
-```bash
-npx create-liveblocks-app@latest --example zustand-todo-list --no-api-key --no-vercel
-```
-
-This will download the example and install the example. Next, you must:
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.ts`](./src/store.ts) with your **public** key
-- Run `npm run dev` and open `http://localhost:3000` in your browser
-
-### Manual setup
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-Alternatively, you can set up your project manually:
+Run the following command to set up your project manually:
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.ts`](./src/store.ts) with your **public** key
-- Run `npm run dev` and open `http://localhost:3000` in your browser
-
-</details>
-
-### Deploy on Vercel
-
-<details><summary>Read more</summary>
-
-<p></p>
-
-To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
-
-```bash
-npx create-liveblocks-app@latest --example zustand-todo-list --vercel
-```
-
-This will download the example and ask permission to open your browser, enabling you to deploy to Vercel. Next, you must:
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`src/store.ts`](./src/store.ts) with your **public** key
-- Push a commit to update the Vercel demo with the key
-- Run `npm run dev` and open `http://localhost:3000` in your browser
-
-</details>
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Create an `.env.local` file and add your **public** key as the
+  `VITE_LIVEBLOCKS_PUBLIC_KEY` environment variable
+- Run `npm run dev` and go to [http://localhost:5173](http://localhost:5173)
 
 ### Develop on CodeSandbox
 
@@ -85,7 +44,7 @@ This will download the example and ask permission to open your browser, enabling
 
 <p></p>
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/zustand-todo-list) on CodeSandbox, create the `pk_YOUR_PUBLIC_KEY` environment variable as a [public](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/zustand-todo-list) on CodeSandbox, create the `VITE_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
 
 </details>
 

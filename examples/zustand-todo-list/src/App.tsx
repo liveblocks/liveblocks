@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import useStore from "./store";
-import "./App.css";
 
 let roomId = "zustand-todo-list";
 
