@@ -1,8 +1,8 @@
-import { RoomInfo } from "@liveblocks/node";
+import { RoomData } from "@liveblocks/node";
 import { DocumentUser } from "@/types";
 
 interface IsUserDocumentOwnerProps {
-  room: RoomInfo;
+  room: RoomData;
   userId: DocumentUser["id"];
 }
 

@@ -1,4 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import type { MentionData } from "@liveblocks/core";
 import {
   COMMAND_PRIORITY_LOW,
   KEY_ARROW_DOWN_COMMAND,
@@ -23,10 +24,10 @@ import {
   useState,
 } from "react";
 
-export const SuggestionsContext = createContext<string[] | null>(null);
+export const SuggestionsContext = createContext<MentionData[] | null>(null);
 
-export const OnValueSelectCallbackContext = createContext<
-  ((value: string) => void) | null
+export const OnSuggestionSelectCallbackContext = createContext<
+  ((mention: MentionData) => void) | null
 >(null);
 
 export const OnResetMatchCallbackContext = createContext<(() => void) | null>(
@@ -46,18 +47,20 @@ const List = forwardRef<HTMLDivElement, ListProps>(
     const { children, ...divProps } = props;
     const [editor] = useLexicalComposerContext();
     const [highlightedIndex, setHighlightedIndex] = useState(0);
-    const values = useSuggestions();
-    const onValueSelect = useOnValueSelectCallback();
+    const suggestions = useSuggestions();
+    const onSuggestionSelect = useOnSuggestionSelectCallback();
     const onEscapeKeyDown = useOnResetMatchCallback();
 
     useEffect(() => {
       function onKeyArrowDown(event: KeyboardEvent): boolean {
-        if (values.length === 0) return true;
+        if (suggestions.length === 0) return true;
         if (highlightedIndex === null) return true;
 
         // If the highlighted index is at the last suggestion, then we loop back to the first suggestion, otherwise we increment the index.
         const nextIndex =
-          highlightedIndex === values.length - 1 ? 0 : highlightedIndex + 1;
+          highlightedIndex === suggestions.length - 1
+            ? 0
+            : highlightedIndex + 1;
         setHighlightedIndex(nextIndex);
 
         event.preventDefault();
@@ -71,16 +74,18 @@ const List = forwardRef<HTMLDivElement, ListProps>(
         onKeyArrowDown,
         COMMAND_PRIORITY_LOW
       );
-    }, [editor, highlightedIndex, values]);
+    }, [editor, highlightedIndex, suggestions]);
 
     useEffect(() => {
       function onKeyArrowUp(event: KeyboardEvent): boolean {
-        if (values.length === 0) return true;
+        if (suggestions.length === 0) return true;
         if (highlightedIndex === null) return true;
 
         // If the highlighted index is at the first suggestion, then we loop back to the last suggestion, otherwise we decrement the index.
         const nextIndex =
-          highlightedIndex === 0 ? values.length - 1 : highlightedIndex - 1;
+          highlightedIndex === 0
+            ? suggestions.length - 1
+            : highlightedIndex - 1;
         setHighlightedIndex(nextIndex);
 
         event.preventDefault();
@@ -93,7 +98,7 @@ const List = forwardRef<HTMLDivElement, ListProps>(
         onKeyArrowUp,
         COMMAND_PRIORITY_LOW
       );
-    }, [editor, highlightedIndex, values]);
+    }, [editor, highlightedIndex, suggestions]);
 
     useEffect(() => {
       function onKeyEscape(event: KeyboardEvent): boolean {
@@ -113,9 +118,9 @@ const List = forwardRef<HTMLDivElement, ListProps>(
 
     useEffect(() => {
       function onKeyEnter(event: KeyboardEvent | null): boolean {
-        if (values.length === 0) return true;
+        if (suggestions.length === 0) return true;
 
-        onValueSelect(values[highlightedIndex]);
+        onSuggestionSelect(suggestions[highlightedIndex]);
 
         if (event === null) return true;
 
@@ -129,7 +134,7 @@ const List = forwardRef<HTMLDivElement, ListProps>(
         onKeyEnter,
         COMMAND_PRIORITY_LOW
       );
-    }, [editor, onValueSelect, highlightedIndex, values]);
+    }, [editor, onSuggestionSelect, highlightedIndex, suggestions]);
 
     useEffect(() => {
       const root = editor.getRootElement();
@@ -168,9 +173,9 @@ const Item = forwardRef<HTMLDivElement | null, ItemProps>(
 
     const [highlightedIndex, setHighlightedIndex] = useHighlightedIndex();
     const suggestions = useSuggestions();
-    const onValueSelect = useOnValueSelectCallback();
+    const onSuggestionSelect = useOnSuggestionSelectCallback();
 
-    const isHighlighted = suggestions[highlightedIndex] === value;
+    const isHighlighted = suggestions[highlightedIndex].id === value;
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       forwardedRef,
@@ -191,7 +196,9 @@ const Item = forwardRef<HTMLDivElement | null, ItemProps>(
 
       if (event.isDefaultPrevented()) return;
 
-      const index = suggestions.indexOf(value);
+      const index = suggestions.findIndex(
+        (suggestion) => suggestion.id === value
+      );
       if (index === -1) return;
 
       setHighlightedIndex(index);
@@ -202,7 +209,7 @@ const Item = forwardRef<HTMLDivElement | null, ItemProps>(
 
       if (event.isDefaultPrevented()) return;
 
-      onValueSelect(value);
+      onSuggestionSelect(suggestions[highlightedIndex]);
     }
 
     return (
@@ -230,7 +237,7 @@ function useHighlightedIndex(): [number, Dispatch<SetStateAction<number>>] {
   return context;
 }
 
-function useSuggestions(): string[] {
+function useSuggestions(): MentionData[] {
   const suggestions = useContext(SuggestionsContext);
   if (suggestions === null) {
     throw new Error("useSuggestions: SuggestionsContext not found");
@@ -239,13 +246,15 @@ function useSuggestions(): string[] {
   return suggestions;
 }
 
-function useOnValueSelectCallback(): (value: string) => void {
-  const onValueSelect = useContext(OnValueSelectCallbackContext);
-  if (onValueSelect === null) {
-    throw new Error("useOnValueSelectCallback: OnValueSelectContext not found");
+function useOnSuggestionSelectCallback(): (mention: MentionData) => void {
+  const onSuggestionSelect = useContext(OnSuggestionSelectCallbackContext);
+  if (onSuggestionSelect === null) {
+    throw new Error(
+      "useOnSuggestionSelectCallback: OnSuggestionSelectContext not found"
+    );
   }
 
-  return onValueSelect;
+  return onSuggestionSelect;
 }
 
 function useOnResetMatchCallback(): () => void {

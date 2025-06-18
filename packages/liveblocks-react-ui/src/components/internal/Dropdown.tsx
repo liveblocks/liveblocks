@@ -4,7 +4,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
 import { forwardRef } from "react";
 
-import { useLiveblocksUIConfig } from "../../config";
+import { useLiveblocksUiConfig } from "../../config";
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
@@ -37,7 +37,7 @@ export function Dropdown({
   ...props
 }: DropdownProps) {
   const $ = useOverrides();
-  const { portalContainer } = useLiveblocksUIConfig();
+  const { portalContainer } = useLiveblocksUiConfig();
 
   return (
     <DropdownMenuPrimitive.Root

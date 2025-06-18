@@ -8,13 +8,13 @@ import { Suspense } from "react";
 import { User } from "./User";
 
 export function Mention({
-  userId,
+  mention,
 }: ComposerEditorMentionProps | CommentBodyMentionProps) {
   return (
     <span className="font-medium text-accent">
       @
       <Suspense fallback="…">
-        <User userId={userId} />
+        <User userId={mention.id} />
       </Suspense>
     </span>
   );

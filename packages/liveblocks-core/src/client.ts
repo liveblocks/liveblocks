@@ -1,7 +1,8 @@
+import { type Ai, createAi, makeCreateSocketDelegateForAi } from "./ai";
 import type { LiveblocksHttpApi } from "./api-client";
 import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
-import { isIdle } from "./connection";
+import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
@@ -56,6 +57,7 @@ import {
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
+import type { MentionData } from "./types/MentionData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -158,7 +160,7 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserId: Signal<string | undefined>;
-  readonly mentionSuggestionsCache: Map<string, string[]>;
+  readonly mentionSuggestionsCache: Map<string, MentionData[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
@@ -169,6 +171,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
   emitError(context: LiveblocksErrorContext, cause?: Error): void;
+  ai: Ai;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -450,15 +453,13 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   backgroundKeepAliveTimeout?: number; // in milliseconds
   polyfills?: Polyfills;
   largeMessageStrategy?: LargeMessageStrategy;
-  /** @deprecated Use `largeMessageStrategy="experimental-fallback-to-http"` instead. */
-  unstable_fallbackToHTTP?: boolean;
   unstable_streamData?: boolean;
   /**
-   * A function that returns a list of user IDs matching a string.
+   * A function that returns a list of mention suggestions matching a string.
    */
   resolveMentionSuggestions?: (
     args: ResolveMentionSuggestionsArgs
-  ) => Awaitable<string[]>;
+  ) => Awaitable<string[] | MentionData[]>;
 
   /**
    * A function that returns user info from user IDs.
@@ -559,6 +560,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const httpClient = createApiClient({
     baseUrl,
     fetchPolyfill,
+    currentUserId,
     authManager,
   });
 
@@ -568,6 +570,41 @@ export function createClient<U extends BaseUserMeta = DU>(
   };
 
   const roomsById = new Map<string, RoomDetails>();
+
+  const ai = createAi({
+    userId: currentUserId.get(),
+    lostConnectionTimeout,
+    backgroundKeepAliveTimeout: getBackgroundKeepAliveTimeout(
+      clientOptions.backgroundKeepAliveTimeout
+    ),
+    polyfills: clientOptions.polyfills,
+    delegates: {
+      createSocket: makeCreateSocketDelegateForAi(
+        baseUrl,
+        clientOptions.polyfills?.WebSocket
+      ),
+      authenticate: async () => {
+        const resp = await authManager.getAuthValue({
+          requestedScope: "room:read",
+        });
+        if (resp.type === "public") {
+          throw new StopRetrying(
+            "Cannot use AI Copilots with a public API key"
+          );
+        } else if (resp.token.parsed.k === TokenKind.SECRET_LEGACY) {
+          throw new StopRetrying("AI Copilots requires an ID or Access token");
+        } else {
+          if (!resp.token.parsed.ai) {
+            throw new StopRetrying(
+              "AI Copilots is not yet enabled for this account. To get started, see https://liveblocks.io/docs/get-started/ai-copilots#Quickstart"
+            );
+          }
+        }
+        return resp;
+      },
+      canZombie: () => false,
+    },
+  });
 
   function teardownRoom(room: OpaqueRoom) {
     unlinkDevTools(room.id);
@@ -661,11 +698,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
         errorEventSource: liveblocksErrorSource,
-        largeMessageStrategy:
-          clientOptions.largeMessageStrategy ??
-          (clientOptions.unstable_fallbackToHTTP
-            ? "experimental-fallback-to-http"
-            : undefined),
+        largeMessageStrategy: clientOptions.largeMessageStrategy,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
@@ -773,7 +806,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     roomsInfoStore.invalidate(roomIds);
   }
 
-  const mentionSuggestionsCache = new Map<string, string[]>();
+  const mentionSuggestionsCache = new Map<string, MentionData[]>();
 
   function invalidateResolvedMentionSuggestions() {
     mentionSuggestionsCache.clear();
@@ -907,6 +940,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       [kInternal]: {
         currentUserId,
         mentionSuggestionsCache,
+        ai,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,

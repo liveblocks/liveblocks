@@ -1885,7 +1885,7 @@ Returns an unsubscribe function. If you’d like to retry connecting, call
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
-  switch (error.code) {
+  switch (error.context.code) {
     case -1:
       // Authentication error
       break;
@@ -1946,7 +1946,7 @@ helpful for implementing a redirect to another page.
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
   // Could not connect because you don't have access to this room
-  if (error.code === 4001)
+  if (error.context.code === 4001)
     return __displayForbiddenEntryDialog__();
   }
 });
@@ -1963,7 +1963,7 @@ or the
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
   // The room ID has changed, get the new room ID
-  if (error.code === 4006)
+  if (error.context.code === 4006)
     const newRoomId = error.message;
     return __redirect__(`/app/${newRoomId}`)
   }
@@ -4895,24 +4895,40 @@ client.resolvers.invalidateMentionSuggestions();
 
 ## Utilities
 
-### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
+### getMentionsFromCommentBody [#get-mentions-from-comment-body]
 
-Returns an array of each user’s ID that has been mentioned in a `CommentBody`
-(found under `comment.body`).
+Returns an array of mentions from a `CommentBody` (found under `comment.body`).
 
 ```ts
-import { getMentionedIdsFromCommentBody } from "@liveblocks/client";
+import { getMentionsFromCommentBody } from "@liveblocks/client";
 
-const mentionedIds = getMentionedIdsFromCommentBody(comment.body);
+const mentions = getMentionsFromCommentBody(comment.body);
+```
+
+An optional second argument can be used to filter the returned mentions. By
+default, if it’s not provided, all mentions are returned, including future
+mention kinds (e.g. group mentions in the future).
+
+```tsx
+// All mentions (same as `getMentionsFromCommentBody(commentBody)`)
+getMentionsFromCommentBody(commentBody);
+
+// Only user mentions with an ID of "123"
+getMentionsFromCommentBody(
+  commentBody,
+  (mention) => mention.kind === "user" && mention.id === "123"
+);
+
+// Only mentions with an ID which starts with "prefix:"
+getMentionsFromCommentBody(commentBody, (mention) => (
+  mention.id.startsWith("prefix:")
+);
 ```
 
 Here’s an example with a custom `CommentBody`.
 
 ```ts
-import {
-  CommentBody,
-  getMentionedIdsFromCommentBody,
-} from "@liveblocks/client";
+import { CommentBody, getMentionsFromCommentBody } from "@liveblocks/client";
 
 // Create a custom `CommentBody`
 const commentBody: CommentBody = {
@@ -4929,16 +4945,16 @@ const commentBody: CommentBody = {
 };
 
 // Get the mentions inside the comment's body
-const mentionedIds = getMentionedIdsFromCommentBody(commentBody);
+const mentions = getMentionsFromCommentBody(commentBody);
 
-// ["chris@example.com"]
-console.log(mentionedIds);
+// [{ kind: "user", id: "chris@example.com" }]
+console.log(mentions);
 ```
 
 <Banner title="Also available from @liveblocks/node">
 
 If you’d like to use this on the server side, it's also available from
-[`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentioned-ids-from-comment-body).
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentions-from-comment-body).
 
 </Banner>
 
@@ -5424,8 +5440,9 @@ leave();
 ### Room.getNotificationSettings [@badge=Deprecated]
 
 <Banner title="Deprecated" type="error">
-  This method was renamed to [`room.getSubscriptionSettings`][] in 2.24, read
-  more in our [migration guide](/docs/platform/upgrading/2.24).
+  This method was renamed to [`room.getSubscriptionSettings`][] in 2.24 and
+  removed in 3.0, read more in our [migration
+  guide](/docs/platform/upgrading/2.24).
 </Banner>
 
 Gets the user’s subscription settings for the current room. This notates which
@@ -5435,8 +5452,9 @@ the current user receives in the current room.
 ### Room.updateNotificationSettings [@badge=Deprecated]
 
 <Banner title="Deprecated" type="error">
-  This method was renamed to [`room.updateSubscriptionSettings`][] in 2.24, read
-  more in our [migration guide](/docs/platform/upgrading/2.24).
+  This method was renamed to [`room.updateSubscriptionSettings`][] in 2.24 and
+  removed in 3.0, read more in our [migration
+  guide](/docs/platform/upgrading/2.24).
 </Banner>
 
 Updates the user’s subscription settings for the current room. Updating this

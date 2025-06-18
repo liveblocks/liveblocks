@@ -222,16 +222,31 @@ function traverseCommentBody(
 }
 
 /**
- * Get an array of each user's ID that has been mentioned in a `CommentBody`.
+ * Get an array of all mentions in a `CommentBody`.
+ *
+ * Narrow results with an optional predicate, e.g.
+ * `(mention) => mention.kind === "user"` to only get user mentions.
  */
-export function getMentionedIdsFromCommentBody(body: CommentBody): string[] {
-  const mentionedIds = new Set<string>();
+export function getMentionsFromCommentBody(
+  body: CommentBody,
+  predicate?: (mention: CommentBodyMention) => boolean
+): CommentBodyMention[] {
+  const mentionIds = new Set<string>();
+  const mentions: CommentBodyMention[] = [];
 
-  traverseCommentBody(body, "mention", (mention) =>
-    mentionedIds.add(mention.id)
-  );
+  traverseCommentBody(body, "mention", (mention) => {
+    if (
+      // If this mention isn't already in the list
+      !mentionIds.has(mention.id) &&
+      // And the provided predicate is true
+      (predicate ? predicate(mention) : true)
+    ) {
+      mentionIds.add(mention.id);
+      mentions.push(mention);
+    }
+  });
 
-  return Array.from(mentionedIds);
+  return mentions;
 }
 
 export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
@@ -246,7 +261,11 @@ export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
     return resolvedUsers;
   }
 
-  const userIds = getMentionedIdsFromCommentBody(body);
+  const userIds = getMentionsFromCommentBody(
+    body,
+    (mention) => mention.kind === "user"
+  ).map((mention) => mention.id);
+
   const users = await resolveUsers({
     userIds,
   });

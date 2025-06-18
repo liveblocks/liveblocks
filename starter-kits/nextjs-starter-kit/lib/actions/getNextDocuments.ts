@@ -12,11 +12,11 @@ type Props = {
 /**
  * Get Next Documents
  *
- * Get the next set of documents using userId and nextPage.
- * nextPage can be retrieved from getDocumentsByGroup.ts
+ * Get the next set of documents using userId and nextCursor.
+ * nextCursor can be retrieved from getDocumentsByGroup.ts
  * Uses custom API endpoint
  *
- * @param nextPage - nextPage, retrieved from getDocumentByGroup
+ * @param nextCursor - nextCursor, retrieved from getDocumentByGroup
  */
 export async function getNextDocuments({ nextCursor }: Props) {
   let session;

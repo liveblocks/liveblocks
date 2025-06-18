@@ -94,7 +94,7 @@ export async function threadEmail(
               })
               .replace(",", "")}
           </div>
-          <div>{emailData.comment.reactBody}</div>
+          <div>{emailData.comment.body}</div>
         </div>
       );
       break;
@@ -108,7 +108,7 @@ export async function threadEmail(
               <div>
                 @{comment.author.id} at {comment.createdAt.toString()}
               </div>
-              <div>{comment.reactBody}</div>
+              <div>{comment.body}</div>
             </div>
           ))}
         </div>

@@ -38,8 +38,8 @@ With our
 [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
 package, you can listen for error events with
 [`useErrorListener`](/docs/api-reference/liveblocks-react#useErrorListener).
-When `error.code === 4005`, that means the room was full when the user tried to
-join.
+When `error.context.code === 4005`, that means the room was full when the user
+tried to join.
 
 ```tsx highlight="15-17"
 import { useErrorListener } from "../liveblocks.config";
@@ -47,7 +47,7 @@ import { useErrorListener } from "../liveblocks.config";
 function App() {
   // Listen for errors
   useErrorListener((error) => {
-    switch (error.code) {
+    switch (error.context.code) {
       case -1:
         // Authentication error
         break;
@@ -75,8 +75,8 @@ function App() {
 With our [`@liveblocks/client`](/docs/api-reference/liveblocks-client) package,
 you can listen for error events with
 [`room.subscribe("error")`](/docs/api-reference/liveblocks-client#Room.subscribe.error).
-When `error.code === 4005`, that means the room was full when the user tried to
-join.
+When `error.context.code === 4005`, that means the room was full when the user
+tried to join.
 
 ```ts highlight="17-19"
 // No error is thrown when the room is full
@@ -86,7 +86,7 @@ const { room, leave } = client.enterRoom("my-room", {
 
 // Listen for errors
 const unsubscribe = room.subscribe("error", (error) => {
-  switch (error.code) {
+  switch (error.context.code) {
     case -1:
       // Authentication error
       break;

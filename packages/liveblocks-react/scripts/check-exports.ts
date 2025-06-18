@@ -7,7 +7,9 @@ import { sorted } from "itertools";
 // Configuration
 const ALLOW_NO_JSDOCS = [
   "MutationContext",
-  "UseStorageStatusOptions",
+  "RegisterAiKnowledgeProps",
+  "RegisterAiToolProps",
+  "UseSendAiMessageOptions",
   "UseThreadsOptions",
 ];
 
@@ -42,7 +44,9 @@ const ALLOW_NO_FACTORY = [
   "Json",
   "JsonObject",
   "MutationContext",
-  "UseStorageStatusOptions",
+  "RegisterAiKnowledgeProps",
+  "RegisterAiToolProps",
+  "UseSendAiMessageOptions",
   "UseThreadsOptions",
 ];
 

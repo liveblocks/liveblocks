@@ -26,7 +26,15 @@ Displays an interactive AI chat. AI can
 <AiChat chatId="my-chat-id" />
 ```
 
-{/* TODO image */}
+<Figure>
+  <Image
+    src="/assets/ai-copilots/ai-chat.jpg"
+    alt="AI Chat"
+    width={768}
+    height={446}
+    style={{ borderRadius: 12 }}
+  />
+</Figure>
 
 Each chat is stored permanently, and is identified by its unique `chatId`. Chats
 are only visible to the [authenticated user](/docs/authentication) who created
@@ -869,7 +877,7 @@ to update the property.
   <PropertiesListItem
     name="onMentionClick"
     type="function"
-    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+    detailedType="(mention: MentionData, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a mention.
   </PropertiesListItem>
@@ -1223,7 +1231,7 @@ function Component() {
   <PropertiesListItem
     name="onMentionClick"
     type="function"
-    detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
+    detailedType="(mention: MentionData, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a mention.
   </PropertiesListItem>
@@ -1363,20 +1371,20 @@ function MyComposer() {
 }
 
 // Render a mention in the composer's editor, e.g. "@Emil Joyce"
-function Mention({ userId }: CommentBodyMentionProps) {
-  return <Comment.Mention>@{userId}</Comment.Mention>;
+function Mention({ mention }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{mention.id}</Comment.Mention>;
 }
 
 // Render a list of mention suggestions, used after typing "@" in the editor
 function MentionSuggestions({
-  userIds,
-  selectedUserId,
+  mentions,
+  selectedMentionId,
 }: ComposerEditorMentionSuggestionsProps) {
   return (
     <Composer.Suggestions>
       <Composer.SuggestionsList>
-        {userIds.map((userId) => (
-          <MentionSuggestion key={userId} userId={userId} />
+        {mentions.map((mention) => (
+          <MentionSuggestion key={mention.id} userId={mention.id} />
         ))}
       </Composer.SuggestionsList>
     </Composer.Suggestions>
@@ -1512,7 +1520,7 @@ The components displayed within the editor.
     name="Mention"
     type="ComponentType<ComposerEditorMentionProps>"
   >
-    The component used to display mentions. Defaults to the mention’s `userId`
+    The component used to display mentions. Defaults to the mention’s `id`
     prefixed by an @.
   </PropertiesListItem>
   <PropertiesListItem
@@ -1520,7 +1528,7 @@ The components displayed within the editor.
     type="ComponentType<ComposerEditorMentionSuggestionProps>"
   >
     The component used to display mention suggestions. Defaults to a list of the
-    suggestions’ `userId`.
+    suggested mentions’ `id`.
   </PropertiesListItem>
   <PropertiesListItem name="Link" type="ComponentType<ComposerEditorLinkProps>">
     The component used to display links. Defaults to the link’s `children`
@@ -1541,16 +1549,16 @@ The component used to display mentions.
 ```tsx
 <Composer.Editor
   components={{
-    Mention: ({ userId, isSelected }) => (
-      <Composer.Mention>@{userId}</Composer.Mention>
+    Mention: ({ mention, isSelected }) => (
+      <Composer.Mention>@{mention.id}</Composer.Mention>
     ),
   }}
 />
 ```
 
 <PropertiesList>
-  <PropertiesListItem name="userId" type="string">
-    The mention’s user ID.
+  <PropertiesListItem name="mention" type="MentionData">
+    The mention to display.
   </PropertiesListItem>
   <PropertiesListItem name="isSelected" type="boolean">
     Whether the mention is selected.
@@ -1562,11 +1570,11 @@ The component used to display mentions.
 The component used to display mention suggestions.
 
 <PropertiesList>
-  <PropertiesListItem name="userIds" type="string[]">
-    The list of suggested user IDs.
+  <PropertiesListItem name="mentions" type="MentionData[]">
+    The list of suggested mentions.
   </PropertiesListItem>
-  <PropertiesListItem name="selectedUserId" type="string">
-    he currently selected user ID.
+  <PropertiesListItem name="selectedMentionId" type="string">
+    The currently selected mention’s ID.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1627,7 +1635,7 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
 Displays mentions within `Composer.Editor`.
 
 ```tsx
-<Composer.Mention>@{userId}</Composer.Mention>
+<Composer.Mention>@{mention.id}</Composer.Mention>
 ```
 
 <PropertiesList>
@@ -1664,9 +1672,9 @@ Displays a list of suggestions within `Composer.Editor`.
 
 ```tsx
 <Composer.SuggestionsList>
-  {userIds.map((userId) => (
-    <Composer.SuggestionsListItem key={userId} value={userId}>
-      @{userId}
+  {mentions.map((mention) => (
+    <Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+      @{mention.id}
     </Composer.SuggestionsListItem>
   ))}
 </Composer.SuggestionsList>
@@ -1683,8 +1691,8 @@ Displays a list of suggestions within `Composer.Editor`.
 Displays a suggestion within `Composer.SuggestionsList`.
 
 ```tsx
-<Composer.SuggestionsListItem key={userId} value={userId}>
-  @{userId}
+<Composer.SuggestionsListItem key={mention.id} value={mention.id}>
+  @{mention.id}
 </Composer.SuggestionsListItem>
 ```
 
@@ -1809,8 +1817,8 @@ Used to render a single comment.
 ```tsx
 <Comment.Body
   components={{
-    Mention: <Comment.Mention />,
-    Link: <Comment.Link />,
+    Mention: Comment.Mention,
+    Link: Comment.Link,
   }}
 />
 ```
@@ -1846,8 +1854,8 @@ function MyComments({ thread }: { thread: ThreadData }) {
 }
 
 // Render a mention in the comment, e.g. "@Emil Joyce"
-function Mention({ userId }: CommentBodyMentionProps) {
-  return <Comment.Mention>@{userId}</Comment.Mention>;
+function Mention({ mention }: CommentBodyMentionProps) {
+  return <Comment.Mention>@{mention.id}</Comment.Mention>;
 }
 
 // Render a link in the comment, e.g. "https://liveblocks.io"
@@ -1886,7 +1894,7 @@ The components displayed within the comment body.
     name="Mention"
     type="ComponentType<CommentBodyMentionProps>"
   >
-    The component used to display mentions. Defaults to the mention’s `userId`
+    The component used to display mentions. Defaults to the mention’s `id`
     prefixed by an @.
   </PropertiesListItem>
   <PropertiesListItem name="Link" type="ComponentType<CommentBodyLinkProps>">
@@ -1902,14 +1910,14 @@ The component used to display mentions.
 ```tsx
 <Comment.Body
   components={{
-    Mention: ({ userId }) => <Comment.Mention>@{userId}</Comment.Mention>,
+    Mention: ({ mention }) => <Comment.Mention>@{mention.id}</Comment.Mention>,
   }}
 />
 ```
 
 <PropertiesList>
-  <PropertiesListItem name="userId" type="string">
-    The mention’s user ID.
+  <PropertiesListItem name="mention" type="MentionData">
+    The mention to display.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1941,7 +1949,7 @@ The component used to display links.
 Displays mentions within `Comment.Body`.
 
 ```tsx
-<Comment.Mention>@{userId}</Comment.Mention>
+<Comment.Mention>@{mention.id}</Comment.Mention>
 ```
 
 <PropertiesList>
@@ -2832,16 +2840,16 @@ import { Icon } from "@liveblocks/react-ui";
 Find a full list of available icons in
 [our GitHub repo](https://github.com/liveblocks/liveblocks/blob/main/packages/liveblocks-react-ui/src/icon.ts).
 
-#### LiveblocksUIConfig
+#### LiveblocksUiConfig
 
 Set configuration options for all `@liveblocks/react-ui` components, such as
 [overrides](#overrides).
 
 ```tsx
-<LiveblocksUIConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
+<LiveblocksUiConfig overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" }} />
 ```
 
-##### Props [#LiveblocksUIConfig-props]
+##### Props [#LiveblocksUiConfig-props]
 
 <PropertiesList>
   <PropertiesListItem name="overrides" type="Partial<Overrides>">
@@ -3080,18 +3088,18 @@ ignoring their containers. You can either target specific floating elements
 Overrides can be used to customize components’ strings and localization-related
 properties, such as locale and reading direction.
 
-They can be set globally for all components using `LiveblocksUIConfig`:
+They can be set globally for all components using `LiveblocksUiConfig`:
 
 ```tsx
-import { LiveblocksUIConfig } from "@liveblocks/react-ui";
+import { LiveblocksUiConfig } from "@liveblocks/react-ui";
 
 export function App() {
   return (
-    <LiveblocksUIConfig
+    <LiveblocksUiConfig
       overrides={{ locale: "fr", USER_UNKNOWN: "Anonyme" /* ... */ }}
     >
       {/* ... */}
-    </LiveblocksUIConfig>
+    </LiveblocksUiConfig>
   );
 }
 ```

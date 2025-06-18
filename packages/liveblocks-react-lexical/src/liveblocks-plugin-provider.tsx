@@ -21,53 +21,6 @@ import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
 import { useRootElement } from "./use-root-element";
 
-export type EditorStatus =
-  /* The editor state is not loaded and has not been requested. */
-  | "not-loaded"
-  /* The editor state is loading from Liveblocks servers */
-  | "loading"
-  /**
-   * Not working yet! Will be available in a future release.
-   * Some editor state modifications has not been acknowledged yet by the server
-   */
-  | "synchronizing"
-  /* The editor state is sync with Liveblocks servers */
-  | "synchronized";
-
-/**
- * Get the storage status.
- *
- * - `not-loaded`: Initial state when entering the room.
- * - `loading`: Once the editor state has been requested by LiveblocksPlugin.
- * - `synchronizing`: Not working yet! Will be available in a future release.
- * - `synchronized`:  The editor state is sync with Liveblocks servers.
- *
- * @deprecated Prefer `useIsEditorReady` or `useSyncStatus` (from @liveblocks/react)
- */
-export function useEditorStatus(): EditorStatus {
-  const provider = useYjsProvider();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      if (provider === undefined) return () => {};
-      provider.on("status", onStoreChange);
-      return () => {
-        provider.off("status", onStoreChange);
-      };
-    },
-    [provider]
-  );
-
-  const getSnapshot = useCallback(() => {
-    if (provider === undefined) {
-      return "not-loaded";
-    }
-    return provider.getStatus();
-  }, [provider]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
 /**
  * Returns whether the editor has loaded the initial text contents from the
  * server and is ready to be used.

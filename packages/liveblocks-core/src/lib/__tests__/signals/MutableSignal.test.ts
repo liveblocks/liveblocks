@@ -139,6 +139,45 @@ it("when batched, derived signals will only update the value changed", () => {
   unsub();
 });
 
+it("nesting of mutations", () => {
+  const evaled = jest.fn();
+  const watcher = jest.fn();
+
+  const fruits = new MutableSignal<string[]>([]);
+  const count = new Signal<number>(1);
+  const list = DerivedSignal.from(fruits, count, (arr, n) => {
+    evaled();
+    return arr.flatMap((x) => Array<string>(n).fill(x));
+  });
+
+  const unsub = list.subscribe(watcher);
+  evaled.mockClear();
+
+  // Mutate fruits using a nested mutation
+  fruits.mutate((f) => {
+    f.push("🍎");
+
+    fruits.mutate((f) => {
+      f.push("🍐");
+    });
+
+    fruits.mutate((f) => {
+      f.push("🍌");
+
+      fruits.mutate((f) => {
+        f.push("🍉");
+      });
+    });
+  });
+
+  // Despite being two .mutate() calls, because of the nesting, only the
+  // outermost will trigger the update / re-evaluation
+  expect(list.get()).toEqual(["🍎", "🍐", "🍌", "🍉"]);
+  expect(evaled).toHaveBeenCalledTimes(1); // ...it's called only once
+
+  unsub();
+});
+
 test("[prop] whatever value you initialize it with is what comes out", () => {
   fc.assert(
     fc.property(
