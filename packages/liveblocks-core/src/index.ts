@@ -33,6 +33,7 @@ export type {
   EnterOptions,
   OpaqueClient,
   PrivateClientApi,
+  ResolveGroupsInfoArgs,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
@@ -94,6 +95,7 @@ export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
   DE,
+  DGI,
   DM,
   DP,
   DRI,

@@ -1,5 +1,6 @@
 import type {
   ClientOptions,
+  ResolveGroupsInfoArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
 } from "../client";
@@ -166,6 +167,86 @@ describe("resolvers", () => {
       });
       expect(resolveRoomsInfo).toHaveBeenNthCalledWith(2, {
         roomIds: ["b", "c"],
+      });
+    });
+  });
+
+  describe("invalidateGroupsInfo", () => {
+    test("should support invalidating all groups", async () => {
+      const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+        groupIds.map((groupId) => ({ name: groupId }))
+      );
+      const client = createClientForTest({
+        resolveGroupsInfo,
+      });
+
+      await Promise.all([
+        client[kInternal].groupsInfoStore.enqueue("a"),
+        client[kInternal].groupsInfoStore.enqueue("b"),
+      ]);
+
+      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([
+        '"a"',
+        '"b"',
+      ]);
+
+      // Invalidating all groups.
+      client.resolvers.invalidateGroupsInfo();
+
+      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([]);
+
+      await client[kInternal].groupsInfoStore.enqueue("a");
+
+      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual(['"a"']);
+
+      expect(resolveGroupsInfo).toHaveBeenCalledTimes(2);
+      expect(resolveGroupsInfo).toHaveBeenNthCalledWith(1, {
+        groupIds: ["a", "b"],
+      });
+      expect(resolveGroupsInfo).toHaveBeenNthCalledWith(2, { groupIds: ["a"] });
+    });
+
+    test("should support invalidating specific groups", async () => {
+      const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+        groupIds.map((groupId) => ({ name: groupId }))
+      );
+      const client = createClientForTest({
+        resolveGroupsInfo,
+      });
+
+      await Promise.all([
+        client[kInternal].groupsInfoStore.enqueue("a"),
+        client[kInternal].groupsInfoStore.enqueue("b"),
+      ]);
+
+      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([
+        '"a"',
+        '"b"',
+      ]);
+
+      // Invalidating "b" and "c" even though "c" is not in the cache.
+      client.resolvers.invalidateGroupsInfo(["b", "c"]);
+
+      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual(['"a"']);
+
+      await Promise.all([
+        client[kInternal].groupsInfoStore.enqueue("a"),
+        client[kInternal].groupsInfoStore.enqueue("b"),
+        client[kInternal].groupsInfoStore.enqueue("c"),
+      ]);
+
+      expect(client[kInternal].groupsInfoStore._cacheKeys()).toEqual([
+        '"a"',
+        '"b"',
+        '"c"',
+      ]);
+
+      expect(resolveGroupsInfo).toHaveBeenCalledTimes(2);
+      expect(resolveGroupsInfo).toHaveBeenNthCalledWith(1, {
+        groupIds: ["a", "b"],
+      });
+      expect(resolveGroupsInfo).toHaveBeenNthCalledWith(2, {
+        groupIds: ["b", "c"],
       });
     });
   });

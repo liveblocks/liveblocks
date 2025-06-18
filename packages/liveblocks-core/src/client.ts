@@ -6,7 +6,7 @@ import { isIdle, StopRetrying } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
-import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+import type { DE, DGI, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -71,6 +71,7 @@ const DEFAULT_LOST_CONNECTION_TIMEOUT = 5_000;
 
 const RESOLVE_USERS_BATCH_DELAY = 50;
 const RESOLVE_ROOMS_INFO_BATCH_DELAY = 50;
+const RESOLVE_GROUPS_INFO_BATCH_DELAY = 50;
 
 export type ResolveMentionSuggestionsArgs = {
   /**
@@ -96,6 +97,13 @@ export type ResolveRoomsInfoArgs = {
    * The IDs of the rooms to resolve.
    */
   roomIds: string[];
+};
+
+export type ResolveGroupsInfoArgs = {
+  /**
+   * The IDs of the groups to resolve.
+   */
+  groupIds: string[];
 };
 
 export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
@@ -164,6 +172,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
+  readonly groupsInfoStore: BatchStore<DGI | undefined, string>;
   readonly getRoomIds: () => string[];
   readonly httpClient: LiveblocksHttpApi<M>;
   // Type-level helper
@@ -394,6 +403,19 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     invalidateRoomsInfo(roomIds?: string[]): void;
 
     /**
+     * Invalidate some or all groups info that were previously cached by `resolveGroupsInfo`.
+     *
+     * @example
+     * // Invalidate all groups
+     * client.resolvers.invalidateGroupsInfo();
+     *
+     * @example
+     * // Invalidate specific groups
+     * client.resolvers.invalidateGroupsInfo(["group-1", "group-2"]);
+     */
+    invalidateGroupsInfo(groupIds?: string[]): void;
+
+    /**
      * Invalidate all mention suggestions cached by `resolveMentionSuggestions`.
      *
      * @example
@@ -475,6 +497,14 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
+  ) => Awaitable<(DRI | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
   ) => Awaitable<(DRI | undefined)[] | undefined>;
 
   /**
@@ -806,6 +836,29 @@ export function createClient<U extends BaseUserMeta = DU>(
     roomsInfoStore.invalidate(roomIds);
   }
 
+  const resolveGroupsInfo = clientOptions.resolveGroupsInfo;
+  const warnIfNoResolveGroupsInfo = createDevelopmentWarning(
+    () => !resolveGroupsInfo,
+    "Set the resolveGroupsInfo option in createClient to specify group info."
+  );
+
+  const batchedResolveGroupsInfo = new Batch(
+    async (batchedGroupIds: string[]) => {
+      const groupIds = batchedGroupIds.flat();
+      const groupsInfo = await resolveGroupsInfo?.({ groupIds });
+
+      warnIfNoResolveGroupsInfo();
+
+      return groupsInfo ?? groupIds.map(() => undefined);
+    },
+    { delay: RESOLVE_GROUPS_INFO_BATCH_DELAY }
+  );
+  const groupsInfoStore = createBatchStore(batchedResolveGroupsInfo);
+
+  function invalidateResolvedGroupsInfo(groupIds?: string[]) {
+    groupsInfoStore.invalidate(groupIds);
+  }
+
   const mentionSuggestionsCache = new Map<string, MentionData[]>();
 
   function invalidateResolvedMentionSuggestions() {
@@ -927,6 +980,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       resolvers: {
         invalidateUsers: invalidateResolvedUsers,
         invalidateRoomsInfo: invalidateResolvedRoomsInfo,
+        invalidateGroupsInfo: invalidateResolvedGroupsInfo,
         invalidateMentionSuggestions: invalidateResolvedMentionSuggestions,
       },
 
@@ -944,6 +998,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,
+        groupsInfoStore,
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
