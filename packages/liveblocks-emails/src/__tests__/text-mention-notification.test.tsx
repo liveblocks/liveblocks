@@ -6,7 +6,7 @@ import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
 import { MENTION_CHARACTER } from "../lib/constants";
-import type { ConvertMentionContentElements } from "../mention-content";
+import type { ConvertTextMentionContentElements } from "../text-mention-content";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
@@ -231,7 +231,7 @@ describe("text mention notification", () => {
   });
 
   describe("prepare text mention notification email", () => {
-    const elements: ConvertMentionContentElements<string, BaseUserMeta> = {
+    const elements: ConvertTextMentionContentElements<string, BaseUserMeta> = {
       container: ({ children }) => children.join(""),
       mention: ({ node, user }) =>
         `${MENTION_CHARACTER}${user?.name ?? node.id}`,
