@@ -47,9 +47,9 @@ describe("convert text mention content", () => {
 
       return content.join("\n"); //NOTE: to represent a valid HTML string
     },
-    mention: ({ node, user }) => {
+    mention: ({ node, user, group }) => {
       // prettier-ignore
-      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
+      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : node.id}</span>`
     },
     text: ({ node }) => {
       // Note: construction following the schema 👇

@@ -62,9 +62,9 @@ describe("convert comment body", () => {
       // prettier-ignore
       return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
     },
-    mention: ({ element, user }) => {
+    mention: ({ element, user, group }) => {
       // prettier-ignore
-      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
+      return html`<span data-mention>${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
     },
   };
 

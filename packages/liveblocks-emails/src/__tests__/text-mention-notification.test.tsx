@@ -242,8 +242,8 @@ describe("text mention notification", () => {
   describe("prepare text mention notification email", () => {
     const elements: ConvertTextMentionContentElements<string, BaseUserMeta> = {
       container: ({ children }) => children.join(""),
-      mention: ({ node, user }) =>
-        `${MENTION_CHARACTER}${user?.name ?? node.id}`,
+      mention: ({ node, user, group }) =>
+        `${MENTION_CHARACTER}${user?.name ?? group?.name ?? node.id}`,
       text: ({ node }) => node.text,
     };
 

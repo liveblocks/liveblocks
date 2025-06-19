@@ -254,6 +254,8 @@ export async function prepareTextMentionNotificationEmail<
     callerName,
   });
 
+  // TODO: resolve groups info
+
   const authorsInfoPromise = resolveAuthorsInfo({
     userIds: [data.createdBy],
     resolveUsers: batchUsersResolver.resolveUsers,
@@ -288,6 +290,8 @@ export async function prepareTextMentionNotificationEmail<
 
   await batchUsersResolver.resolve();
 
+  // TODO: batchedGroupsResolver.resolve();
+
   const [authorsInfo, content] = await Promise.all([
     authorsInfoPromise,
     contentPromise,
@@ -320,15 +324,24 @@ export type TextEditorContainerComponentProps = {
   children: ReactNode;
 };
 
-export type TextEditorMentionComponentProps<U extends BaseUserMeta = DU> = {
+export type TextEditorMentionComponentProps<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention element.
    */
   element: LiveblocksTextEditorMentionNode;
+
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
 export type TextEditorTextComponentProps = {
@@ -340,6 +353,7 @@ export type TextEditorTextComponentProps = {
 
 export type ConvertTextEditorNodesAsReactComponents<
   U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
 > = {
   /**
    *
@@ -350,7 +364,7 @@ export type ConvertTextEditorNodesAsReactComponents<
   /**
    * The component used to display mentions.
    */
-  Mention: ComponentType<TextEditorMentionComponentProps<U>>;
+  Mention: ComponentType<TextEditorMentionComponentProps<U, GI>>;
 
   /**
    * The component used to display text nodes.
@@ -358,12 +372,15 @@ export type ConvertTextEditorNodesAsReactComponents<
   Text: ComponentType<TextEditorTextComponentProps>;
 };
 
-const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
+const baseComponents: ConvertTextEditorNodesAsReactComponents<
+  BaseUserMeta,
+  BaseGroupInfo
+> = {
   Container: ({ children }) => <div>{children}</div>,
-  Mention: ({ element, user }) => (
+  Mention: ({ element, user, group }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.id}
+      {user?.name ?? group?.name ?? element.id}
     </span>
   ),
   Text: ({ element }) => {
@@ -393,12 +410,13 @@ const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
 
 export type PrepareTextMentionNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
 > = PrepareTextMentionNotificationEmailOptions & {
   /**
    * The components used to customize the resulting React nodes. Each components has
    * priority over the base components inherited.
    */
-  components?: Partial<ConvertTextEditorNodesAsReactComponents<U>>;
+  components?: Partial<ConvertTextEditorNodesAsReactComponents<U, GI>>;
 };
 
 export type TextMentionNotificationEmailDataAsReact<
@@ -432,7 +450,10 @@ export type TextMentionNotificationEmailDataAsReact<
 export async function prepareTextMentionNotificationEmailAsReact(
   client: Liveblocks,
   event: TextMentionNotificationEvent,
-  options: PrepareTextMentionNotificationEmailAsReactOptions<BaseUserMeta> = {}
+  options: PrepareTextMentionNotificationEmailAsReactOptions<
+    BaseUserMeta,
+    BaseGroupInfo
+  > = {}
 ): Promise<TextMentionNotificationEmailDataAsReact | null> {
   const Components = { ...baseComponents, ...options.components };
   const data = await prepareTextMentionNotificationEmail<
