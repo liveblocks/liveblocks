@@ -51,7 +51,7 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
-import { Avatar, type AvatarProps } from "./internal/Avatar";
+import { UserAvatar, type UserAvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -242,7 +242,7 @@ interface InboxNotificationLayoutProps
 
 export type InboxNotificationIconProps = ComponentProps<"div">;
 
-export type InboxNotificationAvatarProps = AvatarProps;
+export type InboxNotificationAvatarProps = UserAvatarProps;
 
 const InboxNotificationLayout = forwardRef<
   HTMLAnchorElement,
@@ -427,7 +427,7 @@ function InboxNotificationAvatar({
   ...props
 }: InboxNotificationAvatarProps) {
   return (
-    <Avatar
+    <UserAvatar
       className={cn("lb-inbox-notification-avatar", className)}
       {...props}
     />
