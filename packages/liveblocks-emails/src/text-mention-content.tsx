@@ -16,19 +16,19 @@ import {
   resolveUsersInLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
 
-export type MentionContentContainerElementArgs<T> = {
+export type TextMentionContentContainerElementArgs<T> = {
   /**
-   * The blocks of the mention content
+   * The blocks of the text mention content
    */
   children: T[];
 };
 
-export type MentionContentMentionElementArgs<
+export type TextMentionContentMentionElementArgs<
   U extends BaseUserMeta = DU,
   GI extends BaseGroupInfo = DGI,
 > = {
   /**
-   * The mention node.
+   * The text mention node.
    */
   node: LiveblocksTextEditorMentionNode;
 
@@ -43,7 +43,7 @@ export type MentionContentMentionElementArgs<
   group?: GI;
 };
 
-export type MentionContentTextElementArgs = {
+export type TextMentionContentTextElementArgs = {
   /**
    * The text element.
    */
@@ -52,24 +52,27 @@ export type MentionContentTextElementArgs = {
 
 /**
  * Protocol:
- * Mention content elements to be converted to a custom format `T`
+ * Text mention content elements to be converted to a custom format `T`
  */
-export type ConvertMentionContentElements<T, U extends BaseUserMeta = DU> = {
+export type ConvertTextMentionContentElements<
+  T,
+  U extends BaseUserMeta = DU,
+> = {
   /**
-   * The container element used to display mention content blocks
+   * The container element used to display text mention content blocks
    */
-  container: (args: MentionContentContainerElementArgs<T>) => T;
+  container: (args: TextMentionContentContainerElementArgs<T>) => T;
   /**
    * The mention element used to display the mention itself.
    */
-  mention: (args: MentionContentMentionElementArgs<U>, index: number) => T;
+  mention: (args: TextMentionContentMentionElementArgs<U>, index: number) => T;
   /**
    * The text element used to display the text surrounding the mention.
    */
-  text: (args: MentionContentTextElementArgs, index: number) => T;
+  text: (args: TextMentionContentTextElementArgs, index: number) => T;
 };
 
-export type ConvertMentionContentionOptions<
+export type ConvertTextMentionContentOptions<
   T,
   U extends BaseUserMeta = DU,
   GI extends BaseGroupInfo = DGI,
@@ -93,19 +96,19 @@ export type ConvertMentionContentionOptions<
   /**
    * The elements used to customize the resulting format `T`.
    */
-  elements: ConvertMentionContentElements<T, U>;
+  elements: ConvertTextMentionContentElements<T, U>;
 };
 
 /**
- * Convert a mention content nodes to a custom format `T`.
+ * Convert a text mention content nodes to a custom format `T`.
  */
-export async function convertMentionContent<
+export async function convertTextMentionContent<
   T,
   U extends BaseUserMeta = DU,
   GI extends BaseGroupInfo = DGI,
 >(
   nodes: LiveblocksTextEditorNode[],
-  options: ConvertMentionContentionOptions<T, U, GI>
+  options: ConvertTextMentionContentOptions<T, U, GI>
 ): Promise<T> {
   const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
     nodes,
