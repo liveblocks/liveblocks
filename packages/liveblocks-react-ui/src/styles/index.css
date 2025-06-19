@@ -1504,7 +1504,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.lb-comment-reaction-tooltip {
+.lb-comment-reaction-tooltip,
+.lb-comment-mention-tooltip {
   max-inline-size: 200px;
 }
 
