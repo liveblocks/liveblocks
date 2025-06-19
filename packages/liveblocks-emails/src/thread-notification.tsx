@@ -284,7 +284,6 @@ export async function prepareThreadNotificationEmail<
         commentId: comment.id,
       });
 
-      // TODO: Return the mention kind? So you can make the title different for user and group mentions
       return {
         type: "unreadMention",
         comment: {
@@ -692,7 +691,7 @@ export async function prepareThreadNotificationEmailAsReact(
     },
     {
       container: ({ children }) => (
-        <Components.Container key={"lb-comment-body-container"}>
+        <Components.Container key="lb-comment-body-container">
           {children}
         </Components.Container>
       ),

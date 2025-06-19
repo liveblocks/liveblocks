@@ -516,12 +516,12 @@ const InboxNotificationThread = forwardRef<
         }
 
         case "mention": {
-          const mentionUserId = contents.userIds[0]!;
+          const mentionCreatedBy = contents.userIds[0]!;
           const mentionComment = contents.comments[0]!;
 
-          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const aside = <InboxNotificationAvatar userId={mentionCreatedBy} />;
           const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-            <User key={mentionUserId} userId={mentionUserId} />,
+            <User key={mentionCreatedBy} userId={mentionCreatedBy} />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined
           );
           const content = (

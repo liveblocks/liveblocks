@@ -650,8 +650,14 @@ export async function stringifyCommentBody(
                   elements.mention(
                     {
                       element: inline,
-                      user: resolvedUsers.get(inline.id),
-                      group: resolvedGroupsInfo.get(inline.id),
+                      user:
+                        inline.kind === "user"
+                          ? resolvedUsers.get(inline.id)
+                          : undefined,
+                      group:
+                        inline.kind === "group"
+                          ? resolvedGroupsInfo.get(inline.id)
+                          : undefined,
                     },
                     inlineIndex
                   ),
