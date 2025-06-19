@@ -57,6 +57,7 @@ export type TextMentionContentTextElementArgs = {
 export type ConvertTextMentionContentElements<
   T,
   U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
 > = {
   /**
    * The container element used to display text mention content blocks
@@ -65,7 +66,10 @@ export type ConvertTextMentionContentElements<
   /**
    * The mention element used to display the mention itself.
    */
-  mention: (args: TextMentionContentMentionElementArgs<U>, index: number) => T;
+  mention: (
+    args: TextMentionContentMentionElementArgs<U, GI>,
+    index: number
+  ) => T;
   /**
    * The text element used to display the text surrounding the mention.
    */
@@ -96,7 +100,7 @@ export type ConvertTextMentionContentOptions<
   /**
    * The elements used to customize the resulting format `T`.
    */
-  elements: ConvertTextMentionContentElements<T, U>;
+  elements: ConvertTextMentionContentElements<T, U, GI>;
 };
 
 /**
