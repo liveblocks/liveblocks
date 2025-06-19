@@ -55,6 +55,7 @@ export {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
+  resolveGroupsInfoInCommentBody,
   resolveUsersInCommentBody,
   stringifyCommentBody,
   toAbsoluteUrl,

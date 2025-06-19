@@ -1,13 +1,16 @@
 import type {
   Awaitable,
+  BaseGroupInfo,
   BaseUserMeta,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyText,
   CommentData,
+  DGI,
   DRI,
   DU,
   InboxNotificationData,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -76,6 +79,7 @@ export const getUnreadComments = ({
   });
 };
 
+// TODO: Update to handle group mentions
 /** @internal */
 export const getLastUnreadCommentWithMention = ({
   comments,
@@ -173,18 +177,30 @@ export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> =
 export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
   CommentEmailData<ReactNode, U>;
 
-type PrepareThreadNotificationEmailOptions<U extends BaseUserMeta = DU> = {
+type PrepareThreadNotificationEmailOptions<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * A function that returns room info from room IDs.
    */
   resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 
   /**
-   * A function that returns info from user IDs.
+   * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
 };
 
 /**
@@ -220,6 +236,8 @@ export async function prepareThreadNotificationEmail<
     callerName,
   });
 
+  // TODO: Add resolveGroupsInfo
+
   switch (data.type) {
     case "unreadMention": {
       const { comment } = data;
@@ -231,6 +249,7 @@ export async function prepareThreadNotificationEmail<
 
       const commentBodyPromise = convertCommentBody<BodyType, U>(comment.body, {
         resolveUsers: batchUsersResolver.resolveUsers,
+        // TODO: resolveGroupsInfo: batchGroupsResolver.resolveGroupsInfo,
         elements,
       });
 
@@ -249,6 +268,7 @@ export async function prepareThreadNotificationEmail<
           })
         : undefined;
 
+      // TODO: Return the mention kind? So you can make the title different for user and group mentions
       return {
         type: "unreadMention",
         comment: {
@@ -277,11 +297,13 @@ export async function prepareThreadNotificationEmail<
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBody<BodyType, U>(c.body, {
           resolveUsers: batchUsersResolver.resolveUsers,
+          // TODO: resolveGroupsInfo: batchGroupsResolver.resolveGroupsInfo,
           elements,
         })
       );
 
       await batchUsersResolver.resolve();
+      // TODO: await batchGroupsResolver.resolve();
 
       const [authorsInfo, ...commentBodies] = await Promise.all([
         authorsInfoPromise,
@@ -419,6 +441,7 @@ export async function prepareThreadNotificationEmailAsHtml(
     event,
     {
       resolveUsers: options.resolveUsers,
+      resolveGroupsInfo: options.resolveGroupsInfo,
       resolveRoomInfo: options.resolveRoomInfo,
     },
     {
@@ -463,9 +486,9 @@ export async function prepareThreadNotificationEmailAsHtml(
         // prettier-ignore
         return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ? html`${element.text}` : element.url}</a>`;
       },
-      mention: ({ element, user }) => {
+      mention: ({ element, user, group }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
       },
     },
     "prepareThreadNotificationEmailAsHtml"
@@ -511,19 +534,30 @@ export type CommentBodyLinkComponentProps = {
   href: string;
 };
 
-export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
+export type CommentBodyMentionComponentProps<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention element.
    */
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
-export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
+export type ConvertCommentBodyAsReactComponents<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    *
    * The component used to act as a container to wrap comment body blocks,
@@ -547,10 +581,10 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
   /**
    * The component used to display mentions.
    */
-  Mention: ComponentType<CommentBodyMentionComponentProps<U>>;
+  Mention: ComponentType<CommentBodyMentionComponentProps<U, GI>>;
 };
 
-const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
+const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta, DGI> = {
   Container: ({ children }) => <div>{children}</div>,
   Paragraph: ({ children }) => <p>{children}</p>,
   Text: ({ element }) => {
@@ -581,22 +615,23 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
       {element.text ?? element.url}
     </a>
   ),
-  Mention: ({ element, user }) => (
+  Mention: ({ element, user, group }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.id}
+      {user?.name ?? group?.name ?? element.id}
     </span>
   ),
 };
 
 export type PrepareThreadNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
-> = PrepareThreadNotificationEmailOptions<U> & {
+  GI extends BaseGroupInfo = DGI,
+> = PrepareThreadNotificationEmailOptions<U, GI> & {
   /**
    * The components used to customize the resulting React nodes inside a comment body.
    * Each components has priority over the base components inherited internally defined.
    */
-  components?: Partial<ConvertCommentBodyAsReactComponents<U>>;
+  components?: Partial<ConvertCommentBodyAsReactComponents<U, GI>>;
 };
 
 export type ThreadNotificationEmailDataAsReact<U extends BaseUserMeta = DU> =
@@ -638,6 +673,7 @@ export async function prepareThreadNotificationEmailAsReact(
     event,
     {
       resolveUsers: options.resolveUsers,
+      resolveGroupsInfo: options.resolveGroupsInfo,
       resolveRoomInfo: options.resolveRoomInfo,
     },
     {
@@ -664,12 +700,13 @@ export async function prepareThreadNotificationEmailAsReact(
           href={href}
         />
       ),
-      mention: ({ element, user }, index) =>
+      mention: ({ element, user, group }, index) =>
         element.id ? (
           <Components.Mention
             key={`lb-comment-body-mention-${index}`}
             element={element}
             user={user}
+            group={group}
           />
         ) : null,
     },
