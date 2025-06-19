@@ -1,11 +1,14 @@
 import {
   type Awaitable,
+  type BaseGroupInfo,
   type BaseUserMeta,
+  type DGI,
   type DRI,
   type DU,
   html,
   htmlSafe,
   type MentionData,
+  type ResolveGroupsInfoArgs,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
@@ -190,18 +193,30 @@ export type TextMentionNotificationEmailData<
   roomInfo: DRI;
 };
 
-type PrepareTextMentionNotificationEmailOptions<U extends BaseUserMeta = DU> = {
+type PrepareTextMentionNotificationEmailOptions<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * A function that returns room info from room IDs.
    */
   resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 
   /**
-   * A function that returns info from user IDs.
+   * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
 };
 
 /**
@@ -554,9 +569,9 @@ export async function prepareTextMentionNotificationEmailAsHtml(
 
         return content.join("\n"); //NOTE: to represent a valid HTML string
       },
-      mention: ({ node, user }) => {
+      mention: ({ node, user, group }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : node.id}</span>`
       },
       text: ({ node }) => {
         // Note: construction following the schema 👇

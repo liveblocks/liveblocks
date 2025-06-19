@@ -1,15 +1,18 @@
 import type {
   Awaitable,
+  BaseGroupInfo,
   BaseUserMeta,
+  DGI,
   DU,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
-import { assertNever } from "@liveblocks/core";
 
 import {
   type LiveblocksTextEditorMentionNode,
   type LiveblocksTextEditorNode,
   type LiveblocksTextEditorTextNode,
+  resolveGroupsInfoInLiveblocksTextEditorNodes,
   resolveUsersInLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
 
@@ -20,15 +23,24 @@ export type MentionContentContainerElementArgs<T> = {
   children: T[];
 };
 
-export type MentionContentMentionElementArgs<U extends BaseUserMeta = DU> = {
+export type MentionContentMentionElementArgs<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention node.
    */
   node: LiveblocksTextEditorMentionNode;
+
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
 export type MentionContentTextElementArgs = {
@@ -57,7 +69,11 @@ export type ConvertMentionContentElements<T, U extends BaseUserMeta = DU> = {
   text: (args: MentionContentTextElementArgs, index: number) => T;
 };
 
-export type ConvertMentionContentionOptions<T, U extends BaseUserMeta = DU> = {
+export type ConvertMentionContentionOptions<
+  T,
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * A function that returns user info from user IDs.
    * You should return a list of user objects of the same size, in the same order.
@@ -65,6 +81,14 @@ export type ConvertMentionContentionOptions<T, U extends BaseUserMeta = DU> = {
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
 
   /**
    * The elements used to customize the resulting format `T`.
@@ -75,24 +99,35 @@ export type ConvertMentionContentionOptions<T, U extends BaseUserMeta = DU> = {
 /**
  * Convert a mention content nodes to a custom format `T`.
  */
-export async function convertMentionContent<T, U extends BaseUserMeta = DU>(
+export async function convertMentionContent<
+  T,
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+>(
   nodes: LiveblocksTextEditorNode[],
-  options: ConvertMentionContentionOptions<T, U>
+  options: ConvertMentionContentionOptions<T, U, GI>
 ): Promise<T> {
   const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
     nodes,
     options?.resolveUsers
   );
+  const resolvedGroupsInfo = await resolveGroupsInfoInLiveblocksTextEditorNodes(
+    nodes,
+    options?.resolveGroupsInfo
+  );
 
   const blocks: T[] = nodes.map((node, index) => {
     switch (node.type) {
       case "mention": {
-        if (node.kind !== "user") {
-          return assertNever(node.kind, "Unknown mention kind");
-        }
-
         return options.elements.mention(
-          { node, user: resolvedUsers.get(node.id) },
+          {
+            node,
+            user: node.kind === "user" ? resolvedUsers.get(node.id) : undefined,
+            group:
+              node.kind === "group"
+                ? resolvedGroupsInfo.get(node.id)
+                : undefined,
+          },
           index
         );
       }

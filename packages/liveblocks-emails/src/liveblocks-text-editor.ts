@@ -7,8 +7,10 @@
 
 import type {
   Awaitable,
+  BaseGroupInfo,
   BaseUserMeta,
   Relax,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 
@@ -39,13 +41,21 @@ export type LiveblocksTextEditorTextNode = {
   text: string;
 } & LiveblocksTextEditorTextFormat;
 
-export type LiveblocksTextEditorMentionNode =
-  Relax<LiveblocksTextEditorUserMentionNode>;
+export type LiveblocksTextEditorMentionNode = Relax<
+  LiveblocksTextEditorUserMentionNode | LiveblocksTextEditorGroupMentionNode
+>;
 
 type LiveblocksTextEditorUserMentionNode = {
   type: "mention";
   kind: "user";
   id: string;
+};
+
+export type LiveblocksTextEditorGroupMentionNode = {
+  type: "mention";
+  kind: "group";
+  id: string;
+  userIds?: string[];
 };
 
 /**
@@ -274,7 +284,7 @@ export function transformAsLiveblocksTextEditorNodes(
 
 /**
  * @internal
- * Resolves mentioned users in Liveblocks Text Editor node
+ * Resolves mentioned users in Liveblocks Text Editor nodes.
  */
 export const resolveUsersInLiveblocksTextEditorNodes = async <
   U extends BaseUserMeta,
@@ -308,4 +318,42 @@ export const resolveUsersInLiveblocksTextEditorNodes = async <
     }
   }
   return resolvedUsers;
+};
+
+/**
+ * @internal
+ * Resolves mentioned groups in Liveblocks Text Editor nodes.
+ */
+export const resolveGroupsInfoInLiveblocksTextEditorNodes = async <
+  GI extends BaseGroupInfo,
+>(
+  nodes: LiveblocksTextEditorNode[],
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>
+): Promise<Map<string, GI>> => {
+  const resolvedGroupsInfo = new Map<string, GI>();
+  if (!resolveGroupsInfo) {
+    return resolvedGroupsInfo;
+  }
+
+  const mentionedGroupIds = new Set<string>();
+  for (const node of nodes) {
+    if (node.type === "mention" && node.kind === "group") {
+      mentionedGroupIds.add(node.id);
+    }
+  }
+
+  const groupIds = Array.from(mentionedGroupIds);
+
+  const groupsInfo = await resolveGroupsInfo({ groupIds });
+  if (groupsInfo) {
+    for (const [index, groupId] of groupIds.entries()) {
+      const groupInfo = groupsInfo[index];
+      if (groupInfo) {
+        resolvedGroupsInfo.set(groupId, groupInfo);
+      }
+    }
+  }
+  return resolvedGroupsInfo;
 };

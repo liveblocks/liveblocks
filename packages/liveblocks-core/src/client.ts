@@ -505,7 +505,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
    */
   resolveGroupsInfo?: (
     args: ResolveGroupsInfoArgs
-  ) => Awaitable<(DRI | undefined)[] | undefined>;
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 
   /**
    * Prevent the current browser tab from being closed if there are any locally
