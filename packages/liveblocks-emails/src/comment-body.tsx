@@ -1,18 +1,22 @@
 import type {
   Awaitable,
+  BaseGroupInfo,
   BaseUserMeta,
   CommentBody,
   CommentBodyLink,
   CommentBodyMention,
   CommentBodyParagraph,
   CommentBodyText,
+  DGI,
   DU,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
+  resolveGroupsInfoInCommentBody,
   resolveUsersInCommentBody,
   sanitizeUrl,
 } from "@liveblocks/core";
@@ -56,23 +60,35 @@ export type CommentBodyLinkElementArgs = {
   href: string;
 };
 
-export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
+export type CommentBodyMentionElementArgs<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention element.
    */
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolveUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolveGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
 /**
  * Protocol:
  * Comment body elements to be converted to a custom format `T`
  */
-export type ConvertCommentBodyElements<T, U extends BaseUserMeta = DU> = {
+export type ConvertCommentBodyElements<
+  T,
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The container element used to display comment body blocks.
    */
@@ -92,10 +108,14 @@ export type ConvertCommentBodyElements<T, U extends BaseUserMeta = DU> = {
   /**
    * The mention element used to display mentions.
    */
-  mention: (args: CommentBodyMentionElementArgs<U>, index: number) => T;
+  mention: (args: CommentBodyMentionElementArgs<U, GI>, index: number) => T;
 };
 
-export type ConvertCommentBodyOptions<T, U extends BaseUserMeta = DU> = {
+export type ConvertCommentBodyOptions<
+  T,
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * A function that returns user info from user IDs.
    * You should return a list of user objects of the same size, in the same order.
@@ -105,9 +125,17 @@ export type ConvertCommentBodyOptions<T, U extends BaseUserMeta = DU> = {
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
 
   /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
+
+  /**
    * The elements used to customize the resulting format `T`.
    */
-  elements: ConvertCommentBodyElements<T, U>;
+  elements: ConvertCommentBodyElements<T, U, GI>;
 };
 
 /**
@@ -121,6 +149,10 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
     body,
     options?.resolveUsers
   );
+  const resolvedGroupsInfo = await resolveGroupsInfoInCommentBody(
+    body,
+    options?.resolveGroupsInfo
+  );
 
   const blocks: T[] = body.content
     .map((block, index) => {
@@ -133,6 +165,7 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
                   {
                     element: inline,
                     user: resolvedUsers.get(inline.id),
+                    group: resolvedGroupsInfo.get(inline.id),
                   },
                   inlineIndex
                 );

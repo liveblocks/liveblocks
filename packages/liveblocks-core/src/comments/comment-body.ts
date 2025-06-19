@@ -1,7 +1,8 @@
-import type { ResolveUsersArgs } from "../client";
-import type { DU } from "../globals/augmentation";
+import type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "../client";
+import type { DGI, DU } from "../globals/augmentation";
 import { nn } from "../lib/assert";
 import { sanitizeUrl } from "../lib/url";
+import type { BaseGroupInfo } from "../protocol/BaseGroupInfo";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
   CommentBody,
@@ -75,19 +76,30 @@ export type CommentBodyLinkElementArgs = {
   href: string;
 };
 
-export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
+export type CommentBodyMentionElementArgs<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention element.
    */
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolveUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolveGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
-export type StringifyCommentBodyElements<U extends BaseUserMeta = DU> = {
+export type StringifyCommentBodyElements<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The element used to display paragraphs.
    */
@@ -106,10 +118,16 @@ export type StringifyCommentBodyElements<U extends BaseUserMeta = DU> = {
   /**
    * The element used to display mentions.
    */
-  mention: (args: CommentBodyMentionElementArgs<U>, index: number) => string;
+  mention: (
+    args: CommentBodyMentionElementArgs<U, GI>,
+    index: number
+  ) => string;
 };
 
-export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
+export type StringifyCommentBodyOptions<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * Which format to convert the comment to.
    */
@@ -119,7 +137,7 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
    * The elements used to customize the resulting string. Each element has
    * priority over the defaults inherited from the `format` option.
    */
-  elements?: Partial<StringifyCommentBodyElements<U>>;
+  elements?: Partial<StringifyCommentBodyElements<U, GI>>;
 
   /**
    * The separator used between paragraphs.
@@ -133,6 +151,14 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
 };
 
 export function isCommentBodyParagraph(
@@ -280,6 +306,38 @@ export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   }
 
   return resolvedUsers;
+}
+
+export async function resolveGroupsInfoInCommentBody<GI extends BaseGroupInfo>(
+  body: CommentBody,
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>
+): Promise<Map<string, GI>> {
+  const resolvedGroupsInfo = new Map<string, GI>();
+
+  if (!resolveGroupsInfo) {
+    return resolvedGroupsInfo;
+  }
+
+  const groupIds = getMentionsFromCommentBody(
+    body,
+    (mention) => mention.kind === "group"
+  ).map((mention) => mention.id);
+
+  const groups = await resolveGroupsInfo({
+    groupIds,
+  });
+
+  for (const [index, groupId] of groupIds.entries()) {
+    const group = groups?.[index];
+
+    if (group) {
+      resolvedGroupsInfo.set(groupId, group);
+    }
+  }
+
+  return resolvedGroupsInfo;
 }
 
 const htmlEscapables = {
@@ -560,7 +618,7 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
  */
 export async function stringifyCommentBody(
   body: CommentBody,
-  options?: StringifyCommentBodyOptions<BaseUserMeta>
+  options?: StringifyCommentBodyOptions<BaseUserMeta, BaseGroupInfo>
 ): Promise<string> {
   const format = options?.format ?? "plain";
   const separator =
@@ -577,6 +635,10 @@ export async function stringifyCommentBody(
     body,
     options?.resolveUsers
   );
+  const resolvedGroupsInfo = await resolveGroupsInfoInCommentBody(
+    body,
+    options?.resolveGroupsInfo
+  );
 
   const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
@@ -589,6 +651,7 @@ export async function stringifyCommentBody(
                     {
                       element: inline,
                       user: resolvedUsers.get(inline.id),
+                      group: resolvedGroupsInfo.get(inline.id),
                     },
                     inlineIndex
                   ),
