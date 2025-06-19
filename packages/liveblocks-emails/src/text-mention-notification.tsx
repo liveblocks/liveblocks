@@ -35,9 +35,9 @@ import type {
 } from "./liveblocks-text-editor";
 import { transformAsLiveblocksTextEditorNodes } from "./liveblocks-text-editor";
 import {
-  convertMentionContent,
-  type ConvertMentionContentElements,
-} from "./mention-content";
+  convertTextMentionContent,
+  type ConvertTextMentionContentElements,
+} from "./text-mention-content";
 import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
@@ -230,7 +230,7 @@ export async function prepareTextMentionNotificationEmail<
   client: Liveblocks,
   event: TextMentionNotificationEvent,
   options: PrepareTextMentionNotificationEmailOptions<U>,
-  elements: ConvertMentionContentElements<ContentType, U>,
+  elements: ConvertTextMentionContentElements<ContentType, U>,
   callerName: string
 ): Promise<TextMentionNotificationEmailData<ContentType, U> | null> {
   const { roomId, mentionId } = event.data;
@@ -278,7 +278,7 @@ export async function prepareTextMentionNotificationEmail<
     }
   }
 
-  const contentPromise = convertMentionContent<ContentType, U>(
+  const contentPromise = convertTextMentionContent<ContentType, U>(
     textEditorNodes,
     {
       resolveUsers: batchUsersResolver.resolveUsers,
@@ -297,7 +297,7 @@ export async function prepareTextMentionNotificationEmail<
 
   return {
     mention: {
-      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated
+      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated.
       kind: "user",
       id: data.userId,
       textMentionId: mentionId,
