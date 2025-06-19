@@ -511,61 +511,65 @@ function markdown(
   return new MarkdownSafeString(strings, values) as unknown as string;
 }
 
-const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMeta> =
-  {
-    paragraph: ({ children }) => children,
-    text: ({ element }) => element.text,
-    link: ({ element }) => element.text ?? element.url,
-    mention: ({ element, user }) => {
-      return `@${user?.name ?? element.id}`;
-    },
-  };
+const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<
+  BaseUserMeta,
+  BaseGroupInfo
+> = {
+  paragraph: ({ children }) => children,
+  text: ({ element }) => element.text,
+  link: ({ element }) => element.text ?? element.url,
+  mention: ({ element, user, group }) => {
+    return `@${user?.name ?? group?.name ?? element.id}`;
+  },
+};
 
-const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMeta> =
-  {
-    paragraph: ({ children }) => {
-      // prettier-ignore
-      return children ? html`<p>${htmlSafe(children)}</p>` : children;
-    },
-    text: ({ element }) => {
-      // <code><s><em><strong>text</strong></s></em></code>
-      let children = element.text;
+const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<
+  BaseUserMeta,
+  BaseGroupInfo
+> = {
+  paragraph: ({ children }) => {
+    // prettier-ignore
+    return children ? html`<p>${htmlSafe(children)}</p>` : children;
+  },
+  text: ({ element }) => {
+    // <code><s><em><strong>text</strong></s></em></code>
+    let children = element.text;
 
-      if (!children) {
-        return html`${children}`;
-      }
-
-      if (element.bold) {
-        // prettier-ignore
-        children = html`<strong>${children}</strong>`;
-      }
-
-      if (element.italic) {
-        // prettier-ignore
-        children = html`<em>${children}</em>`;
-      }
-
-      if (element.strikethrough) {
-        // prettier-ignore
-        children = html`<s>${children}</s>`;
-      }
-
-      if (element.code) {
-        // prettier-ignore
-        children = html`<code>${children}</code>`;
-      }
-
+    if (!children) {
       return html`${children}`;
-    },
-    link: ({ element, href }) => {
+    }
+
+    if (element.bold) {
       // prettier-ignore
-      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
-    },
-    mention: ({ element, user }) => {
+      children = html`<strong>${children}</strong>`;
+    }
+
+    if (element.italic) {
       // prettier-ignore
-      return html`<span data-mention>@${user?.name ? html`${user?.name}` : element.id}</span>`;
-    },
-  };
+      children = html`<em>${children}</em>`;
+    }
+
+    if (element.strikethrough) {
+      // prettier-ignore
+      children = html`<s>${children}</s>`;
+    }
+
+    if (element.code) {
+      // prettier-ignore
+      children = html`<code>${children}</code>`;
+    }
+
+    return html`${children}`;
+  },
+  link: ({ element, href }) => {
+    // prettier-ignore
+    return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
+  },
+  mention: ({ element, user, group }) => {
+    // prettier-ignore
+    return html`<span data-mention>@${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
+  },
+};
 
 const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUserMeta> =
   {
@@ -606,9 +610,9 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
       // prettier-ignore
       return markdown`[${element.text ?? element.url}](${href})`;
     },
-    mention: ({ element, user }) => {
+    mention: ({ element, user, group }) => {
       // prettier-ignore
-      return markdown`@${user?.name ?? element.id}`;
+      return markdown`@${user?.name ?? group?.name ?? element.id}`;
     },
   };
 
