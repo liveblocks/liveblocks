@@ -1,38 +1,85 @@
 "use client";
 
+import { MentionData } from "@liveblocks/client";
 import { LiveblocksProvider } from "@liveblocks/react";
 import { PropsWithChildren } from "react";
+import { NAMES } from "../database";
+
+const USERS = [...NAMES.keys()].map((userIndex) => ({
+  kind: "user" as const,
+  id: `user-${userIndex}`,
+  name: NAMES[userIndex],
+}));
+const GROUPS = [
+  { kind: "group" as const, id: "engineering", name: "Engineering" },
+  {
+    kind: "group" as const,
+    id: "design",
+    name: "Design",
+    avatar: "https://liveblocks.io/favicon.svg",
+  },
+  { kind: "group" as const, id: "noName" },
+  {
+    kind: "group" as const,
+    id: "here",
+    userIds: ["user-0", "user-1", "user-2"],
+  },
+];
 
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
-      // Get users' info from their ID
+      // TODO: Temporary, revert
       resolveUsers={async ({ userIds }) => {
-        const searchParams = new URLSearchParams(
-          userIds.map((userId) => ["userIds", userId])
-        );
-        const response = await fetch(`/api/users?${searchParams}`);
+        return userIds.map((userId) => {
+          if (!userId.startsWith("user-")) {
+            return;
+          }
 
-        if (!response.ok) {
-          throw new Error("Problem resolving users");
-        }
+          const userIndex = Number(userId.replace(/^\D+/g, "")) ?? 0;
 
-        const users = await response.json();
-        return users;
+          return {
+            name: NAMES[userIndex],
+            avatar: `https://liveblocks.io/avatars/avatar-${userIndex}.png`,
+          };
+        });
       }}
-      // Find a list of users that match the current search term
+      // TODO: Temporary, revert
       resolveMentionSuggestions={async ({ text }) => {
-        const response = await fetch(
-          `/api/users/search?text=${encodeURIComponent(text)}`
-        );
+        return [...GROUPS, ...USERS]
+          .filter((suggestion) => {
+            return text
+              ? (suggestion.name ?? suggestion.id)
+                  .toLowerCase()
+                  .includes(text.toLowerCase())
+              : true;
+          })
+          .map((suggestion) => {
+            if (suggestion.kind === "group") {
+              return {
+                id: suggestion.id,
+                kind: "group",
+                userIds: suggestion.userIds,
+              };
+            }
 
-        if (!response.ok) {
-          throw new Error("Problem resolving mention suggestions");
-        }
+            return {
+              kind: "user",
+              id: suggestion.id,
+            };
+          }) as MentionData[];
+      }}
+      // TODO: Temporary, remove
+      resolveGroupsInfo={async ({ groupIds }) => {
+        return groupIds.map((groupId) => {
+          const group = GROUPS.find((group) => group.id === groupId);
 
-        const userIds = await response.json();
-        return userIds;
+          return {
+            name: group?.name,
+            avatar: group?.avatar,
+          };
+        });
       }}
     >
       {children}
