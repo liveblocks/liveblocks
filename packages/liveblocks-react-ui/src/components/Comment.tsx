@@ -78,7 +78,7 @@ import {
   MediaAttachment,
   separateMediaAttachments,
 } from "./internal/Attachment";
-import { Avatar } from "./internal/Avatar";
+import { UserAvatar } from "./internal/Avatar";
 import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
@@ -235,7 +235,7 @@ export function CommentMention({
     case "group":
       return (
         <CommentPrimitive.Mention
-          className={classNames("lb-comment-mention", className)}
+          className={cn("lb-comment-mention", className)}
           // TODO: If we have access to the user IDs, we can check if the current user is in the group
           // data-self={mention.id === currentId ? "" : undefined}
           {...props}
@@ -752,7 +752,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           >
             <div className="lb-comment-header">
               <div className="lb-comment-details">
-                <Avatar
+                <UserAvatar
                   className="lb-comment-avatar"
                   userId={comment.userId}
                   onClick={handleAuthorClick}

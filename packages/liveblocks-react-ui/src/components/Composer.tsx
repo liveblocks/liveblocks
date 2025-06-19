@@ -71,7 +71,7 @@ import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
-import { Avatar } from "./internal/Avatar";
+import { GroupAvatar, UserAvatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
@@ -374,7 +374,7 @@ function ComposerMentionSuggestions({
                   className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
                   value={mention.id}
                 >
-                  <Avatar
+                  <UserAvatar
                     userId={mention.id}
                     className="lb-composer-mention-suggestion-avatar"
                   />
@@ -392,8 +392,8 @@ function ComposerMentionSuggestions({
                   className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
                   value={mention.id}
                 >
-                  <Avatar
-                    userId={mention.id}
+                  <GroupAvatar
+                    groupId={mention.id}
                     className="lb-composer-mention-suggestion-avatar"
                   />
                   <Group
