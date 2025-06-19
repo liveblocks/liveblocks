@@ -48,6 +48,7 @@ export type {
   LostConnectionEvent,
   Lson,
   LsonObject,
+  MentionData,
   NotificationChannel,
   NotificationChannelSettings,
   NotificationKind,
