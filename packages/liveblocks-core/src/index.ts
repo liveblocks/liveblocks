@@ -33,6 +33,7 @@ export type {
   EnterOptions,
   OpaqueClient,
   PrivateClientApi,
+  ResolveGroupsInfoArgs,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
@@ -54,6 +55,7 @@ export {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
+  resolveGroupsInfoInCommentBody,
   resolveUsersInCommentBody,
   stringifyCommentBody,
   toAbsoluteUrl,
@@ -96,6 +98,7 @@ export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
   DE,
+  DGI,
   DM,
   DP,
   DRI,
@@ -180,6 +183,7 @@ export type {
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
+export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {

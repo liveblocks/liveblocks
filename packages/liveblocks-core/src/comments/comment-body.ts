@@ -1,6 +1,7 @@
-import type { ResolveUsersArgs } from "../client";
-import type { DU } from "../globals/augmentation";
+import type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "../client";
+import type { DGI, DU } from "../globals/augmentation";
 import { nn } from "../lib/assert";
+import type { BaseGroupInfo } from "../protocol/BaseGroupInfo";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
   CommentBody,
@@ -74,19 +75,30 @@ export type CommentBodyLinkElementArgs = {
   href: string;
 };
 
-export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
+export type CommentBodyMentionElementArgs<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention element.
    */
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolveUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolveGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
-export type StringifyCommentBodyElements<U extends BaseUserMeta = DU> = {
+export type StringifyCommentBodyElements<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The element used to display paragraphs.
    */
@@ -105,10 +117,16 @@ export type StringifyCommentBodyElements<U extends BaseUserMeta = DU> = {
   /**
    * The element used to display mentions.
    */
-  mention: (args: CommentBodyMentionElementArgs<U>, index: number) => string;
+  mention: (
+    args: CommentBodyMentionElementArgs<U, GI>,
+    index: number
+  ) => string;
 };
 
-export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
+export type StringifyCommentBodyOptions<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * Which format to convert the comment to.
    */
@@ -118,7 +136,7 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
    * The elements used to customize the resulting string. Each element has
    * priority over the defaults inherited from the `format` option.
    */
-  elements?: Partial<StringifyCommentBodyElements<U>>;
+  elements?: Partial<StringifyCommentBodyElements<U, GI>>;
 
   /**
    * The separator used between paragraphs.
@@ -132,6 +150,14 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
 };
 
 export function isCommentBodyParagraph(
@@ -279,6 +305,38 @@ export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   }
 
   return resolvedUsers;
+}
+
+export async function resolveGroupsInfoInCommentBody<GI extends BaseGroupInfo>(
+  body: CommentBody,
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>
+): Promise<Map<string, GI>> {
+  const resolvedGroupsInfo = new Map<string, GI>();
+
+  if (!resolveGroupsInfo) {
+    return resolvedGroupsInfo;
+  }
+
+  const groupIds = getMentionsFromCommentBody(
+    body,
+    (mention) => mention.kind === "group"
+  ).map((mention) => mention.id);
+
+  const groups = await resolveGroupsInfo({
+    groupIds,
+  });
+
+  for (const [index, groupId] of groupIds.entries()) {
+    const group = groups?.[index];
+
+    if (group) {
+      resolvedGroupsInfo.set(groupId, group);
+    }
+  }
+
+  return resolvedGroupsInfo;
 }
 
 const htmlEscapables = {
@@ -470,61 +528,65 @@ export function toAbsoluteUrl(url: string): string | undefined {
   return;
 }
 
-const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMeta> =
-  {
-    paragraph: ({ children }) => children,
-    text: ({ element }) => element.text,
-    link: ({ element }) => element.text ?? element.url,
-    mention: ({ element, user }) => {
-      return `@${user?.name ?? element.id}`;
-    },
-  };
+const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<
+  BaseUserMeta,
+  BaseGroupInfo
+> = {
+  paragraph: ({ children }) => children,
+  text: ({ element }) => element.text,
+  link: ({ element }) => element.text ?? element.url,
+  mention: ({ element, user, group }) => {
+    return `@${user?.name ?? group?.name ?? element.id}`;
+  },
+};
 
-const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<BaseUserMeta> =
-  {
-    paragraph: ({ children }) => {
-      // prettier-ignore
-      return children ? html`<p>${htmlSafe(children)}</p>` : children;
-    },
-    text: ({ element }) => {
-      // <code><s><em><strong>text</strong></s></em></code>
-      let children = element.text;
+const stringifyCommentBodyHtmlElements: StringifyCommentBodyElements<
+  BaseUserMeta,
+  BaseGroupInfo
+> = {
+  paragraph: ({ children }) => {
+    // prettier-ignore
+    return children ? html`<p>${htmlSafe(children)}</p>` : children;
+  },
+  text: ({ element }) => {
+    // <code><s><em><strong>text</strong></s></em></code>
+    let children = element.text;
 
-      if (!children) {
-        return html`${children}`;
-      }
-
-      if (element.bold) {
-        // prettier-ignore
-        children = html`<strong>${children}</strong>`;
-      }
-
-      if (element.italic) {
-        // prettier-ignore
-        children = html`<em>${children}</em>`;
-      }
-
-      if (element.strikethrough) {
-        // prettier-ignore
-        children = html`<s>${children}</s>`;
-      }
-
-      if (element.code) {
-        // prettier-ignore
-        children = html`<code>${children}</code>`;
-      }
-
+    if (!children) {
       return html`${children}`;
-    },
-    link: ({ element, href }) => {
+    }
+
+    if (element.bold) {
       // prettier-ignore
-      return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
-    },
-    mention: ({ element, user }) => {
+      children = html`<strong>${children}</strong>`;
+    }
+
+    if (element.italic) {
       // prettier-ignore
-      return html`<span data-mention>@${user?.name ? html`${user?.name}` : element.id}</span>`;
-    },
-  };
+      children = html`<em>${children}</em>`;
+    }
+
+    if (element.strikethrough) {
+      // prettier-ignore
+      children = html`<s>${children}</s>`;
+    }
+
+    if (element.code) {
+      // prettier-ignore
+      children = html`<code>${children}</code>`;
+    }
+
+    return html`${children}`;
+  },
+  link: ({ element, href }) => {
+    // prettier-ignore
+    return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ? html`${element.text}` : element.url}</a>`;
+  },
+  mention: ({ element, user, group }) => {
+    // prettier-ignore
+    return html`<span data-mention>@${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
+  },
+};
 
 const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUserMeta> =
   {
@@ -565,9 +627,9 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
       // prettier-ignore
       return markdown`[${element.text ?? element.url}](${href})`;
     },
-    mention: ({ element, user }) => {
+    mention: ({ element, user, group }) => {
       // prettier-ignore
-      return markdown`@${user?.name ?? element.id}`;
+      return markdown`@${user?.name ?? group?.name ?? element.id}`;
     },
   };
 
@@ -577,7 +639,7 @@ const stringifyCommentBodyMarkdownElements: StringifyCommentBodyElements<BaseUse
  */
 export async function stringifyCommentBody(
   body: CommentBody,
-  options?: StringifyCommentBodyOptions<BaseUserMeta>
+  options?: StringifyCommentBodyOptions<BaseUserMeta, BaseGroupInfo>
 ): Promise<string> {
   const format = options?.format ?? "plain";
   const separator =
@@ -594,6 +656,10 @@ export async function stringifyCommentBody(
     body,
     options?.resolveUsers
   );
+  const resolvedGroupsInfo = await resolveGroupsInfoInCommentBody(
+    body,
+    options?.resolveGroupsInfo
+  );
 
   const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
@@ -605,7 +671,14 @@ export async function stringifyCommentBody(
                   elements.mention(
                     {
                       element: inline,
-                      user: resolvedUsers.get(inline.id),
+                      user:
+                        inline.kind === "user"
+                          ? resolvedUsers.get(inline.id)
+                          : undefined,
+                      group:
+                        inline.kind === "group"
+                          ? resolvedGroupsInfo.get(inline.id)
+                          : undefined,
                     },
                     inlineIndex
                   ),

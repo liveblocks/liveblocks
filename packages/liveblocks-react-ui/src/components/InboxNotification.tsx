@@ -47,7 +47,7 @@ import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { classNames } from "../utils/class-names";
 import { generateURL } from "../utils/url";
-import { Avatar, type AvatarProps } from "./internal/Avatar";
+import { UserAvatar, type UserAvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
@@ -228,7 +228,7 @@ interface InboxNotificationLayoutProps
 
 export type InboxNotificationIconProps = ComponentProps<"div">;
 
-export type InboxNotificationAvatarProps = AvatarProps;
+export type InboxNotificationAvatarProps = UserAvatarProps;
 
 const InboxNotificationLayout = forwardRef<
   HTMLAnchorElement,
@@ -416,7 +416,7 @@ function InboxNotificationAvatar({
   ...props
 }: InboxNotificationAvatarProps) {
   return (
-    <Avatar
+    <UserAvatar
       className={classNames("lb-inbox-notification-avatar", className)}
       {...props}
     />
@@ -508,12 +508,12 @@ const InboxNotificationThread = forwardRef<
         }
 
         case "mention": {
-          const mentionUserId = contents.userIds[0]!;
+          const mentionCreatedBy = contents.userIds[0]!;
           const mentionComment = contents.comments[0]!;
 
-          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const aside = <InboxNotificationAvatar userId={mentionCreatedBy} />;
           const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-            <User key={mentionUserId} userId={mentionUserId} />,
+            <User key={mentionCreatedBy} userId={mentionCreatedBy} />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined
           );
           const content = (

@@ -78,16 +78,18 @@ import {
   MediaAttachment,
   separateMediaAttachments,
 } from "./internal/Attachment";
-import { Avatar } from "./internal/Avatar";
+import { UserAvatar } from "./internal/Avatar";
 import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { Group } from "./internal/Group";
 import { List } from "./internal/List";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
+const GROUP_MENTIONS_TRUNCATE = 5;
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -217,6 +219,8 @@ export function CommentMention({
   ...props
 }: CommentBodyMentionProps & CommentMentionProps) {
   const currentId = useCurrentUserId();
+  // TODO: $ doesn't include `overrides` applied on `Comment`
+  const $ = useOverrides();
 
   switch (mention.kind) {
     case "user":
@@ -231,8 +235,43 @@ export function CommentMention({
         </CommentPrimitive.Mention>
       );
 
+    case "group":
+      return (
+        // TODO: Only display the tooltip in comments/threads, not in inbox notifications, etc.
+        <Tooltip
+          content={
+            mention.userIds ? (
+              <span>
+                <List
+                  values={mention.userIds.map((userId) => (
+                    <User key={userId} userId={userId} replaceSelf />
+                  ))}
+                  formatRemaining={$.LIST_REMAINING_USERS}
+                  truncate={GROUP_MENTIONS_TRUNCATE}
+                  locale={$.locale}
+                />
+              </span>
+            ) : (
+              <Group groupId={mention.id} />
+            )
+          }
+          multiline
+          className="lb-comment-mention-tooltip"
+        >
+          <CommentPrimitive.Mention
+            className={classNames("lb-comment-mention", className)}
+            // TODO: If we have access to the user IDs, we can check if the current user is in the group
+            // data-self={mention.id === currentId ? "" : undefined}
+            {...props}
+          >
+            {MENTION_CHARACTER}
+            <Group groupId={mention.id} />
+          </CommentPrimitive.Mention>
+        </Tooltip>
+      );
+
     default:
-      return assertNever(mention.kind, "Unhandled mention kind");
+      return assertNever(mention, "Unhandled mention kind");
   }
 }
 
@@ -738,7 +777,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           >
             <div className="lb-comment-header">
               <div className="lb-comment-details">
-                <Avatar
+                <UserAvatar
                   className="lb-comment-avatar"
                   userId={comment.userId}
                   onClick={handleAuthorClick}

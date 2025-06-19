@@ -1,11 +1,14 @@
 import {
   type Awaitable,
+  type BaseGroupInfo,
   type BaseUserMeta,
+  type DGI,
   type DRI,
   type DU,
   html,
   htmlSafe,
   type MentionData,
+  type ResolveGroupsInfoArgs,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
@@ -32,9 +35,9 @@ import type {
 } from "./liveblocks-text-editor";
 import { transformAsLiveblocksTextEditorNodes } from "./liveblocks-text-editor";
 import {
-  convertMentionContent,
-  type ConvertMentionContentElements,
-} from "./mention-content";
+  convertTextMentionContent,
+  type ConvertTextMentionContentElements,
+} from "./text-mention-content";
 import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
@@ -190,18 +193,30 @@ export type TextMentionNotificationEmailData<
   roomInfo: DRI;
 };
 
-type PrepareTextMentionNotificationEmailOptions<U extends BaseUserMeta = DU> = {
+type PrepareTextMentionNotificationEmailOptions<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * A function that returns room info from room IDs.
    */
   resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 
   /**
-   * A function that returns info from user IDs.
+   * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(GI | undefined)[] | undefined>;
 };
 
 /**
@@ -215,7 +230,7 @@ export async function prepareTextMentionNotificationEmail<
   client: Liveblocks,
   event: TextMentionNotificationEvent,
   options: PrepareTextMentionNotificationEmailOptions<U>,
-  elements: ConvertMentionContentElements<ContentType, U>,
+  elements: ConvertTextMentionContentElements<ContentType, U>,
   callerName: string
 ): Promise<TextMentionNotificationEmailData<ContentType, U> | null> {
   const { roomId, mentionId } = event.data;
@@ -238,6 +253,8 @@ export async function prepareTextMentionNotificationEmail<
     resolveUsers: options.resolveUsers,
     callerName,
   });
+
+  // TODO: resolve groups info
 
   const authorsInfoPromise = resolveAuthorsInfo({
     userIds: [data.createdBy],
@@ -263,7 +280,7 @@ export async function prepareTextMentionNotificationEmail<
     }
   }
 
-  const contentPromise = convertMentionContent<ContentType, U>(
+  const contentPromise = convertTextMentionContent<ContentType, U>(
     textEditorNodes,
     {
       resolveUsers: batchUsersResolver.resolveUsers,
@@ -272,6 +289,8 @@ export async function prepareTextMentionNotificationEmail<
   );
 
   await batchUsersResolver.resolve();
+
+  // TODO: batchedGroupsResolver.resolve();
 
   const [authorsInfo, content] = await Promise.all([
     authorsInfoPromise,
@@ -282,7 +301,7 @@ export async function prepareTextMentionNotificationEmail<
 
   return {
     mention: {
-      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated
+      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated.
       kind: "user",
       id: data.userId,
       textMentionId: mentionId,
@@ -305,15 +324,24 @@ export type TextEditorContainerComponentProps = {
   children: ReactNode;
 };
 
-export type TextEditorMentionComponentProps<U extends BaseUserMeta = DU> = {
+export type TextEditorMentionComponentProps<
+  U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
+> = {
   /**
    * The mention element.
    */
   element: LiveblocksTextEditorMentionNode;
+
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+   */
+  group?: GI;
 };
 
 export type TextEditorTextComponentProps = {
@@ -325,6 +353,7 @@ export type TextEditorTextComponentProps = {
 
 export type ConvertTextEditorNodesAsReactComponents<
   U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
 > = {
   /**
    *
@@ -335,7 +364,7 @@ export type ConvertTextEditorNodesAsReactComponents<
   /**
    * The component used to display mentions.
    */
-  Mention: ComponentType<TextEditorMentionComponentProps<U>>;
+  Mention: ComponentType<TextEditorMentionComponentProps<U, GI>>;
 
   /**
    * The component used to display text nodes.
@@ -343,12 +372,15 @@ export type ConvertTextEditorNodesAsReactComponents<
   Text: ComponentType<TextEditorTextComponentProps>;
 };
 
-const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
+const baseComponents: ConvertTextEditorNodesAsReactComponents<
+  BaseUserMeta,
+  BaseGroupInfo
+> = {
   Container: ({ children }) => <div>{children}</div>,
-  Mention: ({ element, user }) => (
+  Mention: ({ element, user, group }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.id}
+      {user?.name ?? group?.name ?? element.id}
     </span>
   ),
   Text: ({ element }) => {
@@ -378,12 +410,13 @@ const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
 
 export type PrepareTextMentionNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
+  GI extends BaseGroupInfo = DGI,
 > = PrepareTextMentionNotificationEmailOptions & {
   /**
    * The components used to customize the resulting React nodes. Each components has
    * priority over the base components inherited.
    */
-  components?: Partial<ConvertTextEditorNodesAsReactComponents<U>>;
+  components?: Partial<ConvertTextEditorNodesAsReactComponents<U, GI>>;
 };
 
 export type TextMentionNotificationEmailDataAsReact<
@@ -417,7 +450,10 @@ export type TextMentionNotificationEmailDataAsReact<
 export async function prepareTextMentionNotificationEmailAsReact(
   client: Liveblocks,
   event: TextMentionNotificationEvent,
-  options: PrepareTextMentionNotificationEmailAsReactOptions<BaseUserMeta> = {}
+  options: PrepareTextMentionNotificationEmailAsReactOptions<
+    BaseUserMeta,
+    BaseGroupInfo
+  > = {}
 ): Promise<TextMentionNotificationEmailDataAsReact | null> {
   const Components = { ...baseComponents, ...options.components };
   const data = await prepareTextMentionNotificationEmail<
@@ -554,9 +590,9 @@ export async function prepareTextMentionNotificationEmailAsHtml(
 
         return content.join("\n"); //NOTE: to represent a valid HTML string
       },
-      mention: ({ node, user }) => {
+      mention: ({ node, user, group }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : node.id}</span>`
       },
       text: ({ node }) => {
         // Note: construction following the schema 👇
