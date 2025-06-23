@@ -1,6 +1,5 @@
 import type {
   Awaitable,
-  BaseGroupInfo,
   BaseUserMeta,
   DGI,
   DU,
@@ -23,25 +22,23 @@ export type TextMentionContentContainerElementArgs<T> = {
   children: T[];
 };
 
-export type TextMentionContentMentionElementArgs<
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
-  /**
-   * The text mention node.
-   */
-  node: LiveblocksTextEditorMentionNode;
+export type TextMentionContentMentionElementArgs<U extends BaseUserMeta = DU> =
+  {
+    /**
+     * The text mention node.
+     */
+    node: LiveblocksTextEditorMentionNode;
 
-  /**
-   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
-   */
-  user?: U["info"];
+    /**
+     * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
+     */
+    user?: U["info"];
 
-  /**
-   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
-   */
-  group?: GI;
-};
+    /**
+     * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+     */
+    group?: DGI;
+  };
 
 export type TextMentionContentTextElementArgs = {
   /**
@@ -57,7 +54,6 @@ export type TextMentionContentTextElementArgs = {
 export type ConvertTextMentionContentElements<
   T,
   U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
 > = {
   /**
    * The container element used to display text mention content blocks
@@ -66,21 +62,14 @@ export type ConvertTextMentionContentElements<
   /**
    * The mention element used to display the mention itself.
    */
-  mention: (
-    args: TextMentionContentMentionElementArgs<U, GI>,
-    index: number
-  ) => T;
+  mention: (args: TextMentionContentMentionElementArgs<U>, index: number) => T;
   /**
    * The text element used to display the text surrounding the mention.
    */
   text: (args: TextMentionContentTextElementArgs, index: number) => T;
 };
 
-export type ConvertTextMentionContentOptions<
-  T,
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+export type ConvertTextMentionContentOptions<T, U extends BaseUserMeta = DU> = {
   /**
    * A function that returns user info from user IDs.
    * You should return a list of user objects of the same size, in the same order.
@@ -95,24 +84,20 @@ export type ConvertTextMentionContentOptions<
    */
   resolveGroupsInfo?: (
     args: ResolveGroupsInfoArgs
-  ) => Awaitable<(GI | undefined)[] | undefined>;
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 
   /**
    * The elements used to customize the resulting format `T`.
    */
-  elements: ConvertTextMentionContentElements<T, U, GI>;
+  elements: ConvertTextMentionContentElements<T, U>;
 };
 
 /**
  * Convert a text mention content nodes to a custom format `T`.
  */
-export async function convertTextMentionContent<
-  T,
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
->(
+export async function convertTextMentionContent<T, U extends BaseUserMeta = DU>(
   nodes: LiveblocksTextEditorNode[],
-  options: ConvertTextMentionContentOptions<T, U, GI>
+  options: ConvertTextMentionContentOptions<T, U>
 ): Promise<T> {
   const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
     nodes,
