@@ -16,7 +16,10 @@ import {
 import type { RelativePosition } from "yjs";
 
 import type { YSyncPluginState } from "./types";
-import { LIVEBLOCKS_MENTION_TYPE } from "./types";
+import {
+  LIVEBLOCKS_GROUP_MENTION_TYPE,
+  LIVEBLOCKS_MENTION_TYPE,
+} from "./types";
 
 const CONTEXT_TRUNCATION = "[…]";
 const CONTEXT_BLOCK_SEPARATOR = "\n";
@@ -62,15 +65,26 @@ export const getRectFromCoords = (coords: {
 export const getMentionsFromNode = (
   node: ProseMirrorNode,
   range: Range
-): { notificationId: string; userId: string }[] => {
-  const result: { notificationId: string; userId: string }[] = [];
+): { kind: "user" | "group"; id: string; notificationId: string }[] => {
+  const result: {
+    kind: "user" | "group";
+    id: string;
+    notificationId: string;
+  }[] = [];
   node.nodesBetween(range.from, range.to, (child) => {
-    if (child.type.name === LIVEBLOCKS_MENTION_TYPE) {
+    if (
+      child.type.name === LIVEBLOCKS_MENTION_TYPE ||
+      child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
+    ) {
       const mention = child.attrs as { id?: string; notificationId?: string };
       if (mention.id && mention.notificationId) {
         result.push({
+          kind:
+            child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
+              ? "group"
+              : "user",
+          id: mention.id,
           notificationId: mention.notificationId,
-          userId: mention.id,
         });
       }
     }
