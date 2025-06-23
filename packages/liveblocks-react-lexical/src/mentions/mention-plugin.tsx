@@ -17,6 +17,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
+import { User } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -47,7 +48,6 @@ import {
   OnSuggestionSelectCallbackContext,
   SuggestionsContext,
 } from "./suggestions";
-import { User } from "./user";
 
 const MENTION_TRIGGER = "@";
 

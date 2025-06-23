@@ -9,44 +9,16 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { assertNever, createInboxNotificationId } from "@liveblocks/core";
-import { useRoom, useUser } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
 import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { useOverrides } from "@liveblocks/react-ui";
+import { User } from "@liveblocks/react-ui/_private";
 import type { HTMLAttributes, MouseEvent } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
 import { Avatar } from "./Avatar";
-
-export interface UserProps
-  extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
-  userId: string;
-}
-
-export const User = forwardRef<HTMLSpanElement, UserProps>(
-  function User(props, forwardedRef) {
-    const { userId, className, ...spanProps } = props;
-
-    const { user, isLoading } = useUser(userId);
-    const $ = useOverrides();
-
-    const name =
-      user === undefined || user === null ? $.USER_UNKNOWN : user.name;
-
-    return (
-      <span
-        className={className}
-        data-loading={isLoading ? "" : undefined}
-        ref={forwardedRef}
-        {...spanProps}
-      >
-        {isLoading ? null : name}
-      </span>
-    );
-  }
-);
 
 export const SUGGESTIONS_COLLISION_PADDING = 10;
 

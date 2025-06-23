@@ -1,9 +1,9 @@
+import { User } from "@liveblocks/react-ui/_private";
 import type { Node } from "@tiptap/pm/model";
 import { NodeViewWrapper } from "@tiptap/react";
 import { forwardRef } from "react";
 
 import { classNames } from "../classnames";
-import { User } from "./MentionsList";
 
 const MENTION_CHARACTER = "@";
 
