@@ -22,6 +22,7 @@ export const LIVEBLOCKS_MENTION_NOTIFIER_KEY = new PluginKey(
 
 export const LIVEBLOCKS_MENTION_EXTENSION = "liveblocksMentionExt";
 export const LIVEBLOCKS_MENTION_TYPE = "liveblocksMention";
+export const LIVEBLOCKS_GROUP_MENTION_TYPE = "liveblocksGroupMention";
 
 export const THREADS_ACTIVE_SELECTION_PLUGIN = new PluginKey(
   "lb-threads-active-selection-plugin"

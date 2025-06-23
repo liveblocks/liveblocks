@@ -52,7 +52,11 @@ export const SUGGESTIONS_COLLISION_PADDING = 10;
 
 export interface MentionsListProps extends HTMLAttributes<HTMLDivElement> {
   query: string;
-  command: (otps: { id: string; notificationId: string }) => void;
+  command: (otps: {
+    kind: "user" | "group";
+    id: string;
+    notificationId: string;
+  }) => void;
   clientRect: () => DOMRect;
   hide: boolean;
 }
@@ -105,16 +109,27 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
         return;
       }
 
+      const notificationId = createInboxNotificationId();
+
       switch (mention.kind) {
         case "user":
           props.command({
+            kind: "user",
             id: mention.id,
-            notificationId: createInboxNotificationId(),
+            notificationId,
+          });
+          break;
+
+        case "group":
+          props.command({
+            kind: "group",
+            id: mention.id,
+            notificationId,
           });
           break;
 
         default:
-          return assertNever(mention.kind, "Unhandled mention kind");
+          return assertNever(mention, "Unhandled mention kind");
       }
     };
 
@@ -213,8 +228,22 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
                   </div>
                 );
 
+              case "group":
+                return (
+                  <div
+                    className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
+                    key={index}
+                    role="option"
+                    data-highlighted={index === selectedIndex || undefined}
+                    onMouseEnter={handleMouseEnter(index)}
+                    onClick={handleClick(index)}
+                  >
+                    {/* TODO: Display group name and avatar */}
+                  </div>
+                );
+
               default:
-                return assertNever(mention.kind, "Unhandled mention kind");
+                return assertNever(mention, "Unhandled mention kind");
             }
           })}
         </div>

@@ -12,6 +12,7 @@ import Suggestion from "@tiptap/suggestion";
 import { ySyncPluginKey } from "y-prosemirror";
 
 import {
+  LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_EXTENSION,
   LIVEBLOCKS_MENTION_KEY,
   LIVEBLOCKS_MENTION_NOTIFIER_KEY,
@@ -19,6 +20,7 @@ import {
   LIVEBLOCKS_MENTION_TYPE,
 } from "../types";
 import { getMentionsFromNode, mapFragment } from "../utils";
+import { GroupMentionNode } from "./GroupMentionNode";
 import { MentionNode } from "./MentionNode";
 import type { MentionsListHandle, MentionsListProps } from "./MentionsList";
 import { MentionsList } from "./MentionsList";
@@ -35,8 +37,11 @@ const mentionPasteHandler = (): Plugin => {
     props: {
       transformPasted: (slice) => {
         const getNewNotificationIds = (node: ProseMirrorNode) => {
-          // If this is a mention node, we need to get a new notificatio id
-          if (node.type.name === LIVEBLOCKS_MENTION_TYPE) {
+          // If this is a mention node, we need to get a new notification id
+          if (
+            node.type.name === LIVEBLOCKS_MENTION_TYPE ||
+            node.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
+          ) {
             return node.type.create(
               { ...node.attrs, notificationId: createInboxNotificationId() },
               node.content
@@ -52,7 +57,11 @@ const mentionPasteHandler = (): Plugin => {
 };
 
 export type MentionExtensionOptions = {
-  onCreateMention: (userId: string, notificationId: string) => void;
+  onCreateMention: (
+    kind: "user" | "group",
+    id: string,
+    notificationId: string
+  ) => void;
   onDeleteMention: (notificationId: string) => void;
 };
 /**
@@ -93,7 +102,7 @@ const notifier = ({
           // create new mentions
           newMentions.forEach((mention) => {
             if (!oldMentions.includes(mention)) {
-              onCreateMention(mention.userId, mention.notificationId);
+              onCreateMention(mention.kind, mention.id, mention.notificationId);
             }
           });
           // delete old mentions
@@ -122,7 +131,7 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
   },
 
   addExtensions() {
-    return [MentionNode];
+    return [MentionNode, GroupMentionNode];
   },
 
   addProseMirrorPlugins() {
@@ -146,7 +155,10 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             .focus()
             .insertContentAt(range, [
               {
-                type: LIVEBLOCKS_MENTION_TYPE,
+                type:
+                  (props as Record<string, string>).kind === "user"
+                    ? LIVEBLOCKS_MENTION_TYPE
+                    : LIVEBLOCKS_GROUP_MENTION_TYPE,
                 attrs: props as Record<string, string>,
               },
               {
@@ -162,11 +174,16 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             ?.collapseToEnd();
         },
         allow: ({ state, range }) => {
-          const $from = state.doc.resolve(range.from);
-          const type = state.schema.nodes[LIVEBLOCKS_MENTION_TYPE];
-          const allow = !!$from.parent.type.contentMatch.matchType(type);
+          const $fromParentType = state.doc.resolve(range.from).parent.type;
 
-          return allow;
+          return Boolean(
+            $fromParentType.contentMatch.matchType(
+              state.schema.nodes[LIVEBLOCKS_MENTION_TYPE]
+            ) ||
+              $fromParentType.contentMatch.matchType(
+                state.schema.nodes[LIVEBLOCKS_GROUP_MENTION_TYPE]
+              )
+          );
         },
         allowSpaces: true,
         items: () => [], // we'll let the mentions list component do this

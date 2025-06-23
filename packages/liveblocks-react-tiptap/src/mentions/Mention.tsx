@@ -3,9 +3,8 @@ import { NodeViewWrapper } from "@tiptap/react";
 import { forwardRef } from "react";
 
 import { classNames } from "../classnames";
+import { MENTION_CHARACTER } from "../constants";
 import { User } from "./MentionsList";
-
-const MENTION_CHARACTER = "@";
 
 export const Mention = forwardRef<
   HTMLSpanElement,
@@ -20,6 +19,7 @@ export const Mention = forwardRef<
   return (
     <NodeViewWrapper className={classnames} as="span" ref={forwardedRef}>
       {MENTION_CHARACTER}
+      {/* TODO: Display group name if kind is group */}
       <User userId={id} />
     </NodeViewWrapper>
   );

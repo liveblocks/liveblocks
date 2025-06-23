@@ -12,30 +12,29 @@ import type { JSX } from "react";
 
 import { MENTION_CHARACTER } from "../constants";
 import { Mention } from "./mention-component";
-import { User } from "./user";
 
-export type SerializedMentionNode = Spread<
+export type SerializedGroupMentionNode = Spread<
   {
-    userId: string;
+    groupId: string;
   },
   SerializedLexicalNode
 >;
-export class MentionNode extends DecoratorNode<JSX.Element> {
+export class GroupMentionNode extends DecoratorNode<JSX.Element> {
   __id: string;
-  __userId: string;
+  __groupId: string;
 
-  constructor(id: string, userId: string, key?: NodeKey) {
+  constructor(id: string, groupId: string, key?: NodeKey) {
     super(key);
     this.__id = id;
-    this.__userId = userId;
+    this.__groupId = groupId;
   }
 
   static getType(): string {
-    return "lb-mention";
+    return "lb-group-mention";
   }
 
-  static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__id, node.__userId, node.__key);
+  static clone(node: GroupMentionNode): GroupMentionNode {
+    return new GroupMentionNode(node.__id, node.__groupId, node.__key);
   }
 
   createDOM(): HTMLElement {
@@ -53,8 +52,10 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
     return {
       span: () => ({
         conversion: (element) => {
-          const value = atob(element.getAttribute("data-lexical-lb-mention")!);
-          const node = $createMentionNode(value);
+          const value = atob(
+            element.getAttribute("data-lexical-lb-group-mention")!
+          );
+          const node = $createGroupMentionNode(value);
           return { node };
         },
         priority: 1,
@@ -65,27 +66,29 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   exportDOM(): DOMExportOutput {
     const element = document.createElement("span");
     const value = this.getTextContent();
-    element.setAttribute("data-lexical-lb-mention", btoa(value));
+    element.setAttribute("data-lexical-lb-group-mention", btoa(value));
     element.textContent = this.getTextContent();
     return { element };
   }
 
-  static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-    const node = $createMentionNode(serializedNode.userId);
+  static importJSON(
+    serializedNode: SerializedGroupMentionNode
+  ): GroupMentionNode {
+    const node = $createGroupMentionNode(serializedNode.groupId);
     return node;
   }
 
-  exportJSON(): SerializedMentionNode {
+  exportJSON(): SerializedGroupMentionNode {
     return {
-      userId: this.__userId,
-      type: "lb-mention",
+      groupId: this.__groupId,
+      type: "lb-group-mention",
       version: 1,
     };
   }
 
-  getUserId(): string {
+  getGroupId(): string {
     const self = this.getLatest();
-    return self.__userId;
+    return self.__groupId;
   }
 
   getId(): string {
@@ -97,19 +100,20 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
     return (
       <Mention nodeKey={this.getKey()}>
         {MENTION_CHARACTER}
-        <User userId={this.getUserId()} />
+        {/* TODO: Display group name */}
+        {/* <User userId={this.getUserId()} /> */}
       </Mention>
     );
   }
 }
 
-export function $isMentionNode(
+export function $isGroupMentionNode(
   node: LexicalNode | null | undefined
-): node is MentionNode {
-  return node instanceof MentionNode;
+): node is GroupMentionNode {
+  return node instanceof GroupMentionNode;
 }
 
-export function $createMentionNode(userId: string): MentionNode {
-  const node = new MentionNode(createInboxNotificationId(), userId);
+export function $createGroupMentionNode(groupId: string): GroupMentionNode {
+  const node = new GroupMentionNode(createInboxNotificationId(), groupId);
   return $applyNodeReplacement(node);
 }

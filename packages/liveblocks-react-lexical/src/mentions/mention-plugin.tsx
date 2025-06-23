@@ -36,6 +36,11 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar } from "./avatar";
+import type { GroupMentionNode } from "./group-mention-node";
+import {
+  $createGroupMentionNode,
+  $isGroupMentionNode,
+} from "./group-mention-node";
 import {
   $createMentionNode,
   $isMentionNode,
@@ -182,16 +187,24 @@ export function MentionPlugin() {
             const node = $getNodeByKey(key);
             if (node === null) return;
 
-            if (!$isMentionNode(node)) return;
-            createTextMention(node.getUserId(), node.getId());
+            if ($isMentionNode(node)) {
+              createTextMention(node.getUserId(), node.getId());
+            } else if ($isGroupMentionNode(node)) {
+              // TODO: Create group mentions differently
+              createTextMention(node.getGroupId(), node.getId());
+            }
           });
         } else if (mutation === "destroyed") {
           prevEditorState.read(() => {
             const node = $getNodeByKey(key);
             if (node === null) return;
 
-            if (!$isMentionNode(node)) return;
-            deleteTextMention(node.getId());
+            if ($isMentionNode(node)) {
+              deleteTextMention(node.getId());
+            } else if ($isGroupMentionNode(node)) {
+              // TODO: Delete group mentions differently
+              deleteTextMention(node.getId());
+            }
           });
         }
       }
@@ -322,16 +335,19 @@ export function MentionPlugin() {
         const startOffset = selectionOffset - queryOffset;
         if (startOffset < 0) return;
 
-        let mentionNode: MentionNode;
+        let mentionNode: MentionNode | GroupMentionNode;
 
-        // Other mention kinds will be different nodes: GroupMentionNode, etc.
         switch (mention.kind) {
           case "user":
             mentionNode = $createMentionNode(mention.id);
             break;
 
+          case "group":
+            mentionNode = $createGroupMentionNode(mention.id);
+            break;
+
           default:
-            return assertNever(mention.kind, "Unhandled mention kind");
+            return assertNever(mention, "Unhandled mention kind");
         }
 
         // Split the anchor (text) node and create a new text node only containing matched text.
@@ -389,8 +405,19 @@ export function MentionPlugin() {
                       </Suggestions.Item>
                     );
 
+                  case "group":
+                    return (
+                      <Suggestions.Item
+                        key={mention.id}
+                        value={mention.id}
+                        className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
+                      >
+                        {/* TODO: Display group name and avatar */}
+                      </Suggestions.Item>
+                    );
+
                   default:
-                    return assertNever(mention.kind, "Unhandled mention kind");
+                    return assertNever(mention, "Unhandled mention kind");
                 }
               })}
             </Suggestions.List>
