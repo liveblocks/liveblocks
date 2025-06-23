@@ -125,8 +125,8 @@ export const extractTextMentionNotificationData = async ({
       const state = getSerializedLexicalState({ buffer, key });
       const mentionNodeWithContext = findLexicalMentionNodeWithContext({
         root: state,
-        mentionedUserId: userId,
-        mentionId: inboxNotification.mentionId,
+        mentionedId: userId,
+        textMentionId: inboxNotification.mentionId,
       });
 
       // The mention node did not exists so we do not have to send an email.
@@ -146,8 +146,8 @@ export const extractTextMentionNotificationData = async ({
       const state = getSerializedTiptapState({ buffer, key });
       const mentionNodeWithContext = findTiptapMentionNodeWithContext({
         root: state,
-        mentionedUserId: userId,
-        mentionId: inboxNotification.mentionId,
+        mentionedId: userId,
+        textMentionId: inboxNotification.mentionId,
       });
 
       // The mention node did not exists so we do not have to send an email.
