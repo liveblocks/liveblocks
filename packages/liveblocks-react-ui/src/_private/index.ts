@@ -1,5 +1,6 @@
 // Private APIs
 
+export { Avatar } from "../components/internal/Avatar";
 export { Button, SelectButton } from "../components/internal/Button";
 export { List } from "../components/internal/List";
 export { Prose } from "../components/internal/Prose";

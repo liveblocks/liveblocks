@@ -17,7 +17,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { User } from "@liveblocks/react-ui/_private";
+import { Avatar, User } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -36,7 +36,6 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Avatar } from "./avatar";
 import {
   $createMentionNode,
   $isMentionNode,

@@ -14,11 +14,9 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { User } from "@liveblocks/react-ui/_private";
+import { Avatar, User } from "@liveblocks/react-ui/_private";
 import type { HTMLAttributes, MouseEvent } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-
-import { Avatar } from "./Avatar";
 
 export const SUGGESTIONS_COLLISION_PADDING = 10;
 
