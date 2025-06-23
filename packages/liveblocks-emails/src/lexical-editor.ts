@@ -35,6 +35,16 @@ export interface SerializedLexicalMentionNode
   };
 }
 
+export interface SerializedLexicalGroupMentionNode
+  extends SerializedLexicalDecoratorNode {
+  type: "lb-group-mention";
+  attributes: {
+    __id: string;
+    __type: "lb-group-mention";
+    __groupId: string;
+  };
+}
+
 export interface SerializedLexicalLineBreakNode
   extends SerializedBaseLexicalNode {
   group: "linebreak";
@@ -292,6 +302,29 @@ export const isSerializedMentionNode = (
   );
 };
 
+const isGroupMentionNodeType = (type: string): type is "lb-group-mention" => {
+  return type === "lb-group-mention";
+};
+
+const isGroupMentionNodeAttributeType = (
+  type: unknown
+): type is "lb-group-mention" => {
+  return isString(type) && type === "lb-group-mention";
+};
+
+export const isSerializedGroupMentionNode = (
+  node: SerializedLexicalDecoratorNode
+): node is SerializedLexicalGroupMentionNode => {
+  const attributes = node.attributes;
+
+  return (
+    isGroupMentionNodeType(node.type) &&
+    isGroupMentionNodeAttributeType(attributes.__type) &&
+    isMentionNodeAttributeId(attributes.__id) &&
+    isString(attributes.__groupId)
+  );
+};
+
 /**
  * Internal type helper when flattening nodes.
  * It helps to better extract mention node with context by marking
@@ -357,7 +390,7 @@ export const flattenLexicalTree = (
 export type LexicalMentionNodeWithContext = {
   before: SerializedLexicalNode[];
   after: SerializedLexicalNode[];
-  mention: SerializedLexicalMentionNode;
+  mention: SerializedLexicalMentionNode | SerializedLexicalGroupMentionNode;
 };
 
 /**
@@ -366,12 +399,12 @@ export type LexicalMentionNodeWithContext = {
  */
 export function findLexicalMentionNodeWithContext({
   root,
-  mentionedUserId,
-  mentionId,
+  mentionedId,
+  textMentionId,
 }: {
   root: SerializedLexicalRootNode;
-  mentionedUserId: string;
-  mentionId: string;
+  mentionedId: string;
+  textMentionId: string;
 }): LexicalMentionNodeWithContext | null {
   const nodes = flattenLexicalTree(root.children);
 
@@ -382,9 +415,12 @@ export function findLexicalMentionNodeWithContext({
     const node = nodes[i]!;
     if (
       node.group === "decorator" &&
-      isSerializedMentionNode(node) &&
-      node.attributes.__id === mentionId &&
-      node.attributes.__userId === mentionedUserId
+      (isSerializedMentionNode(node) || isSerializedGroupMentionNode(node)) &&
+      node.attributes.__id === textMentionId &&
+      ((node as SerializedLexicalMentionNode).attributes.__userId ===
+        mentionedId ||
+        (node as SerializedLexicalGroupMentionNode).attributes.__groupId ===
+          mentionedId)
     ) {
       mentionNodeIndex = i;
       break;

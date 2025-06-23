@@ -7,8 +7,8 @@
 
 import type {
   Awaitable,
-  BaseGroupInfo,
   BaseUserMeta,
+  DGI,
   Relax,
   ResolveGroupsInfoArgs,
   ResolveUsersArgs,
@@ -19,7 +19,10 @@ import type {
   SerializedLexicalNode,
   SerializedLexicalTextNode,
 } from "./lexical-editor";
-import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor";
+import {
+  isSerializedGroupMentionNode as isSerializedLexicalGroupMentionNode,
+  isSerializedMentionNode as isSerializedLexicalMentionNode,
+} from "./lexical-editor";
 import type {
   SerializedTiptapMark,
   SerializedTiptapMarkType,
@@ -27,7 +30,10 @@ import type {
   SerializedTiptapTextNode,
   TiptapMentionNodeWithContext,
 } from "./tiptap-editor";
-import { isSerializedMentionNode as isSerializedTiptapMentionNode } from "./tiptap-editor";
+import {
+  isSerializedGroupMentionNode as isSerializedTiptapGroupMentionNode,
+  isSerializedMentionNode as isSerializedTiptapMentionNode,
+} from "./tiptap-editor";
 
 type LiveblocksTextEditorTextFormat = {
   bold: boolean;
@@ -167,6 +173,15 @@ const transformLexicalMentionNodeWithContext = (
           kind: "user",
           id: node.attributes.__userId,
         });
+      } else if (
+        node.group === "decorator" &&
+        isSerializedLexicalGroupMentionNode(node)
+      ) {
+        textEditorNodes.push({
+          type: "mention",
+          kind: "group",
+          id: node.attributes.__groupId,
+        });
       }
     }
   };
@@ -174,8 +189,11 @@ const transformLexicalMentionNodeWithContext = (
   transform(before);
   textEditorNodes.push({
     type: "mention",
-    kind: "user",
-    id: mention.attributes.__userId,
+    kind: mention.type === "lb-group-mention" ? "group" : "user",
+    id:
+      mention.type === "lb-group-mention"
+        ? mention.attributes.__groupId
+        : mention.attributes.__userId,
   });
   transform(after);
 
@@ -233,6 +251,12 @@ const transformTiptapMentionNodeWithContext = (
           kind: "user",
           id: node.attrs.id,
         });
+      } else if (isSerializedTiptapGroupMentionNode(node)) {
+        textEditorNodes.push({
+          type: "mention",
+          kind: "group",
+          id: node.attrs.id,
+        });
       }
     }
   };
@@ -240,7 +264,7 @@ const transformTiptapMentionNodeWithContext = (
   transform(before);
   textEditorNodes.push({
     type: "mention",
-    kind: "user",
+    kind: mention.type === "liveblocksGroupMention" ? "group" : "user",
     id: mention.attrs.id,
   });
   transform(after);
@@ -284,31 +308,55 @@ export function transformAsLiveblocksTextEditorNodes(
 
 /**
  * @internal
- * Resolves mentioned users in Liveblocks Text Editor nodes.
+ * Resolves mentions (users or groups) in Liveblocks Text Editor nodes.
  */
-export const resolveUsersInLiveblocksTextEditorNodes = async <
+export const resolveMentionsInLiveblocksTextEditorNodes = async <
   U extends BaseUserMeta,
 >(
   nodes: LiveblocksTextEditorNode[],
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>
-): Promise<Map<string, U["info"]>> => {
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>,
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>
+): Promise<{
+  users: Map<string, U["info"]>;
+  groups: Map<string, DGI>;
+}> => {
   const resolvedUsers = new Map<string, U["info"]>();
-  if (!resolveUsers) {
-    return resolvedUsers;
+  const resolvedGroupsInfo = new Map<string, DGI>();
+
+  if (!resolveUsers && !resolveGroupsInfo) {
+    return {
+      users: resolvedUsers,
+      groups: resolvedGroupsInfo,
+    };
   }
 
   const mentionedUserIds = new Set<string>();
+  const mentionedGroupIds = new Set<string>();
+
   for (const node of nodes) {
-    if (node.type === "mention" && node.kind === "user") {
-      mentionedUserIds.add(node.id);
+    if (node.type === "mention") {
+      if (node.kind === "user") {
+        mentionedUserIds.add(node.id);
+      } else if (node.kind === "group") {
+        mentionedGroupIds.add(node.id);
+      }
     }
   }
 
   const userIds = Array.from(mentionedUserIds);
+  const groupIds = Array.from(mentionedGroupIds);
 
-  const users = await resolveUsers({ userIds });
+  const [users, groups] = await Promise.all([
+    resolveUsers && userIds.length > 0 ? resolveUsers({ userIds }) : undefined,
+    resolveGroupsInfo && groupIds.length > 0
+      ? resolveGroupsInfo({ groupIds })
+      : undefined,
+  ]);
+
   if (users) {
     for (const [index, userId] of userIds.entries()) {
       const user = users[index];
@@ -317,43 +365,18 @@ export const resolveUsersInLiveblocksTextEditorNodes = async <
       }
     }
   }
-  return resolvedUsers;
-};
 
-/**
- * @internal
- * Resolves mentioned groups in Liveblocks Text Editor nodes.
- */
-export const resolveGroupsInfoInLiveblocksTextEditorNodes = async <
-  GI extends BaseGroupInfo,
->(
-  nodes: LiveblocksTextEditorNode[],
-  resolveGroupsInfo?: (
-    args: ResolveGroupsInfoArgs
-  ) => Awaitable<(GI | undefined)[] | undefined>
-): Promise<Map<string, GI>> => {
-  const resolvedGroupsInfo = new Map<string, GI>();
-  if (!resolveGroupsInfo) {
-    return resolvedGroupsInfo;
-  }
-
-  const mentionedGroupIds = new Set<string>();
-  for (const node of nodes) {
-    if (node.type === "mention" && node.kind === "group") {
-      mentionedGroupIds.add(node.id);
-    }
-  }
-
-  const groupIds = Array.from(mentionedGroupIds);
-
-  const groupsInfo = await resolveGroupsInfo({ groupIds });
-  if (groupsInfo) {
+  if (groups) {
     for (const [index, groupId] of groupIds.entries()) {
-      const groupInfo = groupsInfo[index];
-      if (groupInfo) {
-        resolvedGroupsInfo.set(groupId, groupInfo);
+      const group = groups[index];
+      if (group) {
+        resolvedGroupsInfo.set(groupId, group);
       }
     }
   }
-  return resolvedGroupsInfo;
+
+  return {
+    users: resolvedUsers,
+    groups: resolvedGroupsInfo,
+  };
 };
