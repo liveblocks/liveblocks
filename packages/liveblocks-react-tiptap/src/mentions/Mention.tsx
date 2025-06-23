@@ -3,7 +3,7 @@ import type { Node } from "@tiptap/pm/model";
 import { NodeViewWrapper } from "@tiptap/react";
 import { forwardRef } from "react";
 
-const MENTION_CHARACTER = "@";
+import { MENTION_CHARACTER } from "../constants";
 
 export const Mention = forwardRef<
   HTMLSpanElement,
@@ -21,6 +21,7 @@ export const Mention = forwardRef<
       ref={forwardedRef}
     >
       {MENTION_CHARACTER}
+      {/* TODO: Display group name if kind is group */}
       <User userId={id} />
     </NodeViewWrapper>
   );
