@@ -1,6 +1,5 @@
 import type {
   Awaitable,
-  BaseGroupInfo,
   BaseUserMeta,
   CommentBodyLink,
   CommentBodyMention,
@@ -195,10 +194,7 @@ export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> =
 export type CommentEmailAsReactData<U extends BaseUserMeta = DU> =
   CommentEmailData<ReactNode, U>;
 
-type PrepareThreadNotificationEmailOptions<
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+type PrepareThreadNotificationEmailOptions<U extends BaseUserMeta = DU> = {
   /**
    * A function that returns room info from room IDs.
    */
@@ -218,7 +214,7 @@ type PrepareThreadNotificationEmailOptions<
    */
   resolveGroupsInfo?: (
     args: ResolveGroupsInfoArgs
-  ) => Awaitable<(GI | undefined)[] | undefined>;
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 };
 
 /**
@@ -547,10 +543,7 @@ export type CommentBodyLinkComponentProps = {
   href: string;
 };
 
-export type CommentBodyMentionComponentProps<
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
   /**
    * The mention element.
    */
@@ -564,13 +557,10 @@ export type CommentBodyMentionComponentProps<
   /**
    * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
    */
-  group?: GI;
+  group?: DGI;
 };
 
-export type ConvertCommentBodyAsReactComponents<
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
   /**
    *
    * The component used to act as a container to wrap comment body blocks,
@@ -594,10 +584,10 @@ export type ConvertCommentBodyAsReactComponents<
   /**
    * The component used to display mentions.
    */
-  Mention: ComponentType<CommentBodyMentionComponentProps<U, GI>>;
+  Mention: ComponentType<CommentBodyMentionComponentProps<U>>;
 };
 
-const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta, DGI> = {
+const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
   Container: ({ children }) => <div>{children}</div>,
   Paragraph: ({ children }) => <p>{children}</p>,
   Text: ({ element }) => {
@@ -638,13 +628,12 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta, DGI> = {
 
 export type PrepareThreadNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = PrepareThreadNotificationEmailOptions<U, GI> & {
+> = PrepareThreadNotificationEmailOptions<U> & {
   /**
    * The components used to customize the resulting React nodes inside a comment body.
    * Each components has priority over the base components inherited internally defined.
    */
-  components?: Partial<ConvertCommentBodyAsReactComponents<U, GI>>;
+  components?: Partial<ConvertCommentBodyAsReactComponents<U>>;
 };
 
 export type ThreadNotificationEmailDataAsReact<U extends BaseUserMeta = DU> =

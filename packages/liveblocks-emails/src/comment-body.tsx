@@ -1,6 +1,5 @@
 import type {
   Awaitable,
-  BaseGroupInfo,
   BaseUserMeta,
   CommentBody,
   CommentBodyLink,
@@ -60,10 +59,7 @@ export type CommentBodyLinkElementArgs = {
   href: string;
 };
 
-export type CommentBodyMentionElementArgs<
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+export type CommentBodyMentionElementArgs<U extends BaseUserMeta = DU> = {
   /**
    * The mention element.
    */
@@ -77,18 +73,14 @@ export type CommentBodyMentionElementArgs<
   /**
    * The mention's group info, if the mention is a group mention and the `resolveGroupsInfo` option was provided.
    */
-  group?: GI;
+  group?: DGI;
 };
 
 /**
  * Protocol:
  * Comment body elements to be converted to a custom format `T`
  */
-export type ConvertCommentBodyElements<
-  T,
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+export type ConvertCommentBodyElements<T, U extends BaseUserMeta = DU> = {
   /**
    * The container element used to display comment body blocks.
    */
@@ -108,14 +100,10 @@ export type ConvertCommentBodyElements<
   /**
    * The mention element used to display mentions.
    */
-  mention: (args: CommentBodyMentionElementArgs<U, GI>, index: number) => T;
+  mention: (args: CommentBodyMentionElementArgs<U>, index: number) => T;
 };
 
-export type ConvertCommentBodyOptions<
-  T,
-  U extends BaseUserMeta = DU,
-  GI extends BaseGroupInfo = DGI,
-> = {
+export type ConvertCommentBodyOptions<T, U extends BaseUserMeta = DU> = {
   /**
    * A function that returns user info from user IDs.
    * You should return a list of user objects of the same size, in the same order.
@@ -130,12 +118,12 @@ export type ConvertCommentBodyOptions<
    */
   resolveGroupsInfo?: (
     args: ResolveGroupsInfoArgs
-  ) => Awaitable<(GI | undefined)[] | undefined>;
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 
   /**
    * The elements used to customize the resulting format `T`.
    */
-  elements: ConvertCommentBodyElements<T, U, GI>;
+  elements: ConvertCommentBodyElements<T, U>;
 };
 
 /**
