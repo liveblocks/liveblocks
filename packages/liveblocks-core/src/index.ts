@@ -55,8 +55,7 @@ export {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
-  resolveGroupsInfoInCommentBody,
-  resolveUsersInCommentBody,
+  resolveMentionsInCommentBody,
   stringifyCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates } from "./connection";

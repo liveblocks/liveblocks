@@ -11,8 +11,7 @@ import {
   type LiveblocksTextEditorMentionNode,
   type LiveblocksTextEditorNode,
   type LiveblocksTextEditorTextNode,
-  resolveGroupsInfoInLiveblocksTextEditorNodes,
-  resolveUsersInLiveblocksTextEditorNodes,
+  resolveMentionsInLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
 
 export type TextMentionContentContainerElementArgs<T> = {
@@ -99,14 +98,12 @@ export async function convertTextMentionContent<T, U extends BaseUserMeta = DU>(
   nodes: LiveblocksTextEditorNode[],
   options: ConvertTextMentionContentOptions<T, U>
 ): Promise<T> {
-  const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
-    nodes,
-    options?.resolveUsers
-  );
-  const resolvedGroupsInfo = await resolveGroupsInfoInLiveblocksTextEditorNodes(
-    nodes,
-    options?.resolveGroupsInfo
-  );
+  const { users: resolvedUsers, groups: resolvedGroupsInfo } =
+    await resolveMentionsInLiveblocksTextEditorNodes(
+      nodes,
+      options?.resolveUsers,
+      options?.resolveGroupsInfo
+    );
 
   const blocks: T[] = nodes.map((node, index) => {
     switch (node.type) {

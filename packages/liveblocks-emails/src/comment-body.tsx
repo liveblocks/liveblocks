@@ -15,8 +15,7 @@ import {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
-  resolveGroupsInfoInCommentBody,
-  resolveUsersInCommentBody,
+  resolveMentionsInCommentBody,
   sanitizeUrl,
 } from "@liveblocks/core";
 
@@ -133,14 +132,12 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
   body: CommentBody,
   options: ConvertCommentBodyOptions<T, U>
 ): Promise<T> {
-  const resolvedUsers = await resolveUsersInCommentBody(
-    body,
-    options?.resolveUsers
-  );
-  const resolvedGroupsInfo = await resolveGroupsInfoInCommentBody(
-    body,
-    options?.resolveGroupsInfo
-  );
+  const { users: resolvedUsers, groups: resolvedGroupsInfo } =
+    await resolveMentionsInCommentBody(
+      body,
+      options?.resolveUsers,
+      options?.resolveGroupsInfo
+    );
 
   const blocks: T[] = body.content
     .map((block, index) => {

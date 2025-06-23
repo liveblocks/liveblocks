@@ -2,7 +2,6 @@ import type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "../client";
 import type { DGI, DU } from "../globals/augmentation";
 import { nn } from "../lib/assert";
 import { sanitizeUrl } from "../lib/url";
-import type { BaseGroupInfo } from "../protocol/BaseGroupInfo";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
   CommentBody,
@@ -264,68 +263,65 @@ export function getMentionsFromCommentBody(
   return mentions;
 }
 
-export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
+export async function resolveMentionsInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
-  ) => Awaitable<(U["info"] | undefined)[] | undefined>
-): Promise<Map<string, U["info"]>> {
-  const resolvedUsers = new Map<string, U["info"]>();
-
-  if (!resolveUsers) {
-    return resolvedUsers;
-  }
-
-  const userIds = getMentionsFromCommentBody(
-    body,
-    (mention) => mention.kind === "user"
-  ).map((mention) => mention.id);
-
-  const users = await resolveUsers({
-    userIds,
-  });
-
-  for (const [index, userId] of userIds.entries()) {
-    const user = users?.[index];
-
-    if (user) {
-      resolvedUsers.set(userId, user);
-    }
-  }
-
-  return resolvedUsers;
-}
-
-export async function resolveGroupsInfoInCommentBody<GI extends BaseGroupInfo>(
-  body: CommentBody,
+  ) => Awaitable<(U["info"] | undefined)[] | undefined>,
   resolveGroupsInfo?: (
     args: ResolveGroupsInfoArgs
-  ) => Awaitable<(GI | undefined)[] | undefined>
-): Promise<Map<string, GI>> {
-  const resolvedGroupsInfo = new Map<string, GI>();
+  ) => Awaitable<(DGI | undefined)[] | undefined>
+): Promise<{
+  users: Map<string, U["info"]>;
+  groups: Map<string, DGI>;
+}> {
+  const resolvedUsers = new Map<string, U["info"]>();
+  const resolvedGroupsInfo = new Map<string, DGI>();
 
-  if (!resolveGroupsInfo) {
-    return resolvedGroupsInfo;
+  if (!resolveUsers && !resolveGroupsInfo) {
+    return {
+      users: resolvedUsers,
+      groups: resolvedGroupsInfo,
+    };
   }
 
-  const groupIds = getMentionsFromCommentBody(
-    body,
-    (mention) => mention.kind === "group"
-  ).map((mention) => mention.id);
+  const mentions = getMentionsFromCommentBody(body);
+  const userIds = mentions
+    .filter((mention) => mention.kind === "user")
+    .map((mention) => mention.id);
+  const groupIds = mentions
+    .filter((mention) => mention.kind === "group")
+    .map((mention) => mention.id);
 
-  const groups = await resolveGroupsInfo({
-    groupIds,
-  });
+  const [users, groups] = await Promise.all([
+    resolveUsers && userIds.length > 0 ? resolveUsers({ userIds }) : undefined,
+    resolveGroupsInfo && groupIds.length > 0
+      ? resolveGroupsInfo({ groupIds })
+      : undefined,
+  ]);
 
-  for (const [index, groupId] of groupIds.entries()) {
-    const group = groups?.[index];
-
-    if (group) {
-      resolvedGroupsInfo.set(groupId, group);
+  if (users) {
+    for (const [index, userId] of userIds.entries()) {
+      const user = users[index];
+      if (user) {
+        resolvedUsers.set(userId, user);
+      }
     }
   }
 
-  return resolvedGroupsInfo;
+  if (groups) {
+    for (const [index, groupId] of groupIds.entries()) {
+      const group = groups[index];
+      if (group) {
+        resolvedGroupsInfo.set(groupId, group);
+      }
+    }
+  }
+
+  return {
+    users: resolvedUsers,
+    groups: resolvedGroupsInfo,
+  };
 }
 
 const htmlEscapables = {
@@ -619,14 +615,12 @@ export async function stringifyCommentBody(
         : stringifyCommentBodyPlainElements),
     ...options?.elements,
   };
-  const resolvedUsers = await resolveUsersInCommentBody(
-    body,
-    options?.resolveUsers
-  );
-  const resolvedGroupsInfo = await resolveGroupsInfoInCommentBody(
-    body,
-    options?.resolveGroupsInfo
-  );
+  const { users: resolvedUsers, groups: resolvedGroupsInfo } =
+    await resolveMentionsInCommentBody(
+      body,
+      options?.resolveUsers,
+      options?.resolveGroupsInfo
+    );
 
   const blocks = body.content.flatMap((block, blockIndex) => {
     switch (block.type) {
