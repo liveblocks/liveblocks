@@ -3,7 +3,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { Children, forwardRef, useRef } from "react";
 
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 
 export interface InboxNotificationListProps
@@ -57,7 +57,7 @@ export const InboxNotificationList = forwardRef<
 >(({ onReachEnd, children, className, ...props }, forwardedRef) => {
   return (
     <ol
-      className={classNames("lb-root lb-inbox-notification-list", className)}
+      className={cn("lb-root lb-inbox-notification-list", className)}
       {...props}
       ref={forwardedRef}
     >

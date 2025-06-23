@@ -15,6 +15,7 @@ import { useHistoryVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
+  cn,
   List,
   RestoreIcon,
   SpinnerIcon,
@@ -26,7 +27,6 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import type { Transaction, YEvent } from "yjs";
 import { applyUpdate, Doc } from "yjs";
 
-import { classNames } from "../classnames";
 import { liveblocksConfig } from "../liveblocks-config";
 
 const AUTHORS_TRUNCATE = 3;
@@ -168,7 +168,7 @@ export const HistoryVersionPreview = forwardRef<
   return (
     <div
       {...props}
-      className={classNames(
+      className={cn(
         "lb-root lb-history-version-preview lb-lexical-version-preview",
         className
       )}

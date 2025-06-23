@@ -4,7 +4,7 @@ import { useRoomInfo } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export interface RoomProps extends ComponentProps<"span"> {
   roomId: string;
@@ -18,7 +18,7 @@ export function Room({ roomId, className, ...props }: RoomProps) {
 
   return (
     <span
-      className={classNames("lb-name lb-room", className)}
+      className={cn("lb-name lb-room", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >

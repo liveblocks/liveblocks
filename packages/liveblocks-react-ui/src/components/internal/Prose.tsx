@@ -7,7 +7,7 @@ import type {
   MarkdownComponentsLinkProps,
 } from "../../primitives/Markdown";
 import { Markdown } from "../../primitives/Markdown";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { CodeBlock as DefaultCodeBlock } from "./CodeBlock";
 
 interface ProseProps extends ComponentProps<"div"> {
@@ -42,7 +42,7 @@ export function Prose({ content, className, ...props }: ProseProps) {
     <Markdown
       content={content}
       components={markdownComponents}
-      className={classNames("lb-prose", className)}
+      className={cn("lb-prose", className)}
       {...props}
     />
   );

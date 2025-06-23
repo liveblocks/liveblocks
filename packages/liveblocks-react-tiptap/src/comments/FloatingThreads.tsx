@@ -14,6 +14,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
+import { cn } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import {
   type ComponentType,
@@ -26,7 +27,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
 import { THREADS_PLUGIN_KEY } from "../types";
 
 type ThreadPanelComponents = {
@@ -212,7 +212,7 @@ function FloatingThreadPortal({
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
       }}
-      className={classNames(
+      className={cn(
         "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-threads",
         className
       )}

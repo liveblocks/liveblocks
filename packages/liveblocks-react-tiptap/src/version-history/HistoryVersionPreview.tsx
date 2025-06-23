@@ -3,6 +3,7 @@ import { useHistoryVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
+  cn,
   List,
   RestoreIcon,
   SpinnerIcon,
@@ -14,8 +15,6 @@ import type { ComponentPropsWithoutRef } from "react";
 import { forwardRef, useCallback, useEffect } from "react";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { applyUpdate, Doc } from "yjs";
-
-import { classNames } from "../classnames";
 
 const AUTHORS_TRUNCATE = 3;
 
@@ -70,7 +69,7 @@ export const HistoryVersionPreview = forwardRef<
     return (
       <div
         {...props}
-        className={classNames(
+        className={cn(
           "lb-root lb-history-version-preview lb-tiptap-version-preview",
           className
         )}
