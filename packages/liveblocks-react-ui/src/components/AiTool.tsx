@@ -63,8 +63,11 @@ export interface AiToolProps
 
   /**
    * Whether the content can be collapsed/expanded.
+   *
    * If set to `false`, clicking on it or changing the `collapsed` prop
    * will have no effect.
+   *
+   * If there's no content, this prop has no effect.
    */
   collapsible?: boolean;
 }
@@ -356,7 +359,8 @@ export const AiTool = Object.assign(
       //       For now we're limiting the visual issues caused by the above by using CSS's
       //       `:empty` pseudo-class to make the content 0px high if it's actually empty.
       const hasContent = Children.count(children) > 0;
-      const isCollapsible = collapsible ?? hasContent;
+      // If there's no content, the tool is never collapsible.
+      const isCollapsible = hasContent ? (collapsible ?? true) : false;
       const resolvedTitle = useMemo(() => {
         return title ?? prettifyString(name);
       }, [title, name]);
