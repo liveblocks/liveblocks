@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Reasoning parts in `AiChat` are now automatically collapsed when the reasoning
+  is done.
+- Add `collapsible` prop to `AiTool` to control whether its content can be
+  collapsed/expanded.
+
 ## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
