@@ -2555,9 +2555,8 @@ Returns a thread and its associated inbox notification and subscription, from
 its ID, if it exists.
 
 ```ts
-const { thread, inboxNotification, subscription } = await room.getThread(
-  "th_xxx"
-);
+const { thread, inboxNotification, subscription } =
+  await room.getThread("th_xxx");
 ```
 
 The thread ID can be retrieved from existing threads.
@@ -2661,8 +2660,8 @@ const thread = await room.createThread({ body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
-> website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the
+> **[Liveblocks](https://liveblocks.io)** website is cool!
 
 ```ts
 const body: CommentBody = {
@@ -2931,8 +2930,8 @@ const comment = await room.createComment({ threadId: thread.id, body });
 
 It’s also possible to create links and mentions.
 
-> <span title="jody.hekla">**@Jody Hekla**</span> the **[Liveblocks](https://liveblocks.io)**
-> website is cool!
+> <span title="jody.hekla">**@Jody Hekla**</span> the
+> **[Liveblocks](https://liveblocks.io)** website is cool!
 
 ```ts
 const body: CommentBody = {
