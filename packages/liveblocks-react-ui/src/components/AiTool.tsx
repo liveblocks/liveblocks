@@ -361,12 +361,6 @@ export const AiTool = Object.assign(
         return title ?? prettifyString(name);
       }, [title, name]);
 
-      console.log({
-        collapsible,
-        hasContent,
-        isCollapsible,
-      });
-
       // `AiTool` uses "collapsed" instead of "open" (like the `Composer` component) because "open"
       // makes sense next to something called "Collapsible" but less so for something called "AiTool".
       const handleCollapsibleOpenChange = useCallback(
