@@ -35,6 +35,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { MENTION_CHARACTER } from "../constants";
 import { Avatar } from "./avatar";
 import type { GroupMentionNode } from "./group-mention-node";
 import {
@@ -54,13 +55,11 @@ import {
 } from "./suggestions";
 import { User } from "./user";
 
-const MENTION_TRIGGER = "@";
-
 const PUNCTUATIONS =
   "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
 
 // Characters we expect to see in a mention (non-space, non-punctuation).
-const VALID_CHARACTERS = "[^" + MENTION_TRIGGER + PUNCTUATIONS + "\\s]";
+const VALID_CHARACTERS = "[^" + MENTION_CHARACTER + PUNCTUATIONS + "\\s]";
 
 const VALID_JOINS =
   "(?:" +
@@ -76,7 +75,7 @@ const LENGTH_LIMIT = 75;
 const MentionRegex = new RegExp(
   "(^|\\s|\\()(" +
     "[" +
-    MENTION_TRIGGER +
+    MENTION_CHARACTER +
     "]" +
     "((?:" +
     VALID_CHARACTERS +
