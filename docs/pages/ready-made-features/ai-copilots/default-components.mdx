@@ -80,9 +80,9 @@ function App() {
           render: ({ result }) => (
             // +++
             <AiTool>
-              {result ? (
+              {result.data ? (
                 <div>
-                  {result.temperature}°F - {result.condition}
+                  {result.data.temperature}°F - {result.data.condition}
                 </div>
               ) : null}
             </AiTool>

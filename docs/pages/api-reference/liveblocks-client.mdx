@@ -853,14 +853,14 @@ const myTool = defineAiTool()({
   },
   execute: async ({ userId }) => {
     const user = await getUserById(userId);
-    return { data: { success: true, user } };
+    return { data: { user } };
   },
   render: ({ result }) => (
     <AiTool title="User Lookup" icon="👤">
-      {!result ? (
+      {!result.data ? (
         <div>Looking up user...</div>
       ) : (
-        <div>Found user: {result.user.name}</div>
+        <div>Found user: {result.data.user.name}</div>
       )}
     </AiTool>
   ),
