@@ -63,10 +63,7 @@ export interface AiToolProps
 
   /**
    * Whether the content can be collapsed/expanded.
-   *
-   * If set to `false`, clicking on it or changing the `collapsed` prop
-   * will have no effect.
-   *
+   * If set to `false`, clicking on it will have no effect.
    * If there's no content, this prop has no effect.
    */
   collapsible?: boolean;
