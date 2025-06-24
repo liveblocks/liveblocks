@@ -891,17 +891,141 @@ Note that the function should be called like this `defineAiTool()({ ... })`
   </PropertiesListItem>
   <PropertiesListItem name="execute" type="function">
     Async function that performs the tool's action. Receives validated arguments
-    and execution context, returns structured data.
+    and execution context, returns structured data. See [implementing the tool
+    call via `execute`](#implement-via-execute).
   </PropertiesListItem>
   <PropertiesListItem name="render" type="function">
     React component function that renders the tool's UI during different
-    execution stages.
+    execution stages. See [tool call rendering
+    stages](#tool-call-rendering-stages).
   </PropertiesListItem>
 </PropertiesList>
 
 Tools can be registered globally with
 [`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool) or
 passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat).
+
+### Tool call rendering stages [#tool-call-rendering-stages]
+
+Rendering a tool call can be done before the tool call is executed, which allows
+you to display a UI during its entire lifecycle. The tool call stages are:
+
+- `receiving` The tool call is being received. This stage is reserved for future
+  use, to enable showing a UI while the tool call `args` object is being
+  streamed in, but before the tool call can actually be made.
+- `executing` The tool call is currently executing, or is ready to be. In this
+  stage, the `args` are fully known, but the result of the tool call is not
+  known yet.
+- `executed` The tool call has been executed, and the result is known. This
+  happens after your `execute` function was run, or after you called `respond()`
+  inside `render`. In this stage, the `result` object will be available.
+
+The render component will automatically re-render when its stage changes.
+
+### Implementing tool calls
+
+When you implement a tool call, use one of these combinations:
+
+1. Implement `execute` _and_ `render`
+1. Implement only `execute`, but no `render`
+1. Implement only `render`, but make sure to eventually call `respond()`
+
+#### Implementing your tool call via `execute` [#implement-via-execute]
+
+If you implement the `execute` function, this function will automatically be
+invoked when the tool call gets made. The return value of this function will be
+the result that will be passed back to the AI copilot.
+
+- `{ data: any, description?: string }` The data to return in case of success.
+  `data` must be a legal JSON value. Providing a description is optional. If you
+  provide a description, it will be passed to the AI copilot to help it
+  understand the returned data or to provide follow-up instructions for how to
+  respond to this tool result.
+- `{ error: string }` The error message in case the tool call failed to execute.
+- `{ cancel: true | string }` If the tool call should be cancelled. You can
+  optionally provide a cancel reason as an instruction to the AI copilot.
+
+The returned value can be observed in the `render` method, through the `result`
+param:
+
+```tsx
+defineAiTool()({
+  /* ... */
+
+  execute: async () => {
+    await sleep(1000);
+    return { data: { user: { name: "Alice" } } };
+  },
+
+  render: ({ result }) => {
+    if (result.data) {
+      return <div>Found user: {result.data.user.name}</div>;
+    }
+
+    // Tool hasn't executed yet
+    return <Spinner />;
+  },
+});
+```
+
+If you do not implement `render` alongside `execute`, the tool call will still
+be executed, but no UI will be displayed. The result will still be passed back
+to the AI copilot.
+
+#### Implementing your tool call via `render` [#implement-via-render]
+
+Sometimes you may not want to immediately execute the tool call. This is most
+common to build a Human-in-the-Loop (HITL) style UI where you want the user to
+confirm or correct the tool call’s behavior. In these scenarios, you do not want
+to implement `execute`. Instead, you could display any UI, as long as you
+eventually call the `respond` function that is provided to `render`’s props.
+
+```tsx
+defineAiTool()({
+  /* ... */
+  /* NOTE: No execute method used here! */
+
+  render: ({ respond }) => {
+    return (
+      <div>
+        <button
+          onClick={() => {
+            respond({ data: { user: { name: "Alice" } } });
+          }}
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => {
+            respond({ cancel: true });
+          }}
+        >
+          Confirm
+        </button>
+      </div>
+    );
+  },
+});
+```
+
+In this example, until the Confirm button is clicked, the AI chat will remain in
+“executing” stage, awaiting the result of this tool call.
+
+This example is for illustrative purposes only. In practice, using our
+[`AiTool.Confirmation`](/docs/api-reference/liveblocks-react-ui#AiTool.Confirmation)
+tool is preferred.
+
+Like with the `execute` function, the `respond` function should be called with a
+value of this shape:
+
+- `{ data: any, description?: string }` The data to return in case of success.
+  `data` must be a legal JSON value. Providing a description is optional. If you
+  provide a description, it will be passed to the AI copilot to help it
+  understand the returned data or to provide follow-up instructions for how to
+  respond to this tool result.
+- `{ error: string }` The error message in case the tool call failed to execute.
+- `{ cancel: true | string }` If the tool call should be cancelled. You can
+  optionally provide a cancel reason as an instruction to the AI copilot.
 
 ## Room
 
