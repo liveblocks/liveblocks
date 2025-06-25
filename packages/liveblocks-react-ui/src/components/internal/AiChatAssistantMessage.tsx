@@ -24,7 +24,7 @@ import type {
   AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Prose } from "./Prose";
 
@@ -100,7 +100,7 @@ export const AiChatAssistantMessage = memo(
 
       return (
         <div
-          className={classNames(
+          className={cn(
             "lb-ai-chat-message lb-ai-chat-assistant-message",
             className
           )}
@@ -156,7 +156,7 @@ function ReasoningPart({
       onOpenChange={setIsOpen}
     >
       <Collapsible.Trigger
-        className={classNames(
+        className={cn(
           "lb-collapsible-trigger",
           isStreaming && "lb-ai-chat-pending"
         )}

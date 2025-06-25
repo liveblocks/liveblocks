@@ -30,7 +30,7 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../overrides";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { useVisible } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
@@ -182,7 +182,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       <div
         ref={containerRef}
         {...props}
-        className={classNames(
+        className={cn(
           "lb-root lb-ai-chat",
           layout === "compact"
             ? "lb-ai-chat:layout-compact"

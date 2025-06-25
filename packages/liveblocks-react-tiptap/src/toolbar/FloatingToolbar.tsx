@@ -13,6 +13,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
+  cn,
   TooltipProvider,
   useInitial,
   useRefs,
@@ -33,7 +34,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
 import type { FloatingPosition } from "../types";
 import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
@@ -457,7 +457,7 @@ export const FloatingToolbar = Object.assign(
                 role="toolbar"
                 aria-label="Floating toolbar"
                 aria-orientation="horizontal"
-                className={classNames(
+                className={cn(
                   "lb-root lb-portal lb-elevation lb-tiptap-floating-toolbar lb-tiptap-toolbar",
                   className
                 )}

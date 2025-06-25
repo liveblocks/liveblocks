@@ -23,7 +23,7 @@ import {
 } from "../overrides";
 import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { useSemiControllableState } from "../utils/use-controllable-state";
 import { CodeBlock } from "./internal/CodeBlock";
 
@@ -114,16 +114,14 @@ export interface AiToolConfirmationProps<
 }
 
 function AiToolIcon({ className, ...props }: AiToolIconProps) {
-  return (
-    <div className={classNames("lb-ai-tool-icon", className)} {...props} />
-  );
+  return <div className={cn("lb-ai-tool-icon", className)} {...props} />;
 }
 
 function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
   const { args, partialArgs, result } = useAiToolInvocationContext();
 
   return (
-    <div className={classNames("lb-ai-tool-inspector", className)} {...props}>
+    <div className={cn("lb-ai-tool-inspector", className)} {...props}>
       <CodeBlock
         title="Arguments"
         code={JSON.stringify(args ?? partialArgs, null, 2)}
@@ -181,10 +179,7 @@ function AiToolConfirmation<
   }
 
   return (
-    <div
-      className={classNames("lb-ai-tool-confirmation", className)}
-      {...props}
-    >
+    <div className={cn("lb-ai-tool-confirmation", className)} {...props}>
       {children ? (
         <div className="lb-ai-tool-confirmation-content">{children}</div>
       ) : null}
@@ -364,7 +359,7 @@ export const AiTool = Object.assign(
       return (
         <Collapsible.Root
           ref={forwardedRef}
-          className={classNames("lb-collapsible lb-ai-tool", className)}
+          className={cn("lb-collapsible lb-ai-tool", className)}
           {...props}
           // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
           open={hasContent ? !semiControlledCollapsed : false}

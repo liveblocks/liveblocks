@@ -14,6 +14,7 @@ import {
   ArrowCornerDownRightIcon,
   Button,
   CheckIcon,
+  cn,
   CrossIcon,
   EditIcon,
   LengthenIcon,
@@ -51,7 +52,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type {
   AiCommands,
@@ -176,7 +176,7 @@ const AiToolbarDropdownSeparator = forwardRef<
 >(({ className, ...props }, forwardedRef) => {
   return (
     <Command.Separator
-      className={classNames("lb-dropdown-separator", className)}
+      className={cn("lb-dropdown-separator", className)}
       {...props}
       ref={forwardedRef}
     />
@@ -196,7 +196,7 @@ const AiToolbarDropdownItem = forwardRef<
 >(({ children, onSelect, icon, className, ...props }, forwardedRef) => {
   return (
     <Command.Item
-      className={classNames("lb-dropdown-item", className)}
+      className={cn("lb-dropdown-item", className)}
       onSelect={onSelect}
       {...props}
       ref={forwardedRef}
@@ -216,7 +216,7 @@ const AiToolbarSuggestionsLabel = forwardRef<
   return (
     <span
       ref={forwardedRef}
-      className={classNames("lb-dropdown-label", className)}
+      className={cn("lb-dropdown-label", className)}
       {...props}
     >
       {children}
@@ -859,7 +859,7 @@ export const AiToolbar = Object.assign(
               role="toolbar"
               label="AI toolbar"
               aria-orientation="horizontal"
-              className={classNames(
+              className={cn(
                 "lb-root lb-portal lb-tiptap-ai-toolbar-portal",
                 className
               )}

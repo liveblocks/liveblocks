@@ -17,7 +17,7 @@ import type { Overrides } from "../../overrides";
 import { useOverrides } from "../../overrides";
 import { AttachmentTooLargeError } from "../../primitives";
 import { useComposerAttachmentsContextOrNull } from "../../primitives/Composer/contexts";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
 
@@ -360,7 +360,7 @@ export function MediaAttachment({
 
   return (
     <div
-      className={classNames("lb-attachment lb-media-attachment", className)}
+      className={cn("lb-attachment lb-media-attachment", className)}
       data-error={isError ? "" : undefined}
       {...props}
       role={onClick ? "button" : undefined}
@@ -432,7 +432,7 @@ export function FileAttachment({
 
   return (
     <div
-      className={classNames("lb-attachment lb-file-attachment", className)}
+      className={cn("lb-attachment lb-file-attachment", className)}
       data-error={isError ? "" : undefined}
       {...props}
       role={onClick ? "button" : undefined}

@@ -22,7 +22,7 @@ import {
   useOverrides,
 } from "../../overrides";
 import * as ComposerPrimitive from "../../primitives/AiChatComposer";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { Button } from "./Button";
 import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
 
@@ -186,7 +186,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
     return (
       <TooltipProvider>
         <ComposerPrimitive.Form
-          className={classNames(
+          className={cn(
             "lb-root lb-ai-chat-composer lb-ai-chat-composer-form",
             className
           )}

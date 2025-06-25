@@ -13,7 +13,7 @@ import {
   useOverrides,
 } from "../../overrides";
 import * as CommentPrimitive from "../../primitives/Comment";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import {
   CommentMention,
   CommentNonInteractiveFileAttachment,
@@ -65,7 +65,7 @@ export function InboxNotificationComment({
 
   return (
     <div
-      className={classNames(
+      className={cn(
         "lb-root lb-inbox-notification-comment lb-comment",
         className
       )}
