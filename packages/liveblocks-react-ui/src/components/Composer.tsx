@@ -71,7 +71,7 @@ import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
-import { GroupAvatar, UserAvatar } from "./internal/Avatar";
+import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
@@ -366,15 +366,15 @@ function ComposerMentionSuggestions({
     <ComposerPrimitive.Suggestions className="lb-root lb-portal lb-elevation lb-composer-suggestions lb-composer-mention-suggestions">
       <ComposerPrimitive.SuggestionsList className="lb-composer-suggestions-list lb-composer-mention-suggestions-list">
         {mentions.map((mention) => {
-          switch (mention.kind) {
-            case "user":
-              return (
-                <ComposerPrimitive.SuggestionsListItem
-                  key={mention.id}
-                  className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
-                  value={mention.id}
-                >
-                  <UserAvatar
+          return (
+            <ComposerPrimitive.SuggestionsListItem
+              key={mention.id}
+              className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
+              value={mention.id}
+            >
+              {mention.kind === "user" ? (
+                <>
+                  <Avatar
                     userId={mention.id}
                     className="lb-composer-mention-suggestion-avatar"
                   />
@@ -382,17 +382,10 @@ function ComposerMentionSuggestions({
                     userId={mention.id}
                     className="lb-composer-mention-suggestion-user"
                   />
-                </ComposerPrimitive.SuggestionsListItem>
-              );
-
-            case "group":
-              return (
-                <ComposerPrimitive.SuggestionsListItem
-                  key={mention.id}
-                  className="lb-composer-suggestions-list-item lb-composer-mention-suggestion"
-                  value={mention.id}
-                >
-                  <GroupAvatar
+                </>
+              ) : mention.kind === "group" ? (
+                <>
+                  <Avatar
                     groupId={mention.id}
                     className="lb-composer-mention-suggestion-avatar"
                   />
@@ -400,12 +393,12 @@ function ComposerMentionSuggestions({
                     groupId={mention.id}
                     className="lb-composer-mention-suggestion-group"
                   />
-                </ComposerPrimitive.SuggestionsListItem>
-              );
-
-            default:
-              return assertNever(mention, "Unhandled mention kind");
-          }
+                </>
+              ) : (
+                assertNever(mention, "Unhandled mention kind")
+              )}
+            </ComposerPrimitive.SuggestionsListItem>
+          );
         })}
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
