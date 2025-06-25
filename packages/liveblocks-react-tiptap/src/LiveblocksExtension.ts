@@ -371,7 +371,10 @@ export const useLiveblocksExtension = (
       if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
-            onCreateMention: createTextMention,
+            // TODO: Handle group mentions
+            onCreateMention: (mention) => {
+              createTextMention(mention.id, mention.notificationId);
+            },
             onDeleteMention: deleteTextMention,
           })
         );

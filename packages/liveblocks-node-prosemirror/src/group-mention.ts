@@ -37,6 +37,33 @@ export const GroupMentionExtension = Node.create({
           };
         },
       },
+      userIds: {
+        default: null,
+        parseHTML: (element) => {
+          const userIdsAttribute = element.getAttribute("data-user-ids");
+
+          if (!userIdsAttribute) {
+            return null;
+          }
+
+          try {
+            const userIds = JSON.parse(userIdsAttribute) as string[];
+
+            return Array.isArray(userIds) ? userIds : null;
+          } catch {
+            return null;
+          }
+        },
+        renderHTML: (attributes) => {
+          if (!attributes.userIds || !Array.isArray(attributes.userIds)) {
+            return {};
+          }
+
+          return {
+            "data-user-ids": JSON.stringify(attributes.userIds),
+          };
+        },
+      },
       notificationId: {
         default: null,
         parseHTML: (element) => element.getAttribute("data-notification-id"),
