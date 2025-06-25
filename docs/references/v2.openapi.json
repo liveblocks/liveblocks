@@ -3070,6 +3070,25 @@
             "in": "query",
             "name": "query",
             "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 50
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of inbox notifications to be returned. The limit can range between 1 and 50, and defaults to 50."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
           }
         ],
         "operationId": "get-users-userId-inboxNotifications",
