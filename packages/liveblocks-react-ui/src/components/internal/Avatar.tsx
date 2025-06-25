@@ -1,41 +1,44 @@
 "use client";
 
-import { useGroupInfo, useUser } from "@liveblocks/react";
+import type { Relax } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
 import { cn } from "../../utils/cn";
 import { getInitials } from "../../utils/get-initials";
+import { useUserOrGroupInfo } from "../../utils/use-user-or-group";
 
-export interface AvatarProps extends ComponentProps<"div"> {
+interface AvatarLayoutProps extends ComponentProps<"div"> {
   src?: string;
   name?: string;
   fallback?: string;
   isLoading: boolean;
 }
 
-export interface UserAvatarProps extends ComponentProps<"div"> {
-  /**
-   * The user ID to display the avatar for.
-   */
-  userId: string;
-}
+export type AvatarProps = ComponentProps<"div"> &
+  Relax<
+    | {
+        /**
+         * The user ID to display the avatar for.
+         */
+        userId: string;
+      }
+    | {
+        /**
+         * The group ID to display the avatar for.
+         */
+        groupId: string;
+      }
+  >;
 
-export interface GroupAvatarProps extends ComponentProps<"div"> {
-  /**
-   * The group ID to display the avatar for.
-   */
-  groupId: string;
-}
-
-export function Avatar({
+function AvatarLayout({
   src,
   name,
   fallback,
   isLoading,
   className,
   ...props
-}: AvatarProps) {
+}: AvatarLayoutProps) {
   const nameInitials = useMemo(
     () => (name ? getInitials(name) : undefined),
     [name]
@@ -69,28 +72,17 @@ export function Avatar({
   );
 }
 
-export function UserAvatar({ userId, ...props }: UserAvatarProps) {
-  const { user, isLoading } = useUser(userId);
-
-  return (
-    <Avatar
-      src={user?.avatar}
-      name={user?.name}
-      fallback={userId}
-      isLoading={isLoading}
-      {...props}
-    />
+export function Avatar({ userId, groupId, ...props }: AvatarProps) {
+  const { info, isLoading } = useUserOrGroupInfo(
+    userId ? "user" : "group",
+    userId ?? groupId
   );
-}
-
-export function GroupAvatar({ groupId, ...props }: GroupAvatarProps) {
-  const { info, isLoading } = useGroupInfo(groupId);
 
   return (
-    <Avatar
+    <AvatarLayout
       src={info?.avatar}
       name={info?.name}
-      fallback={groupId}
+      fallback={userId ?? groupId}
       isLoading={isLoading}
       {...props}
     />
