@@ -6,6 +6,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
+import { cn } from "@liveblocks/react-ui/_private";
 import { $getNodeByKey } from "lexical";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import {
@@ -17,7 +18,6 @@ import {
   useState,
 } from "react";
 
-import { classNames } from "../classnames";
 import { useRootElement } from "../use-root-element";
 import {
   ActiveThreadsContext,
@@ -239,7 +239,7 @@ export function AnchoredThreads({
   return (
     <div
       {...props}
-      className={classNames(className, "lb-root lb-lexical-anchored-threads")}
+      className={cn(className, "lb-root lb-lexical-anchored-threads")}
       ref={containerRef}
       style={{
         position: "relative",
@@ -328,10 +328,7 @@ function ThreadWrapper({
   return (
     <div
       ref={divRef}
-      className={classNames(
-        "lb-lexical-anchored-threads-thread-container",
-        className
-      )}
+      className={cn("lb-lexical-anchored-threads-thread-container", className)}
       {...props}
     >
       <Thread

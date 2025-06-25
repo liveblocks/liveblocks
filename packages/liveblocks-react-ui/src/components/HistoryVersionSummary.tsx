@@ -6,7 +6,7 @@ import { forwardRef } from "react";
 
 import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { List } from "./internal/List";
 import { User } from "./internal/User";
 
@@ -33,7 +33,7 @@ export const HistoryVersionSummary = forwardRef<
   return (
     <button
       {...props}
-      className={classNames("lb-root lb-history-version-summary", className)}
+      className={cn("lb-root lb-history-version-summary", className)}
       ref={forwardedRef}
       data-selected={selected ? "" : undefined}
     >

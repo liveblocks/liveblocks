@@ -66,7 +66,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { CommentAttachmentArgs } from "../types";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { download } from "../utils/download";
 import { useRefs } from "../utils/use-refs";
 import { useIntersectionCallback } from "../utils/use-visible";
@@ -226,7 +226,7 @@ export function CommentMention({
     case "user":
       return (
         <CommentPrimitive.Mention
-          className={classNames("lb-comment-mention", className)}
+          className={cn("lb-comment-mention", className)}
           data-self={mention.id === currentId ? "" : undefined}
           {...props}
         >
@@ -259,7 +259,7 @@ export function CommentMention({
           className="lb-comment-mention-tooltip"
         >
           <CommentPrimitive.Mention
-            className={classNames("lb-comment-mention", className)}
+            className={cn("lb-comment-mention", className)}
             // TODO: If we have access to the user IDs, we can check if the current user is in the group
             // data-self={mention.id === currentId ? "" : undefined}
             {...props}
@@ -285,7 +285,7 @@ export function CommentLink({
 
   return (
     <CommentPrimitive.Link
-      className={classNames("lb-comment-link", className)}
+      className={cn("lb-comment-link", className)}
       href={href}
       {...props}
       asChild
@@ -302,7 +302,7 @@ export function CommentNonInteractiveLink({
   ...props
 }: CommentBodyLinkProps & CommentLinkProps) {
   return (
-    <span className={classNames("lb-comment-link", className)} {...props}>
+    <span className={cn("lb-comment-link", className)} {...props}>
       {children}
     </span>
   );
@@ -315,7 +315,7 @@ const CommentReactionButton = forwardRef<
   const $ = useOverrides(overrides);
   return (
     <CustomButton
-      className={classNames("lb-comment-reaction", className)}
+      className={cn("lb-comment-reaction", className)}
       variant="outline"
       aria-label={$.COMMENT_REACTION_DESCRIPTION(
         reaction.emoji,
@@ -478,7 +478,7 @@ function CommentMediaAttachment({
 
   return (
     <MediaAttachment
-      className={classNames("lb-comment-attachment", className)}
+      className={cn("lb-comment-attachment", className)}
       {...props}
       attachment={attachment}
       overrides={overrides}
@@ -521,7 +521,7 @@ function CommentFileAttachment({
 
   return (
     <FileAttachment
-      className={classNames("lb-comment-attachment", className)}
+      className={cn("lb-comment-attachment", className)}
       {...props}
       attachment={attachment}
       overrides={overrides}
@@ -537,7 +537,7 @@ export function CommentNonInteractiveFileAttachment({
 }: CommentAttachmentProps) {
   return (
     <FileAttachment
-      className={classNames("lb-comment-attachment", className)}
+      className={cn("lb-comment-attachment", className)}
       allowMediaPreview={false}
       {...props}
     />
@@ -759,7 +759,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           )}
           <div
             id={comment.id}
-            className={classNames(
+            className={cn(
               "lb-root lb-comment",
               indentContent && "lb-comment:indent-content",
               showActions === "hover" && "lb-comment:show-actions-hover",
@@ -807,7 +807,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               </div>
               {showActions && !isEditing && (
                 <div
-                  className={classNames(
+                  className={cn(
                     "lb-comment-actions",
                     additionalActionsClassName
                   )}

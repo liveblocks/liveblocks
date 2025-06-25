@@ -3,7 +3,7 @@
 import { useGroupInfo } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export interface GroupProps extends ComponentProps<"span"> {
   /**
@@ -17,7 +17,7 @@ export function Group({ groupId, className, ...props }: GroupProps) {
 
   return (
     <span
-      className={classNames("lb-name lb-group", className)}
+      className={cn("lb-name lb-group", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >

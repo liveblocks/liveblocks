@@ -17,6 +17,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
+import { Avatar, User } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -36,7 +37,6 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { MENTION_CHARACTER } from "../constants";
-import { Avatar } from "./avatar";
 import type { GroupMentionNode } from "./group-mention-node";
 import {
   $createGroupMentionNode,
@@ -53,7 +53,6 @@ import {
   OnSuggestionSelectCallbackContext,
   SuggestionsContext,
 } from "./suggestions";
-import { User } from "./user";
 
 const PUNCTUATIONS =
   "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";

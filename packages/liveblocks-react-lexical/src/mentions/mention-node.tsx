@@ -1,4 +1,5 @@
 import { createInboxNotificationId } from "@liveblocks/core";
+import { User } from "@liveblocks/react-ui/_private";
 import type {
   DOMConversionMap,
   DOMExportOutput,
@@ -12,7 +13,6 @@ import type { JSX } from "react";
 
 import { MENTION_CHARACTER } from "../constants";
 import { Mention } from "./mention-component";
-import { User } from "./user";
 
 export type SerializedMentionNode = Spread<
   {

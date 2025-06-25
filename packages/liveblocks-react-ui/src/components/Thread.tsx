@@ -42,7 +42,7 @@ import type {
   ThreadOverrides,
 } from "../overrides";
 import { useOverrides } from "../overrides";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
@@ -305,7 +305,7 @@ export const Thread = forwardRef(
     return (
       <TooltipProvider>
         <div
-          className={classNames(
+          className={cn(
             "lb-root lb-thread",
             showActions === "hover" && "lb-thread:show-actions-hover",
             className

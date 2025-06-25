@@ -1,6 +1,8 @@
 // Private APIs
 
+export { Avatar } from "../components/internal/Avatar";
 export { Button, SelectButton } from "../components/internal/Button";
+export { Group } from "../components/internal/Group";
 export { List } from "../components/internal/List";
 export { Prose } from "../components/internal/Prose";
 export {
@@ -11,6 +13,7 @@ export {
 export { User } from "../components/internal/User";
 export * from "../icons";
 export { capitalize } from "../utils/capitalize";
+export { cn } from "../utils/cn";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";
 

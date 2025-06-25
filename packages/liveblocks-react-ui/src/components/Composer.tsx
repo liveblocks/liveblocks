@@ -67,7 +67,7 @@ import type {
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import type { ComposerBodyMark } from "../types";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
@@ -255,7 +255,7 @@ function ComposerInsertMentionEditorAction({
   return (
     <Tooltip content={tooltipLabel ?? label}>
       <Button
-        className={classNames("lb-composer-editor-action", className)}
+        className={cn("lb-composer-editor-action", className)}
         onPointerDown={preventDefault}
         onClick={handleClick}
         aria-label={label}
@@ -288,7 +288,7 @@ function ComposerInsertEmojiEditorAction({
       <Tooltip content={tooltipLabel ?? label}>
         <EmojiPickerTrigger asChild>
           <Button
-            className={classNames("lb-composer-editor-action", className)}
+            className={cn("lb-composer-editor-action", className)}
             onPointerDown={preventDefault}
             onClick={stopPropagation}
             aria-label={label}
@@ -319,7 +319,7 @@ function ComposerAttachFilesEditorAction({
     <Tooltip content={tooltipLabel ?? label}>
       <ComposerPrimitive.AttachFiles asChild>
         <Button
-          className={classNames("lb-composer-editor-action", className)}
+          className={cn("lb-composer-editor-action", className)}
           onPointerDown={preventDefault}
           onClick={stopPropagation}
           aria-label={label}
@@ -490,7 +490,7 @@ function ComposerFileAttachment({
 
   return (
     <FileAttachment
-      className={classNames("lb-composer-attachment", className)}
+      className={cn("lb-composer-attachment", className)}
       {...props}
       attachment={attachment}
       onDeleteClick={handleDeleteClick}
@@ -513,10 +513,7 @@ function ComposerAttachments({
   }
 
   return (
-    <div
-      className={classNames("lb-composer-attachments", className)}
-      {...props}
-    >
+    <div className={cn("lb-composer-attachments", className)} {...props}>
       <div className="lb-attachments">
         {attachments.map((attachment) => {
           return (
@@ -827,10 +824,7 @@ export const Composer = forwardRef(
       <TooltipProvider>
         <ComposerPrimitive.Form
           onComposerSubmit={handleComposerSubmit}
-          className={classNames(
-            "lb-root lb-composer lb-composer-form",
-            className
-          )}
+          className={cn("lb-root lb-composer lb-composer-form", className)}
           dir={$.dir}
           {...props}
           ref={forwardedRef}

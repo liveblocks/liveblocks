@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { forwardRef } from "react";
 
 import { ChevronDownIcon } from "../../icons/ChevronDown";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export interface ButtonProps extends ComponentProps<"button"> {
   variant?:
@@ -37,7 +37,7 @@ export const CustomButton = forwardRef<
     return (
       <button
         type="button"
-        className={classNames(
+        className={cn(
           "lb-button",
           !disableable && "lb-button:non-disableable",
           className
@@ -70,7 +70,7 @@ export const SelectButton = forwardRef<HTMLButtonElement, ButtonProps>(
       <CustomButton
         {...props}
         type="button"
-        className={classNames("lb-select-button", className)}
+        className={cn("lb-select-button", className)}
         ref={forwardedRef}
       >
         {icon ? <span className="lb-icon-container">{icon}</span> : null}

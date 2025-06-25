@@ -4,7 +4,7 @@ import type { Relax } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { getInitials } from "../../utils/get-initials";
 import { useUserOrGroupInfo } from "../../utils/use-user-or-group";
 
@@ -50,7 +50,7 @@ function AvatarLayout({
 
   return (
     <div
-      className={classNames("lb-avatar", className)}
+      className={cn("lb-avatar", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >
