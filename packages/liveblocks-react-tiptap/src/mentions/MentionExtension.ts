@@ -18,6 +18,7 @@ import {
   LIVEBLOCKS_MENTION_NOTIFIER_KEY,
   LIVEBLOCKS_MENTION_PASTE_KEY,
   LIVEBLOCKS_MENTION_TYPE,
+  type TiptapMentionData,
 } from "../types";
 import { getMentionsFromNode, mapFragment } from "../utils";
 import { GroupMentionNode } from "./GroupMentionNode";
@@ -57,11 +58,7 @@ const mentionPasteHandler = (): Plugin => {
 };
 
 export type MentionExtensionOptions = {
-  onCreateMention: (
-    kind: "user" | "group",
-    id: string,
-    notificationId: string
-  ) => void;
+  onCreateMention: (mention: TiptapMentionData) => void;
   onDeleteMention: (notificationId: string) => void;
 };
 /**
@@ -98,16 +95,17 @@ const notifier = ({
       changes.forEach(({ newRange, oldRange }) => {
         const newMentions = getMentionsFromNode(newState.doc, newRange);
         const oldMentions = getMentionsFromNode(oldState.doc, oldRange);
-        if (oldMentions.length || newMentions.length) {
+
+        if (oldMentions.size || newMentions.size) {
           // create new mentions
           newMentions.forEach((mention) => {
-            if (!oldMentions.includes(mention)) {
-              onCreateMention(mention.kind, mention.id, mention.notificationId);
+            if (!oldMentions.has(mention.notificationId)) {
+              onCreateMention(mention);
             }
           });
           // delete old mentions
           oldMentions.forEach((mention) => {
-            if (!newMentions.includes(mention)) {
+            if (!newMentions.has(mention.notificationId)) {
               onDeleteMention(mention.notificationId);
             }
           });

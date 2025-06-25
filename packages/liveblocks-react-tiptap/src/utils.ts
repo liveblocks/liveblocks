@@ -15,7 +15,7 @@ import {
 } from "y-prosemirror";
 import type { RelativePosition } from "yjs";
 
-import type { YSyncPluginState } from "./types";
+import type { TiptapMentionData, YSyncPluginState } from "./types";
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_TYPE,
@@ -65,31 +65,31 @@ export const getRectFromCoords = (coords: {
 export const getMentionsFromNode = (
   node: ProseMirrorNode,
   range: Range
-): { kind: "user" | "group"; id: string; notificationId: string }[] => {
-  const result: {
-    kind: "user" | "group";
-    id: string;
-    notificationId: string;
-  }[] = [];
+): Map<string, TiptapMentionData> => {
+  const mentions = new Map<string, TiptapMentionData>();
+
   node.nodesBetween(range.from, range.to, (child) => {
     if (
       child.type.name === LIVEBLOCKS_MENTION_TYPE ||
       child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
     ) {
-      const mention = child.attrs as { id?: string; notificationId?: string };
+      const mention = child.attrs as Omit<TiptapMentionData, "kind">;
+
       if (mention.id && mention.notificationId) {
-        result.push({
+        mentions.set(mention.notificationId, {
           kind:
             child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
               ? "group"
               : "user",
           id: mention.id,
+          userIds: mention.userIds,
           notificationId: mention.notificationId,
-        });
+        } as TiptapMentionData);
       }
     }
   });
-  return result;
+
+  return mentions;
 };
 
 // How to modify data in transformPasted, inspired by: https://discuss.prosemirror.net/t/modify-specific-node-on-copy-and-paste-in-clipboard/4901/4
