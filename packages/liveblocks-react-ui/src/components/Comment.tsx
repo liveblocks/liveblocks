@@ -78,7 +78,7 @@ import {
   MediaAttachment,
   separateMediaAttachments,
 } from "./internal/Attachment";
-import { UserAvatar } from "./internal/Avatar";
+import { Avatar } from "./internal/Avatar";
 import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
@@ -777,7 +777,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           >
             <div className="lb-comment-header">
               <div className="lb-comment-details">
-                <UserAvatar
+                <Avatar
                   className="lb-comment-avatar"
                   userId={comment.userId}
                   onClick={handleAuthorClick}
