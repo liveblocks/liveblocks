@@ -1,6 +1,7 @@
 import type {
   ContextualPromptContext,
   ContextualPromptResponse,
+  MentionData,
   Relax,
   TextEditorType,
 } from "@liveblocks/core";
@@ -358,4 +359,8 @@ export type AiCommands<ReturnType = boolean> = {
 
 export type YSyncPluginState = {
   binding: ProsemirrorBinding;
+};
+
+export type TiptapMentionData = MentionData & {
+  notificationId: string;
 };
