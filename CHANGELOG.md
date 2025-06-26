@@ -1,5 +1,18 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- `defineAiTool()()` now takes an optional `enabled` property. When set to
+  `false`, the tool will not be made available to the AI copilot for new/future
+  chat messages, but still allow existing tool invocations to be rendered that
+  are part of the historic chat record.
+
+### `@liveblocks/react`
+
+- `RegisterAiTool` now also takes an optional `enabled` prop. This is a
+  convenience prop that can be used to override the tool’s `enabled` status
+  directly in React.
+
 ## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
