@@ -57,8 +57,8 @@ describe("batch users resolve", () => {
   });
 
   test("should handle no `resolveUsers` callback", async () => {
-    const warnMock1 = vi.fn();
-    vi.spyOn(console, "warn").mockImplementation(warnMock1);
+    const warnMock = vi.fn();
+    vi.spyOn(console, "warn").mockImplementation(warnMock);
 
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       callerName: "test-suite-0",
@@ -71,15 +71,16 @@ describe("batch users resolve", () => {
 
     await batchUsersResolver.resolve();
 
-    const resolvedUsers = await Promise.all(resolveUsersPromises);
-    const expected = [[undefined], [undefined], [undefined]];
-
-    expect(resolvedUsers).toEqual(expected);
-    expect(warnMock1).toHaveBeenCalledWith(
+    await expect(Promise.all(resolveUsersPromises)).resolves.toEqual([
+      [undefined],
+      [undefined],
+      [undefined],
+    ]);
+    expect(warnMock).toHaveBeenCalledWith(
       'Set "resolveUsers" option in "test-suite-0" to specify users info'
     );
 
-    warnMock1.mockRestore();
+    warnMock.mockRestore();
   });
 
   test("should resolve users info all at once", async () => {
@@ -127,9 +128,7 @@ describe("batch users resolve", () => {
     expect(resolvedUser2).toEqual(expected);
   });
 
-  test("should warn if batch promise is already resolved", async () => {
-    const warnMock2 = vi.spyOn(console, "warn").mockImplementation(() => {});
-
+  test("should throw if resolver is invoked more than once", async () => {
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,
       callerName: "test-suite-3",
@@ -140,18 +139,14 @@ describe("batch users resolve", () => {
     await batchUsersResolver.resolve();
     const resolvedUser1 = await promise1;
 
-    const promise2 = batchUsersResolver.resolveUsers({ userIds: ["user-1"] });
-
-    await batchUsersResolver.resolve();
-    const resolvedUser2 = await promise2;
-
-    expect(warnMock2).toHaveBeenCalledTimes(1);
-    expect(warnMock2).toHaveBeenCalledWith(
-      "Batch users resolver promise already resolved. It can only resolve once."
-    );
     expect(resolvedUser1).toEqual([{ name: "Charlie Layne" }]);
-    expect(resolvedUser2).toBeUndefined();
 
-    warnMock2.mockRestore();
+    await expect(
+      batchUsersResolver.resolveUsers({ userIds: ["user-1"] })
+    ).rejects.toThrow("resolveUsers was already invoked once.");
+    await batchUsersResolver.resolve();
+
+    expect(resolveUsersMock).toHaveBeenCalledTimes(1);
+    expect(resolveUsersMock).toHaveBeenCalledWith({ userIds: ["user-0"] });
   });
 });
