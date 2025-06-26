@@ -1,6 +1,7 @@
-import { createInboxNotificationId } from "@liveblocks/core";
+import { assertNever, createInboxNotificationId } from "@liveblocks/core";
 import {
   combineTransactionSteps,
+  type Content,
   Extension,
   getChangedRanges,
 } from "@tiptap/core";
@@ -11,6 +12,7 @@ import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 import { ySyncPluginKey } from "y-prosemirror";
 
+import { MENTION_CHARACTER } from "../constants";
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_EXTENSION,
@@ -136,7 +138,7 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
     return [
       Suggestion({
         editor: this.editor,
-        char: "@",
+        char: MENTION_CHARACTER,
         pluginKey: LIVEBLOCKS_MENTION_KEY,
         command: ({ editor, range, props }) => {
           // increase range.to by one when the next node is of type "text"
@@ -148,17 +150,38 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             range.to += 1;
           }
 
+          const mention = props as TiptapMentionData;
+
+          let mentionNode: Content;
+
+          if (mention.kind === "user") {
+            mentionNode = {
+              type: LIVEBLOCKS_MENTION_TYPE,
+              attrs: {
+                id: mention.id,
+                notificationId: mention.notificationId,
+              },
+            };
+          } else if (mention.kind === "group") {
+            mentionNode = {
+              type: LIVEBLOCKS_GROUP_MENTION_TYPE,
+              attrs: {
+                id: mention.id,
+                userIds: mention.userIds
+                  ? JSON.stringify(mention.userIds)
+                  : undefined,
+                notificationId: mention.notificationId,
+              },
+            };
+          } else {
+            assertNever(mention, "Unhandled mention kind");
+          }
+
           editor
             .chain()
             .focus()
             .insertContentAt(range, [
-              {
-                type:
-                  (props as Record<string, string>).kind === "user"
-                    ? LIVEBLOCKS_MENTION_TYPE
-                    : LIVEBLOCKS_GROUP_MENTION_TYPE,
-                attrs: props as Record<string, string>,
-              },
+              mentionNode,
               {
                 type: "text",
                 text: " ",

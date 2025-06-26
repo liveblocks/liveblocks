@@ -46,20 +46,20 @@ export const GroupMentionNode = Node.create<never, never>({
         },
       },
       userIds: {
-        default: null,
+        default: undefined,
         parseHTML: (element) => {
           const userIdsAttribute = element.getAttribute("data-user-ids");
 
           if (!userIdsAttribute) {
-            return null;
+            return undefined;
           }
 
           try {
             const userIds = JSON.parse(userIdsAttribute) as string[];
 
-            return Array.isArray(userIds) ? userIds : null;
+            return Array.isArray(userIds) ? userIds : undefined;
           } catch {
-            return null;
+            return undefined;
           }
         },
         renderHTML: (attributes) => {
