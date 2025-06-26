@@ -27,7 +27,6 @@ import type {
 import * as Collapsible from "../../primitives/Collapsible";
 import { classNames } from "../../utils/class-names";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
-import { useSemiControllableState } from "../../utils/use-controllable-state";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
