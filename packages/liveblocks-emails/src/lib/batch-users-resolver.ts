@@ -4,9 +4,7 @@ import type {
   DU,
   ResolveUsersArgs,
 } from "@liveblocks/core";
-import { Promise_withResolvers } from "@liveblocks/core";
-
-import { createDevelopmentWarning } from "./warning";
+import { Promise_withResolvers, warnOnceIf } from "@liveblocks/core";
 
 type ResolveUserOptionalPromise<U extends BaseUserMeta> = (
   args: ResolveUsersArgs
@@ -27,8 +25,6 @@ class BatchUsersResolver<U extends BaseUserMeta> {
   private primeResolveUsersFn: ResolveUserOptionalPromise<U> | undefined;
   private usersById: Map<string, U["info"] | undefined>;
 
-  private warnAsAlreadyResolved: () => void;
-
   constructor(resolveUsers: ResolveUserOptionalPromise<U> | undefined) {
     const { promise, resolve } = Promise_withResolvers<void>();
 
@@ -38,19 +34,13 @@ class BatchUsersResolver<U extends BaseUserMeta> {
 
     this.primeResolveUsersFn = resolveUsers;
     this.usersById = new Map();
-
-    this.warnAsAlreadyResolved = createDevelopmentWarning(
-      true,
-      "Batch users resolver promise already resolved. It can only resolve once."
-    );
   }
 
   resolveUsers = async (
     args: ResolveUsersArgs
   ): Promise<(U["info"] | undefined)[] | undefined> => {
     if (this.isResolved) {
-      this.warnAsAlreadyResolved();
-      return undefined;
+      throw new Error("resolveUsers was already invoked once.");
     }
 
     // Note: register all user Ids
@@ -68,7 +58,6 @@ class BatchUsersResolver<U extends BaseUserMeta> {
 
   async resolve(): Promise<void> {
     if (this.isResolved) {
-      this.warnAsAlreadyResolved();
       return;
     }
 
@@ -102,14 +91,14 @@ export function createBatchUsersResolver<U extends BaseUserMeta = DU>({
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
   callerName: string;
 }): CreateBatchUsersResolverReturnType<U> {
-  const warnIfNoResolveUsers = createDevelopmentWarning(
-    () => !resolveUsers,
-    `Set "resolveUsers" option in "${callerName}" to specify users info`
-  );
   const batchUsersResolver = new BatchUsersResolver(resolveUsers);
 
   const resolve = async (): Promise<void> => {
-    warnIfNoResolveUsers();
+    warnOnceIf(
+      !resolveUsers,
+      `Set "resolveUsers" in "${callerName}" to specify users info`
+    );
+
     await batchUsersResolver.resolve();
   };
 

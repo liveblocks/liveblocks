@@ -18,6 +18,7 @@ import type { NoInfr } from "./lib/NoInfer";
 import type { Relax } from "./lib/Relax";
 import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
+import { warnOnceIf } from "./lib/warnings";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -791,17 +792,15 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   const resolveUsers = clientOptions.resolveUsers;
-  const warnIfNoResolveUsers = createDevelopmentWarning(
-    () => !resolveUsers,
-    "Set the resolveUsers option in createClient to specify user info."
-  );
-
   const batchedResolveUsers = new Batch(
     async (batchedUserIds: string[]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
 
-      warnIfNoResolveUsers();
+      warnOnceIf(
+        !resolveUsers,
+        "Set the resolveUsers option in createClient to specify user info."
+      );
 
       return users ?? userIds.map(() => undefined);
     },
@@ -814,17 +813,15 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
-  const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
-    () => !resolveRoomsInfo,
-    "Set the resolveRoomsInfo option in createClient to specify room info."
-  );
-
   const batchedResolveRoomsInfo = new Batch(
     async (batchedRoomIds: string[]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
 
-      warnIfNoResolveRoomsInfo();
+      warnOnceIf(
+        !resolveRoomsInfo,
+        "Set the resolveRoomsInfo option in createClient to specify room info."
+      );
 
       return roomsInfo ?? roomIds.map(() => undefined);
     },
@@ -837,17 +834,15 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   const resolveGroupsInfo = clientOptions.resolveGroupsInfo;
-  const warnIfNoResolveGroupsInfo = createDevelopmentWarning(
-    () => !resolveGroupsInfo,
-    "Set the resolveGroupsInfo option in createClient to specify group info."
-  );
-
   const batchedResolveGroupsInfo = new Batch(
     async (batchedGroupIds: string[]) => {
       const groupIds = batchedGroupIds.flat();
       const groupsInfo = await resolveGroupsInfo?.({ groupIds });
 
-      warnIfNoResolveGroupsInfo();
+      warnOnceIf(
+        !resolveGroupsInfo,
+        "Set the resolveGroupsInfo option in createClient to specify group info."
+      );
 
       return groupsInfo ?? groupIds.map(() => undefined);
     },
@@ -1071,29 +1066,4 @@ function getLostConnectionTimeout(value: number): number {
     MAX_LOST_CONNECTION_TIMEOUT,
     RECOMMENDED_MIN_LOST_CONNECTION_TIMEOUT
   );
-}
-
-/**
- * Emit a warning only once if a condition is met, in development only.
- */
-function createDevelopmentWarning(
-  condition: boolean | (() => boolean),
-  ...args: Parameters<typeof console.warn>
-) {
-  let hasWarned = false;
-
-  if (process.env.NODE_ENV !== "production") {
-    return () => {
-      if (
-        !hasWarned &&
-        (typeof condition === "function" ? condition() : condition)
-      ) {
-        console.warn(...args);
-
-        hasWarned = true;
-      }
-    };
-  } else {
-    return () => {};
-  }
 }
