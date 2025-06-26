@@ -1,7 +1,7 @@
 import { type ComponentProps, forwardRef } from "react";
 
 import { EMOJI_FONT_FAMILY } from "../../constants";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 interface EmojiProps extends ComponentProps<"span"> {
   emoji: string;
@@ -14,7 +14,7 @@ export const Emoji = forwardRef<HTMLSpanElement, EmojiProps>(
         role="img"
         aria-label={emoji}
         data-emoji={emoji}
-        className={classNames("lb-emoji", className)}
+        className={cn("lb-emoji", className)}
         style={{
           ...style,
           fontFamily: EMOJI_FONT_FAMILY,

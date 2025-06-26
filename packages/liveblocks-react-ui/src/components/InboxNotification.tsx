@@ -45,7 +45,7 @@ import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { generateURL } from "../utils/url";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -312,7 +312,7 @@ const InboxNotificationLayout = forwardRef<
     return (
       <TooltipProvider>
         <Component
-          className={classNames(
+          className={cn(
             "lb-root lb-inbox-notification",
             showActions === "hover" &&
               "lb-inbox-notification:show-actions-hover",
@@ -404,10 +404,7 @@ function InboxNotificationIcon({
   ...props
 }: InboxNotificationIconProps) {
   return (
-    <div
-      className={classNames("lb-inbox-notification-icon", className)}
-      {...props}
-    />
+    <div className={cn("lb-inbox-notification-icon", className)} {...props} />
   );
 }
 
@@ -417,7 +414,7 @@ function InboxNotificationAvatar({
 }: InboxNotificationAvatarProps) {
   return (
     <Avatar
-      className={classNames("lb-inbox-notification-avatar", className)}
+      className={cn("lb-inbox-notification-avatar", className)}
       {...props}
     />
   );

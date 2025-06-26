@@ -1,4 +1,5 @@
 import { createInboxNotificationId } from "@liveblocks/core";
+import { User } from "@liveblocks/react-ui/_private";
 import type {
   DOMConversionMap,
   DOMExportOutput,
@@ -11,7 +12,6 @@ import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
 import { Mention } from "./mention-component";
-import { User } from "./user";
 
 const MENTION_CHARACTER = "@";
 

@@ -3,6 +3,7 @@ import {
   BoldIcon,
   Button,
   CheckIcon,
+  cn,
   CodeIcon,
   CommentIcon,
   H1Icon,
@@ -33,7 +34,6 @@ import type {
 } from "react";
 import { forwardRef, useCallback, useContext, useMemo } from "react";
 
-import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type { AiExtensionStorage, ExtendedChainedCommands } from "../types";
 import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
@@ -472,7 +472,7 @@ const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
         ref={forwardedRef}
         role="separator"
         aria-orientation="vertical"
-        className={classNames("lb-tiptap-toolbar-separator", className)}
+        className={cn("lb-tiptap-toolbar-separator", className)}
         {...props}
       />
     );
@@ -777,7 +777,7 @@ export const Toolbar = Object.assign(
               role="toolbar"
               aria-label="Toolbar"
               aria-orientation="horizontal"
-              className={classNames("lb-root lb-tiptap-toolbar", className)}
+              className={cn("lb-root lb-tiptap-toolbar", className)}
               {...props}
             >
               {applyToolbarSlot(before, slotProps)}

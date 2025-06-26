@@ -590,7 +590,7 @@ const deleteFileTool = defineAiTool<{ deletedFileName: string }>()({
     }
     return (
       <AiTool title="Delete File" icon="🗑️">
-        {!result ? (
+        {!result.data ? (
           // +++
           <AiTool.Confirmation
             // Make `confirm` and `cancel` type-safe

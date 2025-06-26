@@ -9,7 +9,7 @@ import {
   FLOATING_ELEMENT_COLLISION_PADDING,
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { isApple } from "../../utils/is-apple";
 
 const ALT_KEY = { title: "Alt", key: "⌥" };
@@ -84,7 +84,7 @@ export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
         </TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal container={portalContainer}>
           <TooltipPrimitive.Content
-            className={classNames(
+            className={cn(
               "lb-root lb-portal lb-tooltip",
               multiline && "lb-tooltip:multiline",
               className

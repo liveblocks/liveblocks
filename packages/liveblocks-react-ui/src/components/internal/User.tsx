@@ -6,7 +6,7 @@ import { useMemo } from "react";
 
 import { useOverrides } from "../../overrides";
 import { useCurrentUserId } from "../../shared";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export interface UserProps extends ComponentProps<"span"> {
   /**
@@ -32,7 +32,7 @@ export function User({ userId, replaceSelf, className, ...props }: UserProps) {
 
   return (
     <span
-      className={classNames("lb-name lb-user", className)}
+      className={cn("lb-name lb-user", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >

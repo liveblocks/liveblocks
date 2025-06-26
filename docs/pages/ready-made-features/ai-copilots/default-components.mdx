@@ -80,9 +80,9 @@ function App() {
           render: ({ result }) => (
             // +++
             <AiTool>
-              {result ? (
+              {result.data ? (
                 <div>
-                  {result.temperature}°F - {result.condition}
+                  {result.data.temperature}°F - {result.data.condition}
                 </div>
               ) : null}
             </AiTool>
@@ -109,5 +109,5 @@ It’s possible to style and localize the default components:
 Learn more under
 [styling and customization](/docs/ready-made-features/comments/styling-and-customization).
 
-[`AiChat`]: /docs/api-reference/liveblocks-react-ui#AiChat
-[`AiTool`]: /docs/api-reference/liveblocks-react-ui#AiTool
+[`aichat`]: /docs/api-reference/liveblocks-react-ui#AiChat
+[`aitool`]: /docs/api-reference/liveblocks-react-ui#AiTool

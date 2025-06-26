@@ -1707,9 +1707,9 @@ function App() {
           },
           render: ({ result }) => (
             <AiTool title="Weather Lookup" icon="🌤️">
-              {result ? (
+              {result.data ? (
                 <div>
-                  {result.temperature}°F - {result.condition}
+                  {result.data.temperature}°F - {result.data.condition}
                 </div>
               ) : null}
             </AiTool>
@@ -1764,7 +1764,7 @@ function Chat() {
             };
           },
 
-          render: ({ result }) => <AiTool title="Toast sent" icon="🍞" />,
+          render: () => <AiTool title="Toast sent" icon="🍞" />,
         })}
       />
       <AiChat chatId="my-chat-id" />

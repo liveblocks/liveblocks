@@ -11,6 +11,7 @@ import {
   BoldIcon,
   Button,
   CheckIcon,
+  cn,
   CodeIcon,
   CommentIcon,
   H1Icon,
@@ -57,7 +58,6 @@ import {
   useState,
 } from "react";
 
-import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { isBlockNodeActive } from "../is-block-node-active";
 import { useIsCommandRegistered } from "../is-command-registered";
@@ -264,7 +264,7 @@ const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
         ref={forwardedRef}
         role="separator"
         aria-orientation="vertical"
-        className={classNames("lb-lexical-toolbar-separator", className)}
+        className={cn("lb-lexical-toolbar-separator", className)}
         {...props}
       />
     );
@@ -658,7 +658,7 @@ export const Toolbar = Object.assign(
             role="toolbar"
             aria-label="Toolbar"
             aria-orientation="horizontal"
-            className={classNames("lb-root lb-lexical-toolbar", className)}
+            className={cn("lb-root lb-lexical-toolbar", className)}
             {...props}
           >
             {applyToolbarSlot(before, slotProps)}

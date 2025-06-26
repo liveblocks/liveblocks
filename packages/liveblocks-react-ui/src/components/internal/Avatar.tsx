@@ -4,7 +4,7 @@ import { useUser } from "@liveblocks/react";
 import type { ComponentProps } from "react";
 import { useMemo } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { getInitials } from "../../utils/get-initials";
 
 export interface AvatarProps extends ComponentProps<"div"> {
@@ -29,7 +29,7 @@ export function Avatar({ userId, className, ...props }: AvatarProps) {
 
   return (
     <div
-      className={classNames("lb-avatar", className)}
+      className={cn("lb-avatar", className)}
       data-loading={isLoading ? "" : undefined}
       {...props}
     >

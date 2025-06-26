@@ -4,7 +4,7 @@ import { forwardRef, useMemo } from "react";
 
 import { useOverrides } from "../../overrides";
 import type { ComponentPropsWithSlot } from "../../types";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { listFormat } from "../../utils/intl";
 
 export interface ListProps extends ComponentPropsWithSlot<"span"> {
@@ -40,7 +40,7 @@ export const List = forwardRef<HTMLSpanElement, ListProps>(
 
     return (
       <Component
-        className={classNames("lb-list", className)}
+        className={cn("lb-list", className)}
         {...props}
         ref={forwardedRef}
       >
