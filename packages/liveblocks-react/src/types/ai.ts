@@ -22,4 +22,12 @@ export type RegisterAiToolProps = {
    * instance.
    */
   chatId?: string;
+
+  /**
+   * Whether this tool should be enabled. When set to `false`, the tool will
+   * not be made available to the AI copilot for any new/future chat messages,
+   * but will still allow existing tool invocations to be rendered that are
+   * part of the historic chat record. Defaults to true.
+   */
+  enabled?: boolean;
 };
