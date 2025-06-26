@@ -175,6 +175,7 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export { warnOnce, warnOnceIf } from "./lib/warnings";
 export type {
   ContextualPromptContext,
   ContextualPromptResponse,
