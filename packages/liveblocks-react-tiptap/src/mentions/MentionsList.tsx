@@ -14,19 +14,17 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, User } from "@liveblocks/react-ui/_private";
+import { Avatar, Group, User } from "@liveblocks/react-ui/_private";
 import type { HTMLAttributes, MouseEvent } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+
+import type { TiptapMentionData } from "../types";
 
 export const SUGGESTIONS_COLLISION_PADDING = 10;
 
 export interface MentionsListProps extends HTMLAttributes<HTMLDivElement> {
   query: string;
-  command: (otps: {
-    kind: "user" | "group";
-    id: string;
-    notificationId: string;
-  }) => void;
+  command: (otps: TiptapMentionData) => void;
   clientRect: () => DOMRect;
   hide: boolean;
 }
@@ -94,6 +92,7 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
           props.command({
             kind: "group",
             id: mention.id,
+            userIds: mention.userIds,
             notificationId,
           });
           break;
@@ -176,17 +175,17 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
       >
         <div className="lb-tiptap-suggestions-list lb-tiptap-mention-suggestions-list">
           {suggestions.map((mention, index) => {
-            switch (mention.kind) {
-              case "user":
-                return (
-                  <div
-                    className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
-                    key={index}
-                    role="option"
-                    data-highlighted={index === selectedIndex || undefined}
-                    onMouseEnter={handleMouseEnter(index)}
-                    onClick={handleClick(index)}
-                  >
+            return (
+              <div
+                className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
+                key={index}
+                role="option"
+                data-highlighted={index === selectedIndex || undefined}
+                onMouseEnter={handleMouseEnter(index)}
+                onClick={handleClick(index)}
+              >
+                {mention.kind === "user" ? (
+                  <>
                     <Avatar
                       userId={mention.id}
                       className="lb-tiptap-mention-suggestion-avatar"
@@ -195,26 +194,23 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
                       userId={mention.id}
                       className="lb-tiptap-mention-suggestion-user"
                     />
-                  </div>
-                );
-
-              case "group":
-                return (
-                  <div
-                    className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
-                    key={index}
-                    role="option"
-                    data-highlighted={index === selectedIndex || undefined}
-                    onMouseEnter={handleMouseEnter(index)}
-                    onClick={handleClick(index)}
-                  >
-                    {/* TODO: Display group name and avatar */}
-                  </div>
-                );
-
-              default:
-                return assertNever(mention, "Unhandled mention kind");
-            }
+                  </>
+                ) : mention.kind === "group" ? (
+                  <>
+                    <Avatar
+                      groupId={mention.id}
+                      className="lb-tiptap-mention-suggestion-avatar"
+                    />
+                    <Group
+                      groupId={mention.id}
+                      className="lb-tiptap-mention-suggestion-group"
+                    />
+                  </>
+                ) : (
+                  assertNever(mention, "Unhandled mention kind")
+                )}
+              </div>
+            );
           })}
         </div>
       </div>
