@@ -1,5 +1,5 @@
 // A mock database with example users
-const USER_INFO: Liveblocks["UserMeta"][] = [
+export const USER_INFO: Liveblocks["UserMeta"][] = [
   {
     id: "charlie.layne@example.com",
     info: {
