@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.1.0
+
 ### `@liveblocks/react-ui`
 
 - Reasoning parts in `AiChat` are now automatically collapsed when the reasoning
