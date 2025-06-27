@@ -130,11 +130,11 @@ export const docStateRoot2: SerializedTiptapRootNode = {
 };
 
 export const createTipTapMentionNodeWithContext = ({
-  mentionedUserId,
-  mentionId,
+  mentionedId,
+  textMentionId,
 }: {
-  mentionedUserId: string;
-  mentionId: string;
+  mentionedId: string;
+  textMentionId: string;
 }): TiptapMentionNodeWithContext => {
   return {
     before: [
@@ -164,8 +164,8 @@ export const createTipTapMentionNodeWithContext = ({
     mention: {
       type: "liveblocksMention",
       attrs: {
-        id: mentionedUserId,
-        notificationId: mentionId,
+        id: mentionedId,
+        notificationId: textMentionId,
       },
     },
     after: [

@@ -145,8 +145,8 @@ describe("Lexical editor", () => {
 
       const context = findLexicalMentionNodeWithContext({
         root,
-        mentionedUserId: "user-mina",
-        mentionId: generateInboxNotificationId(),
+        mentionedId: "user-mina",
+        textMentionId: generateInboxNotificationId(),
       });
 
       expect(context).toBeNull();
@@ -155,12 +155,12 @@ describe("Lexical editor", () => {
     it("should find a mention with context", () => {
       const context = findLexicalMentionNodeWithContext({
         root: docStateRoot2,
-        mentionedUserId: MENTIONED_USER_ID,
-        mentionId: MENTION_ID,
+        mentionedId: MENTIONED_USER_ID,
+        textMentionId: MENTION_ID,
       });
       const expected = createLexicalMentionNodeWithContext({
-        mentionedUserId: MENTIONED_USER_ID,
-        mentionId: MENTION_ID,
+        mentionedId: MENTIONED_USER_ID,
+        textMentionId: MENTION_ID,
       });
 
       expect(context).toEqual(expected);
