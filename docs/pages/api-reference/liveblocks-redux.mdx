@@ -21,13 +21,14 @@ import { configureStore } from "@reduxjs/toolkit";
 
 const store = configureStore({
   reducer: /* reducer */,
-  enhancers: [
-    liveblocksEnhancer({
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(
+      liveblocksEnhancer({
       client,
       storageMapping: {},
       presenceMapping: {},
-    }),
-  ],
+    })
+  ),
 });
 ```
 
@@ -45,11 +46,8 @@ const client = createClient({
 
 const store = configureStore({
   reducer: /* reducer */,
-  enhancers: [
-    liveblocksEnhancer({
-      client,
-    }),
-  ],
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(liveblocksEnhancer({ client })),
 });
 ```
 
@@ -75,12 +73,13 @@ const slice = createSlice({
 
 const store = configureStore({
   reducer: slice.reducer,
-  enhancers: [
-    liveblocksEnhancer({
-      client,
-      presenceMapping: { cursor: true },
-    }),
-  ],
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(
+      liveblocksEnhancer({
+        client,
+        presenceMapping: { cursor: true },
+      })
+    ),
 });
 ```
 
@@ -106,12 +105,13 @@ const slice = createSlice({
 
 const store = configureStore({
   reducer: slice.reducer,
-  enhancers: [
-    liveblocksEnhancer({
-      client,
-      storageMapping: { scientist: true },
-    }),
-  ],
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(
+      liveblocksEnhancer({
+        client,
+        storageMapping: { scientist: true },
+      })
+    ),
 });
 ```
 

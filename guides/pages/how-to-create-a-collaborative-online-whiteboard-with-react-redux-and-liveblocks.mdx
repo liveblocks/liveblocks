@@ -92,11 +92,8 @@ const slice = createSlice({
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(liveblocksEnhancer({ client })),
   });
 }
 
@@ -199,12 +196,13 @@ const slice = createSlice({
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { scientist: true },
+        })
+      ),
   });
 }
 

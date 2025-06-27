@@ -95,11 +95,8 @@ const slice = createSlice({
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(liveblocksEnhancer({ client })),
   });
 }
 
@@ -372,12 +369,13 @@ export const { setDraft } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        presenceMapping: { isTyping: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          presenceMapping: { isTyping: true },
+        })
+      ),
   });
 }
 
@@ -507,13 +505,14 @@ export const { setDraft, addTodo, deleteTodo } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { todos: true },
-        presenceMapping: { isTyping: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { todos: true },
+          presenceMapping: { isTyping: true },
+        })
+      ),
   });
 }
 
