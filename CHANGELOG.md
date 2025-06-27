@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.1.0
+
 ### `@liveblocks/client`
 
 - `defineAiTool()()` now takes an optional `enabled` property. When set to
