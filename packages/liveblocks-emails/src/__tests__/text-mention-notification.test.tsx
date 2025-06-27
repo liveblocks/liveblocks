@@ -6,7 +6,7 @@ import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
 import { MENTION_CHARACTER } from "../lib/constants";
-import type { ConvertMentionContentElements } from "../mention-content";
+import type { ConvertTextMentionContentElements } from "../text-mention-content";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
@@ -214,8 +214,8 @@ describe("text mention notification", () => {
       });
 
       const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionId: MENTION_ID_TIPTAP,
-        mentionedUserId: MENTIONED_USER_ID_TIPTAP,
+        mentionedId: MENTIONED_USER_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
       });
 
       const expected: TextMentionNotificationData = {
@@ -231,10 +231,10 @@ describe("text mention notification", () => {
   });
 
   describe("prepare text mention notification email", () => {
-    const elements: ConvertMentionContentElements<string, BaseUserMeta> = {
+    const elements: ConvertTextMentionContentElements<string, BaseUserMeta> = {
       container: ({ children }) => children.join(""),
-      mention: ({ node, user }) =>
-        `${MENTION_CHARACTER}${user?.name ?? node.id}`,
+      mention: ({ node, user, group }) =>
+        `${MENTION_CHARACTER}${user?.name ?? group?.name ?? node.id}`,
       text: ({ node }) => node.text,
     };
 

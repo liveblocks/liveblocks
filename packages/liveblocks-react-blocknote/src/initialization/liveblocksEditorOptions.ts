@@ -30,7 +30,7 @@ export const withLiveblocksEditorOptions = <
   } = blocknoteOptions;
 
   return {
-    // add the liveblocks schema (i.e.: add the mention node to the schema)
+    // add the liveblocks schema (i.e.: add the mentions nodes to the schema)
     schema: withLiveblocksSchema(blocknoteSchema, liveblocksOptions),
 
     // add the liveblocks extension

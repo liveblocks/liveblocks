@@ -60,6 +60,15 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   };
 }
 
+export interface SerializedTiptapGroupMentionNode
+  extends SerializedTiptapBaseNode {
+  type: "liveblocksGroupMention";
+  attrs: {
+    id: string;
+    notificationId: string;
+  };
+}
+
 export interface SerializedTiptapEmptyParagraphNode
   extends SerializedTiptapBaseNode {
   type: "paragraph";
@@ -87,6 +96,7 @@ export type SerializedTiptapNode =
   | SerializedTiptapEmptyParagraphNode
   | SerializedTiptapHardBreakNode
   | SerializedTiptapMentionNode
+  | SerializedTiptapGroupMentionNode
   | SerializedTiptapTextNode;
 
 export type SerializedTiptapRootNodeContent = Array<
@@ -150,6 +160,15 @@ export const isSerializedMentionNode = (
 ): node is SerializedTiptapMentionNode => {
   return (
     node.type === "liveblocksMention" &&
+    isMentionNodeAttributeId(node.attrs.notificationId)
+  );
+};
+
+export const isSerializedGroupMentionNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapGroupMentionNode => {
+  return (
+    node.type === "liveblocksGroupMention" &&
     isMentionNodeAttributeId(node.attrs.notificationId)
   );
 };
@@ -228,7 +247,7 @@ export const flattenTiptapTree = (
 export type TiptapMentionNodeWithContext = {
   before: SerializedTiptapNode[];
   after: SerializedTiptapNode[];
-  mention: SerializedTiptapMentionNode;
+  mention: SerializedTiptapMentionNode | SerializedTiptapGroupMentionNode;
 };
 
 /**
@@ -237,12 +256,12 @@ export type TiptapMentionNodeWithContext = {
  */
 export function findTiptapMentionNodeWithContext({
   root,
-  mentionedUserId,
-  mentionId,
+  mentionedId,
+  textMentionId,
 }: {
   root: SerializedTiptapRootNode;
-  mentionedUserId: string;
-  mentionId: string;
+  mentionedId: string;
+  textMentionId: string;
 }): TiptapMentionNodeWithContext | null {
   const nodes = flattenTiptapTree(root.content);
 
@@ -254,9 +273,9 @@ export function findTiptapMentionNodeWithContext({
 
     if (
       !isFlattenedTiptapParagraphNodeMarker(node) &&
-      isSerializedMentionNode(node) &&
-      node.attrs.notificationId === mentionId &&
-      node.attrs.id === mentionedUserId
+      (isSerializedMentionNode(node) || isSerializedGroupMentionNode(node)) &&
+      node.attrs.notificationId === textMentionId &&
+      node.attrs.id === mentionedId
     ) {
       mentionNodeIndex = i;
       break;
@@ -269,7 +288,9 @@ export function findTiptapMentionNodeWithContext({
   }
 
   // Collect nodes before and after
-  const mentionNode = nodes[mentionNodeIndex] as SerializedTiptapMentionNode;
+  const mentionNode = nodes[mentionNodeIndex] as
+    | SerializedTiptapMentionNode
+    | SerializedTiptapGroupMentionNode;
 
   // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or paragraph

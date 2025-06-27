@@ -1,14 +1,14 @@
 import type { NodeKey, SerializedLexicalNode, Spread } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 
-export type SerializedMentionNode = Spread<
+export type SerializedGroupMentionNode = Spread<
   {
     value: string;
   },
   SerializedLexicalNode
 >;
 
-export class MentionNode extends DecoratorNode<null> {
+export class GroupMentionNode extends DecoratorNode<null> {
   __id: string;
 
   constructor(value: string, key?: NodeKey) {
@@ -17,33 +17,31 @@ export class MentionNode extends DecoratorNode<null> {
   }
 
   static getType(): string {
-    return "lb-mention";
+    return "lb-group-mention";
   }
 
-  static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__id);
+  static clone(node: GroupMentionNode): GroupMentionNode {
+    return new GroupMentionNode(node.__id);
   }
 
-  static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-    const node = new MentionNode(serializedNode.value);
+  static importJSON(
+    serializedNode: SerializedGroupMentionNode
+  ): GroupMentionNode {
+    const node = new GroupMentionNode(serializedNode.value);
     return $applyNodeReplacement(node);
   }
 
-  exportJSON(): SerializedMentionNode {
+  exportJSON(): SerializedGroupMentionNode {
     return {
       value: this.getTextContent(),
-      type: "lb-mention",
+      type: "lb-group-mention",
       version: 1,
     };
   }
 
-  getId(): string {
+  getTextContent(): string {
     const self = this.getLatest();
     return self.__id;
-  }
-
-  getTextContent(): string {
-    return this.getId();
   }
 
   decorate(): null {
