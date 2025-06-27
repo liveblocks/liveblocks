@@ -107,8 +107,8 @@ describe("tiptap editor", () => {
 
       const context = findTiptapMentionNodeWithContext({
         root,
-        mentionedUserId: "user-dracula",
-        mentionId: generateInboxNotificationId(),
+        mentionedId: "user-dracula",
+        textMentionId: generateInboxNotificationId(),
       });
 
       expect(context).toBeNull();
@@ -117,12 +117,12 @@ describe("tiptap editor", () => {
     it("should find a mention with context", () => {
       const context = findTiptapMentionNodeWithContext({
         root: docStateRoot2,
-        mentionedUserId: MENTIONED_USER_ID,
-        mentionId: MENTION_ID,
+        mentionedId: MENTIONED_USER_ID,
+        textMentionId: MENTION_ID,
       });
       const expected = createTipTapMentionNodeWithContext({
-        mentionedUserId: MENTIONED_USER_ID,
-        mentionId: MENTION_ID,
+        mentionedId: MENTIONED_USER_ID,
+        textMentionId: MENTION_ID,
       });
 
       expect(context).toEqual(expected);
