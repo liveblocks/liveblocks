@@ -881,13 +881,19 @@ Note that the function should be called like this `defineAiTool()({ ... })`
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="description" type="string">
+  <PropertiesListItem name="description" type="string" isRequired>
     A clear description of what the tool does. Used by AI to understand when to
     call this tool.
   </PropertiesListItem>
-  <PropertiesListItem name="parameters" type="JSONSchema7">
+  <PropertiesListItem name="parameters" type="JSONSchema7" isRequired>
     JSON Schema defining the tool’s input parameters. The AI will validate
     arguments against this schema.
+  </PropertiesListItem>
+  <PropertiesListItem name="enabled" type="boolean">
+    Whether this tool should be enabled. When set to `false`, the tool will not
+    be made available to the AI copilot for any new/future chat messages, but
+    will still allow existing tool invocations to be rendered that are part of
+    the historic chat record. Defaults to true.
   </PropertiesListItem>
   <PropertiesListItem name="execute" type="function">
     Async function that performs the tool’s action. Receives validated arguments

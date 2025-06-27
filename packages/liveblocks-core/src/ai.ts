@@ -155,6 +155,7 @@ export type AiToolDefinition<
   parameters: S;
   execute?: AiToolExecuteCallback<A, R>;
   render?: (props: AiToolInvocationProps<A, R>) => unknown;
+  enabled?: boolean;
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<
@@ -372,7 +373,7 @@ function createStore_forTools() {
       ...(scopedToolsΣ?.entries() ?? []),
     ]).flatMap(([name, toolΣ]) => {
       const tool = toolΣ.get();
-      return tool
+      return tool && (tool.enabled ?? true)
         ? [{ name, description: tool.description, parameters: tool.parameters }]
         : [];
     });

@@ -93,13 +93,18 @@ export const RegisterAiTool = memo(function RegisterAiTool({
   chatId,
   name,
   tool,
+  enabled,
 }: RegisterAiToolProps) {
   // Register the provided tools to the chat on mount and unregister them on unmount
   const client = useClient();
   const ai = client[kInternal].ai;
   useEffect(() => {
-    return ai.registerTool(name, tool, chatId);
-  }, [ai, chatId, name, tool]);
+    // The `enabled` prop, when specified, will take precedence over the
+    // `enabled` property of the tool itself. This allows enabling or disabling
+    // the tool dynamically.
+    const toolWithEnabled = enabled !== undefined ? { ...tool, enabled } : tool;
+    return ai.registerTool(name, toolWithEnabled, chatId);
+  }, [ai, chatId, name, tool, enabled]);
 
   return null;
 });

@@ -1820,6 +1820,14 @@ function Chat() {
     Optional chat ID to scope this tool to a specific chat. If provided, the
     tool will only be available to that chat.
   </PropertiesListItem>
+  <PropertiesListItem name="enabled" type="boolean">
+    Whether this tool should be enabled. When set to `false`, the tool will not
+    be made available to the AI copilot for any new/future chat messages, but
+    will still allow existing tool invocations to be rendered that are part of
+    the historic chat record. When provided as a prop to `RegisterAiTool`, it
+    will take precedence over the value of the tool’s `enabled` value in
+    `defineAiTool`.
+  </PropertiesListItem>
 </PropertiesList>
 
 ## Room

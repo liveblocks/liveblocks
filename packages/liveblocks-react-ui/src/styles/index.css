@@ -2798,7 +2798,7 @@
 
 .lb-ai-tool-header {
   display: flex;
-  gap: calc(0.25 * var(--lb-spacing));
+  gap: calc(0.3125 * var(--lb-spacing));
   align-items: center;
   inline-size: 100%;
   block-size: calc($lb-button-size + var(--lb-spacing));
@@ -2832,18 +2832,19 @@
 .lb-ai-tool-header-title {
   @include truncate;
 
+  margin-inline-end: calc(0.25 * var(--lb-spacing));
   color: var(--lb-foreground-secondary);
   font-size: 0.9375em;
 
   &:where(:first-child) {
-    margin-inline-start: calc(0.25 * var(--lb-spacing));
+    margin-inline-start: calc(0.3125 * var(--lb-spacing));
   }
 }
 
 .lb-ai-tool-header-status {
   flex: none;
   margin-inline-start: auto;
-  margin-inline-end: calc(0.25 * var(--lb-spacing));
+  margin-inline-end: calc(0.1875 * var(--lb-spacing));
   color: var(--lb-foreground-moderate);
 }
 

@@ -4,6 +4,7 @@ import {
   forwardRef,
   memo,
   type ReactNode,
+  useEffect,
   useState,
 } from "react";
 
@@ -146,8 +147,17 @@ function ReasoningPart({
   part,
   isStreaming,
 }: AiMessageContentReasoningPartProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // Start collapsed if reasoning is already done.
+  const [isOpen, setIsOpen] = useState(isStreaming);
   const $ = useOverrides();
+
+  // Auto-collapse when reasoning is done, while still allowing the user to
+  // open/collapse it manually during and after it's done.
+  useEffect(() => {
+    if (!isStreaming) {
+      setIsOpen(false);
+    }
+  }, [isStreaming]);
 
   return (
     <Collapsible.Root
