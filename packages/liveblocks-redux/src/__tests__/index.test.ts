@@ -72,7 +72,8 @@ function prepareClientAndStore<T>(
     WithLiveblocks<BasicState, BasicPresence, never>
   >({
     reducer: reducer as any,
-    enhancers: [liveblocksEnhancer({ client, ...options })],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(liveblocksEnhancer({ client, ...options })),
     preloadedState: preloadedState as any,
   });
   return { client, store };
