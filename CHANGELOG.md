@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.1.0
+
 ## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
