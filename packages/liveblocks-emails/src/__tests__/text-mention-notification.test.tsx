@@ -223,8 +223,8 @@ describe("text mention notification", () => {
       });
 
       const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionId: MENTION_ID_TIPTAP,
-        mentionedUserId: MENTIONED_USER_ID_TIPTAP,
+        mentionedId: MENTIONED_USER_ID_TIPTAP,
+        textMentionId: MENTION_ID_TIPTAP,
       });
 
       const expected: TextMentionNotificationData = {
