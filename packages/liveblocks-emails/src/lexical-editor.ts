@@ -42,6 +42,7 @@ export interface SerializedLexicalGroupMentionNode
     __id: string;
     __type: "lb-group-mention";
     __groupId: string;
+    __userIds: string[] | undefined;
   };
 }
 
@@ -321,7 +322,8 @@ export const isSerializedGroupMentionNode = (
     isGroupMentionNodeType(node.type) &&
     isGroupMentionNodeAttributeType(attributes.__type) &&
     isMentionNodeAttributeId(attributes.__id) &&
-    isString(attributes.__groupId)
+    isString(attributes.__groupId) &&
+    (attributes.__userIds === undefined || Array.isArray(attributes.__userIds))
   );
 };
 

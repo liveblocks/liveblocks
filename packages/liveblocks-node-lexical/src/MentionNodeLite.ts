@@ -37,9 +37,13 @@ export class MentionNode extends DecoratorNode<null> {
     };
   }
 
-  getTextContent(): string {
+  getId(): string {
     const self = this.getLatest();
     return self.__id;
+  }
+
+  getTextContent(): string {
+    return this.getId();
   }
 
   decorate(): null {
