@@ -17,7 +17,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, User } from "@liveblocks/react-ui/_private";
+import { Avatar, Group, User } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -197,10 +197,7 @@ export function MentionPlugin() {
             const node = $getNodeByKey(key);
             if (node === null) return;
 
-            if ($isMentionNode(node)) {
-              deleteTextMention(node.getId());
-            } else if ($isGroupMentionNode(node)) {
-              // TODO: Delete group mentions differently
+            if ($isMentionNode(node) || $isGroupMentionNode(node)) {
               deleteTextMention(node.getId());
             }
           });
@@ -341,7 +338,7 @@ export function MentionPlugin() {
             break;
 
           case "group":
-            mentionNode = $createGroupMentionNode(mention.id);
+            mentionNode = $createGroupMentionNode(mention.id, mention.userIds);
             break;
 
           default:
@@ -384,14 +381,14 @@ export function MentionPlugin() {
           >
             <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
               {suggestions.map((mention) => {
-                switch (mention.kind) {
-                  case "user":
-                    return (
-                      <Suggestions.Item
-                        key={mention.id}
-                        value={mention.id}
-                        className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
-                      >
+                return (
+                  <Suggestions.Item
+                    key={mention.id}
+                    value={mention.id}
+                    className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
+                  >
+                    {mention.kind === "user" ? (
+                      <>
                         <Avatar
                           userId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
@@ -400,23 +397,23 @@ export function MentionPlugin() {
                           userId={mention.id}
                           className="lb-lexical-mention-suggestion-user"
                         />
-                      </Suggestions.Item>
-                    );
-
-                  case "group":
-                    return (
-                      <Suggestions.Item
-                        key={mention.id}
-                        value={mention.id}
-                        className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
-                      >
-                        {/* TODO: Display group name and avatar */}
-                      </Suggestions.Item>
-                    );
-
-                  default:
-                    return assertNever(mention, "Unhandled mention kind");
-                }
+                      </>
+                    ) : mention.kind === "group" ? (
+                      <>
+                        <Avatar
+                          groupId={mention.id}
+                          className="lb-lexical-mention-suggestion-avatar"
+                        />
+                        <Group
+                          groupId={mention.id}
+                          className="lb-lexical-mention-suggestion-group"
+                        />
+                      </>
+                    ) : (
+                      assertNever(mention, "Unhandled mention kind")
+                    )}
+                  </Suggestions.Item>
+                );
               })}
             </Suggestions.List>
           </SuggestionsPortal>
