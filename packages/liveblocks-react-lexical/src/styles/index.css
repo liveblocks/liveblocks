@@ -241,3 +241,17 @@
     background: var(--lb-foreground-subtle);
   }
 }
+
+/*************************************
+ *       Collaboration cursors       *
+ *************************************/
+
+.lb-lexical-cursors {
+  isolation: isolate;
+
+  /* stylelint-disable-next-line selector-max-specificity */
+  span[style*="font-family: Arial"] {
+    /* Lexical hardcodes the font family to Arial, we force it back to inherit */
+    font-family: inherit !important;
+  }
+}
