@@ -247,6 +247,7 @@
  *************************************/
 
 .lb-lexical-cursors {
+  z-index: 1;
   isolation: isolate;
 
   /* stylelint-disable-next-line selector-max-specificity */
