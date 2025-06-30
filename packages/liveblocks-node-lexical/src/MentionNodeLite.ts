@@ -1,9 +1,19 @@
 import type { NodeKey, SerializedLexicalNode, Spread } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 
+const MENTION_CHARACTER = "@";
+
+type LegacySerializedMentionNode = Spread<
+  {
+    // Legacy field, now named `id`
+    value: string;
+  },
+  SerializedLexicalNode
+>;
+
 export type SerializedMentionNode = Spread<
   {
-    value: string;
+    id: string;
   },
   SerializedLexicalNode
 >;
@@ -11,9 +21,9 @@ export type SerializedMentionNode = Spread<
 export class MentionNode extends DecoratorNode<null> {
   __id: string;
 
-  constructor(value: string, key?: NodeKey) {
+  constructor(id: string, key?: NodeKey) {
     super(key);
-    this.__id = value;
+    this.__id = id;
   }
 
   static getType(): string {
@@ -24,22 +34,33 @@ export class MentionNode extends DecoratorNode<null> {
     return new MentionNode(node.__id);
   }
 
-  static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-    const node = new MentionNode(serializedNode.value);
+  static importJSON(
+    serializedNode: SerializedMentionNode | LegacySerializedMentionNode
+  ): MentionNode {
+    const node = new MentionNode(
+      (serializedNode as LegacySerializedMentionNode).value ??
+        (serializedNode as SerializedMentionNode).id
+    );
     return $applyNodeReplacement(node);
   }
 
   exportJSON(): SerializedMentionNode {
     return {
-      value: this.getTextContent(),
+      id: this.getId(),
       type: "lb-mention",
       version: 1,
     };
   }
 
-  getTextContent(): string {
+  getId(): string {
     const self = this.getLatest();
     return self.__id;
+  }
+
+  getTextContent(): string {
+    // We don't have a `__userId` value, `__id` is an inbox notification ID ("in_xxx")
+    // so it isn't human readable and not suitable as text content.
+    return MENTION_CHARACTER;
   }
 
   decorate(): null {
