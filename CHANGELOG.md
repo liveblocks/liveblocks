@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/redux`
+
+- Add support for Redux v5
+
 ## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
