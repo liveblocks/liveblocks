@@ -396,12 +396,13 @@ export const { insertRectangle } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 
@@ -503,13 +504,14 @@ export const { insertRectangle, onShapePointerDown } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { shapes: true },
-        presenceMapping: { selectedShape: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { shapes: true },
+          presenceMapping: { selectedShape: true },
+        })
+      ),
   });
 }
 
@@ -648,13 +650,14 @@ export const { insertRectangle, onShapePointerDown, deleteShape } =
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        presenceMapping: { selectedShape: true },
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          presenceMapping: { selectedShape: true },
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 
@@ -764,13 +767,14 @@ export const {
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        presenceMapping: { selectedShape: true },
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          presenceMapping: { selectedShape: true },
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 
