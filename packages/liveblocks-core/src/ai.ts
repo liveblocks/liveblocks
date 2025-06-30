@@ -16,7 +16,7 @@ import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
 import { TreePool } from "./lib/TreePool";
 import type { Brand, DistributiveOmit } from "./lib/utils";
-import { raise, tryParseJson } from "./lib/utils";
+import { raise, tryParseJson, wait } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   DynamicSessionInfo,
@@ -146,6 +146,14 @@ export type AiToolExecuteCallback<
   ? Awaitable<ToolResultResponse<R> | undefined | void>
   : Awaitable<ToolResultResponse<R>>;
 
+export type AiToolEffectType = "cursor" | "highlight" | "spotlight";
+export type AiToolEffect = {
+  type: AiToolEffectType;
+  target: string;
+  duration?: number;
+  className?: string;
+};
+
 export type AiToolDefinition<
   S extends JSONObjectSchema7,
   A extends JsonObject,
@@ -153,6 +161,7 @@ export type AiToolDefinition<
 > = {
   description?: string;
   parameters: S;
+  effect?: AiToolEffect;
   execute?: AiToolExecuteCallback<A, R>;
   render?: (props: AiToolInvocationProps<A, R>) => unknown;
 };
@@ -540,11 +549,131 @@ function createStore_forChatMessages(
               continue;
             }
 
-            const executeFn = toolsStore
+            const tool = toolsStore
               .getToolΣ(toolInvocation.name, message.chatId)
-              .get()?.execute;
+              .get();
+
+            const executeFn = tool?.execute;
+            const effect = tool?.effect;
             if (executeFn) {
               (async () => {
+                if (effect) {
+                  const target = document.querySelector(effect.target);
+                  console.warn("dom target now found: ", effect.target);
+                  if (!target) return;
+                  switch (effect.type) {
+                    case "cursor":
+                      {
+                        const cursor = document.createElement("svg");
+                        cursor.style.position = "absolute";
+                        cursor.style.top = "0";
+                        cursor.style.left = "0";
+                        cursor.style.width = "20px";
+                        cursor.style.height = "20px";
+                        cursor.style.backgroundColor = "pink";
+                        cursor.style.borderRadius = "50%";
+                        cursor.style.zIndex = "9999";
+                        cursor.style.pointerEvents = "none";
+                        document.body.appendChild(cursor);
+
+                        // Get target position
+                        const targetRect = target.getBoundingClientRect();
+                        const targetCenterX =
+                          targetRect.left + targetRect.width / 2;
+                        const targetCenterY =
+                          targetRect.top + targetRect.height / 2;
+
+                        // Animate to target center
+                        cursor.style.transition = `all ${effect.duration ?? 500}ms ease-in-out`;
+                        cursor.style.left = `${targetCenterX - 10}px`;
+                        cursor.style.top = `${targetCenterY - 10}px`;
+
+                        // Wait for animation to complete
+                        await wait(effect.duration ?? 500);
+
+                        // Remove after animation
+                        if (cursor.parentNode) {
+                          cursor.parentNode.removeChild(cursor);
+                        }
+                      }
+                      break;
+                    case "highlight":
+                      {
+                        const highlight = document.createElement("div");
+                        highlight.style.position = "absolute";
+                        highlight.style.border = "4px solid red";
+                        highlight.style.borderRadius = "4px";
+                        highlight.style.pointerEvents = "none";
+                        highlight.style.zIndex = "9998";
+                        highlight.style.transition = `opacity ${effect.duration ?? 500}ms ease-in-out`;
+                        highlight.style.opacity = "1";
+                        document.body.appendChild(highlight);
+
+                        // Position over target
+                        const targetRect = target.getBoundingClientRect();
+                        highlight.style.left = `${targetRect.left}px`;
+                        highlight.style.top = `${targetRect.top}px`;
+                        highlight.style.width = `${targetRect.width}px`;
+                        highlight.style.height = `${targetRect.height}px`;
+
+                        // Wait for duration
+                        await wait(effect.duration ?? 500);
+
+                        // Fade out and remove
+                        highlight.style.opacity = "0";
+                        await wait(effect.duration ?? 500);
+
+                        if (highlight.parentNode) {
+                          highlight.parentNode.removeChild(highlight);
+                        }
+                      }
+                      break;
+                    case "spotlight":
+                      {
+                        const overlay = document.createElement("div");
+                        overlay.style.position = "fixed";
+                        overlay.style.top = "0";
+                        overlay.style.left = "0";
+                        overlay.style.width = "100vw";
+                        overlay.style.height = "100vh";
+                        overlay.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+                        overlay.style.zIndex = "9997";
+                        overlay.style.pointerEvents = "none";
+                        overlay.style.transition = `opacity ${effect.duration ?? 500}ms ease-in-out`;
+                        overlay.style.opacity = "1";
+                        document.body.appendChild(overlay);
+
+                        // Create spotlight hole
+                        const targetRect = target.getBoundingClientRect();
+                        const spotlight = document.createElement("div");
+                        spotlight.style.position = "absolute";
+                        spotlight.style.left = `${targetRect.left}px`;
+                        spotlight.style.top = `${targetRect.top}px`;
+                        spotlight.style.width = `${targetRect.width}px`;
+                        spotlight.style.height = `${targetRect.height}px`;
+                        spotlight.style.backgroundColor = "transparent";
+                        spotlight.style.borderRadius = "4px";
+                        spotlight.style.boxShadow =
+                          "0 0 0 9999px rgba(0, 0, 0, 0.7)";
+                        overlay.appendChild(spotlight);
+
+                        // Wait for duration
+                        await wait(effect.duration ?? 500);
+
+                        // Fade out and remove
+                        overlay.style.opacity = "0";
+                        await wait(effect.duration ?? 500);
+
+                        if (overlay.parentNode) {
+                          overlay.parentNode.removeChild(overlay);
+                        }
+                      }
+                      break;
+                    default:
+                      console.warn("unknown effect type: ", effect.type);
+                  }
+                }
+
                 const result = await executeFn(toolInvocation.args, {
                   name: toolInvocation.name,
                   invocationId: toolInvocation.invocationId,

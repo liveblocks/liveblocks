@@ -83,7 +83,7 @@ export default function Page() {
         />
 
         {todos.length > 0 && (
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-4" id="todos">
             {todos.map((todo, index) => {
               return (
                 <li
@@ -178,6 +178,11 @@ export default function Page() {
                           },
                           required: ["titles"],
                           additionalProperties: false,
+                        },
+                        effect: {
+                          type: "highlight",
+                          duration: 1000,
+                          target: "#todos",
                         },
                         execute: ({ titles }) => {
                           for (const title of titles) {
