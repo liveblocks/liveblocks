@@ -62,13 +62,13 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: (getDefaultEnhancers) =>
-      getDefaultEnhancers().concat([
+      getDefaultEnhancers().concat(
         liveblocksEnhancer<State>({
           client,
           storageMapping: { todos: true },
           presenceMapping: { isTyping: true },
-        }),
-      ]),
+        })
+      ),
   });
 }
 
