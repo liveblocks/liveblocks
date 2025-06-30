@@ -5,8 +5,10 @@ const MENTION_CHARACTER = "@";
 
 type LegacySerializedMentionNode = Spread<
   {
-    // Legacy field, now named `id`
+    // Legacy field now named `id`
     value: string;
+    // Not present in legacy nodes
+    userId: never;
   },
   SerializedLexicalNode
 >;
@@ -14,16 +16,19 @@ type LegacySerializedMentionNode = Spread<
 export type SerializedMentionNode = Spread<
   {
     id: string;
+    userId: string | undefined;
   },
   SerializedLexicalNode
 >;
 
 export class MentionNode extends DecoratorNode<null> {
   __id: string;
+  __userId: string | undefined;
 
-  constructor(id: string, key?: NodeKey) {
+  constructor(id: string, userId: string | undefined, key?: NodeKey) {
     super(key);
     this.__id = id;
+    this.__userId = userId;
   }
 
   static getType(): string {
@@ -31,7 +36,7 @@ export class MentionNode extends DecoratorNode<null> {
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.__id);
+    return new MentionNode(node.__id, node.__userId);
   }
 
   static importJSON(
@@ -39,7 +44,8 @@ export class MentionNode extends DecoratorNode<null> {
   ): MentionNode {
     const node = new MentionNode(
       (serializedNode as LegacySerializedMentionNode).value ??
-        (serializedNode as SerializedMentionNode).id
+        (serializedNode as SerializedMentionNode).id,
+      (serializedNode as SerializedMentionNode).userId
     );
     return $applyNodeReplacement(node);
   }
@@ -47,6 +53,7 @@ export class MentionNode extends DecoratorNode<null> {
   exportJSON(): SerializedMentionNode {
     return {
       id: this.getId(),
+      userId: this.getUserId(),
       type: "lb-mention",
       version: 1,
     };
@@ -57,10 +64,21 @@ export class MentionNode extends DecoratorNode<null> {
     return self.__id;
   }
 
+  getUserId(): string | undefined {
+    const self = this.getLatest();
+    return self.__userId;
+  }
+
   getTextContent(): string {
-    // We don't have a `__userId` value, `__id` is an inbox notification ID ("in_xxx")
-    // so it isn't human readable and not suitable as text content.
-    return MENTION_CHARACTER;
+    const userId = this.getUserId();
+
+    if (userId) {
+      return MENTION_CHARACTER + userId;
+    }
+
+    // Legacy behavior: return the ID as text content
+    // Since the ID is an inbox notification ID ("in_xxx") and not a user ID, this isn't ideal
+    return this.getId();
   }
 
   decorate(): null {
