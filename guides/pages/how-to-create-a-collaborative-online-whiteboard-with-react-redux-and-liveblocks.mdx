@@ -172,7 +172,7 @@ To achieve that, we are going to use the enhancer option
 It means that the part of the state named `shapes` should be automatically
 synced with Liveblocks Storage.
 
-```js file="src/store.js" highlight="10,27"
+```js file="src/store.js" highlight="10,28"
 import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -478,7 +478,7 @@ The middleware option
 means that we want to automatically sync the part of the state named
 `selectedShape` to Liveblocks Presence.
 
-```js file="src/store.js" highlight="5,15-17,21,30"
+```js file="src/store.js" highlight="5,15-17,21,31"
 /* ... */
 
 const initialState = {

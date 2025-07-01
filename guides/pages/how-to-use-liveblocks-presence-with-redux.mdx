@@ -68,12 +68,13 @@ export const { setCursor } = slice.actions;
 function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      enhancer({
-        client,
-        presenceMapping: { cursor: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        enhancer({
+          client,
+          presenceMapping: { cursor: true },
+        })
+      ),
   });
 }
 

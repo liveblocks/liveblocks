@@ -339,7 +339,7 @@ The enhancer option
 means that we want to automatically sync the part of the state named `isTyping`
 to Liveblocks Presence.
 
-```js highlight="10-11,18-21,25,33" file="src/store.js"
+```js highlight="10-11,18-21,25,34" file="src/store.js"
 import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -466,7 +466,7 @@ To achieve that, we are going to use the enhancer option
 It means that the part of the state named `todos` will be synced with Liveblocks
 Storage.
 
-```js highlight="10,23-30,34,42" file="src/store.js"
+```js highlight="10,23-30,34,43" file="src/store.js"
 import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
