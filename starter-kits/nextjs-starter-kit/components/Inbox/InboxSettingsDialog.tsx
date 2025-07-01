@@ -138,9 +138,41 @@ function EmailNotificationSettings() {
   );
 }
 
+function RoomNotificationSettings() {
+  const initialDocument = useInitialDocument();
+
+  return (
+    <>
+      <h3>In this document, receive thread notifications for… </h3>
+      <Suspense
+        fallback={
+          <div className={clsx(styles.switchBox, styles.loading)}>
+            <Spinner />
+          </div>
+        }
+      >
+        <ThreadsSubscriptionSettings />
+      </Suspense>
+      {initialDocument.type === "text" || initialDocument.type === "note" ? (
+        <>
+          <h3>In this document, receive text mentions notifications for… </h3>
+          <Suspense
+            fallback={
+              <div className={clsx(styles.switchBox, styles.loading)}>
+                <Spinner />
+              </div>
+            }
+          >
+            <TextMentionsSubscriptionSettings />
+          </Suspense>
+        </>
+      ) : null}
+    </>
+  );
+}
+
 export function InboxSettingsDialog({ children }: { children: ReactNode }) {
   const isInsideRoom = useIsInsideRoom();
-  const initialDocument = useInitialDocument();
 
   return (
     <Dialog
@@ -148,37 +180,7 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
       content={
         <div className={styles.dialog}>
           <div className={styles.switches}>
-            {isInsideRoom ? (
-              <>
-                <h3>In this document, receive thread notifications for… </h3>
-                <Suspense
-                  fallback={
-                    <div className={clsx(styles.switchBox, styles.loading)}>
-                      <Spinner />
-                    </div>
-                  }
-                >
-                  <ThreadsSubscriptionSettings />
-                </Suspense>
-                {initialDocument.type === "text" ||
-                initialDocument.type === "note" ? (
-                  <>
-                    <h3>
-                      In this document, receive text mentions notifications for…{" "}
-                    </h3>
-                    <Suspense
-                      fallback={
-                        <div className={clsx(styles.switchBox, styles.loading)}>
-                          <Spinner />
-                        </div>
-                      }
-                    >
-                      <TextMentionsSubscriptionSettings />
-                    </Suspense>
-                  </>
-                ) : null}
-              </>
-            ) : null}
+            {isInsideRoom ? <RoomNotificationSettings /> : null}
             <h3>In all documents, receive emails for…</h3>
             <Suspense
               fallback={
