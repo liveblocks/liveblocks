@@ -49,6 +49,7 @@ import { cn } from "../utils/cn";
 import { generateURL } from "../utils/url";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
+import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
   generateInboxNotificationThreadContents,
@@ -150,6 +151,15 @@ export interface InboxNotificationTextMentionProps
   showRoomName?: boolean;
 }
 
+export interface InboxNotificationInspectorProps
+  extends Omit<InboxNotificationProps, "kinds" | "children">,
+    InboxNotificationSharedProps {
+  /**
+   * The inbox notification to display.
+   */
+  inboxNotification: InboxNotificationData;
+}
+
 export interface InboxNotificationCustomProps
   extends Omit<InboxNotificationProps, "kinds">,
     InboxNotificationSharedProps,
@@ -207,7 +217,7 @@ interface InboxNotificationLayoutProps
     InboxNotificationSharedProps,
     SlotProp {
   inboxNotification: InboxNotificationData;
-  aside: ReactNode;
+  aside?: ReactNode;
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
@@ -719,6 +729,44 @@ const InboxNotificationCustom = forwardRef<
   }
 );
 
+/**
+ * Display the inbox notification's data, which can be useful during development.
+ */
+const InboxNotificationInspector = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationInspectorProps
+>(
+  (
+    { inboxNotification, showActions = "hover", overrides, ...props },
+    forwardedRef
+  ) => {
+    const unread = useMemo(() => {
+      return (
+        !inboxNotification.readAt ||
+        inboxNotification.notifiedAt > inboxNotification.readAt
+      );
+    }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
+    return (
+      <InboxNotificationLayout
+        inboxNotification={inboxNotification}
+        title={<code>{inboxNotification.id}</code>}
+        date={inboxNotification.notifiedAt}
+        unread={unread}
+        overrides={overrides}
+        showActions={showActions}
+        {...props}
+        ref={forwardedRef}
+      >
+        <CodeBlock
+          title="Inbox Notification"
+          code={JSON.stringify(inboxNotification, null, 2)}
+        />
+      </InboxNotificationLayout>
+    );
+  }
+);
+
 const InboxNotificationCustomMissing = forwardRef<
   HTMLAnchorElement,
   Omit<InboxNotificationCustomProps, "children" | "title" | "aside">
@@ -837,6 +885,7 @@ export const InboxNotification = Object.assign(
     Thread: InboxNotificationThread,
     TextMention: InboxNotificationTextMention,
     Custom: InboxNotificationCustom,
+    Inspector: InboxNotificationInspector,
     Icon: InboxNotificationIcon,
     Avatar: InboxNotificationAvatar,
   }
