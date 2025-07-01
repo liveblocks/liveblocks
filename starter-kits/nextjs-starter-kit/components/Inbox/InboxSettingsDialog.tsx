@@ -138,7 +138,7 @@ function EmailNotificationSettings() {
   );
 }
 
-function RoomNotificationSettings() {
+function RoomSubscriptionSettings() {
   const initialDocument = useInitialDocument();
 
   return (
@@ -180,7 +180,7 @@ export function InboxSettingsDialog({ children }: { children: ReactNode }) {
       content={
         <div className={styles.dialog}>
           <div className={styles.switches}>
-            {isInsideRoom ? <RoomNotificationSettings /> : null}
+            {isInsideRoom ? <RoomSubscriptionSettings /> : null}
             <h3>In all documents, receive emails for…</h3>
             <Suspense
               fallback={
