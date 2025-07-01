@@ -60,6 +60,13 @@ export interface AiToolProps
    * The event handler called when the content is collapsed or expanded by clicking on it.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
+
+  /**
+   * Whether the content can be collapsed/expanded.
+   * If set to `false`, clicking on it will have no effect.
+   * If there's no content, this prop has no effect.
+   */
+  collapsible?: boolean;
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
@@ -318,6 +325,7 @@ export const AiTool = Object.assign(
         children,
         title,
         icon,
+        collapsible,
         collapsed,
         onCollapsedChange,
         className,
@@ -343,6 +351,8 @@ export const AiTool = Object.assign(
       //       For now we're limiting the visual issues caused by the above by using CSS's
       //       `:empty` pseudo-class to make the content 0px high if it's actually empty.
       const hasContent = Children.count(children) > 0;
+      // If there's no content, the tool is never collapsible.
+      const isCollapsible = hasContent ? (collapsible ?? true) : false;
       const resolvedTitle = useMemo(() => {
         return title ?? prettifyString(name);
       }, [title, name]);
@@ -364,7 +374,7 @@ export const AiTool = Object.assign(
           // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
           open={hasContent ? !semiControlledCollapsed : false}
           onOpenChange={handleCollapsibleOpenChange}
-          disabled={!hasContent}
+          disabled={!isCollapsible}
           data-result={result?.type}
           data-stage={stage}
         >
@@ -373,7 +383,7 @@ export const AiTool = Object.assign(
               <div className="lb-ai-tool-header-icon-container">{icon}</div>
             ) : null}
             <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
-            {hasContent ? (
+            {isCollapsible ? (
               <span className="lb-collapsible-chevron lb-icon-container">
                 <ChevronRightIcon />
               </span>
