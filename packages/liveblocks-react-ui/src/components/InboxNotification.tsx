@@ -748,7 +748,7 @@ const InboxNotificationInspector = forwardRef<
         data-inspector=""
       >
         <CodeBlock
-          title="Inbox Notification"
+          title="Data"
           code={JSON.stringify(inboxNotification, null, 2)}
         />
       </InboxNotificationLayout>
