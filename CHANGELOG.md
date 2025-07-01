@@ -22,6 +22,12 @@
 - Add `collapsible` prop to `AiTool` to control whether its content can be
   collapsed/expanded.
 
+### `@liveblocks/react-lexical`
+
+- Fix default `z-index` of collaboration cursors, and make them inherit their
+  font family instead of always using Arial.
+- Add `lb-lexical-cursors` class to the collaboration cursors’ container.
+
 ## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
