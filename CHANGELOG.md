@@ -21,6 +21,8 @@
   is done.
 - Add `collapsible` prop to `AiTool` to control whether its content can be
   collapsed/expanded.
+- Add `InboxNotification.Inspector` component to help debugging custom inbox
+  notifications.
 
 ## v3.0.0
 
