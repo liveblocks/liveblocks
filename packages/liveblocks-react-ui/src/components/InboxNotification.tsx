@@ -430,9 +430,6 @@ function InboxNotificationAvatar({
   );
 }
 
-/**
- * Displays a thread inbox notification.
- */
 const InboxNotificationThread = forwardRef<
   HTMLAnchorElement,
   InboxNotificationThreadProps
@@ -628,9 +625,6 @@ const InboxNotificationThread = forwardRef<
   }
 );
 
-/**
- * Displays a text mention notification kind.
- */
 const InboxNotificationTextMention = forwardRef<
   HTMLAnchorElement,
   InboxNotificationTextMentionProps
@@ -685,9 +679,6 @@ const InboxNotificationTextMention = forwardRef<
   }
 );
 
-/**
- * Displays a custom notification kind.
- */
 const InboxNotificationCustom = forwardRef<
   HTMLAnchorElement,
   InboxNotificationCustomProps
@@ -729,9 +720,6 @@ const InboxNotificationCustom = forwardRef<
   }
 );
 
-/**
- * Display the inbox notification's data, which can be useful during development.
- */
 const InboxNotificationInspector = forwardRef<
   HTMLAnchorElement,
   InboxNotificationInspectorProps
@@ -882,9 +870,32 @@ export const InboxNotification = Object.assign(
     }
   ),
   {
+    /**
+     * Displays a thread inbox notification kind.
+     */
     Thread: InboxNotificationThread,
+
+    /**
+     * Displays a text mention inbox notification kind.
+     */
     TextMention: InboxNotificationTextMention,
+
+    /**
+     * Displays a custom inbox notification kind.
+     */
     Custom: InboxNotificationCustom,
+
+    /**
+     * Display the inbox notification's data, which can be useful during development.
+     *
+     * @example
+     * <InboxNotification
+     *   inboxNotification={inboxNotification}
+     *   kinds={{
+     *     $custom: InboxNotification.Inspector,
+     *   }}
+     * />
+     */
     Inspector: InboxNotificationInspector,
     Icon: InboxNotificationIcon,
     Avatar: InboxNotificationAvatar,
