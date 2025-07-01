@@ -1,6 +1,6 @@
 import { LiveList } from "@liveblocks/client";
 import { kInternal } from "@liveblocks/core";
-import { createRoomContext } from "@liveblocks/react";
+import { createRoomContext, useSyncStatus } from "@liveblocks/react";
 
 import {
   getRoomFromUrl,
@@ -48,6 +48,7 @@ let item = "A";
 function Sandbox(_props: { roomId: string }) {
   const renderCount = useRenderCount();
   const status = useStatus();
+  const smoothSyncStatus = useSyncStatus({ smooth: true });
   const room = useRoom();
   const internals = room[kInternal];
   const items = useStorage((root) => root.items);
@@ -296,6 +297,14 @@ function Sandbox(_props: { roomId: string }) {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row
+            id="syncStatus"
+            name="Sync status"
+            value={smoothSyncStatus}
+            style={{
+              color: smoothSyncStatus !== "synchronized" ? "orange" : "green",
+            }}
+          />
           <Row
             id="socketStatus"
             name="WebSocket status"
