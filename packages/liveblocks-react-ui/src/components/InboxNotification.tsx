@@ -745,6 +745,7 @@ const InboxNotificationInspector = forwardRef<
         showActions={showActions}
         {...props}
         ref={forwardedRef}
+        data-inspector=""
       >
         <CodeBlock
           title="Inbox Notification"

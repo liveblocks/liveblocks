@@ -2001,9 +2001,11 @@
 }
 
 .lb-inbox-notification-title {
-  @include capitalize;
-
   min-block-size: $lb-button-size;
+
+  :where(.lb-inbox-notification:not([data-inspector])) & {
+    @include capitalize;
+  }
 
   :where(strong, .lb-list, .lb-name) {
     font-weight: 500;
