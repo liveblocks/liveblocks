@@ -2387,7 +2387,7 @@
     margin: 0;
     padding: 0 var(--lb-spacing) calc(0.875 * var(--lb-spacing));
     font-size: 85%;
-    line-height: 1;
+    line-height: var(--lb-line-height);
 
     /* overflow-inline: auto; doesn't work as expected */
     /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
