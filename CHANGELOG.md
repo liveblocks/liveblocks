@@ -1,5 +1,38 @@
 ## vNEXT (not yet published)
 
+## v3.1.0
+
+### `@liveblocks/client`
+
+- `defineAiTool()()` now takes an optional `enabled` property. When set to
+  `false`, the tool will not be made available to the AI copilot for new/future
+  chat messages, but still allow existing tool invocations to be rendered that
+  are part of the historic chat record.
+
+### `@liveblocks/react`
+
+- `RegisterAiTool` now also takes an optional `enabled` prop. This is a
+  convenience prop that can be used to override the tool’s `enabled` status
+  directly in React.
+
+### `@liveblocks/react-ui`
+
+- Reasoning parts in `AiChat` are now automatically collapsed when the reasoning
+  is done.
+- Add `collapsible` prop to `AiTool` to control whether its content can be
+  collapsed/expanded.
+
+### `@liveblocks/react-lexical`
+
+- Fix default `z-index` of collaboration cursors, and make them inherit their
+  font family instead of always using Arial.
+- Add `lb-lexical-cursors` class to the collaboration cursors’ container.
+- Improve mentions’ serialization.
+
+### `@liveblocks/node-lexical`
+
+- Improve mentions’ serialization.
+
 ## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
