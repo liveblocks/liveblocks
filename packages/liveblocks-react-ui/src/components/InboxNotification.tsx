@@ -7,7 +7,7 @@ import type {
   InboxNotificationThreadData,
   KDAD,
 } from "@liveblocks/core";
-import { assertNever, console } from "@liveblocks/core";
+import { assertNever, warnOnce } from "@liveblocks/core";
 import {
   useDeleteInboxNotification,
   useInboxNotificationThread,
@@ -746,15 +746,12 @@ const InboxNotificationCustomMissing = forwardRef<
       ref={forwardedRef}
       data-missing=""
     >
-      {/* TODO: Add link to the docs */}
       Notifications of this kind won’t be displayed in production. Use the{" "}
-      <code>kinds</code> prop to define how they should be rendered.
+      <code>kinds</code> prop to define how they should be rendered, learn more
+      in the console.
     </InboxNotificationCustom>
   );
 });
-
-// Keeps track of which inbox notification kinds it has warned about already.
-const inboxNotificationKindsWarnings: Set<string> = new Set();
 
 /**
  * Displays a single inbox notification.
@@ -806,13 +803,9 @@ export const InboxNotification = Object.assign(
 
           if (!ResolvedInboxNotificationCustom) {
             if (process.env.NODE_ENV !== "production") {
-              if (!inboxNotificationKindsWarnings.has(inboxNotification.kind)) {
-                inboxNotificationKindsWarnings.add(inboxNotification.kind);
-                // TODO: Add link to the docs
-                console.warn(
-                  `Custom notification kind "${inboxNotification.kind}" is not handled so notifications of this kind will not be displayed in production. Use the kinds prop to define how they should be rendered.`
-                );
-              }
+              warnOnce(
+                `Custom notification kind "${inboxNotification.kind}" is not handled so notifications of this kind will not be displayed in production. Use the kinds prop to define how they should be rendered. Learn more: https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently.`
+              );
 
               return (
                 <InboxNotificationCustomMissing
