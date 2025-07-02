@@ -18,7 +18,7 @@ export default function Page() {
 
   return (
     <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow">
-      <RegisterAiTool
+      {/* <RegisterAiTool
         name="show-create-ticket-form"
         tool={defineAiTool()({
           description:
@@ -39,8 +39,8 @@ export default function Page() {
             );
           },
         })}
-      />
-      {/* <RegisterAiTool
+      /> */}
+      <RegisterAiTool
         name="show-create-ticket-form"
         tool={defineAiTool()({
           description:
@@ -55,12 +55,12 @@ export default function Page() {
             return (
               <AiTool title="Support ticket">
                 <div className="text-sm text-neutral-500 mb-2">
-                  Create a new support ticket for our team to answer? This
-                  chat’s history will be included.
+                  Create a new support ticket for our team? This chat’s history
+                  will be included.
                 </div>
                 <div className="flex justify-end">
                   <button
-                    className="px-3 py-1.5 transition-colors rounded-sm flex items-center gap-2 bg-[--accent] text-white text-[13px] font-medium shadow-xs hover:bg-neutral-100"
+                    className="px-3 py-1.5 transition-colors rounded-sm flex items-center gap-2 bg-[--accent] text-white text-[13px] font-medium shadow-xs hover:bg-[--accent-hover]"
                     onClick={() => {
                       respond({
                         data: {},
@@ -76,7 +76,7 @@ export default function Page() {
             );
           },
         })}
-      /> */}
+      />
 
       <div className="p-10 flex flex-col gap-0.5 border-b pb-10 border-neutral-200">
         <h1 className="text-3xl font-semibold">Chat with support</h1>
@@ -85,14 +85,12 @@ export default function Page() {
         </div>
       </div>
       {showEmailForm ? (
-        <div className="px-10 py-10">
+        <div className="px-10 py-16">
           <EmailForm chatId={chatId} />
         </div>
       ) : (
         <div className="px-10 py-10 bg-white">
-          <ClientSideSuspense fallback={null}>
-            <Chat chatId={chatId} />
-          </ClientSideSuspense>
+          <Chat chatId={chatId} />
         </div>
       )}
       <div className="px-10 py-4 flex gap-0.5 border-t border-neutral-200 justify-end items-center">
@@ -136,9 +134,9 @@ function Empty({ chatId }: { chatId: string }) {
       <div className="flex flex-wrap items-start gap-2">
         <button
           className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
-          onClick={() => sendMessage("Write a story about a brave knight")}
+          onClick={() => sendMessage("How do I create a new project?")}
         >
-          Write a story
+          How to create new projects?
         </button>
         <button
           className="px-3.5 py-1.5 transition-colors rounded-full flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-50"
@@ -218,35 +216,10 @@ function EmailForm({ chatId }: { chatId: string }) {
 
       <button
         type="submit"
-        className="px-4 py-2 bg-[--accent] text-white rounded font-semibold transition-colors"
+        className="px-4 py-2 bg-[--accent] text-white rounded font-medium transition-colors hover:bg-[--accent-hover]"
       >
         Submit
       </button>
     </form>
-  );
-}
-
-// Creating a new chat every hour
-function getDefaultChatId() {
-  return new Date().toISOString().slice(0, 13);
-}
-
-function PlusIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   );
 }
