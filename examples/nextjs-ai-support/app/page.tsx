@@ -31,6 +31,28 @@ export default function Page() {
           execute: () => {},
           render: ({ respond }) => {
             return (
+              <AiTool title="Submit a support ticket">
+                <div className="py-12">
+                  <EmailForm chatId={chatId} />
+                </div>
+              </AiTool>
+            );
+          },
+        })}
+      />
+      {/* <RegisterAiTool
+        name="show-create-ticket-form"
+        tool={defineAiTool()({
+          description:
+            "Show a button that takes users to an email form where they can create a support ticket",
+          parameters: {
+            type: "object",
+            additionalItems: false,
+            properties: {},
+          },
+          execute: () => {},
+          render: ({ respond }) => {
+            return (
               <AiTool title="Support ticket">
                 <div className="text-sm text-neutral-500 mb-2">
                   Create a new support ticket for our team to answer? This
@@ -54,71 +76,8 @@ export default function Page() {
             );
           },
         })}
-      />
-      {/* <RegisterAiTool
-        name="show-create-ticket-form"
-        tool={defineAiTool()({
-          description:
-            "Show a button that takes users to an email form where they can create a support ticket",
-          parameters: {
-            type: "object",
-            additionalItems: false,
-            properties: {},
-          },
-          execute: () => {},
-          render: ({ respond }) => {
-            return (
-              <div className="p-4 bg-[--lb-background-foreground-faint] rounded-[calc((1lh+var(--lb-spacing))/2)] flex flex-col gap-2 items-start justify-self-start">
-                <div className="text-base font-semibold">
-                  Would you like to create a support ticket?
-                </div>
-                <button
-                  className="px-3 py-1.5 transition-colors rounded flex items-center gap-2 bg-[--accent] text-white text-sm font-medium shadow-xs hover:bg-neutral-100"
-                  onClick={() => {
-                    respond({
-                      data: {},
-                      description: "Showing the email form",
-                    });
-                    setShowEmailForm(true);
-                  }}
-                >
-                  Create ticket
-                </button>
-              </div>
-            );
-          },
-        })}
       /> */}
-      {/* <RegisterAiTool
-        name="show-create-ticket-form"
-        tool={defineAiTool()({
-          description:
-            "Show a button that takes users to an email form where they can create a support ticket",
-          parameters: {
-            type: "object",
-            additionalItems: false,
-            properties: {},
-          },
-          render: ({ respond }) => {
-            return (
-              <AiTool title="Support ticket">
-                <AiTool.Confirmation
-                  overrides={{ AI_TOOL_CONFIRMATION_CONFIRM: "Create" }}
-                  confirm={() => {
-                    setShowEmailForm(true);
-                    return { data: {}, description: "Showing the email form" };
-                  }}
-                  cancel={() => {
-                    return { data: {}, description: "Cancelled" };
-                  }}
-                >
-                  Create a new support ticket with this chat's history
-                </AiTool.Confirmation>
-              </AiTool>
-            );
-          },
-        })}
-      /> */}
+
       <div className="p-10 flex flex-col gap-0.5 border-b pb-10 border-neutral-200">
         <h1 className="text-3xl font-semibold">Chat with support</h1>
         <div className="text-neutral-500">
