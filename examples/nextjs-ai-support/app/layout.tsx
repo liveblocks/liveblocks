@@ -37,7 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
             <div>
               <Image
-                src="https://liveblocks.io/avatars/avatar-1.png"
+                src="https://liveblocks.io/avatars/avatar-6.png"
                 alt="User avatar"
                 className="size-8 rounded-full bg-black dark:bg-white"
                 width={32}
