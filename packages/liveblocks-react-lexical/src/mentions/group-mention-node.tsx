@@ -66,10 +66,30 @@ export class GroupMentionNode extends DecoratorNode<JSX.Element> {
     return {
       span: () => ({
         conversion: (element) => {
-          const value = atob(
-            element.getAttribute("data-lexical-lb-group-mention")!
+          const groupId = element.getAttribute("data-lexical-lb-group-mention");
+
+          if (!groupId) {
+            return null;
+          }
+
+          const userIdsAttribute = element.getAttribute(
+            "data-lexical-lb-user-ids"
           );
-          const node = $createGroupMentionNode(value, undefined);
+          let userIds: string[] | undefined;
+
+          if (userIdsAttribute) {
+            try {
+              const parsedUserIds = JSON.parse(userIdsAttribute) as string[];
+
+              if (Array.isArray(parsedUserIds)) {
+                userIds = parsedUserIds;
+              }
+            } catch {
+              // Invalid userIds attribute
+            }
+          }
+
+          const node = $createGroupMentionNode(groupId, userIds);
           return { node };
         },
         priority: 1,
@@ -79,8 +99,11 @@ export class GroupMentionNode extends DecoratorNode<JSX.Element> {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("span");
-    const value = this.getTextContent();
-    element.setAttribute("data-lexical-lb-group-mention", btoa(value));
+    element.setAttribute("data-lexical-lb-group-mention", this.getGroupId());
+    element.setAttribute(
+      "data-lexical-lb-group-mention-users",
+      JSON.stringify(this.getUserIds())
+    );
     element.textContent = this.getTextContent();
     return { element };
   }
@@ -98,6 +121,7 @@ export class GroupMentionNode extends DecoratorNode<JSX.Element> {
   exportJSON(): SerializedGroupMentionNode {
     return {
       groupId: this.__groupId,
+      userIds: this.__userIds,
       type: "lb-group-mention",
       version: 1,
     };
