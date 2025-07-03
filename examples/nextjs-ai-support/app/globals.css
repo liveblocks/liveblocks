@@ -22,6 +22,10 @@
   --lb-radius: theme("borderRadius.sm");
 }
 
+.lb-ai-chat-messages {
+  padding-top: 0;
+}
+
 .lb-ai-chat-footer {
   padding: 1px;
 }

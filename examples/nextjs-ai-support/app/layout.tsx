@@ -28,7 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body
-        className={`${inter.className} text-neutral-900 flex flex-col justify-center items-stretch bg-neutral-50 antialiased gap-12`}
+        className={`${inter.className} text-neutral-900 flex flex-col justify-center items-stretch bg-neutral-50 antialiased gap-12 overflow-y-scroll`}
       >
         <Providers>
           <header className="bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
