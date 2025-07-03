@@ -6,7 +6,7 @@
 
 - `defineAiTool()()` now takes an optional `enabled` property. When set to
   `false`, the tool will not be made available to the AI copilot for new/future
-  chat messages, but stil l allow existing tool invocations to be rendered that
+  chat messages, but still allow existing tool invocations to be rendered that
   are part of the historic chat record.
 
 ### `@liveblocks/react`
