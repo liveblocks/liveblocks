@@ -32,7 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <Providers>
           <header className="bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-            <div className="text-sm font-medium text-neutral-900 transition-opacity dark:text-neutral-50 opacity-100">
+            <div className="font-semibold text-neutral-900 transition-opacity dark:text-neutral-50 opacity-100">
               Acme Corp.
             </div>
             <div>
@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               />
             </div>
           </header>
-          {children}
+          <div className="px-4">{children}</div>
           <footer></footer>
         </Providers>
       </body>

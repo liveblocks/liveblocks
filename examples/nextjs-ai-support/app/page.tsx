@@ -24,7 +24,7 @@ export default function Page() {
   const [showEmailForm, setShowEmailForm] = useState(false);
 
   return (
-    <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow">
+    <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow rounded-lg">
       {/* Defines a tool that the AI can choose to use. Shows a button that displays an email form on click. */}
       <RegisterAiTool
         name="show-create-ticket-form"
@@ -46,7 +46,7 @@ export default function Page() {
                 </div>
                 <div className="flex justify-end">
                   <button
-                    className="px-3 py-1.5 transition-colors rounded-sm flex items-center gap-2 bg-[--accent] text-white text-[13px] font-medium shadow-xs hover:bg-[--accent-hover]"
+                    className="px-3 py-1.5 transition-colors rounded flex items-center gap-2 bg-[--accent] text-white text-[13px] font-medium shadow-xs hover:bg-[--accent-hover]"
                     onClick={() => {
                       respond({
                         data: {},
@@ -64,28 +64,40 @@ export default function Page() {
         })}
       />
 
-      <div className="p-10 flex flex-col gap-0.5 border-b pb-10 border-neutral-200">
-        <h1 className="text-3xl font-semibold">Chat with support</h1>
+      <div className="px-10 py-8 flex flex-col gap-0.5 border-b pb-10 border-neutral-200">
+        <h1 className="text-2xl font-semibold tracking-[-0.015em]">
+          Chat with support
+        </h1>
         <div className="text-neutral-500">
           Describe your problem to get help or create a support ticket.
         </div>
       </div>
 
-      {showEmailForm ? (
-        <EmailForm chatId={chatId} />
-      ) : (
-        <div className="px-10 py-10 bg-white min-h-[282px]">
-          <div className="flex flex-col gap-3">
-            <div>How can I assist you today?</div>
-            <ClientSideSuspense fallback={<Fallback />}>
-              <Chat chatId={chatId} />
-            </ClientSideSuspense>
-          </div>
+      <div className="px-10 py-10 bg-white min-h-[282px]">
+        <div className="flex flex-col gap-3">
+          <div>How can I assist you today?</div>
+          <ClientSideSuspense fallback={<Fallback />}>
+            <Chat chatId={chatId} />
+          </ClientSideSuspense>
+        </div>
+      </div>
+
+      {/* Modal overlay */}
+      {showEmailForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <EmailForm
+            chatId={chatId}
+            onClose={() => setShowEmailForm(false)}
+            onSubmitSuccess={() => {
+              setShowEmailForm(false);
+              createNewChat();
+            }}
+          />
         </div>
       )}
       <div className="px-10 py-4 flex gap-0.5 border-t border-neutral-200 justify-end items-center">
         <button
-          className="px-3 py-1.5 transition-colors rounded flex items-center gap-2 bg-white border-neutral-200 border text-sm font-medium shadow-xs hover:bg-neutral-100"
+          className="px-3 py-1.5 transition-colors rounded flex items-center gap-2 bg-black text-sm font-medium shadow-xs hover:bg-neutral-900 text-white"
           onClick={() => {
             createNewChat();
             setShowEmailForm(false);
@@ -163,87 +175,102 @@ function Fallback() {
   );
 }
 
-function EmailForm({ chatId }: { chatId: string }) {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+function EmailForm({
+  chatId,
+  onClose,
+  onSubmitSuccess,
+}: {
+  chatId: string;
+  onClose: () => void;
+  onSubmitSuccess: () => void;
+}) {
   // Get the messages from this chat, ready to submit to your backend
   const { messages } = useAiChatMessages(chatId);
 
-  if (isSubmitted) {
-    return (
-      <div className="px-10 py-6 bg-green-50 flex flex-col gap-0.5 mx-auto">
-        <div className="text-base font-semibold text-green-900">
-          Message sent
-        </div>
-        <div className="text-green-800 text-sm">
-          Thanks for getting in touch, we’ll get back to you as soon as we can.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <form
-      className="px-10 py-16 flex flex-col gap-6 max-w-md text-sm mx-auto"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target as HTMLFormElement);
-        const name = formData.get("name") as string;
-        const email = formData.get("email") as string;
-        const description = formData.get("description") as string;
+    <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="flex items-center justify-between p-6 border-b border-neutral-200">
+        <h2 className="text-lg font-semibold">Create support ticket</h2>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full hover:bg-neutral-100 p-2 text-neutral-500 hover:text-neutral-700 transition-colors"
+          aria-label="Close form"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path
+              d="M12 4L4 12M4 4L12 12"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <form
+        className="p-6 flex flex-col gap-6 text-sm"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target as HTMLFormElement);
+          const name = formData.get("name") as string;
+          const email = formData.get("email") as string;
+          const description = formData.get("description") as string;
 
-        // Submit the form data to your backend
-        // ...
+          // Submit the form data to your backend
+          // ...
 
-        console.log("Form submitted:", {
-          name,
-          email,
-          description,
-          messages,
-        });
-        setIsSubmitted(true);
-      }}
-    >
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Name</span>
-        <input
-          type="text"
-          name="name"
-          value="Quinn Elton"
-          readOnly
-          className="border border-neutral-200 rounded px-3 py-2 bg-neutral-100 text-neutral-500 cursor-not-allowed focus:outline-none"
-        />
-      </label>
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Email</span>
-        <input
-          type="email"
-          name="email"
-          value="quinn.elton@example.com"
-          readOnly
-          className="border border-neutral-200 rounded px-3 py-2 bg-neutral-100 text-neutral-500 cursor-not-allowed focus:outline-none"
-        />
-      </label>
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium">
-          Description
-          <div className="flex flex-col gap-2 font-normal text-neutral-500 text-xs mt-1">
-            Your chat history will be included in the ticket
-          </div>
-        </span>
-        <textarea
-          name="description"
-          className="border border-neutral-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 min-h-[80px]"
-          placeholder="Describe your issue or question"
-          required
-        />
-      </label>
-
-      <button
-        type="submit"
-        className="px-4 py-2 bg-[--accent] text-white rounded font-medium transition-colors hover:bg-[--accent-hover]"
+          console.log("Form submitted:", {
+            name,
+            email,
+            description,
+            messages,
+          });
+          onSubmitSuccess();
+        }}
       >
-        Submit
-      </button>
-    </form>
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Name</span>
+          <input
+            type="text"
+            name="name"
+            value="Quinn Elton"
+            readOnly
+            className="border border-neutral-200 rounded px-3 py-2 bg-neutral-50 text-neutral-500 cursor-not-allowed focus:outline-none"
+          />
+        </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium">Email</span>
+          <input
+            type="email"
+            name="email"
+            value="quinn.elton@example.com"
+            readOnly
+            className="border border-neutral-200 rounded px-3 py-2 bg-neutral-50 text-neutral-500 cursor-not-allowed focus:outline-none"
+          />
+        </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-sm font-medium">
+            Description
+            <div className="flex flex-col gap-2 font-normal text-neutral-500 text-xs mt-1">
+              Your chat history will be included in the ticket
+            </div>
+          </span>
+          <textarea
+            name="description"
+            className="border border-neutral-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200 min-h-[80px]"
+            placeholder="Describe your issue or question"
+            required
+          />
+        </label>
+
+        <button
+          type="submit"
+          className="px-4 py-2 bg-[--accent] text-white rounded font-medium transition-colors hover:bg-[--accent-hover]"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
   );
 }
