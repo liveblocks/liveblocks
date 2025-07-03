@@ -21,6 +21,10 @@
   is done.
 - Add `collapsible` prop to `AiTool` to control whether its content can be
   collapsed/expanded.
+  
+### `@liveblocks/redux`
+
+- Add support for Redux v5
 
 ### `@liveblocks/react-lexical`
 

@@ -20,14 +20,14 @@
     "@liveblocks/redux": "*",
     "@liveblocks/yjs": "*",
     "@liveblocks/zustand": "*",
-    "@reduxjs/toolkit": "^1.9.7",
+    "@reduxjs/toolkit": "^2.8.2",
     "encoding": "^0.1.13",
     "next": "^14.2.20",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.1.2",
-    "react-redux": "^8.1.3",
-    "redux": "^4.2.1",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

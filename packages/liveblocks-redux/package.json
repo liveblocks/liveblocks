@@ -37,15 +37,15 @@
     "@liveblocks/core": "3.0.0"
   },
   "peerDependencies": {
-    "redux": "^4"
+    "redux": "^4 || ^5"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@reduxjs/toolkit": "^1.7.2",
+    "@reduxjs/toolkit": "^2.8.2",
     "@testing-library/jest-dom": "^6.4.6",
     "msw": "^1.3.5",
-    "redux": "^4.1.2"
+    "redux": "^5.0.1"
   },
   "sideEffects": false,
   "bugs": {
