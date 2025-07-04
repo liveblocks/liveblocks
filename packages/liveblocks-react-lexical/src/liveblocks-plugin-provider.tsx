@@ -169,6 +169,7 @@ export const LiveblocksPlugin = ({
     <>
       <div
         ref={handleFloatingRef}
+        className="lb-root lb-lexical-cursors"
         style={{
           position: strategy,
           top: 0,

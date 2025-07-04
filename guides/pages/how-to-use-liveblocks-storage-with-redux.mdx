@@ -82,12 +82,17 @@ export const { setScientist } = slice.actions;
 function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      enhancer({
-        client,
-        storageMapping: { firstName: true, lastName: true, discoveries: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        enhancer({
+          client,
+          storageMapping: {
+            firstName: true,
+            lastName: true,
+            discoveries: true,
+          },
+        })
+      ),
   });
 }
 
