@@ -21,8 +21,11 @@ import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
-import { resolveAuthorsInfo } from "./lib/authors";
-import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import {
+  createBatchGroupsInfoResolver,
+  createBatchUsersResolver,
+  getResolvedForId,
+} from "./lib/batch-resolvers";
 import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
@@ -249,13 +252,13 @@ export async function prepareTextMentionNotificationEmail<
     resolveUsers: options.resolveUsers,
     callerName,
   });
-
-  // TODO: resolve groups info
-
-  const authorsInfoPromise = resolveAuthorsInfo({
-    userIds: [data.createdBy],
-    resolveUsers: batchUsersResolver.resolveUsers,
+  const batchGroupsInfoResolver = createBatchGroupsInfoResolver({
+    resolveGroupsInfo: options.resolveGroupsInfo,
+    callerName,
   });
+
+  const authorsIds = [data.createdBy];
+  const authorsInfoPromise = batchUsersResolver.get(authorsIds);
 
   let textEditorNodes: LiveblocksTextEditorNode[] = [];
 
@@ -279,21 +282,22 @@ export async function prepareTextMentionNotificationEmail<
   const contentPromise = convertTextMentionContent<ContentType, U>(
     textEditorNodes,
     {
-      resolveUsers: batchUsersResolver.resolveUsers,
+      resolveUsers: ({ userIds }) => batchUsersResolver.get(userIds),
+      resolveGroupsInfo: ({ groupIds }) =>
+        batchGroupsInfoResolver.get(groupIds),
       elements,
     }
   );
 
   await batchUsersResolver.resolve();
-
-  // TODO: batchedGroupsResolver.resolve();
+  await batchGroupsInfoResolver.resolve();
 
   const [authorsInfo, content] = await Promise.all([
     authorsInfoPromise,
     contentPromise,
   ]);
 
-  const authorInfo = authorsInfo.get(data.createdBy);
+  const authorInfo = getResolvedForId(data.createdBy, authorsIds, authorsInfo);
 
   return {
     mention: {
