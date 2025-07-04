@@ -63,6 +63,17 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 nvie, marcbouchenoire, sugardarius
 
+# Week 26 (2025-06-27)
+
+## Website
+
+- New blog post:
+  [People and AI working together, in any app — the story behind Liveblocks 3.0](https://liveblocks.io/blog/people-and-ai-working-together-liveblocks-3-0).
+
+## Contributors
+
+pierrelevaillant, stevenfabre
+
 # Week 25 (2025-06-20)
 
 ## v3.0.0
@@ -127,6 +138,11 @@ For full upgrade instructions and codemods, see the
 
 - The `getMentionedIdsFromCommentBody` utility has been replaced by
   `getMentionsFromCommentBody`.
+
+## Website
+
+- New blog post:
+  [Meet Liveblocks 3.0, the fastest way to let people collaborate with AI in your product](https://liveblocks.io/blog/meet-liveblocks-3-0-the-fastest-way-to-let-your-users-collaborate-with-ai-in-your-product).
 
 ## Contributors
 
