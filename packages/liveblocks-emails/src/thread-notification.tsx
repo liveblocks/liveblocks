@@ -25,8 +25,11 @@ import type { ConvertCommentBodyElements } from "./comment-body";
 import { convertCommentBody } from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
-import { resolveAuthorsInfo } from "./lib/authors";
-import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import {
+  createBatchGroupsInfoResolver,
+  createBatchUsersResolver,
+  getResolvedForId,
+} from "./lib/batch-resolvers";
 import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
@@ -249,36 +252,43 @@ export async function prepareThreadNotificationEmail<
     resolveUsers: options.resolveUsers,
     callerName,
   });
-
-  // TODO: Add resolveGroupsInfo
+  const batchGroupsInfoResolver = createBatchGroupsInfoResolver({
+    resolveGroupsInfo: options.resolveGroupsInfo,
+    callerName,
+  });
 
   switch (data.type) {
     case "unreadMention": {
       const { comment } = data;
 
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: [comment.userId],
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
-
+      const authorsIds = [comment.userId];
+      const authorsInfoPromise = batchUsersResolver.get(authorsIds);
       const commentBodyPromise = convertCommentBody<BodyType, U>(comment.body, {
-        resolveUsers: batchUsersResolver.resolveUsers,
-        // TODO: resolveGroupsInfo: batchGroupsResolver.resolveGroupsInfo,
+        resolveUsers: ({ userIds }) => batchUsersResolver.get(userIds),
+        resolveGroupsInfo: ({ groupIds }) =>
+          batchGroupsInfoResolver.get(groupIds),
         elements,
       });
 
       await batchUsersResolver.resolve();
+      await batchGroupsInfoResolver.resolve();
 
       const [authorsInfo, commentBody] = await Promise.all([
         authorsInfoPromise,
         commentBodyPromise,
       ]);
 
-      const authorInfo = authorsInfo.get(comment.userId);
-      const url = generateCommentUrl({
-        roomUrl: roomInfo?.url,
-        commentId: comment.id,
-      });
+      const authorInfo = getResolvedForId(
+        comment.userId,
+        authorsIds,
+        authorsInfo
+      );
+      const url = roomInfo?.url
+        ? generateCommentUrl({
+            roomUrl: roomInfo?.url,
+            commentId: comment.id,
+          })
+        : undefined;
 
       return {
         type: "unreadMention",
@@ -300,21 +310,20 @@ export async function prepareThreadNotificationEmail<
     case "unreadReplies": {
       const { comments } = data;
 
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: comments.map((c) => c.userId),
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
+      const authorsIds = comments.map((c) => c.userId);
+      const authorsInfoPromise = batchUsersResolver.get(authorsIds);
 
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBody<BodyType, U>(c.body, {
-          resolveUsers: batchUsersResolver.resolveUsers,
-          // TODO: resolveGroupsInfo: batchGroupsResolver.resolveGroupsInfo,
+          resolveUsers: ({ userIds }) => batchUsersResolver.get(userIds),
+          resolveGroupsInfo: ({ groupIds }) =>
+            batchGroupsInfoResolver.get(groupIds),
           elements,
         })
       );
 
       await batchUsersResolver.resolve();
-      // TODO: await batchGroupsResolver.resolve();
+      await batchGroupsInfoResolver.resolve();
 
       const [authorsInfo, ...commentBodies] = await Promise.all([
         authorsInfoPromise,
@@ -324,7 +333,11 @@ export async function prepareThreadNotificationEmail<
       return {
         type: "unreadReplies",
         comments: comments.map((comment, index) => {
-          const authorInfo = authorsInfo.get(comment.userId);
+          const authorInfo = getResolvedForId(
+            comment.userId,
+            authorsIds,
+            authorsInfo
+          );
           const commentBody = commentBodies[index] as BodyType;
 
           const url = generateCommentUrl({
