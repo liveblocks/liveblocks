@@ -1135,9 +1135,7 @@ describe("LiveObject", () => {
       // This should throw since LiveObject.detectLargeObjects property is enabled and data exceeds limit
       expect(() => {
         liveObject.set("largeString", largeData);
-      }).toThrow(
-        /LiveObject size exceeded limit.*bytes/
-      );
+      }).toThrow(/LiveObject size exceeded limit.*bytes/);
     });
 
     it("should NOT throw when LiveObject.detectLargeObjects property is enabled but size is within limit", () => {
@@ -1283,6 +1281,28 @@ describe("LiveObject", () => {
       expect(() => {
         liveObject.set("moreTiny", tinyData);
       }).not.toThrow();
+    });
+
+    it("should handle performance optimization boundary correctly", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<Record<string, string>>();
+
+      // Create data that when multiplied by 4 would exceed limit, but actual size is under
+      // JSON with lots of ASCII chars: string length * 4 > 128KB, but actual UTF-8 bytes < 128KB
+      const asciiData = "a".repeat(33000); // 33KB of ASCII (when multiplied by 4 = 132KB > 128KB)
+
+      // This should NOT throw because actual UTF-8 encoding is much smaller than the upper bound
+      expect(() => {
+        liveObject.set("asciiTest", asciiData);
+      }).not.toThrow();
+
+      // But if we have actual large data that exceeds the limit, it should throw
+      const reallyLargeData = createLargeData(140 * 1024); // 140KB
+      expect(() => {
+        liveObject.set("reallyLarge", reallyLargeData);
+      }).toThrow(/LiveObject size exceeded limit/);
     });
   });
 });

@@ -578,11 +578,19 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         }
       }
 
-      const newSize = new TextEncoder().encode(JSON.stringify(data)).length;
-      if (newSize > MAX_LIVE_OBJECT_SIZE) {
-        throw new Error(
-          `LiveObject size exceeded limit: ${newSize} bytes > ${MAX_LIVE_OBJECT_SIZE} bytes. See https://liveblocks.io/docs/platform/limits#Liveblocks-Storage-limits`
-        );
+      // Fast upper-bound check: multiply JSON string length by 4 (worst-case UTF-8)
+      // This is much faster than TextEncoder and gives us an upper bound
+      const jsonString = JSON.stringify(data);
+      const upperBoundSize = jsonString.length * 4;
+
+      // Only do the precise calculation if the fast check suggests we might be close
+      if (upperBoundSize > MAX_LIVE_OBJECT_SIZE) {
+        const preciseSize = new TextEncoder().encode(jsonString).length;
+        if (preciseSize > MAX_LIVE_OBJECT_SIZE) {
+          throw new Error(
+            `LiveObject size exceeded limit: ${preciseSize} bytes > ${MAX_LIVE_OBJECT_SIZE} bytes. See https://liveblocks.io/docs/platform/limits#Liveblocks-Storage-limits`
+          );
+        }
       }
     }
 
