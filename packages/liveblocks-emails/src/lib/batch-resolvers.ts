@@ -91,9 +91,19 @@ export class BatchResolver<T> {
 
     const ids = Array.from(this.ids);
 
+    // Call the callback once with all IDs
     try {
-      // Call the callback once with all IDs
       const results = this.callback ? await this.callback(ids) : undefined;
+
+      if (results !== undefined) {
+        if (!Array.isArray(results)) {
+          throw new Error("Callback must return an array.");
+        } else if (ids.length !== results.length) {
+          throw new Error(
+            `Callback must return an array of the same length as the number of provided items. Expected ${ids.length}, but got ${results.length}.`
+          );
+        }
+      }
 
       ids.forEach((id, index) => {
         this.results.set(id, results?.[index]);
