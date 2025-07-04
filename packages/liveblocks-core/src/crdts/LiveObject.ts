@@ -1,6 +1,6 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
-import type { JsonObject } from "../lib/Json";
+import type { Json, JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import type { RemoveUndefinedValues } from "../lib/utils";
 import { compactObject, deepClone } from "../lib/utils";
@@ -37,6 +37,11 @@ export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
 };
 
+// One key platform limit is that a LiveObject cannot exceed 128 kB when
+// totalling the size of the keys and values.
+// See https://liveblocks.io/docs/platform/limits#Liveblocks-Storage-limits
+const MAX_LIVE_OBJECT_SIZE = 128 * 1024;
+
 /**
  * A LiveObject notification that is sent in-client to any subscribers whenever
  * one or more of the entries inside the LiveObject instance have changed.
@@ -55,6 +60,17 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   #map: Map<string, Lson>;
   #propToLastUpdate: Map<string, string>;
+
+  /**
+   * Enable or disable detection of too large LiveObjects.
+   * When enabled, throws an error if LiveObject static data exceeds 128KB, which
+   * is the maximum value the server will be able to accept.
+   * By default, this behavior is disabled to avoid the runtime performance
+   * overhead on every LiveObject.set() or LiveObject.update() call.
+   *
+   * @experimental
+   */
+  public static detectLargeObjects = false;
 
   static #buildRootAndParentToChildren(
     items: IdTuple<SerializedCrdt>[]
@@ -544,6 +560,32 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   update(patch: Partial<O>): void {
     this._pool?.assertStorageIsWritable();
+
+    // If detectLargeObjects is enabled, perform a runtime size check now so we
+    // can immediately throw as soon as the max object size is exceeded.
+    if (LiveObject.detectLargeObjects) {
+      const data: Record<string, Json> = {};
+      for (const [key, value] of this.#map) {
+        if (!isLiveNode(value)) {
+          data[key] = value;
+        }
+      }
+      for (const key of Object.keys(patch)) {
+        const value = patch[key];
+        if (value === undefined) continue;
+        if (!isLiveNode(value)) {
+          data[key] = value;
+        }
+      }
+
+      const newSize = new TextEncoder().encode(JSON.stringify(data)).length;
+      if (newSize > MAX_LIVE_OBJECT_SIZE) {
+        throw new Error(
+          `LiveObject size exceeded limit: ${newSize} bytes > ${MAX_LIVE_OBJECT_SIZE} bytes. See https://liveblocks.io/docs/platform/limits#Liveblocks-Storage-limits`
+        );
+      }
+    }
+
     if (this._pool === undefined || this._id === undefined) {
       for (const key in patch) {
         const newValue = patch[key];

@@ -1,5 +1,16 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- Adds experimental setting `LiveObject.detectLargeObjects`, which can be
+  enabled globally using `LiveObject.detectLargeObjects = true` (default is
+  false). With this setting enabled, calls to `LiveObject.set()` or
+  `LiveObject.update()` will throw as soon as you add a value that would make
+  the total size of the LiveObject exceed the platform limit of 128 kB. The
+  benefit is that you get an early error instead of a silent failure, but the
+  downside is that this adds significant runtime overhead if your application
+  makes many LiveObject mutations.
+
 ## v3.1.0
 
 ### `@liveblocks/client`
