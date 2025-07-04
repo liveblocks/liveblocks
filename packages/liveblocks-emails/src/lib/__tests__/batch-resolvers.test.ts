@@ -79,6 +79,37 @@ describe("BatchResolver", () => {
     );
   });
 
+  it("should throw when callback doesn't return an array", async () => {
+    const nonArrayCallback = jest.fn(() => ({ "id-1": "value" }));
+    const resolver = new BatchResolver(
+      nonArrayCallback as unknown as (ids: string[]) => Promise<unknown[]>,
+      "Warning"
+    );
+
+    void resolver.get(["id-1"]);
+
+    await expect(resolver.resolve()).rejects.toThrow(
+      "Callback must return an array."
+    );
+  });
+
+  it("should throw when callback returns array of wrong length", async () => {
+    // Return fewer items than requested
+    const wrongLengthCallback = jest.fn((ids: string[]) => {
+      return ids.slice(0, ids.length - 1).map((id) => ({ resolved: id }));
+    });
+    const resolver = new BatchResolver(wrongLengthCallback, "Warning");
+
+    const promise = resolver.get(["id-1", "id-2", "id-3"]);
+
+    await expect(resolver.resolve()).rejects.toThrow(
+      "Callback must return an array of the same length as the number of provided items. Expected 3, but got 2."
+    );
+
+    const result = await promise;
+    expect(result).toEqual([undefined, undefined, undefined]);
+  });
+
   it("should handle callback throwing", async () => {
     const errorCallback = jest.fn(() => {
       throw new Error("Callback error");
