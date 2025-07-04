@@ -18,7 +18,54 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 27 (2025-07-04)
+
+## v3.1.0
+
+### `@liveblocks/client`
+
+- `defineAiTool()()` now takes an optional `enabled` property. When set to
+  `false`, the tool will not be made available to the AI copilot for new/future
+  chat messages, but still allow existing tool invocations to be rendered that
+  are part of the historic chat record.
+
+### `@liveblocks/react`
+
+- `RegisterAiTool` now also takes an optional `enabled` prop. This is a
+  convenience prop that can be used to override the tool’s `enabled` status
+  directly in React.
+
+### `@liveblocks/react-ui`
+
+- Reasoning parts in `AiChat` are now automatically collapsed when the reasoning
+  is done.
+- Add `collapsible` prop to `AiTool` to control whether its content can be
+  collapsed/expanded.
+- Add `InboxNotification.Inspector` component to help debugging custom inbox
+  notifications.
+
+### `@liveblocks/redux`
+
+- Add support for Redux v5.
+
+### `@liveblocks/react-lexical`
+
+- Fix default `z-index` of collaboration cursors, and make them inherit their
+  font family instead of always using Arial.
+- Add `lb-lexical-cursors` class to the collaboration cursors’ container.
+- Improve mentions’ serialization.
+
+### `@liveblocks/node-lexical`
+
+- Improve mentions’ serialization.
+
+## Contributors
+
+nvie, marcbouchenoire, sugardarius
+
 # Week 25 (2025-06-20)
+
+## v3.0.0
 
 Liveblocks 3.0 is our third major release, focusing on our newest product,
 [AI Copilots](https://liveblocks.io/blog/meet-liveblocks-3-0-the-fastest-way-to-let-your-users-collaborate-with-ai-in-your-product).
