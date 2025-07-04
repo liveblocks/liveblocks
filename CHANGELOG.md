@@ -21,10 +21,12 @@
   is done.
 - Add `collapsible` prop to `AiTool` to control whether its content can be
   collapsed/expanded.
-  
+- Add `InboxNotification.Inspector` component to help debugging custom inbox
+  notifications.
+
 ### `@liveblocks/redux`
 
-- Add support for Redux v5
+- Add support for Redux v5.
 
 ### `@liveblocks/react-lexical`
 
