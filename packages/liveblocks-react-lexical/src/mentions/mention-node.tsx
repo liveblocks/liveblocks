@@ -11,9 +11,8 @@ import type {
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
+import { MENTION_CHARACTER } from "../constants";
 import { Mention } from "./mention-component";
-
-const MENTION_CHARACTER = "@";
 
 export type SerializedMentionNode = Spread<
   {

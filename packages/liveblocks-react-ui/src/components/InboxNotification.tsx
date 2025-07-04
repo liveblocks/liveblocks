@@ -7,7 +7,7 @@ import type {
   InboxNotificationThreadData,
   KDAD,
 } from "@liveblocks/core";
-import { assertNever, console } from "@liveblocks/core";
+import { assertNever, warnOnce } from "@liveblocks/core";
 import {
   useDeleteInboxNotification,
   useInboxNotificationThread,
@@ -47,7 +47,7 @@ import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
 import { generateURL } from "../utils/url";
-import { Avatar, type AvatarProps } from "./internal/Avatar";
+import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -238,7 +238,12 @@ interface InboxNotificationLayoutProps
 
 export type InboxNotificationIconProps = ComponentProps<"div">;
 
-export type InboxNotificationAvatarProps = AvatarProps;
+export interface InboxNotificationAvatarProps extends ComponentProps<"div"> {
+  /**
+   * The user ID to display the avatar for.
+   */
+  userId: string;
+}
 
 const InboxNotificationLayout = forwardRef<
   HTMLAnchorElement,
@@ -512,12 +517,12 @@ const InboxNotificationThread = forwardRef<
         }
 
         case "mention": {
-          const mentionUserId = contents.userIds[0]!;
+          const mentionCreatedBy = contents.userIds[0]!;
           const mentionComment = contents.comments[0]!;
 
-          const aside = <InboxNotificationAvatar userId={mentionUserId} />;
+          const aside = <InboxNotificationAvatar userId={mentionCreatedBy} />;
           const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-            <User key={mentionUserId} userId={mentionUserId} />,
+            <User key={mentionCreatedBy} userId={mentionCreatedBy} />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined
           );
           const content = (
@@ -778,15 +783,12 @@ const InboxNotificationCustomMissing = forwardRef<
       ref={forwardedRef}
       data-missing=""
     >
-      {/* TODO: Add link to the docs */}
       Notifications of this kind won’t be displayed in production. Use the{" "}
-      <code>kinds</code> prop to define how they should be rendered.
+      <code>kinds</code> prop to define how they should be rendered, learn more
+      in the console.
     </InboxNotificationCustom>
   );
 });
-
-// Keeps track of which inbox notification kinds it has warned about already.
-const inboxNotificationKindsWarnings: Set<string> = new Set();
 
 /**
  * Displays a single inbox notification.
@@ -838,13 +840,9 @@ export const InboxNotification = Object.assign(
 
           if (!ResolvedInboxNotificationCustom) {
             if (process.env.NODE_ENV !== "production") {
-              if (!inboxNotificationKindsWarnings.has(inboxNotification.kind)) {
-                inboxNotificationKindsWarnings.add(inboxNotification.kind);
-                // TODO: Add link to the docs
-                console.warn(
-                  `Custom notification kind "${inboxNotification.kind}" is not handled so notifications of this kind will not be displayed in production. Use the kinds prop to define how they should be rendered.`
-                );
-              }
+              warnOnce(
+                `Custom notification kind "${inboxNotification.kind}" is not handled so notifications of this kind will not be displayed in production. Use the kinds prop to define how they should be rendered. Learn more: https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently.`
+              );
 
               return (
                 <InboxNotificationCustomMissing

@@ -17,7 +17,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, User } from "@liveblocks/react-ui/_private";
+import { Avatar, Group, User } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -36,6 +36,12 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { MENTION_CHARACTER } from "../constants";
+import type { GroupMentionNode } from "./group-mention-node";
+import {
+  $createGroupMentionNode,
+  $isGroupMentionNode,
+} from "./group-mention-node";
 import {
   $createMentionNode,
   $isMentionNode,
@@ -48,13 +54,11 @@ import {
   SuggestionsContext,
 } from "./suggestions";
 
-const MENTION_TRIGGER = "@";
-
 const PUNCTUATIONS =
   "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
 
 // Characters we expect to see in a mention (non-space, non-punctuation).
-const VALID_CHARACTERS = "[^" + MENTION_TRIGGER + PUNCTUATIONS + "\\s]";
+const VALID_CHARACTERS = "[^" + MENTION_CHARACTER + PUNCTUATIONS + "\\s]";
 
 const VALID_JOINS =
   "(?:" +
@@ -70,7 +74,7 @@ const LENGTH_LIMIT = 75;
 const MentionRegex = new RegExp(
   "(^|\\s|\\()(" +
     "[" +
-    MENTION_TRIGGER +
+    MENTION_CHARACTER +
     "]" +
     "((?:" +
     VALID_CHARACTERS +
@@ -181,16 +185,21 @@ export function MentionPlugin() {
             const node = $getNodeByKey(key);
             if (node === null) return;
 
-            if (!$isMentionNode(node)) return;
-            createTextMention(node.getUserId(), node.getId());
+            if ($isMentionNode(node)) {
+              createTextMention(node.getUserId(), node.getId());
+            } else if ($isGroupMentionNode(node)) {
+              // TODO: Create group mentions differently
+              createTextMention(node.getGroupId(), node.getId());
+            }
           });
         } else if (mutation === "destroyed") {
           prevEditorState.read(() => {
             const node = $getNodeByKey(key);
             if (node === null) return;
 
-            if (!$isMentionNode(node)) return;
-            deleteTextMention(node.getId());
+            if ($isMentionNode(node) || $isGroupMentionNode(node)) {
+              deleteTextMention(node.getId());
+            }
           });
         }
       }
@@ -321,16 +330,19 @@ export function MentionPlugin() {
         const startOffset = selectionOffset - queryOffset;
         if (startOffset < 0) return;
 
-        let mentionNode: MentionNode;
+        let mentionNode: MentionNode | GroupMentionNode;
 
-        // Other mention kinds will be different nodes: GroupMentionNode, etc.
         switch (mention.kind) {
           case "user":
             mentionNode = $createMentionNode(mention.id);
             break;
 
+          case "group":
+            mentionNode = $createGroupMentionNode(mention.id, mention.userIds);
+            break;
+
           default:
-            return assertNever(mention.kind, "Unhandled mention kind");
+            return assertNever(mention, "Unhandled mention kind");
         }
 
         // Split the anchor (text) node and create a new text node only containing matched text.
@@ -369,14 +381,14 @@ export function MentionPlugin() {
           >
             <Suggestions.List className="lb-lexical-suggestions-list lb-lexical-mention-suggestions-list">
               {suggestions.map((mention) => {
-                switch (mention.kind) {
-                  case "user":
-                    return (
-                      <Suggestions.Item
-                        key={mention.id}
-                        value={mention.id}
-                        className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
-                      >
+                return (
+                  <Suggestions.Item
+                    key={mention.id}
+                    value={mention.id}
+                    className="lb-lexical-suggestions-list-item lb-lexical-mention-suggestion"
+                  >
+                    {mention.kind === "user" ? (
+                      <>
                         <Avatar
                           userId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
@@ -385,12 +397,23 @@ export function MentionPlugin() {
                           userId={mention.id}
                           className="lb-lexical-mention-suggestion-user"
                         />
-                      </Suggestions.Item>
-                    );
-
-                  default:
-                    return assertNever(mention.kind, "Unhandled mention kind");
-                }
+                      </>
+                    ) : mention.kind === "group" ? (
+                      <>
+                        <Avatar
+                          groupId={mention.id}
+                          className="lb-lexical-mention-suggestion-avatar"
+                        />
+                        <Group
+                          groupId={mention.id}
+                          className="lb-lexical-mention-suggestion-group"
+                        />
+                      </>
+                    ) : (
+                      assertNever(mention, "Unhandled mention kind")
+                    )}
+                  </Suggestions.Item>
+                );
               })}
             </Suggestions.List>
           </SuggestionsPortal>
