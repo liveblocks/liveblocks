@@ -65,6 +65,10 @@ nvie, marcbouchenoire, sugardarius
 
 # Week 26 (2025-06-27)
 
+## Dashboard
+
+- Fix caching issue when editing notification settings.
+
 ## Website
 
 - New blog post:
@@ -72,7 +76,7 @@ nvie, marcbouchenoire, sugardarius
 
 ## Contributors
 
-pierrelevaillant, stevenfabre
+pierrelevaillant, stevenfabre, sugardarius
 
 # Week 25 (2025-06-20)
 
@@ -138,6 +142,19 @@ For full upgrade instructions and codemods, see the
 
 - The `getMentionedIdsFromCommentBody` utility has been replaced by
   `getMentionsFromCommentBody`.
+
+## Dashboard
+
+- Introduce an AI Copilots view to manage copilots and their knowledge.
+
+## Examples
+
+- New example:
+  [AI Popup Chat](https://liveblocks.io/examples/ai-popup/nextjs-ai-popup).
+- New example:
+  [AI Chats](https://liveblocks.io/examples/ai-chats/nextjs-ai-chats).
+- New example:
+  [AI Reports Dashboard](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports).
 
 ## Website
 
