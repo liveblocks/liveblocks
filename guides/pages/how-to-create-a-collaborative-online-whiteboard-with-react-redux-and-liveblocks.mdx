@@ -92,11 +92,8 @@ const slice = createSlice({
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(liveblocksEnhancer({ client })),
   });
 }
 
@@ -175,7 +172,7 @@ To achieve that, we are going to use the enhancer option
 It means that the part of the state named `shapes` should be automatically
 synced with Liveblocks Storage.
 
-```js file="src/store.js" highlight="10,27"
+```js file="src/store.js" highlight="10,28"
 import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -199,12 +196,13 @@ const slice = createSlice({
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { scientist: true },
+        })
+      ),
   });
 }
 
@@ -398,12 +396,13 @@ export const { insertRectangle } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 
@@ -479,7 +478,7 @@ The middleware option
 means that we want to automatically sync the part of the state named
 `selectedShape` to Liveblocks Presence.
 
-```js file="src/store.js" highlight="5,15-17,21,30"
+```js file="src/store.js" highlight="5,15-17,21,31"
 /* ... */
 
 const initialState = {
@@ -505,13 +504,14 @@ export const { insertRectangle, onShapePointerDown } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        storageMapping: { shapes: true },
-        presenceMapping: { selectedShape: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          storageMapping: { shapes: true },
+          presenceMapping: { selectedShape: true },
+        })
+      ),
   });
 }
 
@@ -650,13 +650,14 @@ export const { insertRectangle, onShapePointerDown, deleteShape } =
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        presenceMapping: { selectedShape: true },
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          presenceMapping: { selectedShape: true },
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 
@@ -766,13 +767,14 @@ export const {
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer({
-        client,
-        presenceMapping: { selectedShape: true },
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer({
+          client,
+          presenceMapping: { selectedShape: true },
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 

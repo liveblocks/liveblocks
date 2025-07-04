@@ -536,6 +536,10 @@ render: () => (
     Callback fired when the collapsed state changes. Use this to control the
     collapsed state externally.
   </PropertiesListItem>
+  <PropertiesListItem name="collapsible" type="boolean">
+    Whether the tool content can be collapsed. If set to `false`, clicking on it
+    will have no effect. If there's no content, this prop has no effect.
+  </PropertiesListItem>
   <PropertiesListItem name="className" type="string">
     CSS class name to apply to the tool container.
   </PropertiesListItem>
@@ -2620,7 +2624,7 @@ Override specific kinds of inbox notifications.
 
 ###### InboxNotification.Thread [#InboxNotification.Thread]
 
-Displays a thread inbox notification.
+Displays a thread inbox notification kind.
 
 ```tsx
 <InboxNotification
@@ -2652,6 +2656,37 @@ Displays a thread inbox notification.
   </PropertiesListItem>
   <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
     Whether to show attachments.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.TextMention [#InboxNotification.TextMention]
+
+Displays a text mention inbox notification kind.
+
+```tsx
+<InboxNotification
+  inboxNotification={inboxNotification}
+  kinds={{
+    textMention: (props) => (
+      <InboxNotification.TextMention {...props} showRoomName={false} />
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationTextMentionData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showRoomName" type="boolean" defaultValue="true">
+    Whether to show the room name in the title.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2708,6 +2743,32 @@ Displays a custom notification kind.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### InboxNotification.Inspector [#InboxNotification.Inspector]
+
+Displays the inbox notification’s data in a JSON code snippet. Useful when debugging notifications in your app.
+
+```tsx
+<InboxNotification
+  inboxNotification={inboxNotification}
+  kinds={{
+    $myCustomNotificationKind: InboxNotification.Inspector,
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem
+    name="inboxNotification"
+    type="InboxNotificationData"
+    required
+  >
+    The inbox notification to display.
+  </PropertiesListItem>
+  <PropertiesListItem name="showActions" type='boolean | "hover"'>
+    How to show or hide the actions.
   </PropertiesListItem>
 </PropertiesList>
 

@@ -61,13 +61,14 @@ export const { addTodo, deleteTodo, setDraft } = slice.actions;
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer<State>({
-        client,
-        storageMapping: { todos: true },
-        presenceMapping: { isTyping: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer<State>({
+          client,
+          storageMapping: { todos: true },
+          presenceMapping: { isTyping: true },
+        })
+      ),
   });
 }
 

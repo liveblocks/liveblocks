@@ -2001,9 +2001,11 @@
 }
 
 .lb-inbox-notification-title {
-  @include capitalize;
-
   min-block-size: $lb-button-size;
+
+  :where(.lb-inbox-notification:not([data-inspector])) & {
+    @include capitalize;
+  }
 
   :where(strong, .lb-list, .lb-name) {
     font-weight: 500;
@@ -2385,7 +2387,7 @@
     margin: 0;
     padding: 0 var(--lb-spacing) calc(0.875 * var(--lb-spacing));
     font-size: 85%;
-    line-height: 1;
+    line-height: var(--lb-line-height);
 
     /* overflow-inline: auto; doesn't work as expected */
     /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
@@ -2798,7 +2800,7 @@
 
 .lb-ai-tool-header {
   display: flex;
-  gap: calc(0.25 * var(--lb-spacing));
+  gap: calc(0.3125 * var(--lb-spacing));
   align-items: center;
   inline-size: 100%;
   block-size: calc($lb-button-size + var(--lb-spacing));
@@ -2832,18 +2834,19 @@
 .lb-ai-tool-header-title {
   @include truncate;
 
+  margin-inline-end: calc(0.25 * var(--lb-spacing));
   color: var(--lb-foreground-secondary);
   font-size: 0.9375em;
 
   &:where(:first-child) {
-    margin-inline-start: calc(0.25 * var(--lb-spacing));
+    margin-inline-start: calc(0.3125 * var(--lb-spacing));
   }
 }
 
 .lb-ai-tool-header-status {
   flex: none;
   margin-inline-start: auto;
-  margin-inline-end: calc(0.25 * var(--lb-spacing));
+  margin-inline-end: calc(0.1875 * var(--lb-spacing));
   color: var(--lb-foreground-moderate);
 }
 
