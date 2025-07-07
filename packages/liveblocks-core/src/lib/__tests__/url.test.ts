@@ -17,7 +17,7 @@ describe("sanitizeUrl", () => {
   });
 
   it("should return valid HTTP(S) URLs as-is", () => {
-    expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io/");
+    expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io");
     expect(sanitizeUrl("https://liveblocks.io/docs")).toBe(
       "https://liveblocks.io/docs"
     );
@@ -27,8 +27,13 @@ describe("sanitizeUrl", () => {
     expect(sanitizeUrl("/examples")).toBe("/examples");
   });
 
-  it("should convert www URLs to HTTPS", () => {
-    expect(sanitizeUrl("www.liveblocks.io")).toBe("https://www.liveblocks.io/");
+  it("should normalize relative URLs", () => {
+    expect(sanitizeUrl("./docs")).toBe("/docs");
+    expect(sanitizeUrl("../docs")).toBe("/docs");
+  });
+
+  it("should normalize www URLs to HTTPS", () => {
+    expect(sanitizeUrl("www.liveblocks.io")).toBe("https://www.liveblocks.io");
     expect(sanitizeUrl("www.liveblocks.io/docs/get-started")).toBe(
       "https://www.liveblocks.io/docs/get-started"
     );
@@ -43,13 +48,40 @@ describe("sanitizeUrl", () => {
     );
   });
 
-  it("should reject non-HTTP(S) protocols", () => {
+  it("should preserve the presence/absence of trailing slashes", () => {
+    expect(sanitizeUrl("https://liveblocks.io/")).toBe(
+      "https://liveblocks.io/"
+    );
+    expect(sanitizeUrl("https://liveblocks.io/docs/")).toBe(
+      "https://liveblocks.io/docs/"
+    );
+    expect(sanitizeUrl("http://blog.liveblocks.io/?query=value")).toBe(
+      "http://blog.liveblocks.io/?query=value"
+    );
+    expect(sanitizeUrl("http://blog.liveblocks.io/?query=value#hash")).toBe(
+      "http://blog.liveblocks.io/?query=value#hash"
+    );
+
+    expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io");
+    expect(sanitizeUrl("https://liveblocks.io/docs")).toBe(
+      "https://liveblocks.io/docs"
+    );
+    expect(sanitizeUrl("http://blog.liveblocks.io?query=value")).toBe(
+      "http://blog.liveblocks.io?query=value"
+    );
+    expect(sanitizeUrl("http://blog.liveblocks.io?query=value#hash")).toBe(
+      "http://blog.liveblocks.io?query=value#hash"
+    );
+  });
+
+  it("should reject non-HTTP(S) protocols and other invalid URLs", () => {
     expect(sanitizeUrl("javascript:alert('xss')")).toBe(null);
     expect(sanitizeUrl("data:text/html,<script>alert('xss')</script>")).toBe(
       null
     );
     expect(sanitizeUrl("vbscript:alert('xss')")).toBe(null);
     expect(sanitizeUrl("file:///etc/passwd")).toBe(null);
+    expect(sanitizeUrl("//liveblocks.io")).toBe(null);
   });
 });
 

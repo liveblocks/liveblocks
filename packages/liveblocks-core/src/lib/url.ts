@@ -2,6 +2,7 @@ import type { Brand } from "./utils";
 
 const PLACEHOLDER_BASE_URL = "https://localhost:9999";
 const ABSOLUTE_URL_REGEX = /^[a-zA-Z][a-zA-Z\d+\-.]*?:/;
+const TRAILING_SLASH_URL_REGEX = /\/(?:(?:\?|#).*)?$/;
 
 export type QueryParams =
   | Record<string, string | number | null | undefined>
@@ -83,11 +84,10 @@ export function url(
  * - Absolute URLs with a `www` prefix (e.g. www.liveblocks.io)
  * - Relative URLs (e.g. /path/to/page)
  *
+ * The presence/absence of trailing slashes is preserved.
  * Rejected URLs are returned as `null`.
  */
 export function sanitizeUrl(url: string): string | null {
-  let sanitizedUrl: string | null;
-
   // If the URL starts with "www.", normalize it as an HTTPS URL
   if (url.startsWith("www.")) {
     url = "https://" + url;
@@ -100,18 +100,36 @@ export function sanitizeUrl(url: string): string | null {
       isAbsolute ? undefined : PLACEHOLDER_BASE_URL
     );
 
-    if (urlObject.protocol === "http:" || urlObject.protocol === "https:") {
-      sanitizedUrl = isAbsolute
-        ? urlObject.href
-        : urlObject.href.replace(PLACEHOLDER_BASE_URL, "");
-    } else {
-      sanitizedUrl = null;
+    if (urlObject.protocol !== "http:" && urlObject.protocol !== "https:") {
+      return null;
     }
-  } catch {
-    sanitizedUrl = null;
-  }
 
-  return sanitizedUrl;
+    const hasTrailingSlash = TRAILING_SLASH_URL_REGEX.test(url);
+
+    // Instead of using URL.toString(), we rebuild the URL manually
+    // to preserve the presence/absence of trailing slashes.
+    const sanitizedUrl =
+      // 1. Origin, only for absolute URLs
+      (isAbsolute ? urlObject.origin : "") +
+      // 2. Pathname, with a trailing slash if the original URL had one
+      (urlObject.pathname === "/"
+        ? // 2.a. Domain-only URLs, they always have their pathname set to "/"
+          hasTrailingSlash
+          ? "/"
+          : ""
+        : // 2.b. URLs with a path
+          hasTrailingSlash && !urlObject.pathname.endsWith("/")
+          ? urlObject.pathname + "/"
+          : urlObject.pathname) +
+      // 3. Search params
+      urlObject.search +
+      // 4. Hash
+      urlObject.hash;
+
+    return sanitizedUrl !== "" ? sanitizedUrl : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

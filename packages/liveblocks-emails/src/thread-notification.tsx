@@ -157,7 +157,7 @@ function generateCommentUrl({
     return;
   }
 
-  return generateUrl(roomUrl, { commentId }, commentId);
+  return generateUrl(roomUrl, undefined, commentId);
 }
 
 export type CommentEmailData<BodyType, U extends BaseUserMeta = DU> = {
