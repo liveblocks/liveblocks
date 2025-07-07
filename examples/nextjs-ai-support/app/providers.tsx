@@ -11,7 +11,9 @@ export function Providers({ children }: { children: ReactNode }) {
       authEndpoint={authWithExampleId("/api/liveblocks-auth")}
     >
       {children}
-      <Toaster richColors />
+      <div className="absolute">
+        <Toaster richColors />
+      </div>
     </LiveblocksProvider>
   );
 }
