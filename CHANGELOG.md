@@ -16,7 +16,7 @@
   shown during development.
 
 - Fix an issue with the render component of tool calls not being displayed
-  correctly when tool calls are read before they are registered.
+  correctly when the tool call signal was read before it was registered.
 
 ## v3.1.0
 
