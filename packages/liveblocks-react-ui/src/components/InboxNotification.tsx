@@ -7,7 +7,12 @@ import type {
   InboxNotificationThreadData,
   KDAD,
 } from "@liveblocks/core";
-import { assertNever, console } from "@liveblocks/core";
+import {
+  assertNever,
+  console,
+  generateUrl,
+  sanitizeUrl,
+} from "@liveblocks/core";
 import {
   useDeleteInboxNotification,
   useInboxNotificationThread,
@@ -46,7 +51,6 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
-import { generateURL } from "../utils/url";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { CodeBlock } from "./internal/CodeBlock";
@@ -560,13 +564,13 @@ const InboxNotificationThread = forwardRef<
       showReactions,
       thread,
     ]);
-    // Add the thread ID and comment ID to the `href`.
-    // And use URL from `resolveRoomsInfo` if `href` isn't set.
+    // Use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? generateURL(resolvedHref, undefined, contents?.commentId)
+        ? // Set the comment ID as the URL hash.
+          generateUrl(resolvedHref, undefined, contents?.commentId)
         : undefined;
     }, [contents?.commentId, href, info?.url]);
 
@@ -646,7 +650,9 @@ const InboxNotificationTextMention = forwardRef<
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
-      return resolvedHref ? generateURL(resolvedHref) : undefined;
+      return resolvedHref
+        ? (sanitizeUrl(resolvedHref) ?? undefined)
+        : undefined;
     }, [href, info?.url]);
 
     const unread = useMemo(() => {

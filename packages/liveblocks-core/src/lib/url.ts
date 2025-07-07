@@ -1,5 +1,8 @@
 import type { Brand } from "./utils";
 
+const PLACEHOLDER_BASE_URL = "https://localhost:9999";
+const ABSOLUTE_URL_REGEX = /^[a-zA-Z][a-zA-Z\d+\-.]*?:/;
+
 export type QueryParams =
   | Record<string, string | number | null | undefined>
   | URLSearchParams;
@@ -70,4 +73,72 @@ export function url(
   return strings.reduce(
     (result, str, i) => result + encodeURIComponent(values[i - 1] ?? "") + str
   ) as URLSafeString;
+}
+
+/**
+ * Sanitize a URL (normalize www URLs, handle relative URLs, prevent XSS attacks, etc.)
+ *
+ * Accepted URLs:
+ * - Absolute URLs with an http or https protocol (e.g. https://liveblocks.io)
+ * - Absolute URLs with a `www` prefix (e.g. www.liveblocks.io)
+ * - Relative URLs (e.g. /path/to/page)
+ *
+ * Rejected URLs are returned as `null`.
+ */
+export function sanitizeUrl(url: string): string | null {
+  let sanitizedUrl: string | null;
+
+  // If the URL starts with "www.", normalize it as an HTTPS URL
+  if (url.startsWith("www.")) {
+    url = "https://" + url;
+  }
+
+  try {
+    const isAbsolute = ABSOLUTE_URL_REGEX.test(url);
+    const urlObject = new URL(
+      url,
+      isAbsolute ? undefined : PLACEHOLDER_BASE_URL
+    );
+
+    if (urlObject.protocol === "http:" || urlObject.protocol === "https:") {
+      sanitizedUrl = isAbsolute
+        ? urlObject.href
+        : urlObject.href.replace(PLACEHOLDER_BASE_URL, "");
+    } else {
+      sanitizedUrl = null;
+    }
+  } catch {
+    sanitizedUrl = null;
+  }
+
+  return sanitizedUrl;
+}
+
+/**
+ * Construct a URL with optional parameters and hash.
+ */
+export function generateUrl(
+  url: string,
+  params?: Record<string, string | number | undefined>,
+  hash?: string
+): string {
+  const isAbsolute = ABSOLUTE_URL_REGEX.test(url);
+  const urlObject = new URL(url, isAbsolute ? undefined : PLACEHOLDER_BASE_URL);
+
+  if (params !== undefined) {
+    for (const [param, value] of Object.entries(params)) {
+      if (value) {
+        urlObject.searchParams.set(param, String(value));
+      }
+    }
+  }
+
+  // Only add the new hash if the URL does not already have one
+  if (!urlObject.hash && hash !== undefined) {
+    urlObject.hash = `#${hash}`;
+  }
+
+  return isAbsolute
+    ? urlObject.href
+    : urlObject.href.replace(PLACEHOLDER_BASE_URL, "");
 }

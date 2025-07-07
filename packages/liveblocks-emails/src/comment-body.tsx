@@ -14,7 +14,7 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
   resolveUsersInCommentBody,
-  toAbsoluteUrl,
+  sanitizeUrl,
 } from "@liveblocks/core";
 
 import { exists } from "./lib/utils";
@@ -139,9 +139,11 @@ export async function convertCommentBody<T, U extends BaseUserMeta = DU>(
               }
 
               if (isCommentBodyLink(inline)) {
-                const href = toAbsoluteUrl(inline.url) ?? inline.url;
                 return options.elements.link(
-                  { element: inline, href },
+                  {
+                    element: inline,
+                    href: sanitizeUrl(inline.url) ?? "",
+                  },
                   inlineIndex
                 );
               }
