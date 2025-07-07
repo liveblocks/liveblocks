@@ -11,7 +11,9 @@ import { AiChat, AiTool } from "@liveblocks/react-ui";
 import Link from "next/link";
 import { useState } from "react";
 import { useChatId } from "./useChatId";
+import { toast } from "sonner";
 
+// Answers to these are defined in the Liveblocks dashboard, in the copilot's knowledge
 const INITIAL_SUGGESTIONS = [
   "I can’t log in",
   "How do I change my email?",
@@ -90,6 +92,9 @@ export default function Page() {
             onClose={() => setShowEmailForm(false)}
             onSubmitSuccess={() => {
               setShowEmailForm(false);
+              toast.success("Ticket created successfully", {
+                duration: 5000,
+              });
               createNewChat();
             }}
           />
@@ -112,7 +117,7 @@ export default function Page() {
 
 // The actual chat component
 function Chat({ chatId }: { chatId: string }) {
-  // Triggers ClientSideSuspense for all chat
+  // Triggers ClientSideSuspense for the whole chat
   const { messages } = useAiChatMessages(chatId);
 
   return (
@@ -160,7 +165,7 @@ function Empty({ chatId }: { chatId: string }) {
 function Fallback() {
   return (
     <div>
-      <div className="flex flex-wrap items-start gap-2 mb-8">
+      <div className="flex flex-wrap items-start gap-2 mb-8 select-none">
         {INITIAL_SUGGESTIONS.map((suggestion) => (
           <div
             key={suggestion}

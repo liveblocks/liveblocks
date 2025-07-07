@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
+import { Toaster } from "sonner";
 
 // You can wrap your whole app in a LiveblocksProvider
 export function Providers({ children }: { children: ReactNode }) {
@@ -10,6 +11,7 @@ export function Providers({ children }: { children: ReactNode }) {
       authEndpoint={authWithExampleId("/api/liveblocks-auth")}
     >
       {children}
+      <Toaster richColors />
     </LiveblocksProvider>
   );
 }
