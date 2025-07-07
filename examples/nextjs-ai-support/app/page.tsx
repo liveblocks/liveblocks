@@ -29,10 +29,10 @@ export default function Page() {
     <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow rounded-lg">
       {/* Defines a tool that the AI can choose to use. Shows a button that displays an email form on click. */}
       <RegisterAiTool
-        name="show-create-ticket-form"
+        name="create-support-ticket-button"
         tool={defineAiTool()({
           description:
-            "Show a button that takes users to an email form where they can create a support ticket",
+            "Shows a button that displays an email contact form where users can create a support ticket. Name and email are pre-filled, the description box must be filled. The chat’s history is included in the ticket.",
           parameters: {
             type: "object",
             additionalItems: false,
