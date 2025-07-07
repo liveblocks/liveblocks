@@ -28,7 +28,7 @@ export default function Page() {
   return (
     <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow rounded-lg">
       {/* Defines a tool that the AI can choose to use. Shows a button that displays an email form on click. */}
-      <RegisterAiTool
+      {/* <RegisterAiTool
         name="create-support-ticket-button"
         tool={defineAiTool()({
           description:
@@ -64,7 +64,7 @@ export default function Page() {
             );
           },
         })}
-      />
+      /> */}
 
       <div className="px-10 py-8 flex flex-col gap-0.5 border-b pb-10 border-neutral-200">
         <h1 className="text-2xl font-semibold tracking-[-0.015em]">
@@ -115,19 +115,19 @@ export default function Page() {
   );
 }
 
+const copilotId = process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined;
+
 // The actual chat component
 function Chat({ chatId }: { chatId: string }) {
   // Triggers ClientSideSuspense for the whole chat
   const { messages } = useAiChatMessages(chatId);
-
-  console.log(process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID);
 
   return (
     <AiChat
       className="min-h-0 h-full flex-shrink flex-grow overflow-x-hidden"
       chatId={chatId}
       // Create a custom copilot in the dashboard with your chosen AI provider/prompt/settings
-      copilotId={process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID || undefined}
+      copilotId={copilotId}
       components={{
         // Placeholder when there's no messages
         Empty,
@@ -144,7 +144,9 @@ function Chat({ chatId }: { chatId: string }) {
 // Shown when the chat is empty
 function Empty({ chatId }: { chatId: string }) {
   // Start a chat with this when the user clicks a button
-  const sendMessage = useSendAiMessage(chatId);
+  const sendMessage = useSendAiMessage(chatId, {
+    copilotId: copilotId,
+  });
 
   return (
     <div className="pb-8 h-full flex flex-col gap-5 justify-end">
