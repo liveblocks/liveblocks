@@ -196,17 +196,15 @@ function ToolInvocationPart({
     <div className="lb-ai-chat-message-tool-invocation">
       <ErrorBoundary
         fallback={
-          process.env.NODE_ENV !== "production" ? (
-            <div className="lb-ai-chat-message-error">
-              <span className="lb-icon-container">
-                <WarningIcon />
-              </span>
-              <p>
-                Failed to render tool call result for <code>{part.name}</code>.
-                See console for details.
-              </p>
-            </div>
-          ) : null
+          <div className="lb-ai-chat-message-error">
+            <span className="lb-icon-container">
+              <WarningIcon />
+            </span>
+            <p>
+              Failed to render tool call result for <code>{part.name}</code>.
+              See console for details.
+            </p>
+          </div>
         }
       >
         <AiMessageToolInvocation part={part} message={message} />
