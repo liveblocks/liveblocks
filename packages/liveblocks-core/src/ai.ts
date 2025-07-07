@@ -326,11 +326,11 @@ function createStore_forTools() {
       return (
         // A tool that's registered and scoped to a specific chat ID...
         (chatId !== undefined
-          ? toolsByChatIdΣ.get(chatId)?.get(name)
+          ? toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name)
           : undefined
         )?.get() ??
         // ...or a globally registered tool
-        toolsByChatIdΣ.getOrCreate(kWILDCARD).get(name)?.get()
+        toolsByChatIdΣ.getOrCreate(kWILDCARD).getOrCreate(name).get()
       );
     });
   });
