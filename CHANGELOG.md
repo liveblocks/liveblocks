@@ -1,4 +1,4 @@
-## vNEXT (not yet published)
+## v3.1.1
 
 ### `@liveblocks/client`
 
@@ -14,6 +14,9 @@
 - Fix: also display errors in production builds when they happen in `render`
   methods defined with `defineAiTool()`. Previously, these errors would only be
   shown during development.
+
+- Fix an issue with the render component of tool calls not being displayed
+  correctly when the tool call signal was read before it was registered.
 
 ## v3.1.0
 
