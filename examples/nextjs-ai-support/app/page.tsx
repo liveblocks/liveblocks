@@ -28,7 +28,7 @@ export default function Page() {
   return (
     <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow rounded-lg">
       {/* Defines a tool that the AI can choose to use. Shows a button that displays an email form on click. */}
-      {/* <RegisterAiTool
+      <RegisterAiTool
         name="create-support-ticket-button"
         tool={defineAiTool()({
           description:
@@ -64,7 +64,7 @@ export default function Page() {
             );
           },
         })}
-      /> */}
+      />
 
       <div className="px-10 py-8 flex flex-col gap-0.5 border-b pb-10 border-neutral-200">
         <h1 className="text-2xl font-semibold tracking-[-0.015em]">
