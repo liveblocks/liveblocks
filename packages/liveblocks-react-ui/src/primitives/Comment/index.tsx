@@ -113,7 +113,14 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                     }
 
                     if (isCommentBodyLink(inline)) {
-                      const href = sanitizeUrl(inline.url) ?? "";
+                      const href = sanitizeUrl(inline.url);
+
+                      // If the URL is invalid, its text/URL are used as plain text.
+                      if (href === null) {
+                        return (
+                          <span key={index}>{inline.text ?? inline.url}</span>
+                        );
+                      }
 
                       return (
                         <Link href={href} key={index}>

@@ -597,11 +597,25 @@ export async function stringifyCommentBody(
           }
 
           if (isCommentBodyLink(inline)) {
+            const href = sanitizeUrl(inline.url);
+
+            // If the URL is invalid, its text/URL are used as plain text.
+            if (href === null) {
+              return [
+                elements.text(
+                  {
+                    element: { text: inline.text ?? inline.url },
+                  },
+                  inlineIndex
+                ),
+              ];
+            }
+
             return [
               elements.link(
                 {
                   element: inline,
-                  href: sanitizeUrl(inline.url) ?? "",
+                  href,
                 },
                 inlineIndex
               ),
