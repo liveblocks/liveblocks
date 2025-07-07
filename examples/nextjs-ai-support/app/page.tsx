@@ -35,8 +35,8 @@ export default function Page() {
             "Shows a button that displays an email contact form where users can create a support ticket. Name and email are pre-filled, the description box must be filled. The chat’s history is included in the ticket.",
           parameters: {
             type: "object",
-            additionalItems: false,
             properties: {},
+            additionalProperties: false,
           },
           execute: () => {},
           render: ({ respond }) => {
@@ -119,6 +119,8 @@ export default function Page() {
 function Chat({ chatId }: { chatId: string }) {
   // Triggers ClientSideSuspense for the whole chat
   const { messages } = useAiChatMessages(chatId);
+
+  console.log(process.env.NEXT_PUBLIC_LIVEBLOCKS_COPILOT_ID);
 
   return (
     <AiChat
