@@ -1,4 +1,4 @@
-## vNEXT (not yet published)
+## v3.1.1
 
 ### `@liveblocks/client`
 
