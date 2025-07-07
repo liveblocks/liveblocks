@@ -15,6 +15,9 @@
   methods defined with `defineAiTool()`. Previously, these errors would only be
   shown during development.
 
+- Fix an issue with the render component of tool calls not being displayed
+  correctly when tool calls are read before they are registered.
+
 ## v3.1.0
 
 ### `@liveblocks/client`
