@@ -155,6 +155,7 @@ export type AiToolDefinition<
   parameters: S;
   execute?: AiToolExecuteCallback<A, R>;
   render?: (props: AiToolInvocationProps<A, R>) => unknown;
+  enabled?: boolean;
 };
 
 export type AiOpaqueToolDefinition = AiToolDefinition<
@@ -325,11 +326,11 @@ function createStore_forTools() {
       return (
         // A tool that's registered and scoped to a specific chat ID...
         (chatId !== undefined
-          ? toolsByChatIdΣ.get(chatId)?.get(name)
+          ? toolsByChatIdΣ.getOrCreate(chatId).getOrCreate(name)
           : undefined
         )?.get() ??
         // ...or a globally registered tool
-        toolsByChatIdΣ.getOrCreate(kWILDCARD).get(name)?.get()
+        toolsByChatIdΣ.getOrCreate(kWILDCARD).getOrCreate(name).get()
       );
     });
   });
@@ -372,7 +373,7 @@ function createStore_forTools() {
       ...(scopedToolsΣ?.entries() ?? []),
     ]).flatMap(([name, toolΣ]) => {
       const tool = toolΣ.get();
-      return tool
+      return tool && (tool.enabled ?? true)
         ? [{ name, description: tool.description, parameters: tool.parameters }]
         : [];
     });

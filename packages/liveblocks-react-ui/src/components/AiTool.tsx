@@ -23,7 +23,7 @@ import {
 } from "../overrides";
 import { useAiToolInvocationContext } from "../primitives/AiMessage/contexts";
 import * as Collapsible from "../primitives/Collapsible";
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 import { useSemiControllableState } from "../utils/use-controllable-state";
 import { CodeBlock } from "./internal/CodeBlock";
 
@@ -60,6 +60,13 @@ export interface AiToolProps
    * The event handler called when the content is collapsed or expanded by clicking on it.
    */
   onCollapsedChange?: (collapsed: boolean) => void;
+
+  /**
+   * Whether the content can be collapsed/expanded.
+   * If set to `false`, clicking on it will have no effect.
+   * If there's no content, this prop has no effect.
+   */
+  collapsible?: boolean;
 }
 
 export type AiToolIconProps = ComponentProps<"div">;
@@ -114,16 +121,14 @@ export interface AiToolConfirmationProps<
 }
 
 function AiToolIcon({ className, ...props }: AiToolIconProps) {
-  return (
-    <div className={classNames("lb-ai-tool-icon", className)} {...props} />
-  );
+  return <div className={cn("lb-ai-tool-icon", className)} {...props} />;
 }
 
 function AiToolInspector({ className, ...props }: AiToolInspectorProps) {
   const { args, partialArgs, result } = useAiToolInvocationContext();
 
   return (
-    <div className={classNames("lb-ai-tool-inspector", className)} {...props}>
+    <div className={cn("lb-ai-tool-inspector", className)} {...props}>
       <CodeBlock
         title="Arguments"
         code={JSON.stringify(args ?? partialArgs, null, 2)}
@@ -181,10 +186,7 @@ function AiToolConfirmation<
   }
 
   return (
-    <div
-      className={classNames("lb-ai-tool-confirmation", className)}
-      {...props}
-    >
+    <div className={cn("lb-ai-tool-confirmation", className)} {...props}>
       {children ? (
         <div className="lb-ai-tool-confirmation-content">{children}</div>
       ) : null}
@@ -323,6 +325,7 @@ export const AiTool = Object.assign(
         children,
         title,
         icon,
+        collapsible,
         collapsed,
         onCollapsedChange,
         className,
@@ -348,6 +351,8 @@ export const AiTool = Object.assign(
       //       For now we're limiting the visual issues caused by the above by using CSS's
       //       `:empty` pseudo-class to make the content 0px high if it's actually empty.
       const hasContent = Children.count(children) > 0;
+      // If there's no content, the tool is never collapsible.
+      const isCollapsible = hasContent ? (collapsible ?? true) : false;
       const resolvedTitle = useMemo(() => {
         return title ?? prettifyString(name);
       }, [title, name]);
@@ -364,12 +369,12 @@ export const AiTool = Object.assign(
       return (
         <Collapsible.Root
           ref={forwardedRef}
-          className={classNames("lb-collapsible lb-ai-tool", className)}
+          className={cn("lb-collapsible lb-ai-tool", className)}
           {...props}
           // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
           open={hasContent ? !semiControlledCollapsed : false}
           onOpenChange={handleCollapsibleOpenChange}
-          disabled={!hasContent}
+          disabled={!isCollapsible}
           data-result={result?.type}
           data-stage={stage}
         >
@@ -378,7 +383,7 @@ export const AiTool = Object.assign(
               <div className="lb-ai-tool-header-icon-container">{icon}</div>
             ) : null}
             <span className="lb-ai-tool-header-title">{resolvedTitle}</span>
-            {hasContent ? (
+            {isCollapsible ? (
               <span className="lb-collapsible-chevron lb-icon-container">
                 <ChevronRightIcon />
               </span>

@@ -16,6 +16,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
+import { cn } from "@liveblocks/react-ui/_private";
 import {
   $getSelection,
   COMMAND_PRIORITY_HIGH,
@@ -34,7 +35,6 @@ import {
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
-import { classNames } from "../classnames";
 import { compareNodes } from "./anchored-threads";
 import {
   ActiveThreadsContext,
@@ -236,7 +236,7 @@ function FloatingThreadPortal({
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
       }}
-      className={classNames(
+      className={cn(
         "lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-threads",
         className
       )}

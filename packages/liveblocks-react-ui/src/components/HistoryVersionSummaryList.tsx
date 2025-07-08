@@ -3,7 +3,7 @@
 import type { ComponentPropsWithoutRef } from "react";
 import { Children, forwardRef } from "react";
 
-import { classNames } from "../utils/class-names";
+import { cn } from "../utils/cn";
 
 export type HistoryVersionSummaryListProps = ComponentPropsWithoutRef<"ol">;
 
@@ -23,10 +23,7 @@ export const HistoryVersionSummaryList = forwardRef<
 >(({ children, className, ...props }, forwardedRef) => {
   return (
     <ol
-      className={classNames(
-        "lb-root lb-history-version-summary-list",
-        className
-      )}
+      className={cn("lb-root lb-history-version-summary-list", className)}
       {...props}
       ref={forwardedRef}
     >

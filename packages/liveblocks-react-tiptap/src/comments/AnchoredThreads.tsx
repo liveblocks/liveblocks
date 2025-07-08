@@ -4,11 +4,11 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
+import { cn } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { classNames } from "../classnames";
 import { THREADS_PLUGIN_KEY } from "../types";
 import { getRectFromCoords } from "../utils";
 
@@ -197,7 +197,7 @@ export function AnchoredThreads({
   return (
     <div
       {...props}
-      className={classNames(className, "lb-root lb-tiptap-anchored-threads")}
+      className={cn(className, "lb-root lb-tiptap-anchored-threads")}
       ref={containerRef}
       style={{
         position: "relative",
@@ -283,10 +283,7 @@ function ThreadWrapper({
   return (
     <div
       ref={divRef}
-      className={classNames(
-        "lb-tiptap-anchored-threads-thread-container",
-        className
-      )}
+      className={cn("lb-tiptap-anchored-threads-thread-container", className)}
       {...props}
     >
       <Thread

@@ -8,7 +8,7 @@ import { forwardRef, memo } from "react";
 
 import { AiMessage } from "../../_private";
 import { type GlobalOverrides, useOverrides } from "../../overrides";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 type UiUserMessage = WithNavigation<AiUserMessage>;
 
@@ -41,7 +41,7 @@ export const AiChatUserMessage = memo(
       return (
         <div
           ref={forwardedRef}
-          className={classNames(
+          className={cn(
             "lb-ai-chat-message lb-ai-chat-user-message",
             className
           )}

@@ -1,4 +1,61 @@
-## vNEXT (not yet published)
+## v3.1.1
+
+### `@liveblocks/client`
+
+- Adds experimental setting `LiveObject.detectLargeObjects`, which can be
+  enabled globally using `LiveObject.detectLargeObjects = true` (default is
+  false). With this setting enabled, calls to `LiveObject.set()` or
+  `LiveObject.update()` will throw as soon as you add a value that would make
+  the total size of the LiveObject exceed the platform limit of 128 kB. The
+  benefit is that you get an early error instead of a silent failure, but the
+  downside is that this adds significant runtime overhead if your application
+  makes many LiveObject mutations.
+
+- Fix: also display errors in production builds when they happen in `render`
+  methods defined with `defineAiTool()`. Previously, these errors would only be
+  shown during development.
+
+- Fix an issue with the render component of tool calls not being displayed
+  correctly when the tool call signal was read before it was registered.
+
+## v3.1.0
+
+### `@liveblocks/client`
+
+- `defineAiTool()()` now takes an optional `enabled` property. When set to
+  `false`, the tool will not be made available to the AI copilot for new/future
+  chat messages, but still allow existing tool invocations to be rendered that
+  are part of the historic chat record.
+
+### `@liveblocks/react`
+
+- `RegisterAiTool` now also takes an optional `enabled` prop. This is a
+  convenience prop that can be used to override the tool’s `enabled` status
+  directly in React.
+
+### `@liveblocks/react-ui`
+
+- Reasoning parts in `AiChat` are now automatically collapsed when the reasoning
+  is done.
+- Add `collapsible` prop to `AiTool` to control whether its content can be
+  collapsed/expanded.
+- Add `InboxNotification.Inspector` component to help debugging custom inbox
+  notifications.
+
+### `@liveblocks/redux`
+
+- Add support for Redux v5.
+
+### `@liveblocks/react-lexical`
+
+- Fix default `z-index` of collaboration cursors, and make them inherit their
+  font family instead of always using Arial.
+- Add `lb-lexical-cursors` class to the collaboration cursors’ container.
+- Improve mentions’ serialization.
+
+### `@liveblocks/node-lexical`
+
+- Improve mentions’ serialization.
 
 ## v3.0.0
 

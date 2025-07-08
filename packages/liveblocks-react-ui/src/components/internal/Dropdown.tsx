@@ -10,7 +10,7 @@ import {
   FLOATING_ELEMENT_SIDE_OFFSET,
 } from "../../constants";
 import { useOverrides } from "../../overrides";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export interface DropdownProps
   extends Pick<
@@ -49,7 +49,7 @@ export function Dropdown({
       {children}
       <DropdownMenuPrimitive.Portal container={portalContainer}>
         <DropdownMenuPrimitive.Content
-          className={classNames(
+          className={cn(
             "lb-root lb-portal lb-elevation lb-dropdown",
             className
           )}
@@ -68,7 +68,7 @@ export const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
   ({ children, className, icon, ...props }, forwardedRef) => {
     return (
       <DropdownMenuPrimitive.DropdownMenuItem
-        className={classNames("lb-dropdown-item", className)}
+        className={cn("lb-dropdown-item", className)}
         {...props}
         ref={forwardedRef}
       >

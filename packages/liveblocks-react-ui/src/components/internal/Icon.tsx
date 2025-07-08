@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export const ICON_WIDTH = 20;
 export const ICON_HEIGHT = 20;
@@ -18,7 +18,7 @@ export function Icon({ children, className, ...props }: ComponentProps<"svg">) {
       strokeLinecap="round"
       strokeLinejoin="round"
       role="presentation"
-      className={classNames("lb-icon", className)}
+      className={cn("lb-icon", className)}
       {...props}
     >
       {children}

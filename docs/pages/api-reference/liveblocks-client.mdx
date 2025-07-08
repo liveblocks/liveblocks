@@ -281,7 +281,7 @@ const client = createClient({
         Authentication: "<your own headers here>",
         "Content-Type": "application/json",
       },
-      // Don't forget to pass `room` down. Note that it
+      // Don’t forget to pass `room` down. Note that it
       // can be undefined when using Notifications.
       body: JSON.stringify({ room }),
     });
@@ -300,7 +300,7 @@ These are the values the functions can return.
 1. A valid token, it returns a `{ "token": "..." }` shaped response.
 1. A token that explicitly forbids access, it returns an
    `{ "error": "forbidden", "reason": "..." }` shaped response. If this is
-   returned, the client will disconnect and won't keep trying to authorize.
+   returned, the client will disconnect and won’t keep trying to authorize.
 
 Any other error will be treated as an unexpected error, after which the client
 will retry the request until it receives either 1. or 2.
@@ -846,21 +846,21 @@ const myTool = defineAiTool()({
   parameters: {
     type: "object",
     properties: {
-      userId: { type: "string", description: "The user's unique identifier" },
+      userId: { type: "string", description: "The user’s unique identifier" },
     },
     required: ["userId"],
     additionalProperties: false,
   },
   execute: async ({ userId }) => {
     const user = await getUserById(userId);
-    return { data: { success: true, user } };
+    return { data: { user } };
   },
   render: ({ result }) => (
     <AiTool title="User Lookup" icon="👤">
-      {!result ? (
+      {!result.data ? (
         <div>Looking up user...</div>
       ) : (
-        <div>Found user: {result.user.name}</div>
+        <div>Found user: {result.data.user.name}</div>
       )}
     </AiTool>
   ),
@@ -870,7 +870,7 @@ const myTool = defineAiTool()({
 <Banner>
 
 Note that the function should be called like this `defineAiTool()({ ... })`
-(double-parens). This allows TypeScript's inference to work correctly.
+(double-parens). This allows TypeScript’s inference to work correctly.
 
 </Banner>
 
@@ -881,27 +881,157 @@ Note that the function should be called like this `defineAiTool()({ ... })`
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="description" type="string">
+  <PropertiesListItem name="description" type="string" isRequired>
     A clear description of what the tool does. Used by AI to understand when to
     call this tool.
   </PropertiesListItem>
-  <PropertiesListItem name="parameters" type="JSONSchema7">
-    JSON Schema defining the tool's input parameters. The AI will validate
+  <PropertiesListItem name="parameters" type="JSONSchema7" isRequired>
+    JSON Schema defining the tool’s input parameters. The AI will validate
     arguments against this schema.
   </PropertiesListItem>
+  <PropertiesListItem name="enabled" type="boolean">
+    Whether this tool should be enabled. When set to `false`, the tool will not
+    be made available to the AI copilot for any new/future chat messages, but
+    will still allow existing tool invocations to be rendered that are part of
+    the historic chat record. Defaults to true.
+  </PropertiesListItem>
   <PropertiesListItem name="execute" type="function">
-    Async function that performs the tool's action. Receives validated arguments
-    and execution context, returns structured data.
+    Async function that performs the tool’s action. Receives validated arguments
+    and execution context, returns structured data. See [implementing the tool
+    call via `execute`](#implement-via-execute).
   </PropertiesListItem>
   <PropertiesListItem name="render" type="function">
-    React component function that renders the tool's UI during different
-    execution stages.
+    React component function that renders the tool’s UI during different
+    execution stages. See [tool call rendering
+    stages](#tool-call-rendering-stages).
   </PropertiesListItem>
 </PropertiesList>
 
 Tools can be registered globally with
 [`RegisterAiTool`](/docs/api-reference/liveblocks-react#RegisterAiTool) or
 passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat).
+
+### Tool call rendering stages [#tool-call-rendering-stages]
+
+Rendering a tool call can be done before the tool call is executed, which allows
+you to display a UI during its entire lifecycle. The tool call stages are:
+
+- `receiving` The tool call is being received. This stage is reserved for future
+  use, to enable showing a UI while the tool call `args` object is being
+  streamed in, but before the tool call can actually be made.
+- `executing` The tool call is currently executing, or is ready to be. In this
+  stage, the `args` are fully known, but the result of the tool call is not
+  known yet.
+- `executed` The tool call has been executed, and the result is known. This
+  happens after your `execute` function was run, or after you called `respond()`
+  inside `render`. In this stage, the `result` object will be available.
+
+The render component will automatically re-render when its stage changes.
+
+### Implementing tool calls
+
+When you implement a tool call, use one of these combinations:
+
+1. Implement `execute` _and_ `render`
+1. Implement only `execute`, but no `render`
+1. Implement only `render`, but make sure to eventually call `respond()`
+
+#### Implementing your tool call via `execute` [#implement-via-execute]
+
+If you implement the `execute` function, this function will automatically be
+invoked when the tool call gets made. The return value of this function will be
+the result that will be passed back to the AI copilot.
+
+- `{ data: any, description?: string }` The data to return in case of success.
+  `data` must be a legal JSON value. Providing a description is optional. If you
+  provide a description, it will be passed to the AI copilot to help it
+  understand the returned data or to provide follow-up instructions for how to
+  respond to this tool result.
+- `{ error: string }` The error message in case the tool call failed to execute.
+- `{ cancel: true | string }` If the tool call should be cancelled. You can
+  optionally provide a cancel reason as an instruction to the AI copilot.
+
+The returned value can be observed in the `render` method, through the `result`
+param:
+
+```tsx
+defineAiTool()({
+  /* ... */
+
+  execute: async () => {
+    await sleep(1000);
+    return { data: { user: { name: "Alice" } } };
+  },
+
+  render: ({ result }) => {
+    if (result.data) {
+      return <div>Found user: {result.data.user.name}</div>;
+    }
+
+    // Tool hasn’t executed yet
+    return <Spinner />;
+  },
+});
+```
+
+If you do not implement `render` alongside `execute`, the tool call will still
+be executed, but no UI will be displayed. The result will still be passed back
+to the AI copilot.
+
+#### Implementing your tool call via `render` [#implement-via-render]
+
+Sometimes you may not want to immediately execute the tool call. This is most
+common to build a Human-in-the-Loop (HITL) style UI where you want the user to
+confirm or correct the tool call’s behavior. In these scenarios, you do not want
+to implement `execute`. Instead, you could display any UI, as long as you
+eventually call the `respond` function that is provided to `render`’s props.
+
+```tsx
+defineAiTool()({
+  /* ... */
+  /* NOTE: No execute method used here! */
+
+  render: ({ respond }) => {
+    return (
+      <div>
+        <button
+          onClick={() => {
+            respond({ data: { user: { name: "Alice" } } });
+          }}
+        >
+          Confirm
+        </button>
+        <button
+          onClick={() => {
+            respond({ cancel: true });
+          }}
+        >
+          Cancel
+        </button>
+      </div>
+    );
+  },
+});
+```
+
+In this example, until the Confirm button is clicked, the AI chat will remain in
+“executing” stage, awaiting the result of this tool call.
+
+This example is for illustrative purposes only. In practice, using our
+[`AiTool.Confirmation`](/docs/api-reference/liveblocks-react-ui#AiTool.Confirmation)
+tool is preferred for building confirm/cancel flows.
+
+Like with the `execute` function, the `respond` function should be called with a
+value of this shape:
+
+- `{ data: any, description?: string }` The data to return in case of success.
+  `data` must be a legal JSON value. Providing a description is optional. If you
+  provide a description, it will be passed to the AI copilot to help it
+  understand the returned data or to provide follow-up instructions for how to
+  respond to this tool result.
+- `{ error: string }` The error message in case the tool call failed to execute.
+- `{ cancel: true | string }` If the tool call should be cancelled. You can
+  optionally provide a cancel reason as an instruction to the AI copilot.
 
 ## Room
 
@@ -1687,7 +1817,7 @@ declare global {
 ```ts
 const { room, leave } = client.enterRoom("my-room-id");
 
-// Call this to update the current user's Presence
+// Call this to update the current user’s Presence
 function updateCursorPosition({ x, y }) {
   room.updatePresence({ cursor: { x, y } });
 }
@@ -1891,7 +2021,7 @@ const unsubscribe = room.subscribe("error", (error) => {
       break;
 
     case 4001:
-      // Could not connect because you don't have access to this room
+      // Could not connect because you don’t have access to this room
       break;
 
     case 4005:
@@ -1931,7 +2061,7 @@ const unsubscribe = room.subscribe("error", (error) => {
     </div>
 
     - `-1` Authentication error.
-    - `4001` Could not connect because you don't have access to this room.
+    - `4001` Could not connect because you don’t have access to this room.
     - `4005` Could not connect because room was full.
     - `4006` The room ID has changed.
 
@@ -1945,7 +2075,7 @@ helpful for implementing a redirect to another page.
 
 ```ts
 const unsubscribe = room.subscribe("error", (error) => {
-  // Could not connect because you don't have access to this room
+  // Could not connect because you don’t have access to this room
   if (error.context.code === 4001)
     return __displayForbiddenEntryDialog__();
   }
@@ -2138,7 +2268,7 @@ pet.toImmutable();
 Note that `room.batch` cannot take an `async` function.
 
 ```tsx
-// ❌ Won't work
+// ❌ Won’t work
 room.batch(async () => {
   // ...
 });
@@ -4944,7 +5074,7 @@ const commentBody: CommentBody = {
   ],
 };
 
-// Get the mentions inside the comment's body
+// Get the mentions inside the comment’s body
 const mentions = getMentionsFromCommentBody(commentBody);
 
 // [{ kind: "user", id: "chris@example.com" }]
@@ -4953,7 +5083,7 @@ console.log(mentions);
 
 <Banner title="Also available from @liveblocks/node">
 
-If you’d like to use this on the server side, it's also available from
+If you’d like to use this on the server side, it’s also available from
 [`@liveblocks/node`](/docs/api-reference/liveblocks-node#get-mentions-from-comment-body).
 
 </Banner>
@@ -5002,12 +5132,12 @@ const stringComment = await stringifyCommentBody(comment.body, {
       `<a href="${user.profileUrl}">${element.id}</a>`,
   },
 
-  // Optional, get your user's names and info from their ID to be displayed in mentions
+  // Optional, get your user’s names and info from their ID to be displayed in mentions
   async resolveUsers({ userIds }) {
     const usersData = await __getUsersFromDB__(userIds);
 
     return usersData.map((userData) => ({
-      // Name is inserted into the output instead of a user's ID
+      // Name is inserted into the output instead of a user’s ID
       name: userData.name,
 
       // Custom formatting in `elements.mention` allows custom properties to be used
@@ -5019,7 +5149,7 @@ const stringComment = await stringifyCommentBody(comment.body, {
 
 <Banner title="Also available from @liveblocks/node">
 
-If you’d like to use this on the server side, it's also available from
+If you’d like to use this on the server side, it’s also available from
 [`@liveblocks/node`](/docs/api-reference/liveblocks-node#stringify-comment-body).
 
 </Banner>
@@ -5086,7 +5216,7 @@ recommended to make use of them.
 ```ts file="liveblocks.config.ts"
 declare global {
   interface Liveblocks {
-    // Each user's Presence
+    // Each user’s Presence
     Presence: {};
 
     // The Storage tree for the room
@@ -5123,7 +5253,7 @@ import { LiveList } from "@liveblocks/client";
 
 declare global {
   interface Liveblocks {
-    // Each user's Presence
+    // Each user’s Presence
     Presence: {
       // Example, real-time cursor coordinates
       cursor: { x: number; y: number };
@@ -5255,15 +5385,15 @@ type ToolDefinition<TArgs = any, TResult = any> = {
     call this tool.
   </PropertiesListItem>
   <PropertiesListItem name="parameters" type="JSONSchema7">
-    JSON Schema defining the tool's input parameters. The AI will validate
+    JSON Schema defining the tool’s input parameters. The AI will validate
     arguments against this schema.
   </PropertiesListItem>
   <PropertiesListItem name="execute" type="function">
-    Async function that performs the tool's action. Receives validated arguments
+    Async function that performs the tool’s action. Receives validated arguments
     and execution context, returns structured data.
   </PropertiesListItem>
   <PropertiesListItem name="render" type="function">
-    React component function that renders the tool's UI during different
+    React component function that renders the tool’s UI during different
     execution stages.
   </PropertiesListItem>
 </PropertiesList>
@@ -5271,7 +5401,7 @@ type ToolDefinition<TArgs = any, TResult = any> = {
 ### AiKnowledgeSource
 
 Type definition for knowledge sources that provide contextual information to AI.
-Knowledge sources help the AI understand your application's current state and
+Knowledge sources help the AI understand your application’s current state and
 make more informed responses.
 
 ```ts
@@ -5283,7 +5413,7 @@ type AiKnowledgeSource = {
 
 <PropertiesList title="Properties">
   <PropertiesListItem name="description" type="string">
-    A clear description of what this knowledge represents (e.g., "Current user's
+    A clear description of what this knowledge represents (e.g., "Current user’s
     profile", "Application settings").
   </PropertiesListItem>
   <PropertiesListItem
@@ -5322,7 +5452,7 @@ and other functions. Some of its values are set when
 ```ts file="liveblocks.config.ts"
 declare global {
   interface Liveblocks {
-    // Each user's Presence
+    // Each user’s Presence
     // +++
     Presence: {
       cursor: { x: number; y: number };
@@ -5464,7 +5594,7 @@ the current user receives in the current room.
 
 [`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
 [`base-64`]: https://www.npmjs.com/package/base-64
-[`client.enterRoom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
+[`client.enterroom`]: /docs/api-reference/liveblocks-client#Client.enterRoom
 [`client.getroom`]: /docs/api-reference/liveblocks-client#Client.getRoom
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
 [`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
@@ -5479,12 +5609,12 @@ the current user receives in the current room.
   /docs/api-reference/liveblocks-client#Room.broadcastEvent
 [`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
 [`room.reconnect`]: /docs/api-reference/liveblocks-client#Room.reconnect
-[`room.getSelf`]: /docs/api-reference/liveblocks-client#Room.getSelf
-[`room.getOthers`]: /docs/api-reference/liveblocks-client#Room.getOthers
-[`room.getStorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
-[`room.getSubscriptionSettings`]:
+[`room.getself`]: /docs/api-reference/liveblocks-client#Room.getSelf
+[`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
+[`room.getstorage`]: /docs/api-reference/liveblocks-client#Room.getStorage
+[`room.getsubscriptionsettings`]:
   /docs/api-reference/liveblocks-client#Room.getSubscriptionSettings
-[`room.updateSubscriptionSettings`]:
+[`room.updatesubscriptionsettings`]:
   /docs/api-reference/liveblocks-client#Room.updateSubscriptionSettings
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`room.subscribe("event")`]:

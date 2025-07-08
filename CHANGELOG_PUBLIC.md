@@ -18,6 +18,176 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 27 (2025-07-04)
+
+## v3.1.0
+
+### `@liveblocks/client`
+
+- `defineAiTool()()` now takes an optional `enabled` property. When set to
+  `false`, the tool will not be made available to the AI copilot for new/future
+  chat messages, but still allow existing tool invocations to be rendered that
+  are part of the historic chat record.
+
+### `@liveblocks/react`
+
+- `RegisterAiTool` now also takes an optional `enabled` prop. This is a
+  convenience prop that can be used to override the tool’s `enabled` status
+  directly in React.
+
+### `@liveblocks/react-ui`
+
+- Reasoning parts in `AiChat` are now automatically collapsed when the reasoning
+  is done.
+- Add `collapsible` prop to `AiTool` to control whether its content can be
+  collapsed/expanded.
+- Add `InboxNotification.Inspector` component to help debugging custom inbox
+  notifications.
+
+### `@liveblocks/redux`
+
+- Add support for Redux v5.
+
+### `@liveblocks/react-lexical`
+
+- Fix default `z-index` of collaboration cursors, and make them inherit their
+  font family instead of always using Arial.
+- Add `lb-lexical-cursors` class to the collaboration cursors’ container.
+- Improve mentions’ serialization.
+
+### `@liveblocks/node-lexical`
+
+- Improve mentions’ serialization.
+
+## Contributors
+
+nvie, marcbouchenoire, sugardarius
+
+# Week 26 (2025-06-27)
+
+## Dashboard
+
+- Fix caching issue when editing notification settings.
+
+## Website
+
+- New blog post:
+  [People and AI working together, in any app — the story behind Liveblocks 3.0](https://liveblocks.io/blog/people-and-ai-working-together-liveblocks-3-0).
+
+## Contributors
+
+pierrelevaillant, stevenfabre, sugardarius
+
+# Week 25 (2025-06-20)
+
+## v3.0.0
+
+Liveblocks 3.0 is our third major release, focusing on our newest product,
+[AI Copilots](https://liveblocks.io/blog/meet-liveblocks-3-0-the-fastest-way-to-let-your-users-collaborate-with-ai-in-your-product).
+We’ve used this as an opportunity to tidy up some of our existing APIs, ensuring
+consistency throughout our offering.
+
+For full upgrade instructions and codemods, see the
+[3.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/3.0).
+
+### All packages
+
+- TypeScript 5.0 is now the minimum supported version.
+- Remove deprecated APIs, see
+  [the deprecated section](https://liveblocks.io/docs/platform/upgrading/3.0#deprecated)
+  in the upgrade guide to learn more.
+
+### `@liveblocks/react`
+
+- Introduce hooks and APIs for AI Copilots: `useAiChats`, `useAiChat`,
+  `useDeleteAiChat`,`useSendAiMessage`, `RegisterAiTool`, `RegisterAiKnowledge`,
+  etc.
+- Rename `UPDATE_USER_NOTIFICATION_SETTINGS_ERROR` to
+  `UPDATE_NOTIFICATION_SETTINGS_ERROR` when using `useNotificationSettings` or
+  `useUpdateNotificationSettings`.
+
+### `@liveblocks/react-ui`
+
+- Introduce pre-built components for AI Copilots: `AiChat`, `AiTool`, etc.
+- The `onMentionClick` prop on `Thread` and `Comment` now receives a
+  `MentionData` object instead of a `userId` string.
+- The `Mention` component on the `Comment.Body` and `Composer.Editor` primitives
+  now receives a `mention` prop instead of a `userId` one.
+- The `MentionSuggestions` component on the `Composer.Editor` primitive now
+  receives a `mentions` prop instead of a `userIds` one, and the
+  `selectedUserId` prop has been renamed to `selectedMentionId`.
+- Rename `LiveblocksUIConfig` to `LiveblocksUiConfig` for consistency with other
+  Liveblocks APIs.
+
+### `@liveblocks/emails`
+
+- Remove deprecated `htmlBody`/`reactBody` properties from
+  `prepareThreadNotificationEmailAsHtml`/`prepareThreadNotificationEmailAsReact`,
+  use `body` instead.
+- Remove `htmlContent`/`reactContent` properties from
+  `prepareTextMentionNotificationEmailAsHtml`/`prepareTextMentionNotificationEmailAsReact`,
+  use `content` instead.
+- The `prepareTextMentionNotificationEmailAsReact` and
+  `prepareTextMentionNotificationEmailAsHtml` functions’ returned data changed
+  slightly:
+  - The `id` property is now named `textMentionId`, it refers to the mention’s
+    Text Mention ID, not the user ID used for the mention
+  - The `id` property now refers to the mention’s ID, as in the user ID used for
+    the mention
+- The `element` prop received by the `Mention` component in
+  `prepareTextMentionNotificationEmailAsReact` now contains an `id` property
+  instead of `userId`, and a new `kind` property to indicate the mention’s kind.
+
+### `@liveblocks/client` and `@liveblocks/node`
+
+- The `getMentionedIdsFromCommentBody` utility has been replaced by
+  `getMentionsFromCommentBody`.
+
+## Dashboard
+
+- Introduce an AI Copilots view to manage copilots and their knowledge.
+
+## Examples
+
+- New example:
+  [AI Popup Chat](https://liveblocks.io/examples/ai-popup/nextjs-ai-popup).
+- New example:
+  [AI Chats](https://liveblocks.io/examples/ai-chats/nextjs-ai-chats).
+- New example:
+  [AI Reports Dashboard](https://liveblocks.io/examples/ai-dashboard-reports/nextjs-ai-dashboard-reports).
+
+## Website
+
+- New blog post:
+  [Meet Liveblocks 3.0, the fastest way to let people collaborate with AI in your product](https://liveblocks.io/blog/meet-liveblocks-3-0-the-fastest-way-to-let-your-users-collaborate-with-ai-in-your-product).
+
+## Contributors
+
+adigau, ctnicholas, flowflorent, jrowny, marcbouchenoire, nimeshnayaju, nvie,
+ofoucherot, pierrelevaillant, stevenfabre, sugardarius
+
+# Week 22 (2025-05-30)
+
+### `@liveblocks/react` and `@liveblocks/react-ui`
+
+- Fix an issue with subpath imports (e.g. `@liveblocks/react/suspense`) and
+  CommonJS which could happen with certain bundlers.
+
+## Contributors
+
+marcbouchenoire
+
+# Week 19 (2025-05-09)
+
+### `@liveblocks/react-ui`
+
+- Disable or hide actions in `Thread` and `Comment` components for users without
+  permission to perform them, such as adding reactions or (un)resolving threads.
+
+## Contributors
+
+marcbouchenoire
+
 # Week 18 (2025-05-02)
 
 ## v2.24.1

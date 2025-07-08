@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 
 export function Attribution({ className, ...props }: ComponentProps<"a">) {
   return (
@@ -8,7 +8,7 @@ export function Attribution({ className, ...props }: ComponentProps<"a">) {
       href="https://liveblocks.io"
       target="_blank"
       rel="noopener noreferrer"
-      className={classNames("lb-composer-attribution", className)}
+      className={cn("lb-composer-attribution", className)}
       {...props}
     >
       <svg

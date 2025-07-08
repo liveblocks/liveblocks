@@ -18,7 +18,7 @@ import {
 import { SearchIcon } from "../../icons/Search";
 import { SpinnerIcon } from "../../icons/Spinner";
 import { useOverrides } from "../../overrides";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { Emoji } from "./Emoji";
 import { Tooltip } from "./Tooltip";
 
@@ -33,10 +33,7 @@ function EmojiPickerListEmoji({
   ...props
 }: EmojiPickerListEmojiProps) {
   return (
-    <button
-      className={classNames("lb-emoji-picker-emoji", className)}
-      {...props}
-    >
+    <button className={cn("lb-emoji-picker-emoji", className)} {...props}>
       <Emoji emoji={emoji.emoji} />
     </button>
   );
@@ -48,7 +45,7 @@ function EmojiPickerListRow({
   ...props
 }: EmojiPickerListRowProps) {
   return (
-    <div className={classNames("lb-emoji-picker-row", className)} {...props}>
+    <div className={cn("lb-emoji-picker-row", className)} {...props}>
       {children}
     </div>
   );
@@ -61,7 +58,7 @@ function EmojiPickerListCategoryHeader({
 }: EmojiPickerListCategoryHeaderProps) {
   return (
     <div
-      className={classNames("lb-emoji-picker-category-header", className)}
+      className={cn("lb-emoji-picker-category-header", className)}
       {...props}
     >
       <span className="lb-emoji-picker-category-header-title">
@@ -109,7 +106,7 @@ export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(
             align="center"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-            className={classNames(
+            className={cn(
               "lb-root lb-portal lb-elevation lb-emoji-picker",
               className
             )}

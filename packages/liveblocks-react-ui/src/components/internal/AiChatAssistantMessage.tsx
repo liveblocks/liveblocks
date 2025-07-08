@@ -4,6 +4,7 @@ import {
   forwardRef,
   memo,
   type ReactNode,
+  useEffect,
   useState,
 } from "react";
 
@@ -24,7 +25,7 @@ import type {
   AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
-import { classNames } from "../../utils/class-names";
+import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Prose } from "./Prose";
 
@@ -100,7 +101,7 @@ export const AiChatAssistantMessage = memo(
 
       return (
         <div
-          className={classNames(
+          className={cn(
             "lb-ai-chat-message lb-ai-chat-assistant-message",
             className
           )}
@@ -146,8 +147,17 @@ function ReasoningPart({
   part,
   isStreaming,
 }: AiMessageContentReasoningPartProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // Start collapsed if reasoning is already done.
+  const [isOpen, setIsOpen] = useState(isStreaming);
   const $ = useOverrides();
+
+  // Auto-collapse when reasoning is done, while still allowing the user to
+  // open/collapse it manually during and after it's done.
+  useEffect(() => {
+    if (!isStreaming) {
+      setIsOpen(false);
+    }
+  }, [isStreaming]);
 
   return (
     <Collapsible.Root
@@ -156,7 +166,7 @@ function ReasoningPart({
       onOpenChange={setIsOpen}
     >
       <Collapsible.Trigger
-        className={classNames(
+        className={cn(
           "lb-collapsible-trigger",
           isStreaming && "lb-ai-chat-pending"
         )}
@@ -186,17 +196,15 @@ function ToolInvocationPart({
     <div className="lb-ai-chat-message-tool-invocation">
       <ErrorBoundary
         fallback={
-          process.env.NODE_ENV !== "production" ? (
-            <div className="lb-ai-chat-message-error">
-              <span className="lb-icon-container">
-                <WarningIcon />
-              </span>
-              <p>
-                Failed to render tool call result for <code>{part.name}</code>.
-                See console for details.
-              </p>
-            </div>
-          ) : null
+          <div className="lb-ai-chat-message-error">
+            <span className="lb-icon-container">
+              <WarningIcon />
+            </span>
+            <p>
+              Failed to render tool call result for <code>{part.name}</code>.
+              See console for details.
+            </p>
+          </div>
         }
       >
         <AiMessageToolInvocation part={part} message={message} />

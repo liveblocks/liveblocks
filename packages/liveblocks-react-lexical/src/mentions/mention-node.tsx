@@ -1,4 +1,5 @@
 import { createInboxNotificationId } from "@liveblocks/core";
+import { User } from "@liveblocks/react-ui/_private";
 import type {
   DOMConversionMap,
   DOMExportOutput,
@@ -11,7 +12,6 @@ import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
 import { Mention } from "./mention-component";
-import { User } from "./user";
 
 const MENTION_CHARACTER = "@";
 
@@ -54,8 +54,13 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
     return {
       span: () => ({
         conversion: (element) => {
-          const value = atob(element.getAttribute("data-lexical-lb-mention")!);
-          const node = $createMentionNode(value);
+          const userId = element.getAttribute("data-lexical-lb-mention");
+
+          if (!userId) {
+            return null;
+          }
+
+          const node = $createMentionNode(userId);
           return { node };
         },
         priority: 1,
@@ -65,9 +70,8 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
 
   exportDOM(): DOMExportOutput {
     const element = document.createElement("span");
-    const value = this.getTextContent();
-    element.setAttribute("data-lexical-lb-mention", btoa(value));
-    element.textContent = this.getTextContent();
+    element.setAttribute("data-lexical-lb-mention", this.getUserId());
+    element.textContent = this.getUserId();
     return { element };
   }
 
@@ -101,6 +105,10 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
         <User userId={this.getUserId()} />
       </Mention>
     );
+  }
+
+  getTextContent(): string {
+    return MENTION_CHARACTER + this.getUserId();
   }
 }
 
