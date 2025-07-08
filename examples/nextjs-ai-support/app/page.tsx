@@ -3,6 +3,7 @@
 import { defineAiTool } from "@liveblocks/client";
 import {
   ClientSideSuspense,
+  RegisterAiKnowledge,
   RegisterAiTool,
   useAiChatMessages,
   useSendAiMessage,
@@ -27,6 +28,37 @@ export default function Page() {
 
   return (
     <main className="max-w-screen-md w-full min-h-full mx-auto border border-neutral-200 flex-grow rounded-lg">
+      <RegisterAiKnowledge
+        description="Billing history for the current user"
+        value={[
+          {
+            date: "2025-07-01",
+            amount: 4.5,
+            description: "Advanced Plan monthly subscription",
+          },
+          {
+            date: "2025-06-01",
+            amount: 4.5,
+            description: "Advanced Plan monthly subscription",
+          },
+          {
+            date: "2025-05-01",
+            amount: 0,
+            description: "Free trial",
+          },
+        ]}
+      />
+
+      <RegisterAiKnowledge
+        description="the user's current plan"
+        value="Advanced Plan monthly subscription"
+      />
+
+      <RegisterAiKnowledge
+        description="Pages you can link users to"
+        value={["#billing", "#dashboard", "#docs"]}
+      />
+
       {/* Defines a tool that the AI can choose to use. Shows a button that displays an email form on click. */}
       <RegisterAiTool
         name="create-support-ticket-button"
@@ -38,7 +70,13 @@ export default function Page() {
             properties: {},
             additionalProperties: false,
           },
-          execute: () => {},
+          execute: () => {
+            return {
+              data: {},
+              description:
+                "The user can click the button to write a ticket. Let the user know what to put in the description.",
+            };
+          },
           render: ({ respond }) => {
             return (
               <AiTool title="Support ticket">
@@ -60,6 +98,33 @@ export default function Page() {
                     New ticket
                   </button>
                 </div>
+              </AiTool>
+            );
+          },
+        })}
+      />
+
+      {/* Defines a tool that shows a guide on how to change email */}
+      <RegisterAiTool
+        name="how-to-change-email"
+        tool={defineAiTool()({
+          description:
+            "A visual guide on how to change the email address in the account settings.",
+          parameters: {
+            type: "object",
+            properties: {},
+            additionalProperties: false,
+          },
+          execute: () => {
+            return {
+              data: {},
+              description: "Showing the how to change email guide",
+            };
+          },
+          render: () => {
+            return (
+              <AiTool title="How to change email">
+                <ChangeEmailGuide />
               </AiTool>
             );
           },
@@ -280,6 +345,164 @@ function EmailForm({
           Submit
         </button>
       </form>
+    </div>
+  );
+}
+
+function ChangeEmailGuide() {
+  return (
+    <ol
+      className="relative -ml-7 mr-4 !mt-4 !list-none"
+      style={{ counterReset: "step 0" }}
+    >
+      <li
+        className="relative !pl-14 pb-6 before:absolute before:left-0 before:flex before:h-8 before:w-8 before:items-center before:justify-center before:border before:bg-white before:text-xs before:font-medium before:text-product-subtle after:absolute after:-bottom-4 after:left-[15px] after:top-8 after:w-px after:bg-gray-200 before:rounded-md before:content-[counter(step)]"
+        style={{ counterIncrement: "step 1" }}
+      >
+        <h3 className="pt-1 text-base font-medium leading-normal text-product">
+          Navigate to dashboard settings{" "}
+        </h3>
+        <div className="markdown markdown-sm markdown-stripped mt-3">
+          <p>
+            To get started, first navigate to your{" "}
+            <a href="#dashboard" className="underline font-medium">
+              dashboard
+            </a>
+            , then click on “Settings”.
+          </p>
+        </div>
+      </li>
+      <li
+        className="relative !pl-14 pb-0 before:absolute before:left-0 before:flex before:h-8 before:w-8 before:items-center before:justify-center before:border before:bg-white before:bg-product-surface-base before:text-xs before:font-medium before:text-product-subtle before:rounded-md before:content-[counter(step)]"
+        style={{ counterIncrement: "step 1" }}
+      >
+        <h3 className="pt-1 text-base font-medium leading-normal text-product">
+          Enter new email and submit{" "}
+        </h3>
+        <div className="markdown markdown-sm markdown-stripped mt-3">
+          <p>
+            On the settings page, enter your email into the “New email” field
+            and submit the form.
+          </p>
+          <div className="relative flex mt-5 rounded-sm border overflow-hidden">
+            <ChangeEmailIllustration />{" "}
+          </div>
+        </div>
+      </li>
+    </ol>
+  );
+}
+
+function ChangeEmailIllustration() {
+  return (
+    <div className="relative flex w-full">
+      <div className="block absolute inset-0 bg-gradient-to-l from-black via-transparent to-transparent opacity-[1%]"></div>
+      <div className="block absolute inset-0 bg-gradient-to-bl from-black via-transparent to-transparent opacity-[1%]"></div>
+      <div className="block absolute inset-0 bg-gradient-to-br from-black via-transparent to-transparent opacity-[2%]"></div>
+      <div className="block absolute inset-0 bg-gradient-to-tr from-black via-transparent to-transparent opacity-[2%]"></div>
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-100 via-gray-100/20 dark:from-gray-900 dark:via-gray-900/20 opacity-50"></div>{" "}
+      <div className="block absolute inset-0 bg-gradient-to-tl from-black/50 via-transparent to-transparent opacity-[2%]"></div>
+      <svg
+        className="pointer-events-none absolute left-[-19%] top-0 h-auto w-[145%] rotate-3 text-white opacity-50 dark:opacity-[2.5%]"
+        width="1021"
+        height="1021"
+        viewBox="0 0 1021 1021"
+        fill="none"
+      >
+        <g clipPath="url(#clip)">
+          <path
+            d="M-471.628 659.947L-42.4998 1019C-42.4998 1019 305 866.5 422 425C539 -16.5 496.5 -483.5 496.5 -483.5L273.5 -598.5L-471.628 659.947Z"
+            fill="url(#paint)"
+          ></path>
+        </g>
+        <defs>
+          <linearGradient
+            id="paint"
+            x1="167.5"
+            y1="595"
+            x2="322.335"
+            y2="-68.7304"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="currentColor" stop-opacity="0"></stop>
+            <stop offset="1" stop-color="currentColor"></stop>
+          </linearGradient>
+          <clipPath id="clip">
+            <rect width="1021" height="1021" fill="currentColor"></rect>
+          </clipPath>
+        </defs>
+      </svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 400 300"
+        className="w-full h-auto !m-0 !p-0"
+      >
+        {/* Background */}
+        <rect width="400" height="300" fill="#fafafa" />
+
+        {/* Sidebar */}
+        <rect x="0" y="0" width="70" height="300" fill="#f5f5f5" />
+
+        {/* Sidebar items */}
+        <rect x="10" y="20" width="50" height="6" rx="3" fill="#e5e5e5" />
+        <rect x="10" y="35" width="35" height="6" rx="3" fill="#e5e5e5" />
+        <rect x="10" y="50" width="40" height="6" rx="3" fill="#d4d4d8" />
+        <rect x="10" y="65" width="30" height="6" rx="3" fill="#e5e5e5" />
+        <rect x="10" y="80" width="45" height="6" rx="3" fill="#e5e5e5" />
+
+        {/* Top bar */}
+        <rect x="70" y="0" width="330" height="35" fill="#ffffff" />
+
+        {/* Search */}
+        <rect x="85" y="10" width="80" height="15" rx="7" fill="#f5f5f5" />
+
+        {/* Avatar */}
+        <circle cx="370" cy="17" r="7" fill="#e5e5e5" />
+
+        {/* Main content area */}
+        <rect x="85" y="50" width="300" height="235" fill="#ffffff" />
+
+        {/* Metric cards row */}
+        <rect x="95" y="65" width="85" height="45" rx="4" fill="#f9f9f9" />
+        <rect x="190" y="65" width="85" height="45" rx="4" fill="#f9f9f9" />
+        <rect x="285" y="65" width="85" height="45" rx="4" fill="#f9f9f9" />
+
+        {/* Small metric indicators */}
+        <rect x="105" y="75" width="25" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="105" y="85" width="40" height="8" rx="2" fill="#d4d4d8" />
+
+        <rect x="200" y="75" width="30" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="200" y="85" width="35" height="8" rx="2" fill="#d4d4d8" />
+
+        <rect x="295" y="75" width="20" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="295" y="85" width="45" height="8" rx="2" fill="#d4d4d8" />
+
+        {/* Chart area */}
+        <rect x="95" y="125" width="180" height="90" rx="4" fill="#f9f9f9" />
+
+        {/* Simple chart lines */}
+        <polyline
+          points="110,190 130,175 150,185 170,165 190,170 210,155 230,160 250,145"
+          stroke="#d4d4d8"
+          strokeWidth="2"
+          fill="none"
+        />
+
+        {/* Side panel */}
+        <rect x="285" y="125" width="85" height="90" rx="4" fill="#f9f9f9" />
+
+        {/* List items in side panel */}
+        <rect x="295" y="140" width="65" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="295" y="150" width="45" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="295" y="160" width="55" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="295" y="170" width="40" height="4" rx="2" fill="#e5e5e5" />
+        <rect x="295" y="180" width="50" height="4" rx="2" fill="#e5e5e5" />
+
+        {/* Bottom section */}
+        <rect x="95" y="230" width="275" height="40" rx="4" fill="#f9f9f9" />
+        <rect x="105" y="240" width="60" height="6" rx="3" fill="#e5e5e5" />
+        <rect x="105" y="250" width="100" height="4" rx="2" fill="#e5e5e5" />
+      </svg>
     </div>
   );
 }

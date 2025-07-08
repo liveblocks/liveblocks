@@ -32,9 +32,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <Providers>
           <header className="bg-white border-b border-neutral-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-            <div className="font-semibold text-neutral-900 transition-opacity dark:text-neutral-50 opacity-100">
+            <a
+              className="font-semibold text-neutral-900 transition-opacity dark:text-neutral-50 opacity-100"
+              href="/"
+            >
               Acme Corp.
-            </div>
+            </a>
             <div>
               <Image
                 src="https://liveblocks.io/avatars/avatar-6.png"
