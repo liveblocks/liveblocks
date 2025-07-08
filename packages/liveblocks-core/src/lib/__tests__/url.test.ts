@@ -1,21 +1,6 @@
 import { generateUrl, sanitizeUrl } from "../url";
 
 describe("sanitizeUrl", () => {
-  let locationMock: jest.Mock;
-
-  beforeEach(() => {
-    locationMock = jest.fn(() => ({
-      href: "https://liveblocks.io/examples",
-      origin: "https://liveblocks.io",
-    }));
-
-    jest.spyOn(window, "location", "get").mockImplementation(locationMock);
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
-  });
-
   it("should return valid URLs as-is", () => {
     expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io");
     expect(sanitizeUrl("https://liveblocks.io/docs")).toBe(
