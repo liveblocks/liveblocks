@@ -16,7 +16,7 @@ describe("sanitizeUrl", () => {
     jest.restoreAllMocks();
   });
 
-  it("should return valid HTTP(S) URLs as-is", () => {
+  it("should return valid URLs as-is", () => {
     expect(sanitizeUrl("https://liveblocks.io")).toBe("https://liveblocks.io");
     expect(sanitizeUrl("https://liveblocks.io/docs")).toBe(
       "https://liveblocks.io/docs"
@@ -25,6 +25,7 @@ describe("sanitizeUrl", () => {
       "http://blog.liveblocks.io/"
     );
     expect(sanitizeUrl("/examples")).toBe("/examples");
+    expect(sanitizeUrl("#anchor")).toBe("#anchor");
   });
 
   it("should normalize relative URLs", () => {
@@ -82,6 +83,8 @@ describe("sanitizeUrl", () => {
     expect(sanitizeUrl("vbscript:alert('xss')")).toBe(null);
     expect(sanitizeUrl("file:///etc/passwd")).toBe(null);
     expect(sanitizeUrl("//liveblocks.io")).toBe(null);
+    expect(sanitizeUrl("")).toBe(null);
+    expect(sanitizeUrl("#")).toBe(null);
   });
 });
 
