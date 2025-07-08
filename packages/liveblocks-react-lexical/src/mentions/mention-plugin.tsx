@@ -186,10 +186,16 @@ export function MentionPlugin() {
             if (node === null) return;
 
             if ($isMentionNode(node)) {
-              createTextMention(node.getUserId(), node.getId());
+              createTextMention(node.getId(), {
+                kind: "user",
+                id: node.getUserId(),
+              });
             } else if ($isGroupMentionNode(node)) {
-              // TODO: Create group mentions differently
-              createTextMention(node.getGroupId(), node.getId());
+              createTextMention(node.getId(), {
+                kind: "group",
+                id: node.getGroupId(),
+                userIds: node.getUserIds(),
+              });
             }
           });
         } else if (mutation === "destroyed") {

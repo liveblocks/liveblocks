@@ -1,5 +1,6 @@
 import type { DAD } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
+import type { MentionData } from "../types/MentionData";
 
 export type InboxNotificationThreadData = {
   kind: "thread";
@@ -18,6 +19,7 @@ export type InboxNotificationTextMentionData = {
   readAt: Date | null;
   createdBy: string;
   mentionId: string;
+  mention: MentionData;
 };
 
 export type InboxNotificationTextMentionDataPlain =
