@@ -372,7 +372,7 @@ export const useLiveblocksExtension = (
         extensions.push(
           MentionExtension.configure({
             onCreateMention: (mention) => {
-              createTextMention(mention.id, mention);
+              createTextMention(mention.notificationId, mention);
             },
             onDeleteMention: deleteTextMention,
           })

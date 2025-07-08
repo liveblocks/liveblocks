@@ -1,5 +1,5 @@
 import type { ClientRectObject } from "@floating-ui/react-dom";
-import type { ContextualPromptContext } from "@liveblocks/core";
+import { assertNever, type ContextualPromptContext } from "@liveblocks/core";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
@@ -15,7 +15,11 @@ import {
 } from "y-prosemirror";
 import type { RelativePosition } from "yjs";
 
-import type { TiptapMentionData, YSyncPluginState } from "./types";
+import type {
+  SerializedTiptapMentionData,
+  TiptapMentionData,
+  YSyncPluginState,
+} from "./types";
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_TYPE,
@@ -73,18 +77,39 @@ export const getMentionsFromNode = (
       child.type.name === LIVEBLOCKS_MENTION_TYPE ||
       child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
     ) {
-      const mention = child.attrs as Omit<TiptapMentionData, "kind">;
+      const mention = child.attrs as Omit<SerializedTiptapMentionData, "kind">;
 
       if (mention.id && mention.notificationId) {
-        mentions.set(mention.notificationId, {
-          kind:
-            child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
-              ? "group"
-              : "user",
-          id: mention.id,
-          userIds: mention.userIds,
-          notificationId: mention.notificationId,
-        } as TiptapMentionData);
+        if (child.type.name === LIVEBLOCKS_MENTION_TYPE) {
+          mentions.set(mention.notificationId, {
+            kind: "user",
+            id: mention.id,
+            notificationId: mention.notificationId,
+          });
+        } else if (child.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE) {
+          let userIds: string[] | undefined;
+
+          if (mention.userIds) {
+            try {
+              const parsedUserIds = JSON.parse(mention.userIds) as string[];
+
+              if (Array.isArray(parsedUserIds)) {
+                userIds = parsedUserIds;
+              }
+            } catch {
+              userIds = undefined;
+            }
+          }
+
+          mentions.set(mention.notificationId, {
+            kind: "group",
+            id: mention.id,
+            userIds,
+            notificationId: mention.notificationId,
+          });
+        } else {
+          assertNever(child.type.name, "Unexpected mention kind");
+        }
       }
     }
   });
