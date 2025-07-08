@@ -37,10 +37,10 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { MENTION_CHARACTER } from "../constants";
-import type { GroupMentionNode } from "./group-mention-node";
 import {
   $createGroupMentionNode,
   $isGroupMentionNode,
+  GroupMentionNode,
 } from "./group-mention-node";
 import {
   $createMentionNode,
@@ -171,7 +171,7 @@ export function MentionPlugin() {
   const deleteTextMention = useDeleteTextMention();
 
   useEffect(() => {
-    function $handleMutation(
+    function $handleMentionMutation(
       mutations: Map<NodeKey, NodeMutation>,
       {
         prevEditorState,
@@ -190,7 +190,36 @@ export function MentionPlugin() {
                 kind: "user",
                 id: node.getUserId(),
               });
-            } else if ($isGroupMentionNode(node)) {
+            }
+          });
+        } else if (mutation === "destroyed") {
+          prevEditorState.read(() => {
+            const node = $getNodeByKey(key);
+            if (node === null) return;
+
+            if ($isMentionNode(node)) {
+              deleteTextMention(node.getId());
+            }
+          });
+        }
+      }
+    }
+
+    function $handleGroupMentionMutation(
+      mutations: Map<NodeKey, NodeMutation>,
+      {
+        prevEditorState,
+      }: {
+        prevEditorState: EditorState;
+      }
+    ) {
+      for (const [key, mutation] of mutations) {
+        if (mutation === "created") {
+          editor.getEditorState().read(() => {
+            const node = $getNodeByKey(key);
+            if (node === null) return;
+
+            if ($isGroupMentionNode(node)) {
               createTextMention(node.getId(), {
                 kind: "group",
                 id: node.getGroupId(),
@@ -203,7 +232,7 @@ export function MentionPlugin() {
             const node = $getNodeByKey(key);
             if (node === null) return;
 
-            if ($isMentionNode(node) || $isGroupMentionNode(node)) {
+            if ($isGroupMentionNode(node)) {
               deleteTextMention(node.getId());
             }
           });
@@ -211,7 +240,7 @@ export function MentionPlugin() {
       }
     }
 
-    return editor.registerMutationListener(
+    const unsubscribeMentionMutationListener = editor.registerMutationListener(
       MentionNode,
       (mutations, payload) => {
         // Ignore mutations to MentionNode (creation/updates/deletions) that are caused by collaboration (remote users) or history merge.
@@ -222,9 +251,30 @@ export function MentionPlugin() {
           return;
         }
 
-        $handleMutation(mutations, payload);
+        $handleMentionMutation(mutations, payload);
       }
     );
+
+    const unsubscribeGroupMentionMutationListener =
+      editor.registerMutationListener(
+        GroupMentionNode,
+        (mutations, payload) => {
+          // Ignore mutations to GroupMentionNode (creation/updates/deletions) that are caused by collaboration (remote users) or history merge.
+          if (
+            payload.updateTags.has("collaboration") ||
+            payload.updateTags.has("history-merge")
+          ) {
+            return;
+          }
+
+          $handleGroupMentionMutation(mutations, payload);
+        }
+      );
+
+    return () => {
+      unsubscribeMentionMutationListener();
+      unsubscribeGroupMentionMutationListener();
+    };
   }, [editor, createTextMention, deleteTextMention]);
 
   useEffect(() => {
@@ -256,7 +306,9 @@ export function MentionPlugin() {
         if (nodes.length !== 1) return false;
 
         const node = nodes[0];
-        if (!$isMentionNode(node)) return false;
+        if (!$isMentionNode(node) && !$isGroupMentionNode(node)) {
+          return false;
+        }
 
         const text = $createTextNode("@");
         node.replace(text);
@@ -272,7 +324,10 @@ export function MentionPlugin() {
 
         const anchor = selection.anchor.getNode();
         const prevSibling = anchor.getPreviousSibling();
-        if (selection.anchor.offset === 0 && $isMentionNode(prevSibling)) {
+        if (
+          selection.anchor.offset === 0 &&
+          ($isMentionNode(prevSibling) || $isGroupMentionNode(prevSibling))
+        ) {
           const text = $createTextNode("@");
           prevSibling.replace(text);
 
@@ -284,7 +339,9 @@ export function MentionPlugin() {
           return true;
         } else if ($isElementNode(anchor)) {
           const child = anchor.getChildAtIndex(selection.anchor.offset - 1);
-          if (!$isMentionNode(child)) return false;
+          if (!$isMentionNode(child) && !$isGroupMentionNode(child)) {
+            return false;
+          }
 
           const text = $createTextNode("@");
           child.replace(text);
