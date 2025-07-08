@@ -400,7 +400,7 @@ function ChangeEmailIllustration() {
       <div className="block absolute inset-0 bg-gradient-to-bl from-black via-transparent to-transparent opacity-[1%]"></div>
       <div className="block absolute inset-0 bg-gradient-to-br from-black via-transparent to-transparent opacity-[2%]"></div>
       <div className="block absolute inset-0 bg-gradient-to-tr from-black via-transparent to-transparent opacity-[2%]"></div>
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-100 via-gray-100/20 dark:from-gray-900 dark:via-gray-900/20 opacity-50"></div>{" "}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-gray-100 via-gray-100/20 opacity-50"></div>{" "}
       <div className="block absolute inset-0 bg-gradient-to-tl from-black/50 via-transparent to-transparent opacity-[2%]"></div>
       <svg
         className="pointer-events-none absolute left-[-19%] top-0 h-auto w-[145%] rotate-3 text-white opacity-50"
