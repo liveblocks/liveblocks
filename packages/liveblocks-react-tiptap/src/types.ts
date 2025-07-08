@@ -364,3 +364,9 @@ export type YSyncPluginState = {
 export type TiptapMentionData = MentionData & {
   notificationId: string;
 };
+
+export type SerializedTiptapMentionData = TiptapMentionData extends infer T
+  ? T extends { kind: "group" }
+    ? Omit<T, "userIds"> & { userIds?: string }
+    : T
+  : never;
