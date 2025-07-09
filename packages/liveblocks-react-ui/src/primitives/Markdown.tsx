@@ -19,10 +19,10 @@ export type MarkdownComponents = {
   Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
   Table: ComponentType<MarkdownComponentsTableProps>;
   List: ComponentType<MarkdownComponentsListProps>;
+  Separator: ComponentType;
 
   // Paragraph
   // Inline (text, strong, em, code, del)
-  // Separator (hr)
 };
 
 interface MarkdownComponentsTableCell {
@@ -204,6 +204,9 @@ const defaultComponents: MarkdownComponents = {
       </List>
     );
   },
+  Separator: () => {
+    return <hr />;
+  },
 };
 
 export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
@@ -305,7 +308,9 @@ export function MarkdownBlockToken({
       );
     }
     case "hr": {
-      return <hr />;
+      const Separator = components?.Separator ?? defaultComponents.Separator;
+
+      return <Separator />;
     }
     case "list": {
       const List = components?.List ?? defaultComponents.List;
