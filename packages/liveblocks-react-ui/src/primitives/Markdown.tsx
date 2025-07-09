@@ -17,6 +17,7 @@ export type MarkdownComponents = {
   Heading: ComponentType<MarkdownComponentsHeadingProps>;
   Image: ComponentType<MarkdownComponentsImageProps>;
   Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
+  Table: ComponentType<MarkdownComponentsTableProps>;
 
   // Paragraph
   // Inline (text, strong, em, code, del)
@@ -24,6 +25,16 @@ export type MarkdownComponents = {
   // List
   // Separator (hr)
 };
+
+interface MarkdownComponentsTableCell {
+  align?: "left" | "center" | "right";
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsTableProps {
+  headings: MarkdownComponentsTableCell[];
+  rows: MarkdownComponentsTableCell[][];
+}
 
 export interface MarkdownComponentsBlockquoteProps {
   children: ReactNode;
@@ -126,6 +137,38 @@ const defaultComponents: MarkdownComponents = {
   },
   Blockquote: ({ children }) => {
     return <blockquote>{children}</blockquote>;
+  },
+  Table: ({ headings, rows }) => {
+    return (
+      <table>
+        <thead>
+          <tr>
+            {headings.map((heading, index) => {
+              return (
+                <th key={index} align={heading.align}>
+                  {heading.children}
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => {
+            return (
+              <tr key={index}>
+                {row.map((cell, index) => {
+                  return (
+                    <td key={index} align={cell.align}>
+                      {cell.children}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
   },
 };
 
@@ -501,48 +544,34 @@ export function MarkdownBlockToken({
       );
     }
     case "table": {
-      return (
-        <table>
-          <thead>
-            <tr>
-              {token.header.map((cell, index) => {
-                return (
-                  <th key={index} align={cell.align ?? undefined}>
-                    {cell.tokens.map((token, index) => (
-                      <MarkdownInlineToken
-                        key={index}
-                        token={token as InlineToken}
-                        components={components}
-                      />
-                    ))}
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {token.rows.map((row, index) => {
-              return (
-                <tr key={index}>
-                  {row.map((cell, index) => {
-                    return (
-                      <td key={index} align={cell.align ?? undefined}>
-                        {cell.tokens.map((token, index) => (
-                          <MarkdownInlineToken
-                            key={index}
-                            token={token as InlineToken}
-                            components={components}
-                          />
-                        ))}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      const Table = components?.Table ?? defaultComponents.Table;
+      const headings: MarkdownComponentsTableCell[] = token.header.map(
+        (cell) => ({
+          align: cell.align ?? undefined,
+          children: cell.tokens.map((token, index) => (
+            <MarkdownInlineToken
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
+          )),
+        })
       );
+
+      const rows: MarkdownComponentsTableCell[][] = token.rows.map((row) =>
+        row.map((cell) => ({
+          align: cell.align ?? undefined,
+          children: cell.tokens.map((token, index) => (
+            <MarkdownInlineToken
+              key={index}
+              token={token as InlineToken}
+              components={components}
+            />
+          )),
+        }))
+      );
+
+      return <Table headings={headings} rows={rows} />;
     }
   }
 }
