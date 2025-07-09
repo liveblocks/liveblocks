@@ -19,11 +19,15 @@ export type MarkdownComponents = {
   Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
   Table: ComponentType<MarkdownComponentsTableProps>;
   List: ComponentType<MarkdownComponentsListProps>;
+  Paragraph: ComponentType<MarkdownComponentsParagraphProps>;
   Separator: ComponentType;
 
-  // Paragraph
   // Inline (text, strong, em, code, del)
 };
+
+export interface MarkdownComponentsParagraphProps {
+  children: ReactNode;
+}
 
 interface MarkdownComponentsTableCell {
   align?: "left" | "center" | "right";
@@ -129,6 +133,9 @@ type CheckboxToken = {
 };
 
 const defaultComponents: MarkdownComponents = {
+  Paragraph: ({ children }) => {
+    return <p>{children}</p>;
+  },
   CodeBlock: ({ language, code }) => {
     return (
       <pre data-language={language ?? undefined}>
@@ -412,13 +419,15 @@ export function MarkdownBlockToken({
       );
     }
     case "paragraph": {
+      const Paragraph = components?.Paragraph ?? defaultComponents.Paragraph;
+
       return (
-        <p>
+        <Paragraph>
           <MarkdownInlineTokens
             tokens={token.tokens as InlineToken[]}
             components={components}
           />
-        </p>
+        </Paragraph>
       );
     }
     case "table": {
