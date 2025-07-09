@@ -150,6 +150,24 @@ const commentBodyWithMentions: CommentBody = {
   ],
 };
 
+const commentBodyWihValidUrls: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "This is a " },
+        { type: "link", url: "https://liveblocks.io", text: "link" },
+        { text: " and " },
+        {
+          type: "link",
+          url: "www.liveblocks.io/docs?query=123#hash",
+        },
+      ],
+    },
+  ],
+};
+
 const commentBodyWihInvalidUrls: CommentBody = {
   version: 1,
   content: [
@@ -399,6 +417,22 @@ describe("stringifyCommentBody", () => {
     ).resolves.toBe(
       "Hello _**\\*\\*world\\*\\***_ and [https://liveblocks.io](https://liveblocks.io)"
     );
+  });
+
+  test("should preserve valid URLs", async () => {
+    await expect(
+      stringifyCommentBody(commentBodyWihValidUrls, { format: "html" })
+    ).resolves.toBe(
+      '<p>This is a <a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">link</a> and <a href="https://www.liveblocks.io/docs?query=123#hash" target="_blank" rel="noopener noreferrer">www.liveblocks.io/docs?query=123#hash</a></p>'
+    );
+    await expect(
+      stringifyCommentBody(commentBodyWihValidUrls, { format: "markdown" })
+    ).resolves.toBe(
+      "This is a [link](https://liveblocks.io) and [www.liveblocks.io/docs?query=123\\#hash](https://www.liveblocks.io/docs?query=123\\#hash)"
+    );
+    await expect(
+      stringifyCommentBody(commentBodyWihValidUrls, { format: "plain" })
+    ).resolves.toBe("This is a link and www.liveblocks.io/docs?query=123#hash");
   });
 
   test("should replace invalid URLs with plain text", async () => {

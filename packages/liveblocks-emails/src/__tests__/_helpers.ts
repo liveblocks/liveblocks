@@ -222,6 +222,24 @@ export const commentBodyWithInvalidUrls: CommentBody = {
   ],
 };
 
+export const commentBodyWithValidUrls: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Trying with " },
+        { type: "link", url: "https://liveblocks.io", text: "this link" },
+        { text: " and " },
+        {
+          type: "link",
+          url: "www.liveblocks.io/docs?query=123#hash",
+        },
+      ],
+    },
+  ],
+};
+
 export const makeComment = ({
   userId,
   threadId,
