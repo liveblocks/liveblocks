@@ -39,6 +39,8 @@ export type {
   MarkdownComponentsHeadingProps,
   MarkdownComponentsImageProps,
   MarkdownComponentsLinkProps,
+  MarkdownComponentsListProps,
+  MarkdownComponentsTableProps,
   MarkdownProps,
 } from "../primitives/Markdown";
 export { Markdown } from "../primitives/Markdown";
