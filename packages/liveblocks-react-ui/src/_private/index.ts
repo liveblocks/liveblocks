@@ -38,6 +38,7 @@ export type {
   MarkdownComponentsCodeBlockProps,
   MarkdownComponentsHeadingProps,
   MarkdownComponentsImageProps,
+  MarkdownComponentsInlineProps,
   MarkdownComponentsLinkProps,
   MarkdownComponentsListProps,
   MarkdownComponentsParagraphProps,

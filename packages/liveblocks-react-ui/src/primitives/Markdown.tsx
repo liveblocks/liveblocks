@@ -1,4 +1,4 @@
-import { sanitizeUrl } from "@liveblocks/core";
+import { assertNever, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import { Lexer, type Token, type Tokens } from "marked";
 import {
@@ -20,10 +20,14 @@ export type MarkdownComponents = {
   Table: ComponentType<MarkdownComponentsTableProps>;
   List: ComponentType<MarkdownComponentsListProps>;
   Paragraph: ComponentType<MarkdownComponentsParagraphProps>;
+  Inline: ComponentType<MarkdownComponentsInlineProps>;
   Separator: ComponentType;
-
-  // Inline (text, strong, em, code, del)
 };
+
+export interface MarkdownComponentsInlineProps {
+  type: "strong" | "em" | "code" | "del";
+  children: ReactNode;
+}
 
 export interface MarkdownComponentsParagraphProps {
   children: ReactNode;
@@ -135,6 +139,20 @@ type CheckboxToken = {
 const defaultComponents: MarkdownComponents = {
   Paragraph: ({ children }) => {
     return <p>{children}</p>;
+  },
+  Inline: ({ type, children }) => {
+    switch (type) {
+      case "strong":
+        return <strong>{children}</strong>;
+      case "em":
+        return <em>{children}</em>;
+      case "code":
+        return <code>{children}</code>;
+      case "del":
+        return <del>{children}</del>;
+      default:
+        assertNever(type, "Unknown inline type");
+    }
   },
   CodeBlock: ({ language, code }) => {
     return (
@@ -289,13 +307,7 @@ export function MarkdownBlockToken({
 
       return (
         <Blockquote>
-          {tokens.map((token, index) => (
-            <MarkdownBlockToken
-              token={token}
-              key={index}
-              components={components}
-            />
-          ))}
+          <MarkdownBlockTokens tokens={tokens} components={components} />
         </Blockquote>
       );
     }
@@ -470,74 +482,69 @@ function MarkdownInlineToken({
 }) {
   switch (token.type) {
     case "strong": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
       return (
-        <strong>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </strong>
+        <Inline type="strong">
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Inline>
       );
     }
     case "em": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
       return (
-        <em>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </em>
+        <Inline type="em">
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Inline>
       );
     }
     case "codespan": {
-      return <code>{parseHtmlEntities(token.text)}</code>;
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
+      return <Inline type="code">{parseHtmlEntities(token.text)}</Inline>;
     }
     case "br": {
       return <br />;
     }
     case "del": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
       return (
-        <del>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </del>
+        <Inline type="del">
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Inline>
       );
     }
     case "link": {
       const href = sanitizeUrl(token.href);
 
       if (href === null) {
-        return token.tokens.map((token, index) => (
-          <MarkdownInlineToken
-            key={index}
-            token={token as InlineToken}
+        return (
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
             components={components}
           />
-        ));
+        );
       }
 
       const Link = components?.Link ?? defaultComponents.Link;
 
       return (
         <Link href={href} title={token.title ?? undefined}>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
         </Link>
       );
     }
@@ -556,13 +563,12 @@ function MarkdownInlineToken({
     }
     case "text": {
       if (token.tokens !== undefined) {
-        return token.tokens.map((token, index) => (
-          <MarkdownInlineToken
-            key={index}
-            token={token as InlineToken}
+        return (
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
             components={components}
           />
-        ));
+        );
       } else {
         return parseHtmlEntities(token.text);
       }
@@ -577,6 +583,18 @@ function MarkdownInlineToken({
       return null;
     }
   }
+}
+
+function MarkdownBlockTokens({
+  tokens,
+  components,
+}: {
+  tokens: BlockToken[];
+  components: Partial<MarkdownComponents> | undefined;
+}) {
+  return tokens.map((token, index) => (
+    <MarkdownBlockToken key={index} token={token} components={components} />
+  ));
 }
 
 function MarkdownInlineTokens({
