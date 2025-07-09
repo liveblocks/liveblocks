@@ -1256,7 +1256,8 @@ export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 export type LargeMessageStrategy =
   | "default"
   | "split"
-  | "experimental-fallback-to-http";
+  | "experimental-fallback-to-http"
+  | "throw";
 
 /** @internal */
 export type RoomConfig<M extends BaseMetadata> = {
@@ -1760,6 +1761,10 @@ export function createRoom<
             }
           });
         return;
+      }
+
+      case "throw": {
+        throw new Error("Message is too large for websockets, not sending.");
       }
     }
   }
