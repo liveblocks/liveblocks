@@ -49,7 +49,7 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
       add a new state called `liveblocks` to your store, enabling
       you to interact with our Presence and Storage APIs.
 
-      ```ts file="store.ts" highlight="7-9,25-27"
+      ```ts file="store.ts" highlight="7-9,24-25"
       "use client";
 
       import { createClient } from "@liveblocks/client";
@@ -73,11 +73,8 @@ from the [`@liveblocks/redux`](/docs/api-reference/liveblocks-redux) package.
       function makeStore() {
         return configureStore({
           reducer: slice.reducer,
-          enhancers: [
-            liveblocksEnhancer({
-              client,
-            }),
-          ],
+          enhancers: (getDefaultEnhancers) =>
+            getDefaultEnhancers().concat(liveblocksEnhancer({ client })),
         });
       }
 

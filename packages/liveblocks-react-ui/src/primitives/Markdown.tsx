@@ -1,3 +1,4 @@
+import { sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import { Lexer, type Tokens } from "marked";
 import {
@@ -600,24 +601,7 @@ function MarkdownInlineToken({
       );
     }
     case "link": {
-      let href: string | null;
-      try {
-        const url = new URL(token.href, window.location.href);
-        if (url.protocol === "http:" || url.protocol === "https:") {
-          // If the link is relative to the current origin, we use the pathname, search, and hash to create a relative link.
-          if (url.origin === window.location.origin) {
-            href = url.pathname + url.search + url.hash;
-          }
-          // If the link is absolute, we use the full URL.
-          else {
-            href = url.toString();
-          }
-        } else {
-          href = null;
-        }
-      } catch {
-        href = null;
-      }
+      const href = sanitizeUrl(token.href);
 
       if (href === null) {
         return token.tokens.map((token, index) => (
@@ -644,17 +628,7 @@ function MarkdownInlineToken({
       );
     }
     case "image": {
-      let href: string | null;
-      try {
-        const url = new URL(token.href);
-        if (url.protocol === "http:" || url.protocol === "https:") {
-          href = url.toString();
-        } else {
-          href = null;
-        }
-      } catch {
-        href = null;
-      }
+      const href = sanitizeUrl(token.href);
 
       if (href === null) {
         return token.text;

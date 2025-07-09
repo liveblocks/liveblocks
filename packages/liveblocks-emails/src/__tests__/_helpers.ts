@@ -169,7 +169,7 @@ export const commentBody7: CommentBody = {
       type: "paragraph",
       children: [
         { text: "Check out this " },
-        { type: "link", url: "https://www.liveblocks.io", text: "example" },
+        { type: "link", url: "https://www.liveblocks.io/", text: "example" },
       ],
     },
   ],
@@ -198,6 +198,25 @@ export const commentBodyWithHtml2: CommentBody = {
           text: "<script>injected script</script>",
         },
         { text: " !" },
+      ],
+    },
+  ],
+};
+
+export const commentBodyWithInvalidUrls: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Trying with " },
+        { type: "link", url: "javascript:alert('xss')", text: "this link" },
+        { text: " and " },
+        {
+          type: "link",
+          url: "data:text/html,<script>alert('xss')</script>",
+          text: "this other link",
+        },
       ],
     },
   ],

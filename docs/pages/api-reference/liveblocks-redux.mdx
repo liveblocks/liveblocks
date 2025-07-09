@@ -21,13 +21,14 @@ import { configureStore } from "@reduxjs/toolkit";
 
 const store = configureStore({
   reducer: /* reducer */,
-  enhancers: [
-    liveblocksEnhancer({
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(
+      liveblocksEnhancer({
       client,
       storageMapping: {},
       presenceMapping: {},
-    }),
-  ],
+    })
+  ),
 });
 ```
 
@@ -35,7 +36,7 @@ const store = configureStore({
 
 See different authentication methods in the [`createClient`][] method.
 
-```js highlight="1,4-6,12"
+```js highlight="1,4-6,10-11"
 import { createClient } from "@liveblocks/client";
 import { liveblocksEnhancer } from "@liveblocks/redux";
 
@@ -45,11 +46,8 @@ const client = createClient({
 
 const store = configureStore({
   reducer: /* reducer */,
-  enhancers: [
-    liveblocksEnhancer({
-      client,
-    }),
-  ],
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(liveblocksEnhancer({ client })),
 });
 ```
 
@@ -58,7 +56,7 @@ const store = configureStore({
 Mapping used to synchronize a part of your Redux state with one Liveblocks room
 presence.
 
-```js highlight="20"
+```js highlight="21"
 import { liveblocksEnhancer } from "@liveblocks/redux";
 
 const initialState = {
@@ -75,12 +73,13 @@ const slice = createSlice({
 
 const store = configureStore({
   reducer: slice.reducer,
-  enhancers: [
-    liveblocksEnhancer({
-      client,
-      presenceMapping: { cursor: true },
-    }),
-  ],
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(
+      liveblocksEnhancer({
+        client,
+        presenceMapping: { cursor: true },
+      })
+    ),
 });
 ```
 
@@ -89,7 +88,7 @@ const store = configureStore({
 Mapping used to synchronize a part of your Redux state with one Liveblocks Room
 storage.
 
-```js highlight="20"
+```js highlight="21"
 import { liveblocksEnhancer } from "@liveblocks/redux";
 
 const initialState = {
@@ -106,12 +105,13 @@ const slice = createSlice({
 
 const store = configureStore({
   reducer: slice.reducer,
-  enhancers: [
-    liveblocksEnhancer({
-      client,
-      storageMapping: { scientist: true },
-    }),
-  ],
+  enhancers: (getDefaultEnhancers) =>
+    getDefaultEnhancers().concat(
+      liveblocksEnhancer({
+        client,
+        storageMapping: { scientist: true },
+      })
+    ),
 });
 ```
 
