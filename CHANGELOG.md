@@ -1,3 +1,11 @@
+## vNEXT (not yet published)
+
+## v3.1.2
+
+### `@liveblocks/react-ui` and `@liveblocks/emails`
+
+- Improve URL sanitization in comments.
+
 ## v3.1.1
 
 ### `@liveblocks/client`

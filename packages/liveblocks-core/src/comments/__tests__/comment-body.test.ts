@@ -150,6 +150,25 @@ const commentBodyWithMentions: CommentBody = {
   ],
 };
 
+const commentBodyWihInvalidUrls: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "This is a " },
+        { type: "link", url: "javascript:alert('xss')", text: "link" },
+        { text: " and " },
+        {
+          type: "link",
+          url: "data:text/html,<script>alert('xss')</script>",
+          text: "another one",
+        },
+      ],
+    },
+  ],
+};
+
 function resolveUsers({ userIds }: ResolveUsersArgs) {
   return userIds.map((userId) => {
     return {
@@ -380,6 +399,18 @@ describe("stringifyCommentBody", () => {
     ).resolves.toBe(
       "Hello _**\\*\\*world\\*\\***_ and [https://liveblocks.io](https://liveblocks.io)"
     );
+  });
+
+  test("should replace invalid URLs with plain text", async () => {
+    await expect(
+      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "html" })
+    ).resolves.toBe("<p>This is a link and another one</p>");
+    await expect(
+      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "markdown" })
+    ).resolves.toBe("This is a link and another one");
+    await expect(
+      stringifyCommentBody(commentBodyWihInvalidUrls, { format: "plain" })
+    ).resolves.toBe("This is a link and another one");
   });
 
   const resolveUsersExpected = [

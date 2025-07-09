@@ -12,6 +12,7 @@ import {
   commentBody7,
   commentBodyWithHtml,
   commentBodyWithHtml2,
+  commentBodyWithInvalidUrls,
   resolveUsers,
 } from "./_helpers";
 
@@ -97,10 +98,20 @@ describe("convert comment body", () => {
     const expected1 =
       '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>';
     const expected2 =
-      '<p>Check out this <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">example</a></p>';
+      '<p>Check out this <a href="https://www.liveblocks.io/" target="_blank" rel="noopener noreferrer">example</a></p>';
 
     expect(body1).toEqual(expected1);
     expect(body2).toEqual(expected2);
+  });
+
+  it("should replace invalid URLs with plain text", async () => {
+    const body = await convertCommentBody(commentBodyWithInvalidUrls, {
+      elements,
+    });
+
+    const expected = "<p>Trying with this link and this other link</p>";
+
+    expect(body).toEqual(expected);
   });
 
   it("should convert with user mention", async () => {
