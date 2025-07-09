@@ -20,7 +20,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 28 (2025-07-11)
 
+## Examples
+
+- New example:
+  [AI Support Chat](https://liveblocks.io/examples/ai-support/nextjs-ai-support).
+
 ## Contributors
+
+ctnicholas
 
 # Week 27 (2025-07-04)
 
