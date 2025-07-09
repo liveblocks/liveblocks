@@ -1,6 +1,6 @@
-import { sanitizeUrl } from "@liveblocks/core";
+import { assertNever, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
-import { Lexer, type Tokens } from "marked";
+import { Lexer, type Token, type Tokens } from "marked";
 import {
   type ComponentType,
   forwardRef,
@@ -17,13 +17,41 @@ export type MarkdownComponents = {
   Heading: ComponentType<MarkdownComponentsHeadingProps>;
   Image: ComponentType<MarkdownComponentsImageProps>;
   Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
-
-  // Paragraph
-  // Inline (text, strong, em, code, del)
-  // Table
-  // List
-  // Separator (hr)
+  Table: ComponentType<MarkdownComponentsTableProps>;
+  List: ComponentType<MarkdownComponentsListProps>;
+  Paragraph: ComponentType<MarkdownComponentsParagraphProps>;
+  Inline: ComponentType<MarkdownComponentsInlineProps>;
+  Separator: ComponentType;
 };
+
+export interface MarkdownComponentsInlineProps {
+  type: "strong" | "em" | "code" | "del";
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsParagraphProps {
+  children: ReactNode;
+}
+
+interface MarkdownComponentsTableCell {
+  align?: "left" | "center" | "right";
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsTableProps {
+  headings: MarkdownComponentsTableCell[];
+  rows: MarkdownComponentsTableCell[][];
+}
+
+interface MarkdownComponentsListItem {
+  checked?: boolean;
+  children: ReactNode;
+}
+
+export interface MarkdownComponentsListProps {
+  type: "ordered" | "unordered";
+  items: MarkdownComponentsListItem[];
+}
 
 export interface MarkdownComponentsBlockquoteProps {
   children: ReactNode;
@@ -99,9 +127,33 @@ type InlineToken =
   | Tokens.Link
   | Tokens.Image
   | Tokens.Text
-  | Tokens.Escape;
+  | Tokens.Escape
+  | CheckboxToken;
+
+type CheckboxToken = {
+  type: "checkbox";
+  checked: boolean;
+  raw: string;
+};
 
 const defaultComponents: MarkdownComponents = {
+  Paragraph: ({ children }) => {
+    return <p>{children}</p>;
+  },
+  Inline: ({ type, children }) => {
+    switch (type) {
+      case "strong":
+        return <strong>{children}</strong>;
+      case "em":
+        return <em>{children}</em>;
+      case "code":
+        return <code>{children}</code>;
+      case "del":
+        return <del>{children}</del>;
+      default:
+        assertNever(type, "Unknown inline type");
+    }
+  },
   CodeBlock: ({ language, code }) => {
     return (
       <pre data-language={language ?? undefined}>
@@ -126,6 +178,59 @@ const defaultComponents: MarkdownComponents = {
   },
   Blockquote: ({ children }) => {
     return <blockquote>{children}</blockquote>;
+  },
+  Table: ({ headings, rows }) => {
+    return (
+      <table>
+        <thead>
+          <tr>
+            {headings.map((heading, index) => {
+              return (
+                <th key={index} align={heading.align}>
+                  {heading.children}
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => {
+            return (
+              <tr key={index}>
+                {row.map((cell, index) => {
+                  return (
+                    <td key={index} align={cell.align}>
+                      {cell.children}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  },
+  List: ({ type, items }) => {
+    const List = type === "ordered" ? "ol" : "ul";
+
+    return (
+      <List>
+        {items.map((item, index) => (
+          <li key={index}>
+            {item.checked !== undefined && (
+              <>
+                <input type="checkbox" disabled checked={item.checked} />{" "}
+              </>
+            )}
+            {item.children}
+          </li>
+        ))}
+      </List>
+    );
+  },
+  Separator: () => {
+    return <hr />;
   },
 };
 
@@ -197,57 +302,12 @@ export function MarkdownBlockToken({
       return <CodeBlock language={language} code={token.text} />;
     }
     case "blockquote": {
-      const tokens: BlockToken[] = [];
-      for (let i = 0; i < token.tokens.length; i++) {
-        switch (token.tokens[i]!.type) {
-          case "space":
-          case "code":
-          case "blockquote":
-          case "html":
-          case "heading":
-          case "hr":
-          case "list":
-          case "paragraph":
-          case "table": {
-            tokens.push(token.tokens[i] as BlockToken);
-            break;
-          }
-          case "text": {
-            const texts: Tokens.Text[] = [token.tokens[i] as Tokens.Text];
-            while (
-              i + 1 < token.tokens.length &&
-              token.tokens[i + 1]!.type === "text"
-            ) {
-              i++;
-              texts.push(token.tokens[i] as Tokens.Text);
-            }
-            tokens.push({
-              type: "paragraph",
-              tokens: texts,
-              raw: texts.map((text) => text.raw).join(""),
-              text: texts.map((text) => text.text).join(""),
-            } satisfies Tokens.Paragraph);
-            break;
-          }
-          default: {
-            continue;
-          }
-        }
-      }
-
+      const tokens = normalizeToBlockTokens(token.tokens);
       const Blockquote = components?.Blockquote ?? defaultComponents.Blockquote;
 
       return (
         <Blockquote>
-          {tokens.map((token, index) => {
-            return (
-              <MarkdownBlockToken
-                token={token}
-                key={index}
-                components={components}
-              />
-            );
-          })}
+          <MarkdownBlockTokens tokens={tokens} components={components} />
         </Blockquote>
       );
     }
@@ -259,290 +319,156 @@ export function MarkdownBlockToken({
 
       return (
         <Heading level={clampHeadingLevel(token.depth)}>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
         </Heading>
       );
     }
     case "hr": {
-      return <hr />;
+      const Separator = components?.Separator ?? defaultComponents.Separator;
+
+      return <Separator />;
     }
     case "list": {
-      const ListTag = token.ordered ? "ol" : "ul";
+      const List = components?.List ?? defaultComponents.List;
+      const items: MarkdownComponentsListItem[] = token.items.map((item) => {
+        // A 'loose' list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
+        if (item.loose) {
+          // If the list item is a task list item, we need to add a checkbox to the start of the token
+          if (item.task) {
+            const tokens = [...item.tokens];
+            const checkboxTokens: InlineToken[] = [
+              {
+                type: "checkbox",
+                checked: item.checked ?? false,
+                raw: "",
+              },
+              {
+                type: "text",
+                text: " ",
+                raw: " ",
+                escaped: false,
+              },
+            ];
 
-      return (
-        <ListTag>
-          {token.items.map((item, index) => {
-            // A 'loose' list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
-            if (item.loose) {
-              // If the list item is a task list item, we need to add a checkbox to the start of the token
-              if (item.task) {
-                const tokens = [...item.tokens];
-                if (tokens[0]?.type === "paragraph") {
-                  const token = tokens[0] as Tokens.Paragraph;
-                  token.tokens.unshift(
-                    {
-                      type: "checkbox",
-                      checked: item.checked,
-                      raw: "",
-                    },
-                    {
-                      type: "text",
-                      text: " ",
-                      raw: " ",
-                      escaped: false,
-                    }
-                  );
-                } else {
-                  tokens.unshift(
-                    {
-                      type: "checkbox",
-                      checked: item.checked,
-                      raw: "",
-                    },
-                    {
-                      type: "text",
-                      text: " ",
-                      raw: " ",
-                      escaped: false,
-                    }
-                  );
-                }
-
-                const items: BlockToken[] = [];
-                for (let i = 0; i < tokens.length; i++) {
-                  switch (tokens[i]!.type) {
-                    case "space":
-                    case "code":
-                    case "blockquote":
-                    case "html":
-                    case "heading":
-                    case "hr":
-                    case "list":
-                    case "paragraph":
-                    case "table": {
-                      items.push(tokens[i] as BlockToken);
-                      break;
-                    }
-                    case "text":
-                    case "checkbox": {
-                      const texts: (
-                        | Tokens.Text
-                        | {
-                            type: "checkbox";
-                            checked: boolean;
-                            raw: string;
-                            text: string;
-                          }
-                      )[] = [
-                        tokens[i] as
-                          | Tokens.Text
-                          | {
-                              type: "checkbox";
-                              checked: boolean;
-                              raw: string;
-                              text: string;
-                            },
-                      ];
-                      while (
-                        i + 1 < tokens.length &&
-                        tokens[i + 1]!.type === "text"
-                      ) {
-                        i++;
-                        texts.push(tokens[i] as Tokens.Text);
-                      }
-                      items.push({
-                        type: "paragraph",
-                        tokens: texts,
-                        raw: texts.map((text) => text.raw).join(""),
-                        text: texts.map((text) => text.text).join(""),
-                      } satisfies Tokens.Paragraph);
-                      break;
-                    }
-                    default: {
-                      continue;
-                    }
-                  }
-                }
-
-                return (
-                  <li key={index}>
-                    {items.map((token, index) => {
-                      return (
-                        <MarkdownBlockToken
-                          token={token}
-                          key={index}
-                          components={components}
-                        />
-                      );
-                    })}
-                  </li>
-                );
-              } else {
-                const tokens: BlockToken[] = [];
-                for (let i = 0; i < item.tokens.length; i++) {
-                  switch (item.tokens[i]!.type) {
-                    case "space":
-                    case "code":
-                    case "blockquote":
-                    case "html":
-                    case "heading":
-                    case "hr":
-                    case "list":
-                    case "paragraph":
-                    case "table": {
-                      tokens.push(item.tokens[i] as BlockToken);
-                      break;
-                    }
-                    case "text": {
-                      const texts: Tokens.Text[] = [
-                        item.tokens[i] as Tokens.Text,
-                      ];
-                      while (
-                        i + 1 < item.tokens.length &&
-                        item.tokens[i + 1]!.type === "text"
-                      ) {
-                        i++;
-                        texts.push(item.tokens[i] as Tokens.Text);
-                      }
-                      tokens.push({
-                        type: "paragraph",
-                        tokens: texts,
-                        raw: texts.map((text) => text.raw).join(""),
-                        text: texts.map((text) => text.text).join(""),
-                      } satisfies Tokens.Paragraph);
-                      break;
-                    }
-                    default: {
-                      continue;
-                    }
-                  }
-                }
-
-                return (
-                  <li key={index}>
-                    {tokens.map((token, index) => {
-                      return (
-                        <MarkdownBlockToken
-                          token={token}
-                          key={index}
-                          components={components}
-                        />
-                      );
-                    })}
-                  </li>
-                );
+            if (tokens[0]?.type === "paragraph") {
+              const paragraphToken = tokens[0];
+              if (paragraphToken.tokens) {
+                paragraphToken.tokens.unshift(...checkboxTokens);
               }
             } else {
-              const Items: ReactNode = item.tokens.map((token, index) => {
-                switch (token.type) {
-                  case "space":
-                  case "code":
-                  case "blockquote":
-                  case "html":
-                  case "heading":
-                  case "hr":
-                  case "list":
-                  case "paragraph":
-                  case "table": {
-                    return (
-                      <MarkdownBlockToken
-                        token={token as BlockToken}
-                        key={index}
-                        components={components}
-                      />
-                    );
-                  }
-                  case "text": {
-                    return (
-                      <MarkdownInlineToken
-                        token={token as Tokens.Text}
-                        key={index}
-                        components={components}
-                      />
-                    );
-                  }
-                  default: {
-                    return null;
-                  }
-                }
-              });
-              if (item.task) {
-                return (
-                  <li key={index}>
-                    <input type="checkbox" disabled checked={item.checked} />{" "}
-                    {Items}
-                  </li>
-                );
-              } else {
-                return <li key={index}>{Items}</li>;
-              }
+              tokens.unshift(...checkboxTokens);
             }
-          })}
-        </ListTag>
+
+            return {
+              checked: item.checked,
+              children: normalizeToBlockTokens(tokens).map((token, index) => (
+                <MarkdownBlockToken
+                  token={token}
+                  key={index}
+                  components={components}
+                />
+              )),
+            };
+          } else {
+            return {
+              children: normalizeToBlockTokens(item.tokens).map(
+                (token, index) => (
+                  <MarkdownBlockToken
+                    token={token}
+                    key={index}
+                    components={components}
+                  />
+                )
+              ),
+            };
+          }
+        } else {
+          return {
+            checked: item.task ? item.checked : undefined,
+            // Non-'loose' list items aren't wrapped in a paragraph
+            children: item.tokens.map((token, index) => {
+              switch (token.type) {
+                case "space":
+                case "code":
+                case "blockquote":
+                case "html":
+                case "heading":
+                case "hr":
+                case "list":
+                case "paragraph":
+                case "table": {
+                  return (
+                    <MarkdownBlockToken
+                      token={token as BlockToken}
+                      key={index}
+                      components={components}
+                    />
+                  );
+                }
+                case "text": {
+                  return (
+                    <MarkdownInlineToken
+                      token={token as Tokens.Text}
+                      key={index}
+                      components={components}
+                    />
+                  );
+                }
+                default: {
+                  return null;
+                }
+              }
+            }),
+          };
+        }
+      });
+
+      return (
+        <List type={token.ordered ? "ordered" : "unordered"} items={items} />
       );
     }
     case "paragraph": {
+      const Paragraph = components?.Paragraph ?? defaultComponents.Paragraph;
+
       return (
-        <p>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </p>
+        <Paragraph>
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Paragraph>
       );
     }
     case "table": {
-      return (
-        <table>
-          <thead>
-            <tr>
-              {token.header.map((cell, index) => {
-                return (
-                  <th key={index} align={cell.align ?? undefined}>
-                    {cell.tokens.map((token, index) => (
-                      <MarkdownInlineToken
-                        key={index}
-                        token={token as InlineToken}
-                        components={components}
-                      />
-                    ))}
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {token.rows.map((row, index) => {
-              return (
-                <tr key={index}>
-                  {row.map((cell, index) => {
-                    return (
-                      <td key={index} align={cell.align ?? undefined}>
-                        {cell.tokens.map((token, index) => (
-                          <MarkdownInlineToken
-                            key={index}
-                            token={token as InlineToken}
-                            components={components}
-                          />
-                        ))}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      const Table = components?.Table ?? defaultComponents.Table;
+      const headings: MarkdownComponentsTableCell[] = token.header.map(
+        (cell) => ({
+          align: cell.align ?? undefined,
+          children: (
+            <MarkdownInlineTokens
+              tokens={cell.tokens as InlineToken[]}
+              components={components}
+            />
+          ),
+        })
       );
+
+      const rows: MarkdownComponentsTableCell[][] = token.rows.map((row) =>
+        row.map((cell) => ({
+          align: cell.align ?? undefined,
+          children: (
+            <MarkdownInlineTokens
+              tokens={cell.tokens as InlineToken[]}
+              components={components}
+            />
+          ),
+        }))
+      );
+
+      return <Table headings={headings} rows={rows} />;
     }
   }
 }
@@ -551,79 +477,74 @@ function MarkdownInlineToken({
   token,
   components,
 }: {
-  token: InlineToken | { type: "checkbox"; checked: boolean };
+  token: InlineToken;
   components: Partial<MarkdownComponents> | undefined;
 }) {
   switch (token.type) {
     case "strong": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
       return (
-        <strong>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </strong>
+        <Inline type="strong">
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Inline>
       );
     }
     case "em": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
       return (
-        <em>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </em>
+        <Inline type="em">
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Inline>
       );
     }
     case "codespan": {
-      return <code>{parseHtmlEntities(token.text)}</code>;
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
+      return <Inline type="code">{parseHtmlEntities(token.text)}</Inline>;
     }
     case "br": {
       return <br />;
     }
     case "del": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
       return (
-        <del>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
-        </del>
+        <Inline type="del">
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
+        </Inline>
       );
     }
     case "link": {
       const href = sanitizeUrl(token.href);
 
       if (href === null) {
-        return token.tokens.map((token, index) => (
-          <MarkdownInlineToken
-            key={index}
-            token={token as InlineToken}
+        return (
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
             components={components}
           />
-        ));
+        );
       }
 
       const Link = components?.Link ?? defaultComponents.Link;
 
       return (
         <Link href={href} title={token.title ?? undefined}>
-          {token.tokens.map((token, index) => (
-            <MarkdownInlineToken
-              key={index}
-              token={token as InlineToken}
-              components={components}
-            />
-          ))}
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
+            components={components}
+          />
         </Link>
       );
     }
@@ -642,13 +563,12 @@ function MarkdownInlineToken({
     }
     case "text": {
       if (token.tokens !== undefined) {
-        return token.tokens.map((token, index) => (
-          <MarkdownInlineToken
-            key={index}
-            token={token as InlineToken}
+        return (
+          <MarkdownInlineTokens
+            tokens={token.tokens as InlineToken[]}
             components={components}
           />
-        ));
+        );
       } else {
         return parseHtmlEntities(token.text);
       }
@@ -665,6 +585,30 @@ function MarkdownInlineToken({
   }
 }
 
+function MarkdownBlockTokens({
+  tokens,
+  components,
+}: {
+  tokens: BlockToken[];
+  components: Partial<MarkdownComponents> | undefined;
+}) {
+  return tokens.map((token, index) => (
+    <MarkdownBlockToken key={index} token={token} components={components} />
+  ));
+}
+
+function MarkdownInlineTokens({
+  tokens,
+  components,
+}: {
+  tokens: InlineToken[];
+  components: Partial<MarkdownComponents> | undefined;
+}) {
+  return tokens.map((token, index) => (
+    <MarkdownInlineToken key={index} token={token} components={components} />
+  ));
+}
+
 function parseHtmlEntities(input: string) {
   const document = new DOMParser().parseFromString(
     `<!doctype html><body>${input}`,
@@ -676,4 +620,50 @@ function parseHtmlEntities(input: string) {
 
 function clampHeadingLevel(level: number) {
   return Math.max(1, Math.min(6, level)) as 1 | 2 | 3 | 4 | 5 | 6;
+}
+
+function normalizeToBlockTokens(tokens: Token[]): BlockToken[] {
+  const blocks: BlockToken[] = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]!;
+
+    switch (token.type) {
+      case "space":
+      case "code":
+      case "blockquote":
+      case "html":
+      case "heading":
+      case "hr":
+      case "list":
+      case "paragraph":
+      case "table": {
+        blocks.push(token as BlockToken);
+        break;
+      }
+
+      case "text": {
+        // Group consecutive text tokens into a paragraph
+        const texts: Tokens.Text[] = [token as Tokens.Text];
+        while (i + 1 < tokens.length && tokens[i + 1]!.type === "text") {
+          i++;
+          texts.push(tokens[i] as Tokens.Text);
+        }
+        blocks.push({
+          type: "paragraph",
+          tokens: texts,
+          raw: texts.map((text) => text.raw).join(""),
+          text: texts.map((text) => text.text).join(""),
+        } satisfies Tokens.Paragraph);
+
+        break;
+      }
+
+      default: {
+        continue;
+      }
+    }
+  }
+
+  return blocks;
 }
