@@ -5,6 +5,7 @@ import { useLatest } from "./use-latest";
 interface ObserveOptions {
   rootMargin?: string | number;
   root?: RefObject<Element>;
+  threshold?: number | number[];
 }
 
 interface Options extends ObserveOptions {
@@ -62,6 +63,7 @@ function observe(
           typeof options.rootMargin === "number"
             ? `${options.rootMargin}px`
             : options.rootMargin,
+        threshold: options.threshold,
       }
     );
 
@@ -94,7 +96,7 @@ export function useIntersectionCallback(
 ) {
   const enabled = options?.enabled ?? true;
   const latestCallback = useLatest(callback);
-  const { root, rootMargin } = options ?? {};
+  const { root, rootMargin, threshold } = options ?? {};
 
   useEffect(() => {
     const element = ref.current;
@@ -106,6 +108,7 @@ export function useIntersectionCallback(
     const observeOptions: ObserveOptions = {
       root,
       rootMargin,
+      threshold,
     };
 
     if (enabled) {
@@ -125,7 +128,7 @@ export function useIntersectionCallback(
     return () => {
       unobserve(element, observeOptions);
     };
-  }, [ref, enabled, latestCallback, root, rootMargin]);
+  }, [ref, enabled, latestCallback, root, rootMargin, threshold]);
 }
 
 /**

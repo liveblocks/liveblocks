@@ -30,7 +30,7 @@ import {
   useOverrides,
 } from "../overrides";
 import { cn } from "../utils/cn";
-import { useVisible } from "../utils/use-visible";
+import { useIntersectionCallback, useVisible } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
@@ -64,7 +64,7 @@ export type AiChatComponents = {
  * The minimum number of pixels from the bottom of the scrollable area
  * before showing the scroll to bottom indicator.
  */
-const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 50;
+const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 60;
 
 export interface AiChatProps extends ComponentProps<"div"> {
   /**
@@ -116,6 +116,12 @@ const defaultComponents: AiChatComponents = {
   ),
 };
 
+// [0, 0.1, ..., 0.9, 1]
+const intersectionPercentageThresholds: number[] = Array.from(
+  { length: 11 },
+  (_, index) => index * 0.1
+);
+
 export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   (
     {
@@ -143,17 +149,22 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const footerRef = useRef<HTMLDivElement | null>(null);
     const scrollBottomRef = useRef<HTMLDivElement | null>(null);
     const trailingSpacerRef = useRef<HTMLDivElement | null>(null);
-    const isScrollIndicatorEnabled = !isLoading && !error;
+    const [trailingSpacerHeight, setTrailingSpacerHeight] = useState(0);
+    const areScrollBehaviorsEnabled = !isLoading && !error;
     const isScrollAtBottom = useVisible(scrollBottomRef, {
-      enabled: isScrollIndicatorEnabled,
+      enabled: areScrollBehaviorsEnabled,
       root: containerRef,
       rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR,
       initialValue: null,
     });
     const isScrollIndicatorVisible =
-      isScrollIndicatorEnabled && isScrollAtBottom !== null
+      areScrollBehaviorsEnabled && isScrollAtBottom !== null
         ? !isScrollAtBottom
         : false;
+    const [
+      hasPendingLastMessageScrollAnimation,
+      setHasPendingLastMessageScrollAnimation,
+    ] = useState(false);
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       forwardedRef,
@@ -191,15 +202,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
     // Scroll when sending a new message
     useLayoutEffect(() => {
-      if (
-        !lastSentMessageId ||
-        !containerRef.current ||
-        !trailingSpacerRef.current
-      ) {
+      const container = containerRef.current;
+      const trailingSpacer = trailingSpacerRef.current;
+
+      if (!lastSentMessageId || !container || !trailingSpacer) {
         return;
       }
 
-      const lastSentMessage = containerRef.current.querySelector(
+      const lastSentMessage = container.querySelector(
         `[data-message-id="${lastSentMessageId}"]`
       );
 
@@ -212,24 +222,95 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       const lastSentMessageScrollMarginTop = Number.parseFloat(
         getComputedStyle(lastSentMessage as HTMLElement).scrollMarginTop
       );
-      const containerHeight = containerRef.current.clientHeight;
+      const containerViewportHeight = container.clientHeight;
       const footerHeight = footerRef.current?.offsetHeight ?? 0;
 
       // Compute the additional height needed if we want the new message to be positioned
       // at the top of the scrollable area's viewport.
-      const trailingSpacerHeight =
-        containerHeight -
-        lastSentMessageHeight -
-        lastSentMessageScrollMarginTop -
-        footerHeight;
-      trailingSpacerRef.current.style.height = `${Math.max(trailingSpacerHeight, 0)}px`;
+      const trailingSpacerHeight = Math.max(
+        0,
+        containerViewportHeight -
+          lastSentMessageHeight -
+          lastSentMessageScrollMarginTop -
+          footerHeight
+      );
 
-      // Then scroll to the top of the new message.
+      // The state version is used to enable/disable `useIntersectionCallback` below,
+      // it's not used for updating the actual height.
+      setTrailingSpacerHeight(trailingSpacerHeight);
+      trailingSpacer.style.height = `${trailingSpacerHeight}px`;
+
+      // Finally, scroll to the top of the new message.
       lastSentMessage.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
+      setHasPendingLastMessageScrollAnimation(true);
     }, [lastSentMessageId]);
+
+    // Wait for scroll to be idle to "detect" when the `scrollIntoView` animation is complete.
+    useLayoutEffect(() => {
+      const container = containerRef.current;
+
+      if (!hasPendingLastMessageScrollAnimation || !container) {
+        return;
+      }
+
+      let timeoutId: ReturnType<typeof setTimeout>;
+
+      const handleScroll = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+
+        timeoutId = setTimeout(() => {
+          setHasPendingLastMessageScrollAnimation(false);
+        }, 200);
+      };
+
+      container.addEventListener("scroll", handleScroll);
+
+      return () => {
+        container.removeEventListener("scroll", handleScroll);
+      };
+    }, [hasPendingLastMessageScrollAnimation]);
+
+    // Update the trailing spacer height based on whether it's still needed (and by how much) or not.
+    useIntersectionCallback(
+      trailingSpacerRef,
+      (_, entry) => {
+        const trailingSpacer = entry.target as HTMLElement;
+
+        if (entry.intersectionRatio === 1) {
+          const container = containerRef.current;
+
+          // The trailing spacer is fully visible, so if the container isn't scrollable that means we can remove it.
+          if (container && container.scrollHeight <= container.clientHeight) {
+            setTrailingSpacerHeight(0);
+            trailingSpacer.style.height = "0px";
+          }
+        } else if (entry.intersectionRatio === 0) {
+          // The trailing spacer is not visible, so we can remove it.
+          setTrailingSpacerHeight(0);
+          trailingSpacer.style.height = "0px";
+        } else {
+          // The `intersectionRect` doesn't account for sticky elements like the footer.
+          const visibleHeight =
+            entry.intersectionRect.height -
+            (footerRef.current?.offsetHeight ?? 0);
+
+          trailingSpacer.style.height = `${visibleHeight}px`;
+        }
+      },
+      {
+        enabled:
+          areScrollBehaviorsEnabled &&
+          trailingSpacerHeight > 0 &&
+          !hasPendingLastMessageScrollAnimation,
+        root: containerRef,
+        threshold: intersectionPercentageThresholds,
+      }
+    );
 
     return (
       <div
