@@ -14,7 +14,6 @@ import {
   type ComponentProps,
   type ComponentType,
   forwardRef,
-  useEffect,
   useImperativeHandle,
   useRef,
   useState,
@@ -38,11 +37,11 @@ import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
 export type AiChatComponentsEmptyProps = {
   /**
-   * The chat id provided to the `AiChat` component.
+   * The chat ID provided to the `AiChat` component.
    */
   chatId: string;
   /**
-   * The copilot id provided to the `AiChat` component.
+   * The Copilot ID provided to the `AiChat` component.
    */
   copilotId?: string;
 };
@@ -134,14 +133,18 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     forwardedRef
   ) => {
     const { messages, isLoading, error } = useAiChatMessages(chatId);
+    const [lastSentMessageId, setLastSentMessageId] =
+      useState<MessageId | null>(null);
     const $ = useOverrides(overrides);
     const Empty = components?.Empty ?? defaultComponents.Empty;
     const Loading = components?.Loading ?? defaultComponents.Loading;
 
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const containerBottomRef = useRef<HTMLDivElement | null>(null);
+    const footerRef = useRef<HTMLDivElement | null>(null);
+    const scrollBottomRef = useRef<HTMLDivElement | null>(null);
+    const trailingSpacerRef = useRef<HTMLDivElement | null>(null);
     const isScrollIndicatorEnabled = !isLoading && !error;
-    const isScrollAtBottom = useVisible(containerBottomRef, {
+    const isScrollAtBottom = useVisible(scrollBottomRef, {
       enabled: isScrollIndicatorEnabled,
       root: containerRef,
       rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR,
@@ -151,9 +154,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       isScrollIndicatorEnabled && isScrollAtBottom !== null
         ? !isScrollAtBottom
         : false;
-
-    const [lastSentMessageId, setLastSentMessageId] =
-      useState<MessageId | null>(null);
 
     useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(
       forwardedRef,
@@ -177,6 +177,53 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       };
     }
     const scrollToBottom = scrollToBottomCallbackRef.current;
+
+    // Instantly scroll to bottom when the messages load for the first time
+    useLayoutEffect(() => {
+      if (!isLoading && !error && messages.length > 0) {
+        scrollToBottom("instant");
+      }
+      // If we include `messages.length` in the dependency array, this effect would
+      // be triggered if the messages load at 0 and then move to 1+ later. We only
+      // want it to run when the messages load for the first time.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scrollToBottom, isLoading, error]);
+
+    // Scroll when sending a new message
+    useLayoutEffect(() => {
+      if (
+        !lastSentMessageId ||
+        !containerRef.current ||
+        !trailingSpacerRef.current
+      ) {
+        return;
+      }
+
+      const lastSentMessage = containerRef.current.querySelector(
+        `[data-message-id="${lastSentMessageId}"]`
+      );
+
+      if (!lastSentMessage) {
+        return;
+      }
+
+      const lastSentMessageHeight = (lastSentMessage as HTMLElement)
+        .offsetHeight;
+      const containerHeight = containerRef.current.clientHeight;
+      const footerHeight = footerRef.current?.offsetHeight ?? 0;
+
+      // Compute the additional height needed if we want the new message to be positioned
+      // at the top of the scrollable area's viewport.
+      const trailingSpacerHeight =
+        containerHeight - lastSentMessageHeight - footerHeight;
+      trailingSpacerRef.current.style.height = `${trailingSpacerHeight}px`;
+
+      // Then scroll to the top of the new message.
+      lastSentMessage.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, [lastSentMessageId]);
 
     return (
       <div
@@ -216,10 +263,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <Empty chatId={chatId} copilotId={copilotId} />
           ) : (
             <>
-              <AutoScrollHandler
-                lastSentMessageId={lastSentMessageId}
-                scrollToBottom={scrollToBottom}
-              />
               <div className="lb-ai-chat-messages">
                 {messages.map((message) => {
                   if (message.role === "user") {
@@ -228,6 +271,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                         key={message.id}
                         message={message}
                         overrides={overrides}
+                        data-message-id={message.id}
                       />
                     );
                   } else if (message.role === "assistant") {
@@ -237,6 +281,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                         message={message}
                         overrides={overrides}
                         components={components}
+                        data-message-id={message.id}
                       />
                     );
                   } else {
@@ -244,11 +289,18 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                   }
                 })}
               </div>
+              {/* This empty space is used to extend the scrollable area beyond its actual content. */}
+              <div
+                ref={trailingSpacerRef}
+                data-trailing-spacer
+                style={{ pointerEvents: "none" }}
+                aria-hidden
+              />
             </>
           )}
         </div>
 
-        <div className="lb-ai-chat-footer">
+        <div className="lb-ai-chat-footer" ref={footerRef}>
           <div className="lb-ai-chat-footer-actions">
             <div
               className="lb-root lb-elevation lb-elevation-moderate lb-ai-chat-scroll-indicator"
@@ -288,32 +340,12 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
          * IntersectionObserver when the scrollable area is fully scrolled.
          */}
         <div
-          ref={containerBottomRef}
+          ref={scrollBottomRef}
           style={{ position: "sticky", height: 0 }}
           aria-hidden
-          data-scroll-at-bottom={isScrollAtBottom ? "" : undefined}
+          data-scroll-bottom={isScrollAtBottom ? "" : undefined}
         />
       </div>
     );
   }
 );
-
-function AutoScrollHandler({
-  lastSentMessageId,
-  scrollToBottom,
-}: {
-  lastSentMessageId: MessageId | null;
-  scrollToBottom: (behavior: "instant" | "smooth") => void;
-}) {
-  // Scroll to bottom when the component first mounts
-  useLayoutEffect(() => {
-    scrollToBottom("instant");
-  }, [scrollToBottom]);
-
-  // Scroll to bottom when sending a new message
-  useEffect(() => {
-    scrollToBottom("smooth");
-  }, [lastSentMessageId, scrollToBottom]);
-
-  return null;
-}
