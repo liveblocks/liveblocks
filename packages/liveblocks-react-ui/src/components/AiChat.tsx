@@ -209,14 +209,20 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
       const lastSentMessageHeight = (lastSentMessage as HTMLElement)
         .offsetHeight;
+      const lastSentMessageScrollMarginTop = Number.parseFloat(
+        getComputedStyle(lastSentMessage as HTMLElement).scrollMarginTop
+      );
       const containerHeight = containerRef.current.clientHeight;
       const footerHeight = footerRef.current?.offsetHeight ?? 0;
 
       // Compute the additional height needed if we want the new message to be positioned
       // at the top of the scrollable area's viewport.
       const trailingSpacerHeight =
-        containerHeight - lastSentMessageHeight - footerHeight;
-      trailingSpacerRef.current.style.height = `${trailingSpacerHeight}px`;
+        containerHeight -
+        lastSentMessageHeight -
+        lastSentMessageScrollMarginTop -
+        footerHeight;
+      trailingSpacerRef.current.style.height = `${Math.max(trailingSpacerHeight, 0)}px`;
 
       // Then scroll to the top of the new message.
       lastSentMessage.scrollIntoView({
@@ -292,7 +298,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               {/* This empty space is used to extend the scrollable area beyond its actual content. */}
               <div
                 ref={trailingSpacerRef}
-                data-trailing-spacer
+                data-trailing-spacer=""
                 style={{ pointerEvents: "none" }}
                 aria-hidden
               />
@@ -343,7 +349,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ref={scrollBottomRef}
           style={{ position: "sticky", height: 0 }}
           aria-hidden
-          data-scroll-bottom={isScrollAtBottom ? "" : undefined}
+          data-scroll-bottom={isScrollAtBottom}
         />
       </div>
     );
