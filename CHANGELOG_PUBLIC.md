@@ -53,7 +53,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nimeshnayaju, nvie, marcbouchenoire
 
 # Week 27 (2025-07-04)
 
