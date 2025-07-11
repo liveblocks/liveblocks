@@ -15,6 +15,7 @@ import {
   type ComponentType,
   forwardRef,
   useImperativeHandle,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -189,6 +190,125 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scrollToBottom, isLoading, error]);
 
+    // TODO: Proof of concept with useState, use signals otherwise
+    const [containerHeight, setContainerHeight] = useState<number | null>(null);
+    const [footerHeight, setFooterHeight] = useState<number | null>(null);
+    const [lastUserMessageScrollMarginTop, setLastUserMessageScrollMarginTop] =
+      useState<number | null>(null);
+    const [lastAssistantMessageTopOffset, setLastAssistantMessageTopOffset] =
+      useState<number | null>(null);
+    const [
+      lastAssistantMessageBottomOffset,
+      setLastAssistantMessageBottomOffset,
+    ] = useState<number | null>(null);
+
+    const minHeight = useMemo(() => {
+      if (
+        containerHeight === null ||
+        footerHeight === null ||
+        lastUserMessageScrollMarginTop === null ||
+        lastAssistantMessageTopOffset === null ||
+        lastAssistantMessageBottomOffset === null
+      ) {
+        return null;
+      }
+
+      return (
+        containerHeight -
+        footerHeight -
+        lastUserMessageScrollMarginTop -
+        lastAssistantMessageTopOffset
+        // lastAssistantMessageBottomOffset
+      );
+    }, [
+      containerHeight,
+      footerHeight,
+      lastUserMessageScrollMarginTop,
+      lastAssistantMessageTopOffset,
+      lastAssistantMessageBottomOffset,
+    ]);
+
+    useLayoutEffect(() => {
+      const container = containerRef.current;
+      const footer = footerRef.current;
+
+      if (!container || !footer) {
+        return;
+      }
+
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === container) {
+            const borderBoxSize = entry.borderBoxSize[0];
+            const containerHeight = borderBoxSize?.blockSize;
+
+            setContainerHeight(containerHeight ?? null);
+          } else if (entry.target === footer) {
+            const borderBoxSize = entry.borderBoxSize[0];
+            const footerHeight = borderBoxSize?.blockSize;
+
+            setFooterHeight(footerHeight ?? null);
+          }
+        }
+      });
+
+      resizeObserver.observe(container);
+      resizeObserver.observe(footer);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, []);
+
+    let lastAssistantMessageId: MessageId | null = null;
+
+    if (messages && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+
+      if (lastMessage?.role === "assistant") {
+        lastAssistantMessageId = lastMessage.id;
+      }
+    }
+
+    useLayoutEffect(() => {
+      const container = containerRef.current;
+
+      if (!lastAssistantMessageId || !container) {
+        return;
+      }
+
+      const lastAssistantMessage = container.querySelector(
+        `[data-message-id="${lastAssistantMessageId}"]`
+      );
+
+      if (!lastAssistantMessage) {
+        return;
+      }
+
+      const lastUserMessage = lastAssistantMessage.previousElementSibling;
+
+      if (!lastUserMessage) {
+        return;
+      }
+
+      const lastUserMessageRect = lastUserMessage.getBoundingClientRect();
+      const lastAssistantMessageRect =
+        lastAssistantMessage.getBoundingClientRect();
+      const footerRect = footerRef.current?.getBoundingClientRect();
+
+      setLastAssistantMessageTopOffset(
+        lastAssistantMessageRect.top - lastUserMessageRect.top
+      );
+      setLastAssistantMessageBottomOffset(
+        footerRect ? footerRect.top - lastAssistantMessageRect.bottom : 0
+      );
+      setLastUserMessageScrollMarginTop(
+        Number.parseFloat(
+          getComputedStyle(lastUserMessage as HTMLElement).scrollMarginTop
+        )
+      );
+    }, [lastAssistantMessageId]);
+
     // Scroll when sending a new message
     useLayoutEffect(() => {
       const container = containerRef.current;
@@ -272,13 +392,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ) : (
             <>
               <div className="lb-ai-chat-messages">
-                {messages.map((message) => {
+                {messages.map((message, index) => {
                   if (message.role === "user") {
                     return (
                       <AiChatUserMessage
                         key={message.id}
                         message={message}
                         overrides={overrides}
+                        data-message-role="user"
                         data-message-id={message.id}
                       />
                     );
@@ -289,7 +410,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                         message={message}
                         overrides={overrides}
                         components={components}
+                        data-message-role="assistant"
                         data-message-id={message.id}
+                        style={{
+                          minHeight:
+                            index === messages.length - 1 && minHeight
+                              ? minHeight
+                              : undefined,
+                        }}
                       />
                     );
                   } else {
@@ -301,7 +429,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               <div
                 ref={trailingSpacerRef}
                 data-trailing-spacer=""
-                style={{ pointerEvents: "none" }}
+                style={{ pointerEvents: "none", display: "none" }}
                 aria-hidden
               />
             </>
