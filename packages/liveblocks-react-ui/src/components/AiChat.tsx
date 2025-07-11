@@ -179,6 +179,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     }
     const scrollToBottom = scrollToBottomCallbackRef.current;
 
+    // Update the trailing spacer height when needed
     useLayoutEffect(() => {
       if (!areMessagesLoaded) {
         return;
@@ -216,7 +217,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         let updatedMessagesHeight: number | null = messagesHeight;
 
         for (const entry of entries) {
-          const entryHeight = entry.borderBoxSize[0]?.blockSize;
+          const entryHeight =
+            entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
 
           if (entry.target === container) {
             updatedContainerHeight = entryHeight ?? null;
@@ -250,21 +252,54 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         footerHeight = updatedFooterHeight;
         messagesHeight = updatedMessagesHeight;
 
-        const messagesRect = messages.getBoundingClientRect();
-        const penultimateMessageRect =
-          penultimateMessage.getBoundingClientRect();
-        const heightFromPenultimateMessageToFooter =
-          messagesRect.bottom - penultimateMessageRect.top;
+        /**
+         * We need to calculate the height of the trailing spacer that would
+         * allow the penultimate message to be at the top of the viewport.
+         *
+         *   ┌─────────────────────────────────────────┐▲   A = The `scroll-margin-top`
+         *   │            ┌─────────────────────────┐  │▼▲  value of the penultimate
+         *   │            │ The penultimate message │  │ │
+         *   │            └─────────────────────────┘  │ │  B = The height from the top of
+         *   │                                         │ │  the penultimate message to the
+         *   │ ┌─────────────────────────┐             │ │  bottom of the messages list,
+         *   │ │ The last message        │             │ │  including the messages' heights,
+         *   │ └─────────────────────────┘             │ │  and any padding, gap, etc
+         *   │                                         │ │
+         *   ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤▲▼
+         *   │                                         ││   The trailing spacer height needed
+         *   │    = container height - (A + B + C)     ││   to allow the penultimate message
+         *   │                                         ││   to be at the top of the viewport
+         *   ├ ┬─────────────────────────────────────┬ ┤▼▲
+         *   │ │                                     │ │ │
+         *   │ │                                     │ │ │  C = The footer's height,
+         *   │ │                                     │ │ │  including any padding
+         *   │ └─────────────────────────────────────┘ │ │
+         *   └─────────────────────────────────────────┘ ▼
+         */
 
+        // A
         const penultimateMessageScrollMarginTop = Number.parseFloat(
           getComputedStyle(penultimateMessage as HTMLElement).scrollMarginTop
         );
 
-        const trailingSpacerHeight =
-          containerHeight -
-          penultimateMessageScrollMarginTop -
-          heightFromPenultimateMessageToFooter -
+        // B
+        const messagesRect = messages.getBoundingClientRect();
+        const penultimateMessageRect =
+          penultimateMessage.getBoundingClientRect();
+        const heightFromPenultimateMessageTopToMessagesListBottom =
+          messagesRect.bottom - penultimateMessageRect.top;
+
+        // A + B + C
+        const differenceHeight =
+          penultimateMessageScrollMarginTop +
+          heightFromPenultimateMessageTopToMessagesListBottom +
           (footerHeight ?? 0);
+
+        // = container height - (A + B + C)
+        const trailingSpacerHeight = Math.max(
+          containerHeight - differenceHeight,
+          0
+        );
 
         trailingSpacer.style.height = `${trailingSpacerHeight}px`;
       });
