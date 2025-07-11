@@ -1346,7 +1346,7 @@ function MyComposer() {
     { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
-    event.preventdefault();
+    event.preventDefault();
 
     // Create a new thread
     // +++
