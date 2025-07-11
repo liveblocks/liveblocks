@@ -15,7 +15,6 @@ import {
   type ComponentType,
   forwardRef,
   useImperativeHandle,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -141,18 +140,19 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const Loading = components?.Loading ?? defaultComponents.Loading;
 
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const messagesRef = useRef<HTMLDivElement | null>(null);
     const footerRef = useRef<HTMLDivElement | null>(null);
     const scrollBottomRef = useRef<HTMLDivElement | null>(null);
     const trailingSpacerRef = useRef<HTMLDivElement | null>(null);
-    const areScrollBehaviorsEnabled = !isLoading && !error;
+    const areMessagesLoaded = !isLoading && !error;
     const isScrollAtBottom = useVisible(scrollBottomRef, {
-      enabled: areScrollBehaviorsEnabled,
+      enabled: areMessagesLoaded,
       root: containerRef,
       rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR,
       initialValue: null,
     });
     const isScrollIndicatorVisible =
-      areScrollBehaviorsEnabled && isScrollAtBottom !== null
+      areMessagesLoaded && isScrollAtBottom !== null
         ? !isScrollAtBottom
         : false;
 
@@ -179,6 +179,105 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     }
     const scrollToBottom = scrollToBottomCallbackRef.current;
 
+    useLayoutEffect(() => {
+      if (!areMessagesLoaded) {
+        return;
+      }
+
+      const container = containerRef.current;
+      const footer = footerRef.current;
+      const messages = messagesRef.current;
+
+      if (!container || !footer || !messages) {
+        return;
+      }
+
+      let containerHeight: number | null = null;
+      let footerHeight: number | null = null;
+      let messagesHeight: number | null = null;
+
+      const resizeObserver = new ResizeObserver((entries) => {
+        const trailingSpacer = trailingSpacerRef.current;
+
+        if (!trailingSpacer) {
+          return;
+        }
+
+        const lastMessage = messages.lastElementChild;
+        const penultimateMessage = lastMessage?.previousElementSibling;
+
+        // If there's no last pair of messages, we can't do anything yet.
+        if (!lastMessage || !penultimateMessage) {
+          return;
+        }
+
+        let updatedContainerHeight: number | null = containerHeight;
+        let updatedFooterHeight: number | null = footerHeight;
+        let updatedMessagesHeight: number | null = messagesHeight;
+
+        for (const entry of entries) {
+          const entryHeight = entry.borderBoxSize[0]?.blockSize;
+
+          if (entry.target === container) {
+            updatedContainerHeight = entryHeight ?? null;
+          } else if (entry.target === footer) {
+            updatedFooterHeight = entryHeight ?? null;
+          } else if (entry.target === messages) {
+            updatedMessagesHeight = entryHeight ?? null;
+          }
+        }
+
+        // If we don't have all the heights, we can't do anything yet.
+        if (
+          updatedContainerHeight === null ||
+          updatedFooterHeight === null ||
+          updatedMessagesHeight === null
+        ) {
+          return;
+        }
+
+        // If none of the heights have changed, we don't need to do anything.
+        if (
+          updatedContainerHeight === containerHeight &&
+          updatedFooterHeight === footerHeight &&
+          updatedMessagesHeight === messagesHeight
+        ) {
+          return;
+        }
+
+        // Now that we have compared them, we can update the heights.
+        containerHeight = updatedContainerHeight;
+        footerHeight = updatedFooterHeight;
+        messagesHeight = updatedMessagesHeight;
+
+        const messagesRect = messages.getBoundingClientRect();
+        const penultimateMessageRect =
+          penultimateMessage.getBoundingClientRect();
+        const heightFromPenultimateMessageToFooter =
+          messagesRect.bottom - penultimateMessageRect.top;
+
+        const penultimateMessageScrollMarginTop = Number.parseFloat(
+          getComputedStyle(penultimateMessage as HTMLElement).scrollMarginTop
+        );
+
+        const trailingSpacerHeight =
+          containerHeight -
+          penultimateMessageScrollMarginTop -
+          heightFromPenultimateMessageToFooter -
+          (footerHeight ?? 0);
+
+        trailingSpacer.style.height = `${trailingSpacerHeight}px`;
+      });
+
+      resizeObserver.observe(container);
+      resizeObserver.observe(footer);
+      resizeObserver.observe(messages);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [areMessagesLoaded]);
+
     // Instantly scroll to bottom when the messages load for the first time
     useLayoutEffect(() => {
       if (!isLoading && !error && messages.length > 0) {
@@ -190,168 +289,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [scrollToBottom, isLoading, error]);
 
-    // TODO: Proof of concept with useState, use signals otherwise
-    const [containerHeight, setContainerHeight] = useState<number | null>(null);
-    const [footerHeight, setFooterHeight] = useState<number | null>(null);
-    const [lastUserMessageScrollMarginTop, setLastUserMessageScrollMarginTop] =
-      useState<number | null>(null);
-    const [lastAssistantMessageTopOffset, setLastAssistantMessageTopOffset] =
-      useState<number | null>(null);
-    const [
-      lastAssistantMessageBottomOffset,
-      setLastAssistantMessageBottomOffset,
-    ] = useState<number | null>(null);
-
-    const minHeight = useMemo(() => {
-      if (
-        containerHeight === null ||
-        footerHeight === null ||
-        lastUserMessageScrollMarginTop === null ||
-        lastAssistantMessageTopOffset === null ||
-        lastAssistantMessageBottomOffset === null
-      ) {
-        return null;
-      }
-
-      return (
-        containerHeight -
-        footerHeight -
-        lastUserMessageScrollMarginTop -
-        lastAssistantMessageTopOffset
-        // lastAssistantMessageBottomOffset
-      );
-    }, [
-      containerHeight,
-      footerHeight,
-      lastUserMessageScrollMarginTop,
-      lastAssistantMessageTopOffset,
-      lastAssistantMessageBottomOffset,
-    ]);
-
+    // Scroll to new messages when sending them
     useLayoutEffect(() => {
-      const container = containerRef.current;
-      const footer = footerRef.current;
-
-      if (!container || !footer) {
-        return;
+      if (lastSentMessageId) {
+        requestAnimationFrame(() => {
+          scrollToBottom("smooth");
+        });
       }
-
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.target === container) {
-            const borderBoxSize = entry.borderBoxSize[0];
-            const containerHeight = borderBoxSize?.blockSize;
-
-            setContainerHeight(containerHeight ?? null);
-          } else if (entry.target === footer) {
-            const borderBoxSize = entry.borderBoxSize[0];
-            const footerHeight = borderBoxSize?.blockSize;
-
-            setFooterHeight(footerHeight ?? null);
-          }
-        }
-      });
-
-      resizeObserver.observe(container);
-      resizeObserver.observe(footer);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }, []);
-
-    let lastAssistantMessageId: MessageId | null = null;
-
-    if (messages && messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-
-      if (lastMessage?.role === "assistant") {
-        lastAssistantMessageId = lastMessage.id;
-      }
-    }
-
-    useLayoutEffect(() => {
-      const container = containerRef.current;
-
-      if (!lastAssistantMessageId || !container) {
-        return;
-      }
-
-      const lastAssistantMessage = container.querySelector(
-        `[data-message-id="${lastAssistantMessageId}"]`
-      );
-
-      if (!lastAssistantMessage) {
-        return;
-      }
-
-      const lastUserMessage = lastAssistantMessage.previousElementSibling;
-
-      if (!lastUserMessage) {
-        return;
-      }
-
-      const lastUserMessageRect = lastUserMessage.getBoundingClientRect();
-      const lastAssistantMessageRect =
-        lastAssistantMessage.getBoundingClientRect();
-      const footerRect = footerRef.current?.getBoundingClientRect();
-
-      setLastAssistantMessageTopOffset(
-        lastAssistantMessageRect.top - lastUserMessageRect.top
-      );
-      setLastAssistantMessageBottomOffset(
-        footerRect ? footerRect.top - lastAssistantMessageRect.bottom : 0
-      );
-      setLastUserMessageScrollMarginTop(
-        Number.parseFloat(
-          getComputedStyle(lastUserMessage as HTMLElement).scrollMarginTop
-        )
-      );
-    }, [lastAssistantMessageId]);
-
-    // Scroll when sending a new message
-    useLayoutEffect(() => {
-      const container = containerRef.current;
-      const trailingSpacer = trailingSpacerRef.current;
-
-      if (!lastSentMessageId || !container || !trailingSpacer) {
-        return;
-      }
-
-      const lastSentMessage = container.querySelector(
-        `[data-message-id="${lastSentMessageId}"]`
-      );
-
-      if (!lastSentMessage) {
-        return;
-      }
-
-      const lastSentMessageHeight = (lastSentMessage as HTMLElement)
-        .offsetHeight;
-      const lastSentMessageScrollMarginTop = Number.parseFloat(
-        getComputedStyle(lastSentMessage as HTMLElement).scrollMarginTop
-      );
-      const containerViewportHeight = container.clientHeight;
-      const footerHeight = footerRef.current?.offsetHeight ?? 0;
-
-      // Compute the additional height needed if we want the new message to be positioned
-      // at the top of the scrollable area's viewport.
-      const trailingSpacerHeight = Math.max(
-        0,
-        containerViewportHeight -
-          lastSentMessageHeight -
-          lastSentMessageScrollMarginTop -
-          footerHeight
-      );
-
-      trailingSpacer.style.height = `${trailingSpacerHeight}px`;
-
-      // Finally, scroll to the top of the new message.
-      lastSentMessage.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, [lastSentMessageId]);
+    }, [lastSentMessageId, scrollToBottom]);
 
     return (
       <div
@@ -391,16 +336,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <Empty chatId={chatId} copilotId={copilotId} />
           ) : (
             <>
-              <div className="lb-ai-chat-messages">
-                {messages.map((message, index) => {
+              <div className="lb-ai-chat-messages" ref={messagesRef}>
+                {messages.map((message) => {
                   if (message.role === "user") {
                     return (
                       <AiChatUserMessage
                         key={message.id}
                         message={message}
                         overrides={overrides}
-                        data-message-role="user"
-                        data-message-id={message.id}
                       />
                     );
                   } else if (message.role === "assistant") {
@@ -410,14 +353,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                         message={message}
                         overrides={overrides}
                         components={components}
-                        data-message-role="assistant"
-                        data-message-id={message.id}
-                        style={{
-                          minHeight:
-                            index === messages.length - 1 && minHeight
-                              ? minHeight
-                              : undefined,
-                        }}
                       />
                     );
                   } else {
@@ -429,7 +364,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               <div
                 ref={trailingSpacerRef}
                 data-trailing-spacer=""
-                style={{ pointerEvents: "none", display: "none" }}
+                style={{ pointerEvents: "none" }}
                 aria-hidden
               />
             </>
