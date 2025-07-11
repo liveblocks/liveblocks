@@ -18,6 +18,41 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 28 (2025-07-11)
+
+## v3.1.2
+
+### `@liveblocks/react-ui` and `@liveblocks/emails`
+
+- Improve URL sanitization in comments.
+
+## v3.1.1
+
+### `@liveblocks/client`
+
+- Adds experimental setting `LiveObject.detectLargeObjects`, which can be
+  enabled globally using `LiveObject.detectLargeObjects = true` (default is
+  false). With this setting enabled, calls to `LiveObject.set()` or
+  `LiveObject.update()` will throw as soon as you add a value that would make
+  the total size of the LiveObject exceed the platform limit of 128 kB. The
+  benefit is that you get an early error instead of a silent failure, but the
+  downside is that this adds significant runtime overhead if your application
+  makes many LiveObject mutations.
+- Fix: also display errors in production builds when they happen in `render`
+  methods defined with `defineAiTool()`. Previously, these errors would only be
+  shown during development.
+- Fix an issue with the render component of tool calls not being displayed
+  correctly when the tool call signal was read before it was registered.
+
+## Examples
+
+- New example:
+  [AI Support Chat](https://liveblocks.io/examples/ai-support/nextjs-ai-support).
+
+## Contributors
+
+ctnicholas, nimeshnayaju, nvie, marcbouchenoire
+
 # Week 27 (2025-07-04)
 
 ## v3.1.0
