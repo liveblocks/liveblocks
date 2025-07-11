@@ -1346,7 +1346,7 @@ function MyComposer() {
     { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
-    event.preventdefault();
+    event.preventDefault();
 
     // Create a new thread
     // +++
@@ -1661,7 +1661,7 @@ Displays mentions within `Composer.Editor`.
 Contains suggestions within `Composer.Editor`.
 
 ```tsx
-<Composer.Suggestions>{/* ... */}<Composer.Suggestions>
+<Composer.Suggestions>{/* ... */}</Composer.Suggestions>
 ```
 
 <PropertiesList>
@@ -2341,7 +2341,7 @@ function MyComposerAttachments() {
     type="function"
     detailedType="(mark: ComposerBodyMark) => void"
   >
-    Remove an attachment by its ID.
+    Toggle a text mark.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"
