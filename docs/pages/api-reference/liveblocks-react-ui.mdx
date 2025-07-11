@@ -656,7 +656,7 @@ clicked.
     name="overrides"
     type="Partial<GlobalOverrides & AiToolConfirmationOverrides>"
   >
-    Override the component’s strings. It can be used the change the "confirm"
+    Override the component’s strings. It can be used to change the "confirm"
     and "cancel" labels.
   </PropertiesListItem>
 </PropertiesList>
@@ -1129,7 +1129,7 @@ retrieved with [`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
 import { Comment } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
 
-// Renders a list of comments attach to the specified `thread`
+// Renders a list of comments attached to the specified `thread`
 function Component({ thread }: { thread: ThreadData }) {
   return (
     <>
@@ -2341,7 +2341,7 @@ function MyComposerAttachments() {
     type="function"
     detailedType="(mark: ComposerBodyMark) => void"
   >
-    Remove an attachment by its ID.
+    Toggle the specified mark on/off for the current selection.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"
