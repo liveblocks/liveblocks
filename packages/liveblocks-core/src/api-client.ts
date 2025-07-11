@@ -9,6 +9,7 @@ import {
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import { assertNever } from "./lib/assert";
 import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -63,6 +64,7 @@ import type {
   SubscriptionDeleteInfoPlain,
 } from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
+import type { MentionData } from "./types/MentionData";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";
@@ -300,12 +302,12 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   // Text editor
   createTextMention({
     roomId,
-    userId,
     mentionId,
+    mention,
   }: {
     roomId: string;
-    userId: string;
     mentionId: string;
+    mention: MentionData;
   }): Promise<void>;
 
   deleteTextMention({
@@ -1313,9 +1315,13 @@ export function createApiClient<M extends BaseMetadata>({
    * -----------------------------------------------------------------------------------------------*/
   async function createTextMention(options: {
     roomId: string;
-    userId: string;
     mentionId: string;
+    mention: MentionData;
   }) {
+    if (options.mention.kind !== "user" && options.mention.kind !== "group") {
+      return assertNever(options.mention, "Unexpected mention kind");
+    }
+
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
@@ -1323,7 +1329,14 @@ export function createApiClient<M extends BaseMetadata>({
         roomId: options.roomId,
       }),
       {
-        userId: options.userId,
+        userId:
+          options.mention.kind === "user" ? options.mention.id : undefined,
+        groupId:
+          options.mention.kind === "group" ? options.mention.id : undefined,
+        userIds:
+          options.mention.kind === "group"
+            ? options.mention.userIds
+            : undefined,
         mentionId: options.mentionId,
       }
     );
