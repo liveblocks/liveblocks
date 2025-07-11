@@ -1739,7 +1739,9 @@ export function createRoom<
         });
         const didNotify = config.errorEventSource.notify(err);
         if (!didNotify) {
-          console.error("Message is too large for websockets");
+          console.error(
+            "Message is too large for websockets.  Configure largeMessageStrategy option or useErrorListener to handle this."
+          );
         }
         return;
       }
