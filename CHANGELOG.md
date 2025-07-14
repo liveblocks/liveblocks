@@ -2,7 +2,13 @@
 
 ## v3.1.2
 
-### `@liveblocks/react-ui` and `@liveblocks/emails`
+### `@liveblocks/react-ui`
+
+- Improve URL sanitization in comments.
+- Fix `AiChat` component not scrolling instantly to the bottom on render when
+  messages are already loaded.
+
+### `@liveblocks/emails`
 
 - Improve URL sanitization in comments.
 

@@ -178,6 +178,13 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     }
     const scrollToBottom = scrollToBottomCallbackRef.current;
 
+    useEffect(() => {
+      if (messages === undefined) return;
+      scrollToBottom("instant");
+      // If the messages are already loaded during the initial render, we want to scroll to the bottom immediately.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     return (
       <div
         ref={containerRef}
@@ -312,6 +319,7 @@ function AutoScrollHandler({
 
   // Scroll to bottom when sending a new message
   useEffect(() => {
+    if (lastSentMessageId === null) return;
     scrollToBottom("smooth");
   }, [lastSentMessageId, scrollToBottom]);
 
