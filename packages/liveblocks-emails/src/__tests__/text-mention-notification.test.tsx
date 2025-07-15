@@ -139,6 +139,10 @@ describe("text mention notification", () => {
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId,
+        mention: {
+          kind: "user",
+          id: "user-2",
+        },
         createdBy: "user-0",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
         readAt: new Date("2024-09-10T08:12:00.000Z"),
@@ -169,6 +173,10 @@ describe("text mention notification", () => {
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId,
+        mention: {
+          kind: "user",
+          id: "user-1",
+        },
         createdBy: "user-0",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
@@ -198,6 +206,10 @@ describe("text mention notification", () => {
     test("should extract a text mention notification data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
+        mention: {
+          kind: "user",
+          id: MENTIONED_USER_ID_TIPTAP,
+        },
         createdBy: "user-nimesh",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
@@ -250,6 +262,10 @@ describe("text mention notification", () => {
     test("should extract mention and nodes and prepare base email data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
+        mention: {
+          kind: "user",
+          id: MENTIONED_USER_ID_TIPTAP,
+        },
         createdBy: "user-nimesh",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
@@ -320,6 +336,10 @@ describe("text mention notification", () => {
   describe("prepare text mention notification email as html", () => {
     const inboxNotification = makeTextMentionInboxNotification({
       mentionId: MENTION_ID_TIPTAP,
+      mention: {
+        kind: "user",
+        id: MENTIONED_USER_ID_TIPTAP,
+      },
       createdBy: "user-1",
       notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
     });
@@ -408,6 +428,10 @@ describe("text mention notification", () => {
   describe("prepare text mention notification email as React", () => {
     const inboxNotification = makeTextMentionInboxNotification({
       mentionId: MENTION_ID_TIPTAP,
+      mention: {
+        kind: "user",
+        id: MENTIONED_USER_ID_TIPTAP,
+      },
       createdBy: "user-1",
       notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
     });

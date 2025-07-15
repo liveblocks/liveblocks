@@ -8,6 +8,7 @@ import type {
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
+  MentionData,
   ResolveUsersArgs,
   ThreadData,
 } from "@liveblocks/core";
@@ -554,11 +555,13 @@ export const makeTextMentionNotificationEvent = ({
 });
 
 export const makeTextMentionInboxNotification = ({
+  mention,
   mentionId,
   createdBy,
   notifiedAt,
   readAt,
 }: {
+  mention: MentionData;
   mentionId: string;
   createdBy: string;
   notifiedAt?: Date;
@@ -567,6 +570,7 @@ export const makeTextMentionInboxNotification = ({
   id: generateInboxNotificationId(),
   kind: "textMention",
   roomId: ROOM_ID_TEST,
+  mention,
   mentionId,
   createdBy,
   notifiedAt: notifiedAt ?? new Date(),
