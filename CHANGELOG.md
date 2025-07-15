@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v3.1.3
+
+### `@liveblocks/react-ui`
+
+- Fix `AiChat` component not scrolling instantly to the bottom on render when
+  messages are already loaded.
+
 ## v3.1.2
 
 ### `@liveblocks/react-ui` and `@liveblocks/emails`
