@@ -9,11 +9,12 @@ import {
   RegisterAiTool,
   useAiChatMessages,
 } from "@liveblocks/react";
-import { useLayoutEffect } from "@liveblocks/react/_private";
+import { useLatest, useLayoutEffect } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
   type ComponentType,
   forwardRef,
+  type MutableRefObject,
   useImperativeHandle,
   useRef,
   useState,
@@ -35,13 +36,20 @@ import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
 
+/**
+ * The minimum number of pixels from the bottom of the scrollable area
+ * before showing the scroll to bottom indicator.
+ */
+const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 60;
+
 export type AiChatComponentsEmptyProps = {
   /**
    * The chat ID provided to the `AiChat` component.
    */
   chatId: string;
+
   /**
-   * The Copilot ID provided to the `AiChat` component.
+   * The copilot ID provided to the `AiChat` component.
    */
   copilotId?: string;
 };
@@ -54,44 +62,45 @@ export type AiChatComponents = {
    * The component used to render the empty state of the chat.
    */
   Empty: ComponentType<AiChatComponentsEmptyProps>;
+
   /**
    * The component used to render the loading state of the chat.
    */
   Loading: ComponentType<AiChatComponentsLoadingProps>;
 };
 
-/**
- * The minimum number of pixels from the bottom of the scrollable area
- * before showing the scroll to bottom indicator.
- */
-const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 60;
-
 export interface AiChatProps extends ComponentProps<"div"> {
   /**
-   * The id of the chat the composer belongs to.
+   * The ID of the chat the composer belongs to.
    */
   chatId: string;
+
   /**
    * Whether to focus the chat composer on mount.
    */
   autoFocus?: boolean;
+
   /**
-   * The id of the copilot to use to send the message.
+   * The ID of the copilot to use to send the message.
    */
   copilotId?: string;
+
   /**
    * The contextual knowledge to include in the chat. May be used by the assistant when generating responses.
    * Any knowledge you provide via this prop will be added to any already globally registered knowledge via <RegisterAiKnowledge />.
    */
   knowledge?: AiKnowledgeSource[];
+
   /**
    * Tool definitions to make available within this chat. May be used by the assistant when generating responses.
    */
   tools?: Record<string, AiOpaqueToolDefinition>;
+
   /**
    * The layout of the chat and its composer.
    */
   layout?: "inset" | "compact";
+
   /**
    * Override the component's strings.
    */
@@ -101,6 +110,7 @@ export interface AiChatProps extends ComponentProps<"div"> {
       AiChatComposerOverrides &
       AiChatOverrides
   >;
+
   /**
    * Override the component's components.
    */
@@ -115,6 +125,41 @@ const defaultComponents: AiChatComponents = {
     </div>
   ),
 };
+
+// This component is only rendered when the messages are loaded,
+// which simplifies effects since they don't need to account for
+// the cases where they shouldn't trigger behaviors.
+function AiChatAutoScrollBehaviors({
+  scrollToBottom,
+  lastSentMessageId,
+}: {
+  scrollToBottom: MutableRefObject<
+    (behavior: "instant" | "smooth", includeTrailingSpace?: boolean) => void
+  >;
+  lastSentMessageId: MessageId | null;
+}) {
+  // Instantly scroll to the bottom for the initial state
+  useLayoutEffect(
+    () => {
+      scrollToBottom.current("instant");
+    },
+    // `scrollToBottom` is a stable ref containing the callback.
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // Scroll to new messages when sending them
+  useLayoutEffect(
+    () => {
+      if (lastSentMessageId) {
+        scrollToBottom.current("smooth", true);
+      }
+    },
+    // `scrollToBottom` is a stable ref containing the callback.
+    [lastSentMessageId] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  return null;
+}
 
 export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
   (
@@ -133,8 +178,10 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     forwardedRef
   ) => {
     const { messages, isLoading, error } = useAiChatMessages(chatId);
+    const areMessagesLoaded = !isLoading && !error;
     const [lastSentMessageId, setLastSentMessageId] =
       useState<MessageId | null>(null);
+
     const $ = useOverrides(overrides);
     const Empty = components?.Empty ?? defaultComponents.Empty;
     const Loading = components?.Loading ?? defaultComponents.Loading;
@@ -144,7 +191,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const footerRef = useRef<HTMLDivElement | null>(null);
     const scrollBottomRef = useRef<HTMLDivElement | null>(null);
     const trailingSpacerRef = useRef<HTMLDivElement | null>(null);
-    const areMessagesLoaded = !isLoading && !error;
+
     const isScrollAtBottom = useVisible(scrollBottomRef, {
       enabled: areMessagesLoaded,
       root: containerRef,
@@ -162,24 +209,62 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       []
     );
 
-    const scrollToBottomCallbackRef =
-      useRef<(behavior: "instant" | "smooth") => void>(undefined);
-    if (scrollToBottomCallbackRef.current === undefined) {
-      scrollToBottomCallbackRef.current = function (
-        behavior: "instant" | "smooth"
-      ) {
+    const scrollToBottom = useLatest(
+      (behavior: "instant" | "smooth", includeTrailingSpace = false) => {
         const container = containerRef.current;
-        if (container === null) return;
 
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior,
-        });
-      };
-    }
-    const scrollToBottom = scrollToBottomCallbackRef.current;
+        if (!container) {
+          return;
+        }
 
-    // Update the trailing spacer height when needed
+        if (includeTrailingSpace) {
+          // Scroll all the way to include the trailing space,
+          // and wait for a frame in case the trailing space hasn't
+          // been updated yet. (e.g. when sending a new message)
+          requestAnimationFrame(() => {
+            container.scrollTo({
+              top: container.scrollHeight,
+              behavior,
+            });
+          });
+        } else {
+          const messagesHeight = messagesRef.current?.offsetHeight ?? 0;
+          const footerHeight = footerRef?.current?.offsetHeight ?? 0;
+
+          // Scroll to the bottom of the messages to exclude the trailing space.
+          container.scrollTo({
+            top: messagesHeight + footerHeight - container.clientHeight,
+            behavior,
+          });
+        }
+      }
+    );
+
+    /**
+     * Every time the container, footer, or messages list change size,
+     * we calculate the trailing space that would allow the penultimate
+     * message to be at the top of the viewport, and apply it.
+     *
+     *   ┌─────────────────────────────────────────┐▲   A = The `scroll-margin-top`
+     *   │            ┌─────────────────────────┐  │▼▲  value of the penultimate
+     *   │            │ The penultimate message │  │ │
+     *   │            └─────────────────────────┘  │ │  B = The height from the top of
+     *   │                                         │ │  the penultimate message to the
+     *   │ ┌─────────────────────────┐             │ │  bottom of the messages list,
+     *   │ │ The last message        │             │ │  including the messages' heights,
+     *   │ └─────────────────────────┘             │ │  and any padding, gap, etc
+     *   │                                         │ │
+     *   ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤▲▼
+     *   │                                         ││   The trailing space needed to
+     *   │    = container height - (A + B + C)     ││   allow the penultimate message
+     *   │                                         ││   to be at the top of the viewport
+     *   ├ ┬─────────────────────────────────────┬ ┤▼▲
+     *   │ │                                     │ │ │
+     *   │ │                                     │ │ │  C = The footer's height,
+     *   │ │                                     │ │ │  including any padding
+     *   │ └─────────────────────────────────────┘ │ │
+     *   └─────────────────────────────────────────┘ ▼
+     */
     useLayoutEffect(() => {
       if (!areMessagesLoaded) {
         return;
@@ -193,14 +278,15 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         return;
       }
 
+      const trailingSpacer = trailingSpacerRef.current;
+      const scrollBottom = scrollBottomRef.current;
+
       let containerHeight: number | null = null;
       let footerHeight: number | null = null;
       let messagesHeight: number | null = null;
 
       const resizeObserver = new ResizeObserver((entries) => {
-        const trailingSpacer = trailingSpacerRef.current;
-
-        if (!trailingSpacer) {
+        if (!trailingSpacer || !scrollBottom) {
           return;
         }
 
@@ -252,31 +338,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         footerHeight = updatedFooterHeight;
         messagesHeight = updatedMessagesHeight;
 
-        /**
-         * We need to calculate the height of the trailing spacer that would
-         * allow the penultimate message to be at the top of the viewport.
-         *
-         *   ┌─────────────────────────────────────────┐▲   A = The `scroll-margin-top`
-         *   │            ┌─────────────────────────┐  │▼▲  value of the penultimate
-         *   │            │ The penultimate message │  │ │
-         *   │            └─────────────────────────┘  │ │  B = The height from the top of
-         *   │                                         │ │  the penultimate message to the
-         *   │ ┌─────────────────────────┐             │ │  bottom of the messages list,
-         *   │ │ The last message        │             │ │  including the messages' heights,
-         *   │ └─────────────────────────┘             │ │  and any padding, gap, etc
-         *   │                                         │ │
-         *   ├ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┤▲▼
-         *   │                                         ││   The trailing spacer height needed
-         *   │    = container height - (A + B + C)     ││   to allow the penultimate message
-         *   │                                         ││   to be at the top of the viewport
-         *   ├ ┬─────────────────────────────────────┬ ┤▼▲
-         *   │ │                                     │ │ │
-         *   │ │                                     │ │ │  C = The footer's height,
-         *   │ │                                     │ │ │  including any padding
-         *   │ └─────────────────────────────────────┘ │ │
-         *   └─────────────────────────────────────────┘ ▼
-         */
-
         // A
         const penultimateMessageScrollMarginTop = Number.parseFloat(
           getComputedStyle(penultimateMessage as HTMLElement).scrollMarginTop
@@ -296,12 +357,14 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           (footerHeight ?? 0);
 
         // = container height - (A + B + C)
-        const trailingSpacerHeight = Math.max(
-          containerHeight - differenceHeight,
-          0
-        );
+        const trailingSpace = Math.max(containerHeight - differenceHeight, 0);
 
-        trailingSpacer.style.height = `${trailingSpacerHeight}px`;
+        // Update the trailing space.
+        trailingSpacer.style.height = `${trailingSpace}px`;
+
+        // Offset what "the bottom" is to the "scroll at the bottom" detection logic,
+        // so that it doesn't include the trailing space.
+        scrollBottom.style.top = `${-trailingSpace}px`;
       });
 
       resizeObserver.observe(container);
@@ -310,28 +373,11 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
       return () => {
         resizeObserver.disconnect();
+
+        trailingSpacer?.style.removeProperty("height");
+        scrollBottom?.style.removeProperty("top");
       };
     }, [areMessagesLoaded]);
-
-    // Instantly scroll to bottom when the messages load for the first time
-    useLayoutEffect(() => {
-      if (!isLoading && !error && messages.length > 0) {
-        scrollToBottom("instant");
-      }
-      // If we include `messages.length` in the dependency array, this effect would
-      // be triggered if the messages load at 0 and then move to 1+ later. We only
-      // want it to run when the messages load for the first time.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scrollToBottom, isLoading, error]);
-
-    // Scroll to new messages when sending them
-    useLayoutEffect(() => {
-      if (lastSentMessageId) {
-        requestAnimationFrame(() => {
-          scrollToBottom("smooth");
-        });
-      }
-    }, [lastSentMessageId, scrollToBottom]);
 
     return (
       <div
@@ -395,11 +441,22 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                   }
                 })}
               </div>
-              {/* This empty space is used to extend the scrollable area beyond its actual content. */}
+
+              <AiChatAutoScrollBehaviors
+                scrollToBottom={scrollToBottom}
+                lastSentMessageId={lastSentMessageId}
+              />
+
+              {/**
+               * This trailing spacer is used to extend the scrollable area beyond its actual
+               * content, to allow messages to appear at the top of the viewport for example.
+               */}
               <div
                 ref={trailingSpacerRef}
                 data-trailing-spacer=""
-                style={{ pointerEvents: "none" }}
+                style={{
+                  pointerEvents: "none",
+                }}
                 aria-hidden
               />
             </>
@@ -416,7 +473,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 className="lb-ai-chat-scroll-indicator-button"
                 tabIndex={isScrollIndicatorVisible ? 0 : -1}
                 aria-hidden={!isScrollIndicatorVisible}
-                onClick={() => scrollToBottom("smooth")}
+                onClick={() => scrollToBottom.current("smooth")}
               >
                 <span className="lb-icon-container">
                   <ArrowDownIcon />
@@ -438,19 +495,32 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             }
           />
         </div>
-        {/* This invisible element is a trick which allows us to use IntersectionObserver to detect when the
+
+        {/**
+         * This invisible element is a trick which allows us to use IntersectionObserver to detect when the
          * scrollable area is fully scrolled to the bottom instead of manually tracking the scroll position
          * and having to deal with resizes, etc.
          *
          * It's positioned at the bottom of the scrollable area and reliably only becomes "visible" to the
-         * IntersectionObserver when the scrollable area is fully scrolled.
+         * IntersectionObserver when the scrollable area is scrolled to the bottom.
          */}
         <div
-          ref={scrollBottomRef}
           style={{ position: "sticky", height: 0 }}
           aria-hidden
           data-scroll-bottom={isScrollAtBottom}
-        />
+        >
+          {/**
+           * This inner element is the actual observed element, it's absolutely positioned which allows us to
+           * control what "the bottom" is to the IntersectionObserver without changing the layout.
+           */}
+          <div
+            ref={scrollBottomRef}
+            style={{
+              position: "absolute",
+              height: 0,
+            }}
+          />
+        </div>
       </div>
     );
   }

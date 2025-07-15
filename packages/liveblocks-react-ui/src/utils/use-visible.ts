@@ -1,6 +1,5 @@
+import { useLatest } from "@liveblocks/react/_private";
 import { type RefObject, useEffect, useState } from "react";
-
-import { useLatest } from "./use-latest";
 
 interface ObserveOptions {
   rootMargin?: string | number;
