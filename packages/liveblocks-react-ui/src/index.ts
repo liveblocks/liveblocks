@@ -26,6 +26,7 @@ export type {
   InboxNotificationCustomKindProps,
   InboxNotificationCustomProps,
   InboxNotificationIconProps,
+  InboxNotificationInspectorProps,
   InboxNotificationProps,
   InboxNotificationTextMentionKindProps,
   InboxNotificationTextMentionProps,

@@ -1086,4 +1086,223 @@ describe("LiveObject", () => {
       });
     });
   });
+
+  describe("LiveObject.detectLargeObjects static property validation", () => {
+    // Create a large string of specified size in bytes
+    const createLargeData = (sizeInBytes: number) => {
+      // JSON.stringify adds quotes around the string, so we need to account for that
+      // Also account for the property name and JSON structure overhead
+      const str = "a".repeat(sizeInBytes);
+      return str;
+    };
+
+    beforeAll(() => {
+      // Mock TextEncoder for Node.js test environment
+      if (typeof global.TextEncoder === "undefined") {
+        global.TextEncoder = class {
+          encode(str: string) {
+            return Buffer.from(str, "utf8");
+          }
+        } as any;
+      }
+    });
+
+    afterEach(() => {
+      // Reset detectLargeObjects flag after each test
+      LiveObject.detectLargeObjects = false;
+    });
+
+    it("should NOT throw when LiveObject.detectLargeObjects property is disabled (default behavior)", () => {
+      // Ensure LiveObject.detectLargeObjects property is disabled
+      LiveObject.detectLargeObjects = false;
+
+      const liveObject = new LiveObject<{ largeString?: string }>();
+      const largeData = createLargeData(150 * 1024); // 150KB - exceeds 128KB limit
+
+      // This should NOT throw since LiveObject.detectLargeObjects property is disabled
+      expect(() => {
+        liveObject.set("largeString", largeData);
+      }).not.toThrow();
+    });
+
+    it("should throw when LiveObject.detectLargeObjects property is enabled and size exceeds 128KB", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<{ largeString?: string }>();
+      const largeData = createLargeData(150 * 1024); // 150KB - exceeds 128KB limit
+
+      // This should throw since LiveObject.detectLargeObjects property is enabled and data exceeds limit
+      expect(() => {
+        liveObject.set("largeString", largeData);
+      }).toThrow(/LiveObject size exceeded limit.*bytes/);
+    });
+
+    it("should NOT throw when LiveObject.detectLargeObjects property is enabled but size is within limit", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<{ smallString?: string }>();
+      const smallData = createLargeData(50 * 1024); // 50KB - within 128KB limit
+
+      // This should NOT throw since data is within limit
+      expect(() => {
+        liveObject.set("smallString", smallData);
+      }).not.toThrow();
+    });
+
+    it("should exclude Live structure references from size calculation", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<{
+        largeString?: string;
+        liveList?: LiveList<string>;
+      }>();
+      const largeData = createLargeData(150 * 1024); // 150KB - would exceed limit if counted
+      const liveList = new LiveList<string>([]);
+
+      // First set the Live structure reference - should not count toward size
+      liveObject.set("liveList", liveList);
+
+      // Now set large static data - should still throw because static data exceeds limit
+      expect(() => {
+        liveObject.set("largeString", largeData);
+      }).toThrow(/LiveObject size exceeded limit/);
+
+      // But if we only have the Live structure and small static data, it should be fine
+      const liveObject2 = new LiveObject<{
+        smallString?: string;
+        liveList?: LiveList<string>;
+      }>();
+      const liveList2 = new LiveList<string>([]);
+      liveObject2.set("liveList", liveList2);
+
+      expect(() => {
+        liveObject2.set("smallString", "small data");
+      }).not.toThrow();
+    });
+
+    it("should throw when accumulating many small properties exceeds 128KB limit", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<Record<string, string>>();
+
+      // Add many small properties that together approach the 128KB limit
+      const smallData = createLargeData(10 * 1024); // 10KB each
+
+      // Add 12 properties of 10KB each = 120KB total (under limit)
+      for (let i = 0; i < 12; i++) {
+        liveObject.set(`prop${i}`, smallData);
+      }
+
+      // This should still work (total ~120KB)
+      expect(() => {
+        liveObject.set("stillOk", "small");
+      }).not.toThrow();
+
+      // Now add one more 10KB property that pushes us over 128KB
+      expect(() => {
+        liveObject.set("finalProp", smallData); // This should push us over the limit
+      }).toThrow(/LiveObject size exceeded limit/);
+    });
+
+    it("should correctly handle mixed small properties and Live structures", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<Record<string, any>>();
+
+      // Add some Live structures (should not count toward size)
+      const liveList1 = new LiveList<string>([]);
+      const liveList2 = new LiveList<number>([]);
+      liveObject.set("list1", liveList1);
+      liveObject.set("list2", liveList2);
+
+      // Add small static data properties that approach the limit
+      const mediumData = createLargeData(20 * 1024); // 20KB each
+
+      // Add 6 properties of 20KB each = 120KB total (under limit)
+      for (let i = 0; i < 6; i++) {
+        liveObject.set(`data${i}`, mediumData);
+      }
+
+      // Add another Live structure - should still be fine
+      const liveList3 = new LiveList<boolean>([]);
+      expect(() => {
+        liveObject.set("list3", liveList3);
+      }).not.toThrow();
+
+      // Now add static data that pushes us over the limit
+      expect(() => {
+        liveObject.set("finalData", mediumData); // 20KB more = 140KB total
+      }).toThrow(/LiveObject size exceeded limit/);
+    });
+
+    it("should handle the exact boundary case at 128KB", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<Record<string, string>>();
+
+      // Create data that gets us very close to 128KB
+      // Account for JSON overhead (quotes, commas, braces)
+      const exactData = createLargeData(128 * 1024 - 100); // Slightly under 128KB to account for JSON structure
+
+      // This should work (just under limit)
+      expect(() => {
+        liveObject.set("almostFull", exactData);
+      }).not.toThrow();
+
+      // Now try to add even a tiny bit more
+      expect(() => {
+        liveObject.set("overflow", "x".repeat(200)); // Small amount that pushes over
+      }).toThrow(/LiveObject size exceeded limit/);
+    });
+
+    it("should allow many small properties when total stays under limit", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<Record<string, string>>();
+
+      // Add many tiny properties that together stay under 128KB
+      const tinyData = createLargeData(1024); // 1KB each
+
+      // Add 100 properties of 1KB each = 100KB total (well under limit)
+      for (let i = 0; i < 100; i++) {
+        expect(() => {
+          liveObject.set(`tiny${i}`, tinyData);
+        }).not.toThrow();
+      }
+
+      // Should still have room for more
+      expect(() => {
+        liveObject.set("moreTiny", tinyData);
+      }).not.toThrow();
+    });
+
+    it("should handle performance optimization boundary correctly", () => {
+      // Enable LiveObject.detectLargeObjects property
+      LiveObject.detectLargeObjects = true;
+
+      const liveObject = new LiveObject<Record<string, string>>();
+
+      // Create data that when multiplied by 4 would exceed limit, but actual size is under
+      // JSON with lots of ASCII chars: string length * 4 > 128KB, but actual UTF-8 bytes < 128KB
+      const asciiData = "a".repeat(33000); // 33KB of ASCII (when multiplied by 4 = 132KB > 128KB)
+
+      // This should NOT throw because actual UTF-8 encoding is much smaller than the upper bound
+      expect(() => {
+        liveObject.set("asciiTest", asciiData);
+      }).not.toThrow();
+
+      // But if we have actual large data that exceeds the limit, it should throw
+      const reallyLargeData = createLargeData(140 * 1024); // 140KB
+      expect(() => {
+        liveObject.set("reallyLarge", reallyLargeData);
+      }).toThrow(/LiveObject size exceeded limit/);
+    });
+  });
 });

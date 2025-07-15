@@ -49,13 +49,14 @@ export const { setName, incCounter, addItem, deleteItem, clear } =
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer<State>({
-        client,
-        storageMapping: { items: true },
-        presenceMapping: { name: true, counter: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer<State>({
+          client,
+          storageMapping: { items: true },
+          presenceMapping: { name: true, counter: true },
+        })
+      ),
   });
 }
 

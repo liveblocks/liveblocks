@@ -98,13 +98,14 @@ export const {
 export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
-    enhancers: [
-      liveblocksEnhancer<State>({
-        client,
-        presenceMapping: { selectedShape: true },
-        storageMapping: { shapes: true },
-      }),
-    ],
+    enhancers: (getDefaultEnhancers) =>
+      getDefaultEnhancers().concat(
+        liveblocksEnhancer<State>({
+          client,
+          presenceMapping: { selectedShape: true },
+          storageMapping: { shapes: true },
+        })
+      ),
   });
 }
 

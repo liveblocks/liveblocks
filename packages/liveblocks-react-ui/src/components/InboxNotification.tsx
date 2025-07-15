@@ -7,7 +7,12 @@ import type {
   InboxNotificationThreadData,
   KDAD,
 } from "@liveblocks/core";
-import { assertNever, console } from "@liveblocks/core";
+import {
+  assertNever,
+  console,
+  generateUrl,
+  sanitizeUrl,
+} from "@liveblocks/core";
 import {
   useDeleteInboxNotification,
   useInboxNotificationThread,
@@ -46,9 +51,9 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import type { SlotProp } from "../types";
 import { cn } from "../utils/cn";
-import { generateURL } from "../utils/url";
 import { Avatar, type AvatarProps } from "./internal/Avatar";
 import { Button } from "./internal/Button";
+import { CodeBlock } from "./internal/CodeBlock";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import {
   generateInboxNotificationThreadContents,
@@ -150,6 +155,15 @@ export interface InboxNotificationTextMentionProps
   showRoomName?: boolean;
 }
 
+export interface InboxNotificationInspectorProps
+  extends Omit<InboxNotificationProps, "kinds" | "children">,
+    InboxNotificationSharedProps {
+  /**
+   * The inbox notification to display.
+   */
+  inboxNotification: InboxNotificationData;
+}
+
 export interface InboxNotificationCustomProps
   extends Omit<InboxNotificationProps, "kinds">,
     InboxNotificationSharedProps,
@@ -207,7 +221,7 @@ interface InboxNotificationLayoutProps
     InboxNotificationSharedProps,
     SlotProp {
   inboxNotification: InboxNotificationData;
-  aside: ReactNode;
+  aside?: ReactNode;
   title: ReactNode;
   date: Date | string | number;
   unread?: boolean;
@@ -420,9 +434,6 @@ function InboxNotificationAvatar({
   );
 }
 
-/**
- * Displays a thread inbox notification.
- */
 const InboxNotificationThread = forwardRef<
   HTMLAnchorElement,
   InboxNotificationThreadProps
@@ -553,13 +564,13 @@ const InboxNotificationThread = forwardRef<
       showReactions,
       thread,
     ]);
-    // Add the thread ID and comment ID to the `href`.
-    // And use URL from `resolveRoomsInfo` if `href` isn't set.
+    // Use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? generateURL(resolvedHref, undefined, contents?.commentId)
+        ? // Set the comment ID as the URL hash.
+          generateUrl(resolvedHref, undefined, contents?.commentId)
         : undefined;
     }, [contents?.commentId, href, info?.url]);
 
@@ -618,9 +629,6 @@ const InboxNotificationThread = forwardRef<
   }
 );
 
-/**
- * Displays a text mention notification kind.
- */
 const InboxNotificationTextMention = forwardRef<
   HTMLAnchorElement,
   InboxNotificationTextMentionProps
@@ -642,7 +650,9 @@ const InboxNotificationTextMention = forwardRef<
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
-      return resolvedHref ? generateURL(resolvedHref) : undefined;
+      return resolvedHref
+        ? (sanitizeUrl(resolvedHref) ?? undefined)
+        : undefined;
     }, [href, info?.url]);
 
     const unread = useMemo(() => {
@@ -675,9 +685,6 @@ const InboxNotificationTextMention = forwardRef<
   }
 );
 
-/**
- * Displays a custom notification kind.
- */
 const InboxNotificationCustom = forwardRef<
   HTMLAnchorElement,
   InboxNotificationCustomProps
@@ -714,6 +721,42 @@ const InboxNotificationCustom = forwardRef<
         ref={forwardedRef}
       >
         {children}
+      </InboxNotificationLayout>
+    );
+  }
+);
+
+const InboxNotificationInspector = forwardRef<
+  HTMLAnchorElement,
+  InboxNotificationInspectorProps
+>(
+  (
+    { inboxNotification, showActions = "hover", overrides, ...props },
+    forwardedRef
+  ) => {
+    const unread = useMemo(() => {
+      return (
+        !inboxNotification.readAt ||
+        inboxNotification.notifiedAt > inboxNotification.readAt
+      );
+    }, [inboxNotification.notifiedAt, inboxNotification.readAt]);
+
+    return (
+      <InboxNotificationLayout
+        inboxNotification={inboxNotification}
+        title={<code>{inboxNotification.id}</code>}
+        date={inboxNotification.notifiedAt}
+        unread={unread}
+        overrides={overrides}
+        showActions={showActions}
+        {...props}
+        ref={forwardedRef}
+        data-inspector=""
+      >
+        <CodeBlock
+          title="Data"
+          code={JSON.stringify(inboxNotification, null, 2)}
+        />
       </InboxNotificationLayout>
     );
   }
@@ -834,9 +877,33 @@ export const InboxNotification = Object.assign(
     }
   ),
   {
+    /**
+     * Displays a thread inbox notification kind.
+     */
     Thread: InboxNotificationThread,
+
+    /**
+     * Displays a text mention inbox notification kind.
+     */
     TextMention: InboxNotificationTextMention,
+
+    /**
+     * Displays a custom inbox notification kind.
+     */
     Custom: InboxNotificationCustom,
+
+    /**
+     * Display the inbox notification's data, which can be useful during development.
+     *
+     * @example
+     * <InboxNotification
+     *   inboxNotification={inboxNotification}
+     *   kinds={{
+     *     $custom: InboxNotification.Inspector,
+     *   }}
+     * />
+     */
+    Inspector: InboxNotificationInspector,
     Icon: InboxNotificationIcon,
     Avatar: InboxNotificationAvatar,
   }

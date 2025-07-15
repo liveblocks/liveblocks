@@ -11,7 +11,7 @@ import type {
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
-  generateCommentUrl,
+  generateUrl,
   getMentionsFromCommentBody,
   html,
   htmlSafe,
@@ -142,6 +142,24 @@ export const extractThreadNotificationData = async ({
   };
 };
 
+/**
+ * @internal
+ * Set the comment ID as the URL hash and a query param.
+ */
+function generateCommentUrl({
+  roomUrl,
+  commentId,
+}: {
+  roomUrl: string | undefined;
+  commentId: string;
+}): string | undefined {
+  if (!roomUrl) {
+    return;
+  }
+
+  return generateUrl(roomUrl, undefined, commentId);
+}
+
 export type CommentEmailData<BodyType, U extends BaseUserMeta = DU> = {
   id: string;
   threadId: string;
@@ -242,12 +260,10 @@ export async function prepareThreadNotificationEmail<
       ]);
 
       const authorInfo = authorsInfo.get(comment.userId);
-      const url = roomInfo?.url
-        ? generateCommentUrl({
-            roomUrl: roomInfo?.url,
-            commentId: comment.id,
-          })
-        : undefined;
+      const url = generateCommentUrl({
+        roomUrl: roomInfo?.url,
+        commentId: comment.id,
+      });
 
       return {
         type: "unreadMention",
@@ -294,12 +310,10 @@ export async function prepareThreadNotificationEmail<
           const authorInfo = authorsInfo.get(comment.userId);
           const commentBody = commentBodies[index] as BodyType;
 
-          const url = roomInfo?.url
-            ? generateCommentUrl({
-                roomUrl: roomInfo?.url,
-                commentId: comment.id,
-              })
-            : undefined;
+          const url = generateCommentUrl({
+            roomUrl: roomInfo?.url,
+            commentId: comment.id,
+          });
 
           return {
             id: comment.id,
