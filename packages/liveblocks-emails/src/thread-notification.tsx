@@ -150,7 +150,7 @@ export const extractThreadNotificationData = async ({
 
 /**
  * @internal
- * Set the comment ID as the URL hash and a query param.
+ * Set the comment ID as the URL hash.
  */
 function generateCommentUrl({
   roomUrl,
