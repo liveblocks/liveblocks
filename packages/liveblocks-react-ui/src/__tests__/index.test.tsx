@@ -563,6 +563,48 @@ describe("Primitives", () => {
         },
       },
       {
+        description: "loose lists",
+        content: dedent`
+          - A list item
+
+          - Another list item with
+
+            multiple paragraphs.
+
+          - [x] A task list item with
+
+            > a quote and a code block
+
+            \`\`\`
+            const a = 2;
+            \`\`\`
+        `,
+        assertions: (element) => {
+          const list = element.querySelector("ul");
+          expect(list).toBeInTheDocument();
+
+          const listItems = list?.querySelectorAll("li");
+          expect(listItems).toHaveLength(3);
+
+          expect(listItems?.[0]).toHaveTextContent("A list item");
+
+          expect(listItems?.[1]).toHaveTextContent(
+            "Another list item withmultiple paragraphs."
+          );
+
+          expect(listItems?.[2]).toHaveTextContent("A task list item with");
+          expect(
+            listItems?.[2]?.querySelector("input[type='checkbox']")
+          ).toBeChecked();
+          expect(listItems?.[2]?.querySelector("blockquote")).toHaveTextContent(
+            "a quote and a code block"
+          );
+          expect(listItems?.[2]?.querySelector("pre")).toHaveTextContent(
+            "const a = 2;"
+          );
+        },
+      },
+      {
         description: "blockquotes",
         content: dedent`
           > A blockquote.

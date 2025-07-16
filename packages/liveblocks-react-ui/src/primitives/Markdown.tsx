@@ -127,14 +127,7 @@ type InlineToken =
   | Tokens.Link
   | Tokens.Image
   | Tokens.Text
-  | Tokens.Escape
-  | CheckboxToken;
-
-type CheckboxToken = {
-  type: "checkbox";
-  checked: boolean;
-  raw: string;
-};
+  | Tokens.Escape;
 
 const defaultComponents: MarkdownComponents = {
   Paragraph: ({ children }) => {
@@ -342,55 +335,18 @@ export function MarkdownBlockToken({
       const items: MarkdownComponentsListItem[] = token.items.map((item) => {
         // A 'loose' list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
         if (item.loose) {
-          // If the list item is a task list item, we need to add a checkbox to the start of the token
-          if (item.task) {
-            const tokens = [...item.tokens];
-            const checkboxTokens: InlineToken[] = [
-              {
-                type: "checkbox",
-                checked: item.checked ?? false,
-                raw: "",
-              },
-              {
-                type: "text",
-                text: " ",
-                raw: " ",
-                escaped: false,
-              },
-            ];
-
-            if (tokens[0]?.type === "paragraph") {
-              const paragraphToken = tokens[0];
-              if (paragraphToken.tokens) {
-                paragraphToken.tokens.unshift(...checkboxTokens);
-              }
-            } else {
-              tokens.unshift(...checkboxTokens);
-            }
-
-            return {
-              checked: item.checked,
-              children: normalizeToBlockTokens(tokens).map((token, index) => (
+          return {
+            checked: item.task ? item.checked : undefined,
+            children: normalizeToBlockTokens(item.tokens).map(
+              (token, index) => (
                 <MarkdownBlockToken
                   token={token}
                   key={index}
                   components={components}
                 />
-              )),
-            };
-          } else {
-            return {
-              children: normalizeToBlockTokens(item.tokens).map(
-                (token, index) => (
-                  <MarkdownBlockToken
-                    token={token}
-                    key={index}
-                    components={components}
-                  />
-                )
-              ),
-            };
-          }
+              )
+            ),
+          };
         } else {
           return {
             checked: item.task ? item.checked : undefined,
@@ -591,10 +547,6 @@ function MarkdownInlineToken({
 
     case "escape": {
       return token.text;
-    }
-
-    case "checkbox": {
-      return <input type="checkbox" disabled checked={token.checked} />;
     }
 
     default: {
