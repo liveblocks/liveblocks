@@ -291,6 +291,7 @@ export function MarkdownBlockToken({
     case "space": {
       return null;
     }
+
     case "code": {
       let language: string | undefined = undefined;
       if (token.lang !== undefined) {
@@ -301,6 +302,7 @@ export function MarkdownBlockToken({
 
       return <CodeBlock language={language} code={token.text} />;
     }
+
     case "blockquote": {
       const tokens = normalizeToBlockTokens(token.tokens);
       const Blockquote = components?.Blockquote ?? defaultComponents.Blockquote;
@@ -311,9 +313,11 @@ export function MarkdownBlockToken({
         </Blockquote>
       );
     }
+
     case "html": {
       return token.text;
     }
+
     case "heading": {
       const Heading = components?.Heading ?? defaultComponents.Heading;
 
@@ -326,11 +330,13 @@ export function MarkdownBlockToken({
         </Heading>
       );
     }
+
     case "hr": {
       const Separator = components?.Separator ?? defaultComponents.Separator;
 
       return <Separator />;
     }
+
     case "list": {
       const List = components?.List ?? defaultComponents.List;
       const items: MarkdownComponentsListItem[] = token.items.map((item) => {
@@ -430,6 +436,7 @@ export function MarkdownBlockToken({
         <List type={token.ordered ? "ordered" : "unordered"} items={items} />
       );
     }
+
     case "paragraph": {
       const Paragraph = components?.Paragraph ?? defaultComponents.Paragraph;
 
@@ -442,6 +449,7 @@ export function MarkdownBlockToken({
         </Paragraph>
       );
     }
+
     case "table": {
       const Table = components?.Table ?? defaultComponents.Table;
       const headings: MarkdownComponentsTableCell[] = token.header.map(
@@ -493,6 +501,7 @@ function MarkdownInlineToken({
         </Inline>
       );
     }
+
     case "em": {
       const Inline = components?.Inline ?? defaultComponents.Inline;
 
@@ -505,14 +514,17 @@ function MarkdownInlineToken({
         </Inline>
       );
     }
+
     case "codespan": {
       const Inline = components?.Inline ?? defaultComponents.Inline;
 
       return <Inline type="code">{parseHtmlEntities(token.text)}</Inline>;
     }
+
     case "br": {
       return <br />;
     }
+
     case "del": {
       const Inline = components?.Inline ?? defaultComponents.Inline;
 
@@ -525,6 +537,7 @@ function MarkdownInlineToken({
         </Inline>
       );
     }
+
     case "link": {
       const href = sanitizeUrl(token.href);
 
@@ -548,6 +561,7 @@ function MarkdownInlineToken({
         </Link>
       );
     }
+
     case "image": {
       const href = sanitizeUrl(token.href);
 
@@ -561,6 +575,7 @@ function MarkdownInlineToken({
         <Image src={href} alt={token.text} title={token.title ?? undefined} />
       );
     }
+
     case "text": {
       if (token.tokens !== undefined) {
         return (
@@ -573,12 +588,15 @@ function MarkdownInlineToken({
         return parseHtmlEntities(token.text);
       }
     }
+
     case "escape": {
       return token.text;
     }
+
     case "checkbox": {
       return <input type="checkbox" disabled checked={token.checked} />;
     }
+
     default: {
       return null;
     }

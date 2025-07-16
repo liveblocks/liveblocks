@@ -87,5 +87,53 @@ export function createContextsForTest<M extends BaseMetadata>(
   };
 }
 
+export function dedent(strings: TemplateStringsArray, ...values: any[]): string;
+export function dedent(string: string): string;
+export function dedent(
+  stringOrTemplate: TemplateStringsArray | string,
+  ...values: any[]
+): string {
+  let string: string;
+
+  if (Array.isArray(stringOrTemplate) && "raw" in stringOrTemplate) {
+    string = stringOrTemplate.reduce(
+      (result, string, index) => result + string + (values[index] || ""),
+      ""
+    );
+  } else {
+    string = stringOrTemplate as string;
+  }
+
+  const lines = string.split("\n").filter((line) => line.trim().length > 0);
+
+  if (lines.length === 0) {
+    return string;
+  }
+
+  let minIndent = Infinity;
+
+  for (const line of lines) {
+    const lineIndent = line.search(/\S/);
+
+    if (lineIndent !== -1) {
+      minIndent = Math.min(minIndent, lineIndent);
+    }
+  }
+
+  if (minIndent === Infinity) {
+    return string;
+  }
+
+  return lines
+    .map((line) => {
+      if (line.length < minIndent || line.trim().length === 0) {
+        return line;
+      }
+
+      return line.substring(minIndent);
+    })
+    .join("\n");
+}
+
 export * from "@testing-library/react";
 export { customRender as render, customRenderHook as renderHook };

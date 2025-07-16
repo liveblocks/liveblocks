@@ -13,7 +13,8 @@ import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
 import { Timestamp } from "../primitives";
-import { render } from "./_utils"; // Basically re-exports from @testing-library/react
+import { Markdown } from "../primitives/Markdown";
+import { dedent, render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -247,12 +248,6 @@ describe("Components", () => {
 
       expect(container).not.toBeEmptyDOMElement();
     });
-
-    test.todo(
-      "should not render deleted comments, unless the showDeletedComments prop is set"
-    );
-
-    test.todo("should support overrides");
   });
 
   describe("Comment", () => {
@@ -261,12 +256,6 @@ describe("Components", () => {
 
       expect(container).not.toBeEmptyDOMElement();
     });
-
-    test.todo(
-      "should not render if deleted, unless the showDeleted prop is set"
-    );
-
-    test.todo("should support overrides");
   });
 
   describe("Composer", () => {
@@ -275,8 +264,6 @@ describe("Components", () => {
 
       expect(container).not.toBeEmptyDOMElement();
     });
-
-    test.todo("should support overrides");
   });
 });
 
@@ -301,5 +288,243 @@ describe("Primitives", () => {
     test.todo("should support a title function");
 
     test.todo("should support a children function");
+  });
+
+  describe("Markdown", () => {
+    test.each([
+      {
+        description: "paragraphs",
+        content: dedent`
+          A paragraph.
+
+          Another paragraph which
+          spans multiple lines.
+        `,
+      },
+      {
+        description: "headings",
+        content: dedent`
+          # Heading 1
+
+          ## Heading 2
+
+          ### Heading 3
+
+          #### Heading 4
+
+          ##### Heading 5
+
+          ###### Heading 6
+
+          Alternate heading 1
+          ===============
+
+          Alternate heading 2
+          --------------
+        `,
+      },
+      {
+        description: "bold text",
+        content: dedent`
+          **Bold** and __bold__.
+        `,
+      },
+      {
+        description: "italic text",
+        content: dedent`
+          *Italic* and _italic_.
+        `,
+      },
+      {
+        description: "strikethrough text",
+        content: dedent`
+          ~~Strikethrough~~.
+        `,
+      },
+      {
+        description: "inline code",
+        content: dedent`
+          Inline \`code\`.
+        `,
+      },
+      {
+        description: "links",
+        content: dedent`
+          A [link](https://www.liveblocks.io), [another one](/docs "With a title"),
+          https://www.liveblocks.io, and <https://www.liveblocks.io>.
+        `,
+      },
+      {
+        description: "ordered lists",
+        content: dedent`
+          1. A list item
+          2. Another list item
+          3. Yet another list item
+        `,
+      },
+      {
+        description: "unordered lists",
+        content: dedent`
+          - A list item
+          - Another list item
+          - Yet another list item
+
+          * A list item
+          * Another list item
+          * Yet another list item
+          
+          + A list item
+          + Another list item
+          + Yet another list item
+        `,
+      },
+      {
+        description: "task lists",
+        content: dedent`
+          - [ ] A list item
+          - [x] Another list item
+          - [ ] Yet another list item
+        `,
+      },
+      {
+        description: "mixed lists",
+        content: dedent`
+          - A list item
+            1. A nested list item
+            - Another nested list item
+              - [ ] A deeply nested list item
+          - Another list item
+            1. A nested list item
+            2. [x] Another nested list item
+        `,
+      },
+      {
+        description: "blockquotes",
+        content: dedent`
+          > A blockquote.
+
+          > Another one which spans
+          >
+          > multiple paragraphs.
+
+          > Yet another which
+          >
+          > > is nested.
+        `,
+      },
+      {
+        description: "code blocks",
+        content: dedent`
+          \`\`\`
+          p {
+            color: #000;
+          }
+          \`\`\`
+
+          \`\`\`javascript
+          const a = 2;
+          \`\`\`
+        `,
+      },
+      {
+        description: "images",
+        content: dedent`
+          ![An image](https://www.liveblocks.io/favicon.png)
+        `,
+      },
+      {
+        description: "tables",
+        content: dedent`
+          | A column heading | Another column heading |
+          |------------------|------------------------|
+          | A cell           | Another cell           |
+          | A cell           | Another cell           |
+        `,
+      },
+      {
+        description: "horizontal rules",
+        content: dedent`
+          ***
+
+          ---
+
+          _____
+        `,
+      },
+      {
+        description: "escaped characters",
+        content: dedent`
+          \*Not italic\* and \[not a link\]\(https://example.com\).
+        `,
+      },
+      {
+        description: "mixed content",
+        content: dedent`
+          A paragraph with **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
+
+          > A blockquote which includes \`code\`,
+          > **bold**, and [links](https://liveblocks.io/) inside the blockquote.
+
+          ### A heading
+
+          - A list item
+            - A nested list item
+
+          ### Another heading
+
+          1. A list item
+          2. Another list item
+            1. A nested list item with a [link](https://liveblocks.io/), **bold text**, and ~~strikethrough~~
+            2. Another nested list item
+
+          ---
+
+          \`\`\`
+          const x = 42;
+          \`\`\`
+
+          \`\`\`json
+          { "name": "my-app", "version": "1.0.0" }
+          \`\`\`
+
+          - [x] ~~A completed task list item~~
+          - [ ] A task list item with a [link](https://liveblocks.io/)
+          - [x] A completed task list item with **bold text**
+
+          ***
+
+          | Feature       | Example                              | Notes                     |
+          | ------------- | ------------------------------------ | ------------------------- |
+          | Link          | [Liveblocks](https://liveblocks.io/) | External link             |
+          | Inline code   | \`const x = 42;\`                    | Code inside table         |
+          | Bold text     | **Important**                        | Styling test              |
+          | Italic text   | _Emphasis_                           | Test italic inside tables |
+          | Strikethrough | ~~Deprecated~~                       | Show removal              |
+
+          > ### A quoted heading
+          >
+          > - A quoted unordered list item
+          > - Another quoted unordered list item
+          >
+          > > A nested quote
+          > >
+          > > 1. A quoted ordered list item
+          > > 2. Another quoted ordered list item
+          >
+          > \`\`\`ts
+          > const x = 1;
+          > \`\`\`
+        `,
+      },
+    ] satisfies {
+      description: string;
+      content: string;
+    }[])("should render $description", ({ content }) => {
+      const result = render(
+        <Markdown data-testid="markdown" content={content} />
+      );
+
+      console.log(result);
+    });
   });
 });
