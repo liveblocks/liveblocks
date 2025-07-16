@@ -941,11 +941,11 @@ describe("Primitives", () => {
           expect(links[0]).toHaveAttribute("data-link");
           expect(links[0]).toHaveAttribute("href", "https://www.liveblocks.io");
           expect(links[0]).toHaveTextContent("link");
-          expect(links[0]).toHaveAttribute("title", "With a title");
 
           expect(links[1]).toHaveAttribute("data-link");
-          expect(links[1]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[1]).toHaveAttribute("href", "/docs");
           expect(links[1]).toHaveTextContent("another one");
+          expect(links[1]).toHaveAttribute("title", "With a title");
 
           expect(links[2]).toHaveAttribute("data-link");
           expect(links[2]).toHaveAttribute("href", "https://www.liveblocks.io");
