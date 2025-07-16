@@ -104,11 +104,19 @@ export function dedent(
     string = stringOrTemplate as string;
   }
 
-  const lines = string.split("\n").filter((line) => line.trim().length > 0);
+  let lines = string.split("\n");
 
-  if (lines.length === 0) {
-    return string;
+  const firstNonEmptyLine = lines.findIndex((line) => line.trim().length > 0);
+
+  if (firstNonEmptyLine === -1) {
+    return "";
   }
+
+  const lastNonEmptyLine = [...lines]
+    .reverse()
+    .findIndex((line) => line.trim().length > 0);
+
+  lines = lines.slice(firstNonEmptyLine, lines.length - lastNonEmptyLine);
 
   let minIndent = Infinity;
 
@@ -121,12 +129,16 @@ export function dedent(
   }
 
   if (minIndent === Infinity) {
-    return string;
+    minIndent = 0;
   }
 
   return lines
     .map((line) => {
-      if (line.length < minIndent || line.trim().length === 0) {
+      if (line.trim().length === 0) {
+        return "";
+      }
+
+      if (line.length < minIndent) {
         return line;
       }
 

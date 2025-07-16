@@ -300,6 +300,15 @@ describe("Primitives", () => {
           Another paragraph which
           spans multiple lines.
         `,
+        assertions: (element) => {
+          const paragraphs = element.querySelectorAll("p");
+
+          expect(paragraphs).toHaveLength(2);
+          expect(paragraphs[0]).toHaveTextContent("A paragraph.");
+          expect(paragraphs[1]).toHaveTextContent(
+            "Another paragraph which spans multiple lines."
+          );
+        },
       },
       {
         description: "headings",
@@ -322,30 +331,69 @@ describe("Primitives", () => {
           Alternate heading 2
           --------------
         `,
+        assertions: (element) => {
+          const headings = element.querySelectorAll("h1, h2, h3, h4, h5, h6");
+
+          expect(headings).toHaveLength(8);
+          expect(headings[0]).toHaveTextContent("Heading 1");
+          expect(headings[1]).toHaveTextContent("Heading 2");
+          expect(headings[2]).toHaveTextContent("Heading 3");
+          expect(headings[3]).toHaveTextContent("Heading 4");
+          expect(headings[4]).toHaveTextContent("Heading 5");
+          expect(headings[5]).toHaveTextContent("Heading 6");
+          expect(headings[6]).toHaveTextContent("Alternate heading 1");
+          expect(headings[7]).toHaveTextContent("Alternate heading 2");
+        },
       },
       {
         description: "bold text",
         content: dedent`
           **Bold** and __bold__.
         `,
+        assertions: (element) => {
+          const strongs = element.querySelectorAll("strong");
+
+          expect(strongs).toHaveLength(2);
+          expect(strongs[0]).toHaveTextContent("Bold");
+          expect(strongs[1]).toHaveTextContent("bold");
+        },
       },
       {
         description: "italic text",
         content: dedent`
           *Italic* and _italic_.
         `,
+        assertions: (element) => {
+          const ems = element.querySelectorAll("em");
+
+          expect(ems).toHaveLength(2);
+          expect(ems[0]).toHaveTextContent("Italic");
+          expect(ems[1]).toHaveTextContent("italic");
+        },
       },
       {
         description: "strikethrough text",
         content: dedent`
           ~~Strikethrough~~.
         `,
+        assertions: (element) => {
+          const dels = element.querySelectorAll("del");
+
+          expect(dels).toHaveLength(1);
+          expect(dels[0]).toHaveTextContent("Strikethrough");
+        },
       },
       {
         description: "inline code",
         content: dedent`
           Inline \`code\`.
         `,
+        assertions: (element) => {
+          const codes = element.querySelectorAll("code");
+
+          expect(codes).toHaveLength(1);
+          expect(codes[0]).toHaveTextContent("code");
+        },
       },
       {
         description: "links",
@@ -353,6 +401,15 @@ describe("Primitives", () => {
           A [link](https://www.liveblocks.io), [another one](/docs "With a title"),
           https://www.liveblocks.io, and <https://www.liveblocks.io>.
         `,
+        assertions: (element) => {
+          const links = element.querySelectorAll("a");
+
+          expect(links).toHaveLength(4);
+          expect(links[0]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[1]).toHaveAttribute("href", "/docs");
+          expect(links[2]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[3]).toHaveAttribute("href", "https://www.liveblocks.io");
+        },
       },
       {
         description: "ordered lists",
@@ -361,6 +418,16 @@ describe("Primitives", () => {
           2. Another list item
           3. Yet another list item
         `,
+        assertions: (element) => {
+          const list = element.querySelector("ol");
+          const listItems = list?.querySelectorAll("li");
+
+          expect(list).not.toBeNull();
+          expect(listItems).toHaveLength(3);
+          expect(listItems?.[0]).toHaveTextContent("A list item");
+          expect(listItems?.[1]).toHaveTextContent("Another list item");
+          expect(listItems?.[2]).toHaveTextContent("Yet another list item");
+        },
       },
       {
         description: "unordered lists",
@@ -372,11 +439,23 @@ describe("Primitives", () => {
           * A list item
           * Another list item
           * Yet another list item
-          
+
           + A list item
           + Another list item
           + Yet another list item
         `,
+        assertions: (element) => {
+          const lists = element.querySelectorAll("ul");
+
+          lists.forEach((list) => {
+            const listItems = list.querySelectorAll("li");
+
+            expect(listItems).toHaveLength(3);
+            expect(listItems?.[0]).toHaveTextContent("A list item");
+            expect(listItems?.[1]).toHaveTextContent("Another list item");
+            expect(listItems?.[2]).toHaveTextContent("Yet another list item");
+          });
+        },
       },
       {
         description: "task lists",
@@ -385,6 +464,25 @@ describe("Primitives", () => {
           - [x] Another list item
           - [ ] Yet another list item
         `,
+        assertions: (element) => {
+          const list = element.querySelector("ul");
+          const listItems = list?.querySelectorAll("li");
+
+          expect(list).not.toBeNull();
+          expect(listItems).toHaveLength(3);
+          expect(listItems?.[0]).toHaveTextContent("A list item");
+          expect(
+            listItems?.[0]?.querySelector("input[type='checkbox']")
+          ).not.toBeChecked();
+          expect(listItems?.[1]).toHaveTextContent("Another list item");
+          expect(
+            listItems?.[1]?.querySelector("input[type='checkbox']")
+          ).toBeChecked();
+          expect(listItems?.[2]).toHaveTextContent("Yet another list item");
+          expect(
+            listItems?.[2]?.querySelector("input[type='checkbox']")
+          ).not.toBeChecked();
+        },
       },
       {
         description: "mixed lists",
@@ -397,6 +495,72 @@ describe("Primitives", () => {
             1. A nested list item
             2. [x] Another nested list item
         `,
+        assertions: (element) => {
+          const rootList = element.querySelector(":scope > ul");
+          expect(rootList).toBeInTheDocument();
+
+          const rootListItems = element.querySelectorAll(":scope > ul > li");
+          expect(rootListItems).toHaveLength(2);
+
+          // - A list item
+          //   1. A nested list item
+          //   - Another nested list item
+          //     - [ ] A deeply nested list item
+          const firstNestedLists = element?.querySelectorAll(
+            ":scope > ul > li:nth-child(1) > :is(ul, ol)"
+          );
+          expect(firstNestedLists).toHaveLength(2);
+
+          //   1. A nested list item
+          const firstNestedFirstList = firstNestedLists?.[0];
+          expect(firstNestedFirstList?.tagName).toBe("OL");
+          expect(firstNestedFirstList?.childNodes).toHaveLength(1);
+          expect(firstNestedFirstList?.childNodes[0]?.textContent).toBe(
+            "A nested list item"
+          );
+
+          //   - Another nested list item
+          //     - [ ] A deeply nested list item
+          const firstNestedSecondList = firstNestedLists?.[1];
+          expect(firstNestedSecondList?.tagName).toBe("UL");
+          expect(firstNestedSecondList?.childNodes).toHaveLength(1);
+          expect(
+            firstNestedSecondList?.childNodes[0]?.childNodes[0]
+          ).toHaveTextContent("Another nested list item");
+
+          //     - [ ] A deeply nested list item
+          const firstNestedSecondListFirstNestedList = firstNestedSecondList
+            ?.childNodes[0]?.childNodes[1] as HTMLElement | null;
+          expect(firstNestedSecondListFirstNestedList).toHaveTextContent(
+            "A deeply nested list item"
+          );
+          expect(firstNestedSecondListFirstNestedList?.tagName).toBe("UL");
+          expect(
+            firstNestedSecondListFirstNestedList?.querySelector(
+              "input[type='checkbox']"
+            )
+          ).not.toBeChecked();
+
+          // - Another list item
+          //   1. A nested list item
+          //   2. [x] Another nested list item
+          const secondNestedList = element?.querySelector(
+            ":scope > ul > li:nth-child(2) > :is(ul, ol)"
+          );
+          expect(secondNestedList?.tagName).toBe("OL");
+          expect(secondNestedList?.childNodes).toHaveLength(2);
+          expect(secondNestedList?.childNodes[0]).toHaveTextContent(
+            "A nested list item"
+          );
+          expect(secondNestedList?.childNodes[1]).toHaveTextContent(
+            "Another nested list item"
+          );
+          expect(
+            (
+              secondNestedList?.childNodes[1] as HTMLElement | null
+            )?.querySelector("input[type='checkbox']")
+          ).toBeChecked();
+        },
       },
       {
         description: "blockquotes",
@@ -411,6 +575,32 @@ describe("Primitives", () => {
           >
           > > is nested.
         `,
+        assertions: (element) => {
+          const blockquotes = element.querySelectorAll(":scope >blockquote");
+
+          expect(blockquotes).toHaveLength(3);
+          expect(blockquotes[0]).toHaveTextContent("A blockquote.");
+
+          const blockquote1Paragraphs = blockquotes[1]?.querySelectorAll("p");
+          expect(blockquote1Paragraphs).toHaveLength(2);
+          expect(blockquote1Paragraphs?.[0]).toHaveTextContent(
+            "Another one which spans"
+          );
+          expect(blockquote1Paragraphs?.[1]).toHaveTextContent(
+            "multiple paragraphs."
+          );
+
+          expect(blockquotes[2]?.childNodes[0]).toHaveTextContent(
+            "Yet another which"
+          );
+
+          const blockquote2NestedBlockquote = blockquotes[2]
+            ?.childNodes[1] as HTMLElement | null;
+          expect(blockquote2NestedBlockquote?.tagName).toBe("BLOCKQUOTE");
+          expect(blockquote2NestedBlockquote?.childNodes[0]).toHaveTextContent(
+            "is nested."
+          );
+        },
       },
       {
         description: "code blocks",
@@ -425,12 +615,28 @@ describe("Primitives", () => {
           const a = 2;
           \`\`\`
         `,
+        assertions: (element) => {
+          const codeBlocks = element.querySelectorAll("pre");
+          expect(codeBlocks).toHaveLength(2);
+
+          expect(codeBlocks[0]?.textContent).toBe("p {\n  color: #000;\n}");
+          expect(codeBlocks[1]?.textContent).toBe("const a = 2;");
+        },
       },
       {
         description: "images",
         content: dedent`
           ![An image](https://www.liveblocks.io/favicon.png)
         `,
+        assertions: (element) => {
+          const images = element.querySelectorAll("img");
+
+          expect(images).toHaveLength(1);
+          expect(images[0]).toHaveAttribute(
+            "src",
+            "https://www.liveblocks.io/favicon.png"
+          );
+        },
       },
       {
         description: "tables",
@@ -440,6 +646,28 @@ describe("Primitives", () => {
           | A cell           | Another cell           |
           | A cell           | Another cell           |
         `,
+        assertions: (element) => {
+          const table = element.querySelector("table");
+          expect(table).toBeInTheDocument();
+
+          const tableHeadings = table?.querySelectorAll("th");
+          expect(tableHeadings).toHaveLength(2);
+          expect(tableHeadings?.[0]).toHaveTextContent("A column heading");
+          expect(tableHeadings?.[1]).toHaveTextContent(
+            "Another column heading"
+          );
+
+          const tableRows = table?.querySelectorAll("tbody tr");
+          expect(tableRows).toHaveLength(2);
+
+          tableRows?.forEach((row) => {
+            const cells = row.querySelectorAll("td");
+
+            expect(cells).toHaveLength(2);
+            expect(cells?.[0]).toHaveTextContent("A cell");
+            expect(cells?.[1]).toHaveTextContent("Another cell");
+          });
+        },
       },
       {
         description: "horizontal rules",
@@ -450,81 +678,93 @@ describe("Primitives", () => {
 
           _____
         `,
+        assertions: (element) => {
+          const horizontalRules = element.querySelectorAll("hr");
+
+          expect(horizontalRules).toHaveLength(3);
+        },
       },
       {
         description: "escaped characters",
         content: dedent`
-          \*Not italic\* and \[not a link\]\(https://example.com\).
+          \\*Not italic\\* and \\[not a link\\]\\(https://liveblocks.io\).
         `,
+        assertions: (element) => {
+          expect(element).toHaveTextContent(
+            "*Not italic* and [not a link](https://liveblocks.io)."
+          );
+        },
       },
-      {
-        description: "mixed content",
-        content: dedent`
-          A paragraph with **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
+      // {
+      //   description: "mixed content",
+      //   content: dedent`
+      //     A paragraph with **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
 
-          > A blockquote which includes \`code\`,
-          > **bold**, and [links](https://liveblocks.io/) inside the blockquote.
+      //     > A blockquote which includes \`code\`,
+      //     > **bold**, and [links](https://liveblocks.io/) inside the blockquote.
 
-          ### A heading
+      //     ### A heading
 
-          - A list item
-            - A nested list item
+      //     - A list item
+      //       - A nested list item
 
-          ### Another heading
+      //     ### Another heading
 
-          1. A list item
-          2. Another list item
-            1. A nested list item with a [link](https://liveblocks.io/), **bold text**, and ~~strikethrough~~
-            2. Another nested list item
+      //     1. A list item
+      //     2. Another list item
+      //       1. A nested list item with a [link](https://liveblocks.io/), **bold text**, and ~~strikethrough~~
+      //       2. Another nested list item
 
-          ---
+      //     ---
 
-          \`\`\`
-          const x = 42;
-          \`\`\`
+      //     \`\`\`
+      //     const x = 42;
+      //     \`\`\`
 
-          \`\`\`json
-          { "name": "my-app", "version": "1.0.0" }
-          \`\`\`
+      //     \`\`\`json
+      //     { "name": "my-app", "version": "1.0.0" }
+      //     \`\`\`
 
-          - [x] ~~A completed task list item~~
-          - [ ] A task list item with a [link](https://liveblocks.io/)
-          - [x] A completed task list item with **bold text**
+      //     - [x] ~~A completed task list item~~
+      //     - [ ] A task list item with a [link](https://liveblocks.io/)
+      //     - [x] A completed task list item with **bold text**
 
-          ***
+      //     ***
 
-          | Feature       | Example                              | Notes                     |
-          | ------------- | ------------------------------------ | ------------------------- |
-          | Link          | [Liveblocks](https://liveblocks.io/) | External link             |
-          | Inline code   | \`const x = 42;\`                    | Code inside table         |
-          | Bold text     | **Important**                        | Styling test              |
-          | Italic text   | _Emphasis_                           | Test italic inside tables |
-          | Strikethrough | ~~Deprecated~~                       | Show removal              |
+      //     | Feature       | Example                              | Notes                     |
+      //     | ------------- | ------------------------------------ | ------------------------- |
+      //     | Link          | [Liveblocks](https://liveblocks.io/) | External link             |
+      //     | Inline code   | \`const x = 42;\`                    | Code inside table         |
+      //     | Bold text     | **Important**                        | Styling test              |
+      //     | Italic text   | _Emphasis_                           | Test italic inside tables |
+      //     | Strikethrough | ~~Deprecated~~                       | Show removal              |
 
-          > ### A quoted heading
-          >
-          > - A quoted unordered list item
-          > - Another quoted unordered list item
-          >
-          > > A nested quote
-          > >
-          > > 1. A quoted ordered list item
-          > > 2. Another quoted ordered list item
-          >
-          > \`\`\`ts
-          > const x = 1;
-          > \`\`\`
-        `,
-      },
+      //     > ### A quoted heading
+      //     >
+      //     > - A quoted unordered list item
+      //     > - Another quoted unordered list item
+      //     >
+      //     > > A nested quote
+      //     > >
+      //     > > 1. A quoted ordered list item
+      //     > > 2. Another quoted ordered list item
+      //     >
+      //     > \`\`\`ts
+      //     > const x = 1;
+      //     > \`\`\`
+      //   `,
+      //   assertions: () => {},
+      // },
     ] satisfies {
       description: string;
       content: string;
-    }[])("should render $description", ({ content }) => {
-      const result = render(
+      assertions: (element: HTMLElement) => void;
+    }[])("should render $description", ({ content, assertions }) => {
+      const { getByTestId } = render(
         <Markdown data-testid="markdown" content={content} />
       );
 
-      console.log(result);
+      assertions(getByTestId("markdown"));
     });
   });
 });
