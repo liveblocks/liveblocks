@@ -766,5 +766,29 @@ describe("Primitives", () => {
 
       assertions(getByTestId("markdown"));
     });
+
+    test("should rerender when the content changes", () => {
+      const { getByTestId, rerender } = render(
+        <Markdown data-testid="markdown" content="This is a [link](ht" />
+      );
+
+      const element = getByTestId("markdown");
+
+      expect(element).toHaveTextContent("This is a [link](ht");
+      expect(element.querySelector("a")).not.toBeInTheDocument();
+
+      rerender(
+        <Markdown
+          data-testid="markdown"
+          content="This is a [link](https://liveblocks.io)."
+        />
+      );
+
+      expect(element).toHaveTextContent("This is a link.");
+      expect(element.querySelector("a")).toHaveAttribute(
+        "href",
+        "https://liveblocks.io"
+      );
+    });
   });
 });
