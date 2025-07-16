@@ -12,15 +12,224 @@ import {
 import type { ComponentPropsWithSlot } from "../types";
 
 export type MarkdownComponents = {
-  CodeBlock: ComponentType<MarkdownComponentsCodeBlockProps>;
-  Link: ComponentType<MarkdownComponentsLinkProps>;
-  Heading: ComponentType<MarkdownComponentsHeadingProps>;
-  Image: ComponentType<MarkdownComponentsImageProps>;
-  Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
-  Table: ComponentType<MarkdownComponentsTableProps>;
-  List: ComponentType<MarkdownComponentsListProps>;
+  /**
+   * The component used to render paragraphs.
+   *
+   * @example
+   * ```md
+   * A paragraph.
+   *
+   * Another paragraph.
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Paragraph: ({ children }) => <p className="...">{children}</p>
+   *   }}
+   * />
+   * ```
+   */
   Paragraph: ComponentType<MarkdownComponentsParagraphProps>;
+
+  /**
+   * The component used to render inline elements (bold, italic, strikethrough, and inline code).
+   *
+   * @example
+   * ```md
+   * **Bold**, _italic_, ~~strikethrough~~, and `inline code`.
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Inline: ({ type, children }) => {
+   *       const Component = type;
+   *       return <Component className="...">{children}</Component>;
+   *     }
+   *   }}
+   * />
+   * ```
+   */
   Inline: ComponentType<MarkdownComponentsInlineProps>;
+
+  /**
+   * The component used to render links.
+   *
+   * @example
+   * ```md
+   * A [link](https://liveblocks.io).
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Link: ({ href, children }) => <a href={href} className="...">{children}</a>
+   *   }}
+   * />
+   * ```
+   */
+  Link: ComponentType<MarkdownComponentsLinkProps>;
+
+  /**
+   * The component used to render headings.
+   *
+   * @example
+   * ```md
+   * # Heading 1
+   * ## Heading 2
+   * ### Heading 3
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Heading: ({ level, children }) => {
+   *       const Heading = `h${level}` as const;
+   *       return <Heading className="...">{children}</Heading>;
+   *     }
+   *   }}
+   * />
+   * ```
+   */
+  Heading: ComponentType<MarkdownComponentsHeadingProps>;
+
+  /**
+   * The component used to render blockquotes.
+   *
+   * @example
+   * ```md
+   * > A blockquote.
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Blockquote: ({ children }) => <blockquote className="...">{children}</blockquote>
+   *   }}
+   * />
+   * ```
+   */
+  Blockquote: ComponentType<MarkdownComponentsBlockquoteProps>;
+
+  /**
+   * The component used to render code blocks.
+   *
+   * @example
+   * ```md
+   * `⁠`⁠`javascript
+   * const a = 1;
+   * `⁠`⁠`
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     CodeBlock: ({ language, code }) => (
+   *       <pre data-language={language} className="...">
+   *         <code className="...">{code}</code>
+   *       </pre>
+   *     )
+   *   }}
+   * />
+   * ```
+   */
+  CodeBlock: ComponentType<MarkdownComponentsCodeBlockProps>;
+
+  /**
+   * The component used to render images.
+   *
+   * @example
+   * ```md
+   * ![An image](https://liveblocks.io/logo.svg)
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Image: ({ src, alt }) => <img src={src} alt={alt} className="...">
+   *   }}
+   * />
+   * ```
+   */
+  Image: ComponentType<MarkdownComponentsImageProps>;
+
+  /**
+   * The component used to render lists.
+   *
+   * @example
+   * ```md
+   * 1. An ordered list item
+   * - An unordered list item
+   * - [x] A checked list item
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     List: ({ type, items }) => {
+   *       const List = type === "ordered" ? "ol" : "ul";
+   *       return (
+   *         <List>
+   *           {items.map((item, index) => (
+   *             <li key={index}>
+   *               {item.checked !== undefined && (
+   *                 <input type="checkbox" disabled checked={item.checked} />{" "}
+   *               )}
+   *               {item.children}
+   *             </li>
+   *           ))}
+   *         </List>
+   *       );
+   *     }
+   *   }}
+   * />
+   * ```
+   */
+  List: ComponentType<MarkdownComponentsListProps>;
+
+  /**
+   * The component used to render tables.
+   *
+   * @example
+   * ```md
+   * | Heading 1 | Heading 2 |
+   * |-----------|-----------|
+   * | Cell 1    | Cell 2    |
+   * | Cell 3    | Cell 4    |
+   * ```
+   * ```tsx
+   * <Markdown
+   *   components={{
+   *     Table: ({ headings, rows }) => (
+   *       <table>
+   *         <thead>
+   *           <tr>
+   *             {headings.map(({ children }, index) => (
+   *               <th key={index}>{children}</th>
+   *             ))}
+   *           </tr>
+   *         </thead>
+   *         <tbody>
+   *           {rows.map((row, index) => (
+   *             <tr key={index}>
+   *               {row.map(({ children }, index) => (
+   *                 <td key={index}>{children}</td>
+   *               ))}
+   *             </tr>
+   *           ))}
+   *         </tbody>
+   *       </table>
+   *     )
+   *   }}
+   * />
+   * ```
+   */
+  Table: ComponentType<MarkdownComponentsTableProps>;
+
+  /**
+   * The component used to render separators.
+   *
+   * @example
+   * ```md
+   * ---
+   * ```
+   * ```tsx
+   * <Markdown components={{ Separator: () => <hr className="..." /> }} />
+   * ```
+   */
   Separator: ComponentType;
 };
 
