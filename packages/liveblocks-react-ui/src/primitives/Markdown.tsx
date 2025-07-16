@@ -1,6 +1,6 @@
 import { assertNever, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
-import { Lexer, type Token, type Tokens } from "marked";
+import { Lexer, type MarkedToken, type Token, type Tokens } from "marked";
 import {
   type ComponentType,
   forwardRef,
@@ -83,51 +83,6 @@ export interface MarkdownProps extends ComponentPropsWithSlot<"div"> {
   content: string;
   components?: Partial<MarkdownComponents>;
 }
-
-/**
- * Block level tokens include:
- * - space
- * - code
- * - blockquote
- * - html
- * - heading
- * - hr
- * - list
- * - paragraph
- * - table
- */
-export type BlockToken =
-  | Tokens.Space
-  | Tokens.Code
-  | Tokens.Blockquote
-  | Tokens.HTML
-  | Tokens.Heading
-  | Tokens.Hr
-  | Tokens.List
-  | Tokens.Paragraph
-  | Tokens.Table;
-
-/**
- * Inline tokens include:
- * - strong
- * - em
- * - codespan
- * - br
- * - del
- * - link
- * - image
- * - text
- */
-type InlineToken =
-  | Tokens.Strong
-  | Tokens.Em
-  | Tokens.Codespan
-  | Tokens.Br
-  | Tokens.Del
-  | Tokens.Link
-  | Tokens.Image
-  | Tokens.Text
-  | Tokens.Escape;
 
 const defaultComponents: MarkdownComponents = {
   Paragraph: ({ children }) => {
@@ -238,8 +193,8 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
       <Component {...props} ref={forwardedRef}>
         {tokens.map((token, index) => {
           return (
-            <MemoizedMarkdownBlockToken
-              token={token as BlockToken}
+            <MemoizedMarkdownToken
+              token={token}
               key={index}
               components={components}
             />
@@ -250,39 +205,136 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   }
 );
 
-const MemoizedMarkdownBlockToken = memo(
+const MemoizedMarkdownToken = memo(
   ({
     token,
     components,
   }: {
-    token: BlockToken;
+    token: Token;
     components?: Partial<MarkdownComponents>;
   }) => {
-    return <MarkdownBlockToken token={token} components={components} />;
+    return <MarkdownToken token={token} components={components} />;
   },
-  (prevProps, nextProps) => {
-    const prevToken = prevProps.token;
+  (previousProps, nextProps) => {
+    const previousToken = previousProps.token;
     const nextToken = nextProps.token;
-    if (prevToken.raw.length !== nextToken.raw.length) {
+
+    if (previousToken.raw.length !== nextToken.raw.length) {
       return false;
     }
-    if (prevToken.type !== nextToken.type) {
+
+    if (previousToken.type !== nextToken.type) {
       return false;
     }
-    return prevToken.raw === nextToken.raw;
+
+    return previousToken.raw === nextToken.raw;
   }
 );
 
-export function MarkdownBlockToken({
+export function MarkdownToken({
   token,
   components,
 }: {
-  token: BlockToken;
+  token: Token;
   components: Partial<MarkdownComponents> | undefined;
 }) {
+  // Marked.js supports generic tokens, but we don't use them.
+  if (!isMarkedToken(token)) {
+    return null;
+  }
+
   switch (token.type) {
+    case "html":
+    case "escape": {
+      return token.text;
+    }
+
     case "space": {
       return null;
+    }
+
+    case "text": {
+      if (token.tokens !== undefined) {
+        return <MarkdownTokens tokens={token.tokens} components={components} />;
+      } else {
+        return parseHtmlEntities(token.text);
+      }
+    }
+
+    case "br": {
+      return <br />;
+    }
+
+    case "paragraph": {
+      const Paragraph = components?.Paragraph ?? defaultComponents.Paragraph;
+
+      return (
+        <Paragraph>
+          <MarkdownTokens tokens={token.tokens} components={components} />
+        </Paragraph>
+      );
+    }
+
+    case "heading": {
+      const Heading = components?.Heading ?? defaultComponents.Heading;
+
+      return (
+        <Heading level={clampHeadingLevel(token.depth)}>
+          <MarkdownTokens tokens={token.tokens} components={components} />
+        </Heading>
+      );
+    }
+
+    case "strong": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
+      return (
+        <Inline type="strong">
+          <MarkdownTokens tokens={token.tokens} components={components} />
+        </Inline>
+      );
+    }
+
+    case "em": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
+      return (
+        <Inline type="em">
+          <MarkdownTokens tokens={token.tokens} components={components} />
+        </Inline>
+      );
+    }
+
+    case "codespan": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
+      return <Inline type="code">{parseHtmlEntities(token.text)}</Inline>;
+    }
+
+    case "del": {
+      const Inline = components?.Inline ?? defaultComponents.Inline;
+
+      return (
+        <Inline type="del">
+          <MarkdownTokens tokens={token.tokens} components={components} />
+        </Inline>
+      );
+    }
+
+    case "link": {
+      const href = sanitizeUrl(token.href);
+
+      if (href === null) {
+        return <MarkdownTokens tokens={token.tokens} components={components} />;
+      }
+
+      const Link = components?.Link ?? defaultComponents.Link;
+
+      return (
+        <Link href={href} title={token.title ?? undefined}>
+          <MarkdownTokens tokens={token.tokens} components={components} />
+        </Link>
+      );
     }
 
     case "code": {
@@ -297,112 +349,37 @@ export function MarkdownBlockToken({
     }
 
     case "blockquote": {
-      const tokens = normalizeToBlockTokens(token.tokens);
       const Blockquote = components?.Blockquote ?? defaultComponents.Blockquote;
 
       return (
         <Blockquote>
-          <MarkdownBlockTokens tokens={tokens} components={components} />
+          <MarkdownTokens
+            tokens={token.tokens}
+            components={components}
+            normalizeToBlockTokens
+          />
         </Blockquote>
       );
-    }
-
-    case "html": {
-      return token.text;
-    }
-
-    case "heading": {
-      const Heading = components?.Heading ?? defaultComponents.Heading;
-
-      return (
-        <Heading level={clampHeadingLevel(token.depth)}>
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        </Heading>
-      );
-    }
-
-    case "hr": {
-      const Separator = components?.Separator ?? defaultComponents.Separator;
-
-      return <Separator />;
     }
 
     case "list": {
       const List = components?.List ?? defaultComponents.List;
       const items: MarkdownComponentsListItem[] = token.items.map((item) => {
-        // A 'loose' list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
-        if (item.loose) {
-          return {
-            checked: item.task ? item.checked : undefined,
-            children: normalizeToBlockTokens(item.tokens).map(
-              (token, index) => (
-                <MarkdownBlockToken
-                  token={token}
-                  key={index}
-                  components={components}
-                />
-              )
-            ),
-          };
-        } else {
-          return {
-            checked: item.task ? item.checked : undefined,
-            // Non-'loose' list items aren't wrapped in a paragraph
-            children: item.tokens.map((token, index) => {
-              switch (token.type) {
-                case "space":
-                case "code":
-                case "blockquote":
-                case "html":
-                case "heading":
-                case "hr":
-                case "list":
-                case "paragraph":
-                case "table": {
-                  return (
-                    <MarkdownBlockToken
-                      token={token as BlockToken}
-                      key={index}
-                      components={components}
-                    />
-                  );
-                }
-                case "text": {
-                  return (
-                    <MarkdownInlineToken
-                      token={token as Tokens.Text}
-                      key={index}
-                      components={components}
-                    />
-                  );
-                }
-                default: {
-                  return null;
-                }
-              }
-            }),
-          };
-        }
+        return {
+          checked: item.task ? item.checked : undefined,
+          children: (
+            <MarkdownTokens
+              tokens={item.tokens}
+              components={components}
+              // A "loose" list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
+              normalizeToBlockTokens={item.loose}
+            />
+          ),
+        };
       });
 
       return (
         <List type={token.ordered ? "ordered" : "unordered"} items={items} />
-      );
-    }
-
-    case "paragraph": {
-      const Paragraph = components?.Paragraph ?? defaultComponents.Paragraph;
-
-      return (
-        <Paragraph>
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        </Paragraph>
       );
     }
 
@@ -412,10 +389,7 @@ export function MarkdownBlockToken({
         (cell) => ({
           align: cell.align ?? undefined,
           children: (
-            <MarkdownInlineTokens
-              tokens={cell.tokens as InlineToken[]}
-              components={components}
-            />
+            <MarkdownTokens tokens={cell.tokens} components={components} />
           ),
         })
       );
@@ -424,98 +398,12 @@ export function MarkdownBlockToken({
         row.map((cell) => ({
           align: cell.align ?? undefined,
           children: (
-            <MarkdownInlineTokens
-              tokens={cell.tokens as InlineToken[]}
-              components={components}
-            />
+            <MarkdownTokens tokens={cell.tokens} components={components} />
           ),
         }))
       );
 
       return <Table headings={headings} rows={rows} />;
-    }
-  }
-}
-
-function MarkdownInlineToken({
-  token,
-  components,
-}: {
-  token: InlineToken;
-  components: Partial<MarkdownComponents> | undefined;
-}) {
-  switch (token.type) {
-    case "strong": {
-      const Inline = components?.Inline ?? defaultComponents.Inline;
-
-      return (
-        <Inline type="strong">
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        </Inline>
-      );
-    }
-
-    case "em": {
-      const Inline = components?.Inline ?? defaultComponents.Inline;
-
-      return (
-        <Inline type="em">
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        </Inline>
-      );
-    }
-
-    case "codespan": {
-      const Inline = components?.Inline ?? defaultComponents.Inline;
-
-      return <Inline type="code">{parseHtmlEntities(token.text)}</Inline>;
-    }
-
-    case "br": {
-      return <br />;
-    }
-
-    case "del": {
-      const Inline = components?.Inline ?? defaultComponents.Inline;
-
-      return (
-        <Inline type="del">
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        </Inline>
-      );
-    }
-
-    case "link": {
-      const href = sanitizeUrl(token.href);
-
-      if (href === null) {
-        return (
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        );
-      }
-
-      const Link = components?.Link ?? defaultComponents.Link;
-
-      return (
-        <Link href={href} title={token.title ?? undefined}>
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        </Link>
-      );
     }
 
     case "image": {
@@ -532,21 +420,10 @@ function MarkdownInlineToken({
       );
     }
 
-    case "text": {
-      if (token.tokens !== undefined) {
-        return (
-          <MarkdownInlineTokens
-            tokens={token.tokens as InlineToken[]}
-            components={components}
-          />
-        );
-      } else {
-        return parseHtmlEntities(token.text);
-      }
-    }
+    case "hr": {
+      const Separator = components?.Separator ?? defaultComponents.Separator;
 
-    case "escape": {
-      return token.text;
+      return <Separator />;
     }
 
     default: {
@@ -555,28 +432,82 @@ function MarkdownInlineToken({
   }
 }
 
-function MarkdownBlockTokens({
+function MarkdownTokens({
   tokens,
   components,
+  normalizeToBlockTokens = false,
 }: {
-  tokens: BlockToken[];
+  tokens: Token[];
   components: Partial<MarkdownComponents> | undefined;
+  normalizeToBlockTokens?: boolean;
 }) {
+  const normalizedTokens: Token[] = [];
+
+  if (normalizeToBlockTokens) {
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]!;
+
+      switch (token.type) {
+        case "text": {
+          // Wrap consecutive text tokens into a paragraph
+          const texts: Tokens.Text[] = [token as Tokens.Text];
+          while (i + 1 < tokens.length && tokens[i + 1]!.type === "text") {
+            i++;
+            texts.push(tokens[i] as Tokens.Text);
+          }
+
+          normalizedTokens.push({
+            type: "paragraph",
+            tokens: texts,
+            raw: texts.map((text) => text.raw).join(""),
+            text: texts.map((text) => text.text).join(""),
+          } satisfies Tokens.Paragraph);
+
+          break;
+        }
+
+        default: {
+          normalizedTokens.push(token);
+        }
+      }
+    }
+  }
+
   return tokens.map((token, index) => (
-    <MarkdownBlockToken key={index} token={token} components={components} />
+    <MarkdownToken key={index} token={token} components={components} />
   ));
 }
 
-function MarkdownInlineTokens({
-  tokens,
-  components,
-}: {
-  tokens: InlineToken[];
-  components: Partial<MarkdownComponents> | undefined;
-}) {
-  return tokens.map((token, index) => (
-    <MarkdownInlineToken key={index} token={token} components={components} />
-  ));
+const markedTokenTypes = [
+  "blockquote",
+  "br",
+  "code",
+  "codespan",
+  "def",
+  "del",
+  "em",
+  "escape",
+  "heading",
+  "hr",
+  "html",
+  "image",
+  "link",
+  "list",
+  "list_item",
+  "paragraph",
+  "space",
+  "strong",
+  "table",
+  "text",
+] as const satisfies MarkedToken["type"][];
+
+function isMarkedToken(token: unknown): token is MarkedToken {
+  return (
+    typeof token === "object" &&
+    token !== null &&
+    "type" in token &&
+    markedTokenTypes.includes(token.type as MarkedToken["type"])
+  );
 }
 
 function parseHtmlEntities(input: string) {
@@ -590,50 +521,4 @@ function parseHtmlEntities(input: string) {
 
 function clampHeadingLevel(level: number) {
   return Math.max(1, Math.min(6, level)) as 1 | 2 | 3 | 4 | 5 | 6;
-}
-
-function normalizeToBlockTokens(tokens: Token[]): BlockToken[] {
-  const blocks: BlockToken[] = [];
-
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i]!;
-
-    switch (token.type) {
-      case "space":
-      case "code":
-      case "blockquote":
-      case "html":
-      case "heading":
-      case "hr":
-      case "list":
-      case "paragraph":
-      case "table": {
-        blocks.push(token as BlockToken);
-        break;
-      }
-
-      case "text": {
-        // Group consecutive text tokens into a paragraph
-        const texts: Tokens.Text[] = [token as Tokens.Text];
-        while (i + 1 < tokens.length && tokens[i + 1]!.type === "text") {
-          i++;
-          texts.push(tokens[i] as Tokens.Text);
-        }
-        blocks.push({
-          type: "paragraph",
-          tokens: texts,
-          raw: texts.map((text) => text.raw).join(""),
-          text: texts.map((text) => text.text).join(""),
-        } satisfies Tokens.Paragraph);
-
-        break;
-      }
-
-      default: {
-        continue;
-      }
-    }
-  }
-
-  return blocks;
 }
