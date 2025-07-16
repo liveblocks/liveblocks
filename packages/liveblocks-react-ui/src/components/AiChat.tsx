@@ -30,6 +30,7 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../overrides";
+import type { MarkdownComponents } from "../primitives/Markdown";
 import { cn } from "../utils/cn";
 import { useVisible } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
@@ -49,7 +50,6 @@ export type AiChatComponentsEmptyProps = {
 
 export type AiChatComponentsLoadingProps = Record<string, never>;
 
-// TODO: Add Markdown components
 export type AiChatComponents = {
   /**
    * The component used to render the empty state of the chat.
@@ -59,6 +59,10 @@ export type AiChatComponents = {
    * The component used to render the loading state of the chat.
    */
   Loading: ComponentType<AiChatComponentsLoadingProps>;
+  /**
+   * The components used to render Markdown content.
+   */
+  markdown?: Partial<MarkdownComponents>;
 };
 
 /**
