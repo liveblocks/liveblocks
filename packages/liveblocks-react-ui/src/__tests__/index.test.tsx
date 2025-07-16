@@ -718,7 +718,7 @@ describe("Primitives", () => {
       //     ---
 
       //     \`\`\`
-      //     const x = 42;
+      //     const a = 2;
       //     \`\`\`
 
       //     \`\`\`json
@@ -734,7 +734,7 @@ describe("Primitives", () => {
       //     | Feature       | Example                              | Notes                     |
       //     | ------------- | ------------------------------------ | ------------------------- |
       //     | Link          | [Liveblocks](https://liveblocks.io/) | External link             |
-      //     | Inline code   | \`const x = 42;\`                    | Code inside table         |
+      //     | Inline code   | \`const a = 2;\`                    | Code inside table         |
       //     | Bold text     | **Important**                        | Styling test              |
       //     | Italic text   | _Emphasis_                           | Test italic inside tables |
       //     | Strikethrough | ~~Deprecated~~                       | Show removal              |
@@ -994,12 +994,116 @@ describe("Primitives", () => {
         },
         assertions: (element) => {
           const image = element.querySelector("img");
+
           expect(image).toBeInTheDocument();
           expect(image).toHaveAttribute(
             "src",
             "https://www.liveblocks.io/favicon.png"
           );
           expect(image).toHaveAttribute("alt", "An image");
+        },
+      },
+      {
+        description: "tables",
+        content: dedent`
+          | Feature       | Example                              | Notes                     |
+          | ------------- | ------------------------------------ | ------------------------- |
+          | Link          | [Liveblocks](https://liveblocks.io/) | External link             |
+          | Inline code   | \`const a = 2;\`                    | Code inside table         |
+          | Bold text     | **Important**                        | Styling test              |
+          | Italic text   | _Emphasis_                           | Test italic inside tables |
+          | Strikethrough | ~~Deprecated~~                       | Show removal              |
+        `,
+        components: {
+          Table: ({ headings, rows }) => (
+            <table data-table>
+              <thead>
+                <tr>
+                  {headings.map((heading, index) => (
+                    <th key={index}>{heading.children}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={index}>
+                    {row.map((cell, index) => (
+                      <td key={index}>{cell.children}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ),
+        },
+        assertions: (element) => {
+          const table = element.querySelector("table");
+
+          expect(table).toBeInTheDocument();
+          expect(table).toHaveAttribute("data-table");
+
+          const headings = table?.querySelectorAll("th");
+          expect(headings).toHaveLength(3);
+
+          expect(headings?.[0]).toHaveTextContent("Feature");
+          expect(headings?.[1]).toHaveTextContent("Example");
+          expect(headings?.[2]).toHaveTextContent("Notes");
+
+          const rows = table?.querySelectorAll("tbody tr");
+          expect(rows).toHaveLength(5);
+
+          const firstRowCells = rows?.[0]?.querySelectorAll("td");
+          expect(firstRowCells).toHaveLength(3);
+
+          expect(firstRowCells?.[0]).toHaveTextContent("Link");
+          expect(firstRowCells?.[1]).toHaveTextContent("Liveblocks");
+          expect(firstRowCells?.[1]?.querySelector("a")).toHaveAttribute(
+            "href",
+            "https://liveblocks.io/"
+          );
+          expect(firstRowCells?.[2]).toHaveTextContent("External link");
+
+          const secondRowCells = rows?.[1]?.querySelectorAll("td");
+          expect(secondRowCells).toHaveLength(3);
+
+          expect(secondRowCells?.[0]).toHaveTextContent("Inline code");
+          expect(secondRowCells?.[1]).toHaveTextContent("const a = 2;");
+          expect(secondRowCells?.[1]?.querySelector("code")).toHaveTextContent(
+            "const a = 2;"
+          );
+          expect(secondRowCells?.[2]).toHaveTextContent("Code inside table");
+
+          const thirdRowCells = rows?.[2]?.querySelectorAll("td");
+          expect(thirdRowCells).toHaveLength(3);
+
+          expect(thirdRowCells?.[0]).toHaveTextContent("Bold text");
+          expect(thirdRowCells?.[1]).toHaveTextContent("Important");
+          expect(thirdRowCells?.[1]?.querySelector("strong")).toHaveTextContent(
+            "Important"
+          );
+          expect(thirdRowCells?.[2]).toHaveTextContent("Styling test");
+
+          const fourthRowCells = rows?.[3]?.querySelectorAll("td");
+          expect(fourthRowCells).toHaveLength(3);
+
+          expect(fourthRowCells?.[0]).toHaveTextContent("Italic text");
+          expect(fourthRowCells?.[1]).toHaveTextContent("Emphasis");
+          expect(fourthRowCells?.[1]?.querySelector("em")).toHaveTextContent(
+            "Emphasis"
+          );
+          expect(fourthRowCells?.[2]).toHaveTextContent(
+            "Test italic inside tables"
+          );
+
+          const fifthRowCells = rows?.[4]?.querySelectorAll("td");
+          expect(fifthRowCells).toHaveLength(3);
+
+          expect(fifthRowCells?.[0]).toHaveTextContent("Strikethrough");
+          expect(fifthRowCells?.[1]).toHaveTextContent("Deprecated");
+          expect(fifthRowCells?.[1]?.querySelector("del")).toHaveTextContent(
+            "Deprecated"
+          );
+          expect(fifthRowCells?.[2]).toHaveTextContent("Show removal");
         },
       },
       {
