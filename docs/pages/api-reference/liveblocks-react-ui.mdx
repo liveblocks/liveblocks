@@ -380,6 +380,32 @@ function Chat() {
 }
 ```
 
+##### Customize how Markdown is rendered [#AiChat-markdown]
+
+You can customize how Markdown is rendered in messages by passing components to
+the `components` prop.
+
+```tsx
+<AiChat
+  chatId="my-chat-id"
+  components={{
+    // +++
+    markdown: {
+      // Example: Use an existing component for quotes.
+      Blockquote: ({ children }) => <MyQuote>{children}</MyQuote>,
+
+      // Example: Use an external library to add syntax highlighting to code blocks.
+      CodeBlock: ({ language, code }) => (
+        <SyntaxHighlighter language={language}>{code}</SyntaxHighlighter>
+      ),
+
+      // And `Paragraph`, `Heading`, `Link`, `Inline`, `List`, `Table`, `Image`, `Separator`, etc.
+    },
+    // +++
+  }}
+/>
+```
+
 ##### Props [#AiChat-props]
 
 <PropertiesList>
@@ -2748,7 +2774,8 @@ Displays a custom notification kind.
 
 ###### InboxNotification.Inspector [#InboxNotification.Inspector]
 
-Displays the inbox notification’s data in a JSON code snippet. Useful when debugging notifications in your app.
+Displays the inbox notification’s data in a JSON code snippet. Useful when
+debugging notifications in your app.
 
 ```tsx
 <InboxNotification
