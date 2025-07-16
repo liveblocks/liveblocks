@@ -915,6 +915,130 @@ describe("Primitives", () => {
         },
       },
       {
+        description: "lists",
+        content: dedent`
+          - A list item
+            1. A list item
+            2. Another list item
+            3. Yet another list item
+          - Another list item
+            - [ ] A task list item
+            - [x] A completed task list item
+            - [x] Another completed task list item
+          - Yet another list item
+            1. A list item
+            * Another list item
+            + [x] Yet another list item
+        `,
+        components: {
+          List: ({ items, type }) => {
+            const List = type === "ordered" ? "ol" : "ul";
+
+            return (
+              <List data-list={type}>
+                {items.map((item, index) => (
+                  <li key={index}>
+                    {item.checked !== undefined && (
+                      <>
+                        <input
+                          type="checkbox"
+                          disabled
+                          checked={item.checked}
+                        />{" "}
+                      </>
+                    )}
+                    {item.children}
+                  </li>
+                ))}
+              </List>
+            );
+          },
+        },
+        assertions: (element) => {
+          const rootList = element.querySelector(":scope > ul");
+          expect(rootList).toHaveAttribute("data-list");
+
+          const rootListItems = element.querySelectorAll(":scope > ul > li");
+          expect(rootListItems).toHaveLength(3);
+
+          expect(rootListItems[0]).toHaveTextContent("A list item");
+
+          const firstNestedList = rootListItems[0]?.querySelector("ol");
+          expect(firstNestedList).toHaveAttribute("data-list");
+
+          const firstNestedListItems = firstNestedList?.querySelectorAll("li");
+          expect(firstNestedListItems).toHaveLength(3);
+
+          expect(firstNestedListItems?.[0]).toHaveTextContent("A list item");
+          expect(firstNestedListItems?.[1]).toHaveTextContent(
+            "Another list item"
+          );
+          expect(firstNestedListItems?.[2]).toHaveTextContent(
+            "Yet another list item"
+          );
+
+          const secondRootListItem = rootListItems[1];
+          expect(secondRootListItem).toHaveTextContent("Another list item");
+
+          const secondNestedList = secondRootListItem?.querySelector("ul");
+          expect(secondNestedList).toHaveAttribute("data-list");
+
+          const secondNestedListItems =
+            secondNestedList?.querySelectorAll("li");
+          expect(secondNestedListItems).toHaveLength(3);
+
+          expect(secondNestedListItems?.[0]).toHaveTextContent(
+            "A task list item"
+          );
+          expect(
+            secondNestedListItems?.[0]?.querySelector("input[type='checkbox']")
+          ).not.toBeChecked();
+          expect(secondNestedListItems?.[1]).toHaveTextContent(
+            "A completed task list item"
+          );
+          expect(
+            secondNestedListItems?.[1]?.querySelector("input[type='checkbox']")
+          ).toBeChecked();
+          expect(secondNestedListItems?.[2]).toHaveTextContent(
+            "Another completed task list item"
+          );
+          expect(
+            secondNestedListItems?.[2]?.querySelector("input[type='checkbox']")
+          ).toBeChecked();
+
+          const thirdRootListItem = rootListItems[2];
+          expect(thirdRootListItem).toHaveTextContent("Yet another list item");
+
+          const thirdNestedLists =
+            thirdRootListItem?.querySelectorAll("ol, ul");
+          expect(thirdNestedLists).toHaveLength(3);
+
+          expect(thirdNestedLists?.[0]).toHaveAttribute("data-list", "ordered");
+          expect(thirdNestedLists?.[0]?.querySelector("li")).toHaveTextContent(
+            "A list item"
+          );
+
+          expect(thirdNestedLists?.[1]).toHaveAttribute(
+            "data-list",
+            "unordered"
+          );
+          expect(thirdNestedLists?.[1]?.querySelector("li")).toHaveTextContent(
+            "Another list item"
+          );
+
+          expect(thirdNestedLists?.[2]).toHaveAttribute(
+            "data-list",
+            "unordered"
+          );
+          expect(thirdNestedLists?.[2]?.querySelector("li")).toHaveTextContent(
+            "Yet another list item"
+          );
+          expect(
+            thirdNestedLists?.[2]?.querySelector("input[type='checkbox']")
+          ).toBeChecked();
+        },
+      },
+      {
         description: "blockquotes",
         content: dedent`
           > A blockquote.
