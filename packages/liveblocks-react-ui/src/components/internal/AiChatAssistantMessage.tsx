@@ -178,7 +178,7 @@ function TextPart({ part, components }: TextPartProps) {
     <Prose
       content={part.text}
       className="lb-ai-chat-message-text"
-      components={{ ...components?.markdown, ...components }}
+      components={components}
     />
   );
 }
@@ -219,10 +219,7 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Prose
-          content={part.text}
-          components={{ ...components?.markdown, ...components }}
-        />
+        <Prose content={part.text} components={components} />
       </Collapsible.Content>
     </Collapsible.Root>
   );

@@ -1,6 +1,10 @@
 import type { ComponentProps } from "react";
 
-import { type GlobalComponents, useComponents } from "../../components";
+import {
+  ComponentsProvider,
+  type GlobalComponents,
+  useComponents,
+} from "../../components";
 import type {
   MarkdownComponents,
   MarkdownComponentsCodeBlockProps,
@@ -12,7 +16,9 @@ import { CodeBlock as DefaultCodeBlock } from "./CodeBlock";
 
 interface ProseProps extends ComponentProps<"div"> {
   content: string;
-  components?: Partial<GlobalComponents & MarkdownComponents>;
+  components?: Partial<
+    GlobalComponents & { markdown?: Partial<MarkdownComponents> }
+  >;
 }
 
 function Link({ href, title, children }: MarkdownComponentsLinkProps) {
@@ -29,7 +35,7 @@ function CodeBlock({ language, code }: MarkdownComponentsCodeBlockProps) {
   return <DefaultCodeBlock title={language || "Plain text"} code={code} />;
 }
 
-const defaultComponents: Partial<MarkdownComponents> = {
+const defaultMarkdownComponents: Partial<MarkdownComponents> = {
   Link,
   CodeBlock,
 };
@@ -45,11 +51,13 @@ export function Prose({
   ...props
 }: ProseProps) {
   return (
-    <Markdown
-      content={content}
-      components={{ ...defaultComponents, ...components }}
-      className={cn("lb-prose", className)}
-      {...props}
-    />
+    <ComponentsProvider components={components}>
+      <Markdown
+        content={content}
+        components={{ ...defaultMarkdownComponents, ...components?.markdown }}
+        className={cn("lb-prose", className)}
+        {...props}
+      />
+    </ComponentsProvider>
   );
 }
