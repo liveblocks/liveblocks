@@ -13,7 +13,7 @@ import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
 import { Timestamp } from "../primitives";
-import { Markdown } from "../primitives/Markdown";
+import { Markdown, type MarkdownComponents } from "../primitives/Markdown";
 import { dedent, render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
@@ -790,5 +790,257 @@ describe("Primitives", () => {
         "https://liveblocks.io"
       );
     });
+
+    test.each([
+      {
+        description: "paragraphs",
+        content: dedent`A paragraph.`,
+        components: {
+          Paragraph: ({ children }) => <p data-paragraph>{children}</p>,
+        },
+        assertions: (element) => {
+          const paragraph = element.querySelector("p");
+
+          expect(paragraph).toBeInTheDocument();
+          expect(paragraph).toHaveTextContent("A paragraph.");
+        },
+      },
+      {
+        description: "headings",
+        content: dedent`
+          # Heading 1
+
+          ## Heading 2
+
+          ### Heading 3
+
+          #### Heading 4
+
+          ##### Heading 5
+
+          ###### Heading 6
+        `,
+        components: {
+          Heading: ({ children, level }) => {
+            const Heading = `h${level}` as const;
+
+            return <Heading data-heading={level}>{children}</Heading>;
+          },
+        },
+        assertions: (element) => {
+          const headings = element.querySelectorAll("h1, h2, h3, h4, h5, h6");
+          expect(headings).toHaveLength(6);
+
+          headings.forEach((heading, index) => {
+            expect(heading).toHaveAttribute("data-heading", String(index + 1));
+            expect(heading).toHaveTextContent(`Heading ${index + 1}`);
+          });
+        },
+      },
+      {
+        description: "inline elements",
+        content: dedent`
+          This is **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, and **\`bold inline code\`**. 
+        `,
+        components: {
+          Inline: ({ children, type }) => {
+            const Inline = type;
+
+            return <Inline data-inline={type}>{children}</Inline>;
+          },
+        },
+        assertions: (element) => {
+          const strongs = element.querySelectorAll("strong");
+          expect(strongs).toHaveLength(3);
+          expect(strongs[0]).toHaveTextContent("bold text");
+          expect(strongs[0]).toHaveAttribute("data-inline", "strong");
+          expect(strongs[1]).toHaveTextContent("bold and italic");
+          expect(strongs[1]).toHaveAttribute("data-inline", "strong");
+          expect(strongs[2]).toHaveTextContent("bold inline code");
+          expect(strongs[2]).toHaveAttribute("data-inline", "strong");
+
+          const italics = element.querySelectorAll("em");
+          expect(italics).toHaveLength(2);
+          expect(italics[0]).toHaveTextContent("italic text");
+          expect(italics[0]).toHaveAttribute("data-inline", "em");
+          expect(italics[1]).toHaveTextContent("bold and italic");
+          expect(italics[1]).toHaveAttribute("data-inline", "em");
+
+          const strikethroughs = element.querySelectorAll("del");
+          expect(strikethroughs).toHaveLength(1);
+          expect(strikethroughs[0]).toHaveTextContent("strikethrough");
+          expect(strikethroughs[0]).toHaveAttribute("data-inline", "del");
+
+          const codes = element.querySelectorAll("code");
+          expect(codes).toHaveLength(2);
+          expect(codes[0]).toHaveTextContent("inline code");
+          expect(codes[0]).toHaveAttribute("data-inline", "code");
+          expect(codes[1]).toHaveTextContent("bold inline code");
+          expect(codes[1]).toHaveAttribute("data-inline", "code");
+        },
+      },
+      {
+        description: "links",
+        content: dedent`
+          A [link](https://www.liveblocks.io), [another one](/docs "With a title"),
+          https://www.liveblocks.io, and <https://www.liveblocks.io>.
+        `,
+        components: {
+          Link: ({ href, title, children }) => (
+            <a href={href} title={title} data-link>
+              {children}
+            </a>
+          ),
+        },
+        assertions: (element) => {
+          const links = element.querySelectorAll("a");
+          expect(links).toHaveLength(4);
+
+          expect(links[0]).toHaveAttribute("data-link");
+          expect(links[0]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[0]).toHaveTextContent("link");
+          expect(links[0]).toHaveAttribute("title", "With a title");
+
+          expect(links[1]).toHaveAttribute("data-link");
+          expect(links[1]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[1]).toHaveTextContent("another one");
+
+          expect(links[2]).toHaveAttribute("data-link");
+          expect(links[2]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[2]).toHaveTextContent("https://www.liveblocks.io");
+
+          expect(links[3]).toHaveAttribute("data-link");
+          expect(links[3]).toHaveAttribute("href", "https://www.liveblocks.io");
+          expect(links[3]).toHaveTextContent("https://www.liveblocks.io");
+        },
+      },
+      {
+        description: "blockquotes",
+        content: dedent`
+          > A blockquote.
+
+          > Another one which spans
+          >
+          > multiple paragraphs.
+
+          > Yet another which
+          >
+          > > is nested.
+        `,
+        components: {
+          Blockquote: ({ children }) => (
+            <blockquote data-blockquote>{children}</blockquote>
+          ),
+        },
+        assertions: (element) => {
+          const blockquotes = element.querySelectorAll("blockquote");
+          expect(blockquotes).toHaveLength(4);
+
+          expect(blockquotes[0]).toHaveTextContent("A blockquote.");
+          expect(blockquotes[0]).toHaveAttribute("data-blockquote");
+          expect(blockquotes[1]).toHaveTextContent(
+            "Another one which spansmultiple paragraphs."
+          );
+          expect(blockquotes[1]).toHaveAttribute("data-blockquote");
+          expect(blockquotes[2]).toHaveTextContent(
+            "Yet another whichis nested."
+          );
+          expect(blockquotes[2]).toHaveAttribute("data-blockquote");
+          expect(blockquotes[3]).toHaveTextContent("is nested.");
+          expect(blockquotes[3]).toHaveAttribute("data-blockquote");
+        },
+      },
+      {
+        description: "code blocks",
+        content: dedent`
+          \`\`\`
+          p {
+            color: #000;
+          }
+          \`\`\`
+
+          \`\`\`javascript
+          const a = 2;
+          \`\`\`
+        `,
+        components: {
+          CodeBlock: ({ code, language }) => (
+            <pre data-code-block>
+              <code data-language={language}>{code}</code>
+            </pre>
+          ),
+        },
+        assertions: (element) => {
+          const codeBlocks = element.querySelectorAll("pre");
+          expect(codeBlocks).toHaveLength(2);
+
+          expect(codeBlocks[0]).toHaveTextContent("p { color: #000; }");
+          expect(codeBlocks[0]).toHaveAttribute("data-code-block");
+          expect(codeBlocks[1]).toHaveTextContent("const a = 2;");
+          expect(codeBlocks[1]).toHaveAttribute("data-code-block");
+          expect(codeBlocks[1]?.querySelector("code")).toHaveAttribute(
+            "data-language",
+            "javascript"
+          );
+        },
+      },
+      {
+        description: "images",
+        content: dedent`
+          ![An image](https://www.liveblocks.io/favicon.png)
+        `,
+        components: {
+          Image: ({ src, alt }) => <img src={src} alt={alt} data-image />,
+        },
+        assertions: (element) => {
+          const image = element.querySelector("img");
+          expect(image).toBeInTheDocument();
+          expect(image).toHaveAttribute(
+            "src",
+            "https://www.liveblocks.io/favicon.png"
+          );
+          expect(image).toHaveAttribute("alt", "An image");
+        },
+      },
+      {
+        description: "separators",
+        content: dedent`
+          ***
+
+          ---
+
+          _____
+        `,
+        components: {
+          Separator: () => <hr data-separator />,
+        },
+        assertions: (element) => {
+          const separators = element.querySelectorAll("hr");
+          expect(separators).toHaveLength(3);
+
+          separators.forEach((separator) => {
+            expect(separator).toHaveAttribute("data-separator");
+          });
+        },
+      },
+    ] satisfies {
+      description: string;
+      content: string;
+      components: Partial<MarkdownComponents>;
+      assertions: (element: HTMLElement) => void;
+    }[])(
+      "should support overriding $description",
+      ({ content, components, assertions }) => {
+        const { getByTestId } = render(
+          <Markdown
+            data-testid="markdown"
+            content={content}
+            components={components}
+          />
+        );
+
+        assertions(getByTestId("markdown"));
+      }
+    );
   });
 });
