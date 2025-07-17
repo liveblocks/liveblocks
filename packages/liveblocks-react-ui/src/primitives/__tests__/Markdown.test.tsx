@@ -450,6 +450,21 @@ describe("Markdown", () => {
         );
       },
     },
+    {
+      description: "HTML entities",
+      content: dedent`
+        &lt;p&gt; &amp;
+
+        > &quot; &apos;
+
+        - &copy; &trade;
+      `,
+      assertions: (element) => {
+        expect(element.querySelector("p")).toHaveTextContent("<p> &");
+        expect(element.querySelector("blockquote")).toHaveTextContent("\" '");
+        expect(element.querySelector("li")).toHaveTextContent("© ™");
+      },
+    },
   ] satisfies {
     description: string;
     content: string;
