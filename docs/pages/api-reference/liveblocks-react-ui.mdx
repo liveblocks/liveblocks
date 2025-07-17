@@ -451,6 +451,31 @@ the `components` prop.
   </PropertiesListItem>
 </PropertiesList>
 
+###### components [#AiChat-components]
+
+Override specific parts of `AiChat` with custom components.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="Empty"
+    type="ComponentType<AiChatComponentsEmptyProps>"
+  >
+    The component used to render the empty state of the chat. Defaults to
+    nothing.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="Loading"
+    type="ComponentType<AiChatComponentsLoadingProps>"
+  >
+    The component used to render the loading state of the chat. Defaults to a
+    loading spinner.
+  </PropertiesListItem>
+  <PropertiesListItem name="markdown" type="Partial<MarkdownComponents>">
+    The components used to render Markdown content: `Paragraph`, `Heading`,
+    `List`, etc.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### AiTool
 
 Displays [AI tool calls](/docs/ready-made-features/ai-copilots/features#tools)
@@ -2638,6 +2663,13 @@ Override specific kinds of inbox notifications.
   >
     The component used to display thread notifications. Defaults to
     `InboxNotification.Thread`.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="textMention"
+    type="ComponentType<InboxNotificationTextMentionKindProps>"
+  >
+    The component used to display text mention notifications. Defaults to
+    `InboxNotification.TextMention`.
   </PropertiesListItem>
   <PropertiesListItem
     name="$${string}"
