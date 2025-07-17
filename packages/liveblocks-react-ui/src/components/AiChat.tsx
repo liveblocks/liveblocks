@@ -249,6 +249,12 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
             return;
           }
 
+          // If the container's height is based on its content, the container isn't scrollable and there's no need for any trailing space.
+          if (container.scrollHeight === container.clientHeight) {
+            resetTrailingSpace();
+            return;
+          }
+
           let updatedContainerHeight: number | null = containerHeight;
           let updatedFooterHeight: number | null = footerHeight;
           let updatedMessagesHeight: number | null = messagesHeight;
@@ -289,12 +295,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           containerHeight = updatedContainerHeight;
           footerHeight = updatedFooterHeight;
           messagesHeight = updatedMessagesHeight;
-
-          // The container is not scrollable, so there's no need for any trailing space.
-          if (container.scrollHeight <= containerHeight) {
-            resetTrailingSpace();
-            return;
-          }
 
           // A
           const penultimateMessageScrollMarginTop = Number.parseFloat(
