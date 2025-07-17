@@ -2,6 +2,11 @@
 
 ## v3.2.0
 
+### `@liveblocks/react-ui`
+
+- Improve `AiChat`'s scroll behavior when sending new messages: the chat will
+  now scroll new messages to the top and leave enough space for responses.
+
 ## v3.1.3
 
 ### `@liveblocks/react-ui`

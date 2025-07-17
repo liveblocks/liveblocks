@@ -122,7 +122,7 @@ type ClearChatPair = DefineCmd<
 
 export type AiGenerationOptions = {
   /**
-   * The Copilot ID to use for this request. If not provided, a built-in
+   * The copilot ID to use for this request. If not provided, a built-in
    * default Copilot will be used instead of one that you configured via the
    * dashboard.
    */
