@@ -465,6 +465,29 @@ describe("Markdown", () => {
         expect(element.querySelector("li")).toHaveTextContent("© ™");
       },
     },
+    {
+      description: "HTML elements (as plain text)",
+      content: dedent`
+        The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</abbr>.
+
+        Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy.
+
+        This is <mark>highlighted</mark> text.
+
+        E = mc<sup>2</sup>
+      `,
+      assertions: (element) => {
+        const paragraphs = element.querySelectorAll("p");
+        expect(paragraphs).toHaveLength(4);
+
+        expect(paragraphs[0]).toHaveTextContent(
+          "The abbreviation for HyperText Markup Language is HTML."
+        );
+        expect(paragraphs[1]).toHaveTextContent("Press Ctrl + C to copy.");
+        expect(paragraphs[2]).toHaveTextContent("This is highlighted text.");
+        expect(paragraphs[3]).toHaveTextContent("E = mc2");
+      },
+    },
   ] satisfies {
     description: string;
     content: string;
