@@ -440,7 +440,7 @@ the `components` prop.
   </PropertiesListItem>
   <PropertiesListItem name="components" type="AiChatComponents">
     Custom components to override specific parts of the chat UI, such as the
-    `Empty` placeholder component.
+    `Empty` placeholder component or Markdown components.
   </PropertiesListItem>
   <PropertiesListItem name="className" type="string">
     CSS class name to apply to the chat container.
@@ -471,8 +471,68 @@ Override specific parts of `AiChat` with custom components.
     loading spinner.
   </PropertiesListItem>
   <PropertiesListItem name="markdown" type="Partial<MarkdownComponents>">
-    The components used to render Markdown content: `Paragraph`, `Heading`,
-    `List`, etc.
+    The components used to render Markdown content.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Paragraph"
+    type="Partial<MarkdownComponentsParagraphProps>"
+  >
+    The component used to render paragraphs.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Inline"
+    type="Partial<MarkdownComponentsInlineProps>"
+  >
+    The component used to render inline elements (bold, italic, strikethrough,
+    and inline code).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Link"
+    type="Partial<MarkdownComponentsLinkProps>"
+  >
+    The component used to render links.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Heading"
+    type="Partial<MarkdownComponentsHeadingProps>"
+  >
+    The component used to render headings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Blockquote"
+    type="Partial<MarkdownComponentsBlockquoteProps>"
+  >
+    The component used to render blockquotes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.CodeBlock"
+    type="Partial<MarkdownComponentsCodeBlockProps>"
+  >
+    The component used to render code blocks.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Image"
+    type="Partial<MarkdownComponentsImageProps>"
+  >
+    The component used to render images.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.List"
+    type="Partial<MarkdownComponentsListProps>"
+  >
+    The component used to render lists.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Table"
+    type="Partial<MarkdownComponentsTableProps>"
+  >
+    The component used to render tables.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Separator"
+    type="Partial<MarkdownComponentsSeparatorProps>"
+  >
+    The component used to render separators.
   </PropertiesListItem>
 </PropertiesList>
 
