@@ -9,7 +9,7 @@ import {
   RegisterAiTool,
   useAiChatMessages,
 } from "@liveblocks/react";
-import { useLatest, useLayoutEffect } from "@liveblocks/react/_private";
+import { useLatest } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
   type ComponentType,
@@ -167,7 +167,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
     /**
      * Instantly scroll to the bottom for the initial state.
      */
-    useLayoutEffect(
+    useEffect(
       () => {
         scrollToBottom.current("instant");
       },
@@ -178,7 +178,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
     /**
      * Scroll to new messages when sending them.
      */
-    useLayoutEffect(
+    useEffect(
       () => {
         if (lastSentMessageId) {
           scrollToBottom.current("smooth", true);
@@ -213,7 +213,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
      *   │ └─────────────────────────────────────┘ │ │
      *   └─────────────────────────────────────────┘ ▼
      */
-    useLayoutEffect(
+    useEffect(
       () => {
         const container = containerRef.current;
         const footer = footerRef.current;
