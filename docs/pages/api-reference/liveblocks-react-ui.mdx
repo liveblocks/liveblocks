@@ -383,7 +383,7 @@ function Chat() {
 ##### Customize how Markdown is rendered [#AiChat-markdown]
 
 You can customize how Markdown is rendered in messages by passing components to
-the `components` prop.
+the `components` prop. A full list is [available here](#AiChat-components).
 
 ```tsx
 <AiChat
@@ -391,15 +391,22 @@ the `components` prop.
   components={{
     // +++
     markdown: {
-      // Example: Use an existing component for quotes.
+      // Example: Use custom paragraph styles
+      Paragraph: ({ children }) => <p className="my-3">{children}</p>,
+
+      // Example: Use an existing component for quotes
       Blockquote: ({ children }) => <MyQuote>{children}</MyQuote>,
 
-      // Example: Use an external library to add syntax highlighting to code blocks.
+      // Example: Use `next/link` instead of default `<a>` tag
+      Link: ({ children, href }) => <Link href={href || ""}>{children}</Link>,
+
+      // Example: Use an external library to add syntax highlighting to code blocks
       CodeBlock: ({ language, code }) => (
         <SyntaxHighlighter language={language}>{code}</SyntaxHighlighter>
       ),
 
-      // And `Paragraph`, `Heading`, `Link`, `Inline`, `List`, `Table`, `Image`, `Separator`, etc.
+      // `Heading`, `Inline`, `List`, `Table`, `Image`, `Separator`, etc.
+      // ...
     },
     // +++
   }}
@@ -458,15 +465,12 @@ Override specific parts of `AiChat` with custom components.
 <PropertiesList>
   <PropertiesListItem
     name="Empty"
-    type="ComponentType<AiChatComponentsEmptyProps>"
+    type="({ chatId: string, copilotId?: string }) => ReactNode"
   >
     The component used to render the empty state of the chat. Defaults to
     nothing.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="Loading"
-    type="ComponentType<AiChatComponentsLoadingProps>"
-  >
+  <PropertiesListItem name="Loading" type="() => ReactNode">
     The component used to render the loading state of the chat. Defaults to a
     loading spinner.
   </PropertiesListItem>
@@ -475,63 +479,60 @@ Override specific parts of `AiChat` with custom components.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Paragraph"
-    type="Partial<MarkdownComponentsParagraphProps>"
+    type="({ children: ReactNode }) => ReactNode"
   >
     The component used to render paragraphs.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Inline"
-    type="Partial<MarkdownComponentsInlineProps>"
+    detailedType={`({ type: "strong" | "em" | "code" | "del", children: ReactNode }) => ReactNode`}
   >
     The component used to render inline elements (bold, italic, strikethrough,
     and inline code).
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Link"
-    type="Partial<MarkdownComponentsLinkProps>"
+    type={`({ href: string, title?: string, children: ReactNode }) => ReactNode`}
   >
     The component used to render links.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Heading"
-    type="Partial<MarkdownComponentsHeadingProps>"
+    type={`({ level: 1 | 2 | 3 | 4 | 5 | 6, children: ReactNode }) => ReactNode`}
   >
     The component used to render headings.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Blockquote"
-    type="Partial<MarkdownComponentsBlockquoteProps>"
+    type="({ children: ReactNode }) => ReactNode"
   >
     The component used to render blockquotes.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.CodeBlock"
-    type="Partial<MarkdownComponentsCodeBlockProps>"
+    type={`({ code: string, language?: string }) => ReactNode`}
   >
     The component used to render code blocks.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Image"
-    type="Partial<MarkdownComponentsImageProps>"
+    type={`({ src: string, alt: string, title?: string }) => ReactNode`}
   >
     The component used to render images.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.List"
-    type="Partial<MarkdownComponentsListProps>"
+    detailedType={`({ type: "ordered" | "unordered", items: { checked?: boolean, children: ReactNode }[] }) => ReactNode`}
   >
     The component used to render lists.
   </PropertiesListItem>
   <PropertiesListItem
     name="markdown.Table"
-    type="Partial<MarkdownComponentsTableProps>"
+    detailedType={`({ headings: { align?: "left" | "center" | "right"; children: ReactNode }[], rows: { align?: "left" | "center" | "right"; children: ReactNode }[] }) => ReactNode`}
   >
     The component used to render tables.
   </PropertiesListItem>
-  <PropertiesListItem
-    name="markdown.Separator"
-    type="Partial<MarkdownComponentsSeparatorProps>"
-  >
+  <PropertiesListItem name="markdown.Separator" type="() => ReactNode">
     The component used to render separators.
   </PropertiesListItem>
 </PropertiesList>
