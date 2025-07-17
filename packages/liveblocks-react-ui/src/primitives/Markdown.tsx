@@ -634,6 +634,8 @@ export function MarkdownToken({
       return <Separator />;
     }
 
+    // HTML elements/tokens are not supported (yet).
+    case "html":
     default: {
       return null;
     }
