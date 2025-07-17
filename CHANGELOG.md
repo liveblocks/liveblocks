@@ -5,6 +5,13 @@
 - Expose Markdown components in `AiChat`’s `components` prop to customize the
   rendering of Markdown content.
 
+## v3.1.3
+
+### `@liveblocks/react-ui`
+
+- Fix `AiChat` component not scrolling instantly to the bottom on render when
+  messages are already loaded.
+
 ## v3.1.2
 
 ### `@liveblocks/react-ui` and `@liveblocks/emails`
@@ -23,11 +30,9 @@
   benefit is that you get an early error instead of a silent failure, but the
   downside is that this adds significant runtime overhead if your application
   makes many LiveObject mutations.
-
 - Fix: also display errors in production builds when they happen in `render`
   methods defined with `defineAiTool()`. Previously, these errors would only be
   shown during development.
-
 - Fix an issue with the render component of tool calls not being displayed
   correctly when the tool call signal was read before it was registered.
 

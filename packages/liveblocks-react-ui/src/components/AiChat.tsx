@@ -9,7 +9,6 @@ import {
   RegisterAiTool,
   useAiChatMessages,
 } from "@liveblocks/react";
-import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
   type ComponentType,
@@ -310,12 +309,13 @@ function AutoScrollHandler({
   scrollToBottom: (behavior: "instant" | "smooth") => void;
 }) {
   // Scroll to bottom when the component first mounts
-  useLayoutEffect(() => {
+  useEffect(() => {
     scrollToBottom("instant");
   }, [scrollToBottom]);
 
   // Scroll to bottom when sending a new message
   useEffect(() => {
+    if (lastSentMessageId === null) return;
     scrollToBottom("smooth");
   }, [lastSentMessageId, scrollToBottom]);
 
