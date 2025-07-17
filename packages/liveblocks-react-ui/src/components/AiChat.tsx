@@ -194,7 +194,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
      * message to be at the top of the viewport, and apply it.
      *
      *   ┌─────────────────────────────────────────┐▲   A = The `scroll-margin-top`
-     *   │            ┌─────────────────────────┐  │▼▲  value of the penultimate
+     *   │            ┌─────────────────────────┐  │▼▲  value of the penultimate message
      *   │            │ The penultimate message │  │ │
      *   │            └─────────────────────────┘  │ │  B = The height from the top of
      *   │                                         │ │  the penultimate message to the
