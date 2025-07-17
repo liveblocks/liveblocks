@@ -230,6 +230,11 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         let footerHeight: number | null = null;
         let messagesHeight: number | null = null;
 
+        const resetTrailingSpace = () => {
+          trailingSpacer?.style.removeProperty("height");
+          scrollBottom?.style.removeProperty("top");
+        };
+
         const resizeObserver = new ResizeObserver((entries) => {
           if (!trailingSpacer || !scrollBottom) {
             return;
@@ -238,8 +243,9 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           const lastMessage = messages.lastElementChild;
           const penultimateMessage = lastMessage?.previousElementSibling;
 
-          // If there's no last pair of messages, we can't do anything yet.
+          // If there's no last pair of messages, there's no need for any trailing space.
           if (!lastMessage || !penultimateMessage) {
+            resetTrailingSpace();
             return;
           }
 
@@ -260,12 +266,13 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
             }
           }
 
-          // If we don't have all the heights, we can't do anything yet.
+          // If we don't have all the heights, we can't compute the trailing space.
           if (
             updatedContainerHeight === null ||
             updatedFooterHeight === null ||
             updatedMessagesHeight === null
           ) {
+            resetTrailingSpace();
             return;
           }
 
@@ -282,6 +289,12 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
           containerHeight = updatedContainerHeight;
           footerHeight = updatedFooterHeight;
           messagesHeight = updatedMessagesHeight;
+
+          // The container is not scrollable, so there's no need for any trailing space.
+          if (container.scrollHeight <= containerHeight) {
+            resetTrailingSpace();
+            return;
+          }
 
           // A
           const penultimateMessageScrollMarginTop = Number.parseFloat(
@@ -318,9 +331,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
 
         return () => {
           resizeObserver.disconnect();
-
-          trailingSpacer?.style.removeProperty("height");
-          scrollBottom?.style.removeProperty("top");
+          resetTrailingSpace();
         };
       },
       // This effect only uses stable refs.
