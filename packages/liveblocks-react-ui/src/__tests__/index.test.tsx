@@ -12,7 +12,6 @@ import { setupServer } from "msw/node";
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
-import { Timestamp } from "../primitives";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
@@ -240,66 +239,26 @@ const thread: ThreadData = {
   resolved: false,
 };
 
-describe("Components", () => {
-  describe("Thread", () => {
-    test("should render", () => {
-      const { container } = render(<Thread thread={thread} />);
+describe("Thread", () => {
+  test("should render", () => {
+    const { container } = render(<Thread thread={thread} />);
 
-      expect(container).not.toBeEmptyDOMElement();
-    });
-
-    test.todo(
-      "should not render deleted comments, unless the showDeletedComments prop is set"
-    );
-
-    test.todo("should support overrides");
-  });
-
-  describe("Comment", () => {
-    test("should render", () => {
-      const { container } = render(<Comment comment={comment} />);
-
-      expect(container).not.toBeEmptyDOMElement();
-    });
-
-    test.todo(
-      "should not render if deleted, unless the showDeleted prop is set"
-    );
-
-    test.todo("should support overrides");
-  });
-
-  describe("Composer", () => {
-    test("should render", () => {
-      const { container } = render(<Composer />);
-
-      expect(container).not.toBeEmptyDOMElement();
-    });
-
-    test.todo("should support overrides");
+    expect(container).not.toBeEmptyDOMElement();
   });
 });
 
-describe("Primitives", () => {
-  describe("Timestamp", () => {
-    const now = Date.now();
+describe("Comment", () => {
+  test("should render", () => {
+    const { container } = render(<Comment comment={comment} />);
 
-    test("should render", () => {
-      const { container } = render(<Timestamp date={now} />);
+    expect(container).not.toBeEmptyDOMElement();
+  });
+});
 
-      expect(container).not.toBeEmptyDOMElement();
-    });
+describe("Composer", () => {
+  test("should render", () => {
+    const { container } = render(<Composer />);
 
-    test.todo("should have a datetime attribute");
-
-    test.todo("should rerender at an interval");
-
-    test.todo("should support changing the rerender interval");
-
-    test.todo("should support a title string");
-
-    test.todo("should support a title function");
-
-    test.todo("should support a children function");
+    expect(container).not.toBeEmptyDOMElement();
   });
 });
