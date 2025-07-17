@@ -500,6 +500,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           ) : (
             <>
               <AiChatMessages
+                ref={messagesRef}
                 messages={messages}
                 overrides={overrides}
                 components={components}
