@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 
 import { render } from "@testing-library/react";
 
-import { Markdown, type MarkdownComponents } from "../primitives/Markdown";
+import { Markdown, type MarkdownComponents } from "../Markdown";
 import { dedent } from "./_utils";
 
 describe("Markdown", () => {

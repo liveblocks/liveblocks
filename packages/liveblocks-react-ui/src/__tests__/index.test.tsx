@@ -12,7 +12,6 @@ import { setupServer } from "msw/node";
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";
 import { Thread } from "../components/Thread";
-import { Timestamp } from "../primitives";
 import { render } from "./_utils"; // Basically re-exports from @testing-library/react
 
 function remove<T>(array: T[], item: T) {
@@ -240,28 +239,26 @@ const thread: ThreadData = {
   resolved: false,
 };
 
-describe("Components", () => {
-  describe("Thread", () => {
-    test("should render", () => {
-      const { container } = render(<Thread thread={thread} />);
+describe("Thread", () => {
+  test("should render", () => {
+    const { container } = render(<Thread thread={thread} />);
 
-      expect(container).not.toBeEmptyDOMElement();
-    });
+    expect(container).not.toBeEmptyDOMElement();
   });
+});
 
-  describe("Comment", () => {
-    test("should render", () => {
-      const { container } = render(<Comment comment={comment} />);
+describe("Comment", () => {
+  test("should render", () => {
+    const { container } = render(<Comment comment={comment} />);
 
-      expect(container).not.toBeEmptyDOMElement();
-    });
+    expect(container).not.toBeEmptyDOMElement();
   });
+});
 
-  describe("Composer", () => {
-    test("should render", () => {
-      const { container } = render(<Composer />);
+describe("Composer", () => {
+  test("should render", () => {
+    const { container } = render(<Composer />);
 
-      expect(container).not.toBeEmptyDOMElement();
-    });
+    expect(container).not.toBeEmptyDOMElement();
   });
 });

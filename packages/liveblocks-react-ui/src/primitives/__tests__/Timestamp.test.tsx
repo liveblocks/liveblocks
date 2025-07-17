@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 
 import { render } from "@testing-library/react";
 
-import { Timestamp } from "../primitives/Timestamp";
+import { Timestamp } from "../Timestamp";
 
 describe("Timestamp", () => {
   const now = Date.now();
