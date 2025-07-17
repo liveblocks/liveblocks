@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Expose Markdown components in `AiChat`’s `components` prop to customize the
+  rendering of Markdown content.
+
 ## v3.1.2
 
 ### `@liveblocks/react-ui` and `@liveblocks/emails`
