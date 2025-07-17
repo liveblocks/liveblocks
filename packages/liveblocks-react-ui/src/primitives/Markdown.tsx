@@ -453,7 +453,6 @@ export function MarkdownToken({
   }
 
   switch (token.type) {
-    case "html":
     case "escape": {
       return token.text;
     }
