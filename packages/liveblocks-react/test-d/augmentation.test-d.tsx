@@ -27,8 +27,8 @@ declare global {
     };
 
     RoomEvent:
-      | { type: "emoji"; emoji: string }
-      | { type: "beep"; times?: number };
+    | { type: "emoji"; emoji: string }
+    | { type: "beep"; times?: number };
 
     ThreadMetadata: {
       color: "red" | "blue";
@@ -330,6 +330,7 @@ declare global {
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "LARGE_MESSAGE_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
@@ -373,6 +374,7 @@ declare global {
       | "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR"
       | "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR"
       | "UPDATE_NOTIFICATION_SETTINGS_ERROR"
+      | "LARGE_MESSAGE_ERROR"
     >(err.context.type);
     if (err.context.type === "ROOM_CONNECTION_ERROR") {
       expectAssignable<number>(err.context.code);
