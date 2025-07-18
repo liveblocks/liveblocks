@@ -224,6 +224,7 @@ export type {
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type { GroupSummary } from "./protocol/Groups";
 export type {
   ActivityData,
   InboxNotificationCustomData,
