@@ -46,7 +46,6 @@ const AiComposerContext = createContext<{
   editor: SlateEditor;
   onEditorValueChange: (value: SlateDescendant[]) => void;
   isEditorEmpty: boolean;
-
   submit: () => void;
   disabled: boolean;
 } | null>(null);
@@ -81,11 +80,40 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const editor = useInitial(() =>
       withNormalize(withHistory(withReact(createEditor())))
     );
-    const [isEditorEmpty, setIsEditorEmpty] = useState(true);
+    const [isEditorEmpty, setEditorEmpty] = useState(true);
+    const [isSubmitting, setSubmitting] = useState(false);
+
+    const clear = useCallback(() => {
+      SlateTransforms.delete(editor, {
+        at: {
+          anchor: SlateEditor.start(editor, []),
+          focus: SlateEditor.end(editor, []),
+        },
+      });
+    }, [editor]);
+
+    const onSubmitEnd = useCallback(() => {
+      clear();
+      setSubmitting(false);
+    }, [clear]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
-        if (disabled || isEmpty(editor, editor.children)) return;
+        if (disabled) {
+          return;
+        }
+
+        // In some situations (e.g. pressing Enter while composing diacritics), it's possible
+        // for the form to be submitted as empty even though we already checked whether the
+        // editor was empty when handling the key press.
+        const isEditorEmpty = isEmpty(editor, editor.children);
+
+        // We even prevent the user's `onSubmit` handler from being called if the editor is empty.
+        if (isEditorEmpty) {
+          event.preventDefault();
+
+          return;
+        }
 
         onSubmit?.(event);
 
@@ -111,31 +139,26 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           })
           .join("\n");
 
-        onComposerSubmit({ text: content }, event);
-
-        if (event.isDefaultPrevented()) {
-          return;
-        }
+        const promise = onComposerSubmit({ text: content }, event);
 
         event.preventDefault();
 
-        // Clear the editor after dispatching the message.
-        SlateTransforms.delete(editor, {
-          at: {
-            anchor: SlateEditor.start(editor, []),
-            focus: SlateEditor.end(editor, []),
-          },
-        });
+        if (promise) {
+          setSubmitting(true);
+          promise.then(onSubmitEnd);
+        } else {
+          onSubmitEnd();
+        }
       },
-      [disabled, editor, onSubmit, onComposerSubmit]
+      [disabled, editor, onSubmit, onComposerSubmit, onSubmitEnd]
     );
 
     useLayoutEffect(() => {
-      setIsEditorEmpty(isEmpty(editor, editor.children));
+      setEditorEmpty(isEmpty(editor, editor.children));
     }, [editor]);
 
     const handleEditorValueChange = useCallback(() => {
-      setIsEditorEmpty(isEmpty(editor, editor.children));
+      setEditorEmpty(isEmpty(editor, editor.children));
     }, [editor]);
 
     const submit = useCallback(() => {
@@ -163,7 +186,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           onEditorValueChange: handleEditorValueChange,
           isEditorEmpty,
           submit,
-          disabled: disabled || false,
+          disabled: disabled || isSubmitting || false,
         }}
       >
         <Component onSubmit={handleSubmit} {...props} ref={formRef} />

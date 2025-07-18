@@ -2,19 +2,21 @@ import type { ComponentPropsWithoutRef, FormEvent } from "react";
 
 import type { ComponentPropsWithSlot } from "../../types";
 
+export interface AiComposerSubmitMessage {
+  /**
+   * The submitted message text.
+   */
+  text: string;
+}
+
 export interface AiComposerFormProps extends ComponentPropsWithSlot<"form"> {
   /**
-   * The event handler called when a chat message is submitted.
+   * The event handler called when the composer is submitted.
    */
   onComposerSubmit?: (
-    message: {
-      /**
-       * The submitted message text.
-       */
-      text: string;
-    },
+    message: AiComposerSubmitMessage,
     event: FormEvent<HTMLFormElement>
-  ) => void;
+  ) => Promise<void> | void;
 
   /**
    * Whether the composer is disabled.
