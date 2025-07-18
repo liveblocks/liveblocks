@@ -236,6 +236,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                         message={message}
                         overrides={overrides}
                         components={components}
+                        copilotId={copilotId}
                       />
                     );
                   } else {

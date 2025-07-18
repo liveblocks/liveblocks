@@ -39,7 +39,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
  * <AiMessage.Content message={message} components={{ TextPart }} />
  */
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
-  ({ message, components, asChild, ...props }, forwardedRef) => {
+  ({ message, components, asChild, copilotId, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const { TextPart, ReasoningPart, ToolInvocationPart } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
@@ -70,6 +70,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
                   part={part}
                   {...extra}
                   message={message}
+                  copilotId={copilotId}
                 />
               );
             default:
