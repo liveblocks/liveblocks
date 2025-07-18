@@ -1,3 +1,4 @@
+import { nn } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import type { FormEvent, KeyboardEvent } from "react";
@@ -19,47 +20,57 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 import { withHistory } from "slate-history";
-import { Editable, ReactEditor, Slate, withReact } from "slate-react";
+import {
+  Editable,
+  ReactEditor,
+  type RenderPlaceholderProps,
+  Slate,
+  withReact,
+} from "slate-react";
 
-import type { AiComposerEditor } from "../../types";
+import { requestSubmit } from "../../utils/request-submit";
+import { useInitial } from "../../utils/use-initial";
 import { withNormalize } from "../slate/plugins/normalize";
 import { isEmpty } from "../slate/utils/is-empty";
 import type {
-  AiChatComposerEditorProps,
-  AiChatComposerFormProps,
-  AiChatComposerSubmitProps,
+  AiComposerEditorProps,
+  AiComposerFormProps,
+  AiComposerSubmitProps,
 } from "./types";
 
-const AI_CHAT_COMPOSER_SUBMIT_NAME = "AiChatComposerSubmit";
-const AI_CHAT_COMPOSER_EDITOR_NAME = "AiChatComposerEditor";
-const AI_CHAT_COMPOSER_FORM_NAME = "AiChatComposerForm";
+const AI_COMPOSER_SUBMIT_NAME = "AiComposerSubmit";
+const AI_COMPOSER_EDITOR_NAME = "AiComposerEditor";
+const AI_COMPOSER_FORM_NAME = "AiComposerForm";
 
-const AiChatComposerContext = createContext<{
+const AiComposerContext = createContext<{
   editor: SlateEditor;
   onEditorValueChange: (value: SlateDescendant[]) => void;
   isEditorEmpty: boolean;
 
-  requestFormSubmit: () => void;
+  submit: () => void;
   disabled: boolean;
 } | null>(null);
+
+function useAiComposer() {
+  const composerContext = useContext(AiComposerContext);
+
+  return nn(composerContext, "AiComposer.Form is missing from the React tree.");
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Form
  * -----------------------------------------------------------------------------------------------*/
 
 /**
- * Surrounds the chat composer's content and handles submissions.
+ * Surrounds the AI composer's content and handles submissions.
  *
  * @example
- * <AiChatComposer.Form onComposerSubmit={({ text }) => {}}>
- *	 <AiChatComposer.Editor />
- *   <AiChatComposer.Submit />
- * </AiChatComposer.Form>
+ * <AiComposer.Form onComposerSubmit={({ text }) => {}}>
+ *	 <AiComposer.Editor />
+ *   <AiComposer.Submit />
+ * </AiComposer.Form>
  */
-export const AiChatComposerForm = forwardRef<
-  HTMLFormElement,
-  AiChatComposerFormProps
->(
+export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
   (
     { onComposerSubmit, onSubmit, disabled, asChild, ...props },
     forwardedRef
@@ -67,12 +78,9 @@ export const AiChatComposerForm = forwardRef<
     const Component = asChild ? Slot : "form";
     const formRef = useRef<HTMLFormElement | null>(null);
 
-    const editorRef = useRef<AiComposerEditor | null>(null);
-    if (editorRef.current === null) {
-      editorRef.current = withNormalize(withHistory(withReact(createEditor())));
-    }
-    const editor = editorRef.current;
-
+    const editor = useInitial(() =>
+      withNormalize(withHistory(withReact(createEditor())))
+    );
     const [isEditorEmpty, setIsEditorEmpty] = useState(true);
 
     const handleSubmit = useCallback(
@@ -130,22 +138,15 @@ export const AiChatComposerForm = forwardRef<
       setIsEditorEmpty(isEmpty(editor, editor.children));
     }, [editor]);
 
-    const requestFormSubmit = useCallback(() => {
+    const submit = useCallback(() => {
       if (isEmpty(editor, editor.children)) return;
 
       // We need to wait for the next frame in some cases like when composing diacritics,
       // we want any native handling to be done first while still being handled on `keydown`.
       requestAnimationFrame(() => {
-        if (formRef.current === null) return;
-        if (typeof formRef.current.requestSubmit === "function") {
-          return formRef.current.requestSubmit();
+        if (formRef.current) {
+          requestSubmit(formRef.current);
         }
-        const submitter = document.createElement("input");
-        submitter.type = "submit";
-        submitter.hidden = true;
-        formRef.current.appendChild(submitter);
-        submitter.click();
-        formRef.current.removeChild(submitter);
       });
     }, [editor]);
 
@@ -156,17 +157,17 @@ export const AiChatComposerForm = forwardRef<
     );
 
     return (
-      <AiChatComposerContext.Provider
+      <AiComposerContext.Provider
         value={{
           editor,
           onEditorValueChange: handleEditorValueChange,
           isEditorEmpty,
-          requestFormSubmit,
+          submit,
           disabled: disabled || false,
         }}
       >
         <Component onSubmit={handleSubmit} {...props} ref={formRef} />
-      </AiChatComposerContext.Provider>
+      </AiComposerContext.Provider>
     );
   }
 );
@@ -175,31 +176,37 @@ export const AiChatComposerForm = forwardRef<
  * Editor
  * -----------------------------------------------------------------------------------------------*/
 
+function AiComposerEditorPlaceholder({
+  attributes,
+  children,
+}: RenderPlaceholderProps) {
+  const { opacity: _opacity, ...style } = attributes.style;
+
+  return (
+    <span {...attributes} style={style} data-placeholder="">
+      {children}
+    </span>
+  );
+}
+
 /**
- * Displays the chat composer's editor.
+ * Displays the AI composer's editor.
  *
  * @example
- * <AiChatComposer.Editor placeholder="Write a message…" />
+ * <AiComposer.Editor placeholder="Write a message…" />
  */
-export const AiChatComposerEditor = forwardRef<
-  HTMLDivElement,
-  AiChatComposerEditorProps
->(
+const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
   (
     { defaultValue = "", onKeyDown, disabled, autoFocus, ...props },
     forwardedRef
   ) => {
-    const context = useContext(AiChatComposerContext);
-    if (context === null) {
-      throw new Error("AiChatComposer.Form is missing from the React tree.");
-    }
-
     const {
       editor,
       onEditorValueChange,
-      requestFormSubmit,
+      submit,
       disabled: isFormDisabled,
-    } = context;
+    } = useAiComposer();
+    const isDisabled = disabled || isFormDisabled;
 
     const handleKeyDown = useCallback(
       (event: KeyboardEvent<HTMLDivElement>) => {
@@ -208,13 +215,13 @@ export const AiChatComposerEditor = forwardRef<
 
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
-          requestFormSubmit();
+          submit();
         } else if (event.key === "Enter" && event.shiftKey) {
           event.preventDefault();
           editor.insertBreak();
         }
       },
-      [editor, onKeyDown, requestFormSubmit]
+      [editor, onKeyDown, submit]
     );
 
     useImperativeHandle(
@@ -253,18 +260,11 @@ export const AiChatComposerEditor = forwardRef<
           enterKeyHint="send"
           autoCapitalize="sentences"
           onKeyDown={handleKeyDown}
-          data-disabled={disabled || isFormDisabled || undefined}
+          data-disabled={isDisabled || undefined}
           {...props}
-          readOnly={disabled || isFormDisabled}
-          disabled={disabled || isFormDisabled}
-          renderPlaceholder={function ({ attributes, children }) {
-            const { opacity: _opacity, ...style } = attributes.style;
-            return (
-              <span {...attributes} style={style} data-placeholder="">
-                {children}
-              </span>
-            );
-          }}
+          readOnly={isDisabled}
+          disabled={isDisabled}
+          renderPlaceholder={AiComposerEditorPlaceholder}
         />
       </Slate>
     );
@@ -276,22 +276,17 @@ export const AiChatComposerEditor = forwardRef<
  * -----------------------------------------------------------------------------------------------*/
 
 /**
- * A button to submit a chat message.
+ * A button to submit the AI composer's content.
  *
  * @example
- * <AiChatComposer.Submit>Send</AiChatComposer.Submit>
+ * <AiComposer.Submit>Send</AiComposer.Submit>
  */
-export const AiChatComposerSubmit = forwardRef<
+export const AiComposerSubmit = forwardRef<
   HTMLButtonElement,
-  AiChatComposerSubmitProps
+  AiComposerSubmitProps
 >(({ disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const context = useContext(AiChatComposerContext);
-  if (context === null) {
-    throw new Error("AiChatComposer.Form is missing from the React tree.");
-  }
-
-  const { disabled: isFormDisabled, isEditorEmpty } = context;
+  const { disabled: isFormDisabled, isEditorEmpty } = useAiComposer();
 
   return (
     <Component
@@ -304,14 +299,14 @@ export const AiChatComposerSubmit = forwardRef<
 });
 
 if (process.env.NODE_ENV !== "production") {
-  AiChatComposerEditor.displayName = AI_CHAT_COMPOSER_EDITOR_NAME;
-  AiChatComposerForm.displayName = AI_CHAT_COMPOSER_FORM_NAME;
-  AiChatComposerSubmit.displayName = AI_CHAT_COMPOSER_SUBMIT_NAME;
+  AiComposerEditor.displayName = AI_COMPOSER_EDITOR_NAME;
+  AiComposerForm.displayName = AI_COMPOSER_FORM_NAME;
+  AiComposerSubmit.displayName = AI_COMPOSER_SUBMIT_NAME;
 }
 
-// NOTE: Every export from this file will be available publicly as AiChatComposer.*
+// NOTE: Every export from this file will be available publicly as AiComposer.*
 export {
-  AiChatComposerEditor as Editor,
-  AiChatComposerForm as Form,
-  AiChatComposerSubmit as Submit,
+  AiComposerEditor as Editor,
+  AiComposerForm as Form,
+  AiComposerSubmit as Submit,
 };
