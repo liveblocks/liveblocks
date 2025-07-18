@@ -28,6 +28,7 @@ import {
   withReact,
 } from "slate-react";
 
+import type { AiComposerBody } from "../../types";
 import { requestSubmit } from "../../utils/request-submit";
 import { useInitial } from "../../utils/use-initial";
 import { withNormalize } from "../slate/plugins/normalize";
@@ -220,7 +221,7 @@ function AiComposerEditorPlaceholder({
  */
 const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
   (
-    { defaultValue = "", onKeyDown, disabled, autoFocus, ...props },
+    { defaultValue = "", onKeyDown, disabled, autoFocus, dir, ...props },
     forwardedRef
   ) => {
     const {
@@ -266,12 +267,11 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
       }
     }, [editor, autoFocus]);
 
-    const initialValue: { type: "paragraph"; children: { text: string }[] }[] =
-      useMemo(() => {
-        return defaultValue
-          .split("\n")
-          .map((text) => ({ type: "paragraph", children: [{ text }] }));
-      }, [defaultValue]);
+    const initialValue: AiComposerBody = useMemo(() => {
+      return defaultValue
+        .split("\n")
+        .map((text) => ({ type: "paragraph", children: [{ text }] }));
+    }, [defaultValue]);
 
     return (
       <Slate
@@ -280,8 +280,10 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
         onValueChange={onEditorValueChange}
       >
         <Editable
+          dir={dir}
           enterKeyHint="send"
           autoCapitalize="sentences"
+          aria-label="Composer editor"
           onKeyDown={handleKeyDown}
           data-disabled={isDisabled || undefined}
           {...props}

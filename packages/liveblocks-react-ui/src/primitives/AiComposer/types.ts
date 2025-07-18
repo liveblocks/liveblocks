@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, FormEvent } from "react";
 
-import type { ComponentPropsWithSlot } from "../../types";
+import type { ComponentPropsWithSlot, Direction } from "../../types";
 
 export interface AiComposerSubmitMessage {
   /**
@@ -26,6 +26,11 @@ export interface AiComposerFormProps extends ComponentPropsWithSlot<"form"> {
 
 export interface AiComposerEditorProps
   extends Omit<ComponentPropsWithoutRef<"div">, "defaultValue" | "children"> {
+  /**
+   * The reading direction of the editor and related elements.
+   */
+  dir?: Direction;
+
   /**
    * The editor's initial value.
    */
