@@ -45,6 +45,7 @@ import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
+import type { GroupSummary } from "./protocol/Groups";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
@@ -483,6 +484,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
   }>;
+
+  groupSummariesStore: BatchStore<GroupSummary | undefined, string>;
+
+  getGroupSummary(groupId: string): Promise<GroupSummary | undefined>;
 }
 
 export function createApiClient<M extends BaseMetadata>({
@@ -1765,6 +1770,40 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * Groups
+   * -------------------------------------------------------------------------------------------------
+   */
+
+  const batchedGetGroupSummaries = new Batch(
+    async (batchedGroupIds: string[]) => {
+      const groupIds = batchedGroupIds.flat();
+      const { groups } = await httpClient.post<{
+        groups: GroupSummary[];
+      }>(
+        url`/v2/c/groups/summaries`,
+        await authManager.getAuthValue({
+          requestedScope: "comments:read",
+        }),
+        { groupIds }
+      );
+
+      const summaries = new Map<string, GroupSummary>();
+
+      for (const group of groups) {
+        summaries.set(group.id, group);
+      }
+
+      return groupIds.map((groupId) => summaries.get(groupId));
+    },
+    { delay: 50 }
+  );
+  const groupSummariesStore = createBatchStore(batchedGetGroupSummaries);
+
+  function getGroupSummary(groupId: string) {
+    return batchedGetGroupSummaries.get(groupId);
+  }
+
   return {
     // Room threads
     getThreads,
@@ -1818,6 +1857,9 @@ export function createApiClient<M extends BaseMetadata>({
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
+    // Groups
+    groupSummariesStore,
+    getGroupSummary,
     // AI
     executeContextualPrompt,
   };

@@ -26,6 +26,7 @@ import type {
   DS,
   DU,
   EnterOptions,
+  GroupSummary,
   IYjsProvider,
   LiveblocksErrorContext,
   MentionData,
@@ -86,6 +87,7 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
+  GroupSummaryAsyncResult,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -3128,6 +3130,46 @@ const _useStorageRoot: TypedBundle["useStorageRoot"] = useStorageRoot;
 const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
+function selectorFor_useGroupSummary(
+  state: AsyncResult<GroupSummary | undefined> | undefined
+): GroupSummaryAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  return {
+    isLoading: false,
+    summary: state.data,
+  };
+}
+
+/** @private - Internal API, do not rely on it. */
+function useGroupSummary(groupId: string): GroupSummaryAsyncResult {
+  const client = useClient();
+  const store = client[kInternal].httpClient.groupSummariesStore;
+
+  const getGroupSummaryState = useCallback(
+    () => store.getItemState(groupId),
+    [store, groupId]
+  );
+
+  useEffect(() => {
+    void store.enqueue(groupId);
+  }, [store, groupId]);
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getGroupSummaryState,
+    getGroupSummaryState,
+    selectorFor_useGroupSummary,
+    shallow
+  );
+}
+
 export {
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -3152,6 +3194,7 @@ export {
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,
+  useGroupSummary,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
