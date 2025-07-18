@@ -1,7 +1,7 @@
 import type { NodeKey, SerializedLexicalNode, Spread } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 
-const MENTION_CHARACTER = "@";
+import { MENTION_CHARACTER } from "./constants";
 
 type LegacySerializedMentionNode = Spread<
   {
