@@ -187,7 +187,7 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     autoFocus?: ComposerEditorProps["autoFocus"];
 
     /**
-     * Whether to blur the editor when the form is submitted.
+     * Whether to blur the composer editor when the composer is submitted.
      */
     blurOnSubmit?: boolean;
 
