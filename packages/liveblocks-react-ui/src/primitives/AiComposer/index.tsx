@@ -1,19 +1,15 @@
-import { nn } from "@liveblocks/core";
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import type { FormEvent, KeyboardEvent } from "react";
 import {
-  createContext,
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from "react";
-import type { Descendant as SlateDescendant } from "slate";
 import {
   createEditor,
   Editor as SlateEditor,
@@ -33,6 +29,12 @@ import { requestSubmit } from "../../utils/request-submit";
 import { useInitial } from "../../utils/use-initial";
 import { withNormalize } from "../slate/plugins/normalize";
 import { isEmpty } from "../slate/utils/is-empty";
+import {
+  AiComposerContext,
+  AiComposerEditorContext,
+  useAiComposer,
+  useAiComposerEditorContext,
+} from "./contexts";
 import type {
   AiComposerEditorProps,
   AiComposerFormProps,
@@ -42,20 +44,6 @@ import type {
 const AI_COMPOSER_SUBMIT_NAME = "AiComposerSubmit";
 const AI_COMPOSER_EDITOR_NAME = "AiComposerEditor";
 const AI_COMPOSER_FORM_NAME = "AiComposerForm";
-
-const AiComposerContext = createContext<{
-  editor: SlateEditor;
-  onEditorValueChange: (value: SlateDescendant[]) => void;
-  isEditorEmpty: boolean;
-  submit: () => void;
-  disabled: boolean;
-} | null>(null);
-
-function useAiComposer() {
-  const composerContext = useContext(AiComposerContext);
-
-  return nn(composerContext, "AiComposer.Form is missing from the React tree.");
-}
 
 /* -------------------------------------------------------------------------------------------------
  * Form
@@ -77,12 +65,13 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
   ) => {
     const Component = asChild ? Slot : "form";
     const formRef = useRef<HTMLFormElement | null>(null);
-
     const editor = useInitial(() =>
       withNormalize(withHistory(withReact(createEditor())))
     );
     const [isEditorEmpty, setEditorEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
+    const isDisabled = isSubmitting || disabled === true;
+    const canSubmit = !isEditorEmpty;
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {
@@ -163,7 +152,9 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     }, [editor]);
 
     const submit = useCallback(() => {
-      if (isEmpty(editor, editor.children)) return;
+      if (!canSubmit) {
+        return;
+      }
 
       // We need to wait for the next frame in some cases like when composing diacritics,
       // we want any native handling to be done first while still being handled on `keydown`.
@@ -172,7 +163,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           requestSubmit(formRef.current);
         }
       });
-    }, [editor]);
+    }, [canSubmit]);
 
     useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
       forwardedRef,
@@ -181,17 +172,24 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     );
 
     return (
-      <AiComposerContext.Provider
+      <AiComposerEditorContext.Provider
         value={{
           editor,
           onEditorValueChange: handleEditorValueChange,
-          isEditorEmpty,
-          submit,
-          disabled: disabled || isSubmitting || false,
         }}
       >
-        <Component onSubmit={handleSubmit} {...props} ref={formRef} />
-      </AiComposerContext.Provider>
+        <AiComposerContext.Provider
+          value={{
+            isDisabled,
+            isEmpty: isEditorEmpty,
+            canSubmit,
+            submit,
+            clear,
+          }}
+        >
+          <Component onSubmit={handleSubmit} {...props} ref={formRef} />
+        </AiComposerContext.Provider>
+      </AiComposerEditorContext.Provider>
     );
   }
 );
@@ -224,13 +222,9 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
     { defaultValue = "", onKeyDown, disabled, autoFocus, dir, ...props },
     forwardedRef
   ) => {
-    const {
-      editor,
-      onEditorValueChange,
-      submit,
-      disabled: isFormDisabled,
-    } = useAiComposer();
-    const isDisabled = disabled || isFormDisabled;
+    const { editor, onEditorValueChange } = useAiComposerEditorContext();
+    const { submit, isDisabled: isComposerDisabled } = useAiComposer();
+    const isDisabled = disabled || isComposerDisabled;
 
     const handleKeyDown = useCallback(
       (event: KeyboardEvent<HTMLDivElement>) => {
@@ -263,7 +257,9 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
           ReactEditor.focus(editor);
         }
       } catch {
-        // Slate's DOM-specific methods will throw if the editor's DOM  node no longer exists. This action doesn't make sense on an unmounted editor so we can safely ignore it.
+        // Slate's DOM-specific methods will throw if the editor's DOM
+        // node no longer exists. This action doesn't make sense on an
+        // unmounted editor so we can safely ignore it.
       }
     }, [editor, autoFocus]);
 
@@ -311,14 +307,15 @@ export const AiComposerSubmit = forwardRef<
   AiComposerSubmitProps
 >(({ disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const { disabled: isFormDisabled, isEditorEmpty } = useAiComposer();
+  const { isDisabled: isComposerDisabled, canSubmit } = useAiComposer();
+  const isDisabled = isComposerDisabled || disabled || !canSubmit;
 
   return (
     <Component
       type="submit"
       {...props}
       ref={forwardedRef}
-      disabled={disabled || isFormDisabled || isEditorEmpty}
+      disabled={isDisabled}
     />
   );
 });

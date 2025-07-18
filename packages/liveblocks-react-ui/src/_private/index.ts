@@ -19,9 +19,11 @@ export { useRefs } from "../utils/use-refs";
 // Private primitives (which will be exported from @liveblocks/react-ui/primitives when/if made public)
 
 export * as AiComposer from "../primitives/AiComposer";
+export { useAiComposer } from "../primitives/AiComposer/contexts";
 export type {
   AiComposerEditorProps,
   AiComposerFormProps,
+  AiComposerSubmitMessage,
   AiComposerSubmitProps,
 } from "../primitives/AiComposer/types";
 export * as AiMessage from "../primitives/AiMessage";
