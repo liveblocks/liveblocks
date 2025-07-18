@@ -30,6 +30,7 @@ import type {
   CommentData,
   DGI,
   DRI,
+  GroupSummary,
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
@@ -165,6 +166,15 @@ export type GroupInfoAsyncSuccess = AsyncSuccess<DGI, "info">;
 
 export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
 export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
+
+export type GroupSummaryAsyncResult = AsyncResult<
+  GroupSummary | undefined,
+  "summary"
+>;
+export type GroupSummaryAsyncSuccess = AsyncSuccess<
+  GroupSummary | undefined,
+  "summary"
+>;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
