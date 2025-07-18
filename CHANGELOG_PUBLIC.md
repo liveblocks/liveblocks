@@ -27,9 +27,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Fix `AiChat` component not scrolling instantly to the bottom on render when
   messages are already loaded.
 
+## Website
+
+- New blog post: [What’s new in Liveblocks: June 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-june-edition-2025).
+
 ## Contributors
 
-nimeshnayaju
+nimeshnayaju, ctnicholas
 
 # Week 28 (2025-07-11)
 
