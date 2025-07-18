@@ -166,6 +166,11 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
   pasteFilesAsAttachments?: boolean;
 
   /**
+   * Whether to blur the editor when the form is submitted.
+   */
+  blurOnSubmit?: boolean;
+
+  /**
    * When `preventUnsavedChanges` is set on your Liveblocks client (or set on
    * <LiveblocksProvider>), then closing a browser tab will be prevented when
    * there are unsaved changes.

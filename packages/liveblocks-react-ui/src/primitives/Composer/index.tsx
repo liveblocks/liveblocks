@@ -1247,6 +1247,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onComposerSubmit,
       defaultAttachments = [],
       pasteFilesAsAttachments,
+      blurOnSubmit = true,
       preventUnsavedChanges = true,
       disabled,
       asChild,
@@ -1460,10 +1461,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const onSubmitEnd = useCallback(() => {
       clear();
-      blur();
       clearAttachments();
       setSubmitting(false);
-    }, [blur, clear, clearAttachments]);
+
+      if (blurOnSubmit) {
+        blur();
+      }
+    }, [blur, blurOnSubmit, clear, clearAttachments]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {

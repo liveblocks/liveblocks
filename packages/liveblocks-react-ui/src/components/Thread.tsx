@@ -85,6 +85,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
   /**
+   * Whether to blur the composer editor when the composer is submitted.
+   */
+  blurComposerOnSubmit?: ComposerProps["blurOnSubmit"];
+
+  /**
    * Whether to indent the comments' content.
    */
   indentCommentContent?: CommentProps["indentContent"];
@@ -184,6 +189,7 @@ export const Thread = forwardRef(
       onMentionClick,
       onAttachmentClick,
       onComposerSubmit,
+      blurComposerOnSubmit,
       overrides,
       components,
       className,
@@ -436,6 +442,7 @@ export const Thread = forwardRef(
               showAttachments={showAttachments}
               showFormattingControls={showComposerFormattingControls}
               onComposerSubmit={onComposerSubmit}
+              blurOnSubmit={blurComposerOnSubmit}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
