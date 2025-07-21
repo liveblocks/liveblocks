@@ -214,6 +214,14 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
       });
     }, [canSubmit]);
 
+    const abort = useCallback(() => {
+      if (!canAbort || !abortableMessageId) {
+        return;
+      }
+
+      client[kInternal].ai.abort(abortableMessageId);
+    }, [canAbort, abortableMessageId, client]);
+
     useImperativeHandle<HTMLFormElement | null, HTMLFormElement | null>(
       forwardedRef,
       () => formRef.current,
@@ -235,6 +243,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
             canSubmit,
             canAbort,
             submit,
+            abort,
             clear,
           }}
         >
@@ -387,9 +396,7 @@ export const AiComposerAbort = forwardRef<
   AiComposerSubmitProps
 >(({ disabled, onClick, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const client = useClient();
-  const { abortableMessageId } = useAiComposerEditorContext();
-  const { isDisabled: isComposerDisabled, canAbort } = useAiComposer();
+  const { isDisabled: isComposerDisabled, canAbort, abort } = useAiComposer();
   const isDisabled = isComposerDisabled || disabled || !canAbort;
 
   const handleClick = useCallback(
@@ -400,11 +407,9 @@ export const AiComposerAbort = forwardRef<
         return;
       }
 
-      if (abortableMessageId) {
-        client[kInternal].ai.abort(abortableMessageId);
-      }
+      abort();
     },
-    [client, onClick, abortableMessageId]
+    [abort, onClick]
   );
 
   return (

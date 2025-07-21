@@ -32,6 +32,11 @@ export type AiComposerContext = {
   submit: () => void;
 
   /**
+   * Abort the composer's related response programmatically.
+   */
+  abort: () => void;
+
+  /**
    * Clear the composer programmatically.
    */
   clear: () => void;
