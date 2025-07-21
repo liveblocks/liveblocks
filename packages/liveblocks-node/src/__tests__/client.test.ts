@@ -2356,4 +2356,614 @@ describe("client", () => {
       ).resolves.toBeUndefined();
     });
   });
+
+  describe("create group", () => {
+    test("should return the created group when createGroup receives a successful response", async () => {
+      const groupData = {
+        id: "group1",
+        memberIds: ["user1", "user2"],
+        tenantId: "tenant1",
+      };
+
+      const createdGroup = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T14:32:50.697Z",
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+          {
+            id: "user2",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (JSON.stringify(data) === JSON.stringify(groupData)) {
+            return HttpResponse.json(createdGroup, { status: 200 });
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(groupData);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user2",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should create a group without members when createGroup receives a successful response", async () => {
+      const groupData = {
+        id: "group1",
+        tenantId: "tenant1",
+      };
+
+      const createdGroup = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T14:32:50.697Z",
+        members: [],
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+
+          if (JSON.stringify(data) === JSON.stringify(groupData)) {
+            return HttpResponse.json(createdGroup, { status: 200 });
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+      const res = await client.createGroup(groupData);
+
+      expect(res).toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        members: [],
+      });
+    });
+
+    test("should throw a LiveblocksError when createGroup receives an error response", async () => {
+      const groupData = {
+        id: "group1",
+        memberIds: ["user1"],
+        tenantId: "tenant1",
+      };
+
+      const error = {
+        error: "GROUP_ALREADY_EXISTS",
+        message: "Group already exists",
+      };
+
+      server.use(
+        http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
+          const data = await request.json();
+          if (JSON.stringify(data) === JSON.stringify(groupData)) {
+            return HttpResponse.json(error, { status: 409 });
+          }
+
+          return HttpResponse.error();
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.createGroup(groupData);
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(409);
+          expect(err.message).toBe("Group already exists");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get group", () => {
+    test("should return the specified group when getGroup receives a successful response", async () => {
+      const group = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T14:32:50.697Z",
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.json(group, { status: 200 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getGroup({
+          id: "group1",
+        })
+      ).resolves.toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when getGroup receives an error response", async () => {
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getGroup({
+          id: "group1",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("add group members", () => {
+    test("should return the updated group when addGroupMembers receives a successful response", async () => {
+      const memberIds = ["user3", "user4"];
+
+      const updatedGroup = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T14:32:50.697Z",
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+          {
+            id: "user2",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+          {
+            id: "user3",
+            addedAt: "2022-07-13T15:00:00.000Z",
+          },
+          {
+            id: "user4",
+            addedAt: "2022-07-13T15:00:00.000Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/add-members`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(updatedGroup, { status: 200 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.addGroupMembers("group1", { memberIds })
+      ).resolves.toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user2",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+          {
+            id: "user3",
+            addedAt: new Date("2022-07-13T15:00:00.000Z"),
+          },
+          {
+            id: "user4",
+            addedAt: new Date("2022-07-13T15:00:00.000Z"),
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when addGroupMembers receives an error response", async () => {
+      const memberIds = ["user3"];
+
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/add-members`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.addGroupMembers("group1", { memberIds });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("remove group members", () => {
+    test("should return the updated group when removeGroupMembers receives a successful response", async () => {
+      const memberIds = ["user2", "user3"];
+
+      const updatedGroup = {
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: "2022-07-13T14:32:50.697Z",
+        updatedAt: "2022-07-13T15:30:00.000Z",
+        members: [
+          {
+            id: "user1",
+            addedAt: "2022-07-13T14:32:50.697Z",
+          },
+        ],
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/remove-members`,
+          async ({ request }) => {
+            const data = await request.json();
+
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(updatedGroup, { status: 200 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.removeGroupMembers("group1", { memberIds })
+      ).resolves.toEqual({
+        type: "group",
+        id: "group1",
+        tenantId: "tenant1",
+        createdAt: new Date("2022-07-13T14:32:50.697Z"),
+        updatedAt: new Date("2022-07-13T15:30:00.000Z"),
+        members: [
+          {
+            id: "user1",
+            addedAt: new Date("2022-07-13T14:32:50.697Z"),
+          },
+        ],
+      });
+    });
+
+    test("should throw a LiveblocksError when removeGroupMembers receives an error response", async () => {
+      const memberIds = ["user2"];
+
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.post(
+          `${DEFAULT_BASE_URL}/v2/groups/:groupId/remove-members`,
+          async ({ request }) => {
+            const data = await request.json();
+            if (JSON.stringify(data) === JSON.stringify({ memberIds })) {
+              return HttpResponse.json(error, { status: 404 });
+            }
+
+            return HttpResponse.error();
+          }
+        )
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.removeGroupMembers("group1", { memberIds });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("delete group", () => {
+    test("should delete a group when deleteGroup receives a successful response", async () => {
+      server.use(
+        http.delete(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.text(null, { status: 204 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      const res = await client.deleteGroup({
+        id: "group1",
+      });
+
+      expect(res).toBeUndefined();
+    });
+
+    test("should throw a LiveblocksError when deleteGroup receives an error response", async () => {
+      const error = {
+        error: "GROUP_NOT_FOUND",
+        message: "Group not found",
+      };
+
+      server.use(
+        http.delete(`${DEFAULT_BASE_URL}/v2/groups/:groupId`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.deleteGroup({
+          id: "group1",
+        });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("Group not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
+
+  describe("get groups", () => {
+    test("should return a list of groups when getGroups receives a successful response", async () => {
+      const groups = [
+        {
+          type: "group",
+          id: "group1",
+          tenantId: "tenant1",
+          createdAt: "2022-07-13T14:32:50.697Z",
+          updatedAt: "2022-07-13T14:32:50.697Z",
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-13T14:32:50.697Z",
+            },
+          ],
+        },
+        {
+          type: "group",
+          id: "group2",
+          tenantId: "tenant1",
+          createdAt: "2022-07-14T10:00:00.000Z",
+          updatedAt: "2022-07-14T10:00:00.000Z",
+          members: [
+            {
+              id: "user2",
+              addedAt: "2022-07-14T10:00:00.000Z",
+            },
+            {
+              id: "user3",
+              addedAt: "2022-07-14T10:00:00.000Z",
+            },
+          ],
+        },
+      ];
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: "cursor1",
+              data: groups,
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getGroups()).resolves.toEqual({
+        nextCursor: "cursor1",
+        data: [
+          {
+            type: "group",
+            id: "group1",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-13T14:32:50.697Z"),
+            updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-13T14:32:50.697Z"),
+              },
+            ],
+          },
+          {
+            type: "group",
+            id: "group2",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-14T10:00:00.000Z"),
+            updatedAt: new Date("2022-07-14T10:00:00.000Z"),
+            members: [
+              {
+                id: "user2",
+                addedAt: new Date("2022-07-14T10:00:00.000Z"),
+              },
+              {
+                id: "user3",
+                addedAt: new Date("2022-07-14T10:00:00.000Z"),
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("should return an empty list when getGroups receives an empty response", async () => {
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: null,
+              data: [],
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getGroups()).resolves.toEqual({
+        nextCursor: null,
+        data: [],
+      });
+    });
+
+    test("should throw a LiveblocksError when getGroups receives an error response", async () => {
+      const error = {
+        error: "UNAUTHORIZED",
+        message: "Unauthorized access",
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/groups`, () => {
+          return HttpResponse.json(error, { status: 401 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        await client.getGroups();
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(401);
+          expect(err.message).toBe("Unauthorized access");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
 });
