@@ -164,29 +164,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
     },
     forwardedRef
   ) => {
-    /**
-     * Instantly scroll to the bottom for the initial state.
-     */
-    useEffect(
-      () => {
-        scrollToBottom.current("instant");
-      },
-      // `scrollToBottom` is a stable ref containing the callback.
-      [] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-
-    /**
-     * Scroll to new messages when sending them.
-     */
-    useEffect(
-      () => {
-        if (lastSentMessageId) {
-          scrollToBottom.current("smooth", true);
-        }
-      },
-      // `scrollToBottom` is a stable ref containing the callback.
-      [lastSentMessageId] // eslint-disable-line react-hooks/exhaustive-deps
-    );
+    const hasLastSentMessage = lastSentMessageId !== null;
 
     /**
      * Every time the container, footer, or messages list change size,
@@ -215,6 +193,10 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
      */
     useEffect(
       () => {
+        if (!hasLastSentMessage) {
+          return;
+        }
+
         const container = containerRef.current;
         const footer = footerRef.current;
         const messages = messagesRef.current;
@@ -335,7 +317,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         };
       },
       // This effect only uses stable refs.
-      [] // eslint-disable-line react-hooks/exhaustive-deps
+      [hasLastSentMessage] // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     /**
@@ -347,6 +329,30 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         onScrollAtBottomChange.current(isIntersecting);
       },
       { root: containerRef, rootMargin: MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR }
+    );
+
+    /**
+     * Instantly scroll to the bottom for the initial state.
+     */
+    useEffect(
+      () => {
+        scrollToBottom.current("instant");
+      },
+      // `scrollToBottom` is a stable ref containing the callback.
+      [] // eslint-disable-line react-hooks/exhaustive-deps
+    );
+
+    /**
+     * Scroll to new messages when sending them.
+     */
+    useEffect(
+      () => {
+        if (lastSentMessageId) {
+          scrollToBottom.current("smooth", true);
+        }
+      },
+      // `scrollToBottom` is a stable ref containing the callback.
+      [lastSentMessageId] // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     /**
