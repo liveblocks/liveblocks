@@ -1,6 +1,13 @@
-import { useLayoutEffect } from "@liveblocks/react/_private";
+import {
+  type AiChatMessage,
+  kInternal,
+  Signal,
+  type WithNavigation,
+} from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
+import { useLayoutEffect, useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import type { FormEvent, KeyboardEvent } from "react";
+import type { FormEvent, KeyboardEvent, MouseEvent } from "react";
 import {
   forwardRef,
   useCallback,
@@ -42,12 +49,25 @@ import type {
 } from "./types";
 
 const AI_COMPOSER_SUBMIT_NAME = "AiComposerSubmit";
+const AI_COMPOSER_ABORT_NAME = "AiComposerAbort";
 const AI_COMPOSER_EDITOR_NAME = "AiComposerEditor";
 const AI_COMPOSER_FORM_NAME = "AiComposerForm";
+
+type UiChatMessage = WithNavigation<AiChatMessage>;
 
 /* -------------------------------------------------------------------------------------------------
  * Form
  * -----------------------------------------------------------------------------------------------*/
+
+const emptyMessagesΣ = new Signal<UiChatMessage[]>([]);
+
+function getAbortableMessageId(messages: UiChatMessage[]) {
+  return messages.find(
+    (message) =>
+      message.role === "assistant" &&
+      (message.status === "generating" || message.status === "awaiting-tool")
+  )?.id;
+}
 
 /**
  * Surrounds the AI composer's content and handles submissions.
@@ -60,18 +80,33 @@ const AI_COMPOSER_FORM_NAME = "AiComposerForm";
  */
 export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
   (
-    { onComposerSubmit, onSubmit, disabled, asChild, ...props },
+    {
+      onComposerSubmit,
+      onSubmit,
+      disabled,
+      chatId,
+      branchId,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
+    const client = useClient();
     const formRef = useRef<HTMLFormElement | null>(null);
     const editor = useInitial(() =>
       withNormalize(withHistory(withReact(createEditor())))
     );
     const [isEditorEmpty, setEditorEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
+    const messagesΣ = chatId
+      ? client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId)
+      : emptyMessagesΣ;
+    const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
+
     const isDisabled = isSubmitting || disabled === true;
-    const canSubmit = !isEditorEmpty;
+    const canAbort = abortableMessageId !== undefined;
+    const canSubmit = !isEditorEmpty && !canAbort;
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {
@@ -176,6 +211,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
         value={{
           editor,
           onEditorValueChange: handleEditorValueChange,
+          abortableMessageId,
         }}
       >
         <AiComposerContext.Provider
@@ -183,6 +219,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
             isDisabled,
             isEmpty: isEditorEmpty,
             canSubmit,
+            canAbort,
             submit,
             clear,
           }}
@@ -275,6 +312,7 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
         initialValue={initialValue}
         onValueChange={onEditorValueChange}
       >
+        {/* TODO: Add focus/blur methods and attributes */}
         <Editable
           dir={dir}
           enterKeyHint="send"
@@ -320,14 +358,62 @@ export const AiComposerSubmit = forwardRef<
   );
 });
 
+/* -------------------------------------------------------------------------------------------------
+ * Abort
+ * -----------------------------------------------------------------------------------------------*/
+
+/**
+ * A button to abort a response related to the AI composer.
+ *
+ * @example
+ * <AiComposer.Abort>Cancel</AiComposer.Abort>
+ */
+export const AiComposerAbort = forwardRef<
+  HTMLButtonElement,
+  AiComposerSubmitProps
+>(({ disabled, onClick, asChild, ...props }, forwardedRef) => {
+  const Component = asChild ? Slot : "button";
+  const client = useClient();
+  const { abortableMessageId } = useAiComposerEditorContext();
+  const { isDisabled: isComposerDisabled, canAbort } = useAiComposer();
+  const isDisabled = isComposerDisabled || disabled || !canAbort;
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      if (abortableMessageId) {
+        client[kInternal].ai.abort(abortableMessageId);
+      }
+    },
+    [client, onClick, abortableMessageId]
+  );
+
+  return (
+    <Component
+      type="button"
+      {...props}
+      ref={forwardedRef}
+      disabled={isDisabled}
+      onClick={handleClick}
+    />
+  );
+});
+
 if (process.env.NODE_ENV !== "production") {
   AiComposerEditor.displayName = AI_COMPOSER_EDITOR_NAME;
   AiComposerForm.displayName = AI_COMPOSER_FORM_NAME;
   AiComposerSubmit.displayName = AI_COMPOSER_SUBMIT_NAME;
+  AiComposerAbort.displayName = AI_COMPOSER_ABORT_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as AiComposer.*
 export {
+  AiComposerAbort as Abort,
   AiComposerEditor as Editor,
   AiComposerForm as Form,
   AiComposerSubmit as Submit,

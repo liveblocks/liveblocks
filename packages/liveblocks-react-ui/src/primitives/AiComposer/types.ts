@@ -1,3 +1,4 @@
+import type { MessageId } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef, FormEvent } from "react";
 
 import type { ComponentPropsWithSlot, Direction } from "../../types";
@@ -10,6 +11,16 @@ export interface AiComposerSubmitMessage {
 }
 
 export interface AiComposerFormProps extends ComponentPropsWithSlot<"form"> {
+  /**
+   * The ID of the chat the composer belongs to.
+   */
+  chatId?: string;
+
+  /**
+   * @internal
+   */
+  branchId?: MessageId;
+
   /**
    * The event handler called when the composer is submitted.
    */

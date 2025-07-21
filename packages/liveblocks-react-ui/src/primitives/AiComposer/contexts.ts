@@ -1,4 +1,4 @@
-import { nn } from "@liveblocks/core";
+import { type MessageId, nn } from "@liveblocks/core";
 import { createContext, useContext } from "react";
 import type {
   Descendant as SlateDescendant,
@@ -15,6 +15,11 @@ export type AiComposerContext = {
    * Whether the composer can currently be submitted.
    */
   canSubmit: boolean;
+
+  /**
+   * Whether the composer can currently abort a response in its related chat.
+   */
+  canAbort: boolean;
 
   /**
    * Whether the editor is currently empty.
@@ -35,6 +40,7 @@ export type AiComposerContext = {
 export type AiComposerEditorContext = {
   onEditorValueChange: (value: SlateDescendant[]) => void;
   editor: SlateEditor;
+  abortableMessageId: MessageId | undefined;
 };
 
 export const AiComposerContext = createContext<AiComposerContext | null>(null);

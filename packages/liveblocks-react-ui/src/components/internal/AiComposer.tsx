@@ -1,16 +1,10 @@
-import type {
-  AiChatMessage,
-  CopilotId,
-  MessageId,
-  WithNavigation,
-} from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
-import { useSignal } from "@liveblocks/react/_private";
+import type { CopilotId, MessageId } from "@liveblocks/core";
+import { useSendAiMessage } from "@liveblocks/react";
 import {
   type ComponentProps,
   type FormEvent,
   forwardRef,
+  type SyntheticEvent,
   useCallback,
 } from "react";
 
@@ -22,16 +16,21 @@ import {
   useOverrides,
 } from "../../overrides";
 import * as ComposerPrimitive from "../../primitives/AiComposer";
+import { useAiComposer } from "../../primitives/AiComposer/contexts";
+import type {
+  AiComposerEditorProps,
+  AiComposerFormProps,
+  AiComposerSubmitMessage,
+} from "../../primitives/AiComposer/types";
 import { cn } from "../../utils/cn";
 import { Button } from "./Button";
 import { ShortcutTooltip, TooltipProvider } from "./Tooltip";
 
-type UiChatMessage = WithNavigation<AiChatMessage>;
-
 /* -------------------------------------------------------------------------------------------------
  * AiComposer
  * -----------------------------------------------------------------------------------------------*/
-export interface AiComposerProps extends ComponentProps<"form"> {
+export interface AiComposerProps
+  extends Omit<ComponentProps<"form">, "defaultValue"> {
   /**
    * The composer's initial value.
    */
@@ -41,22 +40,17 @@ export interface AiComposerProps extends ComponentProps<"form"> {
    * The event handler called when the composer is submitted.
    */
   onComposerSubmit?: (
-    message: {
-      /**
-       * The submitted message text.
-       */
-      text: string;
-    },
+    message: AiComposerSubmitMessage,
     event: FormEvent<HTMLFormElement>
   ) => void;
 
   /**
    * @internal
-   * The event handler called when a user chat message is created optimistically.
+   * The event handler called after the composer is submitted.
    */
-  onUserMessageCreate?: (message: {
+  onComposerSubmitted?: (message: {
     /**
-     * The created user message id.
+     * The created message ID.
      */
     id: MessageId;
   }) => void;
@@ -64,12 +58,12 @@ export interface AiComposerProps extends ComponentProps<"form"> {
   /**
    * Whether the composer is disabled.
    */
-  disabled?: boolean;
+  disabled?: AiComposerFormProps["disabled"];
 
   /**
-   * Whether to focus the editor on mount.
+   * Whether to focus the composer on mount.
    */
-  autoFocus?: boolean;
+  autoFocus?: AiComposerEditorProps["autoFocus"];
 
   /**
    * Override the component's strings.
@@ -97,6 +91,51 @@ export interface AiComposerProps extends ComponentProps<"form"> {
   stream?: boolean;
 }
 
+function AiComposerAction({
+  overrides,
+}: {
+  overrides?: AiComposerProps["overrides"];
+}) {
+  const { canAbort } = useAiComposer();
+  const $ = useOverrides(overrides);
+
+  const preventDefault = useCallback((event: SyntheticEvent) => {
+    event.preventDefault();
+  }, []);
+
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
+  return canAbort ? (
+    <ShortcutTooltip content={$.AI_COMPOSER_ABORT}>
+      <ComposerPrimitive.Abort asChild>
+        <Button
+          onPointerDown={preventDefault}
+          onClick={stopPropagation}
+          className="lb-ai-composer-action"
+          variant="secondary"
+          aria-label={$.AI_COMPOSER_ABORT}
+          icon={<StopIcon />}
+        />
+      </ComposerPrimitive.Abort>
+    </ShortcutTooltip>
+  ) : (
+    <ShortcutTooltip content={$.AI_COMPOSER_SEND} shortcut="Enter">
+      <ComposerPrimitive.Submit asChild>
+        <Button
+          onPointerDown={preventDefault}
+          onClick={stopPropagation}
+          className="lb-ai-composer-action"
+          variant="primary"
+          aria-label={$.AI_COMPOSER_SEND}
+          icon={<SendIcon />}
+        />
+      </ComposerPrimitive.Submit>
+    </ShortcutTooltip>
+  );
+}
+
 export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
   (
     {
@@ -110,85 +149,28 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
       branchId,
       copilotId,
       stream = true,
-      onUserMessageCreate,
+      // onComposerSubmitted,
       ...props
     },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const client = useClient();
-
-    const getLastMessageId = useCallback((messages: UiChatMessage[]) => {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage === undefined) return null;
-      return lastMessage.id;
-    }, []);
-
-    const getAbortableMessageId = useCallback((messages: UiChatMessage[]) => {
-      return messages.find(
-        (m) =>
-          m.role === "assistant" &&
-          (m.status === "generating" || m.status === "awaiting-tool")
-      )?.id;
-    }, []);
-
-    const messagesΣ = client[kInternal].ai.signals.getChatMessagesForBranchΣ(
-      chatId,
-      branchId
-    );
-
-    const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
-    const lastMessageId = useSignal(messagesΣ, getLastMessageId);
+    const sendAiMessage = useSendAiMessage(chatId, {
+      copilotId,
+      stream,
+    });
 
     const handleComposerSubmit = useCallback(
-      (message: { text: string }, event: FormEvent<HTMLFormElement>) => {
-        if (abortableMessageId !== undefined) {
-          event.preventDefault();
-          return;
-        }
-
+      (message: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => {
         onComposerSubmit?.(message, event);
+
         if (event.isDefaultPrevented()) return;
 
-        const content = [{ type: "text" as const, text: message.text }];
-        const newMessageId = client[kInternal].ai[
-          kInternal
-        ].context.messagesStore.createOptimistically(
-          chatId,
-          "user",
-          lastMessageId,
-          content
-        );
-        onUserMessageCreate?.({ id: newMessageId });
+        sendAiMessage(message.text);
 
-        const targetMessageId = client[kInternal].ai[
-          kInternal
-        ].context.messagesStore.createOptimistically(
-          chatId,
-          "assistant",
-          newMessageId
-        );
-
-        client[kInternal].ai.askUserMessageInChat(
-          chatId,
-          { id: newMessageId, parentMessageId: lastMessageId, content },
-          targetMessageId,
-          {
-            stream,
-            copilotId,
-          }
-        );
+        // onComposerSubmitted?.({ id: newMessageId });
       },
-      [
-        onComposerSubmit,
-        onUserMessageCreate,
-        client,
-        chatId,
-        lastMessageId,
-        abortableMessageId,
-        stream,
-        copilotId,
-      ]
+      [onComposerSubmit, sendAiMessage]
     );
 
     return (
@@ -203,6 +185,8 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
           disabled={disabled}
           ref={forwardedRef}
           onComposerSubmit={handleComposerSubmit}
+          chatId={chatId}
+          branchId={branchId}
         >
           <div className="lb-ai-composer-editor-container">
             <ComposerPrimitive.Editor
@@ -218,37 +202,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
               </div>
 
               <div className="lb-ai-composer-actions">
-                {abortableMessageId === undefined ? (
-                  <ShortcutTooltip
-                    content={$.AI_COMPOSER_SEND}
-                    shortcut="Enter"
-                  >
-                    <ComposerPrimitive.Submit asChild>
-                      <Button
-                        onPointerDown={(event) => event.preventDefault()}
-                        onClick={(event) => event.stopPropagation()}
-                        className="lb-ai-composer-action"
-                        variant="primary"
-                        aria-label={$.AI_COMPOSER_SEND}
-                        icon={<SendIcon />}
-                      />
-                    </ComposerPrimitive.Submit>
-                  </ShortcutTooltip>
-                ) : (
-                  <ShortcutTooltip content={$.AI_COMPOSER_ABORT}>
-                    <Button
-                      onPointerDown={(event) => event.preventDefault()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        client[kInternal].ai.abort(abortableMessageId);
-                      }}
-                      className="lb-ai-composer-action"
-                      variant="secondary"
-                      aria-label={$.AI_COMPOSER_ABORT}
-                      icon={<StopIcon />}
-                    />
-                  </ShortcutTooltip>
-                )}
+                <AiComposerAction overrides={overrides} />
               </div>
             </div>
           </div>

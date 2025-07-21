@@ -271,7 +271,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
-            onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
+            onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
             className={cn(
               "lb-ai-chat-composer",
               layout === "inset"
