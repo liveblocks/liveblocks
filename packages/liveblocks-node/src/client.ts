@@ -72,7 +72,6 @@ import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { Session } from "./Session";
 import {
-  assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
   getBaseUrl,
@@ -130,8 +129,8 @@ export type AuthResponse = {
 
 type Identity = {
   userId: string;
-  tenantId: string;
   groupIds: string[];
+  tenantId?: string;
 };
 
 export type ThreadParticipants = {
