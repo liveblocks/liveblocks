@@ -927,6 +927,13 @@ to update the property.
     Whether to show the composer’s formatting controls.
   </PropertiesListItem>
   <PropertiesListItem
+    name="blurComposerOnSubmit"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to blur the composer editor when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showResolveAction"
     type="boolean"
     defaultValue="true"
@@ -1170,6 +1177,9 @@ Learn more about mutation hooks under
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
   >
     The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="blurOnSubmit" type="boolean" defaultValue="true">
+    Whether to blur the composer editor when the composer is submitted.
   </PropertiesListItem>
   <PropertiesListItem name="defaultValue" type="CommentBody">
     The composer’s initial value.
@@ -1570,6 +1580,9 @@ occurs when the composer is submitted. You must create your own mutations within
     uploaded via this composer, but not submitted yet. If you want to prevent
     unsaved changes with Liveblocks, but not for this composer, you can opt-out
     this composer instance by setting this prop to `false`.
+  </PropertiesListItem>
+  <PropertiesListItem name="blurOnSubmit" type="boolean" defaultValue="true">
+    Whether to blur the editor when the form is submitted.
   </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"

@@ -6,6 +6,9 @@
 
 - Expose Markdown components in `AiChat`’s `components` prop to customize the
   rendering of Markdown content.
+- Add `blurOnSubmit` prop to `Composer` (also available on the `Composer.Form`
+  primitive and as `blurComposerOnSubmit` on `Thread`) to control whether a
+  composer should lose focus after being submitted.
 
 ## v3.1.4
 
