@@ -4,6 +4,8 @@
 
 ### `@liveblocks/react-ui`
 
+- Improve `AiChat`'s scroll behavior when sending new messages: the chat will
+  now scroll new messages to the top and leave enough space for responses.
 - Expose Markdown components in `AiChat`’s `components` prop to customize the
   rendering of Markdown content.
 - Add `blurOnSubmit` prop to `Composer` (also available on the `Composer.Form`

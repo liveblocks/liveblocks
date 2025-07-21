@@ -2504,6 +2504,7 @@
   flex-direction: column;
   gap: var(--lb-spacing);
   color: var(--lb-foreground);
+  scroll-margin-block-start: calc(1.5 * var(--lb-spacing));
 }
 
 .lb-ai-chat-user-message {
@@ -2580,7 +2581,7 @@
 .lb-ai-chat-messages {
   display: flex;
   flex-direction: column;
-  gap: var(--lb-spacing);
+  gap: calc(1.5 * var(--lb-spacing));
   inline-size: 100%;
   max-inline-size: min(
     calc(var(--lb-ai-chat-container-width) - var(--lb-spacing)),
