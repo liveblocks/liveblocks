@@ -61,6 +61,16 @@ type UiChatMessage = WithNavigation<AiChatMessage>;
 
 const emptyMessagesΣ = new Signal<UiChatMessage[]>([]);
 
+function getLastMessageId(messages: UiChatMessage[]) {
+  const lastMessage = messages[messages.length - 1];
+
+  if (lastMessage === undefined) {
+    return null;
+  }
+
+  return lastMessage.id;
+}
+
 function getAbortableMessageId(messages: UiChatMessage[]) {
   return messages.find(
     (message) =>
@@ -102,6 +112,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     const messagesΣ = chatId
       ? client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId)
       : emptyMessagesΣ;
+    const lastMessageId = useSignal(messagesΣ, getLastMessageId);
     const abortableMessageId = useSignal(messagesΣ, getAbortableMessageId);
 
     const isDisabled = isSubmitting || disabled === true;
@@ -164,7 +175,10 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           })
           .join("\n");
 
-        const promise = onComposerSubmit({ text: content }, event);
+        const promise = onComposerSubmit(
+          { text: content, lastMessageId },
+          event
+        );
 
         event.preventDefault();
 
@@ -175,7 +189,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           onSubmitEnd();
         }
       },
-      [disabled, editor, onSubmit, onComposerSubmit, onSubmitEnd]
+      [disabled, editor, onSubmit, onComposerSubmit, onSubmitEnd, lastMessageId]
     );
 
     useLayoutEffect(() => {

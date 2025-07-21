@@ -8,6 +8,12 @@ export interface AiComposerSubmitMessage {
    * The submitted message text.
    */
   text: string;
+
+  /**
+   * @internal
+   * The ID of the last message in the chat.
+   */
+  lastMessageId: MessageId | null;
 }
 
 export interface AiComposerFormProps extends ComponentPropsWithSlot<"form"> {

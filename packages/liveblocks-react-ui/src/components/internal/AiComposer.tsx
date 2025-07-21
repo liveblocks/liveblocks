@@ -1,5 +1,5 @@
-import type { CopilotId, MessageId } from "@liveblocks/core";
-import { useSendAiMessage } from "@liveblocks/react";
+import { type CopilotId, kInternal, type MessageId } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
 import {
   type ComponentProps,
   type FormEvent,
@@ -149,16 +149,13 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
       branchId,
       copilotId,
       stream = true,
-      // onComposerSubmitted,
+      onComposerSubmitted,
       ...props
     },
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const sendAiMessage = useSendAiMessage(chatId, {
-      copilotId,
-      stream,
-    });
+    const client = useClient();
 
     const handleComposerSubmit = useCallback(
       (message: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => {
@@ -166,11 +163,42 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
 
         if (event.isDefaultPrevented()) return;
 
-        sendAiMessage(message.text);
+        const content = [{ type: "text" as const, text: message.text }];
 
-        // onComposerSubmitted?.({ id: newMessageId });
+        const newMessageId = client[kInternal].ai[
+          kInternal
+        ].context.messagesStore.createOptimistically(
+          chatId,
+          "user",
+          message.lastMessageId ?? null,
+          content
+        );
+
+        onComposerSubmitted?.({ id: newMessageId });
+
+        const targetMessageId = client[kInternal].ai[
+          kInternal
+        ].context.messagesStore.createOptimistically(
+          chatId,
+          "assistant",
+          newMessageId
+        );
+
+        client[kInternal].ai.askUserMessageInChat(
+          chatId,
+          {
+            id: newMessageId,
+            parentMessageId: message.lastMessageId ?? null,
+            content,
+          },
+          targetMessageId,
+          {
+            stream,
+            copilotId,
+          }
+        );
       },
-      [onComposerSubmit, sendAiMessage]
+      [onComposerSubmit, chatId, client, copilotId, stream, onComposerSubmitted]
     );
 
     return (
