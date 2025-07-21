@@ -7,6 +7,14 @@
 - Expose Markdown components in `AiChat`’s `components` prop to customize the
   rendering of Markdown content.
 
+## v3.1.4
+
+### `@liveblocks/react-ui`
+
+- Fix copilot id not being passed to 'set-tool-call-result' command that is
+  dispatched when a tool call is responded to. Previously, we were using the
+  default copilot to generate messages from the tool call result.
+
 ## v3.1.3
 
 ### `@liveblocks/react-ui`
