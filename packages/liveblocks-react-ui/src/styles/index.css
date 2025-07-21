@@ -2660,11 +2660,11 @@
       content: "";
       position: absolute;
       inset: 0;
-      inset-block-start: calc(-3 * var(--lb-spacing));
+      inset-block-start: 0;
       background: linear-gradient(
         to bottom,
         transparent 0%,
-        var(--lb-background) calc(3.5 * var(--lb-spacing))
+        var(--lb-background) var(--lb-spacing)
       );
       pointer-events: none;
     }
