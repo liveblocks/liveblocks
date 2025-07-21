@@ -132,7 +132,7 @@ interface AiChatMessagesProps extends ComponentProps<"div"> {
   containerRef: MutableRefObject<HTMLDivElement | null>;
   footerRef: MutableRefObject<HTMLDivElement | null>;
   messagesRef: MutableRefObject<HTMLDivElement | null>;
-  scrollBottomRef: MutableRefObject<HTMLDivElement | null>;
+  bottomTrailingMarkerRef: MutableRefObject<HTMLDivElement | null>;
   trailingSpacerRef: MutableRefObject<HTMLDivElement | null>;
 }
 
@@ -157,7 +157,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
       containerRef,
       footerRef,
       messagesRef,
-      scrollBottomRef,
+      bottomTrailingMarkerRef,
       trailingSpacerRef,
       className,
       ...props
@@ -224,7 +224,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
         }
 
         const trailingSpacer = trailingSpacerRef.current;
-        const scrollBottom = scrollBottomRef.current;
+        const bottomTrailingMarker = bottomTrailingMarkerRef.current;
 
         let containerHeight: number | null = null;
         let footerHeight: number | null = null;
@@ -232,11 +232,11 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
 
         const resetTrailingSpace = () => {
           trailingSpacer?.style.removeProperty("height");
-          scrollBottom?.style.removeProperty("top");
+          bottomTrailingMarker?.style.removeProperty("top");
         };
 
         const resizeObserver = new ResizeObserver((entries) => {
-          if (!trailingSpacer || !scrollBottom) {
+          if (!trailingSpacer || !bottomTrailingMarker) {
             return;
           }
 
@@ -322,7 +322,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
 
           // Offset what "the bottom" is to the "scroll at the bottom" detection logic,
           // so that it doesn't include the trailing space.
-          scrollBottom.style.top = `${-trailingSpace}px`;
+          bottomTrailingMarker.style.top = `${-trailingSpace}px`;
         });
 
         resizeObserver.observe(container);
@@ -342,7 +342,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
      * Update the "scroll at bottom" state when needed.
      */
     useIntersectionCallback(
-      scrollBottomRef,
+      bottomTrailingMarkerRef,
       (isIntersecting) => {
         onScrollAtBottomChange.current(isIntersecting);
       },
@@ -424,7 +424,8 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
     const containerRef = useRef<HTMLDivElement | null>(null);
     const messagesRef = useRef<HTMLDivElement | null>(null);
     const footerRef = useRef<HTMLDivElement | null>(null);
-    const scrollBottomRef = useRef<HTMLDivElement | null>(null);
+    const bottomMarkerRef = useRef<HTMLDivElement | null>(null);
+    const bottomTrailingMarkerRef = useRef<HTMLDivElement | null>(null);
     const trailingSpacerRef = useRef<HTMLDivElement | null>(null);
 
     const [isScrollAtBottom, setScrollAtBottom] = useState<boolean | null>(
@@ -443,30 +444,22 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
 
     const scrollToBottom = useLatest(
       (behavior: "instant" | "smooth", includeTrailingSpace = false) => {
-        const container = containerRef.current;
-
-        if (!container) {
-          return;
-        }
-
         if (includeTrailingSpace) {
-          // Scroll all the way to include the trailing space,
+          // Scroll to the bottom marker to include the trailing space,
           // and wait for a frame in case the trailing space hasn't
           // been updated yet. (e.g. when sending a new message)
           requestAnimationFrame(() => {
-            container.scrollTo({
-              top: container.scrollHeight,
+            bottomMarkerRef.current?.scrollIntoView({
               behavior,
+              block: "end",
             });
           });
         } else {
-          const messagesHeight = messagesRef.current?.offsetHeight ?? 0;
-          const footerHeight = footerRef?.current?.offsetHeight ?? 0;
-
-          // Scroll to the bottom of the messages to exclude the trailing space.
-          container.scrollTo({
-            top: messagesHeight + footerHeight - container.clientHeight,
+          // Scroll to the trailing space marker to only scroll to the
+          // bottom of the messages, without including the trailing space.
+          bottomTrailingMarkerRef.current?.scrollIntoView({
             behavior,
+            block: "end",
           });
         }
       }
@@ -521,7 +514,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
                 containerRef={containerRef}
                 footerRef={footerRef}
                 messagesRef={messagesRef}
-                scrollBottomRef={scrollBottomRef}
+                bottomTrailingMarkerRef={bottomTrailingMarkerRef}
                 trailingSpacerRef={trailingSpacerRef}
               />
 
@@ -575,7 +568,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         </div>
 
         {/**
-         * This invisible element is a trick which allows us to use IntersectionObserver to detect when the
+         * This invisible marker is a trick which allows us to use IntersectionObserver to detect when the
          * scrollable area is fully scrolled to the bottom instead of manually tracking the scroll position
          * and having to deal with resizes, etc.
          *
@@ -584,20 +577,22 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
          */}
         {messages && messages.length > 0 ? (
           <div
+            ref={bottomMarkerRef}
             style={{ position: "sticky", height: 0 }}
             aria-hidden
-            data-scroll-bottom={isScrollAtBottom}
+            data-bottom-marker=""
           >
             {/**
-             * This inner element is the actual observed element, it's absolutely positioned which allows us to
-             * control what "the bottom" is to the IntersectionObserver without changing the layout.
+             * This inner marker is absolutely offset by the same distance as the trailing space so its
+             * visibility means the scrollable area is at the bottom of the messages, not the full bottom.
              */}
             <div
-              ref={scrollBottomRef}
+              ref={bottomTrailingMarkerRef}
               style={{
                 position: "absolute",
                 height: 0,
               }}
+              data-bottom-trailing-marker=""
             />
           </div>
         ) : null}
