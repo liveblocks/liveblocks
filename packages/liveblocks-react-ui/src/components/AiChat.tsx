@@ -31,6 +31,7 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../overrides";
+import type { MarkdownComponents } from "../primitives/Markdown";
 import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
@@ -57,7 +58,6 @@ export type AiChatComponentsEmptyProps = {
 
 export type AiChatComponentsLoadingProps = Record<string, never>;
 
-// TODO: Add Markdown components
 export type AiChatComponents = {
   /**
    * The component used to render the empty state of the chat.
@@ -68,6 +68,11 @@ export type AiChatComponents = {
    * The component used to render the loading state of the chat.
    */
   Loading: ComponentType<AiChatComponentsLoadingProps>;
+
+  /**
+   * The components used to render Markdown content.
+   */
+  markdown?: Partial<MarkdownComponents>;
 };
 
 export interface AiChatProps extends ComponentProps<"div"> {
@@ -120,6 +125,7 @@ export interface AiChatProps extends ComponentProps<"div"> {
 
 interface AiChatMessagesProps extends ComponentProps<"div"> {
   messages: NonNullable<ReturnType<typeof useAiChatMessages>["messages"]>;
+  copilotId: AiChatProps["copilotId"];
   overrides: AiChatProps["overrides"];
   components: AiChatProps["components"];
   lastSentMessageId: MessageId | null;
@@ -149,6 +155,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
   (
     {
       messages,
+      copilotId,
       overrides,
       components,
       lastSentMessageId,
@@ -392,6 +399,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 message={message}
                 overrides={overrides}
                 components={components}
+                copilotId={copilotId}
               />
             );
           } else {
@@ -511,6 +519,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <>
               <AiChatMessages
                 ref={messagesRef}
+                copilotId={copilotId}
                 messages={messages}
                 overrides={overrides}
                 components={components}
