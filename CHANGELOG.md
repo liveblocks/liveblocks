@@ -12,6 +12,12 @@
   primitive and as `blurComposerOnSubmit` on `Thread`) to control whether a
   composer should lose focus after being submitted.
 
+### `@liveblocks/react`
+
+- `useErrorListener` now receives `"LARGE_MESSAGE_ERROR"` errors when the
+  `largeMessageStrategy` option isn’t configured and a message couldn’t be sent
+  because it was too large for WebSocket.
+
 ## v3.1.4
 
 ### `@liveblocks/react-ui`
