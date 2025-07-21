@@ -797,6 +797,10 @@
   :where(:first-child) {
     @include capitalize;
   }
+
+  :where(.lb-name) {
+    display: contents;
+  }
 }
 
 /*************************************
