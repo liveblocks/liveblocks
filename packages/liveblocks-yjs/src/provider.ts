@@ -35,7 +35,7 @@ export class LiveblocksYjsProvider
 
   public readonly awareness: Awareness;
 
-  private readonly rootDocHandler: yDocHandler;
+  public readonly rootDocHandler: yDocHandler;
   private readonly subdocHandlersΣ = new MutableSignal<
     Map<string, yDocHandler>
   >(new Map());
@@ -324,5 +324,18 @@ export class LiveblocksYjsProvider
 
   connect(): void {
     // This is a noop for liveblocks as connections are managed by the room
+  }
+
+  get subdocHandlers(): Map<string, yDocHandler> {
+    return this.subdocHandlersΣ.get();
+  }
+
+  set subdocHandlers(value: Map<string, yDocHandler>) {
+    this.subdocHandlersΣ.mutate((map) => {
+      map.clear();
+      for (const [key, handler] of value) {
+        map.set(key, handler);
+      }
+    });
   }
 }
