@@ -1733,8 +1733,16 @@ export function createRoom<
     // If message is too big for WebSockets, we need to follow a strategy
     switch (strategy) {
       case "default": {
-        console.error("Message is too large for websockets, not sending. Configure largeMessageStrategy option to deal with this."); // prettier-ignore
-        // Don't send the message
+        const type = "LARGE_MESSAGE_ERROR";
+        const err = new LiveblocksError("Message is too large for websockets", {
+          type,
+        });
+        const didNotify = config.errorEventSource.notify(err);
+        if (!didNotify) {
+          console.error(
+            "Message is too large for websockets.  Configure largeMessageStrategy option or useErrorListener to handle this."
+          );
+        }
         return;
       }
 
