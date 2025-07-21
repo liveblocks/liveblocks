@@ -380,6 +380,39 @@ function Chat() {
 }
 ```
 
+##### Customize how Markdown is rendered [#AiChat-markdown]
+
+You can customize how Markdown is rendered in messages by passing components to
+the `components` prop. A full list is [available here](#AiChat-components).
+
+```tsx
+<AiChat
+  chatId="my-chat-id"
+  components={{
+    // +++
+    markdown: {
+      // Example: Use custom paragraph styles
+      Paragraph: ({ children }) => <p className="my-3">{children}</p>,
+
+      // Example: Use an existing component for quotes
+      Blockquote: ({ children }) => <MyQuote>{children}</MyQuote>,
+
+      // Example: Use `next/link` instead of default `<a>` tag
+      Link: ({ children, href }) => <Link href={href || ""}>{children}</Link>,
+
+      // Example: Use an external library to add syntax highlighting to code blocks
+      CodeBlock: ({ language, code }) => (
+        <SyntaxHighlighter language={language}>{code}</SyntaxHighlighter>
+      ),
+
+      // `Heading`, `Inline`, `List`, `Table`, `Image`, `Separator`, etc.
+      // ...
+    },
+    // +++
+  }}
+/>
+```
+
 ##### Props [#AiChat-props]
 
 <PropertiesList>
@@ -414,7 +447,7 @@ function Chat() {
   </PropertiesListItem>
   <PropertiesListItem name="components" type="AiChatComponents">
     Custom components to override specific parts of the chat UI, such as the
-    `Empty` placeholder component.
+    `Empty` placeholder component or Markdown components.
   </PropertiesListItem>
   <PropertiesListItem name="className" type="string">
     CSS class name to apply to the chat container.
@@ -422,6 +455,85 @@ function Chat() {
   <PropertiesListItem name="style" type="CSSProperties">
     Inline styles to apply to the chat container. Useful for setting CSS custom
     properties.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### components [#AiChat-components]
+
+Override specific parts of `AiChat` with custom components.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="Empty"
+    type="({ chatId: string, copilotId?: string }) => ReactNode"
+  >
+    The component used to render the empty state of the chat. Defaults to
+    nothing.
+  </PropertiesListItem>
+  <PropertiesListItem name="Loading" type="() => ReactNode">
+    The component used to render the loading state of the chat. Defaults to a
+    loading spinner.
+  </PropertiesListItem>
+  <PropertiesListItem name="markdown" type="Partial<MarkdownComponents>">
+    The components used to render Markdown content.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Paragraph"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The component used to render paragraphs.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Inline"
+    detailedType={`({ type: "strong" | "em" | "code" | "del", children: ReactNode }) => ReactNode`}
+  >
+    The component used to render inline elements (bold, italic, strikethrough,
+    and inline code).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Link"
+    type={`({ href: string, title?: string, children: ReactNode }) => ReactNode`}
+  >
+    The component used to render links.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Heading"
+    type={`({ level: 1 | 2 | 3 | 4 | 5 | 6, children: ReactNode }) => ReactNode`}
+  >
+    The component used to render headings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Blockquote"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The component used to render blockquotes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.CodeBlock"
+    type={`({ code: string, language?: string }) => ReactNode`}
+  >
+    The component used to render code blocks.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Image"
+    type={`({ src: string, alt: string, title?: string }) => ReactNode`}
+  >
+    The component used to render images.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.List"
+    detailedType={`({ type: "ordered" | "unordered", items: { checked?: boolean, children: ReactNode }[] }) => ReactNode`}
+  >
+    The component used to render lists.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Table"
+    detailedType={`({ headings: { align?: "left" | "center" | "right"; children: ReactNode }[], rows: { align?: "left" | "center" | "right"; children: ReactNode }[] }) => ReactNode`}
+  >
+    The component used to render tables.
+  </PropertiesListItem>
+  <PropertiesListItem name="markdown.Separator" type="() => ReactNode">
+    The component used to render separators.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2614,6 +2726,13 @@ Override specific kinds of inbox notifications.
     `InboxNotification.Thread`.
   </PropertiesListItem>
   <PropertiesListItem
+    name="textMention"
+    type="ComponentType<InboxNotificationTextMentionKindProps>"
+  >
+    The component used to display text mention notifications. Defaults to
+    `InboxNotification.TextMention`.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="$${string}"
     type="ComponentType<InboxNotificationCustomKindProps>"
   >
@@ -2748,7 +2867,8 @@ Displays a custom notification kind.
 
 ###### InboxNotification.Inspector [#InboxNotification.Inspector]
 
-Displays the inbox notification’s data in a JSON code snippet. Useful when debugging notifications in your app.
+Displays the inbox notification’s data in a JSON code snippet. Useful when
+debugging notifications in your app.
 
 ```tsx
 <InboxNotification
