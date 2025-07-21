@@ -18,6 +18,27 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 29 (2025-07-18)
+
+## v3.1.3
+
+### `@liveblocks/react-ui`
+
+- Fix `AiChat` component not scrolling instantly to the bottom on render when
+  messages are already loaded.
+
+## Dashboard
+
+- Added the ability to use website crawls and sitemaps as knowledge sources for your AI copilot.
+
+## Website
+
+- New blog post: [What’s new in Liveblocks: June 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-june-edition-2025).
+
+## Contributors
+
+nimeshnayaju, ctnicholas
+
 # Week 28 (2025-07-11)
 
 ## v3.1.2
