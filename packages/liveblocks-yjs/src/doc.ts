@@ -1,3 +1,4 @@
+import { DerivedSignal, Signal } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
@@ -11,6 +12,12 @@ export default class yDocHandler extends Observable<unknown> {
   private updateRoomDoc: (update: Uint8Array) => void;
   private fetchRoomDoc: (vector: string) => void;
   private useV2Encoding: boolean;
+  private localSnapshotΣ: Signal<Y.Snapshot>;
+  private remoteSnapshotΣ: Signal<Y.Snapshot | null>;
+
+  public readonly syncStatusSignalΣ: DerivedSignal<
+    "loading" | "synchronized" | "synchronizing"
+  >;
 
   constructor({
     doc,
@@ -38,6 +45,21 @@ export default class yDocHandler extends Observable<unknown> {
     };
 
     this.syncDoc();
+
+    this.localSnapshotΣ = new Signal<Y.Snapshot>(Y.snapshot(doc));
+    this.remoteSnapshotΣ = new Signal<Y.Snapshot | null>(null);
+
+    this.syncStatusSignalΣ = DerivedSignal.from(
+      this.localSnapshotΣ,
+      this.remoteSnapshotΣ,
+      (localSnapshot, remoteSnapshot) => {
+        if (remoteSnapshot === null) {
+          return "loading";
+        }
+        const isEqual = Y.equalSnapshots(localSnapshot, remoteSnapshot);
+        return isEqual ? "synchronized" : "synchronizing";
+      }
+    );
   }
 
   public handleServerUpdate = ({
@@ -45,12 +67,20 @@ export default class yDocHandler extends Observable<unknown> {
     stateVector,
     readOnly,
     v2,
+    remoteSnapshot: _remoteSnapshot,
   }: {
     update: Uint8Array;
     stateVector: string | null;
     readOnly: boolean;
     v2?: boolean;
+    remoteSnapshot: Uint8Array;
   }): void => {
+    this.remoteSnapshotΣ.set(
+      v2
+        ? Y.decodeSnapshotV2(_remoteSnapshot)
+        : Y.decodeSnapshot(_remoteSnapshot)
+    );
+
     // apply update from the server, updates from the server can be v1 or v2
     const applyUpdate = v2 ? Y.applyUpdateV2 : Y.applyUpdate;
     applyUpdate(this.doc, update, "backend");
@@ -105,6 +135,8 @@ export default class yDocHandler extends Observable<unknown> {
     update: Uint8Array,
     origin: string | IndexeddbPersistence
   ) => {
+    this.localSnapshotΣ.set(Y.snapshot(this.doc));
+
     // don't send updates from indexedb, those will get handled by sync
     const isFromLocal = origin instanceof IndexeddbPersistence;
     if (origin !== "backend" && !isFromLocal) {

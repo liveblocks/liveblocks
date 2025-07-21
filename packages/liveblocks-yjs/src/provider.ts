@@ -1,9 +1,15 @@
-import type { IYjsProvider, OpaqueRoom, YjsSyncStatus } from "@liveblocks/core";
-import { ClientMsgCode, kInternal } from "@liveblocks/core";
+import {
+  DerivedSignal,
+  type IYjsProvider,
+  type OpaqueRoom,
+  type YjsSyncStatus,
+} from "@liveblocks/core";
+import { ClientMsgCode, kInternal, MutableSignal } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
-import { type Doc, parseUpdateMeta, PermanentUserData } from "yjs";
+import type { Doc } from "yjs";
+import { parseUpdateMeta, PermanentUserData } from "yjs";
 
 import { Awareness } from "./awareness";
 import yDocHandler from "./doc";
@@ -29,8 +35,11 @@ export class LiveblocksYjsProvider
 
   public readonly awareness: Awareness;
 
-  public readonly rootDocHandler: yDocHandler;
-  public readonly subdocHandlers: Map<string, yDocHandler> = new Map();
+  private readonly rootDocHandler: yDocHandler;
+  private readonly subdocHandlersΣ = new MutableSignal<
+    Map<string, yDocHandler>
+  >(new Map());
+  private readonly overallSyncStatusΣ: DerivedSignal<YjsSyncStatus>;
 
   public readonly permanentUserData?: PermanentUserData;
 
@@ -66,7 +75,6 @@ export class LiveblocksYjsProvider
         } else {
           this.rootDocHandler.synced = false;
         }
-        this.emit("status", [this.getStatus()]);
       })
     );
 
@@ -77,7 +85,13 @@ export class LiveblocksYjsProvider
           // don't apply updates that came from the client
           return;
         }
-        const { stateVector, update: updateStr, guid, v2 } = message;
+        const {
+          stateVector,
+          update: updateStr,
+          guid,
+          v2,
+          remoteSnapshot,
+        } = message;
         const canWrite = this.room.getSelf()?.canWrite ?? true;
         const update = Base64.toUint8Array(updateStr);
         const updateId = this.getUniqueUpdateId(update);
@@ -89,22 +103,25 @@ export class LiveblocksYjsProvider
         });
         // find the right doc and update
         if (guid !== undefined) {
-          this.subdocHandlers.get(guid)?.handleServerUpdate({
-            update,
-            stateVector,
-            readOnly: !canWrite,
-            v2,
-          });
+          this.subdocHandlersΣ
+            .get()
+            .get(guid)
+            ?.handleServerUpdate({
+              update,
+              stateVector,
+              readOnly: !canWrite,
+              v2,
+              remoteSnapshot: Base64.toUint8Array(remoteSnapshot),
+            });
         } else {
           this.rootDocHandler.handleServerUpdate({
             update,
             stateVector,
             readOnly: !canWrite,
             v2,
+            remoteSnapshot: Base64.toUint8Array(remoteSnapshot),
           });
         }
-        // notify any listeners that the status has changed
-        this.emit("status", [this.getStatus()]);
       })
     );
 
@@ -115,15 +132,42 @@ export class LiveblocksYjsProvider
     // different consumers listen to sync and synced
     this.rootDocHandler.on("synced", () => {
       const state = this.rootDocHandler.synced;
-      for (const [_, handler] of this.subdocHandlers) {
+      for (const [_, handler] of this.subdocHandlersΣ.get()) {
         handler.syncDoc();
       }
       this.emit("synced", [state]);
       this.emit("sync", [state]);
-      this.emit("status", [this.getStatus()]);
     });
     this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
+
+    this.overallSyncStatusΣ = DerivedSignal.from(() => {
+      // 1. If the root document is loading, the overall status is also "loading".
+      // 2. If the root document is synchronizing, the overall status is "synchronizing".
+      // 3. If the root document is synchronized, we check the status of the subdocuments.
+      //    If all subdocuments are synchronized, the overall status is "synchronized".
+      //    Otherwise, the overall status is "synchronizing".
+      const rootDocStatus = this.rootDocHandler.syncStatusSignalΣ.get();
+      if (rootDocStatus === "loading") {
+        return "loading";
+      }
+      if (rootDocStatus === "synchronizing") {
+        return "synchronizing";
+      }
+
+      // If the root document is synchronized, we check the status of the subdocuments and if all subdocuments are synchronized, we return "synchronized".
+      const subdocStatuses = Array.from(
+        this.subdocHandlersΣ.get().values()
+      ).map((handler) => handler.syncStatusSignalΣ.get());
+      const allSubdocsSynchronized = subdocStatuses.every(
+        (status) => status === "synchronized"
+      );
+      return allSubdocsSynchronized ? "synchronized" : "synchronizing";
+    });
+
+    this.overallSyncStatusΣ.subscribe(() => {
+      this.emit("status", [this.overallSyncStatusΣ.get()]);
+    });
   }
 
   private setupOfflineSupport = () => {
@@ -151,17 +195,18 @@ export class LiveblocksYjsProvider
     added: Set<Doc>;
   }) => {
     loaded.forEach(this.createSubdocHandler);
+    const subdocHandlers = this.subdocHandlersΣ.get();
     if (this.options.autoloadSubdocs) {
       for (const subdoc of added) {
-        if (!this.subdocHandlers.has(subdoc.guid)) {
+        if (!subdocHandlers.has(subdoc.guid)) {
           subdoc.load();
         }
       }
     }
     for (const subdoc of removed) {
-      if (this.subdocHandlers.has(subdoc.guid)) {
-        this.subdocHandlers.get(subdoc.guid)?.destroy();
-        this.subdocHandlers.delete(subdoc.guid);
+      if (subdocHandlers.has(subdoc.guid)) {
+        subdocHandlers.get(subdoc.guid)?.destroy();
+        subdocHandlers.delete(subdoc.guid);
       }
     }
   };
@@ -181,7 +226,6 @@ export class LiveblocksYjsProvider
         guid,
         this.useV2Encoding
       );
-      this.emit("status", [this.getStatus()]);
     }
   };
 
@@ -190,9 +234,10 @@ export class LiveblocksYjsProvider
   };
 
   private createSubdocHandler = (subdoc: Doc): void => {
-    if (this.subdocHandlers.has(subdoc.guid)) {
+    const subdocHandlers = this.subdocHandlersΣ.get();
+    if (subdocHandlers.has(subdoc.guid)) {
       // if we already handle this subdoc, just fetch it again
-      this.subdocHandlers.get(subdoc.guid)?.syncDoc();
+      subdocHandlers.get(subdoc.guid)?.syncDoc();
       return;
     }
     const handler = new yDocHandler({
@@ -202,7 +247,7 @@ export class LiveblocksYjsProvider
       fetchDoc: this.fetchDoc,
       useV2Encoding: this.options.useV2Encoding_experimental ?? false,
     });
-    this.subdocHandlers.set(subdoc.guid, handler);
+    subdocHandlers.set(subdoc.guid, handler);
   };
 
   // attempt to load a subdoc of a given guid
@@ -219,7 +264,7 @@ export class LiveblocksYjsProvider
 
   private syncDoc = () => {
     this.rootDocHandler.syncDoc();
-    for (const [_, handler] of this.subdocHandlers) {
+    for (const [_, handler] of this.subdocHandlersΣ.get()) {
       handler.syncDoc();
     }
   };
@@ -248,10 +293,7 @@ export class LiveblocksYjsProvider
   }
 
   public getStatus(): YjsSyncStatus {
-    if (!this.synced) {
-      return "loading";
-    }
-    return this.pending.length === 0 ? "synchronized" : "synchronizing";
+    return this.overallSyncStatusΣ.get();
   }
 
   destroy(): void {
@@ -259,10 +301,10 @@ export class LiveblocksYjsProvider
     this.awareness.destroy();
     this.rootDocHandler.destroy();
     this._observers = new Map();
-    for (const [_, handler] of this.subdocHandlers) {
+    for (const [_, handler] of this.subdocHandlersΣ.get()) {
       handler.destroy();
     }
-    this.subdocHandlers.clear();
+    this.subdocHandlersΣ.get().clear();
     super.destroy();
   }
 
