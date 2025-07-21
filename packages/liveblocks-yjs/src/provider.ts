@@ -9,7 +9,7 @@ import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
 import type { Doc } from "yjs";
-import { parseUpdateMeta, PermanentUserData } from "yjs";
+import { PermanentUserData } from "yjs";
 
 import { Awareness } from "./awareness";
 import yDocHandler from "./doc";
@@ -42,8 +42,6 @@ export class LiveblocksYjsProvider
   private readonly overallSyncStatusΣ: DerivedSignal<YjsSyncStatus>;
 
   public readonly permanentUserData?: PermanentUserData;
-
-  private pending: string[] = [];
 
   constructor(room: OpaqueRoom, doc: Doc, options: ProviderOptions = {}) {
     super();
@@ -94,13 +92,7 @@ export class LiveblocksYjsProvider
         } = message;
         const canWrite = this.room.getSelf()?.canWrite ?? true;
         const update = Base64.toUint8Array(updateStr);
-        const updateId = this.getUniqueUpdateId(update);
-        this.pending = this.pending.filter((pendingUpdate) => {
-          if (pendingUpdate === updateId) {
-            return false;
-          }
-          return true;
-        });
+
         // find the right doc and update
         if (guid !== undefined) {
           this.subdocHandlersΣ
@@ -211,16 +203,9 @@ export class LiveblocksYjsProvider
     }
   };
 
-  private getUniqueUpdateId = (update: Uint8Array) => {
-    const clock = parseUpdateMeta(update).to.get(this.rootDoc.clientID) ?? "-1";
-    return this.rootDoc.clientID + ":" + clock;
-  };
-
   private updateDoc = (update: Uint8Array, guid?: string) => {
     const canWrite = this.room.getSelf()?.canWrite ?? true;
     if (canWrite && !this.isPaused) {
-      const updateId = this.getUniqueUpdateId(update);
-      this.pending.push(updateId);
       this.room.updateYDoc(
         Base64.fromUint8Array(update),
         guid,
