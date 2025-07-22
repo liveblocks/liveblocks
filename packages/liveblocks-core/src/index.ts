@@ -63,6 +63,7 @@ export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToGroupData,
   convertToInboxNotificationData,
   convertToSubscriptionData,
   convertToThreadData,
@@ -229,7 +230,12 @@ export type {
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
-export type { GroupSummary } from "./protocol/Groups";
+export type {
+  GroupData,
+  GroupDataPlain,
+  GroupMemberData,
+  GroupSummary,
+} from "./protocol/Groups";
 export type {
   ActivityData,
   InboxNotificationCustomData,
