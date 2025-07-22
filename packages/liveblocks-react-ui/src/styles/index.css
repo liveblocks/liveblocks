@@ -626,6 +626,18 @@
     > :where(ol, ul) {
       margin-block-start: 0.25em;
     }
+
+    > :where(p) {
+      margin-block: 0.25em;
+    }
+
+    > :where(p:first-child) {
+      margin-block-start: 0;
+    }
+
+    > :where(p:last-child) {
+      margin-block-end: 0;
+    }
   }
 
   :where(a) {
@@ -2490,6 +2502,7 @@
   flex-direction: column;
   gap: var(--lb-spacing);
   color: var(--lb-foreground);
+  scroll-margin-block-start: calc(1.5 * var(--lb-spacing));
 }
 
 .lb-ai-chat-user-message {
@@ -2566,7 +2579,7 @@
 .lb-ai-chat-messages {
   display: flex;
   flex-direction: column;
-  gap: var(--lb-spacing);
+  gap: calc(1.5 * var(--lb-spacing));
   inline-size: 100%;
   max-inline-size: min(
     calc(var(--lb-ai-chat-container-width) - var(--lb-spacing)),

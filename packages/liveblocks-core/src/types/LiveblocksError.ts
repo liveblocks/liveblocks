@@ -16,6 +16,10 @@ type RoomConnectionErrorContext = {
   roomId: string;
 };
 
+type LargeMessageErrorContext = {
+  type: "LARGE_MESSAGE_ERROR";
+};
+
 // All possible errors originating from using Comments or Notifications
 type CommentsOrNotificationsErrorContext =
   | {
@@ -92,6 +96,7 @@ export type LiveblocksErrorContext = Relax<
   | RoomConnectionErrorContext // from Presence, Storage, or Yjs
   | CommentsOrNotificationsErrorContext // from Comments or Notifications or UserNotificationSettings
   | AiConnectionErrorContext // from AI
+  | LargeMessageErrorContext // whena  message is too large
 >;
 
 export class LiveblocksError extends Error {
@@ -166,6 +171,7 @@ function defaultMessageFromContext(context: LiveblocksErrorContext): string {
     case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR": return "Could not delete all inbox notifications";
     case "UPDATE_ROOM_SUBSCRIPTION_SETTINGS_ERROR": return "Could not update room subscription settings";
     case "UPDATE_NOTIFICATION_SETTINGS_ERROR": return "Could not update notification settings";
+    case "LARGE_MESSAGE_ERROR": return "Could not send large message";
 
     default:
       return assertNever(context, "Unhandled case");

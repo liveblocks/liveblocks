@@ -187,6 +187,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     autoFocus?: ComposerEditorProps["autoFocus"];
 
     /**
+     * Whether to blur the composer editor when the composer is submitted.
+     */
+    blurOnSubmit?: boolean;
+
+    /**
      * Override the component's strings.
      */
     overrides?: Partial<GlobalOverrides & ComposerOverrides>;
@@ -652,6 +657,7 @@ export const Composer = forwardRef(
       onFocus,
       autoFocus,
       disabled,
+      blurOnSubmit = true,
       showAttachments = true,
       showFormattingControls = true,
       showAttribution,
@@ -815,6 +821,7 @@ export const Composer = forwardRef(
           defaultAttachments={defaultAttachments}
           pasteFilesAsAttachments={showAttachments}
           preventUnsavedChanges={preventUnsavedComposerChanges}
+          blurOnSubmit={blurOnSubmit}
           roomId={roomId}
         >
           <ComposerEditorContainer

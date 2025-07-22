@@ -40,7 +40,11 @@ export type {
   MarkdownComponentsCodeBlockProps,
   MarkdownComponentsHeadingProps,
   MarkdownComponentsImageProps,
+  MarkdownComponentsInlineProps,
   MarkdownComponentsLinkProps,
+  MarkdownComponentsListProps,
+  MarkdownComponentsParagraphProps,
+  MarkdownComponentsTableProps,
   MarkdownProps,
 } from "../primitives/Markdown";
 export { Markdown } from "../primitives/Markdown";
