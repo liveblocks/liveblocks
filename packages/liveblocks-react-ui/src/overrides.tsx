@@ -19,6 +19,7 @@ export interface GlobalOverrides {
   LIST_REMAINING: (count: number) => string;
   LIST_REMAINING_USERS: (count: number) => string;
   LIST_REMAINING_COMMENTS: (count: number) => string;
+  GROUP_MEMBERS_DESCRIPTION: (count: number) => string;
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
   EMOJI_PICKER_EMPTY: ReactNode;
   EMOJI_PICKER_ERROR: (error: Error) => ReactNode;
@@ -141,6 +142,8 @@ export const defaultOverrides: Overrides = {
   LIST_REMAINING_USERS: (count) => `${count} ${pluralize(count, "other")}`,
   LIST_REMAINING_COMMENTS: (count) =>
     `${count} more ${pluralize(count, "comment")}`,
+  GROUP_MEMBERS_DESCRIPTION: (count: number) =>
+    `${count} ${pluralize(count, "member")}`,
   EMOJI_PICKER_SEARCH_PLACEHOLDER: "Search…",
   EMOJI_PICKER_EMPTY: "No emoji found.",
   EMOJI_PICKER_ERROR: () =>

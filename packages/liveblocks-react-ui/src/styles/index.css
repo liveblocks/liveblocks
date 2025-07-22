@@ -1094,7 +1094,8 @@
  *               Name                *
  *************************************/
 
-.lb-name {
+.lb-name,
+.lb-group-members {
   display: inline-block;
 
   &:where([data-loading]) {
@@ -1116,7 +1117,7 @@
  *              Loading              *
  *************************************/
 
-:is(.lb-avatar, .lb-name):where([data-loading]) {
+:is(.lb-avatar, .lb-name, .lb-group-members):where([data-loading]) {
   animation: lb-animation-shimmer 8s linear infinite;
 }
 
