@@ -271,9 +271,8 @@ function CommentGroupMention({
     <Tooltip
       content={
         <span
-          className={cn("lb-group-members", className)}
+          className="lb-group-members"
           data-loading={isLoadingSummary ? "" : undefined}
-          {...props}
         >
           {isLoadingSummary
             ? null
