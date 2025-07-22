@@ -5,6 +5,7 @@ import type {
   CommentAttachment,
   CommentMixedAttachment,
   DM,
+  GroupMentionData,
 } from "@liveblocks/core";
 import { assertNever, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
@@ -69,6 +70,7 @@ import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
+import { useGroupMentionSummary } from "../utils/use-group-mention";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
@@ -336,23 +338,88 @@ function ComposerAttachFilesEditorAction({
   );
 }
 
-function ComposerMention({ mention }: ComposerEditorMentionProps) {
+// function ComposerMention({ mention }: ComposerEditorMentionProps) {
+//   switch (mention.kind) {
+//     case "user":
+//       return (
+//         <ComposerPrimitive.Mention className="lb-composer-mention">
+//           {MENTION_CHARACTER}
+//           <User userId={mention.id} />
+//         </ComposerPrimitive.Mention>
+//       );
+
+//     case "group":
+//       return (
+//         <ComposerPrimitive.Mention className="lb-composer-mention">
+//           {MENTION_CHARACTER}
+//           <Group groupId={mention.id} />
+//         </ComposerPrimitive.Mention>
+//       );
+
+//     default:
+//       return assertNever(mention, "Unhandled mention kind");
+//   }
+// }
+
+interface ComposerMentionProps extends ComposerEditorMentionProps {
+  overrides?: ComposerProps["overrides"];
+}
+
+function ComposerUserMention({ mention }: ComposerMentionProps) {
+  return (
+    <ComposerPrimitive.Mention className="lb-composer-mention">
+      {MENTION_CHARACTER}
+      <User userId={mention.id} />
+    </ComposerPrimitive.Mention>
+  );
+}
+
+function ComposerGroupMention({ mention, overrides }: ComposerMentionProps) {
+  const $ = useOverrides(overrides);
+  const { summary, isLoading: isLoadingSummary } = useGroupMentionSummary(
+    mention as GroupMentionData
+  );
+
+  const content = (
+    <ComposerPrimitive.Mention
+      className="lb-composer-mention"
+      data-self={summary?.isMember ? "" : undefined}
+    >
+      {MENTION_CHARACTER}
+      <Group groupId={mention.id} />
+    </ComposerPrimitive.Mention>
+  );
+
+  // Don't display the tooltip if we won't have a summary.
+  if (!isLoadingSummary && summary?.totalMembers === undefined) {
+    return content;
+  }
+
+  return (
+    <Tooltip
+      content={
+        <span
+          className="lb-group-members"
+          data-loading={isLoadingSummary ? "" : undefined}
+        >
+          {isLoadingSummary
+            ? null
+            : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
+        </span>
+      }
+    >
+      {content}
+    </Tooltip>
+  );
+}
+
+export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
   switch (mention.kind) {
     case "user":
-      return (
-        <ComposerPrimitive.Mention className="lb-composer-mention">
-          {MENTION_CHARACTER}
-          <User userId={mention.id} />
-        </ComposerPrimitive.Mention>
-      );
+      return <ComposerUserMention mention={mention} {...props} />;
 
     case "group":
-      return (
-        <ComposerPrimitive.Mention className="lb-composer-mention">
-          {MENTION_CHARACTER}
-          <Group groupId={mention.id} />
-        </ComposerPrimitive.Mention>
-      );
+      return <ComposerGroupMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");
