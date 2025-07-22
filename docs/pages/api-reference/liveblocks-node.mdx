@@ -206,6 +206,7 @@ const { body, status } = await liveblocks.identifyUser(
   {
     userId: "marie@example.com", // Required, user ID from your DB
     groupIds: ["marketing", "engineering"],
+    tenantId: "acme-inc", // Optional, tenant ID for multi-tenant apps
   },
 
   // Optional
@@ -228,6 +229,11 @@ assigning group permissions.
 `groupIds` (optional) can be used to specify which groups this user belongs to.
 These are arbitrary identifiers that make sense to your app, and that you can
 refer to in the [Permissions REST API][] when assigning group permissions.
+
+`tenantId` (optional) can be used to specify which tenant this user belongs to
+in multi-tenant applications. A tenant ensures separation of data between
+different tenants, they are a sub-division of the project. If not provided,
+Liveblocks will use the `default` tenant.
 
 `userInfo` (optional) is any custom JSON value, which you can use to attach
 static metadata to this user’s session. This will be publicly visible to all

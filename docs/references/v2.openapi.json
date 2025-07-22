@@ -2745,6 +2745,7 @@
                   "value": {
                     "userId": "user-123",
                     "groupIds": ["marketing", "engineering"],
+                    "tenantId": "acme-inc",
                     "userInfo": {
                       "name": "bob",
                       "avatar": "https://example.org/images/user123.jpg"
@@ -3987,6 +3988,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "tenantId": {
+            "type": "string"
           },
           "userInfo": {
             "type": "object"
