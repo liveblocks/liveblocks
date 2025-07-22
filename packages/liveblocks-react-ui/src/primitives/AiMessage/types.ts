@@ -37,36 +37,35 @@ export type AiMessageContentToolInvocationPartProps = {
   copilotId?: string;
 };
 
-export interface AiMessageContentComponents {
+export interface AiMessageContentParts {
   /**
    * The component used to display text parts.
    */
-  TextPart: ComponentType<AiMessageContentTextPartProps>;
+  Text: ComponentType<AiMessageContentTextPartProps>;
 
   /**
    * The component used to display reasoning parts.
    */
-  ReasoningPart: ComponentType<AiMessageContentReasoningPartProps>;
+  Reasoning: ComponentType<AiMessageContentReasoningPartProps>;
 
   /**
    * NOTE that ToolInvocationPart is slightly different.
    * Tool invocations are typically rendered via the render() method instead.
    * @internal
    */
-  ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
+  ToolInvocation: ComponentType<AiMessageContentToolInvocationPartProps>;
 }
 
 export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {
   /**
-   * The message contents to display.
+   * The message to display.
    */
   message: AiChatMessage;
 
   /**
-   * Optional overrides for the default components to render each part within
-   * the message content.
+   * Override specific message parts.
    */
-  components?: Partial<AiMessageContentComponents>;
+  parts?: Partial<AiMessageContentParts>;
 
   /**
    * @internal

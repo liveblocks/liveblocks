@@ -55,8 +55,8 @@ export const AiChatUserMessage = memo(
             <div className="lb-ai-chat-message-content">
               <AiMessage.Content
                 message={message}
-                components={{
-                  TextPart: PlainTextPart,
+                parts={{
+                  Text: PlainTextPart,
                 }}
                 className="lb-prose lb-ai-chat-message-text"
               />

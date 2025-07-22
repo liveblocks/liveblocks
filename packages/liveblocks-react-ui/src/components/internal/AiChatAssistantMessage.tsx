@@ -176,12 +176,12 @@ function AssistantMessageContent({
   return (
     <AiMessage.Content
       message={message}
-      components={{
-        TextPart: (props) => <TextPart {...props} components={components} />,
-        ReasoningPart: (props) => (
+      parts={{
+        Text: (props) => <TextPart {...props} components={components} />,
+        Reasoning: (props) => (
           <ReasoningPart {...props} components={components} />
         ),
-        ToolInvocationPart,
+        ToolInvocation: ToolInvocationPart,
       }}
       copilotId={copilotId}
       className="lb-ai-chat-message-content"

@@ -4,21 +4,18 @@ import { forwardRef, useMemo } from "react";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Markdown } from "../Markdown";
 import { AiMessageToolInvocation } from "./tool-invocation";
-import type {
-  AiMessageContentComponents,
-  AiMessageContentProps,
-} from "./types";
+import type { AiMessageContentParts, AiMessageContentProps } from "./types";
 
 const AI_MESSAGE_CONTENT_NAME = "AiMessageContent";
 
-const defaultMessageContentComponents: AiMessageContentComponents = {
-  TextPart: ({ part }) => {
+const defaultMessageContentParts: AiMessageContentParts = {
+  Text: ({ part }) => {
     return <Markdown content={part.text} />;
   },
-  ReasoningPart: ({ part }) => {
+  Reasoning: ({ part }) => {
     return <Markdown content={part.text} />;
   },
-  ToolInvocationPart: ({ part, message }) => {
+  ToolInvocation: ({ part, message }) => {
     return (
       <ErrorBoundary fallback={null}>
         <AiMessageToolInvocation part={part} message={message} />
@@ -36,14 +33,14 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
  * an array of parts.
  *
  * @example
- * <AiMessage.Content message={message} components={{ TextPart }} />
+ * <AiMessage.Content message={message} parts={{ Text: ({ part }) => <p>{part.text}</p> }} />
  */
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
-  ({ message, components, asChild, copilotId, ...props }, forwardedRef) => {
+  ({ message, parts, asChild, copilotId, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { TextPart, ReasoningPart, ToolInvocationPart } = useMemo(
-      () => ({ ...defaultMessageContentComponents, ...components }),
-      [components]
+    const { Text, Reasoning, ToolInvocation } = useMemo(
+      () => ({ ...defaultMessageContentParts, ...parts }),
+      [parts]
     );
 
     const content = message.content ?? message.contentSoFar;
@@ -60,12 +57,12 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
           const extra = { index, isStreaming };
           switch (part.type) {
             case "text":
-              return <TextPart key={index} part={part} {...extra} />;
+              return <Text key={index} part={part} {...extra} />;
             case "reasoning":
-              return <ReasoningPart key={index} part={part} {...extra} />;
+              return <Reasoning key={index} part={part} {...extra} />;
             case "tool-invocation":
               return (
-                <ToolInvocationPart
+                <ToolInvocation
                   key={index}
                   part={part}
                   {...extra}

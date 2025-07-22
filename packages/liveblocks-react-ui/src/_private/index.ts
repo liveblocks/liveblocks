@@ -26,7 +26,7 @@ export type {
 } from "../primitives/AiChatComposer/types";
 export * as AiMessage from "../primitives/AiMessage";
 export type {
-  AiMessageContentComponents,
+  AiMessageContentParts,
   AiMessageContentProps,
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
