@@ -250,21 +250,38 @@ function CommentGroupMention({
     mention as GroupMentionData
   );
 
-  console.log($, summary, isLoadingSummary);
+  const content = (
+    <CommentPrimitive.Mention
+      className={cn("lb-comment-mention", className)}
+      data-self={summary?.isMember ? "" : undefined}
+      {...props}
+    >
+      {MENTION_CHARACTER}
+      <Group groupId={mention.id} />
+    </CommentPrimitive.Mention>
+  );
+
+  // Don't display the tooltip if we won't have a summary.
+  if (!isLoadingSummary && summary?.totalMembers === undefined) {
+    return content;
+  }
 
   // TODO: Only display the tooltip in comments/threads, not in inbox notifications, etc.
   return (
-    // TODO: Display loading skeleton when `isLoadingSummary` is `true`
-    // TODO: Use an override for this
-    <Tooltip content={`${summary?.totalMembers} members`}>
-      <CommentPrimitive.Mention
-        className={cn("lb-comment-mention", className)}
-        data-self={summary?.isMember ? "" : undefined}
-        {...props}
-      >
-        {MENTION_CHARACTER}
-        <Group groupId={mention.id} />
-      </CommentPrimitive.Mention>
+    <Tooltip
+      content={
+        <span
+          className={cn("lb-group-members", className)}
+          data-loading={isLoadingSummary ? "" : undefined}
+          {...props}
+        >
+          {isLoadingSummary
+            ? null
+            : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
+        </span>
+      }
+    >
+      {content}
     </Tooltip>
   );
 }
