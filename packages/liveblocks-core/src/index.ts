@@ -365,7 +365,11 @@ export type {
 } from "./types/PlainLson";
 export type { User } from "./types/User";
 export { detectDupes };
-export type { MentionData, UserMentionData } from "./types/MentionData";
+export type {
+  GroupMentionData,
+  MentionData,
+  UserMentionData,
+} from "./types/MentionData";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

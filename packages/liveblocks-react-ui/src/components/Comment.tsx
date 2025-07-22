@@ -5,6 +5,7 @@ import {
   type CommentAttachment,
   type CommentData,
   type CommentReaction as CommentReactionData,
+  type GroupMentionData,
   type MentionData,
   Permission,
 } from "@liveblocks/core";
@@ -60,7 +61,7 @@ import type {
   CommentBodyLinkProps,
   CommentBodyMentionProps,
   CommentLinkProps,
-  CommentMentionProps,
+  CommentMentionProps as CommentPrimitiveMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
@@ -68,6 +69,7 @@ import { useCurrentUserId } from "../shared";
 import type { CommentAttachmentArgs } from "../types";
 import { cn } from "../utils/cn";
 import { download } from "../utils/download";
+import { useGroupMentionSummary } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
@@ -89,7 +91,6 @@ import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
-const GROUP_MENTIONS_TRUNCATE = 5;
 
 export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
@@ -213,62 +214,68 @@ interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
   onAttachmentClick?: CommentProps["onAttachmentClick"];
 }
 
-export function CommentMention({
+interface CommentMentionProps
+  extends CommentBodyMentionProps,
+    CommentPrimitiveMentionProps {
+  overrides?: CommentProps["overrides"];
+}
+
+function CommentUserMention({
   mention,
   className,
   ...props
-}: CommentBodyMentionProps & CommentMentionProps) {
+}: CommentMentionProps) {
   const currentId = useCurrentUserId();
-  // TODO: $ doesn't include `overrides` applied on `Comment`
-  const $ = useOverrides();
 
+  return (
+    <CommentPrimitive.Mention
+      className={cn("lb-comment-mention", className)}
+      data-self={mention.id === currentId ? "" : undefined}
+      {...props}
+    >
+      {MENTION_CHARACTER}
+      <User userId={mention.id} />
+    </CommentPrimitive.Mention>
+  );
+}
+
+function CommentGroupMention({
+  mention,
+  overrides,
+  className,
+  ...props
+}: CommentMentionProps) {
+  const $ = useOverrides(overrides);
+  const { summary, isLoading: isLoadingSummary } = useGroupMentionSummary(
+    mention as GroupMentionData
+  );
+
+  console.log($, summary, isLoadingSummary);
+
+  // TODO: Only display the tooltip in comments/threads, not in inbox notifications, etc.
+  return (
+    // TODO: Display loading skeleton when `isLoadingSummary` is `true`
+    // TODO: Use an override for this
+    <Tooltip content={`${summary?.totalMembers} members`}>
+      <CommentPrimitive.Mention
+        className={cn("lb-comment-mention", className)}
+        data-self={summary?.isMember ? "" : undefined}
+        {...props}
+      >
+        {MENTION_CHARACTER}
+        <Group groupId={mention.id} />
+      </CommentPrimitive.Mention>
+    </Tooltip>
+  );
+}
+
+export function CommentMention({ mention, ...props }: CommentMentionProps) {
   switch (mention.kind) {
     case "user":
-      return (
-        <CommentPrimitive.Mention
-          className={cn("lb-comment-mention", className)}
-          data-self={mention.id === currentId ? "" : undefined}
-          {...props}
-        >
-          {MENTION_CHARACTER}
-          <User userId={mention.id} />
-        </CommentPrimitive.Mention>
-      );
+      return <CommentUserMention mention={mention} {...props} />;
 
     case "group":
-      return (
-        // TODO: Only display the tooltip in comments/threads, not in inbox notifications, etc.
-        <Tooltip
-          content={
-            mention.userIds ? (
-              <span>
-                <List
-                  values={mention.userIds.map((userId) => (
-                    <User key={userId} userId={userId} replaceSelf />
-                  ))}
-                  formatRemaining={$.LIST_REMAINING_USERS}
-                  truncate={GROUP_MENTIONS_TRUNCATE}
-                  locale={$.locale}
-                />
-              </span>
-            ) : (
-              <Group groupId={mention.id} />
-            )
-          }
-          multiline
-          className="lb-comment-mention-tooltip"
-        >
-          <CommentPrimitive.Mention
-            className={cn("lb-comment-mention", className)}
-            // TODO: If we have access to the user IDs, we can check if the current user is in the group
-            // data-self={mention.id === currentId ? "" : undefined}
-            {...props}
-          >
-            {MENTION_CHARACTER}
-            <Group groupId={mention.id} />
-          </CommentPrimitive.Mention>
-        </Tooltip>
-      );
+      return <CommentGroupMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");
@@ -932,6 +939,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         <CommentMention
                           mention={mention}
                           onClick={(event) => onMentionClick?.(mention, event)}
+                          overrides={overrides}
                         />
                       ),
                       Link: CommentLink,
