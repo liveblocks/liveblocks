@@ -218,6 +218,7 @@ interface CommentMentionProps
   extends CommentBodyMentionProps,
     CommentPrimitiveMentionProps {
   overrides?: CommentProps["overrides"];
+  showGroupTooltip?: boolean;
 }
 
 function CommentUserMention({
@@ -242,6 +243,7 @@ function CommentUserMention({
 function CommentGroupMention({
   mention,
   overrides,
+  showGroupTooltip,
   className,
   ...props
 }: CommentMentionProps) {
@@ -261,12 +263,14 @@ function CommentGroupMention({
     </CommentPrimitive.Mention>
   );
 
-  // Don't display the tooltip if we won't have a summary.
-  if (!isLoadingSummary && summary?.totalMembers === undefined) {
+  // Don't display the tooltip if we won't have a summary (or if it's disabled).
+  if (
+    !showGroupTooltip ||
+    (!isLoadingSummary && summary?.totalMembers === undefined)
+  ) {
     return content;
   }
 
-  // TODO: Only display the tooltip in comments/threads, not in inbox notifications, etc.
   return (
     <Tooltip
       content={
@@ -285,13 +289,23 @@ function CommentGroupMention({
   );
 }
 
-export function CommentMention({ mention, ...props }: CommentMentionProps) {
+export function CommentMention({
+  mention,
+  showGroupTooltip = true,
+  ...props
+}: CommentMentionProps) {
   switch (mention.kind) {
     case "user":
       return <CommentUserMention mention={mention} {...props} />;
 
     case "group":
-      return <CommentGroupMention mention={mention} {...props} />;
+      return (
+        <CommentGroupMention
+          mention={mention}
+          showGroupTooltip={showGroupTooltip}
+          {...props}
+        />
+      );
 
     default:
       return assertNever(mention, "Unhandled mention kind");
