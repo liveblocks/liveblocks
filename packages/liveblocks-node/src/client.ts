@@ -72,6 +72,7 @@ import { asyncConsume, runConcurrently } from "./lib/itertools";
 import { LineStream, NdJsonStream } from "./lib/ndjson";
 import { Session } from "./Session";
 import {
+  assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
   getBaseUrl,
@@ -536,6 +537,8 @@ export class Liveblocks {
       typeof identity === "string"
         ? { userId: identity, groupIds: undefined, tenantId: undefined }
         : identity;
+
+    assertNonEmpty(userId, "userId");
 
     const body = {
       userId,
