@@ -18,6 +18,10 @@
   `largeMessageStrategy` option isn’t configured and a message couldn’t be sent
   because it was too large for WebSocket.
 
+### `@liveblocks/node`
+
+- Add `tenantId` to `identifyUser` method as an optional parameter.
+
 ## v3.1.4
 
 ### `@liveblocks/react-ui`
