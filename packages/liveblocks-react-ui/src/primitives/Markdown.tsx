@@ -159,10 +159,10 @@ export type MarkdownComponents = {
    * ```tsx
    * <Markdown
    *   components={{
-   *     List: ({ type, items }) => {
+   *     List: ({ type, items, start }) => {
    *       const List = type === "ordered" ? "ol" : "ul";
    *       return (
-   *         <List>
+   *         <List start={start}>
    *           {items.map((item, index) => (
    *             <li key={index}>
    *               {item.checked !== undefined && (

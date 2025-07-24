@@ -753,11 +753,11 @@ describe("Markdown", () => {
           + [x] Yet another list item
       `,
       components: {
-        List: ({ items, type }) => {
+        List: ({ items, type, start }) => {
           const List = type === "ordered" ? "ol" : "ul";
 
           return (
-            <List data-list={type}>
+            <List start={start} data-list={type}>
               {items.map((item, index) => (
                 <li key={index}>
                   {item.checked !== undefined && (
