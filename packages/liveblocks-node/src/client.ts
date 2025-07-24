@@ -131,6 +131,7 @@ export type AuthResponse = {
 type Identity = {
   userId: string;
   groupIds: string[];
+  tenantId?: string;
 };
 
 export type ThreadParticipants = {
@@ -531,21 +532,23 @@ export class Liveblocks {
     const options = rest[0];
 
     const path = url`/v2/identify-user`;
-    const userId = typeof identity === "string" ? identity : identity.userId;
-    const groupIds =
-      typeof identity === "string" ? undefined : identity.groupIds;
 
-    assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
-    // assertStringArrayOrUndefined(groupsIds, "groupIds"); // TODO: Check if this is a legal userId value too
+    const { userId, groupIds, tenantId } =
+      typeof identity === "string"
+        ? { userId: identity, groupIds: undefined, tenantId: undefined }
+        : identity;
+
+    assertNonEmpty(userId, "userId");
+
+    const body = {
+      userId,
+      groupIds,
+      tenantId,
+      userInfo: options?.userInfo,
+    };
 
     try {
-      const resp = await this.#post(path, {
-        userId,
-        groupIds,
-
-        // Optional metadata
-        userInfo: options?.userInfo,
-      });
+      const resp = await this.#post(path, body);
 
       return {
         status: normalizeStatusCode(resp.status),

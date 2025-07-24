@@ -12,8 +12,8 @@ $lb-elevation-shadow:
   0 8px 26px rgb(0 0 0 / 12%);
 $lb-elevation-shadow-moderate:
   0 0 0 1px rgb(0 0 0 / 4%),
-  0 2px 6px rgb(0 0 0 / 6%),
-  0 8px 26px rgb(0 0 0 / 8%);
+  0 2px 6px rgb(0 0 0 / 5%),
+  0 8px 26px rgb(0 0 0 / 6%);
 $lb-tooltip-shadow:
   0 2px 4px rgb(0 0 0 / 8%),
   0 4px 12px rgb(0 0 0 / 12%);

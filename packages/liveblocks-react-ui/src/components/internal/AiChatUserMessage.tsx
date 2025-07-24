@@ -36,7 +36,7 @@ function PlainTextPart({ part }: PlainTextPartProps) {
 
 export const AiChatUserMessage = memo(
   forwardRef<HTMLDivElement, AiChatUserMessageProps>(
-    ({ message, className, overrides }, forwardedRef) => {
+    ({ message, className, overrides, ...props }, forwardedRef) => {
       const $ = useOverrides(overrides);
       return (
         <div
@@ -45,6 +45,7 @@ export const AiChatUserMessage = memo(
             "lb-ai-chat-message lb-ai-chat-user-message",
             className
           )}
+          {...props}
         >
           {message.deletedAt !== undefined ? (
             <div className="lb-ai-chat-message-deleted">
