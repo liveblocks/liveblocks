@@ -14,6 +14,7 @@ import {
   warnOnce,
 } from "@liveblocks/core";
 import {
+  useClient,
   useDeleteInboxNotification,
   useInboxNotificationThread,
   useMarkInboxNotificationAsRead,
@@ -457,6 +458,7 @@ const InboxNotificationThread = forwardRef<
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
+    const client = useClient();
     const thread = useInboxNotificationThread(inboxNotification.id);
     const {
       status: subscriptionStatus,
@@ -467,6 +469,7 @@ const InboxNotificationThread = forwardRef<
     const { info } = useRoomInfo(inboxNotification.roomId);
     const contents = useMemo(() => {
       const contents = generateInboxNotificationThreadContents(
+        client,
         inboxNotification,
         thread,
         currentUserId ?? ""
@@ -561,6 +564,7 @@ const InboxNotificationThread = forwardRef<
       }
     }, [
       $,
+      client,
       currentUserId,
       inboxNotification,
       overrides,
