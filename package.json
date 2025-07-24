@@ -11,7 +11,8 @@
     "e2e/node-sandbox",
     "examples/nextjs-comments",
     "examples/nextjs-tiptap",
-    "examples/nextjs-lexical"
+    "examples/nextjs-lexical",
+    "starter-kits/nextjs-starter-kit"
   ],
   "scripts": {
     "build": "turbo run build",
