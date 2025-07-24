@@ -372,11 +372,11 @@ describe("Markdown", () => {
         // - A "nested" list item
         // - Another "nested" list item
         const firstListFirstItem = listItems[0]?.parentElement;
-        expect(firstListFirstItem?.getAttribute("start")).toBe("1");
+        expect(firstListFirstItem).not.toHaveAttribute("start");
         const firstListSecondItem = listItems[3]?.parentElement;
-        expect(firstListSecondItem?.getAttribute("start")).toBe("2");
+        expect(firstListSecondItem).toHaveAttribute("start", "2");
         const firstListThirdItem = listItems[6]?.parentElement;
-        expect(firstListThirdItem?.getAttribute("start")).toBe("3");
+        expect(firstListThirdItem).toHaveAttribute("start", "3");
 
         // 1. A numbered list item
         //
@@ -392,11 +392,11 @@ describe("Markdown", () => {
         //
         // A paragraph.
         const secondListFirstItem = listItems[9]?.parentElement;
-        expect(secondListFirstItem?.getAttribute("start")).toBe("1");
+        expect(secondListFirstItem).not.toHaveAttribute("start");
         const secondListSecondItem = listItems[10]?.parentElement;
-        expect(secondListSecondItem?.getAttribute("start")).toBe("2");
+        expect(secondListSecondItem).toHaveAttribute("start", "2");
         const secondListThirdItem = listItems[11]?.parentElement;
-        expect(secondListThirdItem?.getAttribute("start")).toBe("3");
+        expect(secondListThirdItem).toHaveAttribute("start", "3");
 
         // 1. A numbered list item
         // 1. Another numbered list item
@@ -405,7 +405,7 @@ describe("Markdown", () => {
         expect(listItems[12]?.parentElement).toBe(thirdList);
         expect(listItems[13]?.parentElement).toBe(thirdList);
         expect(listItems[14]?.parentElement).toBe(thirdList);
-        expect(thirdList?.getAttribute("start")).toBe("1");
+        expect(thirdList).not.toHaveAttribute("start");
       },
     },
     {
