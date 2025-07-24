@@ -107,6 +107,7 @@
   color: var(--lb-accent);
   box-decoration-break: clone;
   font-weight: 500;
+  cursor: default;
 
   @include invisible-selection;
 }
