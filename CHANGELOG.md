@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Improve how ordered lists are rendered in Markdown by supporting arbitrary
+  starting numbers. (e.g. `3.` instead of `1.`)
+
 ## v3.2.0
 
 ### `@liveblocks/react-ui`
