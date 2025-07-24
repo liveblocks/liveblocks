@@ -16,7 +16,7 @@ export default class yDocHandler extends Observable<unknown> {
   private remoteSnapshotΣ: Signal<Y.Snapshot | null>;
 
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  private static readonly DEBOUNCE_INTERVAL_MS = 1000;
+  private static readonly DEBOUNCE_INTERVAL_MS = 200;
 
   public readonly syncStatusSignalΣ: DerivedSignal<
     "loading" | "synchronized" | "synchronizing"
