@@ -604,7 +604,7 @@
     flex-direction: column;
     gap: 0.25em;
     margin-block: 0.75em;
-    padding-inline-start: 1.5em;
+    padding-inline-start: 1.125em;
     list-style-position: outside;
 
     :where(ol, ul) {
