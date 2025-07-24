@@ -382,7 +382,8 @@ const defaultComponents: MarkdownComponents = {
     const List = type === "ordered" ? "ol" : "ul";
 
     return (
-      <List start={start}>
+      // No need to set the `start` attribute if it's 1.
+      <List start={start === 1 ? undefined : start}>
         {items.map((item, index) => (
           <li key={index}>
             {item.checked !== undefined && (
