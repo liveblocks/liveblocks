@@ -15,6 +15,9 @@ export default class yDocHandler extends Observable<unknown> {
   private localSnapshotΣ: Signal<Y.Snapshot>;
   private remoteSnapshotΣ: Signal<Y.Snapshot | null>;
 
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly DEBOUNCE_INTERVAL_MS = 1000;
+
   public readonly syncStatusSignalΣ: DerivedSignal<
     "loading" | "synchronized" | "synchronizing"
   >;
@@ -67,7 +70,7 @@ export default class yDocHandler extends Observable<unknown> {
     stateVector,
     readOnly,
     v2,
-    remoteSnapshot: _remoteSnapshot,
+    remoteSnapshot,
   }: {
     update: Uint8Array;
     stateVector: string | null;
@@ -76,9 +79,7 @@ export default class yDocHandler extends Observable<unknown> {
     remoteSnapshot: Uint8Array;
   }): void => {
     this.remoteSnapshotΣ.set(
-      v2
-        ? Y.decodeSnapshotV2(_remoteSnapshot)
-        : Y.decodeSnapshot(_remoteSnapshot)
+      v2 ? Y.decodeSnapshotV2(remoteSnapshot) : Y.decodeSnapshot(remoteSnapshot)
     );
 
     // apply update from the server, updates from the server can be v1 or v2
@@ -131,11 +132,19 @@ export default class yDocHandler extends Observable<unknown> {
     }
   }
 
+  private debounced_updateLocalSnapshot() {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    this.debounceTimer = setTimeout(() => {
+      this.localSnapshotΣ.set(Y.snapshot(this.doc));
+      this.debounceTimer = null;
+    }, yDocHandler.DEBOUNCE_INTERVAL_MS);
+  }
+
   private updateHandler = (
     update: Uint8Array,
     origin: string | IndexeddbPersistence
   ) => {
-    this.localSnapshotΣ.set(Y.snapshot(this.doc));
+    this.debounced_updateLocalSnapshot();
 
     // don't send updates from indexedb, those will get handled by sync
     const isFromLocal = origin instanceof IndexeddbPersistence;
@@ -145,6 +154,7 @@ export default class yDocHandler extends Observable<unknown> {
   };
 
   destroy(): void {
+    if (this.debounceTimer) clearTimeout(this.debounceTimer);
     this.doc.off("update", this.updateHandler);
     this.unsubscribers.forEach((unsub) => unsub());
     this._observers = new Map();
