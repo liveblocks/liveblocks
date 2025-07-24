@@ -4,10 +4,18 @@ import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 
+export enum DocumentState {
+  Idle = "@idle",
+  LoadingDirty = "@loading.dirty",
+  LoadingSyncing = "@loading.syncing",
+  LoadedDirty = "@loaded.dirty",
+  LoadedSyncing = "@loaded.syncing",
+  Synced = "@synced",
+}
+
 export default class yDocHandler extends Observable<unknown> {
   private unsubscribers: Array<() => void> = [];
 
-  private _synced = false;
   private doc: Y.Doc;
   private updateRoomDoc: (update: Uint8Array) => void;
   private fetchRoomDoc: (vector: string) => void;
@@ -18,7 +26,8 @@ export default class yDocHandler extends Observable<unknown> {
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly DEBOUNCE_INTERVAL_MS = 200;
 
-  private isLocalAndRemoteSnapshotEqualΣ: DerivedSignal<boolean>;
+  private stateΣ = new Signal<DocumentState>(DocumentState.Idle);
+  private numOfPendingSyncs = 0;
 
   constructor({
     doc,
@@ -50,11 +59,35 @@ export default class yDocHandler extends Observable<unknown> {
     this.localSnapshotΣ = new Signal<Y.Snapshot>(Y.snapshot(doc));
     this.remoteSnapshotΣ = new Signal<Y.Snapshot | null>(null);
 
-    this.isLocalAndRemoteSnapshotEqualΣ = DerivedSignal.from(() => {
+    const isLocalAndRemoteSnapshotEqualΣ = DerivedSignal.from(() => {
       const remoteSnapshot = this.remoteSnapshotΣ.get();
       if (remoteSnapshot === null) return false;
       return Y.equalSnapshots(this.localSnapshotΣ.get(), remoteSnapshot);
     });
+
+    this.unsubscribers.push(
+      isLocalAndRemoteSnapshotEqualΣ.subscribe(() => {
+        if (isLocalAndRemoteSnapshotEqualΣ.get()) {
+          this.stateΣ.set(DocumentState.Synced);
+        }
+      }),
+      this.stateΣ.subscribe(() => {
+        const state = this.stateΣ.get();
+        if (state === DocumentState.Synced) {
+          this.emit("synced", [true]);
+          this.emit("sync", [true]);
+        }
+        // If the state is reset to 'idle', we emit 'synced' and 'sync' event with 'false' payload.
+        // Additionally, we reset the number of pending syncs to 0.
+        else if (state === DocumentState.Idle) {
+          this.numOfPendingSyncs = 0;
+          this.emit("synced", [false]);
+          this.emit("sync", [false]);
+        }
+      })
+    );
+
+    this.stateΣ.set(DocumentState.Idle);
   }
 
   public handleServerUpdate = ({
@@ -68,7 +101,7 @@ export default class yDocHandler extends Observable<unknown> {
     stateVector: string | null;
     readOnly: boolean;
     v2?: boolean;
-    remoteSnapshot: Uint8Array;
+    remoteSnapshot?: Uint8Array;
   }): void => {
     // apply update from the server, updates from the server can be v1 or v2
     const applyUpdate = v2 ? Y.applyUpdateV2 : Y.applyUpdate;
@@ -92,21 +125,38 @@ export default class yDocHandler extends Observable<unknown> {
           console.warn(e);
         }
       }
-      // now that we've sent our local and received from server, we're in sync
-      // calling `syncDoc` again will sync up the documents
-      this.synced = true;
+
+      if (this.numOfPendingSyncs > 0) {
+        this.numOfPendingSyncs -= 1;
+      }
+
+      const currentState = this.stateΣ.get();
+      if (
+        currentState !== DocumentState.LoadingDirty &&
+        currentState !== DocumentState.LoadedDirty &&
+        this.numOfPendingSyncs === 0
+      ) {
+        this.stateΣ.set(DocumentState.Synced);
+      }
     }
 
     // If a remote snapshot (combination of state vector and delete set) is provided, we update the remote snapshot state
-    const snapshot = v2
-      ? Y.decodeSnapshotV2(remoteSnapshot)
-      : Y.decodeSnapshot(remoteSnapshot);
-
-    this.remoteSnapshotΣ.set(snapshot);
+    if (remoteSnapshot !== undefined) {
+      const snapshot = v2
+        ? Y.decodeSnapshotV2(remoteSnapshot)
+        : Y.decodeSnapshot(remoteSnapshot);
+      this.remoteSnapshotΣ.set(snapshot);
+    }
   };
 
   public syncDoc = (): void => {
-    this.synced = false;
+    // We set the state to syncing (loading or loaded) and increment the number of pending syncs
+    this.stateΣ.set(
+      this.stateΣ.get() === DocumentState.Idle
+        ? DocumentState.LoadingSyncing
+        : DocumentState.LoadedSyncing
+    );
+    this.numOfPendingSyncs += 1;
 
     // The state vector is sent to the server so it knows what to send back
     // if you don't send it, it returns everything
@@ -116,15 +166,11 @@ export default class yDocHandler extends Observable<unknown> {
 
   // The sync'd property is required by some provider implementations
   get synced(): boolean {
-    return this._synced;
+    return this.stateΣ.get() === DocumentState.Synced;
   }
 
   set synced(state: boolean) {
-    if (this._synced !== state) {
-      this._synced = state;
-      this.emit("synced", [state]);
-      this.emit("sync", [state]);
-    }
+    this.stateΣ.set(state ? DocumentState.Synced : DocumentState.Idle);
   }
 
   private debounced_updateLocalSnapshot() {
@@ -133,6 +179,11 @@ export default class yDocHandler extends Observable<unknown> {
       // Compute local snapshot and update the local snapshot state
       this.localSnapshotΣ.set(Y.snapshot(this.doc));
       this.debounceTimer = null;
+
+      const state = this.stateΣ.get();
+      if (state !== DocumentState.Synced) {
+        this.syncDoc();
+      }
     }, yDocHandler.DEBOUNCE_INTERVAL_MS);
   }
 
@@ -142,6 +193,20 @@ export default class yDocHandler extends Observable<unknown> {
   ) => {
     this.debounced_updateLocalSnapshot();
 
+    if (origin !== "backend") {
+      const currentState = this.stateΣ.get();
+      const isDocumentLoaded =
+        currentState === DocumentState.LoadedDirty ||
+        currentState === DocumentState.LoadedSyncing ||
+        currentState === DocumentState.Synced;
+
+      this.stateΣ.set(
+        isDocumentLoaded
+          ? DocumentState.LoadedDirty
+          : DocumentState.LoadingDirty
+      );
+    }
+
     // don't send updates from indexedb, those will get handled by sync
     const isFromLocal = origin instanceof IndexeddbPersistence;
     if (origin !== "backend" && !isFromLocal) {
@@ -149,12 +214,26 @@ export default class yDocHandler extends Observable<unknown> {
     }
   };
 
+  /**
+   * @internal
+   * @returns The current synchronization status of the document. This method is experimental and may change in the future.
+   * - "loading": an initial synchronization request is pending, i.e., we have received any remote document yet (resets after websocket disconnection)
+   * - "synchronizing": there are local updates to the document that have not been synchronized or acknolwedged by the server yet.
+   * - "synchronized": the document is in sync with the server, i.e., all local updates have been acknowledged by the server and the local snapshot is equal to the remote snapshot.
+   */
   experimental_getSyncStatus(): YjsSyncStatus {
-    const remoteSnapshot = this.remoteSnapshotΣ.get();
-    if (remoteSnapshot === null) {
+    const state = this.stateΣ.get();
+    if (
+      state === DocumentState.Idle ||
+      state === DocumentState.LoadingDirty ||
+      state === DocumentState.LoadingSyncing
+    ) {
       return "loading";
     }
-    if (!this.isLocalAndRemoteSnapshotEqualΣ.get()) {
+    if (
+      state === DocumentState.LoadedDirty ||
+      state === DocumentState.LoadedSyncing
+    ) {
       return "synchronizing";
     }
     return "synchronized";

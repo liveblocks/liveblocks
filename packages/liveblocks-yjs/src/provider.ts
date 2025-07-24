@@ -69,6 +69,7 @@ export class LiveblocksYjsProvider
     this.unsubscribers.push(
       this.room.events.status.subscribe((status) => {
         if (status === "connected") {
+          this.rootDocHandler.synced = false;
           this.rootDocHandler.syncDoc();
         } else {
           this.rootDocHandler.synced = false;
@@ -103,7 +104,9 @@ export class LiveblocksYjsProvider
               stateVector,
               readOnly: !canWrite,
               v2,
-              remoteSnapshot: Base64.toUint8Array(remoteSnapshot),
+              remoteSnapshot: remoteSnapshot
+                ? Base64.toUint8Array(remoteSnapshot)
+                : undefined,
             });
         } else {
           this.rootDocHandler.handleServerUpdate({
@@ -111,7 +114,9 @@ export class LiveblocksYjsProvider
             stateVector,
             readOnly: !canWrite,
             v2,
-            remoteSnapshot: Base64.toUint8Array(remoteSnapshot),
+            remoteSnapshot: remoteSnapshot
+              ? Base64.toUint8Array(remoteSnapshot)
+              : undefined,
           });
         }
       })
@@ -154,6 +159,7 @@ export class LiveblocksYjsProvider
       return "synchronized";
     });
 
+    this.emit("status", [this.getStatus()]);
     this.unsubscribers.push(
       this.syncStatusΣ.subscribe(() => {
         this.emit("status", [this.getStatus()]);
