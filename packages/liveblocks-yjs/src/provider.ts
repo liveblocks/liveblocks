@@ -39,7 +39,7 @@ export class LiveblocksYjsProvider
   private readonly subdocHandlersΣ = new MutableSignal<
     Map<string, yDocHandler>
   >(new Map());
-  private readonly overallSyncStatusΣ: DerivedSignal<YjsSyncStatus>;
+  private readonly syncStatusΣ: DerivedSignal<YjsSyncStatus>;
 
   public readonly permanentUserData?: PermanentUserData;
 
@@ -133,33 +133,32 @@ export class LiveblocksYjsProvider
     this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
 
-    this.overallSyncStatusΣ = DerivedSignal.from(() => {
-      // 1. If the root document is loading, the overall status is also "loading".
-      // 2. If the root document is synchronizing, the overall status is "synchronizing".
-      // 3. If the root document is synchronized, we check the status of the subdocuments.
-      //    If all subdocuments are synchronized, the overall status is "synchronized".
-      //    Otherwise, the overall status is "synchronizing".
-      const rootDocStatus = this.rootDocHandler.syncStatusSignalΣ.get();
-      if (rootDocStatus === "loading") {
-        return "loading";
+    this.syncStatusΣ = DerivedSignal.from(() => {
+      // If the root document is loading or synchronizing, we infer that the overall status is also loading or synchronizing.
+      const rootDocumentStatus =
+        this.rootDocHandler.experimental_getSyncStatus();
+      if (
+        rootDocumentStatus === "loading" ||
+        rootDocumentStatus === "synchronizing"
+      ) {
+        return rootDocumentStatus;
       }
-      if (rootDocStatus === "synchronizing") {
+
+      // If the root document is synchronized, we check if all subdocs are synchronized. If at least one subdoc is not synchronized, we are still synchronizing.
+      const subdocumentStatuses = Array.from(
+        this.subdocHandlersΣ.get().values()
+      ).map((handler) => handler.experimental_getSyncStatus());
+      if (subdocumentStatuses.some((state) => state !== "synchronized")) {
         return "synchronizing";
       }
-
-      // If the root document is synchronized, we check the status of the subdocuments and if all subdocuments are synchronized, we return "synchronized".
-      const subdocStatuses = Array.from(
-        this.subdocHandlersΣ.get().values()
-      ).map((handler) => handler.syncStatusSignalΣ.get());
-      const allSubdocsSynchronized = subdocStatuses.every(
-        (status) => status === "synchronized"
-      );
-      return allSubdocsSynchronized ? "synchronized" : "synchronizing";
+      return "synchronized";
     });
 
-    this.overallSyncStatusΣ.subscribe(() => {
-      this.emit("status", [this.overallSyncStatusΣ.get()]);
-    });
+    this.unsubscribers.push(
+      this.syncStatusΣ.subscribe(() => {
+        this.emit("status", [this.getStatus()]);
+      })
+    );
   }
 
   private setupOfflineSupport = () => {
@@ -278,7 +277,7 @@ export class LiveblocksYjsProvider
   }
 
   public getStatus(): YjsSyncStatus {
-    return this.overallSyncStatusΣ.get();
+    return this.syncStatusΣ.get();
   }
 
   destroy(): void {

@@ -1,4 +1,4 @@
-import { DerivedSignal, Signal } from "@liveblocks/core";
+import { DerivedSignal, Signal, type YjsSyncStatus } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
@@ -18,9 +18,7 @@ export default class yDocHandler extends Observable<unknown> {
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly DEBOUNCE_INTERVAL_MS = 200;
 
-  public readonly syncStatusSignalΣ: DerivedSignal<
-    "loading" | "synchronized" | "synchronizing"
-  >;
+  private syncStatusΣ: DerivedSignal<YjsSyncStatus>;
 
   constructor({
     doc,
@@ -52,17 +50,16 @@ export default class yDocHandler extends Observable<unknown> {
     this.localSnapshotΣ = new Signal<Y.Snapshot>(Y.snapshot(doc));
     this.remoteSnapshotΣ = new Signal<Y.Snapshot | null>(null);
 
-    this.syncStatusSignalΣ = DerivedSignal.from(
-      this.localSnapshotΣ,
-      this.remoteSnapshotΣ,
-      (localSnapshot, remoteSnapshot) => {
-        if (remoteSnapshot === null) {
-          return "loading";
-        }
-        const isEqual = Y.equalSnapshots(localSnapshot, remoteSnapshot);
-        return isEqual ? "synchronized" : "synchronizing";
-      }
-    );
+    this.syncStatusΣ = DerivedSignal.from(() => {
+      const remoteSnapshot = this.remoteSnapshotΣ.get();
+      if (remoteSnapshot === null) return "loading";
+
+      const isLocalAndRemoteSnapshotEqual = Y.equalSnapshots(
+        this.localSnapshotΣ.get(),
+        remoteSnapshot
+      );
+      return isLocalAndRemoteSnapshotEqual ? "synchronized" : "synchronizing";
+    });
   }
 
   public handleServerUpdate = ({
@@ -78,10 +75,6 @@ export default class yDocHandler extends Observable<unknown> {
     v2?: boolean;
     remoteSnapshot: Uint8Array;
   }): void => {
-    this.remoteSnapshotΣ.set(
-      v2 ? Y.decodeSnapshotV2(remoteSnapshot) : Y.decodeSnapshot(remoteSnapshot)
-    );
-
     // apply update from the server, updates from the server can be v1 or v2
     const applyUpdate = v2 ? Y.applyUpdateV2 : Y.applyUpdate;
     applyUpdate(this.doc, update, "backend");
@@ -108,6 +101,13 @@ export default class yDocHandler extends Observable<unknown> {
       // calling `syncDoc` again will sync up the documents
       this.synced = true;
     }
+
+    // If a remote snapshot (combination of state vector and delete set) is provided, we update the remote snapshot state
+    const snapshot = v2
+      ? Y.decodeSnapshotV2(remoteSnapshot)
+      : Y.decodeSnapshot(remoteSnapshot);
+
+    this.remoteSnapshotΣ.set(snapshot);
   };
 
   public syncDoc = (): void => {
@@ -135,6 +135,7 @@ export default class yDocHandler extends Observable<unknown> {
   private debounced_updateLocalSnapshot() {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
+      // Compute local snapshot and update the local snapshot state
       this.localSnapshotΣ.set(Y.snapshot(this.doc));
       this.debounceTimer = null;
     }, yDocHandler.DEBOUNCE_INTERVAL_MS);
@@ -152,6 +153,10 @@ export default class yDocHandler extends Observable<unknown> {
       this.updateRoomDoc(update);
     }
   };
+
+  experimental_getSyncStatus(): YjsSyncStatus {
+    return this.syncStatusΣ.get();
+  }
 
   destroy(): void {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
