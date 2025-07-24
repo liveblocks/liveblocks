@@ -18,7 +18,7 @@ export default class yDocHandler extends Observable<unknown> {
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly DEBOUNCE_INTERVAL_MS = 200;
 
-  private syncStatusΣ: DerivedSignal<YjsSyncStatus>;
+  private isLocalAndRemoteSnapshotEqualΣ: DerivedSignal<boolean>;
 
   constructor({
     doc,
@@ -50,15 +50,10 @@ export default class yDocHandler extends Observable<unknown> {
     this.localSnapshotΣ = new Signal<Y.Snapshot>(Y.snapshot(doc));
     this.remoteSnapshotΣ = new Signal<Y.Snapshot | null>(null);
 
-    this.syncStatusΣ = DerivedSignal.from(() => {
+    this.isLocalAndRemoteSnapshotEqualΣ = DerivedSignal.from(() => {
       const remoteSnapshot = this.remoteSnapshotΣ.get();
-      if (remoteSnapshot === null) return "loading";
-
-      const isLocalAndRemoteSnapshotEqual = Y.equalSnapshots(
-        this.localSnapshotΣ.get(),
-        remoteSnapshot
-      );
-      return isLocalAndRemoteSnapshotEqual ? "synchronized" : "synchronizing";
+      if (remoteSnapshot === null) return false;
+      return Y.equalSnapshots(this.localSnapshotΣ.get(), remoteSnapshot);
     });
   }
 
@@ -155,7 +150,14 @@ export default class yDocHandler extends Observable<unknown> {
   };
 
   experimental_getSyncStatus(): YjsSyncStatus {
-    return this.syncStatusΣ.get();
+    const remoteSnapshot = this.remoteSnapshotΣ.get();
+    if (remoteSnapshot === null) {
+      return "loading";
+    }
+    if (!this.isLocalAndRemoteSnapshotEqualΣ.get()) {
+      return "synchronizing";
+    }
+    return "synchronized";
   }
 
   destroy(): void {
