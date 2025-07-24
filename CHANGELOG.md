@@ -2,8 +2,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Improve how ordered lists are rendered in Markdown by supporting arbitrary
-  starting numbers. (e.g. `3.` instead of `1.`)
+- Improve Markdown lists in `AiChat`: better spacing and support for arbitrary
+  starting numbers in ordered lists. (e.g. `3.` instead of `1.`)
 
 ## v3.2.0
 
