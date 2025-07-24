@@ -8,7 +8,7 @@ import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
-import { getUsers } from "@/lib/database";
+import { getUsers, getGroups } from "@/lib/database";
 
 export function Providers({
   children,
@@ -47,10 +47,10 @@ export function Providers({
           const users = await getUsers({ userIds });
           return users.map((user) => user ?? undefined);
         }}
-        // Resolve a mention suggestion into a userId e.g. `@tat` → `tatum.paolo@example.com`
-        resolveMentionSuggestions={async ({ text }) => {
-          const users = await getUsers({ search: text });
-          return users.map((user) => user?.id || "");
+        // Resolve group IDs into name/avatar/etc for Comments
+        resolveGroupsInfo={async ({ groupIds }) => {
+          const groups = await getGroups({ groupIds });
+          return groups.map((group) => group ?? undefined);
         }}
         // Resolve a room ID into room information for Notifications
         resolveRoomsInfo={async ({ roomIds }) => {
@@ -63,6 +63,29 @@ export function Providers({
               ? DOCUMENT_URL(document.type, document.id)
               : undefined,
           }));
+        }}
+        // Resolve what mentions are suggested for Comments/Text Editor
+        resolveMentionSuggestions={async ({ text }) => {
+          // Get group suggestions
+          const groups = await getGroups({ search: text });
+          const groupSuggestions = groups
+            .filter((group) => group !== null)
+            .map((group) => ({
+              kind: "group" as const,
+              id: group?.id,
+            }));
+
+          // Get user suggestions
+          const users = await getUsers({ search: text });
+          const userSuggestions = users
+            .filter((user) => user !== null)
+            .map((user) => ({
+              kind: "user" as const,
+              id: user?.id,
+            }));
+
+          // Return combined suggestions
+          return [...groupSuggestions, ...userSuggestions];
         }}
       >
         <TooltipProvider>{children}</TooltipProvider>
