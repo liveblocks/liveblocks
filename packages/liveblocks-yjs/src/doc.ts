@@ -1,4 +1,9 @@
-import { DerivedSignal, Signal, type YjsSyncStatus } from "@liveblocks/core";
+import {
+  DerivedSignal,
+  Signal as Signal,
+  type YjsSyncStatus,
+} from "@liveblocks/core";
+import { sha256 } from "@noble/hashes/sha2";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
 import { IndexeddbPersistence } from "y-indexeddb";
@@ -12,8 +17,8 @@ export default class yDocHandler extends Observable<unknown> {
   private updateRoomDoc: (update: Uint8Array) => void;
   private fetchRoomDoc: (vector: string) => void;
   private useV2Encoding: boolean;
-  private localSnapshotΣ: Signal<Y.Snapshot>;
-  private remoteSnapshotΣ: Signal<Y.Snapshot | null>;
+  private localSnapshotHashΣ: Signal<Array<number>>;
+  private remoteSnapshotHashΣ: Signal<Array<number> | null>;
 
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private static readonly DEBOUNCE_INTERVAL_MS = 200;
@@ -47,13 +52,27 @@ export default class yDocHandler extends Observable<unknown> {
 
     this.syncDoc();
 
-    this.localSnapshotΣ = new Signal<Y.Snapshot>(Y.snapshot(doc));
-    this.remoteSnapshotΣ = new Signal<Y.Snapshot | null>(null);
+    const encodedSnapshot = this.useV2Encoding
+      ? Y.encodeSnapshotV2(Y.snapshot(this.doc))
+      : Y.encodeSnapshot(Y.snapshot(this.doc));
+
+    this.localSnapshotHashΣ = new Signal(Array.from(sha256(encodedSnapshot)));
+    this.remoteSnapshotHashΣ = new Signal<Array<number> | null>(null);
 
     this.isLocalAndRemoteSnapshotEqualΣ = DerivedSignal.from(() => {
-      const remoteSnapshot = this.remoteSnapshotΣ.get();
-      if (remoteSnapshot === null) return false;
-      return Y.equalSnapshots(this.localSnapshotΣ.get(), remoteSnapshot);
+      const remoteSnapshotHash = this.remoteSnapshotHashΣ.get();
+      if (remoteSnapshotHash === null) return false;
+
+      const localSnapshotHash = this.localSnapshotHashΣ.get();
+      if (localSnapshotHash.length !== remoteSnapshotHash.length) {
+        return false;
+      }
+      for (let i = 0; i < localSnapshotHash.length; i++) {
+        if (localSnapshotHash[i] !== remoteSnapshotHash[i]) {
+          return false;
+        }
+      }
+      return true;
     });
   }
 
@@ -62,13 +81,13 @@ export default class yDocHandler extends Observable<unknown> {
     stateVector,
     readOnly,
     v2,
-    remoteSnapshot,
+    remoteSnapshotHash,
   }: {
     update: Uint8Array;
     stateVector: string | null;
     readOnly: boolean;
     v2?: boolean;
-    remoteSnapshot: Uint8Array;
+    remoteSnapshotHash: Uint8Array;
   }): void => {
     // apply update from the server, updates from the server can be v1 or v2
     const applyUpdate = v2 ? Y.applyUpdateV2 : Y.applyUpdate;
@@ -97,12 +116,7 @@ export default class yDocHandler extends Observable<unknown> {
       this.synced = true;
     }
 
-    // If a remote snapshot (combination of state vector and delete set) is provided, we update the remote snapshot state
-    const snapshot = v2
-      ? Y.decodeSnapshotV2(remoteSnapshot)
-      : Y.decodeSnapshot(remoteSnapshot);
-
-    this.remoteSnapshotΣ.set(snapshot);
+    this.remoteSnapshotHashΣ.set(Array.from(remoteSnapshotHash));
   };
 
   public syncDoc = (): void => {
@@ -131,7 +145,10 @@ export default class yDocHandler extends Observable<unknown> {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => {
       // Compute local snapshot and update the local snapshot state
-      this.localSnapshotΣ.set(Y.snapshot(this.doc));
+      const encodedSnapshot = this.useV2Encoding
+        ? Y.encodeSnapshotV2(Y.snapshot(this.doc))
+        : Y.encodeSnapshot(Y.snapshot(this.doc));
+      this.localSnapshotHashΣ.set(Array.from(sha256(encodedSnapshot)));
       this.debounceTimer = null;
     }, yDocHandler.DEBOUNCE_INTERVAL_MS);
   }
@@ -150,8 +167,8 @@ export default class yDocHandler extends Observable<unknown> {
   };
 
   experimental_getSyncStatus(): YjsSyncStatus {
-    const remoteSnapshot = this.remoteSnapshotΣ.get();
-    if (remoteSnapshot === null) {
+    const remoteSnapshotHash = this.remoteSnapshotHashΣ.get();
+    if (remoteSnapshotHash === null) {
       return "loading";
     }
     if (!this.isLocalAndRemoteSnapshotEqualΣ.get()) {

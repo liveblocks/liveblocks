@@ -88,7 +88,7 @@ export class LiveblocksYjsProvider
           update: updateStr,
           guid,
           v2,
-          remoteSnapshot,
+          remoteSnapshotHash,
         } = message;
         const canWrite = this.room.getSelf()?.canWrite ?? true;
         const update = Base64.toUint8Array(updateStr);
@@ -103,7 +103,7 @@ export class LiveblocksYjsProvider
               stateVector,
               readOnly: !canWrite,
               v2,
-              remoteSnapshot: Base64.toUint8Array(remoteSnapshot),
+              remoteSnapshotHash: Base64.toUint8Array(remoteSnapshotHash),
             });
         } else {
           this.rootDocHandler.handleServerUpdate({
@@ -111,7 +111,7 @@ export class LiveblocksYjsProvider
             stateVector,
             readOnly: !canWrite,
             v2,
-            remoteSnapshot: Base64.toUint8Array(remoteSnapshot),
+            remoteSnapshotHash: Base64.toUint8Array(remoteSnapshotHash),
           });
         }
       })
