@@ -18,10 +18,10 @@ const GROUPS = [
     name: "Design",
     avatar: "https://liveblocks.io/favicon.svg",
   },
-  { kind: "group" as const, id: "noName" },
+  { kind: "group" as const, id: "unknown" },
   {
     kind: "group" as const,
-    id: "here",
+    id: "access",
     userIds: ["user-0", "user-1", "user-2"],
   },
 ];
