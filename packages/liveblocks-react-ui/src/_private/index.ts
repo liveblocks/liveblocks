@@ -13,6 +13,7 @@ export { User } from "../components/internal/User";
 export * from "../icons";
 export { capitalize } from "../utils/capitalize";
 export { cn } from "../utils/cn";
+export { useGroupMentionSummary } from "../utils/use-group-mention";
 export { useInitial } from "../utils/use-initial";
 export { useRefs } from "../utils/use-refs";
 
