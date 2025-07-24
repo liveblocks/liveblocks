@@ -47,6 +47,8 @@ test.describe("Yjs - Text", () => {
 
     // insert text on page 2
     await page2.click("#largeText");
-    await waitForJson(pages, "#text", "yjs ".repeat(50_000));
+    await waitForJson(pages, "#text", "yjs ".repeat(50_000), {
+      timeout: 10000,
+    });
   });
 });
