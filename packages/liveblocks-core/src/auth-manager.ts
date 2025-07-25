@@ -45,12 +45,14 @@ export function createAuthManager(
   const expiryTimes: number[] = []; // Supposed to always contain the same number of elements as `tokens`
 
   const requestPromises = new Map<string, Promise<ParsedAuthToken>>();
+  let firstTokenPromise: Promise<ParsedAuthToken> | null = null;
 
   function reset() {
     seenTokens.clear();
     tokens.length = 0;
     expiryTimes.length = 0;
     requestPromises.clear();
+    firstTokenPromise = null;
   }
 
   function hasCorrespondingScopes(
@@ -208,17 +210,17 @@ export function createAuthManager(
     }
 
     let currentPromise;
-    if (requestOptions.roomId) {
-      currentPromise = requestPromises.get(requestOptions.roomId);
-      if (currentPromise === undefined) {
-        currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set(requestOptions.roomId, currentPromise);
-      }
+    const roomKey = requestOptions.roomId || "liveblocks-user-token";
+    
+    if (tokens.length === 0 && firstTokenPromise === null) {
+      firstTokenPromise = makeAuthRequest(requestOptions);
+      currentPromise = firstTokenPromise;
+      requestPromises.set(roomKey, currentPromise);
     } else {
-      currentPromise = requestPromises.get("liveblocks-user-token");
+      currentPromise = requestPromises.get(roomKey);
       if (currentPromise === undefined) {
         currentPromise = makeAuthRequest(requestOptions);
-        requestPromises.set("liveblocks-user-token", currentPromise);
+        requestPromises.set(roomKey, currentPromise);
       }
     }
 
@@ -241,10 +243,11 @@ export function createAuthManager(
 
       return { type: "secret", token };
     } finally {
-      if (requestOptions.roomId) {
-        requestPromises.delete(requestOptions.roomId);
-      } else {
-        requestPromises.delete("liveblocks-user-token");
+      const roomKey = requestOptions.roomId || "liveblocks-user-token";
+      requestPromises.delete(roomKey);
+      
+      if (currentPromise === firstTokenPromise) {
+        firstTokenPromise = null;
       }
     }
   }
