@@ -190,6 +190,19 @@ export default function Home() {
             </li>
           </ul>
         </li>
+
+        <hr />
+
+        <li>
+          <div>Miscellaneous</div>
+        </li>
+        <ul>
+          <li>
+            <Link href="/icons">
+              All <code>@liveblocks/react-ui</code> icons
+            </Link>
+          </li>
+        </ul>
       </ul>
     </div>
   );
