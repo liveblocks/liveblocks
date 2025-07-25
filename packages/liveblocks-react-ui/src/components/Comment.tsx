@@ -5,6 +5,7 @@ import {
   type CommentAttachment,
   type CommentData,
   type CommentReaction as CommentReactionData,
+  type GroupMentionData,
   type MentionData,
   Permission,
 } from "@liveblocks/core";
@@ -60,7 +61,7 @@ import type {
   CommentBodyLinkProps,
   CommentBodyMentionProps,
   CommentLinkProps,
-  CommentMentionProps,
+  CommentMentionProps as CommentPrimitiveMentionProps,
 } from "../primitives/Comment/types";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
@@ -68,6 +69,7 @@ import { useCurrentUserId } from "../shared";
 import type { CommentAttachmentArgs } from "../types";
 import { cn } from "../utils/cn";
 import { download } from "../utils/download";
+import { useGroupMentionSummary } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
@@ -83,6 +85,7 @@ import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
+import { Group } from "./internal/Group";
 import { List } from "./internal/List";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
@@ -211,28 +214,101 @@ interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
   onAttachmentClick?: CommentProps["onAttachmentClick"];
 }
 
-export function CommentMention({
+interface CommentMentionProps
+  extends CommentBodyMentionProps,
+    CommentPrimitiveMentionProps {
+  overrides?: CommentProps["overrides"];
+  showGroupTooltip?: boolean;
+}
+
+function CommentUserMention({
   mention,
   className,
   ...props
-}: CommentBodyMentionProps & CommentMentionProps) {
+}: CommentMentionProps) {
   const currentId = useCurrentUserId();
 
+  return (
+    <CommentPrimitive.Mention
+      className={cn("lb-comment-mention", className)}
+      data-self={mention.id === currentId ? "" : undefined}
+      {...props}
+    >
+      {MENTION_CHARACTER}
+      <User userId={mention.id} />
+    </CommentPrimitive.Mention>
+  );
+}
+
+function CommentGroupMention({
+  mention,
+  overrides,
+  showGroupTooltip,
+  className,
+  ...props
+}: CommentMentionProps) {
+  const $ = useOverrides(overrides);
+  const { summary, isLoading: isLoadingSummary } = useGroupMentionSummary(
+    mention as GroupMentionData
+  );
+
+  const content = (
+    <CommentPrimitive.Mention
+      className={cn("lb-comment-mention", className)}
+      data-self={summary?.isMember ? "" : undefined}
+      {...props}
+    >
+      {MENTION_CHARACTER}
+      <Group groupId={mention.id} />
+    </CommentPrimitive.Mention>
+  );
+
+  // Don't display the tooltip if we won't have a summary (or if it's disabled).
+  if (
+    !showGroupTooltip ||
+    (!isLoadingSummary && summary?.totalMembers === undefined)
+  ) {
+    return content;
+  }
+
+  return (
+    <Tooltip
+      content={
+        <span
+          className="lb-group-members"
+          data-loading={isLoadingSummary ? "" : undefined}
+        >
+          {isLoadingSummary
+            ? null
+            : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
+        </span>
+      }
+    >
+      {content}
+    </Tooltip>
+  );
+}
+
+export function CommentMention({
+  mention,
+  showGroupTooltip = true,
+  ...props
+}: CommentMentionProps) {
   switch (mention.kind) {
     case "user":
+      return <CommentUserMention mention={mention} {...props} />;
+
+    case "group":
       return (
-        <CommentPrimitive.Mention
-          className={cn("lb-comment-mention", className)}
-          data-self={mention.id === currentId ? "" : undefined}
+        <CommentGroupMention
+          mention={mention}
+          showGroupTooltip={showGroupTooltip}
           {...props}
-        >
-          {MENTION_CHARACTER}
-          <User userId={mention.id} />
-        </CommentPrimitive.Mention>
+        />
       );
 
     default:
-      return assertNever(mention.kind, "Unhandled mention kind");
+      return assertNever(mention, "Unhandled mention kind");
   }
 }
 
@@ -893,6 +969,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         <CommentMention
                           mention={mention}
                           onClick={(event) => onMentionClick?.(mention, event)}
+                          overrides={overrides}
                         />
                       ),
                       Link: CommentLink,

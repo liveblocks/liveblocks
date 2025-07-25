@@ -779,12 +779,30 @@
 }
 
 .lb-composer-mention-suggestion-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   inline-size: var(--lb-composer-mention-suggestion-avatar-size);
+  block-size: var(--lb-composer-mention-suggestion-avatar-size);
   margin-inline-start: calc(-0.125 * var(--lb-spacing));
   margin-inline-end: calc(0.5 * var(--lb-spacing));
   margin-block: calc(0.125 * var(--lb-spacing));
-  background: var(--lb-foreground-subtle);
-  color: var(--lb-foreground-moderate);
+
+  &:where(.lb-avatar) {
+    background: var(--lb-foreground-subtle);
+    color: var(--lb-foreground-moderate);
+  }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-composer-mention-suggestion-group-description {
+  align-self: baseline;
+  margin-inline-start: calc(0.625 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
 }
 
 /*************************************
@@ -796,6 +814,10 @@
 
   :where(:first-child) {
     @include capitalize;
+  }
+
+  :where(.lb-name) {
+    display: contents;
   }
 }
 
@@ -1090,7 +1112,8 @@
  *               Name                *
  *************************************/
 
-.lb-name {
+.lb-name,
+.lb-group-members {
   display: inline-block;
 
   &:where([data-loading]) {
@@ -1112,7 +1135,7 @@
  *              Loading              *
  *************************************/
 
-:is(.lb-avatar, .lb-name):where([data-loading]) {
+:is(.lb-avatar, .lb-name, .lb-group-members):where([data-loading]) {
   animation: lb-animation-shimmer 8s linear infinite;
 }
 
@@ -1155,6 +1178,7 @@
   color: var(--lb-accent);
   box-decoration-break: clone;
   font-weight: 500;
+  cursor: default;
 }
 
 :is(.lb-comment-link, .lb-composer-link) {

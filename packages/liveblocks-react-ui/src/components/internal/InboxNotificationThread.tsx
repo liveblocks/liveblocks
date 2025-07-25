@@ -1,10 +1,11 @@
 import type {
   BaseMetadata,
+  Client,
   CommentData,
   InboxNotificationThreadData,
   ThreadData,
 } from "@liveblocks/core";
-import { getMentionsFromCommentBody } from "@liveblocks/core";
+import { getMentionsFromCommentBody, kInternal } from "@liveblocks/core";
 import type { ComponentProps } from "react";
 
 import {
@@ -83,7 +84,9 @@ export function InboxNotificationComment({
               className="lb-comment-body"
               body={comment.body}
               components={{
-                Mention: CommentMention,
+                Mention: (props) => (
+                  <CommentMention showGroupTooltip={false} {...props} />
+                ),
                 Link: CommentNonInteractiveLink,
               }}
             />
@@ -129,6 +132,7 @@ export function InboxNotificationComment({
  * unless the comment was created by the user themselves.
  */
 function findLastCommentWithMentionedId(
+  client: Client,
   comments: CommentData[],
   mentionedId: string
 ) {
@@ -144,13 +148,34 @@ function findLastCommentWithMentionedId(
     }
 
     if (comment.body) {
-      const mentions = getMentionsFromCommentBody(
-        comment.body,
-        (mention) => mention.kind === "user" && mention.id === mentionedId
-      );
+      const mentions = getMentionsFromCommentBody(comment.body);
 
-      if (mentions.length > 0) {
-        return comment;
+      for (const mention of mentions) {
+        // 1. The comment contains a user mention for the current user.
+        if (mention.kind === "user" && mention.id === mentionedId) {
+          return comment;
+        }
+
+        // 2. The comment contains a group mention including the current user in its `userIds` array.
+        if (
+          mention.kind === "group" &&
+          mention.userIds?.includes(mentionedId)
+        ) {
+          return comment;
+        }
+
+        // 3. The comment contains a group mention including the current user in its managed group members.
+        if (mention.kind === "group" && mention.userIds === undefined) {
+          // Synchronously look up the group summary for this group ID.
+          // TODO: These group summaries need to be fetched in the first place
+          const groupSummary = client[
+            kInternal
+          ].httpClient.groupSummariesStore.getItemState(mention.id);
+
+          if (groupSummary?.data?.isMember) {
+            return comment;
+          }
+        }
       }
     }
   }
@@ -163,6 +188,7 @@ function getUserIdsFromComments(comments: CommentData[]) {
 }
 
 export function generateInboxNotificationThreadContents(
+  client: Client,
   inboxNotification: InboxNotificationThreadData,
   thread: ThreadData<BaseMetadata>,
   userId: string
@@ -194,6 +220,7 @@ export function generateInboxNotificationThreadContents(
   }
 
   const commentWithMention = findLastCommentWithMentionedId(
+    client,
     unreadComments,
     userId
   );

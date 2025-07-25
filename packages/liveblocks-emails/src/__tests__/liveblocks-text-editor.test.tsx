@@ -11,8 +11,8 @@ describe("liveblocks text editor", () => {
       const userId = "user-mina";
 
       const mentionNodeWithContext = createLexicalMentionNodeWithContext({
-        mentionedUserId: userId,
-        mentionId,
+        mentionedId: userId,
+        textMentionId: mentionId,
       });
 
       const nodes = transformAsLiveblocksTextEditorNodes({
@@ -52,8 +52,8 @@ describe("liveblocks text editor", () => {
       const userId = "user-dracula";
 
       const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionedUserId: userId,
-        mentionId,
+        mentionedId: userId,
+        textMentionId: mentionId,
       });
 
       const nodes = transformAsLiveblocksTextEditorNodes({

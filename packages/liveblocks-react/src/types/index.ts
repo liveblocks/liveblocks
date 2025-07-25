@@ -25,7 +25,9 @@ import type {
   CommentAttachment,
   CommentBody,
   CommentData,
+  DGI,
   DRI,
+  GroupSummary,
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
@@ -120,8 +122,20 @@ export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 export type RoomInfoAsyncResult = AsyncResult<DRI, "info">;
 export type RoomInfoAsyncSuccess = AsyncSuccess<DRI, "info">;
 
+export type GroupInfoAsyncResult = AsyncResult<DGI, "info">;
+export type GroupInfoAsyncSuccess = AsyncSuccess<DGI, "info">;
+
 export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
 export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
+
+export type GroupSummaryAsyncResult = AsyncResult<
+  GroupSummary | undefined,
+  "summary"
+>;
+export type GroupSummaryAsyncSuccess = AsyncSuccess<
+  GroupSummary | undefined,
+  "summary"
+>;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
@@ -320,6 +334,14 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useRoomInfo(roomId: string): RoomInfoAsyncResult;
 
     /**
+     * Returns group info from a given group ID.
+     *
+     * @example
+     * const { info, error, isLoading } = useGroupInfo("group-id");
+     */
+    useGroupInfo(groupId: string): GroupInfoAsyncResult;
+
+    /**
      * Returns whether the hook is called within a RoomProvider context.
      *
      * @example
@@ -395,6 +417,14 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const { info } = useRoomInfo("room-id");
      */
     useRoomInfo(roomId: string): RoomInfoAsyncSuccess;
+
+    /**
+     * Returns group info from a given group ID.
+     *
+     * @example
+     * const { info } = useGroupInfo("group-id");
+     */
+    useGroupInfo(groupId: string): GroupInfoAsyncSuccess;
 
     /**
      * Returns whether the hook is called within a RoomProvider context.

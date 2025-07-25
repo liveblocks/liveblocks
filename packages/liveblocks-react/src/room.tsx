@@ -26,8 +26,10 @@ import type {
   DS,
   DU,
   EnterOptions,
+  GroupSummary,
   IYjsProvider,
   LiveblocksErrorContext,
+  MentionData,
   OpaqueClient,
   RoomEventMessage,
   RoomSubscriptionSettings,
@@ -85,6 +87,7 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
+  GroupSummaryAsyncResult,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -784,15 +787,18 @@ function useYjsProvider(): IYjsProvider | undefined {
 }
 
 /** @private - Internal API, do not rely on it. */
-function useCreateTextMention(): (userId: string, mentionId: string) => void {
+function useCreateTextMention(): (
+  mentionId: string,
+  mention: MentionData
+) => void {
   const room = useRoom();
   return useCallback(
-    (userId: string, mentionId: string): void => {
+    (mentionId: string, mention: MentionData): void => {
       room[kInternal]
-        .createTextMention(userId, mentionId)
+        .createTextMention(mentionId, mention)
         .catch((err): void => {
           console.error(
-            `Cannot create text mention for user '${userId}' and mention '${mentionId}'`,
+            `Cannot create text mention for mention '${mentionId}'`,
             err
           );
         });
@@ -3124,6 +3130,46 @@ const _useStorageRoot: TypedBundle["useStorageRoot"] = useStorageRoot;
 const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
+function selectorFor_useGroupSummary(
+  state: AsyncResult<GroupSummary | undefined> | undefined
+): GroupSummaryAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  return {
+    isLoading: false,
+    summary: state.data,
+  };
+}
+
+/** @private - Internal API, do not rely on it. */
+function useGroupSummary(groupId: string): GroupSummaryAsyncResult {
+  const client = useClient();
+  const store = client[kInternal].httpClient.groupSummariesStore;
+
+  const getGroupSummaryState = useCallback(
+    () => store.getItemState(groupId),
+    [store, groupId]
+  );
+
+  useEffect(() => {
+    void store.enqueue(groupId);
+  }, [store, groupId]);
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getGroupSummaryState,
+    getGroupSummaryState,
+    selectorFor_useGroupSummary,
+    shallow
+  );
+}
+
 export {
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -3148,6 +3194,7 @@ export {
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,
+  useGroupSummary,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
