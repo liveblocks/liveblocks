@@ -18,7 +18,47 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 30 (2025-07-25)
+
+## v3.2.0
+
+### `@liveblocks/react-ui`
+
+- Improve `AiChat`'s scroll behavior when sending new messages: the chat will
+  now scroll new messages to the top and leave enough space for responses.
+- Expose Markdown components in `AiChat`’s `components` prop to customize the
+  rendering of Markdown content.
+- Add `blurOnSubmit` prop to `Composer` (also available on the `Composer.Form`
+  primitive and as `blurComposerOnSubmit` on `Thread`) to control whether a
+  composer should lose focus after being submitted.
+
+### `@liveblocks/react`
+
+- `useErrorListener` now receives `"LARGE_MESSAGE_ERROR"` errors when the
+  `largeMessageStrategy` option isn’t configured and a message couldn’t be sent
+  because it was too large for WebSocket.
+
+### `@liveblocks/node`
+
+- Add `tenantId` to `identifyUser` method as an optional parameter.
+
+## Dashboard
+
+- Fix issue with custom nodes causing an error in Tiptap/BlockNote documents views.
+
+## Contributors
+
+marcbouchenoire, jrowny, flowflorent, ctnicholas
+
 # Week 29 (2025-07-18)
+
+## v3.1.4
+
+### `@liveblocks/react-ui`
+
+- Fix copilot id not being passed to 'set-tool-call-result' command that is
+  dispatched when a tool call is responded to. Previously, we were using the
+  default copilot to generate messages from the tool call result.
 
 ## v3.1.3
 
