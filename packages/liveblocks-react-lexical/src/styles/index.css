@@ -24,12 +24,30 @@
 }
 
 .lb-lexical-mention-suggestion-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   inline-size: var(--lb-lexical-mention-suggestion-avatar-size);
+  block-size: var(--lb-lexical-mention-suggestion-avatar-size);
   margin-inline-start: calc(-0.125 * var(--lb-spacing));
   margin-inline-end: calc(0.5 * var(--lb-spacing));
   margin-block: calc(0.125 * var(--lb-spacing));
-  background: var(--lb-foreground-subtle);
-  color: var(--lb-foreground-moderate);
+
+  &:where(.lb-avatar) {
+    background: var(--lb-foreground-subtle);
+    color: var(--lb-foreground-moderate);
+  }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-lexical-mention-suggestion-group-description {
+  align-self: baseline;
+  margin-inline-start: calc(0.625 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
 }
 
 /*************************************

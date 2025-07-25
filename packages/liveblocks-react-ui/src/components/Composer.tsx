@@ -8,7 +8,7 @@ import type {
   GroupMentionData,
 } from "@liveblocks/core";
 import { assertNever, Permission } from "@liveblocks/core";
-import { useGroupInfo, useRoom } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
@@ -79,6 +79,7 @@ import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { Group } from "./internal/Group";
+import { GroupDescription } from "./internal/GroupDescription";
 import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
@@ -235,6 +236,10 @@ interface ComposerEditorContainerProps
   onEditorClick: (event: MouseEvent<HTMLDivElement>) => void;
 }
 
+interface ComposerMentionProps extends ComposerEditorMentionProps {
+  overrides?: ComposerProps["overrides"];
+}
+
 function ComposerInsertMentionEditorAction({
   label,
   tooltipLabel,
@@ -339,33 +344,6 @@ function ComposerAttachFilesEditorAction({
   );
 }
 
-// function ComposerMention({ mention }: ComposerEditorMentionProps) {
-//   switch (mention.kind) {
-//     case "user":
-//       return (
-//         <ComposerPrimitive.Mention className="lb-composer-mention">
-//           {MENTION_CHARACTER}
-//           <User userId={mention.id} />
-//         </ComposerPrimitive.Mention>
-//       );
-
-//     case "group":
-//       return (
-//         <ComposerPrimitive.Mention className="lb-composer-mention">
-//           {MENTION_CHARACTER}
-//           <Group groupId={mention.id} />
-//         </ComposerPrimitive.Mention>
-//       );
-
-//     default:
-//       return assertNever(mention, "Unhandled mention kind");
-//   }
-// }
-
-interface ComposerMentionProps extends ComposerEditorMentionProps {
-  overrides?: ComposerProps["overrides"];
-}
-
 function ComposerUserMention({ mention }: ComposerMentionProps) {
   return (
     <ComposerPrimitive.Mention className="lb-composer-mention">
@@ -425,16 +403,6 @@ export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
     default:
       return assertNever(mention, "Unhandled mention kind");
   }
-}
-
-interface GroupDescriptionProps extends ComponentPropsWithoutRef<"span"> {
-  groupId: string;
-}
-
-function GroupDescription({ groupId, ...props }: GroupDescriptionProps) {
-  const { info } = useGroupInfo(groupId);
-
-  return info?.description ? <span {...props}>{info.description}</span> : null;
 }
 
 function ComposerMentionSuggestions({

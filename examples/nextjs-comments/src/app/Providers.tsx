@@ -21,7 +21,8 @@ const GROUPS = [
   { kind: "group" as const, id: "unknown" },
   {
     kind: "group" as const,
-    id: "access",
+    id: "here",
+    description: "Everyone currently connected",
     userIds: ["user-0", "user-1", "user-2"],
   },
 ];
@@ -78,6 +79,7 @@ export function Providers({ children }: PropsWithChildren) {
           return {
             name: group?.name,
             avatar: group?.avatar,
+            description: group?.description,
           };
         });
       }}

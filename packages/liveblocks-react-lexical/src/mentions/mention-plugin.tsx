@@ -17,7 +17,13 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, Group, User, UsersIcon } from "@liveblocks/react-ui/_private";
+import {
+  Avatar,
+  Group,
+  GroupDescription,
+  User,
+  UsersIcon,
+} from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -471,7 +477,12 @@ export function MentionPlugin() {
                         <Group
                           groupId={mention.id}
                           className="lb-lexical-mention-suggestion-group"
-                        />
+                        >
+                          <GroupDescription
+                            groupId={mention.id}
+                            className="lb-lexical-mention-suggestion-group-description"
+                          />
+                        </Group>
                       </>
                     ) : (
                       assertNever(mention, "Unhandled mention kind")

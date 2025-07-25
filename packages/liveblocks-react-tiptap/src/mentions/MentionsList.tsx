@@ -14,7 +14,13 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, Group, User, UsersIcon } from "@liveblocks/react-ui/_private";
+import {
+  Avatar,
+  Group,
+  GroupDescription,
+  User,
+  UsersIcon,
+} from "@liveblocks/react-ui/_private";
 import type { HTMLAttributes, MouseEvent } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
@@ -205,7 +211,12 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
                     <Group
                       groupId={mention.id}
                       className="lb-tiptap-mention-suggestion-group"
-                    />
+                    >
+                      <GroupDescription
+                        groupId={mention.id}
+                        className="lb-tiptap-mention-suggestion-group-description"
+                      />
+                    </Group>
                   </>
                 ) : (
                   assertNever(mention, "Unhandled mention kind")
