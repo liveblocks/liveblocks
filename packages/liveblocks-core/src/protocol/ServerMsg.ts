@@ -223,6 +223,7 @@ export type YDocUpdateServerMsg = {
   readonly stateVector: string | null; // server's state vector, sent in response to fetch
   readonly guid?: string; // an optional guid to identify which subdoc this update to
   readonly v2?: boolean; // whether this is a v2 update
+  readonly remoteSnapshotHash: string; // The hash of snapshot of server's document. Used to detect if the client has the latest version of the document.
 };
 
 /**

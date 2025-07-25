@@ -1,9 +1,22 @@
 ## vNEXT (not yet published)
 
+## v3.2.1
+
 ### `@liveblocks/react-ui`
 
 - Improve Markdown lists in `AiChat`: better spacing and support for arbitrary
   starting numbers in ordered lists. (e.g. `3.` instead of `1.`)
+
+### `@liveblocks/react`
+
+- Fix `useSyncStatus` returning incorrect synchronization status for Y.js
+  provider. We now compare the hash of local and remote snapshot to check for
+  synchronization differences between local and remote Y.js document.
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksYjsProvider.getStatus()` returning incorrect synchronization
+  status for Y.js provider.
 
 ## v3.2.0
 

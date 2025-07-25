@@ -3045,7 +3045,9 @@ export function createRoom<
 
   function yjsStatusDidChange(status: YjsSyncStatus) {
     return syncSourceForYjs.setSyncStatus(
-      status === "synchronizing" ? "synchronizing" : "synchronized"
+      status === "synchronizing" || status === "loading"
+        ? "synchronizing"
+        : "synchronized"
     );
   }
 
