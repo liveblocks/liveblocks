@@ -12,7 +12,7 @@ export interface GroupProps extends ComponentProps<"span"> {
   groupId: string;
 }
 
-export function Group({ groupId, className, ...props }: GroupProps) {
+export function Group({ groupId, className, children, ...props }: GroupProps) {
   const { info, isLoading } = useGroupInfo(groupId);
 
   return (
@@ -22,6 +22,7 @@ export function Group({ groupId, className, ...props }: GroupProps) {
       {...props}
     >
       {isLoading ? null : (info?.name ?? groupId)}
+      {children}
     </span>
   );
 }

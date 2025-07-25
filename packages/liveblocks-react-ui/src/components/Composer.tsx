@@ -8,7 +8,7 @@ import type {
   GroupMentionData,
 } from "@liveblocks/core";
 import { assertNever, Permission } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import { useGroupInfo, useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
@@ -427,6 +427,16 @@ export function ComposerMention({ mention, ...props }: ComposerMentionProps) {
   }
 }
 
+interface GroupDescriptionProps extends ComponentPropsWithoutRef<"span"> {
+  groupId: string;
+}
+
+function GroupDescription({ groupId, ...props }: GroupDescriptionProps) {
+  const { info } = useGroupInfo(groupId);
+
+  return info?.description ? <span {...props}>{info.description}</span> : null;
+}
+
 function ComposerMentionSuggestions({
   mentions,
 }: ComposerEditorMentionSuggestionsProps) {
@@ -461,7 +471,12 @@ function ComposerMentionSuggestions({
                   <Group
                     groupId={mention.id}
                     className="lb-composer-mention-suggestion-group"
-                  />
+                  >
+                    <GroupDescription
+                      groupId={mention.id}
+                      className="lb-composer-mention-suggestion-group-description"
+                    />
+                  </Group>
                 </>
               ) : (
                 assertNever(mention, "Unhandled mention kind")
