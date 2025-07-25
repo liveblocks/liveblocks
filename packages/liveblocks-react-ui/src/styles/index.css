@@ -802,6 +802,13 @@
   }
 }
 
+.lb-composer-mention-suggestion-group-description {
+  align-self: baseline;
+  margin-inline-start: calc(0.625 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+}
+
 /*************************************
  *                List               *
  *************************************/
