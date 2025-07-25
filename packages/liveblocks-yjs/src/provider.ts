@@ -95,23 +95,20 @@ export class LiveblocksYjsProvider
 
         // find the right doc and update
         if (guid !== undefined) {
-          this.subdocHandlersΣ
-            .get()
-            .get(guid)
-            ?.handleServerUpdate({
-              update,
-              stateVector,
-              readOnly: !canWrite,
-              v2,
-              remoteSnapshotHash: Base64.toUint8Array(remoteSnapshotHash),
-            });
+          this.subdocHandlersΣ.get().get(guid)?.handleServerUpdate({
+            update,
+            stateVector,
+            readOnly: !canWrite,
+            v2,
+            remoteSnapshotHash,
+          });
         } else {
           this.rootDocHandler.handleServerUpdate({
             update,
             stateVector,
             readOnly: !canWrite,
             v2,
-            remoteSnapshotHash: Base64.toUint8Array(remoteSnapshotHash),
+            remoteSnapshotHash,
           });
         }
       })
@@ -153,6 +150,8 @@ export class LiveblocksYjsProvider
       }
       return "synchronized";
     });
+
+    this.emit("status", [this.getStatus()]);
 
     this.unsubscribers.push(
       this.syncStatusΣ.subscribe(() => {
@@ -277,6 +276,7 @@ export class LiveblocksYjsProvider
   }
 
   public getStatus(): YjsSyncStatus {
+    console.log({ status: this.syncStatusΣ.get() });
     return this.syncStatusΣ.get();
   }
 
