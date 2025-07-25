@@ -42,9 +42,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 - Add `tenantId` to `identifyUser` method as an optional parameter.
 
+## Dashboard
+
+- Fix issue with custom nodes causing an error in Tiptap/BlockNote documents views.
+
 ## Contributors
 
-marcbouchenoire, jrowny, flowflorent
+marcbouchenoire, jrowny, flowflorent, ctnicholas
 
 # Week 29 (2025-07-18)
 
