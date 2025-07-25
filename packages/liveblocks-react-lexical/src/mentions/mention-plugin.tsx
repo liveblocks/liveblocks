@@ -17,7 +17,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, Group, User } from "@liveblocks/react-ui/_private";
+import { Avatar, Group, User, UsersIcon } from "@liveblocks/react-ui/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -466,6 +466,7 @@ export function MentionPlugin() {
                         <Avatar
                           groupId={mention.id}
                           className="lb-lexical-mention-suggestion-avatar"
+                          icon={<UsersIcon />}
                         />
                         <Group
                           groupId={mention.id}

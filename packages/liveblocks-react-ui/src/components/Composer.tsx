@@ -40,6 +40,7 @@ import {
 
 import { useLiveblocksUiConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET, MENTION_CHARACTER } from "../constants";
+import { UsersIcon } from "../icons";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
 import { CodeIcon } from "../icons/Code";
@@ -455,6 +456,7 @@ function ComposerMentionSuggestions({
                   <Avatar
                     groupId={mention.id}
                     className="lb-composer-mention-suggestion-avatar"
+                    icon={<UsersIcon />}
                   />
                   <Group
                     groupId={mention.id}
