@@ -12,4 +12,9 @@ export type BaseGroupInfo = {
    * The avatar of the group.
    */
   avatar?: string;
+
+  /**
+   * The description of the group.
+   */
+  description?: string;
 };
