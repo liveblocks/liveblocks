@@ -14,7 +14,7 @@ import {
   useLayoutEffect,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
-import { Avatar, Group, User } from "@liveblocks/react-ui/_private";
+import { Avatar, Group, User, UsersIcon } from "@liveblocks/react-ui/_private";
 import type { HTMLAttributes, MouseEvent } from "react";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
@@ -200,6 +200,7 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>(
                     <Avatar
                       groupId={mention.id}
                       className="lb-tiptap-mention-suggestion-avatar"
+                      icon={<UsersIcon />}
                     />
                     <Group
                       groupId={mention.id}
