@@ -1,7 +1,7 @@
 "use client";
 
 import type { Relax } from "@liveblocks/core";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { useMemo } from "react";
 
 import { cn } from "../../utils/cn";
@@ -15,8 +15,9 @@ interface AvatarLayoutProps extends ComponentProps<"div"> {
   isLoading: boolean;
 }
 
-export type AvatarProps = ComponentProps<"div"> &
-  Relax<
+export type AvatarProps = ComponentProps<"div"> & {
+  icon?: ReactNode;
+} & Relax<
     | {
         /**
          * The user ID to display the avatar for.
@@ -72,13 +73,15 @@ function AvatarLayout({
   );
 }
 
-export function Avatar({ userId, groupId, ...props }: AvatarProps) {
+export function Avatar({ userId, groupId, icon, ...props }: AvatarProps) {
   const { info, isLoading } = useUserOrGroupInfo(
     userId ? "user" : "group",
     userId ?? groupId
   );
 
-  return (
+  return icon && (isLoading || !info?.avatar) ? (
+    <div {...props}>{icon}</div>
+  ) : (
     <AvatarLayout
       src={info?.avatar}
       name={info?.name}
