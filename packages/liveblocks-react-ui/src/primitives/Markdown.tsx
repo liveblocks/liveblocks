@@ -12,6 +12,7 @@ import {
 import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
+const PARTIAL_LINK_REGEX = /\[(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 
@@ -863,7 +864,7 @@ function findPotentiallyPartialToken(
  * Optimistically complete a Markdown string of inline content.
  *
  * - Bold, italic, strikethrough, and inline code
- * - TODO: Links
+ * - Links
  */
 function completePartialInlineMarkdown(markdown: string): string {
   const stack: { string: string; length: number; index: number }[] = [];
@@ -926,6 +927,31 @@ function completePartialInlineMarkdown(markdown: string): string {
       }
 
       i += matchedDelimiter.length - 1;
+    }
+  }
+
+  // Before closing open delimiters, we can look for partial links
+  // from the end of the string (since links cannot be nested).
+  const partialLinkMatch = completedMarkdown.match(PARTIAL_LINK_REGEX);
+
+  if (partialLinkMatch) {
+    const partialLinkMatchContent = partialLinkMatch[0];
+    const { url } = partialLinkMatch.groups!;
+
+    if (url !== undefined) {
+      // "[Link](https://liveblocks.io" → "[Link](https://liveblocks.io)"
+      completedMarkdown += ")";
+    } else {
+      if (partialLinkMatchContent.endsWith("](")) {
+        // "[Link](" → "[Link](#)"
+        completedMarkdown += "#)";
+      } else if (partialLinkMatchContent.endsWith("]")) {
+        // "[Link]" → "[Link](#)"
+        completedMarkdown += "(#)";
+      } else {
+        // "[Link" → "[Link](#)"
+        completedMarkdown += "](#)";
+      }
     }
   }
 
