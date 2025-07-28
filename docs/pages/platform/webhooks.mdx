@@ -612,6 +612,35 @@ For a full step-by-step guide on testing with `localtunnel` and `ngrok`, read
 the guide on
 [how to test webhooks on localhost](/docs/guides/how-to-test-webhooks-on-localhost#Use-your-webhook-event).
 
+### Using svix-cli for enterprise environments [#svix-cli-testing]
+
+For enterprise environments where tunneling tools like `localtunnel` and `ngrok` 
+may be blocked by security policies, you can use the 
+[svix-cli](https://github.com/svix/svix-webhooks/tree/main/svix-cli) tool to 
+listen for webhook events directly.
+
+First, install the svix-cli:
+
+```bash
+npm install -g svix-cli
+```
+
+Then use the `listen` command to forward webhook events to your local server:
+
+```bash
+svix listen http://localhost:3000/api/webhooks
+```
+
+This command will:
+- Generate a unique webhook URL that you can use in the Liveblocks dashboard
+- Forward all webhook events to your local endpoint
+- Display the events in your terminal for debugging
+
+The svix-cli approach bypasses the need for tunneling tools while providing 
+the same functionality for local webhook testing. For detailed setup 
+instructions, see the 
+[svix-cli documentation](https://github.com/svix/svix-webhooks/tree/main/svix-cli#using-the-listen-command).
+
 ## Source IP Addresses [#source-ips]
 
 In case your webhook receiving endpoint is behind a firewall or NAT, you may
