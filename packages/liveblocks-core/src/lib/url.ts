@@ -160,3 +160,12 @@ export function generateUrl(
     ? urlObject.href
     : urlObject.href.replace(PLACEHOLDER_BASE_URL, "");
 }
+
+export function isUrl(string: string): boolean {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}

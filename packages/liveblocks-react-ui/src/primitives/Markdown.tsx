@@ -1,4 +1,4 @@
-import { assertNever, type Relax, sanitizeUrl } from "@liveblocks/core";
+import { assertNever, isUrl, type Relax, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import { Lexer, type MarkedToken, type Token, type Tokens } from "marked";
 import {
@@ -935,17 +935,28 @@ function completePartialInlineMarkdown(markdown: string): string {
   const partialLinkMatch = completedMarkdown.match(PARTIAL_LINK_REGEX);
 
   if (partialLinkMatch) {
-    const partialLinkMatchContent = partialLinkMatch[0];
-    const { url } = partialLinkMatch.groups!;
+    const partialLinkContent = partialLinkMatch[0];
+    const { text: partialLinkText, url: partialLinkUrl } =
+      partialLinkMatch.groups!;
 
-    if (url !== undefined) {
-      // "[Link](https://liveblocks.io" → "[Link](https://liveblocks.io)"
-      completedMarkdown += ")";
+    if (partialLinkUrl !== undefined) {
+      if (WHITESPACE_REGEX.test(partialLinkUrl) || !isUrl(partialLinkUrl)) {
+        // "[Link](https://" → "[Link](#)"
+        // "[Link](https://liveblocks.io 'With a title" → "[Link](#)"
+        completedMarkdown = completedMarkdown.slice(
+          0,
+          -partialLinkContent.length
+        );
+        completedMarkdown += `[${partialLinkText}](#)`;
+      } else {
+        // "[Link](https://liveblocks.io" → "[Link](https://liveblocks.io)"
+        completedMarkdown += ")";
+      }
     } else {
-      if (partialLinkMatchContent.endsWith("](")) {
+      if (partialLinkContent.endsWith("](")) {
         // "[Link](" → "[Link](#)"
         completedMarkdown += "#)";
-      } else if (partialLinkMatchContent.endsWith("]")) {
+      } else if (partialLinkContent.endsWith("]")) {
         // "[Link]" → "[Link](#)"
         completedMarkdown += "(#)";
       } else {
