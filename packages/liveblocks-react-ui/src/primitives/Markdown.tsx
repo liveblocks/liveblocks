@@ -38,19 +38,8 @@ const MARKED_TOKEN_TYPES = [
   "table",
   "text",
 ] as const satisfies MarkedToken["type"][];
-const PARTIAL_RAW_PARAGRAPHS = [
-  // Partial horizontal rules
-  "-",
-  "--",
-  "*",
-  "**",
-  "_",
-  "__",
-
-  // Partial code blocks
-  "`",
-  "``",
-];
+const PARTIAL_HORIZONTAL_RULES = ["-", "--", "*", "**", "_", "__"];
+const PARTIAL_CODE_BLOCKS = ["`", "``"];
 
 type PotentiallyPartialToken = Relax<
   | Tokens.Text
@@ -59,6 +48,7 @@ type PotentiallyPartialToken = Relax<
   | Tokens.Blockquote
   | Tokens.ListItem
   | Tokens.TableCell
+  | Tokens.Code
 >;
 
 export type MarkdownComponents = {
@@ -819,6 +809,10 @@ function findPotentiallyPartialToken(
           return lastListItemLastToken as Tokens.Text;
         }
 
+        if (lastListItemLastToken.type === "code") {
+          return lastListItemLastToken as Tokens.Code;
+        }
+
         if (isBlockToken(lastListItemLastToken)) {
           return findPotentiallyPartialToken(
             lastListItemLastToken.tokens,
@@ -861,6 +855,10 @@ function findPotentiallyPartialToken(
       lastNonEmptyTableCell.tokens,
       lastNonEmptyTableCell
     );
+  }
+
+  if (lastToken.type === "code") {
+    return lastToken as Tokens.Code;
   }
 
   if (isBlockToken(lastToken)) {
@@ -1010,14 +1008,36 @@ function completePartialTokens(tokens: Token[]) {
     return tokens;
   }
 
-  // If we think the current paragraph will turn into something else
-  // (e.g. an horizontal rule, a code block, etc.), we remove its content for now.
-  if (potentiallyPartialToken.type === "paragraph") {
-    const paragraph = potentiallyPartialToken as Tokens.Paragraph;
+  // If the current paragraph/text could turn into something else
+  // (e.g. an horizontal rule, a code block, etc.), we keep it empty for now.
+  if (
+    potentiallyPartialToken.type === "paragraph" ||
+    potentiallyPartialToken.type === "text"
+  ) {
+    const text = potentiallyPartialToken as Tokens.Paragraph | Tokens.Text;
 
-    if (PARTIAL_RAW_PARAGRAPHS.includes(paragraph.raw)) {
-      paragraph.text = "";
-      paragraph.tokens = [];
+    if (
+      PARTIAL_HORIZONTAL_RULES.includes(text.raw) ||
+      PARTIAL_CODE_BLOCKS.includes(text.raw)
+    ) {
+      text.text = "";
+      text.tokens = [];
+
+      return tokens;
+    }
+  }
+
+  // If the code block is about to be closed, we can hide the trailing "`" or "``" for now.
+  if (potentiallyPartialToken.type === "code") {
+    const code = potentiallyPartialToken as Tokens.Code;
+    const codeLines = code.text.split("\n");
+
+    if (codeLines.length > 0) {
+      const lastCodeLine = codeLines[codeLines.length - 1]!;
+
+      if (PARTIAL_CODE_BLOCKS.includes(lastCodeLine)) {
+        code.text = code.text.slice(0, -lastCodeLine.length);
+      }
 
       return tokens;
     }
@@ -1025,6 +1045,9 @@ function completePartialTokens(tokens: Token[]) {
 
   if (potentiallyPartialToken.type === "list_item") {
     const listItem = potentiallyPartialToken as Tokens.ListItem;
+
+    // TODO: If the list item has no token, and its raw value looks like "-",
+    //       and the parent list has only one item, we should remove the list for now.
 
     // Marked.js only turns list items into tasks when the list marker
     // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
