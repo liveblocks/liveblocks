@@ -276,7 +276,6 @@ export class LiveblocksYjsProvider
   }
 
   public getStatus(): YjsSyncStatus {
-    console.log({ status: this.syncStatusΣ.get() });
     return this.syncStatusΣ.get();
   }
 
