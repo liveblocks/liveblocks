@@ -38,6 +38,7 @@ const MARKED_TOKEN_TYPES = [
   "table",
   "text",
 ] as const satisfies MarkedToken["type"][];
+const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
 const PARTIAL_HORIZONTAL_RULES = ["-", "--", "*", "**", "_", "__"];
 const PARTIAL_CODE_BLOCKS = ["`", "``"];
 
@@ -879,7 +880,6 @@ function findPotentiallyPartialToken(
  */
 function completePartialInlineMarkdown(markdown: string): string {
   const stack: { string: string; length: number; index: number }[] = [];
-  const delimiters = ["**", "__", "~~", "*", "_", "`"];
   let completedMarkdown = markdown;
 
   // Strikethrough needs to be handled specifically since a single "~" isn't a delimiter.
@@ -892,7 +892,7 @@ function completePartialInlineMarkdown(markdown: string): string {
   for (let i = 0; i < completedMarkdown.length; i++) {
     let matchedDelimiter: string | null = null;
 
-    for (const delimiter of delimiters) {
+    for (const delimiter of FORMATTING_DELIMITERS) {
       if (markdown.startsWith(delimiter, i)) {
         matchedDelimiter = delimiter;
         break;
@@ -1008,8 +1008,8 @@ function completePartialTokens(tokens: Token[]) {
     return tokens;
   }
 
-  // If the current paragraph/text could turn into something else
-  // (e.g. an horizontal rule, a code block, etc.), we keep it empty for now.
+  // If the partial paragraph/text could turn into something else
+  // (e.g. an horizontal rule, a code block, etc.), we can hide it for now.
   if (
     potentiallyPartialToken.type === "paragraph" ||
     potentiallyPartialToken.type === "text"
@@ -1077,20 +1077,29 @@ function completePartialTokens(tokens: Token[]) {
     }
   }
 
+  if (potentiallyPartialToken.text.length === 0) {
+    return tokens;
+  }
+
+  // If the partial token's text is a only a formatting delimiter,
+  // we can hide it for now.
+  if (FORMATTING_DELIMITERS.includes(potentiallyPartialToken.text)) {
+    potentiallyPartialToken.text = "";
+    potentiallyPartialToken.tokens = [];
+  }
+
   // We optimistically complete inline content as a string then re-lex it
   // to get optimistically complete tokens.
-  if (potentiallyPartialToken.text.length > 0) {
-    const completedMarkdown = completePartialInlineMarkdown(
-      potentiallyPartialToken.text
-    );
-    const completedMarkdownTokens = (
-      getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined
-    )?.tokens;
+  const completedMarkdown = completePartialInlineMarkdown(
+    potentiallyPartialToken.text
+  );
+  const completedMarkdownTokens = (
+    getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined
+  )?.tokens;
 
-    if (completedMarkdownTokens) {
-      potentiallyPartialToken.text = completedMarkdown;
-      potentiallyPartialToken.tokens = completedMarkdownTokens;
-    }
+  if (completedMarkdownTokens) {
+    potentiallyPartialToken.text = completedMarkdown;
+    potentiallyPartialToken.tokens = completedMarkdownTokens;
   }
 
   return tokens;
