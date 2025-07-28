@@ -12,6 +12,8 @@ import {
 import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
+const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
+const WHITESPACE_REGEX = /\s/;
 
 const MARKED_TOKEN_TYPES = [
   "blockquote",
@@ -595,7 +597,8 @@ export function MarkdownToken({
     case "code": {
       let language: string | undefined = undefined;
       if (token.lang !== undefined) {
-        language = token.lang.match(/^\S*/)?.[0] ?? undefined;
+        language =
+          token.lang.match(TRAILING_NON_WHITESPACE_REGEX)?.[0] ?? undefined;
       }
 
       const CodeBlock = components?.CodeBlock ?? defaultComponents.CodeBlock;
@@ -765,7 +768,9 @@ function isBlockToken(
   );
 }
 
-// Find the last partial token that we could potentially complete.
+/**
+ * Find the last partial token that we could potentially complete.
+ */
 function findPotentiallyPartialToken(
   tokens: Token[],
   parentToken: PotentiallyPartialToken | null = null
@@ -854,52 +859,98 @@ function findPotentiallyPartialToken(
   return parentToken;
 }
 
-function completePartialInlineMarkdown(markdown: string) {
-  const stack: { token: string; index: number }[] = [];
-  const formattingTokens = new Set(["**", "__", "*", "_", "~~", "`"]);
+/**
+ * Optimistically complete a Markdown string of inline content.
+ *
+ * - Bold, italic, strikethrough, and inline code
+ * - TODO: Links
+ */
+function completePartialInlineMarkdown(markdown: string): string {
+  const stack: { string: string; length: number; index: number }[] = [];
+  const delimiters = ["**", "__", "~~", "*", "_", "`"];
+  let completedMarkdown = markdown;
 
-  // Collect formatting tokens that are not closed.
-  for (let i = 0; i < markdown.length; i++) {
-    let matchedToken: string | null = null;
+  // Strikethrough needs to be handled specifically since a single "~" isn't a delimiter.
+  // If the string ends with a single "~", we remove it optimistically.
+  if (completedMarkdown.endsWith("~") && !completedMarkdown.endsWith("~~")) {
+    completedMarkdown = completedMarkdown.slice(0, -1);
+  }
 
-    for (const token of formattingTokens) {
-      if (markdown.startsWith(token, i)) {
-        matchedToken = token;
+  // Move forward through the string to collect delimiters.
+  for (let i = 0; i < completedMarkdown.length; i++) {
+    let matchedDelimiter: string | null = null;
+
+    for (const delimiter of delimiters) {
+      if (markdown.startsWith(delimiter, i)) {
+        matchedDelimiter = delimiter;
         break;
       }
     }
 
-    if (!matchedToken) {
+    if (matchedDelimiter) {
+      const lastDelimiter = stack[stack.length - 1];
+      const isClosingPreviousDelimiter =
+        lastDelimiter?.string === matchedDelimiter &&
+        i > lastDelimiter.index + matchedDelimiter.length - 1;
+
+      // If the delimiter is not closing any previous delimiter
+      // and it's at the end of the string, we can remove it from the string.
+      if (
+        !isClosingPreviousDelimiter &&
+        i + matchedDelimiter.length >= markdown.length
+      ) {
+        completedMarkdown = completedMarkdown.slice(0, i);
+        break;
+      }
+
+      if (isClosingPreviousDelimiter) {
+        // If the delimiter is closing a previous delimiter,
+        // we remove it from the stack.
+        stack.pop();
+      } else {
+        const characterAfterDelimiter =
+          completedMarkdown[i + matchedDelimiter.length];
+
+        // If the delimiter is opening and is followed by a
+        // non-whitespace character, we add it to the stack.
+        if (
+          characterAfterDelimiter &&
+          !WHITESPACE_REGEX.test(characterAfterDelimiter)
+        ) {
+          stack.push({
+            string: matchedDelimiter,
+            length: matchedDelimiter.length,
+            index: i,
+          });
+        }
+      }
+
+      i += matchedDelimiter.length - 1;
+    }
+  }
+
+  // Move through the stack to close open formatting tokens.
+  for (let i = stack.length - 1; i >= 0; i--) {
+    const delimiter = stack[i]!;
+
+    // If the open token is at the end of the string,
+    // we can't close it yet so we remove it.
+    if (delimiter.index + delimiter.length >= completedMarkdown.length) {
+      completedMarkdown = completedMarkdown.slice(0, delimiter.index);
       continue;
     }
 
-    const top = stack[stack.length - 1];
-
-    if (formattingTokens.has(matchedToken)) {
-      if (top?.token === matchedToken && i > top.index + matchedToken.length) {
-        stack.pop();
-      } else {
-        stack.push({ token: matchedToken, index: i });
-      }
+    // Bold, italic, and strikethrough cannot end with whitespace so
+    // we trim their content before closing them.
+    if (delimiter.string !== "`") {
+      completedMarkdown = completedMarkdown.trimEnd();
     }
 
-    if (matchedToken.length > 1) {
-      i += matchedToken.length - 1;
-    }
+    // We can close that open token at this point.
+    completedMarkdown += delimiter.string;
   }
 
-  let closingTokens = "";
-
-  // Close the unclosed formatting tokens.
-  for (let i = stack.length - 1; i >= 0; i--) {
-    const { token, index } = stack[i]!;
-
-    if (markdown.length > index + token.length) {
-      closingTokens += token;
-    }
-  }
-
-  return markdown + closingTokens;
+  return completedMarkdown;
 }
 
 function completePartialTokens(tokens: Token[]) {
@@ -940,8 +991,8 @@ function completePartialTokens(tokens: Token[]) {
     }
   }
 
-  // We optimistically complete inline content (e.g. "Hello **wor" becomes "Hello **wor**")
-  // as a string then re-lex it to get optimistically complete tokens.
+  // We optimistically complete inline content as a string then re-lex it
+  // to get optimistically complete tokens.
   const completedMarkdown = completePartialInlineMarkdown(
     potentiallyPartialToken.text
   );
