@@ -38,6 +38,19 @@ const MARKED_TOKEN_TYPES = [
   "table",
   "text",
 ] as const satisfies MarkedToken["type"][];
+const PARTIAL_RAW_PARAGRAPHS = [
+  // Partial horizontal rules
+  "-",
+  "--",
+  "*",
+  "**",
+  "_",
+  "__",
+
+  // Partial code blocks
+  "`",
+  "``",
+];
 
 type PotentiallyPartialToken = Relax<
   | Tokens.Text
@@ -993,18 +1006,31 @@ function completePartialInlineMarkdown(markdown: string): string {
 function completePartialTokens(tokens: Token[]) {
   const potentiallyPartialToken = findPotentiallyPartialToken(tokens);
 
-  if (!potentiallyPartialToken || potentiallyPartialToken.text.length === 0) {
+  if (!potentiallyPartialToken) {
     return tokens;
   }
 
-  // Marked.js only turns list items into tasks when the list marker
-  // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
-  //
-  // We optimistically mark list items as tasks sooner,
-  // whenever a list item starts with "- [", "- [x", etc.
-  if (potentiallyPartialToken.type === "list_item") {
-    const listItem = potentiallyPartialToken;
+  // If we think the current paragraph will turn into something else
+  // (e.g. an horizontal rule, a code block, etc.), we remove its content for now.
+  if (potentiallyPartialToken.type === "paragraph") {
+    const paragraph = potentiallyPartialToken as Tokens.Paragraph;
 
+    if (PARTIAL_RAW_PARAGRAPHS.includes(paragraph.raw)) {
+      paragraph.text = "";
+      paragraph.tokens = [];
+
+      return tokens;
+    }
+  }
+
+  if (potentiallyPartialToken.type === "list_item") {
+    const listItem = potentiallyPartialToken as Tokens.ListItem;
+
+    // Marked.js only turns list items into tasks when the list marker
+    // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
+    //
+    // We optimistically mark list items as tasks sooner,
+    // whenever a list item starts with "- [", "- [x", etc.
     if (
       !listItem.task &&
       listItem.tokens.length === 1 &&
@@ -1030,16 +1056,18 @@ function completePartialTokens(tokens: Token[]) {
 
   // We optimistically complete inline content as a string then re-lex it
   // to get optimistically complete tokens.
-  const completedMarkdown = completePartialInlineMarkdown(
-    potentiallyPartialToken.text
-  );
-  const completedMarkdownTokens = (
-    getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined
-  )?.tokens;
+  if (potentiallyPartialToken.text.length > 0) {
+    const completedMarkdown = completePartialInlineMarkdown(
+      potentiallyPartialToken.text
+    );
+    const completedMarkdownTokens = (
+      getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined
+    )?.tokens;
 
-  if (completedMarkdownTokens) {
-    potentiallyPartialToken.text = completedMarkdown;
-    potentiallyPartialToken.tokens = completedMarkdownTokens;
+    if (completedMarkdownTokens) {
+      potentiallyPartialToken.text = completedMarkdown;
+      potentiallyPartialToken.tokens = completedMarkdownTokens;
+    }
   }
 
   return tokens;
