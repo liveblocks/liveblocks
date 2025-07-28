@@ -13,6 +13,38 @@ import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
 
+const MARKED_TOKEN_TYPES = [
+  "blockquote",
+  "br",
+  "code",
+  "codespan",
+  "def",
+  "del",
+  "em",
+  "escape",
+  "heading",
+  "hr",
+  "html",
+  "image",
+  "link",
+  "list",
+  "list_item",
+  "paragraph",
+  "space",
+  "strong",
+  "table",
+  "text",
+] as const satisfies MarkedToken["type"][];
+
+type PotentiallyPartialToken = Relax<
+  | Tokens.Text
+  | Tokens.Paragraph
+  | Tokens.Heading
+  | Tokens.Blockquote
+  | Tokens.ListItem
+  | Tokens.TableCell
+>;
+
 export type MarkdownComponents = {
   /**
    * The component used to render paragraphs.
@@ -403,119 +435,6 @@ const defaultComponents: MarkdownComponents = {
   },
 };
 
-type PotentiallyPartialToken = Relax<
-  | Tokens.Text
-  | Tokens.Paragraph
-  | Tokens.Heading
-  | Tokens.Blockquote
-  | Tokens.ListItem
-  | Tokens.TableCell
->;
-
-function isBlockToken(
-  token: Token
-): token is
-  | Tokens.Paragraph
-  | Tokens.Heading
-  | Tokens.Blockquote
-  | Tokens.ListItem {
-  return (
-    token.type === "paragraph" ||
-    token.type === "heading" ||
-    token.type === "blockquote" ||
-    token.type === "list_item"
-  );
-}
-
-// Find the last partial token that we could potentially complete.
-function findPotentiallyPartialToken(
-  tokens: Token[],
-  parentToken: PotentiallyPartialToken | null = null
-): PotentiallyPartialToken | null {
-  if (tokens.length === 0) {
-    return parentToken;
-  }
-
-  const lastIndex = tokens.length - 1;
-  const lastToken = tokens[lastIndex]!;
-
-  if (lastToken.type === "list") {
-    const listToken = lastToken as Tokens.List;
-    const lastListItem = listToken.items[listToken.items.length - 1];
-
-    if (!lastListItem) {
-      return parentToken;
-    }
-
-    // List items containing empty lines are handled differently,
-    // instead of using the list item's tokens, we use the last one
-    // if it's a text or block token.
-    if (
-      lastListItem.tokens.some((token) => token.type === "space") &&
-      lastListItem.tokens.length > 0
-    ) {
-      const lastListItemLastToken =
-        lastListItem.tokens[lastListItem.tokens.length - 1];
-
-      if (lastListItemLastToken) {
-        if (lastListItemLastToken.type === "text") {
-          return lastListItemLastToken as Tokens.Text;
-        }
-
-        if (isBlockToken(lastListItemLastToken)) {
-          return findPotentiallyPartialToken(
-            lastListItemLastToken.tokens,
-            lastListItemLastToken
-          );
-        }
-
-        return null;
-      }
-    }
-
-    return findPotentiallyPartialToken(lastListItem.tokens, lastListItem);
-  }
-
-  if (lastToken.type === "table") {
-    const tableToken = lastToken as Tokens.Table;
-    const lastTableRow = tableToken.rows[tableToken.rows.length - 1];
-
-    if (!lastTableRow) {
-      return parentToken;
-    }
-
-    // Marked.js creates all cells in advance when creating rows,
-    // we want the cell where the end currently is.
-    const firstEmptyTableCellIndex = lastTableRow.findIndex(
-      (cell) => cell.tokens.length === 0
-    );
-    const lastNonEmptyTableCell =
-      firstEmptyTableCellIndex === -1
-        ? undefined
-        : firstEmptyTableCellIndex === 0
-          ? lastTableRow[firstEmptyTableCellIndex]
-          : lastTableRow[firstEmptyTableCellIndex - 1];
-
-    if (!lastNonEmptyTableCell) {
-      return parentToken;
-    }
-
-    return findPotentiallyPartialToken(
-      lastNonEmptyTableCell.tokens,
-      lastNonEmptyTableCell
-    );
-  }
-
-  if (isBlockToken(lastToken)) {
-    return findPotentiallyPartialToken(
-      lastToken.tokens,
-      lastToken as PotentiallyPartialToken
-    );
-  }
-
-  return parentToken;
-}
-
 export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
@@ -859,36 +778,117 @@ function MarkdownTokens({
   ));
 }
 
-const markedTokenTypes = [
-  "blockquote",
-  "br",
-  "code",
-  "codespan",
-  "def",
-  "del",
-  "em",
-  "escape",
-  "heading",
-  "hr",
-  "html",
-  "image",
-  "link",
-  "list",
-  "list_item",
-  "paragraph",
-  "space",
-  "strong",
-  "table",
-  "text",
-] as const satisfies MarkedToken["type"][];
-
 function isMarkedToken(token: unknown): token is MarkedToken {
   return (
     typeof token === "object" &&
     token !== null &&
     "type" in token &&
-    markedTokenTypes.includes(token.type as MarkedToken["type"])
+    MARKED_TOKEN_TYPES.includes(token.type as MarkedToken["type"])
   );
+}
+
+function isBlockToken(
+  token: Token
+): token is
+  | Tokens.Paragraph
+  | Tokens.Heading
+  | Tokens.Blockquote
+  | Tokens.ListItem {
+  return (
+    token.type === "paragraph" ||
+    token.type === "heading" ||
+    token.type === "blockquote" ||
+    token.type === "list_item"
+  );
+}
+
+// Find the last partial token that we could potentially complete.
+function findPotentiallyPartialToken(
+  tokens: Token[],
+  parentToken: PotentiallyPartialToken | null = null
+): PotentiallyPartialToken | null {
+  if (tokens.length === 0) {
+    return parentToken;
+  }
+
+  const lastIndex = tokens.length - 1;
+  const lastToken = tokens[lastIndex]!;
+
+  if (lastToken.type === "list") {
+    const listToken = lastToken as Tokens.List;
+    const lastListItem = listToken.items[listToken.items.length - 1];
+
+    if (!lastListItem) {
+      return parentToken;
+    }
+
+    // List items containing empty lines are handled differently,
+    // instead of using the list item's tokens, we use the last one
+    // if it's a text or block token.
+    if (
+      lastListItem.tokens.some((token) => token.type === "space") &&
+      lastListItem.tokens.length > 0
+    ) {
+      const lastListItemLastToken =
+        lastListItem.tokens[lastListItem.tokens.length - 1];
+
+      if (lastListItemLastToken) {
+        if (lastListItemLastToken.type === "text") {
+          return lastListItemLastToken as Tokens.Text;
+        }
+
+        if (isBlockToken(lastListItemLastToken)) {
+          return findPotentiallyPartialToken(
+            lastListItemLastToken.tokens,
+            lastListItemLastToken
+          );
+        }
+
+        return null;
+      }
+    }
+
+    return findPotentiallyPartialToken(lastListItem.tokens, lastListItem);
+  }
+
+  if (lastToken.type === "table") {
+    const tableToken = lastToken as Tokens.Table;
+    const lastTableRow = tableToken.rows[tableToken.rows.length - 1];
+
+    if (!lastTableRow) {
+      return parentToken;
+    }
+
+    // Marked.js creates all cells in advance when creating rows,
+    // we want the cell where the end currently is.
+    const firstEmptyTableCellIndex = lastTableRow.findIndex(
+      (cell) => cell.tokens.length === 0
+    );
+    const lastNonEmptyTableCell =
+      firstEmptyTableCellIndex === -1
+        ? undefined
+        : firstEmptyTableCellIndex === 0
+          ? lastTableRow[firstEmptyTableCellIndex]
+          : lastTableRow[firstEmptyTableCellIndex - 1];
+
+    if (!lastNonEmptyTableCell) {
+      return parentToken;
+    }
+
+    return findPotentiallyPartialToken(
+      lastNonEmptyTableCell.tokens,
+      lastNonEmptyTableCell
+    );
+  }
+
+  if (isBlockToken(lastToken)) {
+    return findPotentiallyPartialToken(
+      lastToken.tokens,
+      lastToken as PotentiallyPartialToken
+    );
+  }
+
+  return parentToken;
 }
 
 function parseHtmlEntities(input: string) {
