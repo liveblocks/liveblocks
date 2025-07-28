@@ -11,6 +11,8 @@ import {
 
 import type { ComponentPropsWithSlot } from "../types";
 
+const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
+
 export type MarkdownComponents = {
   /**
    * The component used to render paragraphs.
@@ -425,7 +427,7 @@ function isBlockToken(
   );
 }
 
-// Find the last token that we could potentially complete.
+// Find the last partial token that we could potentially complete.
 function findPotentiallyPartialToken(
   tokens: Token[],
   parentToken: PotentiallyPartialToken | null = null
@@ -529,7 +531,38 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
         return tokens;
       }
 
-      // TODO: Complete the potentially partial token.
+      // Marked.js only turns list items into tasks when the list marker
+      // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
+      //
+      // We optimistically mark list items as tasks sooner,
+      // whenever a list item starts with "- [", "- [x", etc.
+      if (potentiallyPartialToken.type === "list_item") {
+        const listItem = potentiallyPartialToken;
+
+        if (
+          !listItem.task &&
+          listItem.tokens.length === 1 &&
+          listItem.tokens[0]!.type === "text"
+        ) {
+          const listItemText = listItem.tokens[0] as Tokens.Text;
+          const checkboxMatch = listItemText.text.match(
+            LIST_ITEM_CHECKBOX_REGEX
+          );
+
+          if (checkboxMatch) {
+            listItem.task = true;
+
+            if (checkboxMatch[1] === "x") {
+              listItem.checked = true;
+            } else {
+              listItem.checked = false;
+            }
+
+            listItem.text = "";
+            listItem.tokens = [];
+          }
+        }
+      }
 
       return tokens;
     }, [content]);
