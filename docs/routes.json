@@ -640,6 +640,10 @@
         "path": "/platform/rest-api"
       },
       {
+        "title": "Storage",
+        "path": "/platform/storage"
+      },
+      {
         "title": "Account management",
         "path": "/platform/account-management",
         "routes": [
