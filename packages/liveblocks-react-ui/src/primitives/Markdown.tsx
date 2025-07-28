@@ -440,7 +440,7 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, partial, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const tokens = useMemo(() => {
-      const tokens = new Lexer().lex(content);
+      const tokens = getMarkedTokens(content);
 
       return partial ? completePartialTokens(tokens) : tokens;
     }, [content, partial]);
@@ -737,6 +737,10 @@ function MarkdownTokens({
   ));
 }
 
+function getMarkedTokens(content: string) {
+  return new Lexer().lex(content);
+}
+
 function isMarkedToken(token: unknown): token is MarkedToken {
   return (
     typeof token === "object" &&
@@ -850,6 +854,54 @@ function findPotentiallyPartialToken(
   return parentToken;
 }
 
+function completePartialInlineMarkdown(markdown: string) {
+  const stack: { token: string; index: number }[] = [];
+  const formattingTokens = new Set(["**", "__", "*", "_", "~~", "`"]);
+
+  // Collect formatting tokens that are not closed.
+  for (let i = 0; i < markdown.length; i++) {
+    let matchedToken: string | null = null;
+
+    for (const token of formattingTokens) {
+      if (markdown.startsWith(token, i)) {
+        matchedToken = token;
+        break;
+      }
+    }
+
+    if (!matchedToken) {
+      continue;
+    }
+
+    const top = stack[stack.length - 1];
+
+    if (formattingTokens.has(matchedToken)) {
+      if (top?.token === matchedToken && i > top.index + matchedToken.length) {
+        stack.pop();
+      } else {
+        stack.push({ token: matchedToken, index: i });
+      }
+    }
+
+    if (matchedToken.length > 1) {
+      i += matchedToken.length - 1;
+    }
+  }
+
+  let closingTokens = "";
+
+  // Close the unclosed formatting tokens.
+  for (let i = stack.length - 1; i >= 0; i--) {
+    const { token, index } = stack[i]!;
+
+    if (markdown.length > index + token.length) {
+      closingTokens += token;
+    }
+  }
+
+  return markdown + closingTokens;
+}
+
 function completePartialTokens(tokens: Token[]) {
   const potentiallyPartialToken = findPotentiallyPartialToken(tokens);
 
@@ -886,6 +938,20 @@ function completePartialTokens(tokens: Token[]) {
         listItem.tokens = [];
       }
     }
+  }
+
+  // We optimistically complete inline content (e.g. "Hello **wor" becomes "Hello **wor**")
+  // as a string then re-lex it to get optimistically complete tokens.
+  const completedMarkdown = completePartialInlineMarkdown(
+    potentiallyPartialToken.text
+  );
+  const completedMarkdownTokens = (
+    getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined
+  )?.tokens;
+
+  if (completedMarkdownTokens) {
+    potentiallyPartialToken.text = completedMarkdown;
+    potentiallyPartialToken.tokens = completedMarkdownTokens;
   }
 
   return tokens;
