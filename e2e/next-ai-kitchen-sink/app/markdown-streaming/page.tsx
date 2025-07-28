@@ -5,10 +5,16 @@ import { Prose } from "@liveblocks/react-ui/_private";
 
 function TextPart({
   text,
+  partial,
   ...props
-}: HTMLAttributes<HTMLDivElement> & { text: string }) {
+}: HTMLAttributes<HTMLDivElement> & { text: string; partial?: boolean }) {
   return (
-    <Prose content={text} {...props} className="lb-ai-chat-message-text" />
+    <Prose
+      content={text}
+      partial={partial}
+      {...props}
+      className="lb-ai-chat-message-text"
+    />
   );
 }
 
@@ -27,13 +33,36 @@ const markdownMessage = `
 
 ---
 
-This is a regular paragraph of text. It includes **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/).
+This is a regular paragraph of text. It includes **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/ "With a title").
+Hello world the rest of the first paragraph is here.
 
 Here’s a second paragraph to test spacing between multiple paragraphs.
 
 > This is a blockquote.
-> It can span multiple lines.
-> It also includes \`code\`, **bold**, and links inside the blockquote.
+> It can span multiple **lines.
+> It** also includes \`code\`, **bold**, and links inside the blockquote.
+
+> This is a blockquote.
+>
+> It** also includes \`code\`, **bold**, and links inside the blockquote.
+
+- A list item
+
+- Another list item with
+
+  multiple paragraphs.
+  
+  - test test? 
+
+- [x] A task list item with
+
+  > a quote and a code block
+
+  ### test
+
+  \`\`\`
+  const a = 2;
+  \`\`\`
 
 ---
 
@@ -336,6 +365,7 @@ export default function Home() {
                 <TextPart
                   className="lb-ai-chat-message-text"
                   text={markdownMessage.slice(0, value)}
+                  partial={value < markdownMessage.length}
                 />
               </div>
             </div>

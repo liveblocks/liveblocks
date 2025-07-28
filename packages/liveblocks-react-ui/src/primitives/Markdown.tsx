@@ -334,6 +334,7 @@ export interface MarkdownComponentsCodeBlockProps {
 
 export interface MarkdownProps extends ComponentPropsWithSlot<"div"> {
   content: string;
+  partial?: boolean;
   components?: Partial<MarkdownComponents>;
 }
 
@@ -436,55 +437,13 @@ const defaultComponents: MarkdownComponents = {
 };
 
 export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
-  ({ content, components, asChild, ...props }, forwardedRef) => {
+  ({ content, partial, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const tokens = useMemo(() => {
       const tokens = new Lexer().lex(content);
 
-      const potentiallyPartialToken = findPotentiallyPartialToken(tokens);
-
-      if (
-        !potentiallyPartialToken ||
-        potentiallyPartialToken.text.length === 0
-      ) {
-        return tokens;
-      }
-
-      // Marked.js only turns list items into tasks when the list marker
-      // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
-      //
-      // We optimistically mark list items as tasks sooner,
-      // whenever a list item starts with "- [", "- [x", etc.
-      if (potentiallyPartialToken.type === "list_item") {
-        const listItem = potentiallyPartialToken;
-
-        if (
-          !listItem.task &&
-          listItem.tokens.length === 1 &&
-          listItem.tokens[0]!.type === "text"
-        ) {
-          const listItemText = listItem.tokens[0] as Tokens.Text;
-          const checkboxMatch = listItemText.text.match(
-            LIST_ITEM_CHECKBOX_REGEX
-          );
-
-          if (checkboxMatch) {
-            listItem.task = true;
-
-            if (checkboxMatch[1] === "x") {
-              listItem.checked = true;
-            } else {
-              listItem.checked = false;
-            }
-
-            listItem.text = "";
-            listItem.tokens = [];
-          }
-        }
-      }
-
-      return tokens;
-    }, [content]);
+      return partial ? completePartialTokens(tokens) : tokens;
+    }, [content, partial]);
 
     return (
       <Component {...props} ref={forwardedRef}>
@@ -889,6 +848,47 @@ function findPotentiallyPartialToken(
   }
 
   return parentToken;
+}
+
+function completePartialTokens(tokens: Token[]) {
+  const potentiallyPartialToken = findPotentiallyPartialToken(tokens);
+
+  if (!potentiallyPartialToken || potentiallyPartialToken.text.length === 0) {
+    return tokens;
+  }
+
+  // Marked.js only turns list items into tasks when the list marker
+  // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
+  //
+  // We optimistically mark list items as tasks sooner,
+  // whenever a list item starts with "- [", "- [x", etc.
+  if (potentiallyPartialToken.type === "list_item") {
+    const listItem = potentiallyPartialToken;
+
+    if (
+      !listItem.task &&
+      listItem.tokens.length === 1 &&
+      listItem.tokens[0]!.type === "text"
+    ) {
+      const listItemText = listItem.tokens[0] as Tokens.Text;
+      const checkboxMatch = listItemText.text.match(LIST_ITEM_CHECKBOX_REGEX);
+
+      if (checkboxMatch) {
+        listItem.task = true;
+
+        if (checkboxMatch[1] === "x") {
+          listItem.checked = true;
+        } else {
+          listItem.checked = false;
+        }
+
+        listItem.text = "";
+        listItem.tokens = [];
+      }
+    }
+  }
+
+  return tokens;
 }
 
 function parseHtmlEntities(input: string) {
