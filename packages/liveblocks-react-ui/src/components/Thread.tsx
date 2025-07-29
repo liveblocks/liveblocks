@@ -233,7 +233,7 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
-    const hiddenCommentsIndices = useMemo(() => {
+    const hiddenComments = useMemo(() => {
       const maxVisibleCommentsCount =
         typeof maxVisibleComments === "number"
           ? maxVisibleComments
@@ -263,10 +263,15 @@ export const Thread = forwardRef(
 
       // Always show the first and last comments even if the limit is set to lower than 2.
       if (maxVisibleCommentsCount <= 2) {
+        const firstHiddenCommentIndex =
+          comments[1]?.index ?? firstVisibleComment.index;
+        const lastHiddenCommentIndex =
+          comments[comments.length - 2]?.index ?? lastVisibleComment.index;
+
         return {
-          first: comments[1]?.index ?? firstVisibleComment.index,
-          last:
-            comments[comments.length - 2]?.index ?? lastVisibleComment.index,
+          firstIndex: firstHiddenCommentIndex,
+          lastIndex: lastHiddenCommentIndex,
+          count: comments.slice(1, comments.length - 1).length,
         };
       }
 
@@ -302,8 +307,11 @@ export const Thread = forwardRef(
       }
 
       return {
-        first: firstHiddenComment.index,
-        last: lastHiddenComment.index,
+        firstIndex: firstHiddenComment.index,
+        lastIndex: lastHiddenComment.index,
+        count: thread.comments
+          .slice(firstHiddenComment.index, lastHiddenComment.index + 1)
+          .filter((comment) => showDeletedComments || comment.body).length,
       };
     }, [
       maxVisibleComments,
@@ -429,17 +437,17 @@ export const Thread = forwardRef(
               const isUnread =
                 unreadIndex !== undefined && index >= unreadIndex;
               const isHidden =
-                hiddenCommentsIndices &&
-                index >= hiddenCommentsIndices.first &&
-                index <= hiddenCommentsIndices.last;
+                hiddenComments &&
+                index >= hiddenComments.firstIndex &&
+                index <= hiddenComments.lastIndex;
               const isFirstHiddenComment =
-                isHidden && index === hiddenCommentsIndices.first;
+                isHidden && index === hiddenComments.firstIndex;
 
               if (isFirstHiddenComment) {
                 return (
                   <Fragment key={comment.id}>
                     <button onClick={() => setShowAllComments(true)}>
-                      Show more replies
+                      Show {hiddenComments.count} replies
                     </button>
                   </Fragment>
                 );
