@@ -1592,11 +1592,23 @@
 }
 
 .lb-thread-show-more {
-  padding-inline: var(--lb-spacing);
-}
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  justify-content: center;
+  align-items: center;
 
-.lb-thread-show-more-button {
-  inline-size: 100%;
+  &::before,
+  &::after {
+    content: "";
+    z-index: 0;
+    flex: 1 0 auto;
+    min-inline-size: var(--lb-spacing);
+    block-size: 0;
+    border-block-start: 1px dashed var(--lb-foreground-subtle);
+    transition-property: border;
+  }
 }
 
 .lb-thread-new-indicator {
