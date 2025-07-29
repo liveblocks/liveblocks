@@ -608,7 +608,7 @@ export function MarkdownToken({
 
       const CodeBlock = components?.CodeBlock ?? defaultComponents.CodeBlock;
 
-      return <CodeBlock language={language} code={token.text} />;
+      return <CodeBlock language={language} code={token.text || " "} />;
     }
 
     case "blockquote": {
