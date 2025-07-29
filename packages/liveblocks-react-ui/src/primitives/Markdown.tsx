@@ -14,7 +14,7 @@ import type { ComponentPropsWithSlot } from "../types";
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
 const PARTIAL_LINK_REGEX = /\[(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
-  /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
+  /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 
@@ -798,7 +798,17 @@ function findPotentiallyPartialToken(
   }
 
   const lastIndex = tokens.length - 1;
-  const lastToken = tokens[lastIndex]!;
+  let lastToken = tokens[lastIndex]!;
+
+  if (lastToken.type === "space") {
+    const penultimateToken = tokens[lastIndex - 1];
+
+    if (!penultimateToken) {
+      return parentPotentiallyPartialToken;
+    }
+
+    lastToken = penultimateToken;
+  }
 
   if (lastToken.type === "list") {
     const listToken = lastToken as Tokens.List;
