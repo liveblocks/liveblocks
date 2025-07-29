@@ -51,7 +51,12 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
 - Another list item with
 
   multiple paragraphs.
-  
+
+  | Syntax    | Description |
+  | --------- | ----------- |
+  | Header    | Title       |
+  | Paragraph | Text        |
+
   - test test? 
 
 - [x] A task list item with
@@ -254,7 +259,7 @@ Just some plain text
 
 ---
 
-| Syntax    | Description |
+| Syntax **test**    | Description |
 | --------- | ----------- |
 | Header    | Title       |
 | Paragraph | Text        |

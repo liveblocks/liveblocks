@@ -13,6 +13,8 @@ import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
 const PARTIAL_LINK_REGEX = /\[(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
+const PARTIAL_TABLE_HEADER_REGEX =
+  /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 
@@ -1032,6 +1034,30 @@ function completePartialInlineMarkdown(markdown: string): string {
   return completedMarkdown;
 }
 
+/**
+ * Optimistically complete a Markdown string of a table.
+ */
+function completePartialTableMarkdown(markdown: string): string | undefined {
+  const tableLines = markdown.split("\n");
+
+  if (tableLines.length === 0) {
+    return undefined;
+  }
+
+  const tableHeader = tableLines[0]!;
+
+  if (tableHeader === "|") {
+    return undefined;
+  }
+
+  const tableHeaderCells = tableHeader
+    .split("|")
+    .map((cell) => cell.trim())
+    .filter((cell) => cell !== "");
+
+  return `| ${tableHeaderCells.join(" | ")} |\n| ${tableHeaderCells.map(() => "---").join(" | ")} |`;
+}
+
 function completePartialTokens(tokens: Token[]) {
   const potentiallyPartialTokenResult = findPotentiallyPartialToken(tokens);
 
@@ -1044,13 +1070,48 @@ function completePartialTokens(tokens: Token[]) {
     parent: potentiallyPartialTokenParent,
   } = potentiallyPartialTokenResult;
 
-  // If the partial paragraph/text could turn into something else
-  // (e.g. an horizontal rule, a code block, a list, etc.), we can hide it for now.
   if (
     potentiallyPartialToken.type === "paragraph" ||
     potentiallyPartialToken.type === "text"
   ) {
     const text = potentiallyPartialToken as Tokens.Paragraph | Tokens.Text;
+
+    // Marked.js only creates tables when the table header and its
+    // separator below are complete.
+    //
+    // We optimistically create tables sooner if the current text looks
+    // like a partial table header.
+    if (text.raw.startsWith("|") && PARTIAL_TABLE_HEADER_REGEX.test(text.raw)) {
+      const completedTableMarkdown = completePartialTableMarkdown(text.raw);
+
+      if (completedTableMarkdown) {
+        // We optimistically complete the table as a string then re-lex it
+        // to get an optimistically complete table token.
+        const completedTable = getMarkedTokens(completedTableMarkdown)[0] as
+          | Tokens.Table
+          | undefined;
+
+        if (completedTable) {
+          // We replace the paragraph/text by the optimistically completed table.
+          const table = text as unknown as Tokens.Table;
+
+          table.type = "table";
+          table.raw = completedTableMarkdown;
+          table.header = completedTable.header;
+          table.align = completedTable.align;
+          table.rows = completedTable.rows;
+
+          return tokens;
+        }
+      } else {
+        // Otherwise, we hide it for now.
+        text.text = "";
+        text.tokens = [];
+      }
+    }
+
+    // If the partial paragraph/text could turn into something else
+    // (e.g. an horizontal rule, a code block, a list, etc.), we can hide it for now.
     if (PARTIAL_TEXT_ELEMENTS.includes(text.raw)) {
       text.text = "";
       text.tokens = [];
@@ -1091,7 +1152,7 @@ function completePartialTokens(tokens: Token[]) {
         potentiallyPartialTokenParent as unknown as Tokens.Paragraph;
 
       paragraph.type = "paragraph";
-      paragraph.raw = "";
+      paragraph.text = "";
       paragraph.tokens = [];
 
       return tokens;
