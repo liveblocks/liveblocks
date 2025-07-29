@@ -85,6 +85,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
   /**
+   * The maximum number of comments to show.
+   */
+  maxVisibleComments?: number;
+
+  /**
    * Whether to blur the composer editor when the composer is submitted.
    */
   blurComposerOnSubmit?: ComposerProps["blurOnSubmit"];
@@ -181,6 +186,7 @@ export const Thread = forwardRef(
       showComposer = "collapsed",
       showAttachments = true,
       showComposerFormattingControls = true,
+      maxVisibleComments,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -200,6 +206,7 @@ export const Thread = forwardRef(
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
+    const [showAllComments, setShowAllComments] = useState(false);
     const firstCommentIndex = useMemo(() => {
       return showDeletedComments
         ? 0
@@ -210,6 +217,72 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
+    const hiddenCommentsIndices = useMemo(() => {
+      // If the "show more" button has been clicked, we don't want to hide any
+      // comments anymore.
+      if (showAllComments) {
+        return;
+      }
+
+      // There's no limit set so no need to hide any comments.
+      if (maxVisibleComments === undefined) {
+        return;
+      }
+
+      // "Potentially hidden" comments are all comments between the first and last.
+      const firstPotentiallyHiddenCommentIndex = firstCommentIndex + 1;
+      const lastPotentiallyHiddenCommentIndex = lastCommentIndex - 1;
+
+      // There aren't enough "potentially hidden" comments so no need to hide any comments.
+      if (
+        firstPotentiallyHiddenCommentIndex > lastPotentiallyHiddenCommentIndex
+      ) {
+        return;
+      }
+
+      // If `maxVisibleComments` is set to 2 or less, we want to show the first and last comments only.
+      // so we can hide all "potentially hidden" comments.
+      if (maxVisibleComments <= 2) {
+        return {
+          first: firstPotentiallyHiddenCommentIndex,
+          last: lastPotentiallyHiddenCommentIndex,
+        };
+      }
+
+      const potentiallyHiddenComments =
+        lastPotentiallyHiddenCommentIndex -
+        firstPotentiallyHiddenCommentIndex +
+        1;
+      const remainingVisibleComments = maxVisibleComments - 2;
+
+      // There still aren't enough "potentially hidden" comments so no need to hide any comments.
+      if (potentiallyHiddenComments <= remainingVisibleComments) {
+        return;
+      }
+
+      // We can now compute how many comments should remain visible before and after
+      // a "show more" indicator.
+      const remainingVisibleCommentsBeforeIndicator = Math.floor(
+        remainingVisibleComments / 2
+      );
+      const remainingVisibleCommentsAfterIndicator = Math.ceil(
+        remainingVisibleComments / 2
+      );
+
+      return {
+        first:
+          firstPotentiallyHiddenCommentIndex +
+          remainingVisibleCommentsBeforeIndicator,
+        last:
+          lastPotentiallyHiddenCommentIndex -
+          remainingVisibleCommentsAfterIndicator,
+      };
+    }, [
+      firstCommentIndex,
+      lastCommentIndex,
+      maxVisibleComments,
+      showAllComments,
+    ]);
     const {
       status: subscriptionStatus,
       unreadSince,
@@ -327,6 +400,26 @@ export const Thread = forwardRef(
               const isFirstComment = index === firstCommentIndex;
               const isUnread =
                 unreadIndex !== undefined && index >= unreadIndex;
+              const isHidden =
+                hiddenCommentsIndices &&
+                index >= hiddenCommentsIndices.first &&
+                index <= hiddenCommentsIndices.last;
+              const isFirstHiddenComment =
+                isHidden && index === hiddenCommentsIndices.first;
+
+              if (isFirstHiddenComment) {
+                return (
+                  <Fragment key={comment.id}>
+                    <button onClick={() => setShowAllComments(true)}>
+                      Show more replies
+                    </button>
+                  </Fragment>
+                );
+              }
+
+              if (isHidden) {
+                return null;
+              }
 
               const children = (
                 <Comment
