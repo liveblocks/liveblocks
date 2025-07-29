@@ -447,7 +447,7 @@ export const Thread = forwardRef(
                 return (
                   <Fragment key={comment.id}>
                     <button onClick={() => setShowAllComments(true)}>
-                      Show {hiddenComments.count} replies
+                      {$.THREAD_SHOW_MORE_COMMENTS(hiddenComments.count)}
                     </button>
                   </Fragment>
                 );
