@@ -218,70 +218,61 @@ export const Thread = forwardRef(
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
     const hiddenCommentsIndices = useMemo(() => {
-      // If the "show more" button has been clicked, we don't want to hide any
-      // comments anymore.
-      if (showAllComments) {
+      // If we explicitely want to show all comments or there's no limit set,
+      // no need to hide any comments.
+      if (showAllComments || maxVisibleComments === undefined) {
         return;
       }
 
-      // There's no limit set so no need to hide any comments.
-      if (maxVisibleComments === undefined) {
+      const comments = thread.comments
+        .map((comment, index) => ({ comment, index }))
+        .filter(({ comment }) => showDeletedComments || comment.body);
+
+      // There aren't enough comments so no need to hide any.
+      if (comments.length <= Math.max(maxVisibleComments, 2)) {
         return;
       }
 
-      // "Potentially hidden" comments are all comments between the first and last.
-      const firstPotentiallyHiddenCommentIndex = firstCommentIndex + 1;
-      const lastPotentiallyHiddenCommentIndex = lastCommentIndex - 1;
+      const firstVisibleComment = comments[0]!;
+      const lastVisibleComment = comments[comments.length - 1]!;
 
-      // There aren't enough "potentially hidden" comments so no need to hide any comments.
+      // Always show the first and last comments even if the limit is set to lower than 2.
+      if (maxVisibleComments <= 2) {
+        return {
+          first: comments[1]?.index ?? firstVisibleComment.index,
+          last:
+            comments[comments.length - 2]?.index ?? lastVisibleComment.index,
+        };
+      }
+
+      const remainingVisibleComments = maxVisibleComments - 2;
+      const leadingVisibleComments = Math.floor(remainingVisibleComments / 2);
+      const trailingVisibleComments = Math.ceil(remainingVisibleComments / 2);
+
+      // The first comment is always visible so `+ 1` to skip it.
+      const firstHiddenComment = comments[1 + leadingVisibleComments];
+      // The last comment is always visible so `- 2` to skip it.
+      const lastHiddenComment =
+        comments[comments.length - 2 - trailingVisibleComments];
+
+      // There aren't any comments to hide besides the first and last ones.
       if (
-        firstPotentiallyHiddenCommentIndex > lastPotentiallyHiddenCommentIndex
+        !firstHiddenComment ||
+        !lastHiddenComment ||
+        firstHiddenComment.index > lastHiddenComment.index
       ) {
         return;
       }
 
-      // If `maxVisibleComments` is set to 2 or less, we want to show the first and last comments only.
-      // so we can hide all "potentially hidden" comments.
-      if (maxVisibleComments <= 2) {
-        return {
-          first: firstPotentiallyHiddenCommentIndex,
-          last: lastPotentiallyHiddenCommentIndex,
-        };
-      }
-
-      const potentiallyHiddenComments =
-        lastPotentiallyHiddenCommentIndex -
-        firstPotentiallyHiddenCommentIndex +
-        1;
-      const remainingVisibleComments = maxVisibleComments - 2;
-
-      // There still aren't enough "potentially hidden" comments so no need to hide any comments.
-      if (potentiallyHiddenComments <= remainingVisibleComments) {
-        return;
-      }
-
-      // We can now compute how many comments should remain visible before and after
-      // a "show more" indicator.
-      const remainingVisibleCommentsBeforeIndicator = Math.floor(
-        remainingVisibleComments / 2
-      );
-      const remainingVisibleCommentsAfterIndicator = Math.ceil(
-        remainingVisibleComments / 2
-      );
-
       return {
-        first:
-          firstPotentiallyHiddenCommentIndex +
-          remainingVisibleCommentsBeforeIndicator,
-        last:
-          lastPotentiallyHiddenCommentIndex -
-          remainingVisibleCommentsAfterIndicator,
+        first: firstHiddenComment.index,
+        last: lastHiddenComment.index,
       };
     }, [
-      firstCommentIndex,
-      lastCommentIndex,
       maxVisibleComments,
       showAllComments,
+      showDeletedComments,
+      thread.comments,
     ]);
     const {
       status: subscriptionStatus,
