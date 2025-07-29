@@ -41,6 +41,12 @@ const MARKED_TOKEN_TYPES = [
 const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
 const PARTIAL_HORIZONTAL_RULES = ["-", "--", "*", "**", "_", "__"];
 const PARTIAL_CODE_BLOCKS = ["`", "``"];
+const PARTIAL_LIST_INDICATORS = ["-", "*", "+"];
+const PARTIAL_TEXT_ELEMENTS = [
+  ...PARTIAL_HORIZONTAL_RULES,
+  ...PARTIAL_CODE_BLOCKS,
+  ...PARTIAL_LIST_INDICATORS.map((indicator) => `${indicator} `),
+];
 
 type PotentiallyPartialToken = Relax<
   | Tokens.Text
@@ -773,15 +779,20 @@ function isBlockToken(
   );
 }
 
+type PotentiallyPartialTokenResult = {
+  token: PotentiallyPartialToken;
+  parent: MarkedToken | undefined;
+};
+
 /**
  * Find the last partial token that we could potentially complete.
  */
 function findPotentiallyPartialToken(
   tokens: Token[],
-  parentToken: PotentiallyPartialToken | null = null
-): PotentiallyPartialToken | null {
+  parentPotentiallyPartialToken?: PotentiallyPartialTokenResult
+): PotentiallyPartialTokenResult | undefined {
   if (tokens.length === 0) {
-    return parentToken;
+    return parentPotentiallyPartialToken;
   }
 
   const lastIndex = tokens.length - 1;
@@ -792,7 +803,7 @@ function findPotentiallyPartialToken(
     const lastListItem = listToken.items[listToken.items.length - 1];
 
     if (!lastListItem) {
-      return parentToken;
+      return parentPotentiallyPartialToken;
     }
 
     // List items containing empty lines are handled differently,
@@ -807,25 +818,34 @@ function findPotentiallyPartialToken(
 
       if (lastListItemLastToken) {
         if (lastListItemLastToken.type === "text") {
-          return lastListItemLastToken as Tokens.Text;
+          return {
+            token: lastListItemLastToken as Tokens.Text,
+            parent: lastListItem,
+          };
         }
 
         if (lastListItemLastToken.type === "code") {
-          return lastListItemLastToken as Tokens.Code;
+          return {
+            token: lastListItemLastToken as Tokens.Code,
+            parent: lastListItem,
+          };
         }
 
         if (isBlockToken(lastListItemLastToken)) {
-          return findPotentiallyPartialToken(
-            lastListItemLastToken.tokens,
-            lastListItemLastToken
-          );
+          return findPotentiallyPartialToken(lastListItemLastToken.tokens, {
+            token: lastListItemLastToken,
+            parent: lastListItem,
+          });
         }
 
-        return null;
+        return undefined;
       }
     }
 
-    return findPotentiallyPartialToken(lastListItem.tokens, lastListItem);
+    return findPotentiallyPartialToken(lastListItem.tokens, {
+      token: lastListItem,
+      parent: listToken,
+    });
   }
 
   if (lastToken.type === "table") {
@@ -833,7 +853,7 @@ function findPotentiallyPartialToken(
     const lastTableRow = tableToken.rows[tableToken.rows.length - 1];
 
     if (!lastTableRow) {
-      return parentToken;
+      return parentPotentiallyPartialToken;
     }
 
     // Marked.js creates all cells in advance when creating rows,
@@ -849,27 +869,30 @@ function findPotentiallyPartialToken(
           : lastTableRow[firstEmptyTableCellIndex - 1];
 
     if (!lastNonEmptyTableCell) {
-      return parentToken;
+      return parentPotentiallyPartialToken;
     }
 
-    return findPotentiallyPartialToken(
-      lastNonEmptyTableCell.tokens,
-      lastNonEmptyTableCell
-    );
+    return findPotentiallyPartialToken(lastNonEmptyTableCell.tokens, {
+      token: lastNonEmptyTableCell,
+      parent: tableToken,
+    });
   }
 
   if (lastToken.type === "code") {
-    return lastToken as Tokens.Code;
+    return {
+      token: lastToken as Tokens.Code,
+      parent: parentPotentiallyPartialToken?.token as MarkedToken | undefined,
+    };
   }
 
   if (isBlockToken(lastToken)) {
-    return findPotentiallyPartialToken(
-      lastToken.tokens,
-      lastToken as PotentiallyPartialToken
-    );
+    return findPotentiallyPartialToken(lastToken.tokens, {
+      token: lastToken,
+      parent: parentPotentiallyPartialToken?.token as MarkedToken | undefined,
+    });
   }
 
-  return parentToken;
+  return parentPotentiallyPartialToken;
 }
 
 /**
@@ -1010,24 +1033,25 @@ function completePartialInlineMarkdown(markdown: string): string {
 }
 
 function completePartialTokens(tokens: Token[]) {
-  const potentiallyPartialToken = findPotentiallyPartialToken(tokens);
+  const potentiallyPartialTokenResult = findPotentiallyPartialToken(tokens);
 
-  if (!potentiallyPartialToken) {
+  if (!potentiallyPartialTokenResult) {
     return tokens;
   }
 
+  const {
+    token: potentiallyPartialToken,
+    parent: potentiallyPartialTokenParent,
+  } = potentiallyPartialTokenResult;
+
   // If the partial paragraph/text could turn into something else
-  // (e.g. an horizontal rule, a code block, etc.), we can hide it for now.
+  // (e.g. an horizontal rule, a code block, a list, etc.), we can hide it for now.
   if (
     potentiallyPartialToken.type === "paragraph" ||
     potentiallyPartialToken.type === "text"
   ) {
     const text = potentiallyPartialToken as Tokens.Paragraph | Tokens.Text;
-
-    if (
-      PARTIAL_HORIZONTAL_RULES.includes(text.raw) ||
-      PARTIAL_CODE_BLOCKS.includes(text.raw)
-    ) {
+    if (PARTIAL_TEXT_ELEMENTS.includes(text.raw)) {
       text.text = "";
       text.tokens = [];
 
@@ -1035,7 +1059,8 @@ function completePartialTokens(tokens: Token[]) {
     }
   }
 
-  // If the code block is about to be closed, we can hide the trailing "`" or "``" for now.
+  // If the code block is about to be closed, we can hide the trailing
+  // "`" or "``" for now.
   if (potentiallyPartialToken.type === "code") {
     const code = potentiallyPartialToken as Tokens.Code;
     const codeLines = code.text.split("\n");
@@ -1054,8 +1079,23 @@ function completePartialTokens(tokens: Token[]) {
   if (potentiallyPartialToken.type === "list_item") {
     const listItem = potentiallyPartialToken as Tokens.ListItem;
 
-    // TODO: If the list item has no token, and its raw value looks like "-",
-    //       and the parent list has only one item, we should remove the list for now.
+    // If a list item and its list are only made of list indicators (e.g. "- "),
+    // we can hide the list for now.
+    if (
+      potentiallyPartialTokenParent?.type === "list" &&
+      !potentiallyPartialTokenParent.ordered &&
+      potentiallyPartialTokenParent.items.length === 1 &&
+      PARTIAL_LIST_INDICATORS.includes(potentiallyPartialTokenParent.raw)
+    ) {
+      const paragraph =
+        potentiallyPartialTokenParent as unknown as Tokens.Paragraph;
+
+      paragraph.type = "paragraph";
+      paragraph.raw = "";
+      paragraph.tokens = [];
+
+      return tokens;
+    }
 
     // Marked.js only turns list items into tasks when the list marker
     // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
