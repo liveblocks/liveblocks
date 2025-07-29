@@ -457,7 +457,15 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
     const tokens = useMemo(() => {
       const tokens = getMarkedTokens(content);
 
-      return partial ? completePartialTokens(tokens) : tokens;
+      if (partial) {
+        try {
+          return completePartialTokens(tokens);
+        } catch {
+          return tokens;
+        }
+      }
+
+      return tokens;
     }, [content, partial]);
 
     return (
@@ -1064,6 +1072,10 @@ function completePartialTableMarkdown(markdown: string): string | undefined {
     .split("|")
     .map((cell) => cell.trim())
     .filter((cell) => cell !== "");
+
+  if (tableHeadings.length === 0) {
+    return undefined;
+  }
 
   // If the last header cell is partial, it might also contain partial elements.
   if (!tableHeader.endsWith("|")) {
