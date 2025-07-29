@@ -86,8 +86,24 @@ export interface ThreadProps<M extends BaseMetadata = DM>
 
   /**
    * The maximum number of comments to show.
+   *
+   * The first and last comments are always shown and by default if some comments
+   * are hidden, only the first comment will be shown before the "show more" button
+   * and after it will be shown all the newest comments to fit the limit set.
+   *
+   * It's possible to customize this by setting `maxVisibleComments` to an object:
+   *
+   * @example
+   * // Only show the last comment, and all the older ones to fit the limit.
+   * <Thread maxVisibleComments={{ max: 5, show: "oldest" }} />
+   *
+   * @example
+   * // Show as many old comments as new ones to fit the limit.
+   * <Thread maxVisibleComments={{ max: 5, show: "both" }} />
    */
-  maxVisibleComments?: number;
+  maxVisibleComments?:
+    | number
+    | { max: number; show: "oldest" | "both" | "newest" };
 
   /**
    * Whether to blur the composer editor when the composer is submitted.
@@ -218,9 +234,18 @@ export const Thread = forwardRef(
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
     const hiddenCommentsIndices = useMemo(() => {
+      const maxVisibleCommentsCount =
+        typeof maxVisibleComments === "number"
+          ? maxVisibleComments
+          : maxVisibleComments?.max;
+      const visibleCommentsShow =
+        (typeof maxVisibleComments === "object"
+          ? maxVisibleComments?.show
+          : undefined) ?? "newest";
+
       // If we explicitely want to show all comments or there's no limit set,
       // no need to hide any comments.
-      if (showAllComments || maxVisibleComments === undefined) {
+      if (showAllComments || maxVisibleCommentsCount === undefined) {
         return;
       }
 
@@ -229,7 +254,7 @@ export const Thread = forwardRef(
         .filter(({ comment }) => showDeletedComments || comment.body);
 
       // There aren't enough comments so no need to hide any.
-      if (comments.length <= Math.max(maxVisibleComments, 2)) {
+      if (comments.length <= Math.max(maxVisibleCommentsCount, 2)) {
         return;
       }
 
@@ -237,7 +262,7 @@ export const Thread = forwardRef(
       const lastVisibleComment = comments[comments.length - 1]!;
 
       // Always show the first and last comments even if the limit is set to lower than 2.
-      if (maxVisibleComments <= 2) {
+      if (maxVisibleCommentsCount <= 2) {
         return {
           first: comments[1]?.index ?? firstVisibleComment.index,
           last:
@@ -245,15 +270,27 @@ export const Thread = forwardRef(
         };
       }
 
-      const remainingVisibleComments = maxVisibleComments - 2;
-      const leadingVisibleComments = Math.floor(remainingVisibleComments / 2);
-      const trailingVisibleComments = Math.ceil(remainingVisibleComments / 2);
+      const remainingVisibleCommentsCount = maxVisibleCommentsCount - 2;
+
+      // Split the remaining visible comments before, after, or equally.
+      const beforeVisibleCommentsCount =
+        visibleCommentsShow === "oldest"
+          ? remainingVisibleCommentsCount
+          : visibleCommentsShow === "newest"
+            ? 0
+            : Math.floor(remainingVisibleCommentsCount / 2);
+      const afterVisibleCommentsCount =
+        visibleCommentsShow === "oldest"
+          ? 0
+          : visibleCommentsShow === "newest"
+            ? remainingVisibleCommentsCount
+            : Math.ceil(remainingVisibleCommentsCount / 2);
 
       // The first comment is always visible so `+ 1` to skip it.
-      const firstHiddenComment = comments[1 + leadingVisibleComments];
+      const firstHiddenComment = comments[1 + beforeVisibleCommentsCount];
       // The last comment is always visible so `- 2` to skip it.
       const lastHiddenComment =
-        comments[comments.length - 2 - trailingVisibleComments];
+        comments[comments.length - 2 - afterVisibleCommentsCount];
 
       // There aren't any comments to hide besides the first and last ones.
       if (
