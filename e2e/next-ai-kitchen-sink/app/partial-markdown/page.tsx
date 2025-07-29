@@ -361,28 +361,55 @@ export default function Home() {
   }
 
   return (
-    <main style={{ height: "100vh", width: "100%" }}>
-      <div className="lb-root lb-ai-chat lb-ai-chat:layout-inset">
-        <div className="lb-ai-chat-content">
-          <div className="lb-ai-chat-messages">
-            <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
-              <div className="lb-ai-chat-message-content">
-                <TextPart
-                  className="lb-ai-chat-message-text"
-                  text={markdownMessage.slice(0, value)}
-                  partial={value < markdownMessage.length}
-                />
+    <main
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        width: "100%",
+      }}
+    >
+      <div style={{ display: "flex", flex: "1" }}>
+        <div className="lb-root lb-ai-chat lb-ai-chat:layout-inset">
+          <div className="lb-ai-chat-content">
+            <div className="lb-ai-chat-messages">
+              <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+                <div className="lb-ai-chat-message-content">
+                  <TextPart
+                    className="lb-ai-chat-message-text"
+                    text={markdownMessage.slice(0, value)}
+                    partial={false}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <div className="lb-root lb-ai-chat lb-ai-chat:layout-inset">
+          <div className="lb-ai-chat-content">
+            <div className="lb-ai-chat-messages">
+              <div className="lb-ai-chat-message lb-ai-chat-assistant-message">
+                <div className="lb-ai-chat-message-content">
+                  <TextPart
+                    className="lb-ai-chat-message-text"
+                    text={markdownMessage.slice(0, value)}
+                    partial={value < markdownMessage.length}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        style={{ position: "sticky", bottom: 0, width: "100%", padding: 16 }}
+      >
         <div className="lb-ai-chat-footer">
           <div className="lb-root lb-ai-chat-composer lb-ai-chat-composer-form lb-elevation lb-elevation-moderate">
             {/* Debug panel */}
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
                 gap: "0.5rem",
                 padding: "1rem",
               }}
@@ -394,6 +421,9 @@ export default function Home() {
                 value={value}
                 step={1}
                 onChange={(event) => setValue(Number(event.target.value))}
+                style={{
+                  flex: 1,
+                }}
               />
               <button onClick={() => setValue(value - 1)}>Previous</button>
               <button onClick={() => setValue(value + 1)}>Next</button>
