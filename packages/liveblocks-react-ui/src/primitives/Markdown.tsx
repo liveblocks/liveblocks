@@ -888,6 +888,14 @@ function completePartialInlineMarkdown(markdown: string): string {
     completedMarkdown = completedMarkdown.slice(0, -1);
   }
 
+  // Marked.js doesn't parse partial closing HTML tags,
+  // so if the string ends with "<" or "</", we remove it optimistically.
+  if (completedMarkdown.endsWith("</")) {
+    completedMarkdown = completedMarkdown.slice(0, -2);
+  } else if (completedMarkdown.endsWith("<")) {
+    completedMarkdown = completedMarkdown.slice(0, -1);
+  }
+
   // Move forward through the string to collect delimiters.
   for (let i = 0; i < completedMarkdown.length; i++) {
     let matchedDelimiter: string | null = null;
