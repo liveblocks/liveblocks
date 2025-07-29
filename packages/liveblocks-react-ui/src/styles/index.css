@@ -1611,6 +1611,10 @@
   }
 }
 
+:where(.lb-thread-show-more + .lb-thread-new-indicator) {
+  margin-block-start: calc(0.5 * var(--lb-spacing));
+}
+
 .lb-thread-new-indicator {
   position: relative;
   z-index: 1;
