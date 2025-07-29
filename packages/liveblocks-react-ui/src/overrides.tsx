@@ -194,7 +194,7 @@ export const defaultOverrides: Overrides = {
   THREAD_NEW_INDICATOR: "New",
   THREAD_NEW_INDICATOR_DESCRIPTION: "New comments",
   THREAD_SHOW_MORE_COMMENTS: (count) =>
-    `Show ${count} ${pluralize(count, "reply", "replies")}`,
+    `Show ${count} more ${pluralize(count, "reply", "replies")}`,
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
   INBOX_NOTIFICATION_MORE: "More",

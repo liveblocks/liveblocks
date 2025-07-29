@@ -1591,6 +1591,14 @@
   }
 }
 
+.lb-thread-show-more {
+  padding-inline: var(--lb-spacing);
+}
+
+.lb-thread-show-more-button {
+  inline-size: 100%;
+}
+
 .lb-thread-new-indicator {
   position: relative;
   z-index: 1;

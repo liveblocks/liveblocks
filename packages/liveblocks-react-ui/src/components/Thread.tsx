@@ -445,11 +445,17 @@ export const Thread = forwardRef(
 
               if (isFirstHiddenComment) {
                 return (
-                  <Fragment key={comment.id}>
-                    <button onClick={() => setShowAllComments(true)}>
+                  <div
+                    key={`${comment.id}-show-more`}
+                    className="lb-thread-show-more"
+                  >
+                    <Button
+                      className="lb-thread-show-more-button"
+                      onClick={() => setShowAllComments(true)}
+                    >
                       {$.THREAD_SHOW_MORE_COMMENTS(hiddenComments.count)}
-                    </button>
-                  </Fragment>
+                    </Button>
+                  </div>
                 );
               }
 
