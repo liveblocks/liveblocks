@@ -1060,12 +1060,21 @@ function completePartialTableMarkdown(markdown: string): string | undefined {
     return undefined;
   }
 
-  const tableHeaderCells = tableHeader
+  const tableHeadings = tableHeader
     .split("|")
     .map((cell) => cell.trim())
     .filter((cell) => cell !== "");
 
-  return `| ${tableHeaderCells.join(" | ")} |\n| ${tableHeaderCells.map(() => "---").join(" | ")} |`;
+  // If the last header cell is partial, it might also contain partial elements.
+  if (!tableHeader.endsWith("|")) {
+    const lastTableHeading = tableHeadings[tableHeadings.length - 1]!;
+    const completedLastTableHeading =
+      completePartialInlineMarkdown(lastTableHeading);
+
+    tableHeadings[tableHeadings.length - 1] = completedLastTableHeading;
+  }
+
+  return `| ${tableHeadings.join(" | ")} |\n| ${tableHeadings.map(() => "---").join(" | ")} |`;
 }
 
 function completePartialTokens(tokens: Token[]) {
