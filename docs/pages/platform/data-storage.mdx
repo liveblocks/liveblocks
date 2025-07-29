@@ -1,0 +1,164 @@
+---
+meta:
+  title: "Data storage"
+  parentTitle: "Platform"
+  description:
+    "Learn about Liveblocks data storage, retention policies, and deletion
+    procedures."
+---
+
+Liveblocks is designed to support realtime collaboration and AI features with a
+focus on performance, reliability, and privacy. While many aspects of data
+handling are managed by the platform, enterprise customers can configure certain
+behaviors related to data storage, retention, and region enforcement. This
+document outlines what data Liveblocks stores, where it is stored, and how
+deletion is handled.
+
+## Data stored
+
+In most cases, sensitive or personal information can be excluded from what's
+sent to Liveblocks. Additionally, expanded storage configuration and data
+control features are under active development for enterprise customers.
+
+### AI Copilots
+
+- **Data stored**: Prompt configuration, LLM connection parameters (including
+  API keys), message history, tool results, token usage, model usage, chat
+  names, and metadata. Back-end knowledge is an optional add-on that requires
+  saving text and vectors to support knowledge recall.
+- **Retention**: Persists until the user or client deletes a chat.
+
+### Comments
+
+- **Data stored**: Comment body, author ID, timestamps, mentions, tags, and
+  metadata.
+- **Retention**: Persists until the room or thread is explicitly deleted.
+  Additionally, if all comments in a thread are removed, the thread is deleted.
+
+### Multiplayer Editing
+
+- **Data stored**: Collaborative state written in text editor and sync engine
+  integrations. This includes Tiptap, BlockNote, Lexical, Storage (e.g.
+  `LiveObject`), and Yjs (e.g. `Y.Doc`).
+- **Retention**: Persists until the room is explicitly deleted. Storage (e.g.
+  `LiveObject`) data can be deleted without deleting the room.
+
+### Notifications
+
+- **Data stored**: Notification message, delivery state, and recipient user ID.
+- **Retention**: Persists until each notification is explicitly deleted.
+
+### Presence
+
+- **Data stored**: Room ID, user ID, and approximate geolocation (based on IP
+  address). This is used to display session events in the Liveblocks Dashboard.
+- **Retention**: Persists until a deletion request is submitted.
+
+### Webhooks
+
+- **Data stored**:
+  [Webhook event data](/docs/platform/webhooks#Liveblocks-events), such as
+  project ID, room ID, and the event type.
+- **Retention**: Automatically deleted after 90 days.
+
+## Storage Locations
+
+### AWS
+
+AWS is used to store various data with `us-east-1` being used as the default
+region. Enterprise customers can choose to
+[region lock data](/docs/platform/projects#Project-location) in `us-east-1` or
+`eu-central-1`, per project.
+
+#### Stored in AWS
+
+- Room metadata (ID, accesses, metadata).
+- Comments.
+- Notifications.
+- Project usage analytics.
+- Dashboard members.
+- User events.
+- AI Copilot configuration.
+- AI Copilot uploaded/crawled knowledge.
+
+#### Encryption
+
+Postgres and MongoDB data is encrypted at rest, including backups, replicas, and
+snapshots.
+
+### Cloudflare
+
+Realtime collaboration data used in Multiplayer Editing and Presence is handled
+by Cloudflare’s global edge network. This data is handled on the edge, as close
+to the user as possible, to ensure low-latency performance. Because Cloudflare
+manages routing dynamically across its global edge network, data processed in
+WebSocket sessions is not guaranteed to remain within a specific geographic
+region, apart from when region-locking is enabled.
+
+Enterprise customers can choose to
+[region lock data](/docs/platform/projects#Project-location) to `Cloudflare EU`
+or `Cloudflare FedRAMP`, per project.
+
+#### Stored in Cloudflare
+
+- Multiplayer Editing data for text editor and sync engine integrations.
+- AI Copilot message, tool, chat, and usage history.
+
+#### Encryption
+
+DurableObject data is encrypted at rest.
+
+### Svix
+
+Svix is used to deliver webhook messages.
+
+#### Stored in Svix
+
+- Webhook message data.
+
+## Data deletion
+
+### AI Copilots
+
+Chat data is deleted by the user or client calling
+[`useDeleteAiChat`](/docs/api-reference/liveblocks-react#useDeleteAiChat).
+
+### Comments
+
+Comment data persists until the room is deleted with
+[`deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomId) or
+[Delete Room REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId).
+Additionally, individual threads and their comments can be deleted explicitly
+with [`useDeleteThread`](/docs/api-reference/liveblocks-react#useDeleteThread),
+[`deleteThread`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId)
+or
+[Delete Thread REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-threads-threadId).
+
+Comments can also be deleted by their authors—when a single comment is deleted,
+its body is cleared and marked with a `deletedAt` timestamp. When all comments
+in a thread are deleted, the thread is deleted too.
+
+### Multiplayer Editing
+
+Multiplayer Editing data is deleted when the associated room is removed with
+[`deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomId) or
+[Delete Room REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId).
+Additionally, Storage data can be explicitly deleted with
+[`deleteStorageDocument`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage)
+or
+[Delete Storage Document REST API](/docs/api-reference/rest-api-endpoints#delete-rooms-roomId-storage).
+
+### Notifications
+
+Notifications are persisted until explicitly deleted with
+[`deleteInboxNotification`](/docs/api-reference/liveblocks-node#delete-users-userId-inboxNotifications-inboxNotificationId)
+or
+[Delete Inbox Notification REST API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications-inboxNotificationId).
+
+### Presence
+
+Presence data persists until a deletion request is submitted.
+
+### Webhooks
+
+Webhook messages data is automatically deleted after 90 days.
