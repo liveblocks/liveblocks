@@ -1,6 +1,11 @@
 import { assertNever, isUrl, type Relax, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
-import { Lexer, type MarkedToken, type Token, type Tokens } from "marked";
+import {
+  Lexer,
+  type MarkedToken as DefaultMarkedToken,
+  type Token,
+  type Tokens,
+} from "marked";
 import {
   type ComponentType,
   forwardRef,
@@ -20,28 +25,6 @@ const PARTIAL_TABLE_HEADER_REGEX =
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 
-const MARKED_TOKEN_TYPES = [
-  "blockquote",
-  "br",
-  "code",
-  "codespan",
-  "def",
-  "del",
-  "em",
-  "escape",
-  "heading",
-  "hr",
-  "html",
-  "image",
-  "link",
-  "list",
-  "list_item",
-  "paragraph",
-  "space",
-  "strong",
-  "table",
-  "text",
-] as const satisfies MarkedToken["type"][];
 const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
 const PARTIAL_HORIZONTAL_RULES = ["-", "--", "*", "**", "_", "__"];
 const PARTIAL_CODE_BLOCKS = ["`", "``"];
@@ -51,6 +34,13 @@ const PARTIAL_TEXT_ELEMENTS = [
   ...PARTIAL_CODE_BLOCKS,
   ...PARTIAL_LIST_INDICATORS.map((indicator) => `${indicator} `),
 ];
+
+type CheckboxToken = {
+  type: "checkbox";
+  checked: boolean;
+};
+
+type MarkedToken = DefaultMarkedToken | CheckboxToken;
 
 type PotentiallyPartialToken = Relax<
   | Tokens.Text
@@ -216,9 +206,6 @@ export type MarkdownComponents = {
    *         <List start={start}>
    *           {items.map((item, index) => (
    *             <li key={index}>
-   *               {item.checked !== undefined && (
-   *                 <input type="checkbox" disabled checked={item.checked} />{" "}
-   *               )}
    *               {item.children}
    *             </li>
    *           ))}
@@ -436,14 +423,7 @@ const defaultComponents: MarkdownComponents = {
     return (
       <List start={start === 1 ? undefined : start}>
         {items.map((item, index) => (
-          <li key={index}>
-            {item.checked !== undefined && (
-              <>
-                <input type="checkbox" disabled checked={item.checked} />{" "}
-              </>
-            )}
-            {item.children}
-          </li>
+          <li key={index}>{item.children}</li>
         ))}
       </List>
     );
@@ -543,14 +523,13 @@ export function MarkdownToken({
   components: Partial<MarkdownComponents> | undefined;
   isMounted: boolean;
 }) {
-  // Marked.js supports generic tokens, but we don't use them.
-  if (!isMarkedToken(token)) {
-    return null;
-  }
+  // Marked.js supports generic tokens in their types but we
+  // don't use them.
+  const markedToken = token as unknown as MarkedToken;
 
-  switch (token.type) {
+  switch (markedToken.type) {
     case "escape": {
-      return token.text;
+      return markedToken.text;
     }
 
     case "space": {
@@ -558,16 +537,16 @@ export function MarkdownToken({
     }
 
     case "text": {
-      if (token.tokens !== undefined) {
+      if (markedToken.tokens !== undefined) {
         return (
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
         );
       } else {
-        return parseHtmlEntities(token.text, isMounted);
+        return parseHtmlEntities(markedToken.text, isMounted);
       }
     }
 
@@ -581,7 +560,7 @@ export function MarkdownToken({
       return (
         <Paragraph>
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -593,9 +572,9 @@ export function MarkdownToken({
       const Heading = components?.Heading ?? defaultComponents.Heading;
 
       return (
-        <Heading level={clampHeadingLevel(token.depth)}>
+        <Heading level={clampHeadingLevel(markedToken.depth)}>
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -609,7 +588,7 @@ export function MarkdownToken({
       return (
         <Inline type="strong">
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -623,7 +602,7 @@ export function MarkdownToken({
       return (
         <Inline type="em">
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -635,7 +614,9 @@ export function MarkdownToken({
       const Inline = components?.Inline ?? defaultComponents.Inline;
 
       return (
-        <Inline type="code">{parseHtmlEntities(token.text, isMounted)}</Inline>
+        <Inline type="code">
+          {parseHtmlEntities(markedToken.text, isMounted)}
+        </Inline>
       );
     }
 
@@ -645,7 +626,7 @@ export function MarkdownToken({
       return (
         <Inline type="del">
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -654,12 +635,12 @@ export function MarkdownToken({
     }
 
     case "link": {
-      const href = sanitizeUrl(token.href);
+      const href = sanitizeUrl(markedToken.href);
 
       if (href === null) {
         return (
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -669,9 +650,9 @@ export function MarkdownToken({
       const Link = components?.Link ?? defaultComponents.Link;
 
       return (
-        <Link href={href} title={token.title ?? undefined}>
+        <Link href={href} title={markedToken.title ?? undefined}>
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
           />
@@ -681,14 +662,15 @@ export function MarkdownToken({
 
     case "code": {
       let language: string | undefined = undefined;
-      if (token.lang !== undefined) {
+      if (markedToken.lang !== undefined) {
         language =
-          token.lang.match(TRAILING_NON_WHITESPACE_REGEX)?.[0] ?? undefined;
+          markedToken.lang.match(TRAILING_NON_WHITESPACE_REGEX)?.[0] ??
+          undefined;
       }
 
       const CodeBlock = components?.CodeBlock ?? defaultComponents.CodeBlock;
 
-      return <CodeBlock language={language} code={token.text || " "} />;
+      return <CodeBlock language={language} code={markedToken.text || " "} />;
     }
 
     case "blockquote": {
@@ -697,7 +679,7 @@ export function MarkdownToken({
       return (
         <Blockquote>
           <MarkdownTokens
-            tokens={token.tokens}
+            tokens={markedToken.tokens}
             components={components}
             isMounted={isMounted}
             normalizeToBlockTokens
@@ -708,31 +690,46 @@ export function MarkdownToken({
 
     case "list": {
       const List = components?.List ?? defaultComponents.List;
-      const items: MarkdownComponentsListItem[] = token.items.map((item) => {
-        return {
-          checked: item.task ? item.checked : undefined,
-          children: (
-            <MarkdownTokens
-              tokens={item.tokens}
-              components={components}
-              isMounted={isMounted}
-              // A "loose" list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
-              normalizeToBlockTokens={item.loose}
-            />
-          ),
-        };
-      });
+      const items: MarkdownComponentsListItem[] = markedToken.items.map(
+        (item) => {
+          let tokens = item.tokens as MarkedToken[];
 
-      const props: MarkdownComponentsListProps = token.ordered
-        ? { type: "ordered", items, start: token.start || 1 }
+          if (item.task) {
+            tokens = [
+              { type: "checkbox", checked: Boolean(item.checked) },
+              ...tokens,
+            ];
+          }
+
+          return {
+            checked: item.task ? item.checked : undefined,
+            children: (
+              <MarkdownTokens
+                tokens={tokens as Token[]}
+                components={components}
+                isMounted={isMounted}
+                // A "loose" list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
+                normalizeToBlockTokens={item.loose}
+              />
+            ),
+          };
+        }
+      );
+
+      const props: MarkdownComponentsListProps = markedToken.ordered
+        ? { type: "ordered", items, start: markedToken.start || 1 }
         : { type: "unordered", items };
 
       return <List {...props} />;
     }
 
+    case "checkbox": {
+      return <input type="checkbox" disabled checked={markedToken.checked} />;
+    }
+
     case "table": {
       const Table = components?.Table ?? defaultComponents.Table;
-      const headings: MarkdownComponentsTableCell[] = token.header.map(
+      const headings: MarkdownComponentsTableCell[] = markedToken.header.map(
         (cell) => ({
           align: cell.align ?? undefined,
           children: (
@@ -745,33 +742,38 @@ export function MarkdownToken({
         })
       );
 
-      const rows: MarkdownComponentsTableCell[][] = token.rows.map((row) =>
-        row.map((cell) => ({
-          align: cell.align ?? undefined,
-          children: (
-            <MarkdownTokens
-              tokens={cell.tokens}
-              components={components}
-              isMounted={isMounted}
-            />
-          ),
-        }))
+      const rows: MarkdownComponentsTableCell[][] = markedToken.rows.map(
+        (row) =>
+          row.map((cell) => ({
+            align: cell.align ?? undefined,
+            children: (
+              <MarkdownTokens
+                tokens={cell.tokens}
+                components={components}
+                isMounted={isMounted}
+              />
+            ),
+          }))
       );
 
       return <Table headings={headings} rows={rows} />;
     }
 
     case "image": {
-      const href = sanitizeUrl(token.href);
+      const href = sanitizeUrl(markedToken.href);
 
       if (href === null) {
-        return token.text;
+        return markedToken.text;
       }
 
       const Image = components?.Image ?? defaultComponents.Image;
 
       return (
-        <Image src={href} alt={token.text} title={token.title ?? undefined} />
+        <Image
+          src={href}
+          alt={markedToken.text}
+          title={markedToken.title ?? undefined}
+        />
       );
     }
 
@@ -800,7 +802,7 @@ function MarkdownTokens({
   isMounted: boolean;
   normalizeToBlockTokens?: boolean;
 }) {
-  const normalizedTokens: Token[] = [];
+  let normalizedTokens: Token[] = [];
 
   if (normalizeToBlockTokens) {
     for (let i = 0; i < tokens.length; i++) {
@@ -830,9 +832,11 @@ function MarkdownTokens({
         }
       }
     }
+  } else {
+    normalizedTokens = tokens;
   }
 
-  return tokens.map((token, index) => (
+  return normalizedTokens.map((token, index) => (
     <MarkdownToken
       key={index}
       token={token}
@@ -844,15 +848,6 @@ function MarkdownTokens({
 
 function getMarkedTokens(content: string) {
   return new Lexer().lex(content);
-}
-
-function isMarkedToken(token: unknown): token is MarkedToken {
-  return (
-    typeof token === "object" &&
-    token !== null &&
-    "type" in token &&
-    MARKED_TOKEN_TYPES.includes(token.type as MarkedToken["type"])
-  );
 }
 
 function isBlockToken(
