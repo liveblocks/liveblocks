@@ -1245,7 +1245,44 @@ function completePartialTokens(tokens: Token[]) {
   return tokens;
 }
 
+function parseHtmlEntitiesFallback(input: string) {
+  return (
+    input
+      // Decimal entities
+      .replace(/&#(\d+);/g, (_, code: string) => {
+        return String.fromCharCode(parseInt(code, 10));
+      })
+
+      // Hexadecimal entities
+      .replace(/&#x([0-9a-fA-F]+);/g, (_, code: string) => {
+        return String.fromCharCode(parseInt(code, 16));
+      })
+
+      // Named entities
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&nbsp;/g, " ")
+      .replace(/&ndash;/g, "–")
+      .replace(/&mdash;/g, "—")
+      .replace(/&hellip;/g, "…")
+      .replace(/&lsquo;/g, "‘")
+      .replace(/&rsquo;/g, "’")
+      .replace(/&ldquo;/g, "“")
+      .replace(/&rdquo;/g, "”")
+      .replace(/&times;/g, "×")
+  );
+}
+
 function parseHtmlEntities(input: string) {
+  // DOMParser is a browser-only API, if it's not available we replace
+  // it with a naive alternative to still allow Markdown to be rendered
+  // in non-browser environments.
+  if (typeof DOMParser === "undefined") {
+    return parseHtmlEntitiesFallback(input);
+  }
+
   const document = new DOMParser().parseFromString(
     `<!doctype html><body>${input}`,
     "text/html"
