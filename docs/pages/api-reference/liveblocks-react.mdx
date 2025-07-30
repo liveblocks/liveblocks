@@ -1320,7 +1320,7 @@ Returns a function that creates an AI chat.
 import { useCreateAiChat } from "@liveblocks/react/suspense";
 
 const createAiChat = useCreateAiChat();
-createAiChat({ id: "my-ai-chat" });
+createAiChat("my-ai-chat");
 ```
 
 You can optionally set a `title`, which prevents the AI auto-generating a title
@@ -1353,8 +1353,8 @@ and add a delete button.
 ```tsx
 import { useDeleteAiChat } from "@liveblocks/react/suspense";
 
-const deleteChat = useDeleteAiChat();
-deleteChat("my-chat-id");
+const deleteAiChat = useDeleteAiChat();
+deleteAiChat("my-chat-id");
 ```
 
 ### useSendAiMessage
@@ -3228,8 +3228,7 @@ const {
 } = useThreads();
 ```
 
-- `hasFetchedAll` indicates whether all available threads have been
-  fetched.
+- `hasFetchedAll` indicates whether all available threads have been fetched.
 - `fetchMore` loads up to 50 more threads, and is always safe to call.
 - `isFetchingMore` indicates whether more threads are being fetched.
 - `fetchMoreError` returns error statuses resulting from fetching more.

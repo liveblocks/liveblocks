@@ -1106,17 +1106,30 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
  *
  * @example
  * const createAiChat = useCreateAiChat();
+ *
+ * // Create a chat with an automatically generated title
+ * createAiChat("ai-chat-id");
+ *
+ * // Create a chat with a custom title
  * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
  */
 function useCreateAiChat() {
   const client = useClient();
 
   return useCallback(
-    (options: {
-      id: string;
-      title?: string;
-      metadata?: Record<string, string | string[]>;
-    }) => {
+    (
+      options:
+        | string
+        | {
+            id: string;
+            title?: string;
+            metadata?: Record<string, string | string[]>;
+          }
+    ) => {
+      if (typeof options === "string") {
+        options = { id: options };
+      }
+
       client[kInternal].ai
         .getOrCreateChat(options.id, {
           title: options.title,

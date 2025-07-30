@@ -1252,13 +1252,22 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    *
    * @example
    * const createAiChat = useCreateAiChat();
+   *
+   * // Create a chat with an automatically generated title
+   * createAiChat("ai-chat-id");
+   *
+   * // Create a chat with a custom title
    * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
    */
-  useCreateAiChat(): (options: {
-    id: string;
-    title?: string;
-    metadata?: Record<string, string | string[]>;
-  }) => void;
+  useCreateAiChat(): (
+    options:
+      | string
+      | {
+          id: string;
+          title?: string;
+          metadata?: Record<string, string | string[]>;
+        }
+  ) => void;
 
   /**
    * Returns a function that deletes the AI chat with the specified id.
