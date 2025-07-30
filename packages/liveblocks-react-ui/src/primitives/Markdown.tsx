@@ -724,7 +724,11 @@ export function MarkdownToken({
     }
 
     case "checkbox": {
-      return <input type="checkbox" disabled checked={markedToken.checked} />;
+      return (
+        <>
+          <input type="checkbox" disabled checked={markedToken.checked} />{" "}
+        </>
+      );
     }
 
     case "table": {
