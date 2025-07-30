@@ -63,6 +63,7 @@ import type {
   NotificationSettingsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
+  SendAiMessageOptions,
   SharedContextBundle,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
@@ -76,6 +77,8 @@ import type {
 import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
+
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 function missingUserError(userId: string) {
   return new Error(`resolveUsers didn't return anything for user '${userId}'`);
@@ -1176,29 +1179,36 @@ function useDeleteAiChat() {
  * sendAiMessage("Hello, Liveblocks AI!");
  *
  * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", message: "Hello, Liveblocks AI!" })
+ *
+ * @example
  * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
  * sendAiMessage("Hello, Liveblocks AI!");
  *
  * @example
  * const sendAiMessage = useSendAiMessage(chatId);
- * sendAiMessage({ message: "Hello, Liveblocks AI!", copilotId: "co_xxx" })
+ * sendAiMessage({ copilotId: "co_xxx", message: "Hello, Liveblocks AI!" })
+
  */
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (
-  message:
-    | string
-    | (UseSendAiMessageOptions & { chatId?: string; message: string })
-) => void {
+): (message: string | SendAiMessageOptions) => void;
+function useSendAiMessage(
+  chatId?: never,
+  options?: never
+): (message: WithRequired<SendAiMessageOptions, "chatId">) => void;
+function useSendAiMessage(
+  chatId?: string,
+  options?: UseSendAiMessageOptions
+):
+  | ((message: string | SendAiMessageOptions) => void)
+  | ((message: WithRequired<SendAiMessageOptions, "chatId">) => void) {
   const client = useClient();
 
   return useCallback(
-    (
-      message:
-        | string
-        | (UseSendAiMessageOptions & { chatId?: string; message: string })
-    ) => {
+    (message: string | SendAiMessageOptions) => {
       const resolvedChatId =
         typeof message === "object" && message.chatId !== undefined
           ? message.chatId

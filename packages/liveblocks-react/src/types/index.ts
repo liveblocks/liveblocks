@@ -65,15 +65,24 @@ export type UseSyncStatusOptions = {
 
 export type UseSendAiMessageOptions = {
   /**
-   * The id of the copilot to use to send the message.
+   * The ID of the copilot to use to send the message.
    */
   copilotId?: string;
 
-  /** Stream the response as it is being generated. Defaults to true. */
+  /**
+   * Stream the response as it is being generated. Defaults to true.
+   */
   stream?: boolean;
 
-  /** The maximum timeout for the answer to be generated. */
+  /**
+   * The maximum timeout for the answer to be generated.
+   */
   timeout?: number;
+};
+
+export type SendAiMessageOptions = UseSendAiMessageOptions & {
+  chatId?: string;
+  message: string;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
