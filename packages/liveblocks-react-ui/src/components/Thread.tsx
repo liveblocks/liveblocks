@@ -243,7 +243,7 @@ export const Thread = forwardRef(
           ? maxVisibleComments?.show
           : undefined) ?? "newest";
 
-      // If we explicitely want to show all comments or there's no limit set,
+      // If we explicitly want to show all comments or there's no limit set,
       // no need to hide any comments.
       if (showAllComments || maxVisibleCommentsCount === undefined) {
         return;
