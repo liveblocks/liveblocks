@@ -802,30 +802,52 @@ function MarkdownTokens({
   isMounted: boolean;
   normalizeToBlockTokens?: boolean;
 }) {
-  let normalizedTokens: Token[] = [];
+  const markedTokens = tokens as MarkedToken[];
+  let normalizedTokens: MarkedToken[] = [];
 
   if (normalizeToBlockTokens) {
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i]!;
+    let leadingCheckboxToken =
+      markedTokens[0]?.type === "checkbox" ? markedTokens[0] : null;
+
+    for (let i = 0; i < markedTokens.length; i++) {
+      const token = markedTokens[i]!;
 
       switch (token.type) {
         case "text": {
           // Wrap consecutive text tokens into a paragraph
-          const texts: Tokens.Text[] = [token as Tokens.Text];
-          while (i + 1 < tokens.length && tokens[i + 1]!.type === "text") {
+          const paragraphTextTokens: Tokens.Text[] = [token];
+          while (
+            i + 1 < markedTokens.length &&
+            markedTokens[i + 1]!.type === "text"
+          ) {
             i++;
-            texts.push(tokens[i] as Tokens.Text);
+            paragraphTextTokens.push(markedTokens[i] as Tokens.Text);
           }
 
+          const paragraphRaw = paragraphTextTokens
+            .map((text) => text.raw)
+            .join("");
+          const paragraphText = paragraphTextTokens
+            .map((text) => text.text)
+            .join("");
+
+          // When wrapping "loose" task list items into paragraphs, we need to
+          // move the checkbox into the first paragraph.
           normalizedTokens.push({
             type: "paragraph",
-            tokens: texts,
-            raw: texts.map((text) => text.raw).join(""),
-            text: texts.map((text) => text.text).join(""),
+            tokens: leadingCheckboxToken
+              ? ([leadingCheckboxToken, ...paragraphTextTokens] as Token[])
+              : paragraphTextTokens,
+            raw: paragraphRaw,
+            text: paragraphText,
           } satisfies Tokens.Paragraph);
+          leadingCheckboxToken = null;
 
           break;
         }
+
+        case "checkbox":
+          break;
 
         default: {
           normalizedTokens.push(token);
@@ -833,13 +855,13 @@ function MarkdownTokens({
       }
     }
   } else {
-    normalizedTokens = tokens;
+    normalizedTokens = markedTokens;
   }
 
   return normalizedTokens.map((token, index) => (
     <MarkdownToken
       key={index}
-      token={token}
+      token={token as Token}
       components={components}
       isMounted={isMounted}
     />
