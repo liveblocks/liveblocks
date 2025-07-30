@@ -46,7 +46,7 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
 
 > This is a blockquote.
 > It can span multiple **lines.
-> It also includes \`code\`, **bold**, and links inside the blockquote.
+> It** also includes \`code\`, **bold**, and links inside the blockquote.
 
 > This is a blockquote.
 >

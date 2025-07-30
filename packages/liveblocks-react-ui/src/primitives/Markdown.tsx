@@ -13,7 +13,8 @@ import {
 import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
-const PARTIAL_LINK_REGEX = /\[(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
+const PARTIAL_LINK_REGEX =
+  /\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
   /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
