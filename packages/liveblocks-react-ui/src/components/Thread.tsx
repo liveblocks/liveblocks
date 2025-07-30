@@ -450,6 +450,7 @@ export const Thread = forwardRef(
                     className="lb-thread-show-more"
                   >
                     <Button
+                      variant="ghost"
                       className="lb-thread-show-more-button"
                       onClick={() => setShowAllComments(true)}
                     >

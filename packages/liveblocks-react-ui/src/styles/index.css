@@ -306,6 +306,10 @@
     transition-property: background, color, opacity, box-shadow;
   }
 
+  &:where([data-variant="ghost"]) {
+    background: transparent;
+  }
+
   &:where(:has(.lb-button-label)) {
     gap: calc(0.175 * var(--lb-spacing));
     padding-inline: calc(0.55 * var(--lb-spacing));
