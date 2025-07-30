@@ -1186,19 +1186,32 @@ function useDeleteAiChat() {
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string) => void {
+): (
+  message:
+    | string
+    | (UseSendAiMessageOptions & { chatId?: string; message: string })
+) => void {
   const client = useClient();
 
   return useCallback(
-    (message: string | (UseSendAiMessageOptions & { message: string })) => {
+    (
+      message:
+        | string
+        | (UseSendAiMessageOptions & { chatId?: string; message: string })
+    ) => {
+      const resolvedChatId =
+        typeof message === "object" && message.chatId !== undefined
+          ? message.chatId
+          : chatId;
+
       const messages = client[kInternal].ai.signals
-        .getChatMessagesForBranchΣ(chatId)
+        .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
 
       const lastMessageId = messages[messages.length - 1]?.id ?? null;
       let messageText: string;
 
-      const askUserMessageOptions: AskUserMessageInChatOptions = {
+      const resolvedOptions: AskUserMessageInChatOptions = {
         stream: options?.stream,
         copilotId: options?.copilotId as CopilotId | undefined,
         timeout: options?.timeout,
@@ -1210,15 +1223,15 @@ function useSendAiMessage(
         messageText = message.message;
 
         if (message?.copilotId !== undefined) {
-          askUserMessageOptions.copilotId = message?.copilotId as CopilotId;
+          resolvedOptions.copilotId = message?.copilotId as CopilotId;
         }
 
         if (message?.stream !== undefined) {
-          askUserMessageOptions.stream = message.stream;
+          resolvedOptions.stream = message.stream;
         }
 
         if (message?.timeout !== undefined) {
-          askUserMessageOptions.timeout = message.timeout;
+          resolvedOptions.timeout = message.timeout;
         }
       }
 
@@ -1226,7 +1239,7 @@ function useSendAiMessage(
       const newMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
-        chatId,
+        resolvedChatId,
         "user",
         lastMessageId,
         content
@@ -1235,16 +1248,16 @@ function useSendAiMessage(
       const targetMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
-        chatId,
+        resolvedChatId,
         "assistant",
         newMessageId
       );
 
       void client[kInternal].ai.askUserMessageInChat(
-        chatId,
+        resolvedChatId,
         { id: newMessageId, parentMessageId: lastMessageId, content },
         targetMessageId,
-        askUserMessageOptions
+        resolvedOptions
       );
     },
     [client, chatId, options?.copilotId, options?.stream, options?.timeout]
