@@ -1,6 +1,12 @@
 "use client";
 
-import { HTMLAttributes, useState, useSyncExternalStore } from "react";
+import {
+  HTMLAttributes,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+} from "react";
 import { Prose } from "@liveblocks/react-ui/_private";
 
 function TextPart({
@@ -40,11 +46,11 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
 
 > This is a blockquote.
 > It can span multiple **lines.
-> It** also includes \`code\`, **bold**, and links inside the blockquote.
+> It also includes \`code\`, **bold**, and links inside the blockquote.
 
 > This is a blockquote.
 >
-> It** also includes \`code\`, **bold**, and links inside the blockquote.
+> It also includes \`code\`, **bold**, and links inside the blockquote.
 
 - A list item
 
@@ -57,7 +63,7 @@ Here’s a second paragraph to test spacing between multiple paragraphs.
   | Header    | Title       |
   | Paragraph | Text        |
 
-  - test test? 
+  - A nested list item
 
 - [x] A task list item with
 
@@ -259,7 +265,7 @@ Just some plain text
 
 ---
 
-| Syntax **test**    | Description |
+| Syntax *italic* and \`code\`    | Description |
 | --------- | ----------- |
 | Header    | Title       |
 | Paragraph | Text        |
@@ -340,36 +346,64 @@ This is <mark>highlighted</mark> text.
 E = mc<sup>2</sup>
 `;
 
-function useIsMounted() {
-  const isMounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
-  return isMounted;
-}
-
 export default function Home() {
-  const isMounted = useIsMounted();
   const min = 0;
   const max = markdownMessage.length;
   const [value, setValue] = useState(min);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  if (!isMounted) {
-    return null;
-  }
+  const clearTimeoutAndInterval = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  const handlePointerDown = useCallback(
+    (direction: "previous" | "next") => {
+      const change = direction === "next" ? 1 : -1;
+
+      clearTimeoutAndInterval();
+
+      setValue((last) => Math.max(min, Math.min(max, last + change)));
+
+      timeoutRef.current = setTimeout(() => {
+        intervalRef.current = setInterval(() => {
+          setValue((last) => Math.max(min, Math.min(max, last + change)));
+        }, 75);
+      }, 500);
+    },
+    [clearTimeoutAndInterval, min, max]
+  );
+
+  const handlePointerUp = useCallback(() => {
+    clearTimeoutAndInterval();
+  }, [clearTimeoutAndInterval]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeoutAndInterval();
+    };
+  }, [clearTimeoutAndInterval]);
 
   return (
     <main
       style={{
         display: "flex",
-        flexDirection: "column",
         height: "100vh",
         width: "100%",
+
+        // This give us a "stick to bottom" behavior for free
+        flexDirection: "column-reverse",
+        overflow: "auto",
       }}
     >
-      <div style={{ display: "flex", flex: "1" }}>
+      <div style={{ display: "flex", flex: "1", paddingBottom: "6rem" }}>
         <div className="lb-root lb-ai-chat lb-ai-chat:layout-inset">
           <div className="lb-ai-chat-content">
             <div className="lb-ai-chat-messages">
@@ -402,7 +436,12 @@ export default function Home() {
         </div>
       </div>
       <div
-        style={{ position: "sticky", bottom: 0, width: "100%", padding: 16 }}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          width: "100%",
+          padding: "2rem",
+        }}
       >
         <div className="lb-ai-chat-footer">
           <div className="lb-root lb-ai-chat-composer lb-ai-chat-composer-form lb-elevation lb-elevation-moderate">
@@ -410,7 +449,7 @@ export default function Home() {
             <div
               style={{
                 display: "flex",
-                gap: "0.5rem",
+                gap: "1rem",
                 padding: "1rem",
               }}
             >
@@ -425,8 +464,26 @@ export default function Home() {
                   flex: 1,
                 }}
               />
-              <button onClick={() => setValue(value - 1)}>Previous</button>
-              <button onClick={() => setValue(value + 1)}>Next</button>
+              <button
+                onPointerDown={() => handlePointerDown("previous")}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                style={{
+                  all: "revert",
+                }}
+              >
+                Previous
+              </button>
+              <button
+                onPointerDown={() => handlePointerDown("next")}
+                onPointerUp={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+                style={{
+                  all: "revert",
+                }}
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
