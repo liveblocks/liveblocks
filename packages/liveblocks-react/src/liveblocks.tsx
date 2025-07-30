@@ -6,6 +6,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AskUserMessageInChatOptions,
   AsyncResult,
   BaseRoomInfo,
   CopilotId,
@@ -1171,25 +1172,57 @@ function useDeleteAiChat() {
  * Returns a function to send a message in an AI chat.
  *
  * @example
- * const sendMessage = useSendAiMessage(chatId);
- * sendMessage("Hello, Liveblocks AI!");
+ * const sendAiMessage = useSendAiMessage(chatId);
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId);
+ * sendAiMessage({ message: "Hello, Liveblocks AI!", copilotId: "co_xxx" })
  */
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
 ): (message: string) => void {
   const client = useClient();
-  const copilotId = options?.copilotId;
 
   return useCallback(
-    (message: string) => {
+    (message: string | (UseSendAiMessageOptions & { message: string })) => {
       const messages = client[kInternal].ai.signals
         .getChatMessagesForBranchΣ(chatId)
         .get();
 
       const lastMessageId = messages[messages.length - 1]?.id ?? null;
+      let messageText: string;
 
-      const content = [{ type: "text" as const, text: message }];
+      const askUserMessageOptions: AskUserMessageInChatOptions = {
+        stream: options?.stream,
+        copilotId: options?.copilotId as CopilotId | undefined,
+        timeout: options?.timeout,
+      };
+
+      if (typeof message === "string") {
+        messageText = message;
+      } else {
+        messageText = message.message;
+
+        if (message?.copilotId !== undefined) {
+          askUserMessageOptions.copilotId = message?.copilotId as CopilotId;
+        }
+
+        if (message?.stream !== undefined) {
+          askUserMessageOptions.stream = message.stream;
+        }
+
+        if (message?.timeout !== undefined) {
+          askUserMessageOptions.timeout = message.timeout;
+        }
+      }
+
+      const content = [{ type: "text" as const, text: messageText }];
       const newMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
@@ -1211,14 +1244,10 @@ function useSendAiMessage(
         chatId,
         { id: newMessageId, parentMessageId: lastMessageId, content },
         targetMessageId,
-        {
-          stream: options?.stream,
-          copilotId: copilotId as CopilotId | undefined,
-          timeout: options?.timeout,
-        }
+        askUserMessageOptions
       );
     },
-    [client, chatId, copilotId, options?.stream, options?.timeout]
+    [client, chatId, options?.copilotId, options?.stream, options?.timeout]
   );
 }
 
