@@ -369,7 +369,8 @@ export type AiAssistantContentPart =
 export type AiAssistantDeltaUpdate =
   | AiTextDelta // ...or a delta to append to the last sent part
   | AiReasoningDelta // ...or a delta to append to the last sent part
-  | AiExecutingToolInvocationPart; // ...or a tool invocation chunk
+  | AiExecutingToolInvocationPart
+  | AiExecutedToolInvocationPart; // ...or a tool invocation chunk
 
 export type AiUserMessage = {
   id: MessageId;
@@ -487,7 +488,21 @@ export function appendDelta(
       break;
 
     case "tool-invocation":
-      content.push(delta);
+      if (delta.stage === "executed") {
+        // find the invocation part and update it
+        const invocationPart = content.findIndex(
+          (part) =>
+            part.type === "tool-invocation" &&
+            part.invocationId === delta.invocationId
+        );
+        if (invocationPart) {
+          content[invocationPart] = delta;
+        } else {
+          content.push(delta);
+        }
+      } else {
+        content.push(delta);
+      }
       break;
 
     default:

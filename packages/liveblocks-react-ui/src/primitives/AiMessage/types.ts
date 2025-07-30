@@ -37,6 +37,14 @@ export type AiMessageContentToolInvocationPartProps = {
   copilotId?: string;
 };
 
+/** @internal */
+export type AiMessageContentKnowledgePartProps = {
+  /** @internal */
+  question: string;
+  /** @internal */
+  stage: "receiving" | "executing" | "executed";
+};
+
 export interface AiMessageContentComponents {
   /**
    * The component used to display text parts.
@@ -54,6 +62,11 @@ export interface AiMessageContentComponents {
    * @internal
    */
   ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
+
+  /**
+   * The component used to display knowledge parts.
+   */
+  KnowledgePart: ComponentType<AiMessageContentKnowledgePartProps>;
 }
 
 export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {

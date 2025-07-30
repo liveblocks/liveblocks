@@ -1,6 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { forwardRef, useMemo } from "react";
 
+import { SpinnerIcon } from "../../icons";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
 import { Markdown } from "../Markdown";
 import { AiMessageToolInvocation } from "./tool-invocation";
@@ -17,6 +18,16 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   },
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
+  },
+  KnowledgePart: ({ question, stage }) => {
+    return (
+      <div
+        style={{
+          margin: "1rem 0",
+          padding: "1rem",
+        }}
+      ><h3>{stage === "receiving" || stage === "executing" ? <SpinnerIcon style={{ marginRight: "0.5rem" }} /> : " 🔍 "} Getting Knowledge</h3><p>Question: {question}</p></div>
+    );
   },
   ToolInvocationPart: ({ part, message }) => {
     return (
@@ -41,7 +52,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, copilotId, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { TextPart, ReasoningPart, ToolInvocationPart } = useMemo(
+    const { TextPart, ReasoningPart, KnowledgePart, ToolInvocationPart } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
       [components]
     );
@@ -50,6 +61,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
     const numParts = content.length;
     const isGenerating =
       message.role === "assistant" && message.status === "generating";
+
     return (
       <Component {...props} ref={forwardedRef}>
         {content.map((part, index) => {
@@ -64,6 +76,16 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
             case "tool-invocation":
+
+              /* 
+                TODO: @marc, I didn't know how to list the current tools here so I can check if the user has defined a getInformation tool
+                if the user has defined a getInformation tool, then it will de-conflict to lbGetInformation, in which case we need to check that instead.
+                I thought of maybe moving that logic up to this level and making ToolInvocationPart a lot simpler
+                -JR
+              */
+              if (part.name === "getInformation" || part.name === "lbGetInformation") {
+                return <KnowledgePart key={index} question={part.args?.question as string} stage={part.stage} />;
+              }
               return (
                 <ToolInvocationPart
                   key={index}
