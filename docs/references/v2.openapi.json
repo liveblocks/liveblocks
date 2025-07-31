@@ -3767,6 +3767,580 @@
           }
         }
       }
+    },
+    "/ai/copilots": {
+      "get": {
+        "summary": "Get AI copilots",
+        "description": "Get a list of AI copilots in your project.",
+        "tags": [
+          "AI"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of AI copilots.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AiCopilot"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create AI copilot",
+        "description": "Create a new AI copilot.",
+        "tags": [
+          "AI"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiCopilot"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success. Returns the created AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}": {
+      "get": {
+        "summary": "Get AI copilot",
+        "description": "Get a specific AI copilot by ID.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update AI copilot",
+        "description": "Update a specific AI copilot.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiCopilot"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete AI copilot",
+        "description": "Delete a specific AI copilot.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. AI copilot deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge-web-sources": {
+      "post": {
+        "summary": "Create web knowledge source",
+        "description": "Create a web-based knowledge source for an AI copilot.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The URL of the web source."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "individual_link",
+                      "crawl",
+                      "sitemap"
+                    ],
+                    "description": "The type of web source."
+                  }
+                },
+                "required": [
+                  "url",
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Success. Web knowledge source created."
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "409": {
+            "$ref": "#/components/responses/409"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge-sources": {
+      "get": {
+        "summary": "Get knowledge sources",
+        "description": "Get all knowledge sources for an AI copilot.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the knowledge sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/KnowledgeSource"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge-sources/{knowledgeSourceId}": {
+      "get": {
+        "summary": "Get knowledge source",
+        "description": "Get a specific knowledge source by ID.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the knowledge source."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSource"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge-file-sources/{knowledgeSourceId}": {
+      "get": {
+        "summary": "Get file knowledge source content",
+        "description": "Get the content of a file-based knowledge source.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the knowledge source."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the file content.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete file knowledge source",
+        "description": "Delete a file-based knowledge source.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the knowledge source."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. File knowledge source deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge-web-sources/{knowledgeSourceId}": {
+      "delete": {
+        "summary": "Delete web knowledge source",
+        "description": "Delete a web-based knowledge source.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the knowledge source."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. Web knowledge source deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge-web-sources/{knowledgeSourceId}/links": {
+      "get": {
+        "summary": "Get web source links",
+        "description": "Get links for a specific web-based knowledge source.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the knowledge source."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the web source links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4695,6 +5269,100 @@
             }
           }
         ]
+      },
+      "AiCopilot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the AI copilot."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the AI copilot."
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the AI copilot."
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Instructions for the AI copilot behavior."
+          },
+          "model": {
+            "type": "string",
+            "description": "The AI model used by the copilot."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The creation timestamp."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last update timestamp."
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "KnowledgeSource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the knowledge source."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "file",
+              "web"
+            ],
+            "description": "The type of knowledge source."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the knowledge source."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed"
+            ],
+            "description": "The processing status of the knowledge source."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the knowledge source (for web sources)."
+          },
+          "filename": {
+            "type": "string",
+            "description": "The filename of the knowledge source (for file sources)."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The creation timestamp."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last update timestamp."
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "status"
+        ]
       }
     },
     "securitySchemes": {
@@ -5119,6 +5787,9 @@
     },
     {
       "name": "Notifications"
+    },
+    {
+      "name": "AI"
     },
     {
       "name": "Deprecated"
