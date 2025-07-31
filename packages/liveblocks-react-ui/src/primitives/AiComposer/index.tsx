@@ -338,6 +338,7 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
       isDisabled: isComposerDisabled,
       isFocused,
       focus,
+      blur,
       select,
     } = useAiComposer();
     const isDisabled = disabled || isComposerDisabled;
@@ -353,9 +354,11 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
         } else if (event.key === "Enter" && event.shiftKey) {
           event.preventDefault();
           editor.insertBreak();
+        } else if (event.key === "Escape") {
+          blur();
         }
       },
-      [editor, onKeyDown, submit]
+      [editor, onKeyDown, submit, blur]
     );
 
     const handleFocus = useCallback(
