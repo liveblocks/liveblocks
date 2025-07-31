@@ -206,6 +206,37 @@ represents all data that is currently stored. It does not reset monthly, and the
 total usage will continue to accrue over time as you add more content and data.
 You can monitor your usage at any time in the [dashboard](/dashboard).
 
+### What’s a room?
+
+A room is the virtual space where people collaborate. For most products, a room
+corresponds to a document.
+
+### What’s a connection?
+
+A connection occurs when a user opens a web page containing a Liveblocks room.
+Each tab counts as one connection, which means that a user with two open tabs
+has two connections. A room is joined when using{" "}
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) in React or
+[`enterRoom`](/docs/api-reference/liveblocks-client#Client.enterRoom) in
+JavaScript. Liveblocks connections are analogous to WebSocket connections,
+representing a realtime link to our server.
+
+### What’s a simultaneous connection per room?
+
+A simultaneous connection per room is when a user or multiple users are
+connected to the same Liveblocks room at the same time.
+
+### What’s a simultaneous connection per project?
+
+A simultaneous connection per project is when a user or multiple users are
+connected to the same project at the same time.
+
+### What happens when limits are reached?
+
+Liveblocks returns a different error for each limit that a user might reach.
+That way, you can decide how to best handle those cases in your product.
+[Learn more about limits](/docs/platform/limits).
+
 ### Do you count monthly active users during testing?
 
 If you connect to rooms and call the Liveblocks API during any automated
