@@ -303,8 +303,8 @@ describe("Markdown", () => {
 
         expect(listItems?.[0]).toHaveTextContent("A list item");
 
-        expect(listItems?.[1]).toHaveTextContent(
-          "Another list item withmultiple paragraphs."
+        expect(listItems?.[1]?.innerHTML).toEqual(
+          "<p>Another list item with</p><p>multiple paragraphs.</p>"
         );
 
         expect(listItems?.[2]).toHaveTextContent("A task list item with");
@@ -872,13 +872,18 @@ describe("Markdown", () => {
 
         expect(blockquotes[0]).toHaveTextContent("A blockquote.");
         expect(blockquotes[0]).toHaveAttribute("data-blockquote");
-        expect(blockquotes[1]).toHaveTextContent(
-          "Another one which spansmultiple paragraphs."
+        expect(blockquotes[1]?.innerHTML).toEqual(
+          "<p>Another one which spans</p><p>multiple paragraphs.</p>"
         );
         expect(blockquotes[1]).toHaveAttribute("data-blockquote");
-        expect(blockquotes[2]).toHaveTextContent("Yet another whichis nested.");
+        expect((blockquotes[2]?.firstChild as HTMLElement).tagName).toEqual(
+          "P"
+        );
+        expect((blockquotes[2]?.firstChild as HTMLElement).innerHTML).toEqual(
+          "Yet another which"
+        );
         expect(blockquotes[2]).toHaveAttribute("data-blockquote");
-        expect(blockquotes[3]).toHaveTextContent("is nested.");
+        expect(blockquotes[3]?.innerHTML).toEqual("<p>is nested.</p>");
         expect(blockquotes[3]).toHaveAttribute("data-blockquote");
       },
     },
