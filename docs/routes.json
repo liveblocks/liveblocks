@@ -620,6 +620,10 @@
     "title": "Platform",
     "routes": [
       {
+        "title": "Data storage",
+        "path": "/platform/data-storage"
+      },
+      {
         "title": "WebSocket infrastructure",
         "path": "/platform/websocket-infrastructure"
       },

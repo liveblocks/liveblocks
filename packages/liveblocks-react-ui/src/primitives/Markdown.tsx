@@ -1,4 +1,4 @@
-import { assertNever, sanitizeUrl } from "@liveblocks/core";
+import { assertNever, type Relax, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import { Lexer, type MarkedToken, type Token, type Tokens } from "marked";
 import {
@@ -159,10 +159,10 @@ export type MarkdownComponents = {
    * ```tsx
    * <Markdown
    *   components={{
-   *     List: ({ type, items }) => {
+   *     List: ({ type, items, start }) => {
    *       const List = type === "ordered" ? "ol" : "ul";
    *       return (
-   *         <List>
+   *         <List start={start}>
    *           {items.map((item, index) => (
    *             <li key={index}>
    *               {item.checked !== undefined && (
@@ -257,8 +257,18 @@ interface MarkdownComponentsListItem {
   children: ReactNode;
 }
 
-export interface MarkdownComponentsListProps {
-  type: "ordered" | "unordered";
+export type MarkdownComponentsListProps = Relax<
+  MarkdownComponentsOrderedListProps | MarkdownComponentsUnorderedListProps
+>;
+
+interface MarkdownComponentsOrderedListProps {
+  type: "ordered";
+  items: MarkdownComponentsListItem[];
+  start: number;
+}
+
+interface MarkdownComponentsUnorderedListProps {
+  type: "unordered";
   items: MarkdownComponentsListItem[];
 }
 
@@ -368,11 +378,11 @@ const defaultComponents: MarkdownComponents = {
       </table>
     );
   },
-  List: ({ type, items }) => {
+  List: ({ type, items, start }) => {
     const List = type === "ordered" ? "ol" : "ul";
 
     return (
-      <List>
+      <List start={start === 1 ? undefined : start}>
         {items.map((item, index) => (
           <li key={index}>
             {item.checked !== undefined && (
@@ -586,9 +596,11 @@ export function MarkdownToken({
         };
       });
 
-      return (
-        <List type={token.ordered ? "ordered" : "unordered"} items={items} />
-      );
+      const props: MarkdownComponentsListProps = token.ordered
+        ? { type: "ordered", items, start: token.start || 1 }
+        : { type: "unordered", items };
+
+      return <List {...props} />;
     }
 
     case "table": {

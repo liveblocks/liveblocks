@@ -320,6 +320,95 @@ describe("Markdown", () => {
       },
     },
     {
+      description: "numbered lists with arbitrary start indices",
+      content: dedent`
+        1. A numbered list item
+        - A "nested" list item
+        - Another "nested" list item
+        
+        2. Another numbered list item
+        - A "nested" list item
+        - Another "nested" list item
+        
+        3. Yet another numbered list item
+        - A "nested" list item
+        - Another "nested" list item
+
+        ---
+
+        1. A numbered list item
+
+        \`\`\`
+        const a = 2;
+        \`\`\`
+
+        2. Another numbered list item
+
+        > A quote.
+
+        3. Yet another numbered list item
+
+        A paragraph.
+
+        ---
+
+        1. A numbered list item
+        1. Another numbered list item
+        1. Yet another numbered list item
+      `,
+      assertions: (element) => {
+        const listItems = element.querySelectorAll("li");
+        expect(listItems).toHaveLength(15);
+
+        // 1. A numbered list item
+        // - A "nested" list item
+        // - Another "nested" list item
+        //
+        // 2. Another numbered list item
+        // - A "nested" list item
+        // - Another "nested" list item
+        //
+        // 3. Yet another numbered list item
+        // - A "nested" list item
+        // - Another "nested" list item
+        const firstListFirstItem = listItems[0]?.parentElement;
+        expect(firstListFirstItem).not.toHaveAttribute("start");
+        const firstListSecondItem = listItems[3]?.parentElement;
+        expect(firstListSecondItem).toHaveAttribute("start", "2");
+        const firstListThirdItem = listItems[6]?.parentElement;
+        expect(firstListThirdItem).toHaveAttribute("start", "3");
+
+        // 1. A numbered list item
+        //
+        // \`\`\`
+        // const a = 2;
+        // \`\`\`
+        //
+        // 2. Another numbered list item
+        //
+        // > A quote.
+        //
+        // 3. Yet another numbered list item
+        //
+        // A paragraph.
+        const secondListFirstItem = listItems[9]?.parentElement;
+        expect(secondListFirstItem).not.toHaveAttribute("start");
+        const secondListSecondItem = listItems[10]?.parentElement;
+        expect(secondListSecondItem).toHaveAttribute("start", "2");
+        const secondListThirdItem = listItems[11]?.parentElement;
+        expect(secondListThirdItem).toHaveAttribute("start", "3");
+
+        // 1. A numbered list item
+        // 1. Another numbered list item
+        // 1. Yet another numbered list item
+        const thirdList = document.querySelector("ol:last-of-type");
+        expect(listItems[12]?.parentElement).toBe(thirdList);
+        expect(listItems[13]?.parentElement).toBe(thirdList);
+        expect(listItems[14]?.parentElement).toBe(thirdList);
+        expect(thirdList).not.toHaveAttribute("start");
+      },
+    },
+    {
       description: "blockquotes",
       content: dedent`
         > A blockquote.
@@ -664,11 +753,11 @@ describe("Markdown", () => {
           + [x] Yet another list item
       `,
       components: {
-        List: ({ items, type }) => {
+        List: ({ items, type, start }) => {
           const List = type === "ordered" ? "ol" : "ul";
 
           return (
-            <List data-list={type}>
+            <List start={start} data-list={type}>
               {items.map((item, index) => (
                 <li key={index}>
                   {item.checked !== undefined && (

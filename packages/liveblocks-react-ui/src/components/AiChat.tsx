@@ -44,6 +44,12 @@ import { AiComposer } from "./internal/AiComposer";
  */
 const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 60;
 
+/**
+ * The minimum number of pixels from the bottom of the scrollable area
+ * before showing the scroll to bottom indicator.
+ */
+const MIN_DISTANCE_BOTTOM_SCROLL_INDICATOR = 60;
+
 export type AiChatComponentsEmptyProps = {
   /**
    * The chat ID provided to the `AiChat` component.

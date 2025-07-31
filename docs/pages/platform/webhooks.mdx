@@ -591,10 +591,46 @@ plug(Plug.Parsers, ...)
 
 ## Testing locally [#testing-locally]
 
-Running webhooks locally can be difficult, but one way to do this is to use a
-tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
-[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
-host your localhost server online.
+Running webhooks locally can be difficult, but there are several tools that
+allow you to temporarily host your localhost server online.
+
+### Using svix-cli
+
+The [`svix-cli`](https://github.com/svix/svix-webhooks/tree/main/svix-cli) 
+provides a `listen` command that creates a publicly accessible URL for testing
+webhooks without requiring any account setup or network configuration changes.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL:
+
+```bash
+svix listen http://localhost:3000/api/liveblocks-webhook
+```
+
+This will output a unique URL that forwards all POST requests to your local
+endpoint:
+
+```
+Webhook Relay is now listening at:
+https://play.svix.com/in/c_tSdQhb4Q5PTF5m2juiWu8qFREqE/
+
+All requests on this endpoint will be forwarded to your local URL:
+http://localhost:3000/api/liveblocks-webhook
+
+View logs and debug information at:
+https://play.svix.com/view/c_tSdQhb4Q5PTF5m2juiWu8qFREqE/
+```
+
+The generated URL can be placed directly into the Liveblocks webhooks dashboard
+for testing. This approach is particularly useful in enterprise environments
+where tools like `localtunnel` or `ngrok` may be blocked by security policies.
+
+### Using localtunnel or ngrok
+
+Alternatively, you can use tools such as 
+[`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which also allow you to
+temporarily host your localhost server online.
 
 If your project is running on `localhost:3000`, you can run the following
 command to generate a temporary URL that’s available while your localhost server
