@@ -2,13 +2,7 @@ import {
   createInboxNotificationId,
   type GroupMentionData,
 } from "@liveblocks/core";
-import { useOverrides } from "@liveblocks/react-ui";
-import {
-  Group,
-  Tooltip,
-  TooltipProvider,
-  useGroupMentionSummary,
-} from "@liveblocks/react-ui/_private";
+import { Group } from "@liveblocks/react-ui/_private";
 import type {
   DOMConversionMap,
   DOMExportOutput,
@@ -38,40 +32,11 @@ function GroupMention({
   mention: GroupMentionData;
   nodeKey: string;
 }) {
-  const $ = useOverrides();
-  const { summary, isLoading: isLoadingSummary } =
-    useGroupMentionSummary(mention);
-
-  const content = (
+  return (
     <Mention nodeKey={nodeKey}>
       {MENTION_CHARACTER}
       <Group groupId={mention.id} />
     </Mention>
-  );
-
-  // Don't display the tooltip if we won't have a summary.
-  if (!isLoadingSummary && summary?.totalMembers === undefined) {
-    return content;
-  }
-
-  return (
-    // Ideally `TooltipProvider` would wrap the entire editor but we don't own it.
-    <TooltipProvider>
-      <Tooltip
-        content={
-          <span
-            className="lb-group-members"
-            data-loading={isLoadingSummary ? "" : undefined}
-          >
-            {isLoadingSummary
-              ? null
-              : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
-          </span>
-        }
-      >
-        {content}
-      </Tooltip>
-    </TooltipProvider>
   );
 }
 

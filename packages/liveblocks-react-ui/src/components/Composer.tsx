@@ -353,13 +353,10 @@ function ComposerUserMention({ mention }: ComposerMentionProps) {
   );
 }
 
-function ComposerGroupMention({ mention, overrides }: ComposerMentionProps) {
-  const $ = useOverrides(overrides);
-  const { summary, isLoading: isLoadingSummary } = useGroupMentionSummary(
-    mention as GroupMentionData
-  );
+function ComposerGroupMention({ mention }: ComposerMentionProps) {
+  const { summary } = useGroupMentionSummary(mention as GroupMentionData);
 
-  const content = (
+  return (
     <ComposerPrimitive.Mention
       className="lb-composer-mention"
       data-self={summary?.isMember ? "" : undefined}
@@ -367,28 +364,6 @@ function ComposerGroupMention({ mention, overrides }: ComposerMentionProps) {
       {MENTION_CHARACTER}
       <Group groupId={mention.id} />
     </ComposerPrimitive.Mention>
-  );
-
-  // Don't display the tooltip if we won't have a summary.
-  if (!isLoadingSummary && summary?.totalMembers === undefined) {
-    return content;
-  }
-
-  return (
-    <Tooltip
-      content={
-        <span
-          className="lb-group-members"
-          data-loading={isLoadingSummary ? "" : undefined}
-        >
-          {isLoadingSummary
-            ? null
-            : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
-        </span>
-      }
-    >
-      {content}
-    </Tooltip>
   );
 }
 
