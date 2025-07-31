@@ -20,6 +20,7 @@ import {
 import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
+  AiMessageContentKnowledgeRetrievalPartProps,
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
@@ -182,6 +183,7 @@ function AssistantMessageContent({
           <ReasoningPart {...props} components={components} />
         ),
         ToolInvocationPart,
+        KnowledgeRetrievalPart,
       }}
       copilotId={copilotId}
       className="lb-ai-chat-message-content"
@@ -273,6 +275,29 @@ function ToolInvocationPart({
           copilotId={copilotId}
         />
       </ErrorBoundary>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * KnowledgeRetrievalPart
+ * -----------------------------------------------------------------------------------------------*/
+function KnowledgeRetrievalPart({
+  search,
+  stage,
+}: AiMessageContentKnowledgeRetrievalPartProps) {
+  const isPending = stage === "receiving" || stage === "executing";
+  return (
+    <div
+      className={cn(
+        "lb-ai-chat-message-knowledge",
+        isPending && "lb-ai-chat-pending"
+      )}
+    >
+      {/* TODO: Use overrides for "Search(ing|ed) for…" */}
+      Search{isPending ? "ing" : "ed"} for{" "}
+      <span className="lb-ai-chat-message-knowledge-search">{search}</span>
+      {isPending ? "…" : null}
     </div>
   );
 }

@@ -38,9 +38,9 @@ export type AiMessageContentToolInvocationPartProps = {
 };
 
 /** @internal */
-export type AiMessageContentKnowledgePartProps = {
+export type AiMessageContentKnowledgeRetrievalPartProps = {
   /** @internal */
-  question: string;
+  search: string;
   /** @internal */
   stage: "receiving" | "executing" | "executed";
 };
@@ -64,9 +64,9 @@ export interface AiMessageContentComponents {
   ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
 
   /**
-   * The component used to display knowledge parts.
+   * The component used to display knowledge retrieval parts.
    */
-  KnowledgePart: ComponentType<AiMessageContentKnowledgePartProps>;
+  KnowledgeRetrievalPart: ComponentType<AiMessageContentKnowledgeRetrievalPartProps>;
 }
 
 export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {

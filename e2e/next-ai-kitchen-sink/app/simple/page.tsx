@@ -12,7 +12,10 @@ export default function Home() {
         baseUrl={process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       >
         <main className="h-screen w-full">
-          <AiChat chatId="ai-chat" />
+          <AiChat
+            chatId="ai-chat-knowledge"
+            copilotId="co_8VdZc4cZZ1ssJgAo580s9"
+          />
         </main>
       </LiveblocksProvider>
     </main>
