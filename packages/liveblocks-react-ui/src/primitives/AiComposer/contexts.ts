@@ -1,5 +1,10 @@
 import { type MessageId, nn } from "@liveblocks/core";
-import { createContext, useContext } from "react";
+import {
+  createContext,
+  type Dispatch,
+  type SetStateAction,
+  useContext,
+} from "react";
 import type {
   Descendant as SlateDescendant,
   Editor as SlateEditor,
@@ -22,6 +27,11 @@ export type AiComposerContext = {
   canAbort: boolean;
 
   /**
+   * Whether the editor is currently focused.
+   */
+  isFocused: boolean;
+
+  /**
    * Whether the editor is currently empty.
    */
   isEmpty: boolean;
@@ -40,12 +50,28 @@ export type AiComposerContext = {
    * Clear the composer programmatically.
    */
   clear: () => void;
+
+  /**
+   * Select the editor programmatically.
+   */
+  select: () => void;
+
+  /**
+   * Focus the editor programmatically.
+   */
+  focus: () => void;
+
+  /**
+   * Blur the editor programmatically.
+   */
+  blur: () => void;
 };
 
 export type AiComposerEditorContext = {
   onEditorValueChange: (value: SlateDescendant[]) => void;
   editor: SlateEditor;
   abortableMessageId: MessageId | undefined;
+  setFocused: Dispatch<SetStateAction<boolean>>;
 };
 
 export const AiComposerContext = createContext<AiComposerContext | null>(null);

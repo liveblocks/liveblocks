@@ -7,11 +7,10 @@ import {
 import { useClient } from "@liveblocks/react";
 import { useLayoutEffect, useSignal } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
-import type { FormEvent, KeyboardEvent, MouseEvent } from "react";
+import type { FocusEvent, FormEvent, KeyboardEvent, MouseEvent } from "react";
 import {
   forwardRef,
   useCallback,
-  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -109,6 +108,7 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
     );
     const [isEditorEmpty, setEditorEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
+    const [isFocused, setFocused] = useState(false);
     const messagesΣ = chatId
       ? client[kInternal].ai.signals.getChatMessagesForBranchΣ(chatId, branchId)
       : emptyMessagesΣ;
@@ -126,6 +126,41 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           focus: SlateEditor.end(editor, []),
         },
       });
+    }, [editor]);
+
+    const select = useCallback(() => {
+      SlateTransforms.select(editor, SlateEditor.end(editor, []));
+    }, [editor]);
+
+    const focus = useCallback(
+      (resetSelection = true) => {
+        try {
+          if (!ReactEditor.isFocused(editor)) {
+            SlateTransforms.select(
+              editor,
+              resetSelection || !editor.selection
+                ? SlateEditor.end(editor, [])
+                : editor.selection
+            );
+            ReactEditor.focus(editor);
+          }
+        } catch {
+          // Slate's DOM-specific methods will throw if the editor's DOM
+          // node no longer exists. This action doesn't make sense on an
+          // unmounted editor so we can safely ignore it.
+        }
+      },
+      [editor]
+    );
+
+    const blur = useCallback(() => {
+      try {
+        ReactEditor.blur(editor);
+      } catch {
+        // Slate's DOM-specific methods will throw if the editor's DOM
+        // node no longer exists. This action doesn't make sense on an
+        // unmounted editor so we can safely ignore it.
+      }
     }, [editor]);
 
     const onSubmitEnd = useCallback(() => {
@@ -234,17 +269,22 @@ export const AiComposerForm = forwardRef<HTMLFormElement, AiComposerFormProps>(
           editor,
           onEditorValueChange: handleEditorValueChange,
           abortableMessageId,
+          setFocused,
         }}
       >
         <AiComposerContext.Provider
           value={{
             isDisabled,
             isEmpty: isEditorEmpty,
+            isFocused,
             canSubmit,
             canAbort,
             submit,
             abort,
             clear,
+            focus,
+            blur,
+            select,
           }}
         >
           <Component onSubmit={handleSubmit} {...props} ref={formRef} />
@@ -279,11 +319,27 @@ function AiComposerEditorPlaceholder({
  */
 const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
   (
-    { defaultValue = "", onKeyDown, disabled, autoFocus, dir, ...props },
+    {
+      defaultValue = "",
+      onKeyDown,
+      onFocus,
+      onBlur,
+      disabled,
+      autoFocus,
+      dir,
+      ...props
+    },
     forwardedRef
   ) => {
-    const { editor, onEditorValueChange } = useAiComposerEditorContext();
-    const { submit, isDisabled: isComposerDisabled } = useAiComposer();
+    const { editor, onEditorValueChange, setFocused } =
+      useAiComposerEditorContext();
+    const {
+      submit,
+      isDisabled: isComposerDisabled,
+      isFocused,
+      focus,
+      select,
+    } = useAiComposer();
     const isDisabled = disabled || isComposerDisabled;
 
     const handleKeyDown = useCallback(
@@ -302,26 +358,48 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
       [editor, onKeyDown, submit]
     );
 
+    const handleFocus = useCallback(
+      (event: FocusEvent<HTMLDivElement>) => {
+        onFocus?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          setFocused(true);
+        }
+      },
+      [onFocus, setFocused]
+    );
+
+    const handleBlur = useCallback(
+      (event: FocusEvent<HTMLDivElement>) => {
+        onBlur?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          setFocused(false);
+        }
+      },
+      [onBlur, setFocused]
+    );
+
     useImperativeHandle(
       forwardedRef,
       () => ReactEditor.toDOMNode(editor, editor) as HTMLDivElement,
       [editor]
     );
 
-    useEffect(() => {
-      if (!autoFocus) return;
-
-      try {
-        if (!ReactEditor.isFocused(editor)) {
-          SlateTransforms.select(editor, SlateEditor.end(editor, []));
-          ReactEditor.focus(editor);
-        }
-      } catch {
-        // Slate's DOM-specific methods will throw if the editor's DOM
-        // node no longer exists. This action doesn't make sense on an
-        // unmounted editor so we can safely ignore it.
+    // Manually focus the editor when `autoFocus` is true
+    useLayoutEffect(() => {
+      if (autoFocus) {
+        focus();
       }
-    }, [editor, autoFocus]);
+    }, [autoFocus, editor, focus]);
+
+    // Manually add a selection in the editor if the selection
+    // is still empty after being focused
+    useLayoutEffect(() => {
+      if (isFocused && editor.selection === null) {
+        select();
+      }
+    }, [editor, select, isFocused]);
 
     const initialValue: AiComposerBody = useMemo(() => {
       return defaultValue
@@ -335,13 +413,15 @@ const AiComposerEditor = forwardRef<HTMLDivElement, AiComposerEditorProps>(
         initialValue={initialValue}
         onValueChange={onEditorValueChange}
       >
-        {/* TODO: Add focus/blur methods and attributes */}
         <Editable
           dir={dir}
           enterKeyHint="send"
           autoCapitalize="sentences"
           aria-label="Composer editor"
           onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          data-focused={isFocused || undefined}
           data-disabled={isDisabled || undefined}
           {...props}
           readOnly={isDisabled}
