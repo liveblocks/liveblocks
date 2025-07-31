@@ -654,6 +654,14 @@
           {
             "title": "Manage team members",
             "path": "/platform/account-management/manage-team-members"
+          },
+          {
+            "title": "SSO",
+            "path": "/platform/account-management/sso"
+          },
+          {
+            "title": "Directory sync",
+            "path": "/platform/account-management/directory-sync"
           }
         ]
       },
