@@ -1180,7 +1180,7 @@ function useDeleteAiChat() {
  *
  * @example
  * const sendAiMessage = useSendAiMessage();
- * sendAiMessage({ chatId: "chat-id", message: "Hello, Liveblocks AI!" })
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" })
  *
  * @example
  * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
@@ -1188,7 +1188,7 @@ function useDeleteAiChat() {
  *
  * @example
  * const sendAiMessage = useSendAiMessage(chatId);
- * sendAiMessage({ copilotId: "co_xxx", message: "Hello, Liveblocks AI!" })
+ * sendAiMessage({ copilotId: "co_xxx", text: "Hello, Liveblocks AI!" })
 
  */
 function useSendAiMessage(
@@ -1209,10 +1209,12 @@ function useSendAiMessage(
 
   return useCallback(
     (message: string | SendAiMessageOptions) => {
+      // The `useSendAiMessage` overloads make it impossible (at the type level at least)
+      // to have no chat ID passed at all, one of the two places should have a value.
       const resolvedChatId =
         typeof message === "object" && message.chatId !== undefined
           ? message.chatId
-          : chatId;
+          : chatId!;
 
       const messages = client[kInternal].ai.signals
         .getChatMessagesForBranchΣ(resolvedChatId)
@@ -1230,7 +1232,7 @@ function useSendAiMessage(
       if (typeof message === "string") {
         messageText = message;
       } else {
-        messageText = message.message;
+        messageText = message.text;
 
         if (message?.copilotId !== undefined) {
           resolvedOptions.copilotId = message?.copilotId as CopilotId;

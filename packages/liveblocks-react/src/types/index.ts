@@ -82,7 +82,7 @@ export type UseSendAiMessageOptions = {
 
 export type SendAiMessageOptions = UseSendAiMessageOptions & {
   chatId?: string;
-  message: string;
+  text: string;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
