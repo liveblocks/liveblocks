@@ -3,15 +3,7 @@ import {
   type MentionData,
   type UserMentionData,
 } from "@liveblocks/core";
-import { useOverrides } from "@liveblocks/react-ui";
-import {
-  cn,
-  Group,
-  Tooltip,
-  TooltipProvider,
-  useGroupMentionSummary,
-  User,
-} from "@liveblocks/react-ui/_private";
+import { cn, Group, User } from "@liveblocks/react-ui/_private";
 import type { Node } from "@tiptap/pm/model";
 import { NodeViewWrapper } from "@tiptap/react";
 import { type ComponentPropsWithoutRef, forwardRef } from "react";
@@ -48,12 +40,7 @@ const UserMention = forwardRef<HTMLSpanElement, MentionProps>(
 
 const GroupMention = forwardRef<HTMLSpanElement, MentionProps>(
   ({ mention, isSelected }, forwardedRef) => {
-    const $ = useOverrides();
-    const { summary, isLoading: isLoadingSummary } = useGroupMentionSummary(
-      mention as GroupMentionData
-    );
-
-    const content = (
+    return (
       <NodeViewWrapper
         className={cn(
           "lb-root lb-tiptap-mention",
@@ -65,31 +52,6 @@ const GroupMention = forwardRef<HTMLSpanElement, MentionProps>(
         {MENTION_CHARACTER}
         <Group groupId={mention.id} />
       </NodeViewWrapper>
-    );
-
-    // Don't display the tooltip if we won't have a summary.
-    if (!isLoadingSummary && summary?.totalMembers === undefined) {
-      return content;
-    }
-
-    return (
-      // Ideally `TooltipProvider` would wrap the entire editor but we don't own it.
-      <TooltipProvider>
-        <Tooltip
-          content={
-            <span
-              className="lb-group-members"
-              data-loading={isLoadingSummary ? "" : undefined}
-            >
-              {isLoadingSummary
-                ? null
-                : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
-            </span>
-          }
-        >
-          {content}
-        </Tooltip>
-      </TooltipProvider>
     );
   }
 );

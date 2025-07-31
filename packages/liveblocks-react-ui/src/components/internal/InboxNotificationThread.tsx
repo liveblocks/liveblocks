@@ -84,9 +84,7 @@ export function InboxNotificationComment({
               className="lb-comment-body"
               body={comment.body}
               components={{
-                Mention: (props) => (
-                  <CommentMention showGroupTooltip={false} {...props} />
-                ),
+                Mention: CommentMention,
                 Link: CommentNonInteractiveLink,
               }}
             />
