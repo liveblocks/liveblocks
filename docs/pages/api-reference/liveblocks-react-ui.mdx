@@ -1468,7 +1468,7 @@ function MyComposer() {
     { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
-    event.preventdefault();
+    event.preventDefault();
 
     // Create a new thread
     // +++
@@ -2466,7 +2466,7 @@ function MyComposerAttachments() {
     type="function"
     detailedType="(mark: ComposerBodyMark) => void"
   >
-    Remove an attachment by its ID.
+    Toggle a specific text mark.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"
@@ -3257,7 +3257,7 @@ Classes containing colons `:` are internal and may change over time.
 
 ### Portaled elements
 
-Floating elements within the default components (e.g. tooltips, drowdowns, etc)
+Floating elements within the default components (e.g. tooltips, dropdowns, etc)
 are portaled to the end of the document to avoid `z-index` conflicts and
 `overflow` issues.
 

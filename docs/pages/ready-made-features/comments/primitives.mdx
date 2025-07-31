@@ -184,7 +184,7 @@ function MyComposer() {
   return (
     <Composer.Form
       onComposerSubmit={({ body }, event) => {
-        event.preventdefault();
+        event.preventDefault();
         const thread = createThread({
           body,
           metadata: {},
