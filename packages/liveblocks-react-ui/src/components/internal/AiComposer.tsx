@@ -1,5 +1,9 @@
-import { type CopilotId, kInternal, type MessageId } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
+import {
+  type AiChatMessage,
+  type CopilotId,
+  type MessageId,
+} from "@liveblocks/core";
+import { useSendAiMessage } from "@liveblocks/react";
 import {
   type ComponentProps,
   type FormEvent,
@@ -15,7 +19,7 @@ import {
   type GlobalOverrides,
   useOverrides,
 } from "../../overrides";
-import * as ComposerPrimitive from "../../primitives/AiComposer";
+import * as AiComposerPrimitive from "../../primitives/AiComposer";
 import { useAiComposer } from "../../primitives/AiComposer/contexts";
 import type {
   AiComposerEditorProps,
@@ -48,12 +52,7 @@ export interface AiComposerProps
    * @internal
    * The event handler called after the composer is submitted.
    */
-  onComposerSubmitted?: (message: {
-    /**
-     * The created message ID.
-     */
-    id: MessageId;
-  }) => void;
+  onComposerSubmitted?: (message: AiChatMessage) => void;
 
   /**
    * Whether the composer is disabled.
@@ -109,7 +108,7 @@ function AiComposerAction({
 
   return canAbort ? (
     <ShortcutTooltip content={$.AI_COMPOSER_ABORT}>
-      <ComposerPrimitive.Abort asChild>
+      <AiComposerPrimitive.Abort asChild>
         <Button
           onPointerDown={preventDefault}
           onClick={stopPropagation}
@@ -118,11 +117,11 @@ function AiComposerAction({
           aria-label={$.AI_COMPOSER_ABORT}
           icon={<StopIcon />}
         />
-      </ComposerPrimitive.Abort>
+      </AiComposerPrimitive.Abort>
     </ShortcutTooltip>
   ) : (
     <ShortcutTooltip content={$.AI_COMPOSER_SEND} shortcut="Enter">
-      <ComposerPrimitive.Submit asChild>
+      <AiComposerPrimitive.Submit asChild>
         <Button
           onPointerDown={preventDefault}
           onClick={stopPropagation}
@@ -131,7 +130,7 @@ function AiComposerAction({
           aria-label={$.AI_COMPOSER_SEND}
           icon={<SendIcon />}
         />
-      </ComposerPrimitive.Submit>
+      </AiComposerPrimitive.Submit>
     </ShortcutTooltip>
   );
 }
@@ -155,7 +154,10 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
     forwardedRef
   ) => {
     const $ = useOverrides(overrides);
-    const client = useClient();
+    const sendAiMessage = useSendAiMessage(chatId, {
+      stream,
+      copilotId,
+    });
 
     const handleComposerSubmit = useCallback(
       (message: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => {
@@ -163,47 +165,16 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
 
         if (event.isDefaultPrevented()) return;
 
-        const content = [{ type: "text" as const, text: message.text }];
+        const newMessage = sendAiMessage(message.text);
 
-        const newMessageId = client[kInternal].ai[
-          kInternal
-        ].context.messagesStore.createOptimistically(
-          chatId,
-          "user",
-          message.lastMessageId ?? null,
-          content
-        );
-
-        onComposerSubmitted?.({ id: newMessageId });
-
-        const targetMessageId = client[kInternal].ai[
-          kInternal
-        ].context.messagesStore.createOptimistically(
-          chatId,
-          "assistant",
-          newMessageId
-        );
-
-        client[kInternal].ai.askUserMessageInChat(
-          chatId,
-          {
-            id: newMessageId,
-            parentMessageId: message.lastMessageId ?? null,
-            content,
-          },
-          targetMessageId,
-          {
-            stream,
-            copilotId,
-          }
-        );
+        onComposerSubmitted?.(newMessage);
       },
-      [onComposerSubmit, chatId, client, copilotId, stream, onComposerSubmitted]
+      [onComposerSubmit, sendAiMessage, onComposerSubmitted]
     );
 
     return (
       <TooltipProvider>
-        <ComposerPrimitive.Form
+        <AiComposerPrimitive.Form
           className={cn(
             "lb-root lb-ai-composer lb-ai-composer-form",
             className
@@ -217,7 +188,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
           branchId={branchId}
         >
           <div className="lb-ai-composer-editor-container">
-            <ComposerPrimitive.Editor
+            <AiComposerPrimitive.Editor
               autoFocus={autoFocus}
               className="lb-ai-composer-editor"
               placeholder={$.AI_COMPOSER_PLACEHOLDER}
@@ -234,7 +205,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
               </div>
             </div>
           </div>
-        </ComposerPrimitive.Form>
+        </AiComposerPrimitive.Form>
       </TooltipProvider>
     );
   }

@@ -6,6 +6,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AiChatMessage,
   AsyncResult,
   BaseRoomInfo,
   CopilotId,
@@ -1164,7 +1165,7 @@ function useDeleteAiChat() {
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string) => void {
+): (message: string) => AiChatMessage {
   const client = useClient();
   const copilotId = options?.copilotId;
 
@@ -1185,6 +1186,10 @@ function useSendAiMessage(
         lastMessageId,
         content
       );
+      const newMessage =
+        client[kInternal].ai[kInternal].context.messagesStore.getMessageById(
+          newMessageId
+        )!;
 
       const targetMessageId = client[kInternal].ai[
         kInternal
@@ -1204,6 +1209,8 @@ function useSendAiMessage(
           timeout: options?.timeout,
         }
       );
+
+      return newMessage;
     },
     [client, chatId, copilotId, options?.stream, options?.timeout]
   );
