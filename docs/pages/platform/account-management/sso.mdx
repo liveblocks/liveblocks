@@ -1,0 +1,94 @@
+---
+meta:
+  title: "Configure SSO"
+  parentTitle: "Platform"
+  description: "Learn how to setup SSO on your Liveblocks account."
+---
+
+<Banner title="SSO is available on Enterprise plans"></Banner>
+
+Once enabled, all team members will be able to log in to the dashboard using
+your selected identity provider. You will still need to invite users to your
+team for them to have access. If you would like all users signing up with SSO to
+be automatically added to your team, please contact us.
+
+You can also use
+[Directory Sync](/docs/platform/account-management/directory-sync) to
+automatically assign users to your team with a specific role.
+
+<Figure>
+  <Image
+    src="/assets/account-management/team-security-settings.png"
+    alt="Liveblocks team security settings"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Configuring SSO
+
+1. To configure SSO for your team, you must be an owner of the team
+2. From your dashboard, ensure your team is selected in the scope selector
+3. Navigate to the Settings tab and select Security & Privacy
+4. Navigate to the SSO section. Click Configure and follow the walkthrough to
+   configure SSO for your team with your identity provider of choice
+
+<Figure>
+  <Image
+    src="/assets/account-management/sso-setup.png"
+    alt="Liveblocks team security settings"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Enforcing SSO
+
+For additional security, SSO can be enforced for a team so that all team members
+cannot access any team information unless their current session was
+authenticated with SSO.
+
+If you want to activate this setting, please contact us.
+
+### Automatic members provisioning
+
+By default, you still need to manually invite users to your team for them to
+have access to it. If you would like all users signing up with SSO to be
+automatically added to your team, please contact us.
+
+### Authenticating with SSO
+
+Once you have configured SSO, your team members can use it to log in or sign up
+to Liveblocks. They only have to enter their email, and they will be redirected
+to the third-party authentication provider that you configured.
+
+### Supported providers
+
+Liveblocks supports the following third-party identity providers:
+
+- Okta
+- Entra ID (Azure AD)
+- Google SAML
+- ADP OpenID connect
+- Auth0 SAML
+- CAS SAML
+- ClassLink SAML
+- Cloudflare SAML
+- CyberArk SAML
+- Duo SAML
+- Entra ID OpenID connect
+- Google OpenID connect
+- JumpCloud SAML
+- Keycloak SAML
+- LastPass SAML
+- Microsoft AD FS
+- NetIQ SAML
+- Okta OpenID Connect
+- OneLogin
+- Oracle
+- PingFederate
+- PingOne
+- Rippling
+- Salesforce
+- SimpleSAMLphp SAML
+- VMware Workspace One
