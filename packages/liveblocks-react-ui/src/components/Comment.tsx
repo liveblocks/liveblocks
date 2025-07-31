@@ -218,7 +218,6 @@ interface CommentMentionProps
   extends CommentBodyMentionProps,
     CommentPrimitiveMentionProps {
   overrides?: CommentProps["overrides"];
-  showGroupTooltip?: boolean;
 }
 
 function CommentUserMention({
@@ -242,17 +241,12 @@ function CommentUserMention({
 
 function CommentGroupMention({
   mention,
-  overrides,
-  showGroupTooltip,
   className,
   ...props
 }: CommentMentionProps) {
-  const $ = useOverrides(overrides);
-  const { summary, isLoading: isLoadingSummary } = useGroupMentionSummary(
-    mention as GroupMentionData
-  );
+  const { summary } = useGroupMentionSummary(mention as GroupMentionData);
 
-  const content = (
+  return (
     <CommentPrimitive.Mention
       className={cn("lb-comment-mention", className)}
       data-self={summary?.isMember ? "" : undefined}
@@ -262,50 +256,15 @@ function CommentGroupMention({
       <Group groupId={mention.id} />
     </CommentPrimitive.Mention>
   );
-
-  // Don't display the tooltip if we won't have a summary (or if it's disabled).
-  if (
-    !showGroupTooltip ||
-    (!isLoadingSummary && summary?.totalMembers === undefined)
-  ) {
-    return content;
-  }
-
-  return (
-    <Tooltip
-      content={
-        <span
-          className="lb-group-members"
-          data-loading={isLoadingSummary ? "" : undefined}
-        >
-          {isLoadingSummary
-            ? null
-            : $.GROUP_MEMBERS_DESCRIPTION(summary?.totalMembers ?? 0)}
-        </span>
-      }
-    >
-      {content}
-    </Tooltip>
-  );
 }
 
-export function CommentMention({
-  mention,
-  showGroupTooltip = true,
-  ...props
-}: CommentMentionProps) {
+export function CommentMention({ mention, ...props }: CommentMentionProps) {
   switch (mention.kind) {
     case "user":
       return <CommentUserMention mention={mention} {...props} />;
 
     case "group":
-      return (
-        <CommentGroupMention
-          mention={mention}
-          showGroupTooltip={showGroupTooltip}
-          {...props}
-        />
-      );
+      return <CommentGroupMention mention={mention} {...props} />;
 
     default:
       return assertNever(mention, "Unhandled mention kind");
