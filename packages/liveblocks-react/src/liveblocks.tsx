@@ -6,6 +6,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AiChatMessage,
   AskUserMessageInChatOptions,
   AsyncResult,
   BaseRoomInfo,
@@ -17,6 +18,7 @@ import type {
   OpaqueClient,
   PartialNotificationSettings,
   SyncStatus,
+  WithRequired,
 } from "@liveblocks/core";
 import {
   assert,
@@ -77,8 +79,6 @@ import type {
 import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
-
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 function missingUserError(userId: string) {
   return new Error(`resolveUsers didn't return anything for user '${userId}'`);
@@ -1194,17 +1194,17 @@ function useDeleteAiChat() {
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string | SendAiMessageOptions) => void;
+): (message: string | SendAiMessageOptions) => AiChatMessage;
 function useSendAiMessage(
   chatId?: never,
   options?: never
-): (message: WithRequired<SendAiMessageOptions, "chatId">) => void;
+): (message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage;
 function useSendAiMessage(
   chatId?: string,
   options?: UseSendAiMessageOptions
 ):
-  | ((message: string | SendAiMessageOptions) => void)
-  | ((message: WithRequired<SendAiMessageOptions, "chatId">) => void) {
+  | ((message: string | SendAiMessageOptions) => AiChatMessage)
+  | ((message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage) {
   const client = useClient();
 
   return useCallback(
@@ -1256,6 +1256,10 @@ function useSendAiMessage(
         lastMessageId,
         content
       );
+      const newMessage =
+        client[kInternal].ai[kInternal].context.messagesStore.getMessageById(
+          newMessageId
+        )!;
 
       const targetMessageId = client[kInternal].ai[
         kInternal
@@ -1271,6 +1275,8 @@ function useSendAiMessage(
         targetMessageId,
         resolvedOptions
       );
+
+      return newMessage;
     },
     [client, chatId, options?.copilotId, options?.stream, options?.timeout]
   );

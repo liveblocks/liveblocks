@@ -41,6 +41,7 @@ import type {
   ThreadData,
   ToImmutable,
   WithNavigation,
+  WithRequired,
 } from "@liveblocks/core";
 import type {
   ComponentType,
@@ -1297,7 +1298,19 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useSendAiMessage(
     chatId: string,
     options?: UseSendAiMessageOptions
-  ): (message: string) => void;
+  ): (message: string | SendAiMessageOptions) => AiChatMessage;
+  useSendAiMessage(
+    chatId?: never,
+    options?: never
+  ): (message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage;
+  useSendAiMessage(
+    chatId?: string,
+    options?: UseSendAiMessageOptions
+  ):
+    | ((message: string | SendAiMessageOptions) => AiChatMessage)
+    | ((
+        message: WithRequired<SendAiMessageOptions, "chatId">
+      ) => AiChatMessage);
 };
 
 export type LiveblocksContextBundle<
