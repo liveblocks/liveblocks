@@ -709,7 +709,9 @@ export function MarkdownToken({
                 components={components}
                 isMounted={isMounted}
                 // A "loose" list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
-                normalizeToBlockTokens={item.loose}
+                normalizeToBlockTokens={
+                  item.tokens.length > 0 ? item.loose : false
+                }
               />
             ),
           };
