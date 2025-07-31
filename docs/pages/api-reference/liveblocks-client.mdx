@@ -430,6 +430,10 @@ components, such as a user’s name or avatar, you need to resolve these IDs int
 user objects. This function receives a list of user IDs and you should return a
 list of user objects of the same size, in the same order.
 
+User IDs are automatically resolved in batches with a maximum of 50 users per
+batch to optimize performance and prevent overwhelming your user resolution
+function.
+
 ```tsx
 import { createClient } from "@liveblocks/client";
 
