@@ -1,11 +1,22 @@
 ---
 meta:
-  title: "Configure SSO"
+  title: "SAML Single Sign-on"
   parentTitle: "Platform"
   description: "Learn how to setup SSO on your Liveblocks account."
 ---
 
-<Banner title="SSO is available on Enterprise plans"></Banner>
+<Banner>
+  This feature is available as an add-on to Enterprise customers. Reach out to
+  [sales@liveblocks.io](mailto:sales@liveblocks.io) to get it added to your
+  account.
+</Banner>
+
+SSO enables teams to enforce authentication via identity providers like Okta,
+Azure AD, Google Workspace, or OneLogin using SAML. This simplifies account
+management, and helps organizations meet internal security requirements. Paired
+with Directory Sync, teams can manage organization membership directly from
+their identity provider, reducing manual overhead and aligning with standard
+enterprise access control practices.
 
 Once enabled, all team members will be able to log in to the dashboard using
 your selected identity provider. You will still need to invite users to your
@@ -27,7 +38,9 @@ automatically assign users to your team with a specific role.
 
 ### Configuring SSO
 
-1. To configure SSO for your team, you must be an owner of the team
+1. To configure SSO for your team, you must be an owner of the team (if you are
+   not owner of the team, see
+   [manage team members](/docs/platform/account-management/manage-team-members))
 2. From your dashboard, ensure your team is selected in the scope selector
 3. Navigate to the Settings tab and select Security & Privacy
 4. Navigate to the SSO section. Click Configure and follow the walkthrough to
@@ -48,13 +61,15 @@ For additional security, SSO can be enforced for a team so that all team members
 cannot access any team information unless their current session was
 authenticated with SSO.
 
-If you want to activate this setting, please contact us.
+If you want to activate this setting, please contact us at
+[support@liveblocks.io](mailto:support@liveblocks.io).
 
-### Automatic members provisioning
+### Automatic provisioning
 
 By default, you still need to manually invite users to your team for them to
 have access to it. If you would like all users signing up with SSO to be
-automatically added to your team, please contact us.
+automatically added to your team, please contact us at
+[support@liveblocks.io](mailto:support@liveblocks.io).
 
 ### Authenticating with SSO
 
@@ -92,3 +107,6 @@ Liveblocks supports the following third-party identity providers:
 - Salesforce
 - SimpleSAMLphp SAML
 - VMware Workspace One
+
+If your Identity provider is not listed, please reach out to us at
+[support@liveblocks.io](mailto:support@liveblocks.io).

@@ -656,8 +656,8 @@
             "path": "/platform/account-management/manage-team-members"
           },
           {
-            "title": "SSO",
-            "path": "/platform/account-management/sso"
+            "title": "SAML Single Sign-on",
+            "path": "/platform/account-management/saml"
           },
           {
             "title": "Directory sync",
