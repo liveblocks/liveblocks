@@ -96,3 +96,4 @@ export {
   useAiChats,
   useAiChatMessages,
 } from "./liveblocks";
+export { useMetadata } from "./room";

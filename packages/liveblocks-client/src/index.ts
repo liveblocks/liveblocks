@@ -69,6 +69,7 @@ export type {
   UploadAttachmentOptions,
   User,
 } from "@liveblocks/core";
+export type { RoomMetadata, RoomMetadataUpdate } from "@liveblocks/core";
 export {
   createClient,
   defineAiTool,

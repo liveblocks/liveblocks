@@ -31,6 +31,8 @@ import type {
   OpaqueClient,
   RoomEventMessage,
   RoomSubscriptionSettings,
+  RoomMetadata,
+  RoomMetadataUpdate,
   SignalType,
   TextEditorType,
   ToImmutable,
@@ -413,6 +415,7 @@ function makeRoomContextBundle<
 
     useRoomSubscriptionSettings,
     useUpdateRoomSubscriptionSettings,
+    useMetadata,
 
     ...shared.classic,
 
@@ -476,6 +479,7 @@ function makeRoomContextBundle<
 
       useRoomSubscriptionSettings: useRoomSubscriptionSettingsSuspense,
       useUpdateRoomSubscriptionSettings,
+      useMetadata,
 
       ...shared.suspense,
     },
@@ -1615,6 +1619,63 @@ function useDeleteRoomComment(roomId: string) {
     },
     [client, roomId]
   );
+
+function useMetadata(): {
+  metadata: RoomMetadata | null;
+  updateMetadata: (metadata: RoomMetadataUpdate) => Promise<RoomMetadata>;
+  isLoading: boolean;
+  error: Error | null;
+} {
+  const room = useRoom();
+  const [state, setState] = useState<{
+    metadata: RoomMetadata | null;
+    isLoading: boolean;
+    error: Error | null;
+  }>({
+    metadata: null,
+    isLoading: true,
+    error: null,
+  });
+
+  const updateMetadata = useCallback(
+    async (metadata: RoomMetadataUpdate) => {
+      try {
+        const result = await room.updateMetadata(metadata);
+        setState(prev => ({ ...prev, metadata: result, error: null }));
+        return result;
+      } catch (error) {
+        setState(prev => ({ ...prev, error: error as Error }));
+        throw error;
+      }
+    },
+    [room]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    
+    const fetchMetadata = async () => {
+      try {
+        setState(prev => ({ ...prev, isLoading: true, error: null }));
+        const metadata = await room.getMetadata();
+        if (!cancelled) {
+          setState({ metadata, isLoading: false, error: null });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setState({ metadata: null, isLoading: false, error: error as Error });
+        }
+      }
+    };
+
+    fetchMetadata();
+    
+    return () => {
+      cancelled = true;
+    };
+  }, [room]);
+
+  return { ...state, updateMetadata };
 }
 
 function useAddReaction<M extends BaseMetadata>() {
@@ -3200,4 +3261,5 @@ export {
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomSubscriptionSettings,
   useYjsProvider,
+  useMetadata,
 };

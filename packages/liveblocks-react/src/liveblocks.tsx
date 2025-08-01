@@ -1819,6 +1819,7 @@ export {
   useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,
+  useMetadata,
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,

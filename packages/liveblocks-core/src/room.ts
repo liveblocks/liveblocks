@@ -87,6 +87,7 @@ import type {
   SubscriptionDeleteInfo,
 } from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
+import type { RoomMetadata, RoomMetadataUpdate } from "./protocol/RoomMetadata";
 import { ManagedOthers } from "./refs/ManagedOthers";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
@@ -712,10 +713,25 @@ export type Room<
   /**
    * Returns a Promise that resolves as soon as Storage has been loaded and
    * available. After awaiting this promise, `.isStorageReady()` will be
-   * guaranteed to be true. Even when calling this function multiple times,
-   * it's guaranteed to return the same Promise instance.
+   * guaranteed to return the same Promise instance.
    */
   waitUntilStorageReady(): Promise<void>;
+
+  /**
+   * Get the room's metadata.
+   * 
+   * @example
+   * const metadata = await room.getMetadata();
+   */
+  getMetadata(): Promise<RoomMetadata>;
+
+  /**
+   * Update the room's metadata. Setting a property to `null` will delete it.
+   * 
+   * @example
+   * await room.updateMetadata({ status: "active", priority: "high" });
+   */
+  updateMetadata(metadata: RoomMetadataUpdate): Promise<RoomMetadata>;
 
   /**
    * Start an attempt to connect the room (aka "enter" it). Calling
@@ -1005,6 +1021,22 @@ export type Room<
   updateSubscriptionSettings(
     settings: Partial<RoomSubscriptionSettings>
   ): Promise<RoomSubscriptionSettings>;
+
+  /**
+   * Get the room's metadata.
+   * 
+   * @example
+   * const metadata = await room.getMetadata();
+   */
+  getMetadata(): Promise<RoomMetadata>;
+
+  /**
+   * Update the room's metadata. Setting a property to `null` will delete it.
+   * 
+   * @example
+   * await room.updateMetadata({ status: "active", priority: "high" });
+   */
+  updateMetadata(metadata: RoomMetadataUpdate): Promise<RoomMetadata>;
 
   /**
    * @private
@@ -3196,6 +3228,9 @@ export function createRoom<
       updateNotificationSettings: updateSubscriptionSettings,
       updateSubscriptionSettings,
       markInboxNotificationAsRead,
+
+      getMetadata: () => httpClient.getRoomMetadata(roomId),
+      updateMetadata: (metadata: RoomMetadataUpdate) => httpClient.updateRoomMetadata(roomId, metadata),
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive

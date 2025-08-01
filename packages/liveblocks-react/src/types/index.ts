@@ -41,6 +41,8 @@ import type {
   ThreadData,
   ToImmutable,
   WithNavigation,
+  RoomMetadata,
+  RoomMetadataUpdate,
 } from "@liveblocks/core";
 import type {
   ComponentType,
@@ -318,6 +320,19 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const { info, error, isLoading } = useRoomInfo("room-id");
      */
     useRoomInfo(roomId: string): RoomInfoAsyncResult;
+
+    /**
+     * Returns room metadata and provides a function to update it.
+     *
+     * @example
+     * const { metadata, updateMetadata, isLoading, error } = useMetadata();
+     */
+    useMetadata(): {
+      metadata: RoomMetadata | null;
+      updateMetadata: (metadata: RoomMetadataUpdate) => Promise<RoomMetadata>;
+      isLoading: boolean;
+      error: Error | null;
+    };
 
     /**
      * Returns whether the hook is called within a RoomProvider context.
@@ -1142,6 +1157,19 @@ export type RoomContextBundle<
              * const { url } = useAttachmentUrl("at_xxx");
              */
             useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
+
+            /**
+             * Returns room metadata and provides a function to update it.
+             *
+             * @example
+             * const { metadata, updateMetadata, isLoading, error } = useMetadata();
+             */
+            useMetadata(): {
+              metadata: RoomMetadata | null;
+              updateMetadata: (metadata: RoomMetadataUpdate) => Promise<RoomMetadata>;
+              isLoading: boolean;
+              error: Error | null;
+            };
           }
       >;
     }

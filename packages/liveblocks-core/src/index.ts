@@ -180,6 +180,7 @@ export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
+export type { RoomMetadata, RoomMetadataUpdate } from "./protocol/RoomMetadata";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
