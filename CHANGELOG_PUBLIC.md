@@ -41,6 +41,8 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Dashboard
 
 - Add MAU breakdown to the historical usage table on the "Billing & usage" page (MAU used / Non-billed MAU).
+- Support OpenAI compatible AI models in AI Copilots.
+- Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
 
 ## Contributors
 
