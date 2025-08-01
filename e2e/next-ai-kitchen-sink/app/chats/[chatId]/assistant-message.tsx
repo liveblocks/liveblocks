@@ -191,15 +191,14 @@ function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
     <div>
       <AiMessage.Content
         message={message}
-        components={{
-          TextPart: ({ part }) => (
+        parts={{
+          Text: ({ part }) => (
             <TextPart
               text={part.text}
               className="prose whitespace-break-spaces"
             />
           ),
-
-          ReasoningPart: ({ part }) => (
+          Reasoning: ({ part }) => (
             <ReasoningPart text={part.text} isPending={isReasoning} />
           ),
         }}
