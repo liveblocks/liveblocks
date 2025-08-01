@@ -44,9 +44,14 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Support OpenAI compatible AI models in AI Copilots.
 - Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
 
+## Doocumentation
+
+- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+
 ## Contributors
 
-pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius
+pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas, stevenfabre
 
 # Week 30 (2025-07-25)
 
