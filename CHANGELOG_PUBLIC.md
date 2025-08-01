@@ -29,18 +29,18 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ### `@liveblocks/react`
 
-- Fix `useSyncStatus` returning incorrect synchronization status for Y.js
+- Fix `useSyncStatus` returning incorrect synchronization status for Yjs
   provider. We now compare the hash of local and remote snapshot to check for
-  synchronization differences between local and remote Y.js document.
+  synchronization differences between local and remote Yjs document.
 
 ### `@liveblocks/yjs`
 
 - Fix `LiveblocksYjsProvider.getStatus()` returning incorrect synchronization
-  status for Y.js provider.
+  status for Yjs provider.
 
 ## Dashboard
 
-- Add MAU breakdown to the historical usage table on the "Billing & usage" page (MAU used / Non-billed MAU).
+- Add MAU breakdown to the historical usage table on the “Billing & usage” page (MAU used / Non-billed MAU).
 - Support OpenAI compatible AI models in AI Copilots.
 - Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
 
