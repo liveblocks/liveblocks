@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 31 (2025-08-01)
 
+### Dashboard
+
+- Add MAU breakdown to the historical usage table on the "Billing & usage" page (MAU used / Non-billed MAU).
+
 ## Contributors
+
+pierrelevaillant
 
 # Week 30 (2025-07-25)
 
