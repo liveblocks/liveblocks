@@ -1,0 +1,66 @@
+---
+meta:
+  title: "Directory sync"
+  parentTitle: "Platform"
+  description: "Learn how to set up directory sync on your Liveblocks account."
+---
+
+<Banner>
+  This feature is available as an add-on to Enterprise customers. Reach out to
+  [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on your
+  account.
+</Banner>
+
+_Directory sync_ helps teams manage their organization membership from a
+third-party identity provider like Google Directory or Okta. To use directory
+sync, [SSO must be configured first](/docs/platform/account-management/saml) as
+it requires an active SSO connection.
+
+## How it works
+
+When directory sync is configured, changes to your directory provider will
+automatically be synced with your team members. The previously existing
+permissions/roles will be overwritten by directory sync, including current user
+performing the sync.
+
+<Banner type="warning">
+
+Make sure you’re a member of the groups from the directory provider that you’re
+syncing with Liveblocks. Otherwise, you may lock yourself out.
+
+</Banner>
+
+You can configure a mapping between your directory provider’s groups and a
+Liveblocks team role. For example, your _engineers_ group on Okta can be
+configured with the _member_ role on Liveblocks, and your _admin_ group can use
+the _owner_ role.
+
+<Figure>
+  <Image
+    src="/assets/account-management/team-security-settings.png"
+    alt="Liveblocks team security settings"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Configuring directory sync
+
+1. To configure directory sync for your team, you must be an owner of the team
+   (see
+   [how to manage team members](/docs/platform/account-management/manage-team-members)).
+2. From your dashboard, ensure your team is selected in the scope selector.
+3. Navigate to the “Settings” tab and select “Security & Privacy”.
+4. Navigate to the “Directory sync” section.
+5. Click “Configure” and follow the walkthrough to configure directory sync for
+   your team with your directory provider of choice.
+6. Map your directory groups to appropriate Liveblocks team roles.
+
+<Figure>
+  <Image
+    src="/assets/account-management/dsync-setup.png"
+    alt="Liveblocks team security settings"
+    width={768}
+    height={406}
+  />
+</Figure>
