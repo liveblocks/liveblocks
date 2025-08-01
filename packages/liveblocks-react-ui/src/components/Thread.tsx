@@ -85,6 +85,27 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
   /**
+   * The maximum number of comments to show.
+   *
+   * The first and last comments are always shown and by default if some comments
+   * are hidden, only the first comment will be shown before the "show more" button
+   * and after it will be shown all the newest comments to fit the limit set.
+   *
+   * It's possible to customize this by setting `maxVisibleComments` to an object:
+   *
+   * @example
+   * // Only show the last comment, and all the older ones to fit the limit.
+   * <Thread maxVisibleComments={{ max: 5, show: "oldest" }} />
+   *
+   * @example
+   * // Show as many old comments as new ones to fit the limit.
+   * <Thread maxVisibleComments={{ max: 5, show: "both" }} />
+   */
+  maxVisibleComments?:
+    | number
+    | { max: number; show: "oldest" | "both" | "newest" };
+
+  /**
    * Whether to blur the composer editor when the composer is submitted.
    */
   blurComposerOnSubmit?: ComposerProps["blurOnSubmit"];
@@ -181,6 +202,7 @@ export const Thread = forwardRef(
       showComposer = "collapsed",
       showAttachments = true,
       showComposerFormattingControls = true,
+      maxVisibleComments,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -200,6 +222,7 @@ export const Thread = forwardRef(
     const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
     const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
+    const [showAllComments, setShowAllComments] = useState(false);
     const firstCommentIndex = useMemo(() => {
       return showDeletedComments
         ? 0
@@ -210,6 +233,92 @@ export const Thread = forwardRef(
         ? thread.comments.length - 1
         : findLastIndex(thread.comments, (comment) => comment.body);
     }, [showDeletedComments, thread.comments]);
+    const hiddenComments = useMemo(() => {
+      const maxVisibleCommentsCount =
+        typeof maxVisibleComments === "number"
+          ? maxVisibleComments
+          : maxVisibleComments?.max;
+      const visibleCommentsShow =
+        (typeof maxVisibleComments === "object"
+          ? maxVisibleComments?.show
+          : undefined) ?? "newest";
+
+      // If we explicitly want to show all comments or there's no limit set,
+      // no need to hide any comments.
+      if (showAllComments || maxVisibleCommentsCount === undefined) {
+        return;
+      }
+
+      const comments = thread.comments
+        .map((comment, index) => ({ comment, index }))
+        .filter(({ comment }) => showDeletedComments || comment.body);
+
+      // There aren't enough comments so no need to hide any.
+      if (comments.length <= Math.max(maxVisibleCommentsCount, 2)) {
+        return;
+      }
+
+      const firstVisibleComment = comments[0]!;
+      const lastVisibleComment = comments[comments.length - 1]!;
+
+      // Always show the first and last comments even if the limit is set to lower than 2.
+      if (maxVisibleCommentsCount <= 2) {
+        const firstHiddenCommentIndex =
+          comments[1]?.index ?? firstVisibleComment.index;
+        const lastHiddenCommentIndex =
+          comments[comments.length - 2]?.index ?? lastVisibleComment.index;
+
+        return {
+          firstIndex: firstHiddenCommentIndex,
+          lastIndex: lastHiddenCommentIndex,
+          count: comments.slice(1, comments.length - 1).length,
+        };
+      }
+
+      const remainingVisibleCommentsCount = maxVisibleCommentsCount - 2;
+
+      // Split the remaining visible comments before, after, or equally.
+      const beforeVisibleCommentsCount =
+        visibleCommentsShow === "oldest"
+          ? remainingVisibleCommentsCount
+          : visibleCommentsShow === "newest"
+            ? 0
+            : Math.floor(remainingVisibleCommentsCount / 2);
+      const afterVisibleCommentsCount =
+        visibleCommentsShow === "oldest"
+          ? 0
+          : visibleCommentsShow === "newest"
+            ? remainingVisibleCommentsCount
+            : Math.ceil(remainingVisibleCommentsCount / 2);
+
+      // The first comment is always visible so `+ 1` to skip it.
+      const firstHiddenComment = comments[1 + beforeVisibleCommentsCount];
+      // The last comment is always visible so `- 2` to skip it.
+      const lastHiddenComment =
+        comments[comments.length - 2 - afterVisibleCommentsCount];
+
+      // There aren't any comments to hide besides the first and last ones.
+      if (
+        !firstHiddenComment ||
+        !lastHiddenComment ||
+        firstHiddenComment.index > lastHiddenComment.index
+      ) {
+        return;
+      }
+
+      return {
+        firstIndex: firstHiddenComment.index,
+        lastIndex: lastHiddenComment.index,
+        count: thread.comments
+          .slice(firstHiddenComment.index, lastHiddenComment.index + 1)
+          .filter((comment) => showDeletedComments || comment.body).length,
+      };
+    }, [
+      maxVisibleComments,
+      showAllComments,
+      showDeletedComments,
+      thread.comments,
+    ]);
     const {
       status: subscriptionStatus,
       unreadSince,
@@ -327,6 +436,33 @@ export const Thread = forwardRef(
               const isFirstComment = index === firstCommentIndex;
               const isUnread =
                 unreadIndex !== undefined && index >= unreadIndex;
+              const isHidden =
+                hiddenComments &&
+                index >= hiddenComments.firstIndex &&
+                index <= hiddenComments.lastIndex;
+              const isFirstHiddenComment =
+                isHidden && index === hiddenComments.firstIndex;
+
+              if (isFirstHiddenComment) {
+                return (
+                  <div
+                    key={`${comment.id}-show-more`}
+                    className="lb-thread-show-more"
+                  >
+                    <Button
+                      variant="ghost"
+                      className="lb-thread-show-more-button"
+                      onClick={() => setShowAllComments(true)}
+                    >
+                      {$.THREAD_SHOW_MORE_COMMENTS(hiddenComments.count)}
+                    </Button>
+                  </div>
+                );
+              }
+
+              if (isHidden) {
+                return null;
+              }
 
               const children = (
                 <Comment

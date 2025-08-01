@@ -11,6 +11,7 @@ export interface ButtonProps extends ComponentProps<"button"> {
     | "default"
     | "toolbar"
     | "outline"
+    | "ghost"
     | "primary"
     | "secondary"
     | "destructive";
