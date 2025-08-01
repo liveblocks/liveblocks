@@ -65,6 +65,7 @@ import type {
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
+import type { RoomMetadata, RoomMetadataUpdate } from "./protocol/RoomMetadata";
 import { PKG_VERSION } from "./version";
 
 export interface RoomHttpApi<M extends BaseMetadata> {
@@ -144,6 +145,10 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
+
+  getRoomMetadata(roomId: string): Promise<RoomMetadata>;
+
+  updateRoomMetadata(roomId: string, metadata: RoomMetadataUpdate): Promise<RoomMetadata>;
 
   createComment({
     roomId,
@@ -447,6 +452,10 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 export interface LiveblocksHttpApi<M extends BaseMetadata>
   extends RoomHttpApi<M>,
     NotificationHttpApi<M> {
+  getRoomMetadata(roomId: string): Promise<RoomMetadata>;
+
+  updateRoomMetadata(roomId: string, metadata: RoomMetadataUpdate): Promise<RoomMetadata>;
+
   getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -720,6 +729,7 @@ export function createApiClient<M extends BaseMetadata>({
       options.metadata
     );
   }
+
 
   async function createComment(options: {
     roomId: string;
@@ -1658,6 +1668,29 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  async function getRoomMetadata(roomId: string): Promise<RoomMetadata> {
+    const json = await httpClient.get<{ metadata: RoomMetadata }>(
+      url`/v2/c/rooms/${roomId}`,
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId,
+      })
+    );
+    return json.metadata;
+  }
+
+  async function updateRoomMetadata(roomId: string, metadata: RoomMetadataUpdate): Promise<RoomMetadata> {
+    const json = await httpClient.post<{ metadata: RoomMetadata }>(
+      url`/v2/c/rooms/${roomId}`,
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId,
+      }),
+      { metadata }
+    );
+    return json.metadata;
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * User threads
    * -------------------------------------------------------------------------------------------------
@@ -1760,6 +1793,8 @@ export function createApiClient<M extends BaseMetadata>({
     getThread,
     deleteThread,
     editThreadMetadata,
+    getRoomMetadata,
+    updateRoomMetadata,
     createComment,
     editComment,
     deleteComment,
