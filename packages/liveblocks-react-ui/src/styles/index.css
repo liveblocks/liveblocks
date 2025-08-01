@@ -2436,18 +2436,16 @@
 }
 
 /*************************************
- *          Chat Composer            *
+ *            AI Composer            *
  *************************************/
 
-.lb-ai-chat-composer {
+.lb-ai-composer {
   position: relative;
   inline-size: 100%;
   color: var(--lb-foreground);
 }
 
-.lb-ai-chat-composer-form:where(
-    :has(.lb-ai-chat-composer-editor:not(:focus-visible))
-  ) {
+.lb-ai-composer-form:where(:has(.lb-ai-composer-editor:not(:focus-visible))) {
   :where(.lb-button[data-variant="primary"]) {
     --lb-button-background: var(--lb-foreground-subtle);
 
@@ -2461,7 +2459,7 @@
   }
 }
 
-.lb-ai-chat-composer-editor {
+.lb-ai-composer-editor {
   max-block-size: 15rem;
   padding: var(--lb-spacing) var(--lb-spacing) 0;
   color: var(--lb-foreground-secondary);
@@ -2504,7 +2502,7 @@
   }
 }
 
-.lb-ai-chat-composer-footer {
+.lb-ai-composer-footer {
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
@@ -2512,14 +2510,14 @@
   padding: var(--lb-spacing);
 }
 
-.lb-ai-chat-composer-actions,
-.lb-ai-chat-composer-editor-actions {
+.lb-ai-composer-actions,
+.lb-ai-composer-editor-actions {
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   align-items: center;
 }
 
-.lb-ai-chat-composer-editor-actions {
+.lb-ai-composer-editor-actions {
   margin-inline-end: auto;
 }
 

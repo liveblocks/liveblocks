@@ -25,9 +25,9 @@ import type { GlobalComponents } from "../components";
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { SpinnerIcon } from "../icons/Spinner";
 import {
-  type AiChatComposerOverrides,
   type AiChatMessageOverrides,
   type AiChatOverrides,
+  type AiComposerOverrides,
   type GlobalOverrides,
   useOverrides,
 } from "../overrides";
@@ -35,8 +35,8 @@ import type { MarkdownComponents } from "../primitives/Markdown";
 import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
-import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
+import { AiComposer } from "./internal/AiComposer";
 
 /**
  * The minimum number of pixels from the bottom of the scrollable area
@@ -112,8 +112,8 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   overrides?: Partial<
     GlobalOverrides &
+      AiComposerOverrides &
       AiChatMessageOverrides &
-      AiChatComposerOverrides &
       AiChatOverrides
   >;
 
@@ -567,18 +567,19 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               </button>
             </div>
           </div>
-          <AiChatComposer
+          <AiComposer
             key={chatId}
             chatId={chatId}
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
-            onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
-            className={
+            onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
+            className={cn(
+              "lb-ai-chat-composer",
               layout === "inset"
                 ? "lb-elevation lb-elevation-moderate"
                 : undefined
-            }
+            )}
           />
         </div>
 

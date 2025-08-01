@@ -62,10 +62,10 @@ export interface AiToolConfirmationOverrides {
   AI_TOOL_CONFIRMATION_CANCEL: string;
 }
 
-export interface AiChatComposerOverrides {
-  AI_CHAT_COMPOSER_PLACEHOLDER: string;
-  AI_CHAT_COMPOSER_SEND: string;
-  AI_CHAT_COMPOSER_ABORT: string;
+export interface AiComposerOverrides {
+  AI_COMPOSER_PLACEHOLDER: string;
+  AI_COMPOSER_SEND: string;
+  AI_COMPOSER_ABORT: string;
 }
 
 export interface AiChatMessageOverrides {
@@ -123,7 +123,7 @@ export type Overrides = LocalizationOverrides &
   ThreadOverrides &
   InboxNotificationOverrides &
   HistoryVersionPreviewOverrides &
-  AiChatComposerOverrides &
+  AiComposerOverrides &
   AiChatMessageOverrides &
   AiChatOverrides &
   AiToolConfirmationOverrides;
@@ -226,9 +226,9 @@ export const defaultOverrides: Overrides = {
   HISTORY_VERSION_PREVIEW_EMPTY: "No content.",
   HISTORY_VERSION_PREVIEW_ERROR: () =>
     "There was an error while getting this version.",
-  AI_CHAT_COMPOSER_PLACEHOLDER: "Ask anything…",
-  AI_CHAT_COMPOSER_SEND: "Send",
-  AI_CHAT_COMPOSER_ABORT: "Abort response",
+  AI_COMPOSER_PLACEHOLDER: "Ask anything…",
+  AI_COMPOSER_SEND: "Send",
+  AI_COMPOSER_ABORT: "Abort response",
   AI_CHAT_MESSAGE_DELETED: "This message has been deleted.",
   AI_CHAT_MESSAGE_THINKING: "Thinking…",
   AI_CHAT_MESSAGE_REASONING: (isStreaming) =>

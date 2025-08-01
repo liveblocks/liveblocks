@@ -1279,7 +1279,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useSendAiMessage(
     chatId: string,
     options?: UseSendAiMessageOptions
-  ): (message: string) => void;
+  ): (message: string) => AiChatMessage;
 };
 
 export type LiveblocksContextBundle<
