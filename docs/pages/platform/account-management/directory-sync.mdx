@@ -2,34 +2,38 @@
 meta:
   title: "Directory sync"
   parentTitle: "Platform"
-  description: "Learn how to setup directory sync on your Liveblocks account."
+  description: "Learn how to set up directory sync on your Liveblocks account."
 ---
 
 <Banner>
   This feature is available as an add-on to Enterprise customers. Reach out to
-  [sales@liveblocks.io](mailto:sales@liveblocks.io) to get it added to your
+  [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on your
   account.
 </Banner>
-Directory Sync helps teams manage their organization membership from a
-third-party identity provider like Google Directory or Okta.
 
-SSO must be configured fist - Directory Sync requires an active SSO connection.
+_Directory sync_ helps teams manage their organization membership from a
+third-party identity provider like Google Directory or Okta. To use directory
+sync, [SSO must be configured first](/docs/platform/account-management/saml) as
+it requires an active SSO connection.
 
-When Directory Sync is configured, changes to your Directory Provider will
+## How it works
+
+When directory sync is configured, changes to your directory provider will
 automatically be synced with your team members. The previously existing
-permissions/roles will be overwritten by Directory Sync, including current user
+permissions/roles will be overwritten by directory sync, including current user
 performing the sync.
 
-<Banner>
-  Make sure that you are a member of the groups from you directory provider that
-  you are synching with Liveblocks Directory Sync, otherwise you might lock
-  yourself out.
+<Banner type="warning">
+
+Make sure you’re a member of the groups from the directory provider that you’re
+syncing with Liveblocks. Otherwise, you may lock yourself out.
+
 </Banner>
 
-You can configure a mapping between your Directory Provider's groups and a
-Liveblocks Team role. For example, your Engineers group on Okta can be
-configured with the member role on Liveblocks, and your Admin group can use the
-owner role.
+You can configure a mapping between your directory provider’s groups and a
+Liveblocks team role. For example, your _engineers_ group on Okta can be
+configured with the _member_ role on Liveblocks, and your _admin_ group can use
+the _owner_ role.
 
 <Figure>
   <Image
@@ -40,15 +44,17 @@ owner role.
   />
 </Figure>
 
-### Configuring Directory Sync
+### Configuring directory sync
 
-1. To configure Directory Sync for your team, you must be an owner of the team
-2. From your dashboard, ensure your team is selected in the scope selector
-3. Navigate to the Settings tab and select Security & Privacy
-4. Navigate to the Directory sync section. Click Configure and follow the
-   walkthrough to configure Directory for your team with your directory provider
-   of choice
-5. Configure how Directory groups should map to Liveblocks team roles.
+1. To configure directory sync for your team, you must be an owner of the team
+   (see
+   [how to manage team members](/docs/platform/account-management/manage-team-members)).
+2. From your dashboard, ensure your team is selected in the scope selector.
+3. Navigate to the “Settings” tab and select “Security & Privacy”.
+4. Navigate to the “Directory sync” section.
+5. Click “Configure” and follow the walkthrough to configure directory sync for
+   your team with your directory provider of choice.
+6. Map your directory groups to appropriate Liveblocks team roles.
 
 <Figure>
   <Image
