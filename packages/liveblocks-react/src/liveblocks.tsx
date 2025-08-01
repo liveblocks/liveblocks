@@ -7,7 +7,6 @@ import type {
 } from "@liveblocks/client";
 import type {
   AiChatMessage,
-  AskUserMessageInChatOptions,
   AsyncResult,
   BaseRoomInfo,
   CopilotId,
@@ -1189,7 +1188,6 @@ function useDeleteAiChat() {
  * @example
  * const sendAiMessage = useSendAiMessage(chatId);
  * sendAiMessage({ copilotId: "co_xxx", text: "Hello, Liveblocks AI!" })
-
  */
 function useSendAiMessage(
   chatId: string,
@@ -1209,43 +1207,20 @@ function useSendAiMessage(
 
   return useCallback(
     (message: string | SendAiMessageOptions) => {
+      const {
+        text: messageText,
+        chatId: messageOptionsChatId,
+        ...messageOptions
+      } = typeof message === "string" ? { text: message } : message;
       // The `useSendAiMessage` overloads make it impossible (at the type level at least)
       // to have no chat ID passed at all, one of the two places should have a value.
-      const resolvedChatId =
-        typeof message === "object" && message.chatId !== undefined
-          ? message.chatId
-          : chatId!;
+      const resolvedChatId = messageOptionsChatId ?? chatId!;
 
       const messages = client[kInternal].ai.signals
         .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
 
       const lastMessageId = messages[messages.length - 1]?.id ?? null;
-      let messageText: string;
-
-      const resolvedOptions: AskUserMessageInChatOptions = {
-        stream: options?.stream,
-        copilotId: options?.copilotId as CopilotId | undefined,
-        timeout: options?.timeout,
-      };
-
-      if (typeof message === "string") {
-        messageText = message;
-      } else {
-        messageText = message.text;
-
-        if (message?.copilotId !== undefined) {
-          resolvedOptions.copilotId = message?.copilotId as CopilotId;
-        }
-
-        if (message?.stream !== undefined) {
-          resolvedOptions.stream = message.stream;
-        }
-
-        if (message?.timeout !== undefined) {
-          resolvedOptions.timeout = message.timeout;
-        }
-      }
 
       const content = [{ type: "text" as const, text: messageText }];
       const newMessageId = client[kInternal].ai[
@@ -1273,7 +1248,13 @@ function useSendAiMessage(
         resolvedChatId,
         { id: newMessageId, parentMessageId: lastMessageId, content },
         targetMessageId,
-        resolvedOptions
+        {
+          stream: messageOptions.stream ?? options?.stream,
+          copilotId: (messageOptions.copilotId ?? options?.copilotId) as
+            | CopilotId
+            | undefined,
+          timeout: messageOptions.timeout ?? options?.timeout,
+        }
       );
 
       return newMessage;

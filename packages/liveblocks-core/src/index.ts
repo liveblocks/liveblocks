@@ -24,7 +24,6 @@ export type {
   AiToolExecuteContext,
   AiToolInvocationProps,
   AiToolTypePack,
-  AskUserMessageInChatOptions,
   WithNavigation,
 } from "./ai";
 export { defineAiTool } from "./ai";
