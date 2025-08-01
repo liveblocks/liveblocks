@@ -9,6 +9,7 @@ import {
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import { assertNever } from "./lib/assert";
 import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -44,6 +45,7 @@ import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
+import type { GroupSummary } from "./protocol/Groups";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
@@ -63,6 +65,7 @@ import type {
   SubscriptionDeleteInfoPlain,
 } from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
+import type { MentionData } from "./types/MentionData";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";
@@ -300,12 +303,12 @@ export interface RoomHttpApi<M extends BaseMetadata> {
   // Text editor
   createTextMention({
     roomId,
-    userId,
     mentionId,
+    mention,
   }: {
     roomId: string;
-    userId: string;
     mentionId: string;
+    mention: MentionData;
   }): Promise<void>;
 
   deleteTextMention({
@@ -481,6 +484,10 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
     requestedAt: Date;
     permissionHints: Record<string, Permission[]>;
   }>;
+
+  groupSummariesStore: BatchStore<GroupSummary | undefined, string>;
+
+  getGroupSummary(groupId: string): Promise<GroupSummary | undefined>;
 }
 
 export function createApiClient<M extends BaseMetadata>({
@@ -1313,9 +1320,13 @@ export function createApiClient<M extends BaseMetadata>({
    * -----------------------------------------------------------------------------------------------*/
   async function createTextMention(options: {
     roomId: string;
-    userId: string;
     mentionId: string;
+    mention: MentionData;
   }) {
+    if (options.mention.kind !== "user" && options.mention.kind !== "group") {
+      return assertNever(options.mention, "Unexpected mention kind");
+    }
+
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
       await authManager.getAuthValue({
@@ -1323,7 +1334,14 @@ export function createApiClient<M extends BaseMetadata>({
         roomId: options.roomId,
       }),
       {
-        userId: options.userId,
+        userId:
+          options.mention.kind === "user" ? options.mention.id : undefined,
+        groupId:
+          options.mention.kind === "group" ? options.mention.id : undefined,
+        userIds:
+          options.mention.kind === "group"
+            ? options.mention.userIds
+            : undefined,
         mentionId: options.mentionId,
       }
     );
@@ -1752,6 +1770,40 @@ export function createApiClient<M extends BaseMetadata>({
     };
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * Groups
+   * -------------------------------------------------------------------------------------------------
+   */
+
+  const batchedGetGroupSummaries = new Batch(
+    async (batchedGroupIds: string[]) => {
+      const groupIds = batchedGroupIds.flat();
+      const { groups } = await httpClient.post<{
+        groups: GroupSummary[];
+      }>(
+        url`/v2/c/groups/summaries`,
+        await authManager.getAuthValue({
+          requestedScope: "comments:read",
+        }),
+        { groupIds }
+      );
+
+      const summaries = new Map<string, GroupSummary>();
+
+      for (const group of groups) {
+        summaries.set(group.id, group);
+      }
+
+      return groupIds.map((groupId) => summaries.get(groupId));
+    },
+    { delay: 50 }
+  );
+  const groupSummariesStore = createBatchStore(batchedGetGroupSummaries);
+
+  function getGroupSummary(groupId: string) {
+    return batchedGetGroupSummaries.get(groupId);
+  }
+
   return {
     // Room threads
     getThreads,
@@ -1805,6 +1857,9 @@ export function createApiClient<M extends BaseMetadata>({
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
+    // Groups
+    groupSummariesStore,
+    getGroupSummary,
     // AI
     executeContextualPrompt,
   };

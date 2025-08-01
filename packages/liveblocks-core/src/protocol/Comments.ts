@@ -110,12 +110,21 @@ export type CommentBodyParagraph = {
   children: CommentBodyInlineElement[];
 };
 
-export type CommentBodyMention = Relax<CommentBodyUserMention>;
+export type CommentBodyMention = Relax<
+  CommentBodyUserMention | CommentBodyGroupMention
+>;
 
 type CommentBodyUserMention = {
   type: "mention";
   kind: "user";
   id: string;
+};
+
+type CommentBodyGroupMention = {
+  type: "mention";
+  kind: "group";
+  id: string;
+  userIds?: string[];
 };
 
 export type CommentBodyLink = {

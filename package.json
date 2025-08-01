@@ -7,7 +7,11 @@
     "packages/*",
     "tools/*",
     "e2e/next-ai-kitchen-sink",
-    "e2e/next-sandbox"
+    "e2e/next-sandbox",
+    "examples/nextjs-comments",
+    "examples/nextjs-tiptap",
+    "examples/nextjs-lexical",
+    "starter-kits/nextjs-starter-kit"
   ],
   "scripts": {
     "build": "turbo run build",

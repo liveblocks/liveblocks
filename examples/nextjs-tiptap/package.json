@@ -10,12 +10,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.0.0",
-    "@liveblocks/node": "^3.0.0",
-    "@liveblocks/react": "^3.0.0",
-    "@liveblocks/react-tiptap": "^3.0.0",
-    "@liveblocks/react-ui": "^3.0.0",
-    "@liveblocks/yjs": "^3.0.0",
+    "@liveblocks/client": "file:../../packages/liveblocks-client",
+    "@liveblocks/node": "file:../../packages/liveblocks-node",
+    "@liveblocks/react": "file:../../packages/liveblocks-react",
+    "@liveblocks/react-tiptap": "file:../../packages/liveblocks-react-tiptap",
+    "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
+    "@liveblocks/yjs": "file:../../packages/liveblocks-yjs",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.0.7",
     "@tiptap/pm": "^2.6.6",

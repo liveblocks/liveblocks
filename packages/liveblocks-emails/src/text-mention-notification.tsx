@@ -1,11 +1,13 @@
 import {
   type Awaitable,
   type BaseUserMeta,
+  type DGI,
   type DRI,
   type DU,
   html,
   htmlSafe,
   type MentionData,
+  type ResolveGroupsInfoArgs,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
 import type {
@@ -19,8 +21,11 @@ import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
-import { resolveAuthorsInfo } from "./lib/authors";
-import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import {
+  createBatchGroupsInfoResolver,
+  createBatchUsersResolver,
+  getResolvedForId,
+} from "./lib/batch-resolvers";
 import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
@@ -32,9 +37,9 @@ import type {
 } from "./liveblocks-text-editor";
 import { transformAsLiveblocksTextEditorNodes } from "./liveblocks-text-editor";
 import {
-  convertMentionContent,
-  type ConvertMentionContentElements,
-} from "./mention-content";
+  convertTextMentionContent,
+  type ConvertTextMentionContentElements,
+} from "./text-mention-content";
 import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
@@ -123,8 +128,8 @@ export const extractTextMentionNotificationData = async ({
       const state = getSerializedLexicalState({ buffer, key });
       const mentionNodeWithContext = findLexicalMentionNodeWithContext({
         root: state,
-        mentionedUserId: userId,
-        mentionId: inboxNotification.mentionId,
+        mentionedId: userId,
+        textMentionId: inboxNotification.mentionId,
       });
 
       // The mention node did not exists so we do not have to send an email.
@@ -144,8 +149,8 @@ export const extractTextMentionNotificationData = async ({
       const state = getSerializedTiptapState({ buffer, key });
       const mentionNodeWithContext = findTiptapMentionNodeWithContext({
         root: state,
-        mentionedUserId: userId,
-        mentionId: inboxNotification.mentionId,
+        mentionedId: userId,
+        textMentionId: inboxNotification.mentionId,
       });
 
       // The mention node did not exists so we do not have to send an email.
@@ -197,11 +202,20 @@ type PrepareTextMentionNotificationEmailOptions<U extends BaseUserMeta = DU> = {
   resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 
   /**
-   * A function that returns info from user IDs.
+   * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 };
 
 /**
@@ -215,7 +229,7 @@ export async function prepareTextMentionNotificationEmail<
   client: Liveblocks,
   event: TextMentionNotificationEvent,
   options: PrepareTextMentionNotificationEmailOptions<U>,
-  elements: ConvertMentionContentElements<ContentType, U>,
+  elements: ConvertTextMentionContentElements<ContentType, U>,
   callerName: string
 ): Promise<TextMentionNotificationEmailData<ContentType, U> | null> {
   const { roomId, mentionId } = event.data;
@@ -238,11 +252,13 @@ export async function prepareTextMentionNotificationEmail<
     resolveUsers: options.resolveUsers,
     callerName,
   });
-
-  const authorsInfoPromise = resolveAuthorsInfo({
-    userIds: [data.createdBy],
-    resolveUsers: batchUsersResolver.resolveUsers,
+  const batchGroupsInfoResolver = createBatchGroupsInfoResolver({
+    resolveGroupsInfo: options.resolveGroupsInfo,
+    callerName,
   });
+
+  const authorsIds = [data.createdBy];
+  const authorsInfoPromise = batchUsersResolver.get(authorsIds);
 
   let textEditorNodes: LiveblocksTextEditorNode[] = [];
 
@@ -263,26 +279,29 @@ export async function prepareTextMentionNotificationEmail<
     }
   }
 
-  const contentPromise = convertMentionContent<ContentType, U>(
+  const contentPromise = convertTextMentionContent<ContentType, U>(
     textEditorNodes,
     {
-      resolveUsers: batchUsersResolver.resolveUsers,
+      resolveUsers: ({ userIds }) => batchUsersResolver.get(userIds),
+      resolveGroupsInfo: ({ groupIds }) =>
+        batchGroupsInfoResolver.get(groupIds),
       elements,
     }
   );
 
   await batchUsersResolver.resolve();
+  await batchGroupsInfoResolver.resolve();
 
   const [authorsInfo, content] = await Promise.all([
     authorsInfoPromise,
     contentPromise,
   ]);
 
-  const authorInfo = authorsInfo.get(data.createdBy);
+  const authorInfo = getResolvedForId(data.createdBy, authorsIds, authorsInfo);
 
   return {
     mention: {
-      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated
+      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated.
       kind: "user",
       id: data.userId,
       textMentionId: mentionId,
@@ -310,10 +329,16 @@ export type TextEditorMentionComponentProps<U extends BaseUserMeta = DU> = {
    * The mention element.
    */
   element: LiveblocksTextEditorMentionNode;
+
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+   */
+  group?: DGI;
 };
 
 export type TextEditorTextComponentProps = {
@@ -345,10 +370,10 @@ export type ConvertTextEditorNodesAsReactComponents<
 
 const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
   Container: ({ children }) => <div>{children}</div>,
-  Mention: ({ element, user }) => (
+  Mention: ({ element, user, group }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.id}
+      {user?.name ?? group?.name ?? element.id}
     </span>
   ),
   Text: ({ element }) => {
@@ -554,9 +579,9 @@ export async function prepareTextMentionNotificationEmailAsHtml(
 
         return content.join("\n"); //NOTE: to represent a valid HTML string
       },
-      mention: ({ node, user }) => {
+      mention: ({ node, user, group }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` :  node.id}</span>`
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : node.id}</span>`
       },
       text: ({ node }) => {
         // Note: construction following the schema 👇
