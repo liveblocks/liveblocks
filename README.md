@@ -69,6 +69,7 @@ notifications, and more.
 - [Tutorial](https://liveblocks.io/docs/tutorial/react/getting-started)
   [`/tutorial`](./tutorial)
 - [Examples](https://liveblocks.io/examples) - [`/examples`](./examples)
+- [OpenAPI Schema](https://raw.githubusercontent.com/liveblocks/liveblocks/main/docs/references/v2.openapi.json) - [`/docs/references/v2.openapi.json`](./docs/references/v2.openapi.json)
 
 You can read our release notes
 [here](https://github.com/liveblocks/liveblocks/releases).
