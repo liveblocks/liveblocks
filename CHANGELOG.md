@@ -2,6 +2,12 @@
 
 ## v3.3.0
 
+### `@liveblocks/react-ui`
+
+- Add `maxVisibleComments` prop to `Thread` to control the maximum number of
+  comments to show. When comments are hidden, a "Show more replies" button is
+  shown to allow users to expand the thread.
+
 ## v3.2.1
 
 ### `@liveblocks/react-ui`

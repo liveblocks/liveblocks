@@ -85,6 +85,7 @@ export interface ThreadOverrides {
   THREAD_UNSUBSCRIBE: string;
   THREAD_NEW_INDICATOR: string;
   THREAD_NEW_INDICATOR_DESCRIPTION: string;
+  THREAD_SHOW_MORE_COMMENTS: (count: number) => string;
   THREAD_COMPOSER_PLACEHOLDER: string;
   THREAD_COMPOSER_SEND: string;
 }
@@ -192,6 +193,8 @@ export const defaultOverrides: Overrides = {
   THREAD_UNSUBSCRIBE: "Unsubscribe from thread",
   THREAD_NEW_INDICATOR: "New",
   THREAD_NEW_INDICATOR_DESCRIPTION: "New comments",
+  THREAD_SHOW_MORE_COMMENTS: (count) =>
+    `Show ${count} more ${pluralize(count, "reply", "replies")}`,
   THREAD_COMPOSER_PLACEHOLDER: "Reply to thread…",
   THREAD_COMPOSER_SEND: "Reply",
   INBOX_NOTIFICATION_MORE: "More",
