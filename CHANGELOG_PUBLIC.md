@@ -18,6 +18,10 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 32 (2025-08-08)
+
+## Contributors
+
 # Week 31 (2025-08-01)
 
 ## v3.2.1
