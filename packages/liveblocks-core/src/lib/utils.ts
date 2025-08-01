@@ -11,6 +11,12 @@ export type DistributiveOmit<T, K extends PropertyKey> = T extends any
 //   ? Pick<T, K>
 //   : never;
 
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
+export type WithOptional<T, K extends keyof T> = Omit<T, K> & {
+  [P in K]?: T[P];
+};
+
 /**
  * Throw an error, but as an expression instead of a statement.
  */

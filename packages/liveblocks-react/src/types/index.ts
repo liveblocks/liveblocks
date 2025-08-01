@@ -41,6 +41,7 @@ import type {
   ThreadData,
   ToImmutable,
   WithNavigation,
+  WithRequired,
 } from "@liveblocks/core";
 import type {
   ComponentType,
@@ -65,15 +66,24 @@ export type UseSyncStatusOptions = {
 
 export type UseSendAiMessageOptions = {
   /**
-   * The id of the copilot to use to send the message.
+   * The ID of the copilot to use to send the message.
    */
   copilotId?: string;
 
-  /** Stream the response as it is being generated. Defaults to true. */
+  /**
+   * Stream the response as it is being generated. Defaults to true.
+   */
   stream?: boolean;
 
-  /** The maximum timeout for the answer to be generated. */
+  /**
+   * The maximum timeout for the answer to be generated.
+   */
   timeout?: number;
+};
+
+export type SendAiMessageOptions = UseSendAiMessageOptions & {
+  chatId?: string;
+  text: string;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
@@ -1252,13 +1262,22 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    *
    * @example
    * const createAiChat = useCreateAiChat();
+   *
+   * // Create a chat with an automatically generated title
+   * createAiChat("ai-chat-id");
+   *
+   * // Create a chat with a custom title
    * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
    */
-  useCreateAiChat(): (options: {
-    id: string;
-    title?: string;
-    metadata?: Record<string, string | string[]>;
-  }) => void;
+  useCreateAiChat(): (
+    options:
+      | string
+      | {
+          id: string;
+          title?: string;
+          metadata?: Record<string, string | string[]>;
+        }
+  ) => void;
 
   /**
    * Returns a function that deletes the AI chat with the specified id.
@@ -1279,7 +1298,19 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useSendAiMessage(
     chatId: string,
     options?: UseSendAiMessageOptions
-  ): (message: string) => void;
+  ): (message: string | SendAiMessageOptions) => AiChatMessage;
+  useSendAiMessage(
+    chatId?: never,
+    options?: never
+  ): (message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage;
+  useSendAiMessage(
+    chatId?: string,
+    options?: UseSendAiMessageOptions
+  ):
+    | ((message: string | SendAiMessageOptions) => AiChatMessage)
+    | ((
+        message: WithRequired<SendAiMessageOptions, "chatId">
+      ) => AiChatMessage);
 };
 
 export type LiveblocksContextBundle<
