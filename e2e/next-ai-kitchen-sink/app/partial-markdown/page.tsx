@@ -44,6 +44,8 @@ const markdownMessage = `
 This is a regular paragraph of text. It includes **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/ "With a title").
 Hello world the rest of the first paragraph is here.
 
+![An image](https://liveblocks.io/favicon.svg)
+
 Here’s a second paragraph to test spacing between multiple paragraphs.
 
 > This is a blockquote.

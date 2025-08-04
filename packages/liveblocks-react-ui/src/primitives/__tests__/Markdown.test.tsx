@@ -741,6 +741,17 @@ describe("Markdown", () => {
       },
     },
     {
+      description: "images",
+      content: dedent`
+        This is an image ![image](https://www.liveblocks.io/favicon.svg
+      `,
+      assertions: (element) => {
+        const image = element.querySelector("img");
+
+        expect(image).not.toBeInTheDocument();
+      },
+    },
+    {
       description: "task lists (with opening bracket)",
       content: dedent`
         - [

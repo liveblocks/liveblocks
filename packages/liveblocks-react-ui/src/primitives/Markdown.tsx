@@ -18,8 +18,8 @@ import {
 import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
-const PARTIAL_LINK_REGEX =
-  /(?<!\\)\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
+const PARTIAL_LINK_IMAGE_REGEX =
+  /(?<!\\)(?<image>!)?\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
   /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
@@ -1043,9 +1043,12 @@ function completePartialInlineMarkdown(markdown: string): string {
     completedMarkdown = completedMarkdown.slice(0, -1);
   }
 
-  // We can optimistically remove trailing backslashes until more
-  // characters are available.
-  else if (completedMarkdown.endsWith("\\")) {
+  // We can optimistically remove other trailing characters until
+  // more characters are available.
+  else if (
+    completedMarkdown.endsWith("\\") ||
+    completedMarkdown.endsWith("!")
+  ) {
     completedMarkdown = completedMarkdown.slice(0, -1);
   }
 
@@ -1106,22 +1109,33 @@ function completePartialInlineMarkdown(markdown: string): string {
     }
   }
 
-  // Before closing open delimiters, we can look for partial links
-  // from the end of the string (since links cannot be nested).
-  const partialLinkMatch = completedMarkdown.match(PARTIAL_LINK_REGEX);
+  // Before closing open delimiters, we can look for partial links/images
+  // from the end of the string (since links/images cannot be nested).
+  const partialLinkImageMatch = completedMarkdown.match(
+    PARTIAL_LINK_IMAGE_REGEX
+  );
 
-  if (partialLinkMatch) {
-    const partialLinkContent = partialLinkMatch[0];
-    const { text: partialLinkText, url: partialLinkUrl } =
-      partialLinkMatch.groups!;
+  if (partialLinkImageMatch) {
+    const partialLinkImageContent = partialLinkImageMatch[0];
+    const {
+      text: partialLinkText,
+      url: partialLinkUrl,
+      image: isImage,
+    } = partialLinkImageMatch.groups!;
 
-    if (partialLinkUrl !== undefined) {
+    if (isImage) {
+      // We can't optimistically complete images, so we remove them until they are complete.
+      completedMarkdown = completedMarkdown.slice(
+        0,
+        -partialLinkImageContent.length
+      );
+    } else if (partialLinkUrl !== undefined) {
       if (WHITESPACE_REGEX.test(partialLinkUrl) || !isUrl(partialLinkUrl)) {
         // "[Link](https://" → "[Link](#)"
         // "[Link](https://liveblocks.io 'With a title" → "[Link](#)"
         completedMarkdown = completedMarkdown.slice(
           0,
-          -partialLinkContent.length
+          -partialLinkImageContent.length
         );
         completedMarkdown += `[${partialLinkText}](#)`;
       } else {
@@ -1129,10 +1143,10 @@ function completePartialInlineMarkdown(markdown: string): string {
         completedMarkdown += ")";
       }
     } else {
-      if (partialLinkContent.endsWith("](")) {
+      if (partialLinkImageContent.endsWith("](")) {
         // "[Link](" → "[Link](#)"
         completedMarkdown += "#)";
-      } else if (partialLinkContent.endsWith("]")) {
+      } else if (partialLinkImageContent.endsWith("]")) {
         // "[Link]" → "[Link](#)"
         completedMarkdown += "(#)";
       } else {
@@ -1347,14 +1361,12 @@ function completePartialTokens(tokens: Token[]) {
   const completedMarkdown = completePartialInlineMarkdown(
     potentiallyPartialToken.text
   );
-  const completedMarkdownTokens = (
-    getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined
-  )?.tokens;
+  const completedMarkdownTokens =
+    (getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined)
+      ?.tokens ?? [];
 
-  if (completedMarkdownTokens) {
-    potentiallyPartialToken.text = completedMarkdown;
-    potentiallyPartialToken.tokens = completedMarkdownTokens;
-  }
+  potentiallyPartialToken.text = completedMarkdown;
+  potentiallyPartialToken.tokens = completedMarkdownTokens;
 
   return tokens;
 }
