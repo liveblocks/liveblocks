@@ -2,7 +2,10 @@ import * as React from "react";
 
 type Use = <T>(promise: Promise<T>) => T;
 
-const reactUse = React["use" as keyof typeof React] as Use | undefined;
+// Prevent bundlers from trying to `import { use } from "react";`
+const reactUse = React[" use ".trim().toString() as keyof typeof React] as
+  | Use
+  | undefined;
 
 /**
  * Drop-in replacement for React 19's `use` hook,
