@@ -230,7 +230,7 @@ describe("Markdown", () => {
         const firstNestedFirstList = firstNestedLists?.[0];
         expect(firstNestedFirstList?.tagName).toBe("OL");
         expect(firstNestedFirstList?.childNodes).toHaveLength(1);
-        expect(firstNestedFirstList?.childNodes[0]?.textContent).toBe(
+        expect(firstNestedFirstList?.childNodes[0]).toHaveTextContent(
           "A nested list item"
         );
 
@@ -589,14 +589,268 @@ describe("Markdown", () => {
     assertions(getByTestId("markdown"));
   });
 
+  test.each([
+    {
+      description: "headings",
+      content: dedent`
+        ###
+      `,
+      assertions: (element) => {
+        const heading = element.querySelector("h3");
+
+        expect(heading).toHaveTextContent("");
+      },
+    },
+    {
+      description: "bold text (with **)",
+      content: dedent`
+        This is **bold text
+      `,
+      assertions: (element) => {
+        const strong = element.querySelector("strong");
+
+        expect(strong).toHaveTextContent("bold text");
+      },
+    },
+    {
+      description: "bold text (with __)",
+      content: dedent`
+        This is __bold text
+      `,
+      assertions: (element) => {
+        const strong = element.querySelector("strong");
+
+        expect(strong).toHaveTextContent("bold text");
+      },
+    },
+    {
+      description: "italic text (with *)",
+      content: dedent`
+        This is *italic text
+      `,
+      assertions: (element) => {
+        const em = element.querySelector("em");
+
+        expect(em).toHaveTextContent("italic text");
+      },
+    },
+    {
+      description: "italic text (with _)",
+      content: dedent`
+        This is _italic text
+      `,
+      assertions: (element) => {
+        const em = element.querySelector("em");
+
+        expect(em).toHaveTextContent("italic text");
+      },
+    },
+    {
+      description: "strikethrough text",
+      content: dedent`
+        This is ~~strikethrough text
+      `,
+      assertions: (element) => {
+        const del = element.querySelector("del");
+
+        expect(del).toHaveTextContent("strikethrough text");
+      },
+    },
+    {
+      description: "inline code",
+      content: dedent`
+        This is \`inline code\`
+      `,
+      assertions: (element) => {
+        const code = element.querySelector("code");
+
+        expect(code).toHaveTextContent("inline code");
+      },
+    },
+    {
+      description: "nested formatting",
+      content: dedent`
+        This is **bold *italic \`code
+      `,
+      assertions: (element) => {
+        const strong = element.querySelector("strong");
+
+        expect(strong).toHaveTextContent("bold italic code");
+        expect(strong?.querySelector("em")).toHaveTextContent("italic code");
+        expect(strong?.querySelector("code")).toHaveTextContent("code");
+      },
+    },
+    {
+      description: "links (with partial text in brackets)",
+      content: dedent`
+        This is a [link
+      `,
+      assertions: (element) => {
+        const link = element.querySelector("a");
+
+        expect(link).toHaveTextContent("link");
+        expect(link).toHaveAttribute("href", "#");
+      },
+    },
+    {
+      description: "links (with text in brackets)",
+      content: dedent`
+        This is a [link]
+      `,
+      assertions: (element) => {
+        const link = element.querySelector("a");
+
+        expect(link).toHaveTextContent("link");
+        expect(link).toHaveAttribute("href", "#");
+      },
+    },
+    {
+      description: "links (with partial URL)",
+      content: dedent`
+        This is a [link](ht
+      `,
+      assertions: (element) => {
+        const link = element.querySelector("a");
+
+        expect(link).toHaveTextContent("link");
+        expect(link).toHaveAttribute("href", "#");
+      },
+    },
+    {
+      description: "links (with complete URL)",
+      content: dedent`
+        This is a [link](https://www.liveblocks.io
+      `,
+      assertions: (element) => {
+        const link = element.querySelector("a");
+
+        expect(link).toHaveTextContent("link");
+        expect(link).toHaveAttribute("href", "https://www.liveblocks.io");
+      },
+    },
+    {
+      description: "links (with partial title)",
+      content: dedent`
+        This is a [link](https://www.liveblocks.io "Liveblocks
+      `,
+      assertions: (element) => {
+        const link = element.querySelector("a");
+
+        expect(link).toHaveTextContent("link");
+        expect(link).toHaveAttribute("href", "#");
+      },
+    },
+    {
+      description: "task lists (with opening bracket)",
+      content: dedent`
+        - [
+      `,
+      assertions: (element) => {
+        expect(
+          element.querySelector("input[type='checkbox']")
+        ).not.toBeChecked();
+      },
+    },
+    {
+      description: "task lists (with closed brackets)",
+      content: dedent`
+        - [ ]
+      `,
+      assertions: (element) => {
+        expect(
+          element.querySelector("input[type='checkbox']")
+        ).not.toBeChecked();
+      },
+    },
+    {
+      description: "task lists (with closed brackets and checked)",
+      content: dedent`
+        - [x]
+      `,
+      assertions: (element) => {
+        expect(element.querySelector("input[type='checkbox']")).toBeChecked();
+      },
+    },
+    {
+      description: "code blocks",
+      content: dedent`
+        \`\`\`
+        p {
+          color: #000;
+        }
+        \`\`
+      `,
+      assertions: (element) => {
+        const codeBlock = element.querySelector("pre");
+
+        expect(codeBlock?.textContent).toBe("p {\n  color: #000;\n}\n");
+      },
+    },
+    {
+      description: "tables (with incomplete header)",
+      content: dedent`
+        | A column heading
+      `,
+      assertions: (element) => {
+        const table = element.querySelector("table");
+        expect(table).toBeInTheDocument();
+
+        const tableHeadings = table?.querySelectorAll("th");
+        expect(tableHeadings).toHaveLength(1);
+        expect(tableHeadings?.[0]).toHaveTextContent("A column heading");
+      },
+    },
+    {
+      description: "tables (with incomplete header)",
+      content: dedent`
+        | A column heading | Another column
+      `,
+      assertions: (element) => {
+        const table = element.querySelector("table");
+        expect(table).toBeInTheDocument();
+
+        const tableHeadings = table?.querySelectorAll("th");
+        expect(tableHeadings).toHaveLength(2);
+        expect(tableHeadings?.[0]).toHaveTextContent("A column heading");
+        expect(tableHeadings?.[1]).toHaveTextContent("Another column");
+      },
+    },
+    {
+      description: "tables (with incomplete header)",
+      content: dedent`
+        | A column heading | Another column heading |
+        |------------------|
+      `,
+      assertions: (element) => {
+        const table = element.querySelector("table");
+        expect(table).toBeInTheDocument();
+
+        const tableHeadings = table?.querySelectorAll("th");
+        expect(tableHeadings).toHaveLength(2);
+        expect(tableHeadings?.[0]).toHaveTextContent("A column heading");
+        expect(tableHeadings?.[1]).toHaveTextContent("Another column");
+      },
+    },
+  ] satisfies {
+    description: string;
+    content: string;
+    assertions: (element: HTMLElement) => void;
+  }[])("should render partial $description", ({ content, assertions }) => {
+    const { getByTestId } = render(
+      <Markdown data-testid="markdown" content={content} partial />
+    );
+
+    assertions(getByTestId("markdown"));
+  });
+
   test("should rerender when the content changes", () => {
     const { getByTestId, rerender } = render(
-      <Markdown data-testid="markdown" content="This is a [link](ht" />
+      <Markdown data-testid="markdown" content="This is a" />
     );
 
     const element = getByTestId("markdown");
 
-    expect(element).toHaveTextContent("This is a [link](ht");
+    expect(element).toHaveTextContent("This is a");
     expect(element.querySelector("a")).not.toBeInTheDocument();
 
     rerender(
@@ -759,14 +1013,7 @@ describe("Markdown", () => {
           return (
             <List start={start} data-list={type}>
               {items.map((item, index) => (
-                <li key={index}>
-                  {item.checked !== undefined && (
-                    <>
-                      <input type="checkbox" disabled checked={item.checked} />{" "}
-                    </>
-                  )}
-                  {item.children}
-                </li>
+                <li key={index}>{item.children}</li>
               ))}
             </List>
           );
