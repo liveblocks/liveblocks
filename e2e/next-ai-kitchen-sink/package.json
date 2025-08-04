@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start --port 3008",
     "lint": "next lint",
+    "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/",
     "test": "playwright test --max-failures=1",
     "test:ui": "playwright test --ui --workers=1 --max-failures=1"
   },
