@@ -671,13 +671,7 @@
       },
       {
         "title": "Limits",
-        "path": "/platform/limits",
-        "routes": [
-          {
-            "title": "Fair Use Policy",
-            "path": "/platform/limits/fair-use-policy"
-          }
-        ]
+        "path": "/platform/limits"
       },
       {
         "title": "Upgrading",
