@@ -41,7 +41,7 @@ When running scripts, use `npx turbo`, not `npm`.
 - End-to-end applications are located in e2e/
 - For Storage, Presence, Inbox Notifications, Comments & Threads the app is
   located in e2e/next-sandbox
-- Run e2e tests headlessly using Playwright: npx turbo build && env HEADLESS=1
-  playwright test --retries=5 --
 - For AI the app is in e2e/next-ai-kitchen-sink
-- There are no headless tests for the AI APIs yet
+
+Run e2e tests headlessly using Playwright:  
+npx turbo build && env HEADLESS=1 playwright test --retries=5 --
