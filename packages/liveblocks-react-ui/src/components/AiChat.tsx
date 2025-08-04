@@ -4,11 +4,7 @@ import type {
   CopilotId,
   MessageId,
 } from "@liveblocks/core";
-import {
-  RegisterAiKnowledge,
-  RegisterAiTool,
-  useAiChatMessages,
-} from "@liveblocks/react";
+import { RegisterAiTool, useAiChatMessages } from "@liveblocks/react";
 import { useLatest } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
@@ -92,8 +88,10 @@ export interface AiChatProps extends ComponentProps<"div"> {
   copilotId?: string;
 
   /**
-   * The contextual knowledge to include in the chat. May be used by the assistant when generating responses.
-   * Any knowledge you provide via this prop will be added to any already globally registered knowledge via <RegisterAiKnowledge />.
+   * The contextual knowledge to include in the chat. May be used by the
+   * assistant when generating responses. In addition to the knowledge passed
+   * in via this prop, the AiChat instance will also have access to any
+   * globally registered knowledge via <RegisterAiKnowledge />.
    */
   knowledge?: AiKnowledgeSource[];
 
@@ -418,7 +416,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       copilotId,
       autoFocus,
       overrides,
-      knowledge,
+      knowledge: localKnowledge,
       tools = {},
       layout = "inset",
       components,
@@ -491,17 +489,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
           className
         )}
       >
-        {knowledge
-          ? knowledge.map((source, index) => (
-              <RegisterAiKnowledge
-                key={index}
-                description={source.description}
-                value={source.value}
-                // knowledgeKey={source.knowledgeKey}
-              />
-            ))
-          : null}
-
         {Object.entries(tools).map(([name, tool]) => (
           <RegisterAiTool key={name} chatId={chatId} name={name} tool={tool} />
         ))}
@@ -573,6 +560,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
+            knowledge={localKnowledge}
             onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
             className={
               layout === "inset"
