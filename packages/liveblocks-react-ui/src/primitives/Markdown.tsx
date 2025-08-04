@@ -19,7 +19,7 @@ import type { ComponentPropsWithSlot } from "../types";
 
 const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
 const PARTIAL_LINK_REGEX =
-  /\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
+  /(?<!\\)\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
   /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
@@ -1037,9 +1037,15 @@ function completePartialInlineMarkdown(markdown: string): string {
 
   // Marked.js doesn't parse partial closing HTML tags,
   // so if the string ends with "<" or "</", we remove it optimistically.
-  if (completedMarkdown.endsWith("</")) {
+  else if (completedMarkdown.endsWith("</")) {
     completedMarkdown = completedMarkdown.slice(0, -2);
   } else if (completedMarkdown.endsWith("<")) {
+    completedMarkdown = completedMarkdown.slice(0, -1);
+  }
+
+  // We can optimistically remove trailing backslashes until more
+  // characters are available.
+  else if (completedMarkdown.endsWith("\\")) {
     completedMarkdown = completedMarkdown.slice(0, -1);
   }
 
@@ -1048,7 +1054,11 @@ function completePartialInlineMarkdown(markdown: string): string {
     let matchedDelimiter: string | null = null;
 
     for (const delimiter of FORMATTING_DELIMITERS) {
-      if (markdown.startsWith(delimiter, i)) {
+      if (
+        markdown.startsWith(delimiter, i) &&
+        i > 0 &&
+        markdown[i - 1] !== "\\"
+      ) {
         matchedDelimiter = delimiter;
         break;
       }

@@ -37,6 +37,8 @@ const markdownMessage = `
 
 ###### Because in this city's barren cold, I still remember the first fall of snow, and how it glistened as it fell, I remember it all too well
 
+\\*Not italic\\* and \\[not a link\\]\\(https://liveblocks.io\).
+
 ---
 
 This is a regular paragraph of text. It includes **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/ "With a title").
