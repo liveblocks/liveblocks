@@ -654,6 +654,14 @@
           {
             "title": "Manage team members",
             "path": "/platform/account-management/manage-team-members"
+          },
+          {
+            "title": "SAML Single Sign-on",
+            "path": "/platform/account-management/saml"
+          },
+          {
+            "title": "Directory sync",
+            "path": "/platform/account-management/directory-sync"
           }
         ]
       },
