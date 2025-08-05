@@ -58,6 +58,7 @@ import type {
   AiChatMessagesAsyncSuccess,
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
+  CreateAiChatOptions,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   NotificationSettingsAsyncResult,
@@ -1116,19 +1117,14 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
  * // Create a chat with a custom title
  * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
  */
-function useCreateAiChat() {
+function useCreateAiChat(): {
+  (chatId: string): void;
+  (options: CreateAiChatOptions): void;
+} {
   const client = useClient();
 
   return useCallback(
-    (
-      options:
-        | string
-        | {
-            id: string;
-            title?: string;
-            metadata?: Record<string, string | string[]>;
-          }
-    ) => {
+    (options: string | CreateAiChatOptions) => {
       if (typeof options === "string") {
         options = { id: options };
       }
@@ -1190,7 +1186,10 @@ function useDeleteAiChat() {
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string | SendAiMessageOptions) => AiUserMessage;
+): {
+  (text: string): AiUserMessage;
+  (options: SendAiMessageOptions): AiUserMessage;
+};
 
 /**
  * Returns a function to send a message in an AI chat.
@@ -1206,7 +1205,7 @@ function useSendAiMessage(
  * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
  */
 function useSendAiMessage(): (
-  message: WithRequired<SendAiMessageOptions, "chatId">
+  options: WithRequired<SendAiMessageOptions, "chatId">
 ) => AiUserMessage;
 
 /**
@@ -1235,9 +1234,11 @@ function useSendAiMessage(): (
 function useSendAiMessage(
   chatId?: string,
   options?: UseSendAiMessageOptions
-):
-  | ((message: string | SendAiMessageOptions) => AiUserMessage)
-  | ((message: WithRequired<SendAiMessageOptions, "chatId">) => AiUserMessage) {
+): {
+  (text: string): AiUserMessage;
+  (options: SendAiMessageOptions): AiUserMessage;
+  (options: WithRequired<SendAiMessageOptions, "chatId">): AiUserMessage;
+} {
   const client = useClient();
 
   return useCallback(

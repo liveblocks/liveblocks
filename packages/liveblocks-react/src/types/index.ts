@@ -16,6 +16,7 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
+  AiUserMessage,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -91,6 +92,12 @@ export type SendAiMessageOptions = UseSendAiMessageOptions & {
    * The text of the message to send.
    */
   text: string;
+};
+
+export type CreateAiChatOptions = {
+  id: string;
+  title?: string;
+  metadata?: Record<string, string | string[]>;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
@@ -1276,15 +1283,10 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * // Create a chat with a custom title
    * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
    */
-  useCreateAiChat(): (
-    options:
-      | string
-      | {
-          id: string;
-          title?: string;
-          metadata?: Record<string, string | string[]>;
-        }
-  ) => void;
+  useCreateAiChat(): {
+    (chatId: string): void;
+    (options: CreateAiChatOptions): void;
+  };
 
   /**
    * Returns a function that deletes the AI chat with the specified id.
@@ -1315,7 +1317,10 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useSendAiMessage(
     chatId: string,
     options?: UseSendAiMessageOptions
-  ): (message: string | SendAiMessageOptions) => AiChatMessage;
+  ): {
+    (text: string): AiUserMessage;
+    (options: SendAiMessageOptions): AiUserMessage;
+  };
 
   /**
    * Returns a function to send a message in an AI chat.
@@ -1360,11 +1365,11 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useSendAiMessage(
     chatId?: string,
     options?: UseSendAiMessageOptions
-  ):
-    | ((message: string | SendAiMessageOptions) => AiChatMessage)
-    | ((
-        message: WithRequired<SendAiMessageOptions, "chatId">
-      ) => AiChatMessage);
+  ): {
+    (text: string): AiUserMessage;
+    (options: SendAiMessageOptions): AiUserMessage;
+    (options: WithRequired<SendAiMessageOptions, "chatId">): AiUserMessage;
+  };
 };
 
 export type LiveblocksContextBundle<
