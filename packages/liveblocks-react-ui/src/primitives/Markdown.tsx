@@ -21,7 +21,7 @@ const LIST_ITEM_CHECKBOX_REGEX = /^\[\s?(x)?\]?$/i;
 const PARTIAL_LINK_IMAGE_REGEX =
   /(?<!\\)(?<image>!)?\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
-  /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
+  /^\s*\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\s*\|\s*[-:|\s]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 const BUFFERED_CHARACTERS_REGEX =
@@ -1226,7 +1226,7 @@ function completePartialTokens(tokens: Token[]) {
     //
     // We optimistically create tables sooner if the current text looks
     // like a partial table header.
-    if (text.raw.startsWith("|") && PARTIAL_TABLE_HEADER_REGEX.test(text.raw)) {
+    if (PARTIAL_TABLE_HEADER_REGEX.test(text.raw)) {
       const completedTableMarkdown = completePartialTableMarkdown(text.raw);
 
       if (completedTableMarkdown) {

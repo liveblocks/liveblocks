@@ -1248,6 +1248,24 @@ describe("Markdown", () => {
           expect(tableHeadings?.[1]).toHaveTextContent("Another column");
         }
       );
+
+      assert(
+        dedent`
+        A paragraph
+
+          | A column heading | Another column heading |
+          |------------------|
+      `,
+        (element) => {
+          const table = element.querySelector("table");
+          expect(table).toBeInTheDocument();
+
+          const tableHeadings = table?.querySelectorAll("th");
+          expect(tableHeadings).toHaveLength(2);
+          expect(tableHeadings?.[0]).toHaveTextContent("A column heading");
+          expect(tableHeadings?.[1]).toHaveTextContent("Another column");
+        }
+      );
     });
 
     test("should render horizontal rules", () => {
