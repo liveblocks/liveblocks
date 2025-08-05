@@ -1,0 +1,14 @@
+{
+  "name": "node-package-sandbox",
+  "version": "1.0.0",
+  "type": "module",
+  "author": "",
+  "scripts": {
+    "test": "jest --silent --verbose --color=always"
+  },
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@liveblocks/node": "*"
+  }
+}
