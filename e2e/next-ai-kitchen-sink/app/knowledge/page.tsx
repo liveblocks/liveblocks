@@ -272,7 +272,10 @@ export default function Page() {
 
         <div className="fixed bottom-8 right-8">
           <Popover.Root>
-            <Popover.Trigger className="inline-flex items-center justify-center rounded-full p-4 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14]">
+            <Popover.Trigger
+              data-testid="ai-chat-trigger"
+              className="inline-flex items-center justify-center rounded-full p-4 shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] hover:shadow-[0_0_0_1px_#00000014,0_2px_6px_#00000014,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14]"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width={32}

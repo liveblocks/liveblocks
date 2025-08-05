@@ -14,11 +14,11 @@ async function setupSimpleChat(page: Page) {
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
   if (
     (await sendButton.isEnabled()) &&
-    (await sendButton.getAttribute("data-variant")) === "secondary"
+    (await sendButton.getAttribute("aria-label")) === "Abort response"
   ) {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+    await expect(sendButton).toHaveAttribute("aria-label", "Send", {
       timeout: 15000,
     });
   }
@@ -38,11 +38,11 @@ test.describe("Simple Chat", () => {
     await sendButton.click();
 
     // Ensure the send button turns into an abort button (should now show StopIcon)
-    // The button should change to have StopIcon and different data-variant
-    await expect(sendButton).toHaveAttribute("data-variant", "secondary");
+    // The button should change to show "Abort response" aria-label
+    await expect(sendButton).toHaveAttribute("aria-label", "Abort response");
 
-    // Wait for the send button to become enabled again (back to primary variant)
-    await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+    // Wait for the send button to become enabled again (back to send state)
+    await expect(sendButton).toHaveAttribute("aria-label", "Send", {
       timeout: 15000, // Give it up to 15 seconds for the AI response
     });
 
@@ -73,18 +73,16 @@ test.describe("Simple Chat", () => {
     await expect(sendButton).toBeEnabled({ timeout: 15000 });
     await sendButton.click();
 
-    // Verify the button changes to abort state (secondary variant)
-    await expect(sendButton).toHaveAttribute("data-variant", "secondary");
+    // Verify the button changes to abort state
     await expect(sendButton).toHaveAttribute("aria-label", "Abort response");
 
     // Click the abort button while the AI is generating
     await sendButton.click();
 
-    // Verify the button goes back to send state (primary variant)
-    await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+    // Verify the button goes back to send state
+    await expect(sendButton).toHaveAttribute("aria-label", "Send", {
       timeout: 15000,
     });
-    await expect(sendButton).toHaveAttribute("aria-label", "Send");
 
     // Verify the user message exists
     const userMessage = page.locator(".lb-ai-chat-user-message").last();

@@ -2,8 +2,8 @@ import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
 async function setupAiChat(page: Page) {
-  // The knowledge page has the chat trigger in the bottom right corner
-  const triggerButton = page.locator(".fixed.bottom-8.right-8 button");
+  // The knowledge page has the chat trigger button with test ID
+  const triggerButton = page.getByTestId("ai-chat-trigger");
 
   // Check if popover is already open
   const isOpen = (await triggerButton.getAttribute("data-state")) === "open";
@@ -20,11 +20,22 @@ async function setupAiChat(page: Page) {
   const textInput = page.locator(".lb-ai-chat-composer-editor");
   const sendButton = page.locator(".lb-ai-chat-composer-action");
 
+  // Wait for the send button to be present and ready
+  await expect(sendButton).toBeVisible({ timeout: 10000 });
+
+  // Wait for the composer form to not be disabled
+  const composerForm = page.locator(".lb-ai-chat-composer-form");
+  await expect(composerForm).not.toHaveAttribute("disabled", {
+    timeout: 10000,
+  });
+
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
-  if ((await sendButton.getAttribute("data-variant")) === "secondary") {
+  if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("aria-label", "Send", {
+      timeout: 15000,
+    });
   }
 
   // Clear any existing text
@@ -37,10 +48,16 @@ async function sendAiMessage(page: Page, message: string) {
   const { textInput, sendButton } = await setupAiChat(page);
 
   await textInput.fill(message);
+
+  // Wait for the button to be enabled after filling the text
+  await expect(sendButton).toBeEnabled({ timeout: 10000 });
+
   await sendButton.click({ timeout: 5000 });
 
   // Verify the message was sent (appears in the chat)
-  await expect(page.locator(`text=${message}`)).toBeVisible();
+  await expect(
+    page.locator(".lb-ai-chat-messages").locator(`text=${message}`)
+  ).toBeVisible();
 }
 
 test.describe("Knowledge Registration", () => {
@@ -213,9 +230,9 @@ test.describe("Knowledge Registration", () => {
 
     // Ask about current view
     await sendAiMessage(page, "What view am I currently in?");
-    await expect(
-      page.locator("text=Todo").or(page.locator("text=todo"))
-    ).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(".lb-ai-chat-messages")).toContainText(/todo/i, {
+      timeout: 30000,
+    });
 
     // Switch to "Another app" tab
     await page.click('button:has-text("Another app")');
@@ -227,12 +244,10 @@ test.describe("Knowledge Registration", () => {
     // Ask about current view again - should now know it's "Another app"
     await sendAiMessage(page, "What is my current view now?");
     // Look for "Another" in the AI chat response, not in the UI
-    await expect(
-      page
-        .locator(".lb-ai-chat-messages")
-        .locator("text=Another")
-        .or(page.locator(".lb-ai-chat-messages").locator("text=another"))
-    ).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(".lb-ai-chat-messages")).toContainText(
+      /another/i,
+      { timeout: 30000 }
+    );
 
     // Switch to "Both" tab
     await page.click('button:has-text("Both")');
@@ -243,12 +258,9 @@ test.describe("Knowledge Registration", () => {
     // Ask about current view - should know it's "Both apps"
     await sendAiMessage(page, "What view am I in now?");
     // Look for "Both" in the AI chat response, not in the UI
-    await expect(
-      page
-        .locator(".lb-ai-chat-messages")
-        .locator("text=Both")
-        .or(page.locator(".lb-ai-chat-messages").locator("text=both"))
-    ).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(".lb-ai-chat-messages")).toContainText(/both/i, {
+      timeout: 30000,
+    });
   });
 
   test("should handle knowledge being disabled", async ({ page }) => {
