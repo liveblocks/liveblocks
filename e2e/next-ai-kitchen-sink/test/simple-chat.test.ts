@@ -30,6 +30,22 @@ async function setupSimpleChat(page: Page) {
 }
 
 test.describe("Simple Chat", () => {
+  test.beforeEach(async ({ page }) => {
+    // Clean up - delete the "ai-chat" chat to start fresh
+    await page.goto("/chats");
+    await expect(page.locator("h1")).toHaveText("List of all chats");
+
+    // Look for the "ai-chat" chat and delete it if it exists
+    const aiChatLink = page.locator('a[href="/chats/ai-chat"]');
+    if (await aiChatLink.isVisible()) {
+      const deleteButton = aiChatLink
+        .locator("..")
+        .locator('button:has-text("Delete")');
+      await deleteButton.click();
+      await expect(aiChatLink).not.toBeVisible();
+    }
+  });
+
   test("should handle ping-pong interaction", async ({ page }) => {
     const { textInput, sendButton } = await setupSimpleChat(page);
 
