@@ -893,6 +893,32 @@ and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
 to update the property.
 
+##### Collapsed threads
+
+You can collapse threads by setting the `maxVisibleComments` prop. If a thread
+contains more comments than the limit set, some of the comments will be hidden
+and a "Show more replies" button will be displayed instead. Clicking on it will
+expand the thread to show all comments.
+
+```tsx
+<Thread thread={thread} maxVisibleComments={5} />
+```
+
+The first and last comments are always visible, and by default the oldest
+comments are more likely to be hidden. You can customize this behavior by
+setting `maxVisibleComments` to an object.
+
+```tsx
+// This is the default behavior, the same as `maxVisibleComments={5}`.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "newest" }} />
+
+// Only show the last comment, and all the older ones to fit the limit.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "oldest" }} />
+
+// Show as many old comments as new ones to fit the limit.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "both" }} />
+```
+
 ##### Props [#Thread-props]
 
 <PropertiesList>
@@ -939,6 +965,14 @@ to update the property.
     defaultValue="true"
   >
     Whether to show the action to resolve the thread.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="maxVisibleComments"
+    type="number | object"
+    detailedType='number | { max: number; show: "oldest" | "newest" | "both" }'
+    defaultValue="No limit"
+  >
+    The maximum number of comments to show.
   </PropertiesListItem>
   <PropertiesListItem
     name="indentCommentContent"
@@ -1468,7 +1502,7 @@ function MyComposer() {
     { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
-    event.preventdefault();
+    event.preventDefault();
 
     // Create a new thread
     // +++
@@ -2466,7 +2500,7 @@ function MyComposerAttachments() {
     type="function"
     detailedType="(mark: ComposerBodyMark) => void"
   >
-    Remove an attachment by its ID.
+    Toggle a specific text mark.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"
@@ -3257,7 +3291,7 @@ Classes containing colons `:` are internal and may change over time.
 
 ### Portaled elements
 
-Floating elements within the default components (e.g. tooltips, drowdowns, etc)
+Floating elements within the default components (e.g. tooltips, dropdowns, etc)
 are portaled to the end of the document to avoid `z-index` conflicts and
 `overflow` issues.
 
