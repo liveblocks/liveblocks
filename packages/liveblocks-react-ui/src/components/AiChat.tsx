@@ -36,7 +36,7 @@ import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
-import { AiComposer } from "./internal/AiComposer";
+import { AiComposer, type AiComposerProps } from "./internal/AiComposer";
 
 /**
  * The minimum number of pixels from the bottom of the scrollable area
@@ -101,6 +101,11 @@ export interface AiChatProps extends ComponentProps<"div"> {
    * Tool definitions to make available within this chat. May be used by the assistant when generating responses.
    */
   tools?: Record<string, AiOpaqueToolDefinition>;
+
+  /**
+   * The event handler called when the composer is submitted.
+   */
+  onComposerSubmit?: AiComposerProps["onComposerSubmit"];
 
   /**
    * The layout of the chat and its composer.
@@ -420,6 +425,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       overrides,
       knowledge,
       tools = {},
+      onComposerSubmit,
       layout = "inset",
       components,
       className,
@@ -573,6 +579,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
+            onComposerSubmit={onComposerSubmit}
             onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
             className={cn(
               "lb-ai-chat-composer",
