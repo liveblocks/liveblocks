@@ -118,13 +118,12 @@ test.describe("AiChat Knowledge Isolation", () => {
     // Go to the dual chat page
     await page.goto("/dual-chat");
 
-    // Wait for both chats to be visible
+    // Wait for the page title and both chats to be visible
     await expect(
-      page.locator('h2:has-text("Chat A (with local knowledge)")')
+      page.locator('h1:has-text("Knowledge Isolation Test")')
     ).toBeVisible();
-    await expect(
-      page.locator('h2:has-text("Chat B (no knowledge)")')
-    ).toBeVisible();
+    await expect(page.locator('h2:has-text("Chat A")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Chat B")')).toBeVisible();
 
     // Verify the default pasta knowledge is set
     const knowledgeInput = page.locator(
@@ -154,7 +153,9 @@ test.describe("AiChat Knowledge Isolation", () => {
     ).toBeVisible({ timeout: 10000 });
 
     // Get Chat B's assistant response text and verify it doesn't include "Spaghetti Carbonara"
-    const chatBAssistantMessage = page.locator('[data-testid="chat-b"] .lb-ai-chat-assistant-message').last();
+    const chatBAssistantMessage = page
+      .locator('[data-testid="chat-b"] .lb-ai-chat-assistant-message')
+      .last();
     const chatBText = await chatBAssistantMessage.textContent();
     expect(chatBText).not.toContain("Spaghetti Carbonara");
   });
@@ -163,6 +164,11 @@ test.describe("AiChat Knowledge Isolation", () => {
     page,
   }) => {
     await page.goto("/dual-chat");
+
+    // Wait for the page title to be visible
+    await expect(
+      page.locator('h1:has-text("Knowledge Isolation Test")')
+    ).toBeVisible();
 
     // Wait for components to load
     await expect(
@@ -196,8 +202,86 @@ test.describe("AiChat Knowledge Isolation", () => {
 
     // Get Chat B's assistant response text and verify it doesn't include "Penne Arrabiata"
     // This test should FAIL with the current bug
-    const chatBAssistantMessage = page.locator('[data-testid="chat-b"] .lb-ai-chat-assistant-message').last();
+    const chatBAssistantMessage = page
+      .locator('[data-testid="chat-b"] .lb-ai-chat-assistant-message')
+      .last();
     const chatBText = await chatBAssistantMessage.textContent();
     expect(chatBText).not.toContain("Penne Arrabiata");
+  });
+
+  test("should SHARE knowledge when using RegisterAiKnowledge globally", async ({
+    page,
+  }) => {
+    // Go to the dual chat page (now contains both local and global knowledge testing)
+    await page.goto("/dual-chat");
+
+    // Wait for the page title and both chats to be visible
+    await expect(
+      page.locator('h1:has-text("Knowledge Isolation Test")')
+    ).toBeVisible();
+    await expect(page.locator('h2:has-text("Chat A")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Chat B")')).toBeVisible();
+
+    // Verify the default global knowledge is set
+    const globalKnowledgeInput = page.locator(
+      '[data-testid="global-knowledge-input"]'
+    );
+    await expect(globalKnowledgeInput).toHaveValue("Tiramisu");
+
+    // Wait for the AiChat components to be fully loaded
+    await expect(
+      page.locator('[data-testid="chat-a"] .lb-ai-chat-composer')
+    ).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(
+      page.locator('[data-testid="chat-b"] .lb-ai-chat-composer')
+    ).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Ask Chat A about the global knowledge - it should have access to both local and global
+    await sendMessageToChatA(page, "What dessert do I like?");
+
+    // Wait for Chat A's response containing the global knowledge
+    await expect(
+      page
+        .locator('[data-testid="chat-a"] .lb-ai-chat-assistant-message')
+        .last()
+        .locator("text=Tiramisu")
+    ).toBeVisible({ timeout: 30000 });
+
+    // Ask Chat B about the same global knowledge - it should ALSO have access
+    await sendMessageToChatB(page, "What dessert do I like?");
+
+    // Chat B should ALSO have access to the global knowledge
+    await expect(
+      page
+        .locator('[data-testid="chat-b"] .lb-ai-chat-assistant-message')
+        .last()
+        .locator("text=Tiramisu")
+    ).toBeVisible({ timeout: 30000 });
+
+    // Change the global knowledge
+    await globalKnowledgeInput.clear();
+    await globalKnowledgeInput.fill("Gelato");
+
+    // Ask both chats again - they should both know the new global knowledge
+    await sendMessageToChatA(page, "What dessert do I like now?");
+    await sendMessageToChatB(page, "What dessert do I like now?");
+
+    // Both chats should have access to the updated global knowledge
+    await expect(
+      page
+        .locator('[data-testid="chat-a"] .lb-ai-chat-assistant-message')
+        .last()
+        .locator("text=Gelato")
+    ).toBeVisible({ timeout: 30000 });
+    await expect(
+      page
+        .locator('[data-testid="chat-b"] .lb-ai-chat-assistant-message')
+        .last()
+        .locator("text=Gelato")
+    ).toBeVisible({ timeout: 30000 });
   });
 });
