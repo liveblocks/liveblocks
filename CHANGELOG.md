@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Knowledge passed as a prop to `AiChat` no longer leaks that knowledge to other
+  instances of `AiChat` that are currently mounted on screen.
+
 ## v3.2.1
 
 ### `@liveblocks/react-ui`

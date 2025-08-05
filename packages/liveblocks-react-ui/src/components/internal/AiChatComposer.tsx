@@ -1,5 +1,6 @@
 import type {
   AiChatMessage,
+  AiKnowledgeSource,
   CopilotId,
   MessageId,
   WithNavigation,
@@ -80,6 +81,13 @@ export interface AiChatComposerProps extends ComponentProps<"form"> {
    */
   copilotId?: CopilotId;
   /**
+   * The contextual knowledge to include in the chat. May be used by the
+   * assistant when generating responses. In addition to the knowledge passed
+   * in via this prop, the AiChat instance will also have access to any
+   * globally registered knowledge via <RegisterAiKnowledge />.
+   */
+  knowledge?: AiKnowledgeSource[];
+  /**
    * @internal
    */
   branchId?: MessageId;
@@ -101,6 +109,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
       chatId,
       branchId,
       copilotId,
+      knowledge: localKnowledge,
       stream = true,
       onUserMessageCreate,
       ...props
@@ -168,6 +177,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
           {
             stream,
             copilotId,
+            knowledge: localKnowledge,
           }
         );
       },
@@ -180,6 +190,7 @@ export const AiChatComposer = forwardRef<HTMLFormElement, AiChatComposerProps>(
         abortableMessageId,
         stream,
         copilotId,
+        localKnowledge,
       ]
     );
 
