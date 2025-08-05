@@ -6,7 +6,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
-  AiChatMessage,
+  AiUserMessage,
   AsyncResult,
   BaseRoomInfo,
   CopilotId,
@@ -1190,7 +1190,7 @@ function useDeleteAiChat() {
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string | SendAiMessageOptions) => AiChatMessage;
+): (message: string | SendAiMessageOptions) => AiUserMessage;
 
 /**
  * Returns a function to send a message in an AI chat.
@@ -1207,7 +1207,7 @@ function useSendAiMessage(
  */
 function useSendAiMessage(): (
   message: WithRequired<SendAiMessageOptions, "chatId">
-) => AiChatMessage;
+) => AiUserMessage;
 
 /**
  * Returns a function to send a message in an AI chat.
@@ -1236,8 +1236,8 @@ function useSendAiMessage(
   chatId?: string,
   options?: UseSendAiMessageOptions
 ):
-  | ((message: string | SendAiMessageOptions) => AiChatMessage)
-  | ((message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage) {
+  | ((message: string | SendAiMessageOptions) => AiUserMessage)
+  | ((message: WithRequired<SendAiMessageOptions, "chatId">) => AiUserMessage) {
   const client = useClient();
 
   return useCallback(
@@ -1271,10 +1271,9 @@ function useSendAiMessage(
         lastMessageId,
         content
       );
-      const newMessage =
-        client[kInternal].ai[kInternal].context.messagesStore.getMessageById(
-          newMessageId
-        )!;
+      const newMessage = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.getMessageById(newMessageId) as AiUserMessage;
 
       const targetMessageId = client[kInternal].ai[
         kInternal
