@@ -28,6 +28,7 @@ function DarkModeToggle() {
     <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
       <label>
         <input
+          data-testid="expose-dark-mode-checkbox"
           type="checkbox"
           checked={exposed}
           onChange={() => toggleExposeTool()}
@@ -71,6 +72,7 @@ function DarkModeToggle() {
 
       <label>
         <input
+          data-testid="dark-mode-toggle"
           type="checkbox"
           checked={mode === "dark"}
           onChange={() => toggleDarkMode()}
@@ -94,7 +96,12 @@ function MyNickName() {
       ) : null}
       <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
         <label>
-          <input type="checkbox" checked={enabled} onChange={() => toggle()} />
+          <input
+            data-testid="share-nickname-checkbox"
+            type="checkbox"
+            checked={enabled}
+            onChange={() => toggle()}
+          />
           <span className="ml-2">Share my nickname</span>
         </label>
       </div>
@@ -230,6 +237,7 @@ export default function Page() {
         <div className="flex flex-col px-4 max-w-4xl py-8 border-b-1">
           <div className="flex gap-4 mx-auto">
             <button
+              data-testid="tab-todo-app"
               className={
                 selectedTab === 1
                   ? "cursor-pointer font-bold"
@@ -240,6 +248,7 @@ export default function Page() {
               Todo app
             </button>
             <button
+              data-testid="tab-another-app"
               className={
                 selectedTab === 2
                   ? "cursor-pointer font-bold"
@@ -250,6 +259,7 @@ export default function Page() {
               Another app
             </button>
             <button
+              data-testid="tab-both"
               className={
                 selectedTab === 3
                   ? "cursor-pointer font-bold"
