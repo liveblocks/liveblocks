@@ -1247,9 +1247,14 @@ function useSendAiMessage(
         chatId: messageOptionsChatId,
         ...messageOptions
       } = typeof message === "string" ? { text: message } : message;
-      // The `useSendAiMessage` overloads make it impossible (at the type level at least)
-      // to have no chat ID passed at all, one of the two places should have a value.
-      const resolvedChatId = messageOptionsChatId ?? chatId!;
+      const resolvedChatId =
+        messageOptionsChatId ??
+        chatId ??
+        // The `useSendAiMessage` overloads prevent this scenario from happening
+        // at the type level, and this error prevents it from happening at runtime.
+        raise(
+          "chatId must be provided to either `useSendAiMessage` or its returned function."
+        );
 
       const messages = client[kInternal].ai.signals
         .getChatMessagesForBranchΣ(resolvedChatId)
