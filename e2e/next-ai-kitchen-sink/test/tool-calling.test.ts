@@ -12,10 +12,12 @@ async function setupAiChat(page: Page) {
   const sendButton = page.locator(".lb-ai-chat-composer-action");
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
-  if ((await sendButton.getAttribute("data-variant")) === "secondary") {
+  if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("aria-label", "Send", {
+      timeout: 15000,
+    });
   }
 
   // Clear any existing text
@@ -32,7 +34,7 @@ async function sendAiMessage(page: Page, message: string) {
   await sendButton.click();
 
   // Verify the message was sent (appears in the chat)
-  await expect(page.locator(`text=${message}`)).toBeVisible();
+  await expect(page.locator(".lb-ai-chat-user-message").last()).toContainText(message);
 }
 
 test.describe("Tool Calling", () => {
@@ -220,8 +222,8 @@ test.describe("Tool Calling", () => {
     ).toBeVisible();
 
     // Verify the AI shows the request was denied
-    await expect(
-      page.locator("text=denied").or(page.locator("text=cancelled"))
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".lb-ai-chat-messages")).toContainText(/denied|cancelled/i, {
+      timeout: 10000
+    });
   });
 });

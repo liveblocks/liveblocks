@@ -55,9 +55,8 @@ async function sendAiMessage(page: Page, message: string) {
   await sendButton.click({ timeout: 5000 });
 
   // Verify the message was sent (appears in the chat)
-  await expect(
-    page.locator(".lb-ai-chat-messages").locator(`text=${message}`)
-  ).toBeVisible();
+  // Use a user message selector to be more specific and avoid duplicates
+  await expect(page.locator(".lb-ai-chat-user-message").last()).toContainText(message);
 }
 
 test.describe("Knowledge Registration", () => {
