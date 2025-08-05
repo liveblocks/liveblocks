@@ -1174,28 +1174,64 @@ function useDeleteAiChat() {
  * Returns a function to send a message in an AI chat.
  *
  * @example
- * const sendAiMessage = useSendAiMessage(chatId);
+ * const sendAiMessage = useSendAiMessage("chat-id");
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
  * sendAiMessage("Hello, Liveblocks AI!");
  *
  * @example
- * const sendAiMessage = useSendAiMessage();
- * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" })
- *
- * @example
- * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
- * sendAiMessage("Hello, Liveblocks AI!");
- *
- * @example
- * const sendAiMessage = useSendAiMessage(chatId);
- * sendAiMessage({ copilotId: "co_xxx", text: "Hello, Liveblocks AI!" })
+ * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+ * sendAiMessage({ text: "Hello, Liveblocks AI!", copilotId: "co_123" });
  */
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
 ): (message: string | SendAiMessageOptions) => AiChatMessage;
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+ */
 function useSendAiMessage(): (
   message: WithRequired<SendAiMessageOptions, "chatId">
 ) => AiChatMessage;
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId);
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can also pass the chat ID dynamically if it's not known when calling the hook.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+ */
 function useSendAiMessage(
   chatId?: string,
   options?: UseSendAiMessageOptions
