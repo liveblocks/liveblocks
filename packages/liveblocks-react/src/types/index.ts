@@ -1310,7 +1310,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    *
    * @example
    * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
-   * sendAiMessage({ text: "Hello, Liveblocks AI!", copilotId: "co_123" });
+   * sendAiMessage({ text: "Hello, Liveblocks AI!", copilotId: "co_yyy" });
    */
   useSendAiMessage(
     chatId: string,
