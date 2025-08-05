@@ -56,7 +56,7 @@ import type {
   SetToolResultResponse,
   ToolResultResponse,
 } from "./types/ai";
-import { appendDelta } from "./types/ai";
+import { patchContentWithDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type {
   InferFromSchema,
@@ -579,7 +579,7 @@ function createStore_forChatMessages(
       const message = lut.get(messageId);
       if (message === undefined) return false;
 
-      appendDelta(message.contentSoFar, delta);
+      patchContentWithDelta(message.contentSoFar, delta);
       lut.set(messageId, message);
       return true;
     });
