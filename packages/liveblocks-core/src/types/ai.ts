@@ -484,7 +484,7 @@ export type AiKnowledgeSource = {
 
 // --------------------------------------------------------------------------------------------------
 
-export function appendDelta(
+export function patchContentWithDelta(
   content: AiAssistantContentPart[],
   delta: AiAssistantDeltaUpdate
 ): void {
