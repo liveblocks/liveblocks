@@ -1193,10 +1193,9 @@ function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
 ): (message: string | SendAiMessageOptions) => AiChatMessage;
-function useSendAiMessage(
-  chatId?: never,
-  options?: never
-): (message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage;
+function useSendAiMessage(): (
+  message: WithRequired<SendAiMessageOptions, "chatId">
+) => AiChatMessage;
 function useSendAiMessage(
   chatId?: string,
   options?: UseSendAiMessageOptions

@@ -1299,10 +1299,9 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
     chatId: string,
     options?: UseSendAiMessageOptions
   ): (message: string | SendAiMessageOptions) => AiChatMessage;
-  useSendAiMessage(
-    chatId?: never,
-    options?: never
-  ): (message: WithRequired<SendAiMessageOptions, "chatId">) => AiChatMessage;
+  useSendAiMessage(): (
+    message: WithRequired<SendAiMessageOptions, "chatId">
+  ) => AiChatMessage;
   useSendAiMessage(
     chatId?: string,
     options?: UseSendAiMessageOptions
