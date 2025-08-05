@@ -24,16 +24,11 @@ const PARTIAL_TABLE_HEADER_REGEX =
   /^\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\|\s*[-:| ]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
+const BUFFERED_CHARACTERS_REGEX =
+  /(?<!\\)((\*+|_+|-+|~+|`+|=+|\++|\\|!|<\/?)\s*)$/;
+const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
 
 const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
-const PARTIAL_HORIZONTAL_RULES = ["-", "--", "*", "**", "_", "__"];
-const PARTIAL_CODE_BLOCKS = ["`", "``"];
-const PARTIAL_LIST_INDICATORS = ["-", "*", "+"];
-const PARTIAL_TEXT_ELEMENTS = [
-  ...PARTIAL_HORIZONTAL_RULES,
-  ...PARTIAL_CODE_BLOCKS,
-  ...PARTIAL_LIST_INDICATORS.map((indicator) => `${indicator} `),
-];
 
 type CheckboxToken = {
   type: "checkbox";
@@ -441,17 +436,17 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, partial, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const tokens = useMemo(() => {
-      const tokens = getMarkedTokens(content);
-
-      if (partial) {
-        try {
-          return completePartialTokens(tokens);
-        } catch {
-          return tokens;
-        }
+      if (!partial) {
+        return getMarkedTokens(content);
       }
 
-      return tokens;
+      const tokens = getMarkedTokens(trimPartialMarkdown(content));
+
+      try {
+        return completePartialTokens(tokens);
+      } catch {
+        return tokens;
+      }
     }, [content, partial]);
     const isMounted = useSyncExternalStore(
       isMountedSubscribe,
@@ -893,20 +888,15 @@ function isBlockToken(
   );
 }
 
-type PotentiallyPartialTokenResult = {
-  token: PotentiallyPartialToken;
-  parent: MarkedToken | undefined;
-};
-
 /**
  * Find the last partial token that we could potentially complete.
  */
 function findPotentiallyPartialToken(
   tokens: Token[],
-  parentPotentiallyPartialToken?: PotentiallyPartialTokenResult
-): PotentiallyPartialTokenResult | undefined {
+  parentToken?: PotentiallyPartialToken
+): PotentiallyPartialToken | undefined {
   if (tokens.length === 0) {
-    return parentPotentiallyPartialToken;
+    return parentToken;
   }
 
   const lastIndex = tokens.length - 1;
@@ -916,7 +906,7 @@ function findPotentiallyPartialToken(
     const penultimateToken = tokens[lastIndex - 1];
 
     if (!penultimateToken) {
-      return parentPotentiallyPartialToken;
+      return parentToken;
     }
 
     lastToken = penultimateToken;
@@ -927,7 +917,7 @@ function findPotentiallyPartialToken(
     const lastListItem = listToken.items[listToken.items.length - 1];
 
     if (!lastListItem) {
-      return parentPotentiallyPartialToken;
+      return parentToken;
     }
 
     // List items containing empty lines are handled differently,
@@ -942,34 +932,25 @@ function findPotentiallyPartialToken(
 
       if (lastListItemLastToken) {
         if (lastListItemLastToken.type === "text") {
-          return {
-            token: lastListItemLastToken as Tokens.Text,
-            parent: lastListItem,
-          };
+          return lastListItemLastToken as Tokens.Text;
         }
 
         if (lastListItemLastToken.type === "code") {
-          return {
-            token: lastListItemLastToken as Tokens.Code,
-            parent: lastListItem,
-          };
+          return lastListItemLastToken as Tokens.Code;
         }
 
         if (isBlockToken(lastListItemLastToken)) {
-          return findPotentiallyPartialToken(lastListItemLastToken.tokens, {
-            token: lastListItemLastToken,
-            parent: lastListItem,
-          });
+          return findPotentiallyPartialToken(
+            lastListItemLastToken.tokens,
+            lastListItemLastToken
+          );
         }
 
         return undefined;
       }
     }
 
-    return findPotentiallyPartialToken(lastListItem.tokens, {
-      token: lastListItem,
-      parent: listToken,
-    });
+    return findPotentiallyPartialToken(lastListItem.tokens, lastListItem);
   }
 
   if (lastToken.type === "table") {
@@ -977,7 +958,7 @@ function findPotentiallyPartialToken(
     const lastTableRow = tableToken.rows[tableToken.rows.length - 1];
 
     if (!lastTableRow) {
-      return parentPotentiallyPartialToken;
+      return parentToken;
     }
 
     // Marked.js creates all cells in advance when creating rows,
@@ -993,30 +974,64 @@ function findPotentiallyPartialToken(
           : lastTableRow[firstEmptyTableCellIndex - 1];
 
     if (!lastNonEmptyTableCell) {
-      return parentPotentiallyPartialToken;
+      return parentToken;
     }
 
-    return findPotentiallyPartialToken(lastNonEmptyTableCell.tokens, {
-      token: lastNonEmptyTableCell,
-      parent: tableToken,
-    });
+    return findPotentiallyPartialToken(
+      lastNonEmptyTableCell.tokens,
+      lastNonEmptyTableCell
+    );
   }
 
   if (lastToken.type === "code") {
-    return {
-      token: lastToken as Tokens.Code,
-      parent: parentPotentiallyPartialToken?.token as MarkedToken | undefined,
-    };
+    return lastToken as Tokens.Code;
   }
 
   if (isBlockToken(lastToken)) {
-    return findPotentiallyPartialToken(lastToken.tokens, {
-      token: lastToken,
-      parent: parentPotentiallyPartialToken?.token as MarkedToken | undefined,
-    });
+    return findPotentiallyPartialToken(lastToken.tokens, lastToken);
   }
 
-  return parentPotentiallyPartialToken;
+  return parentToken;
+}
+
+/**
+ * Trim a partial Markdown string to avoid incomplete tokens.
+ */
+function trimPartialMarkdown(markdown: string) {
+  const lines = markdown.split("\n");
+
+  if (lines.length === 0) {
+    return markdown;
+  }
+
+  // If the last line contains a single non-whitespace character,
+  // we can remove it for now.
+  const [singleCharacterMatch] =
+    lines[lines.length - 1]!.match(SINGLE_CHARACTER_REGEX) ?? [];
+
+  if (singleCharacterMatch) {
+    lines[lines.length - 1] = lines[lines.length - 1]!.slice(
+      0,
+      -singleCharacterMatch.length
+    );
+
+    return lines.join("\n");
+  }
+
+  // If the last line ends with partial syntax, we can remove it for now.
+  const [bufferedCharactersMatch] =
+    lines[lines.length - 1]!.match(BUFFERED_CHARACTERS_REGEX) ?? [];
+
+  if (bufferedCharactersMatch) {
+    lines[lines.length - 1] = lines[lines.length - 1]!.slice(
+      0,
+      -bufferedCharactersMatch.length
+    );
+
+    return lines.join("\n");
+  }
+
+  return markdown;
 }
 
 /**
@@ -1029,29 +1044,6 @@ function completePartialInlineMarkdown(markdown: string): string {
   const stack: { string: string; length: number; index: number }[] = [];
   let completedMarkdown = markdown;
 
-  // Strikethrough needs to be handled specifically since a single "~" isn't a delimiter.
-  // If the string ends with a single "~", we remove it optimistically.
-  if (completedMarkdown.endsWith("~") && !completedMarkdown.endsWith("~~")) {
-    completedMarkdown = completedMarkdown.slice(0, -1);
-  }
-
-  // Marked.js doesn't parse partial closing HTML tags,
-  // so if the string ends with "<" or "</", we remove it optimistically.
-  else if (completedMarkdown.endsWith("</")) {
-    completedMarkdown = completedMarkdown.slice(0, -2);
-  } else if (completedMarkdown.endsWith("<")) {
-    completedMarkdown = completedMarkdown.slice(0, -1);
-  }
-
-  // We can optimistically remove other trailing characters until
-  // more characters are available.
-  else if (
-    completedMarkdown.endsWith("\\") ||
-    completedMarkdown.endsWith("!")
-  ) {
-    completedMarkdown = completedMarkdown.slice(0, -1);
-  }
-
   // Move forward through the string to collect delimiters.
   for (let i = 0; i < completedMarkdown.length; i++) {
     let matchedDelimiter: string | null = null;
@@ -1059,8 +1051,7 @@ function completePartialInlineMarkdown(markdown: string): string {
     for (const delimiter of FORMATTING_DELIMITERS) {
       if (
         markdown.startsWith(delimiter, i) &&
-        i > 0 &&
-        markdown[i - 1] !== "\\"
+        (i > 0 ? markdown[i - 1] !== "\\" : true)
       ) {
         matchedDelimiter = delimiter;
         break;
@@ -1218,16 +1209,11 @@ function completePartialTableMarkdown(markdown: string): string | undefined {
 }
 
 function completePartialTokens(tokens: Token[]) {
-  const potentiallyPartialTokenResult = findPotentiallyPartialToken(tokens);
+  const potentiallyPartialToken = findPotentiallyPartialToken(tokens);
 
-  if (!potentiallyPartialTokenResult) {
+  if (!potentiallyPartialToken) {
     return tokens;
   }
-
-  const {
-    token: potentiallyPartialToken,
-    parent: potentiallyPartialTokenParent,
-  } = potentiallyPartialTokenResult;
 
   if (
     potentiallyPartialToken.type === "paragraph" ||
@@ -1268,54 +1254,10 @@ function completePartialTokens(tokens: Token[]) {
         text.tokens = [];
       }
     }
-
-    // If the partial paragraph/text could turn into something else
-    // (e.g. an horizontal rule, a code block, a list, etc.), we can hide it for now.
-    if (PARTIAL_TEXT_ELEMENTS.includes(text.raw)) {
-      text.text = "";
-      text.tokens = [];
-
-      return tokens;
-    }
-  }
-
-  // If the code block is about to be closed, we can hide the trailing
-  // "`" or "``" for now.
-  if (potentiallyPartialToken.type === "code") {
-    const code = potentiallyPartialToken as Tokens.Code;
-    const codeLines = code.text.split("\n");
-
-    if (codeLines.length > 0) {
-      const lastCodeLine = codeLines[codeLines.length - 1]!;
-
-      if (PARTIAL_CODE_BLOCKS.includes(lastCodeLine)) {
-        code.text = code.text.slice(0, -lastCodeLine.length);
-      }
-
-      return tokens;
-    }
   }
 
   if (potentiallyPartialToken.type === "list_item") {
     const listItem = potentiallyPartialToken as Tokens.ListItem;
-
-    // If a list item and its list are only made of list indicators (e.g. "- "),
-    // we can hide the list for now.
-    if (
-      potentiallyPartialTokenParent?.type === "list" &&
-      !potentiallyPartialTokenParent.ordered &&
-      potentiallyPartialTokenParent.items.length === 1 &&
-      PARTIAL_LIST_INDICATORS.includes(potentiallyPartialTokenParent.raw)
-    ) {
-      const paragraph =
-        potentiallyPartialTokenParent as unknown as Tokens.Paragraph;
-
-      paragraph.type = "paragraph";
-      paragraph.text = "";
-      paragraph.tokens = [];
-
-      return tokens;
-    }
 
     // Marked.js only turns list items into tasks when the list marker
     // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
@@ -1347,13 +1289,6 @@ function completePartialTokens(tokens: Token[]) {
 
   if (potentiallyPartialToken.text.length === 0) {
     return tokens;
-  }
-
-  // If the partial token's text is a only a formatting delimiter,
-  // we can hide it for now.
-  if (FORMATTING_DELIMITERS.includes(potentiallyPartialToken.text)) {
-    potentiallyPartialToken.text = "";
-    potentiallyPartialToken.tokens = [];
   }
 
   // We optimistically complete inline content as a string then re-lex it
