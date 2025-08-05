@@ -14,7 +14,7 @@ describe("node package e2e", () => {
 
     expect(
       await client.createRoom(
-        "node-e2e",
+        "node-package-e2e",
         {
           defaultAccesses: ["room:write"],
         },
@@ -33,14 +33,14 @@ describe("node package e2e", () => {
 
     // delete existing data in the room
     await expect(
-      client.mutateStorage("node-e2e", ({ root }) => {
+      client.mutateStorage("node-package-e2e", ({ root }) => {
         root.delete("z");
       })
     ).resolves.toBeUndefined();
 
     // add data to the room
     await expect(
-      client.mutateStorage("node-e2e", ({ root }) => {
+      client.mutateStorage("node-package-e2e", ({ root }) => {
         expect(root.toImmutable()).toEqual({});
         // Mutate it!
         root.set("z", new LiveList([1, 2, 3]));
@@ -49,7 +49,7 @@ describe("node package e2e", () => {
 
     // add data to the room
     await expect(
-      client.mutateStorage("node-e2e", ({ root }) => {
+      client.mutateStorage("node-package-e2e", ({ root }) => {
         expect(root.toImmutable()).toEqual({ z: [1, 2, 3] });
       })
     ).resolves.toBeUndefined();
