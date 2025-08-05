@@ -82,7 +82,14 @@ export type UseSendAiMessageOptions = {
 };
 
 export type SendAiMessageOptions = UseSendAiMessageOptions & {
+  /**
+   * The ID of the chat to send the message to.
+   */
   chatId?: string;
+
+  /**
+   * The text of the message to send.
+   */
   text: string;
 };
 
