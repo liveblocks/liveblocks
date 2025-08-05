@@ -367,9 +367,10 @@ export type AiAssistantContentPart =
   | AiToolInvocationPart;
 
 export type AiAssistantDeltaUpdate =
-  | AiTextDelta // ...or a delta to append to the last sent part
-  | AiReasoningDelta // ...or a delta to append to the last sent part
-  | AiExecutingToolInvocationPart; // ...or a tool invocation chunk
+  | AiTextDelta // a delta appended to the last part (if text)
+  | AiReasoningDelta // a delta appended to the last part (if reasoning)
+  | AiReceivingToolInvocationPart // a partial/under-construction tool invocation (since protocol V5)
+  | AiExecutingToolInvocationPart; // a tool invocation ready to be executed by the client
 
 export type AiUserMessage = {
   id: MessageId;
@@ -456,6 +457,18 @@ export type AiKnowledgeSource = {
 
 // --------------------------------------------------------------------------------------------------
 
+export function findRight<T>(
+  array: T[],
+  predicate: (item: T) => boolean
+): number | undefined {
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (predicate(array[i])) {
+      return i;
+    }
+  }
+  return undefined;
+}
+
 export function patchContentWithDelta(
   content: AiAssistantContentPart[],
   delta: AiAssistantDeltaUpdate
@@ -486,9 +499,22 @@ export function patchContentWithDelta(
       }
       break;
 
-    case "tool-invocation":
-      content.push(delta);
+    case "tool-invocation": {
+      const existingIdx = findRight(
+        content,
+        (part) =>
+          part.type === "tool-invocation" &&
+          part.invocationId === delta.invocationId
+      );
+
+      // If the same invocation id already exists, replace it entirely
+      if (existingIdx !== undefined) {
+        content[existingIdx] = delta;
+      } else {
+        content.push(delta);
+      }
       break;
+    }
 
     default:
       return assertNever(delta, "Unhandled case");
