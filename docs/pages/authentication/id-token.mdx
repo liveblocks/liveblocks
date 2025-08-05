@@ -133,6 +133,10 @@ There are three permission values that you can set on rooms.
     Read access with presence. Enables people to edit their presence, but only
     view the room&rsquo;s storage. `isReadOnly` is `true`.
   </dd>
+  <dt>`["room:read", "room:presence:write", "comments:write"]`</dt>
+  <dd>
+    Read access with presence and comments. Enables people to edit their presence and create comments, but only view the room&rsquo;s storage. `isReadOnly` is `true`. Perfect for read-only editors with commenting capabilities.
+  </dd>
   <dt>`[]`</dt>
   <dd>Private. No one can enter the room.</dd>
 </dl>
@@ -181,6 +185,9 @@ access level to your room.
 
 // Read-only - everyone can view the room, but only presence can be edited
 "defaultAccesses": ["room:read", "room:presence:write"]
+
+// Read-only with comments - everyone can view the room and add comments, but cannot edit content
+"defaultAccesses": ["room:read", "room:presence:write", "comments:write"]
 ```
 
 #### Setting room access
