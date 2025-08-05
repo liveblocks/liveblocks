@@ -18,6 +18,41 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 31 (2025-08-01)
+
+## v3.2.1
+
+### `@liveblocks/react-ui`
+
+- Improve Markdown lists in `AiChat`: better spacing and support for arbitrary
+  starting numbers in ordered lists. (e.g. `3.` instead of `1.`)
+
+### `@liveblocks/react`
+
+- Fix `useSyncStatus` returning incorrect synchronization status for Yjs
+  provider. We now compare the hash of local and remote snapshot to check for
+  synchronization differences between local and remote Yjs document.
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksYjsProvider.getStatus()` returning incorrect synchronization
+  status for Yjs provider.
+
+## Dashboard
+
+- Add MAU breakdown to the historical usage table on the “Billing & usage” page (MAU used / Non-billed MAU).
+- Support OpenAI compatible AI models in AI Copilots.
+- Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
+
+## Doocumentation
+
+- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+
+## Contributors
+
+pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas, stevenfabre
+
 # Week 30 (2025-07-25)
 
 ## v3.2.0
