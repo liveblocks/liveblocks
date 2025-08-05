@@ -24,6 +24,7 @@ const PARTIAL_TABLE_HEADER_REGEX =
   /^\s*\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\s*\|\s*[-:|\s]*\s*)?$/;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
+const NEWLINE_REGEX = /\r\n?/g;
 const BUFFERED_CHARACTERS_REGEX =
   /(?<!\\)((\*+|_+|-+|~+|`+|=+|\++|\\|!|<\/?)\s*)$/;
 const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
@@ -440,7 +441,11 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
         return getMarkedTokens(content);
       }
 
-      const tokens = getMarkedTokens(trimPartialMarkdown(content));
+      const preprocessedContent = trimPartialMarkdown(
+        normalizeNewlines(content)
+      );
+
+      const tokens = getMarkedTokens(preprocessedContent);
 
       try {
         return completePartialTokens(tokens);
@@ -992,6 +997,10 @@ function findPotentiallyPartialToken(
   }
 
   return parentToken;
+}
+
+function normalizeNewlines(string: string) {
+  return string.replace(NEWLINE_REGEX, "\n");
 }
 
 /**

@@ -476,7 +476,7 @@ describe("Markdown", () => {
       {
         description: "images",
         content: dedent`
-          ![An image](https://www.liveblocks.io/favicon.png)
+          ![An image](https://www.liveblocks.io/favicon.svg)
         `,
         assertions: (element) => {
           const images = element.querySelectorAll("img");
@@ -484,7 +484,7 @@ describe("Markdown", () => {
           expect(images).toHaveLength(1);
           expect(images[0]).toHaveAttribute(
             "src",
-            "https://www.liveblocks.io/favicon.png"
+            "https://www.liveblocks.io/favicon.svg"
           );
         },
       },
@@ -1661,7 +1661,7 @@ describe("Markdown", () => {
       {
         description: "images",
         content: dedent`
-          ![An image](https://www.liveblocks.io/favicon.png)
+          ![An image](https://www.liveblocks.io/favicon.svg)
         `,
         components: {
           Image: ({ src, alt }) => <img src={src} alt={alt} data-image />,
@@ -1672,7 +1672,7 @@ describe("Markdown", () => {
           expect(image).toBeInTheDocument();
           expect(image).toHaveAttribute(
             "src",
-            "https://www.liveblocks.io/favicon.png"
+            "https://www.liveblocks.io/favicon.svg"
           );
           expect(image).toHaveAttribute("alt", "An image");
         },
