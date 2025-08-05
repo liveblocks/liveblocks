@@ -49,8 +49,9 @@ export interface AiComposerProps
   ) => void;
 
   /**
-   * @internal
    * The event handler called after the composer is submitted.
+   *
+   * @internal This API will change, and is not considered stable. DO NOT RELY on it.
    */
   onComposerSubmitted?: (message: AiChatMessage) => void;
 
