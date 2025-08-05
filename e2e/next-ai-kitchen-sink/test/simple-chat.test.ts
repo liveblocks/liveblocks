@@ -18,7 +18,9 @@ async function setupSimpleChat(page: Page) {
   ) {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+      timeout: 15000,
+    });
   }
 
   // Clear any existing text
@@ -41,7 +43,7 @@ test.describe("Simple Chat", () => {
 
     // Wait for the send button to become enabled again (back to primary variant)
     await expect(sendButton).toHaveAttribute("data-variant", "primary", {
-      timeout: 5000, // Give it up to 5 seconds for the AI response
+      timeout: 15000, // Give it up to 15 seconds for the AI response
     });
 
     // Check that a response message containing "pong" is received
@@ -49,11 +51,11 @@ test.describe("Simple Chat", () => {
     const assistantMessage = page
       .locator(".lb-ai-chat-assistant-message")
       .last();
-    await expect(assistantMessage).toBeVisible({ timeout: 5000 });
+    await expect(assistantMessage).toBeVisible({ timeout: 15000 });
 
     // Check if it contains "pong"
     await expect(assistantMessage).toContainText("pong", {
-      timeout: 5000,
+      timeout: 15000,
     });
   });
 
@@ -68,7 +70,7 @@ test.describe("Simple Chat", () => {
     );
 
     // The button should be enabled once we have text
-    await expect(sendButton).toBeEnabled({ timeout: 5000 });
+    await expect(sendButton).toBeEnabled({ timeout: 15000 });
     await sendButton.click();
 
     // Verify the button changes to abort state (secondary variant)
@@ -80,7 +82,7 @@ test.describe("Simple Chat", () => {
 
     // Verify the button goes back to send state (primary variant)
     await expect(sendButton).toHaveAttribute("data-variant", "primary", {
-      timeout: 5000,
+      timeout: 15000,
     });
     await expect(sendButton).toHaveAttribute("aria-label", "Send");
 
