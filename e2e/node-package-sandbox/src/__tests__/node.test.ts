@@ -1,8 +1,9 @@
 import { LiveList } from "@liveblocks/core";
 
 import { Liveblocks } from "@liveblocks/node";
-import * as dotenv from "dotenv";
-dotenv.config();
+import { config } from "dotenv";
+
+config();
 
 describe("node package e2e", () => {
   test("create the room", async () => {

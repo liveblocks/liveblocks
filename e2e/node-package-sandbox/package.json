@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@liveblocks/node": "*"
+    "@liveblocks/node": "*",
+    "dotenv": "^16.0.0"
   }
 }
