@@ -935,6 +935,95 @@ describe("Markdown", () => {
       );
     });
 
+    test("should render nested inline elements", () => {
+      assert(
+        dedent`
+        This is **bold _italic \`code
+      `,
+        (element) => {
+          const strong = element.querySelector("strong");
+          const em = strong?.querySelector("em");
+          const code = em?.querySelector("code");
+
+          expect(strong).toHaveTextContent("bold italic code");
+          expect(em).toHaveTextContent("italic code");
+          expect(code).toHaveTextContent("code");
+        }
+      );
+
+      assert(
+        dedent`
+        This is **bold _italic_ \`code
+      `,
+        (element) => {
+          const strong = element.querySelector("strong");
+          const em = strong?.querySelector("em");
+          const code = strong?.querySelector("code");
+
+          expect(strong).toHaveTextContent("bold italic code");
+          expect(em).toHaveTextContent("italic");
+          expect(code).toHaveTextContent("code");
+        }
+      );
+
+      assert(
+        dedent`
+        This is a **bold [link
+      `,
+        (element) => {
+          const strong = element.querySelector("strong");
+          const link = strong?.querySelector("a");
+
+          expect(strong).toHaveTextContent("bold link");
+          expect(link).toHaveTextContent("link");
+          expect(link).toHaveAttribute("href", "#");
+        }
+      );
+
+      assert(
+        dedent`
+        This isn't a \`code [link
+      `,
+        (element) => {
+          const code = element.querySelector("code");
+          const link = code?.querySelector("a");
+
+          expect(code).toHaveTextContent("code [link");
+          expect(link).not.toBeInTheDocument();
+        }
+      );
+
+      assert(
+        dedent`
+        This is a [link with \`code
+      `,
+        (element) => {
+          const link = element.querySelector("a");
+          const code = link?.querySelector("code");
+
+          expect(link).toHaveTextContent("link with code");
+          expect(link).toHaveAttribute("href", "#");
+          expect(code).toHaveTextContent("code");
+        }
+      );
+
+      assert(
+        dedent`
+        This is a [link with **bold \`code\`
+      `,
+        (element) => {
+          const link = element.querySelector("a");
+          const strong = link?.querySelector("strong");
+          const code = strong?.querySelector("code");
+
+          expect(link).toHaveTextContent("link with bold code");
+          expect(link).toHaveAttribute("href", "#");
+          expect(strong).toHaveTextContent("bold code");
+          expect(code).toHaveTextContent("code");
+        }
+      );
+    });
+
     test("should render lists", () => {
       assert(
         dedent`
