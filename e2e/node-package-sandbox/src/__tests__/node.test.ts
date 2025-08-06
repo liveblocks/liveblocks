@@ -1,11 +1,10 @@
 import { LiveList } from "@liveblocks/core";
-
 import { Liveblocks } from "@liveblocks/node";
 import { config } from "dotenv";
 
 config();
 
-describe("node package e2e", () => {
+describe("@liveblocks/node package e2e", () => {
   test("create the room", async () => {
     const client = new Liveblocks({
       secret: process.env.LIVEBLOCKS_SECRET_KEY!,
