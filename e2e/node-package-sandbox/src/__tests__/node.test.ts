@@ -10,7 +10,10 @@ describe("node package e2e", () => {
     const client = new Liveblocks({
       secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       // @ts-expect-error hidden config
-      baseUrl: process.env.LIVEBLOCKS_BASE_URL ?? "https://api.liveblocks.io",
+      baseUrl:
+        process.env.LIVEBLOCKS_BASE_URL ??
+        process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ??
+        "https://api.liveblocks.io",
     });
 
     expect(
@@ -26,7 +29,10 @@ describe("node package e2e", () => {
     const client = new Liveblocks({
       secret: process.env.LIVEBLOCKS_SECRET_KEY!,
       // @ts-expect-error hidden config
-      baseUrl: process.env.LIVEBLOCKS_BASE_URL ?? "https://api.liveblocks.io",
+      baseUrl:
+        process.env.LIVEBLOCKS_BASE_URL ??
+        process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ??
+        "https://api.liveblocks.io",
     });
 
     // delete existing data in the room
