@@ -15,8 +15,6 @@ export async function POST(request: NextRequest) {
     const authType =
       request.nextUrl.searchParams.get("authType") || "auth-visible";
 
-    console.log("authType", authType);
-
     // Get user based on auth type
     let user;
     let permissions: string[] = [];

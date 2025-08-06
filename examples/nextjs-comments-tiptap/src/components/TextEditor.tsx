@@ -1,6 +1,6 @@
 "use client";
 
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense, useSelf } from "@liveblocks/react";
 import {
   FloatingComposer,
   FloatingToolbar,
@@ -20,6 +20,12 @@ import { Button } from "./Button";
 import { createRoomWithContent } from "@/app/actions";
 
 export function TextEditor() {
+  const { isLoaded } = useScenario();
+
+  if (!isLoaded) {
+    return <DocumentSpinner />;
+  }
+
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
       <Editor />
@@ -30,13 +36,15 @@ export function TextEditor() {
 // Collaborative text editor with simple rich text and live cursors
 export function Editor() {
   const liveblocks = useLiveblocksExtension({
-    offlineSupport_experimental: true,
+    // offlineSupport_experimental: true,
   });
   const { scenario } = useScenario();
 
+  // console.log("scenario", scenario);
+
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
-    editable: scenario === "auth-visible",
+    //editable: scenario === "auth-visible",
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -57,6 +65,14 @@ export function Editor() {
       }),
     ],
   });
+
+  // Check if user has write access in current room
+  const canWrite = useSelf((me) => me.canWrite) || false;
+
+  // If canWrite changes, sync to Tiptap, as we're defaulting to false in the config
+  if (editor && editor.isEditable !== canWrite) {
+    editor.setEditable(canWrite);
+  }
 
   return (
     <div

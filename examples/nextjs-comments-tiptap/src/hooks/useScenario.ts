@@ -7,7 +7,7 @@ export type Scenario = "auth-hidden" | "anonymous" | "auth-visible";
 const STORAGE_KEY = "liveblocks-scenario";
 
 export function useScenario() {
-  const [scenario, setScenario] = useState<Scenario>("auth-visible");
+  const [scenario, setScenario] = useState<Scenario | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -27,5 +27,5 @@ export function useScenario() {
     window.location.reload();
   };
 
-  return { scenario, updateScenario, isLoaded };
+  return { scenario, updateScenario, isLoaded: isLoaded && scenario !== null };
 }
