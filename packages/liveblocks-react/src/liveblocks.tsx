@@ -6,6 +6,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AiUserMessage,
   AsyncResult,
   BaseRoomInfo,
   CopilotId,
@@ -16,6 +17,7 @@ import type {
   OpaqueClient,
   PartialNotificationSettings,
   SyncStatus,
+  WithRequired,
 } from "@liveblocks/core";
 import {
   assert,
@@ -56,12 +58,14 @@ import type {
   AiChatMessagesAsyncSuccess,
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
+  CreateAiChatOptions,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   NotificationSettingsAsyncResult,
   NotificationSettingsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
+  SendAiMessageOptions,
   SharedContextBundle,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
@@ -1106,17 +1110,25 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
  *
  * @example
  * const createAiChat = useCreateAiChat();
+ *
+ * // Create a chat with an automatically generated title
+ * createAiChat("ai-chat-id");
+ *
+ * // Create a chat with a custom title
  * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
  */
-function useCreateAiChat() {
+function useCreateAiChat(): {
+  (chatId: string): void;
+  (options: CreateAiChatOptions): void;
+} {
   const client = useClient();
 
   return useCallback(
-    (options: {
-      id: string;
-      title?: string;
-      metadata?: Record<string, string | string[]>;
-    }) => {
+    (options: string | CreateAiChatOptions) => {
+      if (typeof options === "string") {
+        options = { id: options };
+      }
+
       client[kInternal].ai
         .getOrCreateChat(options.id, {
           title: options.title,
@@ -1158,54 +1170,136 @@ function useDeleteAiChat() {
  * Returns a function to send a message in an AI chat.
  *
  * @example
- * const sendMessage = useSendAiMessage(chatId);
- * sendMessage("Hello, Liveblocks AI!");
+ * const sendAiMessage = useSendAiMessage("chat-id");
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+ * sendAiMessage({ text: "Hello, Liveblocks AI!", copilotId: "co_yyy" });
  */
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string) => void {
+): {
+  (text: string): AiUserMessage;
+  (options: SendAiMessageOptions): AiUserMessage;
+};
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+ */
+function useSendAiMessage(): (
+  options: WithRequired<SendAiMessageOptions, "chatId">
+) => AiUserMessage;
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId);
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can also pass the chat ID dynamically if it's not known when calling the hook.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+ */
+function useSendAiMessage(
+  chatId?: string,
+  options?: UseSendAiMessageOptions
+): {
+  (text: string): AiUserMessage;
+  (options: SendAiMessageOptions): AiUserMessage;
+  (options: WithRequired<SendAiMessageOptions, "chatId">): AiUserMessage;
+} {
   const client = useClient();
-  const copilotId = options?.copilotId;
 
   return useCallback(
-    (message: string) => {
+    (message: string | SendAiMessageOptions) => {
+      const {
+        text: messageText,
+        chatId: messageOptionsChatId,
+        ...messageOptions
+      } = typeof message === "string" ? { text: message } : message;
+      const resolvedChatId =
+        messageOptionsChatId ??
+        chatId ??
+        // The `useSendAiMessage` overloads prevent this scenario from happening
+        // at the type level, and this error prevents it from happening at runtime.
+        raise(
+          "chatId must be provided to either `useSendAiMessage` or its returned function."
+        );
+
       const messages = client[kInternal].ai.signals
-        .getChatMessagesForBranchΣ(chatId)
+        .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
 
       const lastMessageId = messages[messages.length - 1]?.id ?? null;
 
-      const content = [{ type: "text" as const, text: message }];
+      const content = [{ type: "text" as const, text: messageText }];
       const newMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
-        chatId,
+        resolvedChatId,
         "user",
         lastMessageId,
         content
       );
+      const newMessage = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.getMessageById(newMessageId) as AiUserMessage;
 
       const targetMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
-        chatId,
+        resolvedChatId,
         "assistant",
         newMessageId
       );
 
       void client[kInternal].ai.askUserMessageInChat(
-        chatId,
+        resolvedChatId,
         { id: newMessageId, parentMessageId: lastMessageId, content },
         targetMessageId,
         {
-          stream: options?.stream,
-          copilotId: copilotId as CopilotId | undefined,
-          timeout: options?.timeout,
+          stream: messageOptions.stream ?? options?.stream,
+          copilotId: (messageOptions.copilotId ?? options?.copilotId) as
+            | CopilotId
+            | undefined,
+          timeout: messageOptions.timeout ?? options?.timeout,
         }
       );
+
+      return newMessage;
     },
-    [client, chatId, copilotId, options?.stream, options?.timeout]
+    [client, chatId, options?.copilotId, options?.stream, options?.timeout]
   );
 }
 

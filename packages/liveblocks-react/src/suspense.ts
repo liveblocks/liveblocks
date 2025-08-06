@@ -9,6 +9,7 @@ export type {
   MutationContext,
   UseSendAiMessageOptions,
   UseThreadsOptions,
+  SendAiMessageOptions,
 } from "./types";
 
 // Re-exports from @liveblocks/client, for convenience

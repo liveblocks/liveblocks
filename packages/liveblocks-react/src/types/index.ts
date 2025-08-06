@@ -16,6 +16,7 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
+  AiUserMessage,
   AsyncError,
   AsyncLoading,
   AsyncResult,
@@ -41,6 +42,7 @@ import type {
   ThreadData,
   ToImmutable,
   WithNavigation,
+  WithRequired,
 } from "@liveblocks/core";
 import type {
   ComponentType,
@@ -65,15 +67,37 @@ export type UseSyncStatusOptions = {
 
 export type UseSendAiMessageOptions = {
   /**
-   * The id of the copilot to use to send the message.
+   * The ID of the copilot to use to send the message.
    */
   copilotId?: string;
 
-  /** Stream the response as it is being generated. Defaults to true. */
+  /**
+   * Stream the response as it is being generated. Defaults to true.
+   */
   stream?: boolean;
 
-  /** The maximum timeout for the answer to be generated. */
+  /**
+   * The maximum timeout for the answer to be generated.
+   */
   timeout?: number;
+};
+
+export type SendAiMessageOptions = UseSendAiMessageOptions & {
+  /**
+   * The ID of the chat to send the message to.
+   */
+  chatId?: string;
+
+  /**
+   * The text of the message to send.
+   */
+  text: string;
+};
+
+export type CreateAiChatOptions = {
+  id: string;
+  title?: string;
+  metadata?: Record<string, string | string[]>;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
@@ -1252,13 +1276,17 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    *
    * @example
    * const createAiChat = useCreateAiChat();
+   *
+   * // Create a chat with an automatically generated title
+   * createAiChat("ai-chat-id");
+   *
+   * // Create a chat with a custom title
    * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
    */
-  useCreateAiChat(): (options: {
-    id: string;
-    title?: string;
-    metadata?: Record<string, string | string[]>;
-  }) => void;
+  useCreateAiChat(): {
+    (chatId: string): void;
+    (options: CreateAiChatOptions): void;
+  };
 
   /**
    * Returns a function that deletes the AI chat with the specified id.
@@ -1273,13 +1301,75 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * Returns a function to send a message in an AI chat.
    *
    * @example
-   * const sendMessage = useSendAiMessage(chatId);
-   * sendMessage("Hello, Liveblocks AI!");
+   * const sendAiMessage = useSendAiMessage("chat-id");
+   * sendAiMessage("Hello, Liveblocks AI!");
+   *
+   * You can set options related to the message being sent, such as the copilot ID to use.
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+   * sendAiMessage("Hello, Liveblocks AI!");
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+   * sendAiMessage({ text: "Hello, Liveblocks AI!", copilotId: "co_yyy" });
    */
   useSendAiMessage(
     chatId: string,
     options?: UseSendAiMessageOptions
-  ): (message: string) => void;
+  ): {
+    (text: string): AiUserMessage;
+    (options: SendAiMessageOptions): AiUserMessage;
+  };
+
+  /**
+   * Returns a function to send a message in an AI chat.
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage();
+   * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+   *
+   * You can set options related to the message being sent, such as the copilot ID to use.
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage();
+   * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+   */
+  useSendAiMessage(): (
+    message: WithRequired<SendAiMessageOptions, "chatId">
+  ) => AiChatMessage;
+
+  /**
+   * Returns a function to send a message in an AI chat.
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage(chatId);
+   * sendAiMessage("Hello, Liveblocks AI!");
+   *
+   * You can set options related to the message being sent, such as the copilot ID to use.
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
+   * sendAiMessage("Hello, Liveblocks AI!");
+   *
+   * You can also pass the chat ID dynamically if it's not known when calling the hook.
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage();
+   * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+   *
+   * @example
+   * const sendAiMessage = useSendAiMessage();
+   * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+   */
+  useSendAiMessage(
+    chatId?: string,
+    options?: UseSendAiMessageOptions
+  ): {
+    (text: string): AiUserMessage;
+    (options: SendAiMessageOptions): AiUserMessage;
+    (options: WithRequired<SendAiMessageOptions, "chatId">): AiUserMessage;
+  };
 };
 
 export type LiveblocksContextBundle<

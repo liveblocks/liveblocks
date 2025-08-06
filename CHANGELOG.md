@@ -10,6 +10,14 @@
 - Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
   other instances of `AiChat` that are currently mounted on screen.
 
+### `@liveblocks/react`
+
+- `useSendAiMessage` now accepts passing the chat ID and/or options to the
+  function rather than the hook. This can be useful in dynamic scenarios where
+  the chat ID might not be known when calling the hook for example.
+- `useCreateAiChat` now accepts a chat ID as a string instead of
+  `{ id: "chat-id" }`.
+
 ## v3.2.1
 
 ### `@liveblocks/react-ui`
