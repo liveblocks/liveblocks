@@ -922,6 +922,7 @@ describe("Markdown", () => {
         }
       );
 
+      // Links can have titles.
       assert(
         dedent`
         This is a [link](https://www.liveblocks.io "Liveblocks
@@ -931,6 +932,29 @@ describe("Markdown", () => {
 
           expect(link).toHaveTextContent("link");
           expect(link).toHaveAttribute("href", "#");
+        }
+      );
+
+      // Footnotes aren't links.
+      assert(
+        dedent`
+        This isn't a [^
+      `,
+        (element) => {
+          const link = element.querySelector("a");
+
+          expect(link).not.toBeInTheDocument();
+        }
+      );
+
+      assert(
+        dedent`
+        This isn't a [^1
+      `,
+        (element) => {
+          const link = element.querySelector("a");
+
+          expect(link).not.toBeInTheDocument();
         }
       );
     });
