@@ -10,8 +10,9 @@ const liveblocks = new Liveblocks({
 });
 
 export async function POST(request: NextRequest) {
-  // Get the current user's unique id and info from your database
-  const user = getRandomUser();
+  // Always use the first user for consistent authentication
+  const users = await import("@/database").then(m => m.getUsers());
+  const user = users[0];
 
   // Create a session for the current user
   // userInfo is made available in Liveblocks presence hooks, e.g. useOthers

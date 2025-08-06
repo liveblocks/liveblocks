@@ -1,61 +1,40 @@
+import { ComponentProps, forwardRef } from "react";
+import { Icon } from "@liveblocks/react-ui";
 import clsx from "clsx";
-import Link from "next/link";
-import { ComponentProps, ReactNode, forwardRef } from "react";
-import styles from "./Button.module.css";
 
-interface Props {
-  variant?: "primary" | "secondary" | "subtle" | "destructive";
-  icon?: ReactNode;
+export interface ButtonProps extends ComponentProps<"button"> {
+  variant?: "primary" | "secondary" | "destructive" | "subtle";
+  icon?: React.ReactNode;
 }
 
-export const Button = forwardRef<
-  HTMLButtonElement,
-  ComponentProps<"button"> & Props
->(({ variant = "primary", icon, children, className, ...props }, ref) => (
-  <button
-    ref={ref}
-    className={clsx(
-      className,
-      styles.button,
-      icon !== undefined && !children && styles.iconButton,
-      {
-        [styles.buttonPrimary]: variant === "primary",
-        [styles.buttonSecondary]: variant === "secondary",
-        [styles.buttonSubtle]: variant === "subtle",
-        [styles.buttonDestructive]: variant === "destructive",
-      }
-    )}
-    {...props}
-  >
-    {icon && <span className={styles.icon}>{icon}</span>}
-    {children && <span className={styles.label}>{children}</span>}
-  </button>
-));
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ icon, children, variant = "primary", className, ...props }, ref) => {
+    const baseClasses = "flex h-13 px-7 rounded-sm place-items-center transition-all duration-150 ease-in-out outline-none disabled:cursor-default disabled:opacity-50";
+    const iconOnlyClasses = "w-13 px-0 place-content-center";
+    
+    const variantClasses = {
+      primary: "bg-accent text-surface-elevated hover:opacity-80 focus-visible:opacity-80",
+      destructive: "bg-red text-surface-elevated hover:opacity-80 focus-visible:opacity-80",
+      secondary: "bg-surface text-text-light hover:bg-surface-hover hover:text-text focus-visible:bg-surface-hover focus-visible:text-text",
+      subtle: "text-text-lighter hover:bg-surface hover:text-text-light focus-visible:bg-surface focus-visible:text-text-light data-[active]:bg-surface data-[active]:text-text-light"
+    };
 
-export function LinkButton({
-  variant = "primary",
-  icon,
-  children,
-  className,
-  ...props
-}: ComponentProps<typeof Link> & Props) {
-  return (
-    <Link
-      className={clsx(
-        className,
-        styles.button,
-        icon !== undefined && !children && styles.iconButton,
-        {
-          [styles.buttonPrimary]: variant === "primary",
-          [styles.buttonSecondary]: variant === "secondary",
-          [styles.buttonSubtle]: variant === "subtle",
-          [styles.buttonDestructive]: variant === "destructive",
-        }
-      )}
-      {...props}
-    >
-      {icon && <span className={styles.icon}>{icon}</span>}
-      {children && <span className={styles.label}>{children}</span>}
-    </Link>
-  );
-}
+    return (
+      <button
+        className={clsx(
+          baseClasses,
+          variantClasses[variant],
+          {
+            [iconOnlyClasses]: !children,
+          },
+          className
+        )}
+        ref={ref}
+        {...props}
+      >
+        {icon ? <Icon className={clsx("w-4 h-4", children && "-ml-1 mr-4")}>{icon}</Icon> : null}
+        {children ? <span className="text-sm font-medium">{children}</span> : null}
+      </button>
+    );
+  }
+);

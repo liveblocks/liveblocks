@@ -1,14 +1,14 @@
 "use client";
 
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
-import styles from "./Avatars.module.css";
+import clsx from "clsx";
 
 export function Avatars() {
   const users = useOthers();
   const currentUser = useSelf();
 
   return (
-    <div className={styles.avatars}>
+    <div className="flex px-3">
       {users.map(({ connectionId, info }) => {
         return (
           <Avatar key={connectionId} picture={info.avatar} name={info.name} />
@@ -29,12 +29,15 @@ export function Avatars() {
 
 export function Avatar({ picture, name }: { picture: string; name: string }) {
   return (
-    <div className={styles.avatar} data-tooltip={name}>
+    <div
+      className="flex flex-shrink-0 place-content-center relative border-4 border-surface-elevated rounded-full w-9 h-9 bg-gray-400 -ml-3 before:content-[attr(data-tooltip)] before:absolute before:top-full before:opacity-0 before:transition-opacity before:duration-150 before:ease-in-out before:py-1 before:px-2 before:text-surface-elevated before:text-xs before:rounded-lg before:mt-2 before:z-10 before:bg-text before:whitespace-nowrap hover:before:opacity-100"
+      data-tooltip={name}
+    >
       <img
-        alt={name}
         src={picture}
-        className={styles.avatar_picture}
+        className="w-full h-full rounded-full"
         data-tooltip={name}
+        alt={name}
       />
     </div>
   );

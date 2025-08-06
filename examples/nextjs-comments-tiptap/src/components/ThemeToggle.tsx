@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { MoonIcon, SunIcon } from "@/icons";
-import styles from "./Toolbar.module.css";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -16,7 +15,7 @@ export function ThemeToggle() {
 
   return (
     <Button
-      className={styles.toolbarButton}
+      className="w-10 h-10 p-0 flex items-center justify-center"
       variant="subtle"
       onClick={changeTheme}
       aria-label="Switch Theme"

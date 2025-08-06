@@ -2,11 +2,24 @@
 
 import { LiveblocksProvider } from "@liveblocks/react";
 import { PropsWithChildren } from "react";
+import { useScenario } from "@/hooks/useScenario";
 
 export function Providers({ children }: PropsWithChildren) {
+  const { scenario, isLoaded } = useScenario();
+
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
+  const isAnonymous = scenario === 'anonymous';
+  
+  const liveblocksProps = isAnonymous 
+    ? { publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || "pk_prod_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }
+    : { authEndpoint: "/api/liveblocks-auth" };
+
   return (
     <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
+      {...liveblocksProps}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(

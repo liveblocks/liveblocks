@@ -30,10 +30,14 @@ export function Room({ children }: { children: ReactNode }) {
 function useExampleRoomId(roomId: string) {
   const params = useSearchParams();
   const exampleId = params?.get("exampleId");
+  const customRoomId = params?.get("roomId");
 
   const exampleRoomId = useMemo(() => {
+    if (customRoomId) {
+      return `liveblocks:examples:${customRoomId}`;
+    }
     return exampleId ? `${roomId}-${exampleId}` : roomId;
-  }, [roomId, exampleId]);
+  }, [roomId, exampleId, customRoomId]);
 
   return exampleRoomId;
 }

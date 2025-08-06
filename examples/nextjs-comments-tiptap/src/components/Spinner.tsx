@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
-import styles from "./Spinner.module.css";
 
 export interface Props extends ComponentProps<"svg"> {
   size?: number;
@@ -14,7 +13,7 @@ export function Spinner({ size = 16, className, ...props }: Props) {
       viewBox="0 0 16 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={clsx(className, styles.spinner)}
+      className={clsx(className, "animate-spin")}
       {...props}
     >
       <path
@@ -29,7 +28,7 @@ export function Spinner({ size = 16, className, ...props }: Props) {
 
 export function DocumentSpinner() {
   return (
-    <div className={styles.documentSpinner}>
+    <div className="flex items-center justify-center w-full h-full">
       <Spinner size={24} />
     </div>
   );
