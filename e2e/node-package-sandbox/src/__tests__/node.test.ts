@@ -16,15 +16,12 @@ describe("node package e2e", () => {
     expect(
       await client.createRoom(
         "node-package-e2e",
-        {
-          defaultAccesses: ["room:write"],
-        },
-        {
-          idempotent: true,
-        }
+        { defaultAccesses: ["room:write"] },
+        { idempotent: true }
       )
     ).toBeDefined();
   });
+
   test("storage mutation should work in node environment", async () => {
     const client = new Liveblocks({
       secret: process.env.LIVEBLOCKS_SECRET_KEY!,
