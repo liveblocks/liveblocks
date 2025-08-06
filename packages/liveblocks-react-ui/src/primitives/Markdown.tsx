@@ -22,6 +22,7 @@ const PARTIAL_LINK_IMAGE_REGEX =
   /(?<!\\)(?<image>!)?\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
   /^\s*\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\s*\|\s*[-:|\s]*\s*)?$/;
+const PARTIAL_EMOJI_REGEX = /([\uD800-\uDBFF]|\p{Emoji_Presentation})+$/u;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 const NEWLINE_REGEX = /\r\n?/g;
@@ -1037,10 +1038,14 @@ function trimPartialMarkdown(markdown: string) {
 }
 
 /**
- * Optimistically complete a Markdown string of inline content.
+ * Optimistically complete a Markdown string of inline content:
  *
  * - Bold, italic, strikethrough, and inline code
  * - Links
+ *
+ * Remove any remaining partial content:
+ *
+ * - Emoji
  */
 function completePartialInlineMarkdown(
   markdown: string,
@@ -1049,6 +1054,21 @@ function completePartialInlineMarkdown(
   const stack: { string: string; length: number; index: number }[] = [];
   const allowLinksImages = options.allowLinksImages ?? true;
   let completedMarkdown = markdown;
+
+  // Trim any partial emoji.
+  //
+  // We do this here rather than in `trimPartialMarkdown` because
+  // `trimPartialMarkdown` needs to run before Marked.js to prevent
+  // it from parsing partial Markdown syntax, emojis won't be parsed
+  // by Marked.js so we can trim them here to be a bit more efficient.
+  const partialEmojiMatch = completedMarkdown.match(PARTIAL_EMOJI_REGEX);
+
+  if (partialEmojiMatch) {
+    completedMarkdown = completedMarkdown.slice(
+      0,
+      -partialEmojiMatch[0].length
+    );
+  }
 
   // Move forward through the string to collect delimiters.
   for (let i = 0; i < completedMarkdown.length; i++) {
