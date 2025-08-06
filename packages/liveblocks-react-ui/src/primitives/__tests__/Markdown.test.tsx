@@ -980,6 +980,7 @@ describe("Markdown", () => {
         }
       );
 
+      // Links can't be inside inline code.
       assert(
         dedent`
         This isn't a \`code [link
@@ -1253,6 +1254,8 @@ describe("Markdown", () => {
         }
       );
 
+      // Code blocks shouldn't be completed/changed.
+      // In this case, the ending looks like a partial link.
       assert(
         dedent`
         \`\`\`
