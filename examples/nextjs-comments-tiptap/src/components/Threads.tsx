@@ -132,7 +132,7 @@ const CustomComment = memo(function CustomComment({
       />
       <div className="px-16 pb-6 pt-0.5 -mt-15 z-10 relative">
         <button
-          className="flex h-11 w-15 justify-center items-center gap-1.5 rounded-full border border-solid border-gray-200 text-base text-gray-400 hover:bg-gray-100 data-[picked]:border-blue-300 data-[picked]:bg-blue-50 data-[picked]:text-blue-600"
+          className="flex h-11 w-15 justify-center items-center gap-1.5 rounded-full border border-solid border-gray-200 text-base text-gray-400 not-disabled:hover:bg-gray-100 data-[picked]:border-blue-300 data-[picked]:bg-blue-50 data-[picked]:text-blue-600"
           data-picked={hasUpvoted || undefined}
           onClick={() =>
             hasUpvoted
