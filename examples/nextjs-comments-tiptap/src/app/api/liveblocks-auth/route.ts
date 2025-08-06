@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           info: {
             name: "Anonymous User",
             color: "#888888",
-            avatar: "https://liveblocks.io/avatars/avatar-anonymous.png",
+            avatar: "",
           },
         };
         break;
