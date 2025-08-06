@@ -1255,6 +1255,22 @@ describe("Markdown", () => {
 
       assert(
         dedent`
+        \`\`\`
+        const [count, setCount
+      `,
+        (element) => {
+          const codeBlock = element.querySelector("pre");
+
+          expect(codeBlock).toBeInTheDocument();
+          expect(codeBlock?.querySelector("code")?.innerHTML).toBe(
+            "const [count, setCount"
+          );
+          expect(codeBlock).toHaveAttribute("data-language", "");
+        }
+      );
+
+      assert(
+        dedent`
         \`\`\`css
         p {
           color: #000;

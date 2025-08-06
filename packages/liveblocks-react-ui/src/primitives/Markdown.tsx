@@ -941,10 +941,6 @@ function findPotentiallyPartialToken(
           return lastListItemLastToken as Tokens.Text;
         }
 
-        if (lastListItemLastToken.type === "code") {
-          return lastListItemLastToken as Tokens.Code;
-        }
-
         if (isBlockToken(lastListItemLastToken)) {
           return findPotentiallyPartialToken(
             lastListItemLastToken.tokens,
@@ -987,10 +983,6 @@ function findPotentiallyPartialToken(
       lastNonEmptyTableCell.tokens,
       lastNonEmptyTableCell
     );
-  }
-
-  if (lastToken.type === "code") {
-    return lastToken as Tokens.Code;
   }
 
   if (isBlockToken(lastToken)) {
