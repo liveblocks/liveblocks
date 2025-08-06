@@ -30,6 +30,7 @@ const BUFFERED_CHARACTERS_REGEX =
 const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
 
 const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
+const DEFAULT_PARTIAL_LINK_URL = "#";
 
 type CheckboxToken = {
   type: "checkbox";
@@ -1049,8 +1050,12 @@ function trimPartialMarkdown(markdown: string) {
  * - Bold, italic, strikethrough, and inline code
  * - Links
  */
-function completePartialInlineMarkdown(markdown: string): string {
+function completePartialInlineMarkdown(
+  markdown: string,
+  options: { allowLinksImages?: boolean } = {}
+): string {
   const stack: { string: string; length: number; index: number }[] = [];
+  const allowLinksImages = options.allowLinksImages ?? true;
   let completedMarkdown = markdown;
 
   // Move forward through the string to collect delimiters.
@@ -1109,54 +1114,72 @@ function completePartialInlineMarkdown(markdown: string): string {
     }
   }
 
-  const isInsideInlineCode = stack.some(
-    (delimiter) => delimiter.string === "`"
-  );
-
-  // Before closing open delimiters, we can look for partial links/images,
-  // unless we're inside an open inline code element.
-  if (!isInsideInlineCode) {
+  if (allowLinksImages) {
     const partialLinkImageMatch = completedMarkdown.match(
       PARTIAL_LINK_IMAGE_REGEX
     );
 
     if (partialLinkImageMatch) {
-      const partialLinkImageContent = partialLinkImageMatch[0];
-      const {
-        text: partialLinkText,
-        url: partialLinkUrl,
-        image: isImage,
-      } = partialLinkImageMatch.groups!;
+      const linkImageStartIndex = partialLinkImageMatch.index!;
+      const linkImageEndIndex =
+        linkImageStartIndex + partialLinkImageMatch[0].length;
 
-      if (isImage) {
-        // We can't optimistically complete images, so we remove them until they are complete.
-        completedMarkdown = completedMarkdown.slice(
-          0,
-          -partialLinkImageContent.length
-        );
-      } else if (partialLinkUrl !== undefined) {
-        if (WHITESPACE_REGEX.test(partialLinkUrl) || !isUrl(partialLinkUrl)) {
-          // "[Link](https://" → "[Link](#)"
-          // "[Link](https://liveblocks.io 'With a title" → "[Link](#)"
+      const isInsideInlineCodeBeforeLinkImage = stack.some(
+        (delimiter) =>
+          delimiter.string === "`" && delimiter.index < linkImageStartIndex
+      );
+
+      if (!isInsideInlineCodeBeforeLinkImage) {
+        const partialLinkImageContent = partialLinkImageMatch[0];
+        const {
+          text: partialLinkText,
+          url: partialLinkUrl,
+          image: isImage,
+        } = partialLinkImageMatch.groups!;
+
+        if (isImage) {
+          // We can't optimistically complete images, so we remove them until they are complete.
           completedMarkdown = completedMarkdown.slice(
             0,
             -partialLinkImageContent.length
           );
-          completedMarkdown += `[${partialLinkText}](#)`;
         } else {
-          // "[Link](https://liveblocks.io" → "[Link](https://liveblocks.io)"
-          completedMarkdown += ")";
-        }
-      } else {
-        if (partialLinkImageContent.endsWith("](")) {
-          // "[Link](" → "[Link](#)"
-          completedMarkdown += "#)";
-        } else if (partialLinkImageContent.endsWith("]")) {
-          // "[Link]" → "[Link](#)"
-          completedMarkdown += "(#)";
-        } else {
-          // "[Link" → "[Link](#)"
-          completedMarkdown += "](#)";
+          // We can remove delimiters from the stack that are inside the completed link,
+          // since they are now closed.
+          for (let i = stack.length - 1; i >= 0; i--) {
+            const delimiter = stack[i]!;
+            if (
+              delimiter.index >= linkImageStartIndex &&
+              delimiter.index < linkImageEndIndex
+            ) {
+              stack.splice(i, 1);
+            }
+          }
+
+          const completedLinkText = partialLinkText
+            ? partialLinkUrl
+              ? // If there's a partial URL, the text is already completed.
+                partialLinkText
+              : // Otherwise, we complete the text and its potential nested elements.
+                completePartialInlineMarkdown(partialLinkText, {
+                  // Links/images cannot be nested.
+                  allowLinksImages: false,
+                })
+            : "";
+          const completedLinkUrl =
+            partialLinkUrl &&
+            !WHITESPACE_REGEX.test(partialLinkUrl) &&
+            isUrl(partialLinkUrl)
+              ? // We only use the partial URL if it's valid.
+                partialLinkUrl
+              : DEFAULT_PARTIAL_LINK_URL;
+          const completedLink = `[${completedLinkText}](${completedLinkUrl})`;
+
+          completedMarkdown = completedMarkdown.slice(
+            0,
+            -partialLinkImageContent.length
+          );
+          completedMarkdown += completedLink;
         }
       }
     }
