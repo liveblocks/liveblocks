@@ -41,7 +41,8 @@ export function Editor() {
     editorProps: {
       attributes: {
         // Add styles to editor element
-        class: "border-0 rounded-none flex-grow w-full h-full p-20 focus:outline-none",
+        class:
+          "border-0 rounded-none flex-grow w-full h-full p-20 focus:outline-none",
       },
     },
     extensions: [
@@ -66,22 +67,24 @@ export function Editor() {
         <Avatars />
       </div>
       <div className="flex-1 overflow-y-auto scroll-smooth">
-        {scenario !== 'auth-hidden' && (
-          <FloatingToolbar editor={editor} />
-        )}
-        <div className={clsx(
-          "-ml-[310px] min-h-0 h-auto",
-          "max-xl:ml-0 max-xl:px-8"
-        )}>
+        {scenario !== "auth-hidden" && <FloatingToolbar editor={editor} />}
+        <div
+          className={clsx(
+            "-ml-[310px] min-h-0 h-auto",
+            "max-xl:ml-0 max-xl:px-8"
+          )}
+        >
           <div className="relative min-h-[1100px] w-full max-w-[800px] mx-auto my-8 border border-border bg-surface-elevated">
             <EditorContent editor={editor} />
-            {scenario !== 'auth-hidden' && (
+            {scenario !== "auth-hidden" && (
               <FloatingComposer editor={editor} style={{ width: 350 }} />
             )}
-            <div className={clsx(
-              "absolute top-0 left-full ml-8 min-w-[310px]",
-              "max-xl:hidden"
-            )}>
+            <div
+              className={clsx(
+                "absolute top-0 left-full ml-8 min-w-[310px]",
+                "max-xl:hidden"
+              )}
+            >
               <Threads editor={editor} />
             </div>
           </div>
@@ -142,14 +145,16 @@ function Threads({ editor }: { editor: TEditor | null }) {
   const { scenario } = useScenario();
   const isMobile = useIsMobile();
 
-  if (!threads || !editor || scenario === 'auth-hidden') {
+  if (!threads || !editor || scenario === "auth-hidden") {
     return null;
   }
 
   if (!isMobile && threads.length === 0) {
     return (
       <div className="text-text-lighter pt-8 flex flex-col gap-4 select-none ml-4 text-sm max-w-[260px] max-xl:bg-surface-elevated max-xl:border max-xl:border-border max-xl:shadow-sm max-xl:rounded-sm max-xl:p-8 max-xl:ml-0">
-        <div className="text-text-light font-semibold text-lg">No comments yet</div>
+        <div className="text-text-light font-semibold text-lg">
+          No comments yet
+        </div>
         <p className="max-xl:inline-flex max-xl:items-center">
           Create a comment by selecting text and pressing the{" "}
           <CommentIcon className="inline -mt-0.5" /> Comment button.

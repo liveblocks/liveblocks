@@ -11,10 +11,10 @@ export function Providers({ children }: PropsWithChildren) {
     return <div>Loading...</div>;
   }
 
-  const isAnonymous = scenario === 'anonymous';
-  
-  const liveblocksProps = isAnonymous 
-    ? { publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY || "pk_prod_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }
+  const isAnonymous = scenario === "anonymous";
+
+  const liveblocksProps = isAnonymous
+    ? { publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string }
     : { authEndpoint: "/api/liveblocks-auth" };
 
   return (
