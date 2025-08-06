@@ -27,8 +27,6 @@ export function Avatars() {
   );
 }
 
-
-
 export const Avatar = memo(function Avatar({
   picture,
   name,
@@ -49,4 +47,4 @@ export const Avatar = memo(function Avatar({
       />
     </div>
   );
-}
+});
