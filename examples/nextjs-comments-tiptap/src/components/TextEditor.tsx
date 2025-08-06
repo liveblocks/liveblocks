@@ -15,7 +15,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ScenarioMenu } from "@/components/ScenarioMenu";
 import { Threads } from "@/components/Threads";
 import { useScenario } from "@/hooks/useScenario";
-import clsx from "clsx";
 
 export function TextEditor() {
   return (
@@ -55,30 +54,22 @@ export function Editor() {
 
   return (
     <div className="flex flex-col bg-surface absolute inset-0">
-      <ScenarioMenu />
-      <div className="flex-none flex justify-between items-start bg-surface-elevated border-b border-border p-3">
-        <ThemeToggle />
+      <div className="flex-none flex justify-between items-start bg-surface-elevated border-b p-3">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <ScenarioMenu />
+        </div>
         <Avatars />
       </div>
       <div className="flex-1 overflow-y-auto scroll-smooth">
         {scenario !== "auth-hidden" && <FloatingToolbar editor={editor} />}
-        <div
-          className={clsx(
-            "-ml-[310px] min-h-0 h-auto",
-            "max-xl:ml-0 max-xl:px-8"
-          )}
-        >
-          <div className="relative min-h-[1100px] w-full max-w-[800px] mx-auto my-8 border border-border bg-surface-elevated">
+        <div className="xl:-ml-[310px] min-h-0 h-auto xl:px-8">
+          <div className="relative min-h-[1100px] w-full max-w-[800px] mx-auto my-8 border">
             <EditorContent editor={editor} />
             {scenario !== "auth-hidden" && (
               <FloatingComposer editor={editor} style={{ width: 350 }} />
             )}
-            <div
-              className={clsx(
-                "absolute top-0 left-full ml-8 min-w-[310px]",
-                "max-xl:hidden"
-              )}
-            >
+            <div className="absolute top-0 left-full ml-8 min-w-[310px]">
               <Threads editor={editor} />
             </div>
           </div>

@@ -4,34 +4,27 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 import { nanoid } from "nanoid";
+import { createRoomWithMarkdown } from "./actions";
 
 export function ImportForm() {
   const [markdown, setMarkdown] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!markdown.trim()) return;
-
-    setIsLoading(true);
-    
-    try {
-      const roomId = `imported-${nanoid()}`;
-      
-      localStorage.setItem(`room-${roomId}-content`, markdown);
-      
-      router.push(`/?roomId=${roomId}`);
-    } catch (error) {
-      console.error("Failed to create room:", error);
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const roomId = await createRoomWithMarkdown(markdown);
+        router.push(`/?roomId=${roomId}`);
+      }}
+      className="space-y-6"
+    >
       <div>
-        <label htmlFor="markdown" className="block text-sm font-medium text-text mb-2">
+        <label
+          htmlFor="markdown"
+          className="block text-sm font-medium text-text mb-2"
+        >
           Markdown Content
         </label>
         <textarea
@@ -45,7 +38,7 @@ Start writing your markdown here..."
           required
         />
       </div>
-      
+
       <div className="flex justify-end">
         <Button type="submit" disabled={!markdown.trim() || isLoading}>
           {isLoading ? "Creating..." : "Create Document"}

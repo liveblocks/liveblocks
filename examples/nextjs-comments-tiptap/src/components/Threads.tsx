@@ -1,4 +1,4 @@
-import { AnchoredThreads } from "@liveblocks/react-tiptap";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
 import { Comment } from "@liveblocks/react-ui";
 import { Editor as TEditor } from "@tiptap/react";
 import { useThreads } from "@liveblocks/react/suspense";
@@ -31,14 +31,24 @@ export function Threads({ editor }: { editor: TEditor | null }) {
   }
 
   return (
-    <AnchoredThreads
-      threads={threads}
-      editor={editor}
-      style={{ width: 350 }}
-      components={{
-        Thread: CustomThread,
-      }}
-    />
+    <>
+      <AnchoredThreads
+        threads={threads}
+        editor={editor}
+        className="w-[350px] hidden xl:block"
+        components={{
+          Thread: CustomThread,
+        }}
+      />
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        className="w-[350px] block xl:hidden !overflow-visible !shadow-none"
+        components={{
+          Thread: CustomThread,
+        }}
+      />
+    </>
   );
 }
 
@@ -48,7 +58,7 @@ const CustomThread = memo(function CustomThread({
   thread: ThreadData;
 }) {
   return (
-    <div className="shadow-xl border border-border rounded-sm overflow-hidden">
+    <div className="shadow-lg border rounded-sm overflow-hidden">
       {thread.comments.map((comment) => (
         <CustomComment key={comment.id} comment={comment} />
       ))}
@@ -98,24 +108,3 @@ const CustomComment = memo(function CustomComment({
     </div>
   );
 });
-
-function UpvoteIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={20}
-      height={20}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="lucide lucide-square-chevron-up-icon lucide-square-chevron-up"
-      {...props}
-    >
-      <rect width={18} height={18} x={3} y={3} rx={2} />
-      <path d="M8 14l4-4 4 4" />
-    </svg>
-  );
-}
