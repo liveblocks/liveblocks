@@ -1,6 +1,7 @@
 import { LiveList } from "@liveblocks/core";
 import { Liveblocks } from "@liveblocks/node";
 import { config } from "dotenv";
+import { describe, test, expect } from "vitest";
 
 config();
 
