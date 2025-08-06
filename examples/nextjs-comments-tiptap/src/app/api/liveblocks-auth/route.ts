@@ -10,17 +10,62 @@ const liveblocks = new Liveblocks({
 });
 
 export async function POST(request: NextRequest) {
-  // Always use the first user for consistent authentication
-  const user = getUsers()[0];
+  try {
+    // Get auth type from query parameters or default to auth-visible
+    const authType =
+      request.nextUrl.searchParams.get("authType") || "auth-visible";
 
-  // Create a session for the current user
-  // userInfo is made available in Liveblocks presence hooks, e.g. useOthers
-  const session = liveblocks.prepareSession(`${user.id}`, {
-    userInfo: user.info,
-  });
-  session.allow(`*`, session.FULL_ACCESS);
+    console.log("authType", authType);
 
-  // Authorize the user and return the result
-  const { body, status } = await session.authorize();
-  return new Response(body, { status });
+    // Get user based on auth type
+    let user;
+    let permissions: string[] = [];
+
+    switch (authType) {
+      case "auth-visible":
+        // Full access user - can read, write, and see comments
+        user = getUsers()[0];
+        break;
+
+      case "auth-hidden":
+        // Authenticated user but can't see comments
+        user = getUsers()[1];
+        break;
+
+      case "anonymous":
+        // Anonymous user - read-only access
+        user = {
+          id: "anonymous",
+          info: {
+            name: "Anonymous User",
+            color: "#888888",
+            avatar: "https://liveblocks.io/avatars/avatar-anonymous.png",
+          },
+        };
+        break;
+
+      default:
+        // Default to auth-visible
+        user = getUsers()[0];
+        permissions = ["room:read", "room:write", "room:presence:write"];
+    }
+
+    // Identify the user and return the result
+    const session = await liveblocks.prepareSession(user.id, {
+      userInfo: user.info,
+    });
+
+    session.allow(
+      "*",
+      authType === "auth-visible" || authType === "auth-hidden"
+        ? session.FULL_ACCESS
+        : session.READ_ACCESS
+    );
+
+    const { status, body } = await session.authorize();
+    return new Response(body, { status });
+  } catch (error) {
+    console.error("Auth error:", error);
+    return new Response("Authentication failed", { status: 500 });
+  }
 }

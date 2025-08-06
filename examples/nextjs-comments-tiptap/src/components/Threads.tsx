@@ -65,29 +65,34 @@ const CustomThread = memo(function CustomThread({
 }) {
   const markThreadAsResolved = useMarkThreadAsResolved();
   const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+  const { scenario } = useScenario();
 
   return (
     <div className="shadow-lg border rounded-sm overflow-hidden">
-      <div className="bg-neutral-50 border-b px-4 py-3 text-sm text-neutral-600 font-medium flex justify-between items-center">
-        Review
-        <button
-          className="flex items-center gap-2 text-sm text-neutral-600 font-medium"
-          onClick={() => {
-            if (thread.resolved) {
-              markThreadAsUnresolved(thread.id);
-            } else {
-              markThreadAsResolved(thread.id);
-            }
-          }}
-        >
-          {thread.resolved ? <Icon.Check /> : <Icon.CheckCircle />}
-        </button>
-      </div>
+      {scenario !== "anonymous" && (
+        <div className="bg-neutral-50 border-b px-4 py-3 text-sm text-neutral-600 font-medium flex justify-between items-center">
+          Review
+          <button
+            className="flex items-center gap-2 text-sm text-neutral-600 font-medium"
+            onClick={() => {
+              if (thread.resolved) {
+                markThreadAsUnresolved(thread.id);
+              } else {
+                markThreadAsResolved(thread.id);
+              }
+            }}
+          >
+            {thread.resolved ? <Icon.Check /> : <Icon.CheckCircle />}
+          </button>
+        </div>
+      )}
 
       {thread.comments.map((comment) => (
         <CustomComment key={comment.id} comment={comment} />
       ))}
-      <Composer threadId={thread.id} className="border-t" />
+      {scenario !== "anonymous" && (
+        <Composer threadId={thread.id} className="border-t" />
+      )}
     </div>
   );
 });

@@ -11,15 +11,9 @@ export function Providers({ children }: PropsWithChildren) {
     return null;
   }
 
-  const isAnonymous = scenario === "anonymous";
-
-  const liveblocksProps = isAnonymous
-    ? { publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY as string }
-    : { authEndpoint: "/api/liveblocks-auth" };
-
   return (
     <LiveblocksProvider
-      {...liveblocksProps}
+      authEndpoint={`/api/liveblocks-auth?authType=${scenario}`}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(

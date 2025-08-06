@@ -33,7 +33,7 @@ export function ScenarioMenu() {
               <Select.Item
                 key={item.value}
                 value={item.value}
-                className="bg-white px-3 py-2 text-sm cursor-pointer hover:bg-neutral-100 focus:bg-neutral-100 focus:outline-none"
+                className="bg-white px-4 py-3 text-sm cursor-pointer hover:bg-neutral-100 focus:bg-neutral-100 focus:outline-none"
               >
                 <Select.ItemText>{item.label}</Select.ItemText>
               </Select.Item>

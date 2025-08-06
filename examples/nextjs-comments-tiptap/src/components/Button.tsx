@@ -1,5 +1,4 @@
 import { ComponentProps, forwardRef } from "react";
-import { Icon } from "@liveblocks/react-ui";
 import clsx from "clsx";
 
 export interface ButtonProps extends ComponentProps<"button"> {
@@ -9,14 +8,19 @@ export interface ButtonProps extends ComponentProps<"button"> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ icon, children, variant = "primary", className, ...props }, ref) => {
-    const baseClasses = "flex h-13 px-7 rounded-sm place-items-center transition-all duration-150 ease-in-out outline-none disabled:cursor-default disabled:opacity-50";
+    const baseClasses =
+      "flex h-13 px-7 rounded-sm place-items-center transition-all duration-150 ease-in-out outline-none disabled:cursor-default disabled:opacity-50";
     const iconOnlyClasses = "w-13 px-0 place-content-center";
-    
+
     const variantClasses = {
-      primary: "bg-accent text-surface-elevated hover:opacity-80 focus-visible:opacity-80",
-      destructive: "bg-red text-surface-elevated hover:opacity-80 focus-visible:opacity-80",
-      secondary: "bg-surface text-text-light hover:bg-surface-hover hover:text-text focus-visible:bg-surface-hover focus-visible:text-text",
-      subtle: "text-text-lighter hover:bg-surface hover:text-text-light focus-visible:bg-surface focus-visible:text-text-light data-[active]:bg-surface data-[active]:text-text-light"
+      primary:
+        "bg-accent text-surface-elevated hover:opacity-80 focus-visible:opacity-80",
+      destructive:
+        "bg-red text-surface-elevated hover:opacity-80 focus-visible:opacity-80",
+      secondary:
+        "bg-surface text-text-light hover:bg-surface-hover hover:text-text focus-visible:bg-surface-hover focus-visible:text-text",
+      subtle:
+        "text-text-lighter hover:bg-surface hover:text-text-light focus-visible:bg-surface focus-visible:text-text-light data-[active]:bg-surface data-[active]:text-text-light",
     };
 
     return (
@@ -32,8 +36,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        {icon ? <Icon className={clsx("w-4 h-4", children && "-ml-1 mr-4")}>{icon}</Icon> : null}
-        {children ? <span className="text-sm font-medium">{children}</span> : null}
+        {icon ? icon : null}
+        {children ? (
+          <span className="text-sm font-medium">{children}</span>
+        ) : null}
       </button>
     );
   }

@@ -3,6 +3,7 @@
 import { Liveblocks } from "@liveblocks/node";
 import { nanoid } from "nanoid";
 import { withProsemirrorDocument } from "@liveblocks/node-prosemirror";
+import { redirect } from "next/navigation";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -23,7 +24,7 @@ export async function createRoomWithContent(document?: "france" | "beethoven") {
     );
   }
 
-  return roomId;
+  redirect(`/${roomId}`);
 }
 
 const france = {

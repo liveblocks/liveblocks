@@ -7,10 +7,12 @@ interface PageProps {
   };
 }
 
-export default function RoomPage({ params }: PageProps) {
+export default async function RoomPage({ params }: PageProps) {
+  const { roomId } = await params;
+
   return (
     <main>
-      <Room roomId={params.roomId}>
+      <Room roomId={roomId}>
         <TextEditor />
       </Room>
     </main>
