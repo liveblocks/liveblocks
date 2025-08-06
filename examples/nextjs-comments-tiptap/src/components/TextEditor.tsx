@@ -1,25 +1,19 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { ClientSideSuspense } from "@liveblocks/react";
 import {
-  AnchoredThreads,
   FloatingComposer,
-  FloatingThreads,
   FloatingToolbar,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor, Editor as TEditor } from "@tiptap/react";
 import StarterKit, { StarterKitOptions } from "@tiptap/starter-kit";
-import { EditorView } from "prosemirror-view";
 import { Avatars } from "@/components/Avatars";
 import { DocumentSpinner } from "@/components/Spinner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ScenarioMenu } from "@/components/ScenarioMenu";
-import { CustomFloatingThreads } from "@/components/CustomFloatingThreads";
-import { useThreads } from "@liveblocks/react/suspense";
-import { CommentIcon } from "@/icons";
+import { Threads } from "@/components/Threads";
 import { useScenario } from "@/hooks/useScenario";
 import clsx from "clsx";
 
@@ -140,56 +134,10 @@ const starterKitOptions: Partial<StarterKitOptions> = {
   },
 };
 
-function Threads({ editor }: { editor: TEditor | null }) {
-  const { threads } = useThreads();
-  const { scenario } = useScenario();
-  const isMobile = useIsMobile();
-
-  if (!threads || !editor || scenario === "auth-hidden") {
-    return null;
-  }
-
-  if (!isMobile && threads.length === 0) {
-    return (
-      <div className="text-text-lighter pt-8 flex flex-col gap-4 select-none ml-4 text-sm max-w-[260px] max-xl:bg-surface-elevated max-xl:border max-xl:border-border max-xl:shadow-sm max-xl:rounded-sm max-xl:p-8 max-xl:ml-0">
-        <div className="text-text-light font-semibold text-lg">
-          No comments yet
-        </div>
-        <p className="max-xl:inline-flex max-xl:items-center">
-          Create a comment by selecting text and pressing the{" "}
-          <CommentIcon className="inline -mt-0.5" /> Comment button.
-        </p>
-      </div>
-    );
-  }
-
-  return isMobile ? (
-    <CustomFloatingThreads threads={threads} editor={editor} />
-  ) : (
-    <AnchoredThreads threads={threads} editor={editor} style={{ width: 350 }} />
-  );
-}
-
-function useIsMobile() {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
-function subscribe(callback: () => void) {
-  const query = window.matchMedia("(max-width: 1279px)");
-
-  query.addEventListener("change", callback);
-  return () => query.removeEventListener("change", callback);
-}
-
-function getSnapshot() {
-  const query = window.matchMedia("(max-width: 1279px)");
-  return query.matches;
-}
-
 // Prevents a matchesNode error on hot reloading
-EditorView.prototype.updateState = function updateState(state) {
-  // @ts-ignore
-  if (!this.docView) return;
-  // @ts-ignore
-  this.updateStateInner(state, this.state.plugins != state.plugins);
-};
+// EditorView.prototype.updateState = function updateState(state) {
+//   // @ts-ignore
+//   if (!this.docView) return;
+//   // @ts-ignore
+//   this.updateStateInner(state, this.state.plugins != state.plugins);
+// };
