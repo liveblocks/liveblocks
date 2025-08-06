@@ -6,9 +6,9 @@ import * as Select from "@radix-ui/react-select";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 
 const scenarios: { value: Scenario; label: string }[] = [
-  { value: "auth-visible", label: "Auth user (all features)" },
-  { value: "auth-hidden", label: "Auth user (hidden comments)" },
-  { value: "anonymous", label: "Anonymous user" },
+  { value: "auth-visible", label: "Authenticated user" },
+  { value: "auth-hidden", label: "Authenticated user (can't see comments)" },
+  { value: "anonymous", label: "Anonymous user (read everything)" },
 ];
 
 export function ScenarioMenu() {

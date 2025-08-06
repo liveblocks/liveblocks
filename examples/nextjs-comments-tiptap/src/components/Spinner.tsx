@@ -28,7 +28,7 @@ export function Spinner({ size = 16, className, ...props }: Props) {
 
 export function DocumentSpinner() {
   return (
-    <div className="flex items-center justify-center w-full h-full">
+    <div className="absolute inset-0 flex items-center justify-center w-full h-full">
       <Spinner size={24} />
     </div>
   );

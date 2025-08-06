@@ -1,12 +1,7 @@
-import { Room } from "@/app/Room";
-import { TextEditor } from "@/components/TextEditor";
+import { createRoomWithContent } from "./actions";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <main>
-      <Room>
-        <TextEditor />
-      </Room>
-    </main>
-  );
+export default async function Home() {
+  const roomId = await createRoomWithContent();
+  redirect(`/${roomId}`);
 }

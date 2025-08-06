@@ -8,7 +8,7 @@ export function Providers({ children }: PropsWithChildren) {
   const { scenario, isLoaded } = useScenario();
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return null;
   }
 
   const isAnonymous = scenario === "anonymous";

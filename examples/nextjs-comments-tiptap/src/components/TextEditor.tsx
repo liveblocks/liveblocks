@@ -26,7 +26,9 @@ export function TextEditor() {
 
 // Collaborative text editor with simple rich text and live cursors
 export function Editor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
   const { scenario } = useScenario();
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
@@ -54,7 +56,7 @@ export function Editor() {
 
   return (
     <div className="flex flex-col bg-surface absolute inset-0">
-      <div className="flex-none flex justify-between items-start bg-surface-elevated border-b p-3">
+      <div className="flex-none flex justify-between items-center bg-surface-elevated border-b p-3">
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <ScenarioMenu />

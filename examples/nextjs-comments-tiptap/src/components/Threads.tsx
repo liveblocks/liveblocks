@@ -1,12 +1,18 @@
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
-import { Comment } from "@liveblocks/react-ui";
+import { Comment, Composer, Icon } from "@liveblocks/react-ui";
 import { Editor as TEditor } from "@tiptap/react";
 import { useThreads } from "@liveblocks/react/suspense";
 import { CommentIcon } from "@/icons";
 import { useScenario } from "@/hooks/useScenario";
 import { memo } from "react";
 import type { CommentData, ThreadData } from "@liveblocks/client";
-import { useSelf, useAddReaction, useRemoveReaction } from "@liveblocks/react";
+import {
+  useSelf,
+  useAddReaction,
+  useRemoveReaction,
+  useMarkThreadAsResolved,
+  useMarkThreadAsUnresolved,
+} from "@liveblocks/react";
 
 export function Threads({ editor }: { editor: TEditor | null }) {
   const { threads } = useThreads();
@@ -57,11 +63,31 @@ const CustomThread = memo(function CustomThread({
 }: {
   thread: ThreadData;
 }) {
+  const markThreadAsResolved = useMarkThreadAsResolved();
+  const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+
   return (
     <div className="shadow-lg border rounded-sm overflow-hidden">
+      <div className="bg-neutral-50 border-b px-4 py-3 text-sm text-neutral-600 font-medium flex justify-between items-center">
+        Review
+        <button
+          className="flex items-center gap-2 text-sm text-neutral-600 font-medium"
+          onClick={() => {
+            if (thread.resolved) {
+              markThreadAsUnresolved(thread.id);
+            } else {
+              markThreadAsResolved(thread.id);
+            }
+          }}
+        >
+          {thread.resolved ? <Icon.Check /> : <Icon.CheckCircle />}
+        </button>
+      </div>
+
       {thread.comments.map((comment) => (
         <CustomComment key={comment.id} comment={comment} />
       ))}
+      <Composer threadId={thread.id} className="border-t" />
     </div>
   );
 });
@@ -86,10 +112,19 @@ const CustomComment = memo(function CustomComment({
     emoji: "⬆️",
   };
 
+  if (comment.deletedAt) {
+    return null;
+  }
+
   return (
-    <div>
-      <Comment comment={comment} showReactions={false} indentContent={false} />
-      <div className="px-8 pb-6 pt-0.5 -mt-2 z-10 relative">
+    <div className="">
+      <Comment
+        className="!pb-16"
+        comment={comment}
+        showReactions={false}
+        indentContent={true}
+      />
+      <div className="px-16 pb-6 pt-0.5 -mt-15 z-10 relative">
         <button
           className="flex h-11 w-15 justify-center items-center gap-1.5 rounded-full border border-solid border-gray-200 text-base text-gray-400 hover:bg-gray-100 data-[picked]:border-blue-300 data-[picked]:bg-blue-50 data-[picked]:text-blue-600"
           data-picked={hasUpvoted || undefined}
