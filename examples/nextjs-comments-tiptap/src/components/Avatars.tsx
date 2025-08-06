@@ -1,7 +1,7 @@
 "use client";
 
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
-import clsx from "clsx";
+import { memo } from "react";
 
 export function Avatars() {
   const users = useOthers();
@@ -27,7 +27,15 @@ export function Avatars() {
   );
 }
 
-export function Avatar({ picture, name }: { picture: string; name: string }) {
+
+
+export const Avatar = memo(function Avatar({
+  picture,
+  name,
+}: {
+  picture: string;
+  name: string;
+}) {
   return (
     <div
       className="flex flex-shrink-0 place-content-center relative border-3 border-white rounded-full w-12 h-12 bg-gray-400 -ml-3 before:content-[attr(data-tooltip)] before:absolute before:top-full before:opacity-0 before:transition-opacity before:duration-150 before:ease-in-out before:py-1 before:px-2 before:text-white before:text-xs before:rounded-lg before:mt-2 before:z-10 before:bg-text before:whitespace-nowrap hover:before:opacity-100"
