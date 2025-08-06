@@ -1109,49 +1109,55 @@ function completePartialInlineMarkdown(markdown: string): string {
     }
   }
 
-  // Before closing open delimiters, we can look for partial links/images
-  // from the end of the string (since links/images cannot be nested).
-  const partialLinkImageMatch = completedMarkdown.match(
-    PARTIAL_LINK_IMAGE_REGEX
+  const isInsideInlineCode = stack.some(
+    (delimiter) => delimiter.string === "`"
   );
 
-  if (partialLinkImageMatch) {
-    const partialLinkImageContent = partialLinkImageMatch[0];
-    const {
-      text: partialLinkText,
-      url: partialLinkUrl,
-      image: isImage,
-    } = partialLinkImageMatch.groups!;
+  // Before closing open delimiters, we can look for partial links/images,
+  // unless we're inside an open inline code element.
+  if (!isInsideInlineCode) {
+    const partialLinkImageMatch = completedMarkdown.match(
+      PARTIAL_LINK_IMAGE_REGEX
+    );
 
-    if (isImage) {
-      // We can't optimistically complete images, so we remove them until they are complete.
-      completedMarkdown = completedMarkdown.slice(
-        0,
-        -partialLinkImageContent.length
-      );
-    } else if (partialLinkUrl !== undefined) {
-      if (WHITESPACE_REGEX.test(partialLinkUrl) || !isUrl(partialLinkUrl)) {
-        // "[Link](https://" → "[Link](#)"
-        // "[Link](https://liveblocks.io 'With a title" → "[Link](#)"
+    if (partialLinkImageMatch) {
+      const partialLinkImageContent = partialLinkImageMatch[0];
+      const {
+        text: partialLinkText,
+        url: partialLinkUrl,
+        image: isImage,
+      } = partialLinkImageMatch.groups!;
+
+      if (isImage) {
+        // We can't optimistically complete images, so we remove them until they are complete.
         completedMarkdown = completedMarkdown.slice(
           0,
           -partialLinkImageContent.length
         );
-        completedMarkdown += `[${partialLinkText}](#)`;
+      } else if (partialLinkUrl !== undefined) {
+        if (WHITESPACE_REGEX.test(partialLinkUrl) || !isUrl(partialLinkUrl)) {
+          // "[Link](https://" → "[Link](#)"
+          // "[Link](https://liveblocks.io 'With a title" → "[Link](#)"
+          completedMarkdown = completedMarkdown.slice(
+            0,
+            -partialLinkImageContent.length
+          );
+          completedMarkdown += `[${partialLinkText}](#)`;
+        } else {
+          // "[Link](https://liveblocks.io" → "[Link](https://liveblocks.io)"
+          completedMarkdown += ")";
+        }
       } else {
-        // "[Link](https://liveblocks.io" → "[Link](https://liveblocks.io)"
-        completedMarkdown += ")";
-      }
-    } else {
-      if (partialLinkImageContent.endsWith("](")) {
-        // "[Link](" → "[Link](#)"
-        completedMarkdown += "#)";
-      } else if (partialLinkImageContent.endsWith("]")) {
-        // "[Link]" → "[Link](#)"
-        completedMarkdown += "(#)";
-      } else {
-        // "[Link" → "[Link](#)"
-        completedMarkdown += "](#)";
+        if (partialLinkImageContent.endsWith("](")) {
+          // "[Link](" → "[Link](#)"
+          completedMarkdown += "#)";
+        } else if (partialLinkImageContent.endsWith("]")) {
+          // "[Link]" → "[Link](#)"
+          completedMarkdown += "(#)";
+        } else {
+          // "[Link" → "[Link](#)"
+          completedMarkdown += "](#)";
+        }
       }
     }
   }
