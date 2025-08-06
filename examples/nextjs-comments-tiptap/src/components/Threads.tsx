@@ -102,6 +102,7 @@ const CustomComment = memo(function CustomComment({
 }: {
   comment: CommentData;
 }) {
+  const { scenario } = useScenario();
   const currentId = useSelf((me) => me.id);
   const upvoteUsers = comment.reactions.filter((r) => r.emoji === "⬆️")?.[0]
     ?.users;
@@ -138,6 +139,7 @@ const CustomComment = memo(function CustomComment({
               ? removeReaction(reactionObject)
               : addReaction(reactionObject)
           }
+          disabled={scenario === "anonymous"} // TODO come back and allow this for anon users
         >
           ▲{" "}
           <span className="text-xs tabular-nums">
