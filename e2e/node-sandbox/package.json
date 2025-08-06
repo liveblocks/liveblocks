@@ -4,7 +4,9 @@
   "type": "module",
   "author": "",
   "scripts": {
-    "test": "jest --silent --verbose --color=always"
+    "format": "(eslint --fix test/ || true) && prettier --write test/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "license": "ISC",
   "description": "",
@@ -15,6 +17,7 @@
     "ws": "^8.5.0"
   },
   "devDependencies": {
+    "@liveblocks/vitest-config": "*",
     "@types/ws": "^8.5.0"
   }
 }

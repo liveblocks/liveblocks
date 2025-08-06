@@ -57,7 +57,7 @@ describe("@liveblocks/client package e2e", () => {
         process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
       polyfills: { WebSocket },
       // @ts-expect-error hidden config
-      baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
+      baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL!,
     });
 
     const clientB = createClient({
@@ -73,7 +73,7 @@ describe("@liveblocks/client package e2e", () => {
     let roomBOthers: User<JsonObject, BaseUserMeta>[] = [];
 
     const { room: roomA, leave: leaveA } = clientA.enterRoom("node-e2e", {
-      initialPresence: { name: "P" },
+      initialPresence: { name: "A" },
     });
     const { room: roomB, leave: leaveB } = clientB.enterRoom("node-e2e", {
       initialPresence: { name: "B" },
