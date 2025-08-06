@@ -1,5 +1,5 @@
 {
   // Use the same settings for all packages
   "extends": "../../shared/tsconfig.common.json",
-  "include": ["src"]
+  "include": ["test"]
 }
