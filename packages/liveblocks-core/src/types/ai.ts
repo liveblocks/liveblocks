@@ -332,7 +332,7 @@ export type AiReceivingToolInvocationPart = {
   stage: "receiving";
   invocationId: string;
   name: string;
-  partialArgs: Json;
+  partialArgs: JsonObject;
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
