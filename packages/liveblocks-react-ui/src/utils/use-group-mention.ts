@@ -1,17 +1,11 @@
-import type {
-  AsyncResult,
-  GroupMentionData,
-  GroupSummary,
-} from "@liveblocks/core";
-import { useGroupSummary } from "@liveblocks/react/_private";
+import type { GroupMentionData } from "@liveblocks/core";
+import { useGroup } from "@liveblocks/react/_private";
 import { useMemo } from "react";
 
 import { useCurrentUserId } from "../shared";
 import { useInitial } from "./use-initial";
 
-export function useGroupMentionSummary(
-  mention: GroupMentionData
-): AsyncResult<GroupSummary | undefined, "summary"> {
+export function useIsGroupMentionMember(mention: GroupMentionData): boolean {
   // Changing the contents of a group mention is not supported
   // to support the Rules of Hooks.
   const frozenMention = useInitial(mention);
@@ -19,11 +13,7 @@ export function useGroupMentionSummary(
 
   // This is enforced at the type level, but just in case.
   if (frozenMention.kind !== "group") {
-    return {
-      summary: undefined,
-      isLoading: false,
-      error: undefined,
-    };
+    return false;
   } else if (Array.isArray(frozenUserIds)) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const currentId = useCurrentUserId();
@@ -32,17 +22,17 @@ export function useGroupMentionSummary(
       return frozenUserIds.some((userId) => userId === currentId);
     }, [frozenUserIds, currentId]);
 
-    return {
-      summary: {
-        id: frozenMention.id,
-        isMember,
-        totalMembers: frozenUserIds.length,
-      },
-      isLoading: false,
-      error: undefined,
-    };
+    return isMember;
   } else {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useGroupSummary(frozenMention.id);
+    const currentId = useCurrentUserId();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { group } = useGroup(frozenMention.id);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const isMember = useMemo(() => {
+      return Boolean(group?.members.some((member) => member.id === currentId));
+    }, [group, currentId]);
+
+    return isMember;
   }
 }

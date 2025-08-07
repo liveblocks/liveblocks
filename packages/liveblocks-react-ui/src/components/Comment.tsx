@@ -69,7 +69,7 @@ import { useCurrentUserId } from "../shared";
 import type { CommentAttachmentArgs } from "../types";
 import { cn } from "../utils/cn";
 import { download } from "../utils/download";
-import { useGroupMentionSummary } from "../utils/use-group-mention";
+import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { useRefs } from "../utils/use-refs";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
@@ -244,12 +244,12 @@ function CommentGroupMention({
   className,
   ...props
 }: CommentMentionProps) {
-  const { summary } = useGroupMentionSummary(mention as GroupMentionData);
+  const isMember = useIsGroupMentionMember(mention as GroupMentionData);
 
   return (
     <CommentPrimitive.Mention
       className={cn("lb-comment-mention", className)}
-      data-self={summary?.isMember ? "" : undefined}
+      data-self={isMember ? "" : undefined}
       {...props}
     >
       {MENTION_CHARACTER}
