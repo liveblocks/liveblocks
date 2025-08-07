@@ -1,6 +1,7 @@
 import type {
   BaseMetadata,
   CommentData,
+  GroupData,
   InboxNotificationData,
   NotificationSettingsPlain,
   PartialNotificationSettings,
@@ -176,6 +177,7 @@ export function mockGetInboxNotifications(
       threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
       subscriptions: SubscriptionData[];
+      groups: GroupData[];
       meta: {
         requestedAt: string; // ISO date
         nextCursor: string | null;

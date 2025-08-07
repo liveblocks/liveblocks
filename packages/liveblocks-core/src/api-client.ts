@@ -406,6 +406,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     subscriptions: SubscriptionData[];
+    groups: GroupData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
@@ -1532,6 +1533,7 @@ export function createApiClient<M extends BaseMetadata>({
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       subscriptions: SubscriptionDataPlain[];
+      groups: GroupDataPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
@@ -1551,6 +1553,7 @@ export function createApiClient<M extends BaseMetadata>({
       ),
       threads: json.threads.map(convertToThreadData),
       subscriptions: json.subscriptions.map(convertToSubscriptionData),
+      groups: json.groups.map(convertToGroupData),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };

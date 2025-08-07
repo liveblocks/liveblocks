@@ -16,6 +16,7 @@ export type BatchCallback<O, I> = (
 export type BatchStore<O, I> = {
   subscribe: (callback: Callback<void>) => UnsubscribeCallback;
   enqueue: (input: I) => Promise<void>;
+  fill: (input: I, data: O) => void;
   getItemState: (input: I) => AsyncResult<O> | undefined;
   getData: (input: I) => O | undefined;
   invalidate: (inputs?: I[]) => void;
@@ -237,6 +238,11 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     }
   }
 
+  function fill(input: I, data: O): void {
+    const cacheKey = getCacheKey(input);
+    update(cacheKey, { isLoading: false, data });
+  }
+
   function getItemState(input: I): AsyncResult<O> | undefined {
     const cacheKey = getCacheKey(input);
     const cache = signal.get();
@@ -258,6 +264,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
   return {
     subscribe: signal.subscribe,
     enqueue,
+    fill,
     getItemState,
     getData,
     invalidate,
