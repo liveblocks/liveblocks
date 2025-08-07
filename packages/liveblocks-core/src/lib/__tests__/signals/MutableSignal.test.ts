@@ -12,7 +12,7 @@ test("empty", () => {
 });
 
 it("signals always notify watchers whenever mutated (because we cannot tell if their value has changed)", () => {
-  const fn = jest.fn();
+  const fn = vi.fn();
 
   type S = { counter: 0 };
 
@@ -98,8 +98,8 @@ it("when chained, derived signals will think the value changed", () => {
 });
 
 it("when batched, derived signals will only update the value changed", () => {
-  const evaled = jest.fn();
-  const watcher = jest.fn();
+  const evaled = vi.fn();
+  const watcher = vi.fn();
 
   const fruits = new MutableSignal<string[]>([]);
   const count = new Signal<number>(0);
@@ -140,8 +140,8 @@ it("when batched, derived signals will only update the value changed", () => {
 });
 
 it("nesting of mutations", () => {
-  const evaled = jest.fn();
-  const watcher = jest.fn();
+  const evaled = vi.fn();
+  const watcher = vi.fn();
 
   const fruits = new MutableSignal<string[]>([]);
   const count = new Signal<number>(1);

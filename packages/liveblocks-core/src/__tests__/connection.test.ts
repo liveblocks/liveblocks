@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import { ManagedSocket } from "../connection";
 import {
   ALWAYS_FAIL_AUTH,
@@ -10,57 +12,57 @@ import {
 
 describe("ManagedSocket", () => {
   test("failure to authenticate", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     const { delegates } = defineBehavior(ALWAYS_FAIL_AUTH, SOCKET_NO_BEHAVIOR);
 
-    const didConnect = jest.fn();
+    const didConnect = vi.fn();
 
     const mgr = new ManagedSocket(delegates);
     mgr.events.didConnect.subscribe(didConnect);
 
     mgr.connect();
-    await jest.advanceTimersByTimeAsync(4000);
+    await vi.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
     expect(didConnect).not.toHaveBeenCalled();
   });
 
   test("authenticate + websocket connection are successes but no ROOM_STATE still means not connected", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     const { delegates } = defineBehavior(
       AUTH_SUCCESS,
       SOCKET_AUTOCONNECT_BUT_NO_ROOM_STATE
     );
 
-    const didConnect = jest.fn();
+    const didConnect = vi.fn();
 
     const mgr = new ManagedSocket(delegates);
     mgr.events.didConnect.subscribe(didConnect);
 
     mgr.connect();
-    await jest.advanceTimersByTimeAsync(4000);
+    await vi.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
     expect(didConnect).not.toHaveBeenCalled();
   });
 
   test("authenticate + websocket connection + ROOM_STATE = connected", async () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     const { delegates } = defineBehavior(
       AUTH_SUCCESS,
       SOCKET_AUTOCONNECT_AND_ROOM_STATE()
     );
 
-    const didConnect = jest.fn();
+    const didConnect = vi.fn();
 
     const mgr = new ManagedSocket(delegates);
     mgr.events.didConnect.subscribe(didConnect);
 
     mgr.connect();
-    await jest.advanceTimersByTimeAsync(4000);
+    await vi.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
     expect(didConnect).toHaveBeenCalledTimes(1);

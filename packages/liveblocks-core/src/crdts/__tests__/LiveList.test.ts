@@ -1148,7 +1148,7 @@ describe("LiveList", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.storageBatch.subscribe(callback);
 
       const root = storage.root;
@@ -1186,7 +1186,7 @@ describe("LiveList", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.storageBatch.subscribe(callback);
 
       const root = storage.root;
@@ -1217,9 +1217,9 @@ describe("LiveList", () => {
           1
         );
 
-      const rootCallback = jest.fn();
-      const rootDeepCallback = jest.fn();
-      const listCallback = jest.fn();
+      const rootCallback = vi.fn();
+      const rootDeepCallback = vi.fn();
+      const listCallback = vi.fn();
 
       const listItems = root.get("items");
 
@@ -1300,9 +1300,9 @@ describe("LiveList", () => {
           1
         );
 
-      const rootCallback = jest.fn();
-      const rootDeepCallback = jest.fn();
-      const listCallback = jest.fn();
+      const rootCallback = vi.fn();
+      const rootDeepCallback = vi.fn();
+      const listCallback = vi.fn();
 
       const listItems = root.get("items");
 
@@ -1371,9 +1371,9 @@ describe("LiveList", () => {
           1
         );
 
-      const rootCallback = jest.fn();
-      const rootDeepCallback = jest.fn();
-      const listCallback = jest.fn();
+      const rootCallback = vi.fn();
+      const rootDeepCallback = vi.fn();
+      const listCallback = vi.fn();
 
       const listItems = root.get("items");
 
@@ -1503,7 +1503,7 @@ describe("LiveList", () => {
 
         const items = root.get("items");
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         room.events.storageBatch.subscribe(callback);
 
         applyRemoteOperations([
@@ -1579,7 +1579,7 @@ describe("LiveList", () => {
         const items = root.get("items");
         items.delete(0);
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         room.subscribe(items, callback, { isDeep: true });
 
         applyRemoteOperations([
@@ -1621,7 +1621,7 @@ describe("LiveList", () => {
           items: ["0"],
         });
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         room.subscribe(items, callback, { isDeep: true });
 
         applyRemoteOperations([

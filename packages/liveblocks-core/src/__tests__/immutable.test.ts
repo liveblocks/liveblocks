@@ -657,11 +657,11 @@ describe("2 ways tests with two clients", () => {
 
   describe("unsupported types", () => {
     let originalEnv: NodeJS.ProcessEnv;
-    let consoleErrorSpy: jest.SpyInstance;
+    let consoleErrorSpy: any;
 
     beforeAll(() => {
       originalEnv = process.env;
-      consoleErrorSpy = jest.spyOn(console, "error");
+      consoleErrorSpy = vi.spyOn(console, "error");
     });
 
     afterEach(() => {
@@ -728,10 +728,6 @@ describe("2 ways tests with two clients", () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(0);
     });
-  });
-
-  describe("Map/LiveMap", () => {
-    // TODO
   });
 });
 

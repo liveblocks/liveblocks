@@ -2,7 +2,7 @@ import { batch, Signal } from "../signals";
 
 describe("Signals (previously createStore)", () => {
   test("should not notify subscriber right after subscribing", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const store = new Signal({ x: 0 });
 
     store.subscribe(fn);
@@ -11,7 +11,7 @@ describe("Signals (previously createStore)", () => {
   });
 
   test("should notify subscriber when state is updated via callback", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const store = new Signal({ x: 0 });
 
     store.subscribe(fn);
@@ -24,7 +24,7 @@ describe("Signals (previously createStore)", () => {
   });
 
   test("should only notify subscriber if state reference changes", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const store = new Signal({ x: 0 });
 
     store.subscribe(fn);
@@ -47,7 +47,7 @@ describe("Signals (previously createStore)", () => {
   });
 
   test("batching will only notify once", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const store = new Signal({ x: 0 });
 
     store.subscribe(fn);
@@ -72,7 +72,7 @@ describe("Signals (previously createStore)", () => {
   });
 
   test("nesting batches has no effect (only the outer batch counts)", () => {
-    const fn = jest.fn();
+    const fn = vi.fn();
     const store = new Signal({ x: 0 });
 
     store.subscribe(fn);

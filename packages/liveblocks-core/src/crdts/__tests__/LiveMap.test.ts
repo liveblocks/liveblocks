@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import {
   createSerializedList,
   createSerializedMap,
@@ -363,7 +365,7 @@ describe("LiveMap", () => {
 
       const map = root.get("map");
 
-      const fn = jest.fn();
+      const fn = vi.fn();
 
       room.subscribe(map, fn);
 
@@ -388,7 +390,7 @@ describe("LiveMap", () => {
 
       const map = root.get("map");
 
-      const fn = jest.fn();
+      const fn = vi.fn();
 
       room.subscribe(map, fn);
 
@@ -595,7 +597,7 @@ describe("LiveMap", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -621,7 +623,7 @@ describe("LiveMap", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
       const mapElement = root.get("map").get("mapElement");
@@ -661,8 +663,8 @@ describe("LiveMap", () => {
           1
         );
 
-      const rootDeepCallback = jest.fn();
-      const mapCallback = jest.fn();
+      const rootDeepCallback = vi.fn();
+      const mapCallback = vi.fn();
 
       const listItems = root.get("map");
 

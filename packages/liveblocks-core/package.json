@@ -37,10 +37,10 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "jest --silent --verbose --color=always",
+    "test": "vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "jest --silent --verbose --color=always --watch",
-    "test:e2e": "jest --silent --verbose --color=always --config=./jest.config.e2e.cjs",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run --config=./vitest.config.e2e.ts",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg",
     "showdeps:high-level": "depcruise src --include-only '^src' --exclude='(^src/index.ts|shallow.ts|__tests__)' --collapse='^src/(refs|lib|compat|types|crdts|protocol)' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
@@ -48,7 +48,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/vitest-config": "*",
     "@liveblocks/query-parser": "^0.1.1",
     "@types/ws": "^8.5.10",
     "dotenv": "^16.4.5",
