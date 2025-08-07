@@ -7,6 +7,12 @@
 - Add `maxVisibleComments` prop to `Thread` to control the maximum number of
   comments to show. When comments are hidden, a "Show more replies" button is
   shown to allow users to expand the thread.
+- Add `onComposerSubmit` callback to `AiChat` triggered when a new message is
+  sent. It can also be used to customize message submission by calling
+  `useSendAiMessage` yourself.
+- Overrides and CSS classes for `AiChat`'s composer have been renamed:
+  - Overrides: `AI_CHAT_COMPOSER_SEND` → `AI_COMPOSER_PLACEHOLDER`
+  - CSS classes: `.lb-ai-chat-composer-form` → `.lb-ai-composer-form`
 - Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
   other instances of `AiChat` that are currently mounted on screen.
 
