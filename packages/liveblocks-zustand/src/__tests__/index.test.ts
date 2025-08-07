@@ -27,7 +27,7 @@ window.WebSocket = MockWebSocket as any;
 const INVALID_CONFIG_ERROR = /Invalid @liveblocks\/zustand middleware config/;
 
 const server = setupServer(
-  rest.post("/api/auth", (_req, res, ctx) => {
+  rest.post("http://dummy/api/auth", (_req, res, ctx) => {
     return res(
       ctx.json({
         token:
@@ -35,7 +35,7 @@ const server = setupServer(
       })
     );
   }),
-  rest.post("/api/auth-fail", (_req, res, ctx) => {
+  rest.post("http://dummy/api/auth-fail", (_req, res, ctx) => {
     return res(ctx.status(400));
   })
 );
@@ -107,7 +107,7 @@ function prepareClientAndStore<
     presenceMapping: Mapping<TState>;
   }
 ) {
-  const client = createClient({ authEndpoint: "/api/auth" });
+  const client = createClient({ authEndpoint: "http://dummy/api/auth" });
   const store = create<WithLiveblocks<TState, P, S, U, E>>()(
     liveblocksMiddleware(stateCreator, {
       ...options,
@@ -744,7 +744,7 @@ describe("middleware", () => {
     });
 
     test("storageMapping should be an object", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ authEndpoint: "http://dummy/api/auth" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
@@ -754,7 +754,7 @@ describe("middleware", () => {
     });
 
     test("invalid storageMapping key value should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ authEndpoint: "http://dummy/api/auth" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
@@ -764,7 +764,7 @@ describe("middleware", () => {
     });
 
     test("duplicated key should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ authEndpoint: "http://dummy/api/auth" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
@@ -775,7 +775,7 @@ describe("middleware", () => {
     });
 
     test("invalid presenceMapping should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
+      const client = createClient({ authEndpoint: "http://dummy/api/auth" });
       expect(() =>
         liveblocksMiddleware(() => ({}), {
           client,
