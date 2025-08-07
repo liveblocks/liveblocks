@@ -1360,7 +1360,7 @@ export class Liveblocks {
    * Gets a thread's participants.
    *
    * Participants are users who have commented on the thread
-   * or users and groups that have been mentioned in a comment.
+   * or users that have been mentioned in a comment.
    *
    * @param params.roomId The room ID to get the thread participants from.
    * @param params.threadId The thread ID to get the participants from.
