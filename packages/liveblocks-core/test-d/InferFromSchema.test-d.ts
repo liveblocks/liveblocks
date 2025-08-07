@@ -559,7 +559,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
         expectType<"receiving" | "executing" | "executed">(stage);
         if (stage === "receiving") {
-          expectType<Json>(partialArgs);
+          expectType<JsonObject>(partialArgs);
           expectType<undefined>(args);
           expectType<undefined>(result);
         } else if (stage === "executing") {
@@ -587,7 +587,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
 
         expectType<"receiving" | "executing" | "executed">(stage);
         if (stage === "receiving") {
-          expectType<Json>(partialArgs);
+          expectType<JsonObject>(partialArgs);
           expectType<undefined>(args);
           expectType<undefined>(result);
         } else if (stage === "executing") {
