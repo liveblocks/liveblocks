@@ -23,7 +23,6 @@ export { useAiComposer } from "../primitives/AiComposer/contexts";
 export type {
   AiComposerEditorProps,
   AiComposerFormProps,
-  AiComposerSubmitMessage,
   AiComposerSubmitProps,
 } from "../primitives/AiComposer/types";
 export * as AiMessage from "../primitives/AiMessage";
