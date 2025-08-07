@@ -2192,16 +2192,27 @@ export class Liveblocks {
 
   /**
    * Create a group
-   * @param params.id The ID of the group to create.
+   * @param params.groupId The ID of the group to create.
    * @param params.memberIds The IDs of the members to add to the group.
    * @param params.tenantId The ID of the tenant to create the group for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async createGroup(
-    params: { id: string; memberIds?: string[]; tenantId?: string },
+    params: { groupId: string; memberIds?: string[]; tenantId?: string },
     options?: RequestOptions
   ): Promise<GroupData> {
-    const res = await this.#post(url`/v2/groups`, params, options);
+    const res = await this.#post(
+      url`/v2/groups`,
+      {
+        ...params,
+
+        // The REST API uses `id` since a group is a resource,
+        // but we use `groupId` here for consistency with the other methods.
+        id: params.groupId,
+      },
+      options
+    );
+
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -2212,15 +2223,15 @@ export class Liveblocks {
 
   /**
    * Get a group
-   * @param params.id The ID of the group to get.
+   * @param params.groupId The ID of the group to get.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getGroup(
-    params: { id: string },
+    params: { groupId: string },
     options?: RequestOptions
   ): Promise<GroupData> {
     const res = await this.#get(
-      url`/v2/groups/${params.id}`,
+      url`/v2/groups/${params.groupId}`,
       undefined,
       options
     );
@@ -2234,18 +2245,17 @@ export class Liveblocks {
 
   /**
    * Add members to a group
-   * @param params.id The ID of the group to add members to.
+   * @param params.groupId The ID of the group to add members to.
    * @param params.memberIds The IDs of the members to add to the group.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async addGroupMembers(
-    groupId: string,
-    params: { memberIds: string[] },
+    params: { groupId: string; memberIds: string[] },
     options?: RequestOptions
   ): Promise<GroupData> {
     const res = await this.#post(
-      url`/v2/groups/${groupId}/add-members`,
-      params,
+      url`/v2/groups/${params.groupId}/add-members`,
+      { memberIds: params.memberIds },
       options
     );
     if (!res.ok) {
@@ -2258,18 +2268,17 @@ export class Liveblocks {
 
   /**
    * Remove members from a group
-   * @param params.id The ID of the group to remove members from.
+   * @param params.groupId The ID of the group to remove members from.
    * @param params.memberIds The IDs of the members to remove from the group.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async removeGroupMembers(
-    groupId: string,
-    params: { memberIds: string[] },
+    params: { groupId: string; memberIds: string[] },
     options?: RequestOptions
   ): Promise<GroupData> {
     const res = await this.#post(
-      url`/v2/groups/${groupId}/remove-members`,
-      params,
+      url`/v2/groups/${params.groupId}/remove-members`,
+      { memberIds: params.memberIds },
       options
     );
     if (!res.ok) {
@@ -2282,14 +2291,14 @@ export class Liveblocks {
 
   /**
    * Delete a group
-   * @param params.id The ID of the group to delete.
+   * @param params.groupId The ID of the group to delete.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async deleteGroup(
-    params: { id: string },
+    params: { groupId: string },
     options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#delete(url`/v2/groups/${params.id}`, options);
+    const res = await this.#delete(url`/v2/groups/${params.groupId}`, options);
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -2297,10 +2306,19 @@ export class Liveblocks {
 
   /**
    * Get all groups
+   * @param params.limit (optional) The number of groups to return.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
-  public async getGroups(options?: RequestOptions): Promise<Page<GroupData>> {
-    const res = await this.#get(url`/v2/groups`, undefined, options);
+  public async getGroups(
+    params?: PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<GroupData>> {
+    const res = await this.#get(
+      url`/v2/groups`,
+      { startingAfter: params?.startingAfter, limit: params?.limit },
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
