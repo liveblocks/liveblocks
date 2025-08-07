@@ -1294,12 +1294,20 @@ function useSendAiMessage(
             | CopilotId
             | undefined,
           timeout: messageOptions.timeout ?? options?.timeout,
+          knowledge: messageOptions.knowledge ?? options?.knowledge,
         }
       );
 
       return newMessage;
     },
-    [client, chatId, options?.copilotId, options?.stream, options?.timeout]
+    [
+      client,
+      chatId,
+      options?.copilotId,
+      options?.stream,
+      options?.timeout,
+      options?.knowledge,
+    ]
   );
 }
 

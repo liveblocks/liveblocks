@@ -421,6 +421,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       copilotId,
       autoFocus,
       overrides,
+      knowledge: localKnowledge,
       tools = {},
       onComposerSubmit,
       layout = "inset",
@@ -565,6 +566,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
+            knowledge={localKnowledge}
             onComposerSubmit={onComposerSubmit}
             onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
             className={cn(

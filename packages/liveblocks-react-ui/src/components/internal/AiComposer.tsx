@@ -1,9 +1,13 @@
 import {
   type AiChatMessage,
+  type AiKnowledgeSource,
   type CopilotId,
   type MessageId,
 } from "@liveblocks/core";
-import { useSendAiMessage } from "@liveblocks/react";
+import {
+  useSendAiMessage,
+  type UseSendAiMessageOptions,
+} from "@liveblocks/react";
 import {
   type ComponentProps,
   type FormEvent,
@@ -83,6 +87,11 @@ export interface AiComposerProps
   /**
    * @internal
    */
+  knowledge?: AiKnowledgeSource[];
+
+  /**
+   * @internal
+   */
   branchId?: MessageId;
 
   /**
@@ -146,6 +155,7 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
       overrides,
       className,
       chatId,
+      knowledge: localKnowledge,
       branchId,
       copilotId,
       stream = true,
@@ -158,7 +168,12 @@ export const AiComposer = forwardRef<HTMLFormElement, AiComposerProps>(
     const sendAiMessage = useSendAiMessage(chatId, {
       stream,
       copilotId,
-    });
+
+      // TODO: We shouldn't need to pass knowledge from AiChat to AiComposer
+      //       to useSendAiMessage, ideally it would be attached to a chat ID
+      //       behind the scenes inside AiChat.
+      knowledge: localKnowledge,
+    } as UseSendAiMessageOptions);
 
     const handleComposerSubmit = useCallback(
       (message: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => {
