@@ -323,6 +323,7 @@ export type {
   AiAssistantMessage,
   AiChat,
   AiChatMessage,
+  AiChatsQuery,
   AiKnowledgeSource,
   AiReasoningPart,
   AiTextPart,
