@@ -437,6 +437,13 @@ the `components` prop. A full list is [available here](#AiChat-components).
     Object mapping tool names to tool definitions that should be available in
     this chat.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
   <PropertiesListItem name="layout" type="'inset' | 'compact'">
     The layout mode for the chat. Use `'inset'` (default) for standalone chats,
     or `'compact'` for embedded scenarios like pop-up windows.
