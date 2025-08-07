@@ -29,16 +29,16 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "jest --silent --verbose --color=always --passWithNoTests",
+    "test": "vitest run --passWithNoTests",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@liveblocks/core": "3.2.1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*"
+    "@liveblocks/vitest-config": "*"
   },
   "sideEffects": false,
   "bugs": {
