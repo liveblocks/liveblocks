@@ -1,3 +1,5 @@
+import type { MockInstance } from "vitest";
+
 import { createApiClient } from "../api-client";
 import { type AuthValue, createAuthManager } from "../auth-manager";
 import { StopRetrying } from "../connection";
@@ -139,7 +141,7 @@ function createTestableRoom<
 }
 
 describe("room / auth", () => {
-  let consoleErrorSpy: any;
+  let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});

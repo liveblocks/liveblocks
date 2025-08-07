@@ -1,3 +1,5 @@
+import type { MockInstance } from "vitest";
+
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -657,7 +659,7 @@ describe("2 ways tests with two clients", () => {
 
   describe("unsupported types", () => {
     let originalEnv: NodeJS.ProcessEnv;
-    let consoleErrorSpy: any;
+    let consoleErrorSpy: MockInstance;
 
     beforeAll(() => {
       originalEnv = process.env;
