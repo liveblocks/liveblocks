@@ -26,7 +26,7 @@ import type {
   DS,
   DU,
   EnterOptions,
-  GroupSummary,
+  GroupData,
   IYjsProvider,
   LiveblocksErrorContext,
   MentionData,
@@ -87,7 +87,7 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  GroupSummaryAsyncResult,
+  GroupAsyncResult,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -3130,9 +3130,9 @@ const _useStorageRoot: TypedBundle["useStorageRoot"] = useStorageRoot;
 const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
-function selectorFor_useGroupSummary(
-  state: AsyncResult<GroupSummary | undefined> | undefined
-): GroupSummaryAsyncResult {
+function selectorFor_useGroup(
+  state: AsyncResult<GroupData | undefined> | undefined
+): GroupAsyncResult {
   if (state === undefined || state?.isLoading) {
     return state ?? { isLoading: true };
   }
@@ -3143,16 +3143,16 @@ function selectorFor_useGroupSummary(
 
   return {
     isLoading: false,
-    summary: state.data,
+    group: state.data,
   };
 }
 
 /** @private - Internal API, do not rely on it. */
-function useGroupSummary(groupId: string): GroupSummaryAsyncResult {
+function useGroup(groupId: string): GroupAsyncResult {
   const client = useClient();
-  const store = client[kInternal].httpClient.groupSummariesStore;
+  const store = client[kInternal].httpClient.groupsStore;
 
-  const getGroupSummaryState = useCallback(
+  const getGroupState = useCallback(
     () => store.getItemState(groupId),
     [store, groupId]
   );
@@ -3163,9 +3163,9 @@ function useGroupSummary(groupId: string): GroupSummaryAsyncResult {
 
   return useSyncExternalStoreWithSelector(
     store.subscribe,
-    getGroupSummaryState,
-    getGroupSummaryState,
-    selectorFor_useGroupSummary,
+    getGroupState,
+    getGroupState,
+    selectorFor_useGroup,
     shallow
   );
 }
@@ -3194,7 +3194,7 @@ export {
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,
-  useGroupSummary,
+  useGroup,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,

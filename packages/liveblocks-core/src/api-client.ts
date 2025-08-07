@@ -2,6 +2,7 @@ import type { AuthManager, AuthValue } from "./auth-manager";
 import {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToGroupData,
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
   convertToSubscriptionData,
@@ -45,7 +46,7 @@ import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
-import type { GroupSummary } from "./protocol/Groups";
+import type { GroupData, GroupDataPlain } from "./protocol/Groups";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
@@ -485,9 +486,9 @@ export interface LiveblocksHttpApi<M extends BaseMetadata>
     permissionHints: Record<string, Permission[]>;
   }>;
 
-  groupSummariesStore: BatchStore<GroupSummary | undefined, string>;
+  groupsStore: BatchStore<GroupData | undefined, string>;
 
-  getGroupSummary(groupId: string): Promise<GroupSummary | undefined>;
+  getGroup(groupId: string): Promise<GroupData | undefined>;
 }
 
 export function createApiClient<M extends BaseMetadata>({
@@ -1775,33 +1776,33 @@ export function createApiClient<M extends BaseMetadata>({
    * -------------------------------------------------------------------------------------------------
    */
 
-  const batchedGetGroupSummaries = new Batch(
+  const batchedGetGroups = new Batch(
     async (batchedGroupIds: string[]) => {
       const groupIds = batchedGroupIds.flat();
-      const { groups } = await httpClient.post<{
-        groups: GroupSummary[];
+      const { groups: plainGroups } = await httpClient.post<{
+        groups: GroupDataPlain[];
       }>(
-        url`/v2/c/groups/summaries`,
+        url`/v2/c/groups/find`,
         await authManager.getAuthValue({
           requestedScope: "comments:read",
         }),
         { groupIds }
       );
 
-      const summaries = new Map<string, GroupSummary>();
+      const groups = new Map<string, GroupData>();
 
-      for (const group of groups) {
-        summaries.set(group.id, group);
+      for (const group of plainGroups) {
+        groups.set(group.id, convertToGroupData(group));
       }
 
-      return groupIds.map((groupId) => summaries.get(groupId));
+      return groupIds.map((groupId) => groups.get(groupId));
     },
     { delay: 50 }
   );
-  const groupSummariesStore = createBatchStore(batchedGetGroupSummaries);
+  const groupsStore = createBatchStore(batchedGetGroups);
 
-  function getGroupSummary(groupId: string) {
-    return batchedGetGroupSummaries.get(groupId);
+  function getGroup(groupId: string) {
+    return batchedGetGroups.get(groupId);
   }
 
   return {
@@ -1858,8 +1859,8 @@ export function createApiClient<M extends BaseMetadata>({
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
     // Groups
-    groupSummariesStore,
-    getGroupSummary,
+    groupsStore,
+    getGroup,
     // AI
     executeContextualPrompt,
   };

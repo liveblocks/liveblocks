@@ -229,7 +229,6 @@ export type {
   GroupData,
   GroupDataPlain,
   GroupMemberData,
-  GroupSummary,
 } from "./protocol/Groups";
 export type {
   ActivityData,

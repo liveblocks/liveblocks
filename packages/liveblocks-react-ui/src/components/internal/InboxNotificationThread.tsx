@@ -164,13 +164,12 @@ function findLastCommentWithMentionedId(
 
         // 3. The comment contains a group mention including the current user in its managed group members.
         if (mention.kind === "group" && mention.userIds === undefined) {
-          // Synchronously look up the group summary for this group ID.
-          // TODO: These group summaries need to be fetched in the first place
-          const groupSummary = client[
-            kInternal
-          ].httpClient.groupSummariesStore.getItemState(mention.id);
+          // Synchronously look up the group data for this group ID.
+          const group = client[kInternal].httpClient.groupsStore.getData(
+            mention.id
+          );
 
-          if (groupSummary?.data?.isMember) {
+          if (group?.members.some((member) => member.id === mentionedId)) {
             return comment;
           }
         }

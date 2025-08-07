@@ -71,7 +71,7 @@ import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import type { ComposerBodyMark } from "../types";
 import { cn } from "../utils/cn";
 import { useControllableState } from "../utils/use-controllable-state";
-import { useGroupMentionSummary } from "../utils/use-group-mention";
+import { useIsGroupMentionMember } from "../utils/use-group-mention";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
@@ -354,12 +354,12 @@ function ComposerUserMention({ mention }: ComposerMentionProps) {
 }
 
 function ComposerGroupMention({ mention }: ComposerMentionProps) {
-  const { summary } = useGroupMentionSummary(mention as GroupMentionData);
+  const isMember = useIsGroupMentionMember(mention as GroupMentionData);
 
   return (
     <ComposerPrimitive.Mention
       className="lb-composer-mention"
-      data-self={summary?.isMember ? "" : undefined}
+      data-self={isMember ? "" : undefined}
     >
       {MENTION_CHARACTER}
       <Group groupId={mention.id} />
