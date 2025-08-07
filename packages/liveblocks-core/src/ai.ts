@@ -84,10 +84,7 @@ export type AiToolTypePack<
   R: R;
 };
 
-export type AskUserMessageInChatOptions = Omit<
-  AiGenerationOptions,
-  "tools" | "knowledge"
->;
+export type AskUserMessageInChatOptions = Omit<AiGenerationOptions, "tools">;
 
 export type SetToolResultOptions = Omit<
   AiGenerationOptions,
@@ -1301,7 +1298,9 @@ export function createAi(config: AiConfig): Ai {
         targetMessageId: MessageId,
         options?: AskUserMessageInChatOptions
       ): Promise<AskInChatResponse> => {
-        const knowledge = context.knowledge.get();
+        const globalKnowledge = context.knowledge.get();
+        const requestKnowledge = options?.knowledge || [];
+        const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
@@ -1314,9 +1313,9 @@ export function createAi(config: AiConfig): Ai {
             stream: options?.stream,
             timeout: options?.timeout,
 
-            // Knowledge and tools aren't coming from the options, but retrieved
-            // from the global context
-            knowledge: knowledge.length > 0 ? knowledge : undefined,
+            // Combine global knowledge with request-specific knowledge
+            knowledge:
+              combinedKnowledge.length > 0 ? combinedKnowledge : undefined,
             tools: tools.length > 0 ? tools : undefined,
           },
         });

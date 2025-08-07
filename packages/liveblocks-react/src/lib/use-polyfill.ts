@@ -1,9 +1,21 @@
+import * as React from "react";
+
+type Use = <T>(promise: Promise<T>) => T;
+
+// Prevent bundlers from trying to `import { use } from "react";`
+const reactUse = React[" use ".trim().toString() as keyof typeof React] as
+  | Use
+  | undefined;
+
 /**
- * Drop-in replacement for React 19's `use` hook.
+ * Drop-in replacement for React 19's `use` hook,
+ * with a partial polyfill for older versions of React.
+ *
+ * ⚠️ Only supports `use(promise)`, not `use(context)`.
  */
 export const use =
-  // React.use ||
-  <T>(
+  reactUse ??
+  (<T>(
     promise: Promise<T> & {
       status?: "pending" | "fulfilled" | "rejected";
       value?: T;
@@ -30,4 +42,4 @@ export const use =
       );
       throw promise;
     }
-  };
+  });

@@ -1,19 +1,23 @@
 {
-  "name": "@liveblocks/node-sandbox",
-  "private": true,
-  "main": "index.js",
+  "name": "node-sandbox",
+  "version": "1.0.0",
+  "type": "module",
+  "author": "",
   "scripts": {
-    "test": "jest"
+    "format": "(eslint --fix test/ || true) && prettier --write test/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
-  "license": "MIT",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
     "@liveblocks/client": "*",
-    "node-fetch": "2.6.7",
+    "@liveblocks/node": "*",
+    "dotenv": "^16.0.0",
     "ws": "^8.5.0"
   },
   "devDependencies": {
-    "dotenv": "^16.0.0",
-    "jest": "^27.5.1",
-    "regenerator-runtime": "^0.13.9"
+    "@liveblocks/vitest-config": "*",
+    "@types/ws": "^8.5.0"
   }
 }
