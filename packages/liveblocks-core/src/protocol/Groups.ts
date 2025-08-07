@@ -5,15 +5,10 @@ export type GroupMemberData = {
   addedAt: Date;
 };
 
-export type GroupScopes = {
-  mention?: true;
-};
-
 export type GroupData = {
   type: "group";
   id: string;
   tenantId: string;
-  scopes: GroupScopes;
   createdAt: Date;
   updatedAt: Date;
   members: GroupMemberData[];
