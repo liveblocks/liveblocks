@@ -5,11 +5,11 @@ async function setupSimpleChat(page: Page) {
   await page.goto("/simple");
 
   // Wait for the chat interface to load
-  await expect(page.locator(".lb-ai-chat-composer")).toBeVisible();
+  await expect(page.locator(".lb-ai-composer")).toBeVisible();
 
   // Find the text input and send button
-  const textInput = page.locator(".lb-ai-chat-composer-editor");
-  const sendButton = page.locator(".lb-ai-chat-composer-action");
+  const textInput = page.locator(".lb-ai-composer-editor");
+  const sendButton = page.locator(".lb-ai-composer-action");
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
   if (

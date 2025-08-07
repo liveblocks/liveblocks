@@ -42,13 +42,13 @@ test.describe("Knowledge Registration - Simple", () => {
     }
 
     // Wait for the AI chat popover to be visible
-    await expect(page.locator(".lb-ai-chat-composer")).toBeVisible({
+    await expect(page.locator(".lb-ai-composer")).toBeVisible({
       timeout: 10000,
     });
 
     // Find the text input and send button
-    const textInput = page.locator(".lb-ai-chat-composer-editor");
-    const sendButton = page.locator(".lb-ai-chat-composer-action");
+    const textInput = page.locator(".lb-ai-composer-editor");
+    const sendButton = page.locator(".lb-ai-composer-action");
 
     // If there's an ongoing operation (abort button is enabled), click it first to clear state
     const buttonVariant = await sendButton.getAttribute("data-variant");

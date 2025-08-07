@@ -3,13 +3,13 @@ import type { Page } from "@playwright/test";
 
 async function setupAiChat(page: Page) {
   // Wait for the AI chat popover to be visible
-  await expect(page.locator(".lb-ai-chat-composer")).toBeVisible({
+  await expect(page.locator(".lb-ai-composer")).toBeVisible({
     timeout: 10000,
   });
 
   // Find the text input and send button in the AI chat
-  const textInput = page.locator(".lb-ai-chat-composer-editor");
-  const sendButton = page.locator(".lb-ai-chat-composer-action");
+  const textInput = page.locator(".lb-ai-composer-editor");
+  const sendButton = page.locator(".lb-ai-composer-action");
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
   if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
@@ -34,7 +34,9 @@ async function sendAiMessage(page: Page, message: string) {
   await sendButton.click();
 
   // Verify the message was sent (appears in the chat)
-  await expect(page.locator(".lb-ai-chat-user-message").last()).toContainText(message);
+  await expect(page.locator(".lb-ai-chat-user-message").last()).toContainText(
+    message
+  );
 }
 
 test.describe("Tool Calling", () => {
@@ -222,8 +224,11 @@ test.describe("Tool Calling", () => {
     ).toBeVisible();
 
     // Verify the AI shows the request was denied
-    await expect(page.locator(".lb-ai-chat-messages")).toContainText(/denied|cancelled/i, {
-      timeout: 10000
-    });
+    await expect(page.locator(".lb-ai-chat-messages")).toContainText(
+      /denied|cancelled/i,
+      {
+        timeout: 10000,
+      }
+    );
   });
 });

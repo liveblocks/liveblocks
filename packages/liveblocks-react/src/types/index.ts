@@ -16,6 +16,7 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
+  AiKnowledgeSource,
   AiUserMessage,
   AsyncError,
   AsyncLoading,
@@ -80,6 +81,11 @@ export type UseSendAiMessageOptions = {
    * The maximum timeout for the answer to be generated.
    */
   timeout?: number;
+
+  /**
+   * @internal
+   */
+  knowledge?: AiKnowledgeSource[];
 };
 
 export type SendAiMessageOptions = UseSendAiMessageOptions & {
