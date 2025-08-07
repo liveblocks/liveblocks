@@ -1,4 +1,5 @@
 import { Webhook } from "svix";
+import { vi } from "vitest";
 
 import {
   isCustomNotificationEvent,
@@ -55,7 +56,7 @@ describe("WebhookHandler", () => {
 
   describe("verifyRequest", () => {
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     it.each([
@@ -239,7 +240,7 @@ describe("WebhookHandler", () => {
       ],
     ])('should verify a "%s" event', (type, data) => {
       const now = 1674851609000;
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now,
       });
 
@@ -294,7 +295,7 @@ describe("WebhookHandler", () => {
         ),
       };
 
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674851522000,
       });
 
@@ -309,7 +310,7 @@ describe("WebhookHandler", () => {
     });
 
     it("should verify an event with multiple signatures", () => {
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -346,7 +347,7 @@ describe("WebhookHandler", () => {
     });
 
     it("should allow a native Headers object", () => {
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674850126000,
       });
       const webhookHandler = new WebhookHandler(secret);
@@ -370,7 +371,7 @@ describe("WebhookHandler", () => {
     });
 
     it("should throw if the rawBody is not a string", () => {
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -395,7 +396,7 @@ describe("WebhookHandler", () => {
     });
 
     it("should throw if the signature is invalid", () => {
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -412,7 +413,7 @@ describe("WebhookHandler", () => {
     });
 
     it("should throw if the timestamp is invalid", () => {
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -436,7 +437,7 @@ describe("WebhookHandler", () => {
 
     it("should throw if timestamp is above future threshold", () => {
       const tenMinutesAgo = 1674850126000 - 10 * 60 * 1000;
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: tenMinutesAgo,
       });
 
@@ -459,7 +460,7 @@ describe("WebhookHandler", () => {
 
     it("should throw if timestamp is below past threshold", () => {
       const tenMinutesFromNow = 1674850126000 + 10 * 60 * 1000;
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: tenMinutesFromNow,
       });
 
@@ -481,7 +482,7 @@ describe("WebhookHandler", () => {
     });
 
     it("should throw if the event type is not supported", () => {
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674851522000,
       });
 
