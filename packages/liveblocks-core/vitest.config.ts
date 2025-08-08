@@ -2,8 +2,11 @@ import { defaultLiveblocksVitestConfig } from "@liveblocks/vitest-config";
 
 export default defaultLiveblocksVitestConfig({
   test: {
+    // Don't run the e2e/* tests, only the "normal" tests in src/*
+    // e2e/* tests will be run by `npm run test:e2e`
+    exclude: ["e2e/**"],
+
     globals: true,
-    exclude: ["e2e/**"], // These are run via `npm run test:e2e`
     environment: "jsdom",
     environmentOptions: {
       jsdom: {

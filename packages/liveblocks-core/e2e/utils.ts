@@ -227,8 +227,8 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     actor.ws.pauseSend();
 
-    actor.ws.addEventListener("message", (message) => {
-      console.log(message.data);
+    actor.ws.addEventListener("message", (_message) => {
+      // console.log(message.data);
     });
 
     try {
