@@ -18,6 +18,55 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 32 (2025-08-08)
+
+## v3.3.0
+
+### `@liveblocks/react-ui`
+
+- Add `maxVisibleComments` prop to `Thread` to control the maximum number of
+  comments to show. When comments are hidden, a "Show more replies" button is
+  shown to allow users to expand the thread.
+- Add `onComposerSubmit` callback to `AiChat` triggered when a new message is
+  sent. It can also be used to customize message submission by calling
+  `useSendAiMessage` yourself.
+- Overrides and CSS classes for `AiChat`'s composer have been renamed:
+  - Overrides: `AI_CHAT_COMPOSER_SEND` → `AI_COMPOSER_PLACEHOLDER`
+  - CSS classes: `.lb-ai-chat-composer-form` → `.lb-ai-composer-form`
+- Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
+  other instances of `AiChat` that are currently mounted on screen.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for string
+  arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
+- `useSendAiMessage` now accepts passing the chat ID and/or options to the
+  function rather than the hook. This can be useful in dynamic scenarios where
+  the chat ID might not be known when calling the hook for example.
+- `useCreateAiChat` now accepts a chat ID as a string instead of
+  `{ id: "chat-id" }`.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Allow using custom composers in `FloatingComposer` via the
+  `components={{ Composer }}` prop.
+
+### `@liveblocks/react-lexical`
+
+- Add `ATTACH_THREAD_COMMAND` command to manually create a thread attached to
+  the current selection.
+
+## Dashboard
+
+- Support SAML Single Sign-On for enterprise customers.
+- Allow editing first and last name in personal settings.
+
+## Contributors
+
+ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
+
 # Week 31 (2025-08-01)
 
 ## v3.2.1
