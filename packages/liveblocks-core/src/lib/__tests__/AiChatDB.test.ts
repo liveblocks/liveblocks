@@ -1,11 +1,13 @@
-import type { AiChat, ISODateString } from "../../types/ai";
 import { AiChatDB } from "../../AiChatDB";
+import type { AiChat, ISODateString } from "../../types/ai";
 
 function iso(s: string): ISODateString {
   return new Date(s).toISOString() as ISODateString;
 }
 
-function dummyAiChatData(partial: Partial<AiChat> & Pick<AiChat, "id">): AiChat {
+function dummyAiChatData(
+  partial: Partial<AiChat> & Pick<AiChat, "id">
+): AiChat {
   return {
     id: partial.id,
     title: partial.title ?? `title-${partial.id}`,
@@ -20,9 +22,19 @@ describe("AiChatDB", () => {
   test("upsert adds and sorts by lastMessageAt then createdAt (most recent first)", () => {
     const db = new AiChatDB();
 
-    const a = dummyAiChatData({ id: "a", createdAt: iso("2024-01-01T00:00:00Z") });
-    const b = dummyAiChatData({ id: "b", createdAt: iso("2024-01-02T00:00:00Z") });
-    const c = dummyAiChatData({ id: "c", createdAt: iso("2024-01-01T00:00:00Z"), lastMessageAt: iso("2024-01-03T00:00:00Z") });
+    const a = dummyAiChatData({
+      id: "a",
+      createdAt: iso("2024-01-01T00:00:00Z"),
+    });
+    const b = dummyAiChatData({
+      id: "b",
+      createdAt: iso("2024-01-02T00:00:00Z"),
+    });
+    const c = dummyAiChatData({
+      id: "c",
+      createdAt: iso("2024-01-01T00:00:00Z"),
+      lastMessageAt: iso("2024-01-03T00:00:00Z"),
+    });
 
     db.upsert(a);
     db.upsert(b);
@@ -35,8 +47,14 @@ describe("AiChatDB", () => {
   test("tie-breaker: same timestamps are ordered by id (descending)", () => {
     const db = new AiChatDB();
 
-    const a = dummyAiChatData({ id: "a", createdAt: iso("2024-01-01T00:00:00Z") });
-    const b = dummyAiChatData({ id: "b", createdAt: iso("2024-01-01T00:00:00Z") });
+    const a = dummyAiChatData({
+      id: "a",
+      createdAt: iso("2024-01-01T00:00:00Z"),
+    });
+    const b = dummyAiChatData({
+      id: "b",
+      createdAt: iso("2024-01-01T00:00:00Z"),
+    });
     db.upsert(a);
     db.upsert(b);
 
@@ -67,7 +85,10 @@ describe("AiChatDB", () => {
 
   test("upsert of a previously deleted chat id is ignored", () => {
     const db = new AiChatDB();
-    const y = dummyAiChatData({ id: "y", createdAt: iso("2024-01-01T00:00:00Z") });
+    const y = dummyAiChatData({
+      id: "y",
+      createdAt: iso("2024-01-01T00:00:00Z"),
+    });
     db.upsert(y);
     db.markDeleted("y");
 
@@ -84,7 +105,10 @@ describe("AiChatDB", () => {
 
   test("upserting a chat already deleted (incoming deletedAt) stores in map but not in list", () => {
     const db = new AiChatDB();
-    const z = dummyAiChatData({ id: "z", deletedAt: iso("2024-01-10T00:00:00Z") });
+    const z = dummyAiChatData({
+      id: "z",
+      deletedAt: iso("2024-01-10T00:00:00Z"),
+    });
     db.upsert(z);
 
     expect(db.findMany({})).toEqual([]);
@@ -97,7 +121,13 @@ describe("AiChatDB", () => {
       db.upsert(dummyAiChatData({ id: "m1", metadata: { a: "1" } }));
       db.upsert(dummyAiChatData({ id: "m2", metadata: { b: ["x", "y"] } }));
       db.upsert(dummyAiChatData({ id: "m3", metadata: {} }));
-      db.upsert(dummyAiChatData({ id: "m4", metadata: { a: "2" }, deletedAt: iso("2024-01-01T00:00:00Z") }));
+      db.upsert(
+        dummyAiChatData({
+          id: "m4",
+          metadata: { a: "2" },
+          deletedAt: iso("2024-01-01T00:00:00Z"),
+        })
+      );
 
       const ids = db.findMany({}).map((c) => c.id);
       expect(ids.sort()).toEqual(["m1", "m2", "m3"].sort());
@@ -108,7 +138,9 @@ describe("AiChatDB", () => {
       db.upsert(dummyAiChatData({ id: "s1", metadata: { tag: "urgent" } }));
       db.upsert(dummyAiChatData({ id: "s2", metadata: { tag: "normal" } }));
       db.upsert(dummyAiChatData({ id: "s3", metadata: {} }));
-      db.upsert(dummyAiChatData({ id: "s4", metadata: { tag: ["urgent"] } as any }));
+      db.upsert(
+        dummyAiChatData({ id: "s4", metadata: { tag: ["urgent"] } as any })
+      );
 
       const ids = db.findMany({ metadata: { tag: "urgent" } }).map((c) => c.id);
       // Only s1 matches exactly; s4 has array and should NOT match string
@@ -117,9 +149,16 @@ describe("AiChatDB", () => {
 
     test("array requires all values present and metadata value must be an array", () => {
       const db = new AiChatDB();
-      db.upsert(dummyAiChatData({ id: "a1", metadata: { tag: ["urgent", "p1", "work"] } }));
+      db.upsert(
+        dummyAiChatData({
+          id: "a1",
+          metadata: { tag: ["urgent", "p1", "work"] },
+        })
+      );
       db.upsert(dummyAiChatData({ id: "a2", metadata: { tag: ["urgent"] } }));
-      db.upsert(dummyAiChatData({ id: "a3", metadata: { tag: "urgent" } as any }));
+      db.upsert(
+        dummyAiChatData({ id: "a3", metadata: { tag: "urgent" } as any })
+      );
       db.upsert(dummyAiChatData({ id: "a4", metadata: { tag: ["p1"] } }));
 
       const ids = db
@@ -135,18 +174,32 @@ describe("AiChatDB", () => {
       db.upsert(dummyAiChatData({ id: "n2", metadata: { archived: "yes" } }));
       db.upsert(dummyAiChatData({ id: "n3", metadata: { archived: "" } }));
 
-      const ids = db.findMany({ metadata: { archived: null } }).map((c) => c.id);
+      const ids = db
+        .findMany({ metadata: { archived: null } })
+        .map((c) => c.id);
       expect(ids.sort()).toEqual(["n1"].sort());
     });
 
     test("multiple metadata keys are AND-ed", () => {
       const db = new AiChatDB();
       db.upsert(
-        dummyAiChatData({ id: "m1", metadata: { team: "alpha", tag: ["urgent", "p1"] } })
+        dummyAiChatData({
+          id: "m1",
+          metadata: { team: "alpha", tag: ["urgent", "p1"] },
+        })
       );
-      db.upsert(dummyAiChatData({ id: "m2", metadata: { team: "alpha", tag: ["p1"] } }));
-      db.upsert(dummyAiChatData({ id: "m3", metadata: { team: "beta", tag: ["urgent", "p1"] } }));
-      db.upsert(dummyAiChatData({ id: "m4", metadata: { tag: ["urgent", "p1"] } }));
+      db.upsert(
+        dummyAiChatData({ id: "m2", metadata: { team: "alpha", tag: ["p1"] } })
+      );
+      db.upsert(
+        dummyAiChatData({
+          id: "m3",
+          metadata: { team: "beta", tag: ["urgent", "p1"] },
+        })
+      );
+      db.upsert(
+        dummyAiChatData({ id: "m4", metadata: { tag: ["urgent", "p1"] } })
+      );
 
       const ids = db
         .findMany({ metadata: { team: "alpha", tag: ["urgent", "p1"] } })
@@ -157,13 +210,25 @@ describe("AiChatDB", () => {
     test("filter respects sorting order of results", () => {
       const db = new AiChatDB();
       db.upsert(
-        dummyAiChatData({ id: "r1", metadata: { tag: ["x"] }, createdAt: iso("2024-01-01T00:00:00Z") })
+        dummyAiChatData({
+          id: "r1",
+          metadata: { tag: ["x"] },
+          createdAt: iso("2024-01-01T00:00:00Z"),
+        })
       );
       db.upsert(
-        dummyAiChatData({ id: "r2", metadata: { tag: ["x"] }, lastMessageAt: iso("2024-02-01T00:00:00Z") })
+        dummyAiChatData({
+          id: "r2",
+          metadata: { tag: ["x"] },
+          lastMessageAt: iso("2024-02-01T00:00:00Z"),
+        })
       );
       db.upsert(
-        dummyAiChatData({ id: "r3", metadata: { tag: ["x"] }, createdAt: iso("2024-01-15T00:00:00Z") })
+        dummyAiChatData({
+          id: "r3",
+          metadata: { tag: ["x"] },
+          createdAt: iso("2024-01-15T00:00:00Z"),
+        })
       );
       db.upsert(dummyAiChatData({ id: "r4", metadata: { tag: ["y"] } }));
 
@@ -172,6 +237,3 @@ describe("AiChatDB", () => {
     });
   });
 });
-
-
-

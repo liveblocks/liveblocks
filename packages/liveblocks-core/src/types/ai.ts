@@ -107,7 +107,7 @@ export type GetChatsOptions = {
    * ```
    * // Filter by presence of metadata values
    * { metadata: { tag: ["urgent"] } }
-   * 
+   *
    * // Filter by absence of metadata key (key must not exist)
    * { metadata: { archived: null } }
    * ```

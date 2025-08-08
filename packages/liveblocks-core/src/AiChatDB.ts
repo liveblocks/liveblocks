@@ -25,9 +25,12 @@ export class AiChatDB {
   }
 
   public markDeleted(chatId: string): void {
-      const chat = this.#byId.get(chatId);
-      if (chat === undefined || chat.deletedAt !== undefined) return;
-      this.upsert({ ...chat, deletedAt: new Date().toISOString() as ISODateString });
+    const chat = this.#byId.get(chatId);
+    if (chat === undefined || chat.deletedAt !== undefined) return;
+    this.upsert({
+      ...chat,
+      deletedAt: new Date().toISOString() as ISODateString,
+    });
   }
 
   public upsert(chat: AiChat): void {
@@ -47,7 +50,7 @@ export class AiChatDB {
       }
       this.#byId.set(chat.id, chat);
       return true;
-    })
+    });
   }
 
   public findMany(query: AiChatsQuery): Omit<AiChat, "deletedAt">[] {

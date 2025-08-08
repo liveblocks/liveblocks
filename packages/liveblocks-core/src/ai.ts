@@ -775,7 +775,7 @@ function createStore_forUserAiChats() {
       for (const chat of chats) {
         chatsDB.upsert(chat);
       }
-    })
+    });
   }
 
   function upsert(chat: AiChat) {
