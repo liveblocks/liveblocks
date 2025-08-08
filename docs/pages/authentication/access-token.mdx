@@ -350,6 +350,22 @@ If your application already has rooms, it’s possible to rename their IDs to be
 compatible with a naming pattern. Learn more in our
 [room ID migration guide](/docs/guides/how-to-rename-room-ids-and-successfully-migrate-users).
 
+### Tenants
+
+You can use [tenants](/docs/authentication/tenants) to compartmentalize your
+rooms per customers/organizations that you have.
+
+When using Access tokens, you can set the `tenantId` when you prepare a session.
+When a token is generated for a specific tenant, it will only give access to
+resources inside this tenant, even if the token has permissions to rooms in
+other tenants.
+
+```ts highlight="2"
+const session = liveblocks.prepareSession("olivier@example.com", {
+  tenantId: "tenant123",
+});
+```
+
 ## Select your framework [#select-your-framework]
 
 Select your framework for specific instructions on setting up access token
