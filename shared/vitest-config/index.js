@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -11,6 +11,15 @@ export function defaultLiveblocksVitestConfig(options = {}) {
     plugins: [tsconfigPaths()],
     test: {
       setupFiles: [path.join(__dirname, "setup.js")],
+
+      // Gotcha! One key difference between Jest (our old test runner) and Vitest
+      // is that Vitest does not automatically mock the `performance.now()` method.
+      // Some of our tests rely on this behavior though.
+      // See https://github.com/vitest-dev/vitest/issues/4004
+      fakeTimers: {
+        toFake: [...configDefaults.fakeTimers.toFake, "performance"],
+      },
+
       coverage: {
         provider: "istanbul",
         reporter: ["text", "html"],
