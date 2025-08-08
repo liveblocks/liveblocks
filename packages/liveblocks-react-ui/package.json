@@ -70,9 +70,9 @@
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "jest --silent --verbose --color=always",
+    "test": "vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
@@ -107,8 +107,8 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
     "@liveblocks/rollup-config": "*",
+    "@liveblocks/vitest-config": "*",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",
     "eslint-plugin-react": "^7.33.2",
