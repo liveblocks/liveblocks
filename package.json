@@ -24,6 +24,7 @@
     "@types/node": "^18.19.70",
     "@types/react": "^18.3.17",
     "@types/react-dom": "^18.3.5",
+    "@vitest/coverage-istanbul": "^2.1.9",
     "dependency-cruiser": "^16.9.0",
     "prettier": "^3.4.2",
     "publint": "^0.3.6",
@@ -31,7 +32,8 @@
     "tsd": "^0.31.2",
     "tsup": "^8.3.5",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=22.x"
