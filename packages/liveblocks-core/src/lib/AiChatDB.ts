@@ -60,8 +60,12 @@ export class AiChatDB {
         if (query.metadata === undefined) return true;
 
         for (const [key, value] of Object.entries(query.metadata)) {
+          // If the value is null, check that the key does not exist in the chat's metadata
+          if (value === null) {
+            if (key in chat.metadata) return false;
+          }
           // If the metadata key is a string, check for an exact match against the chat's metadata
-          if (typeof value === "string") {
+          else if (typeof value === "string") {
             if (chat.metadata[key] !== value) return false;
           }
           // If the metadata key is an array, ensure all values are present in the chat's metadata array

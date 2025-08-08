@@ -79,7 +79,7 @@ type GetChatsPair = DefineCmd<
   {
     cursor?: Cursor;
     pageSize?: number;
-    query?: { metadata?: Record<string, string | string[]> };
+    query?: { metadata?: Record<string, string | string[] | null> };
   },
   { chats: AiChat[]; nextCursor: Cursor | null }
 >;
@@ -92,7 +92,7 @@ export type CreateChatOptions = {
 };
 
 export type AiChatsQuery = {
-  metadata?: Record<string, string | string[]>;
+  metadata?: Record<string, string | string[] | null>;
 };
 
 export type GetChatsOptions = {
@@ -105,7 +105,11 @@ export type GetChatsOptions = {
    * that match the query will be returned. If not provided, all chats will be returned.
    * @example
    * ```
+   * // Filter by presence of metadata values
    * { metadata: { tag: ["urgent"] } }
+   * 
+   * // Filter by absence of metadata key (key must not exist)
+   * { metadata: { archived: null } }
    * ```
    */
   query?: AiChatsQuery;
