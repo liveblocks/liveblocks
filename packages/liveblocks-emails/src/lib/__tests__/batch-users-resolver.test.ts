@@ -145,7 +145,7 @@ describe("batch users resolve", () => {
     await batchUsersResolver.resolve();
     const resolvedUser2 = await promise2;
 
-    expect(warnMock2).toHaveBeenCalledTimes(2);
+    expect(warnMock2).toHaveBeenCalledTimes(1);
     expect(warnMock2).toHaveBeenCalledWith(
       "Batch users resolver promise already resolved. It can only resolve once."
     );
