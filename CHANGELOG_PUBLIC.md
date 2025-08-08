@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 32 (2025-08-08)
 
+## Dashboard
+
+- Support SAML Single Sign-On for enterprise customers. 
+
 ## Contributors
+
+ofoucherot, sugardarius
 
 # Week 31 (2025-08-01)
 
