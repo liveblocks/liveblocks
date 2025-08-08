@@ -1000,8 +1000,6 @@ function useAiChatsSuspense(options?: UseAiChatsOptions): AiChatsAsyncSuccess {
 
   const queryKey = makeAiChatsQueryKey(options?.query);
 
-  console.log(queryKey)
-
   use(store.outputs.aiChats.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useAiChats(options);
