@@ -47,5 +47,7 @@ export {
   TranslateIcon as Translate,
   UnderlineIcon as Underline,
   UndoIcon as Undo,
+  UserIcon as User,
+  UsersIcon as Users,
   WarningIcon as Warning,
 } from "./icons";

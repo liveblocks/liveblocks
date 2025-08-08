@@ -17,6 +17,7 @@ import type { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { ThreadMarkNode } from "./comments/thread-mark-node";
+import { GroupMentionNode } from "./mentions/group-mention-node";
 import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
 import { useRootElement } from "./use-root-element";
@@ -92,7 +93,7 @@ export const LiveblocksPlugin = ({
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
 
-  if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
+  if (!editor.hasNodes([ThreadMarkNode, MentionNode, GroupMentionNode])) {
     throw new Error(
       "LiveblocksPlugin requires Lexical configuration to be wrapped in the `liveblocksConfig(options)` function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#liveblocksConfig"
     );
