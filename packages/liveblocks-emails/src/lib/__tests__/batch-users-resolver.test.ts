@@ -5,6 +5,7 @@ import type {
   IUserInfo,
   ResolveUsersArgs,
 } from "@liveblocks/core";
+import { vi } from "vitest";
 
 import { createBatchUsersResolver } from "../batch-users-resolver";
 
@@ -28,9 +29,14 @@ const USERS_DB: IUserInfo[] = [
 ];
 
 describe("batch users resolve", () => {
-  let resolveUsersMock: jest.Mock;
+  let resolveUsersMock: ReturnType<typeof vi.fn>;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
-    resolveUsersMock = jest.fn(
+    resolveUsersMock = vi.fn(
       <U extends BaseUserMeta = DU>({
         userIds,
       }: ResolveUsersArgs): Awaitable<
@@ -51,8 +57,8 @@ describe("batch users resolve", () => {
   });
 
   it("should handle no `resolveUsers` callback", async () => {
-    const warnMock1 = jest.fn();
-    jest.spyOn(console, "warn").mockImplementation(warnMock1);
+    const warnMock1 = vi.fn();
+    vi.spyOn(console, "warn").mockImplementation(warnMock1);
 
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       callerName: "test-suite-0",
@@ -122,7 +128,7 @@ describe("batch users resolve", () => {
   });
 
   it("should warn if batch promise is already resolved", async () => {
-    const warnMock2 = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const warnMock2 = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,

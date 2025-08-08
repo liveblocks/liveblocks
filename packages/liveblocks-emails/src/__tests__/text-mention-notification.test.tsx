@@ -4,6 +4,7 @@ import type {
 } from "@liveblocks/core";
 import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
+import { vi } from "vitest";
 
 import { MENTION_CHARACTER } from "../lib/constants";
 import type { ConvertMentionContentElements } from "../mention-content";
@@ -81,8 +82,8 @@ describe("text mention notification", () => {
 
   describe("internals utils", () => {
     it("should extract `null` - bad bad notification kind", async () => {
-      const warnMock1 = jest.fn();
-      jest.spyOn(console, "warn").mockImplementation(warnMock1);
+      const warnMock1 = vi.fn();
+      vi.spyOn(console, "warn").mockImplementation(warnMock1);
 
       const mentionId = generateInboxNotificationId();
       const badInboxNotification = makeThreadInboxNotification({
@@ -154,8 +155,8 @@ describe("text mention notification", () => {
     });
 
     it("should extract `null` - no text editor associated", async () => {
-      const warnMock2 = jest.fn();
-      jest.spyOn(console, "warn").mockImplementation(warnMock2);
+      const warnMock2 = vi.fn();
+      vi.spyOn(console, "warn").mockImplementation(warnMock2);
 
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
