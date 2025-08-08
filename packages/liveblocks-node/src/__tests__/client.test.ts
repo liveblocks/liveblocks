@@ -2359,36 +2359,40 @@ describe("client", () => {
 
   describe("create group", () => {
     test("should return the created group when createGroup receives a successful response", async () => {
-      const groupData = {
-        id: "group1",
+      const createGroupParams = {
+        groupId: "group1",
         memberIds: ["user1", "user2"],
         tenantId: "tenant1",
-      };
-
-      const createdGroup = {
-        type: "group",
-        id: "group1",
-        tenantId: "tenant1",
-        createdAt: "2022-07-13T14:32:50.697Z",
-        updatedAt: "2022-07-13T14:32:50.697Z",
-        members: [
-          {
-            id: "user1",
-            addedAt: "2022-07-13T14:32:50.697Z",
-          },
-          {
-            id: "user2",
-            addedAt: "2022-07-13T14:32:50.697Z",
-          },
-        ],
       };
 
       server.use(
         http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
           const data = await request.json();
 
-          if (JSON.stringify(data) === JSON.stringify(groupData)) {
-            return HttpResponse.json(createdGroup, { status: 200 });
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "tenant1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                members: [
+                  {
+                    id: "user1",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                  {
+                    id: "user2",
+                    addedAt: "2022-07-13T14:32:50.697Z",
+                  },
+                ],
+              },
+              { status: 200 }
+            );
           }
 
           return HttpResponse.error();
@@ -2396,7 +2400,7 @@ describe("client", () => {
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
-      const res = await client.createGroup(groupData);
+      const res = await client.createGroup(createGroupParams);
 
       expect(res).toEqual({
         type: "group",
@@ -2418,26 +2422,30 @@ describe("client", () => {
     });
 
     test("should create a group without members when createGroup receives a successful response", async () => {
-      const groupData = {
-        id: "group1",
+      const createGroupParams = {
+        groupId: "group1",
         tenantId: "tenant1",
-      };
-
-      const createdGroup = {
-        type: "group",
-        id: "group1",
-        tenantId: "tenant1",
-        createdAt: "2022-07-13T14:32:50.697Z",
-        updatedAt: "2022-07-13T14:32:50.697Z",
-        members: [],
       };
 
       server.use(
         http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
           const data = await request.json();
 
-          if (JSON.stringify(data) === JSON.stringify(groupData)) {
-            return HttpResponse.json(createdGroup, { status: 200 });
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                type: "group",
+                id: "group1",
+                tenantId: "tenant1",
+                createdAt: "2022-07-13T14:32:50.697Z",
+                updatedAt: "2022-07-13T14:32:50.697Z",
+                members: [],
+              },
+              { status: 200 }
+            );
           }
 
           return HttpResponse.error();
@@ -2445,7 +2453,7 @@ describe("client", () => {
       );
 
       const client = new Liveblocks({ secret: "sk_xxx" });
-      const res = await client.createGroup(groupData);
+      const res = await client.createGroup(createGroupParams);
 
       expect(res).toEqual({
         type: "group",
@@ -2458,22 +2466,26 @@ describe("client", () => {
     });
 
     test("should throw a LiveblocksError when createGroup receives an error response", async () => {
-      const groupData = {
-        id: "group1",
+      const createGroupParams = {
+        groupId: "group1",
         memberIds: ["user1"],
         tenantId: "tenant1",
-      };
-
-      const error = {
-        error: "GROUP_ALREADY_EXISTS",
-        message: "Group already exists",
       };
 
       server.use(
         http.post(`${DEFAULT_BASE_URL}/v2/groups`, async ({ request }) => {
           const data = await request.json();
-          if (JSON.stringify(data) === JSON.stringify(groupData)) {
-            return HttpResponse.json(error, { status: 409 });
+          if (
+            (data as typeof createGroupParams)?.groupId ===
+            createGroupParams.groupId
+          ) {
+            return HttpResponse.json(
+              {
+                error: "GROUP_ALREADY_EXISTS",
+                message: "Group already exists",
+              },
+              { status: 409 }
+            );
           }
 
           return HttpResponse.error();
@@ -2484,7 +2496,7 @@ describe("client", () => {
 
       // This should throw a LiveblocksError
       try {
-        await client.createGroup(groupData);
+        await client.createGroup(createGroupParams);
         // If it doesn't throw, fail the test.
         expect(true).toBe(false);
       } catch (err) {
@@ -2524,7 +2536,7 @@ describe("client", () => {
 
       await expect(
         client.getGroup({
-          id: "group1",
+          groupId: "group1",
         })
       ).resolves.toEqual({
         type: "group",
@@ -2558,7 +2570,7 @@ describe("client", () => {
       // This should throw a LiveblocksError
       try {
         await client.getGroup({
-          id: "group1",
+          groupId: "group1",
         });
         // If it doesn't throw, fail the test.
         expect(true).toBe(false);
@@ -2621,7 +2633,10 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       await expect(
-        client.addGroupMembers("group1", { memberIds })
+        client.addGroupMembers({
+          groupId: "group1",
+          memberIds,
+        })
       ).resolves.toEqual({
         type: "group",
         id: "group1",
@@ -2675,7 +2690,10 @@ describe("client", () => {
 
       // This should throw a LiveblocksError
       try {
-        await client.addGroupMembers("group1", { memberIds });
+        await client.addGroupMembers({
+          groupId: "group1",
+          memberIds,
+        });
         // If it doesn't throw, fail the test.
         expect(true).toBe(false);
       } catch (err) {
@@ -2725,7 +2743,10 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       await expect(
-        client.removeGroupMembers("group1", { memberIds })
+        client.removeGroupMembers({
+          groupId: "group1",
+          memberIds,
+        })
       ).resolves.toEqual({
         type: "group",
         id: "group1",
@@ -2767,7 +2788,10 @@ describe("client", () => {
 
       // This should throw a LiveblocksError
       try {
-        await client.removeGroupMembers("group1", { memberIds });
+        await client.removeGroupMembers({
+          groupId: "group1",
+          memberIds,
+        });
         // If it doesn't throw, fail the test.
         expect(true).toBe(false);
       } catch (err) {
@@ -2792,7 +2816,7 @@ describe("client", () => {
       const client = new Liveblocks({ secret: "sk_xxx" });
 
       const res = await client.deleteGroup({
-        id: "group1",
+        groupId: "group1",
       });
 
       expect(res).toBeUndefined();
@@ -2815,7 +2839,7 @@ describe("client", () => {
       // This should throw a LiveblocksError
       try {
         await client.deleteGroup({
-          id: "group1",
+          groupId: "group1",
         });
         // If it doesn't throw, fail the test.
         expect(true).toBe(false);
