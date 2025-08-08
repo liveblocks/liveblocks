@@ -22,11 +22,12 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Dashboard
 
-- Support SAML Single Sign-On for enterprise customers. 
+- Support SAML Single Sign-On for enterprise customers.
+- Allow editing first and last name in personal settings.
 
 ## Contributors
 
-ofoucherot, sugardarius
+ofoucherot, sugardarius, pierrelevaillant
 
 # Week 31 (2025-08-01)
 
