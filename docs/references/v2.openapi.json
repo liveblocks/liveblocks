@@ -4134,6 +4134,91 @@
         }
       }
     },
+    "/ai/copilots/{copilotId}/knowledge-file-sources/{fileName}": {
+      "put": {
+        "summary": "Upload file knowledge source",
+        "description": "Upload a file-based knowledge source for a copilot. Supports PDF files and images up to 20MB. The Content-Length header is required.",
+        "tags": [
+          "AI"
+        ],
+        "parameters": [
+          {
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "fileName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The name of the file to upload."
+          },
+          {
+            "name": "Content-Length",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 20971520
+            },
+            "description": "The size of the file in bytes. Maximum 20MB (20,971,520 bytes)."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/*": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Success. File uploaded and knowledge source created."
+          },
+          "400": {
+            "description": "Bad request. No file content provided."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "description": "Forbidden. AI feature not enabled or insufficient permissions."
+          },
+          "404": {
+            "description": "Not found. Copilot does not exist."
+          },
+          "409": {
+            "description": "Conflict. File with this name already exists."
+          },
+          "411": {
+            "description": "Length required. Content-Length header is missing."
+          },
+          "413": {
+            "description": "Payload too large. File exceeds 20MB limit."
+          },
+          "415": {
+            "description": "Unsupported media type. Only PDF and image files are supported."
+          }
+        }
+      }
+    },
     "/ai/copilots/{copilotId}/knowledge-file-sources/{knowledgeSourceId}": {
       "get": {
         "summary": "Get file knowledge source content",
