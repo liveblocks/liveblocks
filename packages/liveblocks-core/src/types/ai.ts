@@ -76,7 +76,11 @@ export type SetToolResultResponse = ServerCmdResponse<SetToolResultPair>;
 
 type GetChatsPair = DefineCmd<
   "get-chats",
-  { cursor?: Cursor; pageSize?: number },
+  {
+    cursor?: Cursor;
+    pageSize?: number;
+    query?: { metadata?: Record<string, string | string[] | null> };
+  },
   { chats: AiChat[]; nextCursor: Cursor | null }
 >;
 
@@ -85,6 +89,30 @@ export type CreateChatOptions = {
   title?: string;
   /** Arbitrary metadata to record for this chat. This can be later used to filter the list of chats by metadata. */
   metadata?: Record<string, string | string[]>;
+};
+
+export type AiChatsQuery = {
+  metadata?: Record<string, string | string[] | null>;
+};
+
+export type GetChatsOptions = {
+  /**
+   * The cursor to use for pagination.
+   */
+  cursor?: Cursor;
+  /**
+   * The query (including metadata) to filter chats by. If provided, only chats
+   * that match the query will be returned. If not provided, all chats will be returned.
+   * @example
+   * ```
+   * // Filter by presence of metadata values
+   * { metadata: { tag: ["urgent"] } }
+   *
+   * // Filter by absence of metadata key (key must not exist)
+   * { metadata: { archived: null } }
+   * ```
+   */
+  query?: AiChatsQuery;
 };
 
 type GetOrCreateChatPair = DefineCmd<
