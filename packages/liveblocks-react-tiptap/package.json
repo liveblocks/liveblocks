@@ -38,8 +38,8 @@
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
     "start": "npm run dev",
-    "test": "jest --silent --verbose --color=always",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
@@ -78,7 +78,7 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/vitest-config": "*",
     "@liveblocks/rollup-config": "*",
     "@testing-library/jest-dom": "^5.16.5",
     "eslint-plugin-react": "^7.33.2",
