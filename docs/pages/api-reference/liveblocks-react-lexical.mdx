@@ -1061,6 +1061,19 @@ function Toolbar() {
   >
     Override the component’s strings.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<FloatingComposerComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Composer"
+    type="(props: ComposerProps) => ReactNode"
+  >
+    Override the [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer)
+    component.
+  </PropertiesListItem>
 </PropertiesList>
 
 ### FloatingThreads
