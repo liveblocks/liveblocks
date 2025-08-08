@@ -34,8 +34,9 @@ export interface AnchoredThreadsProps<M extends BaseMetadata = DM>
    * Override the component's components.
    */
   components?: Partial<AnchoredThreadsComponents>;
+
   /**
-   * The tiptap editor
+   * The Tiptap editor.
    */
   editor: Editor | null;
 }

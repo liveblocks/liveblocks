@@ -17,9 +17,14 @@ import type {
   ComposerProps,
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
-import { Composer } from "@liveblocks/react-ui";
+import { Composer as DefaultComposer } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
-import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
+import type {
+  ComponentType,
+  FormEvent,
+  KeyboardEvent,
+  MouseEvent,
+} from "react";
 import { forwardRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
@@ -29,23 +34,36 @@ import type {
 } from "../types";
 import { compareSelections, getDomRangeFromSelection } from "../utils";
 
+type FloatingComposerComponents = {
+  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+};
+
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
 > & {
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<FloatingComposerComponents>;
+
+  /**
+   * The Tiptap editor.
+   */
   editor: Editor | null;
 };
-
-type ComposerElement = ComponentRef<typeof Composer>;
 
 export const FLOATING_COMPOSER_COLLISION_PADDING = 10;
 
 export const FloatingComposer = forwardRef<
-  ComposerElement,
+  HTMLFormElement,
   FloatingComposerProps
->(function FloatingComposer(props, forwardedRef) {
+>(function FloatingComposer(
+  { editor, onComposerSubmit, onKeyDown, onClick, components, ...props },
+  forwardedRef
+) {
+  const Composer = components?.Composer ?? DefaultComposer;
   const createThread = useCreateThread();
-  const { editor, onComposerSubmit, onKeyDown } = props;
   const pendingCommentSelection =
     useEditorState({
       editor,
@@ -115,6 +133,7 @@ export const FloatingComposer = forwardRef<
       if (!editor) {
         return;
       }
+
       event.preventDefault();
 
       const thread = createThread({
@@ -144,6 +163,20 @@ export const FloatingComposer = forwardRef<
     [editor, onKeyDown]
   );
 
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLFormElement>) => {
+      onClick?.(event);
+
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      // Don't send up a click event from emoji picker and close the composer.
+      event.stopPropagation();
+    },
+    [onClick]
+  );
+
   if (!isOpen || !editor) {
     return null;
   }
@@ -162,14 +195,11 @@ export const FloatingComposer = forwardRef<
     >
       <Composer
         ref={forwardedRef}
+        autoFocus
         {...props}
         onKeyDown={handleKeyDown}
         onComposerSubmit={handleComposerSubmit}
-        onClick={(e) => {
-          // Don't send up a click event from emoji popout and close the composer
-          e.stopPropagation();
-        }}
-        autoFocus={true}
+        onClick={handleClick}
       />
     </div>,
     document.body

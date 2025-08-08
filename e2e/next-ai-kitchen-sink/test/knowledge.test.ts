@@ -12,19 +12,19 @@ async function setupAiChat(page: Page) {
   }
 
   // Wait for the AI chat popover to be visible
-  await expect(page.locator(".lb-ai-chat-composer")).toBeVisible({
+  await expect(page.locator(".lb-ai-composer")).toBeVisible({
     timeout: 10000,
   });
 
   // Find the text input and send button
-  const textInput = page.locator(".lb-ai-chat-composer-editor");
-  const sendButton = page.locator(".lb-ai-chat-composer-action");
+  const textInput = page.locator(".lb-ai-composer-editor");
+  const sendButton = page.locator(".lb-ai-composer-action");
 
   // Wait for the send button to be present and ready
   await expect(sendButton).toBeVisible({ timeout: 10000 });
 
   // Wait for the composer form to not be disabled
-  const composerForm = page.locator(".lb-ai-chat-composer-form");
+  const composerForm = page.locator(".lb-ai-composer-form");
   await expect(composerForm).not.toHaveAttribute("disabled", {
     timeout: 10000,
   });
@@ -56,7 +56,9 @@ async function sendAiMessage(page: Page, message: string) {
 
   // Verify the message was sent (appears in the chat)
   // Use a user message selector to be more specific and avoid duplicates
-  await expect(page.locator(".lb-ai-chat-user-message").last()).toContainText(message);
+  await expect(page.locator(".lb-ai-chat-user-message").last()).toContainText(
+    message
+  );
 }
 
 test.describe("Knowledge Registration", () => {

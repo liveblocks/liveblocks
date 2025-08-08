@@ -50,7 +50,10 @@ export type {
   ThreadOverrides,
 } from "./overrides";
 export { useOverrides } from "./overrides";
-export type { ComposerSubmitComment } from "./primitives";
+export type {
+  AiComposerSubmitMessage,
+  ComposerSubmitComment,
+} from "./primitives";
 export type {
   CommentAttachmentArgs,
   ComposerBodyMark,
