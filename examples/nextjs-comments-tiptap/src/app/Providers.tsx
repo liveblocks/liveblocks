@@ -2,11 +2,18 @@
 
 import { LiveblocksProvider } from "@liveblocks/react";
 import { PropsWithChildren } from "react";
+import { useScenario } from "@/hooks/useScenario";
 
 export function Providers({ children }: PropsWithChildren) {
+  const { scenario, isLoaded } = useScenario();
+
+  if (!isLoaded) {
+    return null;
+  }
+
   return (
     <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
+      authEndpoint={`/api/liveblocks-auth?authType=${scenario}`}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(

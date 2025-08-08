@@ -1,3 +1,4 @@
+import "./globals.css";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
 import "@liveblocks/react-ui/styles.css";

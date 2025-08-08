@@ -1,12 +1,5 @@
-import { Room } from "@/app/Room";
-import { TextEditor } from "@/components/TextEditor";
+import { createRoomWithContent } from "./actions";
 
-export default function Home() {
-  return (
-    <main>
-      <Room>
-        <TextEditor />
-      </Room>
-    </main>
-  );
+export default async function Home() {
+  await createRoomWithContent();
 }
