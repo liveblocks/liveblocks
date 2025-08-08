@@ -1168,6 +1168,32 @@ function Chats() {
 }
 ```
 
+#### Querying chats [#useAiChats-query]
+
+It’s possible to return chats that match a certain query with the `query`
+option. You can filter by metadata values, or by the absence of a metadata key.
+Returned chats must match the entire query.
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+// Filter by metadata values and by absence of a key
+const { chats } = useAiChats({
+  query: {
+    metadata: {
+      // Match chats that are of type 'temporary'
+      type: "temporary",
+
+      // Match chats that have all of these tags
+      tag: ["urgent", "billing"],
+
+      // Match chats where the "archived" key does not exist
+      archived: null,
+    },
+  },
+});
+```
+
 #### Pagination [#useAiChats-pagination]
 
 By default, the `useAiChats` hook returns up to 50 chats. To fetch more, the
