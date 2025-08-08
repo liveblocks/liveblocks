@@ -24,6 +24,16 @@
 - `useCreateAiChat` now accepts a chat ID as a string instead of
   `{ id: "chat-id" }`.
 
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Allow using custom composers in `FloatingComposer` via the
+  `components={{ Composer }}` prop.
+
+### `@liveblocks/react-lexical`
+
+- Add `ATTACH_THREAD_COMMAND` command to manually create a thread attached to
+  the current selection.
+
 ## v3.2.1
 
 ### `@liveblocks/react-ui`
