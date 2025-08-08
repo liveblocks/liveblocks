@@ -261,6 +261,74 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
+### Read-only editors with comments
+
+You can create read-only text editors that still allow users to add comments and annotations. This is perfect for document review workflows where reviewers can leave feedback but cannot modify the document content.
+
+#### Setting up permissions
+
+To enable read-only editing with commenting capabilities, use the following permission pattern when [authenticating users](/docs/authentication):
+
+```ts
+// For access tokens
+session.allow("my-room-id", ["room:read", "room:presence:write", "comments:write"]);
+
+// For ID tokens - set as default room permissions
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:read", "room:presence:write", "comments:write"],
+});
+```
+
+This permission pattern allows users to:
+- **Read** the document content (`room:read`)
+- **Update their presence** for live cursors and awareness (`room:presence:write`)  
+- **Create and edit comments** on the document (`comments:write`)
+- **Cannot edit** the document content itself
+
+#### Implementation
+
+Use the [`useSelf`](/docs/api-reference/liveblocks-react#useSelf) hook to check if the current user has write permissions, then control the editor's editability:
+
+```tsx
+import { useSelf } from "@liveblocks/react";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor } from "@tiptap/react";
+
+function TiptapEditor() {
+  const liveblocks = useLiveblocksExtension();
+  
+  const editor = useEditor({
+    // Start read-only, updated after `canWrite` is loaded
+    editable: false,
+    extensions: [liveblocks, /* other extensions */],
+  });
+
+  // Check if user has write access in current room
+  const canWrite = useSelf((me) => me.canWrite) || false;
+
+  // Sync editability to Tiptap when canWrite changes
+  if (editor && editor.isEditable !== canWrite) {
+    editor.setEditable(canWrite);
+  }
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      {/* FloatingComposer works regardless of editor editability */}
+      <FloatingComposer editor={editor} />
+      <AnchoredThreads editor={editor} threads={threads} />
+    </div>
+  );
+}
+```
+
+#### Key behaviors
+
+- **Comments work in read-only mode**: [`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer) and comment threads function normally even when the editor is read-only
+- **Toolbars adapt automatically**: The [`FloatingToolbar`](/docs/api-reference/liveblocks-react-tiptap#FloatingToolbar) and [`Toolbar`](/docs/api-reference/liveblocks-react-tiptap#Toolbar) automatically hide editing options when `canWrite` is `false`
+- **Live cursors remain active**: Users can still see each other's cursors and selections for awareness
+- **Mentions work in comments**: Users can mention others in comments even if they can't edit the document
+
 ## Server-side modifications
 
 Fetch and modify your text editor’s content from the server, enabling features

@@ -255,6 +255,110 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
+### Read-only editors with comments
+
+You can create read-only text editors that still allow users to add comments and annotations. This is perfect for document review workflows where reviewers can leave feedback but cannot modify the document content.
+
+#### Setting up permissions
+
+To enable read-only editing with commenting capabilities, use the following permission pattern when [authenticating users](/docs/authentication):
+
+```ts
+// For access tokens
+session.allow("my-room-id", ["room:read", "room:presence:write", "comments:write"]);
+
+// For ID tokens - set as default room permissions
+const room = await liveblocks.createRoom("my-room-id", {
+  defaultAccesses: ["room:read", "room:presence:write", "comments:write"],
+});
+```
+
+This permission pattern allows users to:
+- **Read** the document content (`room:read`)
+- **Update their presence** for live cursors and awareness (`room:presence:write`)  
+- **Create and edit comments** on the document (`comments:write`)
+- **Cannot edit** the document content itself
+
+#### Implementation
+
+Use the [`useSelf`](/docs/api-reference/liveblocks-react#useSelf) hook to check if the current user has write permissions, then control the editor's editability:
+
+```tsx
+import { useSelf } from "@liveblocks/react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { LiveblocksPlugin } from "@liveblocks/react-lexical";
+
+function LexicalEditor() {
+  const canWrite = useSelf((me) => me.canWrite);
+
+  const initialConfig = {
+    namespace: "MyEditor",
+    theme: {},
+    onError: console.error,
+    // Start read-only, controlled by editable prop below
+    editable: false,
+  };
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        {/* Control editability based on user permissions */}
+        <RichTextPlugin
+          contentEditable={
+            <ContentEditable 
+              className="editor-input"
+              style={{ 
+                outline: "none",
+                opacity: canWrite ? 1 : 0.7 
+              }}
+            />
+          }
+          placeholder={<div className="editor-placeholder">Start writing…</div>}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        
+        {/* Set editor editability */}
+        <EditablePlugin readOnly={!canWrite} />
+        
+        {/* FloatingComposer works regardless of editor editability */}
+        <FloatingComposer />
+        <AnchoredThreads threads={threads} />
+      </LiveblocksPlugin>
+    </LexicalComposer>
+  );
+}
+```
+
+For simpler setups using our BlockNote integration:
+
+```tsx
+import { useSelf } from "@liveblocks/react";
+import { useCreateBlockNoteWithLiveblocks } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
+
+function BlockNoteEditor() {
+  const canWrite = useSelf((me) => me.canWrite);
+  
+  const editor = useCreateBlockNoteWithLiveblocks({});
+
+  return (
+    <div>
+      {/* Control editability with the editable prop */}
+      <BlockNoteView editor={editor} editable={canWrite ?? false} />
+      <FloatingComposer />
+      <AnchoredThreads threads={threads} />
+    </div>
+  );
+}
+```
+
+#### Key behaviors
+
+- **Comments work in read-only mode**: [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer) and comment threads function normally even when the editor is read-only
+- **Toolbars adapt automatically**: The [`FloatingToolbar`](/docs/api-reference/liveblocks-react-lexical#FloatingToolbar) and [`Toolbar`](/docs/api-reference/liveblocks-react-lexical#Toolbar) automatically hide editing options when the editor is read-only
+- **Live cursors remain active**: Users can still see each other's cursors and selections for awareness
+- **Mentions work in comments**: Users can mention others in comments even if they can't edit the document
+
 ### AI agents and editing on the server
 
 Fetch and modify your text editor’s content from the server, enabling features

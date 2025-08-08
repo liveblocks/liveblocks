@@ -117,6 +117,10 @@ There are three permission values that you can set as default on rooms.
     view the room&rsquo;s storage. `isReadOnly` is `true`. Also known as
     `session.READ_ACCESS`.
   </dd>
+  <dt>`["room:read", "room:presence:write", "comments:write"]`</dt>
+  <dd>
+    Read access with presence and comments. Enables people to edit their presence and create comments, but only view the room&rsquo;s storage. `isReadOnly` is `true`. Perfect for read-only editors with commenting capabilities.
+  </dd>
   <dt>`[]`</dt>
   <dd>
     Private. Only users that have been given explicit access can enter the room.
@@ -263,7 +267,7 @@ session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 Should we wish to grant read-only access to each room in the organization, we
 then add another line to enable this.
 
-```ts highlight="9-10"
+```ts highlight="9-12"
 const session = liveblocks.prepareSession("olivier@example.com");
 
 // Giving full access to one room
@@ -274,6 +278,9 @@ session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
 
 // Give read-only access to every room in the `Vu78Rt` organization
 session.allow("Vu78Rt:*", session.READ_ACCESS);
+
+// Give read-only access with commenting to specific rooms for reviewers
+session.allow("Vu78Rt:docs:*", ["room:read", "room:presence:write", "comments:write"]);
 
 const { body, status } = await session.authorize();
 ```
