@@ -6,11 +6,12 @@ export default defaultLiveblocksVitestConfig({
     environment: "jsdom",
     environmentOptions: {
       jsdom: {
-        url: "http://dummy/"
-      }
+        url: "http://dummy/",
+      },
     },
     // Collect code coverage for this project, when using the --coverage flag
     coverage: {
+      provider: "istanbul",
       exclude: ["**/__tests__/**"],
     },
   },
