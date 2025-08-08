@@ -29,9 +29,9 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "vitest run",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "vitest"
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
     "@liveblocks/core": "3.2.1",

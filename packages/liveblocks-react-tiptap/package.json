@@ -38,8 +38,8 @@
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
     "start": "npm run dev",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",

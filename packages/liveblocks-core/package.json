@@ -37,10 +37,10 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "vitest run",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "vitest",
-    "test:e2e": "vitest run --config=./vitest.config.e2e.ts",
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest",
+    "test:e2e": "NODE_OPTIONS=\"--no-deprecation\" vitest run --config=./vitest.config.e2e.ts",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg",
     "showdeps:high-level": "depcruise src --include-only '^src' --exclude='(^src/index.ts|shallow.ts|__tests__)' --collapse='^src/(refs|lib|compat|types|crdts|protocol)' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
