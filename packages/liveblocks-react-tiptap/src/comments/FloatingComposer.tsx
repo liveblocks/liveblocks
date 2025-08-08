@@ -59,15 +59,7 @@ export const FloatingComposer = forwardRef<
   HTMLFormElement,
   FloatingComposerProps
 >(function FloatingComposer(
-  {
-    editor,
-    onComposerSubmit,
-    onKeyDown,
-    onClick,
-    components,
-    metadata,
-    ...props
-  },
+  { editor, onComposerSubmit, onKeyDown, onClick, components, ...props },
   forwardedRef
 ) {
   const Composer = components?.Composer ?? DefaultComposer;
@@ -147,11 +139,11 @@ export const FloatingComposer = forwardRef<
       const thread = createThread({
         body: comment.body,
         attachments: comment.attachments,
-        metadata: metadata ?? {},
+        metadata: props.metadata ?? {},
       });
       editor.commands.addComment(thread.id);
     },
-    [onComposerSubmit, editor, createThread, metadata]
+    [onComposerSubmit, editor, createThread, props.metadata]
   );
 
   const handleKeyDown = useCallback(

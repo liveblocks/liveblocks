@@ -18,7 +18,7 @@ import type {
   ComposerProps,
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
-import { Composer } from "@liveblocks/react-ui";
+import { Composer as DefaultComposer } from "@liveblocks/react-ui";
 import type { LexicalCommand } from "lexical";
 import {
   $getSelection,
@@ -27,13 +27,17 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
-import type { ComponentRef, FormEvent, KeyboardEvent, ReactNode } from "react";
+import type { ComponentType, FormEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
+
+type FloatingComposerComponents = {
+  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+};
 
 /**
  * Dispatching OPEN_FLOATING_COMPOSER_COMMAND will display the FloatingComposer
@@ -59,12 +63,15 @@ import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node
 export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
   createCommand("OPEN_FLOATING_COMPOSER_COMMAND");
 
-type ComposerElement = ComponentRef<typeof Composer>;
-
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
->;
+> & {
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<FloatingComposerComponents>;
+};
 
 /**
  * Displays a `Composer` near the current lexical selection.
@@ -75,7 +82,7 @@ export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
  * Should be nested inside `LiveblocksPlugin`.
  */
 export const FloatingComposer = forwardRef<
-  ComposerElement,
+  HTMLFormElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
   const [range, setRange] = useState<Range | null>(null);
@@ -126,7 +133,7 @@ interface FloatingComposerImplProps extends FloatingComposerProps {
 }
 
 const FloatingComposerImpl = forwardRef<
-  ComposerElement,
+  HTMLFormElement,
   FloatingComposerImplProps
 >(function FloatingComposer(props, forwardedRef) {
   const {
@@ -134,9 +141,10 @@ const FloatingComposerImpl = forwardRef<
     onRangeChange,
     onKeyDown,
     onComposerSubmit,
+    components,
     ...composerProps
   } = props;
-
+  const Composer = components?.Composer ?? DefaultComposer;
   const [editor] = useLexicalComposerContext();
   const createThread = useCreateThread();
 
