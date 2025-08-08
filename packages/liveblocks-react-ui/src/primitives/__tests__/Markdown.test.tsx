@@ -858,10 +858,13 @@ describe("Markdown", () => {
     test("should render links", () => {
       assert(
         dedent`
-        This isn't a [
+        This is a [
       `,
         (element) => {
-          expect(element).toHaveTextContent("This isn't a");
+          const link = element.querySelector("a");
+
+          expect(link).toHaveTextContent("");
+          expect(link).toHaveAttribute("href", "#");
         }
       );
 
@@ -884,7 +887,7 @@ describe("Markdown", () => {
         (element) => {
           const link = element.querySelector("a");
 
-          expect(link).toHaveTextContent("li");
+          expect(link).toHaveTextContent("link");
           expect(link).toHaveAttribute("href", "#");
         }
       );
@@ -894,6 +897,9 @@ describe("Markdown", () => {
         This isn't a [link] with text
       `,
         (element) => {
+          const link = element.querySelector("a");
+
+          expect(link).not.toBeInTheDocument();
           expect(element).toHaveTextContent("This isn't a [link] with text");
         }
       );
@@ -1472,6 +1478,26 @@ describe("Markdown", () => {
           const hr = element.querySelector("hr");
 
           expect(hr).toBeInTheDocument();
+        }
+      );
+    });
+
+    test("should render escaped characters", () => {
+      assert(
+        dedent`
+        A paragraph \\
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A paragraph");
+        }
+      );
+
+      assert(
+        dedent`
+        A paragraph \\~
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A paragraph ~");
         }
       );
     });
