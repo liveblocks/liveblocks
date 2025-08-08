@@ -9,6 +9,7 @@ export { AnchoredThreads } from "./comments/anchored-threads";
 export { useIsThreadActive } from "./comments/comment-plugin-provider";
 export type { FloatingComposerProps } from "./comments/floating-composer";
 export {
+  ATTACH_THREAD_COMMAND,
   FloatingComposer,
   OPEN_FLOATING_COMPOSER_COMMAND,
 } from "./comments/floating-composer";
