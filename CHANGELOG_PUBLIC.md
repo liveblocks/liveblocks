@@ -18,7 +18,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
-# Week 33 (2025-8-16)
+# Week 33 (2025-8-15)
 
 ## Contributors
 
