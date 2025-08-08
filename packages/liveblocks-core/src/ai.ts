@@ -792,7 +792,7 @@ function createStore_forUserAiChats() {
   }
 
   function getChatById(chatId: string) {
-    return chatsDB.get(chatId);
+    return chatsDB.getEvenIfDeleted(chatId);
   }
 
   function findMany(query: AiChatsQuery): AiChat[] {

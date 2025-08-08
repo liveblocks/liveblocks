@@ -4,13 +4,13 @@ import { SortedList } from "./SortedList";
 
 export class AiChatDB {
   #byId: Map<string, AiChat>; // A map of chat id to chat details
-  #chats: SortedList<AiChat>; // Sorted list of chats, most recent first
+  #chats: SortedList<Omit<AiChat, "deletedAt">>; // Sorted list of non-deleted chats, most recent first
 
   public readonly signal: MutableSignal<this>;
 
   constructor() {
     this.#byId = new Map();
-    this.#chats = SortedList.from<AiChat>([], (c1, c2) => {
+    this.#chats = SortedList.from<Omit<AiChat, "deletedAt">>([], (c1, c2) => {
       // Sort by 'lastMessageAt' if available, otherwise 'createdAt' (most recent first)
       const d2 = c2.lastMessageAt ?? c2.createdAt;
       const d1 = c1.lastMessageAt ?? c1.createdAt;
@@ -20,7 +20,7 @@ export class AiChatDB {
     this.signal = new MutableSignal(this);
   }
 
-  public get(chatId: string): AiChat | undefined {
+  public getEvenIfDeleted(chatId: string): AiChat | undefined {
     return this.#byId.get(chatId);
   }
 
@@ -50,12 +50,9 @@ export class AiChatDB {
     })
   }
 
-  public findMany(query: AiChatsQuery): AiChat[] {
+  public findMany(query: AiChatsQuery): Omit<AiChat, "deletedAt">[] {
     return Array.from(
       this.#chats.filter((chat) => {
-        // Exclude deleted chats
-        if (chat.deletedAt) return false;
-
         // If metadata query is not provided, include all chats
         if (query.metadata === undefined) return true;
 
