@@ -1,9 +1,9 @@
+import { AiChatDB } from "./AiChatDB";
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
 import type { Delegates, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import { kInternal } from "./internal";
-import { AiChatDB } from "./lib/AiChatDB";
 import { assertNever } from "./lib/assert";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { DefaultMap } from "./lib/DefaultMap";

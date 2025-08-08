@@ -1,5 +1,5 @@
 import type { AiChat, ISODateString } from "../../types/ai";
-import { AiChatDB } from "../AiChatDB";
+import { AiChatDB } from "../../AiChatDB";
 
 function iso(s: string): ISODateString {
   return new Date(s).toISOString() as ISODateString;
