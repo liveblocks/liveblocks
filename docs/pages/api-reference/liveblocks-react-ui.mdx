@@ -380,6 +380,39 @@ function Chat() {
 }
 ```
 
+##### Customize how Markdown is rendered [#AiChat-markdown]
+
+You can customize how Markdown is rendered in messages by passing components to
+the `components` prop. A full list is [available here](#AiChat-components).
+
+```tsx
+<AiChat
+  chatId="my-chat-id"
+  components={{
+    // +++
+    markdown: {
+      // Example: Use custom paragraph styles
+      Paragraph: ({ children }) => <p className="my-3">{children}</p>,
+
+      // Example: Use an existing component for quotes
+      Blockquote: ({ children }) => <MyQuote>{children}</MyQuote>,
+
+      // Example: Use `next/link` instead of default `<a>` tag
+      Link: ({ children, href }) => <Link href={href || ""}>{children}</Link>,
+
+      // Example: Use an external library to add syntax highlighting to code blocks
+      CodeBlock: ({ language, code }) => (
+        <SyntaxHighlighter language={language}>{code}</SyntaxHighlighter>
+      ),
+
+      // `Heading`, `Inline`, `List`, `Table`, `Image`, `Separator`, etc.
+      // ...
+    },
+    // +++
+  }}
+/>
+```
+
 ##### Props [#AiChat-props]
 
 <PropertiesList>
@@ -404,6 +437,13 @@ function Chat() {
     Object mapping tool names to tool definitions that should be available in
     this chat.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
   <PropertiesListItem name="layout" type="'inset' | 'compact'">
     The layout mode for the chat. Use `'inset'` (default) for standalone chats,
     or `'compact'` for embedded scenarios like pop-up windows.
@@ -414,7 +454,7 @@ function Chat() {
   </PropertiesListItem>
   <PropertiesListItem name="components" type="AiChatComponents">
     Custom components to override specific parts of the chat UI, such as the
-    `Empty` placeholder component.
+    `Empty` placeholder component or Markdown components.
   </PropertiesListItem>
   <PropertiesListItem name="className" type="string">
     CSS class name to apply to the chat container.
@@ -422,6 +462,85 @@ function Chat() {
   <PropertiesListItem name="style" type="CSSProperties">
     Inline styles to apply to the chat container. Useful for setting CSS custom
     properties.
+  </PropertiesListItem>
+</PropertiesList>
+
+###### components [#AiChat-components]
+
+Override specific parts of `AiChat` with custom components.
+
+<PropertiesList>
+  <PropertiesListItem
+    name="Empty"
+    type="({ chatId: string, copilotId?: string }) => ReactNode"
+  >
+    The component used to render the empty state of the chat. Defaults to
+    nothing.
+  </PropertiesListItem>
+  <PropertiesListItem name="Loading" type="() => ReactNode">
+    The component used to render the loading state of the chat. Defaults to a
+    loading spinner.
+  </PropertiesListItem>
+  <PropertiesListItem name="markdown" type="Partial<MarkdownComponents>">
+    The components used to render Markdown content.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Paragraph"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The component used to render paragraphs.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Inline"
+    detailedType={`({ type: "strong" | "em" | "code" | "del", children: ReactNode }) => ReactNode`}
+  >
+    The component used to render inline elements (bold, italic, strikethrough,
+    and inline code).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Link"
+    type={`({ href: string, title?: string, children: ReactNode }) => ReactNode`}
+  >
+    The component used to render links.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Heading"
+    type={`({ level: 1 | 2 | 3 | 4 | 5 | 6, children: ReactNode }) => ReactNode`}
+  >
+    The component used to render headings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Blockquote"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The component used to render blockquotes.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.CodeBlock"
+    type={`({ code: string, language?: string }) => ReactNode`}
+  >
+    The component used to render code blocks.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Image"
+    type={`({ src: string, alt: string, title?: string }) => ReactNode`}
+  >
+    The component used to render images.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.List"
+    detailedType={`({ type: "ordered" | "unordered", items: { checked?: boolean, children: ReactNode }[], start?: number }) => ReactNode`}
+  >
+    The component used to render lists.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="markdown.Table"
+    detailedType={`({ headings: { align?: "left" | "center" | "right"; children: ReactNode }[], rows: { align?: "left" | "center" | "right"; children: ReactNode }[] }) => ReactNode`}
+  >
+    The component used to render tables.
+  </PropertiesListItem>
+  <PropertiesListItem name="markdown.Separator" type="() => ReactNode">
+    The component used to render separators.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -781,6 +900,32 @@ and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
 to update the property.
 
+##### Collapsed threads
+
+You can collapse threads by setting the `maxVisibleComments` prop. If a thread
+contains more comments than the limit set, some of the comments will be hidden
+and a "Show more replies" button will be displayed instead. Clicking on it will
+expand the thread to show all comments.
+
+```tsx
+<Thread thread={thread} maxVisibleComments={5} />
+```
+
+The first and last comments are always visible, and by default the oldest
+comments are more likely to be hidden. You can customize this behavior by
+setting `maxVisibleComments` to an object.
+
+```tsx
+// This is the default behavior, the same as `maxVisibleComments={5}`.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "newest" }} />
+
+// Only show the last comment, and all the older ones to fit the limit.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "oldest" }} />
+
+// Show as many old comments as new ones to fit the limit.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "both" }} />
+```
+
 ##### Props [#Thread-props]
 
 <PropertiesList>
@@ -815,11 +960,26 @@ to update the property.
     Whether to show the composer’s formatting controls.
   </PropertiesListItem>
   <PropertiesListItem
+    name="blurComposerOnSubmit"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to blur the composer editor when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showResolveAction"
     type="boolean"
     defaultValue="true"
   >
     Whether to show the action to resolve the thread.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="maxVisibleComments"
+    type="number | object"
+    detailedType='number | { max: number; show: "oldest" | "newest" | "both" }'
+    defaultValue="No limit"
+  >
+    The maximum number of comments to show.
   </PropertiesListItem>
   <PropertiesListItem
     name="indentCommentContent"
@@ -1058,6 +1218,9 @@ Learn more about mutation hooks under
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
   >
     The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="blurOnSubmit" type="boolean" defaultValue="true">
+    Whether to blur the composer editor when the composer is submitted.
   </PropertiesListItem>
   <PropertiesListItem name="defaultValue" type="CommentBody">
     The composer’s initial value.
@@ -1346,7 +1509,7 @@ function MyComposer() {
     { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
-    event.preventdefault();
+    event.preventDefault();
 
     // Create a new thread
     // +++
@@ -1458,6 +1621,9 @@ occurs when the composer is submitted. You must create your own mutations within
     uploaded via this composer, but not submitted yet. If you want to prevent
     unsaved changes with Liveblocks, but not for this composer, you can opt-out
     this composer instance by setting this prop to `false`.
+  </PropertiesListItem>
+  <PropertiesListItem name="blurOnSubmit" type="boolean" defaultValue="true">
+    Whether to blur the editor when the form is submitted.
   </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
@@ -2341,7 +2507,7 @@ function MyComposerAttachments() {
     type="function"
     detailedType="(mark: ComposerBodyMark) => void"
   >
-    Remove an attachment by its ID.
+    Toggle a specific text mark.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"
@@ -2614,6 +2780,13 @@ Override specific kinds of inbox notifications.
     `InboxNotification.Thread`.
   </PropertiesListItem>
   <PropertiesListItem
+    name="textMention"
+    type="ComponentType<InboxNotificationTextMentionKindProps>"
+  >
+    The component used to display text mention notifications. Defaults to
+    `InboxNotification.TextMention`.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="$${string}"
     type="ComponentType<InboxNotificationCustomKindProps>"
   >
@@ -2748,7 +2921,8 @@ Displays a custom notification kind.
 
 ###### InboxNotification.Inspector [#InboxNotification.Inspector]
 
-Displays the inbox notification’s data in a JSON code snippet. Useful when debugging notifications in your app.
+Displays the inbox notification’s data in a JSON code snippet. Useful when
+debugging notifications in your app.
 
 ```tsx
 <InboxNotification
@@ -3064,6 +3238,12 @@ these variables within `.lb-root` to globally style your components.
     The box shadow added to elevated elements.
   </PropertiesListItem>
   <PropertiesListItem
+    name="--lb-elevation-shadow-moderate"
+    defaultValue="  0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 6%), 0 8px 26px rgb(0 0 0 / 8%)"
+  >
+    The box shadow added to moderately elevated elements.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="--lb-tooltip-shadow"
     defaultValue="0 2px 4px rgb(0 0 0 / 8%), 0 4px 12px rgb(0 0 0 / 12%)"
   >
@@ -3118,7 +3298,7 @@ Classes containing colons `:` are internal and may change over time.
 
 ### Portaled elements
 
-Floating elements within the default components (e.g. tooltips, drowdowns, etc)
+Floating elements within the default components (e.g. tooltips, dropdowns, etc)
 are portaled to the end of the document to avoid `z-index` conflicts and
 `overflow` issues.
 

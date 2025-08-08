@@ -310,7 +310,7 @@ test.describe("Composer", () => {
 
       // Fill the editor with text containing URLs
       await editor.pressSequentially(
-        "https://liveblocks.io - https://liveblocksio#test,https://google.com/test https://.com https://liveblocks.io/?test#test"
+        "https://liveblocks.io - https://liveblocksio#test,https://google.com/test https://.com https://liveblocks.io/?test#test www.liveblocks.io"
       );
 
       // ➡️ The editor contains the valid links
@@ -341,6 +341,8 @@ test.describe("Composer", () => {
         { type: "link", url: "https://google.com/test" },
         { text: " https://.com " },
         { type: "link", url: "https://liveblocks.io/?test#test" },
+        { text: " " },
+        { type: "link", url: "www.liveblocks.io" },
         { text: "" },
       ]);
     });

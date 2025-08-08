@@ -29,7 +29,7 @@ import { createPortal } from "react-dom";
 
 import { THREADS_PLUGIN_KEY } from "../types";
 
-type ThreadPanelComponents = {
+type FloatingThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
@@ -43,10 +43,10 @@ export interface FloatingThreadsProps<M extends BaseMetadata = DM>
   /**
    * Override the component's components.
    */
-  components?: Partial<ThreadPanelComponents>;
+  components?: Partial<FloatingThreadsComponents>;
 
   /**
-   * The tiptap editor
+   * The Tiptap editor.
    */
   editor: Editor | null;
 }

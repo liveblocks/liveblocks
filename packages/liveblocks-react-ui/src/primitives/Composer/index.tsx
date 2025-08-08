@@ -8,6 +8,7 @@ import {
   type EventSource,
   makeEventSource,
   type MentionData,
+  sanitizeUrl,
 } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
@@ -85,7 +86,6 @@ import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
-import { toAbsoluteUrl } from "../Comment/utils";
 import { withEmptyClearFormatting } from "../slate/plugins/empty-clear-formatting";
 import { withNormalize } from "../slate/plugins/normalize";
 import { getDOMRange } from "../slate/utils/get-dom-range";
@@ -221,10 +221,7 @@ function ComposerEditorLinkWrapper({
   element,
   children,
 }: ComposerEditorLinkWrapperProps) {
-  const href = useMemo(
-    () => toAbsoluteUrl(element.url) ?? element.url,
-    [element.url]
-  );
+  const href = useMemo(() => sanitizeUrl(element.url) ?? "", [element.url]);
 
   return (
     <span {...attributes}>
@@ -1250,6 +1247,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onComposerSubmit,
       defaultAttachments = [],
       pasteFilesAsAttachments,
+      blurOnSubmit = true,
       preventUnsavedChanges = true,
       disabled,
       asChild,
@@ -1463,10 +1461,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const onSubmitEnd = useCallback(() => {
       clear();
-      blur();
       clearAttachments();
       setSubmitting(false);
-    }, [blur, clear, clearAttachments]);
+
+      if (blurOnSubmit) {
+        blur();
+      }
+    }, [blur, blurOnSubmit, clear, clearAttachments]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {

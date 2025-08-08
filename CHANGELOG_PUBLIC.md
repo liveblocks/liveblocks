@@ -18,6 +18,186 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 32 (2025-08-08)
+
+## v3.3.0
+
+### `@liveblocks/react-ui`
+
+- Add `maxVisibleComments` prop to `Thread` to control the maximum number of
+  comments to show. When comments are hidden, a "Show more replies" button is
+  shown to allow users to expand the thread.
+- Add `onComposerSubmit` callback to `AiChat` triggered when a new message is
+  sent. It can also be used to customize message submission by calling
+  `useSendAiMessage` yourself.
+- Overrides and CSS classes for `AiChat`'s composer have been renamed:
+  - Overrides: `AI_CHAT_COMPOSER_SEND` → `AI_COMPOSER_PLACEHOLDER`
+  - CSS classes: `.lb-ai-chat-composer-form` → `.lb-ai-composer-form`
+- Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
+  other instances of `AiChat` that are currently mounted on screen.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for string
+  arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
+- `useSendAiMessage` now accepts passing the chat ID and/or options to the
+  function rather than the hook. This can be useful in dynamic scenarios where
+  the chat ID might not be known when calling the hook for example.
+- `useCreateAiChat` now accepts a chat ID as a string instead of
+  `{ id: "chat-id" }`.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Allow using custom composers in `FloatingComposer` via the
+  `components={{ Composer }}` prop.
+
+### `@liveblocks/react-lexical`
+
+- Add `ATTACH_THREAD_COMMAND` command to manually create a thread attached to
+  the current selection.
+
+## Dashboard
+
+- Support SAML Single Sign-On for enterprise customers.
+- Allow editing first and last name in personal settings.
+
+## Contributors
+
+ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
+
+# Week 31 (2025-08-01)
+
+## v3.2.1
+
+### `@liveblocks/react-ui`
+
+- Improve Markdown lists in `AiChat`: better spacing and support for arbitrary
+  starting numbers in ordered lists. (e.g. `3.` instead of `1.`)
+
+### `@liveblocks/react`
+
+- Fix `useSyncStatus` returning incorrect synchronization status for Yjs
+  provider. We now compare the hash of local and remote snapshot to check for
+  synchronization differences between local and remote Yjs document.
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksYjsProvider.getStatus()` returning incorrect synchronization
+  status for Yjs provider.
+
+## Dashboard
+
+- Add MAU breakdown to the historical usage table on the “Billing & usage” page (MAU used / Non-billed MAU).
+- Support OpenAI compatible AI models in AI Copilots.
+- Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
+
+## Doocumentation
+
+- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+
+## Contributors
+
+pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas, stevenfabre
+
+# Week 30 (2025-07-25)
+
+## v3.2.0
+
+### `@liveblocks/react-ui`
+
+- Improve `AiChat`'s scroll behavior when sending new messages: the chat will
+  now scroll new messages to the top and leave enough space for responses.
+- Expose Markdown components in `AiChat`’s `components` prop to customize the
+  rendering of Markdown content.
+- Add `blurOnSubmit` prop to `Composer` (also available on the `Composer.Form`
+  primitive and as `blurComposerOnSubmit` on `Thread`) to control whether a
+  composer should lose focus after being submitted.
+
+### `@liveblocks/react`
+
+- `useErrorListener` now receives `"LARGE_MESSAGE_ERROR"` errors when the
+  `largeMessageStrategy` option isn’t configured and a message couldn’t be sent
+  because it was too large for WebSocket.
+
+### `@liveblocks/node`
+
+- Add `tenantId` to `identifyUser` method as an optional parameter.
+
+## Dashboard
+
+- Fix issue with custom nodes causing an error in Tiptap/BlockNote documents views.
+
+## Contributors
+
+marcbouchenoire, jrowny, flowflorent, ctnicholas
+
+# Week 29 (2025-07-18)
+
+## v3.1.4
+
+### `@liveblocks/react-ui`
+
+- Fix copilot id not being passed to 'set-tool-call-result' command that is
+  dispatched when a tool call is responded to. Previously, we were using the
+  default copilot to generate messages from the tool call result.
+
+## v3.1.3
+
+### `@liveblocks/react-ui`
+
+- Fix `AiChat` component not scrolling instantly to the bottom on render when
+  messages are already loaded.
+
+## Dashboard
+
+- Added the ability to use website crawls and sitemaps as knowledge sources for your AI copilot.
+
+## Website
+
+- New blog post: [What’s new in Liveblocks: June 2025](https://liveblocks.io/blog/whats-new-in-liveblocks-june-edition-2025).
+
+## Contributors
+
+nimeshnayaju, ctnicholas
+
+# Week 28 (2025-07-11)
+
+## v3.1.2
+
+### `@liveblocks/react-ui` and `@liveblocks/emails`
+
+- Improve URL sanitization in comments.
+
+## v3.1.1
+
+### `@liveblocks/client`
+
+- Adds experimental setting `LiveObject.detectLargeObjects`, which can be
+  enabled globally using `LiveObject.detectLargeObjects = true` (default is
+  false). With this setting enabled, calls to `LiveObject.set()` or
+  `LiveObject.update()` will throw as soon as you add a value that would make
+  the total size of the LiveObject exceed the platform limit of 128 kB. The
+  benefit is that you get an early error instead of a silent failure, but the
+  downside is that this adds significant runtime overhead if your application
+  makes many LiveObject mutations.
+- Fix: also display errors in production builds when they happen in `render`
+  methods defined with `defineAiTool()`. Previously, these errors would only be
+  shown during development.
+- Fix an issue with the render component of tool calls not being displayed
+  correctly when the tool call signal was read before it was registered.
+
+## Examples
+
+- New example:
+  [AI Support Chat](https://liveblocks.io/examples/ai-support/nextjs-ai-support).
+
+## Contributors
+
+ctnicholas, nimeshnayaju, nvie, marcbouchenoire
+
 # Week 27 (2025-07-04)
 
 ## v3.1.0

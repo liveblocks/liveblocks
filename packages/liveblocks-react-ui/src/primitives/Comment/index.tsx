@@ -1,3 +1,8 @@
+import {
+  isCommentBodyLink,
+  isCommentBodyMention,
+  sanitizeUrl,
+} from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
 import { forwardRef, useMemo } from "react";
@@ -9,11 +14,6 @@ import type {
   CommentLinkProps,
   CommentMentionProps,
 } from "./types";
-import {
-  isCommentBodyLink,
-  isCommentBodyMention,
-  toAbsoluteUrl,
-} from "./utils";
 
 const COMMENT_MENTION_NAME = "CommentMention";
 const COMMENT_BODY_NAME = "CommentBody";
@@ -113,7 +113,14 @@ const CommentBody = forwardRef<HTMLDivElement, CommentBodyProps>(
                     }
 
                     if (isCommentBodyLink(inline)) {
-                      const href = toAbsoluteUrl(inline.url) ?? inline.url;
+                      const href = sanitizeUrl(inline.url);
+
+                      // If the URL is invalid, its text/URL are used as plain text.
+                      if (href === null) {
+                        return (
+                          <span key={index}>{inline.text ?? inline.url}</span>
+                        );
+                      }
 
                       return (
                         <Link href={href} key={index}>

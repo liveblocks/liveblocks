@@ -2,6 +2,7 @@ import type {
   AiChatMessage,
   AiToolInvocationPart,
   AiToolInvocationProps,
+  CopilotId,
   JsonObject,
   ToolResultResponse,
 } from "@liveblocks/core";
@@ -34,9 +35,11 @@ function StableRenderFn(props: {
 export function AiMessageToolInvocation({
   message,
   part,
+  copilotId,
 }: {
   message: AiChatMessage;
   part: AiToolInvocationPart;
+  copilotId?: string;
 }) {
   const client = useClient();
   const ai = client[kInternal].ai;
@@ -59,8 +62,8 @@ export function AiMessageToolInvocation({
           message.chatId,
           message.id,
           part.invocationId,
-          result ?? { data: {} }
-          // TODO Pass in AiGenerationOptions here?
+          result ?? { data: {} },
+          { copilotId: copilotId as CopilotId }
         );
       }
     },
@@ -72,6 +75,7 @@ export function AiMessageToolInvocation({
       part.invocationId,
       part.name,
       part.stage,
+      copilotId,
     ]
   );
 

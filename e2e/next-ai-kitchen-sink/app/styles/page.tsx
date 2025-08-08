@@ -344,6 +344,42 @@ Just some plain text
 
 ---
 
+1. A numbered list item
+- A "nested" list item
+- Another "nested" list item
+
+2. Another numbered list item
+- A "nested" list item
+- Another "nested" list item
+
+3. Yet another numbered list item
+- A "nested" list item
+- Another "nested" list item
+
+---
+
+1. A numbered list item
+
+\`\`\`
+const a = 2;
+\`\`\`
+
+2. Another numbered list item
+
+> A quote.
+
+3. Yet another numbered list item
+
+A paragraph.
+
+---
+
+1. A numbered list item
+1. Another numbered list item
+1. Yet another numbered list item
+
+---
+
 The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</abbr>.
 
 Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy.
@@ -555,7 +591,7 @@ export default function Home() {
           </div>
         </div>
         <div className="lb-ai-chat-footer">
-          <div className="lb-root lb-ai-chat-composer lb-ai-chat-composer-form lb-elevation lb-elevation-moderate">
+          <div className="lb-root lb-ai-chat-composer lb-ai-composer-form lb-elevation lb-elevation-moderate">
             {/* Debug panel */}
             <div
               style={{

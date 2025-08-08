@@ -18,12 +18,13 @@ export { useRefs } from "../utils/use-refs";
 
 // Private primitives (which will be exported from @liveblocks/react-ui/primitives when/if made public)
 
-export * as AiChatComposer from "../primitives/AiChatComposer";
+export * as AiComposer from "../primitives/AiComposer";
+export { useAiComposer } from "../primitives/AiComposer/contexts";
 export type {
-  AiChatComposerEditorProps,
-  AiChatComposerFormProps,
-  AiChatComposerSubmitProps,
-} from "../primitives/AiChatComposer/types";
+  AiComposerEditorProps,
+  AiComposerFormProps,
+  AiComposerSubmitProps,
+} from "../primitives/AiComposer/types";
 export * as AiMessage from "../primitives/AiMessage";
 export type {
   AiMessageContentComponents,
@@ -38,7 +39,11 @@ export type {
   MarkdownComponentsCodeBlockProps,
   MarkdownComponentsHeadingProps,
   MarkdownComponentsImageProps,
+  MarkdownComponentsInlineProps,
   MarkdownComponentsLinkProps,
+  MarkdownComponentsListProps,
+  MarkdownComponentsParagraphProps,
+  MarkdownComponentsTableProps,
   MarkdownProps,
 } from "../primitives/Markdown";
 export { Markdown } from "../primitives/Markdown";

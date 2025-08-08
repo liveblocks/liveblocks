@@ -1,6 +1,7 @@
 import type { ResolveUsersArgs } from "../client";
 import type { DU } from "../globals/augmentation";
 import { nn } from "../lib/assert";
+import { sanitizeUrl } from "../lib/url";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type {
   CommentBody,
@@ -452,24 +453,6 @@ function markdown(
   return new MarkdownSafeString(strings, values) as unknown as string;
 }
 
-/**
- * Helper function to convert a URL (relative or absolute) to an absolute URL.
- *
- * @param url The URL to convert to an absolute URL (relative or absolute).
- * @returns The absolute URL or undefined if the URL is invalid.
- */
-export function toAbsoluteUrl(url: string): string | undefined {
-  // Check if the URL already contains a scheme
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    return url;
-  } else if (url.startsWith("www.")) {
-    // If the URL starts with "www.", prepend "https://"
-    return "https://" + url;
-  }
-
-  return;
-}
-
 const stringifyCommentBodyPlainElements: StringifyCommentBodyElements<BaseUserMeta> =
   {
     paragraph: ({ children }) => children,
@@ -614,11 +597,25 @@ export async function stringifyCommentBody(
           }
 
           if (isCommentBodyLink(inline)) {
+            const href = sanitizeUrl(inline.url);
+
+            // If the URL is invalid, its text/URL are used as plain text.
+            if (href === null) {
+              return [
+                elements.text(
+                  {
+                    element: { text: inline.text ?? inline.url },
+                  },
+                  inlineIndex
+                ),
+              ];
+            }
+
             return [
               elements.link(
                 {
                   element: inline,
-                  href: toAbsoluteUrl(inline.url) ?? inline.url,
+                  href,
                 },
                 inlineIndex
               ),

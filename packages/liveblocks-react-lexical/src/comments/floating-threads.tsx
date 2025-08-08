@@ -42,7 +42,7 @@ import {
 } from "./comment-plugin-provider";
 import { ThreadToNodesContext } from "./comment-plugin-provider";
 
-type ThreadPanelComponents = {
+type FloatingThreadsComponents = {
   Thread: ComponentType<ThreadProps>;
 };
 
@@ -56,7 +56,7 @@ export interface FloatingThreadsProps<M extends BaseMetadata = DM>
   /**
    * Override the component's components.
    */
-  components?: Partial<ThreadPanelComponents>;
+  components?: Partial<FloatingThreadsComponents>;
 }
 
 export function FloatingThreads({

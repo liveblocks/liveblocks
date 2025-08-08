@@ -11,6 +11,7 @@ const ALLOW_NO_JSDOCS = [
   "RegisterAiToolProps",
   "UseSendAiMessageOptions",
   "UseThreadsOptions",
+  "SendAiMessageOptions",
 ];
 
 // Add any hooks here that are allowed to have a different doc string between
@@ -48,6 +49,7 @@ const ALLOW_NO_FACTORY = [
   "RegisterAiToolProps",
   "UseSendAiMessageOptions",
   "UseThreadsOptions",
+  "SendAiMessageOptions",
 ];
 
 /**

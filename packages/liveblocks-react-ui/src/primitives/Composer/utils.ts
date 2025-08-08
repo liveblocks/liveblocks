@@ -23,9 +23,16 @@ import type {
   CommentLocalAttachment,
   CommentMixedAttachment,
 } from "@liveblocks/core";
-import { HttpError, kInternal, makeEventSource } from "@liveblocks/core";
+import {
+  HttpError,
+  isCommentBodyLink,
+  isCommentBodyMention,
+  isCommentBodyText,
+  kInternal,
+  makeEventSource,
+} from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useLayoutEffect } from "@liveblocks/react/_private";
+import { useLatest, useLayoutEffect } from "@liveblocks/react/_private";
 import type { DragEvent } from "react";
 import {
   useCallback,
@@ -50,12 +57,6 @@ import type {
 import { getFiles } from "../../utils/data-transfer";
 import { exists } from "../../utils/exists";
 import { useInitial } from "../../utils/use-initial";
-import { useLatest } from "../../utils/use-latest";
-import {
-  isCommentBodyLink,
-  isCommentBodyMention,
-  isCommentBodyText,
-} from "../Comment/utils";
 import { isText } from "../slate/utils/is-text";
 import { useComposer, useComposerAttachmentsContext } from "./contexts";
 import { isComposerBodyAutoLink } from "./slate/plugins/auto-links";

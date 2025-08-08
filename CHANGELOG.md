@@ -1,3 +1,104 @@
+## vNEXT (not yet published)
+
+## v3.3.0
+
+### `@liveblocks/react-ui`
+
+- Add `maxVisibleComments` prop to `Thread` to control the maximum number of
+  comments to show. When comments are hidden, a "Show more replies" button is
+  shown to allow users to expand the thread.
+- Add `onComposerSubmit` callback to `AiChat` triggered when a new message is
+  sent. It can also be used to customize message submission by calling
+  `useSendAiMessage` yourself.
+- Overrides and CSS classes for `AiChat`'s composer have been renamed:
+  - Overrides: `AI_CHAT_COMPOSER_SEND` → `AI_COMPOSER_PLACEHOLDER`
+  - CSS classes: `.lb-ai-chat-composer-form` → `.lb-ai-composer-form`
+- Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
+  other instances of `AiChat` that are currently mounted on screen.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for string
+  arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
+- `useSendAiMessage` now accepts passing the chat ID and/or options to the
+  function rather than the hook. This can be useful in dynamic scenarios where
+  the chat ID might not be known when calling the hook for example.
+- `useCreateAiChat` now accepts a chat ID as a string instead of
+  `{ id: "chat-id" }`.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Allow using custom composers in `FloatingComposer` via the
+  `components={{ Composer }}` prop.
+
+### `@liveblocks/react-lexical`
+
+- Add `ATTACH_THREAD_COMMAND` command to manually create a thread attached to
+  the current selection.
+
+## v3.2.1
+
+### `@liveblocks/react-ui`
+
+- Improve Markdown lists in `AiChat`: better spacing and support for arbitrary
+  starting numbers in ordered lists. (e.g. `3.` instead of `1.`)
+
+### `@liveblocks/react`
+
+- Fix `useSyncStatus` returning incorrect synchronization status for Y.js
+  provider. We now compare the hash of local and remote snapshot to check for
+  synchronization differences between local and remote Y.js document.
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksYjsProvider.getStatus()` returning incorrect synchronization
+  status for Y.js provider.
+
+## v3.2.0
+
+### `@liveblocks/react-ui`
+
+- Improve `AiChat`'s scroll behavior when sending new messages: the chat will
+  now scroll new messages to the top and leave enough space for responses.
+- Expose Markdown components in `AiChat`’s `components` prop to customize the
+  rendering of Markdown content.
+- Add `blurOnSubmit` prop to `Composer` (also available on the `Composer.Form`
+  primitive and as `blurComposerOnSubmit` on `Thread`) to control whether a
+  composer should lose focus after being submitted.
+
+### `@liveblocks/react`
+
+- `useErrorListener` now receives `"LARGE_MESSAGE_ERROR"` errors when the
+  `largeMessageStrategy` option isn’t configured and a message couldn’t be sent
+  because it was too large for WebSocket.
+
+### `@liveblocks/node`
+
+- Add `tenantId` to `identifyUser` method as an optional parameter.
+
+## v3.1.4
+
+### `@liveblocks/react-ui`
+
+- Fix copilot id not being passed to 'set-tool-call-result' command that is
+  dispatched when a tool call is responded to. Previously, we were using the
+  default copilot to generate messages from the tool call result.
+
+## v3.1.3
+
+### `@liveblocks/react-ui`
+
+- Fix `AiChat` component not scrolling instantly to the bottom on render when
+  messages are already loaded.
+
+## v3.1.2
+
+### `@liveblocks/react-ui` and `@liveblocks/emails`
+
+- Improve URL sanitization in comments.
+
 ## v3.1.1
 
 ### `@liveblocks/client`
@@ -10,11 +111,9 @@
   benefit is that you get an early error instead of a silent failure, but the
   downside is that this adds significant runtime overhead if your application
   makes many LiveObject mutations.
-
 - Fix: also display errors in production builds when they happen in `render`
   methods defined with `defineAiTool()`. Previously, these errors would only be
   shown during development.
-
 - Fix an issue with the render component of tool calls not being displayed
   correctly when the tool call signal was read before it was registered.
 
