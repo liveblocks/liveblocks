@@ -1,4 +1,4 @@
-import { rest } from "msw";
+import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { vi } from "vitest";
 
@@ -63,51 +63,42 @@ describe("auth-manager - secret auth", () => {
     "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicGlkIjoiNjA1YTRmZDMxYTM2ZDVlYTdhMmUwOGYxIiwidWlkIjoidXNlcjEiLCJrIjoiaWQifQ.MhjHg2udkBivX7cW8Q1jmgc4DOZ1YnMoUnP61O32JLVJlIsc0zmHWA__DItsO3vBbRS8doG98cOzSE2qQ-5rKoX2l19k5Mr7gk6M75u1kOAzppV_3YQAGeZ8PfsUUPUBGOF5O6msLnha-HcAywvBuoUmcqP0CF_xhBBx0CLbFeuaWVJqndPKe8LJk9EYcB29HEwFaIzrOSarU1iLxRhsa8FCB910GTDcaApaUTPM9ZRadmf33ypSn3c6by0BWI54vx4O2p-hFsmJ71R38ifRRVq3ETXn78ftwbu1pp6hMTqyYn5YLlnZPPM-JAck_OsarGvE9cxg_Z3Y8bMTOlA5E";
 
   const server = setupServer(
-    rest.post("http://dummy/mocked-api/legacy-auth", (_req, res, ctx) => {
-      return res(
-        ctx.json({ token: legacyTokens[requestCount++ % legacyTokens.length] })
-      );
+    http.post("/api/legacy-auth", () => {
+      return HttpResponse.json({
+        token: legacyTokens[requestCount++ % legacyTokens.length],
+      });
     }),
-    rest.post(
-      "http://dummy/mocked-api/legacy-auth-that-caches",
-      (_req, res, ctx) => {
-        requestCount++;
-        return res(ctx.json({ token: legacyTokens[0] }));
-      }
-    ),
-    rest.post("http://dummy/mocked-api/access-auth", (_req, res, ctx) => {
+    http.post("/api/legacy-auth-that-caches", () => {
       requestCount++;
-      return res(ctx.json({ token: accessToken }));
+      return HttpResponse.json({ token: legacyTokens[0] });
     }),
-    rest.post(
-      "http://dummy/mocked-api/access-auth-comments-read",
-      (_req, res, ctx) => {
-        requestCount++;
-        return res(ctx.json({ token: accessTokenWildcardCommentsRead }));
-      }
-    ),
-    rest.post(
-      "http://dummy/mocked-api/access-auth-no-permission",
-      (_req, res, ctx) => {
-        requestCount++;
-        return res(ctx.json({ token: accessTokenWithNoPermission }));
-      }
-    ),
-    rest.post("http://dummy/mocked-api/id-auth", (_req, res, ctx) => {
+    http.post("/api/access-auth", () => {
       requestCount++;
-      return res(ctx.json({ token: idToken }));
+      return HttpResponse.json({ token: accessToken });
     }),
-    rest.post("http://dummy/mocked-api/403", (_req, res, ctx) => {
-      return res(ctx.status(403));
+    http.post("/api/access-auth-comments-read", () => {
+      requestCount++;
+      return HttpResponse.json({ token: accessTokenWildcardCommentsRead });
     }),
-    rest.post("http://dummy/mocked-api/401-with-details", (_req, res, ctx) => {
-      return res(ctx.status(401), ctx.text("wrong key type"));
+    http.post("/api/access-auth-no-permission", () => {
+      requestCount++;
+      return HttpResponse.json({ token: accessTokenWithNoPermission });
     }),
-    rest.post("http://dummy/mocked-api/not-json", (_req, res, ctx) => {
-      return res(ctx.status(202), ctx.text("this is not json"));
+    http.post("/api/id-auth", () => {
+      requestCount++;
+      return HttpResponse.json({ token: idToken });
     }),
-    rest.post("http://dummy/mocked-api/missing-token", (_req, res, ctx) => {
-      return res(ctx.status(202), ctx.json({}));
+    http.post("/api/403", () => {
+      return new HttpResponse(null, { status: 403 });
+    }),
+    http.post("/api/401-with-details", () => {
+      return new HttpResponse("wrong key type", { status: 401 });
+    }),
+    http.post("/api/not-json", () => {
+      return new HttpResponse("this is not json", { status: 202 });
+    }),
+    http.post("/api/missing-token", () => {
+      return HttpResponse.json({}, { status: 202 });
     })
   );
 
@@ -118,7 +109,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should return token", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/legacy-auth",
+      authEndpoint: "/api/legacy-auth",
     });
 
     const authValue = (await authManager.getAuthValue({
@@ -133,7 +124,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should deduplicate concurrent requests on same room", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/legacy-auth",
+      authEndpoint: "/api/legacy-auth",
     });
 
     const results = await Promise.all([
@@ -154,7 +145,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should not deduplicate concurrent requests on different room", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/legacy-auth",
+      authEndpoint: "/api/legacy-auth",
     });
 
     const results = await Promise.all([
@@ -175,7 +166,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should never use cache when using legacy token", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/legacy-auth",
+      authEndpoint: "/api/legacy-auth",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -195,7 +186,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should throw if legacy token is expired but the next fetch from the backend returns the same (expired) token", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/legacy-auth-that-caches",
+      authEndpoint: "/api/legacy-auth-that-caches",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -231,7 +222,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should use cache when access token has correct permissions", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/access-auth",
+      authEndpoint: "/api/access-auth",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -251,7 +242,7 @@ describe("auth-manager - secret auth", () => {
 
   test("when no roomId, should use cache when access token has correct permissions", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/access-auth-comments-read",
+      authEndpoint: "/api/access-auth-comments-read",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -269,7 +260,7 @@ describe("auth-manager - secret auth", () => {
 
   test("when no roomId, should use cache when access token has correct permissions (higher level)", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/access-auth",
+      authEndpoint: "/api/access-auth",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -287,7 +278,7 @@ describe("auth-manager - secret auth", () => {
 
   test("when no roomId, should use cache when access token has no permission", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/access-auth-no-permission",
+      authEndpoint: "/api/access-auth-no-permission",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -305,7 +296,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should throw if access token is expired but the next fetch from the backend returns the same (expired) token", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/access-auth",
+      authEndpoint: "/api/access-auth",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -349,7 +340,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should use cache when ID token", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/id-auth",
+      authEndpoint: "/api/id-auth",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -369,7 +360,7 @@ describe("auth-manager - secret auth", () => {
 
   test("should throw if ID token is expired but the next fetch from the backend returns the same (expired) token", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/id-auth",
+      authEndpoint: "/api/id-auth",
     });
 
     const authValueReq1 = (await authManager.getAuthValue({
@@ -462,7 +453,7 @@ describe("auth-manager - secret auth", () => {
 
   test("private authentication with 403 status should fail", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/403",
+      authEndpoint: "/api/403",
     });
 
     await expect(
@@ -471,13 +462,13 @@ describe("auth-manager - secret auth", () => {
         roomId: "room1",
       })
     ).rejects.toThrow(
-      "Unauthorized: reason not provided in auth response (403 returned by POST http://dummy/mocked-api/403)"
+      "Unauthorized: reason not provided in auth response (403 returned by POST /api/403)"
     );
   });
 
   test("private authentication with 403 status should fail with details", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/401-with-details",
+      authEndpoint: "/api/401-with-details",
     });
 
     await expect(
@@ -486,13 +477,13 @@ describe("auth-manager - secret auth", () => {
         roomId: "room1",
       })
     ).rejects.toThrow(
-      "Unauthorized: wrong key type (401 returned by POST http://dummy/mocked-api/401-with-details)"
+      "Unauthorized: wrong key type (401 returned by POST /api/401-with-details)"
     );
   });
 
   test("private authentication that does not return valid JSON should fail", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/not-json",
+      authEndpoint: "/api/not-json",
     });
 
     await expect(
@@ -501,13 +492,13 @@ describe("auth-manager - secret auth", () => {
         roomId: "room1",
       })
     ).rejects.toThrow(
-      'Expected a JSON response when doing a POST request on "http://dummy/mocked-api/not-json". SyntaxError: Unexpected token'
+      'Expected a JSON response when doing a POST request on "/api/not-json". SyntaxError: Unexpected token'
     );
   });
 
   test("private authentication without an auth token response should fail", async () => {
     const authManager = createAuthManager({
-      authEndpoint: "http://dummy/mocked-api/missing-token",
+      authEndpoint: "/api/missing-token",
     });
 
     await expect(
@@ -516,7 +507,7 @@ describe("auth-manager - secret auth", () => {
         roomId: "room1",
       })
     ).rejects.toThrow(
-      'Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "http://dummy/mocked-api/missing-token", but got {}'
+      'Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/api/missing-token", but got {}'
     );
   });
 });
