@@ -18,6 +18,10 @@
 
 ### `@liveblocks/react`
 
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for string
+  arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
 - `useSendAiMessage` now accepts passing the chat ID and/or options to the
   function rather than the hook. This can be useful in dynamic scenarios where
   the chat ID might not be known when calling the hook for example.

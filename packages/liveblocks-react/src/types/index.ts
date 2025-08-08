@@ -16,6 +16,7 @@ import type {
 import type {
   AiChat,
   AiChatMessage,
+  AiChatsQuery,
   AiKnowledgeSource,
   AiUserMessage,
   AsyncError,
@@ -104,6 +105,14 @@ export type CreateAiChatOptions = {
   id: string;
   title?: string;
   metadata?: Record<string, string | string[]>;
+};
+
+export type UseAiChatsOptions = {
+  /**
+   * The query (including metadata) to filter the chats by. If provided, only chats
+   * that match the query will be returned. If not provided, all chats will be returned.
+   */
+  query?: AiChatsQuery;
 };
 
 export type ThreadsQuery<M extends BaseMetadata> = {
@@ -1416,7 +1425,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { chats, error, isLoading } = useAiChats();
        */
-      useAiChats(): AiChatsAsyncResult;
+      useAiChats(options?: UseAiChatsOptions): AiChatsAsyncResult;
 
       /**
        * (Private beta)  Returns the messages in the given chat.
@@ -1480,7 +1489,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { chats } = useAiChats();
              */
-            useAiChats(): AiChatsAsyncSuccess;
+            useAiChats(options?: UseAiChatsOptions): AiChatsAsyncSuccess;
 
             /**
              * (Private beta) Returns the messages in the given chat.

@@ -70,13 +70,18 @@ import type {
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
+  UseAiChatsOptions,
   UserAsyncResult,
   UserAsyncSuccess,
   UseSendAiMessageOptions,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
-import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
+import {
+  makeAiChatsQueryKey,
+  makeUserThreadsQueryKey,
+  UmbrellaStore,
+} from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
@@ -964,14 +969,16 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
  * @example
  * const { chats } = useAiChats();
  */
-function useAiChats(): AiChatsAsyncResult {
+function useAiChats(options?: UseAiChatsOptions): AiChatsAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
+
+  const queryKey = makeAiChatsQueryKey(options?.query);
 
   useEnsureAiConnection(client);
 
   useEffect(
-    () => void store.outputs.aiChats.waitUntilLoaded()
+    () => void store.outputs.aiChats.getOrCreate(queryKey).waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -983,10 +990,10 @@ function useAiChats(): AiChatsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  return useSignal(store.outputs.aiChats.signal, identity, shallow);
+  return useSignal(store.outputs.aiChats.getOrCreate(queryKey).signal, identity, shallow);
 }
 
-function useAiChatsSuspense(): AiChatsAsyncSuccess {
+function useAiChatsSuspense(options?: UseAiChatsOptions): AiChatsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -995,9 +1002,11 @@ function useAiChatsSuspense(): AiChatsAsyncSuccess {
 
   useEnsureAiConnection(client);
 
-  use(store.outputs.aiChats.waitUntilLoaded());
+  const queryKey = makeAiChatsQueryKey(options?.query);
 
-  const result = useAiChats();
+  use(store.outputs.aiChats.getOrCreate(queryKey).waitUntilLoaded());
+
+  const result = useAiChats(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
