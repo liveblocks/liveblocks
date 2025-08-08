@@ -33,7 +33,7 @@ test("with custom equals function", () => {
 });
 
 it("signals only notify watchers when their value changes", () => {
-  const fn = jest.fn();
+  const fn = vi.fn();
 
   const counter = new Signal(0);
 
@@ -53,7 +53,7 @@ it("signals only notify watchers when their value changes", () => {
 });
 
 it("without batching three signal updates will lead to three notifications", () => {
-  const fn = jest.fn();
+  const fn = vi.fn();
   const x = new Signal(1);
 
   const unsub = x.subscribe(fn);
@@ -72,7 +72,7 @@ it("without batching three signal updates will lead to three notifications", () 
 });
 
 it("batched signal updates notify only once", () => {
-  const fn = jest.fn();
+  const fn = vi.fn();
   const x = new Signal(1);
 
   const unsub = x.subscribe(fn);

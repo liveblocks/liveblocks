@@ -167,7 +167,7 @@ it("derived signals re-evaluate when sources change (with listeners in grandpare
 });
 
 it("signals only notify watchers when their value changes", () => {
-  const fn = jest.fn();
+  const fn = vi.fn();
 
   const counter = new Signal(0);
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
@@ -200,7 +200,7 @@ it("signals only notify watchers when their value changes", () => {
 it("signals only notify watchers when their value changes (with shallow)", () => {
   let numEvals = 0;
 
-  const fn = jest.fn();
+  const fn = vi.fn();
 
   const fruits = new Signal<string[]>([]);
   const uppercase = new Signal(false);
@@ -247,8 +247,8 @@ it("signals only notify watchers when their value changes (with shallow)", () =>
 });
 
 it("batch signal updates so derived signals will only be notified once", () => {
-  const fn1 = jest.fn(); // Callback when z changes
-  const fn2 = jest.fn(); // Callback when zz changes
+  const fn1 = vi.fn(); // Callback when z changes
+  const fn2 = vi.fn(); // Callback when zz changes
 
   const x = new Signal(1);
   const y = new Signal(2);
@@ -320,7 +320,7 @@ it("batch signal notifications and re-evaluations are as efficient as possible",
   const after2 = sorted.get();
   expect(after2).toBe(before);
 
-  const fn = jest.fn(); // Callback when sorted changes
+  const fn = vi.fn(); // Callback when sorted changes
   const unsub = sorted.subscribe(fn);
   expect(fn).not.toHaveBeenCalled();
 
@@ -385,7 +385,7 @@ it("conditionally read from other signal", () => {
 });
 
 it("conditionally read nested signals", () => {
-  const fn = jest.fn();
+  const fn = vi.fn();
   const map = new DefaultMap<number, Signal<number>>(() => new Signal(0));
 
   map.getOrCreate(0).set(7);
@@ -440,8 +440,8 @@ it("conditionally read nested signals", () => {
 });
 
 it("conditionally reading signals won't unregister old sinks (when using static syntax)", () => {
-  const notificationFn = jest.fn();
-  const evalFn = jest.fn();
+  const notificationFn = vi.fn();
+  const evalFn = vi.fn();
   const cond = new Signal(false);
   const x = new Signal(7);
   const y = new Signal(42);
@@ -477,8 +477,8 @@ it("conditionally reading signals won't unregister old sinks (when using static 
 });
 
 it("conditionally reading signals will unregister old sinks (when using dynamic syntax)", () => {
-  const notificationFn = jest.fn();
-  const evalFn = jest.fn();
+  const notificationFn = vi.fn();
+  const evalFn = vi.fn();
   const cond = new Signal(false);
   const x = new Signal(7);
   const y = new Signal(42);
@@ -517,7 +517,7 @@ it("conditionally reading signals will unregister old sinks (when using dynamic 
 it("conditionally read from nested signals", () => {
   const map = new DefaultMap<string, Signal<number>>(() => new Signal(0));
   const prefix = new Signal("pre");
-  const fn = jest.fn();
+  const fn = vi.fn();
 
   const derived = DerivedSignal.from(
     prefix,

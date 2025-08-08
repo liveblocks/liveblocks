@@ -183,9 +183,9 @@ describe("finite state machine", () => {
 
   describe("enter/leave functions", () => {
     test("executes onEnter when starting", () => {
-      const onEnterRed = jest.fn();
-      const onEnterGreen = jest.fn();
-      const onEnterYellow = jest.fn();
+      const onEnterRed = vi.fn();
+      const onEnterGreen = vi.fn();
+      const onEnterYellow = vi.fn();
 
       const fsm = new FSM({})
         .addState("red")
@@ -285,20 +285,20 @@ describe("finite state machine", () => {
     test("executes group-based enter/exit handlers correctly", () => {
       const calls: string[] = [];
 
-      const exitMachine = jest.fn(() => void calls.push("exited machine"));
-      const enterMachine = jest.fn(() => {
+      const exitMachine = vi.fn(() => void calls.push("exited machine"));
+      const enterMachine = vi.fn(() => {
         calls.push("entered machine");
         return exitMachine;
       });
 
-      const exitGroup = jest.fn(() => void calls.push("exited group"));
-      const enterGroup = jest.fn(() => {
+      const exitGroup = vi.fn(() => void calls.push("exited group"));
+      const enterGroup = vi.fn(() => {
         calls.push("entered group");
         return exitGroup;
       });
 
-      const exitRed = jest.fn(() => void calls.push("exited red"));
-      const enterRed = jest.fn(() => {
+      const exitRed = vi.fn(() => void calls.push("exited red"));
+      const enterRed = vi.fn(() => {
         calls.push("entered red");
         return exitRed;
       });
@@ -491,8 +491,8 @@ describe("finite state machine", () => {
   });
 
   test("side effects", () => {
-    const reset = jest.fn();
-    const inced = jest.fn();
+    const reset = vi.fn();
+    const inced = vi.fn();
 
     const fsm = new FSM({ x: 13, y: 13 })
       .addState("one")
@@ -572,7 +572,7 @@ describe("finite state machine", () => {
 
   describe("time-based transitions", () => {
     test("time-based transitions", () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = new FSM({})
         .addState("start.one")
@@ -595,12 +595,12 @@ describe("finite state machine", () => {
       fsm.send({ type: "GO" });
       expect(fsm.currentState).toEqual("start.two");
 
-      jest.runAllTimers(); // Make the timer go off...
+      vi.runAllTimers(); // Make the timer go off...
       expect(fsm.currentState).toEqual("timed-out"); // ...the timer causes the machine to move to "timed-out" state
     });
 
     test("time-based transitions get cancelled", () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = new FSM({})
         .addState("start.one")
@@ -616,7 +616,7 @@ describe("finite state machine", () => {
 
         .start();
 
-      jest.advanceTimersByTime(5000); // Not far enough yet
+      vi.advanceTimersByTime(5000); // Not far enough yet
 
       // Staying within the "start" group won't cancel
       expect(fsm.currentState).toEqual("start.one");
@@ -628,7 +628,7 @@ describe("finite state machine", () => {
       fsm.send({ type: "END" });
       expect(fsm.currentState).toEqual("end");
 
-      jest.runAllTimers(); // Make the timer go off...
+      vi.runAllTimers(); // Make the timer go off...
       expect(fsm.currentState).toEqual("end"); // ...it should _NOT_ move to timed-out state anymore
     });
   });
@@ -655,79 +655,79 @@ describe("finite state machine", () => {
     }
 
     test("promise-based transitions (on success, within timeout)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = makeFSM(() => wait(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("good");
 
       fsm.stop();
     });
 
     test("promise-based transitions (on failure, within timeout)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad");
 
       fsm.stop();
     });
 
     test("promise-based transitions (on timeout)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       // One millisecond longer than the allowed timeout (30_000)
       const fsm = makeFSM(() => wait(30_001));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad");
 
       fsm.stop();
     });
 
     test("promise-based transitions abort successfully (on success)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = makeFSM(() => wait(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
       fsm.send({ type: "FAIL" }); // Manually failing first...
       expect(fsm.currentState).toEqual("bad");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions abort successfully (on failure)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
       fsm.send({ type: "OK" }); // Manually failing first...
       expect(fsm.currentState).toEqual("good");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("good"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions won't abort within group", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
@@ -737,7 +737,7 @@ describe("finite state machine", () => {
       expect(fsm.currentState).toEqual("waiting.two");
       fsm.send({ type: "JUMP" });
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
 
       // We can keep jumping between waiting.* states without the promise
       // getting cancelled (unlike jumping to "good" or "bad")
@@ -745,12 +745,12 @@ describe("finite state machine", () => {
       fsm.send({ type: "JUMP" });
       expect(fsm.currentState).toEqual("waiting.two");
 
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions abort with signal handler (when aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let gotAborted = false;
 
@@ -769,19 +769,19 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
       expect(gotAborted).toEqual(false);
       fsm.send({ type: "FAIL" }); // Manually failing first...
       expect(gotAborted).toEqual(true);
       expect(fsm.currentState).toEqual("bad");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
       expect(gotAborted).toEqual(true);
     });
 
     test("promise-based transitions abort with signal handler (when timed out)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let gotAborted = false;
 
@@ -801,14 +801,14 @@ describe("finite state machine", () => {
 
       expect(fsm.currentState).toEqual("waiting.one");
       expect(gotAborted).toEqual(false);
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(gotAborted).toEqual(true); // Got aborted by timeout
       expect(fsm.currentState).toEqual("bad");
 
       fsm.stop();
     });
     test("promise-based transitions abort with signal handler (when not aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let hijackedSignal: AbortSignal | undefined;
 
@@ -820,13 +820,13 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("good");
       expect(hijackedSignal?.aborted).toEqual(false);
     });
 
     test("promise-based transitions abort with signal inspection (when aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let gotAborted = false;
 
@@ -838,19 +838,19 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
       expect(gotAborted).toEqual(false);
       fsm.send({ type: "FAIL" }); // Manually failing first...
       expect(gotAborted).toEqual(false); // not yet visible before promise has run
       expect(fsm.currentState).toEqual("bad");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(gotAborted).toEqual(true);
       expect(fsm.currentState).toEqual("bad"); // ...will ignore the returned promise transition
     });
 
     test("promise-based transitions abort with signal inspection (when not aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let hijackedSignal: AbortSignal | undefined;
 
@@ -862,13 +862,13 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("good");
       expect(hijackedSignal?.aborted).toEqual(false);
     });
 
     test("promise-based transitions abort failing promise with signal handler (when aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let gotAborted = false;
 
@@ -887,19 +887,19 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
       expect(gotAborted).toEqual(false);
       fsm.send({ type: "OK" }); // Manually move to good...
       expect(gotAborted).toEqual(true);
       expect(fsm.currentState).toEqual("good");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("good"); // ...will ignore the returned promise transition
       expect(gotAborted).toEqual(true);
     });
 
     test("promise-based transitions abort failing promise with signal handler (when not aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let gotAborted = false;
 
@@ -918,13 +918,13 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad");
       expect(gotAborted).toEqual(false);
     });
 
     test("promise-based transitions abort failing promise with signal inspection (when aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let hijackedSignal: AbortSignal | undefined;
 
@@ -936,7 +936,7 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       expect(fsm.currentState).toEqual("waiting.one");
       expect(hijackedSignal?.aborted).toEqual(false);
       fsm.send({ type: "OK" }); // Manually move to good...
@@ -946,7 +946,7 @@ describe("finite state machine", () => {
     });
 
     test("promise-based transitions abort failing promise with signal inspection (when not aborted)", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
 
       let hijackedSignal: AbortSignal | undefined;
 
@@ -958,7 +958,7 @@ describe("finite state machine", () => {
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.runAllTimersAsync();
+      await vi.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad");
       expect(hijackedSignal?.aborted).toEqual(false);
     });

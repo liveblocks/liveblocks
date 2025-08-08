@@ -27,6 +27,7 @@ When running scripts, use `npx turbo`, not `npm`.
 
 # Code style
 
+- Always try to add proper typing, limit the use of `any`. If needed, ask first.
 - Use $-suffix for variables storing Promises
 - Use Σ-suffix for variables storing Signals (MutableSignal, Signal,
   DerivedSignal, etc)

@@ -1,8 +1,11 @@
 {
-  // Extend the global Turbo file
   "extends": ["//"],
   "tasks": {
+    "test": {
+      "cache": false
+    },
     "test:e2e": {
+      "cache": false,
       "dependsOn": ["build"],
       "inputs": [
         "jest.*",

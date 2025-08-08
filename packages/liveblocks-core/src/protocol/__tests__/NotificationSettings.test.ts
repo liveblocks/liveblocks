@@ -1,3 +1,5 @@
+import { type MockInstance, vi } from "vitest";
+
 import * as console from "../../lib/fancy-console";
 import {
   createNotificationSettings,
@@ -5,11 +7,11 @@ import {
 } from "../NotificationSettings";
 
 describe("NotificationSettings protocol", () => {
-  let consoleErrorMock: jest.Mock;
+  let consoleErrorMock: MockInstance;
 
   beforeEach(() => {
-    consoleErrorMock = jest.fn();
-    jest.spyOn(console, "error").mockImplementation(consoleErrorMock);
+    consoleErrorMock = vi.fn();
+    vi.spyOn(console, "error").mockImplementation(consoleErrorMock as any);
   });
   afterEach(() => {
     consoleErrorMock.mockRestore();

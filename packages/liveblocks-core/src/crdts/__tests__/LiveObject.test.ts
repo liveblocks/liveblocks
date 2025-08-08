@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
@@ -606,7 +608,7 @@ describe("LiveObject", () => {
         a?: number;
       }>([createSerializedObject("0:0", {})]);
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.subscribe(root, callback);
 
       root.delete("a");
@@ -619,7 +621,7 @@ describe("LiveObject", () => {
         a?: number;
       }>([createSerializedObject("0:0", { a: 1 })]);
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.subscribe(root, callback);
 
       root.delete("a");
@@ -635,7 +637,7 @@ describe("LiveObject", () => {
           createSerializedObject("0:0", {}),
         ]);
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.subscribe(root, callback);
 
       applyRemoteOperations([
@@ -651,7 +653,7 @@ describe("LiveObject", () => {
           createSerializedObject("0:0", { a: 1 }),
         ]);
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.subscribe(root, callback);
 
       applyRemoteOperations([
@@ -669,7 +671,7 @@ describe("LiveObject", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -694,7 +696,7 @@ describe("LiveObject", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -724,7 +726,7 @@ describe("LiveObject", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -770,7 +772,7 @@ describe("LiveObject", () => {
           1
         );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -824,7 +826,7 @@ describe("LiveObject", () => {
           1
         );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -867,7 +869,7 @@ describe("LiveObject", () => {
           1
         );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -917,8 +919,8 @@ describe("LiveObject", () => {
           1
         );
 
-      const rootDeepCallback = jest.fn();
-      const liveObjectCallback = jest.fn();
+      const rootDeepCallback = vi.fn();
+      const liveObjectCallback = vi.fn();
 
       room.subscribe(root, rootDeepCallback, { isDeep: true });
       room.subscribe(root.get("obj"), liveObjectCallback);
@@ -970,8 +972,8 @@ describe("LiveObject", () => {
           1
         );
 
-      const rootDeepCallback = jest.fn();
-      const liveObjectCallback = jest.fn();
+      const rootDeepCallback = vi.fn();
+      const liveObjectCallback = vi.fn();
 
       room.subscribe(root, rootDeepCallback, { isDeep: true });
       room.subscribe(root.get("obj"), liveObjectCallback);
@@ -1033,7 +1035,7 @@ describe("LiveObject", () => {
       root.set("a", 1);
       expectStorage({ a: 1 });
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.subscribe(root, callback, { isDeep: true });
 
       room.history.undo();

@@ -17,7 +17,7 @@ describe("Storage", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const unsubscribe = room.subscribe(callback);
 
@@ -44,7 +44,7 @@ describe("Storage", () => {
           1
         );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const unsubscribe = room.subscribe(callback);
 
@@ -75,7 +75,7 @@ describe("Storage", () => {
           1
         );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const unsubscribe = room.subscribe(callback);
 
@@ -106,7 +106,7 @@ describe("Storage", () => {
         b: number;
       }>([createSerializedObject("0:0", { a: 0, b: 0 })], 1);
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -148,7 +148,7 @@ describe("Storage", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 
@@ -190,7 +190,7 @@ describe("Storage", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       const root = storage.root;
 

@@ -5,6 +5,7 @@ import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 describe("LiveMap single client", () => {
   test(
     "remote set conflicts with another set",
+    { timeout: 10000 },
     prepareTestsConflicts(
       {
         map: new LiveMap<string, string>(),
@@ -58,6 +59,7 @@ describe("LiveMap single client", () => {
 describe("LiveMap single client", () => {
   test(
     "fast consecutive sets on same key",
+    { timeout: 10000 },
     prepareSingleClientTest(
       {
         map: new LiveMap<string, string>(),

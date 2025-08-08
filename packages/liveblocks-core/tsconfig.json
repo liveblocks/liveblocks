@@ -4,7 +4,8 @@
 
   "compilerOptions": {
     // TODO: Try to get rid of these overrides
-    "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
+    "noUncheckedIndexedAccess": false, // OVERWRITTEN to relax a bit
+    "types": ["vitest/globals"]
   },
   "include": ["src", "e2e"]
 }
