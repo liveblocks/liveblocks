@@ -5,6 +5,14 @@
 - Knowledge passed as a prop to `AiChat` no longer leaks that knowledge to other
   instances of `AiChat` that are currently mounted on screen.
 
+### `@liveblocks/react`
+
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for
+  string arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
+
+
 ## v3.2.1
 
 ### `@liveblocks/react-ui`
