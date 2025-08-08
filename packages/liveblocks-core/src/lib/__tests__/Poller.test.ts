@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 
-import { makePoller } from "../lib/Poller";
+import { makePoller } from "../Poller";
 
 describe("Poller", () => {
   beforeEach(() => {
