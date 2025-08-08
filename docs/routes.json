@@ -266,6 +266,10 @@
             "path": "/authentication/id-token"
           },
           {
+            "title": "Tenants",
+            "path": "/authentication/tenants"
+          },
+          {
             "title": "Next.js",
             "path": "/authentication/access-token/nextjs",
             "hidden": true
