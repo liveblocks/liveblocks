@@ -985,14 +985,14 @@ import { Composer } from "@liveblocks/react-ui/primitives";
   editor={editor}
   style={{ width: "350px" }}
   components={{
-    Composer: ({ onComposerSubmit }) => {
-      return (
-        <Composer.Form onComposerSubmit={onComposerSubmit}>
-          <Composer.Editor />
-          <Composer.Submit>Send</Composer.Submit>
-        </Composer.Form>
-      );
-    },
+    Composer: ({ onComposerSubmit }) => (
+      // +++
+      <Composer.Form onComposerSubmit={onComposerSubmit}>
+        <Composer.Editor />
+        <Composer.Submit>Send</Composer.Submit>
+      </Composer.Form>
+      // +++
+    ),
   }}
 />;
 ```
@@ -1007,9 +1007,9 @@ import { Composer } from "@liveblocks/react-ui/primitives";
   editor={editor}
   style={{ width: "350px" }}
   components={{
-    Composer: () => {
-      return (
+    Composer: () => (
         <Composer.Form
+        // +++
           onComposerSubmit={(message, event) => {
             event.preventDefault();
 
@@ -1021,12 +1021,12 @@ import { Composer } from "@liveblocks/react-ui/primitives";
 
             editor.commands.addComment(thread.id);
           }}
+          // +++
         >
           <Composer.Editor />
           <Composer.Submit>Send</Composer.Submit>
         </Composer.Form>
-      );
-    },
+      ),
   }}
 />;
 ```
