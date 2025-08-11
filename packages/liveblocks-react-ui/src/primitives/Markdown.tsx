@@ -22,7 +22,8 @@ const PARTIAL_LINK_IMAGE_REGEX =
   /(?<!\\)(?<image>!)?\[(?!\^)(?<text>[^\]]*)(?:\](?:\((?<url>[^)]*)?)?)?$/;
 const PARTIAL_TABLE_HEADER_REGEX =
   /^\s*\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\s*\|\s*[-:|\s]*\s*)?$/;
-const PARTIAL_EMOJI_REGEX = /([\uD800-\uDBFF]|\p{Emoji_Presentation})+$/u;
+const PARTIAL_EMOJI_REGEX =
+  /(?:[\uD800-\uDBFF]|\u200D|\uFE0F|\u20E3|\p{Regional_Indicator}|\p{Emoji_Presentation}|\p{Emoji_Modifier_Base}|\p{Emoji_Modifier})+$/u;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 const NEWLINE_REGEX = /\r\n?/g;

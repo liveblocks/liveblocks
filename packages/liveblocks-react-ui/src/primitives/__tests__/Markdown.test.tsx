@@ -637,7 +637,7 @@ describe("Markdown", () => {
       unmount();
     }
 
-    test("should render headings", () => {
+    test("should handle headings", () => {
       assert(
         dedent`
         ###
@@ -718,7 +718,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render bold text", () => {
+    test("should handle bold text", () => {
       assert(
         dedent`
         This isn't **
@@ -760,7 +760,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render italic text", () => {
+    test("should handle italic text", () => {
       assert(
         dedent`
         This isn't *
@@ -802,7 +802,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render strikethrough text", () => {
+    test("should handle strikethrough text", () => {
       assert(
         dedent`
         This isn't ~
@@ -833,7 +833,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render inline code", () => {
+    test("should handle inline code", () => {
       assert(
         dedent`
         This isn't \`
@@ -855,7 +855,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render links", () => {
+    test("should handle links", () => {
       assert(
         dedent`
         This is a [
@@ -965,7 +965,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render nested inline elements", () => {
+    test("should handle nested inline elements", () => {
       assert(
         dedent`
         This is **bold _italic \`code
@@ -1055,7 +1055,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render lists", () => {
+    test("should handle lists", () => {
       assert(
         dedent`
         -
@@ -1141,7 +1141,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render images", () => {
+    test("should handle images", () => {
       assert(
         dedent`
         Not an image: !
@@ -1235,7 +1235,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render code blocks", () => {
+    test("should handle code blocks", () => {
       assert(
         dedent`
         \`\`
@@ -1341,7 +1341,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render tables", () => {
+    test("should handle tables", () => {
       assert(
         dedent`
         | A column heading
@@ -1406,7 +1406,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render horizontal rules", () => {
+    test("should handle horizontal rules", () => {
       assert(
         dedent`
         A paragraph
@@ -1482,7 +1482,7 @@ describe("Markdown", () => {
       );
     });
 
-    test("should render escaped characters", () => {
+    test("should handle escaped characters", () => {
       assert(
         dedent`
         A paragraph \\
@@ -1498,6 +1498,89 @@ describe("Markdown", () => {
       `,
         (element) => {
           expect(element).toHaveTextContent("A paragraph ~");
+        }
+      );
+    });
+
+    test("should handle emojis", () => {
+      assert(
+        dedent`
+        An emoji 👋
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("An emoji");
+        }
+      );
+
+      assert(
+        dedent`
+        A skin tone sequence emoji 👋🏽
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A skin tone sequence emoji");
+        }
+      );
+
+      assert(
+        dedent`
+        A partial sequence emoji 👋\u200D
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A partial sequence emoji");
+        }
+      );
+
+      assert(
+        dedent`
+        An umbrella as a pictographic ☂
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("An umbrella as a pictographic ☂");
+        }
+      );
+
+      assert(
+        dedent`
+        An umbrella as an emoji ☂️
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("An umbrella as an emoji");
+        }
+      );
+
+      assert(
+        dedent`
+        A partial flag emoji 🇺
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A partial flag emoji");
+        }
+      );
+
+      assert(
+        dedent`
+        A flag emoji 🇺🇳
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A flag emoji");
+        }
+      );
+
+      assert(
+        dedent`
+        A keycap sequence emoji 1️⃣
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("A keycap sequence");
+        }
+      );
+
+      assert(
+        dedent`
+        An emoji 👋 and some text
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("An emoji 👋 and some text");
         }
       );
     });
