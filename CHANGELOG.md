@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v3.3.1
+
+### `@liveblocks/react-ui`
+
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
+
 ## v3.3.0
 
 ### `@liveblocks/react-ui`
