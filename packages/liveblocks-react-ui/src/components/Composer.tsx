@@ -548,7 +548,7 @@ function ComposerEditorContainer({
   }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
-    disabled: disabled || hasMaxAttachments,
+    disabled: disabled || !showAttachments || hasMaxAttachments,
   });
 
   useLayoutEffect(() => {
@@ -819,8 +819,7 @@ export const Composer = forwardRef(
           onBlur={handleBlur}
           disabled={disabled || !canComment}
           defaultAttachments={defaultAttachments}
-          disableAttachments={!showAttachments}
-          pasteFilesAsAttachments
+          pasteFilesAsAttachments={showAttachments}
           preventUnsavedChanges={preventUnsavedComposerChanges}
           blurOnSubmit={blurOnSubmit}
           roomId={roomId}

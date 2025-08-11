@@ -1247,7 +1247,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onComposerSubmit,
       defaultAttachments = [],
       pasteFilesAsAttachments,
-      disableAttachments,
       blurOnSubmit = true,
       preventUnsavedChanges = true,
       disabled,
@@ -1312,7 +1311,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const createAttachments = useCallback(
       (files: File[]) => {
-        if (disableAttachments || !files.length) {
+        if (!files.length) {
           return;
         }
 
@@ -1327,7 +1326,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         addAttachments(attachments);
       },
-      [addAttachments, maxAttachments, numberOfAttachments, disableAttachments]
+      [addAttachments, maxAttachments, numberOfAttachments]
     );
 
     const createAttachmentsRef = useRef(createAttachments);
@@ -1343,9 +1342,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const editor = useInitial(() =>
       createComposerEditor({
         createAttachments: stableCreateAttachments,
-        pasteFilesAsAttachments: disableAttachments
-          ? false
-          : pasteFilesAsAttachments,
+        pasteFilesAsAttachments,
       })
     );
     const onEditorChange = useInitial(makeEventSource) as EventSource<void>;
@@ -1437,18 +1434,18 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const attachFiles = useCallback(() => {
-      if (disabled || disableAttachments) {
+      if (disabled) {
         return;
       }
 
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
-    }, [disabled, disableAttachments]);
+    }, [disabled]);
 
     const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
-        if (disabled || disableAttachments) {
+        if (disabled) {
           return;
         }
 
@@ -1459,7 +1456,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           event.target.value = "";
         }
       },
-      [createAttachments, disabled, disableAttachments]
+      [createAttachments, disabled]
     );
 
     const onSubmitEnd = useCallback(() => {
@@ -1568,7 +1565,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
             hasMaxAttachments,
             maxAttachments,
             maxAttachmentSize,
-            disableAttachments: Boolean(disableAttachments),
           }}
         >
           <ComposerContext.Provider
@@ -1646,11 +1642,9 @@ const ComposerAttachFiles = forwardRef<
   ComposerAttachFilesProps
 >(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const { hasMaxAttachments, disableAttachments } =
-    useComposerAttachmentsContext();
+  const { hasMaxAttachments } = useComposerAttachmentsContext();
   const { isDisabled: isComposerDisabled, attachFiles } = useComposer();
-  const isDisabled =
-    isComposerDisabled || disableAttachments || hasMaxAttachments || disabled;
+  const isDisabled = isComposerDisabled || hasMaxAttachments || disabled;
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -1702,8 +1696,7 @@ const ComposerAttachmentsDropArea = forwardRef<
   ) => {
     const Component = asChild ? Slot : "div";
     const { isDisabled: isComposerDisabled } = useComposer();
-    const { disableAttachments } = useComposerAttachmentsContext();
-    const isDisabled = isComposerDisabled || disableAttachments || disabled;
+    const isDisabled = isComposerDisabled || disabled;
     const [, dropAreaProps] = useComposerAttachmentsDropArea({
       onDragEnter,
       onDragLeave,

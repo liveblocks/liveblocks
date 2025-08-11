@@ -4,10 +4,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix `Composer` uploading attachments on drop even when `showAttachments` is
-  set to `false`.
-- Add `disableAttachments` prop to `Composer` primitive to disable attachments.
-  (e.g. dropping, pasting, etc.)
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
 
 ## v3.3.0
 
