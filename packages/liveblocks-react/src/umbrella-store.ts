@@ -1,4 +1,5 @@
 import type {
+  AiChatsQuery,
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
@@ -252,6 +253,12 @@ export function makeRoomThreadsQueryKey(
 export function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
+  return stableStringify(query ?? {});
+}
+
+export function makeAiChatsQueryKey(
+  query: AiChatsQuery | undefined
+): AiChatsQueryKey {
   return stableStringify(query ?? {});
 }
 
@@ -549,6 +556,8 @@ class SinglePageResource {
 type RoomId = string;
 type UserQueryKey = string;
 type RoomQueryKey = string;
+
+type AiChatsQueryKey = string;
 
 /**
  * A lookup table (LUT) for all the history versions.
@@ -1015,7 +1024,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       LoadableResource<HistoryVersionsAsyncResult>
     >;
     readonly notificationSettings: LoadableResource<NotificationSettingsAsyncResult>;
-    readonly aiChats: LoadableResource<AiChatsAsyncResult>;
+    readonly aiChats: DefaultMap<
+      AiChatsQueryKey,
+      LoadableResource<AiChatsAsyncResult>
+    >;
     readonly messagesByChatId: DefaultMap<
       string,
       DefaultMap<MessageId | null, LoadableResource<AiChatMessagesAsyncResult>>
@@ -1041,9 +1053,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Notification Settings
   #notificationSettings: SinglePageResource;
-
-  // Copilot chats
-  #aiChats: PaginatedResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -1083,13 +1092,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.#notificationSettings = new SinglePageResource(
       notificationSettingsFetcher
     );
-
-    this.#aiChats = new PaginatedResource(async (cursor?: string) => {
-      const result = await this.#client[kInternal].ai.getChats({
-        cursor: cursor as Cursor,
-      });
-      return result.nextCursor;
-    });
 
     this.threads = new ThreadDB();
 
@@ -1363,24 +1365,38 @@ export class UmbrellaStore<M extends BaseMetadata> {
         waitUntilLoaded: this.#notificationSettings.waitUntilLoaded,
       };
 
-    const aiChats: LoadableResource<AiChatsAsyncResult> = {
-      signal: DerivedSignal.from((): AiChatsAsyncResult => {
-        const result = this.#aiChats.get();
-        if (result.isLoading || result.error) {
-          return result;
-        }
+    const aiChats = new DefaultMap(
+      (queryKey: AiChatsQueryKey): LoadableResource<AiChatsAsyncResult> => {
+        const query = JSON.parse(queryKey) as AiChatsQuery;
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client[kInternal].ai.getChats({
+            cursor: cursor as Cursor,
+            query,
+          });
+          return result.nextCursor;
+        });
 
-        return {
-          isLoading: false,
-          chats: this.#client[kInternal].ai.signals.chatsΣ.get(),
-          hasFetchedAll: result.data.hasFetchedAll,
-          isFetchingMore: result.data.isFetchingMore,
-          fetchMore: result.data.fetchMore,
-          fetchMoreError: result.data.fetchMoreError,
-        };
-      }, shallow),
-      waitUntilLoaded: this.#aiChats.waitUntilLoaded,
-    };
+        const signal = DerivedSignal.from((): AiChatsAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          const chats = this.#client[kInternal].ai.queryChats(query);
+
+          return {
+            isLoading: false,
+            chats,
+            hasFetchedAll: result.data.hasFetchedAll,
+            isFetchingMore: result.data.isFetchingMore,
+            fetchMore: result.data.fetchMore,
+            fetchMoreError: result.data.fetchMoreError,
+          };
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
 
     const messagesByChatId = new DefaultMap((chatId: string) => {
       const resourceΣ = new SinglePageResource(async () => {

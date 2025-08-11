@@ -591,7 +591,7 @@ export default function Home() {
           </div>
         </div>
         <div className="lb-ai-chat-footer">
-          <div className="lb-root lb-ai-chat-composer lb-ai-chat-composer-form lb-elevation lb-elevation-moderate">
+          <div className="lb-root lb-ai-chat-composer lb-ai-composer-form lb-elevation lb-elevation-moderate">
             {/* Debug panel */}
             <div
               style={{

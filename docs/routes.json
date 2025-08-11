@@ -662,6 +662,10 @@
           {
             "title": "Directory sync",
             "path": "/platform/account-management/directory-sync"
+          },
+          {
+            "title": "Delete an account",
+            "path": "/platform/account-management/delete-an-account"
           }
         ]
       },
