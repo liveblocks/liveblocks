@@ -1,4 +1,5 @@
 import type {
+  BaseMetadata,
   BaseUserMeta,
   IUserInfo,
   JsonObject,
@@ -36,11 +37,15 @@ import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
+const DEFAULT_OPTIONS: WithRequired<
+  LiveblocksExtensionOptions<BaseMetadata>,
+  "field" | "filterThreads_experimental"
+> = {
   field: "default",
   comments: true,
   mentions: true,
   offlineSupport_experimental: false,
+  filterThreads_experimental: () => true,
   enablePermanentUserData: false,
 };
 
@@ -157,8 +162,8 @@ const YChangeMark = Mark.create({
   },
 });
 
-export const useLiveblocksExtension = (
-  opts?: LiveblocksExtensionOptions
+export const useLiveblocksExtension = <M extends BaseMetadata = BaseMetadata>(
+  opts?: LiveblocksExtensionOptions<M>
 ): Extension => {
   const options = {
     ...DEFAULT_OPTIONS,
@@ -184,7 +189,7 @@ export const useLiveblocksExtension = (
 
   const isEditorReady = useIsEditorReady();
   const client = useClient();
-  const store = getUmbrellaStoreForClient(client);
+  const store = getUmbrellaStoreForClient<M>(client);
   const roomId = room.id;
   const yjsProvider = useYjsProvider();
 
@@ -286,6 +291,7 @@ export const useLiveblocksExtension = (
               store.outputs.threads
                 .get()
                 .findMany(roomId, { resolved: false }, "asc")
+                .filter((thread) => options.filterThreads_experimental(thread))
                 .map((thread) => [thread.id, true])
             );
             function isComment(mark: PMMark): mark is PMMark & {

@@ -1,8 +1,10 @@
 import type {
+  BaseMetadata,
   ContextualPromptContext,
   ContextualPromptResponse,
   Relax,
   TextEditorType,
+  ThreadData,
 } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content, Range } from "@tiptap/core";
@@ -82,12 +84,13 @@ export interface AiConfiguration {
   ) => Promise<ContextualPromptResponse>;
 }
 
-export type LiveblocksExtensionOptions = {
+export type LiveblocksExtensionOptions<M extends BaseMetadata> = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
+  filterThreads_experimental?: (thread: ThreadData<M>) => boolean;
   initialContent?: Content;
   enablePermanentUserData?: boolean;
   /**
