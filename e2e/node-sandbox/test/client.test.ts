@@ -101,6 +101,8 @@ describe("@liveblocks/client package e2e", () => {
         let roomBSawA = false;
 
         roomA.subscribe("others", (others) => {
+          if (others.length === 0) return; // Ignore [] case
+
           callbackACalled = true;
           if (others.some((user: OpaqueUser) => user.presence?.name === "B")) {
             roomASawB = true;
@@ -108,6 +110,8 @@ describe("@liveblocks/client package e2e", () => {
         });
 
         roomB.subscribe("others", (others) => {
+          if (others.length === 0) return; // Ignore [] case
+
           callbackBCalled = true;
           if (others.some((user: OpaqueUser) => user.presence?.name === "A")) {
             roomBSawA = true;
