@@ -3,11 +3,38 @@ import type { BaseUserMeta, JsonObject, User } from "@liveblocks/client";
 import { Liveblocks } from "@liveblocks/node";
 import { config } from "dotenv";
 import WebSocket from "ws";
-import { describe, test, expect, vi } from "vitest";
+import { describe, test, expect, onTestFinished } from "vitest";
 
 type OpaqueUser = User<JsonObject, BaseUserMeta>;
 
 config();
+
+// First, create the room with proper permissions
+const nodeClient = new Liveblocks({
+  secret: process.env.LIVEBLOCKS_SECRET_KEY!,
+  // @ts-expect-error hidden config
+  baseUrl:
+    process.env.LIVEBLOCKS_BASE_URL ??
+    process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ??
+    "https://api.liveblocks.io",
+});
+
+async function createRandomTestRoom(): Promise<string> {
+  const randomRoomId = `node-e2e-${Math.random().toString(36).substring(2, 15)}`;
+
+  // Register cleanup
+  onTestFinished(async () => {
+    await nodeClient.deleteRoom(randomRoomId);
+  });
+
+  await nodeClient.createRoom(
+    randomRoomId,
+    { defaultAccesses: ["room:write"] },
+    { idempotent: true }
+  );
+
+  return randomRoomId;
+}
 
 // Utility functions for client tests
 function wait(ms: number): Promise<void> {
@@ -40,21 +67,7 @@ describe("@liveblocks/client package e2e", () => {
     "presence should work in node environment",
     { timeout: 15000 },
     async () => {
-      // First, create the room with proper permissions
-      const serverClient = new Liveblocks({
-        secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-        // @ts-expect-error hidden config
-        baseUrl:
-          process.env.LIVEBLOCKS_BASE_URL ??
-          process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL ??
-          "https://api.liveblocks.io",
-      });
-
-      await serverClient.createRoom(
-        "node-e2e",
-        { defaultAccesses: ["room:write"] },
-        { idempotent: true }
-      );
+      const roomId = await createRandomTestRoom();
 
       const clientA = createClient({
         publicApiKey:
@@ -74,10 +87,10 @@ describe("@liveblocks/client package e2e", () => {
         baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
       });
 
-      const { room: roomA, leave: leaveA } = clientA.enterRoom("node-e2e", {
+      const { room: roomA, leave: leaveA } = clientA.enterRoom(roomId, {
         initialPresence: { name: "A" },
       });
-      const { room: roomB, leave: leaveB } = clientB.enterRoom("node-e2e", {
+      const { room: roomB, leave: leaveB } = clientB.enterRoom(roomId, {
         initialPresence: { name: "B" },
       });
 
