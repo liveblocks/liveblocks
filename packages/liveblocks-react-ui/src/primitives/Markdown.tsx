@@ -470,6 +470,7 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
               token={token}
               key={index}
               components={components}
+              partial={partial}
               isMounted={isMounted}
             />
           );
@@ -487,6 +488,7 @@ const MemoizedMarkdownToken = memo(
   }: {
     token: Token;
     components?: Partial<MarkdownComponents>;
+    partial?: boolean;
     isMounted: boolean;
   }) => {
     return (
@@ -501,19 +503,31 @@ const MemoizedMarkdownToken = memo(
     const previousToken = previousProps.token;
     const nextToken = nextProps.token;
 
-    if (previousToken.raw.length !== nextToken.raw.length) {
+    // 1️⃣ Start with the fastest comparisons
+    if (
+      previousToken.type !== nextToken.type ||
+      previousProps.partial !== nextProps.partial ||
+      previousProps.isMounted !== nextProps.isMounted
+    ) {
       return false;
     }
 
-    if (previousToken.type !== nextToken.type) {
+    let previousContent = previousToken.raw;
+    let nextContent = nextToken.raw;
+
+    if ("text" in previousToken && "text" in nextToken) {
+      previousContent = (previousToken as Extract<Token, { text: string }>)
+        .text;
+      nextContent = (nextToken as Extract<Token, { text: string }>).text;
+    }
+
+    // 2️⃣ Then only compare the tokens' content lengths first
+    if (previousContent.length !== nextContent.length) {
       return false;
     }
 
-    if (previousProps.isMounted !== nextProps.isMounted) {
-      return false;
-    }
-
-    return previousToken.raw === nextToken.raw;
+    // 3️⃣ And finally compare the actual tokens' content
+    return previousContent === nextContent;
   }
 );
 
@@ -1292,7 +1306,6 @@ function completePartialTokens(tokens: Token[]) {
           const table = text as unknown as Tokens.Table;
 
           table.type = "table";
-          table.raw = completedTableMarkdown;
           table.header = completedTable.header;
           table.align = completedTable.align;
           table.rows = completedTable.rows;
