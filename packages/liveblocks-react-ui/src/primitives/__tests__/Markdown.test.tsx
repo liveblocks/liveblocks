@@ -655,19 +655,23 @@ describe("Markdown", () => {
         =
       `,
         (element) => {
+          const heading = element.querySelector("h1");
+
+          expect(heading).not.toBeInTheDocument();
           expect(element).toHaveTextContent("No heading");
         }
       );
 
       assert(
         dedent`
-        Heading 1
+        No heading
         ==
       `,
         (element) => {
           const heading = element.querySelector("h1");
 
-          expect(heading).toHaveTextContent("Heading 1");
+          expect(heading).not.toBeInTheDocument();
+          expect(element).toHaveTextContent("No heading");
         }
       );
 
@@ -686,9 +690,25 @@ describe("Markdown", () => {
       assert(
         dedent`
         No heading
-        =
+        -
       `,
         (element) => {
+          const heading = element.querySelector("h2");
+
+          expect(heading).not.toBeInTheDocument();
+          expect(element).toHaveTextContent("No heading");
+        }
+      );
+
+      assert(
+        dedent`
+        No heading
+        --
+      `,
+        (element) => {
+          const heading = element.querySelector("h2");
+
+          expect(heading).not.toBeInTheDocument();
           expect(element).toHaveTextContent("No heading");
         }
       );
@@ -696,19 +716,7 @@ describe("Markdown", () => {
       assert(
         dedent`
         Heading 2
-        ==
-      `,
-        (element) => {
-          const heading = element.querySelector("h2");
-
-          expect(heading).toHaveTextContent("Heading 2");
-        }
-      );
-
-      assert(
-        dedent`
-        Heading 2
-        ===
+        ---
       `,
         (element) => {
           const heading = element.querySelector("h2");

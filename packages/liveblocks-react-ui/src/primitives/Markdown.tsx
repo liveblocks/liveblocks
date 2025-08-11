@@ -28,7 +28,7 @@ const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 const NEWLINE_REGEX = /\r\n?/g;
 const BUFFERED_CHARACTERS_REGEX =
-  /(?<!\\)((\*+|_+|-+|~+|`+|=+|\++|\\|!|<\/?)\s*)$/;
+  /(?<!\\)((\*+|_+|~+|`+|\++|-{0,2}|={0,2}|\\|!|<\/?)\s*)$/;
 const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
 
 const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
