@@ -819,7 +819,8 @@ export const Composer = forwardRef(
           onBlur={handleBlur}
           disabled={disabled || !canComment}
           defaultAttachments={defaultAttachments}
-          pasteFilesAsAttachments={showAttachments}
+          disableAttachments={!showAttachments}
+          pasteFilesAsAttachments
           preventUnsavedChanges={preventUnsavedComposerChanges}
           blurOnSubmit={blurOnSubmit}
           roomId={roomId}
