@@ -104,6 +104,7 @@ export type ComposerAttachmentsContext = {
   isUploadingAttachments: boolean;
   maxAttachments: number;
   maxAttachmentSize: number;
+  disableAttachments: boolean;
 };
 
 export type ComposerSuggestionsContext = {
