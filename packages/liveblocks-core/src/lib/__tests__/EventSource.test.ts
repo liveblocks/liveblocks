@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { describe, expect, test, vi } from "vitest";
 
 import { makeBufferableEventSource, makeEventSource } from "../EventSource";
 

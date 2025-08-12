@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import fetch from "node-fetch";
 import type { URL } from "url";
+import { expect } from "vitest";
 import WebSocket from "ws";
 
 import type { Room } from "../src/room";

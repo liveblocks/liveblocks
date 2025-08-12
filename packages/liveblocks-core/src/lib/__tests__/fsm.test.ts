@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import { distance, FSM, patterns } from "../fsm";
 import { wait } from "../utils";
 

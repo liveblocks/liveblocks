@@ -1,4 +1,5 @@
 import { html, htmlSafe } from "@liveblocks/core";
+import { describe, expect } from "vitest";
 
 import { MENTION_CHARACTER } from "../lib/constants";
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";

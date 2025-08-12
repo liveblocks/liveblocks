@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { ManagedOthers } from "../ManagedOthers";
 
 type P = {
@@ -16,7 +18,7 @@ type M = {
 
 describe('Read-only "others" ref cache', () => {
   describe('Tracking "others"', () => {
-    it("setting alone is not enough other", () => {
+    test("setting alone is not enough other", () => {
       const others = new ManagedOthers<P, M>();
       others.setOther(2, { x: 1, y: 1 });
 
@@ -41,7 +43,7 @@ describe('Read-only "others" ref cache', () => {
       ]);
     });
 
-    it("setting other", () => {
+    test("setting other", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.setConnection(3, "user-567", undefined, ["room:write"]);
@@ -70,7 +72,7 @@ describe('Read-only "others" ref cache', () => {
       ]);
     });
 
-    it("setting other as read-only", () => {
+    test("setting other as read-only", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:read"]);
       others.setConnection(3, "user-567", undefined, ["room:write"]);
@@ -98,7 +100,7 @@ describe('Read-only "others" ref cache', () => {
       ]);
     });
 
-    it("setting others removes explicitly-undefined keys", () => {
+    test("setting others removes explicitly-undefined keys", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.setOther(2, { x: 2, y: 2, z: undefined });
@@ -117,7 +119,7 @@ describe('Read-only "others" ref cache', () => {
       ]);
     });
 
-    it("patching others ignores patches for unknown users", () => {
+    test("patching others ignores patches for unknown users", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.patchOther(2, { y: 1, z: 2 }); // .setOther() not called yet for actor 2
@@ -125,7 +127,7 @@ describe('Read-only "others" ref cache', () => {
       expect(others.get()).toStrictEqual([]);
     });
 
-    it("patching others", () => {
+    test("patching others", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.setOther(2, { x: 2, y: 2 });
@@ -165,7 +167,7 @@ describe('Read-only "others" ref cache', () => {
       ]);
     });
 
-    it("removing connections", () => {
+    test("removing connections", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.setOther(2, { x: 2, y: 2 });
@@ -191,7 +193,7 @@ describe('Read-only "others" ref cache', () => {
   });
 
   describe("caching", () => {
-    it("caches immutable results (others)", () => {
+    test("caches immutable results (others)", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.setOther(2, { x: 2, y: 2 });
@@ -220,7 +222,7 @@ describe('Read-only "others" ref cache', () => {
       expect(others6).toBe(others7);
     });
 
-    it("getUser() returns stable cache results", () => {
+    test("getUser() returns stable cache results", () => {
       const others = new ManagedOthers<P, M>();
       others.setConnection(2, "user-123", undefined, ["room:write"]);
       others.setOther(2, { x: 2, y: 2 });

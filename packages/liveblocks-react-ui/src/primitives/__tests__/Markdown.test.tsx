@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom";
 
 import { render } from "@testing-library/react";
+import { describe, expect, test } from "vitest";
 
 import { Markdown, type MarkdownComponents } from "../Markdown";
 import { dedent } from "./_utils";

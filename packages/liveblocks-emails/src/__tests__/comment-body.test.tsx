@@ -1,4 +1,5 @@
 import { html, htmlSafe } from "@liveblocks/core";
+import { describe, expect } from "vitest";
 
 import type { ConvertCommentBodyElements } from "../comment-body";
 import { convertCommentBody } from "../comment-body";

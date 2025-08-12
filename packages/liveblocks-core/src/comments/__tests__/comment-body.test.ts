@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import type { ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../protocol/Comments";
 import {
@@ -333,7 +335,7 @@ describe("stringifyCommentBody", () => {
     );
   });
 
-  it("should escape html entities - mention w/ username", async () => {
+  test("should escape html entities - mention w/ username", async () => {
     const commentBodyHtml: CommentBody = {
       version: 1,
       content: [

@@ -1,3 +1,5 @@
+import { describe, expect } from "vitest";
+
 import type { SerializedLexicalRootNode } from "../lexical-editor";
 import {
   findLexicalMentionNodeWithContext,

@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { expect, test, vi } from "vitest";
 
 import { shallow } from "../../../lib/shallow";
 import { batch, Signal } from "../../signals";
@@ -32,7 +33,7 @@ test("with custom equals function", () => {
   }
 });
 
-it("signals only notify watchers when their value changes", () => {
+test("signals only notify watchers when their value changes", () => {
   const fn = vi.fn();
 
   const counter = new Signal(0);
@@ -52,7 +53,7 @@ it("signals only notify watchers when their value changes", () => {
   unsub();
 });
 
-it("without batching three signal updates will lead to three notifications", () => {
+test("without batching three signal updates will lead to three notifications", () => {
   const fn = vi.fn();
   const x = new Signal(1);
 
@@ -71,7 +72,7 @@ it("without batching three signal updates will lead to three notifications", () 
   unsub();
 });
 
-it("batched signal updates notify only once", () => {
+test("batched signal updates notify only once", () => {
   const fn = vi.fn();
   const x = new Signal(1);
 

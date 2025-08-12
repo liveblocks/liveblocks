@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import { batch, Signal } from "../signals";
 
 describe("Signals (previously createStore)", () => {

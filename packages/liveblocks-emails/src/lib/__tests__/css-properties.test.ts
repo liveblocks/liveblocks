@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import type { CSSProperties } from "../css-properties";
 import { toInlineCSSString } from "../css-properties";
 

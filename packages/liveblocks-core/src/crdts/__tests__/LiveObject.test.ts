@@ -1,4 +1,4 @@
-import { vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 
 import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
@@ -20,11 +20,11 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
-    it("should be null for orphan", () => {
+    test("should be null for orphan", () => {
       expect(new LiveObject().roomId).toBeNull();
     });
 
-    it("should be the associated room id if attached", async () => {
+    test("should be the associated room id if attached", async () => {
       const { root } = await prepareIsolatedStorageTest(
         [createSerializedObject("root", {})],
         1
@@ -33,7 +33,7 @@ describe("LiveObject", () => {
       expect(root.roomId).toBe("room-id");
     });
 
-    it("should be null after being detached", async () => {
+    test("should be null after being detached", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         child: LiveObject<{ a: number }>;
       }>(
@@ -54,7 +54,7 @@ describe("LiveObject", () => {
     });
   });
 
-  it("update non existing property", async () => {
+  test("update non existing property", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
       [createSerializedObject("0:0", {})]
     );
@@ -69,7 +69,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update non existing property with null", async () => {
+  test("update non existing property with null", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
       [createSerializedObject("0:0", {})]
     );
@@ -84,7 +84,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update throws on read-only", async () => {
+  test("update throws on read-only", async () => {
     const { storage } = await prepareStorageTest(
       [createSerializedObject("0:0", { a: 0 })],
       1,
@@ -96,7 +96,7 @@ describe("LiveObject", () => {
     );
   });
 
-  it("update existing property", async () => {
+  test("update existing property", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
       [createSerializedObject("0:0", { a: 0 })]
     );
@@ -111,7 +111,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update existing property with null", async () => {
+  test("update existing property with null", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
       [createSerializedObject("0:0", { a: 0 })]
     );
@@ -126,7 +126,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update root", async () => {
+  test("update root", async () => {
     const { storage, expectStorage, assertUndoRedo } = await prepareStorageTest(
       [createSerializedObject("0:0", { a: 0 })]
     );
@@ -149,7 +149,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("set throws on read-only", async () => {
+  test("set throws on read-only", async () => {
     const { storage } = await prepareStorageTest(
       [createSerializedObject("0:0", {})],
       1,
@@ -161,7 +161,7 @@ describe("LiveObject", () => {
     );
   });
 
-  it("update with LiveObject", async () => {
+  test("update with LiveObject", async () => {
     const { room, storage, expectStorage, operations, assertUndoRedo } =
       await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
         [createSerializedObject("0:0", { child: null })],
@@ -221,7 +221,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("remove nested grand child record with update", async () => {
+  test("remove nested grand child record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         a: number;
@@ -256,7 +256,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("remove nested child record with update", async () => {
+  test("remove nested child record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         a: number;
@@ -284,7 +284,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("add nested record with update", async () => {
+  test("add nested record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
@@ -305,7 +305,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("replace nested record with update", async () => {
+  test("replace nested record with update", async () => {
     const { room, storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
@@ -336,7 +336,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update nested record", async () => {
+  test("update nested record", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         a: number;
@@ -367,7 +367,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update deeply nested record", async () => {
+  test("update deeply nested record", async () => {
     const { storage, expectStorage, assertUndoRedo } =
       await prepareStorageTest<{
         a: number;
@@ -412,7 +412,7 @@ describe("LiveObject", () => {
   });
 
   describe("acknowledge mechanism", () => {
-    it("should not ignore history updates if the current op has not been acknowledged", async () => {
+    test("should not ignore history updates if the current op has not been acknowledged", async () => {
       const { room, root, expectUpdates } =
         await prepareDisconnectedStorageUpdateTest<{
           items: LiveObject<{ b?: string; a?: string }>;
@@ -482,7 +482,7 @@ describe("LiveObject", () => {
         expectStorage({ a: 1 });
       });
 
-      it("when value is a LiveObject", async () => {
+      test("when value is a LiveObject", async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{
             a: LiveObject<{ subA: number }>;
@@ -514,7 +514,7 @@ describe("LiveObject", () => {
         expectStorage({ a: { subA: 1 } });
       });
 
-      it("when value is a LiveList with LiveObjects", async () => {
+      test("when value is a LiveList with LiveObjects", async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{
             a: LiveList<LiveObject<{ b: number }>>;
@@ -550,7 +550,7 @@ describe("LiveObject", () => {
   });
 
   describe("delete", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         child: LiveObject<{ a: number }>;
       }>(
@@ -567,13 +567,13 @@ describe("LiveObject", () => {
       );
     });
 
-    it("detached", () => {
+    test("detached", () => {
       const liveObject = new LiveObject({ a: 0 });
       liveObject.delete("a");
       expect(liveObject.get("a")).toBe(undefined);
     });
 
-    it("should delete property from the object", async () => {
+    test("should delete property from the object", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           a?: number;
@@ -586,7 +586,7 @@ describe("LiveObject", () => {
       assertUndoRedo();
     });
 
-    it("should delete nested crdt", async () => {
+    test("should delete nested crdt", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           child?: LiveObject<{ a: number }>;
@@ -603,7 +603,7 @@ describe("LiveObject", () => {
       assertUndoRedo();
     });
 
-    it("should not notify if property does not exist", async () => {
+    test("should not notify if property does not exist", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
       }>([createSerializedObject("0:0", {})]);
@@ -616,7 +616,7 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledTimes(0);
     });
 
-    it("should notify if property has been deleted", async () => {
+    test("should notify if property has been deleted", async () => {
       const { room, root } = await prepareIsolatedStorageTest<{
         a?: number;
       }>([createSerializedObject("0:0", { a: 1 })]);
@@ -631,7 +631,7 @@ describe("LiveObject", () => {
   });
 
   describe("applyDeleteObjectKey", () => {
-    it("should not notify if property does not exist", async () => {
+    test("should not notify if property does not exist", async () => {
       const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", {}),
@@ -647,7 +647,7 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledTimes(0);
     });
 
-    it("should notify if property has been deleted", async () => {
+    test("should notify if property has been deleted", async () => {
       const { room, root, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", { a: 1 }),
@@ -1114,7 +1114,7 @@ describe("LiveObject", () => {
       LiveObject.detectLargeObjects = false;
     });
 
-    it("should NOT throw when LiveObject.detectLargeObjects property is disabled (default behavior)", () => {
+    test("should NOT throw when LiveObject.detectLargeObjects property is disabled (default behavior)", () => {
       // Ensure LiveObject.detectLargeObjects property is disabled
       LiveObject.detectLargeObjects = false;
 
@@ -1127,7 +1127,7 @@ describe("LiveObject", () => {
       }).not.toThrow();
     });
 
-    it("should throw when LiveObject.detectLargeObjects property is enabled and size exceeds 128KB", () => {
+    test("should throw when LiveObject.detectLargeObjects property is enabled and size exceeds 128KB", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1140,7 +1140,7 @@ describe("LiveObject", () => {
       }).toThrow(/LiveObject size exceeded limit.*bytes/);
     });
 
-    it("should NOT throw when LiveObject.detectLargeObjects property is enabled but size is within limit", () => {
+    test("should NOT throw when LiveObject.detectLargeObjects property is enabled but size is within limit", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1153,7 +1153,7 @@ describe("LiveObject", () => {
       }).not.toThrow();
     });
 
-    it("should exclude Live structure references from size calculation", () => {
+    test("should exclude Live structure references from size calculation", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1185,7 +1185,7 @@ describe("LiveObject", () => {
       }).not.toThrow();
     });
 
-    it("should throw when accumulating many small properties exceeds 128KB limit", () => {
+    test("should throw when accumulating many small properties exceeds 128KB limit", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1210,7 +1210,7 @@ describe("LiveObject", () => {
       }).toThrow(/LiveObject size exceeded limit/);
     });
 
-    it("should correctly handle mixed small properties and Live structures", () => {
+    test("should correctly handle mixed small properties and Live structures", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1242,7 +1242,7 @@ describe("LiveObject", () => {
       }).toThrow(/LiveObject size exceeded limit/);
     });
 
-    it("should handle the exact boundary case at 128KB", () => {
+    test("should handle the exact boundary case at 128KB", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1263,7 +1263,7 @@ describe("LiveObject", () => {
       }).toThrow(/LiveObject size exceeded limit/);
     });
 
-    it("should allow many small properties when total stays under limit", () => {
+    test("should allow many small properties when total stays under limit", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 
@@ -1285,7 +1285,7 @@ describe("LiveObject", () => {
       }).not.toThrow();
     });
 
-    it("should handle performance optimization boundary correctly", () => {
+    test("should handle performance optimization boundary correctly", () => {
       // Enable LiveObject.detectLargeObjects property
       LiveObject.detectLargeObjects = true;
 

@@ -1,3 +1,5 @@
+import { describe, test, expect } from "vitest";
+
 import type { Immutable } from "../src/types/Immutable";
 import { LiveMap } from "../src/crdts/LiveMap";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";

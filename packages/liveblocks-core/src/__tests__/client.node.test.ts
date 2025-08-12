@@ -4,6 +4,7 @@
 
 // We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
 import { Response as NodeFetchResponse } from "node-fetch";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";

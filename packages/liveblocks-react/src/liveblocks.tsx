@@ -990,7 +990,11 @@ function useAiChats(options?: UseAiChatsOptions): AiChatsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  return useSignal(store.outputs.aiChats.getOrCreate(queryKey).signal, identity, shallow);
+  return useSignal(
+    store.outputs.aiChats.getOrCreate(queryKey).signal,
+    identity,
+    shallow
+  );
 }
 
 function useAiChatsSuspense(options?: UseAiChatsOptions): AiChatsAsyncSuccess {

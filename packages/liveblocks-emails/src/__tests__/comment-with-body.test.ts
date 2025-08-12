@@ -1,3 +1,5 @@
+import { describe, expect, it } from "vitest";
+
 import { filterCommentsWithBody } from "../comment-with-body";
 import { commentBody1, generateThreadId, makeComment } from "./_helpers";
 

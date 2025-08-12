@@ -1,3 +1,5 @@
+import { describe, expect } from "vitest";
+
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
 import { transformAsLiveblocksTextEditorNodes } from "../liveblocks-text-editor";
 import { generateInboxNotificationId } from "./_helpers";

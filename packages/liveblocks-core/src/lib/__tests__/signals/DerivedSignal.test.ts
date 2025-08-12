@@ -1,8 +1,10 @@
+import { expect, test, vi } from "vitest";
+
 import { shallow } from "../../../lib/shallow";
 import { batch, DerivedSignal, Signal } from "../../../lib/signals";
 import { DefaultMap } from "../../DefaultMap";
 
-it("compute signal from other signals", () => {
+test("compute signal from other signals", () => {
   const greeting = new Signal("hi");
   const count = new Signal(3);
   const derived = DerivedSignal.from(
@@ -25,7 +27,7 @@ it("compute signal from other signals", () => {
   expect(derived.get()).toEqual("!");
 });
 
-it("compute signal from many other signals", () => {
+test("compute signal from many other signals", () => {
   const jokesSignal = new Signal(["joke1", "joke2"]);
   const allGreatSignal = new Signal(false);
   const multiplierSignal = new Signal(1); // Number of laughs per joke
@@ -51,7 +53,7 @@ it("compute signal from many other signals", () => {
   expect(greatLaughsSignal.get()).toEqual(["HA", "HA", "HA", "HA", "HA", "HA"]);
 });
 
-it("derived signal chaining", () => {
+test("derived signal chaining", () => {
   const counter = new Signal(0);
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
@@ -74,7 +76,7 @@ it("derived signal chaining", () => {
   expect(parity.isDirty).toEqual(false);
 });
 
-it("derived signals re-evaluate when sources change (without listeners)", () => {
+test("derived signals re-evaluate when sources change (without listeners)", () => {
   const counter = new Signal(0);
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
@@ -94,7 +96,7 @@ it("derived signals re-evaluate when sources change (without listeners)", () => 
   expect(parity.get()).toEqual("odd");
 });
 
-it("derived signals re-evaluate when sources change (with listeners)", () => {
+test("derived signals re-evaluate when sources change (with listeners)", () => {
   const counter = new Signal(0);
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
@@ -118,7 +120,7 @@ it("derived signals re-evaluate when sources change (with listeners)", () => {
   unsub();
 });
 
-it("derived signals re-evaluate when sources change (with listeners in parent)", () => {
+test("derived signals re-evaluate when sources change (with listeners in parent)", () => {
   const counter = new Signal(0);
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
@@ -142,7 +144,7 @@ it("derived signals re-evaluate when sources change (with listeners in parent)",
   unsub();
 });
 
-it("derived signals re-evaluate when sources change (with listeners in grandparent)", () => {
+test("derived signals re-evaluate when sources change (with listeners in grandparent)", () => {
   const counter = new Signal(0);
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
@@ -166,7 +168,7 @@ it("derived signals re-evaluate when sources change (with listeners in grandpare
   unsub();
 });
 
-it("signals only notify watchers when their value changes", () => {
+test("signals only notify watchers when their value changes", () => {
   const fn = vi.fn();
 
   const counter = new Signal(0);
@@ -197,7 +199,7 @@ it("signals only notify watchers when their value changes", () => {
   unsub();
 });
 
-it("signals only notify watchers when their value changes (with shallow)", () => {
+test("signals only notify watchers when their value changes (with shallow)", () => {
   let numEvals = 0;
 
   const fn = vi.fn();
@@ -246,7 +248,7 @@ it("signals only notify watchers when their value changes (with shallow)", () =>
   unsub();
 });
 
-it("batch signal updates so derived signals will only be notified once", () => {
+test("batch signal updates so derived signals will only be notified once", () => {
   const fn1 = vi.fn(); // Callback when z changes
   const fn2 = vi.fn(); // Callback when zz changes
 
@@ -277,7 +279,7 @@ it("batch signal updates so derived signals will only be notified once", () => {
   unsub2();
 });
 
-it("batch signal notifications and re-evaluations are as efficient as possible", () => {
+test("batch signal notifications and re-evaluations are as efficient as possible", () => {
   const x = new Signal(1);
   const y = new Signal(2);
   const z = new Signal(3);
@@ -348,7 +350,7 @@ it("batch signal notifications and re-evaluations are as efficient as possible",
   unsub();
 });
 
-it("conditionally read from other signal", () => {
+test("conditionally read from other signal", () => {
   const index = new Signal(0); // Signal to read
   const signals = [
     new Signal("hi"),
@@ -384,7 +386,7 @@ it("conditionally read from other signal", () => {
   expect(derived.isDirty).toEqual(false);
 });
 
-it("conditionally read nested signals", () => {
+test("conditionally read nested signals", () => {
   const fn = vi.fn();
   const map = new DefaultMap<number, Signal<number>>(() => new Signal(0));
 
@@ -439,7 +441,7 @@ it("conditionally read nested signals", () => {
   expect(derived.get()).toEqual(1234);
 });
 
-it("conditionally reading signals won't unregister old sinks (when using static syntax)", () => {
+test("conditionally reading signals won't unregister old sinks (when using static syntax)", () => {
   const notificationFn = vi.fn();
   const evalFn = vi.fn();
   const cond = new Signal(false);
@@ -476,7 +478,7 @@ it("conditionally reading signals won't unregister old sinks (when using static 
   unsub();
 });
 
-it("conditionally reading signals will unregister old sinks (when using dynamic syntax)", () => {
+test("conditionally reading signals will unregister old sinks (when using dynamic syntax)", () => {
   const notificationFn = vi.fn();
   const evalFn = vi.fn();
   const cond = new Signal(false);
@@ -514,7 +516,7 @@ it("conditionally reading signals will unregister old sinks (when using dynamic 
   unsub();
 });
 
-it("conditionally read from nested signals", () => {
+test("conditionally read from nested signals", () => {
   const map = new DefaultMap<string, Signal<number>>(() => new Signal(0));
   const prefix = new Signal("pre");
   const fn = vi.fn();

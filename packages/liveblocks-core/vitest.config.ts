@@ -6,7 +6,6 @@ export default defaultLiveblocksVitestConfig({
     // e2e/* tests will be run by `npm run test:e2e`
     exclude: ["e2e/**"],
 
-    globals: true,
     environment: "jsdom",
     environmentOptions: {
       jsdom: {

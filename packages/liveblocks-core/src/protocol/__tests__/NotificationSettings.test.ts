@@ -1,4 +1,5 @@
-import { type MockInstance, vi } from "vitest";
+import type { MockInstance } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import * as console from "../../lib/fancy-console";
 import {
@@ -17,7 +18,7 @@ describe("NotificationSettings protocol", () => {
     consoleErrorMock.mockRestore();
   });
 
-  it("should create an object with getters for each known notification channel", () => {
+  test("should create an object with getters for each known notification channel", () => {
     const plain: NotificationSettingsPlain = {
       email: {
         thread: true,
@@ -40,7 +41,7 @@ describe("NotificationSettings protocol", () => {
     expect(consoleErrorMock).not.toHaveBeenCalled();
   });
 
-  it("should return null and log an error if a channel is not defined in plain and is accessed later", () => {
+  test("should return null and log an error if a channel is not defined in plain and is accessed later", () => {
     const plain: NotificationSettingsPlain = {
       email: {
         thread: true,
@@ -78,7 +79,7 @@ describe("NotificationSettings protocol", () => {
     );
   });
 
-  it("should return an object where properties are enumerable except `[kPlain]`", () => {
+  test("should return an object where properties are enumerable except `[kPlain]`", () => {
     const plain: NotificationSettingsPlain = {
       email: { thread: true, textMention: true },
       slack: { thread: true, textMention: true },

@@ -1,3 +1,5 @@
+import { describe, test, expect } from "vitest";
+
 import { lsonToJson } from "../src/immutable";
 import { LiveList } from "../src/crdts/LiveList";
 import type { Json } from "../src/lib/Json";

@@ -1,3 +1,5 @@
+import { describe, expect } from "vitest";
+
 import type { SerializedTiptapRootNode } from "../tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
