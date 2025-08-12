@@ -82,7 +82,7 @@
     "@liveblocks/jest-config": "*",
     "@liveblocks/query-parser": "^0.1.1",
     "@testing-library/jest-dom": "6.4.6",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/react": "^15.0.7",
     "date-fns": "^3.6.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "itertools": "^2.3.2",
