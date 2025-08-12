@@ -6,10 +6,8 @@ GITHUB_URL="https://github.com/liveblocks/liveblocks"
 usage () {
     err "publish.sh [-V <version>] [-t <tag>] <pkgdir> [<pkgdir>...]"
     err ""
-    err "    -V   The version to publish to NPM."
-    err "    -t   The NPM tag to use."
-    err "         When explicitly set to the empty string (-t ''), no tag will"
-    err "         be assigned on NPM."
+    err "    -V   the version to publish to NPM"
+    err "    -t   the NPM tag to use"
     err ""
 }
 
@@ -88,9 +86,7 @@ npm_pkgname () {
 }
 
 check_is_valid_version "$VERSION"
-if [ -n "$TAG" ]; then
-    check_is_valid_tag "$TAG"
-fi
+check_is_valid_tag "$TAG"
 
 # Publish to NPM
 for pkgdir in "$@"; do
@@ -99,26 +95,24 @@ for pkgdir in "$@"; do
     ( cd "$pkgdir" && publish_to_npm "$pkgname" )
 done
 
-if [ -n "$TAG" ]; then
-    # By now, all packages should be published under a "privaterollout" tag.
-    # We'll verify that now, and if indeed correct, we'll "assign" the intended tag
-    # instead. Afterwards, we'll remove the "privaterollout" tags again.
-    echo ""
-    echo "Assigning definitive NPM tags"
-    for pkgdir in "$@"; do
-        pkgname="$(npm_pkgname "$pkgdir")"
-        while true; do
-            if npm dist-tag ls "$pkgname" | grep -qEe ": $VERSION\$"; then
-                echo "==> Adding tag $TAG to $pkgname@$VERSION"
-                npm dist-tag add "$pkgname@$VERSION" "$TAG"
-                break
-            else
-                err "I can't find $pkgname@$VERSION on NPM yet..."
-                sleep 5
-            fi
-        done
+# By now, all packages should be published under a "privaterollout" tag.
+# We'll verify that now, and if indeed correct, we'll "assign" the intended tag
+# instead. Afterwards, we'll remove the "privaterollout" tags again.
+echo ""
+echo "Assigning definitive NPM tags"
+for pkgdir in "$@"; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    while true; do
+        if npm dist-tag ls "$pkgname" | grep -qEe ": $VERSION\$"; then
+            echo "==> Adding tag $TAG to $pkgname@$VERSION"
+            npm dist-tag add "$pkgname@$VERSION" "$TAG"
+            break
+        else
+            err "I can't find $pkgname@$VERSION on NPM yet..."
+            sleep 5
+        fi
     done
-fi
+done
 
 # Clean up those temporary "privaterollout" tags
 for pkgdir in "$@"; do
