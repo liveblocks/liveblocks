@@ -20,7 +20,21 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 33 (2025-08-15)
 
+## v3.3.1
+
+### `@liveblocks/react-ui`
+
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
+
+## All versions
+
+- Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
+  instead of `a file.txt`)
+
 ## Contributors
+
+marcbouchenoire
 
 # Week 32 (2025-08-08)
 
