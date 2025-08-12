@@ -34,7 +34,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup && node dist/index.js",
-    "format": "(eslint --fix src/ || true) && prettier --write src/",
+    "format": "(eslint --fix src/ e2e/ || true) && prettier --write src/ e2e/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
     "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",

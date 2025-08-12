@@ -5,16 +5,16 @@ import type { URL } from "url";
 import { expect } from "vitest";
 import WebSocket from "ws";
 
-import type { Room } from "../src/room";
+import type { BaseMetadata, NoInfr } from "../src";
+import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
-import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
-import { wait, withTimeout } from "../src/lib/utils";
-import type { Json, JsonObject } from "../src/lib/Json";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
-import { createClient } from "../src/client";
-import type { BaseMetadata, NoInfr } from "../src";
+import type { Json, JsonObject } from "../src/lib/Json";
+import { wait, withTimeout } from "../src/lib/utils";
+import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
+import type { Room } from "../src/room";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -25,7 +25,7 @@ async function initializeRoomForTest<
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
-  if (publicApiKey == null) {
+  if (!publicApiKey) {
     throw new Error('Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.');
   }
 
@@ -37,6 +37,7 @@ async function initializeRoomForTest<
 
     constructor(address: string | URL) {
       super(address);
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       ws = this;
     }
 
@@ -64,7 +65,7 @@ async function initializeRoomForTest<
   const client = createClient<U>({
     publicApiKey,
     polyfills: {
-      // @ts-ignore-error
+      // @ts-expect-error fetch from Node isn't compatible?
       fetch,
       WebSocket: PausableWebSocket,
     },

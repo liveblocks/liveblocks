@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import { lsonToJson } from "../src/immutable";
 import { LiveList } from "../src/crdts/LiveList";
+import { lsonToJson } from "../src/immutable";
 import type { Json } from "../src/lib/Json";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 

@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import type { Immutable } from "../src/types/Immutable";
 import { LiveMap } from "../src/crdts/LiveMap";
+import type { Immutable } from "../src/types/Immutable";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe("LiveMap single client", () => {
