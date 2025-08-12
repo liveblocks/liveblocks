@@ -393,6 +393,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 key={message.id}
                 message={message}
                 overrides={overrides}
+                components={components}
               />
             );
           } else if (message.role === "assistant") {
