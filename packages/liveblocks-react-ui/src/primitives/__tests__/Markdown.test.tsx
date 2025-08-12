@@ -93,13 +93,14 @@ describe("Markdown", () => {
       {
         description: "strikethrough text",
         content: dedent`
-          ~~Strikethrough~~.
+          ~~Strikethrough~~ and ~strikethrough~.
         `,
         assertions: (element) => {
           const dels = element.querySelectorAll("del");
 
-          expect(dels).toHaveLength(1);
+          expect(dels).toHaveLength(2);
           expect(dels[0]).toHaveTextContent("Strikethrough");
+          expect(dels[1]).toHaveTextContent("strikethrough");
         },
       },
       {
@@ -826,6 +827,17 @@ describe("Markdown", () => {
       `,
         (element) => {
           expect(element).toHaveTextContent("This isn't");
+        }
+      );
+
+      assert(
+        dedent`
+        This is ~strikethrough text
+      `,
+        (element) => {
+          const del = element.querySelector("del");
+
+          expect(del).toHaveTextContent("strikethrough text");
         }
       );
 

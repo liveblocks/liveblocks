@@ -30,7 +30,7 @@ const BUFFERED_CHARACTERS_REGEX =
   /(?<!\\)((\*+|_+|~+|`+|\++|-{0,2}|={0,2}|\\|!|<\/?)\s*)$/;
 const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
 
-const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "`"];
+const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "~", "`"];
 const DEFAULT_PARTIAL_LINK_URL = "#";
 
 type CheckboxToken = {
