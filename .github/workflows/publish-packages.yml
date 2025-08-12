@@ -49,10 +49,14 @@ jobs:
           GIT_TAG: ${{ inputs.tag }}
         run: |
           get_npm_tag () {
-            if grep -q "-" <<< "$1"; then
+            if [ "$1" = "main" ]; then
+                # Publishing from the main branch explicitly uses the `latest` tag explicitly.
+                echo "latest"
+            elif grep -q "-" <<< "$1"; then
+                # If the git tag uses a x.y.z-tagnameN convention, extract the tagname
                 echo "${1##*-}" | sed 's/[0-9]//g'
             else
-                echo "latest"
+                # Return no tag
             fi
           }
           echo value=$(get_npm_tag "$GIT_TAG") >> $GITHUB_OUTPUT
