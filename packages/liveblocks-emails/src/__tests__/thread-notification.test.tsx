@@ -5,7 +5,7 @@ import type {
 import type { ThreadData } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
-import { afterAll, beforeAll, describe, expect } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import type { ConvertCommentBodyElements } from "../comment-body";
 import { MENTION_CHARACTER } from "../lib/constants";
@@ -75,7 +75,7 @@ describe("thread notification", () => {
   };
 
   describe("internals utils", () => {
-    it("should get unread comments - all comments", () => {
+    test("should get unread comments - all comments", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -110,7 +110,7 @@ describe("thread notification", () => {
       expect(unreadComments).toEqual(expected);
     });
 
-    it("should get unread comments - only two comments", () => {
+    test("should get unread comments - only two comments", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -145,7 +145,7 @@ describe("thread notification", () => {
       expect(unreadComments).toEqual(expected);
     });
 
-    it("should get last unread comment with mention - first comment is a mention", () => {
+    test("should get last unread comment with mention - first comment is a mention", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -180,7 +180,7 @@ describe("thread notification", () => {
       expect(lastCommentWithMention1).toEqual(comment1);
     });
 
-    it("should get last unread comment with mention - last comment is a mention", () => {
+    test("should get last unread comment with mention - last comment is a mention", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -221,7 +221,7 @@ describe("thread notification", () => {
       expect(lastUnreadCommentWithMention).toEqual(comment3);
     });
 
-    it("should extract null (no last unread comment with a mention nor unread replies) from a thread notification", async () => {
+    test("should extract null (no last unread comment with a mention nor unread replies) from a thread notification", async () => {
       const threadId = generateThreadId();
       const comment = makeComment({
         userId: "user-0",
@@ -249,7 +249,7 @@ describe("thread notification", () => {
       expect(extracted).toBeNull();
     });
 
-    it("should extract last unread comment with a mention from a thread notification", async () => {
+    test("should extract last unread comment with a mention from a thread notification", async () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-0",
@@ -286,7 +286,7 @@ describe("thread notification", () => {
       expect(extracted).toEqual(expected);
     });
 
-    it("should extract unread replies comments from a thread notification", async () => {
+    test("should extract unread replies comments from a thread notification", async () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -334,7 +334,7 @@ describe("thread notification", () => {
       expect(extracted).toEqual(expected);
     });
 
-    it("should extract only unread replies from a thread notification - no mentions", async () => {
+    test("should extract only unread replies from a thread notification - no mentions", async () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-0",
@@ -396,7 +396,7 @@ describe("thread notification", () => {
         `${MENTION_CHARACTER}${user?.name ?? element.id}`,
     };
 
-    it("should prepare for last unread comment with mention", async () => {
+    test("should prepare for last unread comment with mention", async () => {
       const threadId = generateThreadId();
       const comment = makeComment({
         userId: "user-0",
@@ -468,7 +468,7 @@ describe("thread notification", () => {
       expect(preparedWithResolvedRoomInfo).toEqual(expected2);
     });
 
-    it("should prepare for unread replies comments", async () => {
+    test("should prepare for unread replies comments", async () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-dracula",
@@ -617,7 +617,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
         expected: ThreadNotificationEmailDataAsHtml;
@@ -704,7 +704,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
         expected: ThreadNotificationEmailDataAsHtml;
@@ -789,7 +789,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
         expected: ThreadNotificationEmailDataAsHtml;
@@ -879,7 +879,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
         expected: ThreadNotificationEmailDataAsHtml;
@@ -982,7 +982,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
@@ -1095,7 +1095,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
@@ -1211,7 +1211,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
@@ -1324,7 +1324,7 @@ describe("thread notification", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      it.each<{
+      test.each<{
         withResolvers: boolean;
         promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;

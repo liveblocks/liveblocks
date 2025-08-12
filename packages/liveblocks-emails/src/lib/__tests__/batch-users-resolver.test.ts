@@ -5,7 +5,7 @@ import type {
   IUserInfo,
   ResolveUsersArgs,
 } from "@liveblocks/core";
-import { vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createBatchUsersResolver } from "../batch-users-resolver";
 
@@ -56,7 +56,7 @@ describe("batch users resolve", () => {
     );
   });
 
-  it("should handle no `resolveUsers` callback", async () => {
+  test("should handle no `resolveUsers` callback", async () => {
     const warnMock1 = vi.fn();
     vi.spyOn(console, "warn").mockImplementation(warnMock1);
 
@@ -82,7 +82,7 @@ describe("batch users resolve", () => {
     warnMock1.mockRestore();
   });
 
-  it("should resolve users info all at once", async () => {
+  test("should resolve users info all at once", async () => {
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,
       callerName: "test-suite-1",
@@ -106,7 +106,7 @@ describe("batch users resolve", () => {
     expect(resolveUsersMock).toHaveBeenCalledWith({ userIds });
   });
 
-  it("should resolve the same user in one call with multiple resolveUsers promises", async () => {
+  test("should resolve the same user in one call with multiple resolveUsers promises", async () => {
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,
       callerName: "test-suite-2",
@@ -127,7 +127,7 @@ describe("batch users resolve", () => {
     expect(resolvedUser2).toEqual(expected);
   });
 
-  it("should warn if batch promise is already resolved", async () => {
+  test("should warn if batch promise is already resolved", async () => {
     const warnMock2 = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({

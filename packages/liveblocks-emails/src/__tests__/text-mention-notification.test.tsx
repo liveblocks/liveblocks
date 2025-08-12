@@ -4,7 +4,15 @@ import type {
 } from "@liveblocks/core";
 import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
-import { vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { MENTION_CHARACTER } from "../lib/constants";
 import type { ConvertMentionContentElements } from "../mention-content";
@@ -81,7 +89,7 @@ describe("text mention notification", () => {
   };
 
   describe("internals utils", () => {
-    it("should extract `null` - bad bad notification kind", async () => {
+    test("should extract `null` - bad bad notification kind", async () => {
       const warnMock1 = vi.fn();
       vi.spyOn(console, "warn").mockImplementation(warnMock1);
 
@@ -127,7 +135,7 @@ describe("text mention notification", () => {
       warnMock1.mockRestore();
     });
 
-    it("should extract `null` - notification is already read", async () => {
+    test("should extract `null` - notification is already read", async () => {
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId,
@@ -154,7 +162,7 @@ describe("text mention notification", () => {
       expect(extracted).toBeNull();
     });
 
-    it("should extract `null` - no text editor associated", async () => {
+    test("should extract `null` - no text editor associated", async () => {
       const warnMock2 = vi.fn();
       vi.spyOn(console, "warn").mockImplementation(warnMock2);
 
@@ -187,7 +195,7 @@ describe("text mention notification", () => {
       warnMock2.mockRestore();
     });
 
-    it("should extract a text mention notification data", async () => {
+    test("should extract a text mention notification data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
         createdBy: "user-nimesh",
@@ -239,7 +247,7 @@ describe("text mention notification", () => {
       text: ({ node }) => node.text,
     };
 
-    it("should extract mention and nodes and prepare base email data", async () => {
+    test("should extract mention and nodes and prepare base email data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
         createdBy: "user-nimesh",
@@ -361,7 +369,7 @@ describe("text mention notification", () => {
       roomInfo: RESOLVED_ROOM_INFO_TEST,
     };
 
-    it.each<{
+    test.each<{
       withResolvers: boolean;
       promise: () => Promise<TextMentionNotificationEmailDataAsHtml | null>;
       expected: TextMentionNotificationEmailDataAsHtml;
@@ -444,7 +452,7 @@ describe("text mention notification", () => {
       },
     };
 
-    it.each<{
+    test.each<{
       withResolvers: boolean;
       promise: () => Promise<TextMentionNotificationEmailDataAsReact | null>;
       expected: TextMentionNotificationEmailDataAsReact;
