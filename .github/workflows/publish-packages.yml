@@ -56,7 +56,8 @@ jobs:
                 # If the git tag uses a x.y.z-tagnameN convention, extract the tagname
                 echo "${1##*-}" | sed 's/[0-9]//g'
             else
-                # Return no tag
+                # Return no tag for other branches
+                echo ""
             fi
           }
           echo value=$(get_npm_tag "$GIT_TAG") >> $GITHUB_OUTPUT
