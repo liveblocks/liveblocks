@@ -15,10 +15,16 @@ check_is_valid_github_tag () {
 }
 
 get_npm_tag () {
-  if grep -q "-" <<< "$1"; then
-      echo "${1##*-}" | sed 's/[0-9]//g'
-  else 
+  CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$CURRENT_BRANCH" = "main" ]; then
+      # Publishing from the main branch explicitly uses the `latest` tag explicitly.
       echo "latest"
+  elif grep -q "-" <<< "$1"; then
+      # If the git tag uses a x.y.z-tagnameN convention, extract the tagname
+      echo "${1##*-}" | sed 's/[0-9]//g'
+  else
+      # Return no tag for other branches
+      echo ""
   fi
 }
 
@@ -28,12 +34,12 @@ check_npm_tag_allowed_on_branch () {
 
   echo "Checking if npm tag $NPM_TAG is allowed on branch $CURRENT_BRANCH"
   if [ "$NPM_TAG" == "beta" ] && [ "$CURRENT_BRANCH" != "beta" ]; then
-    err "Error! Only the beta tag is allowed on beta branch"
+    err "Error! You can only push a beta tag on the beta branch"
     exit 2
   fi
 
   if [ "$NPM_TAG" == "latest" ] && [ "$CURRENT_BRANCH" != "main" ]; then
-    err "Error! You can only push a version without an npm tag on the main branch"
+    err "Error! You can only push a latest tag on the main branch"
     exit 2
   fi
 }
