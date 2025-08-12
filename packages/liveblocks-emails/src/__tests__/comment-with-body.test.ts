@@ -1,10 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { filterCommentsWithBody } from "../comment-with-body";
 import { commentBody1, generateThreadId, makeComment } from "./_helpers";
 
 describe("Comment with body", () => {
-  it("should filter comments with defined bodies", () => {
+  test("should filter comments with defined bodies", () => {
     const threadId = generateThreadId();
     const comment1 = makeComment({ userId: "user-0", threadId });
     const comment2 = makeComment({
