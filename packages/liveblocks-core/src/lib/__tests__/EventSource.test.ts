@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { describe, expect, test, vi } from "vitest";
 
 import { makeBufferableEventSource, makeEventSource } from "../EventSource";
 
@@ -22,7 +23,7 @@ describe("EventSource", () => {
         anything(),
 
         (payload) => {
-          const callback = jest.fn();
+          const callback = vi.fn();
           const hub = makeEventSource();
 
           hub.observable.subscribe(callback);
@@ -45,8 +46,8 @@ describe("EventSource", () => {
         anything(),
 
         (payload) => {
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
           const hub = makeEventSource();
 
           hub.observable.subscribe(callback1);
@@ -71,9 +72,9 @@ describe("EventSource", () => {
   });
 
   test("getting counts", () => {
-    const callback1 = jest.fn();
-    const callback2 = jest.fn();
-    const callback3 = jest.fn();
+    const callback1 = vi.fn();
+    const callback2 = vi.fn();
+    const callback3 = vi.fn();
     const hub = makeEventSource();
 
     // No callbacks registered yet
@@ -110,8 +111,8 @@ describe("EventSource", () => {
   });
 
   test("detecting if notifications were sent", () => {
-    const callback1 = jest.fn();
-    const callback2 = jest.fn();
+    const callback1 = vi.fn();
+    const callback2 = vi.fn();
     const hub = makeEventSource();
 
     expect(hub.notify("hi")).toBe(false); // No callbacks were invoked
@@ -134,7 +135,7 @@ describe("EventSource", () => {
         anything(),
 
         (payload) => {
-          const callback = jest.fn();
+          const callback = vi.fn();
           const hub = makeEventSource();
 
           const dereg1 = hub.observable.subscribeOnce(callback);
@@ -162,8 +163,8 @@ describe("EventSource", () => {
         anything(),
 
         (payload) => {
-          const callback1 = jest.fn();
-          const callback2 = jest.fn();
+          const callback1 = vi.fn();
+          const callback2 = vi.fn();
           const hub = makeEventSource();
 
           const dereg1 = hub.observable.subscribe(callback1);
@@ -242,8 +243,8 @@ describe("EventSource", () => {
 
 describe("BufferableEventSource", () => {
   test("detecting if notifications were sent", () => {
-    const callback1 = jest.fn();
-    const callback2 = jest.fn();
+    const callback1 = vi.fn();
+    const callback2 = vi.fn();
     const src = makeBufferableEventSource();
 
     expect(src.notify("hi")).toBe(false); // No callbacks were invoked
@@ -273,7 +274,7 @@ describe("BufferableEventSource", () => {
         anything(),
 
         (payload) => {
-          const callback = jest.fn();
+          const callback = vi.fn();
           const hub = makeBufferableEventSource();
 
           const unsub = hub.observable.subscribe(callback);

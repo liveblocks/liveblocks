@@ -29,9 +29,9 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "jest --silent --verbose --color=always",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "tsd -f test-d/index.test-d.ts",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
     "@liveblocks/core": "3.3.3",
@@ -49,8 +49,8 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
-    "msw": "^2.7.0"
+    "@liveblocks/vitest-config": "*",
+    "msw": "^2.10.4"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"

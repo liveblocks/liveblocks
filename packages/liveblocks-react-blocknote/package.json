@@ -38,8 +38,8 @@
     "lint": "eslint src/; stylelint src/styles/",
     "lint:package": "publint --strict && attw --pack",
     "start": "npm run dev",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
     "@liveblocks/client": "3.3.3",
@@ -70,12 +70,12 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/vitest-config": "*",
     "@liveblocks/rollup-config": "*",
     "@testing-library/jest-dom": "^5.16.5",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "msw": "^1.3.5",
+    "msw": "^2.10.4",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",

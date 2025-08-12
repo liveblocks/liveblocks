@@ -1,3 +1,5 @@
+import { expect } from "vitest";
+
 import { createApiClient } from "../api-client";
 import { createAuthManager } from "../auth-manager";
 import { DEFAULT_BASE_URL } from "../constants";
