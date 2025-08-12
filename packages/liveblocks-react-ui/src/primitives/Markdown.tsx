@@ -12,7 +12,6 @@ import {
   memo,
   type ReactNode,
   useMemo,
-  useSyncExternalStore,
 } from "react";
 
 import type { ComponentPropsWithSlot } from "../types";
@@ -432,10 +431,6 @@ const defaultComponents: MarkdownComponents = {
   },
 };
 
-const isMountedSubscribe = () => () => {};
-const isMountedGetSnapshot = () => true;
-const isMountedGetServerSnapshot = () => false;
-
 export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, partial, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
@@ -456,11 +451,6 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
         return tokens;
       }
     }, [content, partial]);
-    const isMounted = useSyncExternalStore(
-      isMountedSubscribe,
-      isMountedGetSnapshot,
-      isMountedGetServerSnapshot
-    );
 
     return (
       <Component {...props} ref={forwardedRef}>
@@ -471,7 +461,6 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
               key={index}
               components={components}
               partial={partial}
-              isMounted={isMounted}
             />
           );
         })}
@@ -484,20 +473,12 @@ const MemoizedMarkdownToken = memo(
   ({
     token,
     components,
-    isMounted,
   }: {
     token: Token;
     components?: Partial<MarkdownComponents>;
     partial?: boolean;
-    isMounted: boolean;
   }) => {
-    return (
-      <MarkdownToken
-        token={token}
-        components={components}
-        isMounted={isMounted}
-      />
-    );
+    return <MarkdownToken token={token} components={components} />;
   },
   (previousProps, nextProps) => {
     const previousToken = previousProps.token;
@@ -506,8 +487,7 @@ const MemoizedMarkdownToken = memo(
     // 1️⃣ Start with the fastest comparisons
     if (
       previousToken.type !== nextToken.type ||
-      previousProps.partial !== nextProps.partial ||
-      previousProps.isMounted !== nextProps.isMounted
+      previousProps.partial !== nextProps.partial
     ) {
       return false;
     }
@@ -534,11 +514,9 @@ const MemoizedMarkdownToken = memo(
 export function MarkdownToken({
   token,
   components,
-  isMounted,
 }: {
   token: Token;
   components: Partial<MarkdownComponents> | undefined;
-  isMounted: boolean;
 }) {
   // Marked.js supports generic tokens in their types but we
   // don't use them.
@@ -556,14 +534,10 @@ export function MarkdownToken({
     case "text": {
       if (markedToken.tokens !== undefined) {
         return (
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         );
       } else {
-        return parseHtmlEntities(markedToken.text, isMounted);
+        return parseHtmlEntities(markedToken.text);
       }
     }
 
@@ -576,11 +550,7 @@ export function MarkdownToken({
 
       return (
         <Paragraph>
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         </Paragraph>
       );
     }
@@ -590,11 +560,7 @@ export function MarkdownToken({
 
       return (
         <Heading level={clampHeadingLevel(markedToken.depth)}>
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         </Heading>
       );
     }
@@ -604,11 +570,7 @@ export function MarkdownToken({
 
       return (
         <Inline type="strong">
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         </Inline>
       );
     }
@@ -618,11 +580,7 @@ export function MarkdownToken({
 
       return (
         <Inline type="em">
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         </Inline>
       );
     }
@@ -630,11 +588,7 @@ export function MarkdownToken({
     case "codespan": {
       const Inline = components?.Inline ?? defaultComponents.Inline;
 
-      return (
-        <Inline type="code">
-          {parseHtmlEntities(markedToken.text, isMounted)}
-        </Inline>
-      );
+      return <Inline type="code">{parseHtmlEntities(markedToken.text)}</Inline>;
     }
 
     case "del": {
@@ -642,11 +596,7 @@ export function MarkdownToken({
 
       return (
         <Inline type="del">
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         </Inline>
       );
     }
@@ -656,11 +606,7 @@ export function MarkdownToken({
 
       if (href === null) {
         return (
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         );
       }
 
@@ -668,11 +614,7 @@ export function MarkdownToken({
 
       return (
         <Link href={href} title={markedToken.title ?? undefined}>
-          <MarkdownTokens
-            tokens={markedToken.tokens}
-            components={components}
-            isMounted={isMounted}
-          />
+          <MarkdownTokens tokens={markedToken.tokens} components={components} />
         </Link>
       );
     }
@@ -698,7 +640,6 @@ export function MarkdownToken({
           <MarkdownTokens
             tokens={markedToken.tokens}
             components={components}
-            isMounted={isMounted}
             normalizeToBlockTokens
           />
         </Blockquote>
@@ -724,7 +665,6 @@ export function MarkdownToken({
               <MarkdownTokens
                 tokens={tokens as Token[]}
                 components={components}
-                isMounted={isMounted}
                 // A "loose" list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
                 normalizeToBlockTokens={
                   item.tokens.length > 0 ? item.loose : false
@@ -756,11 +696,7 @@ export function MarkdownToken({
         (cell) => ({
           align: cell.align ?? undefined,
           children: (
-            <MarkdownTokens
-              tokens={cell.tokens}
-              components={components}
-              isMounted={isMounted}
-            />
+            <MarkdownTokens tokens={cell.tokens} components={components} />
           ),
         })
       );
@@ -770,11 +706,7 @@ export function MarkdownToken({
           row.map((cell) => ({
             align: cell.align ?? undefined,
             children: (
-              <MarkdownTokens
-                tokens={cell.tokens}
-                components={components}
-                isMounted={isMounted}
-              />
+              <MarkdownTokens tokens={cell.tokens} components={components} />
             ),
           }))
       );
@@ -818,11 +750,9 @@ function MarkdownTokens({
   tokens,
   components,
   normalizeToBlockTokens = false,
-  isMounted,
 }: {
   tokens: Token[];
   components: Partial<MarkdownComponents> | undefined;
-  isMounted: boolean;
   normalizeToBlockTokens?: boolean;
 }) {
   const markedTokens = tokens as MarkedToken[];
@@ -882,12 +812,7 @@ function MarkdownTokens({
   }
 
   return normalizedTokens.map((token, index) => (
-    <MarkdownToken
-      key={index}
-      token={token as Token}
-      components={components}
-      isMounted={isMounted}
-    />
+    <MarkdownToken key={index} token={token as Token} components={components} />
   ));
 }
 
@@ -1370,13 +1295,7 @@ function completePartialTokens(tokens: Token[]) {
   return tokens;
 }
 
-function parseHtmlEntities(input: string, isMounted: boolean) {
-  // If the Markdown component is not mounted yet or DOMParser is not available
-  // (it's a browser-only API), we don't parse HTML entities.
-  if (!isMounted || typeof DOMParser === "undefined") {
-    return input;
-  }
-
+function parseHtmlEntities(input: string) {
   const document = new DOMParser().parseFromString(
     `<!doctype html><body>${input}`,
     "text/html"
