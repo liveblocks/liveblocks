@@ -333,6 +333,7 @@ export type AiReceivingToolInvocationPart = {
   stage: "receiving";
   invocationId: string;
   name: string;
+  /** @internal */
   partialArgsText: string; // The raw, partial JSON text value
   partialArgs: JsonObject; // The interpreted, partial JSON value
 };
