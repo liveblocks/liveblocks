@@ -4,7 +4,7 @@
 
 - Fix race condition where AI tools were not always executing. This could happen
   when using `useSendAiMessage` first and then immediately opening the
-  `<AiChat />` afterwards. In those cases, the tool call would not get executed.
+  `<AiChat />` afterwards.
 
 ## v3.3.1
 
