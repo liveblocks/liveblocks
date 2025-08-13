@@ -564,7 +564,12 @@ function createStore_forChatMessages(
           }
         }
       } else {
-        myMessages.delete(message.id);
+        // Clean up the ownership administration
+        if (message.role === "assistant" && message.status === "generating") {
+          // ...unless it's still generating
+        } else {
+          myMessages.delete(message.id);
+        }
       }
     });
   }
