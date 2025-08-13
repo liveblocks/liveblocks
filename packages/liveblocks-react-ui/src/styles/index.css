@@ -2762,7 +2762,7 @@
 
 .lb-ai-chat-pending {
   user-select: none;
-  animation: lb-animation-shimmer-small 5s linear infinite;
+  animation: lb-animation-shimmer-small 3.5s linear infinite;
 }
 
 .lb-ai-chat-message-thinking,
