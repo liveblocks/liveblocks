@@ -332,7 +332,8 @@ export type AiReceivingToolInvocationPart = {
   stage: "receiving";
   invocationId: string;
   name: string;
-  partialArgs: JsonObject;
+  partialArgsText: string; // The raw, partial JSON text value
+  partialArgs: JsonObject; // The interpreted, partial JSON value
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
@@ -373,6 +374,22 @@ export type AiReasoningDelta = Relax<
   | { type: "reasoning-delta"; signature: string }
 >;
 
+export type AiToolInvocationStreamStart = {
+  type: "tool-stream";
+  invocationId: string;
+  name: string;
+};
+
+export type AiToolInvocationDelta = {
+  type: "tool-delta";
+  /**
+   * The textual delta to be appended to the last tool invocation stream's
+   * partial JSON buffer that will eventually become the full `args` value when
+   * JSON.parse()'ed.
+   */
+  delta: string;
+};
+
 export type AiReasoningPart = {
   type: "reasoning";
   text: string;
@@ -395,9 +412,13 @@ export type AiAssistantContentPart =
   | AiToolInvocationPart;
 
 export type AiAssistantDeltaUpdate =
-  | AiTextDelta // ...or a delta to append to the last sent part
-  | AiReasoningDelta // ...or a delta to append to the last sent part
-  | AiExecutingToolInvocationPart; // ...or a tool invocation chunk
+  | AiTextDelta // a delta appended to the last part (if text)
+  | AiReasoningDelta // a delta appended to the last part (if reasoning)
+  | AiExecutingToolInvocationPart // a tool invocation ready to be executed by the client
+
+  // Since protocol v5, if tool-call-streaming is enabled
+  | AiToolInvocationStreamStart // the start of a new tool-call stream
+  | AiToolInvocationDelta; // a partial/under-construction tool invocation (since protocol V5)
 
 export type AiUserMessage = {
   id: MessageId;
