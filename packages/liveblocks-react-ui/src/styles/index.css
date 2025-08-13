@@ -2833,7 +2833,7 @@
 
 .lb-ai-tool-header {
   display: flex;
-  gap: calc(0.3125 * var(--lb-spacing));
+  gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
   inline-size: 100%;
 }
@@ -2864,8 +2864,6 @@
 
 .lb-ai-tool-header-title {
   @include truncate;
-
-  margin-inline-end: calc(0.25 * var(--lb-spacing));
 }
 
 .lb-ai-tool-header-status {
