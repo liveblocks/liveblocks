@@ -8,6 +8,7 @@ import type { JSONSchema7 } from "json-schema";
 
 import { assertNever } from "../lib/assert";
 import type { Json, JsonObject } from "../lib/Json";
+import { parsePartialJsonObject } from "../lib/parsePartialJsonObject";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
@@ -505,6 +506,21 @@ export type AiKnowledgeSource = {
 
 // --------------------------------------------------------------------------------------------------
 
+/**
+ * Polyfill for Array.prototype.findLastIndex()
+ */
+function findLastIndex<T>(
+  arr: T[],
+  predicate: (value: T, index: number, obj: T[]) => boolean
+): number {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (predicate(arr[i], i, arr)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 export function patchContentWithDelta(
   content: AiAssistantContentPart[],
   delta: AiAssistantDeltaUpdate
@@ -535,9 +551,53 @@ export function patchContentWithDelta(
       }
       break;
 
-    case "tool-invocation":
-      content.push(delta);
+    case "tool-stream":
+      content.push({
+        type: "tool-invocation",
+        stage: "receiving",
+        invocationId: delta.invocationId,
+        name: delta.name,
+        partialArgsText: "",
+        get partialArgs(): JsonObject {
+          // TODO Possibly memoize? Investigate performance first.
+          return parsePartialJsonObject(this.partialArgsText);
+        },
+      });
       break;
+
+    case "tool-delta": {
+      // Take the last part, expect it to be a tool invocation in receiving
+      // stage. If not, ignore this delta. If it is, append the delta to the
+      // partialArgsText
+      if (
+        lastPart?.type === "tool-invocation" &&
+        lastPart.stage === "receiving"
+      ) {
+        lastPart.partialArgsText += delta.delta;
+      }
+      // Otherwise ignore the delta - it's out of order or unexpected
+      break;
+    }
+
+    case "tool-invocation": {
+      // Find and replace any existing tool invocation with the same invocationId
+      // Search from right to left (find the last matching one)
+      const existingIndex = findLastIndex(
+        content,
+        (part) =>
+          part.type === "tool-invocation" &&
+          part.invocationId === delta.invocationId
+      );
+
+      if (existingIndex > -1) {
+        // Replace the existing one
+        content[existingIndex] = delta;
+      } else {
+        // No existing one found, just append
+        content.push(delta);
+      }
+      break;
+    }
 
     default:
       return assertNever(delta, "Unhandled case");
