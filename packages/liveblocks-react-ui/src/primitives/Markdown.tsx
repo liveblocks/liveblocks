@@ -2,8 +2,8 @@ import { assertNever, isUrl, type Relax, sanitizeUrl } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import {
   Lexer,
-  type MarkedToken as DefaultMarkedToken,
-  type Token,
+  type MarkedToken,
+  type Token as DefaultToken,
   type Tokens,
 } from "marked";
 import {
@@ -36,9 +36,12 @@ const DEFAULT_PARTIAL_LINK_URL = "#";
 type CheckboxToken = {
   type: "checkbox";
   checked: boolean;
+  raw: string;
 };
 
-type MarkedToken = DefaultMarkedToken | CheckboxToken;
+type Token = MarkedToken | CheckboxToken;
+
+type AnyToken = Token | DefaultToken;
 
 type PotentiallyPartialToken = Relax<
   | Tokens.Text
@@ -496,9 +499,8 @@ const MemoizedMarkdownToken = memo(
     let nextContent = nextToken.raw;
 
     if ("text" in previousToken && "text" in nextToken) {
-      previousContent = (previousToken as Extract<Token, { text: string }>)
-        .text;
-      nextContent = (nextToken as Extract<Token, { text: string }>).text;
+      previousContent = previousToken.text;
+      nextContent = nextToken.text;
     }
 
     // 2️⃣ Then only compare the tokens' content lengths first
@@ -518,13 +520,9 @@ export function MarkdownToken({
   token: Token;
   components: Partial<MarkdownComponents> | undefined;
 }) {
-  // Marked.js supports generic tokens in their types but we
-  // don't use them.
-  const markedToken = token as unknown as MarkedToken;
-
-  switch (markedToken.type) {
+  switch (token.type) {
     case "escape": {
-      return markedToken.text;
+      return token.text;
     }
 
     case "space": {
@@ -532,12 +530,10 @@ export function MarkdownToken({
     }
 
     case "text": {
-      if (markedToken.tokens !== undefined) {
-        return (
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
-        );
+      if (token.tokens !== undefined) {
+        return <MarkdownTokens tokens={token.tokens} components={components} />;
       } else {
-        return parseHtmlEntities(markedToken.text);
+        return parseHtmlEntities(token.text);
       }
     }
 
@@ -550,7 +546,7 @@ export function MarkdownToken({
 
       return (
         <Paragraph>
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
+          <MarkdownTokens tokens={token.tokens} components={components} />
         </Paragraph>
       );
     }
@@ -559,8 +555,8 @@ export function MarkdownToken({
       const Heading = components?.Heading ?? defaultComponents.Heading;
 
       return (
-        <Heading level={clampHeadingLevel(markedToken.depth)}>
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
+        <Heading level={clampHeadingLevel(token.depth)}>
+          <MarkdownTokens tokens={token.tokens} components={components} />
         </Heading>
       );
     }
@@ -570,7 +566,7 @@ export function MarkdownToken({
 
       return (
         <Inline type="strong">
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
+          <MarkdownTokens tokens={token.tokens} components={components} />
         </Inline>
       );
     }
@@ -580,7 +576,7 @@ export function MarkdownToken({
 
       return (
         <Inline type="em">
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
+          <MarkdownTokens tokens={token.tokens} components={components} />
         </Inline>
       );
     }
@@ -588,7 +584,7 @@ export function MarkdownToken({
     case "codespan": {
       const Inline = components?.Inline ?? defaultComponents.Inline;
 
-      return <Inline type="code">{parseHtmlEntities(markedToken.text)}</Inline>;
+      return <Inline type="code">{parseHtmlEntities(token.text)}</Inline>;
     }
 
     case "del": {
@@ -596,40 +592,37 @@ export function MarkdownToken({
 
       return (
         <Inline type="del">
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
+          <MarkdownTokens tokens={token.tokens} components={components} />
         </Inline>
       );
     }
 
     case "link": {
-      const href = sanitizeUrl(markedToken.href);
+      const href = sanitizeUrl(token.href);
 
       if (href === null) {
-        return (
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
-        );
+        return <MarkdownTokens tokens={token.tokens} components={components} />;
       }
 
       const Link = components?.Link ?? defaultComponents.Link;
 
       return (
-        <Link href={href} title={markedToken.title ?? undefined}>
-          <MarkdownTokens tokens={markedToken.tokens} components={components} />
+        <Link href={href} title={token.title ?? undefined}>
+          <MarkdownTokens tokens={token.tokens} components={components} />
         </Link>
       );
     }
 
     case "code": {
       let language: string | undefined = undefined;
-      if (markedToken.lang !== undefined) {
+      if (token.lang !== undefined) {
         language =
-          markedToken.lang.match(TRAILING_NON_WHITESPACE_REGEX)?.[0] ??
-          undefined;
+          token.lang.match(TRAILING_NON_WHITESPACE_REGEX)?.[0] ?? undefined;
       }
 
       const CodeBlock = components?.CodeBlock ?? defaultComponents.CodeBlock;
 
-      return <CodeBlock language={language} code={markedToken.text || " "} />;
+      return <CodeBlock language={language} code={token.text || " "} />;
     }
 
     case "blockquote": {
@@ -638,7 +631,7 @@ export function MarkdownToken({
       return (
         <Blockquote>
           <MarkdownTokens
-            tokens={markedToken.tokens}
+            tokens={token.tokens}
             components={components}
             normalizeToBlockTokens
           />
@@ -648,35 +641,37 @@ export function MarkdownToken({
 
     case "list": {
       const List = components?.List ?? defaultComponents.List;
-      const items: MarkdownComponentsListItem[] = markedToken.items.map(
-        (item) => {
-          let tokens = item.tokens as MarkedToken[];
+      const items: MarkdownComponentsListItem[] = token.items.map((item) => {
+        let tokens = item.tokens;
 
-          if (item.task) {
-            tokens = [
-              { type: "checkbox", checked: Boolean(item.checked) },
-              ...tokens,
-            ];
-          }
-
-          return {
-            checked: item.task ? item.checked : undefined,
-            children: (
-              <MarkdownTokens
-                tokens={tokens as Token[]}
-                components={components}
-                // A "loose" list item in Markdown is one where the content is wrapped in a paragraph (or potentially other block) token
-                normalizeToBlockTokens={
-                  item.tokens.length > 0 ? item.loose : false
-                }
-              />
-            ),
-          };
+        if (item.task) {
+          tokens = [
+            {
+              type: "checkbox",
+              checked: Boolean(item.checked),
+              raw: `[${item.checked ? "x" : " "}]`,
+            },
+            ...tokens,
+          ];
         }
-      );
 
-      const props: MarkdownComponentsListProps = markedToken.ordered
-        ? { type: "ordered", items, start: markedToken.start || 1 }
+        return {
+          checked: item.task ? item.checked : undefined,
+          children: (
+            <MarkdownTokens
+              tokens={tokens}
+              components={components}
+              normalizeToBlockTokens={
+                // A non-loose list item doesn't need to be wrapped in block tokens.
+                item.tokens.length > 0 ? item.loose : false
+              }
+            />
+          ),
+        };
+      });
+
+      const props: MarkdownComponentsListProps = token.ordered
+        ? { type: "ordered", items, start: token.start || 1 }
         : { type: "unordered", items };
 
       return <List {...props} />;
@@ -685,14 +680,14 @@ export function MarkdownToken({
     case "checkbox": {
       return (
         <>
-          <input type="checkbox" disabled checked={markedToken.checked} />{" "}
+          <input type="checkbox" disabled checked={token.checked} />{" "}
         </>
       );
     }
 
     case "table": {
       const Table = components?.Table ?? defaultComponents.Table;
-      const headings: MarkdownComponentsTableCell[] = markedToken.header.map(
+      const headings: MarkdownComponentsTableCell[] = token.header.map(
         (cell) => ({
           align: cell.align ?? undefined,
           children: (
@@ -701,34 +696,29 @@ export function MarkdownToken({
         })
       );
 
-      const rows: MarkdownComponentsTableCell[][] = markedToken.rows.map(
-        (row) =>
-          row.map((cell) => ({
-            align: cell.align ?? undefined,
-            children: (
-              <MarkdownTokens tokens={cell.tokens} components={components} />
-            ),
-          }))
+      const rows: MarkdownComponentsTableCell[][] = token.rows.map((row) =>
+        row.map((cell) => ({
+          align: cell.align ?? undefined,
+          children: (
+            <MarkdownTokens tokens={cell.tokens} components={components} />
+          ),
+        }))
       );
 
       return <Table headings={headings} rows={rows} />;
     }
 
     case "image": {
-      const href = sanitizeUrl(markedToken.href);
+      const href = sanitizeUrl(token.href);
 
       if (href === null) {
-        return markedToken.text;
+        return token.text;
       }
 
       const Image = components?.Image ?? defaultComponents.Image;
 
       return (
-        <Image
-          src={href}
-          alt={markedToken.text}
-          title={markedToken.title ?? undefined}
-        />
+        <Image src={href} alt={token.text} title={token.title ?? undefined} />
       );
     }
 
@@ -751,30 +741,29 @@ function MarkdownTokens({
   components,
   normalizeToBlockTokens = false,
 }: {
-  tokens: Token[];
+  tokens: AnyToken[];
   components: Partial<MarkdownComponents> | undefined;
   normalizeToBlockTokens?: boolean;
 }) {
-  const markedTokens = tokens as MarkedToken[];
-  let normalizedTokens: MarkedToken[] = [];
+  assertTokens(tokens);
+
+  let normalizedTokens: Token[] = [];
 
   if (normalizeToBlockTokens) {
     let leadingCheckboxToken =
-      markedTokens[0]?.type === "checkbox" ? markedTokens[0] : null;
+      tokens[0]?.type === "checkbox" ? tokens[0] : null;
 
-    for (let i = 0; i < markedTokens.length; i++) {
-      const token = markedTokens[i]!;
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]!;
 
       switch (token.type) {
         case "text": {
-          // Wrap consecutive text tokens into a paragraph
           const paragraphTextTokens: Tokens.Text[] = [token];
-          while (
-            i + 1 < markedTokens.length &&
-            markedTokens[i + 1]!.type === "text"
-          ) {
+
+          // Wrap consecutive text tokens into a paragraph.
+          while (i + 1 < tokens.length && tokens[i + 1]!.type === "text") {
             i++;
-            paragraphTextTokens.push(markedTokens[i] as Tokens.Text);
+            paragraphTextTokens.push(tokens[i] as Tokens.Text);
           }
 
           const paragraphRaw = paragraphTextTokens
@@ -784,12 +773,12 @@ function MarkdownTokens({
             .map((text) => text.text)
             .join("");
 
-          // When wrapping "loose" task list items into paragraphs, we need to
+          // When wrapping loose task list items into paragraphs, we need to
           // move the checkbox into the first paragraph.
           normalizedTokens.push({
             type: "paragraph",
             tokens: leadingCheckboxToken
-              ? ([leadingCheckboxToken, ...paragraphTextTokens] as Token[])
+              ? [leadingCheckboxToken, ...paragraphTextTokens]
               : paragraphTextTokens,
             raw: paragraphRaw,
             text: paragraphText,
@@ -808,20 +797,29 @@ function MarkdownTokens({
       }
     }
   } else {
-    normalizedTokens = markedTokens;
+    normalizedTokens = tokens;
   }
 
   return normalizedTokens.map((token, index) => (
-    <MarkdownToken key={index} token={token as Token} components={components} />
+    <MarkdownToken key={index} token={token} components={components} />
   ));
 }
 
+/**
+ * Marked.js' `Token` union type includes a `Generic` token type which is
+ * too broad and makes narrowing difficult, we don't use generic/custom tokens
+ * so we can assert the `Generic` type away.
+ */
+function assertTokens(_: AnyToken): asserts _ is Token;
+function assertTokens(_: AnyToken[]): asserts _ is Token[];
+function assertTokens(_: AnyToken | AnyToken[]): asserts _ is Token | Token[] {}
+
 function getMarkedTokens(content: string) {
-  return new Lexer().lex(content);
+  return new Lexer().lex(content) as Token[];
 }
 
 function isBlockToken(
-  token: Token
+  token: Token | Tokens.Generic
 ): token is
   | Tokens.Paragraph
   | Tokens.Heading
@@ -839,12 +837,14 @@ function isBlockToken(
  * Find the last partial token that we could potentially complete.
  */
 function findPotentiallyPartialToken(
-  tokens: Token[],
+  tokens: AnyToken[],
   parentToken?: PotentiallyPartialToken
 ): PotentiallyPartialToken | undefined {
   if (tokens.length === 0) {
     return parentToken;
   }
+
+  assertTokens(tokens);
 
   const lastIndex = tokens.length - 1;
   let lastToken = tokens[lastIndex]!;
@@ -860,26 +860,28 @@ function findPotentiallyPartialToken(
   }
 
   if (lastToken.type === "list") {
-    const listToken = lastToken as Tokens.List;
+    const listToken = lastToken;
     const lastListItem = listToken.items[listToken.items.length - 1];
 
     if (!lastListItem) {
       return parentToken;
     }
 
+    const lastListItemTokens = lastListItem.tokens as Token[];
+
     // List items containing empty lines are handled differently,
     // instead of using the list item's tokens, we use the last one
     // if it's a text or block token.
     if (
-      lastListItem.tokens.some((token) => token.type === "space") &&
-      lastListItem.tokens.length > 0
+      lastListItemTokens.some((token) => token.type === "space") &&
+      lastListItemTokens.length > 0
     ) {
       const lastListItemLastToken =
-        lastListItem.tokens[lastListItem.tokens.length - 1];
+        lastListItemTokens[lastListItemTokens.length - 1];
 
       if (lastListItemLastToken) {
         if (lastListItemLastToken.type === "text") {
-          return lastListItemLastToken as Tokens.Text;
+          return lastListItemLastToken;
         }
 
         if (isBlockToken(lastListItemLastToken)) {
@@ -897,7 +899,7 @@ function findPotentiallyPartialToken(
   }
 
   if (lastToken.type === "table") {
-    const tableToken = lastToken as Tokens.Table;
+    const tableToken = lastToken;
     const lastTableRow = tableToken.rows[tableToken.rows.length - 1];
 
     if (!lastTableRow) {
@@ -1209,15 +1211,15 @@ function completePartialTokens(tokens: Token[]) {
     potentiallyPartialToken.type === "paragraph" ||
     potentiallyPartialToken.type === "text"
   ) {
-    const text = potentiallyPartialToken as Tokens.Paragraph | Tokens.Text;
-
     // Marked.js only creates tables when the table header and its
     // separator below are complete.
     //
     // We optimistically create tables sooner if the current text looks
     // like a partial table header.
-    if (PARTIAL_TABLE_HEADER_REGEX.test(text.raw)) {
-      const completedTableMarkdown = completePartialTableMarkdown(text.raw);
+    if (PARTIAL_TABLE_HEADER_REGEX.test(potentiallyPartialToken.raw)) {
+      const completedTableMarkdown = completePartialTableMarkdown(
+        potentiallyPartialToken.raw
+      );
 
       if (completedTableMarkdown) {
         // We optimistically complete the table as a string then re-lex it
@@ -1228,7 +1230,7 @@ function completePartialTokens(tokens: Token[]) {
 
         if (completedTable) {
           // We replace the paragraph/text by the optimistically completed table.
-          const table = text as unknown as Tokens.Table;
+          const table = potentiallyPartialToken as unknown as Tokens.Table;
 
           table.type = "table";
           table.header = completedTable.header;
@@ -1239,14 +1241,15 @@ function completePartialTokens(tokens: Token[]) {
         }
       } else {
         // Otherwise, we hide it for now.
-        text.text = "";
-        text.tokens = [];
+        potentiallyPartialToken.text = "";
+        potentiallyPartialToken.tokens = [];
       }
     }
   }
 
   if (potentiallyPartialToken.type === "list_item") {
-    const listItem = potentiallyPartialToken as Tokens.ListItem;
+    const listItem = potentiallyPartialToken;
+    const listItemTokens = listItem.tokens as Token[];
 
     // Marked.js only turns list items into tasks when the list marker
     // and the task checkbox are complete and followed by a space. (e.g. "- [x] ")
@@ -1255,10 +1258,10 @@ function completePartialTokens(tokens: Token[]) {
     // whenever a list item starts with "- [", "- [x", etc.
     if (
       !listItem.task &&
-      listItem.tokens.length === 1 &&
-      listItem.tokens[0]!.type === "text"
+      listItemTokens.length === 1 &&
+      listItemTokens[0]!.type === "text"
     ) {
-      const listItemText = listItem.tokens[0] as Tokens.Text;
+      const listItemText = listItemTokens[0];
       const checkboxMatch = listItemText.text.match(LIST_ITEM_CHECKBOX_REGEX);
 
       if (checkboxMatch) {
