@@ -1,7 +1,7 @@
 import { LiveList } from "@liveblocks/core";
 import { Liveblocks } from "@liveblocks/node";
 import { config } from "dotenv";
-import { describe, test, expect, onTestFinished } from "vitest";
+import { describe, test, expect, onTestFinished, vi } from "vitest";
 
 config();
 
@@ -35,27 +35,30 @@ describe("@liveblocks/node package e2e", () => {
   test("storage mutation should work in node environment", async () => {
     const roomId = await createRandomTestRoom();
 
-    // delete existing data in the room
-    await expect(
-      client.mutateStorage(roomId, ({ root }) => {
-        root.delete("z");
-      })
-    ).resolves.toBeUndefined();
+    const fn = vi.fn();
 
-    // add data to the room
-    await expect(
-      client.mutateStorage(roomId, ({ root }) => {
-        expect(root.toImmutable()).toEqual({});
-        // Mutate it!
-        root.set("z", new LiveList([1, 2, 3]));
-      })
-    ).resolves.toBeUndefined();
+    // Delete existing data in the room
+    await client.mutateStorage(roomId, ({ root }) => {
+      fn();
+      root.delete("z");
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+    fn.mockReset();
 
-    // add data to the room
-    await expect(
-      client.mutateStorage(roomId, ({ root }) => {
-        expect(root.toImmutable()).toEqual({ z: [1, 2, 3] });
-      })
-    ).resolves.toBeUndefined();
+    // Ensure the initial state is empty
+    expect(await client.getStorageDocument(roomId, "json")).toEqual({});
+
+    // Add data to the room
+    await client.mutateStorage(roomId, ({ root }) => {
+      fn();
+      root.set("z", new LiveList([1, 2, 3]));
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+    fn.mockReset();
+
+    // The GET endpoint should now also match this expected state
+    expect(await client.getStorageDocument(roomId, "json")).toEqual({
+      z: [1, 2, 3],
+    });
   });
 });
