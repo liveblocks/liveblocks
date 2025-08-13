@@ -62,4 +62,75 @@ describe("@liveblocks/node package e2e", () => {
       z: [1, 2, 3],
     });
   });
+
+  test("concurrent LiveList mutations should preserve all items", async () => {
+    const numberOfItemsToInsert = 75;
+    const roomId = await createRandomTestRoom();
+
+    // Initialize storage with empty list
+    await client.mutateStorage(roomId, ({ root }) => {
+      root.set("list", new LiveList<string>([]));
+    });
+
+    // Verify base state is sound
+    expect(await client.getStorageDocument(roomId, "json")).toEqual({
+      list: [],
+    });
+
+    const localTally = new Set<number>();
+
+    // Perform concurrent mutations
+    async function pushOne(index: number): Promise<void> {
+      await client.mutateStorage(roomId, ({ root }) => {
+        localTally.add(index);
+        const list = root.get("list") as LiveList<number>;
+        list.push(index);
+      });
+    }
+
+    const mutations = Array.from({ length: numberOfItemsToInsert }, (_, i) =>
+      pushOne(i)
+    );
+
+    // Wait until all mutations have run
+    const results = await Promise.allSettled(mutations);
+
+    // Verify results
+    const actualList = (await client.getStorageDocument(roomId, "json"))
+      .list as number[];
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.length - succeeded;
+
+    // All operations should succeed
+    expect(failed).toBe(0);
+
+    // All items should be present in the list
+    expect(localTally.size).toBe(numberOfItemsToInsert);
+
+    // Verify all items are unique and present
+    const actualUniqueItems = new Set(actualList);
+
+    // Check which indices are missing
+    const missingIndices: number[] = [];
+    for (let i = 0; i < numberOfItemsToInsert; i++) {
+      if (!actualUniqueItems.has(i)) {
+        missingIndices.push(i);
+      }
+    }
+
+    // Report missing indices if any
+    if (missingIndices.length > 0) {
+      console.log(`Missing indices: ${missingIndices.join(", ")}`);
+      console.log(
+        `Expected ${numberOfItemsToInsert} items, got ${actualList.length}`
+      );
+      console.log(`Actual items in list: ${actualList.join(", ")}`);
+    }
+
+    expect(actualList.length).toBe(numberOfItemsToInsert);
+
+    // All expected indices should be present
+    expect(missingIndices).toEqual([]);
+  });
 });
