@@ -81,7 +81,7 @@ jobs:
       - name: Run public NPM packaging lint checks
         run: npm run lint:package -- --filter ${{ matrix.pkg }}
 
-  e2e-tests:
+  e2e-next-sandbox:
     runs-on: ubuntu-latest
 
     strategy:
@@ -124,7 +124,82 @@ jobs:
           path: e2e/next-sandbox/playwright-report
           retention-days: 14
 
-  e2e-client-specs-tests:
+  e2e-next-ai-sandbox:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.4.1]
+
+    timeout-minutes: 60
+
+    env:
+      NEXT_PUBLIC_GITHUB_SHA: ${{ github.sha }}
+      NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: ${{ vars.E2E_TEST_LIVEBLOCKS_BASE_URL }}
+      LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright
+        run: npx playwright install chromium
+
+      - name: Run AI Playwright tests
+        run: npm run test -- --filter @liveblocks/next-ai-kitchen-sink
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ai-playwright-report
+          path: e2e/next-ai-kitchen-sink/playwright-report
+          retention-days: 14
+
+  e2e-node-sandbox:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.4.1]
+
+    timeout-minutes: 60
+
+    env:
+      LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
+      PUBLIC_LIVEBLOCKS_PUBLIC_KEY:
+        ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
+      NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY:
+        ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
+      NEXT_PUBLIC_LIVEBLOCKS_BASE_URL: ${{ vars.E2E_TEST_LIVEBLOCKS_BASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run node-sandbox tests
+        run: npm run test -- --filter node-sandbox
+
+  e2e-client-specs:
     runs-on: ubuntu-latest
 
     strategy:

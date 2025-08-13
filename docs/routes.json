@@ -654,6 +654,18 @@
           {
             "title": "Manage team members",
             "path": "/platform/account-management/manage-team-members"
+          },
+          {
+            "title": "SAML Single Sign-on",
+            "path": "/platform/account-management/saml"
+          },
+          {
+            "title": "Directory sync",
+            "path": "/platform/account-management/directory-sync"
+          },
+          {
+            "title": "Delete an account",
+            "path": "/platform/account-management/delete-an-account"
           }
         ]
       },
@@ -663,13 +675,7 @@
       },
       {
         "title": "Limits",
-        "path": "/platform/limits",
-        "routes": [
-          {
-            "title": "Fair Use Policy",
-            "path": "/platform/limits/fair-use-policy"
-          }
-        ]
+        "path": "/platform/limits"
       },
       {
         "title": "Upgrading",

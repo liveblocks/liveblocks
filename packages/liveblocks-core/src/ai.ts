@@ -1,3 +1,4 @@
+import { AiChatDB } from "./AiChatDB";
 import { getBearerTokenFromAuthValue } from "./api-client";
 import type { AuthValue } from "./auth-manager";
 import type { Delegates, Status } from "./connection";
@@ -13,7 +14,6 @@ import { nanoid } from "./lib/nanoid";
 import type { Resolve } from "./lib/Resolve";
 import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
-import { SortedList } from "./lib/SortedList";
 import { TreePool } from "./lib/TreePool";
 import type { Brand, DistributiveOmit } from "./lib/utils";
 import { raise, tryParseJson } from "./lib/utils";
@@ -30,6 +30,7 @@ import type {
   AiAssistantDeltaUpdate,
   AiChat,
   AiChatMessage,
+  AiChatsQuery,
   AiFailedAssistantMessage,
   AiGeneratingAssistantMessage,
   AiGenerationOptions,
@@ -43,9 +44,9 @@ import type {
   ClientAiMsg,
   CmdId,
   CreateChatOptions,
-  Cursor,
   DeleteChatResponse,
   DeleteMessageResponse,
+  GetChatsOptions,
   GetChatsResponse,
   GetMessageTreeResponse,
   GetOrCreateChatResponse,
@@ -84,10 +85,7 @@ export type AiToolTypePack<
   R: R;
 };
 
-export type AskUserMessageInChatOptions = Omit<
-  AiGenerationOptions,
-  "tools" | "knowledge"
->;
+export type AskUserMessageInChatOptions = Omit<AiGenerationOptions, "tools">;
 
 export type SetToolResultOptions = Omit<
   AiGenerationOptions,
@@ -770,28 +768,18 @@ function createStore_forChatMessages(
 }
 
 function createStore_forUserAiChats() {
-  // The foundation is the mutable signal, which is a simple Map (easy to make
-  // one-off updates to). But externally we expose a derived signal that
-  // produces a new lazy "object" copy of this map any time it changes. This
-  // plays better with React APIs.
-  const allChatsInclDeletedΣ = new MutableSignal(
-    SortedList.with<AiChat>((x, y) => y.createdAt < x.createdAt)
-  );
-  const nonDeletedChatsΣ = DerivedSignal.from(() =>
-    Array.from(allChatsInclDeletedΣ.get()).filter((c) => !c.deletedAt)
-  );
+  const chatsDB = new AiChatDB();
 
   function upsertMany(chats: AiChat[]) {
-    allChatsInclDeletedΣ.mutate((list) => {
+    batch(() => {
       for (const chat of chats) {
-        list.removeBy((c) => c.id === chat.id, 1);
-        list.add(chat);
+        chatsDB.upsert(chat);
       }
     });
   }
 
   function upsert(chat: AiChat) {
-    upsertMany([chat]);
+    chatsDB.upsert(chat);
   }
 
   /**
@@ -800,24 +788,21 @@ function createStore_forUserAiChats() {
    * we'll re-render those so they can display the chat is deleted.
    */
   function markDeleted(chatId: string) {
-    allChatsInclDeletedΣ.mutate((list) => {
-      const chat = list.find((c) => c.id === chatId);
-      if (!chat) return false;
-
-      upsert({ ...chat, deletedAt: now() });
-      return undefined;
-    });
+    chatsDB.markDeleted(chatId);
   }
 
   function getChatById(chatId: string) {
-    return Array.from(allChatsInclDeletedΣ.get()).find(
-      (chat) => chat.id === chatId
-    );
+    return chatsDB.getEvenIfDeleted(chatId);
+  }
+
+  function findMany(query: AiChatsQuery): AiChat[] {
+    return chatsDB.signal.get().findMany(query);
   }
 
   return {
-    chatsΣ: nonDeletedChatsΣ,
     getChatById,
+
+    findMany,
 
     // Mutations
     upsert,
@@ -838,7 +823,7 @@ export type Ai = {
   getStatus: () => Status;
 
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
-  getChats: (options?: { cursor?: Cursor }) => Promise<GetChatsResponse>;
+  getChats: (options?: GetChatsOptions) => Promise<GetChatsResponse>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getOrCreateChat: (
     /** A unique identifier for the chat. */
@@ -881,7 +866,6 @@ export type Ai = {
   ) => Promise<void>;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   signals: {
-    chatsΣ: DerivedSignal<AiChat[]>;
     getChatMessagesForBranchΣ(
       chatId: string,
       branch?: MessageId
@@ -893,6 +877,8 @@ export type Ai = {
   };
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   getChatById: (chatId: string) => AiChat | undefined;
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
+  queryChats: (query: AiChatsQuery) => AiChat[];
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
@@ -1195,10 +1181,11 @@ export function createAi(config: AiConfig): Ai {
     );
   }
 
-  function getChats(options: { cursor?: Cursor } = {}) {
+  function getChats(options: GetChatsOptions = {}) {
     return sendClientMsgWithResponse<GetChatsResponse>({
       cmd: "get-chats",
       cursor: options.cursor,
+      query: options.query,
     });
   }
 
@@ -1301,7 +1288,9 @@ export function createAi(config: AiConfig): Ai {
         targetMessageId: MessageId,
         options?: AskUserMessageInChatOptions
       ): Promise<AskInChatResponse> => {
-        const knowledge = context.knowledge.get();
+        const globalKnowledge = context.knowledge.get();
+        const requestKnowledge = options?.knowledge || [];
+        const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
@@ -1314,9 +1303,9 @@ export function createAi(config: AiConfig): Ai {
             stream: options?.stream,
             timeout: options?.timeout,
 
-            // Knowledge and tools aren't coming from the options, but retrieved
-            // from the global context
-            knowledge: knowledge.length > 0 ? knowledge : undefined,
+            // Combine global knowledge with request-specific knowledge
+            knowledge:
+              combinedKnowledge.length > 0 ? combinedKnowledge : undefined,
             tools: tools.length > 0 ? tools : undefined,
           },
         });
@@ -1332,13 +1321,13 @@ export function createAi(config: AiConfig): Ai {
       getStatus: () => managedSocket.getStatus(),
 
       signals: {
-        chatsΣ: context.chatsStore.chatsΣ,
         getChatMessagesForBranchΣ:
           context.messagesStore.getChatMessagesForBranchΣ,
         getToolΣ: context.toolsStore.getToolΣ,
       },
 
       getChatById: context.chatsStore.getChatById,
+      queryChats: context.chatsStore.findMany,
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,

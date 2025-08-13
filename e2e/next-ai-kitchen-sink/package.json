@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3008",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start --port 3008",
+    "lint": "next lint",
+    "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/",
+    "test": "playwright test --max-failures=1",
+    "test:ui": "playwright test --ui --workers=1 --max-failures=1"
   },
   "dependencies": {
     "@liveblocks/client": "*",
@@ -20,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.49.1",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",

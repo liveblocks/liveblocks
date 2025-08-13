@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import { isPlainObject } from "../guards";
 import {
@@ -25,19 +26,19 @@ const objectWithoutProto = () =>
   });
 
 describe("TypeScript wrapper utils", () => {
-  it("keys (alias of Object.keys)", () => {
+  test("keys (alias of Object.keys)", () => {
     expect(keys({})).toEqual([]);
     expect(keys({ a: 1 })).toEqual(["a"]);
     expect(keys({ [1]: 1, [2]: 2 })).toEqual(["1", "2"]);
   });
 
-  it("values (alias of Object.values)", () => {
+  test("values (alias of Object.values)", () => {
     expect(values({})).toEqual([]);
     expect(values({ a: 1 })).toEqual([1]);
     expect(values({ [1]: 1, [2]: 2 })).toEqual([1, 2]);
   });
 
-  it("entries (alias of Object.entries)", () => {
+  test("entries (alias of Object.entries)", () => {
     expect(entries({})).toEqual([]);
     expect(entries({ a: 1 })).toEqual([["a", 1]]);
     expect(entries({ [1]: 1, [2]: 2 })).toEqual([
@@ -48,11 +49,11 @@ describe("TypeScript wrapper utils", () => {
 });
 
 describe("compact", () => {
-  it("compact w/ empty list", () => {
+  test("compact w/ empty list", () => {
     expect(compact([])).toEqual([]);
   });
 
-  it("compact removes nulls and undefined values", () => {
+  test("compact removes nulls and undefined values", () => {
     expect(compact(["a", "b", "c"])).toEqual(["a", "b", "c"]);
     expect(compact(["x", undefined])).toEqual(["x"]);
     expect(compact([0, null, undefined, NaN, Infinity])).toEqual([
@@ -64,7 +65,7 @@ describe("compact", () => {
 });
 
 describe("compactObject", () => {
-  it("compactObject w/ empty object", () => {
+  test("compactObject w/ empty object", () => {
     expect(compactObject({})).toStrictEqual({});
     expect(
       compactObject({
@@ -92,11 +93,11 @@ describe("compactObject", () => {
 });
 
 describe("mapValues", () => {
-  it("empty object", () => {
+  test("empty object", () => {
     expect(mapValues({}, (x) => x)).toStrictEqual({});
   });
 
-  it("maps values, not keys", () => {
+  test("maps values, not keys", () => {
     expect(mapValues({ a: 13, b: 0, c: -7 }, (n) => n * 2)).toStrictEqual({
       a: 26,
       b: 0,
@@ -104,7 +105,7 @@ describe("mapValues", () => {
     });
   });
 
-  it("keys don't change", () => {
+  test("keys don't change", () => {
     fc.assert(
       fc.property(
         objectWithoutProto(),
@@ -117,7 +118,7 @@ describe("mapValues", () => {
     );
   });
 
-  it("will skip copying dangerous keys", () => {
+  test("will skip copying dangerous keys", () => {
     expect(mapValues({ __proto__: null }, (x) => x)).toStrictEqual({});
     expect(mapValues({ ["__proto__"]: null }, (x) => x)).toStrictEqual({});
     expect(mapValues({ __proto__: {} }, (x) => x)).toStrictEqual({});
@@ -130,7 +131,7 @@ describe("mapValues", () => {
     });
   });
 
-  it("using keys in mapper", () => {
+  test("using keys in mapper", () => {
     expect(
       mapValues({ a: 5, b: 0, c: 3 }, (n, k) => k.repeat(n))
     ).toStrictEqual({ a: "aaaaa", b: "", c: "ccc" });
@@ -153,7 +154,7 @@ describe("mapValues", () => {
 });
 
 describe("isPlainObject", () => {
-  it("isPlainObject", () => {
+  test("isPlainObject", () => {
     expect(isPlainObject(undefined)).toBe(false);
     expect(isPlainObject(null)).toBe(false);
     expect(isPlainObject(false)).toBe(false);
@@ -176,7 +177,7 @@ describe("isPlainObject", () => {
 });
 
 describe("tryParseJson", () => {
-  it("works like JSON.parse() on legal JSON inputs", () => {
+  test("works like JSON.parse() on legal JSON inputs", () => {
     expect(tryParseJson("true")).toEqual(true);
     expect(tryParseJson("false")).toEqual(false);
     expect(tryParseJson("null")).toEqual(null);
@@ -184,7 +185,7 @@ describe("tryParseJson", () => {
     expect(tryParseJson('["hi", {"a": 1}]')).toEqual(["hi", { a: 1 }]);
   });
 
-  it("returns undefined for invalid JSON inputs", () => {
+  test("returns undefined for invalid JSON inputs", () => {
     expect(tryParseJson("i am not a JSON value")).toBeUndefined();
     expect(tryParseJson("'single quotes'")).toBeUndefined();
     expect(tryParseJson("[[]")).toBeUndefined();

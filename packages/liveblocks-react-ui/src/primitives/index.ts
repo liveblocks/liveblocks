@@ -1,4 +1,5 @@
 export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
+export type { AiComposerSubmitMessage } from "./AiComposer/types";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,

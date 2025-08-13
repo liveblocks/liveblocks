@@ -1,0 +1,111 @@
+---
+meta:
+  title: "SAML Single Sign-on"
+  parentTitle: "Platform"
+  description: "Learn how to set up SSO on your Liveblocks account."
+---
+
+<Banner>
+  This feature is available as an add-on to Enterprise customers. Reach out to
+  [sales@liveblocks.io](mailto:sales@liveblocks.io) to enable it on your
+  account.
+</Banner>
+
+SSO enables teams to enforce authentication via identity providers like Okta,
+Azure AD, Google Workspace, or OneLogin using SAML. This simplifies account
+management, and helps organizations meet internal security requirements. Paired
+with Directory Sync, teams can manage organization membership directly from
+their identity provider, reducing manual overhead and aligning with standard
+enterprise access control practices.
+
+Once enabled, all team members will be able to log in to the dashboard using
+your selected identity provider. You’ll still need to invite users to your team
+for them to have access. If you would like all users signing up with SSO to be
+automatically added to your team, please contact us.
+
+You can also use
+[Directory Sync](/docs/platform/account-management/directory-sync) to
+automatically assign users to your team with a specific role.
+
+<Figure>
+  <Image
+    src="/assets/account-management/team-security-settings.png"
+    alt="Liveblocks team security settings"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Configuring SSO
+
+1. To configure SSO for your team, you must be an owner of the team (see
+   [how to manage team members](/docs/platform/account-management/manage-team-members)).
+2. From your dashboard, ensure your team is selected in the scope selector.
+3. Navigate to the “Settings” tab and select “Security & Privacy”.
+4. Navigate to the “SSO” section.
+5. Click “Configure” and follow the walkthrough to configure SSO for your team
+   with the identity provider of your choice.
+
+<Figure>
+  <Image
+    src="/assets/account-management/sso-setup.png"
+    alt="Liveblocks team security settings"
+    width={768}
+    height={406}
+  />
+</Figure>
+
+### Enforcing SSO
+
+For additional security, SSO can be enforced for a team so that all team members
+cannot access any team information unless their current session is authenticated
+with SSO. If you want to activate this setting, please contact us at
+[support@liveblocks.io](mailto:support@liveblocks.io).
+
+### Automatic provisioning
+
+By default, you still need to manually invite users to your team for them to
+have access to it. If you would like all users signing up with SSO to be
+automatically added to your team, please contact us at
+[support@liveblocks.io](mailto:support@liveblocks.io).
+
+### Authenticating with SSO
+
+Once you have configured SSO, your team members can use it to log in or sign up
+to Liveblocks. They only have to enter their email, and they will be redirected
+to the third-party authentication provider that you configured.
+
+### Supported providers
+
+Liveblocks supports the following third-party identity providers:
+
+- Okta
+- Entra ID (Azure AD)
+- Google SAML
+- ADP OpenID Connect
+- Auth0 SAML
+- CAS SAML
+- ClassLink SAML
+- Cloudflare SAML
+- CyberArk SAML
+- Duo SAML
+- Entra ID OpenID Connect
+- Google OpenID Connect
+- JumpCloud SAML
+- Keycloak SAML
+- LastPass SAML
+- Microsoft AD FS
+- NetIQ SAML
+- Okta OpenID Connect
+- OneLogin
+- Oracle
+- PingFederate
+- PingOne
+- Rippling
+- Salesforce
+- SimpleSAMLphp SAML
+- VMware Workspace One
+
+If your identity provider is not listed or if you'd like to use an OIDC (OpenID
+Connect) SSO provider, please reach out to us at
+[support@liveblocks.io](mailto:support@liveblocks.io).

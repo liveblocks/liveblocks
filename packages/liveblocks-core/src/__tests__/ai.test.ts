@@ -1,16 +1,18 @@
+import { describe, expect, test } from "vitest";
+
 import { KnowledgeStack } from "../ai";
 
 describe("KnowledgeStack", () => {
-  it("should be empty by default", () => {
+  test("should be empty by default", () => {
     expect(new KnowledgeStack().get()).toEqual([]);
   });
 
-  it("should be ref equal when called multiple times", () => {
+  test("should be ref equal when called multiple times", () => {
     const stack = new KnowledgeStack();
     expect(stack.get()).toBe(stack.get());
   });
 
-  it("multiple knowledge registrations", () => {
+  test("multiple knowledge registrations", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     stack.updateKnowledge(key1, "abc", {
@@ -27,7 +29,7 @@ describe("KnowledgeStack", () => {
     ]);
   });
 
-  it("overriding knowledge", () => {
+  test("overriding knowledge", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     const key2 = stack.registerLayer("«r2»");
@@ -45,7 +47,7 @@ describe("KnowledgeStack", () => {
     ]);
   });
 
-  it("explicitly removing knowledge", () => {
+  test("explicitly removing knowledge", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     const key2 = stack.registerLayer("«r2»");
@@ -62,7 +64,7 @@ describe("KnowledgeStack", () => {
     ]);
   });
 
-  it("registering exact same knowledge twice just overrides it", () => {
+  test("registering exact same knowledge twice just overrides it", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     stack.updateKnowledge(key1, "abc", {
@@ -87,7 +89,7 @@ describe("KnowledgeStack", () => {
     expect(stack.get()).toEqual([]);
   });
 
-  it("deregistering layer 1", () => {
+  test("deregistering layer 1", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     const key2 = stack.registerLayer("«r2»");
@@ -106,7 +108,7 @@ describe("KnowledgeStack", () => {
     ]);
   });
 
-  it("deregistering layer 2", () => {
+  test("deregistering layer 2", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     const key2 = stack.registerLayer("«r2»");
@@ -125,7 +127,7 @@ describe("KnowledgeStack", () => {
     ]);
   });
 
-  it("deregistering both layers", () => {
+  test("deregistering both layers", () => {
     const stack = new KnowledgeStack();
     const key1 = stack.registerLayer("«r1»");
     const key2 = stack.registerLayer("«r2»");

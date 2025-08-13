@@ -77,7 +77,7 @@ publish_to_npm () {
     fi
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    npm publish --tag private
+    npm publish --tag privaterollout
 }
 
 # Turns "packages/liveblocks-core" => "@liveblocks/core"
@@ -95,9 +95,9 @@ for pkgdir in "$@"; do
     ( cd "$pkgdir" && publish_to_npm "$pkgname" )
 done
 
-# By now, all packages should be published under a "private" tag.
+# By now, all packages should be published under a "privaterollout" tag.
 # We'll verify that now, and if indeed correct, we'll "assign" the intended tag
-# instead. Afterwards, we'll remove the "private" tags again.
+# instead. Afterwards, we'll remove the "privaterollout" tags again.
 echo ""
 echo "Assigning definitive NPM tags"
 for pkgdir in "$@"; do
@@ -114,10 +114,10 @@ for pkgdir in "$@"; do
     done
 done
 
-# Clean up those temporary "private" tags
+# Clean up those temporary "privaterollout" tags
 for pkgdir in "$@"; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    npm dist-tag rm "$pkgname@$VERSION" private || echo "Continuing despite error..."
+    npm dist-tag rm "$pkgname@$VERSION" privaterollout || echo "Continuing despite error..."
 done
 
 echo ""
