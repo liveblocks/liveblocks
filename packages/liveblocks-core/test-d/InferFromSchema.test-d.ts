@@ -476,6 +476,7 @@ function infer<const T extends JSONSchema7>(x: T): InferFromSchema<T> {
       stage: "receiving",
       name: "callMyTool",
       invocationId: "tc_abc123",
+      partialArgsText: "{}",
       partialArgs: {},
       respond: (payload) => {
         expectType<ToolResultResponse | undefined>(payload);
