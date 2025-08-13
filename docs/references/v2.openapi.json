@@ -3773,6 +3773,29 @@
         "summary": "Get AI copilots",
         "description": "Get a list of AI copilots in your project.",
         "tags": ["AI"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of AI copilots to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success. Returns the list of AI copilots.",
@@ -3785,6 +3808,14 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/AiCopilot"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -4030,6 +4061,27 @@
               "type": "string"
             },
             "description": "The ID of the AI copilot."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of AI copilots to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4040,6 +4092,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
                     "data": {
                       "type": "array",
                       "items": {
@@ -4353,6 +4413,27 @@
               "type": "string"
             },
             "description": "The ID of the knowledge source."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of AI copilots to return.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4363,6 +4444,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "nextCursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
                     "data": {
                       "type": "array",
                       "items": {
@@ -5325,9 +5414,18 @@
       "AiCopilot": {
         "type": "object",
         "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["copilot"],
+            "description": "The type of the AI copilot."
+          },
           "id": {
             "type": "string",
             "description": "The unique identifier for the AI copilot."
+          },
+          "projectId": {
+            "type": "string",
+            "description": "The project identifier that the AI copilot belongs to."
           },
           "name": {
             "type": "string",
@@ -5337,68 +5435,279 @@
             "type": "string",
             "description": "A description of the AI copilot."
           },
-          "instructions": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The creation timestamp."
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last update timestamp."
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last time the AI copilot was used."
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "google", "openai-compatible"],
+            "description": "The AI provider used by the copilot."
+          },
+          "compatibleProviderName": {
+            "type": "string",
+            "description": "For compatible providers like openai-compatible, this is the name of the provider (e.g. nim) as required by the Vercel AI SDK."
+          },
+          "providerBaseUrl": {
+            "type": "string",
+            "description": "The base URL for the AI provider."
+          },
+          "providerAPIKey": {
+            "type": "string",
+            "description": "The API key for the AI provider."
+          },
+          "providerModel": {
+            "type": "string",
+            "description": "The model identifier used by the AI provider."
+          },
+          "providerOptions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "Additional provider-specific options."
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "maxTokens": {
+                "type": "number",
+                "description": "Maximum number of tokens to generate."
+              },
+              "temperature": {
+                "type": "number",
+                "description": "Controls randomness in the output."
+              },
+              "topP": {
+                "type": "number",
+                "description": "Controls diversity via nucleus sampling."
+              },
+              "topK": {
+                "type": "number",
+                "description": "Controls diversity by limiting the number of tokens to consider."
+              },
+              "frequencyPenalty": {
+                "type": "number",
+                "description": "Penalizes tokens that appear frequently."
+              },
+              "presencePenalty": {
+                "type": "number",
+                "description": "Penalizes tokens that have already appeared."
+              },
+              "stopSequences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Sequences where the model will stop generating."
+              },
+              "seed": {
+                "type": "number",
+                "description": "Random seed for deterministic outputs."
+              },
+              "maxRetries": {
+                "type": "number",
+                "description": "Maximum number of retry attempts."
+              }
+            },
+            "description": "AI copilot generation settings."
+          },
+          "systemPrompt": {
             "type": "string",
             "description": "Instructions for the AI copilot behavior."
           },
-          "model": {
+          "knowledgePrompt": {
             "type": "string",
-            "description": "The AI model used by the copilot."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The creation timestamp."
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The last update timestamp."
+            "description": "Knowledge-specific prompt for the AI copilot."
           }
         },
-        "required": ["id", "name"]
+        "required": [
+          "type",
+          "id",
+          "projectId",
+          "name",
+          "createdAt",
+          "updatedAt",
+          "provider",
+          "providerAPIKey",
+          "providerModel",
+          "systemPrompt"
+        ]
       },
       "KnowledgeSource": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The unique identifier for the knowledge source."
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ai-knowledge-file-source"],
+                "description": "The type of knowledge source."
+              },
+              "id": {
+                "type": "string",
+                "description": "The unique identifier for the knowledge source."
+              },
+              "projectId": {
+                "type": "string",
+                "description": "The project identifier."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The creation timestamp."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The last update timestamp."
+              },
+              "deletedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The deletion timestamp.",
+                "nullable": true
+              },
+              "lastIndexedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The last indexing timestamp."
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ingesting", "ready", "error"],
+                "description": "The processing status of the knowledge source."
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message if status is error.",
+                "nullable": true
+              },
+              "file": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The filename."
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "description": "The MIME type of the file."
+                  },
+                  "size": {
+                    "type": "number",
+                    "description": "The file size in bytes."
+                  },
+                  "textLength": {
+                    "type": "number",
+                    "description": "The length of extracted text."
+                  },
+                  "tokens": {
+                    "type": "number",
+                    "description": "The number of tokens."
+                  }
+                },
+                "required": ["name", "mimeType", "size", "textLength", "tokens"]
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "projectId",
+              "createdAt",
+              "updatedAt",
+              "lastIndexedAt",
+              "status",
+              "file"
+            ]
           },
-          "type": {
-            "type": "string",
-            "enum": ["file", "web"],
-            "description": "The type of knowledge source."
-          },
-          "name": {
-            "type": "string",
-            "description": "The name of the knowledge source."
-          },
-          "status": {
-            "type": "string",
-            "enum": ["pending", "processing", "completed", "failed"],
-            "description": "The processing status of the knowledge source."
-          },
-          "url": {
-            "type": "string",
-            "description": "The URL of the knowledge source (for web sources)."
-          },
-          "filename": {
-            "type": "string",
-            "description": "The filename of the knowledge source (for file sources)."
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The creation timestamp."
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The last update timestamp."
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["ai-knowledge-web-source"],
+                "description": "The type of knowledge source."
+              },
+              "id": {
+                "type": "string",
+                "description": "The unique identifier for the knowledge source."
+              },
+              "projectId": {
+                "type": "string",
+                "description": "The project identifier."
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The creation timestamp."
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The last update timestamp."
+              },
+              "deletedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The deletion timestamp.",
+                "nullable": true
+              },
+              "lastIndexedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The last indexing timestamp."
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ingesting", "ready", "error"],
+                "description": "The processing status of the knowledge source."
+              },
+              "errorMessage": {
+                "type": "string",
+                "description": "Error message if status is error.",
+                "nullable": true
+              },
+              "link": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "The URL of the web source."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["crawl", "sitemap", "individual_link"],
+                    "description": "The type of web link."
+                  }
+                },
+                "required": ["url", "type"]
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "projectId",
+              "createdAt",
+              "updatedAt",
+              "lastIndexedAt",
+              "status",
+              "link"
+            ]
           }
-        },
-        "required": ["id", "type", "name", "status"]
+        ]
       }
     },
     "securitySchemes": {
