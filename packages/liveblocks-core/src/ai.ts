@@ -1293,6 +1293,7 @@ export function createAi(config: AiConfig): Ai {
         const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
+        messagesStore.markMine(targetMessageId);
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -1309,7 +1310,6 @@ export function createAi(config: AiConfig): Ai {
             tools: tools.length > 0 ? tools : undefined,
           },
         });
-        messagesStore.markMine(resp.targetMessage.id);
         return resp;
       },
 
