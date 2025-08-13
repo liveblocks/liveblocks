@@ -49,6 +49,11 @@ export interface AiToolProps
   children?: ReactNode;
 
   /**
+   * The visual appearance of the tool.
+   */
+  variant?: "outline" | "minimal";
+
+  /**
    * Whether the content is currently collapsed.
    * It is not a traditional controlled value, as in if you set it to `true` it would only stay expanded.
    * Instead, it is "semi-controlled", meaning that setting it to `true` will expand it, but it
@@ -328,6 +333,7 @@ export const AiTool = Object.assign(
         collapsible,
         collapsed,
         onCollapsedChange,
+        variant = "outline",
         className,
         ...props
       },
@@ -369,7 +375,11 @@ export const AiTool = Object.assign(
       return (
         <Collapsible.Root
           ref={forwardedRef}
-          className={cn("lb-collapsible lb-ai-tool", className)}
+          className={cn(
+            "lb-collapsible lb-ai-tool",
+            `lb-ai-tool:variant-${variant}`,
+            className
+          )}
           {...props}
           // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
           open={hasContent ? !semiControlledCollapsed : false}
@@ -378,7 +388,17 @@ export const AiTool = Object.assign(
           data-result={result?.type}
           data-stage={stage}
         >
-          <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
+          <Collapsible.Trigger
+            className={cn(
+              "lb-collapsible-trigger lb-ai-tool-header",
+              // The minimal variant uses a shimmer instead of a spinner.
+              // (Similar to the spinner, it's only shown if the tool has an `execute` method)
+              variant === "minimal" &&
+                stage !== "executed" &&
+                execute !== undefined &&
+                "lb-ai-chat-pending"
+            )}
+          >
             {icon ? (
               <div className="lb-ai-tool-header-icon-container">{icon}</div>
             ) : null}
@@ -388,20 +408,22 @@ export const AiTool = Object.assign(
                 <ChevronRightIcon />
               </span>
             ) : null}
-            <div className="lb-ai-tool-header-status">
-              {stage === "executed" ? (
-                result.type === "success" ? (
-                  <CheckCircleFillIcon />
-                ) : result.type === "error" ? (
-                  <CrossCircleFillIcon />
-                ) : result.type === "cancelled" ? (
-                  <MinusCircleIcon />
-                ) : null
-              ) : execute !== undefined ? (
-                // Only show a spinner if the tool has an `execute` method.
-                <SpinnerIcon />
-              ) : null}
-            </div>
+            {variant !== "minimal" ? (
+              <div className="lb-ai-tool-header-status">
+                {stage === "executed" ? (
+                  result.type === "success" ? (
+                    <CheckCircleFillIcon />
+                  ) : result.type === "error" ? (
+                    <CrossCircleFillIcon />
+                  ) : result.type === "cancelled" ? (
+                    <MinusCircleIcon />
+                  ) : null
+                ) : execute !== undefined ? (
+                  // Only show a spinner if the tool has an `execute` method.
+                  <SpinnerIcon />
+                ) : null}
+              </div>
+            ) : null}
           </Collapsible.Trigger>
 
           {hasContent ? (
