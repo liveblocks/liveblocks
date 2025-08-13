@@ -2934,6 +2934,12 @@
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
   }
 
+  :where(.lb-ai-tool-header-title) {
+    &:where(:not(:first-child)) {
+      margin-inline-start: calc(-0.0625 * var(--lb-spacing));
+    }
+  }
+
   :where(.lb-ai-tool-content:not(:empty)) {
     padding-block-start: calc(0.5 * var(--lb-spacing));
   }
