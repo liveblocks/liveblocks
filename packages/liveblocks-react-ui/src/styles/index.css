@@ -306,6 +306,10 @@
     transition-property: background, color, opacity, box-shadow;
   }
 
+  &:where([data-variant="ghost"]) {
+    background: transparent;
+  }
+
   &:where(:has(.lb-button-label)) {
     gap: calc(0.175 * var(--lb-spacing));
     padding-inline: calc(0.55 * var(--lb-spacing));
@@ -1591,6 +1595,30 @@
   }
 }
 
+.lb-thread-show-more {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  justify-content: center;
+  align-items: center;
+
+  &::before,
+  &::after {
+    content: "";
+    z-index: 0;
+    flex: 1 0 auto;
+    min-inline-size: var(--lb-spacing);
+    block-size: 0;
+    border-block-start: 1px dashed var(--lb-foreground-subtle);
+    transition-property: border;
+  }
+}
+
+:where(.lb-thread-show-more + .lb-thread-new-indicator) {
+  margin-block-start: calc(0.5 * var(--lb-spacing));
+}
+
 .lb-thread-new-indicator {
   position: relative;
   z-index: 1;
@@ -2408,18 +2436,16 @@
 }
 
 /*************************************
- *          Chat Composer            *
+ *            AI Composer            *
  *************************************/
 
-.lb-ai-chat-composer {
+.lb-ai-composer {
   position: relative;
   inline-size: 100%;
   color: var(--lb-foreground);
 }
 
-.lb-ai-chat-composer-form:where(
-    :has(.lb-ai-chat-composer-editor:not(:focus-visible))
-  ) {
+.lb-ai-composer-form:where(:has(.lb-ai-composer-editor:not(:focus-visible))) {
   :where(.lb-button[data-variant="primary"]) {
     --lb-button-background: var(--lb-foreground-subtle);
 
@@ -2433,7 +2459,7 @@
   }
 }
 
-.lb-ai-chat-composer-editor {
+.lb-ai-composer-editor {
   max-block-size: 15rem;
   padding: var(--lb-spacing) var(--lb-spacing) 0;
   color: var(--lb-foreground-secondary);
@@ -2476,7 +2502,7 @@
   }
 }
 
-.lb-ai-chat-composer-footer {
+.lb-ai-composer-footer {
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
@@ -2484,14 +2510,14 @@
   padding: var(--lb-spacing);
 }
 
-.lb-ai-chat-composer-actions,
-.lb-ai-chat-composer-editor-actions {
+.lb-ai-composer-actions,
+.lb-ai-composer-editor-actions {
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   align-items: center;
 }
 
-.lb-ai-chat-composer-editor-actions {
+.lb-ai-composer-editor-actions {
   margin-inline-end: auto;
 }
 

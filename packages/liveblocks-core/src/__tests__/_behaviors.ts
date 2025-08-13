@@ -8,6 +8,8 @@
  *   const { wss, delegates } = defineBehavior(ALWAYS_AUTH_AS(2), SOCKET_AUTO_OPEN);
  */
 
+import { vi } from "vitest";
+
 import type { AuthValue } from "../auth-manager";
 import type { Delegates } from "../connection";
 import { StopRetrying } from "../connection";
@@ -62,10 +64,10 @@ export function defineBehavior(
   const canZombie = () => false;
 
   const delegates: Delegates<AuthValue> = {
-    authenticate: jest.fn(authenticate),
-    createSocket: jest.fn(createSocket),
-    canZombie: jest.fn(canZombie),
-    //         ^^^^^^^ Allow observing these calls in tests
+    authenticate: vi.fn(authenticate),
+    createSocket: vi.fn(createSocket),
+    canZombie: vi.fn(canZombie),
+    //         ^^^^^ Allow observing these calls in tests
   };
 
   return { wss, delegates };

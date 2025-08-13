@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import type { ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../protocol/Comments";
 import {
@@ -333,7 +335,7 @@ describe("stringifyCommentBody", () => {
     );
   });
 
-  it("should escape html entities - mention w/ username", async () => {
+  test("should escape html entities - mention w/ username", async () => {
     const commentBodyHtml: CommentBody = {
       version: 1,
       content: [
@@ -506,10 +508,10 @@ describe("stringifyCommentBody", () => {
   });
 
   test("provides arguments to custom elements", async () => {
-    const paragraph = jest.fn();
-    const text = jest.fn();
-    const link = jest.fn();
-    const mention = jest.fn();
+    const paragraph = vi.fn();
+    const text = vi.fn();
+    const link = vi.fn();
+    const mention = vi.fn();
 
     await stringifyCommentBody(commentBodyWithMultipleParagraphs, {
       elements: {

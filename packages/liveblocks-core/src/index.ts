@@ -158,7 +158,12 @@ export { SortedList } from "./lib/SortedList";
 export { stableStringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { generateUrl, isUrl, sanitizeUrl, url, urljoin } from "./lib/url";
-export type { Brand, DistributiveOmit } from "./lib/utils";
+export type {
+  Brand,
+  DistributiveOmit,
+  WithOptional,
+  WithRequired,
+} from "./lib/utils";
 export {
   b64decode,
   compactObject,
@@ -323,6 +328,7 @@ export type {
   AiAssistantMessage,
   AiChat,
   AiChatMessage,
+  AiChatsQuery,
   AiKnowledgeSource,
   AiReasoningPart,
   AiTextPart,

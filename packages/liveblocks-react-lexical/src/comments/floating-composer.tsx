@@ -18,7 +18,7 @@ import type {
   ComposerProps,
   ComposerSubmitComment,
 } from "@liveblocks/react-ui";
-import { Composer } from "@liveblocks/react-ui";
+import { Composer as DefaultComposer } from "@liveblocks/react-ui";
 import type { LexicalCommand } from "lexical";
 import {
   $getSelection,
@@ -27,13 +27,17 @@ import {
   COMMAND_PRIORITY_EDITOR,
   createCommand,
 } from "lexical";
-import type { ComponentRef, FormEvent, KeyboardEvent, ReactNode } from "react";
+import type { ComponentType, FormEvent, KeyboardEvent, ReactNode } from "react";
 import { forwardRef, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { createDOMRange } from "../create-dom-range";
 import { createRectsFromDOMRange } from "../create-rects-from-dom-range";
 import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node";
+
+type FloatingComposerComponents = {
+  Composer: ComponentType<Omit<ComposerProps, "threadId" | "commentId">>;
+};
 
 /**
  * Dispatching OPEN_FLOATING_COMPOSER_COMMAND will display the FloatingComposer
@@ -59,12 +63,22 @@ import $wrapSelectionInThreadMarkNode from "./wrap-selection-in-thread-mark-node
 export const OPEN_FLOATING_COMPOSER_COMMAND: LexicalCommand<void> =
   createCommand("OPEN_FLOATING_COMPOSER_COMMAND");
 
-type ComposerElement = ComponentRef<typeof Composer>;
+/**
+ * Dispatching ATTACH_THREAD_COMMAND will attach a comment to the current selection.
+ */
+export const ATTACH_THREAD_COMMAND: LexicalCommand<string> = createCommand(
+  "ATTACH_THREAD_COMMAND"
+);
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
   "threadId" | "commentId"
->;
+> & {
+  /**
+   * Override the component's components.
+   */
+  components?: Partial<FloatingComposerComponents>;
+};
 
 /**
  * Displays a `Composer` near the current lexical selection.
@@ -75,7 +89,7 @@ export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
  * Should be nested inside `LiveblocksPlugin`.
  */
 export const FloatingComposer = forwardRef<
-  ComposerElement,
+  HTMLFormElement,
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
   const [range, setRange] = useState<Range | null>(null);
@@ -126,7 +140,7 @@ interface FloatingComposerImplProps extends FloatingComposerProps {
 }
 
 const FloatingComposerImpl = forwardRef<
-  ComposerElement,
+  HTMLFormElement,
   FloatingComposerImplProps
 >(function FloatingComposer(props, forwardedRef) {
   const {
@@ -134,9 +148,10 @@ const FloatingComposerImpl = forwardRef<
     onRangeChange,
     onKeyDown,
     onComposerSubmit,
+    components,
     ...composerProps
   } = props;
-
+  const Composer = components?.Composer ?? DefaultComposer;
   const [editor] = useLexicalComposerContext();
   const createThread = useCreateThread();
 
@@ -173,18 +188,16 @@ const FloatingComposerImpl = forwardRef<
     });
   }, [editor, range, onRangeChange, $onStateRead]);
 
-  /**
-   * Create a new ThreadMarkNode and wrap the selected content in it.
-   * @param threadId The id of the thread to associate with the selected content
-   */
-  const onThreadCreate = useCallback(
-    (threadId: string) => {
-      editor.update(() => {
+  // Create a new ThreadMarkNode from a thread ID and wrap the selected content in it.
+  useEffect(() => {
+    return editor.registerCommand(
+      ATTACH_THREAD_COMMAND,
+      (threadId: string) => {
         const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return;
+        if (!$isRangeSelection(selection)) return false;
 
         // If the selection is collapsed, we do not create a new thread node in the editor.
-        if (selection.isCollapsed()) return;
+        if (selection.isCollapsed()) return false;
 
         const isBackward = selection.isBackward();
         // Wrap content in a ThreadMarkNode
@@ -192,10 +205,12 @@ const FloatingComposerImpl = forwardRef<
 
         // Clear the selection after wrapping
         $setSelection(null);
-      });
-    },
-    [editor]
-  );
+
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
 
   const handleComposerSubmit = useCallback(
     (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
@@ -210,9 +225,9 @@ const FloatingComposerImpl = forwardRef<
         metadata: props.metadata ?? {},
       });
 
-      onThreadCreate(thread.id);
+      editor.dispatchCommand(ATTACH_THREAD_COMMAND, thread.id);
     },
-    [onThreadCreate, onComposerSubmit, props.metadata, createThread]
+    [onComposerSubmit, props.metadata, createThread, editor]
   );
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
