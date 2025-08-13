@@ -32,9 +32,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
   instead of `a file.txt`)
 
+## Documentation
+
+- More info on styling AI chat components.
+
 ## Contributors
 
-marcbouchenoire
+marcbouchenoire, ctnicholas
 
 # Week 32 (2025-08-08)
 
