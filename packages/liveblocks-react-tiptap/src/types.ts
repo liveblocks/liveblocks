@@ -1,5 +1,4 @@
 import type {
-  BaseMetadata,
   ContextualPromptContext,
   ContextualPromptResponse,
   Relax,
@@ -84,13 +83,13 @@ export interface AiConfiguration {
   ) => Promise<ContextualPromptResponse>;
 }
 
-export type LiveblocksExtensionOptions<M extends BaseMetadata> = {
+export type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
-  threads_experimental?: ThreadData<M>[];
+  threads_experimental?: ThreadData[];
   initialContent?: Content;
   enablePermanentUserData?: boolean;
   /**

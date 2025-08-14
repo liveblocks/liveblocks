@@ -1,5 +1,4 @@
 import type {
-  BaseMetadata,
   BaseUserMeta,
   IUserInfo,
   JsonObject,
@@ -41,10 +40,7 @@ import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-const DEFAULT_OPTIONS: WithRequired<
-  LiveblocksExtensionOptions<BaseMetadata>,
-  "field"
-> = {
+const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
   comments: true,
   mentions: true,
@@ -165,8 +161,8 @@ const YChangeMark = Mark.create({
   },
 });
 
-export const useLiveblocksExtension = <M extends BaseMetadata = BaseMetadata>(
-  opts?: LiveblocksExtensionOptions<M>
+export const useLiveblocksExtension = (
+  opts?: LiveblocksExtensionOptions
 ): Extension => {
   const options = {
     ...DEFAULT_OPTIONS,
@@ -192,7 +188,7 @@ export const useLiveblocksExtension = <M extends BaseMetadata = BaseMetadata>(
 
   const isEditorReady = useIsEditorReady();
   const client = useClient();
-  const store = getUmbrellaStoreForClient<M>(client);
+  const store = getUmbrellaStoreForClient(client);
   const roomId = room.id;
   const yjsProvider = useYjsProvider();
 

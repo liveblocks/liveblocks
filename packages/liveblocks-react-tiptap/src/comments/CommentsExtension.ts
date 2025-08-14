@@ -360,7 +360,7 @@ export const CommentsExtension = Extension.create<
 
             // Toggle attribute for all comment-mark spans
             const els = view.dom.querySelectorAll<HTMLElement>(
-              "span.lb-root.lb-tiptap-thread-mark[data-lb-thread-id]"
+              "span.lb-tiptap-thread-mark[data-lb-thread-id]"
             );
             els.forEach((el) => {
               const id = el.getAttribute("data-lb-thread-id");
