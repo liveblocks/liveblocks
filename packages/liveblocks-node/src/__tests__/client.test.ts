@@ -2990,4 +2990,209 @@ describe("client", () => {
       }
     });
   });
+
+  describe("get user groups", () => {
+    test("should return a list of groups when getUserGroups receives a successful response", async () => {
+      const userId = "user1";
+      const groups = [
+        {
+          type: "group",
+          id: "group1",
+          tenantId: "tenant1",
+          createdAt: "2022-07-13T14:32:50.697Z",
+          updatedAt: "2022-07-13T14:32:50.697Z",
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-13T14:32:50.697Z",
+            },
+            {
+              id: "user2",
+              addedAt: "2022-07-13T14:32:50.697Z",
+            },
+          ],
+        },
+        {
+          type: "group",
+          id: "group3",
+          tenantId: "tenant1",
+          createdAt: "2022-07-15T09:00:00.000Z",
+          updatedAt: "2022-07-15T09:00:00.000Z",
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-15T09:00:00.000Z",
+            },
+          ],
+        },
+      ];
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: "cursor2",
+              data: groups,
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getUserGroups({ userId })).resolves.toEqual({
+        nextCursor: "cursor2",
+        data: [
+          {
+            type: "group",
+            id: "group1",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-13T14:32:50.697Z"),
+            updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-13T14:32:50.697Z"),
+              },
+              {
+                id: "user2",
+                addedAt: new Date("2022-07-13T14:32:50.697Z"),
+              },
+            ],
+          },
+          {
+            type: "group",
+            id: "group3",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-15T09:00:00.000Z"),
+            updatedAt: new Date("2022-07-15T09:00:00.000Z"),
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-15T09:00:00.000Z"),
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("should return the next page of user groups when getUserGroups with additional params receives a successful response", async () => {
+      const userId = "user1";
+      const startingAfter = "cursor1";
+      const limit = 1;
+
+      const groups = [
+        {
+          type: "group",
+          id: "group2",
+          tenantId: "tenant1",
+          createdAt: "2022-07-14T10:00:00.000Z",
+          updatedAt: "2022-07-14T10:00:00.000Z",
+          members: [
+            {
+              id: "user1",
+              addedAt: "2022-07-14T10:00:00.000Z",
+            },
+          ],
+        },
+      ];
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, (res) => {
+          const url = new URL(res.request.url);
+          expect(url.searchParams.size).toEqual(2);
+          expect(url.searchParams.get("startingAfter")).toEqual(startingAfter);
+          expect(url.searchParams.get("limit")).toEqual(limit.toString());
+
+          return HttpResponse.json(
+            {
+              nextCursor: "cursor3",
+              data: groups,
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(
+        client.getUserGroups({ userId, startingAfter, limit })
+      ).resolves.toEqual({
+        nextCursor: "cursor3",
+        data: [
+          {
+            type: "group",
+            id: "group2",
+            tenantId: "tenant1",
+            createdAt: new Date("2022-07-14T10:00:00.000Z"),
+            updatedAt: new Date("2022-07-14T10:00:00.000Z"),
+            members: [
+              {
+                id: "user1",
+                addedAt: new Date("2022-07-14T10:00:00.000Z"),
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("should return an empty list when getUserGroups receives an empty response", async () => {
+      const userId = "user1";
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, () => {
+          return HttpResponse.json(
+            {
+              nextCursor: null,
+              data: [],
+            },
+            { status: 200 }
+          );
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      await expect(client.getUserGroups({ userId })).resolves.toEqual({
+        nextCursor: null,
+        data: [],
+      });
+    });
+
+    test("should throw a LiveblocksError when getUserGroups receives an error response", async () => {
+      const userId = "user1";
+
+      const error = {
+        error: "USER_NOT_FOUND",
+        message: "User not found",
+      };
+
+      server.use(
+        http.get(`${DEFAULT_BASE_URL}/v2/users/:userId/groups`, () => {
+          return HttpResponse.json(error, { status: 404 });
+        })
+      );
+
+      const client = new Liveblocks({ secret: "sk_xxx" });
+
+      // This should throw a LiveblocksError
+      try {
+        // Attempt to get, which should fail and throw an error.
+        await client.getUserGroups({ userId });
+        // If it doesn't throw, fail the test.
+        expect(true).toBe(false);
+      } catch (err) {
+        expect(err instanceof LiveblocksError).toBe(true);
+        if (err instanceof LiveblocksError) {
+          expect(err.status).toBe(404);
+          expect(err.message).toBe("User not found");
+          expect(err.name).toBe("LiveblocksError");
+        }
+      }
+    });
+  });
 });
