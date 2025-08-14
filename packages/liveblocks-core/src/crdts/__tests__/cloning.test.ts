@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import {
   listUpdate,
@@ -15,7 +16,7 @@ import type { LiveList } from "../LiveList";
 import { liveStructure, lson } from "./_arbitraries";
 
 describe("cloning LiveStructures", () => {
-  it("basic cloning logic", async () => {
+  test("basic cloning logic", async () => {
     const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
       list1: LiveList<string>;
       list2: LiveList<string>;
@@ -64,7 +65,7 @@ describe("cloning LiveStructures", () => {
     ]);
   });
 
-  it("deep cloning of LiveStructures", () =>
+  test("deep cloning of LiveStructures", () =>
     fc.assert(
       fc.asyncProperty(
         liveStructure,
@@ -84,7 +85,7 @@ describe("cloning LiveStructures", () => {
       )
     ));
 
-  it("deep cloning of LiveStructures (twice)", () =>
+  test("deep cloning of LiveStructures (twice)", () =>
     fc.assert(
       fc.asyncProperty(
         liveStructure,
@@ -105,7 +106,7 @@ describe("cloning LiveStructures", () => {
       )
     ));
 
-  it("deep cloning of LSON data (= LiveStructures or JSON)", () =>
+  test("deep cloning of LSON data (= LiveStructures or JSON)", () =>
     fc.assert(
       fc.asyncProperty(
         lson,

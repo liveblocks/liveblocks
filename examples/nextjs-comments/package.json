@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "file:../../packages/liveblocks-client",
-    "@liveblocks/node": "file:../../packages/liveblocks-node",
-    "@liveblocks/react": "file:../../packages/liveblocks-react",
-    "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
+    "@liveblocks/client": "^3.3.0",
+    "@liveblocks/node": "^3.3.0",
+    "@liveblocks/react": "^3.3.0",
+    "@liveblocks/react-ui": "^3.3.0",
     "next": "^13.4.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

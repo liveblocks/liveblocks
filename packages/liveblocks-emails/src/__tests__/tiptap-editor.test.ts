@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import type { SerializedTiptapRootNode } from "../tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
@@ -16,7 +18,7 @@ import {
 
 describe("tiptap editor", () => {
   describe("get serialized state", () => {
-    it("should parse correctly a real document", () => {
+    test("should parse correctly a real document", () => {
       const state = getSerializedTiptapState({
         buffer: docUpdateBuffer,
         key: "default",
@@ -27,7 +29,7 @@ describe("tiptap editor", () => {
   });
 
   describe("find mention node with context", () => {
-    it("should flatten tiptap tree", () => {
+    test("should flatten tiptap tree", () => {
       const flattenNodes = flattenTiptapTree(docStateRoot2.content);
       expect(flattenNodes).toEqual([
         { type: "paragraph" },
@@ -76,7 +78,7 @@ describe("tiptap editor", () => {
       ]);
     });
 
-    it("should find no mention with context", () => {
+    test("should find no mention with context", () => {
       const root: SerializedTiptapRootNode = {
         type: "doc",
         content: [
@@ -114,7 +116,7 @@ describe("tiptap editor", () => {
       expect(context).toBeNull();
     });
 
-    it("should find a mention with context", () => {
+    test("should find a mention with context", () => {
       const context = findTiptapMentionNodeWithContext({
         root: docStateRoot2,
         mentionedId: MENTIONED_USER_ID,

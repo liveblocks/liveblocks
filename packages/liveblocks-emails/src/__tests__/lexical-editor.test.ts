@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import type { SerializedLexicalRootNode } from "../lexical-editor";
 import {
   findLexicalMentionNodeWithContext,
@@ -16,7 +18,7 @@ import {
 
 describe("Lexical editor", () => {
   describe("get serialized state", () => {
-    it("should parse correctly a real document", () => {
+    test("should parse correctly a real document", () => {
       const state = getSerializedLexicalState({
         buffer: docUpdateBuffer,
         key: "root",
@@ -27,7 +29,7 @@ describe("Lexical editor", () => {
   });
 
   describe("find mention node with context", () => {
-    it("should flatten Lexical tree", () => {
+    test("should flatten Lexical tree", () => {
       const flattenNodes = flattenLexicalTree(docStateRoot2.children);
       expect(flattenNodes).toEqual([
         {
@@ -96,7 +98,7 @@ describe("Lexical editor", () => {
       ]);
     });
 
-    it("should find no mention with context", () => {
+    test("should find no mention with context", () => {
       const root: SerializedLexicalRootNode = {
         type: "root",
         children: [
@@ -152,7 +154,7 @@ describe("Lexical editor", () => {
       expect(context).toBeNull();
     });
 
-    it("should find a mention with context", () => {
+    test("should find a mention with context", () => {
       const context = findLexicalMentionNodeWithContext({
         root: docStateRoot2,
         mentionedId: MENTIONED_USER_ID,

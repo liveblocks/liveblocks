@@ -306,6 +306,10 @@
     transition-property: background, color, opacity, box-shadow;
   }
 
+  &:where([data-variant="ghost"]) {
+    background: transparent;
+  }
+
   &:where(:has(.lb-button-label)) {
     gap: calc(0.175 * var(--lb-spacing));
     padding-inline: calc(0.55 * var(--lb-spacing));
@@ -750,59 +754,6 @@
   > :where(:last-child) {
     margin-block-end: 0;
   }
-}
-
-/*************************************
- *       Composer suggestions        *
- *************************************/
-
-.lb-composer-suggestions-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.lb-composer-suggestions-list-item {
-  scroll-margin-block: $lb-elevation-padding;
-}
-
-/*************************************
- *   Composer mention suggestions    *
- *************************************/
-
-.lb-composer-mention-suggestions {
-  --lb-composer-mention-suggestion-avatar-size: 1.25rem;
-}
-
-.lb-composer-mention-suggestion {
-  padding: calc(0.375 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing));
-}
-
-.lb-composer-mention-suggestion-avatar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  inline-size: var(--lb-composer-mention-suggestion-avatar-size);
-  block-size: var(--lb-composer-mention-suggestion-avatar-size);
-  margin-inline-start: calc(-0.125 * var(--lb-spacing));
-  margin-inline-end: calc(0.5 * var(--lb-spacing));
-  margin-block: calc(0.125 * var(--lb-spacing));
-
-  &:where(.lb-avatar) {
-    background: var(--lb-foreground-subtle);
-    color: var(--lb-foreground-moderate);
-  }
-
-  :where(.lb-icon) {
-    color: var(--lb-foreground-moderate);
-  }
-}
-
-.lb-composer-mention-suggestion-group-description {
-  align-self: baseline;
-  margin-inline-start: calc(0.625 * var(--lb-spacing));
-  color: var(--lb-foreground-tertiary);
-  font-size: 0.875em;
 }
 
 /*************************************
@@ -1615,6 +1566,30 @@
   }
 }
 
+.lb-thread-show-more {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  justify-content: center;
+  align-items: center;
+
+  &::before,
+  &::after {
+    content: "";
+    z-index: 0;
+    flex: 1 0 auto;
+    min-inline-size: var(--lb-spacing);
+    block-size: 0;
+    border-block-start: 1px dashed var(--lb-foreground-subtle);
+    transition-property: border;
+  }
+}
+
+:where(.lb-thread-show-more + .lb-thread-new-indicator) {
+  margin-block-start: calc(0.5 * var(--lb-spacing));
+}
+
 .lb-thread-new-indicator {
   position: relative;
   z-index: 1;
@@ -2392,6 +2367,61 @@
 }
 
 /*************************************
+ *       Composer suggestions        *
+ *************************************/
+
+.lb-composer-suggestions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lb-composer-suggestions-list-item {
+  scroll-margin-block: $lb-elevation-padding;
+}
+
+/*************************************
+ *   Composer mention suggestions    *
+ *************************************/
+
+.lb-composer-mention-suggestions {
+  --lb-composer-mention-suggestion-avatar-size: 1.25rem;
+}
+
+.lb-composer-mention-suggestion {
+  padding-inline-start: calc(0.5 * var(--lb-spacing));
+  padding-inline-end: calc(0.625 * var(--lb-spacing));
+  padding-block: calc(0.25 * var(--lb-spacing));
+}
+
+.lb-composer-mention-suggestion-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--lb-composer-mention-suggestion-avatar-size);
+  block-size: var(--lb-composer-mention-suggestion-avatar-size);
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  margin-inline-end: calc(0.5 * var(--lb-spacing));
+  margin-block: calc(0.125 * var(--lb-spacing));
+
+  &:where(.lb-avatar) {
+    background: var(--lb-foreground-subtle);
+    color: var(--lb-foreground-moderate);
+  }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-composer-mention-suggestion-group-description {
+  align-self: baseline;
+  margin-inline-start: calc(0.625 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+}
+
+/*************************************
  *            Code block             *
  *************************************/
 
@@ -2432,18 +2462,16 @@
 }
 
 /*************************************
- *          Chat Composer            *
+ *            AI Composer            *
  *************************************/
 
-.lb-ai-chat-composer {
+.lb-ai-composer {
   position: relative;
   inline-size: 100%;
   color: var(--lb-foreground);
 }
 
-.lb-ai-chat-composer-form:where(
-    :has(.lb-ai-chat-composer-editor:not(:focus-visible))
-  ) {
+.lb-ai-composer-form:where(:has(.lb-ai-composer-editor:not(:focus-visible))) {
   :where(.lb-button[data-variant="primary"]) {
     --lb-button-background: var(--lb-foreground-subtle);
 
@@ -2457,7 +2485,7 @@
   }
 }
 
-.lb-ai-chat-composer-editor {
+.lb-ai-composer-editor {
   max-block-size: 15rem;
   padding: var(--lb-spacing) var(--lb-spacing) 0;
   color: var(--lb-foreground-secondary);
@@ -2500,7 +2528,7 @@
   }
 }
 
-.lb-ai-chat-composer-footer {
+.lb-ai-composer-footer {
   display: flex;
   gap: calc(0.75 * var(--lb-spacing));
   align-items: center;
@@ -2508,14 +2536,14 @@
   padding: var(--lb-spacing);
 }
 
-.lb-ai-chat-composer-actions,
-.lb-ai-chat-composer-editor-actions {
+.lb-ai-composer-actions,
+.lb-ai-composer-editor-actions {
   display: flex;
   gap: calc(0.125 * var(--lb-spacing));
   align-items: center;
 }
 
-.lb-ai-chat-composer-editor-actions {
+.lb-ai-composer-editor-actions {
   margin-inline-end: auto;
 }
 

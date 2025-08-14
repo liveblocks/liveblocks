@@ -1,4 +1,5 @@
 import { html, htmlSafe } from "@liveblocks/core";
+import { describe, expect, test } from "vitest";
 
 import { MENTION_CHARACTER } from "../lib/constants";
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
@@ -82,7 +83,7 @@ describe("convert text mention content", () => {
     },
   };
 
-  it("should convert text mention content", async () => {
+  test("should convert text mention content", async () => {
     const mention = buildMentionTextEditorNodes({
       mentionedUserId: "user-dracula",
     });
@@ -95,7 +96,7 @@ describe("convert text mention content", () => {
     expect(content).toEqual(expected);
   });
 
-  it("should convert with bold and italic", async () => {
+  test("should convert with bold and italic", async () => {
     const mention: LiveblocksTextEditorNode[] = [
       {
         type: "text",
@@ -128,7 +129,7 @@ describe("convert text mention content", () => {
     expect(content).toEqual(expected);
   });
 
-  it("should convert with strikethrough and code", async () => {
+  test("should convert with strikethrough and code", async () => {
     const mention: LiveblocksTextEditorNode[] = [
       {
         type: "text",
@@ -161,7 +162,7 @@ describe("convert text mention content", () => {
     expect(content).toEqual(expected);
   });
 
-  it("should resolve user info", async () => {
+  test("should resolve user info", async () => {
     const mention = buildMentionTextEditorNodes({ mentionedUserId: "user-0" });
     const content = await convertTextMentionContent<string>(mention, {
       elements,
@@ -174,7 +175,7 @@ describe("convert text mention content", () => {
   });
 
   describe("use-case/escaping html entities", () => {
-    it("should escape html entities in text", async () => {
+    test("should escape html entities in text", async () => {
       const mention: LiveblocksTextEditorNode[] = [
         {
           type: "text",
@@ -199,7 +200,7 @@ describe("convert text mention content", () => {
       expect(content).toEqual(expected);
     });
 
-    it("should escape html entities in mention w/ username", async () => {
+    test("should escape html entities in mention w/ username", async () => {
       const mention = buildMentionTextEditorNodes({
         mentionedUserId: "user-mina",
       });

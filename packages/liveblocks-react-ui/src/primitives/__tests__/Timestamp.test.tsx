@@ -1,10 +1,12 @@
-import "@testing-library/jest-dom";
-
-import { render } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
+import { afterEach, describe, expect, test } from "vitest";
 
 import { Timestamp } from "../Timestamp";
 
 describe("Timestamp", () => {
+  afterEach(() => {
+    cleanup();
+  });
   const now = Date.now();
 
   test("should render", () => {

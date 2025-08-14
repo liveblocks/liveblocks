@@ -1,4 +1,5 @@
 import { Webhook } from "svix";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   isCustomNotificationEvent,
@@ -45,7 +46,7 @@ describe("WebhookHandler", () => {
     );
   };
 
-  it.each([undefined, null, "", "not_a_valid_secret"])(
+  test.each([undefined, null, "", "not_a_valid_secret"])(
     "initialization should throw an error if the secret is not valid",
     (invalidSecret) => {
       // @ts-expect-error: We want to test invalid secret
@@ -55,10 +56,10 @@ describe("WebhookHandler", () => {
 
   describe("verifyRequest", () => {
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
-    it.each([
+    test.each([
       ["userEntered", userEnteredBody],
       [
         "storageUpdated",
@@ -239,7 +240,7 @@ describe("WebhookHandler", () => {
       ],
     ])('should verify a "%s" event', (type, data) => {
       const now = 1674851609000;
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now,
       });
 
@@ -272,7 +273,7 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(body);
     });
 
-    it('should verify a "ydocUpdated" event', () => {
+    test('should verify a "ydocUpdated" event', () => {
       const ydocUpdated = {
         data: {
           appId: "605a50b01a36d5ea7a2e9104",
@@ -294,7 +295,7 @@ describe("WebhookHandler", () => {
         ),
       };
 
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: 1674851522000,
       });
 
@@ -308,8 +309,8 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(ydocUpdated);
     });
 
-    it("should verify an event with multiple signatures", () => {
-      jest.useFakeTimers({
+    test("should verify an event with multiple signatures", () => {
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -345,8 +346,8 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(userEnteredBody);
     });
 
-    it("should allow a native Headers object", () => {
-      jest.useFakeTimers({
+    test("should allow a native Headers object", () => {
+      vi.useFakeTimers({
         now: 1674850126000,
       });
       const webhookHandler = new WebhookHandler(secret);
@@ -369,8 +370,8 @@ describe("WebhookHandler", () => {
       expect(event).toEqual(userEnteredBody);
     });
 
-    it("should throw if the rawBody is not a string", () => {
-      jest.useFakeTimers({
+    test("should throw if the rawBody is not a string", () => {
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -394,8 +395,8 @@ describe("WebhookHandler", () => {
       );
     });
 
-    it("should throw if the signature is invalid", () => {
-      jest.useFakeTimers({
+    test("should throw if the signature is invalid", () => {
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -411,8 +412,8 @@ describe("WebhookHandler", () => {
       ).toThrowError("Invalid signature");
     });
 
-    it("should throw if the timestamp is invalid", () => {
-      jest.useFakeTimers({
+    test("should throw if the timestamp is invalid", () => {
+      vi.useFakeTimers({
         now: 1674850126000,
       });
 
@@ -434,9 +435,9 @@ describe("WebhookHandler", () => {
       ).toThrowError("Invalid timestamp");
     });
 
-    it("should throw if timestamp is above future threshold", () => {
+    test("should throw if timestamp is above future threshold", () => {
       const tenMinutesAgo = 1674850126000 - 10 * 60 * 1000;
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: tenMinutesAgo,
       });
 
@@ -457,9 +458,9 @@ describe("WebhookHandler", () => {
       ).toThrowError("Timestamp in the future");
     });
 
-    it("should throw if timestamp is below past threshold", () => {
+    test("should throw if timestamp is below past threshold", () => {
       const tenMinutesFromNow = 1674850126000 + 10 * 60 * 1000;
-      jest.useFakeTimers({
+      vi.useFakeTimers({
         now: tenMinutesFromNow,
       });
 
@@ -480,8 +481,8 @@ describe("WebhookHandler", () => {
       ).toThrowError("Timestamp too old");
     });
 
-    it("should throw if the event type is not supported", () => {
-      jest.useFakeTimers({
+    test("should throw if the event type is not supported", () => {
+      vi.useFakeTimers({
         now: 1674851522000,
       });
 
@@ -523,7 +524,7 @@ describe("WebhookHandler", () => {
 
 describe("Type guards", () => {
   describe("isThreadNotificationEvent", () => {
-    it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
+    test.each<{ name: string; event: WebhookEvent; expected: boolean }>([
       {
         name: "notification/thread",
         event: {
@@ -584,7 +585,7 @@ describe("Type guards", () => {
   });
 
   describe("isTextMentionNotificationEvent", () => {
-    it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
+    test.each<{ name: string; event: WebhookEvent; expected: boolean }>([
       {
         name: "notification/textMention",
         event: {
@@ -645,7 +646,7 @@ describe("Type guards", () => {
   });
 
   describe("isCustomNotificationEvent", () => {
-    it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
+    test.each<{ name: string; event: WebhookEvent; expected: boolean }>([
       {
         name: "notification/textMention",
         event: {

@@ -595,7 +595,7 @@ function ComposerEditorContainer({
   }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
-    disabled: disabled || hasMaxAttachments,
+    disabled: disabled || !showAttachments || hasMaxAttachments,
   });
 
   useLayoutEffect(() => {

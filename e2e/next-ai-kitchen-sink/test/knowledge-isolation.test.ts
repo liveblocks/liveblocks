@@ -3,10 +3,10 @@ import type { Page } from "@playwright/test";
 
 async function setupChatA(page: Page) {
   const textInput = page.locator(
-    '[data-testid="chat-a"] .lb-ai-chat-composer-editor'
+    '[data-testid="chat-a"] .lb-ai-composer-editor'
   );
   const sendButton = page.locator(
-    '[data-testid="chat-a"] .lb-ai-chat-composer-action'
+    '[data-testid="chat-a"] .lb-ai-composer-action'
   );
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
@@ -24,10 +24,10 @@ async function setupChatA(page: Page) {
 
 async function setupChatB(page: Page) {
   const textInput = page.locator(
-    '[data-testid="chat-b"] .lb-ai-chat-composer-editor'
+    '[data-testid="chat-b"] .lb-ai-composer-editor'
   );
   const sendButton = page.locator(
-    '[data-testid="chat-b"] .lb-ai-chat-composer-action'
+    '[data-testid="chat-b"] .lb-ai-composer-action'
   );
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
@@ -133,12 +133,12 @@ test.describe("AiChat Knowledge Isolation", () => {
 
     // Wait for the AiChat components to be fully loaded
     await expect(
-      page.locator('[data-testid="chat-a"] .lb-ai-chat-composer')
+      page.locator('[data-testid="chat-a"] .lb-ai-composer')
     ).toBeVisible({
       timeout: 10000,
     });
     await expect(
-      page.locator('[data-testid="chat-b"] .lb-ai-chat-composer')
+      page.locator('[data-testid="chat-b"] .lb-ai-composer')
     ).toBeVisible({
       timeout: 10000,
     });
@@ -172,12 +172,12 @@ test.describe("AiChat Knowledge Isolation", () => {
 
     // Wait for components to load
     await expect(
-      page.locator('[data-testid="chat-a"] .lb-ai-chat-composer')
+      page.locator('[data-testid="chat-a"] .lb-ai-composer')
     ).toBeVisible({
       timeout: 10000,
     });
     await expect(
-      page.locator('[data-testid="chat-b"] .lb-ai-chat-composer')
+      page.locator('[data-testid="chat-b"] .lb-ai-composer')
     ).toBeVisible({
       timeout: 10000,
     });
@@ -230,12 +230,12 @@ test.describe("AiChat Knowledge Isolation", () => {
 
     // Wait for the AiChat components to be fully loaded
     await expect(
-      page.locator('[data-testid="chat-a"] .lb-ai-chat-composer')
+      page.locator('[data-testid="chat-a"] .lb-ai-composer')
     ).toBeVisible({
       timeout: 10000,
     });
     await expect(
-      page.locator('[data-testid="chat-b"] .lb-ai-chat-composer')
+      page.locator('[data-testid="chat-b"] .lb-ai-composer')
     ).toBeVisible({
       timeout: 10000,
     });
