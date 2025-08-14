@@ -20,6 +20,19 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 33 (2025-08-15)
 
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
 ## v3.3.1
 
 ### `@liveblocks/react-ui`
@@ -38,7 +51,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-marcbouchenoire, ctnicholas
+marcbouchenoire, ctnicholas, nvie
 
 # Week 32 (2025-08-08)
 
