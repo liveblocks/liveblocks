@@ -5,7 +5,12 @@ import jscodeshift from "jscodeshift";
 
 // A Vitest-compatible simplified reimplementation of the `defineTest` helper from jscodeshift.
 // https://github.com/facebook/jscodeshift/blob/main/src/testUtils.js
-export function defineTestsForTransform(transform: string) {
+export function defineTestsForTransform(
+  transform: string,
+  options?:
+    | Record<string, any>
+    | ((args: { transform: string; fixture: string }) => Record<string, any>)
+) {
   const transformPath = path.resolve(__dirname, "..", transform);
   const fixturesPath = path.resolve(__dirname, "./__fixtures__", transform);
   const fixtures = readdirSync(fixturesPath)
@@ -33,6 +38,9 @@ export function defineTestsForTransform(transform: string) {
           },
           {
             parser: "tsx",
+            ...(typeof options === "function"
+              ? options({ transform, fixture })
+              : options),
           }
         );
 
