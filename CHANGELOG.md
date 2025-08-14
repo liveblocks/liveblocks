@@ -1,5 +1,11 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
 ## v3.3.1
 
 ### `@liveblocks/react-ui`

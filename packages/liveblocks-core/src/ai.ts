@@ -564,7 +564,12 @@ function createStore_forChatMessages(
           }
         }
       } else {
-        myMessages.delete(message.id);
+        // Clean up the ownership administration
+        if (message.role === "assistant" && message.status === "generating") {
+          // ...unless it's still generating
+        } else {
+          myMessages.delete(message.id);
+        }
       }
     });
   }
@@ -1293,6 +1298,7 @@ export function createAi(config: AiConfig): Ai {
         const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
+        messagesStore.markMine(targetMessageId);
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -1309,7 +1315,6 @@ export function createAi(config: AiConfig): Ai {
             tools: tools.length > 0 ? tools : undefined,
           },
         });
-        messagesStore.markMine(resp.targetMessage.id);
         return resp;
       },
 
