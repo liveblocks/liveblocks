@@ -213,6 +213,15 @@ const Comment = Mark.create({
               return;
             }
             const threadId = commentMark?.attrs.threadId as string | undefined;
+
+            const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
+              view.state
+            )?.filteredThreads;
+            if (threadId && filtered && !filtered.has(threadId)) {
+              selectThread(null);
+              return;
+            }
+
             selectThread(threadId ?? null);
           },
         },
@@ -258,6 +267,19 @@ export const CommentsExtension = Extension.create<
         return true;
       },
       selectThread: (id: string | null) => () => {
+        const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
+          this.editor.state
+        )?.filteredThreads;
+        if (id && filtered && !filtered.has(id)) {
+          this.editor.view.dispatch(
+            this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+              name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+              data: null,
+            })
+          );
+          return true;
+        }
+
         this.editor.view.dispatch(
           this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
             name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
@@ -369,6 +391,18 @@ export const CommentsExtension = Extension.create<
                 view.state.doc !== prevState.doc
               ) {
                 syncDom();
+
+                const selected = THREADS_PLUGIN_KEY.getState(
+                  view.state
+                )?.selectedThreadId;
+                if (selected && curr && !curr.has(selected)) {
+                  view.dispatch(
+                    view.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+                      name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+                      data: null,
+                    })
+                  );
+                }
               }
             },
           };
