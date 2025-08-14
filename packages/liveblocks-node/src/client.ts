@@ -2052,6 +2052,15 @@ export class Liveblocks {
     return inflateRoomData(data);
   }
 
+  /**
+   * Triggers an inbox notification for a user.
+   * @param params.userId The user ID to trigger the inbox notification for.
+   * @param params.kind The kind of inbox notification to trigger.
+   * @param params.subjectId The subject ID of the triggered inbox notification.
+   * @param params.activityData The activity data of the triggered inbox notification.
+   * @param params.roomId (optional) The room ID to trigger the inbox notification for.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
   public async triggerInboxNotification<K extends KDAD>(
     params: {
       userId: string;
