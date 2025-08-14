@@ -1,7 +1,8 @@
+import { describe, test, expect } from "vitest";
 import { replaceReactCommentsImportsInCss } from "../react-comments-to-react-ui";
 
 describe("replaceReactCommentsInPackageJson", () => {
-  it("should update CSS imports with double quotes", () => {
+  test("should update CSS imports with double quotes", () => {
     const input = `
 @import "./globals.css";
 @import "@liveblocks/react-comments/styles.css";
@@ -26,7 +27,7 @@ body::before {
     expect(replaceReactCommentsImportsInCss(input)).toEqual(output);
   });
 
-  it("should update CSS imports with single quotes", () => {
+  test("should update CSS imports with single quotes", () => {
     const input = `
 @import './globals.css';
 @import '@liveblocks/react-comments/styles.css';
