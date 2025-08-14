@@ -2331,6 +2331,36 @@ export class Liveblocks {
   }
 
   /**
+   * Returns all groups a user is a member of.
+   * @param params.userId The user ID to get the groups for.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param params.limit (optional) The number of items to return.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getUserGroups(
+    params: { userId: string } & PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<GroupData>> {
+    const { userId, startingAfter, limit } = params;
+
+    const res = await this.#get(
+      url`/v2/users/${userId}/groups`,
+      { startingAfter, limit },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<GroupDataPlain>;
+
+    return {
+      ...page,
+      data: page.data.map(convertToGroupData),
+    };
+  }
+
+  /**
    * Retrieves the current Storage contents for the given room ID and calls the
    * provided callback function, in which you can mutate the Storage contents
    * at will.
