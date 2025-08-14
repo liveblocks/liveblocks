@@ -109,6 +109,17 @@ const Comment = Mark.create({
                   class: "lb-root lb-tiptap-thread-mark-selected",
                 })
               );
+
+              const decoration = this.editor.view.dom.querySelector(
+                `.lb-tiptap-thread-mark[data-lb-thread-id="${thisThreadId}"]`
+              );
+
+              if (decoration) {
+                decoration.scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                });
+              }
             }
           }
         });
