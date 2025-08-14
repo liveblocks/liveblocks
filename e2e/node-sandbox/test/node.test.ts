@@ -19,6 +19,7 @@ async function createRandomTestRoom(): Promise<string> {
 
   // Register cleanup
   onTestFinished(async () => {
+    console.log(`Cleaning up room: ${randomRoomId}`);
     await client.deleteStorageDocument(randomRoomId);
     await client.deleteRoom(randomRoomId);
   });
@@ -28,6 +29,7 @@ async function createRandomTestRoom(): Promise<string> {
     { defaultAccesses: ["room:write"] },
     { idempotent: true }
   );
+  console.log(`Created room: ${randomRoomId}`);
 
   return randomRoomId;
 }
@@ -66,6 +68,7 @@ describe("@liveblocks/node package e2e", () => {
   test("concurrent LiveList mutations should preserve all items", async () => {
     const numberOfItemsToInsert = 75;
     const roomId = await createRandomTestRoom();
+    console.log(`Testing with roomId: ${roomId}`);
 
     // Initialize storage with empty list
     await client.mutateStorage(roomId, ({ root }) => {
