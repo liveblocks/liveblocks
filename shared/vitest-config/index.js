@@ -8,7 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export function defaultLiveblocksVitestConfig(options = {}) {
   return defineConfig({
-    plugins: [tsconfigPaths()],
+    plugins: [
+      tsconfigPaths({
+        projects: ["./tsconfig.json"],
+      }),
+    ],
     test: {
       setupFiles: [path.join(__dirname, "setup.js")],
 
