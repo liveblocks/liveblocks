@@ -90,7 +90,7 @@ export type LiveblocksExtensionOptions<M extends BaseMetadata> = {
   mentions?: boolean; // | MentionsConfiguration
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
-  filterThreads_experimental?: (thread: ThreadData<M>) => boolean;
+  threads_experimental?: ThreadData<M>[];
   initialContent?: Content;
   enablePermanentUserData?: boolean;
   /**

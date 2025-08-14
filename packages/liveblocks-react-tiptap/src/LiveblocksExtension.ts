@@ -39,13 +39,12 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 const DEFAULT_OPTIONS: WithRequired<
   LiveblocksExtensionOptions<BaseMetadata>,
-  "field" | "filterThreads_experimental"
+  "field"
 > = {
   field: "default",
   comments: true,
   mentions: true,
   offlineSupport_experimental: false,
-  filterThreads_experimental: () => true,
   enablePermanentUserData: false,
 };
 
@@ -291,7 +290,6 @@ export const useLiveblocksExtension = <M extends BaseMetadata = BaseMetadata>(
               store.outputs.threads
                 .get()
                 .findMany(roomId, { resolved: false }, "asc")
-                .filter((thread) => options.filterThreads_experimental(thread))
                 .map((thread) => [thread.id, true])
             );
             function isComment(mark: PMMark): mark is PMMark & {
