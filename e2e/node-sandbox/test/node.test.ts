@@ -19,6 +19,7 @@ async function createRandomTestRoom(): Promise<string> {
 
   // Register cleanup
   onTestFinished(async () => {
+    await client.deleteStorageDocument(randomRoomId);
     await client.deleteRoom(randomRoomId);
   });
 
