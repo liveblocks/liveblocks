@@ -12,45 +12,6 @@
 }
 
 /*************************************
- *        Mention suggestions        *
- *************************************/
-
-.lb-tiptap-mention-suggestions {
-  --lb-tiptap-mention-suggestion-avatar-size: 1.25rem;
-}
-
-.lb-tiptap-mention-suggestion {
-  padding: calc(0.375 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing));
-}
-
-.lb-tiptap-mention-suggestion-avatar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  inline-size: var(--lb-tiptap-mention-suggestion-avatar-size);
-  block-size: var(--lb-tiptap-mention-suggestion-avatar-size);
-  margin-inline-start: calc(-0.125 * var(--lb-spacing));
-  margin-inline-end: calc(0.5 * var(--lb-spacing));
-  margin-block: calc(0.125 * var(--lb-spacing));
-
-  &:where(.lb-avatar) {
-    background: var(--lb-foreground-subtle);
-    color: var(--lb-foreground-moderate);
-  }
-
-  :where(.lb-icon) {
-    color: var(--lb-foreground-moderate);
-  }
-}
-
-.lb-tiptap-mention-suggestion-group-description {
-  align-self: baseline;
-  margin-inline-start: calc(0.625 * var(--lb-spacing));
-  color: var(--lb-foreground-tertiary);
-  font-size: 0.875em;
-}
-
-/*************************************
  *          Elevation lists          *
  *************************************/
 
@@ -112,6 +73,47 @@
   .lb-tiptap-suggestions:where(:not([data-state="closed"])) {
     animation-name: lb-animation-appear;
   }
+}
+
+/*************************************
+ *        Mention suggestions        *
+ *************************************/
+
+.lb-tiptap-mention-suggestions {
+  --lb-tiptap-mention-suggestion-avatar-size: 1.25rem;
+}
+
+.lb-tiptap-mention-suggestion {
+  padding-inline-start: calc(0.5 * var(--lb-spacing));
+  padding-inline-end: calc(0.625 * var(--lb-spacing));
+  padding-block: calc(0.25 * var(--lb-spacing));
+}
+
+.lb-tiptap-mention-suggestion-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  inline-size: var(--lb-tiptap-mention-suggestion-avatar-size);
+  block-size: var(--lb-tiptap-mention-suggestion-avatar-size);
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  margin-inline-end: calc(0.5 * var(--lb-spacing));
+  margin-block: calc(0.125 * var(--lb-spacing));
+
+  &:where(.lb-avatar) {
+    background: var(--lb-foreground-subtle);
+    color: var(--lb-foreground-moderate);
+  }
+
+  :where(.lb-icon) {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-tiptap-mention-suggestion-group-description {
+  align-self: baseline;
+  margin-inline-start: calc(0.625 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
 }
 
 /*************************************
