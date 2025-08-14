@@ -175,7 +175,7 @@ describe("resolvers", () => {
 
   describe("invalidateGroupsInfo", () => {
     test("should support invalidating all groups", async () => {
-      const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+      const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
         groupIds.map((groupId) => ({ name: groupId }))
       );
       const client = createClientForTest({
@@ -209,7 +209,7 @@ describe("resolvers", () => {
     });
 
     test("should support invalidating specific groups", async () => {
-      const resolveGroupsInfo = jest.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
+      const resolveGroupsInfo = vi.fn(({ groupIds }: ResolveGroupsInfoArgs) =>
         groupIds.map((groupId) => ({ name: groupId }))
       );
       const client = createClientForTest({

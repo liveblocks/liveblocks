@@ -1,24 +1,36 @@
 import { warnOnce } from "@liveblocks/core";
+import { beforeEach, describe, expect, type Mock, test, vi } from "vitest";
 
 import { BatchResolver } from "../batch-resolvers";
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-jest.mock("@liveblocks/core", () => ({
-  ...jest.requireActual("@liveblocks/core"),
-  warnOnce: jest.fn(),
-}));
+vi.mock("@liveblocks/core", async () => {
+  const actual = await vi.importActual("@liveblocks/core");
+
+  return {
+    ...actual,
+    warnOnce: vi.fn(),
+  };
+});
 
 describe("BatchResolver", () => {
-  let mockCallback: jest.Mock;
+  let mockCallback: Mock<
+    (ids: string[]) => Promise<
+      {
+        resolved: string;
+      }[]
+    >
+  >;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockCallback = jest.fn((ids: string[]) => {
+    vi.clearAllMocks();
+
+    // eslint-disable-next-line @typescript-eslint/require-await
+    mockCallback = vi.fn(async (ids: string[]) => {
       return ids.map((id) => ({ resolved: id }));
     });
   });
 
-  it("should resolve IDs in a single batch", async () => {
+  test("should resolve IDs in a single batch", async () => {
     const resolver = new BatchResolver(mockCallback, "Warning");
 
     const promise1 = resolver.get(["id-1", "id-2"]);
@@ -35,7 +47,7 @@ describe("BatchResolver", () => {
     expect(mockCallback).toHaveBeenCalledWith(["id-1", "id-2", "id-3"]);
   });
 
-  it("should handle duplicate IDs", async () => {
+  test("should handle duplicate IDs", async () => {
     const resolver = new BatchResolver(mockCallback, "Warning");
 
     const promise1 = resolver.get(["id-1", "id-1"]);
@@ -52,7 +64,7 @@ describe("BatchResolver", () => {
     expect(mockCallback).toHaveBeenCalledWith(["id-1"]);
   });
 
-  it("should handle missing callback", async () => {
+  test("should handle missing callback", async () => {
     const resolver = new BatchResolver(undefined, "Warning");
     const promise1 = resolver.get(["id-1", "id-2"]);
     const promise2 = resolver.get(["id-3"]);
@@ -67,7 +79,7 @@ describe("BatchResolver", () => {
     expect(warnOnce).toHaveBeenCalledWith("Warning");
   });
 
-  it("should throw when used after already resolved", async () => {
+  test("should throw when used after already resolved", async () => {
     const resolver = new BatchResolver(mockCallback, "Warning");
 
     const promise = resolver.get(["id-1"]);
@@ -79,8 +91,8 @@ describe("BatchResolver", () => {
     );
   });
 
-  it("should throw when callback doesn't return an array", async () => {
-    const nonArrayCallback = jest.fn(() => ({ "id-1": "value" }));
+  test("should throw when callback doesn't return an array", async () => {
+    const nonArrayCallback = vi.fn(() => ({ "id-1": "value" }));
     const resolver = new BatchResolver(
       nonArrayCallback as unknown as (ids: string[]) => Promise<unknown[]>,
       "Warning"
@@ -93,9 +105,9 @@ describe("BatchResolver", () => {
     );
   });
 
-  it("should throw when callback returns array of wrong length", async () => {
+  test("should throw when callback returns array of wrong length", async () => {
     // Return fewer items than requested
-    const wrongLengthCallback = jest.fn((ids: string[]) => {
+    const wrongLengthCallback = vi.fn((ids: string[]) => {
       return ids.slice(0, ids.length - 1).map((id) => ({ resolved: id }));
     });
     const resolver = new BatchResolver(wrongLengthCallback, "Warning");
@@ -110,8 +122,8 @@ describe("BatchResolver", () => {
     expect(result).toEqual([undefined, undefined, undefined]);
   });
 
-  it("should handle callback throwing", async () => {
-    const errorCallback = jest.fn(() => {
+  test("should handle callback throwing", async () => {
+    const errorCallback = vi.fn(() => {
       throw new Error("Callback error");
     });
     const resolver = new BatchResolver(errorCallback, "Warning");
@@ -126,8 +138,8 @@ describe("BatchResolver", () => {
     expect(result).toEqual([undefined]);
   });
 
-  it("should handle callback returning undefined", async () => {
-    const undefinedCallback = jest.fn(() => undefined);
+  test("should handle callback returning undefined", async () => {
+    const undefinedCallback = vi.fn(() => undefined);
     const resolver = new BatchResolver(undefinedCallback, "Warning");
 
     const promise = resolver.get(["id-1", "id-2"]);
@@ -139,8 +151,8 @@ describe("BatchResolver", () => {
     expect(undefinedCallback).toHaveBeenCalledWith(["id-1", "id-2"]);
   });
 
-  it("should handle missing results for some IDs", async () => {
-    const partialCallback = jest.fn((ids: string[]) => {
+  test("should handle missing results for some IDs", async () => {
+    const partialCallback = vi.fn((ids: string[]) => {
       return ids.map((id) => {
         if (id === "user-1") return { name: "User 1", id: "user-1" };
         if (id === "user-2") return undefined; // No result for "user-2"
@@ -182,7 +194,7 @@ describe("BatchResolver", () => {
     ]);
   });
 
-  it("should handle empty IDs arrays", async () => {
+  test("should handle empty IDs arrays", async () => {
     const resolver = new BatchResolver(mockCallback, "Warning");
 
     const promise1 = resolver.get([]);
