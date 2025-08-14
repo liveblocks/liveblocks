@@ -141,6 +141,11 @@
   text-underline-offset: 2px;
 }
 
+.lb-tiptap-thread-mark {
+  /* Add some space above/below when scrolling to it. */
+  scroll-margin-block: var(--lb-spacing);
+}
+
 /*************************************
  *          Anchored threads         *
  *************************************/
