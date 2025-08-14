@@ -9,5 +9,11 @@
     "preserveWatchOutput": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["dist", "node_modules", "src/transforms/__tests__"]
+  "exclude": [
+    "dist",
+    "node_modules",
+    "src/transforms/__tests__",
+    "src/replacements/__tests__",
+    "vitest.config.ts"
+  ]
 }
