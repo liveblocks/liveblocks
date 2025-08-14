@@ -1,7 +1,7 @@
 import { Extension, Mark, mergeAttributes } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
-import { Plugin } from "@tiptap/pm/state";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
@@ -17,6 +17,10 @@ type ThreadPluginAction = {
   name: ThreadPluginActions;
   data: string | null;
 };
+
+export const FILTERED_THREADS_PLUGIN_KEY = new PluginKey<{
+  filteredThreads?: Set<string>;
+}>();
 
 /**
  * Known issues: Overlapping marks are merged when reloading the doc. May be related:
@@ -64,6 +68,22 @@ const Comment = Mark.create({
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
+    const filteredThreads = this.editor
+      ? FILTERED_THREADS_PLUGIN_KEY.getState(this.editor.state)?.filteredThreads
+      : undefined;
+    const threadId = (HTMLAttributes as { ["data-lb-thread-id"]: string })[
+      "data-lb-thread-id"
+    ];
+    if (filteredThreads && !filteredThreads.has(threadId)) {
+      return [
+        "span",
+        mergeAttributes(HTMLAttributes, {
+          class: "lb-root lb-tiptap-thread-mark",
+          "data-hidden": "",
+        }),
+      ];
+    }
+
     return [
       "span",
       mergeAttributes(HTMLAttributes, {
@@ -203,6 +223,15 @@ const Comment = Mark.create({
               return;
             }
             const threadId = commentMark?.attrs.threadId as string | undefined;
+
+            const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
+              view.state
+            )?.filteredThreads;
+            if (threadId && filtered && !filtered.has(threadId)) {
+              selectThread(null);
+              return;
+            }
+
             selectThread(threadId ?? null);
           },
         },
@@ -212,7 +241,7 @@ const Comment = Mark.create({
 });
 
 export const CommentsExtension = Extension.create<
-  never,
+  { filteredThreads?: Set<string> },
   CommentsExtensionStorage
 >({
   name: "liveblocksComments",
@@ -248,6 +277,19 @@ export const CommentsExtension = Extension.create<
         return true;
       },
       selectThread: (id: string | null) => () => {
+        const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
+          this.editor.state
+        )?.filteredThreads;
+        if (id && filtered && !filtered.has(id)) {
+          this.editor.view.dispatch(
+            this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+              name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+              data: null,
+            })
+          );
+          return true;
+        }
+
         this.editor.view.dispatch(
           this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
             name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
@@ -305,6 +347,85 @@ export const CommentsExtension = Extension.create<
           },
         },
       }),
+      new Plugin({
+        key: FILTERED_THREADS_PLUGIN_KEY,
+        state: {
+          init: () => ({
+            filteredThreads: this.options.filteredThreads,
+          }),
+          apply(tr, value) {
+            const meta = tr.getMeta(FILTERED_THREADS_PLUGIN_KEY) as
+              | { filteredThreads?: Set<string> }
+              | undefined;
+            if (meta?.filteredThreads) {
+              return { filteredThreads: meta.filteredThreads };
+            }
+            return value;
+          },
+        },
+        view: (view) => {
+          const syncDom = () => {
+            const filteredThreads = FILTERED_THREADS_PLUGIN_KEY.getState(
+              view.state
+            )?.filteredThreads;
+
+            // Toggle attribute for all comment-mark spans
+            const els = view.dom.querySelectorAll<HTMLElement>(
+              "span.lb-tiptap-thread-mark[data-lb-thread-id]"
+            );
+            els.forEach((el) => {
+              const id = el.getAttribute("data-lb-thread-id");
+              if (!id) return;
+              if (!filteredThreads || filteredThreads.has(id)) {
+                el.removeAttribute("data-hidden");
+              } else {
+                el.setAttribute("data-hidden", "");
+              }
+            });
+          };
+
+          queueMicrotask(syncDom);
+
+          return {
+            update: (view, prevState) => {
+              const curr = FILTERED_THREADS_PLUGIN_KEY.getState(
+                view.state
+              )?.filteredThreads;
+              const prev =
+                FILTERED_THREADS_PLUGIN_KEY.getState(
+                  prevState
+                )?.filteredThreads;
+
+              if (
+                !areSetsEqual(prev, curr) ||
+                view.state.doc !== prevState.doc
+              ) {
+                syncDom();
+
+                const selected = THREADS_PLUGIN_KEY.getState(
+                  view.state
+                )?.selectedThreadId;
+                if (selected && curr && !curr.has(selected)) {
+                  view.dispatch(
+                    view.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+                      name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+                      data: null,
+                    })
+                  );
+                }
+              }
+            },
+          };
+        },
+      }),
     ];
   },
 });
+
+export function areSetsEqual(a?: Set<string>, b?: Set<string>): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}

@@ -120,7 +120,7 @@
  *            Thread mark            *
  *************************************/
 
-:where(.lb-tiptap-thread-mark:not([data-orphan="true"])) {
+:where(.lb-tiptap-thread-mark:not([data-orphan="true"], [data-hidden])) {
   background: var(--lb-accent-subtle);
   color: var(--lb-foreground);
   outline: none;
@@ -132,7 +132,7 @@
 }
 
 :where(
-  .lb-tiptap-thread-mark:not([data-orphan="true"])
+  .lb-tiptap-thread-mark:not([data-orphan="true"], [data-hidden])
     .lb-tiptap-thread-mark-selected
 ) {
   color: var(--lb-accent);
