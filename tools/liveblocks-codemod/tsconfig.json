@@ -9,10 +9,5 @@
     "preserveWatchOutput": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": [
-    "dist",
-    "node_modules",
-    "src/transforms/__tests__",
-    "src/transforms/__testfixtures__"
-  ]
+  "exclude": ["dist", "node_modules", "src/transforms/__tests__"]
 }
