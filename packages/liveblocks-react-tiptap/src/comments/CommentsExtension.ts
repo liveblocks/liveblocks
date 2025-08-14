@@ -1,4 +1,3 @@
-import type { ThreadData } from "@liveblocks/core";
 import { Extension, Mark, mergeAttributes } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
