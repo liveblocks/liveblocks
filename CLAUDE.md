@@ -46,3 +46,7 @@ When running scripts, use `npx turbo`, not `npm`.
 
 Run e2e tests headlessly using Playwright:  
 npx turbo build && env HEADLESS=1 playwright test --retries=5 --
+
+# Documentation
+
+All documentation lives in the `docs/` directory, as Markdown files.

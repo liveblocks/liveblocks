@@ -4480,22 +4480,31 @@ list.toImmutable();
 
 ### delete [#LiveList.delete]
 
-Deletes an element at the specified index. If the index doesn’t exist, an
-`Error` is thrown.
+Deletes the element living at the specified index locally. If the index doesn't
+exist, an `Error` is thrown.
 
 ```ts
 const list = new LiveList(["adrien", "jonathan"]);
-list.delete(1);
+list.delete(0);
 
-// ["adrien"]
+// ["jonathan"]
 list.toImmutable();
 ```
+
+This operation uses ID-based semantics, not position-based. When called, it
+reads the item at the specified index from the local state, then sends a "delete
+item with ID X" instruction to the server.
+
+If clients A and B both see a LiveList containing `["foo", "bar"]`, and client A
+calls `.insert("qux", 0)`, while client B simultaneously calls `.delete(0)`, the
+end result will always be `["qux", "bar"]` on both clients, and never
+`["foo", "bar"]`.
 
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
   <PropertiesListItem name="index" type="number" required>
-    The index of the property you’re deleting. If the property doesn’t exist, an
+    The index of the property you're deleting. If the property doesn't exist, an
     `Error` is thrown.
   </PropertiesListItem>
 </PropertiesList>
