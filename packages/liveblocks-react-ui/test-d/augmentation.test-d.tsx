@@ -46,6 +46,12 @@ declare global {
       type: "public" | "private";
     };
 
+    GroupInfo: {
+      name: string;
+      avatar?: string;
+      type: "open" | "closed";
+    };
+
     ActivitiesData: {
       $myErrorNotification: {
         message: string;

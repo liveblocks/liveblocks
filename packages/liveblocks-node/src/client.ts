@@ -18,6 +18,8 @@ import type {
   DM,
   DS,
   DU,
+  GroupData,
+  GroupDataPlain,
   IdTuple,
   InboxNotificationData,
   InboxNotificationDataPlain,
@@ -53,6 +55,7 @@ import {
   ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToGroupData,
   convertToInboxNotificationData,
   convertToSubscriptionData,
   convertToThreadData,
@@ -1357,7 +1360,7 @@ export class Liveblocks {
    * Gets a thread's participants.
    *
    * Participants are users who have commented on the thread
-   * or users and groups that have been mentioned in a comment.
+   * or users that have been mentioned in a comment.
    *
    * @param params.roomId The room ID to get the thread participants from.
    * @param params.threadId The thread ID to get the participants from.
@@ -2185,6 +2188,176 @@ export class Liveblocks {
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+  }
+
+  /**
+   * Create a group
+   * @param params.groupId The ID of the group to create.
+   * @param params.memberIds The IDs of the members to add to the group.
+   * @param params.tenantId The ID of the tenant to create the group for.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async createGroup(
+    params: { groupId: string; memberIds?: string[]; tenantId?: string },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#post(
+      url`/v2/groups`,
+      {
+        ...params,
+
+        // The REST API uses `id` since a group is a resource,
+        // but we use `groupId` here for consistency with the other methods.
+        id: params.groupId,
+      },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Get a group
+   * @param params.groupId The ID of the group to get.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getGroup(
+    params: { groupId: string },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#get(
+      url`/v2/groups/${params.groupId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Add members to a group
+   * @param params.groupId The ID of the group to add members to.
+   * @param params.memberIds The IDs of the members to add to the group.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async addGroupMembers(
+    params: { groupId: string; memberIds: string[] },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#post(
+      url`/v2/groups/${params.groupId}/add-members`,
+      { memberIds: params.memberIds },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Remove members from a group
+   * @param params.groupId The ID of the group to remove members from.
+   * @param params.memberIds The IDs of the members to remove from the group.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async removeGroupMembers(
+    params: { groupId: string; memberIds: string[] },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#post(
+      url`/v2/groups/${params.groupId}/remove-members`,
+      { memberIds: params.memberIds },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Delete a group
+   * @param params.groupId The ID of the group to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteGroup(
+    params: { groupId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(url`/v2/groups/${params.groupId}`, options);
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Get all groups
+   * @param params.limit (optional) The number of groups to return.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getGroups(
+    params?: PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<GroupData>> {
+    const res = await this.#get(
+      url`/v2/groups`,
+      { startingAfter: params?.startingAfter, limit: params?.limit },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<GroupDataPlain>;
+    return {
+      ...page,
+      data: page.data.map(convertToGroupData),
+    };
+  }
+
+  /**
+   * Returns all groups a user is a member of.
+   * @param params.userId The user ID to get the groups for.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param params.limit (optional) The number of items to return.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getUserGroups(
+    params: { userId: string } & PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<GroupData>> {
+    const { userId, startingAfter, limit } = params;
+
+    const res = await this.#get(
+      url`/v2/users/${userId}/groups`,
+      { startingAfter, limit },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<GroupDataPlain>;
+
+    return {
+      ...page,
+      data: page.data.map(convertToGroupData),
+    };
   }
 
   /**

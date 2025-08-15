@@ -14,6 +14,7 @@ export {
   useDeleteTextMention,
   useEditRoomComment,
   useEditRoomThreadMetadata,
+  useGroup,
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,

@@ -20,7 +20,13 @@ export interface UserProps extends ComponentProps<"span"> {
   replaceSelf?: boolean;
 }
 
-export function User({ userId, replaceSelf, className, ...props }: UserProps) {
+export function User({
+  userId,
+  replaceSelf,
+  className,
+  children,
+  ...props
+}: UserProps) {
   const currentId = useCurrentUserId();
   const { user, isLoading } = useUser(userId);
   const $ = useOverrides();
@@ -37,6 +43,7 @@ export function User({ userId, replaceSelf, className, ...props }: UserProps) {
       {...props}
     >
       {isLoading ? null : resolvedUserName}
+      {children}
     </span>
   );
 }
