@@ -71,8 +71,7 @@ test.describe("Storage - LiveMap", () => {
     ])
   );
 
-  // TODO Definitely a bug here!
-  test.skip("fuzzy full w/ undo/redo", async () => {
+  test("fuzzy full w/ undo/redo", async () => {
     const [page1] = pages;
     await page1.click("#clear");
 
@@ -97,11 +96,12 @@ test.describe("Storage - LiveMap", () => {
       await nanoSleep();
     }
 
-    // TODO Investigate: sometimes these don't converge to the same value
+    await waitForJson(pages, "#syncStatus", "synchronized");
     await waitUntilEqualOnAllPages(pages, "#map");
 
     // Clean up the room after the test
     await page1.click("#clear");
+    await waitForJson(pages, "#syncStatus", "synchronized");
     await waitForJson(pages, "#map", {});
   });
 });

@@ -22,6 +22,7 @@ const {
   useRedo,
   useSelf,
   useStorage,
+  useSyncStatus,
   useUndo,
 } = createRoomContext<
   never,
@@ -57,6 +58,7 @@ function Sandbox() {
   const canRedo = useCanRedo();
   const obj = useStorage((root) => root.object);
   const me = useSelf();
+  const syncStatus = useSyncStatus();
 
   const set_ = useMutation(
     ({ storage }, key: string, value: number | LiveObject<{ a: number }>) => {
@@ -145,6 +147,11 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row
+            id="syncStatus"
+            name="Sync status (immediate)"
+            value={syncStatus}
+          />
           <Row id="obj" name="Serialized" value={lsonToJson(obj)} />
         </tbody>
       </table>
