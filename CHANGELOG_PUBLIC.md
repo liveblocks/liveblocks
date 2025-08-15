@@ -45,6 +45,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
   instead of `a file.txt`)
 
+## Infrastructure
+
+- Fixed a bug that caused unreliable storage updates under high concurrency.
+- Fixed an issue that could cause LLM responses to appear to "hang" if the
+  token limit got exceeded during the response generation. If this now happens,
+  the response will indicate a clear error to the user.
+
 ## Documentation
 
 - More info on styling AI chat components.
