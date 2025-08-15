@@ -376,12 +376,17 @@ export type AiReasoningDelta = Relax<
   | { type: "reasoning-delta"; signature: string }
 >;
 
+// Available since protocol V5, this is the start of a tool invocation stream
 export type AiToolInvocationStreamStart = {
   type: "tool-stream";
   invocationId: string;
   name: string;
 };
 
+// Available since protocol V5, this is a partial tool invocation that is being
+// constructed by the server and sent to the client as a delta. The client will
+// append this delta to the last tool invocation stream's partial JSON buffer
+// that will eventually become the full `args` value when JSON.parse()'ed.
 export type AiToolInvocationDelta = {
   type: "tool-delta";
   /**
@@ -418,7 +423,7 @@ export type AiAssistantDeltaUpdate =
   | AiReasoningDelta // a delta appended to the last part (if reasoning)
   | AiExecutingToolInvocationPart // a tool invocation ready to be executed by the client
 
-  // Since protocol v5, if tool-call-streaming is enabled
+  // Since protocol V5, if tool-call-streaming is enabled
   | AiToolInvocationStreamStart // the start of a new tool-call stream
   | AiToolInvocationDelta; // a partial/under-construction tool invocation (since protocol V5)
 
@@ -510,7 +515,7 @@ export type AiKnowledgeSource = {
 /**
  * Polyfill for Array.prototype.findLastIndex()
  */
-function findLastIndex<T>(
+export function findLastIndex<T>(
   arr: T[],
   predicate: (value: T, index: number, obj: T[]) => boolean
 ): number {
