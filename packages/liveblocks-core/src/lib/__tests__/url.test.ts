@@ -27,6 +27,11 @@ describe("sanitizeUrl", () => {
     );
   });
 
+  test("should support hash-only URLs", () => {
+    expect(sanitizeUrl("#")).toBe("#");
+    expect(sanitizeUrl("#hash")).toBe("#hash");
+  });
+
   test("should support ports, query params, and a hash", () => {
     expect(sanitizeUrl("https://localhost:3000/docs?query=value#hash")).toBe(
       "https://localhost:3000/docs?query=value#hash"
@@ -71,7 +76,6 @@ describe("sanitizeUrl", () => {
     expect(sanitizeUrl("file:///etc/passwd")).toBe(null);
     expect(sanitizeUrl("//liveblocks.io")).toBe(null);
     expect(sanitizeUrl("")).toBe(null);
-    expect(sanitizeUrl("#")).toBe(null);
   });
 });
 
