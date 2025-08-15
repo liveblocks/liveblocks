@@ -87,9 +87,10 @@ export function AiMessageToolInvocation({
       types: undefined as never,
       [kInternal]: {
         execute: tool?.execute,
+        messageStatus: message.status,
       },
     };
-  }, [part, respond, tool?.execute]);
+  }, [part, respond, tool?.execute, message.status]);
 
   if (tool?.render === undefined) return null;
   return (

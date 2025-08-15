@@ -28,6 +28,7 @@ import type {
 import type {
   AbortAiResponse,
   AiAssistantDeltaUpdate,
+  AiAssistantMessage,
   AiChat,
   AiChatMessage,
   AiChatsQuery,
@@ -120,6 +121,7 @@ export type AiToolInvocationProps<
     // Private APIs
     [kInternal]: {
       execute: AiToolExecuteCallback<A, R> | undefined;
+      messageStatus: AiAssistantMessage["status"];
     };
   }
 >;
