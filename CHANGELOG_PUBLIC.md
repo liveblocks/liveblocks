@@ -55,6 +55,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 ## Documentation
 
 - More info on styling AI chat components.
+- Disambiguate semantics for `LiveList.delete()`.
 
 ## Contributors
 
