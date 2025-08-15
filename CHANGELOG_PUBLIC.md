@@ -52,6 +52,10 @@ list and feel free to give them credit at the end of a line, e.g.:
   token limit got exceeded during the response generation. If this now happens,
   the response will indicate a clear error to the user.
 
+## Dashboard
+
+- New knowledge prompt option when configuring AI copilots, allowing you to customize when back-end knowledge is fetched.
+
 ## Documentation
 
 - More info on styling AI chat components.
@@ -59,7 +63,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 ## Contributors
 
-marcbouchenoire, ctnicholas, nvie
+marcbouchenoire, ctnicholas, nvie, jrowny, nimeshnayaju
 
 # Week 32 (2025-08-08)
 
