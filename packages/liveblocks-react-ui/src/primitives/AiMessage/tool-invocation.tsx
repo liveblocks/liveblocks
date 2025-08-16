@@ -79,7 +79,15 @@ export function AiMessageToolInvocation({
     ]
   );
 
+  const partialArgs = part?.partialArgs;
   const props = useMemo(() => {
+    // NOTE: Not really used, but necessary to trick useMemo into re-evaluating
+    // when it changes. Without this trick, tool call streaming won't
+    // re-render. The reason this is needed is that `part` gets mutated
+    // in-place by the delta handling, rather than part being replaced by a new
+    // object on every chunk.
+    partialArgs;
+
     const { type: _, ...rest } = part;
     return {
       ...rest,
@@ -87,9 +95,10 @@ export function AiMessageToolInvocation({
       types: undefined as never,
       [kInternal]: {
         execute: tool?.execute,
+        messageStatus: message.status,
       },
     };
-  }, [part, respond, tool?.execute]);
+  }, [part, respond, tool?.execute, message.status, partialArgs]);
 
   if (tool?.render === undefined) return null;
   return (

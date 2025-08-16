@@ -9,7 +9,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { AiChat, AiTool } from "@liveblocks/react-ui";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Popover } from "radix-ui";
 
 function DarkModeToggle() {
@@ -24,8 +24,16 @@ function DarkModeToggle() {
     setMode(mode === "dark" ? "light" : "dark");
   }, [mode]);
 
+  useEffect(() => {
+    if (mode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [mode]);
+
   return (
-    <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
+    <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1 dark:border-neutral-700">
       <label>
         <input
           data-testid="expose-dark-mode-checkbox"
@@ -94,7 +102,7 @@ function MyNickName() {
       {enabled ? (
         <RegisterAiKnowledge description="My internet nick name" value="nvie" />
       ) : null}
-      <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1">
+      <div className="flex flex-col mx-auto px-4 max-w-4xl py-8 border-b-1 dark:border-neutral-700">
         <label>
           <input
             data-testid="share-nickname-checkbox"
@@ -164,7 +172,7 @@ function TodoApp() {
             setValue("");
           }
         }}
-        className="shadow-[0_0_0_1px_rgb(0_0_0_/_4%),_0_2px_6px_rgb(0_0_0_/_4%),_0_8px_26px_rgb(0_0_0_/_6%)] rounded-lg p-3 w-full border-0 mb-4"
+        className="shadow-[0_0_0_1px_rgb(0_0_0_/_4%),_0_2px_6px_rgb(0_0_0_/_4%),_0_8px_26px_rgb(0_0_0_/_6%)] dark:shadow-[0_0_0_1px_rgb(255_255_255_/_10%),_0_2px_6px_rgb(0_0_0_/_20%),_0_8px_26px_rgb(0_0_0_/_30%)] rounded-lg p-3 w-full border-0 mb-4 dark:bg-neutral-800 dark:text-neutral-100"
       />
 
       {todos.length > 0 && (
@@ -173,7 +181,7 @@ function TodoApp() {
             return (
               <li
                 key={index}
-                className={`flex space-between items-center ${todo.isCompleted ? "line-through opacity-50" : "opacity-100"}`}
+                className={`flex space-between items-center cursor-pointer p-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 ${todo.isCompleted ? "line-through opacity-50" : "opacity-100"}`}
                 onClick={() => {
                   setTodos((todos) =>
                     todos.map((t) => {
@@ -234,14 +242,14 @@ export default function Page() {
         <MyNickName />
         <DarkModeToggle />
 
-        <div className="flex flex-col px-4 max-w-4xl py-8 border-b-1">
+        <div className="flex flex-col px-4 max-w-4xl py-8 border-b-1 dark:border-neutral-700">
           <div className="flex gap-4 mx-auto">
             <button
               data-testid="tab-todo-app"
               className={
                 selectedTab === 1
-                  ? "cursor-pointer font-bold"
-                  : "cursor-pointer"
+                  ? "cursor-pointer font-bold dark:text-neutral-100"
+                  : "cursor-pointer dark:text-neutral-300"
               }
               onClick={() => setSelectedTab(1)}
             >
@@ -251,8 +259,8 @@ export default function Page() {
               data-testid="tab-another-app"
               className={
                 selectedTab === 2
-                  ? "cursor-pointer font-bold"
-                  : "cursor-pointer"
+                  ? "cursor-pointer font-bold dark:text-neutral-100"
+                  : "cursor-pointer dark:text-neutral-300"
               }
               onClick={() => setSelectedTab(2)}
             >
@@ -262,8 +270,8 @@ export default function Page() {
               data-testid="tab-both"
               className={
                 selectedTab === 3
-                  ? "cursor-pointer font-bold"
-                  : "cursor-pointer"
+                  ? "cursor-pointer font-bold dark:text-neutral-100"
+                  : "cursor-pointer dark:text-neutral-300"
               }
               onClick={() => setSelectedTab(3)}
             >

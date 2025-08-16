@@ -337,7 +337,7 @@ export const AiTool = Object.assign(
         stage,
         result,
         name,
-        [kInternal]: { execute },
+        [kInternal]: { execute, messageStatus },
       } = useAiToolInvocationContext();
       const [semiControlledCollapsed, onSemiControlledCollapsed] =
         useSemiControllableState(collapsed ?? false, onCollapsedChange);
@@ -397,8 +397,10 @@ export const AiTool = Object.assign(
                 ) : result.type === "cancelled" ? (
                   <MinusCircleIcon />
                 ) : null
-              ) : execute !== undefined ? (
-                // Only show a spinner if the tool has an `execute` method.
+              ) : execute !== undefined &&
+                (stage !== "receiving" || messageStatus === "generating") ? (
+                // Only show a spinner if the tool has an `execute` method and
+                // either the tool is not in "receiving" state or the message is still "generating"
                 <SpinnerIcon />
               ) : null}
             </div>
