@@ -2872,7 +2872,7 @@
   color: var(--lb-foreground-moderate);
 }
 
-.lb-ai-tool:where(.lb-ai-tool\:variant-outline) {
+.lb-ai-tool:where(.lb-ai-tool\:variant-block) {
   border-radius: var(--lb-radius);
   box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
 

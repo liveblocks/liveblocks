@@ -51,7 +51,7 @@ export interface AiToolProps
   /**
    * The visual appearance of the tool.
    */
-  variant?: "outline" | "minimal";
+  variant?: "block" | "minimal";
 
   /**
    * Whether the content is currently collapsed.
@@ -333,7 +333,7 @@ export const AiTool = Object.assign(
         collapsible,
         collapsed,
         onCollapsedChange,
-        variant = "outline",
+        variant = "block",
         className,
         ...props
       },
