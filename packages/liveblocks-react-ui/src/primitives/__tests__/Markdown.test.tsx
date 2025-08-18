@@ -253,6 +253,23 @@ describe("Markdown", () => {
           );
         }
       );
+
+      assert(
+        `
+        This is inline \`code without **bold**, _italic_, ~~strikethrough~~, or [links](https://www.liveblocks.io)\`.
+      `,
+        (root) => {
+          const code = root.querySelector("code");
+
+          expect(code).toHaveTextContent(
+            "code without **bold**, _italic_, ~~strikethrough~~, or [links](https://www.liveblocks.io)"
+          );
+          expect(code?.querySelector("strong")).not.toBeInTheDocument();
+          expect(code?.querySelector("em")).not.toBeInTheDocument();
+          expect(code?.querySelector("del")).not.toBeInTheDocument();
+          expect(code?.querySelector("a")).not.toBeInTheDocument();
+        }
+      );
     });
 
     test("ordered lists", () => {
@@ -1172,20 +1189,6 @@ describe("Markdown", () => {
         }
       );
 
-      // Links can't be inside inline code.
-      assert(
-        `
-        This isn't a \`code [link
-      `,
-        (root) => {
-          const code = root.querySelector("code");
-          const link = code?.querySelector("a");
-
-          expect(code).toHaveTextContent("code [link");
-          expect(link).not.toBeInTheDocument();
-        }
-      );
-
       assert(
         `
         This is a [link with \`code
@@ -1213,6 +1216,58 @@ describe("Markdown", () => {
           expect(link).toHaveAttribute("href", "#");
           expect(strong).toHaveTextContent("bold code");
           expect(code).toHaveTextContent("code");
+        }
+      );
+
+      assert(
+        `
+        This isn't a \`code **bold
+      `,
+        (root) => {
+          const code = root.querySelector("code");
+          const strong = code?.querySelector("strong");
+
+          expect(code).toHaveTextContent("code **bold");
+          expect(strong).not.toBeInTheDocument();
+        }
+      );
+
+      assert(
+        `
+        This isn't a \`code _italic
+      `,
+        (root) => {
+          const code = root.querySelector("code");
+          const em = code?.querySelector("em");
+
+          expect(code).toHaveTextContent("code _italic");
+          expect(em).not.toBeInTheDocument();
+        }
+      );
+
+      assert(
+        `
+        This isn't a \`code ~~strikethrough
+      `,
+        (root) => {
+          const code = root.querySelector("code");
+          const del = code?.querySelector("del");
+
+          expect(code).toHaveTextContent("code ~~strikethrough");
+          expect(del).not.toBeInTheDocument();
+        }
+      );
+
+      assert(
+        `
+        This isn't a \`code [link
+      `,
+        (root) => {
+          const code = root.querySelector("code");
+          const link = code?.querySelector("a");
+
+          expect(code).toHaveTextContent("code [link");
+          expect(link).not.toBeInTheDocument();
         }
       );
     });

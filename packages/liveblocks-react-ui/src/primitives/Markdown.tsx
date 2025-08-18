@@ -1034,6 +1034,15 @@ function completePartialInlineMarkdown(
         lastDelimiter?.string === matchedDelimiter &&
         i > lastDelimiter.index + matchedDelimiter.length - 1;
 
+      const isInsideInlineCode = stack.some(
+        (delimiter) => delimiter.string === "`"
+      );
+
+      if (isInsideInlineCode && matchedDelimiter !== "`") {
+        i += matchedDelimiter.length - 1;
+        continue;
+      }
+
       // If the delimiter is not closing any previous delimiter
       // and it's at the end of the string, we can remove it from the string.
       if (
@@ -1080,12 +1089,12 @@ function completePartialInlineMarkdown(
       const linkImageEndIndex =
         linkImageStartIndex + partialLinkImageMatch[0].length;
 
-      const isInsideInlineCodeBeforeLinkImage = stack.some(
+      const isInsideInlineCode = stack.some(
         (delimiter) =>
           delimiter.string === "`" && delimiter.index < linkImageStartIndex
       );
 
-      if (!isInsideInlineCodeBeforeLinkImage) {
+      if (!isInsideInlineCode) {
         const partialLinkImageContent = partialLinkImageMatch[0];
         const {
           text: partialLinkText,
