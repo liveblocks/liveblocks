@@ -29,8 +29,6 @@ const NEWLINE_REGEX = /\r\n?/g;
 const BUFFERED_CHARACTERS_REGEX =
   /(?<!\\)((\*+|_+|~+|`+|\++|-{0,2}|={0,2}|\\|!|<\/?)\s*)$/;
 const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
-
-const FORMATTING_DELIMITERS = ["**", "__", "~~", "*", "_", "~", "`"];
 const DEFAULT_PARTIAL_LINK_URL = "#";
 
 type CheckboxToken = {
@@ -1016,67 +1014,76 @@ function completePartialInlineMarkdown(
 
   // Move forward through the string to collect delimiters.
   for (let i = 0; i < completedMarkdown.length; i++) {
+    const character = markdown[i]!;
+    const isEscaped = i > 0 ? markdown[i - 1] === "\\" : false;
+
+    if (isEscaped) {
+      continue;
+    }
+
     let matchedDelimiter: string | null = null;
 
-    for (const delimiter of FORMATTING_DELIMITERS) {
-      if (
-        markdown.startsWith(delimiter, i) &&
-        (i > 0 ? markdown[i - 1] !== "\\" : true)
-      ) {
-        matchedDelimiter = delimiter;
-        break;
-      }
+    if (character === "`") {
+      matchedDelimiter = "`";
     }
 
-    if (matchedDelimiter) {
-      const lastDelimiter = stack[stack.length - 1];
-      const isClosingPreviousDelimiter =
-        lastDelimiter?.string === matchedDelimiter &&
-        i > lastDelimiter.index + matchedDelimiter.length - 1;
-
-      const isInsideInlineCode = stack.some(
-        (delimiter) => delimiter.string === "`"
-      );
-
-      if (isInsideInlineCode && matchedDelimiter !== "`") {
-        i += matchedDelimiter.length - 1;
-        continue;
-      }
-
-      // If the delimiter is not closing any previous delimiter
-      // and it's at the end of the string, we can remove it from the string.
-      if (
-        !isClosingPreviousDelimiter &&
-        i + matchedDelimiter.length >= markdown.length
-      ) {
-        completedMarkdown = completedMarkdown.slice(0, i);
-        break;
-      }
-
-      if (isClosingPreviousDelimiter) {
-        // If the delimiter is closing a previous delimiter,
-        // we remove it from the stack.
-        stack.pop();
+    if (character === "*" || character === "_" || character === "~") {
+      if (markdown.startsWith(character + character, i)) {
+        matchedDelimiter = character + character;
       } else {
-        const characterAfterDelimiter =
-          completedMarkdown[i + matchedDelimiter.length];
-
-        // If the delimiter is opening and is followed by a
-        // non-whitespace character, we add it to the stack.
-        if (
-          characterAfterDelimiter &&
-          !WHITESPACE_REGEX.test(characterAfterDelimiter)
-        ) {
-          stack.push({
-            string: matchedDelimiter,
-            length: matchedDelimiter.length,
-            index: i,
-          });
-        }
+        matchedDelimiter = character;
       }
-
-      i += matchedDelimiter.length - 1;
     }
+
+    if (!matchedDelimiter) {
+      continue;
+    }
+
+    const lastDelimiter = stack[stack.length - 1];
+    const isClosingPreviousDelimiter =
+      lastDelimiter?.string === matchedDelimiter &&
+      i > lastDelimiter.index + matchedDelimiter.length - 1;
+
+    const isInsideInlineCode = stack[stack.length - 1]?.string === "`";
+
+    if (isInsideInlineCode && matchedDelimiter !== "`") {
+      i += matchedDelimiter.length - 1;
+      continue;
+    }
+
+    // If the delimiter is not closing any previous delimiter
+    // and it's at the end of the string, we can remove it from the string.
+    if (
+      !isClosingPreviousDelimiter &&
+      i + matchedDelimiter.length >= markdown.length
+    ) {
+      completedMarkdown = completedMarkdown.slice(0, i);
+      break;
+    }
+
+    if (isClosingPreviousDelimiter) {
+      // If the delimiter is closing a previous delimiter,
+      // we remove it from the stack.
+      stack.pop();
+    } else {
+      const characterAfterDelimiter =
+        completedMarkdown[i + matchedDelimiter.length];
+
+      // If the delimiter is opening and is followed by a
+      // non-whitespace character, we add it to the stack.
+      if (
+        characterAfterDelimiter &&
+        !WHITESPACE_REGEX.test(characterAfterDelimiter)
+      ) {
+        stack.push({
+          string: matchedDelimiter,
+          length: matchedDelimiter.length,
+          index: i,
+        });
+      }
+    }
+
+    i += matchedDelimiter.length - 1;
   }
 
   if (allowLinksImages) {
