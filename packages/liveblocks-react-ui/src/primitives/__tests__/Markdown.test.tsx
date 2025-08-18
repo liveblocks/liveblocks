@@ -177,6 +177,52 @@ describe("Markdown", () => {
       );
     });
 
+    test("nested inline elements", () => {
+      assert(
+        dedent`
+        This is **bold _italic \`code\`_**, a **bold [link](https://www.liveblocks.io)**, and [one with **bold \`code\`**](#docs "With a title").
+      `,
+        (element) => {
+          const firstInlineElement = element.querySelector(
+            "strong:nth-child(1)"
+          );
+
+          expect(firstInlineElement).toHaveTextContent("bold italic code");
+          expect(firstInlineElement?.querySelector("em")).toHaveTextContent(
+            "italic code"
+          );
+          expect(firstInlineElement?.querySelector("code")).toHaveTextContent(
+            "code"
+          );
+
+          const secondInlineElement = element.querySelector(
+            "strong:nth-child(2)"
+          );
+
+          expect(secondInlineElement).toHaveTextContent("bold link");
+          expect(secondInlineElement?.querySelector("a")).toHaveTextContent(
+            "link"
+          );
+          expect(secondInlineElement?.querySelector("a")).toHaveAttribute(
+            "href",
+            "https://www.liveblocks.io"
+          );
+
+          const thirdInlineElement = element.querySelector(
+            "a[title='With a title']"
+          );
+          expect(thirdInlineElement).toHaveTextContent("one with bold code");
+          expect(thirdInlineElement).toHaveAttribute("href", "#docs");
+          expect(thirdInlineElement?.querySelector("strong")).toHaveTextContent(
+            "bold code"
+          );
+          expect(thirdInlineElement?.querySelector("code")).toHaveTextContent(
+            "code"
+          );
+        }
+      );
+    });
+
     test("ordered lists", () => {
       assert(
         `
