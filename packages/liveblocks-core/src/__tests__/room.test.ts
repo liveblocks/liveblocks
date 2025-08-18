@@ -1,3 +1,13 @@
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from "vitest";
+
 import { createApiClient } from "../api-client";
 import { type AuthValue, createAuthManager } from "../auth-manager";
 import { StopRetrying } from "../connection";
@@ -139,10 +149,10 @@ function createTestableRoom<
 }
 
 describe("room / auth", () => {
-  let consoleErrorSpy: jest.SpyInstance;
+  let consoleErrorSpy: MockInstance;
 
   beforeEach(() => {
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -570,29 +580,29 @@ describe("room", () => {
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const now = Date.now();
 
       // Forward the system clock by 30 millis
-      jest.setSystemTime(now + 30);
+      vi.setSystemTime(now + 30);
       room.updatePresence({ x: 1 });
-      jest.setSystemTime(now + 35);
+      vi.setSystemTime(now + 35);
       room.updatePresence({ x: 2 }); // These calls should get batched and flushed later
 
-      await jest.advanceTimersByTimeAsync(0);
+      await vi.advanceTimersByTimeAsync(0);
       expect(wss.receivedMessages.length).toBe(1); // Still no new data received
       expect(room[kInternal].presenceBuffer).toEqual({ x: 2 });
 
       // Forwarding time by the flush threshold will trigger the future flush
-      await jest.advanceTimersByTimeAsync(THROTTLE_DELAY);
+      await vi.advanceTimersByTimeAsync(THROTTLE_DELAY);
 
       expect(wss.receivedMessages.length).toBe(2);
       expect(wss.receivedMessages[1]).toEqual([
         { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 2 } },
       ]);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
@@ -888,19 +898,19 @@ describe("room", () => {
       ]);
 
       const now = Date.now();
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
         // Event payload can be any JSON value
-        jest.setSystemTime(now + 1000);
+        vi.setSystemTime(now + 1000);
         room.broadcastEvent({ type: "EVENT" });
-        jest.setSystemTime(now + 2000);
+        vi.setSystemTime(now + 2000);
         room.broadcastEvent([1, 2, 3]);
-        jest.setSystemTime(now + 3000);
+        vi.setSystemTime(now + 3000);
         room.broadcastEvent(42);
-        jest.setSystemTime(now + 4000);
+        vi.setSystemTime(now + 4000);
         room.broadcastEvent("hi");
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
 
       expect(wss.receivedMessages[1]).toEqual([
@@ -1349,7 +1359,7 @@ describe("room", () => {
     test("batch my-presence", () => {
       const { room } = createTestableRoom({});
 
-      const callback = jest.fn();
+      const callback = vi.fn();
 
       room.events.myPresence.subscribe(callback);
 
@@ -1378,8 +1388,8 @@ describe("room", () => {
 
       const storage = await room.getStorage();
 
-      const presenceSubscriber = jest.fn();
-      const storageRootSubscriber = jest.fn();
+      const presenceSubscriber = vi.fn();
+      const storageRootSubscriber = vi.fn();
       room.subscribe("my-presence", presenceSubscriber);
       room.subscribe(storage.root, storageRootSubscriber);
 
@@ -1565,7 +1575,7 @@ describe("room", () => {
     test("batch history", () => {
       const { room } = createTestableRoom({});
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.history.subscribe(callback);
 
       room.batch(() => {
@@ -1580,7 +1590,7 @@ describe("room", () => {
     test("my-presence", () => {
       const { room } = createTestableRoom({});
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       const unsubscribe = room.events.myPresence.subscribe(callback);
 
       room.updatePresence({ x: 0 });
@@ -1696,7 +1706,7 @@ describe("room", () => {
         );
       });
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.customEvent.subscribe(callback);
 
       await waitUntilCustomEvent(room);
@@ -1746,7 +1756,7 @@ describe("room", () => {
         );
       });
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.customEvent.subscribe(callback);
 
       await waitUntilCustomEvent(room);
@@ -1763,7 +1773,7 @@ describe("room", () => {
     test("history", () => {
       const { room } = createTestableRoom({});
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       const unsubscribe = room.events.history.subscribe(callback);
 
       room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -1954,7 +1964,7 @@ describe("room", () => {
 
       expect(room.getStorageStatus()).toBe("synchronized");
 
-      const storageStatusCallback = jest.fn();
+      const storageStatusCallback = vi.fn();
 
       room.events.storageStatus.subscribe(storageStatusCallback);
 
@@ -1991,10 +2001,10 @@ describe("room", () => {
   });
 
   describe("reconnect", () => {
-    let consoleWarnSpy: jest.SpyInstance;
+    let consoleWarnSpy: any;
 
     beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+      consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -2017,19 +2027,19 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 1006). Retrying in 250ms."
         );
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a short backoff delay
-        await jest.advanceTimersByTimeAsync(250);
+        await vi.advanceTimersByTimeAsync(250);
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2051,21 +2061,21 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "connected");
-        await jest.advanceTimersByTimeAsync(1111);
+        await vi.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
         );
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a short backoff delay
-        await jest.advanceTimersByTimeAsync(250);
+        await vi.advanceTimersByTimeAsync(250);
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2088,15 +2098,15 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "disconnected");
         expect(wss.connections.size).toBe(1);
         expect(err.message).toEqual("whatever");
         expect(err.context.code).toEqual(4042);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2122,18 +2132,18 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "connected");
-        await jest.advanceTimersByTimeAsync(1111);
+        await vi.advanceTimersByTimeAsync(1111);
 
         await waitUntilStatus(room, "disconnected");
         expect(wss.connections.size).toBe(1);
         expect(err.message).toEqual("whatever");
         expect(err.context.code).toEqual(4042);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2152,9 +2162,9 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 1013). Retrying in 2000ms."
         );
@@ -2162,12 +2172,12 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a longer backoff delay
-        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2189,23 +2199,23 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "connected");
-        await jest.advanceTimersByTimeAsync(1111);
+        await vi.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 1013). Retrying in 2000ms."
         );
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a LONG backoff delay
-        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2224,9 +2234,9 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 4142). Retrying in 250ms."
         );
@@ -2234,10 +2244,10 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a normal backoff delay
-        await jest.advanceTimersByTimeAsync(250);
+        await vi.advanceTimersByTimeAsync(250);
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2259,21 +2269,21 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "connected");
-        await jest.advanceTimersByTimeAsync(1111);
+        await vi.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 4142). Retrying in 250ms."
         );
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a normal backoff delay
-        await jest.advanceTimersByTimeAsync(250);
+        await vi.advanceTimersByTimeAsync(250);
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2292,12 +2302,12 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         expect(wss.connections.size).toBe(2); // Instantly gets a new token, no backoff
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2319,16 +2329,16 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "connected");
-        await jest.advanceTimersByTimeAsync(1111);
+        await vi.advanceTimersByTimeAsync(1111);
 
         // Instantly gets a new token (no backoff)
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2347,9 +2357,9 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed prematurely (code: 4242). Retrying in 2000ms."
         );
@@ -2357,12 +2367,12 @@ describe("room", () => {
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a longer backoff delay
-        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
+        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
@@ -2384,28 +2394,28 @@ describe("room", () => {
 
       await waitUntilStatus(room, "connecting");
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
-        await jest.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
         await waitUntilStatus(room, "connected");
-        await jest.advanceTimersByTimeAsync(1111);
+        await vi.advanceTimersByTimeAsync(1111);
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           "Connection to Liveblocks websocket server closed (code: 4242). Retrying in 2000ms."
         );
         expect(wss.connections.size).toBe(1);
 
         // A new connection attempt will be made after a LONG backoff delay
-        await jest.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
+        await vi.advanceTimersByTimeAsync(500); // Waiting our normal short delay isn't enough here...
         expect(wss.connections.size).toBe(1);
-        await jest.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
+        await vi.advanceTimersByTimeAsync(1500); // Wait an additional 1500 seconds (for a total of 2000ms)
         expect(wss.connections.size).toBe(2);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     test("manual reconnection", async () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       try {
         const { room, wss } = createTestableRoom(
           { x: 0 },
@@ -2416,7 +2426,7 @@ describe("room", () => {
 
         room.connect();
         expect(room.getStatus()).toEqual("connecting");
-        await jest.advanceTimersByTimeAsync(0); // Resolve the auth promise, which will then start the socket connection
+        await vi.advanceTimersByTimeAsync(0); // Resolve the auth promise, which will then start the socket connection
 
         const ws1 = wss.last;
         ws1.accept();
@@ -2434,9 +2444,9 @@ describe("room", () => {
 
         room.reconnect();
         expect(room.getStatus()).toEqual("connecting");
-        await jest.advanceTimersByTimeAsync(0); // There's a backoff delay here!
+        await vi.advanceTimersByTimeAsync(0); // There's a backoff delay here!
         expect(room.getStatus()).toEqual("connecting");
-        await jest.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
+        await vi.advanceTimersByTimeAsync(500); // Wait for the increased backoff delay!
         expect(room.getStatus()).toEqual("connecting");
 
         const ws2 = wss.last;
@@ -2457,7 +2467,7 @@ describe("room", () => {
         await waitUntilStatus(room, "connected");
         expect(room.getStatus()).toEqual("connected");
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
   });

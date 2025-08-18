@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { AiChatDB } from "../../AiChatDB";
 import type { AiChat, ISODateString } from "../../types/ai";
 

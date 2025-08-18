@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
 import { transformAsLiveblocksTextEditorNodes } from "../liveblocks-text-editor";
 import { generateInboxNotificationId } from "./_helpers";
@@ -6,7 +8,7 @@ import { createTipTapMentionNodeWithContext } from "./_tiptap-helpers";
 
 describe("liveblocks text editor", () => {
   describe("transform serialized nodes into Liveblocks Text Editor nodes", () => {
-    it("should transform lexical nodes", () => {
+    test("should transform lexical nodes", () => {
       const mentionId = generateInboxNotificationId();
       const userId = "user-mina";
 
@@ -47,7 +49,7 @@ describe("liveblocks text editor", () => {
       expect(nodes).toEqual(expected);
     });
 
-    it("should transform tiptap nodes", () => {
+    test("should transform tiptap nodes", () => {
       const mentionId = generateInboxNotificationId();
       const userId = "user-dracula";
 

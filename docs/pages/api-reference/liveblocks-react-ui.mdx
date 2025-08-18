@@ -380,6 +380,30 @@ function Chat() {
 }
 ```
 
+##### Customize CSS variables and classes [#AiChat-variables-and-classes]
+
+You can customize the default styles of the chat by modifying CSS variables and
+classes prefixed with `lb`. Here are some examples.
+
+```css
+/* Lowers spacing and shrinks font size */
+.lb-ai-chat {
+  --lb-spacing: 0.6em;
+  font-size: 14px;
+}
+
+/* Removes composer shadow and adds border */
+.lb-ai-chat-composer {
+  box-shadow: 0;
+  border: 1px solid #f0f0f0;
+}
+
+/* Removes padding below the composer */
+.lb-ai-chat-footer {
+  padding-bottom: 0;
+}
+```
+
 ##### Customize how Markdown is rendered [#AiChat-markdown]
 
 You can customize how Markdown is rendered in messages by passing components to

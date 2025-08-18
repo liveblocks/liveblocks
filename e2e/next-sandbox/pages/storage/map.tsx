@@ -17,9 +17,10 @@ const {
   RoomProvider,
   useCanRedo,
   useCanUndo,
-  useStorage,
   useMutation,
   useRedo,
+  useStorage,
+  useSyncStatus,
   useUndo,
 } = createRoomContext<never, { map: LiveMap<string, string> }>(client);
 
@@ -42,6 +43,7 @@ function Sandbox() {
   const redo = useRedo();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
+  const syncStatus = useSyncStatus();
   const map = useStorage((root) => root.map);
 
   const set_ = useMutation(({ storage }, key: string, value: string) => {
@@ -113,6 +115,11 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row
+            id="syncStatus"
+            name="Sync status (immediate)"
+            value={syncStatus}
+          />
           <Row id="mapSize" name="Map size" value={map.size} />
           <Row id="map" name="Serialized" value={Object.fromEntries(map)} />
         </tbody>

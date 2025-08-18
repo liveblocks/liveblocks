@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { Liveblocks } from "../client";
 
 const P1 = "room:read";

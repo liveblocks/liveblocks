@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { expect, test, vi } from "vitest";
 
 import { shallow } from "../../../lib/shallow";
 import { batch, Signal } from "../../signals";
@@ -32,8 +33,8 @@ test("with custom equals function", () => {
   }
 });
 
-it("signals only notify watchers when their value changes", () => {
-  const fn = jest.fn();
+test("signals only notify watchers when their value changes", () => {
+  const fn = vi.fn();
 
   const counter = new Signal(0);
 
@@ -52,8 +53,8 @@ it("signals only notify watchers when their value changes", () => {
   unsub();
 });
 
-it("without batching three signal updates will lead to three notifications", () => {
-  const fn = jest.fn();
+test("without batching three signal updates will lead to three notifications", () => {
+  const fn = vi.fn();
   const x = new Signal(1);
 
   const unsub = x.subscribe(fn);
@@ -71,8 +72,8 @@ it("without batching three signal updates will lead to three notifications", () 
   unsub();
 });
 
-it("batched signal updates notify only once", () => {
-  const fn = jest.fn();
+test("batched signal updates notify only once", () => {
+  const fn = vi.fn();
   const x = new Signal(1);
 
   const unsub = x.subscribe(fn);

@@ -132,9 +132,11 @@ test.describe("Zustand", () => {
         await nanoSleep();
       }
 
+      await waitForJson(pages, "#syncStatus", "synchronized");
       await waitUntilEqualOnAllPages(pages, "#items");
 
       await page1.click("#clear");
+      await waitForJson(pages, "#syncStatus", "synchronized");
       await waitForJson(pages, "#numItems", 0);
     };
   }
@@ -142,20 +144,12 @@ test.describe("Zustand", () => {
   test("fuzzy [push]", fuzzyTest(["#push"]));
   test("fuzzy [push, delete]", fuzzyTest(["#push", "#delete"]));
 
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip("fuzzy [push, undo]", fuzzyTest(["#push", "#undo"]));
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip("fuzzy [delete, undo]", fuzzyTest(["#delete", "#undo"]));
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip("fuzzy [push, undo, redo]", fuzzyTest(["#push", "#undo", "#redo"]));
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip(
-    "fuzzy [delete, undo, redo]",
-    fuzzyTest(["#delete", "#undo", "#redo"])
-  );
+  test("fuzzy [push, undo]", fuzzyTest(["#push", "#undo"]));
+  test("fuzzy [delete, undo]", fuzzyTest(["#delete", "#undo"]));
+  test("fuzzy [push, undo, redo]", fuzzyTest(["#push", "#undo", "#redo"]));
+  test("fuzzy [delete, undo, redo]", fuzzyTest(["#delete", "#undo", "#redo"]));
 
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip(
+  test(
     "fuzzy [push, delete, undo, redo]",
     fuzzyTest(["#push", "#delete", "#undo", "#redo"])
   );

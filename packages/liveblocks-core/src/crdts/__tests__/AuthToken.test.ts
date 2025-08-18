@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { parseAuthToken } from "../../protocol/AuthToken";
 
 describe("parseRoomAuthToken", () => {

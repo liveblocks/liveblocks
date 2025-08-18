@@ -52,10 +52,6 @@ export type JsonLiveMapUpdate<TKey extends string, TValue extends Lson> = {
   updates: { [key: string]: UpdateDelta };
 };
 
-it("Always passes", () => {
-  /* This bogus test just makes Jest less naggy about this module missing any tests */
-});
-
 export function liveListUpdateToJson<TItem extends Lson>(
   update: LiveListUpdates<TItem>
 ): JsonLiveListUpdate<TItem> {
