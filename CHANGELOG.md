@@ -2,6 +2,10 @@
 
 ## v3.4.0
 
+### `@liveblocks/react-ui`
+
+- Add a minimal appearance to `AiTool` via a new `variant` prop.
+
 ## v3.3.4
 
 ### `@liveblocks/client`
