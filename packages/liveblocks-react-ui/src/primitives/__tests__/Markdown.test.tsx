@@ -14,10 +14,10 @@ describe("Markdown", () => {
       <Markdown data-testid="markdown" content="This is a" />
     );
 
-    const element = getByTestId("markdown");
+    const root = getByTestId("markdown");
 
-    expect(element).toHaveTextContent("This is a");
-    expect(element.querySelector("a")).not.toBeInTheDocument();
+    expect(root).toHaveTextContent("This is a");
+    expect(root.querySelector("a")).not.toBeInTheDocument();
 
     rerender(
       <Markdown
@@ -26,8 +26,8 @@ describe("Markdown", () => {
       />
     );
 
-    expect(element).toHaveTextContent("This is a link.");
-    expect(element.querySelector("a")).toHaveAttribute(
+    expect(root).toHaveTextContent("This is a link.");
+    expect(root.querySelector("a")).toHaveAttribute(
       "href",
       "https://liveblocks.io"
     );
@@ -40,8 +40,8 @@ describe("Markdown", () => {
         <Markdown data-testid="markdown" />
       );
 
-      const element = getByTestId("markdown");
-      expect(element.innerHTML).toBe("");
+      const root = getByTestId("markdown");
+      expect(root.innerHTML).toBe("");
 
       unmount();
     }
@@ -51,8 +51,8 @@ describe("Markdown", () => {
         <Markdown data-testid="markdown" content="" />
       );
 
-      const element = getByTestId("markdown");
-      expect(element.innerHTML).toBe("");
+      const root = getByTestId("markdown");
+      expect(root.innerHTML).toBe("");
 
       unmount();
     }
@@ -62,8 +62,8 @@ describe("Markdown", () => {
         <Markdown data-testid="markdown" content={"   \n\t  "} />
       );
 
-      const element = getByTestId("markdown");
-      expect(element.innerHTML).toBe("");
+      const root = getByTestId("markdown");
+      expect(root.innerHTML).toBe("");
 
       unmount();
     }
@@ -215,13 +215,11 @@ describe("Markdown", () => {
 
     test("nested inline elements", () => {
       assert(
-        dedent`
+        `
         This is **bold _italic \`code\`_**, a **bold [link](https://www.liveblocks.io)**, and [one with **bold \`code\`**](#docs "With a title").
       `,
-        (element) => {
-          const firstInlineElement = element.querySelector(
-            "strong:nth-child(1)"
-          );
+        (root) => {
+          const firstInlineElement = root.querySelector("strong:nth-child(1)");
 
           expect(firstInlineElement).toHaveTextContent("bold italic code");
           expect(firstInlineElement?.querySelector("em")).toHaveTextContent(
@@ -231,9 +229,7 @@ describe("Markdown", () => {
             "code"
           );
 
-          const secondInlineElement = element.querySelector(
-            "strong:nth-child(2)"
-          );
+          const secondInlineElement = root.querySelector("strong:nth-child(2)");
 
           expect(secondInlineElement).toHaveTextContent("bold link");
           expect(secondInlineElement?.querySelector("a")).toHaveTextContent(
@@ -244,7 +240,7 @@ describe("Markdown", () => {
             "https://www.liveblocks.io"
           );
 
-          const thirdInlineElement = element.querySelector(
+          const thirdInlineElement = root.querySelector(
             "a[title='With a title']"
           );
           expect(thirdInlineElement).toHaveTextContent("one with bold code");
@@ -777,7 +773,7 @@ describe("Markdown", () => {
   describe("should handle partial…", () => {
     function assert(content: string, assertions: (root: HTMLElement) => void) {
       const { getByTestId, unmount } = render(
-        <Markdown data-testid="markdown" content={content} partial />
+        <Markdown data-testid="markdown" content={dedent(content)} partial />
       );
 
       assertions(getByTestId("markdown"));
@@ -786,87 +782,87 @@ describe("Markdown", () => {
 
     test("headings", () => {
       assert(
-        dedent`
+        `
         ###
       `,
-        (element) => {
-          const heading = element.querySelector("h3");
+        (root) => {
+          const heading = root.querySelector("h3");
 
           expect(heading).toHaveTextContent("");
         }
       );
 
       assert(
-        dedent`
+        `
         No heading
         =
       `,
-        (element) => {
-          const heading = element.querySelector("h1");
+        (root) => {
+          const heading = root.querySelector("h1");
 
           expect(heading).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("No heading");
+          expect(root).toHaveTextContent("No heading");
         }
       );
 
       assert(
-        dedent`
+        `
         No heading
         ==
       `,
-        (element) => {
-          const heading = element.querySelector("h1");
+        (root) => {
+          const heading = root.querySelector("h1");
 
           expect(heading).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("No heading");
+          expect(root).toHaveTextContent("No heading");
         }
       );
 
       assert(
-        dedent`
+        `
         Heading 1
         ===
       `,
-        (element) => {
-          const heading = element.querySelector("h1");
+        (root) => {
+          const heading = root.querySelector("h1");
 
           expect(heading).toHaveTextContent("Heading 1");
         }
       );
 
       assert(
-        dedent`
+        `
         No heading
         -
       `,
-        (element) => {
-          const heading = element.querySelector("h2");
+        (root) => {
+          const heading = root.querySelector("h2");
 
           expect(heading).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("No heading");
+          expect(root).toHaveTextContent("No heading");
         }
       );
 
       assert(
-        dedent`
+        `
         No heading
         --
       `,
-        (element) => {
-          const heading = element.querySelector("h2");
+        (root) => {
+          const heading = root.querySelector("h2");
 
           expect(heading).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("No heading");
+          expect(root).toHaveTextContent("No heading");
         }
       );
 
       assert(
-        dedent`
+        `
         Heading 2
         ---
       `,
-        (element) => {
-          const heading = element.querySelector("h2");
+        (root) => {
+          const heading = root.querySelector("h2");
 
           expect(heading).toHaveTextContent("Heading");
         }
@@ -875,40 +871,40 @@ describe("Markdown", () => {
 
     test("bold text", () => {
       assert(
-        dedent`
+        `
         This isn't **
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This isn't __
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This is **bold text
       `,
-        (element) => {
-          const strong = element.querySelector("strong");
+        (root) => {
+          const strong = root.querySelector("strong");
 
           expect(strong).toHaveTextContent("bold text");
         }
       );
 
       assert(
-        dedent`
+        `
         This is __bold text
       `,
-        (element) => {
-          const strong = element.querySelector("strong");
+        (root) => {
+          const strong = root.querySelector("strong");
 
           expect(strong).toHaveTextContent("bold text");
         }
@@ -917,40 +913,40 @@ describe("Markdown", () => {
 
     test("italic text", () => {
       assert(
-        dedent`
+        `
         This isn't *
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This isn't _
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This is *italic text
       `,
-        (element) => {
-          const em = element.querySelector("em");
+        (root) => {
+          const em = root.querySelector("em");
 
           expect(em).toHaveTextContent("italic text");
         }
       );
 
       assert(
-        dedent`
+        `
         This is _italic text
       `,
-        (element) => {
-          const em = element.querySelector("em");
+        (root) => {
+          const em = root.querySelector("em");
 
           expect(em).toHaveTextContent("italic text");
         }
@@ -959,40 +955,40 @@ describe("Markdown", () => {
 
     test("strikethrough text", () => {
       assert(
-        dedent`
+        `
         This isn't ~
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This isn't ~~
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This is ~strikethrough text
       `,
-        (element) => {
-          const del = element.querySelector("del");
+        (root) => {
+          const del = root.querySelector("del");
 
           expect(del).toHaveTextContent("strikethrough text");
         }
       );
 
       assert(
-        dedent`
+        `
         This is ~~strikethrough text
       `,
-        (element) => {
-          const del = element.querySelector("del");
+        (root) => {
+          const del = root.querySelector("del");
 
           expect(del).toHaveTextContent("strikethrough text");
         }
@@ -1001,20 +997,20 @@ describe("Markdown", () => {
 
     test("inline code", () => {
       assert(
-        dedent`
+        `
         This isn't \`
       `,
-        (element) => {
-          expect(element).toHaveTextContent("This isn't");
+        (root) => {
+          expect(root).toHaveTextContent("This isn't");
         }
       );
 
       assert(
-        dedent`
+        `
         This is \`inline code
       `,
-        (element) => {
-          const code = element.querySelector("code");
+        (root) => {
+          const code = root.querySelector("code");
 
           expect(code).toHaveTextContent("inline code");
         }
@@ -1023,11 +1019,11 @@ describe("Markdown", () => {
 
     test("links", () => {
       assert(
-        dedent`
+        `
         This is a [
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).toHaveTextContent("");
           expect(link).toHaveAttribute("href", "#");
@@ -1035,11 +1031,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is a [li
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).toHaveTextContent("li");
           expect(link).toHaveAttribute("href", "#");
@@ -1047,11 +1043,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is a [link]
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).toHaveTextContent("link");
           expect(link).toHaveAttribute("href", "#");
@@ -1059,23 +1055,23 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This isn't a [link] with text
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("This isn't a [link] with text");
+          expect(root).toHaveTextContent("This isn't a [link] with text");
         }
       );
 
       assert(
-        dedent`
+        `
         This is a [link](http
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).toHaveTextContent("link");
           expect(link).toHaveAttribute("href", "#");
@@ -1083,11 +1079,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is a [link](https://www.liveblocks.io
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).toHaveTextContent("link");
           expect(link).toHaveAttribute("href", "https://www.liveblocks.io");
@@ -1096,11 +1092,11 @@ describe("Markdown", () => {
 
       // Links can have titles.
       assert(
-        dedent`
+        `
         This is a [link](https://www.liveblocks.io "Liveblocks
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).toHaveTextContent("link");
           expect(link).toHaveAttribute("href", "#");
@@ -1109,22 +1105,22 @@ describe("Markdown", () => {
 
       // Footnotes aren't links.
       assert(
-        dedent`
+        `
         This isn't a [^
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).not.toBeInTheDocument();
         }
       );
 
       assert(
-        dedent`
+        `
         This isn't a [^1
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
 
           expect(link).not.toBeInTheDocument();
         }
@@ -1133,11 +1129,11 @@ describe("Markdown", () => {
 
     test("nested inline elements", () => {
       assert(
-        dedent`
+        `
         This is **bold _italic \`code
       `,
-        (element) => {
-          const strong = element.querySelector("strong");
+        (root) => {
+          const strong = root.querySelector("strong");
           const em = strong?.querySelector("em");
           const code = em?.querySelector("code");
 
@@ -1148,11 +1144,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is **bold _italic_ \`code
       `,
-        (element) => {
-          const strong = element.querySelector("strong");
+        (root) => {
+          const strong = root.querySelector("strong");
           const em = strong?.querySelector("em");
           const code = strong?.querySelector("code");
 
@@ -1163,11 +1159,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is a **bold [link
       `,
-        (element) => {
-          const strong = element.querySelector("strong");
+        (root) => {
+          const strong = root.querySelector("strong");
           const link = strong?.querySelector("a");
 
           expect(strong).toHaveTextContent("bold link");
@@ -1178,11 +1174,11 @@ describe("Markdown", () => {
 
       // Links can't be inside inline code.
       assert(
-        dedent`
+        `
         This isn't a \`code [link
       `,
-        (element) => {
-          const code = element.querySelector("code");
+        (root) => {
+          const code = root.querySelector("code");
           const link = code?.querySelector("a");
 
           expect(code).toHaveTextContent("code [link");
@@ -1191,11 +1187,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is a [link with \`code
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
           const code = link?.querySelector("code");
 
           expect(link).toHaveTextContent("link with code");
@@ -1205,11 +1201,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         This is a [link with **bold \`code\`
       `,
-        (element) => {
-          const link = element.querySelector("a");
+        (root) => {
+          const link = root.querySelector("a");
           const strong = link?.querySelector("strong");
           const code = strong?.querySelector("code");
 
@@ -1223,84 +1219,84 @@ describe("Markdown", () => {
 
     test("lists", () => {
       assert(
-        dedent`
+        `
         -
       `,
-        (element) => {
-          expect(element).toHaveTextContent("");
+        (root) => {
+          expect(root).toHaveTextContent("");
         }
       );
 
       assert(
-        dedent`
+        `
         - A list item
       `,
-        (element) => {
-          const li = element.querySelector("li");
+        (root) => {
+          const li = root.querySelector("li");
 
           expect(li).toHaveTextContent("A list item");
         }
       );
 
       assert(
-        dedent`
+        `
         1
       `,
-        (element) => {
-          expect(element).toHaveTextContent("");
+        (root) => {
+          expect(root).toHaveTextContent("");
         }
       );
 
       assert(
-        dedent`
+        `
         1. A list item
       `,
-        (element) => {
-          const li = element.querySelector("li");
+        (root) => {
+          const li = root.querySelector("li");
 
           expect(li).toHaveTextContent("A list item");
         }
       );
 
       assert(
-        dedent`
+        `
         - [
       `,
-        (element) => {
-          const li = element.querySelector("li");
+        (root) => {
+          const li = root.querySelector("li");
 
           expect(li?.querySelector("input[type='checkbox']")).not.toBeChecked();
         }
       );
 
       assert(
-        dedent`
+        `
         - [ ]
       `,
-        (element) => {
-          const li = element.querySelector("li");
+        (root) => {
+          const li = root.querySelector("li");
 
           expect(li?.querySelector("input[type='checkbox']")).not.toBeChecked();
         }
       );
 
       assert(
-        dedent`
+        `
         - [x
       `,
-        (element) => {
-          const li = element.querySelector("li");
+        (root) => {
+          const li = root.querySelector("li");
 
           expect(li?.querySelector("input[type='checkbox']")).toBeChecked();
         }
       );
 
       assert(
-        dedent`
+        `
         - [x]
       `,
-        (element) => {
-          const li = element.querySelector("li");
+        (root) => {
+          const li = root.querySelector("li");
 
           expect(li?.querySelector("input[type='checkbox']")).toBeChecked();
         }
@@ -1309,123 +1305,123 @@ describe("Markdown", () => {
 
     test("images", () => {
       assert(
-        dedent`
+        `
         Not an image: !
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("Not an image");
+          expect(root).toHaveTextContent("Not an image");
         }
       );
 
       assert(
-        dedent`
+        `
         Not an image: ![
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("Not an image:");
+          expect(root).toHaveTextContent("Not an image:");
         }
       );
 
       assert(
-        dedent`
+        `
         Not an image: ![image
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("Not an image:");
+          expect(root).toHaveTextContent("Not an image:");
         }
       );
 
       assert(
-        dedent`
+        `
         Not an image: ![image](https://www.liveblocks.io/favicon.svg
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("Not an image:");
+          expect(root).toHaveTextContent("Not an image:");
         }
       );
 
       assert(
-        dedent`
+        `
         Not an image: ![](https://www.liveblocks.io/favicon.svg
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).not.toBeInTheDocument();
-          expect(element).toHaveTextContent("Not an image:");
+          expect(root).toHaveTextContent("Not an image:");
         }
       );
 
       assert(
-        dedent`
+        `
         An image: ![image](https://www.liveblocks.io/favicon.svg)
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).toHaveAttribute(
             "src",
             "https://www.liveblocks.io/favicon.svg"
           );
           expect(image).toHaveAttribute("alt", "image");
-          expect(element).toHaveTextContent("An image:");
+          expect(root).toHaveTextContent("An image:");
         }
       );
 
       assert(
-        dedent`
+        `
         An image: ![](https://www.liveblocks.io/favicon.svg)
       `,
-        (element) => {
-          const image = element.querySelector("img");
+        (root) => {
+          const image = root.querySelector("img");
 
           expect(image).toHaveAttribute(
             "src",
             "https://www.liveblocks.io/favicon.svg"
           );
           expect(image).toHaveAttribute("alt", "");
-          expect(element).toHaveTextContent("An image:");
+          expect(root).toHaveTextContent("An image:");
         }
       );
     });
 
     test("code blocks", () => {
       assert(
-        dedent`
+        `
         \`\`
       `,
-        (element) => {
-          expect(element).toHaveTextContent("");
+        (root) => {
+          expect(root).toHaveTextContent("");
         }
       );
 
       assert(
-        dedent`
+        `
         \`\`\`
       `,
-        (element) => {
-          expect(element).toHaveTextContent("");
+        (root) => {
+          expect(root).toHaveTextContent("");
         }
       );
 
       assert(
-        dedent`
+        `
         \`\`\`css
       `,
-        (element) => {
-          const codeBlock = element.querySelector("pre");
+        (root) => {
+          const codeBlock = root.querySelector("pre");
 
           expect(codeBlock).toBeInTheDocument();
           expect(codeBlock).toHaveTextContent("");
@@ -1434,13 +1430,13 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         \`\`\`css
         p {
           color: #000;
       `,
-        (element) => {
-          const codeBlock = element.querySelector("pre");
+        (root) => {
+          const codeBlock = root.querySelector("pre");
 
           expect(codeBlock).toBeInTheDocument();
           expect(codeBlock?.querySelector("code")?.innerHTML).toBe(
@@ -1453,12 +1449,12 @@ describe("Markdown", () => {
       // Code blocks shouldn't be completed/changed.
       // In this case, the ending looks like a partial link.
       assert(
-        dedent`
+        `
         \`\`\`
         const [count, setCount
       `,
-        (element) => {
-          const codeBlock = element.querySelector("pre");
+        (root) => {
+          const codeBlock = root.querySelector("pre");
 
           expect(codeBlock).toBeInTheDocument();
           expect(codeBlock?.querySelector("code")?.innerHTML).toBe(
@@ -1469,15 +1465,15 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         \`\`\`css
         p {
           color: #000;
         }
         \`\`
       `,
-        (element) => {
-          const codeBlock = element.querySelector("pre");
+        (root) => {
+          const codeBlock = root.querySelector("pre");
 
           expect(codeBlock).toBeInTheDocument();
           expect(codeBlock?.querySelector("code")?.innerHTML).toBe(
@@ -1488,15 +1484,15 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         \`\`\`css
         p {
           color: #000;
         }
         \`\`\`
       `,
-        (element) => {
-          const codeBlock = element.querySelector("pre");
+        (root) => {
+          const codeBlock = root.querySelector("pre");
 
           expect(codeBlock).toBeInTheDocument();
           expect(codeBlock?.querySelector("code")?.innerHTML).toBe(
@@ -1509,19 +1505,19 @@ describe("Markdown", () => {
 
     test("tables", () => {
       assert(
-        dedent`
+        `
         Not a table |
       `,
-        (element) => {
-          expect(element).toHaveTextContent("Not a table");
+        (root) => {
+          expect(root).toHaveTextContent("Not a table");
         }
       );
       assert(
-        dedent`
+        `
         | A column heading
       `,
-        (element) => {
-          const table = element.querySelector("table");
+        (root) => {
+          const table = root.querySelector("table");
           expect(table).toBeInTheDocument();
 
           const tableHeadings = table?.querySelectorAll("th");
@@ -1531,11 +1527,11 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         | A column heading | Another column
       `,
-        (element) => {
-          const table = element.querySelector("table");
+        (root) => {
+          const table = root.querySelector("table");
           expect(table).toBeInTheDocument();
 
           const tableHeadings = table?.querySelectorAll("th");
@@ -1546,12 +1542,12 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         | A column heading | Another column heading |
         |------------------|
       `,
-        (element) => {
-          const table = element.querySelector("table");
+        (root) => {
+          const table = root.querySelector("table");
           expect(table).toBeInTheDocument();
 
           const tableHeadings = table?.querySelectorAll("th");
@@ -1562,14 +1558,14 @@ describe("Markdown", () => {
       );
 
       assert(
-        dedent`
+        `
         A paragraph
 
           | A column heading | Another column heading |
           |------------------|
       `,
-        (element) => {
-          const table = element.querySelector("table");
+        (root) => {
+          const table = root.querySelector("table");
           expect(table).toBeInTheDocument();
 
           const tableHeadings = table?.querySelectorAll("th");
@@ -1582,74 +1578,74 @@ describe("Markdown", () => {
 
     test("horizontal rules", () => {
       assert(
-        dedent`
+        `
         A paragraph
 
         -
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A paragraph");
+        (root) => {
+          expect(root).toHaveTextContent("A paragraph");
         }
       );
 
       assert(
-        dedent`
+        `
         A paragraph
 
         _
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A paragraph");
+        (root) => {
+          expect(root).toHaveTextContent("A paragraph");
         }
       );
 
       assert(
-        dedent`
+        `
         A paragraph
 
         --
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A paragraph");
+        (root) => {
+          expect(root).toHaveTextContent("A paragraph");
         }
       );
 
       assert(
-        dedent`
+        `
         A paragraph
 
         __
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A paragraph");
+        (root) => {
+          expect(root).toHaveTextContent("A paragraph");
         }
       );
 
       assert(
-        dedent`
+        `
         A paragraph
 
         ---
 
         Another paragraph
       `,
-        (element) => {
-          const hr = element.querySelector("hr");
+        (root) => {
+          const hr = root.querySelector("hr");
 
           expect(hr).toBeInTheDocument();
         }
       );
 
       assert(
-        dedent`
+        `
         A paragraph
 
         ___
 
         Another paragraph
       `,
-        (element) => {
-          const hr = element.querySelector("hr");
+        (root) => {
+          const hr = root.querySelector("hr");
 
           expect(hr).toBeInTheDocument();
         }
@@ -1658,103 +1654,103 @@ describe("Markdown", () => {
 
     test("escaped characters", () => {
       assert(
-        dedent`
+        `
         A paragraph \\
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A paragraph");
+        (root) => {
+          expect(root).toHaveTextContent("A paragraph");
         }
       );
 
       assert(
-        dedent`
+        `
         A paragraph \\~
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A paragraph ~");
+        (root) => {
+          expect(root).toHaveTextContent("A paragraph ~");
         }
       );
     });
 
     test("emojis", () => {
       assert(
-        dedent`
+        `
         An emoji 👋
       `,
-        (element) => {
-          expect(element).toHaveTextContent("An emoji");
+        (root) => {
+          expect(root).toHaveTextContent("An emoji");
         }
       );
 
       assert(
-        dedent`
+        `
         A skin tone sequence emoji 👋🏽
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A skin tone sequence emoji");
+        (root) => {
+          expect(root).toHaveTextContent("A skin tone sequence emoji");
         }
       );
 
       assert(
-        dedent`
+        `
         A partial sequence emoji 👋\u200D
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A partial sequence emoji");
+        (root) => {
+          expect(root).toHaveTextContent("A partial sequence emoji");
         }
       );
 
       assert(
-        dedent`
+        `
         An umbrella as a pictographic ☂
       `,
-        (element) => {
-          expect(element).toHaveTextContent("An umbrella as a pictographic ☂");
+        (root) => {
+          expect(root).toHaveTextContent("An umbrella as a pictographic ☂");
         }
       );
 
       assert(
-        dedent`
+        `
         An umbrella as an emoji ☂️
       `,
-        (element) => {
-          expect(element).toHaveTextContent("An umbrella as an emoji");
+        (root) => {
+          expect(root).toHaveTextContent("An umbrella as an emoji");
         }
       );
 
       assert(
-        dedent`
+        `
         A partial flag emoji 🇺
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A partial flag emoji");
+        (root) => {
+          expect(root).toHaveTextContent("A partial flag emoji");
         }
       );
 
       assert(
-        dedent`
+        `
         A flag emoji 🇺🇳
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A flag emoji");
+        (root) => {
+          expect(root).toHaveTextContent("A flag emoji");
         }
       );
 
       assert(
-        dedent`
+        `
         A keycap sequence emoji 1️⃣
       `,
-        (element) => {
-          expect(element).toHaveTextContent("A keycap sequence");
+        (root) => {
+          expect(root).toHaveTextContent("A keycap sequence");
         }
       );
 
       assert(
-        dedent`
+        `
         An emoji 👋 and some text
       `,
-        (element) => {
-          expect(element).toHaveTextContent("An emoji 👋 and some text");
+        (root) => {
+          expect(root).toHaveTextContent("An emoji 👋 and some text");
         }
       );
     });
