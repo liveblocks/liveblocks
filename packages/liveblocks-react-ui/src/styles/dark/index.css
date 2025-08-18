@@ -32,4 +32,30 @@
     --lb-background: #2a2a2a;
     --lb-foreground-contrast: 10%;
   }
+
+  .lb-ai-chat-pending {
+    animation-name: lb-animation-shimmer-text-invert;
+  }
+}
+
+@keyframes lb-animation-shimmer-text-invert {
+  from,
+  to {
+    mask-image: linear-gradient(
+      90deg,
+      rgb(0 0 0 / 50%) 36%,
+      #000 48%,
+      #000 52%,
+      rgb(0 0 0 / 50%) 64%
+    );
+    mask-size: 300% 100%;
+  }
+
+  from {
+    mask-position: 100% 0;
+  }
+
+  to {
+    mask-position: 0% 0;
+  }
 }

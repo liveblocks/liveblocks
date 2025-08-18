@@ -1117,7 +1117,7 @@
  *************************************/
 
 :is(.lb-avatar, .lb-name):where([data-loading]) {
-  animation: lb-animation-shimmer 8s linear infinite;
+  animation: lb-animation-shimmer-skeleton 8s linear infinite;
 }
 
 /*************************************
@@ -2762,7 +2762,7 @@
 
 .lb-ai-chat-pending {
   user-select: none;
-  animation: lb-animation-shimmer-small 3.5s linear infinite;
+  animation: lb-animation-shimmer-text 2s cubic-bezier(0.1, 0, 0.9, 1) infinite;
 }
 
 .lb-ai-chat-message-thinking,
@@ -2770,6 +2770,7 @@
   inline-size: fit-content;
   max-inline-size: 100%;
   color: var(--lb-foreground-tertiary);
+  transition-property: color;
 
   &:where(.lb-ai-chat-pending),
   :where(.lb-ai-chat-pending) {
@@ -2915,6 +2916,7 @@
     max-inline-size: 100%;
     block-size: $lb-button-size;
     color: var(--lb-foreground-tertiary);
+    transition-property: color;
 
     &:where(.lb-ai-chat-pending),
     :where(.lb-ai-chat-pending) {
@@ -3042,7 +3044,7 @@
   }
 }
 
-@keyframes lb-animation-shimmer {
+@keyframes lb-animation-shimmer-skeleton {
   from,
   to {
     mask-image: linear-gradient(
@@ -3064,25 +3066,25 @@
   }
 }
 
-@keyframes lb-animation-shimmer-small {
+@keyframes lb-animation-shimmer-text {
   from,
   to {
     mask-image: linear-gradient(
       90deg,
-      #000 0%,
-      rgb(0 0 0 / 50%) 18%,
-      rgb(0 0 0 / 50%) 82%,
-      #000 100%
+      rgb(0 0 0 / 75%) 36%,
+      rgb(0 0 0 / 15%) 48%,
+      rgb(0 0 0 / 15%) 52%,
+      rgb(0 0 0 / 75%) 64%
     );
     mask-size: 300% 100%;
   }
 
   from {
-    mask-position: 200% 0;
+    mask-position: 100% 0;
   }
 
   to {
-    mask-position: -100% 0;
+    mask-position: 0% 0;
   }
 }
 
