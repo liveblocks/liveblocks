@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { expect, test, vi } from "vitest";
 
 import { batch, DerivedSignal, MutableSignal, Signal } from "../../signals";
 
@@ -11,8 +12,8 @@ test("empty", () => {
   expect(new MutableSignal([1, 2, 3]).get()).toStrictEqual([1, 2, 3]);
 });
 
-it("signals always notify watchers whenever mutated (because we cannot tell if their value has changed)", () => {
-  const fn = jest.fn();
+test("signals always notify watchers whenever mutated (because we cannot tell if their value has changed)", () => {
+  const fn = vi.fn();
 
   type S = { counter: 0 };
 
@@ -58,7 +59,7 @@ it("signals always notify watchers whenever mutated (because we cannot tell if t
   unsub();
 });
 
-it("signals throw when used with an async mutation function", () => {
+test("signals throw when used with an async mutation function", () => {
   type S = { counter: 0 };
   const counter = new MutableSignal<S>({ counter: 0 });
   const asyncInc = (state: S) => Promise.resolve(state.counter++);
@@ -68,7 +69,7 @@ it("signals throw when used with an async mutation function", () => {
   );
 });
 
-it("when chained, derived signals will think the value changed", () => {
+test("when chained, derived signals will think the value changed", () => {
   const fruits = new MutableSignal<string[]>([]);
   const count = DerivedSignal.from(fruits, (fruits) => fruits.length);
   const str = DerivedSignal.from(fruits, (fruits) => fruits.join(","));
@@ -97,9 +98,9 @@ it("when chained, derived signals will think the value changed", () => {
   expect(str.get()).toEqual("apple,banana,cherry");
 });
 
-it("when batched, derived signals will only update the value changed", () => {
-  const evaled = jest.fn();
-  const watcher = jest.fn();
+test("when batched, derived signals will only update the value changed", () => {
+  const evaled = vi.fn();
+  const watcher = vi.fn();
 
   const fruits = new MutableSignal<string[]>([]);
   const count = new Signal<number>(0);
@@ -139,9 +140,9 @@ it("when batched, derived signals will only update the value changed", () => {
   unsub();
 });
 
-it("nesting of mutations", () => {
-  const evaled = jest.fn();
-  const watcher = jest.fn();
+test("nesting of mutations", () => {
+  const evaled = vi.fn();
+  const watcher = vi.fn();
 
   const fruits = new MutableSignal<string[]>([]);
   const count = new Signal<number>(1);

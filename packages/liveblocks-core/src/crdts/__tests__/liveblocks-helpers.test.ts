@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { FIRST_POSITION, SECOND_POSITION } from "../../__tests__/_utils";
 import { OpCode } from "../../protocol/Op";
 import { CrdtType } from "../../protocol/SerializedCrdt";
@@ -238,7 +240,7 @@ describe("getTreesDiffOperations", () => {
 });
 
 describe("findNonSerializableValue", () => {
-  it("findNonSerializableValue should return path and value of non serializable value", () => {
+  test("findNonSerializableValue should return path and value of non serializable value", () => {
     for (const [value, expectedPath] of [
       [null, false],
       [undefined, false],
@@ -264,7 +266,7 @@ describe("findNonSerializableValue", () => {
 });
 
 describe("toPlainLson", () => {
-  it("toPlainLson with a plain object should not change", () => {
+  test("toPlainLson with a plain object should not change", () => {
     const mockPlainObject = {
       fruits: ["strawberry", "apple", "mango"],
       vegetables: { broccoli: "delicious", spinach: "also tasty" },
@@ -272,7 +274,7 @@ describe("toPlainLson", () => {
     expect(toPlainLson(mockPlainObject)).toEqual(mockPlainObject);
   });
 
-  it("toPlainLson with a liveStructure object should return plain lson object", () => {
+  test("toPlainLson with a liveStructure object should return plain lson object", () => {
     const mockLsonObject = new LiveObject({
       fruits: new LiveList(["strawberry", "apple", "mango"]),
       vegetables: new LiveMap([
@@ -300,7 +302,7 @@ describe("toPlainLson", () => {
   });
 
   // See https://github.com/liveblocks/liveblocks/issues/1304
-  it("toPlainLson regression #1", () => {
+  test("toPlainLson regression #1", () => {
     const mockLsonObject = new LiveObject({
       a: null,
       b: 0,

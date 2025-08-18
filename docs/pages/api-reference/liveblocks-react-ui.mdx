@@ -380,6 +380,30 @@ function Chat() {
 }
 ```
 
+##### Customize CSS variables and classes [#AiChat-variables-and-classes]
+
+You can customize the default styles of the chat by modifying CSS variables and
+classes prefixed with `lb`. Here are some examples.
+
+```css
+/* Lowers spacing and shrinks font size */
+.lb-ai-chat {
+  --lb-spacing: 0.6em;
+  font-size: 14px;
+}
+
+/* Removes composer shadow and adds border */
+.lb-ai-chat-composer {
+  box-shadow: 0;
+  border: 1px solid #f0f0f0;
+}
+
+/* Removes padding below the composer */
+.lb-ai-chat-footer {
+  padding-bottom: 0;
+}
+```
+
 ##### Customize how Markdown is rendered [#AiChat-markdown]
 
 You can customize how Markdown is rendered in messages by passing components to
@@ -436,6 +460,13 @@ the `components` prop. A full list is [available here](#AiChat-components).
   <PropertiesListItem name="tools" type="Record<string, AiToolDefinition>">
     Object mapping tool names to tool definitions that should be available in
     this chat.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: AiComposerSubmitMessage, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
   </PropertiesListItem>
   <PropertiesListItem name="layout" type="'inset' | 'compact'">
     The layout mode for the chat. Use `'inset'` (default) for standalone chats,
@@ -893,6 +924,32 @@ and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
 to update the property.
 
+##### Collapsed threads
+
+You can collapse threads by setting the `maxVisibleComments` prop. If a thread
+contains more comments than the limit set, some of the comments will be hidden
+and a "Show more replies" button will be displayed instead. Clicking on it will
+expand the thread to show all comments.
+
+```tsx
+<Thread thread={thread} maxVisibleComments={5} />
+```
+
+The first and last comments are always visible, and by default the oldest
+comments are more likely to be hidden. You can customize this behavior by
+setting `maxVisibleComments` to an object.
+
+```tsx
+// This is the default behavior, the same as `maxVisibleComments={5}`.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "newest" }} />
+
+// Only show the last comment, and all the older ones to fit the limit.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "oldest" }} />
+
+// Show as many old comments as new ones to fit the limit.
+<Thread thread={thread} maxVisibleComments={{ max: 5, show: "both" }} />
+```
+
 ##### Props [#Thread-props]
 
 <PropertiesList>
@@ -939,6 +996,14 @@ to update the property.
     defaultValue="true"
   >
     Whether to show the action to resolve the thread.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="maxVisibleComments"
+    type="number | object"
+    detailedType='number | { max: number; show: "oldest" | "newest" | "both" }'
+    defaultValue="No limit"
+  >
+    The maximum number of comments to show.
   </PropertiesListItem>
   <PropertiesListItem
     name="indentCommentContent"

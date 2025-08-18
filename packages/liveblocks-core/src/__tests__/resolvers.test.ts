@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import type {
   ClientOptions,
   ResolveRoomsInfoArgs,
@@ -24,7 +26,7 @@ function createClientForTest(
 describe("resolvers", () => {
   describe("invalidateUsers", () => {
     test("should support invalidating all users", async () => {
-      const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+      const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
         userIds.map((userId) => ({ name: userId }))
       );
       const client = createClientForTest({
@@ -53,7 +55,7 @@ describe("resolvers", () => {
     });
 
     test("should support invalidating specific users", async () => {
-      const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+      const resolveUsers = vi.fn(({ userIds }: ResolveUsersArgs) =>
         userIds.map((userId) => ({ name: userId }))
       );
       const client = createClientForTest({
@@ -92,7 +94,7 @@ describe("resolvers", () => {
 
   describe("invalidateRoomsInfo", () => {
     test("should support invalidating all rooms", async () => {
-      const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+      const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
         roomIds.map((roomId) => ({ name: roomId }))
       );
       const client = createClientForTest({
@@ -126,7 +128,7 @@ describe("resolvers", () => {
     });
 
     test("should support invalidating specific rooms", async () => {
-      const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+      const resolveRoomsInfo = vi.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
         roomIds.map((roomId) => ({ name: roomId }))
       );
       const client = createClientForTest({

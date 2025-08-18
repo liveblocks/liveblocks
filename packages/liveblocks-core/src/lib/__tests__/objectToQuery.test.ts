@@ -1,11 +1,12 @@
 /* eslint-disable quotes */
 import { QueryParser } from "@liveblocks/query-parser";
 import * as fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import { objectToQuery, quote } from "../objectToQuery";
 
 describe("objectToQuery", () => {
-  it("should convert a simple key/value pair to a query", () => {
+  test("should convert a simple key/value pair to a query", () => {
     const query = objectToQuery({
       org: "liveblocks:engineering",
     });
@@ -13,7 +14,7 @@ describe("objectToQuery", () => {
     expect(query).toEqual("org:'liveblocks:engineering'");
   });
 
-  it("should convert a nested object with operator to a query", () => {
+  test("should convert a nested object with operator to a query", () => {
     const query = objectToQuery({
       org: {
         startsWith: "liveblocks:",
@@ -23,7 +24,7 @@ describe("objectToQuery", () => {
     expect(query).toEqual("org^'liveblocks:'");
   });
 
-  it("should convert an indexed field object to a query", () => {
+  test("should convert an indexed field object to a query", () => {
     const query = objectToQuery({
       metadata: {
         status: "open",
@@ -40,7 +41,7 @@ describe("objectToQuery", () => {
     );
   });
 
-  it("should convert regular and indexed field objects to a query", () => {
+  test("should convert regular and indexed field objects to a query", () => {
     const query = objectToQuery({
       metadata: {
         status: "open",
@@ -61,7 +62,7 @@ describe("objectToQuery", () => {
     );
   });
 
-  it.each([
+  test.each([
     "string",
     "string with spaces",
     "string with special characters: !@#$%^&*()",
@@ -83,7 +84,7 @@ describe("objectToQuery", () => {
     );
   });
 
-  it("will only generate syntactically valid queries", () =>
+  test("will only generate syntactically valid queries", () =>
     fc.assert(
       fc.property(
         fc.dictionary(
@@ -128,7 +129,7 @@ describe("objectToQuery", () => {
       )
     ));
 
-  it("previous regressions", () => {
+  test("previous regressions", () => {
     const BS = "\\";
     const SQ = "'";
     const DQ = '"';
@@ -195,7 +196,7 @@ describe("objectToQuery", () => {
     }
   });
 
-  it.each([
+  test.each([
     "'string with single quotes'",
     '"string with double quotes"',
     '"string with both \'single\' and "double" quotes"',
@@ -210,7 +211,7 @@ describe("objectToQuery", () => {
     expect(query).toEqual(`metadata[${quote(key)}]:'value'`);
   });
 
-  it("should avoid injections", () => {
+  test("should avoid injections", () => {
     const query1 = objectToQuery({ foo: '" OR evil:"' });
     //                                 ^^^^^^^^^^^^^ Injection attack with double-quoted strings
 

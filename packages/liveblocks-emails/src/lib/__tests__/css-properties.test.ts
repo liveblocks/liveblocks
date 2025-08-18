@@ -1,8 +1,10 @@
+import { describe, expect, test } from "vitest";
+
 import type { CSSProperties } from "../css-properties";
 import { toInlineCSSString } from "../css-properties";
 
 describe("to inline css string", () => {
-  it("should convert simple properties correctly", () => {
+  test("should convert simple properties correctly", () => {
     const styles: CSSProperties = {
       color: "red",
       backgroundColor: "blue",
@@ -13,7 +15,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should add px to numeric properties that are not unitless", () => {
+  test("should add px to numeric properties that are not unitless", () => {
     const styles: CSSProperties = {
       margin: 0,
       padding: 0,
@@ -24,7 +26,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should not add px to unitless properties", () => {
+  test("should not add px to unitless properties", () => {
     const styles: CSSProperties = {
       opacity: 0.5,
       zIndex: 10,
@@ -36,7 +38,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should handle vendor-prefixed properties correctly", () => {
+  test("should handle vendor-prefixed properties correctly", () => {
     const styles: CSSProperties = {
       WebkitTransform: "rotate(45deg)",
       msFlex: 1,
@@ -47,7 +49,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should handle mixed properties", () => {
+  test("should handle mixed properties", () => {
     const styles: CSSProperties = {
       color: "red",
       WebkitTransform: "scale(1.5)",
@@ -61,7 +63,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should ignore null, undefined, and boolean values", () => {
+  test("should ignore null, undefined, and boolean values", () => {
     const styles: CSSProperties = {
       color: "red",
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -79,7 +81,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should ignore empty strings", () => {
+  test("should ignore empty strings", () => {
     const styles: CSSProperties = {
       color: "",
       backgroundColor: "blue",
@@ -90,7 +92,7 @@ describe("to inline css string", () => {
     expect(inlineCSS).toBe(expected);
   });
 
-  it("should handle complex vendor-prefixed properties", () => {
+  test("should handle complex vendor-prefixed properties", () => {
     const styles: CSSProperties = {
       WebkitBoxFlex: 1,
       MozBoxFlex: 2,

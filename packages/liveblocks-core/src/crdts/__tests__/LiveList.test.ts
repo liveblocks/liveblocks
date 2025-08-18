@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import {
   listUpdate,
   listUpdateDelete,
@@ -34,7 +36,7 @@ import { LiveObject } from "../LiveObject";
 
 describe("LiveList", () => {
   describe("not attached", () => {
-    it("basic operations with native objects", () => {
+    test("basic operations with native objects", () => {
       const list = new LiveList<string>(["first", "second", "third"]);
       expect(list.get(0)).toEqual("first");
       expect(list.length).toBe(3);
@@ -73,7 +75,7 @@ describe("LiveList", () => {
   });
 
   describe("deserialization", () => {
-    it("create document with list in root", async () => {
+    test("create document with list in root", async () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<never>;
       }>([
@@ -86,7 +88,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("init list with items", async () => {
+    test("init list with items", async () => {
       const { expectStorage } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
@@ -104,7 +106,7 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -125,7 +127,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it("push on empty list update", async () => {
+      test("push on empty list update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -145,7 +147,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("push LiveObject on empty list", async () => {
+    test("push LiveObject on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
@@ -173,7 +175,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("push number on empty list", async () => {
+    test("push number on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<number>;
@@ -196,7 +198,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("push LiveMap on empty list", async () => {
+    test("push LiveMap on empty list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveMap<string, number>>;
@@ -220,7 +222,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("push already attached LiveObject should throw", async () => {
+    test("push already attached LiveObject should throw", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -241,7 +243,7 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -262,7 +264,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it("insert at the middle update", async () => {
+      test("insert at the middle update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -284,7 +286,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("insert LiveObject at position 0", async () => {
+    test("insert LiveObject at position 0", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
@@ -313,7 +315,7 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -334,7 +336,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it("delete first update", async () => {
+      test("delete first update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -355,7 +357,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("delete first item", async () => {
+    test("delete first item", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -382,7 +384,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("delete should remove descendants", async () => {
+    test("delete should remove descendants", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
@@ -411,7 +413,7 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -432,7 +434,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it("move at the end update", async () => {
+      test("move at the end update", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -454,7 +456,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("move after current position", async () => {
+    test("move after current position", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -479,7 +481,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("move before current position", async () => {
+    test("move before current position", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -508,7 +510,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("move at the end of the list", async () => {
+    test("move at the end of the list", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -537,7 +539,7 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
@@ -556,7 +558,7 @@ describe("LiveList", () => {
     });
 
     describe("updates", () => {
-      it("clear updates", async () => {
+      test("clear updates", async () => {
         const { root, expectUpdates, room } = await prepareStorageUpdateTest<{
           items: LiveList<string>;
         }>([
@@ -594,7 +596,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("clear should delete all items", async () => {
+    test("clear should delete all items", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -626,7 +628,7 @@ describe("LiveList", () => {
   });
 
   describe("batch", () => {
-    it("batch multiple inserts", async () => {
+    test("batch multiple inserts", async () => {
       const { room, storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -657,7 +659,7 @@ describe("LiveList", () => {
   });
 
   describe("set", () => {
-    it("throws on read-only", async () => {
+    test("throws on read-only", async () => {
       const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
@@ -675,13 +677,13 @@ describe("LiveList", () => {
       );
     });
 
-    it("set register on detached list", () => {
+    test("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
       expect(list.toArray()).toEqual(["D", "B", "C"]);
     });
 
-    it("set at invalid position should throw", () => {
+    test("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       expect(() => list.set(-1, "D")).toThrow(
         'Cannot set list item at index "-1". index should be between 0 and 2'
@@ -691,7 +693,7 @@ describe("LiveList", () => {
       );
     });
 
-    it("set register", async () => {
+    test("set register", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<string>;
@@ -720,7 +722,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("set nested object", async () => {
+    test("set nested object", async () => {
       const { storage, expectStorage, assertUndoRedo } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ a: number }>>;
@@ -746,7 +748,7 @@ describe("LiveList", () => {
   });
 
   describe("conflict", () => {
-    it("list conflicts", async () => {
+    test("list conflicts", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -789,7 +791,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts 2", async () => {
+    test("list conflicts 2", async () => {
       const { root, applyRemoteOperations, expectStorage } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -859,7 +861,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts with offline", async () => {
+    test("list conflicts with offline", async () => {
       const { room, root, expectStorage, applyRemoteOperations, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -903,7 +905,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts with undo redo and remote change", async () => {
+    test("list conflicts with undo redo and remote change", async () => {
       const { root, expectStorage, applyRemoteOperations, room, wss } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -947,7 +949,7 @@ describe("LiveList", () => {
       expectStorage({ items: ["1", "0"] });
     });
 
-    it("list conflicts - move", async () => {
+    test("list conflicts - move", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1001,7 +1003,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts - ack has different position that local item", async () => {
+    test("list conflicts - ack has different position that local item", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1078,7 +1080,7 @@ describe("LiveList", () => {
       });
     });
 
-    it("list conflicts - ack has different position that local and ack position is used", async () => {
+    test("list conflicts - ack has different position that local and ack position is used", async () => {
       const { root, expectStorage, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1148,7 +1150,7 @@ describe("LiveList", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.storageBatch.subscribe(callback);
 
       const root = storage.root;
@@ -1186,7 +1188,7 @@ describe("LiveList", () => {
         1
       );
 
-      const callback = jest.fn();
+      const callback = vi.fn();
       room.events.storageBatch.subscribe(callback);
 
       const root = storage.root;
@@ -1217,9 +1219,9 @@ describe("LiveList", () => {
           1
         );
 
-      const rootCallback = jest.fn();
-      const rootDeepCallback = jest.fn();
-      const listCallback = jest.fn();
+      const rootCallback = vi.fn();
+      const rootDeepCallback = vi.fn();
+      const listCallback = vi.fn();
 
       const listItems = root.get("items");
 
@@ -1300,9 +1302,9 @@ describe("LiveList", () => {
           1
         );
 
-      const rootCallback = jest.fn();
-      const rootDeepCallback = jest.fn();
-      const listCallback = jest.fn();
+      const rootCallback = vi.fn();
+      const rootDeepCallback = vi.fn();
+      const listCallback = vi.fn();
 
       const listItems = root.get("items");
 
@@ -1371,9 +1373,9 @@ describe("LiveList", () => {
           1
         );
 
-      const rootCallback = jest.fn();
-      const rootDeepCallback = jest.fn();
-      const listCallback = jest.fn();
+      const rootCallback = vi.fn();
+      const rootDeepCallback = vi.fn();
+      const listCallback = vi.fn();
 
       const listItems = root.get("items");
 
@@ -1459,7 +1461,7 @@ describe("LiveList", () => {
     });
 
     describe("apply CreateRegister", () => {
-      it('with intent "set" should replace existing item', async () => {
+      test('with intent "set" should replace existing item', async () => {
         const { expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1490,7 +1492,7 @@ describe("LiveList", () => {
         });
       });
 
-      it('with intent "set" should notify with a "set" update', async () => {
+      test('with intent "set" should notify with a "set" update', async () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1503,7 +1505,7 @@ describe("LiveList", () => {
 
         const items = root.get("items");
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         room.events.storageBatch.subscribe(callback);
 
         applyRemoteOperations([
@@ -1526,7 +1528,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it('with intent "set" should insert item if conflict with a delete operation', async () => {
+      test('with intent "set" should insert item if conflict with a delete operation', async () => {
         const { root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1565,7 +1567,7 @@ describe("LiveList", () => {
         });
       });
 
-      it('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
+      test('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
         const { room, root, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1579,7 +1581,7 @@ describe("LiveList", () => {
         const items = root.get("items");
         items.delete(0);
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         room.subscribe(items, callback, { isDeep: true });
 
         applyRemoteOperations([
@@ -1602,7 +1604,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it("on existing position should give the right update", async () => {
+      test("on existing position should give the right update", async () => {
         const { room, root, expectStorage, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1621,7 +1623,7 @@ describe("LiveList", () => {
           items: ["0"],
         });
 
-        const callback = jest.fn();
+        const callback = vi.fn();
         room.subscribe(items, callback, { isDeep: true });
 
         applyRemoteOperations([

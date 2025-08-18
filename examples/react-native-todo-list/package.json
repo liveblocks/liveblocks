@@ -11,8 +11,8 @@
     "dev": "react-native start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.0.0",
-    "@liveblocks/react": "^3.0.0",
+    "@liveblocks/client": "^3.3.0",
+    "@liveblocks/react": "^3.3.0",
     "base-64": "^1.0.0",
     "react": "18.2.0",
     "react-native": "^0.75.2",

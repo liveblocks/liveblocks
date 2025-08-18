@@ -1,3 +1,13 @@
+import {
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  type MockInstance,
+  test,
+  vi,
+} from "vitest";
+
 import { LiveList } from "../crdts/LiveList";
 import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
@@ -657,11 +667,11 @@ describe("2 ways tests with two clients", () => {
 
   describe("unsupported types", () => {
     let originalEnv: NodeJS.ProcessEnv;
-    let consoleErrorSpy: jest.SpyInstance;
+    let consoleErrorSpy: MockInstance;
 
     beforeAll(() => {
       originalEnv = process.env;
-      consoleErrorSpy = jest.spyOn(console, "error");
+      consoleErrorSpy = vi.spyOn(console, "error");
     });
 
     afterEach(() => {
@@ -728,10 +738,6 @@ describe("2 ways tests with two clients", () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledTimes(0);
     });
-  });
-
-  describe("Map/LiveMap", () => {
-    // TODO
   });
 });
 

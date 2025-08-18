@@ -18,6 +18,102 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 33 (2025-08-15)
+
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
+## v3.3.1
+
+### `@liveblocks/react-ui`
+
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
+
+## All versions
+
+- Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
+  instead of `a file.txt`)
+
+## Infrastructure
+
+- Fixed a bug that caused unreliable storage updates under high concurrency.
+- Fixed an issue that could cause LLM responses to appear to "hang" if the
+  token limit got exceeded during the response generation. If this now happens,
+  the response will indicate a clear error to the user.
+
+## Dashboard
+
+- New knowledge prompt option when configuring AI copilots, allowing you to customize when back-end knowledge is fetched.
+
+## Documentation
+
+- More info on styling AI chat components.
+- Disambiguate semantics for `LiveList.delete()`.
+
+## Contributors
+
+marcbouchenoire, ctnicholas, nvie, jrowny, nimeshnayaju
+
+# Week 32 (2025-08-08)
+
+## v3.3.0
+
+### `@liveblocks/react-ui`
+
+- Add `maxVisibleComments` prop to `Thread` to control the maximum number of
+  comments to show. When comments are hidden, a "Show more replies" button is
+  shown to allow users to expand the thread.
+- Add `onComposerSubmit` callback to `AiChat` triggered when a new message is
+  sent. It can also be used to customize message submission by calling
+  `useSendAiMessage` yourself.
+- Overrides and CSS classes for `AiChat`'s composer have been renamed:
+  - Overrides: `AI_CHAT_COMPOSER_SEND` → `AI_COMPOSER_PLACEHOLDER`
+  - CSS classes: `.lb-ai-chat-composer-form` → `.lb-ai-composer-form`
+- Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
+  other instances of `AiChat` that are currently mounted on screen.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for string
+  arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
+- `useSendAiMessage` now accepts passing the chat ID and/or options to the
+  function rather than the hook. This can be useful in dynamic scenarios where
+  the chat ID might not be known when calling the hook for example.
+- `useCreateAiChat` now accepts a chat ID as a string instead of
+  `{ id: "chat-id" }`.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Allow using custom composers in `FloatingComposer` via the
+  `components={{ Composer }}` prop.
+
+### `@liveblocks/react-lexical`
+
+- Add `ATTACH_THREAD_COMMAND` command to manually create a thread attached to
+  the current selection.
+
+## Dashboard
+
+- Support SAML Single Sign-On for enterprise customers.
+- Allow editing first and last name in personal settings.
+
+## Contributors
+
+ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
+
 # Week 31 (2025-08-01)
 
 ## v3.2.1

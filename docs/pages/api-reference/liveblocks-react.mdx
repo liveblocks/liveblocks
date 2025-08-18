@@ -1168,6 +1168,32 @@ function Chats() {
 }
 ```
 
+#### Querying chats [#useAiChats-query]
+
+It’s possible to return chats that match a certain query with the `query`
+option. You can filter by metadata values, or by the absence of a metadata key.
+Returned chats must match the entire query.
+
+```tsx
+import { useAiChats } from "@liveblocks/react";
+
+// Filter by metadata values and by absence of a key
+const { chats } = useAiChats({
+  query: {
+    metadata: {
+      // Match chats that are of type 'temporary'
+      type: "temporary",
+
+      // Match chats that have all of these tags
+      tag: ["urgent", "billing"],
+
+      // Match chats where the "archived" key does not exist
+      archived: null,
+    },
+  },
+});
+```
+
 #### Pagination [#useAiChats-pagination]
 
 By default, the `useAiChats` hook returns up to 50 chats. To fetch more, the
@@ -1324,7 +1350,7 @@ Returns a function that creates an AI chat.
 import { useCreateAiChat } from "@liveblocks/react/suspense";
 
 const createAiChat = useCreateAiChat();
-createAiChat({ id: "my-ai-chat" });
+createAiChat("my-ai-chat");
 ```
 
 You can optionally set a `title`, which prevents the AI auto-generating a title
@@ -1357,8 +1383,8 @@ and add a delete button.
 ```tsx
 import { useDeleteAiChat } from "@liveblocks/react/suspense";
 
-const deleteChat = useDeleteAiChat();
-deleteChat("my-chat-id");
+const deleteAiChat = useDeleteAiChat();
+deleteAiChat("my-chat-id");
 ```
 
 ### useSendAiMessage
@@ -1373,6 +1399,53 @@ import { useSendAiMessage } from "@liveblocks/react";
 
 const sendAiMessage = useSendAiMessage("my-chat-id");
 sendAiMessage("Hello!");
+```
+
+You can set options related to the message being sent, such as the copilot ID to
+use. Alternatively, you can also override or complete the hook’s options when
+calling the function by passing an object to it.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+
+const sendAiMessage = useSendAiMessage("my-chat-id", { copilotId: "co_xxx" });
+
+sendAiMessage("Hello!");
+
+// Use another copilot ID dynamically
+sendAiMessage({ text: "Hello!", copilotId: "co_yyy" });
+
+// Use another chat ID dynamically
+sendAiMessage({ text: "Hello!", chatId: "my-other-chat-id" });
+```
+
+You can also pass the chat ID in the function rather than the hook. This is
+particularly helpful in dynamic scenarios where the chat ID might not be known
+when calling the hook.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+
+const sendAiMessage = useSendAiMessage();
+
+// Because `useSendAiMessage` didn't receive a chat ID, `sendAiMessage`
+// needs to receive one or it will throw an error.
+sendAiMessage({ text: "Hello!", chatId: "my-chat-id" });
+
+// The following calls would result in both TypeScript and runtime errors.
+sendAiMessage("Hello!");
+sendAiMessage({ text: "Hello!" });
+sendAiMessage({ text: "Hello!", copilotId: "co_xxx" });
+```
+
+If needed (e.g. using the message’s ID), you can also access the newly created
+message.
+
+```tsx
+import { useSendAiMessage } from "@liveblocks/react";
+
+const sendAiMessage = useSendAiMessage("my-chat-id");
+const message = sendAiMessage("Hello!");
 ```
 
 ### useAiChatMessages
@@ -3232,8 +3305,7 @@ const {
 } = useThreads();
 ```
 
-- `hasFetchedAll` indicates whether all available threads have been
-  fetched.
+- `hasFetchedAll` indicates whether all available threads have been fetched.
 - `fetchMore` loads up to 50 more threads, and is always safe to call.
 - `isFetchingMore` indicates whether more threads are being fetched.
 - `fetchMoreError` returns error statuses resulting from fetching more.
