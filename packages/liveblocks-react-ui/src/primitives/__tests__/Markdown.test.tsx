@@ -33,6 +33,42 @@ describe("Markdown", () => {
     );
   });
 
+  test("should render empty content", () => {
+    {
+      const { getByTestId, unmount } = render(
+        // @ts-expect-error - Testing a missing `content` prop
+        <Markdown data-testid="markdown" />
+      );
+
+      const element = getByTestId("markdown");
+      expect(element.innerHTML).toBe("");
+
+      unmount();
+    }
+
+    {
+      const { getByTestId, unmount } = render(
+        <Markdown data-testid="markdown" content="" />
+      );
+
+      const element = getByTestId("markdown");
+      expect(element.innerHTML).toBe("");
+
+      unmount();
+    }
+
+    {
+      const { getByTestId, unmount } = render(
+        <Markdown data-testid="markdown" content={"   \n\t  "} />
+      );
+
+      const element = getByTestId("markdown");
+      expect(element.innerHTML).toBe("");
+
+      unmount();
+    }
+  });
+
   describe("should render…", () => {
     function assert(content: string, assertions: (root: HTMLElement) => void) {
       const { getByTestId, unmount } = render(
@@ -628,6 +664,39 @@ describe("Markdown", () => {
             expect(cells?.[0]).toHaveTextContent("A cell");
             expect(cells?.[1]).toHaveTextContent("Another cell");
           });
+        }
+      );
+
+      assert(
+        `
+          | A column heading | Another column heading |
+          |------------------|------------------------|
+          | A cell           |                        |
+          |                  | Another cell           |
+        `,
+        (root) => {
+          const table = root.querySelector("table");
+          expect(table).toBeInTheDocument();
+
+          const tableHeadings = table?.querySelectorAll("th");
+          expect(tableHeadings).toHaveLength(2);
+          expect(tableHeadings?.[0]).toHaveTextContent("A column heading");
+          expect(tableHeadings?.[1]).toHaveTextContent(
+            "Another column heading"
+          );
+
+          const tableRows = table?.querySelectorAll("tbody tr");
+          expect(tableRows).toHaveLength(2);
+
+          const firstRowCells = tableRows?.[0]?.querySelectorAll("td");
+          expect(firstRowCells).toHaveLength(2);
+          expect(firstRowCells?.[0]).toHaveTextContent("A cell");
+          expect(firstRowCells?.[1]).toHaveTextContent("");
+
+          const secondRowCells = tableRows?.[1]?.querySelectorAll("td");
+          expect(secondRowCells).toHaveLength(2);
+          expect(secondRowCells?.[0]).toHaveTextContent("");
+          expect(secondRowCells?.[1]).toHaveTextContent("Another cell");
         }
       );
     });
@@ -1439,6 +1508,14 @@ describe("Markdown", () => {
     });
 
     test("tables", () => {
+      assert(
+        dedent`
+        Not a table |
+      `,
+        (element) => {
+          expect(element).toHaveTextContent("Not a table");
+        }
+      );
       assert(
         dedent`
         | A column heading

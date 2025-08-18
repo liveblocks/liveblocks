@@ -438,6 +438,10 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, partial, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const tokens = useMemo(() => {
+      if (!content) {
+        return [];
+      }
+
       return partial ? tokenizePartial(content) : tokenize(content);
     }, [content, partial]);
 
