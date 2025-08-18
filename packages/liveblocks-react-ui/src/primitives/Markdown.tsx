@@ -438,21 +438,7 @@ export const Markdown = forwardRef<HTMLDivElement, MarkdownProps>(
   ({ content, partial, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const tokens = useMemo(() => {
-      if (!partial) {
-        return getMarkedTokens(content);
-      }
-
-      const preprocessedContent = trimPartialMarkdown(
-        normalizeNewlines(content)
-      );
-
-      const tokens = getMarkedTokens(preprocessedContent);
-
-      try {
-        return completePartialTokens(tokens);
-      } catch {
-        return tokens;
-      }
+      return partial ? tokenizePartial(content) : tokenize(content);
     }, [content, partial]);
 
     return (
@@ -814,10 +800,6 @@ function assertTokens(_: AnyToken): asserts _ is Token;
 function assertTokens(_: AnyToken[]): asserts _ is Token[];
 function assertTokens(_: AnyToken | AnyToken[]): asserts _ is Token | Token[] {}
 
-function getMarkedTokens(content: string) {
-  return new Lexer().lex(content) as Token[];
-}
-
 function isBlockToken(
   token: Token | Tokens.Generic
 ): token is
@@ -831,6 +813,22 @@ function isBlockToken(
     token.type === "blockquote" ||
     token.type === "list_item"
   );
+}
+
+function tokenize(markdown: string) {
+  return new Lexer().lex(markdown) as Token[];
+}
+
+function tokenizePartial(markdown: string) {
+  const preprocessedContent = trimPartialMarkdown(normalizeNewlines(markdown));
+
+  const tokens = tokenize(preprocessedContent);
+
+  try {
+    return completePartialTokens(tokens);
+  } catch {
+    return tokens;
+  }
 }
 
 /**
@@ -1222,9 +1220,9 @@ function completePartialTokens(tokens: Token[]) {
       );
 
       if (completedTableMarkdown) {
-        // We optimistically complete the table as a string then re-lex it
-        // to get an optimistically complete table token.
-        const completedTable = getMarkedTokens(completedTableMarkdown)[0] as
+        // We optimistically complete the table as a string then re-tokenize
+        // it to get an optimistically complete table token.
+        const completedTable = tokenize(completedTableMarkdown)[0] as
           | Tokens.Table
           | undefined;
 
@@ -1283,14 +1281,14 @@ function completePartialTokens(tokens: Token[]) {
     return tokens;
   }
 
-  // We optimistically complete inline content as a string then re-lex it
-  // to get optimistically complete tokens.
+  // We optimistically complete inline content as a string then re-tokenize
+  // it to get optimistically complete tokens.
   const completedMarkdown = completePartialInlineMarkdown(
     potentiallyPartialToken.text
   );
   const completedMarkdownTokens =
-    (getMarkedTokens(completedMarkdown)[0] as Tokens.Paragraph | undefined)
-      ?.tokens ?? [];
+    (tokenize(completedMarkdown)[0] as Tokens.Paragraph | undefined)?.tokens ??
+    [];
 
   potentiallyPartialToken.text = completedMarkdown;
   potentiallyPartialToken.tokens = completedMarkdownTokens;
