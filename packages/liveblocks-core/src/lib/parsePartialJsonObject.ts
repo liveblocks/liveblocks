@@ -10,7 +10,7 @@ export function parsePartialJsonObject(partial: string): JsonObject {
   }
 
   // If it's already valid JSON, return as-is
-  {
+  if (partial.trimEnd().endsWith("}")) {
     const quickCheck = tryParseJson(partial);
     if (quickCheck) {
       // Due to the '{' check above, we can safely assume it's an object
