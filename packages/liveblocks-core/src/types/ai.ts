@@ -543,19 +543,27 @@ export function patchContentWithDelta(
       }
       break;
 
-    case "tool-stream":
-      content.push({
-        type: "tool-invocation",
-        stage: "receiving",
+    case "tool-stream": {
+      let _cacheKey = "";
+      let _cachedArgs: JsonObject = {};
+
+      const toolInvocation = {
+        type: "tool-invocation" as const,
+        stage: "receiving" as const,
         invocationId: delta.invocationId,
         name: delta.name,
         partialArgsText: "",
         get partialArgs(): JsonObject {
-          // TODO Possibly memoize? Investigate performance first.
-          return parsePartialJsonObject(this.partialArgsText);
+          if (this.partialArgsText !== _cacheKey) {
+            _cachedArgs = parsePartialJsonObject(this.partialArgsText);
+            _cacheKey = this.partialArgsText;
+          }
+          return _cachedArgs;
         },
-      });
+      };
+      content.push(toolInvocation);
       break;
+    }
 
     case "tool-delta": {
       // Take the last part, expect it to be a tool invocation in receiving
