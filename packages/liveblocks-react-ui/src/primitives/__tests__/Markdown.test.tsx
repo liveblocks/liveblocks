@@ -256,6 +256,29 @@ describe("Markdown", () => {
 
       assert(
         `
+          This is ***italic bold***, ****double bold****, and *****italic double bold*****.
+        `,
+        (root) => {
+          const elements = root.querySelectorAll("p > *");
+
+          expect(elements).toHaveLength(3);
+
+          expect(elements[0]).toHaveTextContent("italic bold");
+          expect(elements[0]?.tagName).toBe("EM");
+          expect(elements[0]?.querySelector("strong")).toBeInTheDocument();
+
+          expect(elements[1]).toHaveTextContent("double bold");
+          expect(elements[1]?.tagName).toBe("STRONG");
+          expect(elements[1]?.querySelector("strong")).toBeInTheDocument();
+
+          expect(elements[2]).toHaveTextContent("italic double bold");
+          expect(elements[2]?.tagName).toBe("EM");
+          expect(elements[2]?.querySelectorAll("strong")).toHaveLength(2);
+        }
+      );
+
+      assert(
+        `
         This is inline \`code without **bold**, _italic_, ~~strikethrough~~, or [links](https://www.liveblocks.io)\`.
       `,
         (root) => {
@@ -1268,6 +1291,194 @@ describe("Markdown", () => {
 
           expect(code).toHaveTextContent("code [link");
           expect(link).not.toBeInTheDocument();
+        }
+      );
+
+      assert(
+        `
+          This is ***italic bold
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strong = em?.querySelector("strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("bold");
+          expect(root).toHaveTextContent("This is italic bold");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ***italic bold***
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strong = em?.querySelector("strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("bold");
+          expect(root).toHaveTextContent("This is italic bold");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ***italic bold***,
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strong = em?.querySelector("strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("bold");
+          expect(root).toHaveTextContent("This is italic bold");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ***italic bold***, ****double
+        `,
+        (root) => {
+          const em = root.querySelector("p > em");
+          const strong = root.querySelector("p > strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(em?.querySelector("strong")).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("double");
+          expect(strong?.querySelector("strong")).toHaveTextContent("double");
+          expect(root).toHaveTextContent("This is italic bold, double");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ****double
+        `,
+        (root) => {
+          const strongs = root.querySelectorAll("strong");
+
+          expect(strongs).toHaveLength(2);
+          expect(strongs[0]).toHaveTextContent("double");
+          expect(strongs[1]).toHaveTextContent("double");
+          expect(root).toHaveTextContent("This is double");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is *****italic
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strongs = em?.querySelectorAll("strong");
+
+          expect(em).toHaveTextContent("italic");
+          expect(strongs).toHaveLength(2);
+          expect(strongs?.[0]).toHaveTextContent("italic");
+          expect(strongs?.[1]).toHaveTextContent("italic");
+          expect(root).toHaveTextContent("This is italic");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+          This is ___italic bold
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strong = em?.querySelector("strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("bold");
+          expect(root).toHaveTextContent("This is italic bold");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ___italic bold___
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strong = em?.querySelector("strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("bold");
+          expect(root).toHaveTextContent("This is italic bold");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ___italic bold___,
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strong = em?.querySelector("strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("bold");
+          expect(root).toHaveTextContent("This is italic bold");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ___italic bold___, ____double
+        `,
+        (root) => {
+          const em = root.querySelector("p > em");
+          const strong = root.querySelector("p > strong");
+
+          expect(em).toHaveTextContent("italic bold");
+          expect(em?.querySelector("strong")).toHaveTextContent("italic bold");
+          expect(strong).toHaveTextContent("double");
+          expect(strong?.querySelector("strong")).toHaveTextContent("double");
+          expect(root).toHaveTextContent("This is italic bold, double");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is ____double
+        `,
+        (root) => {
+          const strongs = root.querySelectorAll("strong");
+
+          expect(strongs).toHaveLength(2);
+          expect(strongs[0]).toHaveTextContent("double");
+          expect(strongs[1]).toHaveTextContent("double");
+          expect(root).toHaveTextContent("This is double");
+          expect(root.textContent).not.toContain("*");
+        }
+      );
+
+      assert(
+        `
+        This is _____italic
+        `,
+        (root) => {
+          const em = root.querySelector("em");
+          const strongs = em?.querySelectorAll("strong");
+
+          expect(em).toHaveTextContent("italic");
+          expect(strongs).toHaveLength(2);
+          expect(strongs?.[0]).toHaveTextContent("italic");
+          expect(strongs?.[1]).toHaveTextContent("italic");
+          expect(root).toHaveTextContent("This is italic");
+          expect(root.textContent).not.toContain("*");
         }
       );
     });

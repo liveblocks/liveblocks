@@ -1014,76 +1014,131 @@ function completePartialInlineMarkdown(
 
   // Move forward through the string to collect delimiters.
   for (let i = 0; i < completedMarkdown.length; i++) {
-    const character = markdown[i]!;
-    const isEscaped = i > 0 ? markdown[i - 1] === "\\" : false;
+    const character = completedMarkdown[i]!;
+    const isEscaped = i > 0 ? completedMarkdown[i - 1] === "\\" : false;
 
     if (isEscaped) {
       continue;
     }
 
-    let matchedDelimiter: string | null = null;
-
     if (character === "`") {
-      matchedDelimiter = "`";
+      const lastDelimiter = stack[stack.length - 1];
+      const isClosingPreviousDelimiter =
+        lastDelimiter?.string === "`" && i > lastDelimiter.index;
+
+      if (isClosingPreviousDelimiter) {
+        // If the delimiter is closing a previous delimiter,
+        // we remove it from the stack.
+        stack.pop();
+      } else {
+        const characterAfterDelimiter = completedMarkdown[i + 1];
+
+        // If the delimiter is opening and is followed by a
+        // non-whitespace character, we add it to the stack.
+        if (
+          characterAfterDelimiter &&
+          !WHITESPACE_REGEX.test(characterAfterDelimiter)
+        ) {
+          stack.push({ string: "`", length: 1, index: i });
+        }
+      }
+
+      continue;
     }
 
     if (character === "*" || character === "_" || character === "~") {
-      if (markdown.startsWith(character + character, i)) {
-        matchedDelimiter = character + character;
-      } else {
-        matchedDelimiter = character;
-      }
-    }
+      const isInsideInlineCode = stack[stack.length - 1]?.string === "`";
 
-    if (!matchedDelimiter) {
-      continue;
-    }
-
-    const lastDelimiter = stack[stack.length - 1];
-    const isClosingPreviousDelimiter =
-      lastDelimiter?.string === matchedDelimiter &&
-      i > lastDelimiter.index + matchedDelimiter.length - 1;
-
-    const isInsideInlineCode = stack[stack.length - 1]?.string === "`";
-
-    if (isInsideInlineCode && matchedDelimiter !== "`") {
-      i += matchedDelimiter.length - 1;
-      continue;
-    }
-
-    // If the delimiter is not closing any previous delimiter
-    // and it's at the end of the string, we can remove it from the string.
-    if (
-      !isClosingPreviousDelimiter &&
-      i + matchedDelimiter.length >= markdown.length
-    ) {
-      completedMarkdown = completedMarkdown.slice(0, i);
-      break;
-    }
-
-    if (isClosingPreviousDelimiter) {
-      // If the delimiter is closing a previous delimiter,
-      // we remove it from the stack.
-      stack.pop();
-    } else {
-      const characterAfterDelimiter =
-        completedMarkdown[i + matchedDelimiter.length];
-
-      // If the delimiter is opening and is followed by a
-      // non-whitespace character, we add it to the stack.
-      if (
-        characterAfterDelimiter &&
-        !WHITESPACE_REGEX.test(characterAfterDelimiter)
+      let j = i;
+      while (
+        j < completedMarkdown.length &&
+        completedMarkdown[j] === character
       ) {
-        stack.push({
-          string: matchedDelimiter,
-          length: matchedDelimiter.length,
-          index: i,
-        });
+        j++;
       }
-    }
+      const consecutiveDelimiterCharacters = j - i;
 
-    i += matchedDelimiter.length - 1;
+      // Delimiters inside inline code shouldn't be closed so we skip them.
+      if (isInsideInlineCode) {
+        i += consecutiveDelimiterCharacters - 1;
+
+        continue;
+      }
+
+      let remainingConsecutiveDelimiterCharacters =
+        consecutiveDelimiterCharacters;
+      let consecutiveDelimiterCharacterIndex = 0;
+
+      while (remainingConsecutiveDelimiterCharacters > 0) {
+        const lastDelimiter = stack[stack.length - 1];
+
+        if (!lastDelimiter || lastDelimiter.string[0] !== character) {
+          break;
+        }
+
+        // We close as many matching open delimiters as possible from the stack.
+        if (remainingConsecutiveDelimiterCharacters >= lastDelimiter.length) {
+          stack.pop();
+          remainingConsecutiveDelimiterCharacters -= lastDelimiter.length;
+          consecutiveDelimiterCharacterIndex += lastDelimiter.length;
+
+          continue;
+        }
+
+        break;
+      }
+
+      if (remainingConsecutiveDelimiterCharacters > 0) {
+        // If there are any unmatched delimiters at the end of the string,
+        // we can remove them from the string.
+        if (i + consecutiveDelimiterCharacters >= completedMarkdown.length) {
+          completedMarkdown = completedMarkdown.slice(
+            0,
+            completedMarkdown.length - remainingConsecutiveDelimiterCharacters
+          );
+
+          break;
+        }
+
+        const characterAfterDelimiters =
+          completedMarkdown[i + consecutiveDelimiterCharacters];
+
+        if (
+          characterAfterDelimiters &&
+          !WHITESPACE_REGEX.test(characterAfterDelimiters)
+        ) {
+          let delimiterStartIndex = i + consecutiveDelimiterCharacterIndex;
+
+          // If there's an odd number of unmatched delimiters,
+          // we match a single-character delimiter.
+          if (remainingConsecutiveDelimiterCharacters % 2 === 1) {
+            stack.push({
+              string: character,
+              length: 1,
+              index: delimiterStartIndex,
+            });
+            delimiterStartIndex += 1;
+            remainingConsecutiveDelimiterCharacters -= 1;
+          }
+
+          // If there are any unmatched delimiters remaining,
+          // we match double-character delimiters.
+          while (remainingConsecutiveDelimiterCharacters >= 2) {
+            stack.push({
+              string: character + character,
+              length: 2,
+              index: delimiterStartIndex,
+            });
+            delimiterStartIndex += 2;
+            remainingConsecutiveDelimiterCharacters -= 2;
+          }
+        }
+      }
+
+      i += consecutiveDelimiterCharacters - 1;
+
+      continue;
+    }
   }
 
   if (allowLinksImages) {
@@ -1120,6 +1175,7 @@ function completePartialInlineMarkdown(
           // since they are now closed.
           for (let i = stack.length - 1; i >= 0; i--) {
             const delimiter = stack[i]!;
+
             if (
               delimiter.index >= linkImageStartIndex &&
               delimiter.index < linkImageEndIndex
