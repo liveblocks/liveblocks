@@ -225,6 +225,62 @@ test.describe("Multiple rooms (index)", () => {
 
     await waitForJson(page, "#connectionId_1", connId + 1);
   });
+
+  test("initialStorage value DOES get reevaluated if the room ID changes", async () => {
+    const page = pages[0];
+
+    // -----------------------
+    // Test setup
+    // -----------------------
+    await page.click("#add-column");
+
+    // Mount "e2e-multi-234" first
+    await page.fill("#input_1", "e2e-multi-234");
+    await page.click("#mount_1");
+
+    // Mount "e2e-multi-567" second
+    await page.fill("#input_2", "e2e-multi-567");
+    await page.click("#mount_2");
+
+    // Wait for connections
+    await waitForJson(page, "#socketStatus_1", "connected");
+    await waitForJson(page, "#socketStatus_2", "connected");
+
+    // Hit "Clear" on both
+    await page.click("#clear_1");
+    await page.click("#clear_2");
+
+    // Unmount both
+    await page.click("#unmount_1");
+    await page.click("#unmount_2");
+
+    // "Remove column"
+    await page.click("#remove-column");
+
+    // -----------------------
+    // Start of actual test
+    // -----------------------
+
+    // Set room ID to "e2e-multi-234"
+    await page.fill("#input_1", "e2e-multi-234");
+
+    // Mount
+    await page.click("#mount_1");
+    await waitForJson(page, "#socketStatus_1", "connected");
+
+    // Ensure that, when initialRoom_1 equals the "e2e-multi-234" value
+    await expectJson(page, "#initialRoom_1", "e2e-multi-234");
+
+    // Change room ID to "e2e-multi-567" (without unmounting)
+    await page.fill("#input_1", "e2e-multi-567");
+    await waitForJson(page, "#socketStatus_1", "connected");
+
+    // Ensure that, when initialRoom_1 equals the "e2e-multi-567" value
+    await expectJson(page, "#initialRoom_1", "e2e-multi-567");
+
+    // Unmount
+    await page.click("#unmount_1");
+  });
 });
 
 test.describe("Multiple rooms (global augmentation)", () => {
@@ -460,5 +516,65 @@ test.describe("Multiple rooms (global augmentation)", () => {
     );
     await page.click("#logout");
     await waitForJson(page, "#echo_1", newRenderCount);
+  });
+
+  // test("initialStorage value DOES NOT get reevaluated beyond the first value", async () => {
+  //   ...
+  // });
+
+  test("initialStorage value DOES get reevaluated if the room ID changes", async () => {
+    const page = pages[0];
+
+    // -----------------------
+    // Test setup
+    // -----------------------
+    await page.click("#add-column");
+
+    // Mount "e2e-multi-234" first
+    await page.fill("#input_1", "e2e-multi-234");
+    await page.click("#mount_1");
+
+    // Mount "e2e-multi-567" second
+    await page.fill("#input_2", "e2e-multi-567");
+    await page.click("#mount_2");
+
+    // Wait for connections
+    await waitForJson(page, "#socketStatus_1", "connected");
+    await waitForJson(page, "#socketStatus_2", "connected");
+
+    // Hit "Clear" on both
+    await page.click("#clear_1");
+    await page.click("#clear_2");
+
+    // Unmount both
+    await page.click("#unmount_1");
+    await page.click("#unmount_2");
+
+    // "Remove column"
+    await page.click("#remove-column");
+
+    // -----------------------
+    // Start of actual test
+    // -----------------------
+
+    // Set room ID to "e2e-multi-234"
+    await page.fill("#input_1", "e2e-multi-234");
+
+    // Mount
+    await page.click("#mount_1");
+    await waitForJson(page, "#socketStatus_1", "connected");
+
+    // Ensure that, when initialRoom_1 equals the "e2e-multi-234" value
+    await expectJson(page, "#initialRoom_1", "e2e-multi-234");
+
+    // Change room ID to "e2e-multi-567" (without unmounting)
+    await page.fill("#input_1", "e2e-multi-567");
+    await waitForJson(page, "#socketStatus_1", "connected");
+
+    // Ensure that, when initialRoom_1 equals the "e2e-multi-567" value
+    await expectJson(page, "#initialRoom_1", "e2e-multi-567");
+
+    // Unmount
+    await page.click("#unmount_1");
   });
 });

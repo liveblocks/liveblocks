@@ -137,19 +137,19 @@ export function prepareTestsConflicts<S extends LsonObject>(
         actor1.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
       flushSocket2Messages: async () => {
         actor2.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
     };
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor1.ws.pauseSend();
     actor2.ws.pauseSend();
@@ -176,10 +176,17 @@ export function prepareTestsConflicts<S extends LsonObject>(
       immRoot1: ToImmutable<S>,
       immRoot2: ToImmutable<S> = immRoot1
     ) {
-      expect(root1.toImmutable()).toEqual(immRoot1);
-      expect(immutableStorage1).toEqual(immRoot1);
-      expect(root2.toImmutable()).toEqual(immRoot2);
-      expect(immutableStorage2).toEqual(immRoot2);
+      try {
+        expect(root1.toImmutable()).toEqual(immRoot1);
+        expect(immutableStorage1).toEqual(immRoot1);
+        expect(root2.toImmutable()).toEqual(immRoot2);
+
+        expect(immutableStorage2).toEqual(immRoot2);
+      } catch (error) {
+        // Better stack trace (point to where assert is called instead)
+        Error.captureStackTrace(error as Error, assert);
+        throw error;
+      }
     }
 
     try {
@@ -225,7 +232,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor.ws.pauseSend();
 
@@ -241,7 +248,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
           actor.ws.resumeSend();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
-          await wait(1000);
+          await wait(600);
         },
       });
       actor.leave();
