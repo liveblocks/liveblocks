@@ -317,9 +317,8 @@ describe("Markdown", () => {
           expect(listItems?.[2]?.textContent).toBe("Yet another list item");
         }
       );
-    });
 
-    test("ordered lists with arbitrary start indices", () => {
+      // Ordered lists can have arbitrary starting indices.
       assert(
         `
           1. A numbered list item
@@ -812,6 +811,96 @@ describe("Markdown", () => {
         }
       );
     });
+  });
+
+  test("should handle different newlines", () => {
+    const content =
+      "# Heading 1\n\nA paragraph\r\r---\r\n\r\nAnother paragraph";
+
+    const { getByTestId } = render(
+      <Markdown data-testid="markdown" content={content} />
+    );
+    const { getByTestId: getByTestIdPartial } = render(
+      <Markdown data-testid="markdown-partial" content={content} partial />
+    );
+
+    const root = getByTestId("markdown");
+    const rootPartial = getByTestIdPartial("markdown-partial");
+    const roots = [root, rootPartial];
+
+    for (const root of roots) {
+      expect(root.querySelector("h1")?.textContent).toBe("Heading 1");
+
+      const paragraphs = root.querySelectorAll("p");
+      expect(paragraphs).toHaveLength(2);
+      expect(paragraphs[0]?.textContent).toBe("A paragraph");
+      expect(paragraphs[1]?.textContent).toBe("Another paragraph");
+
+      expect(root.querySelector("hr")).toBeInTheDocument();
+    }
+  });
+
+  test("should only modify the last block when handling partial content", () => {
+    function assert(content: string, assertions: (root: HTMLElement) => void) {
+      const { getByTestId, unmount } = render(
+        <Markdown data-testid="markdown" content={dedent(content)} partial />
+      );
+
+      assertions(getByTestId("markdown"));
+      unmount();
+    }
+
+    assert(
+      `
+        A paragraph without **bold
+
+        Another paragraph
+      `,
+      (root) => {
+        const paragraphs = root.querySelectorAll("p");
+        expect(paragraphs).toHaveLength(2);
+
+        expect(paragraphs[0]?.textContent).toBe("A paragraph without **bold");
+        expect(paragraphs[0]?.querySelector("strong")).not.toBeInTheDocument();
+        expect(paragraphs[1]?.textContent).toBe("Another paragraph");
+      }
+    );
+
+    assert(
+      `
+        - A list item 👋
+        - Another list item with **bold
+      `,
+      (root) => {
+        const listItems = root.querySelectorAll("li");
+        expect(listItems).toHaveLength(2);
+
+        expect(listItems[0]?.textContent).toBe("A list item 👋");
+        expect(listItems[1]?.textContent).toBe("Another list item with bold");
+        expect(listItems[1]?.querySelector("strong")?.textContent).toBe("bold");
+      }
+    );
+  });
+
+  test("should rerender when enabling or disabling partial content", () => {
+    const { getByTestId, rerender } = render(
+      <Markdown data-testid="markdown" content="A [link" />
+    );
+
+    const root = getByTestId("markdown");
+
+    expect(root.textContent).toBe("A [link");
+    expect(root.querySelector("a")).not.toBeInTheDocument();
+
+    rerender(<Markdown data-testid="markdown" content="A [link" partial />);
+
+    expect(root.textContent).toBe("A link");
+    expect(root.querySelector("a")?.textContent).toBe("link");
+
+    rerender(<Markdown data-testid="markdown" content="A [link" />);
+
+    expect(root.textContent).toBe("A [link");
+    expect(root.querySelector("a")).not.toBeInTheDocument();
   });
 
   describe("should handle partial…", () => {
@@ -1882,6 +1971,85 @@ describe("Markdown", () => {
       `,
         (root) => {
           expect(root?.textContent).toBe("A paragraph ~");
+        }
+      );
+    });
+
+    test("HTML elements", () => {
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is "
+          );
+        }
+      );
+
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <abbr title="
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is "
+          );
+        }
+      );
+
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is "
+          );
+        }
+      );
+
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HT
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is HT"
+          );
+        }
+      );
+
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML<
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is HTML"
+          );
+        }
+      );
+
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is HTML"
+          );
+        }
+      );
+
+      assert(
+        `
+          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</abbr>.
+        `,
+        (root) => {
+          expect(root?.textContent).toBe(
+            "The abbreviation for HyperText Markup Language is HTML."
+          );
         }
       );
     });
