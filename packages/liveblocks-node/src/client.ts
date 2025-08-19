@@ -1912,6 +1912,7 @@ export class Liveblocks {
    *
    * @param criteria.userId The user ID to get the inbox notifications from.
    * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param criteria.tenantId (optional) The tenant ID to get the inbox notifications for.
    * @param options.pageSize (optional) The page size to use for each request.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
