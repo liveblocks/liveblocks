@@ -62,6 +62,52 @@ describe("useInitial", () => {
     expect(fn1).toHaveBeenCalledWith(99, "hello");
     expect(fn2).not.toHaveBeenCalled(); // Still never called
   });
+
+  test("re-evaluates when roomId changes", () => {
+    const { result, rerender } = renderHook(
+      ({ count, roomId }) => useInitial(count, roomId),
+      { initialProps: { count: 7, roomId: "room1" } }
+    );
+
+    expect(result.current).toEqual(7);
+
+    // Change value but keep same roomId - should stay frozen
+    rerender({ count: 13, roomId: "room1" });
+    expect(result.current).toBe(7); // Same value
+
+    // Change roomId - should re-evaluate with new value
+    rerender({ count: 42, roomId: "room2" });
+    expect(result.current).toEqual(42); // Count updated because roomId changed
+  });
+
+  test("re-evaluates functions when roomId changes", () => {
+    const fn1 = jest.fn(() => "result1");
+    const fn2 = jest.fn(() => "result2");
+    const fn3 = jest.fn(() => "result3");
+
+    const { result, rerender } = renderHook(
+      ({ fn, roomId }) => useInitial(fn, roomId),
+      { initialProps: { fn: fn1, roomId: "room1" } }
+    );
+
+    const frozenFn1 = result.current;
+    expect(frozenFn1()).toBe("result1");
+    expect(fn1).toHaveBeenCalledTimes(1);
+
+    // Change function but keep same roomId - should stay frozen to original
+    rerender({ fn: fn2, roomId: "room1" });
+    expect(result.current).toBe(frozenFn1); // Same reference
+    expect(result.current()).toBe("result1"); // Still original function
+    expect(fn2).not.toHaveBeenCalled();
+
+    // Change roomId - should re-evaluate with new function
+    rerender({ fn: fn3, roomId: "room2" });
+    const frozenFn2 = result.current;
+    expect(frozenFn2).not.toBe(frozenFn1); // Different reference
+    expect(frozenFn2()).toBe("result3"); // New function
+    expect(fn3).toHaveBeenCalledTimes(1);
+    expect(fn2).not.toHaveBeenCalled(); // fn2 was never frozen
+  });
 });
 
 describe("useInitialUnlessFunction", () => {
@@ -129,5 +175,82 @@ describe("useInitialUnlessFunction", () => {
     const result2 = result.current(99, "hello");
     expect(result2).toBe("hello-99");
     expect(fn2).toHaveBeenCalledWith(99, "hello");
+  });
+
+  test("maintains stable wrapper despite roomId changes", () => {
+    const fn1 = jest.fn(() => "fn1");
+    const fn2 = jest.fn(() => "fn2");
+    const fn3 = jest.fn(() => "fn3");
+
+    const { result, rerender } = renderHook(
+      ({ fn, roomId }) => useInitialUnlessFunction(fn, roomId),
+      { initialProps: { fn: fn1, roomId: "room1" } }
+    );
+
+    const wrapper1 = result.current;
+    expect(wrapper1()).toBe("fn1");
+
+    // Change function but keep same roomId - should use same wrapper
+    rerender({ fn: fn2, roomId: "room1" });
+    expect(result.current).toBe(wrapper1); // Same wrapper
+    expect(result.current()).toBe("fn2"); // But calls latest function
+
+    // Change roomId - the useCallback should re-evaluate with new roomId dependency
+    // but since roomId isn't actually used in the useCallback dependency array,
+    // the wrapper reference stays the same (which is the current behavior)
+    rerender({ fn: fn3, roomId: "room2" });
+    const wrapper2 = result.current;
+    // The implementation currently doesn't create a new wrapper when roomId changes
+    // for function values because roomId isn't in the useCallback deps
+    expect(wrapper2()).toBe("fn3"); // Should still call the latest function
+  });
+
+  test("handles type changes from function to non-function when roomId changes", () => {
+    const fn = jest.fn(() => "function result");
+    const nonFunction = "string value";
+
+    const { result, rerender } = renderHook(
+      ({ value, roomId }) => useInitialUnlessFunction(value, roomId),
+      { initialProps: { value: fn as unknown, roomId: "room1" } }
+    );
+
+    // Initially a function - should get a wrapper
+    const wrapper = result.current;
+    expect(typeof wrapper).toBe("function");
+    // @ts-expect-error wrapper is a function at this point
+    expect(wrapper()).toBe("function result");
+
+    // Change to non-function with same roomId - should keep wrapper
+    rerender({ value: nonFunction, roomId: "room1" });
+    expect(result.current).toBe(wrapper); // Same wrapper reference
+
+    // Change roomId with non-function - should get the non-function value directly
+    rerender({ value: nonFunction, roomId: "room2" });
+    expect(result.current).toBe("string value"); // Direct non-function value
+    expect(typeof result.current).toBe("string");
+  });
+
+  test("handles type changes from non-function to function when roomId changes", () => {
+    const nonFunction = "string value";
+    const fn = jest.fn(() => "function result");
+
+    const { result, rerender } = renderHook(
+      ({ value, roomId }) => useInitialUnlessFunction(value, roomId),
+      { initialProps: { value: nonFunction as unknown, roomId: "room1" } }
+    );
+
+    // Initially a non-function - should get the value directly
+    expect(result.current).toBe("string value");
+    expect(typeof result.current).toBe("string");
+
+    // Change to function with same roomId - should keep non-function
+    rerender({ value: fn, roomId: "room1" });
+    expect(result.current).toBe("string value"); // Still the original frozen value
+
+    // Change roomId with function - should get a function wrapper
+    rerender({ value: fn, roomId: "room2" });
+    expect(typeof result.current).toBe("function");
+    // @ts-expect-error result.current is a function at this point
+    expect(result.current()).toBe("function result");
   });
 });

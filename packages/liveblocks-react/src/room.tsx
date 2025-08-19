@@ -604,7 +604,7 @@ function RoomProviderInner<
       initialStorage: props.initialStorage,
       autoConnect: props.autoConnect ?? typeof window !== "undefined",
     },
-    [roomId]
+    roomId
   ) as EnterOptions<P, S>;
 
   const [{ room }, setRoomLeavePair] = useState(() =>

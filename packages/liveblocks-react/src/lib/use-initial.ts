@@ -25,20 +25,18 @@ export function useInitialUnlessFunction<T>(
 ): T {
   const frozenValue = useInitial(latestValue, roomId);
 
-  // Normally the Rules of Hooks™ dictate that you should not call hooks
-  // conditionally. In this case, we're good here, because the same code path
-  // will always be taken on every subsequent render here, because we've frozen
-  // the value.
-  /* eslint-disable react-hooks/rules-of-hooks */
+  type Fn = T & ((...args: unknown[]) => unknown);
+  const ref = useLatest(latestValue as Fn);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const wrapper = useCallback(
+    ((...args: unknown[]) => ref.current(...args)) as Fn,
+    [ref]
+  );
+
+  // Return the wrapper only if the frozen value is a function
   if (typeof frozenValue === "function") {
-    type Fn = T & ((...args: unknown[]) => unknown);
-    const ref = useLatest(latestValue as Fn);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return useCallback(((...args: unknown[]) => ref.current(...args)) as Fn, [
-      ref,
-    ]);
+    return wrapper;
   } else {
     return frozenValue;
   }
-  /* eslint-enable react-hooks/rules-of-hooks */
 }
