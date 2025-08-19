@@ -136,19 +136,19 @@ export function prepareTestsConflicts<S extends LsonObject>(
         actor1.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
       flushSocket2Messages: async () => {
         actor2.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
     };
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor1.ws.pauseSend();
     actor2.ws.pauseSend();
@@ -225,7 +225,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor.ws.pauseSend();
 
@@ -241,7 +241,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
           actor.ws.resumeSend();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
-          await wait(1000);
+          await wait(600);
         },
       });
       actor.leave();
