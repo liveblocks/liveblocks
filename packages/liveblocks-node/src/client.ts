@@ -258,6 +258,7 @@ export type RoomsQueryCriteria = {
 
 export type InboxNotificationsQueryCriteria = {
   userId: string;
+  tenantId?: string;
   /**
    * The query to filter inbox notifications by. It is based on our query language.
    *
@@ -299,8 +300,7 @@ export type GetRoomsOptions =
 // prettier-ignore
 export type GetInboxNotificationsOptions =
   & InboxNotificationsQueryCriteria
-  & PaginationOptions
-  & { tenantId?: string };
+  & PaginationOptions;
 
 export type CreateRoomOptions = {
   defaultAccesses: RoomPermission;
