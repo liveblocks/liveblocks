@@ -1377,6 +1377,10 @@ export class Liveblocks {
   }
 
   /**
+   * @deprecated Prefer using `getMentionsFromCommentBody` to extract mentions
+   * from comments and threads, or `Liveblocks.getThreadSubscriptions` to get
+   * the list of users who are subscribed to a thread.
+   *
    * Gets a thread's participants.
    *
    * Participants are users who have commented on the thread

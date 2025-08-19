@@ -1761,8 +1761,9 @@
     "/rooms/{roomId}/threads/{threadId}/participants": {
       "get": {
         "summary": "Get thread participants",
-        "tags": ["Comments"],
-        "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
+        "x-badge": "Deprecated",
+        "tags": ["Deprecated"],
+        "description": "**Deprecated.** Prefer using [thread subscriptions](#get-rooms-roomId-threads-threadId-subscriptions) instead.\n\nThis endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
         "operationId": "get-rooms-roomId-threads-threadId-participants",
         "parameters": [
           {
