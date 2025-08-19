@@ -597,12 +597,15 @@ function RoomProviderInner<
   }
 
   // Note: We'll hold on to the initial value given here, and ignore any
-  // changes to this argument in subsequent renders
-  const frozenProps = useInitial({
-    initialPresence: props.initialPresence,
-    initialStorage: props.initialStorage,
-    autoConnect: props.autoConnect ?? typeof window !== "undefined",
-  }) as EnterOptions<P, S>;
+  // changes to this argument in subsequent renders, except when roomId changes
+  const frozenProps = useInitial(
+    {
+      initialPresence: props.initialPresence,
+      initialStorage: props.initialStorage,
+      autoConnect: props.autoConnect ?? typeof window !== "undefined",
+    },
+    [roomId]
+  ) as EnterOptions<P, S>;
 
   const [{ room }, setRoomLeavePair] = useState(() =>
     stableEnterRoom(roomId, {
