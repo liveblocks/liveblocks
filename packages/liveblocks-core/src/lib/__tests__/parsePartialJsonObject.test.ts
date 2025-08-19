@@ -84,12 +84,71 @@ describe("parsePartialJsonObject", () => {
     // Test combination of escapes and incomplete structure
     expect(p('{"a":"b\\\\","c":')).toEqual({ a: "b\\" });
 
-    // Test to cover escape handling in backtracking (lines 120, 122)
+    // Test escape handling in string backtracking
     expect(p('{"a":"test\\\\value:')).toEqual({ a: "test\\value:" });
     expect(p('{"a":"test\\\\value":')).toEqual({});
 
-    // Test to cover the false branch of line 113 (endsWith('"') after removing ':')
-    // Input ending with number followed by colon (rare but possible in malformed JSON)
+    // Test handling of input ending with colon after numeric value
     expect(p('{"a":1:')).toEqual({ a: 1 });
+
+    // Cover escaped characters inside strings
+    expect(p('{"msg":"Say \\"hello\\"')).toEqual({ msg: 'Say "hello"' });
+    expect(p('{"path":"C:\\\\Users')).toEqual({ path: "C:\\Users" });
+
+    // Cover array closing bracket stack operations
+    expect(p('{"arr":[1,2]}')).toEqual({ arr: [1, 2] });
+    expect(p('{"nested":[[[]]]}')).toEqual({ nested: [[[]]] });
+    expect(p('{"mixed":[{"a":1}]}')).toEqual({ mixed: [{ a: 1 }] });
+
+    // Cover error recovery logic for malformed JSON
+
+    // Test colon removal for incomplete key-value pairs
+    expect(p('{"a":1,"incomplete":')).toEqual({ a: 1 });
+
+    // Test handling of unmatched quotes
+    expect(p('{"a":1,"bad":"incomplete')).toEqual({ a: 1, bad: "incomplete" });
+
+    // Test comma removal for trailing commas
+    expect(p('{"a":1,"b":2,')).toEqual({ a: 1, b: 2 });
+
+    // Test fallback to {} for completely malformed input
+    expect(p("not json at all")).toEqual({});
+    expect(p('{"completely broken syntax",}')).toEqual({});
+    expect(p('{"key":"completely broken syntax",}')).toEqual({});
+    expect(p('{"key","completely broken syntax",}')).toEqual({});
+  });
+
+  test("handles emojis and newlines", () => {
+    // Complete emojis in strings
+    expect(p('{"message":"Hello 👋 world')).toEqual({
+      message: "Hello 👋 world",
+    });
+    expect(p('{"reaction":"🎉","status":"complete')).toEqual({
+      reaction: "🎉",
+      status: "complete",
+    });
+
+    // Partial/incomplete emojis (multi-byte sequences)
+    expect(p('{"partial":"test 👋')).toEqual({ partial: "test 👋" });
+    expect(p('{"emoji":"🎉🎊')).toEqual({ emoji: "🎉🎊" });
+
+    // Newlines and whitespace in strings
+    expect(p('{"text":"line1\\nline2')).toEqual({ text: "line1\nline2" });
+    expect(p('{"multiline":"first line\\nsecond')).toEqual({
+      multiline: "first line\nsecond",
+    });
+
+    // Mixed emojis, newlines, and regular content
+    expect(p('{"log":"User clicked 👆\\nAction: success ✅')).toEqual({
+      log: "User clicked 👆\nAction: success ✅",
+    });
+
+    // Emojis with arrays and objects
+    expect(p('{"reactions":["👍","👎","❤️')).toEqual({
+      reactions: ["👍", "👎", "❤️"],
+    });
+    expect(p('{"user":{"name":"Alice","status":"🟢 online')).toEqual({
+      user: { name: "Alice", status: "🟢 online" },
+    });
   });
 });
