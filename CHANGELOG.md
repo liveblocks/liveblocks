@@ -2,6 +2,11 @@
 
 ## v3.4.0
 
+### `@liveblocks/react`
+
+- In `RoomProvider`, `initialPresence` and `initialStorage` now get re-evaluated
+  whenever the room ID (the `id` prop) changes.
+
 ## v3.3.4
 
 ### `@liveblocks/client`
