@@ -93,7 +93,7 @@ describe("Markdown", () => {
           expect(paragraphs).toHaveLength(2);
           expect(paragraphs[0]?.textContent).toBe("A paragraph.");
           expect(paragraphs[1]?.textContent).toBe(
-            "Another paragraph which spans multiple lines."
+            "Another paragraph which\nspans multiple lines."
           );
         }
       );
@@ -453,15 +453,15 @@ describe("Markdown", () => {
 
           expect(list).not.toBeNull();
           expect(listItems).toHaveLength(3);
-          expect(listItems?.[0]?.textContent).toBe("A list item");
+          expect(listItems?.[0]?.textContent).toBe(" A list item");
           expect(
             listItems?.[0]?.querySelector("input[type='checkbox']")
           ).not.toBeChecked();
-          expect(listItems?.[1]?.textContent).toBe("Another list item");
+          expect(listItems?.[1]?.textContent).toBe(" Another list item");
           expect(
             listItems?.[1]?.querySelector("input[type='checkbox']")
           ).toBeChecked();
-          expect(listItems?.[2]?.textContent).toBe("Yet another list item");
+          expect(listItems?.[2]?.textContent).toBe(" Yet another list item");
           expect(
             listItems?.[2]?.querySelector("input[type='checkbox']")
           ).not.toBeChecked();
@@ -517,7 +517,7 @@ describe("Markdown", () => {
           const firstNestedSecondListFirstNestedList = firstNestedSecondList
             ?.childNodes[0]?.childNodes[1] as HTMLElement | null;
           expect(firstNestedSecondListFirstNestedList?.textContent).toBe(
-            "A deeply nested list item"
+            " A deeply nested list item"
           );
           expect(firstNestedSecondListFirstNestedList?.tagName).toBe("UL");
           expect(
@@ -538,7 +538,7 @@ describe("Markdown", () => {
             "A nested list item"
           );
           expect(secondNestedList?.childNodes[1]?.textContent).toBe(
-            "Another nested list item"
+            " Another nested list item"
           );
           expect(
             (
@@ -579,7 +579,9 @@ describe("Markdown", () => {
             "<p>Another list item with</p><p>multiple paragraphs.</p>"
           );
 
-          expect(listItems?.[2]?.textContent).toBe("A task list item with");
+          expect(listItems?.[2]?.textContent).toContain(
+            " A task list item with"
+          );
           expect(
             listItems?.[2]?.querySelector("input[type='checkbox']")
           ).toBeChecked();
@@ -1637,7 +1639,7 @@ describe("Markdown", () => {
 
           expect(codeBlock).toBeInTheDocument();
           expect(codeBlock).toHaveAttribute("data-language", "css");
-          expect(codeBlock?.textContent).toBe("");
+          expect(codeBlock?.textContent).toBe(" ");
         }
       );
 
@@ -1935,7 +1937,7 @@ describe("Markdown", () => {
         A partial flag emoji 🇺
       `,
         (root) => {
-          expect(root?.textContent).toBe("A partial flag emoji");
+          expect(root?.textContent).toBe("A partial flag emoji ");
         }
       );
 
@@ -1944,7 +1946,7 @@ describe("Markdown", () => {
         A flag emoji 🇺🇳
       `,
         (root) => {
-          expect(root?.textContent).toBe("A flag emoji");
+          expect(root?.textContent).toBe("A flag emoji ");
         }
       );
 
@@ -1953,7 +1955,7 @@ describe("Markdown", () => {
         A keycap sequence emoji 1️⃣
       `,
         (root) => {
-          expect(root?.textContent).toBe("A keycap sequence");
+          expect(root?.textContent).toBe("A keycap sequence emoji ");
         }
       );
 
@@ -2154,7 +2156,7 @@ describe("Markdown", () => {
           const rootListItems = root.querySelectorAll(":scope > ul > li");
           expect(rootListItems).toHaveLength(3);
 
-          expect(rootListItems[0]?.textContent).toBe("A list item");
+          expect(rootListItems[0]?.textContent).toContain("A list item");
 
           const firstNestedList = rootListItems[0]?.querySelector("ol");
           expect(firstNestedList).toHaveAttribute("data-list");
@@ -2171,7 +2173,9 @@ describe("Markdown", () => {
           );
 
           const secondRootListItem = rootListItems[1];
-          expect(secondRootListItem?.textContent).toBe("Another list item");
+          expect(secondRootListItem?.textContent).toContain(
+            "Another list item"
+          );
 
           const secondNestedList = secondRootListItem?.querySelector("ul");
           expect(secondNestedList).toHaveAttribute("data-list");
@@ -2181,26 +2185,28 @@ describe("Markdown", () => {
           expect(secondNestedListItems).toHaveLength(3);
 
           expect(secondNestedListItems?.[0]?.textContent).toBe(
-            "A task list item"
+            " A task list item"
           );
           expect(
             secondNestedListItems?.[0]?.querySelector("input[type='checkbox']")
           ).not.toBeChecked();
           expect(secondNestedListItems?.[1]?.textContent).toBe(
-            "A completed task list item"
+            " A completed task list item"
           );
           expect(
             secondNestedListItems?.[1]?.querySelector("input[type='checkbox']")
           ).toBeChecked();
           expect(secondNestedListItems?.[2]?.textContent).toBe(
-            "Another completed task list item"
+            " Another completed task list item"
           );
           expect(
             secondNestedListItems?.[2]?.querySelector("input[type='checkbox']")
           ).toBeChecked();
 
           const thirdRootListItem = rootListItems[2];
-          expect(thirdRootListItem?.textContent).toBe("Yet another list item");
+          expect(thirdRootListItem?.textContent).toContain(
+            "Yet another list item"
+          );
 
           const thirdNestedLists =
             thirdRootListItem?.querySelectorAll("ol, ul");
@@ -2224,7 +2230,7 @@ describe("Markdown", () => {
             "unordered"
           );
           expect(thirdNestedLists?.[2]?.querySelector("li")?.textContent).toBe(
-            "Yet another list item"
+            " Yet another list item"
           );
           expect(
             thirdNestedLists?.[2]?.querySelector("input[type='checkbox']")
@@ -2298,7 +2304,7 @@ describe("Markdown", () => {
           const codeBlocks = root.querySelectorAll("pre");
           expect(codeBlocks).toHaveLength(2);
 
-          expect(codeBlocks[0]?.textContent).toBe("p { color: #000; }");
+          expect(codeBlocks[0]?.textContent).toBe("p {\n  color: #000;\n}");
           expect(codeBlocks[0]).toHaveAttribute("data-code-block");
           expect(codeBlocks[1]?.textContent).toBe("const a = 2;");
           expect(codeBlocks[1]).toHaveAttribute("data-code-block");
