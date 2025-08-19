@@ -7,6 +7,7 @@ declare global {
     };
 
     Storage: {
+      initialRoom?: string;
       items?: LiveList<string>;
     };
   }
