@@ -172,14 +172,21 @@ export function prepareTestsConflicts<S extends LsonObject>(
     );
 
     function assert(immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) {
-      if (immRoot2 == null) {
-        immRoot2 = immRoot1;
-      }
+      try {
+        if (immRoot2 === undefined) {
+          immRoot2 = immRoot1;
+        }
 
-      expect(root1.toImmutable()).toEqual(immRoot1);
-      expect(immutableStorage1).toEqual(immRoot1);
-      expect(root2.toImmutable()).toEqual(immRoot2);
-      expect(immutableStorage2).toEqual(immRoot2);
+        expect(root1.toImmutable()).toEqual(immRoot1);
+        expect(immutableStorage1).toEqual(immRoot1);
+        expect(root2.toImmutable()).toEqual(immRoot2);
+
+        expect(immutableStorage2).toEqual(immRoot2);
+      } catch (error) {
+        // Better stack trace (point to where assert is called instead)
+        Error.captureStackTrace(error as Error, assert);
+        throw error;
+      }
     }
 
     try {
