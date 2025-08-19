@@ -12,6 +12,7 @@ import { parsePartialJsonObject } from "../lib/parsePartialJsonObject";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
+import { findLastIndex } from "../lib/utils";
 
 export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
@@ -511,8 +512,6 @@ export type AiKnowledgeSource = {
 };
 
 // --------------------------------------------------------------------------------------------------
-
-import { findLastIndex } from "../lib/utils";
 
 export function patchContentWithDelta(
   content: AiAssistantContentPart[],
