@@ -342,6 +342,65 @@ describe("patchContentWithDelta", () => {
         name: "calculator",
       });
     });
+
+    test("caches partialArgs computation between accesses", () => {
+      // Setup
+      // =====
+      const content: AiAssistantContentPart[] = [];
+
+      // Create two tool invocations (to test that each has its own cache)
+      patchContentWithDelta(content, {
+        type: "tool-stream",
+        invocationId: "inv-cache-test",
+        name: "testTool",
+      });
+
+      const tool1 = content[0] as AiReceivingToolInvocationPart;
+
+      // Actual test
+      // ===========
+
+      expect(tool1.partialArgs).toEqual({});
+      expect(tool1.partialArgs).toBe(tool1.partialArgs);
+      //                                 ^^^^ Referentially equal
+
+      // Add some partial args text
+      patchContentWithDelta(content, {
+        type: "tool-delta",
+        delta: '{"query": "tes',
+      });
+
+      // Multiple accesses doesn't change the value...
+      expect(tool1.partialArgs).toEqual({ query: "tes" });
+      expect(tool1.partialArgs).toEqual({ query: "tes" });
+
+      // ...in fact it returns the same value
+      const result1 = tool1.partialArgs;
+      expect(tool1.partialArgs).toBe(tool1.partialArgs);
+      //                                 ^^^^ Referentially equal
+
+      // Second tool invocation to test that each has its own cache
+      patchContentWithDelta(content, {
+        type: "tool-stream",
+        invocationId: "inv-cache-test-2",
+        name: "testTool2",
+      });
+      patchContentWithDelta(content, {
+        type: "tool-delta",
+        delta: '{"different": "value"}',
+      });
+
+      const tool2 = content[1] as AiReceivingToolInvocationPart;
+
+      // Each tool should have its own cached values
+      tool2.partialArgs;
+
+      expect(tool2.partialArgs).toEqual({ different: "value" });
+      expect(tool2.partialArgs).toBe(tool2.partialArgs);
+
+      // First tool should still have its original cached value
+      expect(tool1.partialArgs).toBe(result1); // Still the same cached object
+    });
   });
 
   describe("tool-delta", () => {
