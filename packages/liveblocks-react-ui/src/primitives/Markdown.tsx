@@ -22,7 +22,7 @@ const PARTIAL_LINK_IMAGE_REGEX =
 const PARTIAL_TABLE_HEADER_REGEX =
   /^\s*\|(?:[^|\n]+(?:\|[^|\n]+)*?)?\|?\s*(?:\n\s*\|\s*[-:|\s]*\s*)?$/;
 const PARTIAL_EMOJI_REGEX =
-  /(?:[\uD800-\uDBFF]|\u200D|\uFE0F|\u20E3|\p{Regional_Indicator}|\p{Emoji_Presentation}|\p{Emoji_Modifier_Base}|\p{Emoji_Modifier})+$/u;
+  /(?:\u200D|\uFE0F|\u20E3|\p{Regional_Indicator}|\p{Emoji_Presentation}|\p{Emoji_Modifier_Base}|\p{Emoji_Modifier})+$/u;
 const TRAILING_NON_WHITESPACE_REGEX = /^\S*/;
 const WHITESPACE_REGEX = /\s/;
 const NEWLINE_REGEX = /\r\n?/g;
@@ -1006,10 +1006,18 @@ function completePartialInlineMarkdown(
   const partialEmojiMatch = completedMarkdown.match(PARTIAL_EMOJI_REGEX);
 
   if (partialEmojiMatch) {
-    completedMarkdown = completedMarkdown.slice(
-      0,
-      -partialEmojiMatch[0].length
-    );
+    const partialEmoji = partialEmojiMatch[0];
+    completedMarkdown = completedMarkdown.slice(0, -partialEmoji.length);
+
+    // If the removed partial emoji contains a special modifier (VS16 or keycap),
+    // we also remove the preceding code point.
+    if (partialEmoji.includes("\uFE0F") || partialEmoji.includes("\u20E3")) {
+      const codepoints = Array.from(completedMarkdown);
+
+      if (codepoints.length > 0) {
+        completedMarkdown = codepoints.slice(0, -1).join("");
+      }
+    }
   }
 
   // Move forward through the string to collect delimiters.
