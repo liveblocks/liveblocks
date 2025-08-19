@@ -44,8 +44,8 @@
     mask-image: linear-gradient(
       90deg,
       rgb(0 0 0 / 50%) 36%,
-      #000 48%,
-      #000 52%,
+      rgb(0 0 0 / 95%) 48%,
+      rgb(0 0 0 / 95%) 52%,
       rgb(0 0 0 / 50%) 64%
     );
     mask-size: 300% 100%;
