@@ -1,5 +1,20 @@
 ## vNEXT (not yet published)
 
+## v3.4.0
+
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
 ## v3.3.1
 
 ### `@liveblocks/react-ui`

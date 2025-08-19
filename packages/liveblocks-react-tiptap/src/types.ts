@@ -3,6 +3,7 @@ import type {
   ContextualPromptResponse,
   Relax,
   TextEditorType,
+  ThreadData,
 } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content, Range } from "@tiptap/core";
@@ -88,6 +89,7 @@ export type LiveblocksExtensionOptions = {
   mentions?: boolean; // | MentionsConfiguration
   ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
+  threads_experimental?: ThreadData[];
   initialContent?: Content;
   enablePermanentUserData?: boolean;
   /**

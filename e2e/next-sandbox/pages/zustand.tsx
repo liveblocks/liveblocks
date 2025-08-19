@@ -1,3 +1,4 @@
+import { createLiveblocksContext } from "@liveblocks/react";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import { liveblocks } from "@liveblocks/zustand";
 import { useEffect } from "react";
@@ -15,6 +16,8 @@ import Button from "../utils/Button";
 import { createLiveblocksClient } from "../utils/createClient";
 
 const client = createLiveblocksClient();
+
+const { useSyncStatus } = createLiveblocksContext(client);
 
 type State = {
   // Presence
@@ -69,6 +72,7 @@ export default function ZustandApp() {
     clear,
     liveblocks: { enterRoom, leaveRoom, isStorageLoading, room, others },
   } = useStore();
+  const syncStatus = useSyncStatus();
 
   const connectionId = room?.getSelf()?.connectionId ?? 0;
 
@@ -167,6 +171,7 @@ export default function ZustandApp() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row id="syncStatus" name="Sync status" value={syncStatus} />
           <Row id="connectionId" name="Connection ID" value={connectionId} />
         </tbody>
       </table>
