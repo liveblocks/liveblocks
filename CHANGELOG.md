@@ -2,10 +2,6 @@
 
 ## v3.4.0
 
-### `@liveblocks/react-ui`
-
-- Add a minimal appearance to `AiTool` via a new `variant` prop.
-
 ### `@liveblocks/react`
 
 Tool calls will now stream in while under construction. This means that tools
@@ -13,7 +9,7 @@ will render sooner and more often re-render, while `partialArgs` are streaming
 in.
 
 > New behavior (>=3.4):
-> 
+>
 > - 1st render: `{ stage: "receiving", partialArgs: {} }`
 > - 2nd render: `{ stage: "receiving", partialArgs: { cities: [] } }`
 > - 3rd render: `{ stage: "receiving", partialArgs: { cities: [""] } }`
@@ -22,17 +18,22 @@ in.
 > - etc.
 > - Then `{ stage: "executing", args: { cities: "Paris" } }` (same as before)
 > - And `{ stage: "executed", args, result }` (same as before)
-> 
+>
 > Before (<3.4):
-> 
+>
 > - Stage "receiving" would never happen
-> - 1st render would be with `{ stage: "executing", args: { cities: ["Paris"] } }`
+> - 1st render would be with
+>   `{ stage: "executing", args: { cities: ["Paris"] } }`
 > - 2nd render would be with `{ stage: "executed", args, result }`
 
 #### Other changes
 
 - In `RoomProvider`, `initialPresence` and `initialStorage` now get re-evaluated
   whenever the room ID (the `id` prop) changes.
+
+### `@liveblocks/react-ui`
+
+- Add a minimal appearance to `AiTool` via a new `variant` prop.
 
 ## v3.3.4
 
