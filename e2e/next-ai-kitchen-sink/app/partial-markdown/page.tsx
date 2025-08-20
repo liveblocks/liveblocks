@@ -41,14 +41,6 @@ const markdownMessage = `
 
 ---
 
-<Markdown>Hello</Markdown>
-
-<Markdown />
-
-\`<Markdown>Hello</Markdown>\`
-
-\`<Markdown />\`
-
 This is a regular paragraph of text. It includes **bold text**, _italic text_, **_bold and italic_**, ~~strikethrough~~, \`inline code\`, **\`bold inline code\`**, and [links](https://liveblocks.io/ "With a title").
 Hello world the rest of the first paragraph is here.
 
