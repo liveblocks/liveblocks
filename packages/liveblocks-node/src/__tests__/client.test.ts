@@ -2364,6 +2364,7 @@ describe("client", () => {
         groupId: "group1",
         memberIds: ["user1", "user2"],
         tenantId: "tenant1",
+        scopes: { mention: true as const },
       };
 
       server.use(
@@ -2381,6 +2382,7 @@ describe("client", () => {
                 tenantId: "tenant1",
                 createdAt: "2022-07-13T14:32:50.697Z",
                 updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
                 members: [
                   {
                     id: "user1",
@@ -2409,6 +2411,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
         members: [
           {
             id: "user1",
@@ -2426,6 +2429,7 @@ describe("client", () => {
       const createGroupParams = {
         groupId: "group1",
         tenantId: "tenant1",
+        scopes: { mention: true as const },
       };
 
       server.use(
@@ -2443,6 +2447,7 @@ describe("client", () => {
                 tenantId: "tenant1",
                 createdAt: "2022-07-13T14:32:50.697Z",
                 updatedAt: "2022-07-13T14:32:50.697Z",
+                scopes: { mention: true },
                 members: [],
               },
               { status: 200 }
@@ -2462,6 +2467,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
         members: [],
       });
     });
@@ -2471,6 +2477,7 @@ describe("client", () => {
         groupId: "group1",
         memberIds: ["user1"],
         tenantId: "tenant1",
+        scopes: { mention: true as const },
       };
 
       server.use(
@@ -2519,6 +2526,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T14:32:50.697Z",
+        scopes: { mention: true },
         members: [
           {
             id: "user1",
@@ -2545,6 +2553,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
         members: [
           {
             id: "user1",
@@ -2596,6 +2605,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T14:32:50.697Z",
+        scopes: { mention: true },
         members: [
           {
             id: "user1",
@@ -2644,6 +2654,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+        scopes: { mention: true },
         members: [
           {
             id: "user1",
@@ -2718,6 +2729,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: "2022-07-13T14:32:50.697Z",
         updatedAt: "2022-07-13T15:30:00.000Z",
+        scopes: { mention: true },
         members: [
           {
             id: "user1",
@@ -2754,6 +2766,7 @@ describe("client", () => {
         tenantId: "tenant1",
         createdAt: new Date("2022-07-13T14:32:50.697Z"),
         updatedAt: new Date("2022-07-13T15:30:00.000Z"),
+        scopes: { mention: true },
         members: [
           {
             id: "user1",

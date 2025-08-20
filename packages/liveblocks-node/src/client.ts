@@ -2245,7 +2245,12 @@ export class Liveblocks {
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async createGroup(
-    params: { groupId: string; memberIds?: string[]; tenantId?: string },
+    params: {
+      groupId: string;
+      memberIds?: string[];
+      tenantId?: string;
+      scopes: { mention: true };
+    },
     options?: RequestOptions
   ): Promise<GroupData> {
     const res = await this.#post(
