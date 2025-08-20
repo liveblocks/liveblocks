@@ -9,22 +9,16 @@ const registry: Array<() => Promise<void>> = [];
  * Call `cleanupAllChats()` in your test's try/finally block or afterEach hook.
  */
 export function createRandomChat(page: Page): string {
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
   const chatId = `${today}-${nanoid(8)}`; // Use shorter 8-char nanoid
 
   const cleanupFn = async () => {
     try {
-      await page.goto("/chats");
-      await expect(page.locator("h1")).toHaveText("List of all chats");
-
-      const chatLink = page.locator(`a[href="/chats/${chatId}"]`);
-      if (await chatLink.isVisible()) {
-        const deleteButton = chatLink
-          .locator("..")
-          .locator('button:has-text("Delete")');
-        await deleteButton.click();
-        await expect(chatLink).not.toBeVisible();
-      }
+      await page.goto(`/cleanup/${chatId}`);
+      // Wait for the deletion to complete - should show "Chat deleted" on success
+      await expect(page.locator("text=Chat deleted")).toBeVisible({
+        timeout: 10000,
+      });
     } catch (error) {
       console.warn(`Failed to cleanup chat ${chatId}:`, error);
     }
@@ -48,4 +42,3 @@ export async function cleanupAllChats(): Promise<void> {
     }
   }
 }
-
