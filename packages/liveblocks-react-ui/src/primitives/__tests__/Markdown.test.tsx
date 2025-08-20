@@ -803,11 +803,15 @@ describe("Markdown", () => {
           expect(paragraphs).toHaveLength(4);
 
           expect(paragraphs[0]?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is HTML."
+            'The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</abbr>.'
           );
-          expect(paragraphs[1]?.textContent).toBe("Press Ctrl + C to copy.");
-          expect(paragraphs[2]?.textContent).toBe("This text is highlighted.");
-          expect(paragraphs[3]?.textContent).toBe("E = mc2");
+          expect(paragraphs[1]?.textContent).toBe(
+            "Press <kbd>Ctrl</kbd> + <kbd>C</kbd> to copy."
+          );
+          expect(paragraphs[2]?.textContent).toBe(
+            "This <mark>text is highlighted</mark>."
+          );
+          expect(paragraphs[3]?.textContent).toBe("E = mc<sup>2</sup>");
         }
       );
     });
@@ -1993,18 +1997,7 @@ describe("Markdown", () => {
         `,
         (root) => {
           expect(root?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is "
-          );
-        }
-      );
-
-      assert(
-        `
-          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">
-        `,
-        (root) => {
-          expect(root?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is "
+            'The abbreviation for HyperText Markup Language is <abbr title="'
           );
         }
       );
@@ -2015,29 +2008,7 @@ describe("Markdown", () => {
         `,
         (root) => {
           expect(root?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is HT"
-          );
-        }
-      );
-
-      assert(
-        `
-          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML<
-        `,
-        (root) => {
-          expect(root?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is HTML"
-          );
-        }
-      );
-
-      assert(
-        `
-          The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</
-        `,
-        (root) => {
-          expect(root?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is HTML"
+            'The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HT'
           );
         }
       );
@@ -2048,7 +2019,7 @@ describe("Markdown", () => {
         `,
         (root) => {
           expect(root?.textContent).toBe(
-            "The abbreviation for HyperText Markup Language is HTML."
+            'The abbreviation for HyperText Markup Language is <abbr title="HyperText Markup Language">HTML</abbr>.'
           );
         }
       );
