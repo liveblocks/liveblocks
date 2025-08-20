@@ -10,10 +10,10 @@ async function setupChatA(page: Page) {
   );
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
-  if ((await sendButton.getAttribute("data-variant")) === "secondary") {
+  if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("aria-label", "Send");
   }
 
   // Clear any existing text
@@ -31,10 +31,10 @@ async function setupChatB(page: Page) {
   );
 
   // If there's an ongoing operation (abort button is enabled), click it first to clear state
-  if ((await sendButton.getAttribute("data-variant")) === "secondary") {
+  if ((await sendButton.getAttribute("aria-label")) === "Abort response") {
     await sendButton.click();
     // Wait for it to return to send state
-    await expect(sendButton).toHaveAttribute("data-variant", "primary");
+    await expect(sendButton).toHaveAttribute("aria-label", "Send");
   }
 
   // Clear any existing text
@@ -55,11 +55,11 @@ async function sendMessageToChatA(page: Page, message: string) {
   ).toBeVisible();
 
   // Wait for generation to finish by monitoring button state change
-  // Button should become "secondary" (abort) during generation, then back to "primary" (send)
-  await expect(sendButton).toHaveAttribute("data-variant", "secondary", {
+  // Button should become "Abort response" during generation, then back to "Send"
+  await expect(sendButton).toHaveAttribute("aria-label", "Abort response", {
     timeout: 10000,
   });
-  await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+  await expect(sendButton).toHaveAttribute("aria-label", "Send", {
     timeout: 60000,
   });
 }
@@ -76,11 +76,11 @@ async function sendMessageToChatB(page: Page, message: string) {
   ).toBeVisible();
 
   // Wait for generation to finish by monitoring button state change
-  // Button should become "secondary" (abort) during generation, then back to "primary" (send)
-  await expect(sendButton).toHaveAttribute("data-variant", "secondary", {
+  // Button should become "Abort response" during generation, then back to "Send"
+  await expect(sendButton).toHaveAttribute("aria-label", "Abort response", {
     timeout: 10000,
   });
-  await expect(sendButton).toHaveAttribute("data-variant", "primary", {
+  await expect(sendButton).toHaveAttribute("aria-label", "Send", {
     timeout: 60000,
   });
 }

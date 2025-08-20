@@ -51,11 +51,11 @@ test.describe("Knowledge Registration - Simple", () => {
     const sendButton = page.locator(".lb-ai-composer-action");
 
     // If there's an ongoing operation (abort button is enabled), click it first to clear state
-    const buttonVariant = await sendButton.getAttribute("data-variant");
-    if (buttonVariant === "secondary") {
+    const buttonLabel = await sendButton.getAttribute("aria-label");
+    if (buttonLabel === "Abort response") {
       await sendButton.click();
       // Wait for it to return to send state
-      await expect(sendButton).toHaveAttribute("data-variant", "primary");
+      await expect(sendButton).toHaveAttribute("aria-label", "Send");
     }
 
     // Clear any existing text and send a simple message
