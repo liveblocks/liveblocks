@@ -773,14 +773,14 @@ describe("Markdown", () => {
     test("HTML entities", () => {
       assert(
         `
-          &lt;p&gt; &amp;
+          &lt;p&gt; &amp; paste&copy
   
           > &quot; &apos;
   
           - &copy; &trade;
         `,
         (root) => {
-          expect(root.querySelector("p")?.textContent).toBe("<p> &");
+          expect(root.querySelector("p")?.textContent).toBe("<p> & paste&copy");
           expect(root.querySelector("blockquote")?.textContent).toBe("\" '");
           expect(root.querySelector("li")?.textContent).toBe("© ™");
         }

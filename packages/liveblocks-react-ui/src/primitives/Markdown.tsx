@@ -31,6 +31,7 @@ const BUFFERED_CHARACTERS_REGEX =
 const SINGLE_CHARACTER_REGEX = /^\s*(\S\s*)$/;
 const LEFT_ANGLE_BRACKET_REGEX = /</g;
 const RIGHT_ANGLE_BRACKET_REGEX = />/g;
+const AMPERSAND_REGEX = /&(?!#?[0-9A-Za-z]+;)/g;
 const DEFAULT_PARTIAL_LINK_URL = "#";
 
 type CheckboxToken = {
@@ -1387,7 +1388,8 @@ function completePartialTokens(tokens: Token[]) {
 function parseHtmlEntities(input: string) {
   const document = new DOMParser().parseFromString(
     `<!doctype html><body>${input
-      // Prevent HTML tags from being interpreted as markup.
+      // Prevent some characters from being interpreted as markup.
+      .replace(AMPERSAND_REGEX, "&amp;")
       .replace(LEFT_ANGLE_BRACKET_REGEX, "&lt;")
       .replace(RIGHT_ANGLE_BRACKET_REGEX, "&gt;")}`,
     "text/html"
