@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { createRandomChat, cleanupAllChats } from "./test-helpers";
 
 async function setupAiChat(page: Page) {
   // The knowledge page has the chat trigger button with test ID
@@ -62,24 +63,16 @@ async function sendAiMessage(page: Page, message: string) {
 }
 
 test.describe("Knowledge Registration", () => {
+  test.afterEach(async () => {
+    await cleanupAllChats();
+  });
+
   test("should use registered knowledge about current view and todos", async ({
     page,
   }) => {
-    // Clean up - delete the knowledge chat to start fresh
-    await page.goto("/chats");
-    await expect(page.locator("h1")).toHaveText("List of all chats");
-
-    const knowledgeChatLink = page.locator('a[href="/chats/todo125"]');
-    if (await knowledgeChatLink.isVisible()) {
-      const deleteButton = knowledgeChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(knowledgeChatLink).not.toBeVisible();
-    }
-
-    // Go to knowledge page
-    await page.goto("/knowledge");
+    // Create unique test chat and go to knowledge page
+    const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`);
 
     // Wait for the page to load - verify default tab is "Todo app"
     await expect(
@@ -111,18 +104,9 @@ test.describe("Knowledge Registration", () => {
   });
 
   test("should use nickname knowledge when enabled", async ({ page }) => {
-    // Clean up first
-    await page.goto("/chats");
-    const knowledgeChatLink = page.locator('a[href="/chats/todo125"]');
-    if (await knowledgeChatLink.isVisible()) {
-      const deleteButton = knowledgeChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(knowledgeChatLink).not.toBeVisible();
-    }
-
-    await page.goto("/knowledge");
+    // Create unique test chat and go to knowledge page
+    const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`);
 
     // Find the nickname checkbox specifically by its label text
     const nicknameCheckbox = page.locator(
@@ -152,18 +136,9 @@ test.describe("Knowledge Registration", () => {
   });
 
   test("should use dark mode knowledge and tool", async ({ page }) => {
-    // Clean up first
-    await page.goto("/chats");
-    const knowledgeChatLink = page.locator('a[href="/chats/todo125"]');
-    if (await knowledgeChatLink.isVisible()) {
-      const deleteButton = knowledgeChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(knowledgeChatLink).not.toBeVisible();
-    }
-
-    await page.goto("/knowledge");
+    // Create unique test chat and go to knowledge page
+    const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`);
 
     // Find the expose dark mode checkbox by its label text
     const exposeCheckbox = page.locator(
@@ -211,18 +186,9 @@ test.describe("Knowledge Registration", () => {
   test("should update knowledge when switching between tabs", async ({
     page,
   }) => {
-    // Clean up first
-    await page.goto("/chats");
-    const knowledgeChatLink = page.locator('a[href="/chats/todo125"]');
-    if (await knowledgeChatLink.isVisible()) {
-      const deleteButton = knowledgeChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(knowledgeChatLink).not.toBeVisible();
-    }
-
-    await page.goto("/knowledge");
+    // Create unique test chat and go to knowledge page
+    const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`);
 
     // Start on Todo app tab
     await expect(page.getByTestId("tab-todo-app")).toHaveClass(/font-bold/);
@@ -259,18 +225,9 @@ test.describe("Knowledge Registration", () => {
   });
 
   test("should handle knowledge being disabled", async ({ page }) => {
-    // Clean up first
-    await page.goto("/chats");
-    const knowledgeChatLink = page.locator('a[href="/chats/todo125"]');
-    if (await knowledgeChatLink.isVisible()) {
-      const deleteButton = knowledgeChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(knowledgeChatLink).not.toBeVisible();
-    }
-
-    await page.goto("/knowledge");
+    // Create unique test chat and go to knowledge page
+    const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`);
 
     // Find and disable dark mode knowledge exposure
     const exposeCheckbox = page.getByTestId("expose-dark-mode-checkbox");

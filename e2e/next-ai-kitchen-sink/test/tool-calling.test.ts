@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { createRandomChat, cleanupAllChats } from "./test-helpers";
 
 async function setupAiChat(page: Page) {
   // Wait for the AI chat popover to be visible
@@ -40,24 +41,14 @@ async function sendAiMessage(page: Page, message: string) {
 }
 
 test.describe("Tool Calling", () => {
+  test.afterEach(async () => {
+    await cleanupAllChats();
+  });
+
   test("should perform todo operations via AI tool calls", async ({ page }) => {
-    // Step 1: Clean up - delete the "todo" chat to start fresh
-    await page.goto("/chats");
-    await expect(page.locator("h1")).toHaveText("List of all chats");
-
-    // Look for the "todo" chat and delete it if it exists
-    const todoChatLink = page.locator('a[href="/chats/todo"]');
-    if (await todoChatLink.isVisible()) {
-      const deleteButton = todoChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      // Wait for it to be deleted
-      await expect(todoChatLink).not.toBeVisible();
-    }
-
-    // Step 2: Go to the todo page
-    await page.goto("/todo");
+    // Create unique test chat and go to todo page
+    const chatId = createRandomChat(page);
+    await page.goto(`/todo/${chatId}`);
 
     // Wait for the page to load and show default todos
     await expect(page.locator('li:has-text("Get groceries")')).toBeVisible();
@@ -148,18 +139,9 @@ test.describe("Tool Calling", () => {
   });
 
   test("should handle tool call errors gracefully", async ({ page }) => {
-    // Clean up first
-    await page.goto("/chats");
-    const todoChatLink = page.locator('a[href="/chats/todo"]');
-    if (await todoChatLink.isVisible()) {
-      const deleteButton = todoChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(todoChatLink).not.toBeVisible();
-    }
-
-    await page.goto("/todo");
+    // Create unique test chat and go to todo page
+    const chatId = createRandomChat(page);
+    await page.goto(`/todo/${chatId}`);
 
     // Try to toggle a non-existent todo
     await sendAiMessage(page, "Toggle the todo with ID 99999");
@@ -183,18 +165,10 @@ test.describe("Tool Calling", () => {
   test("should handle cancellation of delete confirmation", async ({
     page,
   }) => {
-    // Clean up first
-    await page.goto("/chats");
-    const todoChatLink = page.locator('a[href="/chats/todo"]');
-    if (await todoChatLink.isVisible()) {
-      const deleteButton = todoChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(todoChatLink).not.toBeVisible();
-    }
-
-    await page.goto("/todo");
+    // Create unique test chat
+    const chatId = createRandomChat(page);
+    
+    await page.goto(`/todo/${chatId}`);
 
     // Add a test todo
     const todoInput = page.locator('input[placeholder="Add a todo"]');
