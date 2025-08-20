@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
   expectJson,
@@ -10,23 +10,23 @@ import {
   waitForJson,
 } from "./utils";
 
-// NOTE: The tests below don't play well with concurrency just yet. The reason
-// is that they unmount, remount, and then check that the connection ID
-// increased by exactly one. This is not super robust. What matters is that the
-// connection ID increased, but if it increased by more than 1, that could also
-// be just fine. Better to express the conditional like that. For now, just not
-// run them concurrently to avoid it.
-// test.describe.configure({ mode: "parallel" });
-
 test.describe("Multiple rooms (index)", () => {
   const TEST_URL = "http://localhost:3007/multi/";
 
   let pages: Page[];
+  let roomPrefix: string;
+  let roomSuffixCounter: number;
+
+  const getUniqueRoomSuffix = () => `-${roomSuffixCounter++}`;
 
   test.beforeEach(async ({}, testInfo) => {
     const room = genRoomId(testInfo);
+    roomPrefix = `${room}-`;
+    // Start counter from worker ID to ensure unique room suffixes across workers
+    const workerId = testInfo.parallelIndex || 0;
+    roomSuffixCounter = workerId * 100; // Give each worker a unique range
     pages = await preparePages(
-      `${TEST_URL}?room=${encodeURIComponent(room)}`,
+      `${TEST_URL}?room=${encodeURIComponent(room)}&user=${workerId}`,
       { n: 1, width: 1024 } // Open only a single, but wider, browser window
     );
   });
@@ -38,8 +38,9 @@ test.describe("Multiple rooms (index)", () => {
 
   test("mount, unmount, connection ID must be incremented", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
 
     await waitForJson(page, "#socketStatus_1", "connected");
@@ -54,8 +55,10 @@ test.describe("Multiple rooms (index)", () => {
 
   test("mount, change room, change room back", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
 
     // Initial mount
@@ -64,12 +67,12 @@ test.describe("Multiple rooms (index)", () => {
     const initialConnId = (await getJson(page, "#connectionId_1")) as number;
 
     // Change while mounted
-    await page.fill("#input_1", "e2e:multi-B");
+    await page.fill("#input_1", roomB);
     // await waitForJson(page, "#socketStatus_1", "connecting");
     await waitForJson(page, "#socketStatus_1", "connected");
 
     // Change back
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     // await waitForJson(page, "#socketStatus_1", "connecting");
     await waitForJson(page, "#socketStatus_1", "connected");
 
@@ -78,11 +81,13 @@ test.describe("Multiple rooms (index)", () => {
 
   test("mount same room twice as siblings, change room, change room back, should retain connection ID", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // Set up
     await page.click("#add-column");
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
+    await page.fill("#input_2", roomA);
     await page.click("#mount_1");
     await page.click("#mount_2");
     await waitForJson(page, "#socketStatus_1", "connected");
@@ -93,12 +98,12 @@ test.describe("Multiple rooms (index)", () => {
     await expectJson(page, "#connectionId_2", initialConnId);
 
     // Change while mounted
-    await page.fill("#input_2", "e2e:multi-B");
+    await page.fill("#input_2", roomB);
     // await waitForJson(page, "#socketStatus_2", "connecting");
     await waitForJson(page, "#socketStatus_2", "connected");
 
     // Change back
-    await page.fill("#input_2", "e2e:multi-A");
+    await page.fill("#input_2", roomA);
     await waitForJson(page, "#socketStatus_2", "connected");
 
     await expectJson(page, "#connectionId_2", initialConnId);
@@ -106,24 +111,26 @@ test.describe("Multiple rooms (index)", () => {
 
   test("mount same room twice, change room twice, should have same connection ID", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // Set up
     await page.click("#add-column");
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
+    await page.fill("#input_2", roomA);
     await page.click("#mount_1");
     await page.click("#mount_2");
     await waitForJson(page, "#socketStatus_1", "connected");
     await waitForJson(page, "#socketStatus_2", "connected");
 
     // Change while mounted
-    await page.fill("#input_2", "e2e:multi-B");
+    await page.fill("#input_2", roomB);
     // await waitForJson(page, "#socketStatus_2", "connecting");
     await waitForJson(page, "#socketStatus_2", "connected");
     const connId = (await getJson(page, "#connectionId_2")) as number;
 
     // Change the other room instance as well
-    await page.fill("#input_1", "e2e:multi-B");
+    await page.fill("#input_1", roomB);
 
     // They should share the same connection ID now
     await waitForJson(page, "#socketStatus_1", "connected");
@@ -132,6 +139,7 @@ test.describe("Multiple rooms (index)", () => {
 
   test("mount same room 5 times, connection ID only changes after last instance is no longer mounted", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     await page.click("#mount_1");
 
@@ -140,11 +148,11 @@ test.describe("Multiple rooms (index)", () => {
     await page.click("#add-column");
     await page.click("#add-column");
 
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-A");
-    await page.fill("#input_3", "e2e:multi-A");
-    await page.fill("#input_4", "e2e:multi-A");
-    await page.fill("#input_5", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
+    await page.fill("#input_2", roomA);
+    await page.fill("#input_3", roomA);
+    await page.fill("#input_4", roomA);
+    await page.fill("#input_5", roomA);
 
     // Set up
     await page.click("#mount_2");
@@ -199,27 +207,29 @@ test.describe("Multiple rooms (index)", () => {
 
   test("nested room providers", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // Set up three levels of nesting
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
     await page.click("#nest_1");
-    await page.fill("#input_1_1", "e2e:multi-A");
+    await page.fill("#input_1_1", roomA);
     await page.click("#mount_1_1");
     await page.click("#nest_1_1");
-    await page.fill("#input_1_1_1", "e2e:multi-A");
+    await page.fill("#input_1_1_1", roomA);
     await page.click("#mount_1_1_1");
 
     await waitForJson(page, "#socketStatus_1_1_1", "connected");
     const connId = (await getJson(page, "#connectionId_1_1_1")) as number;
 
-    await page.fill("#input_1", "e2e:multi-B");
-    await page.fill("#input_1_1", "e2e:multi-B");
+    await page.fill("#input_1", roomB);
+    await page.fill("#input_1_1", roomB);
     await page.click("#inc_1_1_1"); // Trigger a re-render explicitly
     await expectJson(page, "#socketStatus_1_1_1", "connected"); // Check for regression -- socket should stay connected!
     await expectJson(page, "#connectionId_1_1_1", connId); // No change here
 
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#unmount_1");
     await page.click("#mount_1");
 
@@ -228,18 +238,20 @@ test.describe("Multiple rooms (index)", () => {
 
   test("initialStorage value DOES get reevaluated if the room ID changes", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // -----------------------
     // Test setup
     // -----------------------
     await page.click("#add-column");
 
-    // Mount "e2e-multi-234" first
-    await page.fill("#input_1", "e2e-multi-234");
+    // Mount roomA first
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
 
-    // Mount "e2e-multi-567" second
-    await page.fill("#input_2", "e2e-multi-567");
+    // Mount roomB second
+    await page.fill("#input_2", roomB);
     await page.click("#mount_2");
 
     // Wait for connections
@@ -261,22 +273,22 @@ test.describe("Multiple rooms (index)", () => {
     // Start of actual test
     // -----------------------
 
-    // Set room ID to "e2e-multi-234"
-    await page.fill("#input_1", "e2e-multi-234");
+    // Set room ID to roomA
+    await page.fill("#input_1", roomA);
 
     // Mount
     await page.click("#mount_1");
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the "e2e-multi-234" value
-    await expectJson(page, "#initialRoom_1", "e2e-multi-234");
+    // Ensure that, when initialRoom_1 equals the roomA value
+    await expectJson(page, "#initialRoom_1", roomA);
 
-    // Change room ID to "e2e-multi-567" (without unmounting)
-    await page.fill("#input_1", "e2e-multi-567");
+    // Change room ID to roomB (without unmounting)
+    await page.fill("#input_1", roomB);
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the "e2e-multi-567" value
-    await expectJson(page, "#initialRoom_1", "e2e-multi-567");
+    // Ensure that, when initialRoom_1 equals the roomB value
+    await expectJson(page, "#initialRoom_1", roomB);
 
     // Unmount
     await page.click("#unmount_1");
@@ -287,11 +299,19 @@ test.describe("Multiple rooms (global augmentation)", () => {
   const TEST_URL = "http://localhost:3007/multi/with-global-augmentation";
 
   let pages: Page[];
+  let roomPrefix: string;
+  let roomSuffixCounter: number;
+
+  const getUniqueRoomSuffix = () => roomSuffixCounter++;
 
   test.beforeEach(async ({}, testInfo) => {
     const room = genRoomId(testInfo);
+    roomPrefix = `${room}-`;
+    // Start counter from worker ID to ensure unique room suffixes across workers
+    const workerId = testInfo.parallelIndex || 0;
+    roomSuffixCounter = workerId * 100; // Give each worker a unique range
     pages = await preparePages(
-      `${TEST_URL}?room=${encodeURIComponent(room)}`,
+      `${TEST_URL}?room=${encodeURIComponent(room)}&user=${workerId}`,
       { n: 1, width: 1024 } // Open only a single, but wider, browser window
     );
   });
@@ -303,8 +323,9 @@ test.describe("Multiple rooms (global augmentation)", () => {
 
   test("mount, unmount, connection ID must be incremented", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
 
     await waitForJson(page, "#socketStatus_1", "connected");
@@ -319,8 +340,10 @@ test.describe("Multiple rooms (global augmentation)", () => {
 
   test("mount, change room, change room back", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
 
     // Initial mount
@@ -329,12 +352,12 @@ test.describe("Multiple rooms (global augmentation)", () => {
     const initialConnId = (await getJson(page, "#connectionId_1")) as number;
 
     // Change while mounted
-    await page.fill("#input_1", "e2e:multi-B");
+    await page.fill("#input_1", roomB);
     // await waitForJson(page, "#socketStatus_1", "connecting");
     await waitForJson(page, "#socketStatus_1", "connected");
 
     // Change back
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     // await waitForJson(page, "#socketStatus_1", "connecting");
     await waitForJson(page, "#socketStatus_1", "connected");
 
@@ -343,11 +366,13 @@ test.describe("Multiple rooms (global augmentation)", () => {
 
   test("mount same room twice as siblings, change room, change room back, should retain connection ID", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // Set up
     await page.click("#add-column");
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
+    await page.fill("#input_2", roomA);
     await page.click("#mount_1");
     await page.click("#mount_2");
     await waitForJson(page, "#socketStatus_1", "connected");
@@ -358,12 +383,12 @@ test.describe("Multiple rooms (global augmentation)", () => {
     await expectJson(page, "#connectionId_2", initialConnId);
 
     // Change while mounted
-    await page.fill("#input_2", "e2e:multi-B");
+    await page.fill("#input_2", roomB);
     // await waitForJson(page, "#socketStatus_2", "connecting");
     await waitForJson(page, "#socketStatus_2", "connected");
 
     // Change back
-    await page.fill("#input_2", "e2e:multi-A");
+    await page.fill("#input_2", roomA);
     await waitForJson(page, "#socketStatus_2", "connected");
 
     await expectJson(page, "#connectionId_2", initialConnId);
@@ -371,24 +396,26 @@ test.describe("Multiple rooms (global augmentation)", () => {
 
   test("mount same room twice, change room twice, should have same connection ID", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // Set up
     await page.click("#add-column");
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
+    await page.fill("#input_2", roomA);
     await page.click("#mount_1");
     await page.click("#mount_2");
     await waitForJson(page, "#socketStatus_1", "connected");
     await waitForJson(page, "#socketStatus_2", "connected");
 
     // Change while mounted
-    await page.fill("#input_2", "e2e:multi-B");
+    await page.fill("#input_2", roomB);
     // await waitForJson(page, "#socketStatus_2", "connecting");
     await waitForJson(page, "#socketStatus_2", "connected");
     const connId = (await getJson(page, "#connectionId_2")) as number;
 
     // Change the other room instance as well
-    await page.fill("#input_1", "e2e:multi-B");
+    await page.fill("#input_1", roomB);
 
     // They should share the same connection ID now
     await waitForJson(page, "#socketStatus_1", "connected");
@@ -397,6 +424,7 @@ test.describe("Multiple rooms (global augmentation)", () => {
 
   test("mount same room 5 times, connection ID only changes after last instance is no longer mounted", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     await page.click("#mount_1");
 
@@ -405,11 +433,11 @@ test.describe("Multiple rooms (global augmentation)", () => {
     await page.click("#add-column");
     await page.click("#add-column");
 
-    await page.fill("#input_1", "e2e:multi-A");
-    await page.fill("#input_2", "e2e:multi-A");
-    await page.fill("#input_3", "e2e:multi-A");
-    await page.fill("#input_4", "e2e:multi-A");
-    await page.fill("#input_5", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
+    await page.fill("#input_2", roomA);
+    await page.fill("#input_3", roomA);
+    await page.fill("#input_4", roomA);
+    await page.fill("#input_5", roomA);
 
     // Set up
     await page.click("#mount_2");
@@ -464,27 +492,29 @@ test.describe("Multiple rooms (global augmentation)", () => {
 
   test("nested room providers", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // Set up three levels of nesting
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
     await page.click("#nest_1");
-    await page.fill("#input_1_1", "e2e:multi-A");
+    await page.fill("#input_1_1", roomA);
     await page.click("#mount_1_1");
     await page.click("#nest_1_1");
-    await page.fill("#input_1_1_1", "e2e:multi-A");
+    await page.fill("#input_1_1_1", roomA);
     await page.click("#mount_1_1_1");
 
     await waitForJson(page, "#socketStatus_1_1_1", "connected");
     const connId = (await getJson(page, "#connectionId_1_1_1")) as number;
 
-    await page.fill("#input_1", "e2e:multi-B");
-    await page.fill("#input_1_1", "e2e:multi-B");
+    await page.fill("#input_1", roomB);
+    await page.fill("#input_1_1", roomB);
     await page.click("#inc_1_1_1"); // Trigger a re-render explicitly
     await expectJson(page, "#socketStatus_1_1_1", "connected"); // Check for regression -- socket should stay connected!
     await expectJson(page, "#connectionId_1_1_1", connId); // No change here
 
-    await page.fill("#input_1", "e2e:multi-A");
+    await page.fill("#input_1", roomA);
     await page.click("#unmount_1");
     await page.click("#mount_1");
 
@@ -494,48 +524,55 @@ test.describe("Multiple rooms (global augmentation)", () => {
   test("auth callback is always fresh", async () => {
     const page = pages[0];
 
+    // Get the current render count and current echo value
     const initialRenderCount = await getJson(
       page,
       "#liveblocksProviderRenderCount"
     );
 
     await page.click("#mount_1");
-    await waitForJson(page, "#echo_1", initialRenderCount);
+    // Wait for connection to establish
+    await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Clicking logout has no effect, unless the top level
+    // Get the echo value after mounting (this reflects the render count when auth was called)
+    const initialEcho = await getJson(page, "#echo_1");
+
+    // Clicking logout has no effect on the echo value, since no re-auth happens
     await page.click("#logout");
-    await waitForJson(page, "#echo_1", initialRenderCount);
+    await waitForJson(page, "#echo_1", initialEcho);
 
     // Things change when the top-level LiveblocksProvider is re-rendered.
-    // If that happens, a new authEndpoint function _instance_ should get
-    // invoked after pressing logout.
+    // This creates a new authEndpoint function instance.
     await page.click("#rerenderLiveblocksProvider");
     const newRenderCount = await getJson(
       page,
       "#liveblocksProviderRenderCount"
     );
+
+    // Verify that the render count actually increased
+    expect(newRenderCount).toBeGreaterThan(initialRenderCount as number);
+
+    // Now when we logout, it should trigger re-authentication with the NEW render count
     await page.click("#logout");
     await waitForJson(page, "#echo_1", newRenderCount);
   });
 
-  // test("initialStorage value DOES NOT get reevaluated beyond the first value", async () => {
-  //   ...
-  // });
-
   test("initialStorage value DOES get reevaluated if the room ID changes", async () => {
     const page = pages[0];
+    const roomA = `${roomPrefix}-${getUniqueRoomSuffix()}`;
+    const roomB = `${roomPrefix}-${getUniqueRoomSuffix()}`;
 
     // -----------------------
     // Test setup
     // -----------------------
     await page.click("#add-column");
 
-    // Mount "e2e-multi-234" first
-    await page.fill("#input_1", "e2e-multi-234");
+    // Mount roomA first
+    await page.fill("#input_1", roomA);
     await page.click("#mount_1");
 
-    // Mount "e2e-multi-567" second
-    await page.fill("#input_2", "e2e-multi-567");
+    // Mount roomB second
+    await page.fill("#input_2", roomB);
     await page.click("#mount_2");
 
     // Wait for connections
@@ -557,22 +594,22 @@ test.describe("Multiple rooms (global augmentation)", () => {
     // Start of actual test
     // -----------------------
 
-    // Set room ID to "e2e-multi-234"
-    await page.fill("#input_1", "e2e-multi-234");
+    // Set room ID to roomA
+    await page.fill("#input_1", roomA);
 
     // Mount
     await page.click("#mount_1");
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the "e2e-multi-234" value
-    await expectJson(page, "#initialRoom_1", "e2e-multi-234");
+    // Ensure that, when initialRoom_1 equals the roomA value
+    await expectJson(page, "#initialRoom_1", roomA);
 
-    // Change room ID to "e2e-multi-567" (without unmounting)
-    await page.fill("#input_1", "e2e-multi-567");
+    // Change room ID to roomB (without unmounting)
+    await page.fill("#input_1", roomB);
     await waitForJson(page, "#socketStatus_1", "connected");
 
-    // Ensure that, when initialRoom_1 equals the "e2e-multi-567" value
-    await expectJson(page, "#initialRoom_1", "e2e-multi-567");
+    // Ensure that, when initialRoom_1 equals the roomB value
+    await expectJson(page, "#initialRoom_1", roomB);
 
     // Unmount
     await page.click("#unmount_1");
