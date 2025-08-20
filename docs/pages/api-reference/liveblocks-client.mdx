@@ -3997,7 +3997,9 @@ root.set("b", obj.clone());
 ### toImmutable [#LiveObject.toImmutable]
 
 Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
-Nested values will also be immutable.
+Nested values will also be immutable. Calling this method multiple times has
+no performance penalty. It will return the same cached immutable value as long
+as its (nested) contents have not changed.
 
 ```ts
 const liveObject = new LiveObject({
@@ -4394,7 +4396,9 @@ root.set("b", map.clone());
 ### toImmutable [#LiveMap.toImmutable]
 
 Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
-will also be immutable.
+will also be immutable. Calling this method multiple times has no performance
+penalty. It will return the same cached immutable value as long as its (nested)
+contents have not changed.
 
 ```ts
 const map = new LiveMap([
@@ -4935,7 +4939,9 @@ root.set("b", list.clone());
 ### toImmutable [#LiveList.toImmutable]
 
 Returns an immutable JavaScript array that is equivalent to the `LiveList`.
-Nested values will also be immutable.
+Nested values will also be immutable. Calling this method multiple times has
+no performance penalty. It will return the same cached immutable value as long
+as its (nested) contents have not changed.
 
 ```ts
 const list = new LiveList([
