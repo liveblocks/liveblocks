@@ -168,6 +168,7 @@ export {
   b64decode,
   compactObject,
   entries,
+  findLastIndex,
   keys,
   mapValues,
   memoizeOnSuccess,

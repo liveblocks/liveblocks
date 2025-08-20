@@ -26,6 +26,9 @@ export default function Home() {
         <Link href="/styles" className="underline">
           Default styles playground
         </Link>
+        <Link href="/toolcall-streaming" className="underline">
+          Tool call streaming
+        </Link>
         <Link href="/partial-markdown" className="underline">
           Partial markdown streaming
         </Link>

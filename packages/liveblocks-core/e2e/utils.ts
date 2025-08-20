@@ -72,6 +72,7 @@ async function initializeRoomForTest<
     baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
     initialPresence,
     initialStorage,
@@ -82,7 +83,7 @@ async function initializeRoomForTest<
     room,
     leave,
     get ws() {
-      if (ws == null) {
+      if (ws === null) {
         throw new Error("Websocket should be initialized at this point");
       }
       return ws;
@@ -136,19 +137,19 @@ export function prepareTestsConflicts<S extends LsonObject>(
         actor1.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
       flushSocket2Messages: async () => {
         actor2.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
     };
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor1.ws.pauseSend();
     actor2.ws.pauseSend();
@@ -171,15 +172,21 @@ export function prepareTestsConflicts<S extends LsonObject>(
       { isDeep: true }
     );
 
-    function assert(immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) {
-      if (immRoot2 == null) {
-        immRoot2 = immRoot1;
-      }
+    function assert(
+      immRoot1: ToImmutable<S>,
+      immRoot2: ToImmutable<S> = immRoot1
+    ) {
+      try {
+        expect(root1.toImmutable()).toEqual(immRoot1);
+        expect(immutableStorage1).toEqual(immRoot1);
+        expect(root2.toImmutable()).toEqual(immRoot2);
 
-      expect(root1.toImmutable()).toEqual(immRoot1);
-      expect(immutableStorage1).toEqual(immRoot1);
-      expect(root2.toImmutable()).toEqual(immRoot2);
-      expect(immutableStorage2).toEqual(immRoot2);
+        expect(immutableStorage2).toEqual(immRoot2);
+      } catch (error) {
+        // Better stack trace (point to where assert is called instead)
+        Error.captureStackTrace(error as Error, assert);
+        throw error;
+      }
     }
 
     try {
@@ -225,7 +232,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor.ws.pauseSend();
 
@@ -241,7 +248,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
           actor.ws.resumeSend();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
-          await wait(1000);
+          await wait(600);
         },
       });
       actor.leave();
