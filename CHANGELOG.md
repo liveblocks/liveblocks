@@ -34,6 +34,9 @@ in.
 ### `@liveblocks/react-ui`
 
 - Add a minimal appearance to `AiTool` via a new `variant` prop.
+- Improve Markdown rendering during streaming in `AiChat`: incomplete content is
+  now handled gracefully so things like bold, links, or tables all render
+  instantly without seeing partial Markdown syntax first.
 - Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
   component" would render as "Use the `` component")
 
