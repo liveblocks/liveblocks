@@ -72,6 +72,7 @@ async function initializeRoomForTest<
     baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
     initialPresence,
     initialStorage,
@@ -82,7 +83,7 @@ async function initializeRoomForTest<
     room,
     leave,
     get ws() {
-      if (ws == null) {
+      if (ws === null) {
         throw new Error("Websocket should be initialized at this point");
       }
       return ws;
@@ -171,12 +172,11 @@ export function prepareTestsConflicts<S extends LsonObject>(
       { isDeep: true }
     );
 
-    function assert(immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) {
+    function assert(
+      immRoot1: ToImmutable<S>,
+      immRoot2: ToImmutable<S> = immRoot1
+    ) {
       try {
-        if (immRoot2 === undefined) {
-          immRoot2 = immRoot1;
-        }
-
         expect(root1.toImmutable()).toEqual(immRoot1);
         expect(immutableStorage1).toEqual(immRoot1);
         expect(root2.toImmutable()).toEqual(immRoot2);

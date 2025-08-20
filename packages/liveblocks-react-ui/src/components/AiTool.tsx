@@ -343,8 +343,15 @@ export const AiTool = Object.assign(
         stage,
         result,
         name,
-        [kInternal]: { execute },
+        [kInternal]: { execute, messageStatus },
       } = useAiToolInvocationContext();
+      // Only mark the tool as pending visually (e.g. show a spinner, add a shimmer animation, etc.)
+      // if it has an `execute` method and it isn't in the "executed" stage.
+      const isVisuallyPending =
+        execute !== undefined &&
+        stage !== "executed" &&
+        // If it's in the "receiving" stage, we also check that the outer message is still generating.
+        (stage === "receiving" ? messageStatus === "generating" : true);
       const [semiControlledCollapsed, onSemiControlledCollapsed] =
         useSemiControllableState(collapsed ?? false, onCollapsedChange);
       // TODO: This check won't work for cases like:
@@ -391,12 +398,7 @@ export const AiTool = Object.assign(
           <Collapsible.Trigger
             className={cn(
               "lb-collapsible-trigger lb-ai-tool-header",
-              // The minimal variant uses a shimmer instead of a spinner.
-              // (Similar to the spinner, it's only shown if the tool has an `execute` method)
-              variant === "minimal" &&
-                stage !== "executed" &&
-                execute !== undefined &&
-                "lb-ai-chat-pending"
+              variant === "minimal" && isVisuallyPending && "lb-ai-chat-pending"
             )}
           >
             {icon ? (
@@ -418,8 +420,7 @@ export const AiTool = Object.assign(
                   ) : result.type === "cancelled" ? (
                     <MinusCircleIcon />
                   ) : null
-                ) : execute !== undefined ? (
-                  // Only show a spinner if the tool has an `execute` method.
+                ) : isVisuallyPending ? (
                   <SpinnerIcon />
                 ) : null}
               </div>
