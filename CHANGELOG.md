@@ -2,6 +2,11 @@
 
 ## v3.4.0
 
+### `@liveblocks/react-ui`
+
+- Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
+  component" would render as "Use the `` component")
+
 ## v3.3.4
 
 ### `@liveblocks/client`
