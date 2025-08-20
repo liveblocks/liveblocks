@@ -2877,6 +2877,7 @@ describe("client", () => {
           tenantId: "tenant1",
           createdAt: "2022-07-13T14:32:50.697Z",
           updatedAt: "2022-07-13T14:32:50.697Z",
+          scopes: { mention: true },
           members: [
             {
               id: "user1",
@@ -2890,6 +2891,7 @@ describe("client", () => {
           tenantId: "tenant1",
           createdAt: "2022-07-14T10:00:00.000Z",
           updatedAt: "2022-07-14T10:00:00.000Z",
+          scopes: { mention: true },
           members: [
             {
               id: "user2",
@@ -2926,6 +2928,7 @@ describe("client", () => {
             tenantId: "tenant1",
             createdAt: new Date("2022-07-13T14:32:50.697Z"),
             updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+            scopes: { mention: true },
             members: [
               {
                 id: "user1",
@@ -2939,6 +2942,7 @@ describe("client", () => {
             tenantId: "tenant1",
             createdAt: new Date("2022-07-14T10:00:00.000Z"),
             updatedAt: new Date("2022-07-14T10:00:00.000Z"),
+            scopes: { mention: true },
             members: [
               {
                 id: "user2",
@@ -3015,6 +3019,7 @@ describe("client", () => {
           tenantId: "tenant1",
           createdAt: "2022-07-13T14:32:50.697Z",
           updatedAt: "2022-07-13T14:32:50.697Z",
+          scopes: { mention: true },
           members: [
             {
               id: "user1",
@@ -3032,6 +3037,7 @@ describe("client", () => {
           tenantId: "tenant1",
           createdAt: "2022-07-15T09:00:00.000Z",
           updatedAt: "2022-07-15T09:00:00.000Z",
+          scopes: { mention: true },
           members: [
             {
               id: "user1",
@@ -3064,6 +3070,7 @@ describe("client", () => {
             tenantId: "tenant1",
             createdAt: new Date("2022-07-13T14:32:50.697Z"),
             updatedAt: new Date("2022-07-13T14:32:50.697Z"),
+            scopes: { mention: true },
             members: [
               {
                 id: "user1",
@@ -3081,6 +3088,7 @@ describe("client", () => {
             tenantId: "tenant1",
             createdAt: new Date("2022-07-15T09:00:00.000Z"),
             updatedAt: new Date("2022-07-15T09:00:00.000Z"),
+            scopes: { mention: true },
             members: [
               {
                 id: "user1",
@@ -3104,6 +3112,7 @@ describe("client", () => {
           tenantId: "tenant1",
           createdAt: "2022-07-14T10:00:00.000Z",
           updatedAt: "2022-07-14T10:00:00.000Z",
+          scopes: { mention: true },
           members: [
             {
               id: "user1",
@@ -3143,6 +3152,7 @@ describe("client", () => {
             tenantId: "tenant1",
             createdAt: new Date("2022-07-14T10:00:00.000Z"),
             updatedAt: new Date("2022-07-14T10:00:00.000Z"),
+            scopes: { mention: true },
             members: [
               {
                 id: "user1",
