@@ -718,8 +718,10 @@ export function MarkdownToken({
       return <Separator />;
     }
 
-    // HTML elements/tokens are not supported (yet).
-    case "html":
+    case "html": {
+      return parseHtmlEntities(token.text);
+    }
+
     default: {
       return null;
     }
