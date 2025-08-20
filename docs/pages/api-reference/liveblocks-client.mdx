@@ -874,7 +874,10 @@ const myTool = defineAiTool()({
 <Banner>
 
 Note that the function should be called like this `defineAiTool()({ ... })`
-(double-parens). This allows TypeScript’s inference to work correctly. For the best type inference experience, TypeScript 5.3 or higher is recommended. While Liveblocks supports TypeScript 5.0+, full type inference for `defineAiTool()` requires TypeScript 5.3+.
+(double-parens). This allows TypeScript’s inference to work correctly. For the
+best type inference experience, TypeScript 5.3 or higher is recommended. While
+Liveblocks supports TypeScript 5.0+, full type inference for `defineAiTool()`
+requires TypeScript 5.3+.
 
 </Banner>
 
@@ -3997,9 +4000,9 @@ root.set("b", obj.clone());
 ### toImmutable [#LiveObject.toImmutable]
 
 Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
-Nested values will also be immutable. Calling this method multiple times has
-no performance penalty. It will return the same cached immutable value as long
-as its (nested) contents have not changed.
+Nested values will also be immutable. Calling this method multiple times has no
+performance penalty. It will return the same cached immutable value as long as
+its (nested) contents have not changed.
 
 ```ts
 const liveObject = new LiveObject({
@@ -4939,9 +4942,9 @@ root.set("b", list.clone());
 ### toImmutable [#LiveList.toImmutable]
 
 Returns an immutable JavaScript array that is equivalent to the `LiveList`.
-Nested values will also be immutable. Calling this method multiple times has
-no performance penalty. It will return the same cached immutable value as long
-as its (nested) contents have not changed.
+Nested values will also be immutable. Calling this method multiple times has no
+performance penalty. It will return the same cached immutable value as long as
+its (nested) contents have not changed.
 
 ```ts
 const list = new LiveList([
