@@ -32,9 +32,7 @@ describe("LiveMap single client", () => {
     )
   );
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/7278076193?check_suite_focus=true#step:6:85
-  test.skip(
+  test(
     "remote set conflicts with a delete",
     prepareTestsConflicts(
       {
