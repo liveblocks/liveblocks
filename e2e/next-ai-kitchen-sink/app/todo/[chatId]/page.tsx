@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
@@ -15,7 +16,8 @@ import {
   AiTool,
 } from "@liveblocks/react-ui";
 
-export default function Page() {
+export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
+  const { chatId } = use(params);
   const [todos, setTodos] = useState<
     { id: number; title: string; isCompleted: boolean }[]
   >([
@@ -130,7 +132,7 @@ export default function Page() {
               >
                 <ClientSideSuspense fallback={null}>
                   <AiChat
-                    chatId="todo"
+                    chatId={chatId}
                     layout="compact"
                     components={{
                       Empty: AiChatEmptyComponent,

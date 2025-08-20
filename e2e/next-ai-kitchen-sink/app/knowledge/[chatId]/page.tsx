@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { defineAiTool } from "@liveblocks/client";
 import {
   ClientSideSuspense,
@@ -230,7 +231,8 @@ function BothApps() {
   );
 }
 
-export default function Page() {
+export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
+  const { chatId } = use(params);
   const [selectedTab, setSelectedTab] = useState(1);
   return (
     <LiveblocksProvider
@@ -316,7 +318,7 @@ export default function Page() {
                 className="flex flex-col w-[450px] h-[600px] shadow-[0_0_0_1px_#0000000a,0_2px_6px_#0000000f,0_8px_26px_#00000014] dark:shadow-[0_0_0_1px_#ffffff0f] dark:hover:shadow-[0_0_0_1px_#ffffff14,0_2px_6px_#ffffff14,0_8px_26px_#ffffff14] rounded-xl"
               >
                 <ClientSideSuspense fallback={null}>
-                  <AiChat chatId="todo125" className="rounded-xl" />
+                  <AiChat chatId={chatId} className="rounded-xl" />
                 </ClientSideSuspense>
               </Popover.Content>
             </Popover.Portal>

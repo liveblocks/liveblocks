@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { defineAiTool } from "@liveblocks/core";
 import {
   ClientSideSuspense,
@@ -12,7 +13,8 @@ import {
   AiTool,
 } from "@liveblocks/react-ui";
 
-export default function HtmlStreamingPage() {
+export default function HtmlStreamingPage({ params }: { params: Promise<{ chatId: string }> }) {
+  const { chatId } = use(params);
   return (
     <main className="h-screen w-full">
       <LiveblocksProvider
@@ -22,7 +24,7 @@ export default function HtmlStreamingPage() {
       >
         <ClientSideSuspense fallback={null}>
           <AiChat
-            chatId="html-streaming"
+            chatId={chatId}
             components={{
               Empty: AiChatEmptyComponent,
             }}

@@ -1,10 +1,11 @@
 "use client";
 
+import { use } from "react";
 import { LiveblocksProvider, RegisterAiKnowledge } from "@liveblocks/react";
 import { AiChat } from "@liveblocks/react-ui";
 import { useState } from "react";
 
-function ChatWithLocalKnowledge() {
+function ChatWithLocalKnowledge({ chatId }: { chatId: string }) {
   const [localKnowledge, setLocalKnowledge] = useState("Spaghetti Carbonara");
 
   return (
@@ -29,7 +30,7 @@ function ChatWithLocalKnowledge() {
       <h2 className="text-xl font-bold mb-4">Chat A</h2>
       <div className="h-80" data-testid="chat-a">
         <AiChat
-          chatId="chat-a"
+          chatId={chatId}
           className="h-full border border-gray-200 rounded"
           knowledge={[
             { description: "My favorite pasta dish", value: localKnowledge },
@@ -40,7 +41,7 @@ function ChatWithLocalKnowledge() {
   );
 }
 
-function ChatWithoutLocalKnowledge() {
+function ChatWithoutLocalKnowledge({ chatId }: { chatId: string }) {
   return (
     <div className="w-1/2 h-full p-4">
       <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg mb-4">
@@ -56,7 +57,7 @@ function ChatWithoutLocalKnowledge() {
       <h2 className="text-xl font-bold mb-4">Chat B</h2>
       <div className="h-80" data-testid="chat-b">
         <AiChat
-          chatId="chat-b"
+          chatId={chatId}
           className="h-full border border-gray-200 rounded"
         />
       </div>
@@ -64,7 +65,8 @@ function ChatWithoutLocalKnowledge() {
   );
 }
 
-export default function DualChatPage() {
+export default function DualChatPage({ params }: { params: Promise<{ chatId1: string; chatId2: string }> }) {
+  const { chatId1, chatId2 } = use(params);
   const [globalKnowledge, setGlobalKnowledge] = useState("Tiramisu");
 
   return (
@@ -102,8 +104,8 @@ export default function DualChatPage() {
         </div>
 
         <div className="flex-1 flex">
-          <ChatWithLocalKnowledge />
-          <ChatWithoutLocalKnowledge />
+          <ChatWithLocalKnowledge chatId={chatId1} />
+          <ChatWithoutLocalKnowledge chatId={chatId2} />
         </div>
       </main>
     </LiveblocksProvider>
