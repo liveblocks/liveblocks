@@ -18,6 +18,53 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 33 (2025-08-15)
+
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
+## v3.3.1
+
+### `@liveblocks/react-ui`
+
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
+
+## All versions
+
+- Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
+  instead of `a file.txt`)
+
+## Infrastructure
+
+- Fixed a bug that caused unreliable storage updates under high concurrency.
+- Fixed an issue that could cause LLM responses to appear to "hang" if the
+  token limit got exceeded during the response generation. If this now happens,
+  the response will indicate a clear error to the user.
+
+## Dashboard
+
+- New knowledge prompt option when configuring AI copilots, allowing you to customize when back-end knowledge is fetched.
+
+## Documentation
+
+- More info on styling AI chat components.
+- Disambiguate semantics for `LiveList.delete()`.
+
+## Contributors
+
+marcbouchenoire, ctnicholas, nvie, jrowny, nimeshnayaju
+
 # Week 32 (2025-08-08)
 
 ## v3.3.0
