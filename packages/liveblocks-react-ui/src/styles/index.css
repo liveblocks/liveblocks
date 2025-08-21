@@ -41,6 +41,12 @@
     var(--lb-foreground-contrast),
     50
   );
+  --lb-background-foreground-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-foreground),
+    var(--lb-foreground-contrast),
+    100
+  );
   --lb-background-accent-faint: color-mix-scale(
     var(--lb-background),
     var(--lb-accent),
@@ -2400,9 +2406,11 @@
  *************************************/
 
 .lb-code-block {
+  position: relative;
   min-inline-size: 0;
   border: 1px solid var(--lb-foreground-subtle);
   border-radius: var(--lb-radius);
+  isolation: isolate;
 
   :where(.lb-code-block-header) {
     display: flex;
@@ -2536,18 +2544,48 @@
 .lb-ai-chat-user-message {
   :where(.lb-ai-chat-message-content) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
+    --lb-ai-chat-message-content-padding-factor: 1;
+    --lb-ai-chat-message-content-horizontal-padding: calc(
+      var(--lb-ai-chat-message-content-padding-factor) * 0.9375 *
+        var(--lb-spacing)
+    );
+    --lb-ai-chat-message-content-vertical-padding: calc(
+      var(--lb-ai-chat-message-content-padding-factor) * 0.5625 *
+        var(--lb-spacing)
+    );
 
-    min-block-size: calc(1lh + var(--lb-spacing));
-    padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
+    min-block-size: calc(
+      1lh + 2 * var(--lb-ai-chat-message-content-vertical-padding)
+    );
+    padding: var(--lb-ai-chat-message-content-vertical-padding)
+      var(--lb-ai-chat-message-content-horizontal-padding);
 
     /**
      * Exactly half the height (line-height + padding) of a one line bubble,
      * so that it doesn't change when the text wraps and the bubble becomes taller.
      */
-    border-radius: calc((1lh + var(--lb-spacing)) / 2);
+    border-radius: calc(
+      (1lh + 2 * var(--lb-ai-chat-message-content-vertical-padding)) / 2
+    );
     background: var(--lb-dynamic-background);
     color: var(--lb-foreground);
     line-height: var(--lb-line-height);
+
+    /**
+     * Rich messages get more padding than plain text ones.
+     */
+    &:where(
+        :has(h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, .lb-code-block)
+      ) {
+      --lb-ai-chat-message-content-padding-factor: 1.5;
+    }
+
+    :where(.lb-code-block) {
+      --lb-dynamic-background: var(--lb-background-foreground-subtle);
+
+      border: none;
+      background: var(--lb-dynamic-background);
+    }
   }
 }
 

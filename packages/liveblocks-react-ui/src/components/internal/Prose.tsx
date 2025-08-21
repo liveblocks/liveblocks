@@ -55,7 +55,7 @@ export function Prose({
       <Markdown
         content={content}
         components={{ ...defaultMarkdownComponents, ...components?.markdown }}
-        className={cn("lb-prose", className)}
+        className={cn("lb-root lb-prose", className)}
         {...props}
       />
     </ComponentsProvider>

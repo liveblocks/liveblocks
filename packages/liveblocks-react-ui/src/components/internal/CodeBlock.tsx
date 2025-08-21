@@ -45,7 +45,7 @@ export function CodeBlock({ title, code, overrides }: CodeBlockProps) {
 
   return (
     <TooltipProvider>
-      <div className="lb-code-block">
+      <div className="lb-root lb-code-block">
         <div className="lb-code-block-header">
           <span className="lb-code-block-title">{title}</span>
           <div className="lb-code-block-header-actions">
