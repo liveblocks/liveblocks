@@ -2535,6 +2535,8 @@
 
 .lb-ai-chat-user-message {
   :where(.lb-ai-chat-message-content) {
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
+
     min-block-size: calc(1lh + var(--lb-spacing));
     padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
 
@@ -2543,7 +2545,7 @@
      * so that it doesn't change when the text wraps and the bubble becomes taller.
      */
     border-radius: calc((1lh + var(--lb-spacing)) / 2);
-    background: var(--lb-background-foreground-faint);
+    background: var(--lb-dynamic-background);
     color: var(--lb-foreground);
     line-height: var(--lb-line-height);
   }
