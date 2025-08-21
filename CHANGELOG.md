@@ -40,6 +40,8 @@ in.
 - Render all messages in `AiChat` as Markdown, including ones from the user.
 - Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
   component" would render as "Use the `` component")
+- Improve shimmer animation visible on elements like the
+  "Thinking…"/"Reasoning…" placeholders in `AiChat`.
 
 ## v3.3.4
 
