@@ -1,4 +1,5 @@
 import fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import { shallow } from "../shallow";
 
@@ -36,7 +37,7 @@ const nonpojo = () =>
   );
 
 describe("shallow", () => {
-  it("scalar values", () => {
+  test("scalar values", () => {
     expect(shallow(0, 0)).toBe(true);
     expect(shallow("", "")).toBe(true);
     expect(shallow("hi", "hi")).toBe(true);
@@ -52,7 +53,7 @@ describe("shallow", () => {
     expect(shallow(-0, +0)).toBe(false);
   });
 
-  it("scalar values wrapped in list", () => {
+  test("scalar values wrapped in list", () => {
     expect(shallow([0], [0])).toBe(true);
     expect(shallow([""], [""])).toBe(true);
     expect(shallow(["hi"], ["hi"])).toBe(true);
@@ -68,7 +69,7 @@ describe("shallow", () => {
     expect(shallow([-0], [+0])).toBe(false);
   });
 
-  it("scalar values wrapped in objs", () => {
+  test("scalar values wrapped in objs", () => {
     expect(shallow({ k: 0 }, { k: 0 })).toBe(true);
     expect(shallow({ k: "" }, { k: "" })).toBe(true);
     expect(shallow({ k: "hi" }, { k: "hi" })).toBe(true);
@@ -84,7 +85,7 @@ describe("shallow", () => {
     expect(shallow({ k: -0 }, { k: +0 })).toBe(false);
   });
 
-  it("different outer types are never equal", () => {
+  test("different outer types are never equal", () => {
     expect(shallow({}, [])).toBe(false);
     expect(shallow([], {})).toBe(false);
     expect(shallow(new Date(), new Date())).toBe(false);
@@ -93,15 +94,15 @@ describe("shallow", () => {
     expect(shallow({}, new Date())).toBe(false);
   });
 
-  it("key order does not matter", () => {
+  test("key order does not matter", () => {
     expect(shallow({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
   });
 
-  it("different key counts are never equal", () => {
+  test("different key counts are never equal", () => {
     expect(shallow({ a: undefined, b: 1 }, { b: 1 })).toBe(false);
   });
 
-  it("sparse arrays", () => {
+  test("sparse arrays", () => {
     // Sparse arrays should not break
     /* eslint-disable no-sparse-arrays */
     expect(shallow([,], ["oops", 1])).toBe(false);
@@ -113,7 +114,7 @@ describe("shallow", () => {
 });
 
 describe("shallow (properties)", () => {
-  it("all equal scalars are shallowly equal", () => {
+  test("all equal scalars are shallowly equal", () => {
     fc.assert(
       fc.property(
         // Inputs
@@ -146,7 +147,7 @@ describe("shallow (properties)", () => {
     );
   });
 
-  it("different scalars are not shallowly equal", () => {
+  test("different scalars are not shallowly equal", () => {
     fc.assert(
       fc.property(
         // Inputs
@@ -167,7 +168,7 @@ describe("shallow (properties)", () => {
     );
   });
 
-  it("equal composite values", () => {
+  test("equal composite values", () => {
     fc.assert(
       fc.property(
         // Inputs
@@ -191,7 +192,7 @@ describe("shallow (properties)", () => {
     );
   });
 
-  it("consistency", () => {
+  test("consistency", () => {
     fc.assert(
       fc.property(
         // Inputs
@@ -218,7 +219,7 @@ describe("shallow (properties)", () => {
     );
   });
 
-  it("argument ordering does not matter", () => {
+  test("argument ordering does not matter", () => {
     fc.assert(
       fc.property(
         // Inputs
@@ -238,7 +239,7 @@ describe("shallow (properties)", () => {
     );
   });
 
-  it("date (and other non-pojos) are never considered equal", () => {
+  test("date (and other non-pojos) are never considered equal", () => {
     fc.assert(
       fc.property(
         // Inputs

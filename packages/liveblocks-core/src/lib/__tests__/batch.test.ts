@@ -1,3 +1,5 @@
+import { describe, expect, test, vi } from "vitest";
+
 import { Batch } from "../batch";
 import { wait } from "../utils";
 
@@ -16,7 +18,7 @@ const asynchronousCallback = async (inputs: string[]) => {
 
 describe("Batch", () => {
   test("should batch synchronous calls", async () => {
-    const callback = jest.fn(synchronousCallback);
+    const callback = vi.fn(synchronousCallback);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
@@ -30,7 +32,7 @@ describe("Batch", () => {
   });
 
   test("should batch asynchronous calls", async () => {
-    const callback = jest.fn(asynchronousCallback);
+    const callback = vi.fn(asynchronousCallback);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
@@ -44,7 +46,7 @@ describe("Batch", () => {
   });
 
   test("should batch based on delay", async () => {
-    const callback = jest.fn(synchronousCallback);
+    const callback = vi.fn(synchronousCallback);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
@@ -61,7 +63,7 @@ describe("Batch", () => {
   });
 
   test("should batch based on size", async () => {
-    const callback = jest.fn(synchronousCallback);
+    const callback = vi.fn(synchronousCallback);
     const batch = new Batch<string, string>(callback, {
       delay: SOME_TIME,
       size: 1,
@@ -80,7 +82,7 @@ describe("Batch", () => {
   });
 
   test("should reject batch errors", async () => {
-    const callback = jest.fn(() => {
+    const callback = vi.fn(() => {
       throw ERROR;
     });
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
@@ -94,7 +96,7 @@ describe("Batch", () => {
   });
 
   test("should reject batch rejections", async () => {
-    const callback = jest.fn(() => {
+    const callback = vi.fn(() => {
       return Promise.reject(ERROR_MESSAGE);
     });
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
@@ -108,7 +110,7 @@ describe("Batch", () => {
   });
 
   test("should reject individual errors", async () => {
-    const callback = jest.fn(() => {
+    const callback = vi.fn(() => {
       return ["a", ERROR];
     });
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
@@ -122,7 +124,7 @@ describe("Batch", () => {
   });
 
   test("should reject if callback doesn't return an array", async () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     await expect(batch.get("a")).rejects.toEqual(
@@ -131,7 +133,7 @@ describe("Batch", () => {
   });
 
   test("should reject if callback doesn't return an array of the same length as batch", async () => {
-    const callback = jest.fn(() => []);
+    const callback = vi.fn(() => []);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     await expect(batch.get("a")).rejects.toEqual(
@@ -142,7 +144,7 @@ describe("Batch", () => {
   });
 
   test("should deduplicate identical calls", async () => {
-    const callback = jest.fn(synchronousCallback);
+    const callback = vi.fn(synchronousCallback);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");
@@ -159,7 +161,7 @@ describe("Batch", () => {
   });
 
   test("should not deduplicate identical calls if they're not in the same batch", async () => {
-    const callback = jest.fn(synchronousCallback);
+    const callback = vi.fn(synchronousCallback);
     const batch = new Batch<string, string>(callback, { delay: SOME_TIME });
 
     const a = batch.get("a");

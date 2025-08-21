@@ -490,9 +490,7 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         {...props}
         className={cn(
           "lb-root lb-ai-chat",
-          layout === "compact"
-            ? "lb-ai-chat:layout-compact"
-            : "lb-ai-chat:layout-inset",
+          `lb-ai-chat:layout-${layout}`,
           className
         )}
       >

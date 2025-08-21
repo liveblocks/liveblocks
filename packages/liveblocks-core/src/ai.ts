@@ -28,6 +28,7 @@ import type {
 import type {
   AbortAiResponse,
   AiAssistantDeltaUpdate,
+  AiAssistantMessage,
   AiChat,
   AiChatMessage,
   AiChatsQuery,
@@ -56,7 +57,7 @@ import type {
   SetToolResultResponse,
   ToolResultResponse,
 } from "./types/ai";
-import { appendDelta } from "./types/ai";
+import { patchContentWithDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type {
   InferFromSchema,
@@ -120,6 +121,7 @@ export type AiToolInvocationProps<
     // Private APIs
     [kInternal]: {
       execute: AiToolExecuteCallback<A, R> | undefined;
+      messageStatus: AiAssistantMessage["status"];
     };
   }
 >;
@@ -564,7 +566,12 @@ function createStore_forChatMessages(
           }
         }
       } else {
-        myMessages.delete(message.id);
+        // Clean up the ownership administration
+        if (message.role === "assistant" && message.status === "generating") {
+          // ...unless it's still generating
+        } else {
+          myMessages.delete(message.id);
+        }
       }
     });
   }
@@ -574,7 +581,7 @@ function createStore_forChatMessages(
       const message = lut.get(messageId);
       if (message === undefined) return false;
 
-      appendDelta(message.contentSoFar, delta);
+      patchContentWithDelta(message.contentSoFar, delta);
       lut.set(messageId, message);
       return true;
     });
@@ -1293,6 +1300,7 @@ export function createAi(config: AiConfig): Ai {
         const combinedKnowledge = [...globalKnowledge, ...requestKnowledge];
         const tools = context.toolsStore.getToolDescriptions(chatId);
 
+        messagesStore.markMine(targetMessageId);
         const resp: AskInChatResponse = await sendClientMsgWithResponse({
           cmd: "ask-in-chat",
           chatId,
@@ -1309,7 +1317,6 @@ export function createAi(config: AiConfig): Ai {
             tools: tools.length > 0 ? tools : undefined,
           },
         });
-        messagesStore.markMine(resp.targetMessage.id);
         return resp;
       },
 
@@ -1356,7 +1363,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v4";
+    url.pathname = "/ai/v5";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);

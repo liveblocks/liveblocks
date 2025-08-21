@@ -1,4 +1,5 @@
 import type { CommentBody } from "@liveblocks/client";
+import { describe, expect, test } from "vitest";
 
 import type { ComposerBody } from "../../../types";
 import { commentBodyToComposerBody, composerBodyToCommentBody } from "../utils";

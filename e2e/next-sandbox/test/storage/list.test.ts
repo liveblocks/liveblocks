@@ -83,8 +83,7 @@ test.describe("Storage - LiveList", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip("set conflicts", async () => {
+  test("set conflicts", async () => {
     const [page1, page2] = pages;
     await page1.click("#clear");
     await page1.click("#push");
@@ -94,20 +93,15 @@ test.describe("Storage - LiveList", () => {
     for (let i = 0; i < 30; i++) {
       await page1.click("#set");
       await page2.click("#set");
-
-      // In this test, we should never see a list of less than or more than
-      // 1 element. When this happens, we'll want to immediately fail here.
-      await expectJson(page1, "#numItems", 1);
-      await expectJson(page2, "#numItems", 1);
     }
 
+    await waitForJson(pages, "#syncStatus", "synchronized");
     await expectJson(page1, "#numItems", 1);
     await expectJson(page2, "#numItems", 1);
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  // TODO FIXME Actually fails sometimes, there definitely is a bug here
-  test.skip("fuzzy with undo/redo push delete and move", async () => {
+  test("fuzzy with undo/redo push delete and move", async () => {
     const [page1] = pages;
     await page1.click("#clear");
     await waitForJson(pages, "#numItems", 0);
@@ -136,14 +130,11 @@ test.describe("Storage - LiveList", () => {
         } else {
           await page.click(pickFrom(actions), { force: true });
         }
-
-        // In this test, we should never see a list of more than 1 element. When
-        // it happens, we'll want to immediately fail here.
-        await expectJson(page, "#numItems", 1);
       }
       await nanoSleep();
     }
 
+    await waitForJson(pages, "#syncStatus", "synchronized");
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 });

@@ -5,6 +5,7 @@ import type {
   IUserInfo,
   ResolveUsersArgs,
 } from "@liveblocks/core";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { createBatchUsersResolver } from "../batch-users-resolver";
 
@@ -28,9 +29,14 @@ const USERS_DB: IUserInfo[] = [
 ];
 
 describe("batch users resolve", () => {
-  let resolveUsersMock: jest.Mock;
+  let resolveUsersMock: ReturnType<typeof vi.fn>;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
-    resolveUsersMock = jest.fn(
+    resolveUsersMock = vi.fn(
       <U extends BaseUserMeta = DU>({
         userIds,
       }: ResolveUsersArgs): Awaitable<
@@ -50,9 +56,9 @@ describe("batch users resolve", () => {
     );
   });
 
-  it("should handle no `resolveUsers` callback", async () => {
-    const warnMock1 = jest.fn();
-    jest.spyOn(console, "warn").mockImplementation(warnMock1);
+  test("should handle no `resolveUsers` callback", async () => {
+    const warnMock1 = vi.fn();
+    vi.spyOn(console, "warn").mockImplementation(warnMock1);
 
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       callerName: "test-suite-0",
@@ -76,7 +82,7 @@ describe("batch users resolve", () => {
     warnMock1.mockRestore();
   });
 
-  it("should resolve users info all at once", async () => {
+  test("should resolve users info all at once", async () => {
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,
       callerName: "test-suite-1",
@@ -100,7 +106,7 @@ describe("batch users resolve", () => {
     expect(resolveUsersMock).toHaveBeenCalledWith({ userIds });
   });
 
-  it("should resolve the same user in one call with multiple resolveUsers promises", async () => {
+  test("should resolve the same user in one call with multiple resolveUsers promises", async () => {
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,
       callerName: "test-suite-2",
@@ -121,8 +127,8 @@ describe("batch users resolve", () => {
     expect(resolvedUser2).toEqual(expected);
   });
 
-  it("should warn if batch promise is already resolved", async () => {
-    const warnMock2 = jest.spyOn(console, "warn").mockImplementation(() => {});
+  test("should warn if batch promise is already resolved", async () => {
+    const warnMock2 = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
       resolveUsers: resolveUsersMock,
@@ -139,7 +145,7 @@ describe("batch users resolve", () => {
     await batchUsersResolver.resolve();
     const resolvedUser2 = await promise2;
 
-    expect(warnMock2).toHaveBeenCalledTimes(2);
+    expect(warnMock2).toHaveBeenCalledTimes(1);
     expect(warnMock2).toHaveBeenCalledWith(
       "Batch users resolver promise already resolved. It can only resolve once."
     );

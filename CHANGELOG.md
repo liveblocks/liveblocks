@@ -1,5 +1,53 @@
 ## vNEXT (not yet published)
 
+## v3.4.0
+
+### `@liveblocks/react`
+
+Tool calls will now stream in while under construction. This means that tools
+will render sooner and more often re-render, while `partialArgs` are streaming
+in.
+
+> New behavior (>=3.4):
+>
+> - 1st render: `{ stage: "receiving", partialArgs: {} }`
+> - 2nd render: `{ stage: "receiving", partialArgs: { cities: [] } }`
+> - 3rd render: `{ stage: "receiving", partialArgs: { cities: [""] } }`
+> - 4th render: `{ stage: "receiving", partialArgs: { cities: ["Pa"] } }`
+> - 5th render: `{ stage: "receiving", partialArgs: { cities: ["Paris"] } }`
+> - etc.
+> - Then `{ stage: "executing", args: { cities: "Paris" } }` (same as before)
+> - And `{ stage: "executed", args, result }` (same as before)
+>
+> Before (<3.4):
+>
+> - Stage "receiving" would never happen
+> - 1st render would be with
+>   `{ stage: "executing", args: { cities: ["Paris"] } }`
+> - 2nd render would be with `{ stage: "executed", args, result }`
+
+#### Other changes
+
+- In `RoomProvider`, `initialPresence` and `initialStorage` now get re-evaluated
+  whenever the room ID (the `id` prop) changes.
+
+### `@liveblocks/react-ui`
+
+- Add a minimal appearance to `AiTool` via a new `variant` prop.
+
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
 ## v3.3.1
 
 ### `@liveblocks/react-ui`

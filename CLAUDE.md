@@ -27,6 +27,7 @@ When running scripts, use `npx turbo`, not `npm`.
 
 # Code style
 
+- Always try to add proper typing, limit the use of `any`. If needed, ask first.
 - Use $-suffix for variables storing Promises
 - Use Σ-suffix for variables storing Signals (MutableSignal, Signal,
   DerivedSignal, etc)
@@ -45,3 +46,7 @@ When running scripts, use `npx turbo`, not `npm`.
 
 Run e2e tests headlessly using Playwright:  
 npx turbo build && env HEADLESS=1 playwright test --retries=5 --
+
+# Documentation
+
+All documentation lives in the `docs/` directory, as Markdown files.
