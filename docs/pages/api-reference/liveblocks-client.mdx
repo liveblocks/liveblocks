@@ -1150,6 +1150,13 @@ This demonstrates how each field and nested property appears incrementally,
 providing real-time feedback to users as the AI constructs the tool call
 arguments.
 
+Arguments are streamed in forward-only order. Once a field begins appearing, all
+previous fields are complete and won’t be modified. You’ll never see
+`{ origin: "New York", destination: "London" }` followed by
+`{ origin: "San Francisco", destination: "London" }`, but you might see
+`{ origin: "New" }` then `{ origin: "New York" }` then
+`{ origin: "New York", destination: "London" }`.
+
 ## Room
 
 Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
