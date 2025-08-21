@@ -2544,14 +2544,11 @@
 .lb-ai-chat-user-message {
   :where(.lb-ai-chat-message-content) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
-    --lb-ai-chat-message-content-padding-factor: 1;
     --lb-ai-chat-message-content-horizontal-padding: calc(
-      var(--lb-ai-chat-message-content-padding-factor) * 0.9375 *
-        var(--lb-spacing)
+      0.9375 * var(--lb-spacing)
     );
     --lb-ai-chat-message-content-vertical-padding: calc(
-      var(--lb-ai-chat-message-content-padding-factor) * 0.5625 *
-        var(--lb-spacing)
+      0.5625 * var(--lb-spacing)
     );
 
     min-block-size: calc(
@@ -2577,7 +2574,12 @@
     &:where(
         :has(h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, .lb-code-block)
       ) {
-      --lb-ai-chat-message-content-padding-factor: 1.5;
+      --lb-ai-chat-message-content-horizontal-padding: calc(
+        1.375 * var(--lb-spacing)
+      );
+      --lb-ai-chat-message-content-vertical-padding: calc(
+        1.125 * var(--lb-spacing)
+      );
     }
 
     :where(.lb-code-block) {
