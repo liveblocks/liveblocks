@@ -6,7 +6,7 @@ import { useMemo } from "react";
 
 import { cn } from "../../utils/cn";
 import { getInitials } from "../../utils/get-initials";
-import { useUserOrGroupInfo } from "../../utils/use-user-or-group";
+import { useUserOrGroupInfo } from "../../utils/use-user-or-group-info";
 
 interface AvatarLayoutProps extends ComponentProps<"div"> {
   src?: string;
