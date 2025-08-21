@@ -37,6 +37,7 @@ in.
 - Improve Markdown rendering during streaming in `AiChat`: incomplete content is
   now handled gracefully so things like bold, links, or tables all render
   instantly without seeing partial Markdown syntax first.
+- Render all messages in `AiChat` as Markdown, including ones from the user.
 - Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
   component" would render as "Use the `` component")
 
