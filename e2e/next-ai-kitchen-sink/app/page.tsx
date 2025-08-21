@@ -29,6 +29,9 @@ export default function Home() {
         <Link href="/toolcall-streaming" className="underline">
           Tool call streaming
         </Link>
+        <Link href="/partial-markdown" className="underline">
+          Partial markdown streaming
+        </Link>
       </div>
     </main>
   );
