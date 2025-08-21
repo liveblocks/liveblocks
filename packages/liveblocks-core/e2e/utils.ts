@@ -6,6 +6,7 @@ import { expect } from "vitest";
 import WebSocket from "ws";
 
 import type { BaseMetadata, NoInfr } from "../src";
+import { nanoid } from "../src";
 import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
 import type { LiveObject } from "../src/crdts/LiveObject";
@@ -116,7 +117,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
-    const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
+    const roomName = "storage-requirements-e2e-tests-" + nanoid(10);
 
     const actor1 = await initializeRoomForTest<JsonObject, S>(
       roomName,
