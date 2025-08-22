@@ -26,7 +26,6 @@ import type {
   DS,
   DU,
   EnterOptions,
-  GroupData,
   IYjsProvider,
   LiveblocksErrorContext,
   MentionData,
@@ -87,7 +86,6 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  GroupAsyncResult,
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
@@ -3130,46 +3128,6 @@ const _useStorageRoot: TypedBundle["useStorageRoot"] = useStorageRoot;
 const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
-function selectorFor_useGroup(
-  state: AsyncResult<GroupData | undefined> | undefined
-): GroupAsyncResult {
-  if (state === undefined || state?.isLoading) {
-    return state ?? { isLoading: true };
-  }
-
-  if (state.error) {
-    return state;
-  }
-
-  return {
-    isLoading: false,
-    group: state.data,
-  };
-}
-
-/** @private - Internal API, do not rely on it. */
-function useGroup(groupId: string): GroupAsyncResult {
-  const client = useClient();
-  const store = client[kInternal].httpClient.groupsStore;
-
-  const getGroupState = useCallback(
-    () => store.getItemState(groupId),
-    [store, groupId]
-  );
-
-  useEffect(() => {
-    void store.enqueue(groupId);
-  }, [store, groupId]);
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    getGroupState,
-    getGroupState,
-    selectorFor_useGroup,
-    shallow
-  );
-}
-
 export {
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -3194,7 +3152,6 @@ export {
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   _useEventListener as useEventListener,
-  useGroup,
   useHistory,
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
