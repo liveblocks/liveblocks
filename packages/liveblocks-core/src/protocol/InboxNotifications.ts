@@ -1,6 +1,6 @@
 import type { DAD } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
-import type { MentionData } from "../types/MentionData";
+import type { MentionData } from "./MentionData";
 
 export type InboxNotificationThreadData = {
   kind: "thread";

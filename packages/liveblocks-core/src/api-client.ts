@@ -53,6 +53,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type { MentionData } from "./protocol/MentionData";
 import type {
   NotificationSettingsPlain,
   PartialNotificationSettings,
@@ -66,7 +67,6 @@ import type {
   SubscriptionDeleteInfoPlain,
 } from "./protocol/Subscriptions";
 import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { MentionData } from "./types/MentionData";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import { PKG_VERSION } from "./version";

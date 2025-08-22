@@ -380,7 +380,7 @@ export type {
   GroupMentionData,
   MentionData,
   UserMentionData,
-} from "./types/MentionData";
+} from "./protocol/MentionData";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

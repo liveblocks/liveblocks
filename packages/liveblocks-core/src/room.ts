@@ -67,6 +67,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
@@ -96,7 +97,6 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { MentionData } from "./types/MentionData";
 import type { NodeMap } from "./types/NodeMap";
 import type {
   InternalOthersEvent,

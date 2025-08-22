@@ -31,6 +31,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type { MentionData } from "./protocol/MentionData";
 import type {
   NotificationSettings,
   PartialNotificationSettings,
@@ -58,7 +59,6 @@ import {
 import type { Awaitable } from "./types/Awaitable";
 import type { LiveblocksErrorContext } from "./types/LiveblocksError";
 import { LiveblocksError } from "./types/LiveblocksError";
-import type { MentionData } from "./types/MentionData";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
