@@ -7,8 +7,8 @@
 import type { JSONSchema7 } from "json-schema";
 
 import { assertNever } from "../lib/assert";
+import { IncrementalJsonParser } from "../lib/IncrementalJsonParser";
 import type { Json, JsonObject } from "../lib/Json";
-import { parsePartialJsonObject } from "../lib/parsePartialJsonObject";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
@@ -548,21 +548,23 @@ export function patchContentWithDelta(
       break;
 
     case "tool-stream": {
-      let _cacheKey = "";
-      let _cachedArgs: JsonObject = {};
-
+      // Create parser in closure to avoid exposing it on the object
+      const parser = new IncrementalJsonParser();
+      
       const toolInvocation = {
         type: "tool-invocation" as const,
         stage: "receiving" as const,
         invocationId: delta.invocationId,
         name: delta.name,
-        partialArgsText: "",
+        get partialArgsText(): string {
+          return parser.source;
+        },
         get partialArgs(): JsonObject {
-          if (this.partialArgsText !== _cacheKey) {
-            _cachedArgs = parsePartialJsonObject(this.partialArgsText);
-            _cacheKey = this.partialArgsText;
-          }
-          return _cachedArgs;
+          return parser.json;
+        },
+        // Internal method to append deltas
+        _appendDelta(delta: string) {
+          parser.append(delta);
         },
       };
       content.push(toolInvocation);
@@ -572,12 +574,13 @@ export function patchContentWithDelta(
     case "tool-delta": {
       // Take the last part, expect it to be a tool invocation in receiving
       // stage. If not, ignore this delta. If it is, append the delta to the
-      // partialArgsText
+      // parser
       if (
         lastPart?.type === "tool-invocation" &&
         lastPart.stage === "receiving"
       ) {
-        lastPart.partialArgsText += delta.delta;
+        // Use internal method to update parser
+        (lastPart as any)._appendDelta(delta.delta);
       }
       // Otherwise ignore the delta - it's out of order or unexpected
       break;
