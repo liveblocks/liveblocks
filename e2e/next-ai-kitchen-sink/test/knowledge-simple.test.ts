@@ -1,24 +1,17 @@
 import { test, expect } from "@playwright/test";
+import { createRandomChat, cleanupAllChats } from "./test-helpers";
 
 test.describe("Knowledge Registration - Simple", () => {
+  test.afterEach(async () => {
+    await cleanupAllChats();
+  });
+
   test("should open knowledge page and interact with AI chat", async ({
     page,
   }) => {
-    // Clean up first - delete the knowledge chat if it exists
-    await page.goto("/chats");
-    await expect(page.locator("h1")).toHaveText("List of all chats");
-
-    const knowledgeChatLink = page.locator('a[href="/chats/todo125"]');
-    if (await knowledgeChatLink.isVisible()) {
-      const deleteButton = knowledgeChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(knowledgeChatLink).not.toBeVisible();
-    }
-
-    // Go to knowledge page
-    await page.goto("/knowledge");
+    // Create unique test chat and go to knowledge page
+    const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`);
 
     // Wait for the page to load - verify default tab is "Todo app"
     await expect(
@@ -51,11 +44,11 @@ test.describe("Knowledge Registration - Simple", () => {
     const sendButton = page.locator(".lb-ai-composer-action");
 
     // If there's an ongoing operation (abort button is enabled), click it first to clear state
-    const buttonVariant = await sendButton.getAttribute("data-variant");
-    if (buttonVariant === "secondary") {
+    const buttonLabel = await sendButton.getAttribute("aria-label");
+    if (buttonLabel === "Abort response") {
       await sendButton.click();
       // Wait for it to return to send state
-      await expect(sendButton).toHaveAttribute("data-variant", "primary");
+      await expect(sendButton).toHaveAttribute("aria-label", "Send");
     }
 
     // Clear any existing text and send a simple message
