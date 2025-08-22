@@ -406,7 +406,6 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     subscriptions: SubscriptionData[];
-    groups: GroupData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
@@ -1547,13 +1546,20 @@ export function createApiClient<M extends BaseMetadata>({
       }
     );
 
+    const groups = json.groups.map(convertToGroupData);
+
+    // Instead of being returned publicly, the user's groups are put in
+    // a separate store which is also used for on-demand fetching.
+    for (const group of groups) {
+      groupsStore.fill(group.id, group);
+    }
+
     return {
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
       threads: json.threads.map(convertToThreadData),
       subscriptions: json.subscriptions.map(convertToSubscriptionData),
-      groups: json.groups.map(convertToGroupData),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };

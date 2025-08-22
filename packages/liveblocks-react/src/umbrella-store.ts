@@ -1062,23 +1062,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.#notificationsPaginationState = new PaginatedResource(
       async (cursor?: string) => {
-        const result = await this.#client[
-          kInternal
-        ].httpClient.getInboxNotifications({ cursor });
+        const result = await this.#client.getInboxNotifications({ cursor });
 
         this.updateThreadifications(
           result.threads,
           result.inboxNotifications,
           result.subscriptions
         );
-
-        // Groups aren't part of the umbrella store at the moment.
-        //
-        // They have their own separate store which is also used
-        // for batched on-demand fetching.
-        for (const group of result.groups) {
-          this.#client[kInternal].httpClient.groupsStore.fill(group.id, group);
-        }
 
         // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
         if (this.#notificationsLastRequestedAt === null) {
