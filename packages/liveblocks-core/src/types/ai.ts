@@ -337,6 +337,8 @@ export type AiReceivingToolInvocationPart = {
   /** @internal */
   partialArgsText: string; // The raw, partial JSON text value
   partialArgs: JsonObject; // The interpreted, partial JSON value
+  /** @internal */
+  __appendDelta?: (delta: string) => void; // Internal method for delta updates
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
@@ -548,25 +550,10 @@ export function patchContentWithDelta(
       break;
 
     case "tool-stream": {
-      // Create parser in closure to avoid exposing it on the object
-      const parser = new IncrementalJsonParser();
-      
-      const toolInvocation = {
-        type: "tool-invocation" as const,
-        stage: "receiving" as const,
-        invocationId: delta.invocationId,
-        name: delta.name,
-        get partialArgsText(): string {
-          return parser.source;
-        },
-        get partialArgs(): JsonObject {
-          return parser.json;
-        },
-        // Internal method to append deltas
-        _appendDelta(delta: string) {
-          parser.append(delta);
-        },
-      };
+      const toolInvocation = hydrateReceivingToolInvocation(
+        delta.invocationId,
+        delta.name
+      );
       content.push(toolInvocation);
       break;
     }
@@ -579,8 +566,7 @@ export function patchContentWithDelta(
         lastPart?.type === "tool-invocation" &&
         lastPart.stage === "receiving"
       ) {
-        // Use internal method to update parser
-        (lastPart as any)._appendDelta(delta.delta);
+        lastPart.__appendDelta?.(delta.delta);
       }
       // Otherwise ignore the delta - it's out of order or unexpected
       break;
@@ -609,4 +595,33 @@ export function patchContentWithDelta(
     default:
       return assertNever(delta, "Unhandled case");
   }
+}
+
+/**
+ * Creates a receiving tool invocation part for testing purposes.
+ * This helper eliminates the need to manually create fake tool invocation objects
+ * and provides a clean API for tests.
+ */
+export function hydrateReceivingToolInvocation(
+  invocationId: string,
+  name: string,
+  partialArgsText: string = ""
+): AiReceivingToolInvocationPart {
+  const parser = new IncrementalJsonParser(partialArgsText);
+  return {
+    type: "tool-invocation",
+    stage: "receiving",
+    invocationId,
+    name,
+    get partialArgsText(): string {
+      return parser.source;
+    },
+    get partialArgs(): JsonObject {
+      return parser.json;
+    },
+    // Internal method to append deltas
+    __appendDelta(delta: string) {
+      parser.append(delta);
+    },
+  } satisfies AiReceivingToolInvocationPart;
 }
