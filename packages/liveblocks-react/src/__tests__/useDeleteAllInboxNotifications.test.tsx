@@ -55,6 +55,7 @@ describe("useDeleteAllInboxNotifications", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -133,6 +134,7 @@ describe("useDeleteAllInboxNotifications", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -216,6 +218,7 @@ describe("useDeleteAllInboxNotifications", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -306,6 +309,7 @@ describe("useDeleteAllInboxNotifications", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -400,6 +404,7 @@ describe("useDeleteAllInboxNotifications", () => {
             inboxNotifications,
             threads,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
