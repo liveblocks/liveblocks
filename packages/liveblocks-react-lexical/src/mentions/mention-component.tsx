@@ -36,7 +36,7 @@ export const Mention = forwardRef<HTMLSpanElement, MentionProps>(
       <span
         onClick={handleClick}
         data-selected={isSelected ? "" : undefined}
-        className={cn("lb-root lb-lexical-mention", className)}
+        className={cn("lb-root lb-mention lb-lexical-mention", className)}
         ref={forwardedRef}
         {...props}
       >

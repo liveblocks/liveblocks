@@ -41,9 +41,10 @@ import type {
   GlobalOverrides,
   ThreadOverrides,
 } from "../overrides";
+import { findLastIndex } from "@liveblocks/core";
+
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
-import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
 import type { ComposerProps } from "./Composer";
@@ -231,7 +232,7 @@ export const Thread = forwardRef(
     const lastCommentIndex = useMemo(() => {
       return showDeletedComments
         ? thread.comments.length - 1
-        : findLastIndex(thread.comments, (comment) => comment.body);
+        : findLastIndex(thread.comments, (comment) => Boolean(comment.body));
     }, [showDeletedComments, thread.comments]);
     const hiddenComments = useMemo(() => {
       const maxVisibleCommentsCount =

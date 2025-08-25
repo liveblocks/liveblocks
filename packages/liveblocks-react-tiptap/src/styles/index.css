@@ -586,7 +586,7 @@
   padding-inline: var(--lb-tiptap-ai-toolbar-padding);
   color: var(--lb-foreground-tertiary);
   user-select: none;
-  animation: lb-animation-shimmer-small 5s linear infinite;
+  animation: lb-animation-shimmer-text 5s linear infinite;
 }
 
 .lb-tiptap-ai-toolbar-dropdown {

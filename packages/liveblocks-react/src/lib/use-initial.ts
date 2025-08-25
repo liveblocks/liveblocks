@@ -1,9 +1,6 @@
-import type { Reducer } from "react";
-import { useCallback, useReducer } from "react";
+import { useCallback, useMemo } from "react";
 
 import { useLatest } from "./use-latest";
-
-const noop = <T>(state: T) => state;
 
 /**
  * "Freezes" a given value, so that it will return the same value/instance on
@@ -11,9 +8,9 @@ const noop = <T>(state: T) => state;
  * custom hooks, much like how `useState(initialState)` or
  * `useRef(initialValue)` works.
  */
-export function useInitial<T>(value: T): T {
-  // Equivalent to useState(() => value)[0], but slightly more low-level
-  return useReducer<Reducer<T, unknown>>(noop, value)[0];
+export function useInitial<T>(value: T, roomId?: string): T {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => value, [roomId]);
 }
 
 /**
@@ -22,23 +19,24 @@ export function useInitial<T>(value: T): T {
  * re-renders, but one which will always call the _latest_ provided callback
  * instance.
  */
-export function useInitialUnlessFunction<T>(latestValue: T): T {
-  const frozenValue = useInitial(latestValue);
+export function useInitialUnlessFunction<T>(
+  latestValue: T,
+  roomId?: string
+): T {
+  const frozenValue = useInitial(latestValue, roomId);
 
-  // Normally the Rules of Hooks™ dictate that you should not call hooks
-  // conditionally. In this case, we're good here, because the same code path
-  // will always be taken on every subsequent render here, because we've frozen
-  // the value.
-  /* eslint-disable react-hooks/rules-of-hooks */
+  type Fn = T & ((...args: unknown[]) => unknown);
+  const ref = useLatest(latestValue as Fn);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const wrapper = useCallback(
+    ((...args: unknown[]) => ref.current(...args)) as Fn,
+    [ref]
+  );
+
+  // Return the wrapper only if the frozen value is a function
   if (typeof frozenValue === "function") {
-    type Fn = T & ((...args: unknown[]) => unknown);
-    const ref = useLatest(latestValue as Fn);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return useCallback(((...args: unknown[]) => ref.current(...args)) as Fn, [
-      ref,
-    ]);
+    return wrapper;
   } else {
     return frozenValue;
   }
-  /* eslint-enable react-hooks/rules-of-hooks */
 }

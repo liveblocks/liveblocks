@@ -346,8 +346,8 @@ function ComposerAttachFilesEditorAction({
 
 function ComposerUserMention({ mention }: ComposerMentionProps) {
   return (
-    <ComposerPrimitive.Mention className="lb-composer-mention">
-      {MENTION_CHARACTER}
+    <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <User userId={mention.id} />
     </ComposerPrimitive.Mention>
   );
@@ -358,10 +358,10 @@ function ComposerGroupMention({ mention }: ComposerMentionProps) {
 
   return (
     <ComposerPrimitive.Mention
-      className="lb-composer-mention"
+      className="lb-mention lb-composer-mention"
       data-self={isMember ? "" : undefined}
     >
-      {MENTION_CHARACTER}
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <Group groupId={mention.id} />
     </ComposerPrimitive.Mention>
   );

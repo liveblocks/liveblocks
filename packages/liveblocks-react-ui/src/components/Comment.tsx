@@ -229,11 +229,11 @@ function CommentUserMention({
 
   return (
     <CommentPrimitive.Mention
-      className={cn("lb-comment-mention", className)}
+      className={cn("lb-mention lb-comment-mention", className)}
       data-self={mention.id === currentId ? "" : undefined}
       {...props}
     >
-      {MENTION_CHARACTER}
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <User userId={mention.id} />
     </CommentPrimitive.Mention>
   );
@@ -248,11 +248,11 @@ function CommentGroupMention({
 
   return (
     <CommentPrimitive.Mention
-      className={cn("lb-comment-mention", className)}
+      className={cn("lb-mention lb-comment-mention", className)}
       data-self={isMember ? "" : undefined}
       {...props}
     >
-      {MENTION_CHARACTER}
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <Group groupId={mention.id} />
     </CommentPrimitive.Mention>
   );

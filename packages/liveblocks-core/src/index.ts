@@ -160,7 +160,7 @@ export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
 export { stableStringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
-export { generateUrl, sanitizeUrl, url, urljoin } from "./lib/url";
+export { generateUrl, isUrl, sanitizeUrl, url, urljoin } from "./lib/url";
 export type {
   Brand,
   DistributiveOmit,
@@ -171,6 +171,7 @@ export {
   b64decode,
   compactObject,
   entries,
+  findLastIndex,
   keys,
   mapValues,
   memoizeOnSuccess,

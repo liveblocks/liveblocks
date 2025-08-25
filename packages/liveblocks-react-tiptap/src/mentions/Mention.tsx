@@ -25,13 +25,13 @@ const UserMention = forwardRef<HTMLSpanElement, MentionProps>(
     return (
       <NodeViewWrapper
         className={cn(
-          "lb-root lb-tiptap-mention",
+          "lb-root lb-mention lb-tiptap-mention",
           isSelected && "lb-mention-selected"
         )}
         as="span"
         ref={forwardedRef}
       >
-        {MENTION_CHARACTER}
+        <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
         <User userId={mention.id} />
       </NodeViewWrapper>
     );
@@ -43,13 +43,13 @@ const GroupMention = forwardRef<HTMLSpanElement, MentionProps>(
     return (
       <NodeViewWrapper
         className={cn(
-          "lb-root lb-tiptap-mention",
+          "lb-root lb-mention lb-tiptap-mention",
           isSelected && "lb-mention-selected"
         )}
         as="span"
         ref={forwardedRef}
       >
-        {MENTION_CHARACTER}
+        <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
         <Group groupId={mention.id} />
       </NodeViewWrapper>
     );

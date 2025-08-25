@@ -41,6 +41,12 @@
     var(--lb-foreground-contrast),
     50
   );
+  --lb-background-foreground-subtle: color-mix-scale(
+    var(--lb-background),
+    var(--lb-foreground),
+    var(--lb-foreground-contrast),
+    100
+  );
   --lb-background-accent-faint: color-mix-scale(
     var(--lb-background),
     var(--lb-accent),
@@ -496,7 +502,7 @@
   block-size: calc(0.8 * var(--lb-icon-size));
   margin-inline-start: -1px;
   margin-block-start: 1px;
-  color: var(--lb-foreground-moderate);
+  opacity: 0.65;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1087,7 +1093,7 @@
  *************************************/
 
 :is(.lb-avatar, .lb-name, .lb-group-members):where([data-loading]) {
-  animation: lb-animation-shimmer 8s linear infinite;
+  animation: lb-animation-shimmer-skeleton 8s linear infinite;
 }
 
 /*************************************
@@ -1152,6 +1158,10 @@
   padding: 0.1em 0.3em;
   border-radius: calc(0.675 * var(--lb-radius));
   background: var(--lb-accent-subtle);
+}
+
+.lb-mention-symbol {
+  display: contents;
 }
 
 /*************************************
@@ -2426,9 +2436,11 @@
  *************************************/
 
 .lb-code-block {
+  position: relative;
   min-inline-size: 0;
   border: 1px solid var(--lb-foreground-subtle);
   border-radius: var(--lb-radius);
+  isolation: isolate;
 
   :where(.lb-code-block-header) {
     display: flex;
@@ -2561,17 +2573,51 @@
 
 .lb-ai-chat-user-message {
   :where(.lb-ai-chat-message-content) {
-    min-block-size: calc(1lh + var(--lb-spacing));
-    padding: calc(0.5 * var(--lb-spacing)) var(--lb-spacing);
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
+    --lb-ai-chat-message-content-horizontal-padding: calc(
+      0.9375 * var(--lb-spacing)
+    );
+    --lb-ai-chat-message-content-vertical-padding: calc(
+      0.5625 * var(--lb-spacing)
+    );
+
+    min-block-size: calc(
+      1lh + 2 * var(--lb-ai-chat-message-content-vertical-padding)
+    );
+    padding: var(--lb-ai-chat-message-content-vertical-padding)
+      var(--lb-ai-chat-message-content-horizontal-padding);
 
     /**
      * Exactly half the height (line-height + padding) of a one line bubble,
      * so that it doesn't change when the text wraps and the bubble becomes taller.
      */
-    border-radius: calc((1lh + var(--lb-spacing)) / 2);
-    background: var(--lb-background-foreground-faint);
+    border-radius: calc(
+      (1lh + 2 * var(--lb-ai-chat-message-content-vertical-padding)) / 2
+    );
+    background: var(--lb-dynamic-background);
     color: var(--lb-foreground);
     line-height: var(--lb-line-height);
+
+    /**
+     * Rich messages get more padding than plain text ones.
+     */
+    &:where(
+        :has(h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, .lb-code-block)
+      ) {
+      --lb-ai-chat-message-content-horizontal-padding: calc(
+        1.375 * var(--lb-spacing)
+      );
+      --lb-ai-chat-message-content-vertical-padding: calc(
+        1.125 * var(--lb-spacing)
+      );
+    }
+
+    :where(.lb-code-block) {
+      --lb-dynamic-background: var(--lb-background-foreground-subtle);
+
+      border: none;
+      background: var(--lb-dynamic-background);
+    }
   }
 }
 
@@ -2788,35 +2834,52 @@
 
 .lb-ai-chat-pending {
   user-select: none;
-  animation: lb-animation-shimmer-small 5s linear infinite;
+  animation: lb-animation-shimmer-text 2s cubic-bezier(0.1, 0, 0.9, 1) infinite;
 }
 
-.lb-ai-chat-message-thinking,
-.lb-ai-chat-message-reasoning {
+.lb-ai-chat-message-thinking {
   inline-size: fit-content;
   max-inline-size: 100%;
   color: var(--lb-foreground-tertiary);
+  transition-property: color;
 
-  &:where(.lb-ai-chat-pending),
-  :where(.lb-ai-chat-pending) {
+  &:where(.lb-ai-chat-pending) {
     color: var(--lb-foreground);
   }
 }
 
 .lb-ai-chat-message-reasoning {
+  position: relative;
   margin-block-end: calc(0.75 * var(--lb-spacing));
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: calc(-0.375 * var(--lb-spacing));
+    border-radius: calc(0.75 * var(--lb-radius));
+    pointer-events: none;
+    transition-property: box-shadow;
+  }
+
+  &:where(:has(.lb-collapsible-trigger:focus-visible)) {
+    z-index: 1;
+
+    &::after {
+      box-shadow:
+        var(--lb-dynamic-background) 0 0 0 2px,
+        var(--lb-accent) 0 0 0 4px;
+    }
+  }
 
   :where(.lb-collapsible-trigger) {
     display: flex;
     gap: calc(0.25 * var(--lb-spacing));
     align-items: center;
+    color: var(--lb-foreground-tertiary);
+    transition-property: color;
 
-    &:where(:focus-visible) {
-      color: var(--lb-accent);
-
-      :where(.lb-collapsible-chevron) {
-        color: var(--lb-accent-moderate);
-      }
+    &:where(.lb-ai-chat-pending) {
+      color: var(--lb-foreground);
     }
   }
 
@@ -2840,8 +2903,6 @@
 
 .lb-ai-tool {
   position: relative;
-  border-radius: var(--lb-radius);
-  box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
 
   &::after {
     content: "";
@@ -2865,11 +2926,9 @@
 
 .lb-ai-tool-header {
   display: flex;
-  gap: calc(0.3125 * var(--lb-spacing));
+  gap: calc(0.25 * var(--lb-spacing));
   align-items: center;
   inline-size: 100%;
-  block-size: calc($lb-button-size + var(--lb-spacing));
-  padding-inline: calc(0.5 * var(--lb-spacing));
 }
 
 .lb-ai-tool-header-icon-container,
@@ -2898,26 +2957,95 @@
 
 .lb-ai-tool-header-title {
   @include truncate;
-
-  margin-inline-end: calc(0.25 * var(--lb-spacing));
-  color: var(--lb-foreground-secondary);
-  font-size: 0.9375em;
-
-  &:where(:first-child) {
-    margin-inline-start: calc(0.3125 * var(--lb-spacing));
-  }
 }
 
 .lb-ai-tool-header-status {
   flex: none;
-  margin-inline-start: auto;
-  margin-inline-end: calc(0.1875 * var(--lb-spacing));
   color: var(--lb-foreground-moderate);
 }
 
-.lb-ai-tool:where([data-result="error"]) {
-  box-shadow: inset 0 0 0 1px var(--lb-destructive-moderate);
+.lb-ai-tool:where(.lb-ai-tool\:variant-block) {
+  border-radius: var(--lb-radius);
+  box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
 
+  :where(.lb-ai-tool-header) {
+    block-size: calc($lb-button-size + var(--lb-spacing));
+    padding-inline: calc(0.5 * var(--lb-spacing));
+    color: var(--lb-foreground-secondary);
+  }
+
+  :where(.lb-ai-tool-header-title) {
+    font-size: 0.9375em;
+
+    &:where(:first-child) {
+      margin-inline-start: calc(0.3125 * var(--lb-spacing));
+    }
+  }
+
+  :where(.lb-ai-tool-header-status) {
+    margin-inline-start: auto;
+    margin-inline-end: calc(0.1875 * var(--lb-spacing));
+  }
+
+  :where(.lb-ai-tool-content:not(:empty)) {
+    padding: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+  }
+
+  &:where([data-result="error"]) {
+    box-shadow: inset 0 0 0 1px var(--lb-destructive-moderate);
+  }
+}
+
+.lb-ai-tool:where(.lb-ai-tool\:variant-minimal) {
+  &::after {
+    inset: calc(-0.375 * var(--lb-spacing));
+    border-radius: calc(0.75 * var(--lb-radius));
+  }
+
+  :where(.lb-ai-tool-header) {
+    position: relative;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    block-size: $lb-button-size;
+    color: var(--lb-foreground-tertiary);
+    transition-property: color;
+
+    &:where(.lb-ai-chat-pending),
+    :where(.lb-ai-chat-pending) {
+      color: var(--lb-foreground);
+    }
+
+    /* Invisibly increase the header's hit target size */
+    &::before {
+      content: "";
+      position: absolute;
+      inset: calc(-0.375 * var(--lb-spacing));
+      z-index: -1;
+    }
+  }
+
+  :where(.lb-ai-tool-header-icon-container) {
+    margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  }
+
+  :where(.lb-ai-tool-header-title) {
+    &:where(:not(:first-child)) {
+      margin-inline-start: calc(-0.0625 * var(--lb-spacing));
+    }
+  }
+
+  :where(.lb-ai-tool-content:not(:empty)) {
+    padding-block-start: calc(0.5 * var(--lb-spacing));
+  }
+
+  &:where([data-result="cancelled"]) {
+    :where(.lb-ai-tool-header) {
+      color: var(--lb-foreground-moderate);
+    }
+  }
+}
+
+.lb-ai-tool:where([data-result="error"]) {
   &:where(:has(.lb-ai-tool-header:focus-visible)) {
     &::after {
       box-shadow:
@@ -2926,13 +3054,18 @@
     }
   }
 
+  :where(.lb-ai-tool-header),
   :where(.lb-ai-tool-header-status) {
     color: var(--lb-destructive);
   }
-}
 
-.lb-ai-tool-content:where(:not(:empty)) {
-  padding: 0 calc(0.75 * var(--lb-spacing)) calc(0.75 * var(--lb-spacing));
+  :where(.lb-ai-tool-icon) {
+    background: var(--lb-destructive-subtle);
+  }
+
+  :where(.lb-ai-tool-header-icon-container) {
+    color: var(--lb-destructive-secondary);
+  }
 }
 
 .lb-ai-tool-inspector {
@@ -3003,7 +3136,7 @@
   }
 }
 
-@keyframes lb-animation-shimmer {
+@keyframes lb-animation-shimmer-skeleton {
   from,
   to {
     mask-image: linear-gradient(
@@ -3025,25 +3158,25 @@
   }
 }
 
-@keyframes lb-animation-shimmer-small {
+@keyframes lb-animation-shimmer-text {
   from,
   to {
     mask-image: linear-gradient(
       90deg,
-      #000 0%,
-      rgb(0 0 0 / 50%) 18%,
-      rgb(0 0 0 / 50%) 82%,
-      #000 100%
+      rgb(0 0 0 / 75%) 36%,
+      rgb(0 0 0 / 20%) 48%,
+      rgb(0 0 0 / 20%) 52%,
+      rgb(0 0 0 / 75%) 64%
     );
     mask-size: 300% 100%;
   }
 
   from {
-    mask-position: 200% 0;
+    mask-position: 100% 0;
   }
 
   to {
-    mask-position: -100% 0;
+    mask-position: 0% 0;
   }
 }
 

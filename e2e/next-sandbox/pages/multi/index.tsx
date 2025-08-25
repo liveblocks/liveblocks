@@ -13,6 +13,7 @@ type Presence = {
 };
 
 type Storage = {
+  initialRoom: string;
   items?: LiveList<string>;
 };
 
@@ -28,7 +29,10 @@ const {
 } = createRoomContext<Presence, Storage>(client);
 
 const initialPresence = (): Presence => ({});
-const initialStorage = (): Storage => ({ items: new LiveList([]) });
+const initialStorageForRoom = (roomId: string) => (): Storage => ({
+  initialRoom: roomId,
+  items: new LiveList([]),
+});
 
 export default function Home() {
   const [numColumns, setNumColumns] = useState(1);
@@ -128,7 +132,7 @@ function RoomProviderBlock({ index }: RoomProviderBlockProps) {
             <RoomProvider
               id={roomId}
               initialPresence={initialPresence}
-              initialStorage={initialStorage}
+              initialStorage={initialStorageForRoom(roomId)}
             >
               <Picker index={index} />
             </RoomProvider>
@@ -170,12 +174,16 @@ function Sandbox({ index }: SandboxProps) {
   const renderCount = useRenderCount();
   const socketStatus = useStatus();
   const others = useOthers();
+  const initialRoom = useStorage((root) => root.initialRoom);
   const items = useStorage((root) => root.items);
   const push = useMutation(
     ({ storage }, value: string) => storage.get("items")?.push(value),
     []
   );
-  const clear = useMutation(({ storage }) => storage.get("items")?.clear(), []);
+  const clear = useMutation(({ storage }) => {
+    storage.delete("initialRoom");
+    storage.get("items")?.clear();
+  }, []);
   const [myPresence, updateMyPresence] = useMyPresence();
   const me = useSelf();
   const theirPresence = others[0]?.presence;
@@ -264,6 +272,11 @@ function Sandbox({ index }: SandboxProps) {
       <h2>Storage</h2>
       <table style={styles.dataTable}>
         <tbody>
+          <Row
+            id={`initialRoom_${index}`}
+            name="Current room ID (as captured by initialStorage)"
+            value={initialRoom}
+          />
           <Row id={`items_${index}`} name="Items" value={items} />
         </tbody>
       </table>
