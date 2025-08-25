@@ -8,6 +8,7 @@ import type {
   DGI,
   DRI,
   DU,
+  GroupData,
   InboxNotificationData,
   ResolveGroupsInfoArgs,
   ResolveUsersArgs,
@@ -81,27 +82,56 @@ export const getUnreadComments = ({
   });
 };
 
-// TODO: Update to handle group mentions
 /** @internal */
 export const getLastUnreadCommentWithMention = ({
   comments,
+  groups,
   mentionedUserId,
 }: {
   comments: CommentDataWithBody[];
+  groups: Map<string, GroupData>;
   mentionedUserId: string;
 }): CommentDataWithBody | null => {
-  return (
-    Array.from(comments)
-      .reverse()
-      .filter((c) => c.userId !== mentionedUserId)
-      .find((c) => {
-        const mentions = getMentionsFromCommentBody(
-          c.body,
-          (mention) => mention.kind === "user" && mention.id === mentionedUserId
-        );
-        return mentions.length > 0;
-      }) ?? null
-  );
+  if (!comments.length) {
+    return null;
+  }
+
+  for (let i = comments.length - 1; i >= 0; i--) {
+    const comment = comments[i]!;
+
+    if (comment.userId === mentionedUserId) {
+      continue;
+    }
+
+    const mentions = getMentionsFromCommentBody(comment.body);
+
+    for (const mention of mentions) {
+      // 1. The comment contains a user mention for the current user.
+      if (mention.kind === "user" && mention.id === mentionedUserId) {
+        return comment;
+      }
+
+      // 2. The comment contains a group mention including the current user in its `userIds` array.
+      if (
+        mention.kind === "group" &&
+        mention.userIds?.includes(mentionedUserId)
+      ) {
+        return comment;
+      }
+
+      // 3. The comment contains a group mention including the current user in its managed group members.
+      if (mention.kind === "group" && mention.userIds === undefined) {
+        // Synchronously look up the group data for this group ID.
+        const group = groups.get(mention.id);
+
+        if (group?.members.some((member) => member.id === mentionedUserId)) {
+          return comment;
+        }
+      }
+    }
+  }
+
+  return null;
 };
 
 export type ThreadNotificationData =
@@ -134,8 +164,10 @@ export const extractThreadNotificationData = async ({
     return null;
   }
 
+  const userGroups = await getAllUserGroups(client, userId);
   const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
     comments: unreadComments,
+    groups: userGroups,
     mentionedUserId: userId,
   });
   if (lastUnreadCommentWithMention !== null) {
@@ -147,6 +179,34 @@ export const extractThreadNotificationData = async ({
     comments: unreadComments,
   };
 };
+
+/** @internal */
+async function getAllUserGroups(
+  client: Liveblocks,
+  userId: string
+): Promise<Map<string, GroupData>> {
+  const groups = new Map<string, GroupData>();
+  let cursor: string | undefined = undefined;
+
+  while (true) {
+    const { nextCursor, data } = await client.getUserGroups({
+      userId,
+      startingAfter: cursor,
+    });
+
+    for (const group of data) {
+      groups.set(group.id, group);
+    }
+
+    if (!nextCursor) {
+      break;
+    }
+
+    cursor = nextCursor;
+  }
+
+  return groups;
+}
 
 /**
  * @internal
