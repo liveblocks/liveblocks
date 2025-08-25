@@ -3768,6 +3768,326 @@
           }
         }
       }
+    },
+    "/groups": {
+      "post": {
+        "summary": "Create group",
+        "description": "This endpoint creates a new group. Corresponds to [`liveblocks.createGroup`](/docs/api-reference/liveblocks-node#create-group).",
+        "tags": ["Groups"],
+        "operationId": "post-groups",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict - Group already exists"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get groups",
+        "description": "This endpoint returns a list of all groups in your project. Corresponds to [`liveblocks.getGroups`](/docs/api-reference/liveblocks-node#get-groups).",
+        "tags": ["Groups"],
+        "operationId": "get-groups",
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of groups and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetGroups"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}": {
+      "get": {
+        "summary": "Get group",
+        "description": "This endpoint returns a specific group by ID. Corresponds to [`liveblocks.getGroup`](/docs/api-reference/liveblocks-node#get-group).",
+        "tags": ["Groups"],
+        "operationId": "get-groups-groupId",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to retrieve.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete group",
+        "description": "This endpoint deletes a group. Corresponds to [`liveblocks.deleteGroup`](/docs/api-reference/liveblocks-node#delete-group).",
+        "tags": ["Groups"],
+        "operationId": "delete-groups-groupId",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to delete.",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content - Group deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/add-members": {
+      "post": {
+        "summary": "Add group members",
+        "description": "This endpoint adds new members to an existing group. Corresponds to [`liveblocks.addGroupMembers`](/docs/api-reference/liveblocks-node#add-group-members).",
+        "tags": ["Groups"],
+        "operationId": "post-groups-groupId-add-members",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to add members to.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGroupMembers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      }
+    },
+    "/groups/{groupId}/remove-members": {
+      "post": {
+        "summary": "Remove group members",
+        "description": "This endpoint removes members from an existing group. Corresponds to [`liveblocks.removeGroupMembers`](/docs/api-reference/liveblocks-node#remove-group-members).",
+        "tags": ["Groups"],
+        "operationId": "post-groups-groupId-remove-members",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "groupId",
+            "description": "The ID of the group to remove members from.",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveGroupMembers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated group.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - Group not found"
+          }
+        }
+      }
+    },
+    "/users/{userId}/groups": {
+      "get": {
+        "summary": "Get user groups",
+        "description": "This endpoint returns all groups that a specific user is a member of. Corresponds to [`liveblocks.getUserGroups`](/docs/api-reference/liveblocks-node#get-user-groups).",
+        "tags": ["Groups"],
+        "operationId": "get-users-userId-groups",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "userId",
+            "description": "The ID of the user to get groups for.",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of groups to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of groups the user belongs to and the next page cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserGroups"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found - User not found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4696,6 +5016,150 @@
             }
           }
         ]
+      },
+      "Group": {
+        "title": "Group",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["group"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "scopes": {
+            "type": "object",
+            "properties": {
+              "mention": {
+                "type": "boolean"
+              }
+            }
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupMember"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "tenantId",
+          "createdAt",
+          "updatedAt",
+          "scopes",
+          "members"
+        ]
+      },
+      "GroupMember": {
+        "title": "GroupMember",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "addedAt"]
+      },
+      "CreateGroup": {
+        "title": "CreateGroup",
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "object",
+            "properties": {
+              "mention": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "required": ["groupId"]
+      },
+      "AddGroupMembers": {
+        "title": "AddGroupMembers",
+        "type": "object",
+        "properties": {
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["memberIds"]
+      },
+      "RemoveGroupMembers": {
+        "title": "RemoveGroupMembers",
+        "type": "object",
+        "properties": {
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["memberIds"]
+      },
+      "GetGroups": {
+        "title": "GetGroups",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        }
+      },
+      "GetUserGroups": {
+        "title": "GetUserGroups",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -5123,6 +5587,12 @@
     },
     {
       "name": "Deprecated"
+    },
+    {
+      "name": "Groups"
+    },
+    {
+      "name": "Users"
     }
   ],
   "x-internal": true

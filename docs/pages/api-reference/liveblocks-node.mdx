@@ -734,8 +734,8 @@ useEventListener(({ event, user, connectionId }) => {
 
 ### Groups
 
-Groups allow you to manage collections of users and assign permissions to them.
-This is useful for implementing team-based access control in your application.
+Groups allow you to manage users for group mentions in comments and text
+editors.
 
 #### Liveblocks.createGroup [#create-group]
 
@@ -747,9 +747,11 @@ returns the same response.
 const group = await liveblocks.createGroup({
   groupId: "engineering-team",
   memberIds: ["alice@example.com", "bob@example.com"],
+  tenantId: "acme-corp",
+  scopes: { mention: true },
 });
 
-// { type: "group", id: "engineering-team", memberIds: [...], ... }
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(group);
 ```
 
@@ -781,7 +783,7 @@ const group = await liveblocks.getGroup({
   groupId: "engineering-team",
 });
 
-// { type: "group", id: "engineering-team", memberIds: [...], ... }
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(group);
 ```
 
@@ -795,7 +797,7 @@ the same response.
 const { data: groups, nextCursor } = await liveblocks.getGroups();
 
 // A list of groups
-// [{ type: "group", id: "engineering-team", ... }, ...]
+// [{ type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }, ...]
 console.log(groups);
 
 // A pagination cursor for the next page
@@ -853,7 +855,7 @@ const updatedGroup = await liveblocks.addGroupMembers({
   memberIds: ["david@example.com", "eve@example.com"],
 });
 
-// { type: "group", id: "engineering-team", memberIds: [...], ... }
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(updatedGroup);
 ```
 
@@ -869,7 +871,7 @@ const updatedGroup = await liveblocks.removeGroupMembers({
   memberIds: ["david@example.com"],
 });
 
-// { type: "group", id: "engineering-team", memberIds: [...], ... }
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
 console.log(updatedGroup);
 ```
 
