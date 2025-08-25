@@ -158,7 +158,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
   (
     {
       messages,
-      copilotId,
       overrides,
       components,
       lastSentMessageId,
@@ -402,7 +401,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 message={message}
                 overrides={overrides}
                 components={components}
-                copilotId={copilotId}
               />
             );
           } else {
