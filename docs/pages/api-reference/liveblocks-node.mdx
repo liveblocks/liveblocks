@@ -732,6 +732,160 @@ useEventListener(({ event, user, connectionId }) => {
 });
 ```
 
+### Groups
+
+Groups allow you to manage collections of users and assign permissions to them.
+This is useful for implementing team-based access control in your application.
+
+#### Liveblocks.createGroup [#create-group]
+
+Creates a new group with the specified members. This is a wrapper around the
+[Create Group API](/docs/api-reference/rest-api-endpoints#post-groups) and
+returns the same response.
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["alice@example.com", "bob@example.com"],
+});
+
+// { type: "group", id: "engineering-team", memberIds: [...], ... }
+console.log(group);
+```
+
+You can also create a group without members and add them later:
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "design-team",
+  // Optional, add members when creating the group
+  memberIds: ["charlie@example.com"],
+
+  // Optional, set tenant ID for multi-tenant applications
+  tenantId: "company-123",
+
+  // Optional, set group scopes (defaults to { mention: true })
+  scopes: { mention: true },
+});
+```
+
+#### Liveblocks.getGroup [#get-group]
+
+Returns a group by its ID. Throws an error if the group isn't found. This is a
+wrapper around the
+[Get Group API](/docs/api-reference/rest-api-endpoints#get-groups-groupId) and
+returns the same response.
+
+```ts
+const group = await liveblocks.getGroup({
+  groupId: "engineering-team",
+});
+
+// { type: "group", id: "engineering-team", memberIds: [...], ... }
+console.log(group);
+```
+
+#### Liveblocks.getGroups [#get-groups]
+
+Returns a list of all groups in your project. This is a wrapper around the
+[Get Groups API](/docs/api-reference/rest-api-endpoints#get-groups) and returns
+the same response.
+
+```ts
+const { data: groups, nextCursor } = await liveblocks.getGroups();
+
+// A list of groups
+// [{ type: "group", id: "engineering-team", ... }, ...]
+console.log(groups);
+
+// A pagination cursor for the next page
+console.log(nextCursor);
+```
+
+You can also paginate through groups:
+
+```ts
+const { data: groups, nextCursor } = await liveblocks.getGroups({
+  // Optional, the number of groups to return (defaults to 20)
+  limit: 50,
+
+  // Optional, cursor for pagination
+  startingAfter: nextCursor,
+});
+```
+
+#### Liveblocks.getUserGroups [#get-user-groups]
+
+Returns all groups that a specific user is a member of. This is a wrapper around
+the
+[Get User Groups API](/docs/api-reference/rest-api-endpoints#get-users-userId-groups)
+and returns the same response.
+
+```ts
+const { data: userGroups, nextCursor } = await liveblocks.getUserGroups({
+  userId: "alice@example.com",
+});
+
+// A list of groups the user belongs to
+// [{ type: "group", id: "engineering-team", ... }, ...]
+console.log(userGroups);
+```
+
+You can also paginate through user groups:
+
+```ts
+const { data: userGroups, nextCursor } = await liveblocks.getUserGroups({
+  userId: "alice@example.com",
+  limit: 25,
+  startingAfter: "L3YyL2dyb3Vwcy...",
+});
+```
+
+#### Liveblocks.addGroupMembers [#add-group-members]
+
+Adds new members to an existing group. This is a wrapper around the
+[Add Group Members API](/docs/api-reference/rest-api-endpoints#post-groups-groupId-add-members)
+and returns the same response.
+
+```ts
+const updatedGroup = await liveblocks.addGroupMembers({
+  groupId: "engineering-team",
+  memberIds: ["david@example.com", "eve@example.com"],
+});
+
+// { type: "group", id: "engineering-team", memberIds: [...], ... }
+console.log(updatedGroup);
+```
+
+#### Liveblocks.removeGroupMembers [#remove-group-members]
+
+Removes members from an existing group. This is a wrapper around the
+[Remove Group Members API](/docs/api-reference/rest-api-endpoints#post-groups-groupId-remove-members)
+and returns the same response.
+
+```ts
+const updatedGroup = await liveblocks.removeGroupMembers({
+  groupId: "engineering-team",
+  memberIds: ["david@example.com"],
+});
+
+// { type: "group", id: "engineering-team", memberIds: [...], ... }
+console.log(updatedGroup);
+```
+
+#### Liveblocks.deleteGroup [#delete-group]
+
+Deletes a group. If the group doesn't exist, no error will be thrown. This is a
+wrapper around the
+[Delete Group API](/docs/api-reference/rest-api-endpoints#delete-groups-groupId)
+and returns no response.
+
+```ts
+await liveblocks.deleteGroup({
+  groupId: "old-team",
+});
+```
+
 ### Storage
 
 #### Liveblocks.getStorageDocument [#get-rooms-roomId-storage]
