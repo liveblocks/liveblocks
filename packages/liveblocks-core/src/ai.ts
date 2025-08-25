@@ -43,6 +43,7 @@ import type {
   ClearChatResponse,
   ClientAiMsg,
   CmdId,
+  CopilotId,
   CreateChatOptions,
   DeleteChatResponse,
   DeleteMessageResponse,
@@ -436,18 +437,19 @@ function createStore_forChatMessages(
   function createOptimistically(
     chatId: string,
     role: "assistant",
-    parentId: MessageId | null
+    parentId: MessageId | null,
+    copilotId?: CopilotId
   ): MessageId;
   function createOptimistically(
     chatId: string,
     role: "user" | "assistant",
     parentId: MessageId | null,
-    third?: AiUserContentPart[]
+    third?: AiUserContentPart[] | CopilotId
   ) {
     const id = `ms_${nanoid()}` as MessageId;
     const createdAt = now();
     if (role === "user") {
-      const content = third!; // eslint-disable-line
+      const content = third as AiUserContentPart[];
       upsert({
         id,
         chatId,
@@ -458,6 +460,7 @@ function createStore_forChatMessages(
         _optimistic: true,
       } satisfies AiUserMessage);
     } else {
+      const copilotId = third as CopilotId | undefined;
       upsert({
         id,
         chatId,
@@ -466,6 +469,7 @@ function createStore_forChatMessages(
         createdAt,
         status: "generating",
         contentSoFar: [],
+        copilotId,
         _optimistic: true,
       } satisfies AiGeneratingAssistantMessage);
     }
@@ -752,10 +756,20 @@ function createStore_forChatMessages(
       .getOrCreate(branch || null);
   }
 
+  function getLastUsedCopilotId(chatId: string): CopilotId | undefined {
+    const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
+    // Find the most recent non-deleted assistant message
+    const latest = pool.sorted.findRight(
+      (m) => m.role === "assistant" && !m.deletedAt
+    );
+    return latest?.copilotId;
+  }
+
   return {
     // Readers
     getMessageById,
     getChatMessagesForBranchΣ,
+    getLastUsedCopilotId,
 
     // Mutations
     createOptimistically,
@@ -884,6 +898,8 @@ export type Ai = {
   getChatById: (chatId: string) => AiChat | undefined;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   queryChats: (query: AiChatsQuery) => AiChat[];
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
+  getLastUsedCopilotId: (chatId: string) => CopilotId | undefined;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
@@ -1333,6 +1349,7 @@ export function createAi(config: AiConfig): Ai {
 
       getChatById: context.chatsStore.getChatById,
       queryChats: context.chatsStore.findMany,
+      getLastUsedCopilotId: context.messagesStore.getLastUsedCopilotId,
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,
