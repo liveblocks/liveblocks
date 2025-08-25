@@ -9,6 +9,7 @@ import type {
   ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
+import type { GroupData, GroupDataPlain } from "./protocol/Groups";
 import type {
   InboxNotificationData,
   InboxNotificationDataPlain,
@@ -193,5 +194,21 @@ export function convertToSubscriptionDeleteInfo(
   return {
     ...data,
     deletedAt,
+  };
+}
+
+export function convertToGroupData(data: GroupDataPlain): GroupData {
+  const createdAt = new Date(data.createdAt);
+  const updatedAt = new Date(data.updatedAt);
+  const members = data.members.map((member) => ({
+    ...member,
+    addedAt: new Date(member.addedAt),
+  }));
+
+  return {
+    ...data,
+    createdAt,
+    updatedAt,
+    members,
   };
 }

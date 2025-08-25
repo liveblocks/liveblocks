@@ -18,6 +18,8 @@ import type {
   DM,
   DS,
   DU,
+  GroupData,
+  GroupDataPlain,
   IdTuple,
   InboxNotificationData,
   InboxNotificationDataPlain,
@@ -53,6 +55,7 @@ import {
   ClientMsgCode,
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToGroupData,
   convertToInboxNotificationData,
   convertToSubscriptionData,
   convertToThreadData,
@@ -255,6 +258,7 @@ export type RoomsQueryCriteria = {
 
 export type InboxNotificationsQueryCriteria = {
   userId: string;
+  tenantId?: string;
   /**
    * The query to filter inbox notifications by. It is based on our query language.
    *
@@ -303,6 +307,7 @@ export type CreateRoomOptions = {
   groupsAccesses?: RoomAccesses;
   usersAccesses?: RoomAccesses;
   metadata?: RoomMetadata;
+  tenantId?: string;
 };
 
 export type UpdateRoomOptions = {
@@ -423,9 +428,10 @@ export class Liveblocks {
 
   async #delete(
     path: URLSafeString,
+    params?: QueryParams,
     options?: RequestOptions
   ): Promise<Response> {
-    const url = urljoin(this.#baseUrl, path);
+    const url = urljoin(this.#baseUrl, path, params);
     const headers = {
       Authorization: `Bearer ${this.#secret}`,
     };
@@ -661,6 +667,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param params.tenantId (optional) The tenant ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The created room.
    */
@@ -807,7 +814,11 @@ export class Liveblocks {
     roomId: string,
     options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#delete(url`/v2/rooms/${roomId}`, options);
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}`,
+      undefined,
+      options
+    );
 
     if (!res.ok) {
       throw await LiveblocksError.from(res);
@@ -982,7 +993,11 @@ export class Liveblocks {
     roomId: string,
     options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#delete(url`/v2/rooms/${roomId}/storage`, options);
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/storage`,
+      undefined,
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -1177,7 +1192,11 @@ export class Liveblocks {
     schemaId: string,
     options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#delete(url`/v2/schemas/${schemaId}`, options);
+    const res = await this.#delete(
+      url`/v2/schemas/${schemaId}`,
+      undefined,
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -1248,7 +1267,11 @@ export class Liveblocks {
     roomId: string,
     options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#delete(url`/v2/rooms/${roomId}/schema`, options);
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/schema`,
+      undefined,
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -1354,10 +1377,14 @@ export class Liveblocks {
   }
 
   /**
+   * @deprecated Prefer using `getMentionsFromCommentBody` to extract mentions
+   * from comments and threads, or `Liveblocks.getThreadSubscriptions` to get
+   * the list of users who are subscribed to a thread.
+   *
    * Gets a thread's participants.
    *
    * Participants are users who have commented on the thread
-   * or users and groups that have been mentioned in a comment.
+   * or users that have been mentioned in a comment.
    *
    * @param params.roomId The room ID to get the thread participants from.
    * @param params.threadId The thread ID to get the participants from.
@@ -1523,6 +1550,7 @@ export class Liveblocks {
 
     const res = await this.#delete(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
+      undefined,
       options
     );
     if (!res.ok) {
@@ -1580,6 +1608,7 @@ export class Liveblocks {
 
     const res = await this.#delete(
       url`/v2/rooms/${roomId}/threads/${threadId}`,
+      undefined,
       options
     );
 
@@ -1841,13 +1870,14 @@ export class Liveblocks {
    * Returns the inbox notifications for a user.
    * @param params.userId The user ID to get the inbox notifications from.
    * @param params.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param params.tenantId (optional) The tenant ID to get the inbox notifications for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getInboxNotifications(
     params: GetInboxNotificationsOptions,
     options?: RequestOptions
   ): Promise<Page<InboxNotificationData>> {
-    const { userId } = params;
+    const { userId, tenantId, limit, startingAfter } = params;
 
     let query: string | undefined;
 
@@ -1861,8 +1891,9 @@ export class Liveblocks {
       url`/v2/users/${userId}/inbox-notifications`,
       {
         query,
-        limit: params?.limit,
-        startingAfter: params?.startingAfter,
+        limit,
+        startingAfter,
+        tenantId,
       },
       options
     );
@@ -1885,6 +1916,7 @@ export class Liveblocks {
    *
    * @param criteria.userId The user ID to get the inbox notifications from.
    * @param criteria.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   * @param criteria.tenantId (optional) The tenant ID to get the inbox notifications for.
    * @param options.pageSize (optional) The page size to use for each request.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
@@ -1915,19 +1947,21 @@ export class Liveblocks {
   /**
    * Returns all room subscription settings for a user.
    * @param params.userId The user ID to get the room subscription settings from.
+   * @param params.tenantId (optional) The tenant ID to get the room subscription settings for.
    * @param params.startingAfter (optional) The cursor to start the pagination from.
    * @param params.limit (optional) The number of items to return.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async getUserRoomSubscriptionSettings(
-    params: { userId: string } & PaginationOptions,
+    params: { userId: string; tenantId?: string } & PaginationOptions,
     options?: RequestOptions
   ): Promise<Page<UserRoomSubscriptionSettings>> {
-    const { userId, startingAfter, limit } = params;
+    const { userId, tenantId, startingAfter, limit } = params;
 
     const res = await this.#get(
       url`/v2/users/${userId}/room-subscription-settings`,
       {
+        tenantId,
         startingAfter,
         limit,
       },
@@ -2013,6 +2047,7 @@ export class Liveblocks {
 
     const res = await this.#delete(
       url`/v2/rooms/${roomId}/users/${userId}/subscription-settings`,
+      undefined,
       options
     );
     if (!res.ok) {
@@ -2049,11 +2084,22 @@ export class Liveblocks {
     return inflateRoomData(data);
   }
 
+  /**
+   * Triggers an inbox notification for a user.
+   * @param params.userId The user ID to trigger the inbox notification for.
+   * @param params.kind The kind of inbox notification to trigger.
+   * @param params.subjectId The subject ID of the triggered inbox notification.
+   * @param params.activityData The activity data of the triggered inbox notification.
+   * @param params.roomId (optional) The room ID to trigger the inbox notification for.
+   * @param params.tenantId (optional) The tenant ID to trigger the inbox notification for.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
   public async triggerInboxNotification<K extends KDAD>(
     params: {
       userId: string;
       kind: K;
       roomId?: string;
+      tenantId?: string;
       subjectId: string;
       activityData: DAD[K];
     },
@@ -2087,6 +2133,7 @@ export class Liveblocks {
 
     const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`,
+      undefined,
       options
     );
     if (!res.ok) {
@@ -2097,16 +2144,18 @@ export class Liveblocks {
   /**
    * Deletes all inbox notifications for a user.
    * @param params.userId The user ID for which to delete all the inbox notifications.
+   * @param params.tenantId (optional) The tenant ID to delete the inbox notifications for.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async deleteAllInboxNotifications(
-    params: { userId: string },
+    params: { userId: string; tenantId?: string },
     options?: RequestOptions
   ): Promise<void> {
-    const { userId } = params;
+    const { userId, tenantId } = params;
 
     const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications`,
+      { tenantId },
       options
     );
     if (!res.ok) {
@@ -2180,11 +2229,186 @@ export class Liveblocks {
     const { userId } = params;
     const res = await this.#delete(
       url`/v2/users/${userId}/notification-settings`,
+      undefined,
       options
     );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
+  }
+
+  /**
+   * Create a group
+   * @param params.groupId The ID of the group to create.
+   * @param params.memberIds The IDs of the members to add to the group.
+   * @param params.tenantId (optional) The tenant ID to create the group for.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async createGroup(
+    params: { groupId: string; memberIds?: string[]; tenantId?: string },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#post(
+      url`/v2/groups`,
+      {
+        ...params,
+
+        // The REST API uses `id` since a group is a resource,
+        // but we use `groupId` here for consistency with the other methods.
+        id: params.groupId,
+      },
+      options
+    );
+
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Get a group
+   * @param params.groupId The ID of the group to get.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getGroup(
+    params: { groupId: string },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#get(
+      url`/v2/groups/${params.groupId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Add members to a group
+   * @param params.groupId The ID of the group to add members to.
+   * @param params.memberIds The IDs of the members to add to the group.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async addGroupMembers(
+    params: { groupId: string; memberIds: string[] },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#post(
+      url`/v2/groups/${params.groupId}/add-members`,
+      { memberIds: params.memberIds },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Remove members from a group
+   * @param params.groupId The ID of the group to remove members from.
+   * @param params.memberIds The IDs of the members to remove from the group.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async removeGroupMembers(
+    params: { groupId: string; memberIds: string[] },
+    options?: RequestOptions
+  ): Promise<GroupData> {
+    const res = await this.#post(
+      url`/v2/groups/${params.groupId}/remove-members`,
+      { memberIds: params.memberIds },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const group = (await res.json()) as GroupDataPlain;
+    return convertToGroupData(group);
+  }
+
+  /**
+   * Delete a group
+   * @param params.groupId The ID of the group to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteGroup(
+    params: { groupId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(
+      url`/v2/groups/${params.groupId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Get all groups
+   * @param params.limit (optional) The number of groups to return.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getGroups(
+    params?: PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<GroupData>> {
+    const res = await this.#get(
+      url`/v2/groups`,
+      { startingAfter: params?.startingAfter, limit: params?.limit },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<GroupDataPlain>;
+    return {
+      ...page,
+      data: page.data.map(convertToGroupData),
+    };
+  }
+
+  /**
+   * Returns all groups a user is a member of.
+   * @param params.userId The user ID to get the groups for.
+   * @param params.startingAfter (optional) The cursor to start the pagination from.
+   * @param params.limit (optional) The number of items to return.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getUserGroups(
+    params: { userId: string } & PaginationOptions,
+    options?: RequestOptions
+  ): Promise<Page<GroupData>> {
+    const { userId, startingAfter, limit } = params;
+
+    const res = await this.#get(
+      url`/v2/users/${userId}/groups`,
+      { startingAfter, limit },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const page = (await res.json()) as Page<GroupDataPlain>;
+
+    return {
+      ...page,
+      data: page.data.map(convertToGroupData),
+    };
   }
 
   /**

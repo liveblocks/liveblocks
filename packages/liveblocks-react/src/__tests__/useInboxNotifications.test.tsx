@@ -58,6 +58,7 @@ describe("useInboxNotifications", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -112,6 +113,7 @@ describe("useInboxNotifications", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -186,6 +188,7 @@ describe("useInboxNotifications", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -204,6 +207,7 @@ describe("useInboxNotifications", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -290,6 +294,7 @@ describe("useInboxNotifications", () => {
             threads: [],
             inboxNotifications: [],
             subscriptions: [],
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -460,6 +465,7 @@ describe("useInboxNotifications - Suspense", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -553,6 +559,7 @@ describe("useInboxNotifications: polling", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -639,6 +646,7 @@ describe("useInboxNotifications: polling", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -733,6 +741,7 @@ describe("useInboxNotifications: polling", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -898,6 +907,7 @@ describe("useInboxNotificationsSuspense: error", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -1005,6 +1015,7 @@ describe("useInboxNotifications: pagination", () => {
               threads: [thread2],
               inboxNotifications: inboxNotificationsPage2,
               subscriptions: subscriptionsPage2,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
@@ -1020,6 +1031,7 @@ describe("useInboxNotifications: pagination", () => {
               threads: [thread3],
               inboxNotifications: inboxNotificationsPage3,
               subscriptions: subscriptionsPage3,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
@@ -1035,6 +1047,7 @@ describe("useInboxNotifications: pagination", () => {
               threads: [thread1],
               inboxNotifications: inboxNotificationsPage1,
               subscriptions: subscriptionsPage1,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -1180,6 +1193,7 @@ describe("useInboxNotifications: pagination", () => {
               threads: [threadTwo],
               inboxNotifications: inboxNotificationsPageTwo,
               subscriptions: subscriptionsPageTwo,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
@@ -1194,6 +1208,7 @@ describe("useInboxNotifications: pagination", () => {
               threads: [threadOne],
               inboxNotifications: inboxNotificationsPageOne,
               subscriptions: subscriptionsPageOne,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -1282,6 +1297,7 @@ describe("useInboxNotifications: pagination", () => {
               threads: [threadOne],
               inboxNotifications: inboxNotificationsPageOne,
               subscriptions: subscriptionsPageOne,
+              groups: [],
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",

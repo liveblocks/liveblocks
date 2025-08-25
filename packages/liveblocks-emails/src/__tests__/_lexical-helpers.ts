@@ -195,11 +195,11 @@ export const docStateRoot2: SerializedLexicalRootNode = {
 };
 
 export const createLexicalMentionNodeWithContext = ({
-  mentionedUserId,
-  mentionId,
+  mentionedId,
+  textMentionId,
 }: {
-  mentionedUserId: string;
-  mentionId: string;
+  mentionedId: string;
+  textMentionId: string;
 }): LexicalMentionNodeWithContext => {
   return {
     before: [
@@ -221,8 +221,8 @@ export const createLexicalMentionNodeWithContext = ({
       group: "decorator",
       attributes: {
         __type: "lb-mention",
-        __id: mentionId,
-        __userId: mentionedUserId,
+        __id: textMentionId,
+        __userId: mentionedId,
       },
     },
     after: [

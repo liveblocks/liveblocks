@@ -392,8 +392,8 @@ describe("thread notification", () => {
       paragraph: ({ children }) => children.join(""),
       text: ({ element }) => element.text,
       link: ({ element }) => element.text ?? element.url,
-      mention: ({ element, user }) =>
-        `${MENTION_CHARACTER}${user?.name ?? element.id}`,
+      mention: ({ element, user, group }) =>
+        `${MENTION_CHARACTER}${user?.name ?? group?.name ?? element.id}`,
     };
 
     test("should prepare for last unread comment with mention", async () => {
@@ -1025,8 +1025,8 @@ describe("thread notification", () => {
     describe("unread mention w/ custom components", () => {
       const components: Partial<ConvertCommentBodyAsReactComponents> = {
         Container: ({ children }) => <main>{children}</main>,
-        Mention: ({ element, user }) => (
-          <span>u#{user?.name ?? element.id}</span>
+        Mention: ({ element, user, group }) => (
+          <span>u#{user?.name ?? group?.name ?? element.id}</span>
         ),
       };
 
