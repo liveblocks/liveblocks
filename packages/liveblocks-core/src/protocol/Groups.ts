@@ -11,6 +11,7 @@ export type GroupData = {
   tenantId: string;
   createdAt: Date;
   updatedAt: Date;
+  scopes: { mention: true };
   members: GroupMemberData[];
 };
 
