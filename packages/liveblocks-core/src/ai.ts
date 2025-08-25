@@ -556,8 +556,8 @@ function createStore_forChatMessages(
                   message.chatId,
                   message.id,
                   toolInvocation.invocationId,
-                  result ?? { data: {} }
-                  // TODO Pass in AiGenerationOptions here, or make the backend use the same options
+                  result ?? { data: {} },
+                  { copilotId: message.copilotId } // TODO: Should we pass the other generation options (tools, knowledge) as well?
                 );
               })().catch((err) => {
                 console.error(
