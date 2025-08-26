@@ -1,5 +1,6 @@
 import type {
   BaseUserMeta,
+  GroupData,
   InboxNotificationThreadData,
 } from "@liveblocks/core";
 import type { ThreadData } from "@liveblocks/node";
@@ -59,9 +60,11 @@ describe("thread notification", () => {
   const setServerHandlers = ({
     thread,
     inboxNotification,
+    groups,
   }: {
     thread: ThreadData;
     inboxNotification: InboxNotificationThreadData;
+    groups: GroupData[];
   }): void => {
     server.use(
       http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
@@ -70,6 +73,9 @@ describe("thread notification", () => {
       http.get(
         `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
         () => HttpResponse.json(inboxNotification, { status: 200 })
+      ),
+      http.get(`${SERVER_BASE_URL}/v2/users/:userId/groups`, () =>
+        HttpResponse.json({ data: groups, nextCursor: null }, { status: 200 })
       )
     );
   };
@@ -174,6 +180,7 @@ describe("thread notification", () => {
 
       const lastCommentWithMention1 = getLastUnreadCommentWithMention({
         comments: unreadComments,
+        groups: new Map(),
         mentionedUserId: "user-mina",
       });
 
@@ -214,6 +221,7 @@ describe("thread notification", () => {
       });
 
       const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
+        groups: new Map(),
         comments: unreadComments,
         mentionedUserId: "user-mina",
       });
@@ -236,7 +244,7 @@ describe("thread notification", () => {
         readAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -269,7 +277,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -315,7 +323,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -364,7 +372,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -410,7 +418,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -497,7 +505,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -642,6 +650,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -733,6 +742,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -814,6 +824,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -908,6 +919,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -1007,6 +1019,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1124,6 +1137,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1236,6 +1250,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1353,6 +1368,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();

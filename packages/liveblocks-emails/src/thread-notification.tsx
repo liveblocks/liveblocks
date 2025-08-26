@@ -83,14 +83,42 @@ export const getUnreadComments = ({
 };
 
 /** @internal */
+async function getAllUserGroups(
+  client: Liveblocks,
+  userId: string
+): Promise<Map<string, GroupData>> {
+  const groups = new Map<string, GroupData>();
+  let cursor: string | undefined = undefined;
+
+  while (true) {
+    const { nextCursor, data } = await client.getUserGroups({
+      userId,
+      startingAfter: cursor,
+    });
+
+    for (const group of data) {
+      groups.set(group.id, group);
+    }
+
+    if (!nextCursor) {
+      break;
+    }
+
+    cursor = nextCursor;
+  }
+
+  return groups;
+}
+
+/** @internal */
 export const getLastUnreadCommentWithMention = ({
   comments,
   groups,
   mentionedUserId,
 }: {
   comments: CommentDataWithBody[];
-  groups: Map<string, GroupData>;
   mentionedUserId: string;
+  groups: Map<string, GroupData>;
 }): CommentDataWithBody | null => {
   if (!comments.length) {
     return null;
@@ -165,11 +193,13 @@ export const extractThreadNotificationData = async ({
   }
 
   const userGroups = await getAllUserGroups(client, userId);
+
   const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
     comments: unreadComments,
     groups: userGroups,
     mentionedUserId: userId,
   });
+
   if (lastUnreadCommentWithMention !== null) {
     return { type: "unreadMention", comment: lastUnreadCommentWithMention };
   }
@@ -179,34 +209,6 @@ export const extractThreadNotificationData = async ({
     comments: unreadComments,
   };
 };
-
-/** @internal */
-async function getAllUserGroups(
-  client: Liveblocks,
-  userId: string
-): Promise<Map<string, GroupData>> {
-  const groups = new Map<string, GroupData>();
-  let cursor: string | undefined = undefined;
-
-  while (true) {
-    const { nextCursor, data } = await client.getUserGroups({
-      userId,
-      startingAfter: cursor,
-    });
-
-    for (const group of data) {
-      groups.set(group.id, group);
-    }
-
-    if (!nextCursor) {
-      break;
-    }
-
-    cursor = nextCursor;
-  }
-
-  return groups;
-}
 
 /**
  * @internal
