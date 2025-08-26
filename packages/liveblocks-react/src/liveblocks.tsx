@@ -1275,6 +1275,11 @@ function useSendAiMessage(
         .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
 
+      if (!messageOptionsCopilotId && !options?.copilotId) {
+        console.warn(
+          "No copilot ID was provided to `useSendAiMessage`. This will result in the last used copilot ID being used. This is not recommended, as it may result in unexpected behavior. Please provide a copilot ID to `useSendAiMessage` or `useSendAiMessage(chatId, options)`."
+        );
+      }
       const resolvedCopilotId = (messageOptionsCopilotId ??
         options?.copilotId ??
         client[kInternal].ai.getLastUsedCopilotId(resolvedChatId)) as
