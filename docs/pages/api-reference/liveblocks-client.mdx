@@ -195,7 +195,7 @@ const client = createClient({
   </PropertiesListItem>
   <PropertiesListItem
     name="resolveMentionSuggestions"
-    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
+    detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[] | MentionData[]"
   >
     A function that resolves mention suggestions in
     [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of user IDs or mention objects.
@@ -620,10 +620,12 @@ function Component() {
 
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
-To enable creating mentions in [Comments](/docs/ready-made-features/comments),
-you can provide a resolver function to the `resolveMentionSuggestions` option in
+To enable creating mentions in [Comments](/docs/ready-made-features/comments)
+and [Text Editor](/docs/ready-made-features/text-editor), you can provide a
+resolver function to the `resolveMentionSuggestions` option in
 [`createClient`](#createClient). These mentions will be displayed in the
-[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component and in
+text editors.
 
 This resolver function will receive the mention currently being typed (e.g. when
 writing “@jane”, `text` will be `jane`) and should return a list of user IDs
@@ -649,6 +651,62 @@ const client = createClient({
   // Other options
   // ...
 });
+```
+
+#### Group mentions
+
+To support group mentions in [Comments](/docs/ready-made-features/comments) and
+[Text Editor](/docs/ready-made-features/text-editor), you can return a list of
+mention objects instead of user IDs to suggest a mix of user and group mentions.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  resolveMentionSuggestions: async ({ text, roomId }) => {
+    const dbUsers = await __findUsersFromDB__(roomId);
+    const dbGroups = await __findGroupsFromDB__(roomId);
+
+    // Show groups and users matching the text being typed
+    return [
+      ...dbGroups.map((group) => ({
+        kind: "group",
+        id: group.id,
+      })),
+      ...dbUsers.map((user) => ({
+        kind: "user",
+        id: user.id,
+      })),
+    ];
+  },
+
+  // Other options
+  // ...
+});
+```
+
+The mention objects specify which kind of mention it is, the ID to mention (user
+ID or group ID), etc.
+
+```tsx
+// A user mention suggestion
+{
+  kind: "user",
+  id: "user-1",
+}
+
+// A group mention suggestion
+{
+  kind: "group",
+  id: "group-1",
+}
+
+// A group mention suggestion with fixed group members
+{
+  kind: "group",
+  id: "group-1",
+  members: ["user-1", "user-2"],
+}
 ```
 
 ### createClient for Node.js [#createClientNode]
