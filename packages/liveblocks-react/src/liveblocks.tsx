@@ -21,6 +21,7 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
+  console,
   createClient,
   HttpError,
   kInternal,
@@ -1275,9 +1276,19 @@ function useSendAiMessage(
         .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
 
-      if (!messageOptionsCopilotId && !options?.copilotId) {
+      if (
+        process.env.NODE_ENV !== "production" &&
+        !messageOptionsCopilotId &&
+        !options?.copilotId
+      ) {
         console.warn(
-          "No copilot ID was provided to `useSendAiMessage`. This will result in the last used copilot ID being used. This is not recommended, as it may result in unexpected behavior. Please provide a copilot ID to `useSendAiMessage` or `useSendAiMessage(chatId, options)`."
+          `No copilot ID was provided to useSendAiMessage when sending the message "${messageText.slice(
+            0,
+            20
+          )}…". As a result, the message will use the chat's previous copilot ID, which could lead to unexpected behavior.\nTo ensure the correct copilot ID is used, specify it either through the hook as 'useSendAiMessage("${resolvedChatId}", { copilotId: "co_xxx" })' or via the function as 'sendAiMessage({ text: "${messageText.slice(
+            0,
+            20
+          )}…", copilotId: "co_xxx" })'`
         );
       }
       const resolvedCopilotId = (messageOptionsCopilotId ??

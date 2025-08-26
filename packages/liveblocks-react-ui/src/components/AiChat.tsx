@@ -128,7 +128,6 @@ export interface AiChatProps extends ComponentProps<"div"> {
 
 interface AiChatMessagesProps extends ComponentProps<"div"> {
   messages: NonNullable<ReturnType<typeof useAiChatMessages>["messages"]>;
-  copilotId: AiChatProps["copilotId"];
   overrides: AiChatProps["overrides"];
   components: AiChatProps["components"];
   lastSentMessageId: MessageId | null;
@@ -510,7 +509,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <>
               <AiChatMessages
                 ref={messagesRef}
-                copilotId={copilotId}
                 messages={messages}
                 overrides={overrides}
                 components={components}
