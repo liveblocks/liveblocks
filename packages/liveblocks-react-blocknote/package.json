@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-blocknote",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "An integration of BlockNote + React to enable collaboration, comments, live cursors, and more with Liveblocks.",
   "license": "Apache-2.0",
   "type": "module",
@@ -42,12 +42,12 @@
     "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.4.0",
-    "@liveblocks/core": "3.4.0",
-    "@liveblocks/react": "3.4.0",
-    "@liveblocks/react-tiptap": "3.4.0",
-    "@liveblocks/react-ui": "3.4.0",
-    "@liveblocks/yjs": "3.4.0",
+    "@liveblocks/client": "3.4.1",
+    "@liveblocks/core": "3.4.1",
+    "@liveblocks/react": "3.4.1",
+    "@liveblocks/react-tiptap": "3.4.1",
+    "@liveblocks/react-ui": "3.4.1",
+    "@liveblocks/yjs": "3.4.1",
     "@tiptap/core": "^2.7.2",
     "vitest-tsconfig-paths": "^3.4.1"
   },
