@@ -5409,9 +5409,10 @@ const stringComment = await stringifyCommentBody(comment.body, {
     link: ({ element, href }) =>
       `<a href="${href}" target="_blank">${element.url}</a>`,
 
-    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
-    mention: ({ element, user }) =>
-      `<a href="${user.profileUrl}">${element.id}</a>`,
+    // Optional, override the `mention` element.
+    // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
+    mention: ({ element, user, group }) =>
+      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${element.id}</a>`,
   },
 
   // Optional, get your user’s names and info from their ID to be displayed in mentions
@@ -5424,6 +5425,19 @@ const stringComment = await stringifyCommentBody(comment.body, {
 
       // Custom formatting in `elements.mention` allows custom properties to be used
       profileUrl: userData.profileUrl,
+    }));
+  },
+
+  // Optional, get your group’s names and info from their ID to be displayed in mentions
+  async resolveGroupsInfo({ groupIds }) {
+    const groupsData = await __getGroupsFromDB__(groupIds);
+
+    return groupsData.map((groupData) => ({
+      // Name is inserted into the output instead of a group’s ID
+      name: groupData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      settingsUrl: groupData.settingsUrl,
     }));
   },
 });
