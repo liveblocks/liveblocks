@@ -998,9 +998,7 @@ export function createAi(config: AiConfig): Ai {
     // NoOp for now, but we should maybe fetch messages or something?
   }
 
-  function onDidDisconnect() {
-    console.warn("onDidDisconnect");
-  }
+  function onDidDisconnect() {}
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string")
