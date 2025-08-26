@@ -2242,10 +2242,17 @@ export class Liveblocks {
    * @param params.groupId The ID of the group to create.
    * @param params.memberIds The IDs of the members to add to the group.
    * @param params.tenantId (optional) The tenant ID to create the group for.
+   * @param params.scopes (optional) The scopes to grant to the group. The default
+   * is `{ mention: true }`.
    * @param options.signal (optional) An abort signal to cancel the request.
    */
   public async createGroup(
-    params: { groupId: string; memberIds?: string[]; tenantId?: string },
+    params: {
+      groupId: string;
+      memberIds?: string[];
+      tenantId?: string;
+      scopes?: { mention: true };
+    },
     options?: RequestOptions
   ): Promise<GroupData> {
     const res = await this.#post(
