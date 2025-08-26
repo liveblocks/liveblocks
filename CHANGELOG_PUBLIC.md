@@ -28,7 +28,7 @@ Tool calls will now stream in while under construction. This means that tools
 will render sooner and more often re-render, while `partialArgs` are streaming
 in.
 
-> New behavior (>=3.4):
+> New behavior (v3.4 and higher):
 >
 > - 1st render: `{ stage: "receiving", partialArgs: {} }`
 > - 2nd render: `{ stage: "receiving", partialArgs: { cities: [] } }`
@@ -39,7 +39,7 @@ in.
 > - Then `{ stage: "executing", args: { cities: "Paris" } }` (same as before)
 > - And `{ stage: "executed", args, result }` (same as before)
 >
-> Before (<3.4):
+> Before (v3.3 and lower):
 >
 > - Stage "receiving" would never happen
 > - 1st render would be with
