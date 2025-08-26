@@ -37,7 +37,6 @@ import {
   createNotificationSettings,
   DefaultMap,
   DerivedSignal,
-  getMentionsFromCommentBody,
   getSubscriptionKey,
   kInternal,
   MutableSignal,
