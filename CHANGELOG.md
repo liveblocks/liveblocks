@@ -1,5 +1,17 @@
 ## vNEXT (not yet published)
 
+## v3.4.1
+
+### `@liveblocks/core`
+
+- Fix a bug where copilot id wasn't passed when setting tool call result if a
+  tool call was defined with `execute` callback.
+
+### `@liveblocks/react`
+
+- Update `useSendAiMessage` to use the the last used copilot id in a chat when
+  no copilot id is passed to the hook or the method returned by the hook.
+
 ## v3.4.0
 
 ### `@liveblocks/react`
