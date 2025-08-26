@@ -1259,6 +1259,7 @@ function useSendAiMessage(
       const {
         text: messageText,
         chatId: messageOptionsChatId,
+        copilotId: messageOptionsCopilotId,
         ...messageOptions
       } = typeof message === "string" ? { text: message } : message;
       const resolvedChatId =
@@ -1273,6 +1274,17 @@ function useSendAiMessage(
       const messages = client[kInternal].ai.signals
         .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
+
+      if (!messageOptionsCopilotId && !options?.copilotId) {
+        console.warn(
+          "No copilot ID was provided to `useSendAiMessage`. This will result in the last used copilot ID being used. This is not recommended, as it may result in unexpected behavior. Please provide a copilot ID to `useSendAiMessage` or `useSendAiMessage(chatId, options)`."
+        );
+      }
+      const resolvedCopilotId = (messageOptionsCopilotId ??
+        options?.copilotId ??
+        client[kInternal].ai.getLastUsedCopilotId(resolvedChatId)) as
+        | CopilotId
+        | undefined;
 
       const lastMessageId = messages[messages.length - 1]?.id ?? null;
 
@@ -1294,7 +1306,8 @@ function useSendAiMessage(
       ].context.messagesStore.createOptimistically(
         resolvedChatId,
         "assistant",
-        newMessageId
+        newMessageId,
+        resolvedCopilotId as CopilotId
       );
 
       void client[kInternal].ai.askUserMessageInChat(
@@ -1303,9 +1316,7 @@ function useSendAiMessage(
         targetMessageId,
         {
           stream: messageOptions.stream ?? options?.stream,
-          copilotId: (messageOptions.copilotId ?? options?.copilotId) as
-            | CopilotId
-            | undefined,
+          copilotId: resolvedCopilotId,
           timeout: messageOptions.timeout ?? options?.timeout,
           knowledge: messageOptions.knowledge ?? options?.knowledge,
         }
