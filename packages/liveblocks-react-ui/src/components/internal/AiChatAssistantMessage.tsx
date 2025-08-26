@@ -219,7 +219,11 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Prose content={part.text} components={components} />
+        <Prose
+          content={part.text}
+          partial={isStreaming}
+          components={components}
+        />
       </Collapsible.Content>
     </Collapsible.Root>
   );

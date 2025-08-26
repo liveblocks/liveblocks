@@ -1,3 +1,4 @@
+import { isUrl } from "@liveblocks/core";
 import type { Editor as SlateEditor } from "slate";
 import {
   Element as SlateElement,
@@ -10,15 +11,6 @@ import type { ComposerBodyCustomLink } from "../../../../types";
 import { isPlainText, isText } from "../../../slate/utils/is-text";
 import { filterActiveMarks } from "../../../slate/utils/marks";
 import { selectionContainsInlines } from "../../../slate/utils/selection-contains-inlines";
-
-function isUrl(string: string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
 
 export function withCustomLinks(editor: SlateEditor): SlateEditor {
   const { isInline, normalizeNode, insertData } = editor;

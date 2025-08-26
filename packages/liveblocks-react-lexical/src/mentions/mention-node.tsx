@@ -101,7 +101,7 @@ export class MentionNode extends DecoratorNode<JSX.Element> {
   decorate(): JSX.Element {
     return (
       <Mention nodeKey={this.getKey()}>
-        {MENTION_CHARACTER}
+        <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
         <User userId={this.getUserId()} />
       </Mention>
     );

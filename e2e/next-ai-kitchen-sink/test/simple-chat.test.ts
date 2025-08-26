@@ -1,8 +1,9 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { createRandomChat, cleanupAllChats } from "./test-helpers";
 
-async function setupSimpleChat(page: Page) {
-  await page.goto("/simple");
+async function setupSimpleChat(page: Page, chatId: string) {
+  await page.goto(`/simple/${chatId}`);
 
   // Wait for the chat interface to load
   await expect(page.locator(".lb-ai-composer")).toBeVisible();
@@ -30,24 +31,13 @@ async function setupSimpleChat(page: Page) {
 }
 
 test.describe("Simple Chat", () => {
-  test.beforeEach(async ({ page }) => {
-    // Clean up - delete the "ai-chat" chat to start fresh
-    await page.goto("/chats");
-    await expect(page.locator("h1")).toHaveText("List of all chats");
-
-    // Look for the "ai-chat" chat and delete it if it exists
-    const aiChatLink = page.locator('a[href="/chats/ai-chat"]');
-    if (await aiChatLink.isVisible()) {
-      const deleteButton = aiChatLink
-        .locator("..")
-        .locator('button:has-text("Delete")');
-      await deleteButton.click();
-      await expect(aiChatLink).not.toBeVisible();
-    }
+  test.afterEach(async () => {
+    await cleanupAllChats();
   });
 
   test("should handle ping-pong interaction", async ({ page }) => {
-    const { textInput, sendButton } = await setupSimpleChat(page);
+    const chatId = createRandomChat(page);
+    const { textInput, sendButton } = await setupSimpleChat(page, chatId);
 
     // Perform the ping-pong interaction
     await textInput.fill("ping");
@@ -78,7 +68,8 @@ test.describe("Simple Chat", () => {
   test("should abort AI response when abort button is clicked", async ({
     page,
   }) => {
-    const { textInput, sendButton } = await setupSimpleChat(page);
+    const chatId = createRandomChat(page);
+    const { textInput, sendButton } = await setupSimpleChat(page, chatId);
 
     // Ask a question that should generate a long response
     await textInput.fill(

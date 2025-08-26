@@ -112,7 +112,7 @@ jobs:
         run: npm install
 
       - name: Install Playwright
-        run: npx playwright install chromium
+        run: npx playwright install chromium --no-shell --with-deps
 
       - name: Run Playwright tests
         run: npm run test -- --filter @liveblocks/next-sandbox
@@ -153,7 +153,7 @@ jobs:
         run: npm install
 
       - name: Install Playwright
-        run: npx playwright install chromium
+        run: npx playwright install chromium --no-shell --with-deps
 
       - name: Run AI Playwright tests
         run: npm run test -- --filter @liveblocks/next-ai-kitchen-sink
