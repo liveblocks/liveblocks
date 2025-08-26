@@ -454,6 +454,7 @@ export type AiGeneratingAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "generating";
   contentSoFar: AiAssistantContentPart[];
@@ -468,6 +469,7 @@ export type AiAwaitingToolAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "awaiting-tool";
   contentSoFar: AiAssistantContentPart[];
@@ -483,6 +485,7 @@ export type AiCompletedAssistantMessage = {
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "completed";
   /** @internal */
@@ -496,6 +499,7 @@ export type AiFailedAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "failed";
   contentSoFar: AiAssistantContentPart[];
