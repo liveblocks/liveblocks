@@ -62,7 +62,7 @@ const client = createClient({
   // Disconnect users after X (ms) of inactivity, disabled by default
   backgroundKeepAliveTimeout: undefined,
 
-  // Resolve user info for Comments and Notifications
+  // Resolve user info for Comments, Text Editor, and Notifications
   resolveUsers: async ({ userIds }) => {
     const usersData = await __getUsersFromDB__(userIds);
 
@@ -93,7 +93,7 @@ const client = createClient({
     }));
   },
 
-  // Resolve mention suggestions for Comments
+  // Resolve mention suggestions for Comments and Text Editor
   resolveMentionSuggestions: async ({ text, roomId }) => {
     const workspaceUsers = await __getWorkspaceUsersFromDB__(roomId);
 
@@ -171,7 +171,7 @@ const client = createClient({
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/ready-made-features/comments) and [Text Editor](/docs/ready-made-features/text-editor). Return an array of
+    [Comments](/docs/ready-made-features/comments), [Text Editor](/docs/ready-made-features/text-editor), and [Notifications](/docs/ready-made-features/notifications). Return an array of
     `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#createClientResolveUsers).
   </PropertiesListItem>
@@ -445,11 +445,12 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 ### resolveUsers [#createClientResolveUsers]
 
 [Comments](/docs/ready-made-features/comments) and
-[Text Editor](/docs/ready-made-features/text-editor) store user IDs in its
-system, but no other user information. To display user information in Comments
-and Text Editor components, such as a user’s name or avatar, you need to resolve
-these IDs into user objects. This function receives a list of user IDs and you
-should return a list of user objects of the same size, in the same order.
+[Text Editor](/docs/ready-made-features/text-editor) store user IDs in their
+system, but no other user information. To display user information in Comments,
+Text Editor, and Notifications components, such as a user’s name or avatar, you
+need to resolve these IDs into user objects. This function receives a list of
+user IDs and you should return a list of user objects of the same size, in the
+same order.
 
 User IDs are automatically resolved in batches with a maximum of 50 users per
 batch to optimize performance and prevent overwhelming your user resolution
