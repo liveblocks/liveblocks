@@ -40,6 +40,14 @@
               "type": "string"
             },
             "in": "query",
+            "name": "tenantId",
+            "description": "A filter on tenant ID."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "query",
             "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](/docs/guides/how-to-filter-rooms-using-query-language)."
           },
@@ -3063,6 +3071,14 @@
               "type": "string"
             },
             "description": "ID of the user"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "tenantId",
+            "description": "The tenant ID to filter notifications for."
           },
           {
             "schema": {
