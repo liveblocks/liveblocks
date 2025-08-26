@@ -14,13 +14,13 @@ export const Mention = forwardRef<
   return (
     <NodeViewWrapper
       className={cn(
-        "lb-root lb-tiptap-mention",
+        "lb-root lb-mention lb-tiptap-mention",
         props.selected ? "lb-mention-selected" : null
       )}
       as="span"
       ref={forwardedRef}
     >
-      {MENTION_CHARACTER}
+      <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
       <User userId={id} />
     </NodeViewWrapper>
   );

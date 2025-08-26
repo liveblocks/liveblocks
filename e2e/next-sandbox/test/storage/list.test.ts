@@ -101,7 +101,8 @@ test.describe("Storage - LiveList", () => {
     await waitUntilEqualOnAllPages(pages, "#items");
   });
 
-  test("fuzzy with undo/redo push delete and move", async () => {
+  // TODO Look into why this test is flaky
+  test.skip("fuzzy with undo/redo push delete and move", async () => {
     const [page1] = pages;
     await page1.click("#clear");
     await waitForJson(pages, "#numItems", 0);

@@ -874,7 +874,10 @@ const myTool = defineAiTool()({
 <Banner>
 
 Note that the function should be called like this `defineAiTool()({ ... })`
-(double-parens). This allows TypeScript’s inference to work correctly. For the best type inference experience, TypeScript 5.3 or higher is recommended. While Liveblocks supports TypeScript 5.0+, full type inference for `defineAiTool()` requires TypeScript 5.3+.
+(double-parens). This allows TypeScript’s inference to work correctly. For the
+best type inference experience, TypeScript 5.3 or higher is recommended. While
+Liveblocks supports TypeScript 5.0+, full type inference for `defineAiTool()`
+requires TypeScript 5.3+.
 
 </Banner>
 
@@ -920,9 +923,10 @@ passed directly to [`AiChat`](/docs/api-reference/liveblocks-react-ui#AiChat).
 Rendering a tool call can be done before the tool call is executed, which allows
 you to display a UI during its entire lifecycle. The tool call stages are:
 
-- `receiving` The tool call is being received. This stage is reserved for future
-  use, to enable showing a UI while the tool call `args` object is being
-  streamed in, but before the tool call can actually be made.
+- `receiving` (since [3.4]()) The tool call is being received and its args are
+  being streamed in. During this stage, you can access `partialArgs` to display
+  a UI while the tool call arguments are still being constructed, but before the
+  tool call is executed.
 - `executing` The tool call is currently executing, or is ready to be. In this
   stage, the `args` are fully known, but the result of the tool call is not
   known yet.
@@ -1036,6 +1040,125 @@ value of this shape:
 - `{ error: string }` The error message in case the tool call failed to execute.
 - `{ cancel: true | string }` If the tool call should be cancelled. You can
   optionally provide a cancel reason as an instruction to the AI copilot.
+
+#### Handling different tool call stages [#handling-stages]
+
+You can handle all three stages of a tool call in your render function to
+provide a smooth user experience during tool call streaming and execution:
+
+```tsx
+const bookFlightTool = defineAiTool()({
+  description: "Book a flight for a user",
+  parameters: {
+    type: "object",
+    properties: {
+      origin: { type: "string", description: "Departure city" },
+      destination: { type: "string", description: "Arrival city" },
+      departureDate: {
+        type: "string",
+        description: "Departure date (YYYY-MM-DD)",
+      },
+      passengers: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            age: { type: "number" },
+          },
+          required: ["name", "age"],
+          additionalProperties: false,
+        },
+        description: "List of passengers",
+      },
+    },
+    required: ["origin", "destination", "departureDate", "passengers"],
+    additionalProperties: false,
+  },
+  execute: async ({ origin, destination, departureDate, passengers }) => {
+    const booking = await bookFlight({
+      origin,
+      destination,
+      departureDate,
+      passengers,
+    });
+    return { data: { bookingId: booking.id } };
+  },
+  render: ({ stage, partialArgs, args, result }) => {
+    return (
+      <AiTool title="Flight Booking" icon="✈️">
+        {stage === "receiving" && (
+          <div>
+            <h4>Preparing flight booking...</h4>
+            {partialArgs.origin && <p>From: {partialArgs.origin}</p>}
+            {partialArgs.destination && <p>To: {partialArgs.destination}</p>}
+            {partialArgs.departureDate && (
+              <p>Date: {partialArgs.departureDate}</p>
+            )}
+            {partialArgs.passengers && (
+              <div>
+                <p>Passengers ({partialArgs.passengers.length}):</p>
+                <ul>
+                  {partialArgs.passengers.map((passenger, index) => (
+                    <li key={index}>
+                      {passenger?.name || "Loading..."}
+                      {passenger?.age && ` (${passenger.age})`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+        {stage === "executing" && (
+          <div>
+            <h4>Booking flight...</h4>
+            <p>
+              {args.origin} → {args.destination} on {args.departureDate}
+            </p>
+            <p>{args.passengers.length} passenger(s)</p>
+          </div>
+        )}
+        {stage === "executed" && result.data && (
+          <div>
+            <h4>Flight booked successfully!</h4>
+            <p>Booking ID: {result.data.bookingId}</p>
+          </div>
+        )}
+      </AiTool>
+    );
+  },
+});
+```
+
+In this example, the tool arguments stream in progressively during the
+`receiving` stage, causing multiple re-renders as each field appears:
+
+- **1st render**: `{ stage: "receiving", partialArgs: {} }`
+- **2nd render**: `{ stage: "receiving", partialArgs: { origin: "New York" } }`
+- **3rd render**:
+  `{ stage: "receiving", partialArgs: { origin: "New York", destination: "London" } }`
+- **4th render**:
+  `{ stage: "receiving", partialArgs: { origin: "New York", destination: "London", departureDate: "2024-12-15" } }`
+- **5th render**: `{ stage: "receiving", partialArgs: { ..., passengers: [] } }`
+- **6th render**:
+  `{ stage: "receiving", partialArgs: { ..., passengers: [{ name: "John" }] } }`
+- **7th render**:
+  `{ stage: "receiving", partialArgs: { ..., passengers: [{ name: "John", age: 3 }] } }`
+- **8th render**:
+  `{ stage: "receiving", partialArgs: { ..., passengers: [{ name: "John", age: 30 }] } }`
+- **Final render**: `{ stage: "executing", args: { /* complete object */ } }`
+
+This demonstrates how each field and nested property appears incrementally,
+providing real-time feedback to users as the AI constructs the tool call
+arguments.
+
+Arguments are streamed in forward-only order. Once a field begins appearing, all
+previous fields are complete and won’t be modified. You’ll never see
+`{ origin: "New York", destination: "London" }` followed by
+`{ origin: "San Francisco", destination: "London" }`, but you might see
+`{ origin: "New" }` then `{ origin: "New York" }` then
+`{ origin: "New York", destination: "London" }`.
 
 ## Room
 
@@ -3997,7 +4120,9 @@ root.set("b", obj.clone());
 ### toImmutable [#LiveObject.toImmutable]
 
 Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
-Nested values will also be immutable.
+Nested values will also be immutable. Calling this method multiple times has no
+performance penalty. It will return the same cached immutable value as long as
+its (nested) contents have not changed.
 
 ```ts
 const liveObject = new LiveObject({
@@ -4394,7 +4519,9 @@ root.set("b", map.clone());
 ### toImmutable [#LiveMap.toImmutable]
 
 Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
-will also be immutable.
+will also be immutable. Calling this method multiple times has no performance
+penalty. It will return the same cached immutable value as long as its (nested)
+contents have not changed.
 
 ```ts
 const map = new LiveMap([
@@ -4935,7 +5062,9 @@ root.set("b", list.clone());
 ### toImmutable [#LiveList.toImmutable]
 
 Returns an immutable JavaScript array that is equivalent to the `LiveList`.
-Nested values will also be immutable.
+Nested values will also be immutable. Calling this method multiple times has no
+performance penalty. It will return the same cached immutable value as long as
+its (nested) contents have not changed.
 
 ```ts
 const list = new LiveList([
@@ -5644,3 +5773,4 @@ the current user receives in the current room.
 [`ws`]: https://www.npmjs.com/package/ws
 [connection status example]:
   https://liveblocks.io/examples/connection-status/nextjs
+[3.4]: https://github.com/liveblocks/liveblocks/releases/tag/v3.4.0

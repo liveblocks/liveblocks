@@ -1,5 +1,60 @@
 ## vNEXT (not yet published)
 
+## v3.4.1
+
+### `@liveblocks/core`
+
+- Fix a bug where copilot id wasn't passed when setting tool call result if a
+  tool call was defined with `execute` callback.
+
+### `@liveblocks/react`
+
+- Update `useSendAiMessage` to use the the last used copilot id in a chat when
+  no copilot id is passed to the hook or the method returned by the hook.
+
+## v3.4.0
+
+### `@liveblocks/react`
+
+Tool calls will now stream in while under construction. This means that tools
+will render sooner and more often re-render, while `partialArgs` are streaming
+in.
+
+> New behavior (>=3.4):
+>
+> - 1st render: `{ stage: "receiving", partialArgs: {} }`
+> - 2nd render: `{ stage: "receiving", partialArgs: { cities: [] } }`
+> - 3rd render: `{ stage: "receiving", partialArgs: { cities: [""] } }`
+> - 4th render: `{ stage: "receiving", partialArgs: { cities: ["Pa"] } }`
+> - 5th render: `{ stage: "receiving", partialArgs: { cities: ["Paris"] } }`
+> - etc.
+> - Then `{ stage: "executing", args: { cities: "Paris" } }` (same as before)
+> - And `{ stage: "executed", args, result }` (same as before)
+>
+> Before (<3.4):
+>
+> - Stage "receiving" would never happen
+> - 1st render would be with
+>   `{ stage: "executing", args: { cities: ["Paris"] } }`
+> - 2nd render would be with `{ stage: "executed", args, result }`
+
+#### Other changes
+
+- In `RoomProvider`, `initialPresence` and `initialStorage` now get re-evaluated
+  whenever the room ID (the `id` prop) changes.
+
+### `@liveblocks/react-ui`
+
+- Add a minimal appearance to `AiTool` via a new `variant` prop.
+- Improve Markdown rendering during streaming in `AiChat`: incomplete content is
+  now handled gracefully so things like bold, links, or tables all render
+  instantly without seeing partial Markdown syntax first.
+- Render all messages in `AiChat` as Markdown, including ones from the user.
+- Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
+  component" would render as "Use the `` component")
+- Improve shimmer animation visible on elements like the
+  "Thinking…"/"Reasoning…" placeholders in `AiChat`.
+
 ## v3.3.4
 
 ### `@liveblocks/client`

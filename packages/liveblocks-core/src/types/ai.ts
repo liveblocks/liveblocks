@@ -8,9 +8,11 @@ import type { JSONSchema7 } from "json-schema";
 
 import { assertNever } from "../lib/assert";
 import type { Json, JsonObject } from "../lib/Json";
+import { parsePartialJsonObject } from "../lib/parsePartialJsonObject";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
+import { findLastIndex } from "../lib/utils";
 
 export type Cursor = Brand<string, "Cursor">;
 export type ISODateString = Brand<string, "ISODateString">;
@@ -332,7 +334,9 @@ export type AiReceivingToolInvocationPart = {
   stage: "receiving";
   invocationId: string;
   name: string;
-  partialArgs: Json;
+  /** @internal */
+  partialArgsText: string; // The raw, partial JSON text value
+  partialArgs: JsonObject; // The interpreted, partial JSON value
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
@@ -373,6 +377,27 @@ export type AiReasoningDelta = Relax<
   | { type: "reasoning-delta"; signature: string }
 >;
 
+// Available since protocol V5, this is the start of a tool invocation stream
+export type AiToolInvocationStreamStart = {
+  type: "tool-stream";
+  invocationId: string;
+  name: string;
+};
+
+// Available since protocol V5, this is a partial tool invocation that is being
+// constructed by the server and sent to the client as a delta. The client will
+// append this delta to the last tool invocation stream's partial JSON buffer
+// that will eventually become the full `args` value when JSON.parse()'ed.
+export type AiToolInvocationDelta = {
+  type: "tool-delta";
+  /**
+   * The textual delta to be appended to the last tool invocation stream's
+   * partial JSON buffer that will eventually become the full `args` value when
+   * JSON.parse()'ed.
+   */
+  delta: string;
+};
+
 export type AiReasoningPart = {
   type: "reasoning";
   text: string;
@@ -395,9 +420,13 @@ export type AiAssistantContentPart =
   | AiToolInvocationPart;
 
 export type AiAssistantDeltaUpdate =
-  | AiTextDelta // ...or a delta to append to the last sent part
-  | AiReasoningDelta // ...or a delta to append to the last sent part
-  | AiExecutingToolInvocationPart; // ...or a tool invocation chunk
+  | AiTextDelta // a delta appended to the last part (if text)
+  | AiReasoningDelta // a delta appended to the last part (if reasoning)
+  | AiExecutingToolInvocationPart // a tool invocation ready to be executed by the client
+
+  // Since protocol V5, if tool-call-streaming is enabled
+  | AiToolInvocationStreamStart // the start of a new tool-call stream
+  | AiToolInvocationDelta; // a partial/under-construction tool invocation (since protocol V5)
 
 export type AiUserMessage = {
   id: MessageId;
@@ -425,6 +454,7 @@ export type AiGeneratingAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "generating";
   contentSoFar: AiAssistantContentPart[];
@@ -439,6 +469,7 @@ export type AiAwaitingToolAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "awaiting-tool";
   contentSoFar: AiAssistantContentPart[];
@@ -454,6 +485,7 @@ export type AiCompletedAssistantMessage = {
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "completed";
   /** @internal */
@@ -467,6 +499,7 @@ export type AiFailedAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "failed";
   contentSoFar: AiAssistantContentPart[];
@@ -484,7 +517,7 @@ export type AiKnowledgeSource = {
 
 // --------------------------------------------------------------------------------------------------
 
-export function appendDelta(
+export function patchContentWithDelta(
   content: AiAssistantContentPart[],
   delta: AiAssistantDeltaUpdate
 ): void {
@@ -514,9 +547,61 @@ export function appendDelta(
       }
       break;
 
-    case "tool-invocation":
-      content.push(delta);
+    case "tool-stream": {
+      let _cacheKey = "";
+      let _cachedArgs: JsonObject = {};
+
+      const toolInvocation = {
+        type: "tool-invocation" as const,
+        stage: "receiving" as const,
+        invocationId: delta.invocationId,
+        name: delta.name,
+        partialArgsText: "",
+        get partialArgs(): JsonObject {
+          if (this.partialArgsText !== _cacheKey) {
+            _cachedArgs = parsePartialJsonObject(this.partialArgsText);
+            _cacheKey = this.partialArgsText;
+          }
+          return _cachedArgs;
+        },
+      };
+      content.push(toolInvocation);
       break;
+    }
+
+    case "tool-delta": {
+      // Take the last part, expect it to be a tool invocation in receiving
+      // stage. If not, ignore this delta. If it is, append the delta to the
+      // partialArgsText
+      if (
+        lastPart?.type === "tool-invocation" &&
+        lastPart.stage === "receiving"
+      ) {
+        lastPart.partialArgsText += delta.delta;
+      }
+      // Otherwise ignore the delta - it's out of order or unexpected
+      break;
+    }
+
+    case "tool-invocation": {
+      // Find and replace any existing tool invocation with the same invocationId
+      // Search from right to left (find the last matching one)
+      const existingIndex = findLastIndex(
+        content,
+        (part) =>
+          part.type === "tool-invocation" &&
+          part.invocationId === delta.invocationId
+      );
+
+      if (existingIndex > -1) {
+        // Replace the existing one
+        content[existingIndex] = delta;
+      } else {
+        // No existing one found, just append
+        content.push(delta);
+      }
+      break;
+    }
 
     default:
       return assertNever(delta, "Unhandled case");

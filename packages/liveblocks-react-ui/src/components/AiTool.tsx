@@ -49,6 +49,11 @@ export interface AiToolProps
   children?: ReactNode;
 
   /**
+   * The visual appearance of the tool.
+   */
+  variant?: "block" | "minimal";
+
+  /**
    * Whether the content is currently collapsed.
    * It is not a traditional controlled value, as in if you set it to `true` it would only stay expanded.
    * Instead, it is "semi-controlled", meaning that setting it to `true` will expand it, but it
@@ -328,6 +333,7 @@ export const AiTool = Object.assign(
         collapsible,
         collapsed,
         onCollapsedChange,
+        variant = "block",
         className,
         ...props
       },
@@ -337,8 +343,15 @@ export const AiTool = Object.assign(
         stage,
         result,
         name,
-        [kInternal]: { execute },
+        [kInternal]: { execute, messageStatus },
       } = useAiToolInvocationContext();
+      // Only mark the tool as pending visually (e.g. show a spinner, add a shimmer animation, etc.)
+      // if it has an `execute` method and it isn't in the "executed" stage.
+      const isVisuallyPending =
+        execute !== undefined &&
+        stage !== "executed" &&
+        // If it's in the "receiving" stage, we also check that the outer message is still generating.
+        (stage === "receiving" ? messageStatus === "generating" : true);
       const [semiControlledCollapsed, onSemiControlledCollapsed] =
         useSemiControllableState(collapsed ?? false, onCollapsedChange);
       // TODO: This check won't work for cases like:
@@ -369,7 +382,11 @@ export const AiTool = Object.assign(
       return (
         <Collapsible.Root
           ref={forwardedRef}
-          className={cn("lb-collapsible lb-ai-tool", className)}
+          className={cn(
+            "lb-collapsible lb-ai-tool",
+            `lb-ai-tool:variant-${variant}`,
+            className
+          )}
           {...props}
           // Regardless of `semiControlledCollapsed`, the collapsible is closed if there's no content.
           open={hasContent ? !semiControlledCollapsed : false}
@@ -378,7 +395,12 @@ export const AiTool = Object.assign(
           data-result={result?.type}
           data-stage={stage}
         >
-          <Collapsible.Trigger className="lb-collapsible-trigger lb-ai-tool-header">
+          <Collapsible.Trigger
+            className={cn(
+              "lb-collapsible-trigger lb-ai-tool-header",
+              variant === "minimal" && isVisuallyPending && "lb-ai-chat-pending"
+            )}
+          >
             {icon ? (
               <div className="lb-ai-tool-header-icon-container">{icon}</div>
             ) : null}
@@ -388,20 +410,21 @@ export const AiTool = Object.assign(
                 <ChevronRightIcon />
               </span>
             ) : null}
-            <div className="lb-ai-tool-header-status">
-              {stage === "executed" ? (
-                result.type === "success" ? (
-                  <CheckCircleFillIcon />
-                ) : result.type === "error" ? (
-                  <CrossCircleFillIcon />
-                ) : result.type === "cancelled" ? (
-                  <MinusCircleIcon />
-                ) : null
-              ) : execute !== undefined ? (
-                // Only show a spinner if the tool has an `execute` method.
-                <SpinnerIcon />
-              ) : null}
-            </div>
+            {variant !== "minimal" ? (
+              <div className="lb-ai-tool-header-status">
+                {stage === "executed" ? (
+                  result.type === "success" ? (
+                    <CheckCircleFillIcon />
+                  ) : result.type === "error" ? (
+                    <CrossCircleFillIcon />
+                  ) : result.type === "cancelled" ? (
+                    <MinusCircleIcon />
+                  ) : null
+                ) : isVisuallyPending ? (
+                  <SpinnerIcon />
+                ) : null}
+              </div>
+            ) : null}
           </Collapsible.Trigger>
 
           {hasContent ? (

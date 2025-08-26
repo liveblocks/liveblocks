@@ -54,12 +54,6 @@ export interface AiChatAssistantMessageProps extends ComponentProps<"div"> {
   overrides?: Partial<GlobalOverrides & AiChatMessageOverrides>;
 
   /**
-   * @internal
-   * The id of the copilot to use to set tool call result.
-   */
-  copilotId?: string;
-
-  /**
    * Override the component's components.
    */
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
@@ -75,10 +69,7 @@ interface ReasoningPartProps extends AiMessageContentReasoningPartProps {
 
 export const AiChatAssistantMessage = memo(
   forwardRef<HTMLDivElement, AiChatAssistantMessageProps>(
-    (
-      { message, className, overrides, components, copilotId, ...props },
-      forwardedRef
-    ) => {
+    ({ message, className, overrides, components, ...props }, forwardedRef) => {
       const $ = useOverrides(overrides);
 
       let children: ReactNode = null;
@@ -104,17 +95,12 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               message={message}
               components={components}
-              copilotId={copilotId}
             />
           );
         }
       } else if (message.status === "completed") {
         children = (
-          <AssistantMessageContent
-            message={message}
-            components={components}
-            copilotId={copilotId}
-          />
+          <AssistantMessageContent message={message} components={components} />
         );
       } else if (message.status === "failed") {
         // Do not include the error message if the user aborted the request.
@@ -123,7 +109,6 @@ export const AiChatAssistantMessage = memo(
             <AssistantMessageContent
               message={message}
               components={components}
-              copilotId={copilotId}
             />
           );
         } else {
@@ -132,7 +117,6 @@ export const AiChatAssistantMessage = memo(
               <AssistantMessageContent
                 message={message}
                 components={components}
-                copilotId={copilotId}
               />
 
               <div className="lb-ai-chat-message-error">
@@ -167,11 +151,9 @@ export const AiChatAssistantMessage = memo(
 function AssistantMessageContent({
   message,
   components,
-  copilotId,
 }: {
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
-  copilotId?: string;
 }) {
   return (
     <AiMessage.Content
@@ -183,7 +165,6 @@ function AssistantMessageContent({
         ),
         ToolInvocationPart,
       }}
-      copilotId={copilotId}
       className="lb-ai-chat-message-content"
     />
   );
@@ -238,7 +219,11 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
       </Collapsible.Trigger>
 
       <Collapsible.Content className="lb-collapsible-content">
-        <Prose content={part.text} components={components} />
+        <Prose
+          content={part.text}
+          partial={isStreaming}
+          components={components}
+        />
       </Collapsible.Content>
     </Collapsible.Root>
   );
@@ -250,7 +235,6 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
 function ToolInvocationPart({
   part,
   message,
-  copilotId,
 }: AiMessageContentToolInvocationPartProps) {
   return (
     <div className="lb-ai-chat-message-tool-invocation">
@@ -267,11 +251,7 @@ function ToolInvocationPart({
           </div>
         }
       >
-        <AiMessageToolInvocation
-          part={part}
-          message={message}
-          copilotId={copilotId}
-        />
+        <AiMessageToolInvocation part={part} message={message} />
       </ErrorBoundary>
     </div>
   );

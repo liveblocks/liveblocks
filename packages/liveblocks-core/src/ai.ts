@@ -28,6 +28,7 @@ import type {
 import type {
   AbortAiResponse,
   AiAssistantDeltaUpdate,
+  AiAssistantMessage,
   AiChat,
   AiChatMessage,
   AiChatsQuery,
@@ -43,6 +44,7 @@ import type {
   ClearChatResponse,
   ClientAiMsg,
   CmdId,
+  CopilotId,
   CreateChatOptions,
   DeleteChatResponse,
   DeleteMessageResponse,
@@ -56,7 +58,7 @@ import type {
   SetToolResultResponse,
   ToolResultResponse,
 } from "./types/ai";
-import { appendDelta } from "./types/ai";
+import { patchContentWithDelta } from "./types/ai";
 import type { Awaitable } from "./types/Awaitable";
 import type {
   InferFromSchema,
@@ -120,6 +122,7 @@ export type AiToolInvocationProps<
     // Private APIs
     [kInternal]: {
       execute: AiToolExecuteCallback<A, R> | undefined;
+      messageStatus: AiAssistantMessage["status"];
     };
   }
 >;
@@ -436,18 +439,19 @@ function createStore_forChatMessages(
   function createOptimistically(
     chatId: string,
     role: "assistant",
-    parentId: MessageId | null
+    parentId: MessageId | null,
+    copilotId?: CopilotId
   ): MessageId;
   function createOptimistically(
     chatId: string,
     role: "user" | "assistant",
     parentId: MessageId | null,
-    third?: AiUserContentPart[]
+    third?: AiUserContentPart[] | CopilotId
   ) {
     const id = `ms_${nanoid()}` as MessageId;
     const createdAt = now();
     if (role === "user") {
-      const content = third!; // eslint-disable-line
+      const content = third as AiUserContentPart[];
       upsert({
         id,
         chatId,
@@ -458,6 +462,7 @@ function createStore_forChatMessages(
         _optimistic: true,
       } satisfies AiUserMessage);
     } else {
+      const copilotId = third as CopilotId | undefined;
       upsert({
         id,
         chatId,
@@ -466,6 +471,7 @@ function createStore_forChatMessages(
         createdAt,
         status: "generating",
         contentSoFar: [],
+        copilotId,
         _optimistic: true,
       } satisfies AiGeneratingAssistantMessage);
     }
@@ -552,8 +558,8 @@ function createStore_forChatMessages(
                   message.chatId,
                   message.id,
                   toolInvocation.invocationId,
-                  result ?? { data: {} }
-                  // TODO Pass in AiGenerationOptions here, or make the backend use the same options
+                  result ?? { data: {} },
+                  { copilotId: message.copilotId } // TODO: Should we pass the other generation options (tools, knowledge) as well?
                 );
               })().catch((err) => {
                 console.error(
@@ -579,7 +585,7 @@ function createStore_forChatMessages(
       const message = lut.get(messageId);
       if (message === undefined) return false;
 
-      appendDelta(message.contentSoFar, delta);
+      patchContentWithDelta(message.contentSoFar, delta);
       lut.set(messageId, message);
       return true;
     });
@@ -752,10 +758,20 @@ function createStore_forChatMessages(
       .getOrCreate(branch || null);
   }
 
+  function getLastUsedCopilotId(chatId: string): CopilotId | undefined {
+    const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
+    // Find the most recent non-deleted assistant message
+    const latest = pool.sorted.findRight(
+      (m) => m.role === "assistant" && !m.deletedAt
+    );
+    return latest?.copilotId;
+  }
+
   return {
     // Readers
     getMessageById,
     getChatMessagesForBranchΣ,
+    getLastUsedCopilotId,
 
     // Mutations
     createOptimistically,
@@ -885,6 +901,8 @@ export type Ai = {
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   queryChats: (query: AiChatsQuery) => AiChat[];
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
+  getLastUsedCopilotId: (chatId: string) => CopilotId | undefined;
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   deregisterKnowledgeLayer: (layerKey: LayerKey) => void;
@@ -980,9 +998,7 @@ export function createAi(config: AiConfig): Ai {
     // NoOp for now, but we should maybe fetch messages or something?
   }
 
-  function onDidDisconnect() {
-    console.warn("onDidDisconnect");
-  }
+  function onDidDisconnect() {}
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string")
@@ -1333,6 +1349,7 @@ export function createAi(config: AiConfig): Ai {
 
       getChatById: context.chatsStore.getChatById,
       queryChats: context.chatsStore.findMany,
+      getLastUsedCopilotId: context.messagesStore.getLastUsedCopilotId,
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,
@@ -1361,7 +1378,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v4";
+    url.pathname = "/ai/v5";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
