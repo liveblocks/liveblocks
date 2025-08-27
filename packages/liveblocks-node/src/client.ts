@@ -119,7 +119,9 @@ type DateToString<T> = {
 
 export type CreateSessionOptions<U extends BaseUserMeta = DU> =
   //
-  PartialUnless<U["info"], { userInfo: U["info"] }>;
+  PartialUnless<U["info"], { userInfo: U["info"] }> & {
+    tenantId?: string;
+  };
 
 export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
   //
@@ -492,7 +494,12 @@ export class Liveblocks {
     >
   ): Session {
     const options = rest[0];
-    return new Session(this.#post.bind(this), userId, options?.userInfo);
+    return new Session(
+      this.#post.bind(this),
+      userId,
+      options?.userInfo,
+      options?.tenantId
+    );
   }
 
   /**
