@@ -1,6 +1,9 @@
 import type {
+  AiAssistantMessage,
   AiChatMessage,
+  AiCitationPart,
   AiReasoningPart,
+  AiRetrievalPart,
   AiTextPart,
   AiToolInvocationPart,
 } from "@liveblocks/core";
@@ -14,6 +17,14 @@ export type AiMessageContentTextPartProps = {
   /** @internal */
   isStreaming: boolean;
   part: AiTextPart;
+};
+
+export type AiMessageContentCitationPartProps = {
+  /** @internal */
+  index: number;
+  /** @internal */
+  isStreaming: boolean;
+  part: AiCitationPart;
 };
 
 export type AiMessageContentReasoningPartProps = {
@@ -31,16 +42,15 @@ export type AiMessageContentToolInvocationPartProps = {
   /** @internal */
   isStreaming: boolean;
   /** @internal */
-  message: AiChatMessage;
+  message: AiAssistantMessage;
   part: AiToolInvocationPart;
 };
 
 /** @internal */
 export type AiMessageContentRetrievalPartProps = {
   /** @internal */
-  search: string;
-  /** @internal */
-  stage: "receiving" | "executing" | "executed";
+  index: number;
+  part: AiRetrievalPart;
 };
 
 export interface AiMessageContentComponents {
@@ -55,16 +65,21 @@ export interface AiMessageContentComponents {
   ReasoningPart: ComponentType<AiMessageContentReasoningPartProps>;
 
   /**
-   * NOTE that ToolInvocationPart is slightly different.
-   * Tool invocations are typically rendered via the render() method instead.
-   * @internal
+   * The component used to display citations.
    */
-  ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
+  CitationPart: ComponentType<AiMessageContentCitationPartProps>;
 
   /**
    * The component used to display knowledge retrieval parts.
    */
   RetrievalPart: ComponentType<AiMessageContentRetrievalPartProps>;
+
+  /**
+   * NOTE that ToolInvocationPart is slightly different.
+   * Tool invocations are typically rendered via the render() method instead.
+   * @internal
+   */
+  ToolInvocationPart: ComponentType<AiMessageContentToolInvocationPartProps>;
 }
 
 export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {

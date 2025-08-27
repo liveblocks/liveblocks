@@ -24,6 +24,7 @@ import type {
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
+  AiMessageContentCitationPartProps,
 } from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
@@ -164,8 +165,9 @@ function AssistantMessageContent({
         ReasoningPart: (props) => (
           <ReasoningPart {...props} components={components} />
         ),
-        ToolInvocationPart,
+        CitationPart,
         RetrievalPart,
+        ToolInvocationPart,
       }}
       className="lb-ai-chat-message-content"
     />
@@ -232,6 +234,33 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
 }
 
 /* -------------------------------------------------------------------------------------------------
+ * CitationPart
+ * -----------------------------------------------------------------------------------------------*/
+function CitationPart({ part }: AiMessageContentCitationPartProps) {
+  return <pre>Implement Citation UI here. {JSON.stringify(part, null, 2)}</pre>;
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * RetrievalPart
+ * -----------------------------------------------------------------------------------------------*/
+function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
+  // const isPending = status === "pending";
+  // <div
+  //   className={cn(
+  //     "lb-ai-chat-message-knowledge",
+  //     isPending && "lb-ai-chat-pending"
+  //   )}
+  // >
+  //   {isPending ? "Searching" : "Searched"} for{" "}
+  //   <span className="lb-ai-chat-message-knowledge-search">{query}</span>
+  //   {isPending ? "…" : null}
+  // </div>
+  return (
+    <pre>Implement Retrieval UI here. {JSON.stringify(part, null, 2)}</pre>
+  );
+}
+
+/* -------------------------------------------------------------------------------------------------
  * ToolInvocationPart
  * -----------------------------------------------------------------------------------------------*/
 function ToolInvocationPart({
@@ -255,29 +284,6 @@ function ToolInvocationPart({
       >
         <AiMessageToolInvocation part={part} message={message} />
       </ErrorBoundary>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------------------------------
- * RetrievalPart
- * -----------------------------------------------------------------------------------------------*/
-function RetrievalPart({
-  search,
-  stage,
-}: AiMessageContentRetrievalPartProps) {
-  const isPending = stage === "receiving" || stage === "executing";
-  return (
-    <div
-      className={cn(
-        "lb-ai-chat-message-knowledge",
-        isPending && "lb-ai-chat-pending"
-      )}
-    >
-      {/* TODO: Use overrides for "Search(ing|ed) for…" */}
-      Search{isPending ? "ing" : "ed"} for{" "}
-      <span className="lb-ai-chat-message-knowledge-search">{search}</span>
-      {isPending ? "…" : null}
     </div>
   );
 }

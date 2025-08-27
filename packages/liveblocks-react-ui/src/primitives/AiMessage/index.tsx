@@ -8,6 +8,7 @@ import type {
   AiMessageContentComponents,
   AiMessageContentProps,
 } from "./types";
+import type { AiAssistantMessage } from "@liveblocks/core";
 
 const AI_MESSAGE_CONTENT_NAME = "AiMessageContent";
 
@@ -18,6 +19,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
   },
+  CitationPart: () => null,
   RetrievalPart: () => null,
   ToolInvocationPart: ({ part, message }) => {
     return (
@@ -43,9 +45,10 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const {
-      TextPart,
+      CitationPart,
       ReasoningPart,
       RetrievalPart,
+      TextPart,
       ToolInvocationPart,
     } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
@@ -68,34 +71,24 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
           switch (part.type) {
             case "text":
               return <TextPart key={index} part={part} {...extra} />;
+
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
-            case "tool-invocation":
-              /* 
-                TODO: @marc, I didn't know how to list the current tools here so I can check if the user has defined a getInformation tool
-                if the user has defined a getInformation tool, then it will de-conflict to lbGetInformation, in which case we need to check that instead.
-                I thought of maybe moving that logic up to this level and making ToolInvocationPart a lot simpler
-                -JR
-              */
-              if (
-                part.name === "getInformation" ||
-                part.name === "lbGetInformation"
-              ) {
-                return (
-                  <RetrievalPart
-                    key={index}
-                    search={part.args?.question as string}
-                    stage={part.stage}
-                  />
-                );
-              }
 
+            case "citation":
+              return <CitationPart key={index} part={part} {...extra} />;
+
+            case "retrieval":
+              return <RetrievalPart key={index} part={part} {...extra} />;
+
+            case "tool-invocation":
               return (
                 <ToolInvocationPart
                   key={index}
                   part={part}
                   {...extra}
-                  message={message}
+                  // For tool invocations, we know for sure it's an AiAssistantMessage
+                  message={message as AiAssistantMessage}
                 />
               );
             default:
