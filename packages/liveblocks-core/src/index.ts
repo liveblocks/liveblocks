@@ -235,6 +235,7 @@ export type {
   GroupData,
   GroupDataPlain,
   GroupMemberData,
+  GroupScopes,
 } from "./protocol/Groups";
 export type {
   ActivityData,

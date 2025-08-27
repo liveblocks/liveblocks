@@ -5,13 +5,15 @@ export type GroupMemberData = {
   addedAt: Date;
 };
 
+export type GroupScopes = Partial<{ mention: true }>;
+
 export type GroupData = {
   type: "group";
   id: string;
   tenantId: string;
   createdAt: Date;
   updatedAt: Date;
-  scopes: { mention: true };
+  scopes: GroupScopes;
   members: GroupMemberData[];
 };
 
