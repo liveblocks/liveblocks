@@ -1,3 +1,4 @@
+import type { AiAssistantMessage } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import { forwardRef, useMemo } from "react";
 
@@ -8,7 +9,6 @@ import type {
   AiMessageContentComponents,
   AiMessageContentProps,
 } from "./types";
-import type { AiAssistantMessage } from "@liveblocks/core";
 
 const AI_MESSAGE_CONTENT_NAME = "AiMessageContent";
 

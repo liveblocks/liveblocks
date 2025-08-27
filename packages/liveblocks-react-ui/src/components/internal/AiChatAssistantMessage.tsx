@@ -20,11 +20,11 @@ import {
 import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
-  AiMessageContentRetrievalPartProps,
+  AiMessageContentCitationPartProps,
   AiMessageContentReasoningPartProps,
+  AiMessageContentRetrievalPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
-  AiMessageContentCitationPartProps,
 } from "../../primitives/AiMessage/types";
 import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
