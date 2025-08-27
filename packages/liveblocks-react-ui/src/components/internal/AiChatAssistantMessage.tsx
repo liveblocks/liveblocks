@@ -256,11 +256,6 @@ function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
   // The elapsed time for this retrieval in seconds
   const elapsedSeconds = (endedAt - startedAt) / 1000;
 
-  // Only show time if it's longer than 3 seconds
-  const shouldShowTime =
-    // Debugging currently
-    true; // Restore to: elapsedSeconds !== null && elapsedSeconds > 3 ?
-
   return (
     <div
       className={cn(
@@ -273,12 +268,12 @@ function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
       {isPending ? (
         // Should we show a live timer (eg 3s, 4s, 5s, etc) here instead?
         "…"
-      ) : shouldShowTime ? (
+      ) : (
         <span className="lb-ai-chat-message-knowledge-time">
           {" "}
           ({elapsedSeconds}s)
         </span>
-      ) : null}
+      )}
     </div>
   );
 }
