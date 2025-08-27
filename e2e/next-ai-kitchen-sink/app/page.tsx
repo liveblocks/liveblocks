@@ -20,8 +20,17 @@ export default function Home() {
         <Link href="/knowledge" className="underline">
           Registering client-side knowledge
         </Link>
+        <Link href="/dual-chat" className="underline">
+          Dual chat - Knowledge isolation & sharing
+        </Link>
         <Link href="/styles" className="underline">
           Default styles playground
+        </Link>
+        <Link href="/toolcall-streaming" className="underline">
+          Tool call streaming
+        </Link>
+        <Link href="/partial-markdown" className="underline">
+          Partial markdown streaming
         </Link>
       </div>
     </main>

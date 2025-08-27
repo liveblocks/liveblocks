@@ -18,7 +18,231 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 -->
 
+# Week 34 (2025-08-22)
+
+## v3.4.0
+
+### `@liveblocks/react`
+
+Tool calls will now stream in while under construction. This means that tools
+will render sooner and more often re-render, while `partialArgs` are streaming
+in.
+
+> New behavior (v3.4 and higher):
+>
+> - 1st render: `{ stage: "receiving", partialArgs: {} }`
+> - 2nd render: `{ stage: "receiving", partialArgs: { cities: [] } }`
+> - 3rd render: `{ stage: "receiving", partialArgs: { cities: [""] } }`
+> - 4th render: `{ stage: "receiving", partialArgs: { cities: ["Pa"] } }`
+> - 5th render: `{ stage: "receiving", partialArgs: { cities: ["Paris"] } }`
+> - etc.
+> - Then `{ stage: "executing", args: { cities: "Paris" } }` (same as before)
+> - And `{ stage: "executed", args, result }` (same as before)
+>
+> Before (v3.3 and lower):
+>
+> - Stage "receiving" would never happen
+> - 1st render would be with
+>   `{ stage: "executing", args: { cities: ["Paris"] } }`
+> - 2nd render would be with `{ stage: "executed", args, result }`
+
+#### Other changes
+
+- In `RoomProvider`, `initialPresence` and `initialStorage` now get re-evaluated
+  whenever the room ID (the `id` prop) changes.
+
+### `@liveblocks/react-ui`
+
+- Add a minimal appearance to `AiTool` via a new `variant` prop.
+- Improve Markdown rendering during streaming in `AiChat`: incomplete content is
+  now handled gracefully so things like bold, links, or tables all render
+  instantly without seeing partial Markdown syntax first.
+- Render all messages in `AiChat` as Markdown, including ones from the user.
+- Fix Markdown rendering of HTML tags in `AiChat`. (e.g. "Use the `<AiChat />`
+  component" would render as "Use the `` component")
+- Improve shimmer animation visible on elements like the
+  "Thinking…"/"Reasoning…" placeholders in `AiChat`.
+
+## Infrastructure
+
+- Improved LiveList conflict resolution that will keep the conflicting element closer to its intended destination.
+
+## Contributors
+
+nvie, marcbouchenoire
+
+# Week 33 (2025-08-15)
+
+## v3.3.4
+
+### `@liveblocks/client`
+
+- Fix race condition where AI tools were not always executing. This could happen
+  when using `useSendAiMessage` first and then immediately opening the
+  `<AiChat />` afterwards.
+
+### `@liveblocks/react-tiptap`
+
+- Scroll thread annotations into view when a thread in `AnchoredThreads` is
+  selected, similarly to `@liveblocks/react-lexical`.
+
+## v3.3.1
+
+### `@liveblocks/react-ui`
+
+- Fix `Composer` uploading attachments on drop when `showAttachments` is set to
+  `false`.
+
+## All versions
+
+- Fix attachment names showing URL-encoded characters. (e.g. `a%20file.txt`
+  instead of `a file.txt`)
+
+## Infrastructure
+
+- Fixed a bug that caused unreliable storage updates under high concurrency.
+- Fixed an issue that could cause LLM responses to appear to "hang" if the
+  token limit got exceeded during the response generation. If this now happens,
+  the response will indicate a clear error to the user.
+
+## Dashboard
+
+- New knowledge prompt option when configuring AI copilots, allowing you to customize when back-end knowledge is fetched.
+
+## Documentation
+
+- More info on styling AI chat components.
+- Disambiguate semantics for `LiveList.delete()`.
+
+## Contributors
+
+marcbouchenoire, ctnicholas, nvie, jrowny, nimeshnayaju
+
+# Week 32 (2025-08-08)
+
+## v3.3.0
+
+### `@liveblocks/react-ui`
+
+- Add `maxVisibleComments` prop to `Thread` to control the maximum number of
+  comments to show. When comments are hidden, a "Show more replies" button is
+  shown to allow users to expand the thread.
+- Add `onComposerSubmit` callback to `AiChat` triggered when a new message is
+  sent. It can also be used to customize message submission by calling
+  `useSendAiMessage` yourself.
+- Overrides and CSS classes for `AiChat`'s composer have been renamed:
+  - Overrides: `AI_CHAT_COMPOSER_SEND` → `AI_COMPOSER_PLACEHOLDER`
+  - CSS classes: `.lb-ai-chat-composer-form` → `.lb-ai-composer-form`
+- Fix: knowledge passed as a prop to `AiChat` no longer leaks that knowledge to
+  other instances of `AiChat` that are currently mounted on screen.
+
+### `@liveblocks/react`
+
+- Add `query` option to `useAiChats` to filter the current user’s AI chats by
+  metadata. Supports exact matches for string values, "contains all" for string
+  arrays, and filtering by absence using `null` (e.g.
+  `{ metadata: { archived: null } }`).
+- `useSendAiMessage` now accepts passing the chat ID and/or options to the
+  function rather than the hook. This can be useful in dynamic scenarios where
+  the chat ID might not be known when calling the hook for example.
+- `useCreateAiChat` now accepts a chat ID as a string instead of
+  `{ id: "chat-id" }`.
+
+### `@liveblocks/react-tiptap` and `@liveblocks/react-lexical`
+
+- Allow using custom composers in `FloatingComposer` via the
+  `components={{ Composer }}` prop.
+
+### `@liveblocks/react-lexical`
+
+- Add `ATTACH_THREAD_COMMAND` command to manually create a thread attached to
+  the current selection.
+
+## Dashboard
+
+- Support SAML Single Sign-On for enterprise customers.
+- Allow editing first and last name in personal settings.
+
+## Contributors
+
+ofoucherot, sugardarius, pierrelevaillant, marcbouchenoire, nimeshnayaju, nvie
+
+# Week 31 (2025-08-01)
+
+## v3.2.1
+
+### `@liveblocks/react-ui`
+
+- Improve Markdown lists in `AiChat`: better spacing and support for arbitrary
+  starting numbers in ordered lists. (e.g. `3.` instead of `1.`)
+
+### `@liveblocks/react`
+
+- Fix `useSyncStatus` returning incorrect synchronization status for Yjs
+  provider. We now compare the hash of local and remote snapshot to check for
+  synchronization differences between local and remote Yjs document.
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksYjsProvider.getStatus()` returning incorrect synchronization
+  status for Yjs provider.
+
+## Dashboard
+
+- Add MAU breakdown to the historical usage table on the “Billing & usage” page (MAU used / Non-billed MAU).
+- Support OpenAI compatible AI models in AI Copilots.
+- Support Gemini 2.5 Pro and Gemini 2.5 Flash Thinking models in AI Copilots and remove support for the corresponding preview models.
+
+## Doocumentation
+
+- Improved [Limits](https://liveblocks.io/docs/platform/limits) page.
+- Improved [Plans](https://liveblocks.io/docs/platform/plans) page.
+
+## Contributors
+
+pierrelevaillant, nimeshnayaju, marcbouchenoire, sugardarius, ctnicholas, stevenfabre
+
+# Week 30 (2025-07-25)
+
+## v3.2.0
+
+### `@liveblocks/react-ui`
+
+- Improve `AiChat`'s scroll behavior when sending new messages: the chat will
+  now scroll new messages to the top and leave enough space for responses.
+- Expose Markdown components in `AiChat`’s `components` prop to customize the
+  rendering of Markdown content.
+- Add `blurOnSubmit` prop to `Composer` (also available on the `Composer.Form`
+  primitive and as `blurComposerOnSubmit` on `Thread`) to control whether a
+  composer should lose focus after being submitted.
+
+### `@liveblocks/react`
+
+- `useErrorListener` now receives `"LARGE_MESSAGE_ERROR"` errors when the
+  `largeMessageStrategy` option isn’t configured and a message couldn’t be sent
+  because it was too large for WebSocket.
+
+### `@liveblocks/node`
+
+- Add `tenantId` to `identifyUser` method as an optional parameter.
+
+## Dashboard
+
+- Fix issue with custom nodes causing an error in Tiptap/BlockNote documents views.
+
+## Contributors
+
+marcbouchenoire, jrowny, flowflorent, ctnicholas
+
 # Week 29 (2025-07-18)
+
+## v3.1.4
+
+### `@liveblocks/react-ui`
+
+- Fix copilot id not being passed to 'set-tool-call-result' command that is
+  dispatched when a tool call is responded to. Previously, we were using the
+  default copilot to generate messages from the tool call result.
 
 ## v3.1.3
 

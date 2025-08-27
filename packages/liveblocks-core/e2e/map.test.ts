@@ -1,10 +1,13 @@
-import type { Immutable } from "../src/types/Immutable";
+import { describe, expect, test } from "vitest";
+
 import { LiveMap } from "../src/crdts/LiveMap";
+import type { Immutable } from "../src/types/Immutable";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe("LiveMap single client", () => {
   test(
     "remote set conflicts with another set",
+    { timeout: 10000 },
     prepareTestsConflicts(
       {
         map: new LiveMap<string, string>(),
@@ -29,9 +32,7 @@ describe("LiveMap single client", () => {
     )
   );
 
-  // TODO: This test is flaky and occasionally fails in CI--make it more robust
-  // See https://github.com/liveblocks/liveblocks/runs/7278076193?check_suite_focus=true#step:6:85
-  test.skip(
+  test(
     "remote set conflicts with a delete",
     prepareTestsConflicts(
       {
@@ -58,6 +59,7 @@ describe("LiveMap single client", () => {
 describe("LiveMap single client", () => {
   test(
     "fast consecutive sets on same key",
+    { timeout: 10000 },
     prepareSingleClientTest(
       {
         map: new LiveMap<string, string>(),

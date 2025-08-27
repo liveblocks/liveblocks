@@ -1,4 +1,5 @@
 import * as fc from "fast-check";
+import { describe, expect, test } from "vitest";
 
 import { Deque } from "../Deque";
 

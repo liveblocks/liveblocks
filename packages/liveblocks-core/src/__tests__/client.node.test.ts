@@ -1,9 +1,10 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 
 // We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
 import { Response as NodeFetchResponse } from "node-fetch";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 
 import type { ClientOptions } from "../client";
 import { createClient } from "../client";
@@ -90,7 +91,7 @@ describe("createClient", () => {
   );
 
   test("should not try to connect if autoConnect is false (new style)", () => {
-    const authMock = jest.fn();
+    const authMock = vi.fn();
 
     const client = createClient({
       authEndpoint: authMock,
@@ -111,7 +112,7 @@ describe("createClient", () => {
   });
 
   test("entering twice returns the same room (new style)", () => {
-    const authMock = jest.fn();
+    const authMock = vi.fn();
 
     const client = createClient({
       authEndpoint: authMock,
@@ -187,7 +188,7 @@ describe("createClient", () => {
   });
 
   test("should throw if authEndpoint is string and fetch polyfill is not defined", async () => {
-    const spy = jest.spyOn(console, "error");
+    const spy = vi.spyOn(console, "error");
 
     const client = createClient({
       authEndpoint: "/api/auth",
@@ -215,7 +216,7 @@ describe("createClient", () => {
     const ws = globalThis.WebSocket;
     delete (globalThis as any).WebSocket;
 
-    const spy = jest.spyOn(console, "error");
+    const spy = vi.spyOn(console, "error");
 
     const client = createClient({ authEndpoint: authEndpointCallback });
     const { room, leave } = client.enterRoom("room");

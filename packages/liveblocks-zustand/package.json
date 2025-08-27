@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "3.2.0",
+  "version": "3.4.1",
   "description": "A middleware for Zustand to automatically synchronize your stores with Liveblocks. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -29,22 +29,22 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack",
-    "test": "jest --silent --verbose --color=always",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" vitest run",
     "test:types": "tsd",
-    "test:watch": "jest --silent --verbose --color=always --watch"
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" vitest"
   },
   "dependencies": {
-    "@liveblocks/client": "3.2.0",
-    "@liveblocks/core": "3.2.0"
+    "@liveblocks/client": "3.4.1",
+    "@liveblocks/core": "3.4.1"
   },
   "peerDependencies": {
     "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
-    "@testing-library/jest-dom": "^6.4.6",
-    "msw": "^1.3.5",
+    "@liveblocks/vitest-config": "*",
+    "@testing-library/dom": "^10.4.0",
+    "msw": "^2.10.4",
     "zustand": "^5.0.1"
   },
   "sideEffects": false,

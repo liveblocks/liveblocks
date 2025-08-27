@@ -33,8 +33,6 @@ export type AiMessageContentToolInvocationPartProps = {
   /** @internal */
   message: AiChatMessage;
   part: AiToolInvocationPart;
-  /** @internal */
-  copilotId?: string;
 };
 
 /** @internal */
@@ -80,10 +78,4 @@ export interface AiMessageContentProps extends ComponentPropsWithSlot<"div"> {
    * the message content.
    */
   components?: Partial<AiMessageContentComponents>;
-
-  /**
-   * @internal
-   * The id of the copilot to use to set tool call result.
-   */
-  copilotId?: string;
 }

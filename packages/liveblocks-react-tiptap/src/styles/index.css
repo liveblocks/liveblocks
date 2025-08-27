@@ -120,7 +120,7 @@
  *            Thread mark            *
  *************************************/
 
-:where(.lb-tiptap-thread-mark:not([data-orphan="true"])) {
+:where(.lb-tiptap-thread-mark:not([data-orphan="true"], [data-hidden])) {
   background: var(--lb-accent-subtle);
   color: var(--lb-foreground);
   outline: none;
@@ -132,13 +132,18 @@
 }
 
 :where(
-  .lb-tiptap-thread-mark:not([data-orphan="true"])
+  .lb-tiptap-thread-mark:not([data-orphan="true"], [data-hidden])
     .lb-tiptap-thread-mark-selected
 ) {
   color: var(--lb-accent);
   text-decoration-line: underline;
   text-decoration-color: var(--lb-accent-moderate);
   text-underline-offset: 2px;
+}
+
+.lb-tiptap-thread-mark {
+  /* Add some space above/below when scrolling to it. */
+  scroll-margin-block: var(--lb-spacing);
 }
 
 /*************************************
@@ -560,7 +565,7 @@
   padding-inline: var(--lb-tiptap-ai-toolbar-padding);
   color: var(--lb-foreground-tertiary);
   user-select: none;
-  animation: lb-animation-shimmer-small 5s linear infinite;
+  animation: lb-animation-shimmer-text 5s linear infinite;
 }
 
 .lb-tiptap-ai-toolbar-dropdown {

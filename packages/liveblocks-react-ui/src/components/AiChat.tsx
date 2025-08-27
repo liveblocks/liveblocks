@@ -4,11 +4,7 @@ import type {
   CopilotId,
   MessageId,
 } from "@liveblocks/core";
-import {
-  RegisterAiKnowledge,
-  RegisterAiTool,
-  useAiChatMessages,
-} from "@liveblocks/react";
+import { RegisterAiTool, useAiChatMessages } from "@liveblocks/react";
 import { useLatest } from "@liveblocks/react/_private";
 import {
   type ComponentProps,
@@ -25,9 +21,9 @@ import type { GlobalComponents } from "../components";
 import { ArrowDownIcon } from "../icons/ArrowDown";
 import { SpinnerIcon } from "../icons/Spinner";
 import {
-  type AiChatComposerOverrides,
   type AiChatMessageOverrides,
   type AiChatOverrides,
+  type AiComposerOverrides,
   type GlobalOverrides,
   useOverrides,
 } from "../overrides";
@@ -35,8 +31,8 @@ import type { MarkdownComponents } from "../primitives/Markdown";
 import { cn } from "../utils/cn";
 import { useIntersectionCallback } from "../utils/use-visible";
 import { AiChatAssistantMessage } from "./internal/AiChatAssistantMessage";
-import { AiChatComposer } from "./internal/AiChatComposer";
 import { AiChatUserMessage } from "./internal/AiChatUserMessage";
+import { AiComposer, type AiComposerProps } from "./internal/AiComposer";
 
 /**
  * The minimum number of pixels from the bottom of the scrollable area
@@ -92,8 +88,10 @@ export interface AiChatProps extends ComponentProps<"div"> {
   copilotId?: string;
 
   /**
-   * The contextual knowledge to include in the chat. May be used by the assistant when generating responses.
-   * Any knowledge you provide via this prop will be added to any already globally registered knowledge via <RegisterAiKnowledge />.
+   * The contextual knowledge to include in the chat. May be used by the
+   * assistant when generating responses. In addition to the knowledge passed
+   * in via this prop, the AiChat instance will also have access to any
+   * globally registered knowledge via <RegisterAiKnowledge />.
    */
   knowledge?: AiKnowledgeSource[];
 
@@ -101,6 +99,11 @@ export interface AiChatProps extends ComponentProps<"div"> {
    * Tool definitions to make available within this chat. May be used by the assistant when generating responses.
    */
   tools?: Record<string, AiOpaqueToolDefinition>;
+
+  /**
+   * The event handler called when the composer is submitted.
+   */
+  onComposerSubmit?: AiComposerProps["onComposerSubmit"];
 
   /**
    * The layout of the chat and its composer.
@@ -112,8 +115,8 @@ export interface AiChatProps extends ComponentProps<"div"> {
    */
   overrides?: Partial<
     GlobalOverrides &
+      AiComposerOverrides &
       AiChatMessageOverrides &
-      AiChatComposerOverrides &
       AiChatOverrides
   >;
 
@@ -125,7 +128,6 @@ export interface AiChatProps extends ComponentProps<"div"> {
 
 interface AiChatMessagesProps extends ComponentProps<"div"> {
   messages: NonNullable<ReturnType<typeof useAiChatMessages>["messages"]>;
-  copilotId: AiChatProps["copilotId"];
   overrides: AiChatProps["overrides"];
   components: AiChatProps["components"];
   lastSentMessageId: MessageId | null;
@@ -155,7 +157,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
   (
     {
       messages,
-      copilotId,
       overrides,
       components,
       lastSentMessageId,
@@ -390,6 +391,7 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 key={message.id}
                 message={message}
                 overrides={overrides}
+                components={components}
               />
             );
           } else if (message.role === "assistant") {
@@ -399,7 +401,6 @@ const AiChatMessages = forwardRef<HTMLDivElement, AiChatMessagesProps>(
                 message={message}
                 overrides={overrides}
                 components={components}
-                copilotId={copilotId}
               />
             );
           } else {
@@ -418,8 +419,9 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
       copilotId,
       autoFocus,
       overrides,
-      knowledge,
+      knowledge: localKnowledge,
       tools = {},
+      onComposerSubmit,
       layout = "inset",
       components,
       className,
@@ -485,23 +487,10 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
         {...props}
         className={cn(
           "lb-root lb-ai-chat",
-          layout === "compact"
-            ? "lb-ai-chat:layout-compact"
-            : "lb-ai-chat:layout-inset",
+          `lb-ai-chat:layout-${layout}`,
           className
         )}
       >
-        {knowledge
-          ? knowledge.map((source, index) => (
-              <RegisterAiKnowledge
-                key={index}
-                description={source.description}
-                value={source.value}
-                // knowledgeKey={source.knowledgeKey}
-              />
-            ))
-          : null}
-
         {Object.entries(tools).map(([name, tool]) => (
           <RegisterAiTool key={name} chatId={chatId} name={name} tool={tool} />
         ))}
@@ -519,7 +508,6 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
             <>
               <AiChatMessages
                 ref={messagesRef}
-                copilotId={copilotId}
                 messages={messages}
                 overrides={overrides}
                 components={components}
@@ -567,18 +555,21 @@ export const AiChat = forwardRef<HTMLDivElement, AiChatProps>(
               </button>
             </div>
           </div>
-          <AiChatComposer
+          <AiComposer
             key={chatId}
             chatId={chatId}
             copilotId={copilotId as CopilotId}
             overrides={overrides}
             autoFocus={autoFocus}
-            onUserMessageCreate={({ id }) => setLastSentMessageId(id)}
-            className={
+            knowledge={localKnowledge}
+            onComposerSubmit={onComposerSubmit}
+            onComposerSubmitted={({ id }) => setLastSentMessageId(id)}
+            className={cn(
+              "lb-ai-chat-composer",
               layout === "inset"
                 ? "lb-elevation lb-elevation-moderate"
                 : undefined
-            }
+            )}
           />
         </div>
 

@@ -2,18 +2,20 @@ import "dotenv/config";
 
 import fetch from "node-fetch";
 import type { URL } from "url";
+import { expect } from "vitest";
 import WebSocket from "ws";
 
-import type { Room } from "../src/room";
+import type { BaseMetadata, NoInfr } from "../src";
+import { nanoid } from "../src";
+import { createClient } from "../src/client";
 import type { Status } from "../src/connection";
-import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
-import { wait, withTimeout } from "../src/lib/utils";
-import type { Json, JsonObject } from "../src/lib/Json";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
-import { createClient } from "../src/client";
-import type { BaseMetadata, NoInfr } from "../src";
+import type { Json, JsonObject } from "../src/lib/Json";
+import { wait, withTimeout } from "../src/lib/utils";
+import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
+import type { Room } from "../src/room";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -24,7 +26,7 @@ async function initializeRoomForTest<
 >(roomId: string, initialPresence: NoInfr<P>, initialStorage: NoInfr<S>) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
-  if (publicApiKey == null) {
+  if (!publicApiKey) {
     throw new Error('Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.');
   }
 
@@ -36,6 +38,7 @@ async function initializeRoomForTest<
 
     constructor(address: string | URL) {
       super(address);
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       ws = this;
     }
 
@@ -63,13 +66,14 @@ async function initializeRoomForTest<
   const client = createClient<U>({
     publicApiKey,
     polyfills: {
-      // @ts-ignore-error
+      // @ts-expect-error fetch from Node isn't compatible?
       fetch,
       WebSocket: PausableWebSocket,
     },
     baseUrl: process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   const { room, leave } = client.enterRoom<P, S, E, M>(roomId, {
     initialPresence,
     initialStorage,
@@ -80,7 +84,7 @@ async function initializeRoomForTest<
     room,
     leave,
     get ws() {
-      if (ws == null) {
+      if (ws === null) {
         throw new Error("Websocket should be initialized at this point");
       }
       return ws;
@@ -113,7 +117,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
-    const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
+    const roomName = "storage-requirements-e2e-tests-" + nanoid(10);
 
     const actor1 = await initializeRoomForTest<JsonObject, S>(
       roomName,
@@ -134,19 +138,19 @@ export function prepareTestsConflicts<S extends LsonObject>(
         actor1.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
       flushSocket2Messages: async () => {
         actor2.ws.resumeSend();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
-        await wait(1000);
+        await wait(600);
       },
     };
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor1.ws.pauseSend();
     actor2.ws.pauseSend();
@@ -169,15 +173,21 @@ export function prepareTestsConflicts<S extends LsonObject>(
       { isDeep: true }
     );
 
-    function assert(immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) {
-      if (immRoot2 == null) {
-        immRoot2 = immRoot1;
-      }
+    function assert(
+      immRoot1: ToImmutable<S>,
+      immRoot2: ToImmutable<S> = immRoot1
+    ) {
+      try {
+        expect(root1.toImmutable()).toEqual(immRoot1);
+        expect(immutableStorage1).toEqual(immRoot1);
+        expect(root2.toImmutable()).toEqual(immRoot2);
 
-      expect(root1.toImmutable()).toEqual(immRoot1);
-      expect(immutableStorage1).toEqual(immRoot1);
-      expect(root2.toImmutable()).toEqual(immRoot2);
-      expect(immutableStorage2).toEqual(immRoot2);
+        expect(immutableStorage2).toEqual(immRoot2);
+      } catch (error) {
+        // Better stack trace (point to where assert is called instead)
+        Error.captureStackTrace(error as Error, assert);
+        throw error;
+      }
     }
 
     try {
@@ -223,12 +233,12 @@ export function prepareSingleClientTest<S extends LsonObject>(
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(1000);
+    await wait(600);
 
     actor.ws.pauseSend();
 
-    actor.ws.addEventListener("message", (message) => {
-      console.log(message.data);
+    actor.ws.addEventListener("message", (_message) => {
+      // console.log(message.data);
     });
 
     try {
@@ -239,7 +249,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
           actor.ws.resumeSend();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
-          await wait(1000);
+          await wait(600);
         },
       });
       actor.leave();

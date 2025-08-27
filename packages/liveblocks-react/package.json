@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "3.2.0",
+  "version": "3.4.1",
   "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "module",
@@ -54,15 +54,15 @@
     "format": "(eslint --fix src/ || true) && prettier --write src/",
     "lint": "eslint src/",
     "lint:package": "publint --strict && attw --pack && bun scripts/check-exports.ts",
-    "test": "jest --silent --verbose --color=always",
+    "test": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always",
     "test:types": "ls test-d/* | xargs -n1 tsd --files",
-    "test:watch": "jest --silent --verbose --color=always --watch",
+    "test:watch": "NODE_OPTIONS=\"--no-deprecation\" jest --silent --verbose --color=always --watch",
     "test:deps": "depcruise src --exclude __tests__",
     "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
   "dependencies": {
-    "@liveblocks/client": "3.2.0",
-    "@liveblocks/core": "3.2.0"
+    "@liveblocks/client": "3.4.1",
+    "@liveblocks/core": "3.4.1"
   },
   "peerDependencies": {
     "@types/react": "*",

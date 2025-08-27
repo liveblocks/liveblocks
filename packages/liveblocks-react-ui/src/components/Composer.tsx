@@ -339,8 +339,8 @@ function ComposerMention({ mention }: ComposerEditorMentionProps) {
   switch (mention.kind) {
     case "user":
       return (
-        <ComposerPrimitive.Mention className="lb-composer-mention">
-          {MENTION_CHARACTER}
+        <ComposerPrimitive.Mention className="lb-mention lb-composer-mention">
+          <span className="lb-mention-symbol">{MENTION_CHARACTER}</span>
           <User userId={mention.id} />
         </ComposerPrimitive.Mention>
       );
@@ -548,7 +548,7 @@ function ComposerEditorContainer({
   }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
-    disabled: disabled || hasMaxAttachments,
+    disabled: disabled || !showAttachments || hasMaxAttachments,
   });
 
   useLayoutEffect(() => {

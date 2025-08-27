@@ -40,7 +40,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
  * <AiMessage.Content message={message} components={{ TextPart }} />
  */
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
-  ({ message, components, asChild, copilotId, ...props }, forwardedRef) => {
+  ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const {
       TextPart,
@@ -96,7 +96,6 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
                   part={part}
                   {...extra}
                   message={message}
-                  copilotId={copilotId}
                 />
               );
             default:

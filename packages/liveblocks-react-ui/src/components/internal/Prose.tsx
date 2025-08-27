@@ -16,6 +16,7 @@ import { CodeBlock as DefaultCodeBlock } from "./CodeBlock";
 
 interface ProseProps extends ComponentProps<"div"> {
   content: string;
+  partial?: boolean;
   components?: Partial<
     GlobalComponents & { markdown?: Partial<MarkdownComponents> }
   >;
@@ -46,6 +47,7 @@ const defaultMarkdownComponents: Partial<MarkdownComponents> = {
  */
 export function Prose({
   content,
+  partial,
   components,
   className,
   ...props
@@ -55,7 +57,8 @@ export function Prose({
       <Markdown
         content={content}
         components={{ ...defaultMarkdownComponents, ...components?.markdown }}
-        className={cn("lb-prose", className)}
+        className={cn("lb-root lb-prose", className)}
+        partial={partial}
         {...props}
       />
     </ComponentsProvider>

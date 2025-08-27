@@ -936,6 +936,101 @@ function Toolbar({ editor }: { editor: Editor | null }) {
 }
 ```
 
+#### Customization [#FloatingComposer-customization]
+
+The `FloatingComposer` components acts as a wrapper around a [`Composer`][],
+near the current selection. You can treat the component like you would a `form`,
+using classes, listeners, and more.
+
+```tsx
+<FloatingComposer
+  editor={editor}
+  style={{ width: "350px" }}
+  className="my-floating-composer"
+/>
+```
+
+To apply styling to the composer, you can pass a custom `Composer` property to
+`components` and modify this in any way.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+<FloatingComposer
+  editor={editor}
+  style={{ width: "350px" }}
+  // +++
+  components={{
+    Composer: (props) => (
+      <Composer
+        {...props}
+        className="border shadow"
+        style={{ width: "300px" }}
+      />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Composer`, up to a full custom `Composer` component built using
+our
+[Composer primitives](/docs/api-reference/liveblocks-react-ui#primitives-Composer).
+
+```tsx
+import { Composer } from "@liveblocks/react-ui/primitives";
+
+<FloatingComposer
+  editor={editor}
+  style={{ width: "350px" }}
+  components={{
+    Composer: ({ onComposerSubmit }) => (
+      // +++
+      <Composer.Form onComposerSubmit={onComposerSubmit}>
+        <Composer.Editor />
+        <Composer.Submit>Send</Composer.Submit>
+      </Composer.Form>
+      // +++
+    ),
+  }}
+/>;
+```
+
+You can also customize submission behavior by passing a custom
+`onComposerSubmit` function to the `Composer.Form` component.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui/primitives";
+
+<FloatingComposer
+  editor={editor}
+  style={{ width: "350px" }}
+  components={{
+    Composer: () => (
+        <Composer.Form
+        // +++
+          onComposerSubmit={(message, event) => {
+            event.preventDefault();
+
+            const thread = createThread({
+              body: comment.body,
+              attachments: comment.attachments,
+              metadata: ...,
+            });
+
+            editor.commands.addComment(thread.id);
+          }}
+          // +++
+        >
+          <Composer.Editor />
+          <Composer.Submit>Send</Composer.Submit>
+        </Composer.Form>
+      ),
+  }}
+/>;
+```
+
 #### Props [#FloatingComposer-props]
 
 <PropertiesList>
@@ -978,6 +1073,19 @@ function Toolbar({ editor }: { editor: Editor | null }) {
     type="Partial<GlobalOverrides & ComposerOverrides>"
   >
     Override the component’s strings.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<FloatingComposerComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Composer"
+    type="(props: ComposerProps) => ReactNode"
+  >
+    Override the [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer)
+    component.
   </PropertiesListItem>
 </PropertiesList>
 

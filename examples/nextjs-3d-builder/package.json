@@ -9,8 +9,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^3.0.0",
-    "@liveblocks/react": "^3.0.0",
+    "@liveblocks/client": "^3.3.0",
+    "@liveblocks/react": "^3.3.0",
     "@react-three/drei": "^9.16.0",
     "@react-three/fiber": "^8.0.27",
     "next": "^12.1.6",

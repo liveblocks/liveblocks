@@ -142,7 +142,7 @@ function MyComposer() {
     { body }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
-    event.preventdefault();
+    event.preventDefault();
 
     const thread = createThread({
       body,

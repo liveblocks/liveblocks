@@ -15,4 +15,10 @@ module.exports = [
     message:
       "useLayoutEffect triggers a warning when executed on the server on React <=18.2.0. Import it from '@liveblocks/react/_private' instead.",
   },
+  {
+    selector:
+      "ImportDeclaration[source.value='vitest'] ImportSpecifier[imported.name='it']",
+    message:
+      "Import 'test' instead of 'it' from vitest.",
+  },
 ];

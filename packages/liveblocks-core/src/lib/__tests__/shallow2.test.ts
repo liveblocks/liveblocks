@@ -1,3 +1,5 @@
+import { describe, expect, test } from "vitest";
+
 import { shallow, shallow2 } from "../shallow";
 
 const THING1 = { a: 1 };

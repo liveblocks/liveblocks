@@ -6,6 +6,7 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import type {
+  AiUserMessage,
   AsyncResult,
   BaseRoomInfo,
   CopilotId,
@@ -16,9 +17,11 @@ import type {
   OpaqueClient,
   PartialNotificationSettings,
   SyncStatus,
+  WithRequired,
 } from "@liveblocks/core";
 import {
   assert,
+  console,
   createClient,
   HttpError,
   kInternal,
@@ -56,23 +59,30 @@ import type {
   AiChatMessagesAsyncSuccess,
   AiChatsAsyncResult,
   AiChatsAsyncSuccess,
+  CreateAiChatOptions,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   NotificationSettingsAsyncResult,
   NotificationSettingsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
+  SendAiMessageOptions,
   SharedContextBundle,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
   UnreadInboxNotificationsCountAsyncResult,
+  UseAiChatsOptions,
   UserAsyncResult,
   UserAsyncSuccess,
   UseSendAiMessageOptions,
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
-import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
+import {
+  makeAiChatsQueryKey,
+  makeUserThreadsQueryKey,
+  UmbrellaStore,
+} from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
@@ -960,14 +970,16 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
  * @example
  * const { chats } = useAiChats();
  */
-function useAiChats(): AiChatsAsyncResult {
+function useAiChats(options?: UseAiChatsOptions): AiChatsAsyncResult {
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
+
+  const queryKey = makeAiChatsQueryKey(options?.query);
 
   useEnsureAiConnection(client);
 
   useEffect(
-    () => void store.outputs.aiChats.waitUntilLoaded()
+    () => void store.outputs.aiChats.getOrCreate(queryKey).waitUntilLoaded()
 
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -979,10 +991,14 @@ function useAiChats(): AiChatsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  return useSignal(store.outputs.aiChats.signal, identity, shallow);
+  return useSignal(
+    store.outputs.aiChats.getOrCreate(queryKey).signal,
+    identity,
+    shallow
+  );
 }
 
-function useAiChatsSuspense(): AiChatsAsyncSuccess {
+function useAiChatsSuspense(options?: UseAiChatsOptions): AiChatsAsyncSuccess {
   // Throw error if we're calling this hook server side
   ensureNotServerSide();
 
@@ -991,9 +1007,11 @@ function useAiChatsSuspense(): AiChatsAsyncSuccess {
 
   useEnsureAiConnection(client);
 
-  use(store.outputs.aiChats.waitUntilLoaded());
+  const queryKey = makeAiChatsQueryKey(options?.query);
 
-  const result = useAiChats();
+  use(store.outputs.aiChats.getOrCreate(queryKey).waitUntilLoaded());
+
+  const result = useAiChats(options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
@@ -1106,17 +1124,25 @@ function useAiChatSuspense(chatId: string): AiChatAsyncSuccess {
  *
  * @example
  * const createAiChat = useCreateAiChat();
+ *
+ * // Create a chat with an automatically generated title
+ * createAiChat("ai-chat-id");
+ *
+ * // Create a chat with a custom title
  * createAiChat({ id: "ai-chat-id", title: "My AI chat" });
  */
-function useCreateAiChat() {
+function useCreateAiChat(): {
+  (chatId: string): void;
+  (options: CreateAiChatOptions): void;
+} {
   const client = useClient();
 
   return useCallback(
-    (options: {
-      id: string;
-      title?: string;
-      metadata?: Record<string, string | string[]>;
-    }) => {
+    (options: string | CreateAiChatOptions) => {
+      if (typeof options === "string") {
+        options = { id: options };
+      }
+
       client[kInternal].ai
         .getOrCreateChat(options.id, {
           title: options.title,
@@ -1158,54 +1184,165 @@ function useDeleteAiChat() {
  * Returns a function to send a message in an AI chat.
  *
  * @example
- * const sendMessage = useSendAiMessage(chatId);
- * sendMessage("Hello, Liveblocks AI!");
+ * const sendAiMessage = useSendAiMessage("chat-id");
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage("chat-id", { copilotId: "co_xxx" });
+ * sendAiMessage({ text: "Hello, Liveblocks AI!", copilotId: "co_yyy" });
  */
 function useSendAiMessage(
   chatId: string,
   options?: UseSendAiMessageOptions
-): (message: string) => void {
+): {
+  (text: string): AiUserMessage;
+  (options: SendAiMessageOptions): AiUserMessage;
+};
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+ */
+function useSendAiMessage(): (
+  options: WithRequired<SendAiMessageOptions, "chatId">
+) => AiUserMessage;
+
+/**
+ * Returns a function to send a message in an AI chat.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId);
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can set options related to the message being sent, such as the copilot ID to use.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage(chatId, { copilotId: "co_xxx" });
+ * sendAiMessage("Hello, Liveblocks AI!");
+ *
+ * You can also pass the chat ID dynamically if it's not known when calling the hook.
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!" });
+ *
+ * @example
+ * const sendAiMessage = useSendAiMessage();
+ * sendAiMessage({ chatId: "chat-id", text: "Hello, Liveblocks AI!", copilotId: "co_xxx" });
+ */
+function useSendAiMessage(
+  chatId?: string,
+  options?: UseSendAiMessageOptions
+): {
+  (text: string): AiUserMessage;
+  (options: SendAiMessageOptions): AiUserMessage;
+  (options: WithRequired<SendAiMessageOptions, "chatId">): AiUserMessage;
+} {
   const client = useClient();
-  const copilotId = options?.copilotId;
 
   return useCallback(
-    (message: string) => {
+    (message: string | SendAiMessageOptions) => {
+      const {
+        text: messageText,
+        chatId: messageOptionsChatId,
+        copilotId: messageOptionsCopilotId,
+        ...messageOptions
+      } = typeof message === "string" ? { text: message } : message;
+      const resolvedChatId =
+        messageOptionsChatId ??
+        chatId ??
+        // The `useSendAiMessage` overloads prevent this scenario from happening
+        // at the type level, and this error prevents it from happening at runtime.
+        raise(
+          "chatId must be provided to either `useSendAiMessage` or its returned function."
+        );
+
       const messages = client[kInternal].ai.signals
-        .getChatMessagesForBranchΣ(chatId)
+        .getChatMessagesForBranchΣ(resolvedChatId)
         .get();
+
+      if (
+        process.env.NODE_ENV !== "production" &&
+        !messageOptionsCopilotId &&
+        !options?.copilotId
+      ) {
+        console.warn(
+          `No copilot ID was provided to useSendAiMessage when sending the message "${messageText.slice(
+            0,
+            20
+          )}…". As a result, the message will use the chat's previous copilot ID, which could lead to unexpected behavior.\nTo ensure the correct copilot ID is used, specify it either through the hook as 'useSendAiMessage("${resolvedChatId}", { copilotId: "co_xxx" })' or via the function as 'sendAiMessage({ text: "${messageText.slice(
+            0,
+            20
+          )}…", copilotId: "co_xxx" })'`
+        );
+      }
+      const resolvedCopilotId = (messageOptionsCopilotId ??
+        options?.copilotId ??
+        client[kInternal].ai.getLastUsedCopilotId(resolvedChatId)) as
+        | CopilotId
+        | undefined;
 
       const lastMessageId = messages[messages.length - 1]?.id ?? null;
 
-      const content = [{ type: "text" as const, text: message }];
+      const content = [{ type: "text" as const, text: messageText }];
       const newMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
-        chatId,
+        resolvedChatId,
         "user",
         lastMessageId,
         content
       );
+      const newMessage = client[kInternal].ai[
+        kInternal
+      ].context.messagesStore.getMessageById(newMessageId) as AiUserMessage;
 
       const targetMessageId = client[kInternal].ai[
         kInternal
       ].context.messagesStore.createOptimistically(
-        chatId,
+        resolvedChatId,
         "assistant",
-        newMessageId
+        newMessageId,
+        resolvedCopilotId as CopilotId
       );
 
       void client[kInternal].ai.askUserMessageInChat(
-        chatId,
+        resolvedChatId,
         { id: newMessageId, parentMessageId: lastMessageId, content },
         targetMessageId,
         {
-          stream: options?.stream,
-          copilotId: copilotId as CopilotId | undefined,
-          timeout: options?.timeout,
+          stream: messageOptions.stream ?? options?.stream,
+          copilotId: resolvedCopilotId,
+          timeout: messageOptions.timeout ?? options?.timeout,
+          knowledge: messageOptions.knowledge ?? options?.knowledge,
         }
       );
+
+      return newMessage;
     },
-    [client, chatId, copilotId, options?.stream, options?.timeout]
+    [
+      client,
+      chatId,
+      options?.copilotId,
+      options?.stream,
+      options?.timeout,
+      options?.knowledge,
+    ]
   );
 }
 
