@@ -18,7 +18,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
   },
-  KnowledgeRetrievalPart: () => null,
+  RetrievalPart: () => null,
   ToolInvocationPart: ({ part, message }) => {
     return (
       <ErrorBoundary fallback={null}>
@@ -45,7 +45,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
     const {
       TextPart,
       ReasoningPart,
-      KnowledgeRetrievalPart,
+      RetrievalPart,
       ToolInvocationPart,
     } = useMemo(
       () => ({ ...defaultMessageContentComponents, ...components }),
@@ -82,7 +82,7 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
                 part.name === "lbGetInformation"
               ) {
                 return (
-                  <KnowledgeRetrievalPart
+                  <RetrievalPart
                     key={index}
                     search={part.args?.question as string}
                     stage={part.stage}

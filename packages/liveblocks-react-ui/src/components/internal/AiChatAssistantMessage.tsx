@@ -20,7 +20,7 @@ import {
 import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
-  AiMessageContentKnowledgeRetrievalPartProps,
+  AiMessageContentRetrievalPartProps,
   AiMessageContentReasoningPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
@@ -165,7 +165,7 @@ function AssistantMessageContent({
           <ReasoningPart {...props} components={components} />
         ),
         ToolInvocationPart,
-        KnowledgeRetrievalPart,
+        RetrievalPart,
       }}
       className="lb-ai-chat-message-content"
     />
@@ -260,12 +260,12 @@ function ToolInvocationPart({
 }
 
 /* -------------------------------------------------------------------------------------------------
- * KnowledgeRetrievalPart
+ * RetrievalPart
  * -----------------------------------------------------------------------------------------------*/
-function KnowledgeRetrievalPart({
+function RetrievalPart({
   search,
   stage,
-}: AiMessageContentKnowledgeRetrievalPartProps) {
+}: AiMessageContentRetrievalPartProps) {
   const isPending = stage === "receiving" || stage === "executing";
   return (
     <div
