@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v3.4.2
+
+### `@liveblocks/react-ui`
+
+- Fix improved Markdown streaming in `AiChat` only being enabled in reasoning
+  blocks, it’s now enabled for all Markdown.
+
 ## v3.4.1
 
 ### `@liveblocks/core`
