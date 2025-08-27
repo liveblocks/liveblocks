@@ -237,26 +237,49 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
  * CitationPart
  * -----------------------------------------------------------------------------------------------*/
 function CitationPart({ part }: AiMessageContentCitationPartProps) {
-  return <pre>Implement Citation UI here. {JSON.stringify(part, null, 2)}</pre>;
+  return (
+    <pre style={{ background: "hotpink" }}>
+      Implement Citation UI here. {JSON.stringify(part, null, 2)}
+    </pre>
+  );
 }
 
 /* -------------------------------------------------------------------------------------------------
  * RetrievalPart
  * -----------------------------------------------------------------------------------------------*/
 function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
-  // const isPending = status === "pending";
-  // <div
-  //   className={cn(
-  //     "lb-ai-chat-message-knowledge",
-  //     isPending && "lb-ai-chat-pending"
-  //   )}
-  // >
-  //   {isPending ? "Searching" : "Searched"} for{" "}
-  //   <span className="lb-ai-chat-message-knowledge-search">{query}</span>
-  //   {isPending ? "…" : null}
-  // </div>
+  const isPending = !part.endedAt;
+
+  const startedAt = new Date(part.startedAt).getTime();
+  const endedAt = part.endedAt ? new Date(part.endedAt).getTime() : Date.now();
+
+  // The elapsed time for this retrieval in seconds
+  const elapsedSeconds = (endedAt - startedAt) / 1000;
+
+  // Only show time if it's longer than 3 seconds
+  const shouldShowTime =
+    // Debugging currently
+    true; // Restore to: elapsedSeconds !== null && elapsedSeconds > 3 ?
+
   return (
-    <pre>Implement Retrieval UI here. {JSON.stringify(part, null, 2)}</pre>
+    <div
+      className={cn(
+        "lb-ai-chat-message-knowledge",
+        isPending && "lb-ai-chat-pending"
+      )}
+    >
+      {isPending ? "Searching" : "Searched"} for{" "}
+      <span className="lb-ai-chat-message-knowledge-search">{part.query}</span>
+      {isPending ? (
+        // Should we show a live timer (eg 3s, 4s, 5s, etc) here instead?
+        "…"
+      ) : shouldShowTime ? (
+        <span className="lb-ai-chat-message-knowledge-time">
+          {" "}
+          ({elapsedSeconds}s)
+        </span>
+      ) : null}
+    </div>
   );
 }
 
