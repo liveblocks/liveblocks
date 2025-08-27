@@ -85,6 +85,8 @@ To implement your back end, follow these steps:
       publicly visible to all other people in the room. Useful for
       metadata like the user’s full name, or their avatar URL.
 
+      The `tenantId` (optional) is the tenant for this session, will be set to `default` if not provided.
+
     </StepContent>
 
   </Step>
@@ -323,6 +325,9 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
       roomType: "whiteboard",
     },
   },
+
+  // Optional, filter for rooms that are created for a specific tenant
+  tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",

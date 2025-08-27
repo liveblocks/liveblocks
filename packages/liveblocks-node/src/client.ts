@@ -120,7 +120,9 @@ type DateToString<T> = {
 
 export type CreateSessionOptions<U extends BaseUserMeta = DU> =
   //
-  PartialUnless<U["info"], { userInfo: U["info"] }>;
+  PartialUnless<U["info"], { userInfo: U["info"] }> & {
+    tenantId?: string;
+  };
 
 export type IdentifyUserOptions<U extends BaseUserMeta = DU> =
   //
@@ -478,6 +480,8 @@ export class Liveblocks {
    * uniquely identify the user account in your system. The uniqueness of this
    * value will determine how many MAUs will be counted/billed.
    *
+   * @param tenantId (optional) The tenant ID to authorize the user for.
+   *
    * @param options.userInfo Custom metadata to attach to this user. Data you
    * add here will be visible to all other clients in the room, through the
    * `other.info` property.
@@ -491,7 +495,12 @@ export class Liveblocks {
     >
   ): Session {
     const options = rest[0];
-    return new Session(this.#post.bind(this), userId, options?.userInfo);
+    return new Session(
+      this.#post.bind(this),
+      userId,
+      options?.userInfo,
+      options?.tenantId
+    );
   }
 
   /**
@@ -584,6 +593,7 @@ export class Liveblocks {
    * @param params.userId (optional) A filter on users accesses.
    * @param params.metadata (optional) A filter on metadata. Multiple metadata keys can be used to filter rooms.
    * @param params.groupIds (optional) A filter on groups accesses. Multiple groups can be used.
+   * @param params.tenantId (optional) A filter on tenant ID.
    * @param params.query (optional) A query to filter rooms by. It is based on our query language. You can filter by metadata and room ID.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns A list of rooms.
@@ -708,6 +718,7 @@ export class Liveblocks {
    * @param params.groupsAccesses (optional) The group accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.usersAccesses (optional) The user accesses for the room if the room will be created. Can contain a maximum of 100 entries. Key length has a limit of 40 characters.
    * @param params.metadata (optional) The metadata for the room if the room will be created. Supports upto a maximum of 50 entries. Key length has a limit of 40 characters. Value length has a limit of 256 characters.
+   * @param params.tenantId (optional) The tenant ID to create the room for.
    * @param options.signal (optional) An abort signal to cancel the request.
    * @returns The room.
    */
