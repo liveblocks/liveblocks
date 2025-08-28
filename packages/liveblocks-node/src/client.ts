@@ -173,12 +173,13 @@ export type AiCopilot = {
   type: "copilot";
   id: string;
   name: string;
-  description?: string;
   systemPrompt: string;
   knowledgePrompt?: string;
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
   lastUsedAt?: Date;
+  providerModel: string;
   providerOptions?: Record<string, Record<string, string | Json>>;
   settings?: {
     maxTokens?: number;
@@ -199,7 +200,6 @@ export type AiCopilot = {
       provider: "openai-compatible";
       compatibleProviderName: string;
       providerBaseUrl: string;
-      providerModel: string;
     }
 );
 
@@ -373,6 +373,8 @@ type ProviderSettings = {
 
 export type CreateAiCopilotOptions = {
   name: string;
+  providerApiKey: string;
+  providerModel: string;
   description?: string;
   systemPrompt: string;
   knowledgePrompt?: string;
@@ -381,7 +383,6 @@ export type CreateAiCopilotOptions = {
 } & (
   | {
       provider: "openai" | "anthropic" | "google";
-      providerModel: string;
     }
   | {
       provider: "openai-compatible";
@@ -392,23 +393,23 @@ export type CreateAiCopilotOptions = {
 
 export type UpdateAiCopilotOptions = {
   name?: string;
-  description?: string;
+  providerApiKey?: string;
+  providerModel?: string;
+  description?: string | null;
   systemPrompt?: string;
-  knowledgePrompt?: string;
-  providerOptions?: Record<string, Record<string, string | Json>>;
-  settings?: ProviderSettings;
+  knowledgePrompt?: string | null;
+  providerOptions?: Record<string, Record<string, string | Json>> | null;
+  settings?: ProviderSettings | null;
 } & (
   | {
       provider?: "openai" | "anthropic" | "google";
-      providerModel?: string;
-      compatibleProviderName?: never;
-      providerBaseUrl?: never;
+      compatibleProviderName?: null;
+      providerBaseUrl?: null;
     }
   | {
       provider?: "openai-compatible";
       compatibleProviderName?: string;
       providerBaseUrl?: string;
-      providerModel?: never;
     }
 );
 
@@ -421,7 +422,6 @@ export type CreateWebKnowledgeSourceOptions = {
 export type CreateFileKnowledgeSourceOptions = {
   copilotId: string;
   file: File;
-  name: string;
 };
 
 export type GetKnowledgeSourcesOptions = {
@@ -2632,7 +2632,7 @@ export class Liveblocks {
     params: UpdateAiCopilotOptions,
     options?: RequestOptions
   ): Promise<AiCopilot> {
-    const res = await this.#put(
+    const res = await this.#post(
       url`/v2/ai/copilots/${copilotId}`,
       params,
       options
@@ -2698,12 +2698,13 @@ export class Liveblocks {
     const res = await fetch(
       urljoin(
         this.#baseUrl,
-        url`/v2/ai/copilots/${params.copilotId}/knowledge/file/${params.name}`
+        url`/v2/ai/copilots/${params.copilotId}/knowledge/file/${params.file.name}`
       ),
       {
         method: "PUT",
         body: params.file,
         headers: {
+          Authorization: `Bearer ${this.#secret}`,
           "Content-Type": params.file.type,
           "Content-Length": String(params.file.size),
         },

@@ -2446,6 +2446,7 @@ const copilot = await liveblocks.createAiCopilot({
   systemPrompt: "You are a helpful AI assistant for our team.",
   provider: "openai",
   providerModel: "gpt-4",
+  providerApiKey: "sk-...", // Your OpenAI API key
 });
 
 // { type: "copilot", id: "co_abc123...", name: "My AI Assistant", ... }
@@ -2475,6 +2476,9 @@ const copilot = await liveblocks.createAiCopilot({
   // Required for standard providers, the model to use
   providerModel: "gpt-4-turbo",
 
+  // Required, your API key for the provider
+  providerApiKey: "sk-...",
+
   // Optional, provider-specific options
   providerOptions: {},
 
@@ -2501,6 +2505,7 @@ const copilot = await liveblocks.createAiCopilot({
   provider: "openai-compatible",
   compatibleProviderName: "my-custom-provider",
   providerBaseUrl: "https://api.mycustomprovider.com/v1",
+  providerApiKey: "your-api-key-here", // Your API key for the custom provider
   // Note: providerModel is not used with openai-compatible providers
 });
 ```
@@ -2629,15 +2634,13 @@ wrapper around the
 [Create File Knowledge Source API](/docs/api-reference/rest-api-endpoints#create-file-knowledge-source)
 and returns the ID of the created knowledge source.
 
-```ts
-const file = new File(["Hello world"], "document.txt", {
-  type: "text/plain",
-});
+**Note:** Currently only PDF files (`application/pdf`) and images (`image/*`)
+are supported.
 
+```ts
 const { id } = await liveblocks.createFileKnowledgeSource({
   copilotId: "co_abc123...",
-  file: file,
-  name: "Important Document",
+  file: pdfFile, // Must be a PDF or image file
 });
 
 // "ks_ghi789..."

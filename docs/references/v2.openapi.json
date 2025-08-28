@@ -3890,7 +3890,7 @@
         },
         "operationId": "get-ai-copilot"
       },
-      "put": {
+      "post": {
         "summary": "Update AI copilot",
         "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).",
         "tags": ["AI"],
@@ -5436,6 +5436,9 @@
           "name": {
             "type": "string"
           },
+          "providerApiKey": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -5504,6 +5507,9 @@
         "type": "object",
         "properties": {
           "name": {
+            "type": "string"
+          },
+          "providerApiKey": {
             "type": "string"
           },
           "description": {

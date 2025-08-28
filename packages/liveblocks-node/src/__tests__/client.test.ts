@@ -2365,6 +2365,7 @@ describe("client", () => {
       name: "Test Copilot",
       description: "A test AI copilot",
       systemPrompt: "You are a helpful assistant",
+      providerModel: "gpt-4o",
       knowledgePrompt: "Use the provided knowledge",
       provider: "openai",
       providerOptions: {},
@@ -2460,7 +2461,8 @@ describe("client", () => {
           systemPrompt: "You are a helpful assistant",
           knowledgePrompt: "Use the provided knowledge",
           provider: "openai" as const,
-          providerModel: "gpt-4",
+          providerApiKey: "sk_xxx",
+          providerModel: "gpt-4o",
           settings: {
             maxTokens: 1000,
             temperature: 0.7,
@@ -2501,6 +2503,7 @@ describe("client", () => {
           await client.createAiCopilot({
             name: "Test",
             systemPrompt: "Test",
+            providerApiKey: "sk_xxx",
             provider: "openai",
             providerModel: "gpt-4",
           });
@@ -2530,14 +2533,9 @@ describe("client", () => {
       });
 
       test("should throw a LiveblocksError when getAiCopilot receives an error response", async () => {
-        const error = {
-          error: "COPILOT_NOT_FOUND",
-          message: "Copilot not found",
-        };
-
         server.use(
           http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
-            return HttpResponse.json(error, { status: 404 });
+            return new HttpResponse(null, { status: 404 });
           })
         );
 
@@ -2550,7 +2548,6 @@ describe("client", () => {
           expect(err instanceof LiveblocksError).toBe(true);
           if (err instanceof LiveblocksError) {
             expect(err.status).toBe(404);
-            expect(err.message).toBe("Copilot not found");
           }
         }
       });
@@ -2570,7 +2567,7 @@ describe("client", () => {
         };
 
         server.use(
-          http.put(
+          http.post(
             `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`,
             async ({ request }) => {
               const data = await request.json();
@@ -2586,14 +2583,9 @@ describe("client", () => {
       });
 
       test("should throw a LiveblocksError when updateAiCopilot receives an error response", async () => {
-        const error = {
-          error: "COPILOT_NOT_FOUND",
-          message: "Copilot not found",
-        };
-
         server.use(
-          http.put(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
-            return HttpResponse.json(error, { status: 404 });
+          http.post(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
           })
         );
 
@@ -2606,7 +2598,6 @@ describe("client", () => {
           expect(err instanceof LiveblocksError).toBe(true);
           if (err instanceof LiveblocksError) {
             expect(err.status).toBe(404);
-            expect(err.message).toBe("Copilot not found");
           }
         }
       });
@@ -2626,14 +2617,9 @@ describe("client", () => {
       });
 
       test("should throw a LiveblocksError when deleteAiCopilot receives an error response", async () => {
-        const error = {
-          error: "COPILOT_NOT_FOUND",
-          message: "Copilot not found",
-        };
-
         server.use(
           http.delete(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
-            return HttpResponse.json(error, { status: 404 });
+            return new HttpResponse(null, { status: 404 });
           })
         );
 
@@ -2646,7 +2632,6 @@ describe("client", () => {
           expect(err instanceof LiveblocksError).toBe(true);
           if (err instanceof LiveblocksError) {
             expect(err.status).toBe(404);
-            expect(err.message).toBe("Copilot not found");
           }
         }
       });
@@ -2771,7 +2756,6 @@ describe("client", () => {
         const client = new Liveblocks({ secret: "sk_xxx" });
         const result = await client.createFileKnowledgeSource({
           copilotId: "copilot_123",
-          name: "test.pdf",
           file,
         });
         expect(result).toEqual({ id: "ks_file_123" });
@@ -2801,7 +2785,6 @@ describe("client", () => {
         try {
           await client.createFileKnowledgeSource({
             copilotId: "copilot_123",
-            name: "test.pdf",
             file,
           });
           expect(true).toBe(false);
