@@ -375,7 +375,7 @@ describe("stringifyCommentBody", () => {
     );
   });
 
-  test("should escape html entities - mention w/ username", async () => {
+  test("should escape html entities - mention w/ name", async () => {
     const commentBodyHtml: CommentBody = {
       version: 1,
       content: [

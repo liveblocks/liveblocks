@@ -15,6 +15,7 @@ import {
   commentBodyWithHtml2,
   commentBodyWithInvalidUrls,
   commentBodyWithValidUrls,
+  resolveGroupsInfo,
   resolveUsers,
 } from "./_helpers";
 
@@ -126,25 +127,67 @@ describe("convert comment body", () => {
     expect(body).toEqual(expected);
   });
 
-  test("should convert with user mention", async () => {
+  test("should convert with mentions", async () => {
     const body = await convertCommentBody(
-      buildCommentBodyWithMention({ mentionedUserId: "user-dracula" }),
+      {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Hello" },
+              { text: " " },
+              { type: "mention", kind: "user", id: "user-dracula" },
+              { text: " and " },
+              {
+                type: "mention",
+                kind: "group",
+                id: "here",
+                userIds: ["user-0", "user-1"],
+              },
+              { text: "!" },
+            ],
+          },
+        ],
+      },
       { elements }
     );
-    const expected = "<p>Hello <span data-mention>@user-dracula</span> !</p>";
+    const expected =
+      "<p>Hello <span data-mention>@user-dracula</span> and <span data-mention>@here</span>!</p>";
 
     expect(body).toEqual(expected);
   });
 
-  test("should convert with a resolved user mention", async () => {
+  test("should convert with resolved mentions", async () => {
     const body = await convertCommentBody(
-      buildCommentBodyWithMention({ mentionedUserId: "user-2" }),
+      {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Hello" },
+              { text: " " },
+              { type: "mention", kind: "user", id: "user-2" },
+              { text: ", " },
+              { type: "mention", kind: "user", id: "$unknownUser" },
+              { text: ", " },
+              { type: "mention", kind: "group", id: "group-1" },
+              { text: " and " },
+              { type: "mention", kind: "group", id: "$unknownGroup" },
+              { text: "!" },
+            ],
+          },
+        ],
+      },
       {
         elements,
         resolveUsers,
+        resolveGroupsInfo,
       }
     );
-    const expected = "<p>Hello <span data-mention>@Tatum Paolo</span> !</p>";
+    const expected =
+      "<p>Hello <span data-mention>@Tatum Paolo</span>, <span data-mention>@$unknownUser</span>, <span data-mention>@Design</span> and <span data-mention>@$unknownGroup</span>!</p>";
 
     expect(body).toEqual(expected);
   });
@@ -165,9 +208,9 @@ describe("convert comment body", () => {
       expect(body).toEqual(expected);
     });
 
-    test("should escape html entities in mention w/ username", async () => {
+    test("should escape html entities in mention w/ name", async () => {
       const body = await convertCommentBody(
-        buildCommentBodyWithMention({ mentionedUserId: "user-0" }),
+        buildCommentBodyWithMention({ kind: "user", id: "user-0" }),
         {
           elements,
           resolveUsers: ({ userIds }) => {

@@ -156,7 +156,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-dracula",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-mina" }),
         createdAt: new Date("2024-09-10T08:10:00.000Z"),
       });
       const comment2 = makeComment({
@@ -192,7 +192,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-dracula",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-mina" }),
         createdAt: new Date("2024-09-10T08:10:00.000Z"),
       });
       const comment2 = makeComment({
@@ -204,7 +204,7 @@ describe("thread notification", () => {
       const comment3 = makeComment({
         userId: "user-carmilla",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-mina" }),
         createdAt: new Date("2024-09-10T08:16:00.000Z"),
       });
 
@@ -234,7 +234,7 @@ describe("thread notification", () => {
       const comment = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const thread = makeThread({ threadId, comments: [comment] });
@@ -262,7 +262,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const comment2 = makeComment({
@@ -347,7 +347,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-dante" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-dante" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const comment2 = makeComment({
@@ -409,7 +409,7 @@ describe("thread notification", () => {
       const comment = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const thread = makeThread({ threadId, comments: [comment] });
