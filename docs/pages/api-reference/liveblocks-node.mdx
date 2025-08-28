@@ -2400,6 +2400,382 @@ await liveblocks.deleteNotificationSettings({
 });
 ```
 
+### AI Copilots
+
+#### Liveblocks.getAiCopilots [#get-ai-copilots]
+
+Returns a paginated list of AI copilots. The copilots are returned sorted by
+creation date, from newest to oldest. This is a wrapper around the
+[Get AI Copilots API](/docs/api-reference/rest-api-endpoints#get-ai-copilots)
+and returns the same response.
+
+```ts
+const { data: copilots, nextCursor } = await liveblocks.getAiCopilots();
+
+// A list of AI copilots
+// [{ type: "copilot", id: "co_abc123...", name: "My Copilot", ... }, ...]
+console.log(copilots);
+
+// A pagination cursor used for retrieving the next page of results with `startingAfter`
+// "L3YyL3Jvb21z..."
+console.log(nextCursor);
+```
+
+Pagination options are available to control the number of results returned.
+
+```ts
+const { data: copilots, nextCursor } = await liveblocks.getAiCopilots({
+  // Optional, the amount of copilots to load, between 1 and 100, defaults to 20
+  limit: 20,
+
+  // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
+  startingAfter: "L3YyL3Jvb21z...",
+});
+```
+
+#### Liveblocks.createAiCopilot [#create-ai-copilot]
+
+Creates a new AI copilot with the given configuration. This is a wrapper around
+the
+[Create AI Copilot API](/docs/api-reference/rest-api-endpoints#create-ai-copilot)
+and returns the same response.
+
+```ts
+const copilot = await liveblocks.createAiCopilot({
+  name: "My AI Assistant",
+  systemPrompt: "You are a helpful AI assistant for our team.",
+  provider: "openai",
+  providerModel: "gpt-4",
+  providerApiKey: "sk-...", // Your OpenAI API key
+});
+
+// { type: "copilot", id: "co_abc123...", name: "My AI Assistant", ... }
+console.log(copilot);
+```
+
+The method supports various configuration options for different AI providers.
+
+```ts
+const copilot = await liveblocks.createAiCopilot({
+  // Required, the name of the copilot
+  name: "Documentation Helper",
+
+  // Optional, a description of what the copilot does
+  description: "Helps users understand our documentation",
+
+  // Required, the system prompt that defines the copilot's behavior
+  systemPrompt:
+    "You are an expert at helping users understand technical documentation.",
+
+  // Optional, additional knowledge context for the copilot
+  knowledgePrompt: "Use our company's style guide when providing examples.",
+
+  // Required, the AI provider to use
+  provider: "openai",
+
+  // Required for standard providers, the model to use
+  providerModel: "gpt-4-turbo",
+
+  // Required, your API key for the provider
+  providerApiKey: "sk-...",
+
+  // Optional, provider-specific options
+  providerOptions: {},
+
+  // Optional, model settings
+  settings: {
+    maxTokens: 1000,
+    temperature: 0.7,
+    topP: 0.9,
+    frequencyPenalty: 0.1,
+    presencePenalty: 0.1,
+    stopSequences: ["END"],
+    seed: 42,
+    maxRetries: 3,
+  },
+});
+```
+
+For OpenAI-compatible providers, use a different configuration:
+
+```ts
+const copilot = await liveblocks.createAiCopilot({
+  name: "Custom AI Helper",
+  systemPrompt: "You are a helpful assistant.",
+  provider: "openai-compatible",
+  compatibleProviderName: "my-custom-provider",
+  providerBaseUrl: "https://api.mycustomprovider.com/v1",
+  providerApiKey: "your-api-key-here", // Your API key for the custom provider
+  // Note: providerModel is not used with openai-compatible providers
+});
+```
+
+#### Liveblocks.getAiCopilot [#get-ai-copilot]
+
+Returns an AI copilot by its ID. Throws an error if the copilot isn't found.
+This is a wrapper around the
+[Get AI Copilot API](/docs/api-reference/rest-api-endpoints#get-ai-copilot) and
+returns the same response.
+
+```ts
+const copilot = await liveblocks.getAiCopilot("co_abc123...");
+
+// { type: "copilot", id: "co_abc123...", name: "My AI Assistant", ... }
+console.log(copilot);
+```
+
+#### Liveblocks.updateAiCopilot [#update-ai-copilot]
+
+Updates an existing AI copilot's configuration. You only need to pass the
+properties you want to update. Throws an error if the copilot isn't found. This
+is a wrapper around the
+[Update AI Copilot API](/docs/api-reference/rest-api-endpoints#update-ai-copilot)
+and returns the same response.
+
+```ts
+const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
+  name: "Updated AI Assistant",
+  description: "Now with improved capabilities",
+});
+
+// { type: "copilot", id: "co_abc123...", name: "Updated AI Assistant", ... }
+console.log(updatedCopilot);
+```
+
+You can update various aspects of the copilot:
+
+```ts
+const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
+  // Optional, update the name
+  name: "Better AI Helper",
+
+  // Optional, update the description
+  description: "Enhanced with new features",
+
+  // Optional, update the system prompt
+  systemPrompt: "You are an even more helpful AI assistant.",
+
+  // Optional, update the knowledge prompt
+  knowledgePrompt: "Reference our latest guidelines.",
+
+  // Optional, update provider-specific options
+  providerOptions: {},
+
+  // Optional, update model settings
+  settings: {
+    temperature: 0.5,
+    maxTokens: 1500,
+  },
+});
+```
+
+#### Liveblocks.deleteAiCopilot [#delete-ai-copilot]
+
+Deletes an AI copilot by its ID. A deleted copilot is no longer accessible and
+cannot be restored. Throws an error if the copilot isn't found. This is a
+wrapper around the
+[Delete AI Copilot API](/docs/api-reference/rest-api-endpoints#delete-ai-copilot)
+and returns no response.
+
+```ts
+await liveblocks.deleteAiCopilot("co_abc123...");
+```
+
+### Knowledge Sources
+
+#### Liveblocks.createWebKnowledgeSource [#create-web-knowledge-source]
+
+Creates a web knowledge source for an AI copilot. This allows the copilot to
+access and learn from web content. This is a wrapper around the
+[Create Web Knowledge Source API](/docs/api-reference/rest-api-endpoints#create-web-knowledge-source)
+and returns the ID of the created knowledge source.
+
+```ts
+const { id } = await liveblocks.createWebKnowledgeSource({
+  copilotId: "co_abc123...",
+  url: "https://example.com/documentation",
+  type: "individual_link",
+});
+
+// "ks_def456..."
+console.log(id);
+```
+
+Different types of web knowledge sources are supported:
+
+```ts
+// Index a single web page
+const singlePage = await liveblocks.createWebKnowledgeSource({
+  copilotId: "co_abc123...",
+  url: "https://example.com/important-page",
+  type: "individual_link",
+});
+
+// Crawl an entire website
+const crawledSite = await liveblocks.createWebKnowledgeSource({
+  copilotId: "co_abc123...",
+  url: "https://example.com",
+  type: "crawl",
+});
+
+// Use a sitemap to index multiple pages
+const sitemapSource = await liveblocks.createWebKnowledgeSource({
+  copilotId: "co_abc123...",
+  url: "https://example.com/sitemap.xml",
+  type: "sitemap",
+});
+```
+
+#### Liveblocks.createFileKnowledgeSource [#create-file-knowledge-source]
+
+Creates a file knowledge source for an AI copilot by uploading a file. The
+copilot can then reference the content of the file when responding. This is a
+wrapper around the
+[Create File Knowledge Source API](/docs/api-reference/rest-api-endpoints#create-file-knowledge-source)
+and returns the ID of the created knowledge source.
+
+**Note:** Currently only PDF files (`application/pdf`) and images (`image/*`)
+are supported.
+
+```ts
+const { id } = await liveblocks.createFileKnowledgeSource({
+  copilotId: "co_abc123...",
+  file: pdfFile, // Must be a PDF or image file
+});
+
+// "ks_ghi789..."
+console.log(id);
+```
+
+#### Liveblocks.getKnowledgeSources [#get-knowledge-sources]
+
+Returns a paginated list of knowledge sources for a specific AI copilot. This is
+a wrapper around the
+[Get Knowledge Sources API](/docs/api-reference/rest-api-endpoints#get-knowledge-sources)
+and returns the same response.
+
+```ts
+const { data: sources, nextCursor } = await liveblocks.getKnowledgeSources({
+  copilotId: "co_abc123...",
+});
+
+// [{ type: "ai-knowledge-web-source", id: "ks_abc123...", ... }, ...]
+console.log(sources);
+```
+
+Pagination options are available:
+
+```ts
+const { data: sources, nextCursor } = await liveblocks.getKnowledgeSources({
+  copilotId: "co_abc123...",
+  // Optional, the amount of knowledge sources to load, between 1 and 100, defaults to 20
+  limit: 20,
+  // Optional, cursor used for pagination
+  startingAfter: "L3YyL3Jvb21z...",
+});
+```
+
+#### Liveblocks.getKnowledgeSource [#get-knowledge-source]
+
+Returns a specific knowledge source by its ID. Throws an error if the knowledge
+source isn't found. This is a wrapper around the
+[Get Knowledge Source API](/docs/api-reference/rest-api-endpoints#get-knowledge-source)
+and returns the same response.
+
+```ts
+const source = await liveblocks.getKnowledgeSource({
+  copilotId: "co_abc123...",
+  knowledgeSourceId: "ks_def456...",
+});
+
+// { type: "ai-knowledge-web-source", id: "ks_def456...", ... }
+// or { type: "ai-knowledge-file-source", id: "ks_def456...", ... }
+console.log(source);
+```
+
+#### Liveblocks.getFileKnowledgeSourceMarkdown [#get-file-knowledge-source-markdown]
+
+Returns the content of a file knowledge source as Markdown. This allows you to
+see what content the AI copilot has access to from uploaded files. Throws an
+error if the knowledge source isn't found. This is a wrapper around the
+[Get File Knowledge Source Content API](/docs/api-reference/rest-api-endpoints#get-file-knowledge-source-content)
+and returns the content as a string.
+
+```ts
+const content = await liveblocks.getFileKnowledgeSourceMarkdown({
+  copilotId: "co_abc123...",
+  knowledgeSourceId: "ks_def456...",
+});
+
+// "# Document Title\n\nThis is the content of the uploaded file..."
+console.log(content);
+```
+
+#### Liveblocks.getWebKnowledgeSourceLinks [#get-web-knowledge-source-links]
+
+Returns a paginated list of links that were indexed from a web knowledge source.
+This is useful for understanding what content the AI copilot has access to from
+web sources. This is a wrapper around the
+[Get Web Knowledge Source Links API](/docs/api-reference/rest-api-endpoints#get-web-knowledge-source-links)
+and returns the same response.
+
+```ts
+const { data: links, nextCursor } = await liveblocks.getWebKnowledgeSourceLinks(
+  {
+    copilotId: "co_abc123...",
+    knowledgeSourceId: "ks_def456...",
+  }
+);
+
+// [{ id: "link_123...", url: "https://example.com/page1", status: "ready", ... }, ...]
+console.log(links);
+```
+
+Pagination options are available:
+
+```ts
+const { data: links, nextCursor } = await liveblocks.getWebKnowledgeSourceLinks(
+  {
+    copilotId: "co_abc123...",
+    knowledgeSourceId: "ks_def456...",
+    // Optional, the amount of links to load, between 1 and 100, defaults to 20
+    limit: 20,
+    // Optional, cursor used for pagination
+    startingAfter: "L3YyL3Jvb21z...",
+  }
+);
+```
+
+#### Liveblocks.deleteWebKnowledgeSource [#delete-web-knowledge-source]
+
+Deletes a web knowledge source from an AI copilot. The copilot will no longer
+have access to the content from this source. Throws an error if the knowledge
+source isn't found. This is a wrapper around the
+[Delete Web Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-web-knowledge-source)
+and returns no response.
+
+```ts
+await liveblocks.deleteWebKnowledgeSource({
+  copilotId: "co_abc123...",
+  knowledgeSourceId: "ks_def456...",
+});
+```
+
+#### Liveblocks.deleteFileKnowledgeSource [#delete-file-knowledge-source]
+
+Deletes a file knowledge source from an AI copilot. The copilot will no longer
+have access to the content from this file. Throws an error if the knowledge
+source isn't found. This is a wrapper around the
+[Delete File Knowledge Source API](/docs/api-reference/rest-api-endpoints#delete-file-knowledge-source)
+and returns no response.
+
+```ts
+await liveblocks.deleteFileKnowledgeSource({
+  copilotId: "co_abc123...",
+  knowledgeSourceId: "ks_def456...",
+});
+```
+
 ### Error handling [#error-handling]
 
 Errors in our API methods, such as network failures, invalid arguments, or
