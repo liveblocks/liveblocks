@@ -1,3 +1,4 @@
+import { assertNever, type MentionData } from "@liveblocks/core";
 import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 
@@ -66,6 +67,7 @@ export interface SerializedTiptapGroupMentionNode
   attrs: {
     id: string;
     notificationId: string;
+    userIds: string | undefined;
   };
 }
 
@@ -219,7 +221,8 @@ export const flattenTiptapTree = (
       isSerializedEmptyParagraphNode(node) ||
       isSerializedHardBreakNode(node) ||
       isSerializedTextNode(node) ||
-      isSerializedMentionNode(node)
+      isSerializedMentionNode(node) ||
+      isSerializedGroupMentionNode(node)
     ) {
       flattenNodes = [...flattenNodes, node];
     } else if (isSerializedParagraphNode(node)) {
@@ -256,11 +259,9 @@ export type TiptapMentionNodeWithContext = {
  */
 export function findTiptapMentionNodeWithContext({
   root,
-  mentionedId,
   textMentionId,
 }: {
   root: SerializedTiptapRootNode;
-  mentionedId: string;
   textMentionId: string;
 }): TiptapMentionNodeWithContext | null {
   const nodes = flattenTiptapTree(root.content);
@@ -274,8 +275,7 @@ export function findTiptapMentionNodeWithContext({
     if (
       !isFlattenedTiptapParagraphNodeMarker(node) &&
       (isSerializedMentionNode(node) || isSerializedGroupMentionNode(node)) &&
-      node.attrs.notificationId === textMentionId &&
-      node.attrs.id === mentionedId
+      node.attrs.notificationId === textMentionId
     ) {
       mentionNodeIndex = i;
       break;
@@ -334,4 +334,43 @@ export function findTiptapMentionNodeWithContext({
     after: afterNodes,
     mention: mentionNode,
   };
+}
+
+function deserializeGroupUserIds(
+  userIds: string | undefined
+): string[] | undefined {
+  if (typeof userIds !== "string") {
+    return undefined;
+  }
+
+  try {
+    const parsedUserIds = JSON.parse(userIds) as string[];
+
+    if (Array.isArray(parsedUserIds)) {
+      return parsedUserIds;
+    }
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function getMentionDataFromTiptapNode(
+  node: SerializedTiptapMentionNode | SerializedTiptapGroupMentionNode
+): MentionData {
+  if (isSerializedMentionNode(node)) {
+    return {
+      kind: "user",
+      id: node.attrs.id,
+    };
+  } else if (isSerializedGroupMentionNode(node)) {
+    return {
+      kind: "group",
+      id: node.attrs.id,
+      userIds: deserializeGroupUserIds(node.attrs.userIds),
+    };
+  }
+
+  assertNever(node, "Unknown mention kind");
 }

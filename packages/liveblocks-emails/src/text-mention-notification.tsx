@@ -19,6 +19,7 @@ import type { ComponentType, ReactNode } from "react";
 import type { LexicalMentionNodeWithContext } from "./lexical-editor";
 import {
   findLexicalMentionNodeWithContext,
+  getMentionDataFromLexicalNode,
   getSerializedLexicalState,
 } from "./lexical-editor";
 import {
@@ -43,6 +44,7 @@ import {
 import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
 import {
   findTiptapMentionNodeWithContext,
+  getMentionDataFromTiptapNode,
   getSerializedTiptapState,
 } from "./tiptap-editor";
 
@@ -63,12 +65,8 @@ export type TextMentionNotificationData = (
     }
 ) & {
   createdAt: Date;
-
-  // The user ID mentioned
-  userId: string;
-
-  // The user ID who created the mention
   createdBy: string;
+  mentionData: MentionData;
 };
 
 /** @internal */
@@ -128,7 +126,6 @@ export const extractTextMentionNotificationData = async ({
       const state = getSerializedLexicalState({ buffer, key });
       const mentionNodeWithContext = findLexicalMentionNodeWithContext({
         root: state,
-        mentionedId: userId,
         textMentionId: inboxNotification.mentionId,
       });
 
@@ -137,11 +134,15 @@ export const extractTextMentionNotificationData = async ({
         return null;
       }
 
+      const mentionData = getMentionDataFromLexicalNode(
+        mentionNodeWithContext.mention
+      );
+
       return {
         editor: "lexical",
         mentionNodeWithContext,
+        mentionData,
         createdAt: mentionCreatedAt,
-        userId,
         createdBy: mentionAuthorUserId,
       };
     }
@@ -149,7 +150,6 @@ export const extractTextMentionNotificationData = async ({
       const state = getSerializedTiptapState({ buffer, key });
       const mentionNodeWithContext = findTiptapMentionNodeWithContext({
         root: state,
-        mentionedId: userId,
         textMentionId: inboxNotification.mentionId,
       });
 
@@ -158,11 +158,15 @@ export const extractTextMentionNotificationData = async ({
         return null;
       }
 
+      const mentionData = getMentionDataFromTiptapNode(
+        mentionNodeWithContext.mention
+      );
+
       return {
         editor: "tiptap",
         mentionNodeWithContext,
+        mentionData,
         createdAt: mentionCreatedAt,
-        userId,
         createdBy: mentionAuthorUserId,
       };
     }
@@ -301,9 +305,7 @@ export async function prepareTextMentionNotificationEmail<
 
   return {
     mention: {
-      // TODO: When introducing new mention kinds (e.g. group mentions), this should be updated.
-      kind: "user",
-      id: data.userId,
+      ...data.mentionData,
       textMentionId: mentionId,
       roomId,
       author: {

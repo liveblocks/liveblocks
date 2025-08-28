@@ -242,8 +242,11 @@ describe("text mention notification", () => {
       const expected: TextMentionNotificationData = {
         editor: "tiptap",
         mentionNodeWithContext,
+        mentionData: {
+          kind: "user",
+          id: MENTIONED_USER_ID_TIPTAP,
+        },
         createdAt: inboxNotification.notifiedAt,
-        userId: MENTIONED_USER_ID_TIPTAP,
         createdBy: inboxNotification.createdBy,
       };
 

@@ -1,4 +1,5 @@
-import type { Json, JsonObject } from "@liveblocks/core";
+import type { Json, JsonObject, MentionData } from "@liveblocks/core";
+import { assertNever } from "@liveblocks/core";
 import * as Y from "yjs";
 
 import { isMentionNodeAttributeId, isString } from "./lib/utils";
@@ -401,11 +402,9 @@ export type LexicalMentionNodeWithContext = {
  */
 export function findLexicalMentionNodeWithContext({
   root,
-  mentionedId,
   textMentionId,
 }: {
   root: SerializedLexicalRootNode;
-  mentionedId: string;
   textMentionId: string;
 }): LexicalMentionNodeWithContext | null {
   const nodes = flattenLexicalTree(root.children);
@@ -418,11 +417,7 @@ export function findLexicalMentionNodeWithContext({
     if (
       node.group === "decorator" &&
       (isSerializedMentionNode(node) || isSerializedGroupMentionNode(node)) &&
-      node.attributes.__id === textMentionId &&
-      ((node as SerializedLexicalMentionNode).attributes.__userId ===
-        mentionedId ||
-        (node as SerializedLexicalGroupMentionNode).attributes.__groupId ===
-          mentionedId)
+      node.attributes.__id === textMentionId
     ) {
       mentionNodeIndex = i;
       break;
@@ -435,7 +430,9 @@ export function findLexicalMentionNodeWithContext({
   }
 
   // Collect nodes before and after
-  const mentionNode = nodes[mentionNodeIndex] as SerializedLexicalMentionNode;
+  const mentionNode = nodes[mentionNodeIndex] as
+    | SerializedLexicalMentionNode
+    | SerializedLexicalGroupMentionNode;
 
   // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or element
@@ -487,4 +484,23 @@ export function findLexicalMentionNodeWithContext({
     after: afterNodes,
     mention: mentionNode,
   };
+}
+
+export function getMentionDataFromLexicalNode(
+  node: SerializedLexicalMentionNode | SerializedLexicalGroupMentionNode
+): MentionData {
+  if (isSerializedMentionNode(node)) {
+    return {
+      kind: "user",
+      id: node.attributes.__userId,
+    };
+  } else if (isSerializedGroupMentionNode(node)) {
+    return {
+      kind: "group",
+      id: node.attributes.__groupId,
+      userIds: node.attributes.__userIds,
+    };
+  }
+
+  assertNever(node, "Unknown mention kind");
 }
