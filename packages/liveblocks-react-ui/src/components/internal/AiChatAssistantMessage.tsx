@@ -201,6 +201,13 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
     }
   }, [isStreaming]);
 
+  const done = part.startedAt ? part.endedAt !== undefined : !isStreaming;
+  const duration = part.endedAt
+    ? (new Date(part.endedAt).getTime() - new Date(part.startedAt).getTime()) /
+      1000
+    : part.startedAt
+      ? (Date.now() - new Date(part.startedAt).getTime()) / 1000
+      : 0; /* for legacy parts without a startedAt */
   return (
     <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
@@ -213,8 +220,7 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
           isStreaming && "lb-ai-chat-pending"
         )}
       >
-        {/* TODO: Show duration as "Reasoned for x seconds"? */}
-        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)}
+        {$.AI_CHAT_MESSAGE_REASONING(done, duration)}
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
@@ -230,7 +236,6 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
     </Collapsible.Root>
   );
 }
-
 
 /* -------------------------------------------------------------------------------------------------
  * RetrievalPart
