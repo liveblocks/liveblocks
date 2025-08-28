@@ -591,7 +591,7 @@ export class Liveblocks {
     return await fetch(url, {
       method: "PUT",
       headers,
-      body: new Uint8Array(body),
+      body,
       signal: options?.signal,
     });
   }
