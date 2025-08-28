@@ -284,3 +284,13 @@ export function mockUpdateNotificationSettings(
     resolver
   );
 }
+
+export function mockFindGroups(
+  resolver: ResponseResolver<
+    RestRequest<{ groupIds: string[] }, never>,
+    RestContext,
+    { groups: GroupData[] }
+  >
+) {
+  return rest.post("https://api.liveblocks.io/v2/c/groups/find", resolver);
+}
