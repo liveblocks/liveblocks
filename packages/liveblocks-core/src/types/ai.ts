@@ -401,6 +401,8 @@ export type AiToolInvocationDelta = {
 export type AiReasoningPart = {
   type: "reasoning";
   text: string;
+  startedAt: ISODateString;
+  endedAt?: ISODateString;
 };
 
 export type AiUploadedImagePart = {
@@ -423,7 +425,6 @@ export type AiRetrievalPart = {
   startedAt: ISODateString;
   endedAt?: ISODateString;
 };
-
 
 // "Parts" are what make up the "content" of a message.
 // "Content" is always an "array of parts".
@@ -544,7 +545,8 @@ export type AiKnowledgeSource = {
 function replaceOrAppend<const T extends AiAssistantContentPart>(
   content: AiAssistantContentPart[],
   newItem: T,
-  keyFn: (item: T) => string
+  keyFn: (item: T) => string,
+  now: ISODateString
 ): void {
   const existingIndex = findLastIndex(
     content,
@@ -556,7 +558,21 @@ function replaceOrAppend<const T extends AiAssistantContentPart>(
     content[existingIndex] = newItem;
   } else {
     // No existing one found, just append
+    closePart(content[content.length - 1], now);
     content.push(newItem);
+  }
+}
+
+/**
+ * Given a part, mutates it in-place by setting its endedAt timestamp.
+ */
+function closePart(
+  prevPart: AiAssistantContentPart | undefined,
+  endedAt: ISODateString
+) {
+  // Currently, only reasoning parts have an endedAt timestamp
+  if (prevPart?.type === "reasoning") {
+    prevPart.endedAt ??= endedAt;
   }
 }
 
@@ -568,6 +584,7 @@ export function patchContentWithDelta(
     // Nothing to do
     return;
 
+  const now = new Date().toISOString() as ISODateString;
   const lastPart = content[content.length - 1] as
     | AiAssistantContentPart
     | undefined;
@@ -579,6 +596,7 @@ export function patchContentWithDelta(
       if (lastPart?.type === "text") {
         lastPart.text += delta.textDelta;
       } else {
+        closePart(lastPart, now);
         content.push({ type: "text", text: delta.textDelta });
       }
       break;
@@ -587,13 +605,14 @@ export function patchContentWithDelta(
       if (lastPart?.type === "reasoning") {
         lastPart.text += delta.textDelta;
       } else {
+        closePart(lastPart, now);
         content.push({
           type: "reasoning",
           text: delta.textDelta ?? "",
+          startedAt: now,
         });
       }
       break;
-
 
     case "tool-stream": {
       // --- Alternative implementation for FRONTEND only ------------------------
@@ -601,6 +620,7 @@ export function patchContentWithDelta(
       let _cachedArgs: JsonObject = {};
       // ------------------------------------------------------------------------
 
+      closePart(lastPart, now);
       content.push({
         type: "tool-invocation" as const,
         stage: "receiving" as const,
@@ -635,11 +655,11 @@ export function patchContentWithDelta(
     }
 
     case "tool-invocation":
-      replaceOrAppend(content, delta, (x) => x.invocationId);
+      replaceOrAppend(content, delta, (x) => x.invocationId, now);
       break;
 
     case "retrieval":
-      replaceOrAppend(content, delta, (x) => x.id);
+      replaceOrAppend(content, delta, (x) => x.id, now);
       break;
 
     default:
