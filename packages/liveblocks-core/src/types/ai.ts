@@ -424,16 +424,6 @@ export type AiRetrievalPart = {
   endedAt?: ISODateString;
 };
 
-/**
- * Represents a citation to a web resource.
- * Since protocol V6.
- */
-export type AiCitationPart = {
-  type: "citation";
-  id: string;
-  url: string;
-  title?: string;
-};
 
 // "Parts" are what make up the "content" of a message.
 // "Content" is always an "array of parts".
@@ -442,8 +432,7 @@ export type AiAssistantContentPart =
   | AiReasoningPart
   | AiTextPart
   | AiToolInvocationPart
-  | AiRetrievalPart
-  | AiCitationPart;
+  | AiRetrievalPart;
 
 export type AiAssistantDeltaUpdate =
   | AiTextDelta // a delta appended to the last part (if text)
@@ -454,9 +443,8 @@ export type AiAssistantDeltaUpdate =
   | AiToolInvocationStreamStart // the start of a new tool-call stream
   | AiToolInvocationDelta // a partial/under-construction tool invocation (since protocol V5)
 
-  // Since protocol V6, clients can receive retrieval and citation parts
-  | AiRetrievalPart // Emitted when created, and when later updated with endedAt
-  | AiCitationPart;
+  // Since protocol V6, clients can receive retrieval parts
+  | AiRetrievalPart; // Emitted when created, and when later updated with endedAt
 
 export type AiUserMessage = {
   id: MessageId;
@@ -606,9 +594,6 @@ export function patchContentWithDelta(
       }
       break;
 
-    case "citation":
-      content.push(delta);
-      break;
 
     case "tool-stream": {
       // --- Alternative implementation for FRONTEND only ------------------------

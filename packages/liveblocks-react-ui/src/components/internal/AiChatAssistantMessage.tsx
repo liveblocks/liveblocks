@@ -20,7 +20,6 @@ import {
 import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
-  AiMessageContentCitationPartProps,
   AiMessageContentReasoningPartProps,
   AiMessageContentRetrievalPartProps,
   AiMessageContentTextPartProps,
@@ -165,7 +164,6 @@ function AssistantMessageContent({
         ReasoningPart: (props) => (
           <ReasoningPart {...props} components={components} />
         ),
-        CitationPart,
         RetrievalPart,
         ToolInvocationPart,
       }}
@@ -233,16 +231,6 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
   );
 }
 
-/* -------------------------------------------------------------------------------------------------
- * CitationPart
- * -----------------------------------------------------------------------------------------------*/
-function CitationPart({ part }: AiMessageContentCitationPartProps) {
-  return (
-    <pre style={{ background: "hotpink" }}>
-      Implement Citation UI here. {JSON.stringify(part, null, 2)}
-    </pre>
-  );
-}
 
 /* -------------------------------------------------------------------------------------------------
  * RetrievalPart

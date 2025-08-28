@@ -19,7 +19,6 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
   },
-  CitationPart: () => null,
   RetrievalPart: () => null,
   ToolInvocationPart: ({ part, message }) => {
     return (
@@ -45,7 +44,6 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
     const {
-      CitationPart,
       ReasoningPart,
       RetrievalPart,
       TextPart,
@@ -75,8 +73,6 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
 
-            case "citation":
-              return <CitationPart key={index} part={part} {...extra} />;
 
             case "retrieval":
               return <RetrievalPart key={index} part={part} {...extra} />;

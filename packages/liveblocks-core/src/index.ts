@@ -330,7 +330,6 @@ export type {
   AiChat,
   AiChatMessage,
   AiChatsQuery,
-  AiCitationPart,
   AiKnowledgeSource,
   AiReasoningPart,
   AiRetrievalPart,

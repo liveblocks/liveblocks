@@ -1,7 +1,6 @@
 import type {
   AiAssistantMessage,
   AiChatMessage,
-  AiCitationPart,
   AiReasoningPart,
   AiRetrievalPart,
   AiTextPart,
@@ -19,13 +18,6 @@ export type AiMessageContentTextPartProps = {
   part: AiTextPart;
 };
 
-export type AiMessageContentCitationPartProps = {
-  /** @internal */
-  index: number;
-  /** @internal */
-  isStreaming: boolean;
-  part: AiCitationPart;
-};
 
 export type AiMessageContentReasoningPartProps = {
   /** @internal */
@@ -64,10 +56,6 @@ export interface AiMessageContentComponents {
    */
   ReasoningPart: ComponentType<AiMessageContentReasoningPartProps>;
 
-  /**
-   * The component used to display citations.
-   */
-  CitationPart: ComponentType<AiMessageContentCitationPartProps>;
 
   /**
    * The component used to display knowledge retrieval parts.
