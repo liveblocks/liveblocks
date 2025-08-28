@@ -1,6 +1,7 @@
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
 
 import { ThreadMarkNode } from "./comments/thread-mark-node";
+import { GroupMentionNode } from "./mentions/group-mention-node";
 import { MentionNode } from "./mentions/mention-node";
 
 /**
@@ -39,7 +40,7 @@ export function liveblocksConfig(
 ) {
   const nodes = [...(editorConfig.nodes ?? [])];
 
-  nodes.push(ThreadMarkNode, MentionNode);
+  nodes.push(ThreadMarkNode, MentionNode, GroupMentionNode);
 
   return {
     ...editorConfig,

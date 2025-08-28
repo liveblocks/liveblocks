@@ -54,6 +54,7 @@ describe("useUnreadInboxNotificationsCount", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
@@ -113,6 +114,7 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
             threads,
             inboxNotifications,
             subscriptions,
+            groups: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,

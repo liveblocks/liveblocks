@@ -18,6 +18,8 @@ const FAKE_USERS = [
   "#!?_1234$%&*()",
 ];
 
+const FAKE_GROUPS = ["Engineering", "Design"];
+
 const clientOptions = createLiveblocksClientOptions();
 
 export type TestVariant = "default" | "autoFocus" | "disabled" | "defaultValue";
@@ -64,7 +66,7 @@ export default function Home() {
     <LiveblocksProvider
       {...clientOptions}
       resolveUsers={({ userIds }) => {
-        // Return a list of users
+        // Return a list of user IDs
         return userIds.map((idString) => {
           const index = Number(idString.slice("user-".length)) - 1;
           return !isNaN(index)
@@ -72,13 +74,32 @@ export default function Home() {
             : undefined;
         });
       }}
+      resolveGroupsInfo={({ groupIds }) => {
+        // Return a list of group IDs
+        return groupIds.map((idString) => {
+          const index = Number(idString.slice("group-".length)) - 1;
+          return !isNaN(index)
+            ? { id: `group-${idString}`, name: FAKE_GROUPS[index] }
+            : undefined;
+        });
+      }}
       resolveMentionSuggestions={({ text }) => {
         // The text the user is searching for, e.g. "mar"
-        // Return a list of user IDs that match the query
         text = text.toLowerCase();
-        return FAKE_USERS.flatMap((name, index) =>
-          name.toLowerCase().includes(text) ? [`user-${index + 1}`] : []
+
+        const groups = FAKE_GROUPS.flatMap((name, index) =>
+          name.toLowerCase().includes(text)
+            ? [{ kind: "group" as const, id: `group-${index + 1}` }]
+            : []
         );
+        const users = FAKE_USERS.flatMap((name, index) =>
+          name.toLowerCase().includes(text)
+            ? [{ kind: "user" as const, id: `user-${index + 1}` }]
+            : []
+        );
+
+        // Return a list of user and group mention suggestions that match the query
+        return [...groups, ...users];
       }}
     >
       {/* We're only testing the composer component itself and not interacting with rooms */}

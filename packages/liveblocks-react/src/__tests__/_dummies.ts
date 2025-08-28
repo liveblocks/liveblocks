@@ -1,6 +1,7 @@
 import type {
   BaseMetadata,
   CommentData,
+  GroupData,
   InboxNotificationCustomData,
   InboxNotificationThreadData,
   SubscriptionData,
@@ -138,6 +139,25 @@ export function dummySubscriptionData(
     kind: "thread",
     subjectId: createThreadId(),
     createdAt: now,
+    ...overrides,
+  };
+}
+
+export function dummyGroupData({
+  id,
+  ...overrides
+}: AtLeast<GroupData, "id">): GroupData {
+  const createdAt = overrides.createdAt ?? new Date();
+  const updatedAt = overrides.updatedAt ?? createdAt;
+
+  return {
+    type: "group",
+    id,
+    createdAt,
+    updatedAt,
+    tenantId: "default",
+    scopes: { mention: true },
+    members: [],
     ...overrides,
   };
 }

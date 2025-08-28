@@ -33,6 +33,7 @@ export type {
   EnterOptions,
   OpaqueClient,
   PrivateClientApi,
+  ResolveGroupsInfoArgs,
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
@@ -54,7 +55,7 @@ export {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
-  resolveUsersInCommentBody,
+  resolveMentionsInCommentBody,
   stringifyCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates } from "./connection";
@@ -62,6 +63,7 @@ export type { LostConnectionEvent, Status } from "./connection";
 export {
   convertToCommentData,
   convertToCommentUserReaction,
+  convertToGroupData,
   convertToInboxNotificationData,
   convertToSubscriptionData,
   convertToThreadData,
@@ -94,6 +96,7 @@ export { toPlainLson } from "./crdts/utils";
 export type {
   DAD,
   DE,
+  DGI,
   DM,
   DP,
   DRI,
@@ -177,6 +180,7 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export { warnOnce, warnOnceIf } from "./lib/warnings";
 export type {
   ContextualPromptContext,
   ContextualPromptResponse,
@@ -184,6 +188,7 @@ export type {
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
+export type { BaseGroupInfo } from "./protocol/BaseGroupInfo";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
@@ -226,6 +231,12 @@ export type {
   ThreadDataWithDeleteInfo,
 } from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
+export type {
+  GroupData,
+  GroupDataPlain,
+  GroupMemberData,
+  GroupScopes,
+} from "./protocol/Groups";
 export type {
   ActivityData,
   InboxNotificationCustomData,
@@ -367,7 +378,11 @@ export type {
 } from "./types/PlainLson";
 export type { User } from "./types/User";
 export { detectDupes };
-export type { MentionData, UserMentionData } from "./types/MentionData";
+export type {
+  GroupMentionData,
+  MentionData,
+  UserMentionData,
+} from "./protocol/MentionData";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

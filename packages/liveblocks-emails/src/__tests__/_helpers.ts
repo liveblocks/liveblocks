@@ -1,5 +1,6 @@
 import type {
   Awaitable,
+  BaseGroupInfo,
   BaseUserMeta,
   CommentBody,
   CommentData,
@@ -8,6 +9,8 @@ import type {
   InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
+  MentionData,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
   ThreadData,
 } from "@liveblocks/core";
@@ -54,6 +57,16 @@ export const USERS_DB: IUserInfo[] = [
     name: "Anjali Wanda",
   },
 ];
+export const GROUPS_DB: BaseGroupInfo[] = [
+  {
+    id: "group-0",
+    name: "Engineering",
+  },
+  {
+    id: "group-1",
+    name: "Design",
+  },
+];
 export const ROOM_ID_TEST = "resend";
 export const ROOM_TEST: RoomData = {
   type: "room",
@@ -71,11 +84,9 @@ export const generateCommentId = (): string => "cm_" + nanoid();
 export const generateThreadId = (): string => "th_" + nanoid();
 export const generateInboxNotificationId = (): string => "in_" + nanoid();
 
-export const buildCommentBodyWithMention = ({
-  mentionedUserId,
-}: {
-  mentionedUserId: string;
-}): CommentBody => ({
+export const buildCommentBodyWithMention = (
+  mention: MentionData
+): CommentBody => ({
   version: 1,
   content: [
     {
@@ -83,7 +94,7 @@ export const buildCommentBodyWithMention = ({
       children: [
         { text: "Hello" },
         { text: " " },
-        { type: "mention", kind: "user", id: mentionedUserId },
+        { type: "mention", ...mention },
         { text: " " },
         { text: "!" },
       ],
@@ -355,6 +366,23 @@ export const resolveUsers = <U extends BaseUserMeta = DU>({
   return users;
 };
 
+export const resolveGroupsInfo = ({
+  groupIds,
+}: ResolveGroupsInfoArgs): Awaitable<
+  (BaseGroupInfo | undefined)[] | undefined
+> => {
+  const groups: (BaseGroupInfo | undefined)[] = [];
+
+  for (const groupId of groupIds) {
+    const group = GROUPS_DB.find((g) => g.id === groupId);
+    if (group) {
+      groups.push({ name: group.name });
+    }
+  }
+
+  return groups;
+};
+
 export const RESOLVED_ROOM_INFO_TEST: DRI = {
   name: `${ROOM_ID_TEST}-resolved`,
   url: "https://resend.com/",
@@ -391,7 +419,7 @@ export const makeUnreadMentionDataset = (): {
   const comment = makeComment({
     userId: "user-0",
     threadId,
-    body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+    body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
     createdAt: new Date("2024-09-10T08:04:00.000Z"),
   });
   const thread = makeThread({ threadId, comments: [comment] });
@@ -554,11 +582,13 @@ export const makeTextMentionNotificationEvent = ({
 });
 
 export const makeTextMentionInboxNotification = ({
+  mention,
   mentionId,
   createdBy,
   notifiedAt,
   readAt,
 }: {
+  mention: MentionData;
   mentionId: string;
   createdBy: string;
   notifiedAt?: Date;
@@ -567,6 +597,7 @@ export const makeTextMentionInboxNotification = ({
   id: generateInboxNotificationId(),
   kind: "textMention",
   roomId: ROOM_ID_TEST,
+  mention,
   mentionId,
   createdBy,
   notifiedAt: notifiedAt ?? new Date(),

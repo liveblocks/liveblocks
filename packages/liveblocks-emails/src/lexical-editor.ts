@@ -1,4 +1,5 @@
-import type { Json, JsonObject } from "@liveblocks/core";
+import type { Json, JsonObject, MentionData } from "@liveblocks/core";
+import { assertNever } from "@liveblocks/core";
 import * as Y from "yjs";
 
 import { isMentionNodeAttributeId, isString } from "./lib/utils";
@@ -32,6 +33,17 @@ export interface SerializedLexicalMentionNode
     __id: string;
     __type: "lb-mention";
     __userId: string;
+  };
+}
+
+export interface SerializedLexicalGroupMentionNode
+  extends SerializedLexicalDecoratorNode {
+  type: "lb-group-mention";
+  attributes: {
+    __id: string;
+    __type: "lb-group-mention";
+    __groupId: string;
+    __userIds: string[] | undefined;
   };
 }
 
@@ -292,6 +304,30 @@ export const isSerializedMentionNode = (
   );
 };
 
+const isGroupMentionNodeType = (type: string): type is "lb-group-mention" => {
+  return type === "lb-group-mention";
+};
+
+const isGroupMentionNodeAttributeType = (
+  type: unknown
+): type is "lb-group-mention" => {
+  return isString(type) && type === "lb-group-mention";
+};
+
+export const isSerializedGroupMentionNode = (
+  node: SerializedLexicalDecoratorNode
+): node is SerializedLexicalGroupMentionNode => {
+  const attributes = node.attributes;
+
+  return (
+    isGroupMentionNodeType(node.type) &&
+    isGroupMentionNodeAttributeType(attributes.__type) &&
+    isMentionNodeAttributeId(attributes.__id) &&
+    isString(attributes.__groupId) &&
+    (attributes.__userIds === undefined || Array.isArray(attributes.__userIds))
+  );
+};
+
 /**
  * Internal type helper when flattening nodes.
  * It helps to better extract mention node with context by marking
@@ -357,7 +393,7 @@ export const flattenLexicalTree = (
 export type LexicalMentionNodeWithContext = {
   before: SerializedLexicalNode[];
   after: SerializedLexicalNode[];
-  mention: SerializedLexicalMentionNode;
+  mention: SerializedLexicalMentionNode | SerializedLexicalGroupMentionNode;
 };
 
 /**
@@ -366,12 +402,10 @@ export type LexicalMentionNodeWithContext = {
  */
 export function findLexicalMentionNodeWithContext({
   root,
-  mentionedUserId,
-  mentionId,
+  textMentionId,
 }: {
   root: SerializedLexicalRootNode;
-  mentionedUserId: string;
-  mentionId: string;
+  textMentionId: string;
 }): LexicalMentionNodeWithContext | null {
   const nodes = flattenLexicalTree(root.children);
 
@@ -382,9 +416,8 @@ export function findLexicalMentionNodeWithContext({
     const node = nodes[i]!;
     if (
       node.group === "decorator" &&
-      isSerializedMentionNode(node) &&
-      node.attributes.__id === mentionId &&
-      node.attributes.__userId === mentionedUserId
+      (isSerializedMentionNode(node) || isSerializedGroupMentionNode(node)) &&
+      node.attributes.__id === textMentionId
     ) {
       mentionNodeIndex = i;
       break;
@@ -397,7 +430,9 @@ export function findLexicalMentionNodeWithContext({
   }
 
   // Collect nodes before and after
-  const mentionNode = nodes[mentionNodeIndex] as SerializedLexicalMentionNode;
+  const mentionNode = nodes[mentionNodeIndex] as
+    | SerializedLexicalMentionNode
+    | SerializedLexicalGroupMentionNode;
 
   // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or element
@@ -449,4 +484,23 @@ export function findLexicalMentionNodeWithContext({
     after: afterNodes,
     mention: mentionNode,
   };
+}
+
+export function getMentionDataFromLexicalNode(
+  node: SerializedLexicalMentionNode | SerializedLexicalGroupMentionNode
+): MentionData {
+  if (isSerializedMentionNode(node)) {
+    return {
+      kind: "user",
+      id: node.attributes.__userId,
+    };
+  } else if (isSerializedGroupMentionNode(node)) {
+    return {
+      kind: "group",
+      id: node.attributes.__groupId,
+      userIds: node.attributes.__userIds,
+    };
+  }
+
+  assertNever(node, "Unknown mention kind");
 }
