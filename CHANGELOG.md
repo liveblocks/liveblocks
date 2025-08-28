@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-## v3.4.3
+## v3.5.0
 
 ### `@liveblocks/node`
 
