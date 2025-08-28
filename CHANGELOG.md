@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v3.5.1
+
+### '@liveblocks/react-tiptap`
+
+- Fixes a bug where deleting a thread/comment from TipTap would also remove any
+  comments contained within it.
+
 ## v3.5.0
 
 ### `@liveblocks/node`
