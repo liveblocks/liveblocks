@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import type { ResolveUsersArgs } from "../../client";
+import type { ResolveGroupsInfoArgs, ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../protocol/Comments";
 import {
   getMentionsFromCommentBody,
@@ -34,8 +34,10 @@ const commentBodyWithMultipleParagraphs: CommentBody = {
       children: [
         { text: "Hello " },
         { text: "world", italic: true, bold: true },
-        { text: " and " },
+        { text: ", " },
         { type: "mention", kind: "user", id: "vincent" },
+        { text: " and " },
+        { type: "mention", kind: "group", id: "engineering" },
       ],
     },
     {
@@ -141,13 +143,26 @@ const commentBodyWithMentions: CommentBody = {
       children: [
         { text: "Hello " },
         { type: "mention", kind: "user", id: "chris" },
-        { text: " and " },
+        { text: ", " },
         { type: "mention", kind: "user", id: "vincent" },
+        { text: ", " },
+        { type: "mention", kind: "user", id: "$unknownUser" },
+        { text: " and " },
+        { type: "mention", kind: "group", id: "engineering" },
       ],
     },
     {
       type: "paragraph",
-      children: [{ type: "mention", kind: "user", id: "nimesh" }],
+      children: [
+        { type: "mention", kind: "user", id: "nimesh" },
+        {
+          type: "mention",
+          kind: "group",
+          id: "here",
+          userIds: ["nimesh", "florent"],
+        },
+        { type: "mention", kind: "group", id: "$unknownGroup" },
+      ],
     },
   ],
 };
@@ -191,8 +206,24 @@ const commentBodyWihInvalidUrls: CommentBody = {
 
 function resolveUsers({ userIds }: ResolveUsersArgs) {
   return userIds.map((userId) => {
+    if (userId.startsWith("$")) {
+      return undefined;
+    }
+
     return {
       name: capitalize(userId),
+    };
+  });
+}
+
+function resolveGroupsInfo({ groupIds }: ResolveGroupsInfoArgs) {
+  return groupIds.map((groupId) => {
+    if (groupId.startsWith("$")) {
+      return undefined;
+    }
+
+    return {
+      name: capitalize(groupId),
     };
   });
 }
@@ -202,7 +233,16 @@ describe("getMentionsFromCommentBody", () => {
     expect(getMentionsFromCommentBody(commentBodyWithMentions)).toEqual([
       { type: "mention", kind: "user", id: "chris" },
       { type: "mention", kind: "user", id: "vincent" },
+      { type: "mention", kind: "user", id: "$unknownUser" },
+      { type: "mention", kind: "group", id: "engineering" },
       { type: "mention", kind: "user", id: "nimesh" },
+      {
+        type: "mention",
+        kind: "group",
+        id: "here",
+        userIds: ["nimesh", "florent"],
+      },
+      { type: "mention", kind: "group", id: "$unknownGroup" },
     ]);
   });
 
@@ -232,7 +272,7 @@ describe("getMentionsFromCommentBody", () => {
 describe("stringifyCommentBody", () => {
   const commentBodyFixturesStringifiedPlain = [
     "Hello world and @chris",
-    "Hello world and @vincent\nhttps://liveblocks.io\nLiveblocks",
+    "Hello world, @vincent and @engineering\nhttps://liveblocks.io\nLiveblocks",
     "",
     "",
     "",
@@ -244,7 +284,7 @@ describe("stringifyCommentBody", () => {
   );
   const commentBodyFixturesStringifiedHtml = [
     "<p>Hello <strong>world</strong> and <span data-mention>@chris</span></p>",
-    '<p>Hello <em><strong>world</strong></em> and <span data-mention>@vincent</span></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">Liveblocks</a></p>',
+    '<p>Hello <em><strong>world</strong></em>, <span data-mention>@vincent</span> and <span data-mention>@engineering</span></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">https://liveblocks.io</a></p>\n<p><a href="https://liveblocks.io" target="_blank" rel="noopener noreferrer">Liveblocks</a></p>',
     "",
     "",
     "",
@@ -256,7 +296,7 @@ describe("stringifyCommentBody", () => {
   );
   const commentBodyFixturesStringifiedMarkdown = [
     "Hello **world** and @chris",
-    "Hello _**world**_ and @vincent\n\n[https://liveblocks.io](https://liveblocks.io)\n\n[Liveblocks](https://liveblocks.io)",
+    "Hello _**world**_, @vincent and @engineering\n\n[https://liveblocks.io](https://liveblocks.io)\n\n[Liveblocks](https://liveblocks.io)",
     "",
     "",
     "",
@@ -449,23 +489,32 @@ describe("stringifyCommentBody", () => {
     ).resolves.toBe("This is a link and another one");
   });
 
-  const resolveUsersExpected = [
-    ["plain text", "plain", "Hello @Chris and @Vincent\n@Nimesh"],
+  const resolveInfoExpected = [
+    [
+      "plain text",
+      "plain",
+      "Hello @Chris, @Vincent, @$unknownUser and @Engineering\n@Nimesh@Here@$unknownGroup",
+    ],
     [
       "HTML",
       "html",
-      "<p>Hello <span data-mention>@Chris</span> and <span data-mention>@Vincent</span></p>\n<p><span data-mention>@Nimesh</span></p>",
+      "<p>Hello <span data-mention>@Chris</span>, <span data-mention>@Vincent</span>, <span data-mention>@$unknownUser</span> and <span data-mention>@Engineering</span></p>\n<p><span data-mention>@Nimesh</span><span data-mention>@Here</span><span data-mention>@$unknownGroup</span></p>",
     ],
-    ["Markdown", "markdown", "Hello @Chris and @Vincent\n\n@Nimesh"],
+    [
+      "Markdown",
+      "markdown",
+      "Hello @Chris, @Vincent, @$unknownUser and @Engineering\n\n@Nimesh@Here@$unknownGroup",
+    ],
   ] as const;
 
-  test.each(resolveUsersExpected)(
-    "resolves user IDs as %s",
+  test.each(resolveInfoExpected)(
+    "resolves users and groups as %s",
     async (_, format, stringified) => {
       await expect(
         stringifyCommentBody(commentBodyWithMentions, {
           format,
           resolveUsers,
+          resolveGroupsInfo,
         })
       ).resolves.toBe(stringified);
     }
@@ -477,7 +526,7 @@ describe("stringifyCommentBody", () => {
         separator: "\n\n\n",
       })
     ).resolves.toBe(
-      "Hello world and @vincent\n\n\nhttps://liveblocks.io\n\n\nLiveblocks"
+      "Hello world, @vincent and @engineering\n\n\nhttps://liveblocks.io\n\n\nLiveblocks"
     );
   });
 
@@ -503,7 +552,7 @@ describe("stringifyCommentBody", () => {
         },
       })
     ).resolves.toBe(
-      '<Paragraph>Hello world and <Mention>@vincent</Mention></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">https://liveblocks.io</Link></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">Liveblocks</Link></Paragraph>'
+      '<Paragraph>Hello world, <Mention>@vincent</Mention> and <Mention>@engineering</Mention></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">https://liveblocks.io</Link></Paragraph>\n<Paragraph><Link to="https://liveblocks.io">Liveblocks</Link></Paragraph>'
     );
   });
 
@@ -521,6 +570,7 @@ describe("stringifyCommentBody", () => {
         mention,
       },
       resolveUsers,
+      resolveGroupsInfo,
     });
 
     const firstParagraph = commentBodyWithMultipleParagraphs.content[0];
@@ -583,6 +633,17 @@ describe("stringifyCommentBody", () => {
         },
       },
       3
+    );
+
+    expect(mention).toHaveBeenNthCalledWith(
+      2,
+      {
+        element: firstParagraph.children[5],
+        group: {
+          name: "Engineering",
+        },
+      },
+      5
     );
   });
 });
