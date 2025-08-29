@@ -2282,9 +2282,9 @@ const status = useIsEditorReady();
 Here’s how it can be used in the context of your editor.
 
 ```tsx
-import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 // +++
-import { useIsEditorReady, useEditor, EditorContent } from "@tiptap/react";
+import { useIsEditorReady, useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
 // +++
 
 function TextEditor() {
