@@ -1025,31 +1025,33 @@ function Threads({ editor }: { editor: BlockNoteEditor }) {
 // +++
 ```
 
-Here’s how it can be used in the context of your editor.
+### useIsEditorReady
+
+Used to check if the editor content has been loaded or not, helpful for
+displaying a loading skeleton.
+
+```ts
+import { useIsEditorReady } from "@liveblocks/react-blocknote";
+
+const status = useIsEditorReady();
+```
+
+Here's how it can be used in the context of your editor.
 
 ```tsx
-import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
-// +++
-import { useIsEditorReady, useEditor, EditorContent } from "@tiptap/react";
-// +++
+import { useCreateBlockNoteWithLiveblocks, useIsEditorReady } from "@liveblocks/react-blocknote";
+import { BlockNoteView } from "@blocknote/mantine";
 
 function TextEditor() {
-  const liveblocks = useLiveblocksExtension();
+  const editor = useCreateBlockNoteWithLiveblocks({});
   // +++
   const ready = useIsEditorReady();
   // +++
 
-  const editor = useEditor({
-    extensions: [
-      liveblocks,
-      // ...
-    ],
-  });
-
   return (
     <div>
       // +++
-      {!ready ? <div>Loading...</div> : <EditorContent editor={editor} />}
+      {!ready ? <div>Loading...</div> : <BlockNoteView editor={editor} />}
       // +++
     </div>
   );
