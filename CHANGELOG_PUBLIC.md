@@ -65,9 +65,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Update `useSendAiMessage` to use the the last used copilot id in a chat when
   no copilot id is passed to the hook or the method returned by the hook.
 
+## Website
+
+- New blog post: [Mock up AI agents in your product with the Liveblocks Collaboration Kit for Figma](https://liveblocks.io/blog/mock-up-ai-agents-in-your-propuct-with-the-liveblocks-collaboration-kit-for-figma).
+
 ## Contributors
 
-jrowny, nimeshnayaju, marcbouchenoire
+jrowny, nimeshnayaju, marcbouchenoire, pierrelevaillant, ctnicholas
 
 # Week 34 (2025-08-22)
 
