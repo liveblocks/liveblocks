@@ -18,7 +18,6 @@ export type AiMessageContentTextPartProps = {
   part: AiTextPart;
 };
 
-
 export type AiMessageContentReasoningPartProps = {
   /** @internal */
   index: number;
@@ -55,7 +54,6 @@ export interface AiMessageContentComponents {
    * The component used to display reasoning parts.
    */
   ReasoningPart: ComponentType<AiMessageContentReasoningPartProps>;
-
 
   /**
    * The component used to display knowledge retrieval parts.

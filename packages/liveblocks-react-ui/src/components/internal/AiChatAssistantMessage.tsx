@@ -29,6 +29,7 @@ import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
 import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
+import { Duration } from "./Duration";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
@@ -201,13 +202,6 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
     }
   }, [isStreaming]);
 
-  const done = part.startedAt ? part.endedAt !== undefined : !isStreaming;
-  const duration = part.endedAt
-    ? (new Date(part.endedAt).getTime() - new Date(part.startedAt).getTime()) /
-      1000
-    : part.startedAt
-      ? (Date.now() - new Date(part.startedAt).getTime()) / 1000
-      : 0; /* for legacy parts without a startedAt */
   return (
     <Collapsible.Root
       className="lb-collapsible lb-ai-chat-message-reasoning"
@@ -220,7 +214,8 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
           isStreaming && "lb-ai-chat-pending"
         )}
       >
-        {$.AI_CHAT_MESSAGE_REASONING(done, duration)}
+        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)} (
+        <Duration startedAt={part.startedAt} endedAt={part.endedAt} />)
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
@@ -242,13 +237,6 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
  * -----------------------------------------------------------------------------------------------*/
 function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
   const isPending = !part.endedAt;
-
-  const startedAt = new Date(part.startedAt).getTime();
-  const endedAt = part.endedAt ? new Date(part.endedAt).getTime() : Date.now();
-
-  // The elapsed time for this retrieval in seconds
-  const elapsedSeconds = (endedAt - startedAt) / 1000;
-
   return (
     <div
       className={cn(
@@ -258,15 +246,12 @@ function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
     >
       {isPending ? "Searching" : "Searched"} for{" "}
       <span className="lb-ai-chat-message-knowledge-search">{part.query}</span>
-      {isPending ? (
-        // Should we show a live timer (eg 3s, 4s, 5s, etc) here instead?
-        "…"
-      ) : (
-        <span className="lb-ai-chat-message-knowledge-time">
-          {" "}
-          ({elapsedSeconds}s)
-        </span>
-      )}
+      <span className="lb-ai-chat-message-knowledge-time">
+        {" "}
+        (<Duration startedAt={part.startedAt} endedAt={part.endedAt} />
+        s)
+        {isPending ? "…" : ""}
+      </span>
     </div>
   );
 }

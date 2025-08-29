@@ -43,15 +43,11 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const {
-      ReasoningPart,
-      RetrievalPart,
-      TextPart,
-      ToolInvocationPart,
-    } = useMemo(
-      () => ({ ...defaultMessageContentComponents, ...components }),
-      [components]
-    );
+    const { ReasoningPart, RetrievalPart, TextPart, ToolInvocationPart } =
+      useMemo(
+        () => ({ ...defaultMessageContentComponents, ...components }),
+        [components]
+      );
 
     const content = message.content ?? message.contentSoFar;
     const numParts = content.length;
@@ -72,7 +68,6 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
 
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
-
 
             case "retrieval":
               return <RetrievalPart key={index} part={part} {...extra} />;
