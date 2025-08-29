@@ -215,10 +215,10 @@ const Comment = Mark.create({
               return;
             }
             const commentMark = node.marks.find(
-              (mark) => mark.type === this.type
+              (mark) => mark.type === this.type && !mark.attrs.orphan
             );
-            // don't allow selecting orphaned threads
-            if (commentMark?.attrs.orphan) {
+            // nothing to select
+            if (!commentMark) {
               selectThread(null);
               return;
             }
