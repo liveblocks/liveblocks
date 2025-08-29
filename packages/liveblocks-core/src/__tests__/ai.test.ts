@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { KnowledgeStack } from "../ai";
+import { iso } from "../lib/utils";
 import type {
   AiAssistantContentPart,
   AiAssistantDeltaUpdate,
@@ -172,14 +173,23 @@ describe("patchContentWithDelta", () => {
 
     test("creates new text part when last part is not text", () => {
       const content: AiAssistantContentPart[] = [
-        { type: "reasoning", text: "Some reasoning" },
+        {
+          type: "reasoning",
+          text: "Some reasoning",
+          startedAt: iso("2025-09-28"),
+        },
       ];
       const delta: AiTextDelta = { type: "text-delta", textDelta: "Hello" };
 
       patchContentWithDelta(content, delta);
 
       expect(content).toEqual([
-        { type: "reasoning", text: "Some reasoning" },
+        {
+          type: "reasoning",
+          text: "Some reasoning",
+          startedAt: iso("2025-09-28"),
+          endedAt: expect.any(String), // Date when text delta was added
+        },
         { type: "text", text: "Hello" },
       ]);
     });
@@ -216,7 +226,11 @@ describe("patchContentWithDelta", () => {
   describe("reasoning-delta", () => {
     test("appends to existing reasoning part", () => {
       const content: AiAssistantContentPart[] = [
-        { type: "reasoning", text: "Let me think " },
+        {
+          type: "reasoning",
+          text: "Let me think ",
+          startedAt: iso("2025-09-28"),
+        },
       ];
       const delta: AiReasoningDelta = {
         type: "reasoning-delta",
@@ -226,7 +240,11 @@ describe("patchContentWithDelta", () => {
       patchContentWithDelta(content, delta);
 
       expect(content).toEqual([
-        { type: "reasoning", text: "Let me think about this..." },
+        {
+          type: "reasoning",
+          text: "Let me think about this...",
+          startedAt: iso("2025-09-28"),
+        },
       ]);
     });
 
@@ -243,7 +261,11 @@ describe("patchContentWithDelta", () => {
 
       expect(content).toEqual([
         { type: "text", text: "Some text" },
-        { type: "reasoning", text: "Thinking" },
+        {
+          type: "reasoning",
+          text: "Thinking",
+          startedAt: expect.any(String),
+        },
       ]);
     });
 
@@ -257,7 +279,11 @@ describe("patchContentWithDelta", () => {
       patchContentWithDelta(content, delta);
 
       expect(content).toEqual([
-        { type: "reasoning", text: "Starting to analyze..." },
+        {
+          type: "reasoning",
+          text: "Starting to analyze...",
+          startedAt: expect.any(String),
+        },
       ]);
     });
 
@@ -270,7 +296,13 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([{ type: "reasoning", text: "" }]);
+      expect(content).toEqual([
+        {
+          type: "reasoning",
+          text: "",
+          startedAt: expect.any(String),
+        },
+      ]);
     });
   });
 
@@ -432,7 +464,11 @@ describe("patchContentWithDelta", () => {
 
     test("ignores delta when last part is reasoning", () => {
       const content: AiAssistantContentPart[] = [
-        { type: "reasoning", text: "Thinking..." },
+        {
+          type: "reasoning",
+          text: "Thinking...",
+          startedAt: iso("2025-09-28"),
+        },
       ];
       const delta: AiToolInvocationDelta = {
         type: "tool-delta",
@@ -441,7 +477,13 @@ describe("patchContentWithDelta", () => {
 
       patchContentWithDelta(content, delta);
 
-      expect(content).toEqual([{ type: "reasoning", text: "Thinking..." }]);
+      expect(content).toEqual([
+        {
+          type: "reasoning",
+          text: "Thinking...",
+          startedAt: iso("2025-09-28"),
+        },
+      ]);
     });
 
     test("ignores delta when last tool is executing", () => {
@@ -823,7 +865,12 @@ describe("patchContentWithDelta", () => {
       });
 
       expect(content).toEqual([
-        { type: "reasoning", text: "Let me analyze this problem" },
+        {
+          type: "reasoning",
+          text: "Let me analyze this problem",
+          startedAt: expect.any(String),
+          endedAt: expect.any(String),
+        },
         { type: "text", text: "I'll search for information" },
         expect.objectContaining({
           type: "tool-invocation",

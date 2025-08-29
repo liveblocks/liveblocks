@@ -5,6 +5,8 @@ import {
   memo,
   type ReactNode,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -21,6 +23,7 @@ import * as AiMessage from "../../primitives/AiMessage";
 import { AiMessageToolInvocation } from "../../primitives/AiMessage/tool-invocation";
 import type {
   AiMessageContentReasoningPartProps,
+  AiMessageContentRetrievalPartProps,
   AiMessageContentTextPartProps,
   AiMessageContentToolInvocationPartProps,
 } from "../../primitives/AiMessage/types";
@@ -28,6 +31,7 @@ import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
 import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
+import { Duration } from "./Duration";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
@@ -155,14 +159,26 @@ function AssistantMessageContent({
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }) {
+  const ref = useRef(components);
+  const BoundTextPart = useMemo(
+    () => (props: TextPartProps) => (
+      <TextPart {...props} components={ref.current} />
+    ),
+    []
+  );
+  const BoundReasoningPart = useMemo(
+    () => (props: ReasoningPartProps) => (
+      <ReasoningPart {...props} components={ref.current} />
+    ),
+    []
+  );
   return (
     <AiMessage.Content
       message={message}
       components={{
-        TextPart: (props) => <TextPart {...props} components={components} />,
-        ReasoningPart: (props) => (
-          <ReasoningPart {...props} components={components} />
-        ),
+        TextPart: BoundTextPart,
+        ReasoningPart: BoundReasoningPart,
+        RetrievalPart,
         ToolInvocationPart,
       }}
       className="lb-ai-chat-message-content"
@@ -212,8 +228,8 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
           isStreaming && "lb-ai-chat-pending"
         )}
       >
-        {/* TODO: Show duration as "Reasoned for x seconds"? */}
-        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)}
+        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)} (
+        <Duration startedAt={part.startedAt} endedAt={part.endedAt} />)
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
@@ -227,6 +243,30 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
         />
       </Collapsible.Content>
     </Collapsible.Root>
+  );
+}
+
+/* -------------------------------------------------------------------------------------------------
+ * RetrievalPart
+ * -----------------------------------------------------------------------------------------------*/
+function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
+  const isPending = !part.endedAt;
+  return (
+    <div
+      className={cn(
+        "lb-ai-chat-message-knowledge",
+        isPending && "lb-ai-chat-pending"
+      )}
+    >
+      {isPending ? "Searching" : "Searched"} for{" "}
+      <span className="lb-ai-chat-message-knowledge-search">{part.query}</span>
+      <span className="lb-ai-chat-message-knowledge-time">
+        {" "}
+        (<Duration startedAt={part.startedAt} endedAt={part.endedAt} />
+        s)
+        {isPending ? "…" : ""}
+      </span>
+    </div>
   );
 }
 

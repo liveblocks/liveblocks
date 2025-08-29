@@ -332,6 +332,7 @@ export type {
   AiChatsQuery,
   AiKnowledgeSource,
   AiReasoningPart,
+  AiRetrievalPart,
   AiTextPart,
   AiToolInvocationPart,
   AiUserMessage,

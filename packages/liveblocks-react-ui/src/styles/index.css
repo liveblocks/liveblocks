@@ -2811,7 +2811,8 @@
   animation: lb-animation-shimmer-text 2s cubic-bezier(0.1, 0, 0.9, 1) infinite;
 }
 
-.lb-ai-chat-message-thinking {
+.lb-ai-chat-message-thinking,
+.lb-ai-chat-message-knowledge {
   inline-size: fit-content;
   max-inline-size: 100%;
   color: var(--lb-foreground-tertiary);
@@ -2872,6 +2873,18 @@
     color: var(--lb-foreground);
     font-size: 0.875em;
     opacity: 0.75;
+  }
+}
+
+.lb-ai-chat-message-knowledge-search {
+  font-weight: 500;
+
+  &::before {
+    content: "“";
+  }
+
+  &::after {
+    content: "”";
   }
 }
 

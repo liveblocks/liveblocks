@@ -2173,8 +2173,9 @@ Displays links within `Comment.Body`.
 #### Timestamp [#primitives-Timestamp]
 
 Displays a formatted date, and automatically re-renders to support relative
-formatting. Defaults to relative formatting for recent dates (e.g. “5 minutes
-ago”) and a short absolute formatting for older ones (e.g. “25 Aug”).
+formatting. Defaults to relative formatting for nearby dates (e.g. “5 minutes
+ago” or "in 1 day") and a short absolute formatting for more distant ones (e.g.
+“25 Aug”).
 
 ```tsx
 <Timestamp date={new Date()} />

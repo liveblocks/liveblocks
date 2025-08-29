@@ -1,11 +1,8 @@
 import { describe, expect, test } from "vitest";
 
 import { AiChatDB } from "../../AiChatDB";
-import type { AiChat, ISODateString } from "../../types/ai";
-
-function iso(s: string): ISODateString {
-  return new Date(s).toISOString() as ISODateString;
-}
+import type { AiChat } from "../../types/ai";
+import { iso } from "../utils";
 
 function dummyAiChatData(
   partial: Partial<AiChat> & Pick<AiChat, "id">

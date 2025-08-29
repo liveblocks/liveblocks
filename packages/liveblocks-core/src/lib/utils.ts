@@ -1,3 +1,4 @@
+import type { ISODateString } from "../types/ai";
 import type { Json } from "./Json";
 
 declare const brand: unique symbol;
@@ -260,4 +261,8 @@ export function findLastIndex<T>(
     }
   }
   return -1;
+}
+
+export function iso(s: string): ISODateString {
+  return new Date(s).toISOString() as ISODateString;
 }

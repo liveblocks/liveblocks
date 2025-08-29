@@ -1,5 +1,5 @@
 import type {
-  AiChatMessage,
+  AiAssistantMessage,
   AiToolInvocationPart,
   AiToolInvocationProps,
   JsonObject,
@@ -35,7 +35,7 @@ export function AiMessageToolInvocation({
   message,
   part,
 }: {
-  message: AiChatMessage;
+  message: AiAssistantMessage;
   part: AiToolInvocationPart;
 }) {
   const client = useClient();
@@ -94,7 +94,7 @@ export function AiMessageToolInvocation({
         execute: tool?.execute,
         messageStatus: message.status,
       },
-    };
+    } satisfies OpaqueAiToolInvocationProps;
   }, [part, respond, tool?.execute, message.status, partialArgs]);
 
   if (tool?.render === undefined) return null;
