@@ -4,27 +4,27 @@
 
 ### `@liveblocks/react-tiptap`
 
-- Fixes a bug where deleting a thread/comment from TipTap would also remove any
+- Fixes a bug where deleting a thread/comment from Tiptap would also remove any
   comments contained within it.
 
 ## v3.5.0
 
 ### `@liveblocks/node`
 
-- Add the following methods for managing AI copilots and knowledge source:
-  1. `getAiCopilots`
-  2. `createAiCopilot`
-  3. `getAiCopilot`
-  4. `updateAiCopilot`
-  5. `deleteAiCopilot`
-  6. `createWebKnowledgeSource`
-  7. `createFileKnowledgeSource`
-  8. `deleteFileKnowledgeSource`
-  9. `deleteWebKnowledgeSource`
-  10. `getKnowledgeSources`
-  11. `getKnowledgeSource`
-  12. `getFileKnowledgeSourceMarkdown`
-  13. `getWebKnowledgeSourceLinks`
+- Add the following methods for managing AI copilots and knowledge sources:
+  - `getAiCopilots`
+  - `createAiCopilot`
+  - `getAiCopilot`
+  - `updateAiCopilot`
+  - `deleteAiCopilot`
+  - `createWebKnowledgeSource`
+  - `createFileKnowledgeSource`
+  - `deleteFileKnowledgeSource`
+  - `deleteWebKnowledgeSource`
+  - `getKnowledgeSources`
+  - `getKnowledgeSource`
+  - `getFileKnowledgeSourceMarkdown`
+  - `getWebKnowledgeSourceLinks`
 
 ## v3.4.2
 
