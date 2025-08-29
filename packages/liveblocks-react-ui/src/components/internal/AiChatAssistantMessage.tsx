@@ -5,6 +5,8 @@ import {
   memo,
   type ReactNode,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -157,14 +159,25 @@ function AssistantMessageContent({
   message: UiAssistantMessage;
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }) {
+  const ref = useRef(components);
+  const BoundTextPart = useMemo(
+    () => (props: TextPartProps) => (
+      <TextPart {...props} components={ref.current} />
+    ),
+    []
+  );
+  const BoundReasoningPart = useMemo(
+    () => (props: ReasoningPartProps) => (
+      <ReasoningPart {...props} components={ref.current} />
+    ),
+    []
+  );
   return (
     <AiMessage.Content
       message={message}
       components={{
-        TextPart: (props) => <TextPart {...props} components={components} />,
-        ReasoningPart: (props) => (
-          <ReasoningPart {...props} components={components} />
-        ),
+        TextPart: BoundTextPart,
+        ReasoningPart: BoundReasoningPart,
         RetrievalPart,
         ToolInvocationPart,
       }}

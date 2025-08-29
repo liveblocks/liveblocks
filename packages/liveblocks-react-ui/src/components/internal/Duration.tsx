@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { memo, type ComponentProps } from "react";
 
 import { useRerenderEvery } from "../../utils/use-rerender-every";
 
@@ -21,7 +21,7 @@ interface DurationProps extends ComponentProps<"span"> {
  * provided. Uses formatted duration display (1 decimal for <3s, whole seconds
  * for ≥3s).
  */
-export function Duration({ startedAt, endedAt }: DurationProps) {
+export const Duration = memo(({ startedAt, endedAt }: DurationProps) => {
   const start = new Date(startedAt).getTime();
   const end = endedAt ? new Date(endedAt).getTime() : Date.now();
   const duration = (end - start) / 1000;
@@ -29,4 +29,4 @@ export function Duration({ startedAt, endedAt }: DurationProps) {
   // Re-render frequently for short durations, less frequently for longer ones
   useRerenderEvery(endedAt ? null : 200);
   return <span>{duration.toFixed(1)} seconds</span>;
-}
+});
