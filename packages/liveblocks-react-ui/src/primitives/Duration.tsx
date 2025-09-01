@@ -5,6 +5,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { forwardRef, type ReactNode, useMemo } from "react";
 
 import type { ComponentPropsWithSlot } from "../types";
+import { numberFormat } from "../utils/intl";
 import { useInterval } from "../utils/use-interval";
 import { useRerender } from "../utils/use-rerender";
 
@@ -63,32 +64,144 @@ export type DurationProps = Omit<
     locale?: string;
   };
 
+interface DurationParts {
+  weeks: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  milliseconds: number;
+}
+
+function getDurationParts(duration: number): DurationParts {
+  let remaining = Math.max(duration, 0);
+
+  const milliseconds = remaining % 1000;
+  remaining = Math.floor(remaining / 1000);
+
+  const seconds = remaining % 60;
+  remaining = Math.floor(remaining / 60);
+
+  const minutes = remaining % 60;
+  remaining = Math.floor(remaining / 60);
+
+  const hours = remaining % 24;
+  remaining = Math.floor(remaining / 24);
+
+  const days = remaining % 7;
+  const weeks = Math.floor(remaining / 7);
+
+  return { weeks, days, hours, minutes, seconds, milliseconds };
+}
+
+const durationPartsToNumberFormatOptions: Record<
+  keyof DurationParts,
+  Intl.NumberFormatOptions["unit"]
+> = {
+  weeks: "week",
+  days: "day",
+  hours: "hour",
+  minutes: "minute",
+  seconds: "second",
+  milliseconds: "millisecond",
+};
+
 /**
  * Formats a duration in a short format.
+ * TODO: Use `Intl.DurationFormat` when it's better supported.
  */
 function formatShortDuration(duration: number, locale?: string) {
-  // TODO: Implement formatting with Intl.DurationFormat
+  let resolvedLocale: string;
 
-  console.log(duration, locale);
+  if (locale) {
+    resolvedLocale = locale;
+  } else {
+    const formatter = numberFormat();
 
-  return duration.toString();
+    resolvedLocale = formatter.resolvedOptions().locale;
+  }
+
+  const parts = getDurationParts(duration);
+  let formattedDuration = "";
+
+  for (const [unit, value] of Object.entries(parts) as [
+    keyof DurationParts,
+    number,
+  ][]) {
+    if (value === 0 || unit === "milliseconds") {
+      continue;
+    }
+
+    const formatter = numberFormat(resolvedLocale, {
+      style: "unit",
+      unit: durationPartsToNumberFormatOptions[unit],
+      unitDisplay: "narrow",
+    });
+
+    formattedDuration += formatter.format(value);
+  }
+
+  if (!formattedDuration) {
+    formattedDuration = numberFormat(resolvedLocale, {
+      style: "unit",
+      unit: "second",
+      unitDisplay: "narrow",
+    }).format(0);
+  }
+
+  return formattedDuration;
 }
 
 /**
  * Formats a duration in a longer format.
+ * TODO: Use `Intl.DurationFormat` when it's better supported.
  */
 function formatVerboseDuration(duration: number, locale?: string) {
-  // TODO: Implement formatting with Intl.DurationFormat
+  let resolvedLocale: string;
 
-  console.log(duration, locale);
+  if (locale) {
+    resolvedLocale = locale;
+  } else {
+    const formatter = numberFormat();
 
-  return duration.toString();
+    resolvedLocale = formatter.resolvedOptions().locale;
+  }
+
+  const parts = getDurationParts(duration);
+  let formattedDuration = "";
+
+  for (const [unit, value] of Object.entries(parts) as [
+    keyof DurationParts,
+    number,
+  ][]) {
+    if (value === 0 || unit === "milliseconds") {
+      continue;
+    }
+
+    const formatter = numberFormat(resolvedLocale, {
+      style: "unit",
+      unit: durationPartsToNumberFormatOptions[unit],
+      unitDisplay: "long",
+    });
+
+    formattedDuration += " ";
+    formattedDuration += formatter.format(value);
+  }
+
+  if (!formattedDuration) {
+    formattedDuration = numberFormat(resolvedLocale, {
+      style: "unit",
+      unit: "second",
+      unitDisplay: "long",
+    }).format(0);
+  }
+
+  return formattedDuration.trim();
 }
 
 /**
  * Formats a duration as ISO 8601.
- * We'll be able to use `Temporal.Duration` instead when it's available
- * in all major browsers.
+ * TODO: Use `Temporal.Duration` when it's better supported.
  */
 export function formatIso8601Duration(duration: number) {
   const normalizedDuration = Math.max(duration, 0);
@@ -97,17 +210,8 @@ export function formatIso8601Duration(duration: number) {
     return "PT0S";
   }
 
-  const milliseconds = normalizedDuration % 1000;
-  let seconds = Math.floor(normalizedDuration / 1000);
-  let minutes = Math.floor(seconds / 60);
-  let hours = Math.floor(minutes / 60);
-  let days = Math.floor(hours / 24);
-  const weeks = Math.floor(days / 7);
-
-  seconds = seconds % 60;
-  minutes = minutes % 60;
-  hours = hours % 24;
-  days = days % 7;
+  const { weeks, days, hours, minutes, seconds, milliseconds } =
+    getDurationParts(normalizedDuration);
 
   let isoDuration = "P";
 
