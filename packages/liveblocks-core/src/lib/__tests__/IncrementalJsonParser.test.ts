@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import { IncrementalJsonParser } from "../IncrementalJsonParser";
 
-// Helper to express texts more briefly
+// Helper to express tests more briefly
 function parse(input: string) {
   return new IncrementalJsonParser(input).json;
 }
