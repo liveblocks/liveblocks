@@ -1068,40 +1068,32 @@ export function createAi(config: AiConfig): Ai {
         const { id, delta } = msg;
         enqueueDelta(id, delta);
       } else {
-        switch (msg.event) {
-          case "cmd-failed":
-            batch(() => {
-              flushPendingDeltas();
+        batch(() => {
+          flushPendingDeltas();
+
+          switch (msg.event) {
+            case "cmd-failed":
               pendingCmd?.reject(new Error(msg.error));
-            });
-            break;
+              break;
 
-          case "settle": {
-            batch(() => {
-              flushPendingDeltas();
+            case "settle": {
               context.messagesStore.upsert(msg.message);
-            });
-            break;
-          }
+              break;
+            }
 
-          case "warning":
-            console.warn(msg.message);
-            break;
+            case "warning":
+              console.warn(msg.message);
+              break;
 
-          case "error":
-            console.error(msg.error);
-            break;
+            case "error":
+              console.error(msg.error);
+              break;
 
-          case "rebooted":
-            batch(() => {
-              flushPendingDeltas();
+            case "rebooted":
               context.messagesStore.failAllPending();
-            });
-            break;
+              break;
 
-          case "sync":
-            batch(() => {
-              flushPendingDeltas();
+            case "sync":
               // Delete any resources?
               for (const m of msg["-messages"] ?? []) {
                 context.messagesStore.remove(m.chatId, m.id);
@@ -1121,12 +1113,12 @@ export function createAi(config: AiConfig): Ai {
               if (msg.messages) {
                 context.messagesStore.upsertMany(msg.messages);
               }
-            });
-            break;
+              break;
 
-          default:
-            return assertNever(msg, "Unhandled case");
-        }
+            default:
+              return assertNever(msg, "Unhandled case");
+          }
+        });
       }
     } else {
       switch (msg.cmd) {
