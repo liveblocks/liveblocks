@@ -37,6 +37,7 @@ export type DurationProps = Omit<
 
         /**
          * The date at which the duration ends.
+         * If `from` is provided without `to`, `Date.now()` will be used.
          */
         to?: Date | string | number;
       }
