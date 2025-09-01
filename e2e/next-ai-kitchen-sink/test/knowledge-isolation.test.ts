@@ -101,7 +101,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     // Create unique test chat IDs and go to the dual chat page
     const chatId1 = createRandomChat(page);
     const chatId2 = createRandomChat(page);
-    await page.goto(`/dual-chat/${chatId1}/${chatId2}`);
+    await page.goto(`/dual-chat/${chatId1}/${chatId2}`, { waitUntil: 'networkidle' });
 
     // Wait for the page title and both chats to be visible
     await expect(
@@ -152,7 +152,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     const chatId1 = createRandomChat(page);
     const chatId2 = createRandomChat(page);
 
-    await page.goto(`/dual-chat/${chatId1}/${chatId2}`);
+    await page.goto(`/dual-chat/${chatId1}/${chatId2}`, { waitUntil: 'networkidle' });
 
     // Wait for the page title to be visible
     await expect(
@@ -204,7 +204,7 @@ test.describe("AiChat Knowledge Isolation", () => {
     // Create unique test chat IDs and go to the dual chat page
     const chatId1 = createRandomChat(page);
     const chatId2 = createRandomChat(page);
-    await page.goto(`/dual-chat/${chatId1}/${chatId2}`);
+    await page.goto(`/dual-chat/${chatId1}/${chatId2}`, { waitUntil: 'networkidle' });
 
     // Wait for the page title and both chats to be visible
     await expect(

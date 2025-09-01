@@ -30,7 +30,7 @@ test.describe("Multi Chat", () => {
     page,
   }) => {
     // Start at the chats index page
-    await page.goto("/chats");
+    await page.goto("/chats", { waitUntil: 'networkidle' });
 
     // Wait for the page to load
     await expect(page.locator("h1")).toHaveText("List of all chats");
@@ -53,7 +53,7 @@ test.describe("Multi Chat", () => {
     await expect(page.locator("text=What is machine learning?")).toBeVisible();
 
     // Go back to chats index and create second chat
-    await page.goto("/chats");
+    await page.goto("/chats", { waitUntil: 'networkidle' });
     await page.click('button:has-text("Start a new AI chat")');
 
     // We should be redirected to another new chat page
@@ -74,7 +74,7 @@ test.describe("Multi Chat", () => {
     await expect(page.locator("text=Explain quantum computing.")).toBeVisible();
 
     // Go back to first chat and wait for assistant response
-    await page.goto(firstChatUrl);
+    await page.goto(firstChatUrl, { waitUntil: 'networkidle' });
 
     // Wait for assistant response in first chat (should have at least 2 messages - user + assistant)
     await expect(page.locator('[role="textbox"]')).toBeVisible(); // Wait for page to load
@@ -87,7 +87,7 @@ test.describe("Multi Chat", () => {
     );
 
     // Go back to second chat and wait for assistant response
-    await page.goto(secondChatUrl);
+    await page.goto(secondChatUrl, { waitUntil: 'networkidle' });
 
     // Wait for assistant response in second chat
     await expect(page.locator('[role="textbox"]')).toBeVisible(); // Wait for page to load
@@ -100,7 +100,7 @@ test.describe("Multi Chat", () => {
     );
 
     // Go back to index page to check auto-generated titles
-    await page.goto("/chats");
+    await page.goto("/chats", { waitUntil: 'networkidle' });
 
     // Wait for titles to be generated (they should no longer be "Untitled")
     // Look for links that are not "Untitled" and contain our chat IDs

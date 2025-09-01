@@ -48,7 +48,7 @@ test.describe("Tool Calling", () => {
   test("should perform todo operations via AI tool calls", async ({ page }) => {
     // Create unique test chat and go to todo page
     const chatId = createRandomChat(page);
-    await page.goto(`/todo/${chatId}`);
+    await page.goto(`/todo/${chatId}`, { waitUntil: 'networkidle' });
 
     // Wait for the page to load and show default todos
     await expect(page.locator('li:has-text("Get groceries")')).toBeVisible();
@@ -141,7 +141,7 @@ test.describe("Tool Calling", () => {
   test("should handle tool call errors gracefully", async ({ page }) => {
     // Create unique test chat and go to todo page
     const chatId = createRandomChat(page);
-    await page.goto(`/todo/${chatId}`);
+    await page.goto(`/todo/${chatId}`, { waitUntil: 'networkidle' });
 
     // Try to toggle a non-existent todo
     await sendAiMessage(page, "Toggle the todo with ID 99999");
@@ -168,7 +168,7 @@ test.describe("Tool Calling", () => {
     // Create unique test chat
     const chatId = createRandomChat(page);
     
-    await page.goto(`/todo/${chatId}`);
+    await page.goto(`/todo/${chatId}`, { waitUntil: 'networkidle' });
 
     // Add a test todo
     const todoInput = page.locator('input[placeholder="Add a todo"]');
