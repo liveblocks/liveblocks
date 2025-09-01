@@ -970,9 +970,6 @@ export function createAi(config: AiConfig): Ai {
 
     // Process all pending deltas in a single batch
     batch(() => {
-      console.warn(
-        `Processing ${currentQueue.length} pending deltas in this chunk`
-      );
       for (const { id, delta } of currentQueue) {
         context.messagesStore.addDelta(id, delta);
       }
