@@ -293,7 +293,6 @@ describe("partial keyword recognition", () => {
   });
 
   test("fixes the original counterexample", () => {
-    // This was the counterexample that revealed the issue
     const input = '{"":false," ":null}';
     const parser = new IncrementalJsonParser();
     let maxLen = 0;
