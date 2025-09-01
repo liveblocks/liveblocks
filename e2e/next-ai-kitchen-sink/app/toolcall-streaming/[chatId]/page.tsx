@@ -115,8 +115,10 @@ export default function HtmlStreamingPage({
                   return { data: { success: true } };
                 },
                 render: (props) => {
+                  /* eslint-disable react-hooks/rules-of-hooks */
                   const renderCount = useRenderCount();
                   const stageTimer = useStageTimer(props.invocationId);
+                  /* eslint-enable react-hooks/rules-of-hooks */
 
                   // Track stage transitions
                   if (props.stage === "receiving") {
@@ -385,8 +387,10 @@ export default function HtmlStreamingPage({
                   return { data: { processed: true, recordCount: 0 } };
                 },
                 render: (props) => {
+                  /* eslint-disable react-hooks/rules-of-hooks */
                   const renderCount = useRenderCount();
                   const stageTimer = useStageTimer(props.invocationId);
+                  /* eslint-enable react-hooks/rules-of-hooks */
 
                   // Track stage transitions
                   if (props.stage === "receiving") {
