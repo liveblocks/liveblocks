@@ -2812,7 +2812,7 @@
 }
 
 .lb-ai-chat-message-thinking,
-.lb-ai-chat-message-knowledge {
+.lb-ai-chat-message-retrieval {
   inline-size: fit-content;
   max-inline-size: 100%;
   color: var(--lb-foreground-tertiary);
@@ -2876,7 +2876,7 @@
   }
 }
 
-.lb-ai-chat-message-knowledge-search {
+.lb-ai-chat-message-retrieval-query {
   font-weight: 500;
 
   &::before {

@@ -266,6 +266,13 @@ function getDateTime(date: Date | string | number) {
 }
 
 /**
+ * Get a duration between two Date or Date-like values.
+ */
+function getDuration(from: Date | string | number, to: Date | string | number) {
+  return getDateTime(to) - getDateTime(from);
+}
+
+/**
  * Displays a formatted duration, and automatically re-renders to if the
  * duration is in progress.
  *
@@ -302,9 +309,7 @@ export const Duration = forwardRef<HTMLTimeElement, DurationProps>(
       }
 
       if (from !== undefined) {
-        return to !== undefined
-          ? getDateTime(to) - getDateTime(from)
-          : Date.now() - getDateTime(from);
+        return getDuration(from, to ?? Date.now());
       }
 
       return 0;

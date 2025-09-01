@@ -31,7 +31,6 @@ import * as Collapsible from "../../primitives/Collapsible";
 import type { MarkdownComponents } from "../../primitives/Markdown";
 import { cn } from "../../utils/cn";
 import { ErrorBoundary } from "../../utils/ErrorBoundary";
-import { Duration } from "./Duration";
 import { Prose } from "./Prose";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
@@ -68,6 +67,10 @@ interface TextPartProps extends AiMessageContentTextPartProps {
 }
 
 interface ReasoningPartProps extends AiMessageContentReasoningPartProps {
+  components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
+}
+
+interface RetrievalPartProps extends AiMessageContentRetrievalPartProps {
   components?: Partial<GlobalComponents & AiChatAssistantMessageComponents>;
 }
 
@@ -227,8 +230,7 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
           isStreaming && "lb-ai-chat-pending"
         )}
       >
-        {$.AI_CHAT_MESSAGE_REASONING(isStreaming)} (
-        <Duration startedAt={part.startedAt} endedAt={part.endedAt} />)
+        {$.AI_CHAT_MESSAGE_REASONING(isStreaming, part)}
         <span className="lb-collapsible-chevron lb-icon-container">
           <ChevronRightIcon />
         </span>
@@ -248,23 +250,17 @@ function ReasoningPart({ part, isStreaming, components }: ReasoningPartProps) {
 /* -------------------------------------------------------------------------------------------------
  * RetrievalPart
  * -----------------------------------------------------------------------------------------------*/
-function RetrievalPart({ part }: AiMessageContentRetrievalPartProps) {
-  const isPending = !part.endedAt;
+function RetrievalPart({ part, isStreaming }: RetrievalPartProps) {
+  const $ = useOverrides();
+
   return (
     <div
       className={cn(
-        "lb-ai-chat-message-knowledge",
-        isPending && "lb-ai-chat-pending"
+        "lb-ai-chat-message-retrieval",
+        isStreaming && "lb-ai-chat-pending"
       )}
     >
-      {isPending ? "Searching" : "Searched"} for{" "}
-      <span className="lb-ai-chat-message-knowledge-search">{part.query}</span>
-      <span className="lb-ai-chat-message-knowledge-time">
-        {" "}
-        (<Duration startedAt={part.startedAt} endedAt={part.endedAt} />
-        s)
-        {isPending ? "…" : ""}
-      </span>
+      {$.AI_CHAT_MESSAGE_RETRIEVAL(isStreaming, part)}
     </div>
   );
 }
