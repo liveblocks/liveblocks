@@ -86,6 +86,68 @@ function formatVerboseDuration(duration: number, locale?: string) {
 }
 
 /**
+ * Formats a duration as ISO 8601.
+ * We'll be able to use `Temporal.Duration` instead when it's available
+ * in all major browsers.
+ */
+export function formatIso8601Duration(duration: number) {
+  const normalizedDuration = Math.max(duration, 0);
+
+  if (normalizedDuration === 0) {
+    return "PT0S";
+  }
+
+  const milliseconds = normalizedDuration % 1000;
+  let seconds = Math.floor(normalizedDuration / 1000);
+  let minutes = Math.floor(seconds / 60);
+  let hours = Math.floor(minutes / 60);
+  let days = Math.floor(hours / 24);
+  const weeks = Math.floor(days / 7);
+
+  seconds = seconds % 60;
+  minutes = minutes % 60;
+  hours = hours % 24;
+  days = days % 7;
+
+  let isoDuration = "P";
+
+  // 1. Weeks
+  if (weeks > 0) {
+    isoDuration += `${weeks}W`;
+  }
+
+  // 2. Days
+  if (days > 0) {
+    isoDuration += `${days}D`;
+  }
+
+  if (hours > 0 || minutes > 0 || seconds > 0 || milliseconds > 0) {
+    isoDuration += "T";
+
+    // 3. Hours
+    if (hours > 0) {
+      isoDuration += `${hours}H`;
+    }
+
+    // 4. Minutes
+    if (minutes > 0) {
+      isoDuration += `${minutes}M`;
+    }
+
+    // 5. Seconds and milliseconds
+    if (seconds > 0 || milliseconds > 0) {
+      if (milliseconds > 0) {
+        isoDuration += `${seconds}.${milliseconds.toString().padStart(3, "0").replace(/0+$/, "")}S`;
+      } else {
+        isoDuration += `${seconds}S`;
+      }
+    }
+  }
+
+  return isoDuration;
+}
+
+/**
  * Converts a Date or Date-like value to a timestamp in milliseconds.
  */
 function getDateTime(date: Date | string | number) {
@@ -116,7 +178,7 @@ export const Duration = forwardRef<HTMLTimeElement, DurationProps>(
       from,
       to,
       locale,
-      // dateTime,
+      dateTime,
       title: renderTitle = formatVerboseDuration,
       children: renderChildren = formatShortDuration,
       interval = RENDER_INTERVAL,
@@ -141,6 +203,10 @@ export const Duration = forwardRef<HTMLTimeElement, DurationProps>(
       return 0;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [duration, from, to, key]);
+    const normalizedDuration = useMemo(
+      () => formatIso8601Duration(resolvedDuration),
+      [resolvedDuration]
+    );
     const title = useMemo(
       () =>
         typeof renderTitle === "function"
@@ -168,8 +234,7 @@ export const Duration = forwardRef<HTMLTimeElement, DurationProps>(
       <Component
         {...props}
         ref={forwardedRef}
-        // TODO: Implement ISO 8601 formatting
-        // dateTime={...}
+        dateTime={dateTime ?? normalizedDuration}
         title={title}
       >
         {children}
