@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/core`
+
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance
+
 ## v3.5.1
 
 ### `@liveblocks/react-tiptap`
