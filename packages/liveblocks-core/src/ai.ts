@@ -1031,7 +1031,10 @@ export function createAi(config: AiConfig): Ai {
     // NoOp for now, but we should maybe fetch messages or something?
   }
 
-  function onDidDisconnect() {}
+  function onDidDisconnect() {
+    // Flush any pending deltas before disconnect to prevent data loss
+    flushPendingDeltas();
+  }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
     if (typeof event.data !== "string")
