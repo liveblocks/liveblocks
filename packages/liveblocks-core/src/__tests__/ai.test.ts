@@ -12,7 +12,7 @@ import type {
   AiToolInvocationStreamStart,
 } from "../types/ai";
 import {
-  hydrateReceivingToolInvocation,
+  createReceivingToolInvocation,
   patchContentWithDelta,
 } from "../types/ai";
 
@@ -160,9 +160,9 @@ describe("KnowledgeStack", () => {
   });
 });
 
-describe("hydrateReceivingToolInvocation", () => {
+describe("createReceivingToolInvocation", () => {
   test("creates receiving tool invocation with empty args", () => {
-    const tool = hydrateReceivingToolInvocation("inv-test", "testTool");
+    const tool = createReceivingToolInvocation("inv-test", "testTool");
 
     expect(tool.type).toBe("tool-invocation");
     expect(tool.stage).toBe("receiving");
@@ -173,7 +173,7 @@ describe("hydrateReceivingToolInvocation", () => {
   });
 
   test("creates receiving tool invocation with partial args", () => {
-    const tool = hydrateReceivingToolInvocation(
+    const tool = createReceivingToolInvocation(
       "inv-123",
       "search",
       '{"query": "test"}'
@@ -184,7 +184,7 @@ describe("hydrateReceivingToolInvocation", () => {
   });
 
   test("allows appending deltas via __appendDelta", () => {
-    const tool = hydrateReceivingToolInvocation(
+    const tool = createReceivingToolInvocation(
       "inv-456",
       "calculator",
       '{"expr": "2+'
@@ -665,7 +665,7 @@ describe("patchContentWithDelta", () => {
 
     test("replaces receiving tool with executing tool (same invocationId)", () => {
       const content: AiAssistantContentPart[] = [
-        hydrateReceivingToolInvocation("inv-123", "search", '{"query": "par"}'),
+        createReceivingToolInvocation("inv-123", "search", '{"query": "par"}'),
       ];
 
       const delta: AiExecutingToolInvocationPart = {
@@ -708,7 +708,7 @@ describe("patchContentWithDelta", () => {
     test("replaces tool in middle of content array", () => {
       const content: AiAssistantContentPart[] = [
         { type: "text", text: "Before" },
-        hydrateReceivingToolInvocation("inv-123", "search", '{"q": "test"}'),
+        createReceivingToolInvocation("inv-123", "search", '{"q": "test"}'),
         { type: "text", text: "After" },
       ];
 
@@ -731,9 +731,9 @@ describe("patchContentWithDelta", () => {
 
     test("replaces the LAST matching tool when multiple have same invocationId", () => {
       const content: AiAssistantContentPart[] = [
-        hydrateReceivingToolInvocation("inv-dup", "first", "a"),
+        createReceivingToolInvocation("inv-dup", "first", "a"),
         { type: "text", text: "Middle" },
-        hydrateReceivingToolInvocation("inv-dup", "second", "b"),
+        createReceivingToolInvocation("inv-dup", "second", "b"),
       ];
 
       const delta: AiExecutingToolInvocationPart = {
@@ -754,7 +754,7 @@ describe("patchContentWithDelta", () => {
 
     test("does not affect tools with different invocationIds", () => {
       const content: AiAssistantContentPart[] = [
-        hydrateReceivingToolInvocation("inv-1", "tool1"),
+        createReceivingToolInvocation("inv-1", "tool1"),
         {
           type: "tool-invocation",
           stage: "executing",

@@ -550,7 +550,7 @@ export function patchContentWithDelta(
       break;
 
     case "tool-stream": {
-      const toolInvocation = hydrateReceivingToolInvocation(
+      const toolInvocation = createReceivingToolInvocation(
         delta.invocationId,
         delta.name
       );
@@ -602,7 +602,7 @@ export function patchContentWithDelta(
  * This helper eliminates the need to manually create fake tool invocation objects
  * and provides a clean API for tests.
  */
-export function hydrateReceivingToolInvocation(
+export function createReceivingToolInvocation(
   invocationId: string,
   name: string,
   partialArgsText: string = ""
