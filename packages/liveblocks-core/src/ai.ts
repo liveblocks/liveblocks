@@ -952,6 +952,42 @@ export function createAi(config: AiConfig): Ai {
     knowledge: new KnowledgeStack(),
   };
 
+  // Delta batch processing system to throttle incoming delta updates. Incoming
+  // deltas are buffered and only let through every every 25ms. This creates
+  // a ceiling of max 40 rerenders/second during streaming.
+  const DELTA_THROTTLE = 25;
+  let pendingDeltas: { id: MessageId; delta: AiAssistantDeltaUpdate }[] = [];
+  let deltaBatchTimer: NodeJS.Timeout | number | null = null;
+
+  function flushPendingDeltas() {
+    const currentQueue = pendingDeltas;
+
+    pendingDeltas = [];
+    if (deltaBatchTimer !== null) {
+      clearTimeout(deltaBatchTimer);
+      deltaBatchTimer = null;
+    }
+
+    // Process all pending deltas in a single batch
+    batch(() => {
+      console.warn(
+        `Processing ${currentQueue.length} pending deltas in this chunk`
+      );
+      for (const { id, delta } of currentQueue) {
+        context.messagesStore.addDelta(id, delta);
+      }
+    });
+  }
+
+  function enqueueDelta(id: MessageId, delta: AiAssistantDeltaUpdate) {
+    pendingDeltas.push({ id, delta });
+
+    // If no timer is running, start one to process the batch
+    if (deltaBatchTimer === null) {
+      deltaBatchTimer = setTimeout(flushPendingDeltas, DELTA_THROTTLE);
+    }
+  }
+
   let lastTokenKey: string | undefined;
   function onStatusDidChange(_newStatus: Status) {
     const authValue = managedSocket.authValue;
@@ -1027,60 +1063,70 @@ export function createAi(config: AiConfig): Ai {
     }
 
     if ("event" in msg) {
-      switch (msg.event) {
-        case "cmd-failed":
-          pendingCmd?.reject(new Error(msg.error));
-          break;
+      // Delta's are handled separately
+      if (msg.event === "delta") {
+        const { id, delta } = msg;
+        enqueueDelta(id, delta);
+      } else {
+        switch (msg.event) {
+          case "cmd-failed":
+            batch(() => {
+              flushPendingDeltas();
+              pendingCmd?.reject(new Error(msg.error));
+            });
+            break;
 
-        case "delta": {
-          const { id, delta } = msg;
-          context.messagesStore.addDelta(id, delta);
-          break;
+          case "settle": {
+            batch(() => {
+              flushPendingDeltas();
+              context.messagesStore.upsert(msg.message);
+            });
+            break;
+          }
+
+          case "warning":
+            console.warn(msg.message);
+            break;
+
+          case "error":
+            console.error(msg.error);
+            break;
+
+          case "rebooted":
+            batch(() => {
+              flushPendingDeltas();
+              context.messagesStore.failAllPending();
+            });
+            break;
+
+          case "sync":
+            batch(() => {
+              flushPendingDeltas();
+              // Delete any resources?
+              for (const m of msg["-messages"] ?? []) {
+                context.messagesStore.remove(m.chatId, m.id);
+              }
+              for (const chatId of msg["-chats"] ?? []) {
+                context.chatsStore.markDeleted(chatId);
+                context.messagesStore.removeByChatId(chatId);
+              }
+              for (const chatId of msg.clear ?? []) {
+                context.messagesStore.removeByChatId(chatId);
+              }
+
+              // Add any new resources?
+              if (msg.chats) {
+                context.chatsStore.upsertMany(msg.chats);
+              }
+              if (msg.messages) {
+                context.messagesStore.upsertMany(msg.messages);
+              }
+            });
+            break;
+
+          default:
+            return assertNever(msg, "Unhandled case");
         }
-
-        case "settle": {
-          context.messagesStore.upsert(msg.message);
-          break;
-        }
-
-        case "warning":
-          console.warn(msg.message);
-          break;
-
-        case "error":
-          console.error(msg.error);
-          break;
-
-        case "rebooted":
-          context.messagesStore.failAllPending();
-          break;
-
-        case "sync":
-          batch(() => {
-            // Delete any resources?
-            for (const m of msg["-messages"] ?? []) {
-              context.messagesStore.remove(m.chatId, m.id);
-            }
-            for (const chatId of msg["-chats"] ?? []) {
-              context.chatsStore.markDeleted(chatId);
-              context.messagesStore.removeByChatId(chatId);
-            }
-            for (const chatId of msg.clear ?? []) {
-              context.messagesStore.removeByChatId(chatId);
-            }
-
-            // Add any new resources?
-            if (msg.chats) {
-              context.chatsStore.upsertMany(msg.chats);
-            }
-            if (msg.messages) {
-              context.messagesStore.upsertMany(msg.messages);
-            }
-          });
-          break;
-
-        default:
-          return assertNever(msg, "Unhandled case");
       }
     } else {
       switch (msg.cmd) {
