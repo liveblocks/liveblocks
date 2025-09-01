@@ -188,7 +188,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
           ? renderTitle(parsedDate, locale)
           : renderTitle,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [renderTitle, parsedDate, key]
+      [renderTitle, parsedDate, locale, key]
     );
     const children = useMemo(
       () =>
@@ -196,7 +196,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
           ? renderChildren(parsedDate, locale)
           : renderChildren,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [renderChildren, parsedDate, key]
+      [renderChildren, parsedDate, locale, key]
     );
 
     useInterval(rerender, interval);
