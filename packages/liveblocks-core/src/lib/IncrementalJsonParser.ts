@@ -4,9 +4,10 @@ import { tryParseJson } from "./utils";
 const EMPTY_OBJECT = Object.freeze({}) as JsonObject;
 
 // Characters that can end partial keywords: n, u, l, t, r, e, f, a, s
-const NULL_KEYWORD_CHARS = new Set("null");
-const TRUE_KEYWORD_CHARS = new Set("true");
-const FALSE_KEYWORD_CHARS = new Set("false");
+const NULL_KEYWORD_CHARS = Array.from(new Set("null"));
+const TRUE_KEYWORD_CHARS = Array.from(new Set("true"));
+const FALSE_KEYWORD_CHARS = Array.from(new Set("false"));
+const ALL_KEYWORD_CHARS = Array.from(new Set("nulltruefalse"));
 
 /**
  * Strips the last character from `str` if it is one of the chars in the given
@@ -92,43 +93,34 @@ export class IncrementalJsonParser {
     }
 
     const lastChar = output.charAt(output.length - 1);
+    if (lastChar === "") return "";
 
     // Handle incomplete negative numbers
     if (lastChar === "-") {
       return "0"; // Complete to -0
     }
 
-    // Quick heuristic: only check partial keywords if last char could be part of one
-    if (NULL_KEYWORD_CHARS.has(lastChar)) {
-      if (output.endsWith("nul")) {
-        return "l";
-      } else if (output.endsWith("nu")) {
-        return "ll";
-      } else if (output.endsWith("n")) {
-        return "ull";
-      }
+    // Skip keyword completion for most characters that can't be part of keywords
+    if (!ALL_KEYWORD_CHARS.includes(lastChar)) return "";
+
+    // Check the last few characters directly
+    if (NULL_KEYWORD_CHARS.includes(lastChar)) {
+      if (output.endsWith("nul")) return "l";
+      if (output.endsWith("nu")) return "ll";
+      if (output.endsWith("n")) return "ull";
     }
 
-    if (TRUE_KEYWORD_CHARS.has(lastChar)) {
-      if (output.endsWith("tru")) {
-        return "e";
-      } else if (output.endsWith("tr")) {
-        return "ue";
-      } else if (output.endsWith("t")) {
-        return "rue";
-      }
+    if (TRUE_KEYWORD_CHARS.includes(lastChar)) {
+      if (output.endsWith("tru")) return "e";
+      if (output.endsWith("tr")) return "ue";
+      if (output.endsWith("t")) return "rue";
     }
 
-    if (FALSE_KEYWORD_CHARS.has(lastChar)) {
-      if (output.endsWith("fals")) {
-        return "e";
-      } else if (output.endsWith("fal")) {
-        return "se";
-      } else if (output.endsWith("fa")) {
-        return "lse";
-      } else if (output.endsWith("f")) {
-        return "alse";
-      }
+    if (FALSE_KEYWORD_CHARS.includes(lastChar)) {
+      if (output.endsWith("fals")) return "e";
+      if (output.endsWith("fal")) return "se";
+      if (output.endsWith("fa")) return "lse";
+      if (output.endsWith("f")) return "alse";
     }
 
     return "";
