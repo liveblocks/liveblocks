@@ -9,6 +9,39 @@
 - Add `Duration` primitive to display formatted durations, similar to the
   existing `Timestamp` primitive.
 
+## v3.5.1
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where deleting a thread/comment from Tiptap would also remove any
+  comments contained within it.
+
+## v3.5.0
+
+### `@liveblocks/node`
+
+- Add the following methods for managing AI copilots and knowledge sources:
+  - `getAiCopilots`
+  - `createAiCopilot`
+  - `getAiCopilot`
+  - `updateAiCopilot`
+  - `deleteAiCopilot`
+  - `createWebKnowledgeSource`
+  - `createFileKnowledgeSource`
+  - `deleteFileKnowledgeSource`
+  - `deleteWebKnowledgeSource`
+  - `getKnowledgeSources`
+  - `getKnowledgeSource`
+  - `getFileKnowledgeSourceMarkdown`
+  - `getWebKnowledgeSourceLinks`
+
+## v3.4.2
+
+### `@liveblocks/react-ui`
+
+- Fix improved Markdown streaming in `AiChat` only being enabled in reasoning
+  blocks, it’s now enabled for all Markdown.
+
 ## v3.4.1
 
 ### `@liveblocks/core`

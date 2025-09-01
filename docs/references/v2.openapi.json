@@ -3767,6 +3767,643 @@
           }
         }
       }
+    },
+    "/ai/copilots": {
+      "get": {
+        "summary": "Get AI copilots",
+        "description": "This endpoint returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest. Corresponds to [`liveblocks.getAiCopilots`](/docs/api-reference/liveblocks-node#get-ai-copilots).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of copilots to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of AI copilots.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAiCopilots"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          }
+        },
+        "operationId": "get-ai-copilots"
+      },
+      "post": {
+        "summary": "Create AI copilot",
+        "description": "This endpoint creates a new AI copilot with the given configuration. Corresponds to [`liveblocks.createAiCopilot`](/docs/api-reference/liveblocks-node#create-ai-copilot).",
+        "tags": ["AI"],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the created AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "create-ai-copilot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAiCopilot"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}": {
+      "get": {
+        "summary": "Get AI copilot",
+        "description": "This endpoint returns an AI copilot by its ID. Corresponds to [`liveblocks.getAiCopilot`](/docs/api-reference/liveblocks-node#get-ai-copilot).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-ai-copilot"
+      },
+      "post": {
+        "summary": "Update AI copilot",
+        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the updated AI copilot.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCopilot"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "update-ai-copilot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAiCopilot"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete AI copilot",
+        "description": "This endpoint deletes an AI copilot by its ID. A deleted copilot is no longer accessible and cannot be restored. Corresponds to [`liveblocks.deleteAiCopilot`](/docs/api-reference/liveblocks-node#delete-ai-copilot).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The AI copilot was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-ai-copilot"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge": {
+      "get": {
+        "summary": "Get knowledge sources",
+        "description": "This endpoint returns a paginated list of knowledge sources for a specific AI copilot. Corresponds to [`liveblocks.getKnowledgeSources`](/docs/api-reference/liveblocks-node#get-knowledge-sources).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of knowledge sources to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of knowledge sources.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetKnowledgeSources"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-knowledge-sources"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/{knowledgeSourceId}": {
+      "get": {
+        "summary": "Get knowledge source",
+        "description": "This endpoint returns a specific knowledge source by its ID. Corresponds to [`liveblocks.getKnowledgeSource`](/docs/api-reference/liveblocks-node#get-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KnowledgeSource"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-knowledge-source"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/web": {
+      "post": {
+        "summary": "Create web knowledge source",
+        "description": "This endpoint creates a web knowledge source for an AI copilot. This allows the copilot to access and learn from web content. Corresponds to [`liveblocks.createWebKnowledgeSource`](/docs/api-reference/liveblocks-node#create-web-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the ID of the created knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "create-web-knowledge-source",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebKnowledgeSource"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/file/{name}": {
+      "put": {
+        "summary": "Create file knowledge source",
+        "description": "This endpoint creates a file knowledge source for an AI copilot by uploading a file. The copilot can then reference the content of the file when responding. Corresponds to [`liveblocks.createFileKnowledgeSource`](/docs/api-reference/liveblocks-node#create-file-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "Name of the file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the ID of the created knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "create-file-knowledge-source",
+        "requestBody": {
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/file/{knowledgeSourceId}": {
+      "get": {
+        "summary": "Get file knowledge source content",
+        "description": "This endpoint returns the content of a file knowledge source as Markdown. This allows you to see what content the AI copilot has access to from uploaded files. Corresponds to [`liveblocks.getFileKnowledgeSourceMarkdown`](/docs/api-reference/liveblocks-node#get-file-knowledge-source-markdown).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the content of the file knowledge source.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-file-knowledge-source-content"
+      },
+      "delete": {
+        "summary": "Delete file knowledge source",
+        "description": "This endpoint deletes a file knowledge source from an AI copilot. The copilot will no longer have access to the content from this file. Corresponds to [`liveblocks.deleteFileKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-file-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The file knowledge source was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-file-knowledge-source"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/web/{knowledgeSourceId}": {
+      "delete": {
+        "summary": "Delete web knowledge source",
+        "description": "This endpoint deletes a web knowledge source from an AI copilot. The copilot will no longer have access to the content from this source. Corresponds to [`liveblocks.deleteWebKnowledgeSource`](/docs/api-reference/liveblocks-node#delete-web-knowledge-source).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success. The web knowledge source was deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "delete-web-knowledge-source"
+      }
+    },
+    "/ai/copilots/{copilotId}/knowledge/web/{knowledgeSourceId}/links": {
+      "get": {
+        "summary": "Get web knowledge source links",
+        "description": "This endpoint returns a paginated list of links that were indexed from a web knowledge source. This is useful for understanding what content the AI copilot has access to from web sources. Corresponds to [`liveblocks.getWebKnowledgeSourceLinks`](/docs/api-reference/liveblocks-node#get-web-knowledge-source-links).",
+        "tags": ["AI"],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "copilotId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the AI copilot"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "name": "knowledgeSourceId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the knowledge source"
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "in": "query",
+            "name": "limit",
+            "description": "A limit on the number of links to be returned. The limit can range between 1 and 100, and defaults to 20."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "startingAfter",
+            "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success. Returns the list of web knowledge source links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetWebKnowledgeSourceLinks"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          }
+        },
+        "operationId": "get-web-knowledge-source-links"
+      }
     }
   },
   "components": {
@@ -4695,6 +5332,421 @@
             }
           }
         ]
+      },
+      "AiCopilot": {
+        "title": "AiCopilot",
+        "type": "object",
+        "properties": {
+          "type": {
+            "const": "copilot"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "compatibleProviderName": {
+            "type": "string"
+          },
+          "providerBaseUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "providerOptions": {
+            "type": "object"
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "maxTokens": {
+                "type": "number"
+              },
+              "temperature": {
+                "type": "number"
+              },
+              "topP": {
+                "type": "number"
+              },
+              "topK": {
+                "type": "number"
+              },
+              "frequencyPenalty": {
+                "type": "number"
+              },
+              "presencePenalty": {
+                "type": "number"
+              },
+              "stopSequences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "seed": {
+                "type": "number"
+              },
+              "maxRetries": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name",
+          "systemPrompt",
+          "provider",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateAiCopilot": {
+        "title": "CreateAiCopilot",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "providerApiKey": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "compatibleProviderName": {
+            "type": "string"
+          },
+          "providerBaseUrl": {
+            "type": "string"
+          },
+          "providerOptions": {
+            "type": "object"
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "maxTokens": {
+                "type": "number"
+              },
+              "temperature": {
+                "type": "number"
+              },
+              "topP": {
+                "type": "number"
+              },
+              "topK": {
+                "type": "number"
+              },
+              "frequencyPenalty": {
+                "type": "number"
+              },
+              "presencePenalty": {
+                "type": "number"
+              },
+              "stopSequences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "seed": {
+                "type": "number"
+              },
+              "maxRetries": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": ["name", "systemPrompt", "provider"]
+      },
+      "UpdateAiCopilot": {
+        "title": "UpdateAiCopilot",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "providerApiKey": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "systemPrompt": {
+            "type": "string"
+          },
+          "knowledgePrompt": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "google", "openai-compatible"]
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "compatibleProviderName": {
+            "type": "string"
+          },
+          "providerBaseUrl": {
+            "type": "string"
+          },
+          "providerOptions": {
+            "type": "object"
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "maxTokens": {
+                "type": "number"
+              },
+              "temperature": {
+                "type": "number"
+              },
+              "topP": {
+                "type": "number"
+              },
+              "topK": {
+                "type": "number"
+              },
+              "frequencyPenalty": {
+                "type": "number"
+              },
+              "presencePenalty": {
+                "type": "number"
+              },
+              "stopSequences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "seed": {
+                "type": "number"
+              },
+              "maxRetries": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "GetAiCopilots": {
+        "title": "GetAiCopilots",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiCopilot"
+            }
+          }
+        }
+      },
+      "KnowledgeSource": {
+        "title": "KnowledgeSource",
+        "type": "object",
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "const": "ai-knowledge-web-source"
+              },
+              "id": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastIndexedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ingesting", "ready", "error"]
+              },
+              "errorMessage": {
+                "type": "string"
+              },
+              "link": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["individual_link", "crawl", "sitemap"]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "type": {
+                "const": "ai-knowledge-file-source"
+              },
+              "id": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastIndexedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ingesting", "ready", "error"]
+              },
+              "errorMessage": {
+                "type": "string"
+              },
+              "file": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "mimeType": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateWebKnowledgeSource": {
+        "title": "CreateWebKnowledgeSource",
+        "type": "object",
+        "properties": {
+          "copilotId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["individual_link", "crawl", "sitemap"]
+          }
+        },
+        "required": ["copilotId", "url", "type"]
+      },
+      "GetKnowledgeSources": {
+        "title": "GetKnowledgeSources",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KnowledgeSource"
+            }
+          }
+        }
+      },
+      "WebKnowledgeSourceLink": {
+        "title": "WebKnowledgeSourceLink",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ingesting", "ready", "error"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastIndexedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "url", "status", "createdAt", "lastIndexedAt"]
+      },
+      "GetWebKnowledgeSourceLinks": {
+        "title": "GetWebKnowledgeSourceLinks",
+        "type": "object",
+        "properties": {
+          "nextCursor": {
+            "type": "string"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebKnowledgeSourceLink"
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -5119,6 +6171,9 @@
     },
     {
       "name": "Notifications"
+    },
+    {
+      "name": "AI"
     },
     {
       "name": "Deprecated"

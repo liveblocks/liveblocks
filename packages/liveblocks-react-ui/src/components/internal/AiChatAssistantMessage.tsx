@@ -192,12 +192,13 @@ function AssistantMessageContent({
 /* -------------------------------------------------------------------------------------------------
  * TextPart
  * -----------------------------------------------------------------------------------------------*/
-function TextPart({ part, components }: TextPartProps) {
+function TextPart({ part, components, isStreaming }: TextPartProps) {
   return (
     <Prose
       content={part.text}
       className="lb-ai-chat-message-text"
       components={components}
+      partial={isStreaming}
     />
   );
 }
