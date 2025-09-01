@@ -4,6 +4,8 @@
 
 - Throttle incoming AI delta updates to prevent excessive re-renders during fast
   streaming.
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance.
 
 ## v3.5.1
 
