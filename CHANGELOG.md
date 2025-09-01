@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/core`
+
+- Throttle incoming AI delta updates to prevent excessive re-renders during fast
+  streaming.
+
 ## v3.5.1
 
 ### `@liveblocks/react-tiptap`
