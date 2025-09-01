@@ -1,5 +1,14 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Reasoning in `AiChat` now displays how long it took.
+- `AiChat` nows shows when a copilot is searching its knowledge defined on the
+  dashboard, as a "Searching 'What is RAG?'…" indicator. It also displays how
+  long it took.
+- Add `Duration` primitive to display formatted durations, similar to the
+  existing `Timestamp` primitive.
+
 ## v3.4.1
 
 ### `@liveblocks/core`
