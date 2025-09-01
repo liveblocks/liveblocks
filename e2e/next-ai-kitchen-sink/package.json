@@ -9,7 +9,8 @@
     "lint": "next lint",
     "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/",
     "test": "playwright test --max-failures=1",
-    "test:ui": "playwright test --ui --workers=1 --max-failures=1"
+    "test:headed": "playwright --max-failures=1 test --headed",
+    "test:ui": "playwright test --max-failures=1 --workers=1 --ui"
   },
   "dependencies": {
     "@liveblocks/client": "*",

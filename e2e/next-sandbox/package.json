@@ -7,7 +7,8 @@
     "lint": "eslint pages/ utils/ test/",
     "format": "(eslint --fix pages/ utils/ test/ || true) && prettier --write pages/ utils/ test/",
     "test": "playwright test --max-failures=1",
-    "test:ui": "playwright test --ui --workers=1 --max-failures=1",
+    "test:headed": "playwright test --max-failures=1 --headed",
+    "test:ui": "playwright test --max-failures=1 --workers=1 --ui",
     "dev": "next dev --port 3007",
     "start": "next start --port 3007"
   },
