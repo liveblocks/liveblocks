@@ -15,7 +15,7 @@ import type { Resolve } from "./lib/Resolve";
 import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { TreePool } from "./lib/TreePool";
-import type { Brand, DistributiveOmit } from "./lib/utils";
+import type { Brand, DistributiveOmit, ISODateString } from "./lib/utils";
 import { raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -52,7 +52,6 @@ import type {
   GetChatsResponse,
   GetMessageTreeResponse,
   GetOrCreateChatResponse,
-  ISODateString,
   MessageId,
   ServerAiMsg,
   SetToolResultResponse,

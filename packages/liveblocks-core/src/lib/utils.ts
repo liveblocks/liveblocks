@@ -1,8 +1,9 @@
-import type { ISODateString } from "../types/ai";
 import type { Json } from "./Json";
 
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
+
+export type ISODateString = Brand<string, "ISODateString">;
 
 export type DistributiveOmit<T, K extends PropertyKey> = T extends any
   ? Omit<T, K>

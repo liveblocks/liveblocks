@@ -11,11 +11,10 @@ import type { Json, JsonObject } from "../lib/Json";
 import { parsePartialJsonObject } from "../lib/parsePartialJsonObject";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
-import type { Brand } from "../lib/utils";
+import type { Brand, ISODateString } from "../lib/utils";
 import { findLastIndex } from "../lib/utils";
 
 export type Cursor = Brand<string, "Cursor">;
-export type ISODateString = Brand<string, "ISODateString">;
 
 type ChatId = string;
 
