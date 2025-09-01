@@ -1,7 +1,7 @@
 "use client";
 
 import { useClient } from "@liveblocks/react/suspense";
-import { HTMLAttributes, memo, useEffect, useState } from "react";
+import { HTMLAttributes, memo, useEffect, useRef, useState } from "react";
 import {
   AiAssistantMessage,
   CopilotId,
@@ -22,8 +22,14 @@ import {
   Markdown,
   Collapsible,
 } from "@liveblocks/react-ui/_private";
+import { render } from "react-dom";
 
 type UiAssistantMessage = WithNavigation<AiAssistantMessage>;
+
+function useRenderCount() {
+  const ref = useRef(0);
+  return ++ref.current;
+}
 
 export const AssistantMessage = memo(function AssistantMessage({
   message,
@@ -35,6 +41,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   copilotId: CopilotId | undefined;
 }) {
   const client = useClient();
+  const renderCount = useRenderCount();
+
   function MessageActions({ text }: { text: string }) {
     return (
       <div className="flex flex-row group-hover:opacity-100 opacity-0 transition-opacity duration-200 ease-in-out">
@@ -108,6 +116,8 @@ export const AssistantMessage = memo(function AssistantMessage({
   if (message.deletedAt !== undefined) {
     return (
       <div className="flex flex-col">
+        <div>{renderCount}</div>
+
         <div className="">This message has been deleted.</div>
       </div>
     );
@@ -118,13 +128,21 @@ export const AssistantMessage = memo(function AssistantMessage({
     if (message.contentSoFar.length === 0) {
       return (
         <div className="">
+          <div>{renderCount}</div>
+
           <div className="bg-neutral-900 dark:bg-neutral-50 animate-[pulse-dot_1.2s_ease-in-out_infinite] rounded-full size-2">
             <span className="sr-only">Thinking</span>
           </div>
         </div>
       );
     } else {
-      return <AssistantMessageContent message={message} />;
+      return (
+        <div>
+          <div>{renderCount}</div>
+
+          <AssistantMessageContent message={message} />
+        </div>
+      );
     }
   } else if (message.status === "completed") {
     const text: string = message.content.reduce((acc, part) => {
@@ -136,6 +154,8 @@ export const AssistantMessage = memo(function AssistantMessage({
 
     return (
       <div className="flex flex-col gap-2 group">
+        <div>{renderCount}</div>
+
         {/* Message content */}
         <AssistantMessageContent message={message} />
 
@@ -154,6 +174,8 @@ export const AssistantMessage = memo(function AssistantMessage({
     if (message.errorReason === "Aborted by user") {
       return (
         <div className="flex flex-col gap-2 group">
+          <div>{renderCount}</div>
+
           {/* Message content */}
           <AssistantMessageContent message={message} />
           {/* Message actions */}
@@ -163,6 +185,8 @@ export const AssistantMessage = memo(function AssistantMessage({
     } else {
       return (
         <div className="flex flex-col gap-2 group">
+          <div>{renderCount}</div>
+
           {/* Message content */}
           <AssistantMessageContent message={message} />
 
