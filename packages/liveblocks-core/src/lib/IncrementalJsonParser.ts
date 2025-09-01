@@ -80,7 +80,7 @@ export class IncrementalJsonParser {
     }
   }
 
-  #autocompleteKeywords(output: string): string {
+  #autocompleteTail(output: string): string {
     // Complete unambiguous partial JSON keywords,
     // e.g. '{"a": -' → '{"a": -0'
     //      '{"a": n' → '{"a": null'
@@ -217,7 +217,7 @@ export class IncrementalJsonParser {
     result = stripChar(result, ",.");
 
     // Complete partial keywords at the end (if umambiguous)
-    result = result + this.#autocompleteKeywords(result);
+    result = result + this.#autocompleteTail(result);
 
     // Use the bracket stack to compute the suffix
     const suffix = this.#stack.reduceRight((acc, ch) => acc + ch, "");
