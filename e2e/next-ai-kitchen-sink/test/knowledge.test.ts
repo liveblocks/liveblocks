@@ -191,7 +191,7 @@ test.describe("Knowledge Registration", () => {
     await page.goto(`/knowledge/${chatId}`);
 
     // Start on Todo app tab
-    await expect(page.getByTestId("tab-todo-app")).toHaveClass(/font-bold/);
+    await expect(page.getByTestId("tab-todo-app")).toContainClass("font-bold");
 
     // Ask about current view
     await sendAiMessage(page, "What view am I currently in?");
@@ -201,7 +201,7 @@ test.describe("Knowledge Registration", () => {
 
     // Switch to "Another app" tab
     await page.getByTestId("tab-another-app").click();
-    await expect(page.getByTestId("tab-another-app")).toHaveClass(/font-bold/);
+    await expect(page.getByTestId("tab-another-app")).toContainClass("font-bold");
     await expect(page.locator("text=Another part of the app")).toBeVisible();
 
     // Ask about current view again - should now know it's "Another app"
@@ -214,7 +214,7 @@ test.describe("Knowledge Registration", () => {
 
     // Switch to "Both" tab
     await page.getByTestId("tab-both").click();
-    await expect(page.getByTestId("tab-both")).toHaveClass(/font-bold/);
+    await expect(page.getByTestId("tab-both")).toContainClass("font-bold");
 
     // Ask about current view - should know it's "Both apps"
     await sendAiMessage(page, "What view am I in now?");
