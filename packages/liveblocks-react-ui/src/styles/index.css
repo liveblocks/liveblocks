@@ -2812,6 +2812,12 @@
 }
 
 .lb-ai-chat-message-thinking,
+.lb-ai-chat-message-retrieval,
+.lb-ai-chat-message-reasoning {
+  margin-block-end: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-ai-chat-message-thinking,
 .lb-ai-chat-message-retrieval {
   inline-size: fit-content;
   max-inline-size: 100%;
@@ -2825,7 +2831,6 @@
 
 .lb-ai-chat-message-reasoning {
   position: relative;
-  margin-block-end: calc(0.75 * var(--lb-spacing));
 
   &::after {
     content: "";
