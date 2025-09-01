@@ -122,7 +122,7 @@ function formatShortDuration(duration: number, locale?: string) {
   }
 
   const parts = getDurationParts(duration);
-  let formattedDuration = "";
+  const formattedParts: string[] = [];
 
   for (const [unit, value] of Object.entries(parts) as [
     keyof DurationParts,
@@ -138,18 +138,20 @@ function formatShortDuration(duration: number, locale?: string) {
       unitDisplay: "narrow",
     });
 
-    formattedDuration += formatter.format(value);
+    formattedParts.push(formatter.format(value));
   }
 
-  if (!formattedDuration) {
-    formattedDuration = numberFormat(resolvedLocale, {
-      style: "unit",
-      unit: "second",
-      unitDisplay: "narrow",
-    }).format(0);
+  if (!formattedParts.length) {
+    formattedParts.push(
+      numberFormat(resolvedLocale, {
+        style: "unit",
+        unit: "second",
+        unitDisplay: "narrow",
+      }).format(0)
+    );
   }
 
-  return formattedDuration;
+  return formattedParts.join(" ");
 }
 
 /**
@@ -168,7 +170,7 @@ function formatVerboseDuration(duration: number, locale?: string) {
   }
 
   const parts = getDurationParts(duration);
-  let formattedDuration = "";
+  const formattedParts: string[] = [];
 
   for (const [unit, value] of Object.entries(parts) as [
     keyof DurationParts,
@@ -184,19 +186,20 @@ function formatVerboseDuration(duration: number, locale?: string) {
       unitDisplay: "long",
     });
 
-    formattedDuration += " ";
-    formattedDuration += formatter.format(value);
+    formattedParts.push(formatter.format(value));
   }
 
-  if (!formattedDuration) {
-    formattedDuration = numberFormat(resolvedLocale, {
-      style: "unit",
-      unit: "second",
-      unitDisplay: "long",
-    }).format(0);
+  if (!formattedParts.length) {
+    formattedParts.push(
+      numberFormat(resolvedLocale, {
+        style: "unit",
+        unit: "second",
+        unitDisplay: "long",
+      }).format(0)
+    );
   }
 
-  return formattedDuration.trim();
+  return formattedParts.join(" ");
 }
 
 /**

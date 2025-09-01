@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Timestamp } from "../Timestamp";
 
+// Use fixed a fixed date and locale for testing.
+const DATE = new Date("2025-01-01T00:00:00.000Z");
+const LOCALE = "en-US";
+
 type DateDelta = {
   days: number;
   hours: number;
@@ -10,7 +14,7 @@ type DateDelta = {
   seconds: number;
 };
 
-function updateDate(
+function changeDate(
   date: Date | number | string,
   { days = 0, hours = 0, minutes = 0, seconds = 0 }: Partial<DateDelta> = {}
 ) {
@@ -33,10 +37,6 @@ function updateDate(
   );
 }
 
-// Use fixed a fixed date and locale for testing.
-const DATE = new Date("2025-01-01T00:00:00.000Z");
-const LOCALE = "en-US";
-
 describe("Timestamp", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -56,7 +56,7 @@ describe("Timestamp", () => {
 
     function assert(delta: Partial<DateDelta>, expected: string) {
       rerender(
-        <Timestamp locale={LOCALE} date={updateDate(Date.now(), delta)} />
+        <Timestamp locale={LOCALE} date={changeDate(Date.now(), delta)} />
       );
 
       expect(time.textContent).toBe(expected);
@@ -80,7 +80,7 @@ describe("Timestamp", () => {
     assert({ days: -10 }, "Dec 22");
   });
 
-  test("should have a datetime attribute with the date in ISO format", () => {
+  test("should have a datetime attribute with the date as ISO 8601", () => {
     const { container } = render(<Timestamp locale={LOCALE} date={DATE} />);
     const time = container.querySelector("time")!;
 
