@@ -41,7 +41,7 @@ test.describe("Concurrent Operations", () => {
     page,
   }) => {
     // Go to chats page and create a new chat
-    await page.goto("/chats", { waitUntil: 'networkidle' });
+    await page.goto("/chats", { waitUntil: "networkidle" });
     await expect(page.locator("h1")).toHaveText("List of all chats");
 
     // Create a new chat
@@ -87,7 +87,7 @@ test.describe("Concurrent Operations", () => {
     await expect(abortButton).not.toBeVisible();
 
     // Clean up: delete the test chat
-    await page.goto("/chats", { waitUntil: 'networkidle' });
+    await page.goto("/chats", { waitUntil: "networkidle" });
     const deleteButton = page
       .locator(`a[href="/chats/${chatId}"]`)
       .locator("..")
@@ -100,7 +100,7 @@ test.describe("Concurrent Operations", () => {
 
   test("should handle abort during rapid message sending", async ({ page }) => {
     // Go to chats page and create a new chat
-    await page.goto("/chats", { waitUntil: 'networkidle' });
+    await page.goto("/chats", { waitUntil: "networkidle" });
     await page.click('button:has-text("Start a new AI chat")');
     await expect(page).toHaveURL(/\/chats\/[a-zA-Z0-9_-]+/);
 
@@ -150,7 +150,7 @@ test.describe("Concurrent Operations", () => {
     await expect(abortButton).not.toBeVisible();
 
     // Clean up: delete the test chat
-    await page.goto("/chats", { waitUntil: 'networkidle' });
+    await page.goto("/chats", { waitUntil: "networkidle" });
     const deleteButton = page
       .locator(`a[href="/chats/${chatId}"]`)
       .locator("..")
@@ -163,7 +163,7 @@ test.describe("Concurrent Operations", () => {
     page,
   }) => {
     // Go to chats page and create a new chat
-    await page.goto("/chats", { waitUntil: 'networkidle' });
+    await page.goto("/chats", { waitUntil: "networkidle" });
     await page.click('button:has-text("Start a new AI chat")');
     await expect(page).toHaveURL(/\/chats\/[a-zA-Z0-9_-]+/);
 
@@ -208,7 +208,7 @@ test.describe("Concurrent Operations", () => {
     }
 
     // Clean up: delete the test chat
-    await page.goto("/chats", { waitUntil: 'networkidle' });
+    await page.goto("/chats", { waitUntil: "networkidle" });
     const deleteButton = page
       .locator(`a[href="/chats/${chatId}"]`)
       .locator("..")
