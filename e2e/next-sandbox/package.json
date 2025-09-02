@@ -7,7 +7,8 @@
     "lint": "eslint pages/ utils/ test/",
     "format": "(eslint --fix pages/ utils/ test/ || true) && prettier --write pages/ utils/ test/",
     "test": "playwright test --max-failures=1",
-    "test:ui": "playwright test --ui --workers=1 --max-failures=1",
+    "test:headed": "playwright test --max-failures=1 --headed",
+    "test:ui": "playwright test --max-failures=1 --workers=1 --ui",
     "dev": "next dev --port 3007",
     "start": "next start --port 3007"
   },
@@ -33,11 +34,11 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "^1.55.0",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.13",
     "eslint-config-next": "^14.2.20",
     "lodash": "^4.17.21",
-    "playwright": "^1.54.2"
+    "playwright": "^1.55.0"
   }
 }

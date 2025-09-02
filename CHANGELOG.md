@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/core`
+
+- Throttle incoming AI delta updates to prevent excessive re-renders during fast
+  streaming.
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance.
+
 ### `@liveblocks/react-ui`
 
 - Reasoning in `AiChat` now displays how long it took.

@@ -70,37 +70,47 @@ test.describe("Knowledge Registration", () => {
   test("should use registered knowledge about current view and todos", async ({
     page,
   }) => {
-    // Create unique test chat and go to knowledge page
     const chatId = createRandomChat(page);
     await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
-    // Wait for the page to load - verify default tab is "Todo app"
-    await expect(
-      page.locator('button.font-bold:has-text("Todo app")')
-    ).toBeVisible();
+    await test.step("Setup and verify todo app view", async () => {
+      await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
-    // Verify the default todos are visible
-    await expect(page.locator('li:has-text("Get groceries")')).toBeVisible();
-    await expect(page.locator('li:has-text("Go to the gym")')).toBeVisible();
-    await expect(page.locator('li:has-text("Cook dinner")')).toBeVisible();
+      // Wait for the page to load - verify default tab is "Todo app"
+      await expect(
+        page.locator('button.font-bold:has-text("Todo app")')
+      ).toBeVisible();
 
-    // Ask AI about the current view - it should know we're on the Todo list
-    await sendAiMessage(page, "What is the current view in the app?");
+      // Verify the default todos are visible
+      await expect(page.locator('li:has-text("Get groceries")')).toBeVisible();
+      await expect(page.locator('li:has-text("Go to the gym")')).toBeVisible();
+      await expect(page.locator('li:has-text("Cook dinner")')).toBeVisible();
+    });
 
-    // Wait for AI response that should mention the todo view
-    await expect(
-      page.locator("text=Todo").or(page.locator("text=todo"))
-    ).toBeVisible({ timeout: 30000 });
+    await test.step("Test AI knowledge of current view", async () => {
+      // Ask AI about the current view - it should know we're on the Todo list
+      await sendAiMessage(page, "What is the current view in the app?");
 
-    // Ask AI about the todos - it should know the specific items
-    await sendAiMessage(page, "What todos do I have?");
+      // Wait for AI response that should mention the todo view
+      await expect(
+        page.locator("text=Todo").or(page.locator("text=todo"))
+      ).toBeVisible({ timeout: 30000 });
+    });
 
-    // Wait for AI response that should include the todo items
-    await page.waitForTimeout(10000);
-    // The AI should mention the specific todos in its response - use first() to handle duplicates
-    await expect(
-      page.locator("text=groceries").or(page.locator("text=Groceries")).first()
-    ).toBeVisible({ timeout: 20000 });
+    await test.step("Test AI knowledge of specific todos", async () => {
+      // Ask AI about the todos - it should know the specific items
+      await sendAiMessage(page, "What todos do I have?");
+
+      // Wait for AI response that should include the todo items
+      await page.waitForTimeout(10000);
+      // The AI should mention the specific todos in its response - use first() to handle duplicates
+      await expect(
+        page
+          .locator("text=groceries")
+          .or(page.locator("text=Groceries"))
+          .first()
+      ).toBeVisible({ timeout: 20000 });
+    });
   });
 
   test("should use nickname knowledge when enabled", async ({ page }) => {
@@ -191,7 +201,7 @@ test.describe("Knowledge Registration", () => {
     await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
     // Start on Todo app tab
-    await expect(page.getByTestId("tab-todo-app")).toHaveClass(/font-bold/);
+    await expect(page.getByTestId("tab-todo-app")).toContainClass("font-bold");
 
     // Ask about current view
     await sendAiMessage(page, "What view am I currently in?");
@@ -201,7 +211,9 @@ test.describe("Knowledge Registration", () => {
 
     // Switch to "Another app" tab
     await page.getByTestId("tab-another-app").click();
-    await expect(page.getByTestId("tab-another-app")).toHaveClass(/font-bold/);
+    await expect(page.getByTestId("tab-another-app")).toContainClass(
+      "font-bold"
+    );
     await expect(page.locator("text=Another part of the app")).toBeVisible();
 
     // Ask about current view again - should now know it's "Another app"
@@ -214,7 +226,7 @@ test.describe("Knowledge Registration", () => {
 
     // Switch to "Both" tab
     await page.getByTestId("tab-both").click();
-    await expect(page.getByTestId("tab-both")).toHaveClass(/font-bold/);
+    await expect(page.getByTestId("tab-both")).toContainClass("font-bold");
 
     // Ask about current view - should know it's "Both apps"
     await sendAiMessage(page, "What view am I in now?");

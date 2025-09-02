@@ -12,7 +12,10 @@ import type {
   AiToolInvocationDelta,
   AiToolInvocationStreamStart,
 } from "../types/ai";
-import { patchContentWithDelta } from "../types/ai";
+import {
+  createReceivingToolInvocation,
+  patchContentWithDelta,
+} from "../types/ai";
 
 describe("KnowledgeStack", () => {
   test("should be empty by default", () => {
@@ -155,6 +158,45 @@ describe("KnowledgeStack", () => {
     stack.deregisterLayer(key2);
     stack.deregisterLayer(key1);
     expect(stack.get()).toEqual([]);
+  });
+});
+
+describe("createReceivingToolInvocation", () => {
+  test("creates receiving tool invocation with empty args", () => {
+    const tool = createReceivingToolInvocation("inv-test", "testTool");
+
+    expect(tool.type).toBe("tool-invocation");
+    expect(tool.stage).toBe("receiving");
+    expect(tool.invocationId).toBe("inv-test");
+    expect(tool.name).toBe("testTool");
+    expect(tool.partialArgsText).toBe("");
+    expect(tool.partialArgs).toEqual({});
+  });
+
+  test("creates receiving tool invocation with partial args", () => {
+    const tool = createReceivingToolInvocation(
+      "inv-123",
+      "search",
+      '{"query": "test"}'
+    );
+
+    expect(tool.partialArgsText).toBe('{"query": "test"}');
+    expect(tool.partialArgs).toEqual({ query: "test" });
+  });
+
+  test("allows appending deltas via __appendDelta", () => {
+    const tool = createReceivingToolInvocation(
+      "inv-456",
+      "calculator",
+      '{"expr": "2+'
+    );
+
+    expect(tool.partialArgs).toEqual({ expr: "2+" });
+
+    tool.__appendDelta?.('2"}');
+
+    expect(tool.partialArgsText).toBe('{"expr": "2+2"}');
+    expect(tool.partialArgs).toEqual({ expr: "2+2" });
   });
 });
 
@@ -665,14 +707,7 @@ describe("patchContentWithDelta", () => {
 
     test("replaces receiving tool with executing tool (same invocationId)", () => {
       const content: AiAssistantContentPart[] = [
-        {
-          type: "tool-invocation",
-          stage: "receiving",
-          invocationId: "inv-123",
-          name: "search",
-          partialArgsText: '{"query": "par"}',
-          partialArgs: { dummy: "not used in this test" },
-        },
+        createReceivingToolInvocation("inv-123", "search", '{"query": "par"}'),
       ];
 
       const delta: AiExecutingToolInvocationPart = {
@@ -715,14 +750,7 @@ describe("patchContentWithDelta", () => {
     test("replaces tool in middle of content array", () => {
       const content: AiAssistantContentPart[] = [
         { type: "text", text: "Before" },
-        {
-          type: "tool-invocation",
-          stage: "receiving",
-          invocationId: "inv-123",
-          name: "search",
-          partialArgsText: '{"q": "test"}',
-          partialArgs: { dummy: "not used in this test" },
-        },
+        createReceivingToolInvocation("inv-123", "search", '{"q": "test"}'),
         { type: "text", text: "After" },
       ];
 
@@ -745,23 +773,9 @@ describe("patchContentWithDelta", () => {
 
     test("replaces the LAST matching tool when multiple have same invocationId", () => {
       const content: AiAssistantContentPart[] = [
-        {
-          type: "tool-invocation",
-          stage: "receiving",
-          invocationId: "inv-dup",
-          name: "first",
-          partialArgsText: "a",
-          partialArgs: { dummy: "not used in this test" },
-        },
+        createReceivingToolInvocation("inv-dup", "first", "a"),
         { type: "text", text: "Middle" },
-        {
-          type: "tool-invocation",
-          stage: "receiving",
-          invocationId: "inv-dup",
-          name: "second",
-          partialArgsText: "b",
-          partialArgs: { dummy: "not used in this test" },
-        },
+        createReceivingToolInvocation("inv-dup", "second", "b"),
       ];
 
       const delta: AiExecutingToolInvocationPart = {
@@ -782,14 +796,7 @@ describe("patchContentWithDelta", () => {
 
     test("does not affect tools with different invocationIds", () => {
       const content: AiAssistantContentPart[] = [
-        {
-          type: "tool-invocation",
-          stage: "receiving",
-          invocationId: "inv-1",
-          name: "tool1",
-          partialArgsText: "",
-          partialArgs: { dummy: "not used in this test" },
-        },
+        createReceivingToolInvocation("inv-1", "tool1"),
         {
           type: "tool-invocation",
           stage: "executing",

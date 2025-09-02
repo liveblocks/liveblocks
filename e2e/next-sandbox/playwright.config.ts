@@ -35,7 +35,6 @@ export default defineConfig({
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    headless: process.env.CI || process.env.HEADLESS ? true : false,
     viewport: { width: 640, height: 800 },
     permissions: ["clipboard-write", "clipboard-read"],
     /* Maximum time each action such as `click()` can take. 10s local, 15s CI. */
