@@ -1,5 +1,12 @@
 ## vNEXT (not yet published)
 
+## v3.5.2
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
+
 ## v3.5.1
 
 ### `@liveblocks/react-tiptap`
