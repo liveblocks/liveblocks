@@ -29,7 +29,6 @@ import type {
   AbortAiResponse,
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
-  AiAwaitingToolAssistantMessage,
   AiChat,
   AiChatMessage,
   AiChatsQuery,
