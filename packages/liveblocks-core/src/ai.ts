@@ -803,14 +803,6 @@ function createStore_forChatMessages(
           message?.role === "assistant" &&
           message.status === "awaiting-tool"
         ) {
-          // We consider only messages that:
-          // 1. Are still executing; and
-          // 2. Have an execute() function defined.
-          //
-          // This will make sure not to cancel any messages showing
-          // a confirmation dialog (HITL), for example. Those are still fine to
-          // keep in "executing" status, as the user can still interact with
-          // them, even after reloading their page.
           const isAutoExecuting = message.contentSoFar.some((part) => {
             if (part.type === "tool-invocation" && part.stage === "executing") {
               const tool = toolsStore.getToolΣ(part.name, message.chatId).get();
