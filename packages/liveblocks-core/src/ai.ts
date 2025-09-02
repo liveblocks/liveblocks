@@ -957,7 +957,7 @@ export function createAi(config: AiConfig): Ai {
   // a ceiling of max 40 rerenders/second during streaming.
   const DELTA_THROTTLE = 25;
   let pendingDeltas: { id: MessageId; delta: AiAssistantDeltaUpdate }[] = [];
-  let deltaBatchTimer: NodeJS.Timeout | number | null = null;
+  let deltaBatchTimer: ReturnType<typeof setTimeout> | null = null;
 
   function flushPendingDeltas() {
     const currentQueue = pendingDeltas;
