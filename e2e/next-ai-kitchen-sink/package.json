@@ -9,7 +9,8 @@
     "lint": "next lint",
     "format": "(eslint --fix app/ test/ || true) && prettier --write app/ test/",
     "test": "playwright test --max-failures=1",
-    "test:ui": "playwright test --ui --workers=1 --max-failures=1"
+    "test:headed": "playwright --max-failures=1 test --headed",
+    "test:ui": "playwright test --max-failures=1 --workers=1 --ui"
   },
   "dependencies": {
     "@liveblocks/client": "*",
@@ -23,11 +24,11 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
-    "playwright": "^1.54.2",
+    "playwright": "^1.55.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
