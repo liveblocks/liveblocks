@@ -785,6 +785,10 @@ function createStore_forChatMessages(
     markMine(messageId: MessageId) {
       myMessages.add(messageId);
     },
+
+    get myMessages(): ReadonlySet<MessageId> {
+      return myMessages;
+    },
   };
 }
 
@@ -1310,6 +1314,18 @@ export function createAi(config: AiConfig): Ai {
       messagesStore.markMine(resp.message.id);
     }
   }
+
+  // Abort all my messages and tool calls when the page is unloaded
+  function handleBeforeUnload() {
+    for (const messageId of context.messagesStore.myMessages) {
+      sendClientMsgWithResponse({ cmd: "abort-ai", messageId }).catch(() => {
+        // Ignore errors during page unload
+      });
+    }
+  }
+
+  const win = typeof window !== "undefined" ? window : undefined;
+  win?.addEventListener("beforeunload", handleBeforeUnload, { once: true });
 
   return Object.defineProperty(
     {

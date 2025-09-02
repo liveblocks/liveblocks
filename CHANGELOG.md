@@ -2,6 +2,8 @@
 
 ### `@liveblocks/core`
 
+- Automatically abort all my AI messages (that are still generating or awaiting
+  tool call results) when unloading the page.
 - Throttle incoming AI delta updates to prevent excessive re-renders during fast
   streaming.
 - Optimized partial JSON parser for improved tool invocation streaming
