@@ -29,6 +29,7 @@ import type {
   AbortAiResponse,
   AiAssistantDeltaUpdate,
   AiAssistantMessage,
+  AiAwaitingToolAssistantMessage,
   AiChat,
   AiChatMessage,
   AiChatsQuery,
@@ -786,8 +787,44 @@ function createStore_forChatMessages(
       myMessages.add(messageId);
     },
 
-    get myMessages(): ReadonlySet<MessageId> {
-      return myMessages;
+    /**
+     * Iterates over all "my" auto-executing messages.
+     *
+     * These are messages that match all these conditions:
+     * - The message is an assistant message
+     * - The message is owned by this client ("mine")
+     * - The message is currently in "awaiting-tool" status
+     * - The message has at least one tool invocation in "executing" stage
+     * - The tool invocation has an execute() function defined
+     */
+    *getMyAbortableMessageIds(): Iterable<MessageId> {
+      for (const messageId of myMessages) {
+        const message = getMessageById(messageId);
+        if (
+          message?.role === "assistant" &&
+          message.status === "awaiting-tool"
+        ) {
+          // We consider only messages that:
+          // 1. Are still executing; and
+          // 2. Have an execute() function defined.
+          //
+          // This will make sure not to cancel any messages showing
+          // a confirmation dialog (HITL), for example. Those are still fine to
+          // keep in "executing" status, as the user can still interact with
+          // them, even after reloading their page.
+          const isAutoExecuting = message.contentSoFar.some((part) => {
+            if (part.type === "tool-invocation" && part.stage === "executing") {
+              const tool = toolsStore.getToolΣ(part.name, message.chatId).get();
+              return typeof tool?.execute === "function";
+            }
+            return false;
+          });
+
+          if (isAutoExecuting) {
+            yield message.id;
+          }
+        }
+      }
     },
   };
 }
@@ -1315,9 +1352,9 @@ export function createAi(config: AiConfig): Ai {
     }
   }
 
-  // Abort all my messages and tool calls when the page is unloaded
+  // Abort all my auto-executing messages when the page is unloaded
   function handleBeforeUnload() {
-    for (const messageId of context.messagesStore.myMessages) {
+    for (const messageId of context.messagesStore.getMyAbortableMessageIds()) {
       sendClientMsgWithResponse({ cmd: "abort-ai", messageId }).catch(() => {
         // Ignore errors during page unload
       });
