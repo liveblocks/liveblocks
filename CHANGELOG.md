@@ -1,11 +1,18 @@
 ## vNEXT (not yet published)
 
+## v3.5.2
+
 ### `@liveblocks/core`
 
 - Throttle incoming AI delta updates to prevent excessive re-renders during fast
   streaming.
 - Optimized partial JSON parser for improved tool invocation streaming
   performance.
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
 
 ## v3.5.1
 
