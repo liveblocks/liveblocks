@@ -31,13 +31,20 @@ test.describe("Storage - LiveList", () => {
 
   test("list push basic", async () => {
     const [page1] = pages;
-    await page1.click("#clear");
-    await waitForJson(pages, "#numItems", 0);
 
-    await page1.click("#push");
-    await waitForJson(pages, "#numItems", 1);
+    await test.step("Clear initial list", async () => {
+      await page1.click("#clear");
+      await waitForJson(pages, "#numItems", 0);
+    });
 
-    await waitUntilEqualOnAllPages(pages, "#items");
+    await test.step("Push item to list", async () => {
+      await page1.click("#push");
+      await waitForJson(pages, "#numItems", 1);
+    });
+
+    await test.step("Verify synchronization across pages", async () => {
+      await waitUntilEqualOnAllPages(pages, "#items");
+    });
 
     await page1.click("#push");
     await waitForJson(pages, "#numItems", 2);
