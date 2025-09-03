@@ -2895,7 +2895,11 @@ export class Liveblocks {
     copilotId: string,
     options?: RequestOptions
   ): Promise<void> {
-    const res = await this.#delete(url`/v2/ai/copilots/${copilotId}`, options);
+    const res = await this.#delete(
+      url`/v2/ai/copilots/${copilotId}`,
+      undefined,
+      options
+    );
     if (!res.ok) {
       throw await LiveblocksError.from(res);
     }
@@ -2972,6 +2976,7 @@ export class Liveblocks {
   ): Promise<void> {
     const res = await this.#delete(
       url`/v2/ai/copilots/${params.copilotId}/knowledge/file/${params.knowledgeSourceId}`,
+      undefined,
       options
     );
     if (!res.ok) {
@@ -2991,6 +2996,7 @@ export class Liveblocks {
   ): Promise<void> {
     const res = await this.#delete(
       url`/v2/ai/copilots/${params.copilotId}/knowledge/web/${params.knowledgeSourceId}`,
+      undefined,
       options
     );
     if (!res.ok) {
