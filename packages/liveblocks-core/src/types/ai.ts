@@ -7,8 +7,8 @@
 import type { JSONSchema7 } from "json-schema";
 
 import { assertNever } from "../lib/assert";
+import { IncrementalJsonParser } from "../lib/IncrementalJsonParser";
 import type { Json, JsonObject } from "../lib/Json";
-import { parsePartialJsonObject } from "../lib/parsePartialJsonObject";
 import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { Brand } from "../lib/utils";
@@ -337,6 +337,8 @@ export type AiReceivingToolInvocationPart = {
   /** @internal */
   partialArgsText: string; // The raw, partial JSON text value
   partialArgs: JsonObject; // The interpreted, partial JSON value
+  /** @internal */
+  __appendDelta?: (delta: string) => void; // Internal method for delta updates
 };
 
 export type AiExecutingToolInvocationPart<A extends JsonObject = JsonObject> = {
@@ -454,6 +456,7 @@ export type AiGeneratingAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "generating";
   contentSoFar: AiAssistantContentPart[];
@@ -468,6 +471,7 @@ export type AiAwaitingToolAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "awaiting-tool";
   contentSoFar: AiAssistantContentPart[];
@@ -483,6 +487,7 @@ export type AiCompletedAssistantMessage = {
   content: AiAssistantContentPart[];
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "completed";
   /** @internal */
@@ -496,6 +501,7 @@ export type AiFailedAssistantMessage = {
   role: "assistant";
   createdAt: ISODateString;
   deletedAt?: ISODateString;
+  copilotId?: CopilotId;
 
   status: "failed";
   contentSoFar: AiAssistantContentPart[];
@@ -544,23 +550,10 @@ export function patchContentWithDelta(
       break;
 
     case "tool-stream": {
-      let _cacheKey = "";
-      let _cachedArgs: JsonObject = {};
-
-      const toolInvocation = {
-        type: "tool-invocation" as const,
-        stage: "receiving" as const,
-        invocationId: delta.invocationId,
-        name: delta.name,
-        partialArgsText: "",
-        get partialArgs(): JsonObject {
-          if (this.partialArgsText !== _cacheKey) {
-            _cachedArgs = parsePartialJsonObject(this.partialArgsText);
-            _cacheKey = this.partialArgsText;
-          }
-          return _cachedArgs;
-        },
-      };
+      const toolInvocation = createReceivingToolInvocation(
+        delta.invocationId,
+        delta.name
+      );
       content.push(toolInvocation);
       break;
     }
@@ -568,12 +561,12 @@ export function patchContentWithDelta(
     case "tool-delta": {
       // Take the last part, expect it to be a tool invocation in receiving
       // stage. If not, ignore this delta. If it is, append the delta to the
-      // partialArgsText
+      // parser
       if (
         lastPart?.type === "tool-invocation" &&
         lastPart.stage === "receiving"
       ) {
-        lastPart.partialArgsText += delta.delta;
+        lastPart.__appendDelta?.(delta.delta);
       }
       // Otherwise ignore the delta - it's out of order or unexpected
       break;
@@ -602,4 +595,33 @@ export function patchContentWithDelta(
     default:
       return assertNever(delta, "Unhandled case");
   }
+}
+
+/**
+ * Creates a receiving tool invocation part for testing purposes.
+ * This helper eliminates the need to manually create fake tool invocation objects
+ * and provides a clean API for tests.
+ */
+export function createReceivingToolInvocation(
+  invocationId: string,
+  name: string,
+  partialArgsText: string = ""
+): AiReceivingToolInvocationPart {
+  const parser = new IncrementalJsonParser(partialArgsText);
+  return {
+    type: "tool-invocation",
+    stage: "receiving",
+    invocationId,
+    name,
+    get partialArgsText(): string {
+      return parser.source;
+    },
+    get partialArgs(): JsonObject {
+      return parser.json;
+    },
+    // Internal method to append deltas
+    __appendDelta(delta: string) {
+      parser.append(delta);
+    },
+  } satisfies AiReceivingToolInvocationPart;
 }

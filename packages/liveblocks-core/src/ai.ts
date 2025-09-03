@@ -44,6 +44,7 @@ import type {
   ClearChatResponse,
   ClientAiMsg,
   CmdId,
+  CopilotId,
   CreateChatOptions,
   DeleteChatResponse,
   DeleteMessageResponse,
@@ -438,18 +439,19 @@ function createStore_forChatMessages(
   function createOptimistically(
     chatId: string,
     role: "assistant",
-    parentId: MessageId | null
+    parentId: MessageId | null,
+    copilotId?: CopilotId
   ): MessageId;
   function createOptimistically(
     chatId: string,
     role: "user" | "assistant",
     parentId: MessageId | null,
-    third?: AiUserContentPart[]
+    third?: AiUserContentPart[] | CopilotId
   ) {
     const id = `ms_${nanoid()}` as MessageId;
     const createdAt = now();
     if (role === "user") {
-      const content = third!; // eslint-disable-line
+      const content = third as AiUserContentPart[];
       upsert({
         id,
         chatId,
@@ -460,6 +462,7 @@ function createStore_forChatMessages(
         _optimistic: true,
       } satisfies AiUserMessage);
     } else {
+      const copilotId = third as CopilotId | undefined;
       upsert({
         id,
         chatId,
@@ -468,6 +471,7 @@ function createStore_forChatMessages(
         createdAt,
         status: "generating",
         contentSoFar: [],
+        copilotId,
         _optimistic: true,
       } satisfies AiGeneratingAssistantMessage);
     }
@@ -554,8 +558,8 @@ function createStore_forChatMessages(
                   message.chatId,
                   message.id,
                   toolInvocation.invocationId,
-                  result ?? { data: {} }
-                  // TODO Pass in AiGenerationOptions here, or make the backend use the same options
+                  result ?? { data: {} },
+                  { copilotId: message.copilotId } // TODO: Should we pass the other generation options (tools, knowledge) as well?
                 );
               })().catch((err) => {
                 console.error(
@@ -754,10 +758,20 @@ function createStore_forChatMessages(
       .getOrCreate(branch || null);
   }
 
+  function getLastUsedCopilotId(chatId: string): CopilotId | undefined {
+    const pool = messagePoolByChatIdΣ.getOrCreate(chatId).get();
+    // Find the most recent non-deleted assistant message
+    const latest = pool.sorted.findRight(
+      (m) => m.role === "assistant" && !m.deletedAt
+    );
+    return latest?.copilotId;
+  }
+
   return {
     // Readers
     getMessageById,
     getChatMessagesForBranchΣ,
+    getLastUsedCopilotId,
 
     // Mutations
     createOptimistically,
@@ -887,6 +901,8 @@ export type Ai = {
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   queryChats: (query: AiChatsQuery) => AiChat[];
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
+  getLastUsedCopilotId: (chatId: string) => CopilotId | undefined;
+  /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   registerKnowledgeLayer: (uniqueLayerId: string) => LayerKey;
   /** @private This API will change, and is not considered stable. DO NOT RELY on it. */
   deregisterKnowledgeLayer: (layerKey: LayerKey) => void;
@@ -936,6 +952,39 @@ export function createAi(config: AiConfig): Ai {
     knowledge: new KnowledgeStack(),
   };
 
+  // Delta batch processing system to throttle incoming delta updates. Incoming
+  // deltas are buffered and only let through every every 25ms. This creates
+  // a ceiling of max 40 rerenders/second during streaming.
+  const DELTA_THROTTLE = 25;
+  let pendingDeltas: { id: MessageId; delta: AiAssistantDeltaUpdate }[] = [];
+  let deltaBatchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function flushPendingDeltas() {
+    const currentQueue = pendingDeltas;
+
+    pendingDeltas = [];
+    if (deltaBatchTimer !== null) {
+      clearTimeout(deltaBatchTimer);
+      deltaBatchTimer = null;
+    }
+
+    // Process all pending deltas in a single batch
+    batch(() => {
+      for (const { id, delta } of currentQueue) {
+        context.messagesStore.addDelta(id, delta);
+      }
+    });
+  }
+
+  function enqueueDelta(id: MessageId, delta: AiAssistantDeltaUpdate) {
+    pendingDeltas.push({ id, delta });
+
+    // If no timer is running, start one to process the batch
+    if (deltaBatchTimer === null) {
+      deltaBatchTimer = setTimeout(flushPendingDeltas, DELTA_THROTTLE);
+    }
+  }
+
   let lastTokenKey: string | undefined;
   function onStatusDidChange(_newStatus: Status) {
     const authValue = managedSocket.authValue;
@@ -983,7 +1032,8 @@ export function createAi(config: AiConfig): Ai {
   }
 
   function onDidDisconnect() {
-    console.warn("onDidDisconnect");
+    // Flush any pending deltas before disconnect to prevent data loss
+    flushPendingDeltas();
   }
 
   function handleServerMessage(event: IWebSocketMessageEvent) {
@@ -1013,60 +1063,62 @@ export function createAi(config: AiConfig): Ai {
     }
 
     if ("event" in msg) {
-      switch (msg.event) {
-        case "cmd-failed":
-          pendingCmd?.reject(new Error(msg.error));
-          break;
+      // Delta's are handled separately
+      if (msg.event === "delta") {
+        const { id, delta } = msg;
+        enqueueDelta(id, delta);
+      } else {
+        batch(() => {
+          flushPendingDeltas();
 
-        case "delta": {
-          const { id, delta } = msg;
-          context.messagesStore.addDelta(id, delta);
-          break;
-        }
+          switch (msg.event) {
+            case "cmd-failed":
+              pendingCmd?.reject(new Error(msg.error));
+              break;
 
-        case "settle": {
-          context.messagesStore.upsert(msg.message);
-          break;
-        }
-
-        case "warning":
-          console.warn(msg.message);
-          break;
-
-        case "error":
-          console.error(msg.error);
-          break;
-
-        case "rebooted":
-          context.messagesStore.failAllPending();
-          break;
-
-        case "sync":
-          batch(() => {
-            // Delete any resources?
-            for (const m of msg["-messages"] ?? []) {
-              context.messagesStore.remove(m.chatId, m.id);
-            }
-            for (const chatId of msg["-chats"] ?? []) {
-              context.chatsStore.markDeleted(chatId);
-              context.messagesStore.removeByChatId(chatId);
-            }
-            for (const chatId of msg.clear ?? []) {
-              context.messagesStore.removeByChatId(chatId);
+            case "settle": {
+              context.messagesStore.upsert(msg.message);
+              break;
             }
 
-            // Add any new resources?
-            if (msg.chats) {
-              context.chatsStore.upsertMany(msg.chats);
-            }
-            if (msg.messages) {
-              context.messagesStore.upsertMany(msg.messages);
-            }
-          });
-          break;
+            case "warning":
+              console.warn(msg.message);
+              break;
 
-        default:
-          return assertNever(msg, "Unhandled case");
+            case "error":
+              console.error(msg.error);
+              break;
+
+            case "rebooted":
+              context.messagesStore.failAllPending();
+              break;
+
+            case "sync":
+              // Delete any resources?
+              for (const m of msg["-messages"] ?? []) {
+                context.messagesStore.remove(m.chatId, m.id);
+              }
+              for (const chatId of msg["-chats"] ?? []) {
+                context.chatsStore.markDeleted(chatId);
+                context.messagesStore.removeByChatId(chatId);
+              }
+              for (const chatId of msg.clear ?? []) {
+                context.messagesStore.removeByChatId(chatId);
+              }
+
+              // Add any new resources?
+              if (msg.chats) {
+                context.chatsStore.upsertMany(msg.chats);
+              }
+              if (msg.messages) {
+                context.messagesStore.upsertMany(msg.messages);
+              }
+              break;
+
+            default:
+              return assertNever(msg, "Unhandled case");
+          }
+        });
       }
     } else {
       switch (msg.cmd) {
@@ -1335,6 +1387,7 @@ export function createAi(config: AiConfig): Ai {
 
       getChatById: context.chatsStore.getChatById,
       queryChats: context.chatsStore.findMany,
+      getLastUsedCopilotId: context.messagesStore.getLastUsedCopilotId,
       registerKnowledgeLayer,
       deregisterKnowledgeLayer,
       updateKnowledge,

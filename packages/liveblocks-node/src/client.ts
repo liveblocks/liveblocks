@@ -175,6 +175,41 @@ export type RoomData = {
 
 type RoomDataPlain = DateToString<RoomData>;
 
+export type AiCopilot = {
+  type: "copilot";
+  id: string;
+  name: string;
+  systemPrompt: string;
+  knowledgePrompt?: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastUsedAt?: Date;
+  providerModel: string;
+  providerOptions?: Record<string, Record<string, string | Json>>;
+  settings?: {
+    maxTokens?: number;
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    frequencyPenalty?: number;
+    presencePenalty?: number;
+    stopSequences?: string[];
+    seed?: number;
+    maxRetries?: number;
+  };
+} & (
+  | {
+      provider: "openai" | "anthropic" | "google";
+    }
+  | {
+      provider: "openai-compatible";
+      compatibleProviderName: string;
+      providerBaseUrl: string;
+    }
+);
+
+type AiCopilotPlain = DateToString<AiCopilot>;
 export type RoomUser<U extends BaseUserMeta = DU> = {
   type: "user";
   id: string | null;
@@ -331,6 +366,118 @@ export type UpsertRoomOptions = {
   create?: CreateRoomOptions;
 };
 
+export type GetAiCopilotsOptions = PaginationOptions;
+type ProviderSettings = {
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  stopSequences?: string[];
+  seed?: number;
+  maxRetries?: number;
+};
+
+export type CreateAiCopilotOptions = {
+  name: string;
+  providerApiKey: string;
+  providerModel: string;
+  description?: string;
+  systemPrompt: string;
+  knowledgePrompt?: string;
+  providerOptions?: Record<string, Record<string, string | Json>>;
+  settings?: ProviderSettings;
+} & (
+  | {
+      provider: "openai" | "anthropic" | "google";
+    }
+  | {
+      provider: "openai-compatible";
+      compatibleProviderName: string;
+      providerBaseUrl: string;
+    }
+);
+
+export type UpdateAiCopilotOptions = {
+  name?: string;
+  providerApiKey?: string;
+  providerModel?: string;
+  description?: string | null;
+  systemPrompt?: string;
+  knowledgePrompt?: string | null;
+  providerOptions?: Record<string, Record<string, string | Json>> | null;
+  settings?: ProviderSettings | null;
+} & (
+  | {
+      provider?: "openai" | "anthropic" | "google";
+      compatibleProviderName?: null;
+      providerBaseUrl?: null;
+    }
+  | {
+      provider?: "openai-compatible";
+      compatibleProviderName?: string;
+      providerBaseUrl?: string;
+    }
+);
+
+export type CreateWebKnowledgeSourceOptions = {
+  copilotId: string;
+  url: string;
+  type: "individual_link" | "crawl" | "sitemap";
+};
+
+export type CreateFileKnowledgeSourceOptions = {
+  copilotId: string;
+  file: File;
+};
+
+export type GetKnowledgeSourcesOptions = {
+  copilotId: string;
+} & PaginationOptions;
+
+export type GetWebKnowledgeSourceLinksOptions = {
+  copilotId: string;
+  knowledgeSourceId: string;
+} & PaginationOptions;
+
+type KnowledgeSourcePlain = DateToString<KnowledgeSource>;
+
+export type KnowledgeSource = (
+  | {
+      type: "ai-knowledge-web-source";
+      link: {
+        url: string;
+        type: "individual_link" | "crawl" | "sitemap";
+      };
+    }
+  | {
+      type: "ai-knowledge-file-source";
+      file: {
+        name: string;
+        mimeType: string;
+      };
+    }
+) & {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastIndexedAt: Date;
+} & (
+    | { status: "ingesting" | "ready" }
+    | { status: "error"; errorMessage: string }
+  );
+
+type WebKnowledgeSourceLinkPlain = DateToString<WebKnowledgeSourceLink>;
+
+export type WebKnowledgeSourceLink = {
+  id: string;
+  url: string;
+  status: "ingesting" | "ready" | "error";
+  createdAt: Date;
+  lastIndexedAt: Date;
+};
+
 export type RequestOptions = {
   signal?: AbortSignal;
 };
@@ -349,6 +496,34 @@ function inflateRoomData(room: RoomDataPlain): RoomData {
     ...room,
     createdAt,
     lastConnectionAt,
+  };
+}
+
+function inflateAiCopilot(copilot: AiCopilotPlain): AiCopilot {
+  return {
+    ...copilot,
+    createdAt: new Date(copilot.createdAt),
+    updatedAt: new Date(copilot.updatedAt),
+    lastUsedAt: copilot.lastUsedAt ? new Date(copilot.lastUsedAt) : undefined,
+  };
+}
+
+function inflateKnowledgeSource(source: KnowledgeSourcePlain): KnowledgeSource {
+  return {
+    ...source,
+    createdAt: new Date(source.createdAt),
+    updatedAt: new Date(source.updatedAt),
+    lastIndexedAt: new Date(source.lastIndexedAt),
+  };
+}
+
+function inflateWebKnowledgeSourceLink(
+  link: WebKnowledgeSourceLinkPlain
+): WebKnowledgeSourceLink {
+  return {
+    ...link,
+    createdAt: new Date(link.createdAt),
+    lastIndexedAt: new Date(link.lastIndexedAt),
   };
 }
 
@@ -2617,6 +2792,317 @@ export class Liveblocks {
     //   )[];
     // };
     // return data;
+  }
+
+  /**
+   * Returns a paginated list of AI copilots. The copilots are returned sorted by creation date, from newest to oldest.
+   * @param params.limit (optional) A limit on the number of copilots to return. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A paginated list of AI copilots.
+   */
+  public async getAiCopilots(
+    params: PaginationOptions = {},
+    options?: RequestOptions
+  ): Promise<Page<AiCopilot>> {
+    const res = await this.#get(
+      url`/v2/ai/copilots`,
+      {
+        limit: params.limit,
+        startingAfter: params.startingAfter,
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const page = (await res.json()) as Page<AiCopilotPlain>;
+    return {
+      ...page,
+      data: page.data.map(inflateAiCopilot),
+    };
+  }
+
+  /**
+   * Creates an AI copilot.
+   * @param params The parameters to create the copilot with.
+   * @returns The created copilot.
+   */
+  public async createAiCopilot(
+    params: CreateAiCopilotOptions,
+    options?: RequestOptions
+  ): Promise<AiCopilot> {
+    const res = await this.#post(url`/v2/ai/copilots`, params, options);
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const data = (await res.json()) as AiCopilotPlain;
+    return inflateAiCopilot(data);
+  }
+
+  /**
+   * Returns an AI copilot with the given id.
+   * @param copilotId The id of the copilot to return.
+   * @returns The copilot with the given id.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async getAiCopilot(
+    copilotId: string,
+    options?: RequestOptions
+  ): Promise<AiCopilot> {
+    const res = await this.#get(
+      url`/v2/ai/copilots/${copilotId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+
+    const data = (await res.json()) as AiCopilotPlain;
+    return inflateAiCopilot(data);
+  }
+
+  /**
+   * Updates an AI copilot with the given id.
+   * @param copilotId The id of the copilot to update.
+   * @param params The parameters to update the copilot with.
+   * @returns The updated copilot.
+   */
+  public async updateAiCopilot(
+    copilotId: string,
+    params: UpdateAiCopilotOptions,
+    options?: RequestOptions
+  ): Promise<AiCopilot> {
+    const res = await this.#post(
+      url`/v2/ai/copilots/${copilotId}`,
+      params,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const data = (await res.json()) as AiCopilotPlain;
+    return inflateAiCopilot(data);
+  }
+
+  /**
+   * Deletes an AI copilot with the given id. A deleted copilot is no longer accessible from the API or the dashboard and it cannot be restored.
+   * @param copilotId The id of the copilot to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteAiCopilot(
+    copilotId: string,
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(url`/v2/ai/copilots/${copilotId}`, options);
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Creates a web knowledge source.
+   * @param params.url The URL of the web knowledge source.
+   * @param params.type The type of the web knowledge source: "individual_link", "crawl" or "sitemap".
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The id of the created web knowledge source.
+   */
+  public async createWebKnowledgeSource(
+    params: CreateWebKnowledgeSourceOptions,
+    options?: RequestOptions
+  ): Promise<{ id: string }> {
+    const res = await this.#post(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge/web`,
+      params,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const data = (await res.json()) as { id: string };
+    return data;
+  }
+
+  /**
+   * Creates a file knowledge source.
+   * @param params.copilotId The id of the copilot.
+   * @param params.name The name of the file knowledge source.
+   * @param params.file The file to create the knowledge source from.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The id of the created file knowledge source.
+   */
+  public async createFileKnowledgeSource(
+    params: CreateFileKnowledgeSourceOptions,
+    options?: RequestOptions
+  ): Promise<{ id: string }> {
+    const fetch = await fetchPolyfill();
+    const res = await fetch(
+      urljoin(
+        this.#baseUrl,
+        url`/v2/ai/copilots/${params.copilotId}/knowledge/file/${params.file.name}`
+      ),
+      {
+        method: "PUT",
+        body: params.file,
+        headers: {
+          Authorization: `Bearer ${this.#secret}`,
+          "Content-Type": params.file.type,
+          "Content-Length": String(params.file.size),
+        },
+        signal: options?.signal,
+      }
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const data = (await res.json()) as { id: string };
+    return data;
+  }
+
+  /**
+   * Deletes a file knowledge source.
+   * @param params.copilotId The id of the copilot.
+   * @param params.knowledgeSourceId The id of the knowledge source to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteFileKnowledgeSource(
+    params: { copilotId: string; knowledgeSourceId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge/file/${params.knowledgeSourceId}`,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Deletes a web knowledge source.
+   * @param params.copilotId The id of the copilot.
+   * @param params.knowledgeSourceId The id of the knowledge source to delete.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   */
+  public async deleteWebKnowledgeSource(
+    params: { copilotId: string; knowledgeSourceId: string },
+    options?: RequestOptions
+  ): Promise<void> {
+    const res = await this.#delete(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge/web/${params.knowledgeSourceId}`,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+  }
+
+  /**
+   * Returns a paginated list of knowledge sources.
+   * @param params.copilotId The id of the copilot.
+   * @param params.limit (optional) A limit on the number of knowledge sources to return. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A paginated list of knowledge sources.
+   */
+  public async getKnowledgeSources(
+    params: GetKnowledgeSourcesOptions,
+    options?: RequestOptions
+  ): Promise<Page<KnowledgeSource>> {
+    const res = await this.#get(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge`,
+      {
+        limit: params.limit,
+        startingAfter: params.startingAfter,
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const page = (await res.json()) as Page<KnowledgeSourcePlain>;
+    return {
+      ...page,
+      data: page.data.map(inflateKnowledgeSource),
+    };
+  }
+
+  /**
+   * Returns a knowledge source with the given id.
+   * @param params.copilotId The id of the copilot.
+   * @param params.knowledgeSourceId The id of the knowledge source to return.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The knowledge source.
+   */
+  public async getKnowledgeSource(
+    params: { copilotId: string; knowledgeSourceId: string },
+    options?: RequestOptions
+  ): Promise<KnowledgeSource> {
+    const res = await this.#get(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge/${params.knowledgeSourceId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const data = (await res.json()) as KnowledgeSourcePlain;
+    return inflateKnowledgeSource(data);
+  }
+
+  /**
+   * Returns the content of a file knowledge source.
+   * @param params.copilotId The id of the copilot.
+   * @param params.knowledgeSourceId The id of the knowledge source.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns The content of the file knowledge source.
+   */
+  public async getFileKnowledgeSourceMarkdown(
+    params: { copilotId: string; knowledgeSourceId: string },
+    options?: RequestOptions
+  ): Promise<string> {
+    const res = await this.#get(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge/file/${params.knowledgeSourceId}`,
+      undefined,
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const data = (await res.json()) as { id: string; content: string };
+    return data.content;
+  }
+
+  /**
+   * Returns a paginated list of web knowledge source links.
+   * @param params.copilotId The id of the copilot.
+   * @param params.knowledgeSourceId The id of the knowledge source.
+   * @param params.limit (optional) A limit on the number of links to return. The limit can range between 1 and 100, and defaults to 20.
+   * @param params.startingAfter (optional) A cursor used for pagination. You get the value from the response of the previous page.
+   * @param options.signal (optional) An abort signal to cancel the request.
+   * @returns A paginated list of web knowledge source links.
+   */
+  public async getWebKnowledgeSourceLinks(
+    params: GetWebKnowledgeSourceLinksOptions,
+    options?: RequestOptions
+  ): Promise<Page<WebKnowledgeSourceLink>> {
+    const res = await this.#get(
+      url`/v2/ai/copilots/${params.copilotId}/knowledge/web/${params.knowledgeSourceId}/links`,
+      {
+        limit: params.limit,
+        startingAfter: params.startingAfter,
+      },
+      options
+    );
+    if (!res.ok) {
+      throw await LiveblocksError.from(res);
+    }
+    const page = (await res.json()) as Page<WebKnowledgeSourceLinkPlain>;
+    return {
+      ...page,
+      data: page.data.map(inflateWebKnowledgeSourceLink),
+    };
   }
 }
 

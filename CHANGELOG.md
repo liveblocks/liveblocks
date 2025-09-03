@@ -1,5 +1,64 @@
 ## vNEXT (not yet published)
 
+## v3.5.2
+
+### `@liveblocks/core`
+
+- Throttle incoming AI delta updates to prevent excessive re-renders during fast
+  streaming.
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance.
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
+
+## v3.5.1
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where deleting a thread/comment from Tiptap would also remove any
+  comments contained within it.
+
+## v3.5.0
+
+### `@liveblocks/node`
+
+- Add the following methods for managing AI copilots and knowledge sources:
+  - `getAiCopilots`
+  - `createAiCopilot`
+  - `getAiCopilot`
+  - `updateAiCopilot`
+  - `deleteAiCopilot`
+  - `createWebKnowledgeSource`
+  - `createFileKnowledgeSource`
+  - `deleteFileKnowledgeSource`
+  - `deleteWebKnowledgeSource`
+  - `getKnowledgeSources`
+  - `getKnowledgeSource`
+  - `getFileKnowledgeSourceMarkdown`
+  - `getWebKnowledgeSourceLinks`
+
+## v3.4.2
+
+### `@liveblocks/react-ui`
+
+- Fix improved Markdown streaming in `AiChat` only being enabled in reasoning
+  blocks, it’s now enabled for all Markdown.
+
+## v3.4.1
+
+### `@liveblocks/core`
+
+- Fix a bug where copilot id wasn't passed when setting tool call result if a
+  tool call was defined with `execute` callback.
+
+### `@liveblocks/react`
+
+- Update `useSendAiMessage` to use the the last used copilot id in a chat when
+  no copilot id is passed to the hook or the method returned by the hook.
+
 ## v3.4.0
 
 ### `@liveblocks/react`

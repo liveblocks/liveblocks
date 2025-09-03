@@ -12,7 +12,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
-import { Liveblocks, LiveblocksError } from "../client";
+import { type AiCopilot, Liveblocks, LiveblocksError } from "../client";
 import { getBaseUrl } from "../utils";
 
 const DEFAULT_BASE_URL = getBaseUrl();
@@ -1297,7 +1297,7 @@ describe("client", () => {
       const update = new Uint8Array([21, 31]);
       server.use(
         http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () => {
-          return HttpResponse.arrayBuffer(update);
+          return HttpResponse.arrayBuffer(update.buffer);
         })
       );
 
@@ -1316,9 +1316,9 @@ describe("client", () => {
           ({ request }) => {
             const url = new URL(request.url);
             if (url.searchParams.get("guid") === "subdoc") {
-              return HttpResponse.arrayBuffer(update);
+              return HttpResponse.arrayBuffer(update.buffer);
             }
-            return HttpResponse.arrayBuffer(new Uint8Array([0]));
+            return HttpResponse.arrayBuffer(new Uint8Array([0]).buffer);
           }
         )
       );
@@ -3217,6 +3217,821 @@ describe("client", () => {
           expect(err.name).toBe("LiveblocksError");
         }
       }
+    });
+  });
+
+  describe("AI copilots", () => {
+    const copilot: AiCopilot = {
+      type: "copilot",
+      id: "copilot_123",
+      name: "Test Copilot",
+      description: "A test AI copilot",
+      systemPrompt: "You are a helpful assistant",
+      providerModel: "gpt-4o",
+      knowledgePrompt: "Use the provided knowledge",
+      provider: "openai",
+      providerOptions: {},
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2023-01-02T00:00:00.000Z"),
+      lastUsedAt: new Date("2023-01-03T00:00:00.000Z"),
+      settings: {
+        maxTokens: 1000,
+        temperature: 0.7,
+      },
+    };
+
+    describe("get AI copilots", () => {
+      test("should return a list of AI copilots when getAiCopilots receives a successful response", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots`, () => {
+            return HttpResponse.json(
+              {
+                nextCursor: "cursor1",
+                data: [copilot],
+              },
+              { status: 200 }
+            );
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(client.getAiCopilots()).resolves.toEqual({
+          nextCursor: "cursor1",
+          data: [copilot],
+        });
+      });
+
+      test("should return a list of AI copilots with pagination parameters", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots`, ({ request }) => {
+            const url = new URL(request.url);
+            expect(url.searchParams.get("limit")).toEqual("10");
+            expect(url.searchParams.get("startingAfter")).toEqual("cursor1");
+
+            return HttpResponse.json(
+              {
+                nextCursor: "cursor2",
+                data: [copilot],
+              },
+              { status: 200 }
+            );
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getAiCopilots({ limit: 10, startingAfter: "cursor1" })
+        ).resolves.toEqual({
+          nextCursor: "cursor2",
+          data: [copilot],
+        });
+      });
+
+      test("should throw a LiveblocksError when getAiCopilots receives an error response", async () => {
+        const error = {
+          error: "UNAUTHORIZED",
+          message: "Invalid secret key",
+        };
+
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots`, () => {
+            return HttpResponse.json(error, { status: 401 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getAiCopilots();
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(401);
+            expect(err.message).toBe("Invalid secret key");
+            expect(err.name).toBe("LiveblocksError");
+          }
+        }
+      });
+    });
+
+    describe("create AI copilot", () => {
+      test("should create an AI copilot when createAiCopilot receives a successful response", async () => {
+        const createData = {
+          name: "Test Copilot",
+          description: "A test AI copilot",
+          systemPrompt: "You are a helpful assistant",
+          knowledgePrompt: "Use the provided knowledge",
+          provider: "openai" as const,
+          providerApiKey: "sk_xxx",
+          providerModel: "gpt-4o",
+          settings: {
+            maxTokens: 1000,
+            temperature: 0.7,
+          },
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots`,
+            async ({ request }) => {
+              const data = await request.json();
+              expect(data).toEqual(createData);
+              return HttpResponse.json(copilot, { status: 201 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.createAiCopilot(createData);
+        expect(result).toEqual(copilot);
+      });
+
+      test("should throw a LiveblocksError when createAiCopilot receives an error response", async () => {
+        const error = {
+          error: "INVALID_REQUEST",
+          message: "Invalid copilot data",
+        };
+
+        server.use(
+          http.post(`${DEFAULT_BASE_URL}/v2/ai/copilots`, () => {
+            return HttpResponse.json(error, { status: 400 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.createAiCopilot({
+            name: "Test",
+            systemPrompt: "Test",
+            providerApiKey: "sk_xxx",
+            provider: "openai",
+            providerModel: "gpt-4",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(400);
+            expect(err.message).toBe("Invalid copilot data");
+          }
+        }
+      });
+    });
+
+    describe("get AI copilot", () => {
+      test("should return an AI copilot when getAiCopilot receives a successful response", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return HttpResponse.json(copilot, { status: 200 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(client.getAiCopilot("copilot_123")).resolves.toEqual(
+          copilot
+        );
+      });
+
+      test("should throw a LiveblocksError when getAiCopilot receives an error response", async () => {
+        server.use(
+          http.get(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getAiCopilot("nonexistent");
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+          }
+        }
+      });
+    });
+
+    describe("update AI copilot", () => {
+      test("should update an AI copilot when updateAiCopilot receives a successful response", async () => {
+        const updateData = {
+          name: "Updated Copilot",
+          systemPrompt: "You are an updated assistant",
+        };
+
+        const updatedCopilot = {
+          ...copilot,
+          name: "Updated Copilot",
+          systemPrompt: "You are an updated assistant",
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`,
+            async ({ request }) => {
+              const data = await request.json();
+              expect(data).toEqual(updateData);
+              return HttpResponse.json(updatedCopilot, { status: 200 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.updateAiCopilot("copilot_123", updateData);
+        expect(result).toEqual(updatedCopilot);
+      });
+
+      test("should throw a LiveblocksError when updateAiCopilot receives an error response", async () => {
+        server.use(
+          http.post(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.updateAiCopilot("nonexistent", { name: "Updated" });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+          }
+        }
+      });
+    });
+
+    describe("delete AI copilot", () => {
+      test("should delete an AI copilot when deleteAiCopilot receives a successful response", async () => {
+        server.use(
+          http.delete(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return HttpResponse.text(null, { status: 204 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.deleteAiCopilot("copilot_123");
+        expect(result).toBeUndefined();
+      });
+
+      test("should throw a LiveblocksError when deleteAiCopilot receives an error response", async () => {
+        server.use(
+          http.delete(`${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId`, () => {
+            return new HttpResponse(null, { status: 404 });
+          })
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.deleteAiCopilot("nonexistent");
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+          }
+        }
+      });
+    });
+  });
+
+  describe("knowledge source management", () => {
+    const webKnowledgeSource = {
+      id: "ks_web_123",
+      type: "ai-knowledge-web-source" as const,
+      link: {
+        url: "https://example.com",
+        type: "individual_link" as const,
+      },
+      status: "ready" as const,
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2023-01-02T00:00:00.000Z"),
+      lastIndexedAt: new Date("2023-01-03T00:00:00.000Z"),
+    };
+
+    const fileKnowledgeSource = {
+      id: "ks_file_123",
+      type: "ai-knowledge-file-source" as const,
+      file: {
+        name: "document.pdf",
+        mimeType: "application/pdf",
+      },
+      status: "ready" as const,
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2023-01-02T00:00:00.000Z"),
+      lastIndexedAt: new Date("2023-01-03T00:00:00.000Z"),
+    };
+
+    const webKnowledgeSourceLink = {
+      id: "link_123",
+      url: "https://example.com/page1",
+      status: "ready" as const,
+      createdAt: new Date("2023-01-01T00:00:00.000Z"),
+      lastIndexedAt: new Date("2023-01-03T00:00:00.000Z"),
+    };
+
+    describe("create web knowledge source", () => {
+      test("should create a web knowledge source when createWebKnowledgeSource receives a successful response", async () => {
+        const createData = {
+          copilotId: "copilot_123",
+          url: "https://example.com",
+          type: "individual_link" as const,
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web`,
+            async ({ request }) => {
+              const data = await request.json();
+              expect(data).toEqual(createData);
+              return HttpResponse.json({ id: "ks_web_123" }, { status: 201 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.createWebKnowledgeSource(createData);
+        expect(result).toEqual({ id: "ks_web_123" });
+      });
+
+      test("should throw a LiveblocksError when createWebKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "INVALID_URL",
+          message: "Invalid URL provided",
+        };
+
+        server.use(
+          http.post(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web`,
+            () => {
+              return HttpResponse.json(error, { status: 400 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.createWebKnowledgeSource({
+            copilotId: "copilot_123",
+            url: "invalid-url",
+            type: "individual_link",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(400);
+            expect(err.message).toBe("Invalid URL provided");
+          }
+        }
+      });
+    });
+
+    describe("create file knowledge source", () => {
+      test("should create a file knowledge source when createFileKnowledgeSource receives a successful response", async () => {
+        // Create a mock File object
+        const file = new File(["test content"], "test.pdf", {
+          type: "application/pdf",
+        });
+
+        server.use(
+          http.put(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:name`,
+            async ({ request, params }) => {
+              expect(params.name).toBe("test.pdf");
+              expect(request.headers.get("Content-Type")).toBe(
+                "application/pdf"
+              );
+              const body = await request.text();
+              expect(body).toBe("test content");
+              return HttpResponse.json({ id: "ks_file_123" }, { status: 201 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.createFileKnowledgeSource({
+          copilotId: "copilot_123",
+          file,
+        });
+        expect(result).toEqual({ id: "ks_file_123" });
+      });
+
+      test("should throw a LiveblocksError when createFileKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "INVALID_FILE",
+          message: "Invalid file provided",
+        };
+
+        const file = new File(["test content"], "test.pdf", {
+          type: "application/pdf",
+        });
+
+        server.use(
+          http.put(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:name`,
+            () => {
+              return HttpResponse.json(error, { status: 400 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.createFileKnowledgeSource({
+            copilotId: "copilot_123",
+            file,
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(400);
+            expect(err.message).toBe("Invalid file provided");
+          }
+        }
+      });
+    });
+
+    describe("delete web knowledge source", () => {
+      test("should delete a web knowledge source when deleteWebKnowledgeSource receives a successful response", async () => {
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.text(null, { status: 204 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.deleteWebKnowledgeSource({
+          copilotId: "copilot_123",
+          knowledgeSourceId: "ks_web_123",
+        });
+        expect(result).toBeUndefined();
+      });
+
+      test("should throw a LiveblocksError when deleteWebKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.deleteWebKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("delete file knowledge source", () => {
+      test("should delete a file knowledge source when deleteFileKnowledgeSource receives a successful response", async () => {
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.text(null, { status: 204 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        const result = await client.deleteFileKnowledgeSource({
+          copilotId: "copilot_123",
+          knowledgeSourceId: "ks_file_123",
+        });
+        expect(result).toBeUndefined();
+      });
+
+      test("should throw a LiveblocksError when deleteFileKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.delete(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.deleteFileKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("get knowledge sources", () => {
+      test("should return a list of knowledge sources when getKnowledgeSources receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge`,
+            () => {
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor1",
+                  data: [webKnowledgeSource, fileKnowledgeSource],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getKnowledgeSources({ copilotId: "copilot_123" })
+        ).resolves.toEqual({
+          nextCursor: "cursor1",
+          data: [webKnowledgeSource, fileKnowledgeSource],
+        });
+      });
+
+      test("should return a list of knowledge sources with pagination parameters", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge`,
+            ({ request }) => {
+              const url = new URL(request.url);
+              expect(url.searchParams.get("limit")).toEqual("10");
+              expect(url.searchParams.get("startingAfter")).toEqual("cursor1");
+
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor2",
+                  data: [webKnowledgeSource],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getKnowledgeSources({
+            copilotId: "copilot_123",
+            limit: 10,
+            startingAfter: "cursor1",
+          })
+        ).resolves.toEqual({
+          nextCursor: "cursor2",
+          data: [webKnowledgeSource],
+        });
+      });
+    });
+
+    describe("get knowledge source", () => {
+      test("should return a knowledge source when getKnowledgeSource receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(webKnowledgeSource, {
+                status: 200,
+              });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_web_123",
+          })
+        ).resolves.toEqual(webKnowledgeSource);
+      });
+
+      test("should throw a LiveblocksError when getKnowledgeSource receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getKnowledgeSource({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("get file knowledge source markdown", () => {
+      test("should return file content when getFileKnowledgeSourceMarkdown receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(
+                {
+                  id: "ks_file_123",
+                  content: "# Document Title\n\nThis is the content.",
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getFileKnowledgeSourceMarkdown({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_file_123",
+          })
+        ).resolves.toEqual("# Document Title\n\nThis is the content.");
+      });
+
+      test("should throw a LiveblocksError when getFileKnowledgeSourceMarkdown receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/file/:knowledgeSourceId`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getFileKnowledgeSourceMarkdown({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
+    });
+
+    describe("get web knowledge source links", () => {
+      test("should return a list of links when getWebKnowledgeSourceLinks receives a successful response", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId/links`,
+            () => {
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor1",
+                  data: [webKnowledgeSourceLink],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getWebKnowledgeSourceLinks({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_web_123",
+          })
+        ).resolves.toEqual({
+          nextCursor: "cursor1",
+          data: [webKnowledgeSourceLink],
+        });
+      });
+
+      test("should return a list of links with pagination parameters", async () => {
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId/links`,
+            ({ request }) => {
+              const url = new URL(request.url);
+              expect(url.searchParams.get("limit")).toEqual("20");
+              expect(url.searchParams.get("startingAfter")).toEqual("cursor1");
+
+              return HttpResponse.json(
+                {
+                  nextCursor: "cursor2",
+                  data: [webKnowledgeSourceLink],
+                },
+                { status: 200 }
+              );
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+        await expect(
+          client.getWebKnowledgeSourceLinks({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "ks_web_123",
+            limit: 20,
+            startingAfter: "cursor1",
+          })
+        ).resolves.toEqual({
+          nextCursor: "cursor2",
+          data: [webKnowledgeSourceLink],
+        });
+      });
+
+      test("should throw a LiveblocksError when getWebKnowledgeSourceLinks receives an error response", async () => {
+        const error = {
+          error: "KNOWLEDGE_SOURCE_NOT_FOUND",
+          message: "Knowledge source not found",
+        };
+
+        server.use(
+          http.get(
+            `${DEFAULT_BASE_URL}/v2/ai/copilots/:copilotId/knowledge/web/:knowledgeSourceId/links`,
+            () => {
+              return HttpResponse.json(error, { status: 404 });
+            }
+          )
+        );
+
+        const client = new Liveblocks({ secret: "sk_xxx" });
+
+        try {
+          await client.getWebKnowledgeSourceLinks({
+            copilotId: "copilot_123",
+            knowledgeSourceId: "nonexistent",
+          });
+          expect(true).toBe(false);
+        } catch (err) {
+          expect(err instanceof LiveblocksError).toBe(true);
+          if (err instanceof LiveblocksError) {
+            expect(err.status).toBe(404);
+            expect(err.message).toBe("Knowledge source not found");
+          }
+        }
+      });
     });
   });
 });

@@ -341,7 +341,7 @@ export const useLiveblocksExtension = (
                       pos + node.nodeSize,
                       this.editor.state.doc.content.size - 1
                     );
-                    tr.removeMark(trimmedFrom, trimmedTo, commentMarkType);
+                    tr.removeMark(trimmedFrom, trimmedTo, mark);
                     tr.addMark(
                       trimmedFrom,
                       trimmedTo,
