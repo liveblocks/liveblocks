@@ -661,23 +661,16 @@ export function createReceivingToolInvocation(
   name: string,
   partialArgsText: string = ""
 ): AiReceivingToolInvocationPart {
-  // --- Alternative implementation for FRONTEND only ------------------------
-  const parser = new IncrementalJsonParser(partialArgsText);
+  const parser = new IncrementalJsonParser(partialArgsText); // FRONTEND only
   return {
     type: "tool-invocation",
     stage: "receiving",
     invocationId,
     name,
-    get partialArgsText(): string {
-      return parser.source;
-    },
-    get partialArgs(): JsonObject {
-      return parser.json;
-    },
-    // Internal method to append deltas
-    __appendDelta(delta: string) {
-      parser.append(delta);
-    },
+    // --- Alternative implementation for FRONTEND only ------------------------
+    get partialArgsText(): string { return parser.source; }, // prettier-ignore
+    get partialArgs(): JsonObject { return parser.json; }, // prettier-ignore
+    __appendDelta(delta: string) { parser.append(delta); }, // prettier-ignore
+    // ------------------------------------------------------------------------
   } satisfies AiReceivingToolInvocationPart;
-  // ------------------------------------------------------------------------
 }
