@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/core`
+
+- Auto-abort this client's tool calls on page unload to prevent hanging chats.
+
 ### `@liveblocks/react-ui`
 
 - Reasoning in `AiChat` now displays how long it took.
@@ -13,8 +17,6 @@
 
 ### `@liveblocks/core`
 
-- Automatically abort all my AI messages (that are still generating or awaiting
-  tool call results) when unloading the page.
 - Throttle incoming AI delta updates to prevent excessive re-renders during fast
   streaming.
 - Optimized partial JSON parser for improved tool invocation streaming
