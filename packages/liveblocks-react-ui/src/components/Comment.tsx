@@ -6,6 +6,7 @@ import {
   type CommentData,
   type CommentReaction as CommentReactionData,
   type GroupMentionData,
+  MENTION_CHARACTER,
   type MentionData,
   Permission,
 } from "@liveblocks/core";
@@ -42,7 +43,6 @@ import {
   type GlobalComponents,
   useComponents,
 } from "../components";
-import { MENTION_CHARACTER } from "../constants";
 import { CheckIcon } from "../icons/Check";
 import { CrossIcon } from "../icons/Cross";
 import { DeleteIcon } from "../icons/Delete";

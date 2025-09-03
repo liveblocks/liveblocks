@@ -6,6 +6,7 @@ import {
   type DU,
   html,
   htmlSafe,
+  MENTION_CHARACTER,
   type MentionData,
   type ResolveGroupsInfoArgs,
   type ResolveUsersArgs,
@@ -27,7 +28,6 @@ import {
   createBatchUsersResolver,
   getResolvedForId,
 } from "./lib/batch-resolvers";
-import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
 import type { ResolveRoomInfoArgs } from "./lib/types";

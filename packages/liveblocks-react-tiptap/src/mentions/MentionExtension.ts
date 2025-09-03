@@ -1,4 +1,8 @@
-import { assertNever, createInboxNotificationId } from "@liveblocks/core";
+import {
+  assertNever,
+  createInboxNotificationId,
+  MENTION_CHARACTER,
+} from "@liveblocks/core";
 import {
   combineTransactionSteps,
   type Content,
@@ -12,7 +16,6 @@ import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 import { ySyncPluginKey } from "y-prosemirror";
 
-import { MENTION_CHARACTER } from "../constants";
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_EXTENSION,

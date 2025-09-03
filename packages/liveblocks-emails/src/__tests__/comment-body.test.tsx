@@ -1,9 +1,8 @@
-import { html, htmlSafe } from "@liveblocks/core";
+import { html, htmlSafe, MENTION_CHARACTER } from "@liveblocks/core";
 import { describe, expect, test } from "vitest";
 
 import type { ConvertCommentBodyElements } from "../comment-body";
 import { convertCommentBody } from "../comment-body";
-import { MENTION_CHARACTER } from "../lib/constants";
 import {
   buildCommentBodyWithMention,
   commentBody1,

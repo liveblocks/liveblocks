@@ -18,6 +18,7 @@ import {
   getMentionsFromCommentBody,
   html,
   htmlSafe,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 import type { ComponentType, ReactNode } from "react";
@@ -31,7 +32,6 @@ import {
   createBatchUsersResolver,
   getResolvedForId,
 } from "./lib/batch-resolvers";
-import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
 import type { ResolveRoomInfoArgs } from "./lib/types";

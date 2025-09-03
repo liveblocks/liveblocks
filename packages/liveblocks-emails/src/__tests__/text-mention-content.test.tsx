@@ -1,7 +1,6 @@
-import { html, htmlSafe } from "@liveblocks/core";
+import { html, htmlSafe, MENTION_CHARACTER } from "@liveblocks/core";
 import { describe, expect, test } from "vitest";
 
-import { MENTION_CHARACTER } from "../lib/constants";
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
 import {
   convertTextMentionContent,

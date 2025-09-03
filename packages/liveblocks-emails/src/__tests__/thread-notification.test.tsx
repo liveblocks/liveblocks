@@ -1,7 +1,8 @@
-import type {
-  BaseUserMeta,
-  GroupData,
-  InboxNotificationThreadData,
+import {
+  type BaseUserMeta,
+  type GroupData,
+  type InboxNotificationThreadData,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import type { ThreadData } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
@@ -9,7 +10,6 @@ import { http, HttpResponse } from "msw";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import type { ConvertCommentBodyElements } from "../comment-body";
-import { MENTION_CHARACTER } from "../lib/constants";
 import type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,

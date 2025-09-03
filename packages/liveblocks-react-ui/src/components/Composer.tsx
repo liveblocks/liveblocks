@@ -7,7 +7,7 @@ import type {
   DM,
   GroupMentionData,
 } from "@liveblocks/core";
-import { assertNever, Permission } from "@liveblocks/core";
+import { assertNever, MENTION_CHARACTER, Permission } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateRoomComment,
@@ -39,7 +39,7 @@ import {
 } from "react";
 
 import { useLiveblocksUiConfig } from "../config";
-import { FLOATING_ELEMENT_SIDE_OFFSET, MENTION_CHARACTER } from "../constants";
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { UsersIcon } from "../icons";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";

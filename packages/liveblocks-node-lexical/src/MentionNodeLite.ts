@@ -1,7 +1,6 @@
+import { MENTION_CHARACTER } from "@liveblocks/core";
 import type { NodeKey, SerializedLexicalNode, Spread } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
-
-import { MENTION_CHARACTER } from "./constants";
 
 type LegacySerializedMentionNode = Spread<
   {

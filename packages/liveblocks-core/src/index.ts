@@ -60,6 +60,7 @@ export {
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates } from "./connection";
 export type { LostConnectionEvent, Status } from "./connection";
+export { MENTION_CHARACTER } from "./constants";
 export {
   convertToCommentData,
   convertToCommentUserReaction,

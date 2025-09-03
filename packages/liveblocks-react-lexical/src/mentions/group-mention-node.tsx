@@ -1,6 +1,7 @@
 import {
   createInboxNotificationId,
   type GroupMentionData,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import { Group } from "@liveblocks/react-ui/_private";
 import type {
@@ -14,7 +15,6 @@ import type {
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
 
-import { MENTION_CHARACTER } from "../constants";
 import { Mention } from "./mention-component";
 
 export type SerializedGroupMentionNode = Spread<

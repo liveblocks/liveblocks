@@ -9,7 +9,11 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { assertNever, type MentionData } from "@liveblocks/core";
+import {
+  assertNever,
+  MENTION_CHARACTER,
+  type MentionData,
+} from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateTextMention,
@@ -42,7 +46,6 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { MENTION_CHARACTER } from "../constants";
 import {
   $createGroupMentionNode,
   $isGroupMentionNode,

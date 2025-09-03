@@ -1,5 +1,6 @@
 import {
   type GroupMentionData,
+  MENTION_CHARACTER,
   type MentionData,
   type UserMentionData,
 } from "@liveblocks/core";
@@ -8,7 +9,6 @@ import type { Node } from "@tiptap/pm/model";
 import { NodeViewWrapper } from "@tiptap/react";
 import { type ComponentPropsWithoutRef, forwardRef } from "react";
 
-import { MENTION_CHARACTER } from "../constants";
 import {
   LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_TYPE,

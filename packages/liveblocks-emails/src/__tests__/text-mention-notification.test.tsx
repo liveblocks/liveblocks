@@ -1,6 +1,7 @@
-import type {
-  BaseUserMeta,
-  InboxNotificationTextMentionData,
+import {
+  type BaseUserMeta,
+  type InboxNotificationTextMentionData,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
@@ -14,7 +15,6 @@ import {
   vi,
 } from "vitest";
 
-import { MENTION_CHARACTER } from "../lib/constants";
 import type { ConvertTextMentionContentElements } from "../text-mention-content";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
