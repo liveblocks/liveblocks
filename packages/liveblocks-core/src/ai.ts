@@ -784,6 +784,38 @@ function createStore_forChatMessages(
     markMine(messageId: MessageId) {
       myMessages.add(messageId);
     },
+
+    /**
+     * Iterates over all my auto-executing messages.
+     *
+     * These are messages that match all these conditions:
+     * - The message is an assistant message
+     * - The message is owned by this client ("mine")
+     * - The message is currently in "awaiting-tool" status
+     * - The message has at least one tool invocation in "executing" stage
+     * - The tool invocation has an execute() function defined
+     */
+    *getAutoExecutingMessageIds(): Iterable<MessageId> {
+      for (const messageId of myMessages) {
+        const message = getMessageById(messageId);
+        if (
+          message?.role === "assistant" &&
+          message.status === "awaiting-tool"
+        ) {
+          const isAutoExecuting = message.contentSoFar.some((part) => {
+            if (part.type === "tool-invocation" && part.stage === "executing") {
+              const tool = toolsStore.getToolΣ(part.name, message.chatId).get();
+              return typeof tool?.execute === "function";
+            }
+            return false;
+          });
+
+          if (isAutoExecuting) {
+            yield message.id;
+          }
+        }
+      }
+    },
   };
 }
 
@@ -1309,6 +1341,18 @@ export function createAi(config: AiConfig): Ai {
       messagesStore.markMine(resp.message.id);
     }
   }
+
+  // Abort all my auto-executing messages when the page is unloaded
+  function handleBeforeUnload() {
+    for (const messageId of context.messagesStore.getAutoExecutingMessageIds()) {
+      sendClientMsgWithResponse({ cmd: "abort-ai", messageId }).catch(() => {
+        // Ignore errors during page unload
+      });
+    }
+  }
+
+  const win = typeof window !== "undefined" ? window : undefined;
+  win?.addEventListener("beforeunload", handleBeforeUnload, { once: true });
 
   return Object.defineProperty(
     {

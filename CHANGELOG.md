@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/core`
+
+- Auto-abort this client's tool calls on page unload to prevent hanging chats.
+
 ### `@liveblocks/react-ui`
 
 - Reasoning in `AiChat` now displays how long it took.
