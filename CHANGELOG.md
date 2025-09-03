@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Auto-abort this client's tool calls on page unload to prevent hanging chats.
 
@@ -15,7 +15,7 @@
 
 ## v3.5.2
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Throttle incoming AI delta updates to prevent excessive re-renders during fast
   streaming.
@@ -62,7 +62,7 @@
 
 ## v3.4.1
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Fix a bug where copilot id wasn't passed when setting tool call result if a
   tool call was defined with `execute` callback.
