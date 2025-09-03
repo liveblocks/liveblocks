@@ -1,5 +1,16 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Reasoning in `AiChat` now displays how long it took.
+- `AiChat` nows shows when a copilot is searching its knowledge defined on the
+  dashboard, as a "Searching 'What is RAG?'…" indicator. It also displays how
+  long it took.
+- Add `Duration` primitive to display formatted durations, similar to the
+  existing `Timestamp` primitive.
+
+## v3.5.2
+
 ### `@liveblocks/core`
 
 - Automatically abort all my AI messages (that are still generating or awaiting
@@ -8,6 +19,11 @@
   streaming.
 - Optimized partial JSON parser for improved tool invocation streaming
   performance.
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
 
 ## v3.5.1
 

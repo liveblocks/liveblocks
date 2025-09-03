@@ -16,7 +16,11 @@ import {
   AiTool,
 } from "@liveblocks/react-ui";
 
-export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
+export default function Page({
+  params,
+}: {
+  params: Promise<{ chatId: string }>;
+}) {
   const { chatId } = use(params);
   const [todos, setTodos] = useState<
     { id: number; title: string; isCompleted: boolean }[]

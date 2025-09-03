@@ -82,7 +82,7 @@ export async function preparePage(url: string, options?: WindowOptions) {
     viewport: { width, height },
   });
   const page = await context.newPage();
-  await page.goto(url);
+  await page.goto(url, { waitUntil: "networkidle" });
   return page;
 }
 

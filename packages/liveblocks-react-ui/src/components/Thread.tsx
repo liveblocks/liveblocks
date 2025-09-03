@@ -7,6 +7,7 @@ import {
   Permission,
   type ThreadData,
 } from "@liveblocks/core";
+import { findLastIndex } from "@liveblocks/core";
 import {
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
@@ -41,8 +42,6 @@ import type {
   GlobalOverrides,
   ThreadOverrides,
 } from "../overrides";
-import { findLastIndex } from "@liveblocks/core";
-
 import { useOverrides } from "../overrides";
 import { cn } from "../utils/cn";
 import type { CommentProps } from "./Comment";

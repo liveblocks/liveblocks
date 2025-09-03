@@ -15,7 +15,7 @@ import type { Resolve } from "./lib/Resolve";
 import { shallow, shallow2 } from "./lib/shallow";
 import { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 import { TreePool } from "./lib/TreePool";
-import type { Brand, DistributiveOmit } from "./lib/utils";
+import type { Brand, DistributiveOmit, ISODateString } from "./lib/utils";
 import { raise, tryParseJson } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
@@ -52,7 +52,6 @@ import type {
   GetChatsResponse,
   GetMessageTreeResponse,
   GetOrCreateChatResponse,
-  ISODateString,
   MessageId,
   ServerAiMsg,
   SetToolResultResponse,
@@ -1460,7 +1459,7 @@ export function makeCreateSocketDelegateForAi(
 
     const url = new URL(baseUrl);
     url.protocol = url.protocol === "http:" ? "ws" : "wss";
-    url.pathname = "/ai/v5";
+    url.pathname = "/ai/v6";
     // TODO: don't allow public key to do this
     if (authValue.type === "secret") {
       url.searchParams.set("tok", authValue.token.raw);
