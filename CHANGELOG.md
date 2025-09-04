@@ -13,6 +13,11 @@
 - Add `Duration` primitive to display formatted durations, similar to the
   existing `Timestamp` primitive.
 
+### `@liveblocks/node`
+
+- Better type safety for copilot creation and update options.
+- Add missing type export for AI Copilot and knowledge sources.
+
 ## v3.5.2
 
 ### `@liveblocks/client`
