@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import fetch from "node-fetch";
 import type { URL } from "url";
-import { expect } from "vitest";
+import { expect, onTestFinished } from "vitest";
 import WebSocket from "ws";
 
 import type { BaseMetadata, NoInfr } from "../src";
@@ -15,7 +15,8 @@ import type { ToImmutable } from "../src/crdts/utils";
 import type { Json, JsonObject } from "../src/lib/Json";
 import { wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
-import type { Room } from "../src/room";
+import type { Room, RoomEventMessage } from "../src/room";
+import { controlledPromise } from "../src/lib/controlledPromise";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -154,28 +155,87 @@ export function prepareTestsConflicts<S extends LsonObject>(
     const { root: root1 } = await actor1.room.getStorage();
     const { root: root2 } = await actor2.room.getStorage();
 
+    // We use a beacon system to ensure that all messages have been processed
+    // by the other client. Each time we want to ensures that all messages have
+    // been processed, we broadcast a beacon message, and wait until the other
+    // client has received it. Because all operations are processed in order,
+    // once the beacon is received, we know that all previous messages have
+    // been processed as well.
+    const beacons = new Map<string, () => void>();
+    //                       /          \
+    //                   beaconId    resolve callback
+
+    function watchForBeacons({
+      event,
+    }: RoomEventMessage<JsonObject, BaseUserMeta, Json>) {
+      if (
+        event !== null &&
+        typeof event === "object" &&
+        "beacon" in event &&
+        typeof event.beacon === "string"
+      ) {
+        // Find the beacon in the administration and settle it
+        const resolve = beacons.get(event.beacon);
+        if (resolve) {
+          // HACK Still needed :(
+          // Despite us using beacons for explicit synchronization, even though
+          // at this point the messages have been _delivered_ to client B, it
+          // does not necessarily mean the storage updates for those messages
+          // have already been processed, because this could happen async.
+          // Unfortunately there is no public API to know this has happened. It
+          // typically happens within ~5 ms, so we'll wait a multitude of that
+          // here, just to be sure.
+          setTimeout(resolve, 30);
+        }
+        beacons.delete(event.beacon);
+      }
+    }
+
+    onTestFinished(actor1.room.events.customEvent.subscribe(watchForBeacons));
+    onTestFinished(actor2.room.events.customEvent.subscribe(watchForBeacons));
+
+    function registerBeacon(beaconId: string) {
+      const [p$, resolve] = controlledPromise<void>();
+      beacons.set(beaconId, () => resolve());
+      return p$;
+    }
+
     const wsUtils = {
       flushSocket1Messages: async () => {
-        // Emit all buffered messages and immediately close the gate again to
-        // avoid sending any new messages that arrive in the meantime.
+        const beaconId = nanoid();
+        const beacon$ = registerBeacon(beaconId);
+        actor1.room.broadcastEvent({ beacon: beaconId });
+
+        // Now emit all buffered messages and immediately close the gates
+        // again. The emitted messages will include our beacon message at the
+        // end of the queue, ensuring that once actor2 receives the beacon, all
+        // previous messages have been processed as well.
         actor1.ws.resume();
         actor1.ws.pause();
 
-        // Now wait until every messages are received by all clients. We don't
-        // have a public way to know if everything has been received so we have
-        // to rely on time.
-        await wait(600);
+        await withTimeout(
+          beacon$,
+          2000,
+          "Client B did not receive beacon from Client A within 2s"
+        );
       },
       flushSocket2Messages: async () => {
-        // Emit all buffered messages and immediately close the gate again to
-        // avoid sending any new messages that arrive in the meantime.
+        const beaconId = nanoid();
+        const beacon$ = registerBeacon(beaconId);
+        actor2.room.broadcastEvent({ beacon: beaconId });
+
+        // Now emit all buffered messages and immediately close the gates
+        // again. The emitted messages will include our beacon message at the
+        // end of the queue, ensuring that once actor2 receives the beacon, all
+        // previous messages have been processed as well.
         actor2.ws.resume();
         actor2.ws.pause();
 
-        // Now wait until every messages are received by all clients. We don't
-        // have a public way to know if everything has been received so we have
-        // to rely on time.
-        await wait(600);
+        await withTimeout(
+          beacon$,
+          2000,
+          "Client A did not receive beacon from Client B within 2s"
+        );
       },
     };
 
