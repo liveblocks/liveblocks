@@ -42,11 +42,19 @@ async function initializeRoomForTest<
       ws = this;
     }
 
-    pauseSend() {
+    /**
+     * Stops sending messages through to the server. Effectively starts
+     * buffering messages in-memory until .resume() is called.
+     */
+    pause() {
       this._isSendPaused = true;
     }
 
-    resumeSend() {
+    /**
+     * Immediately sends all buffered messages to the server and stops
+     * buffering any new messages.
+     */
+    resume() {
       this._isSendPaused = false;
       for (const item of this.sendBuffer) {
         super.send(item);
@@ -135,13 +143,13 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
     const wsUtils = {
       flushSocket1Messages: async () => {
-        actor1.ws.resumeSend();
+        actor1.ws.resume();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
         await wait(600);
       },
       flushSocket2Messages: async () => {
-        actor2.ws.resumeSend();
+        actor2.ws.resume();
         // Waiting until every messages are received by all clients.
         // We don't have a public way to know if everything has been received so we have to rely on time
         await wait(600);
@@ -152,8 +160,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
     // We don't have a public way to know if everything has been received so we have to rely on time
     await wait(600);
 
-    actor1.ws.pauseSend();
-    actor2.ws.pauseSend();
+    actor1.ws.pause();
+    actor2.ws.pause();
 
     let immutableStorage1 = root1.toImmutable();
     let immutableStorage2 = root2.toImmutable();
@@ -235,7 +243,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
     // We don't have a public way to know if everything has been received so we have to rely on time
     await wait(600);
 
-    actor.ws.pauseSend();
+    actor.ws.pause();
 
     actor.ws.addEventListener("message", (_message) => {
       // console.log(message.data);
@@ -246,7 +254,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
         room: actor.room,
         root,
         flushSocketMessages: async () => {
-          actor.ws.resumeSend();
+          actor.ws.resume();
           // Waiting until every messages are received by all clients.
           // We don't have a public way to know if everything has been received so we have to rely on time
           await wait(600);
