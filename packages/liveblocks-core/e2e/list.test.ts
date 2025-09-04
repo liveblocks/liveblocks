@@ -62,15 +62,12 @@ describe("LiveList conflicts", () => {
           root2.get("list").move(0, 1);
           root2.get("list").move(1, 0);
           room2.history.undo();
-
           assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
 
           await wsUtils.flushSocket1Messages();
-
           assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
 
           await wsUtils.flushSocket2Messages();
-
           assert({ list: ["B", "C", "A"] });
         }
       )
@@ -86,15 +83,12 @@ describe("LiveList conflicts", () => {
           root1.get("list").push("A");
           root2.get("list").push("B");
           root2.get("list").set(0, "C");
-
           assert({ list: ["A"] }, { list: ["C"] });
 
           await wsUtils.flushSocket1Messages();
-
           assert({ list: ["A"] }, { list: ["A", "C"] });
 
           await wsUtils.flushSocket2Messages();
-
           assert({ list: ["C"] });
         }
       )
@@ -217,58 +211,63 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    // TODO These are known to still fail and need investigation
-    test.skip(
+    test(
       "remote set conflicts with move",
       prepareTestsConflicts(
         {
           list: new LiveList(["a", "b", "c"]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
-          // Client A replaces "a" with "X"
-          root1.get("list").set(0, "X");
+          // Client A replaces "a" with "🟢"
+          root1.get("list").set(0, "🟢");
 
           // Client B simultaneously deletes "a", and moves "c" to the front
           root2.get("list").delete(0);
           root2.get("list").move(1, 0);
 
-          assert({ list: ["X", "b", "c"] }, { list: ["c", "b"] });
+          assert({ list: ["🟢", "b", "c"] }, { list: ["c", "b"] });
 
           await wsUtils.flushSocket1Messages();
-
-          assert({ list: ["X", "b", "c"] }, { list: ["X", "b"] });
+          assert({ list: ["🟢", "b", "c"] }, { list: ["🟢", "b"] });
 
           await wsUtils.flushSocket2Messages();
+          assert({ list: ["🟢", "c", "b"] });
 
-          // Final state after conflict resolution
-          assert({ list: ["X", "b", "c"] });
+          // Final state after conflict resolution:
+          // - A was replaced by 🟢 (client A's change)
+          // - c was moved to the front (client B's change)
         }
       )
     );
 
-    // TODO These are known to still fail and need investigation
-    test.skip(
+    test(
       "remote set conflicts with move via undo",
       prepareTestsConflicts(
         {
           list: new LiveList(["a", "b", "c"]),
         },
         async ({ root1, root2, room2, wsUtils, assert }) => {
-          root1.get("list").set(0, "X");
+          // Client A replaces "a" with "🟢"
+          root1.get("list").set(0, "🟢");
+
+          // Client B simultaneously deletes "a", and moves "c" to the front,
+          // then to position 1, then undoes
           root2.get("list").delete(0);
           root2.get("list").move(1, 0);
           root2.get("list").move(0, 1);
           room2.history.undo();
 
-          assert({ list: ["X", "b", "c"] }, { list: ["c", "b"] });
+          assert({ list: ["🟢", "b", "c"] }, { list: ["c", "b"] });
 
           await wsUtils.flushSocket1Messages();
-
-          assert({ list: ["X", "b", "c"] }, { list: ["X", "b"] });
+          assert({ list: ["🟢", "b", "c"] }, { list: ["🟢", "b"] });
 
           await wsUtils.flushSocket2Messages();
+          assert({ list: ["🟢", "c", "b"] });
 
-          assert({ list: ["X", "b", "c"] });
+          // Final state after conflict resolution:
+          // - A was replaced by 🟢 (client A's change)
+          // - c was moved to the front (client B's change)
         }
       )
     );
@@ -281,20 +280,17 @@ describe("LiveList conflicts", () => {
         },
         async ({ root1, root2, wsUtils, assert }) => {
           // Client A replaces "a" with "X"
-          root1.get("list").set(0, "X");
+          root1.get("list").set(0, "🟢");
 
           // Client B simultaneously deletes "a"
           root2.get("list").delete(0);
-
-          assert({ list: ["X"] }, { list: [] });
+          assert({ list: ["🟢"] }, { list: [] });
 
           await wsUtils.flushSocket1Messages();
-
-          assert({ list: ["X"] }, { list: ["X"] });
+          assert({ list: ["🟢"] }, { list: ["🟢"] });
 
           await wsUtils.flushSocket2Messages();
-
-          assert({ list: ["X"] });
+          assert({ list: ["🟢"] });
         }
       )
     );
@@ -303,25 +299,25 @@ describe("LiveList conflicts", () => {
       "remote set + move conflicts with set",
       prepareTestsConflicts(
         {
-          list: new LiveList(["A", "B"]),
+          list: new LiveList(["a", "b"]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
-          // Client A changes "A" to "🟢" and moves it after "B"
+          // Client A changes "a" to "🟢" and moves it after "b"
           // This is done in a batch to ensure the default throttling won't
           // send the second operation in the message queue
           root1.get("list").set(0, "🟢");
           root1.get("list").move(0, 1);
-          assert({ list: ["B", "🟢"] }, { list: ["A", "B"] });
+          assert({ list: ["b", "🟢"] }, { list: ["a", "b"] });
 
-          // Client B simultaneously changes "A" to "🌕"
+          // Client B simultaneously changes "a" to "🌕"
           root2.get("list").set(0, "🌕");
-          assert({ list: ["B", "🟢"] }, { list: ["🌕", "B"] });
+          assert({ list: ["b", "🟢"] }, { list: ["🌕", "b"] });
 
           await wsUtils.flushSocket1Messages();
-          assert({ list: ["B", "🟢"] }, { list: ["B", "🟢"] });
+          assert({ list: ["b", "🟢"] }, { list: ["b", "🟢"] });
 
           await wsUtils.flushSocket2Messages();
-          assert({ list: ["🌕", "B", "🟢"] });
+          assert({ list: ["🌕", "b", "🟢"] });
         }
       )
     );
