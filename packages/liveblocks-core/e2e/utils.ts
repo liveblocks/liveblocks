@@ -125,7 +125,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
-    const roomName = "storage-requirements-e2e-tests-" + nanoid(10);
+    const roomName = "storage-requirements-e2e-tests-" + nanoid();
 
     const actor1 = await initializeRoomForTest<JsonObject, S>(
       roomName,
@@ -229,7 +229,7 @@ export function prepareSingleClientTest<S extends LsonObject>(
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
-    const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
+    const roomName = "storage-requirements-e2e-tests-" + nanoid();
 
     const actor = await initializeRoomForTest<never, S, never, never, never>(
       roomName,
