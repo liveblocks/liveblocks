@@ -143,15 +143,25 @@ export function prepareTestsConflicts<S extends LsonObject>(
 
     const wsUtils = {
       flushSocket1Messages: async () => {
+        // Emit all buffered messages and immediately close the gate again to
+        // avoid sending any new messages that arrive in the meantime.
         actor1.ws.resume();
-        // Waiting until every messages are received by all clients.
-        // We don't have a public way to know if everything has been received so we have to rely on time
+        actor1.ws.pause();
+
+        // Now wait until every messages are received by all clients. We don't
+        // have a public way to know if everything has been received so we have
+        // to rely on time.
         await wait(600);
       },
       flushSocket2Messages: async () => {
+        // Emit all buffered messages and immediately close the gate again to
+        // avoid sending any new messages that arrive in the meantime.
         actor2.ws.resume();
-        // Waiting until every messages are received by all clients.
-        // We don't have a public way to know if everything has been received so we have to rely on time
+        actor2.ws.pause();
+
+        // Now wait until every messages are received by all clients. We don't
+        // have a public way to know if everything has been received so we have
+        // to rely on time.
         await wait(600);
       },
     };
