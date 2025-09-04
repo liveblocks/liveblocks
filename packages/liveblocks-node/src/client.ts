@@ -419,17 +419,6 @@ export type UpsertRoomOptions = {
 };
 
 export type GetAiCopilotsOptions = PaginationOptions;
-type ProviderSettings = {
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  topK?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  stopSequences?: string[];
-  seed?: number;
-  maxRetries?: number;
-};
 
 export type CreateAiCopilotOptions = {
   name: string;
@@ -438,7 +427,7 @@ export type CreateAiCopilotOptions = {
   systemPrompt: string;
   knowledgePrompt?: string;
 
-  settings?: ProviderSettings;
+  settings?: AiCopilotProviderSettings;
 
   providerApiKey: string;
 } & (
@@ -516,7 +505,7 @@ export type UpdateAiCopilotOptions = {
   systemPrompt?: string;
   knowledgePrompt?: string | null;
 
-  settings?: ProviderSettings | null;
+  settings?: AiCopilotProviderSettings | null;
 
   providerApiKey?: string;
 } & (
