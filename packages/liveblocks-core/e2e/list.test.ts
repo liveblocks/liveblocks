@@ -306,19 +306,22 @@ describe("LiveList conflicts", () => {
           list: new LiveList(["A", "B"]),
         },
         async ({ root1, root2, wsUtils, assert }) => {
-          root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
-          root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
-          root2.get("list").set(0, "D"); //  Client2 sets "A" to "D"
+          // Client A changes "A" to "🟢" and moves it after "B"
+          // This is done in a batch to ensure the default throttling won't
+          // send the second operation in the message queue
+          root1.get("list").set(0, "🟢");
+          root1.get("list").move(0, 1);
+          assert({ list: ["B", "🟢"] }, { list: ["A", "B"] });
 
-          assert({ list: ["B", "C"] }, { list: ["D", "B"] });
+          // Client B simultaneously changes "A" to "🌕"
+          root2.get("list").set(0, "🌕");
+          assert({ list: ["B", "🟢"] }, { list: ["🌕", "B"] });
 
           await wsUtils.flushSocket1Messages();
-
-          assert({ list: ["B", "C"] }, { list: ["B", "C"] });
+          assert({ list: ["B", "🟢"] }, { list: ["B", "🟢"] });
 
           await wsUtils.flushSocket2Messages();
-
-          assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
+          assert({ list: ["🌕", "B", "🟢"] });
         }
       )
     );
