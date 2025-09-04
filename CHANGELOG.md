@@ -5,6 +5,9 @@
 ### `@liveblocks/client`
 
 - Auto-abort this client's tool calls on page unload to prevent hanging chats.
+- Fix bug where a specific combination of concurrent LiveList mutations could
+  break eventual consistency (two clients disagreeing on the final document
+  state).
 
 ### `@liveblocks/react-ui`
 
