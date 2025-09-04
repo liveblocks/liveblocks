@@ -72,6 +72,7 @@ async function initializeRoomForTest<
   }
 
   const client = createClient<U>({
+    __DANGEROUSLY_disableThrottling: true,
     publicApiKey,
     polyfills: {
       // @ts-expect-error fetch from Node isn't compatible?
@@ -101,7 +102,19 @@ async function initializeRoomForTest<
 }
 
 /**
- * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
+ * Client A and B join the same room and with given initial storage. Message
+ * passing is explicitly timed in these tests, to control behavior exactly.
+ *
+ * Client A and B are set up not to use any throttling to make timing these
+ * tests exactly is easier.
+ *
+ * Available utilities:
+ * - wsUtils.flushSocket1Messages()  Sends network messages from Client A -> B,
+ *                                   and waits for B to have processed them
+ * - wsUtils.flushSocket2Messages()  Sends network messages from Client B -> A,
+ *                                   and waits for B to have processed them
+ *
+ * To send messages from Client A -> Client B and wait for Client B to have received/processed them, use
  */
 export function prepareTestsConflicts<S extends LsonObject>(
   initialStorage: S,
