@@ -114,13 +114,32 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["C"] });
 
-          await wsUtils.flushSocket1Messages();
-
+          await wsUtils.flushSocket1Messages(); // Client A gets processed first
           assert({ list: ["B"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
-
           assert({ list: ["C"] });
+        }
+      )
+    );
+
+    test(
+      "remote set conflicts with a set (received in different order)",
+      prepareTestsConflicts(
+        {
+          list: new LiveList(["A"]),
+        },
+        async ({ root1, root2, wsUtils, assert }) => {
+          root1.get("list").set(0, "B");
+          root2.get("list").set(0, "C");
+
+          assert({ list: ["B"] }, { list: ["C"] });
+
+          await wsUtils.flushSocket2Messages(); // Client B gets processed first
+          assert({ list: ["C"] }, { list: ["C"] });
+
+          await wsUtils.flushSocket1Messages();
+          assert({ list: ["B"] });
         }
       )
     );
