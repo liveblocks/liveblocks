@@ -90,16 +90,23 @@ export class Session {
   #postFn: PostFn;
   #userId: string;
   #userInfo?: IUserInfo;
+  #tenantId?: string;
   #sealed = false;
   readonly #permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
-  constructor(postFn: PostFn, userId: string, userInfo?: IUserInfo) {
+  constructor(
+    postFn: PostFn,
+    userId: string,
+    userInfo?: IUserInfo,
+    tenantId?: string
+  ) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
     this.#postFn = postFn;
     this.#userId = userId;
     this.#userInfo = userInfo;
+    this.#tenantId = tenantId;
   }
 
   #getOrCreate(roomId: string): Set<Permission> {
@@ -191,6 +198,7 @@ export class Session {
 
         // Optional metadata
         userInfo: this.#userInfo,
+        tenantId: this.#tenantId,
       });
 
       return {

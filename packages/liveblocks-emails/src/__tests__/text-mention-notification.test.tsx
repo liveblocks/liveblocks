@@ -1,6 +1,7 @@
-import type {
-  BaseUserMeta,
-  InboxNotificationTextMentionData,
+import {
+  type BaseUserMeta,
+  type InboxNotificationTextMentionData,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import { Liveblocks, type RoomData } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
@@ -14,8 +15,7 @@ import {
   vi,
 } from "vitest";
 
-import { MENTION_CHARACTER } from "../lib/constants";
-import type { ConvertMentionContentElements } from "../mention-content";
+import type { ConvertTextMentionContentElements } from "../text-mention-content";
 import type {
   ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
@@ -47,7 +47,6 @@ import {
   textMentionContentAsReactToStaticMarkup,
 } from "./_helpers";
 import {
-  createTipTapMentionNodeWithContext,
   docUpdateBuffer as docUpdateBufferTiptap,
   MENTION_ID as MENTION_ID_TIPTAP,
   MENTIONED_USER_ID as MENTIONED_USER_ID_TIPTAP,
@@ -139,6 +138,10 @@ describe("text mention notification", () => {
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId,
+        mention: {
+          kind: "user",
+          id: "user-2",
+        },
         createdBy: "user-0",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
         readAt: new Date("2024-09-10T08:12:00.000Z"),
@@ -169,6 +172,10 @@ describe("text mention notification", () => {
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId,
+        mention: {
+          kind: "user",
+          id: "user-1",
+        },
         createdBy: "user-0",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
@@ -198,6 +205,10 @@ describe("text mention notification", () => {
     test("should extract a text mention notification data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
+        mention: {
+          kind: "user",
+          id: MENTIONED_USER_ID_TIPTAP,
+        },
         createdBy: "user-nimesh",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
@@ -222,16 +233,52 @@ describe("text mention notification", () => {
         event,
       });
 
-      const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionId: MENTION_ID_TIPTAP,
-        mentionedUserId: MENTIONED_USER_ID_TIPTAP,
-      });
-
       const expected: TextMentionNotificationData = {
         editor: "tiptap",
-        mentionNodeWithContext,
+        mentionNodeWithContext: {
+          before: [
+            {
+              type: "text",
+              text: "Hey this a tip tap ",
+            },
+            {
+              type: "text",
+              text: "example",
+              marks: [
+                {
+                  type: "bold",
+                  attrs: {},
+                },
+                {
+                  type: "italic",
+                  attrs: {},
+                },
+              ],
+            },
+            {
+              type: "text",
+              text: " hiha! ",
+            },
+          ],
+          mention: {
+            type: "liveblocksMention",
+            attrs: {
+              id: MENTIONED_USER_ID_TIPTAP,
+              notificationId: MENTION_ID_TIPTAP,
+            },
+          },
+          after: [
+            {
+              type: "text",
+              text: " fun right?",
+            },
+          ],
+        },
+        mentionData: {
+          kind: "user",
+          id: MENTIONED_USER_ID_TIPTAP,
+        },
         createdAt: inboxNotification.notifiedAt,
-        userId: MENTIONED_USER_ID_TIPTAP,
         createdBy: inboxNotification.createdBy,
       };
 
@@ -240,16 +287,20 @@ describe("text mention notification", () => {
   });
 
   describe("prepare text mention notification email", () => {
-    const elements: ConvertMentionContentElements<string, BaseUserMeta> = {
+    const elements: ConvertTextMentionContentElements<string, BaseUserMeta> = {
       container: ({ children }) => children.join(""),
-      mention: ({ node, user }) =>
-        `${MENTION_CHARACTER}${user?.name ?? node.id}`,
+      mention: ({ node, user, group }) =>
+        `${MENTION_CHARACTER}${user?.name ?? group?.name ?? node.id}`,
       text: ({ node }) => node.text,
     };
 
     test("should extract mention and nodes and prepare base email data", async () => {
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId: MENTION_ID_TIPTAP,
+        mention: {
+          kind: "user",
+          id: MENTIONED_USER_ID_TIPTAP,
+        },
         createdBy: "user-nimesh",
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
@@ -320,6 +371,10 @@ describe("text mention notification", () => {
   describe("prepare text mention notification email as html", () => {
     const inboxNotification = makeTextMentionInboxNotification({
       mentionId: MENTION_ID_TIPTAP,
+      mention: {
+        kind: "user",
+        id: MENTIONED_USER_ID_TIPTAP,
+      },
       createdBy: "user-1",
       notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
     });
@@ -408,6 +463,10 @@ describe("text mention notification", () => {
   describe("prepare text mention notification email as React", () => {
     const inboxNotification = makeTextMentionInboxNotification({
       mentionId: MENTION_ID_TIPTAP,
+      mention: {
+        kind: "user",
+        id: MENTIONED_USER_ID_TIPTAP,
+      },
       createdBy: "user-1",
       notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
     });

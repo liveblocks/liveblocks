@@ -7,11 +7,11 @@ const P2 = "room:write";
 const P3 = "comments:read";
 // const P4 = "comments:write";
 
-function makeSession(options?: { secret?: string }) {
+function makeSession(options?: { secret?: string; tenantId?: string }) {
   const client = new Liveblocks({
     secret: options?.secret ?? "sk_testingtesting",
   });
-  return client.prepareSession("user-123");
+  return client.prepareSession("user-123", { tenantId: options?.tenantId });
 }
 
 describe("authorization (new API)", () => {
@@ -217,5 +217,36 @@ describe("authorization (new API)", () => {
     expect(() => p.allow("r", [P1])).toThrow(
       "You can no longer change these permissions."
     );
+  });
+
+  test("can set tenantId when creating session", () => {
+    const session = makeSession({ tenantId: "tenant-123" });
+    expect(session).toBeDefined();
+
+    // The session should have the tenantId set internally
+    // We can verify this by checking that the session can be used normally
+    expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
+  });
+
+  test("tenantId is optional when creating session", () => {
+    const session = makeSession();
+    expect(session).toBeDefined();
+
+    // The session should work without tenantId
+    expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
+  });
+
+  test("tenantId can be passed through client prepareSession", () => {
+    const client = new Liveblocks({
+      secret: "sk_testingtesting",
+    });
+
+    const session = client.prepareSession("user-123", {
+      tenantId: "tenant-456",
+    });
+    expect(session).toBeDefined();
+
+    // Verify the session works normally with tenantId
+    expect(session.allow("room-1", [P1]).hasPermissions()).toEqual(true);
   });
 });

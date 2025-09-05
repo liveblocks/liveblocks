@@ -5,9 +5,12 @@ import type {
   CommentBodyMention,
   CommentBodyText,
   CommentData,
+  DGI,
   DRI,
   DU,
+  GroupData,
   InboxNotificationData,
+  ResolveGroupsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -15,6 +18,7 @@ import {
   getMentionsFromCommentBody,
   html,
   htmlSafe,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 import type { ComponentType, ReactNode } from "react";
@@ -23,9 +27,11 @@ import type { ConvertCommentBodyElements } from "./comment-body";
 import { convertCommentBody } from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
-import { resolveAuthorsInfo } from "./lib/authors";
-import { createBatchUsersResolver } from "./lib/batch-users-resolver";
-import { MENTION_CHARACTER } from "./lib/constants";
+import {
+  createBatchGroupsInfoResolver,
+  createBatchUsersResolver,
+  getResolvedForId,
+} from "./lib/batch-resolvers";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
 import type { ResolveRoomInfoArgs } from "./lib/types";
@@ -77,25 +83,83 @@ export const getUnreadComments = ({
 };
 
 /** @internal */
+async function getAllUserGroups(
+  client: Liveblocks,
+  userId: string
+): Promise<Map<string, GroupData>> {
+  const groups = new Map<string, GroupData>();
+  let cursor: string | undefined = undefined;
+
+  while (true) {
+    const { nextCursor, data } = await client.getUserGroups({
+      userId,
+      startingAfter: cursor,
+    });
+
+    for (const group of data) {
+      groups.set(group.id, group);
+    }
+
+    if (!nextCursor) {
+      break;
+    }
+
+    cursor = nextCursor;
+  }
+
+  return groups;
+}
+
+/** @internal */
 export const getLastUnreadCommentWithMention = ({
   comments,
+  groups,
   mentionedUserId,
 }: {
   comments: CommentDataWithBody[];
   mentionedUserId: string;
+  groups: Map<string, GroupData>;
 }): CommentDataWithBody | null => {
-  return (
-    Array.from(comments)
-      .reverse()
-      .filter((c) => c.userId !== mentionedUserId)
-      .find((c) => {
-        const mentions = getMentionsFromCommentBody(
-          c.body,
-          (mention) => mention.kind === "user" && mention.id === mentionedUserId
-        );
-        return mentions.length > 0;
-      }) ?? null
-  );
+  if (!comments.length) {
+    return null;
+  }
+
+  for (let i = comments.length - 1; i >= 0; i--) {
+    const comment = comments[i]!;
+
+    if (comment.userId === mentionedUserId) {
+      continue;
+    }
+
+    const mentions = getMentionsFromCommentBody(comment.body);
+
+    for (const mention of mentions) {
+      // 1. The comment contains a user mention for the current user.
+      if (mention.kind === "user" && mention.id === mentionedUserId) {
+        return comment;
+      }
+
+      // 2. The comment contains a group mention including the current user in its `userIds` array.
+      if (
+        mention.kind === "group" &&
+        mention.userIds?.includes(mentionedUserId)
+      ) {
+        return comment;
+      }
+
+      // 3. The comment contains a group mention including the current user in its managed group members.
+      if (mention.kind === "group" && mention.userIds === undefined) {
+        // Synchronously look up the group data for this group ID.
+        const group = groups.get(mention.id);
+
+        if (group?.members.some((member) => member.id === mentionedUserId)) {
+          return comment;
+        }
+      }
+    }
+  }
+
+  return null;
 };
 
 export type ThreadNotificationData =
@@ -128,10 +192,14 @@ export const extractThreadNotificationData = async ({
     return null;
   }
 
+  const userGroups = await getAllUserGroups(client, userId);
+
   const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
     comments: unreadComments,
+    groups: userGroups,
     mentionedUserId: userId,
   });
+
   if (lastUnreadCommentWithMention !== null) {
     return { type: "unreadMention", comment: lastUnreadCommentWithMention };
   }
@@ -144,7 +212,7 @@ export const extractThreadNotificationData = async ({
 
 /**
  * @internal
- * Set the comment ID as the URL hash and a query param.
+ * Set the comment ID as the URL hash.
  */
 function generateCommentUrl({
   roomUrl,
@@ -198,11 +266,20 @@ type PrepareThreadNotificationEmailOptions<U extends BaseUserMeta = DU> = {
   resolveRoomInfo?: (args: ResolveRoomInfoArgs) => Awaitable<DRI | undefined>;
 
   /**
-   * A function that returns info from user IDs.
+   * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => Awaitable<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * A function that returns group info from group IDs.
+   * You should return a list of group info objects of the same size, in the same order.
+   */
+  resolveGroupsInfo?: (
+    args: ResolveGroupsInfoArgs
+  ) => Awaitable<(DGI | undefined)[] | undefined>;
 };
 
 /**
@@ -237,33 +314,43 @@ export async function prepareThreadNotificationEmail<
     resolveUsers: options.resolveUsers,
     callerName,
   });
+  const batchGroupsInfoResolver = createBatchGroupsInfoResolver({
+    resolveGroupsInfo: options.resolveGroupsInfo,
+    callerName,
+  });
 
   switch (data.type) {
     case "unreadMention": {
       const { comment } = data;
 
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: [comment.userId],
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
-
+      const authorsIds = [comment.userId];
+      const authorsInfoPromise = batchUsersResolver.get(authorsIds);
       const commentBodyPromise = convertCommentBody<BodyType, U>(comment.body, {
-        resolveUsers: batchUsersResolver.resolveUsers,
+        resolveUsers: ({ userIds }) => batchUsersResolver.get(userIds),
+        resolveGroupsInfo: ({ groupIds }) =>
+          batchGroupsInfoResolver.get(groupIds),
         elements,
       });
 
       await batchUsersResolver.resolve();
+      await batchGroupsInfoResolver.resolve();
 
       const [authorsInfo, commentBody] = await Promise.all([
         authorsInfoPromise,
         commentBodyPromise,
       ]);
 
-      const authorInfo = authorsInfo.get(comment.userId);
-      const url = generateCommentUrl({
-        roomUrl: roomInfo?.url,
-        commentId: comment.id,
-      });
+      const authorInfo = getResolvedForId(
+        comment.userId,
+        authorsIds,
+        authorsInfo
+      );
+      const url = roomInfo?.url
+        ? generateCommentUrl({
+            roomUrl: roomInfo?.url,
+            commentId: comment.id,
+          })
+        : undefined;
 
       return {
         type: "unreadMention",
@@ -285,19 +372,20 @@ export async function prepareThreadNotificationEmail<
     case "unreadReplies": {
       const { comments } = data;
 
-      const authorsInfoPromise = resolveAuthorsInfo({
-        userIds: comments.map((c) => c.userId),
-        resolveUsers: batchUsersResolver.resolveUsers,
-      });
+      const authorsIds = comments.map((c) => c.userId);
+      const authorsInfoPromise = batchUsersResolver.get(authorsIds);
 
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBody<BodyType, U>(c.body, {
-          resolveUsers: batchUsersResolver.resolveUsers,
+          resolveUsers: ({ userIds }) => batchUsersResolver.get(userIds),
+          resolveGroupsInfo: ({ groupIds }) =>
+            batchGroupsInfoResolver.get(groupIds),
           elements,
         })
       );
 
       await batchUsersResolver.resolve();
+      await batchGroupsInfoResolver.resolve();
 
       const [authorsInfo, ...commentBodies] = await Promise.all([
         authorsInfoPromise,
@@ -307,7 +395,11 @@ export async function prepareThreadNotificationEmail<
       return {
         type: "unreadReplies",
         comments: comments.map((comment, index) => {
-          const authorInfo = authorsInfo.get(comment.userId);
+          const authorInfo = getResolvedForId(
+            comment.userId,
+            authorsIds,
+            authorsInfo
+          );
           const commentBody = commentBodies[index] as BodyType;
 
           const url = generateCommentUrl({
@@ -433,6 +525,7 @@ export async function prepareThreadNotificationEmailAsHtml(
     event,
     {
       resolveUsers: options.resolveUsers,
+      resolveGroupsInfo: options.resolveGroupsInfo,
       resolveRoomInfo: options.resolveRoomInfo,
     },
     {
@@ -477,9 +570,9 @@ export async function prepareThreadNotificationEmailAsHtml(
         // prettier-ignore
         return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ? html`${element.text}` : element.url}</a>`;
       },
-      mention: ({ element, user }) => {
+      mention: ({ element, user, group }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : element.id}</span>`;
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ? html`${user?.name}` : group?.name ? html`${group?.name}` : element.id}</span>`;
       },
     },
     "prepareThreadNotificationEmailAsHtml"
@@ -532,9 +625,14 @@ export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
   element: CommentBodyMention;
 
   /**
-   * The mention's user info, if the `resolvedUsers` option was provided.
+   * The mention's user info, if the mention is a user mention and the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+
+  /**
+   * The mention's group info, if the mention is a group mention and the `resolvedGroupsInfo` option was provided.
+   */
+  group?: DGI;
 };
 
 export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
@@ -595,10 +693,10 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
       {element.text ?? element.url}
     </a>
   ),
-  Mention: ({ element, user }) => (
+  Mention: ({ element, user, group }) => (
     <span data-mention>
       {MENTION_CHARACTER}
-      {user?.name ?? element.id}
+      {user?.name ?? group?.name ?? element.id}
     </span>
   ),
 };
@@ -652,11 +750,12 @@ export async function prepareThreadNotificationEmailAsReact(
     event,
     {
       resolveUsers: options.resolveUsers,
+      resolveGroupsInfo: options.resolveGroupsInfo,
       resolveRoomInfo: options.resolveRoomInfo,
     },
     {
       container: ({ children }) => (
-        <Components.Container key={"lb-comment-body-container"}>
+        <Components.Container key="lb-comment-body-container">
           {children}
         </Components.Container>
       ),
@@ -678,12 +777,13 @@ export async function prepareThreadNotificationEmailAsReact(
           href={href}
         />
       ),
-      mention: ({ element, user }, index) =>
+      mention: ({ element, user, group }, index) =>
         element.id ? (
           <Components.Mention
             key={`lb-comment-body-mention-${index}`}
             element={element}
             user={user}
+            group={group}
           />
         ) : null,
     },

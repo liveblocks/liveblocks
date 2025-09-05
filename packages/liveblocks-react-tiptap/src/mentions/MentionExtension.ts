@@ -1,6 +1,11 @@
-import { createInboxNotificationId } from "@liveblocks/core";
+import {
+  assertNever,
+  createInboxNotificationId,
+  MENTION_CHARACTER,
+} from "@liveblocks/core";
 import {
   combineTransactionSteps,
+  type Content,
   Extension,
   getChangedRanges,
 } from "@tiptap/core";
@@ -12,13 +17,16 @@ import Suggestion from "@tiptap/suggestion";
 import { ySyncPluginKey } from "y-prosemirror";
 
 import {
+  LIVEBLOCKS_GROUP_MENTION_TYPE,
   LIVEBLOCKS_MENTION_EXTENSION,
   LIVEBLOCKS_MENTION_KEY,
   LIVEBLOCKS_MENTION_NOTIFIER_KEY,
   LIVEBLOCKS_MENTION_PASTE_KEY,
   LIVEBLOCKS_MENTION_TYPE,
+  type TiptapMentionData,
 } from "../types";
 import { getMentionsFromNode, mapFragment } from "../utils";
+import { GroupMentionNode } from "./GroupMentionNode";
 import { MentionNode } from "./MentionNode";
 import type { MentionsListHandle, MentionsListProps } from "./MentionsList";
 import { MentionsList } from "./MentionsList";
@@ -35,8 +43,11 @@ const mentionPasteHandler = (): Plugin => {
     props: {
       transformPasted: (slice) => {
         const getNewNotificationIds = (node: ProseMirrorNode) => {
-          // If this is a mention node, we need to get a new notificatio id
-          if (node.type.name === LIVEBLOCKS_MENTION_TYPE) {
+          // If this is a mention node, we need to get a new notification id
+          if (
+            node.type.name === LIVEBLOCKS_MENTION_TYPE ||
+            node.type.name === LIVEBLOCKS_GROUP_MENTION_TYPE
+          ) {
             return node.type.create(
               { ...node.attrs, notificationId: createInboxNotificationId() },
               node.content
@@ -52,7 +63,7 @@ const mentionPasteHandler = (): Plugin => {
 };
 
 export type MentionExtensionOptions = {
-  onCreateMention: (userId: string, notificationId: string) => void;
+  onCreateMention: (mention: TiptapMentionData) => void;
   onDeleteMention: (notificationId: string) => void;
 };
 /**
@@ -89,16 +100,17 @@ const notifier = ({
       changes.forEach(({ newRange, oldRange }) => {
         const newMentions = getMentionsFromNode(newState.doc, newRange);
         const oldMentions = getMentionsFromNode(oldState.doc, oldRange);
-        if (oldMentions.length || newMentions.length) {
+
+        if (oldMentions.size || newMentions.size) {
           // create new mentions
           newMentions.forEach((mention) => {
-            if (!oldMentions.includes(mention)) {
-              onCreateMention(mention.userId, mention.notificationId);
+            if (!oldMentions.has(mention.notificationId)) {
+              onCreateMention(mention);
             }
           });
           // delete old mentions
           oldMentions.forEach((mention) => {
-            if (!newMentions.includes(mention)) {
+            if (!newMentions.has(mention.notificationId)) {
               onDeleteMention(mention.notificationId);
             }
           });
@@ -122,14 +134,14 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
   },
 
   addExtensions() {
-    return [MentionNode];
+    return [MentionNode, GroupMentionNode];
   },
 
   addProseMirrorPlugins() {
     return [
       Suggestion({
         editor: this.editor,
-        char: "@",
+        char: MENTION_CHARACTER,
         pluginKey: LIVEBLOCKS_MENTION_KEY,
         command: ({ editor, range, props }) => {
           // increase range.to by one when the next node is of type "text"
@@ -141,14 +153,38 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             range.to += 1;
           }
 
+          const mention = props as TiptapMentionData;
+
+          let mentionNode: Content;
+
+          if (mention.kind === "user") {
+            mentionNode = {
+              type: LIVEBLOCKS_MENTION_TYPE,
+              attrs: {
+                id: mention.id,
+                notificationId: mention.notificationId,
+              },
+            };
+          } else if (mention.kind === "group") {
+            mentionNode = {
+              type: LIVEBLOCKS_GROUP_MENTION_TYPE,
+              attrs: {
+                id: mention.id,
+                userIds: mention.userIds
+                  ? JSON.stringify(mention.userIds)
+                  : undefined,
+                notificationId: mention.notificationId,
+              },
+            };
+          } else {
+            assertNever(mention, "Unhandled mention kind");
+          }
+
           editor
             .chain()
             .focus()
             .insertContentAt(range, [
-              {
-                type: LIVEBLOCKS_MENTION_TYPE,
-                attrs: props as Record<string, string>,
-              },
+              mentionNode,
               {
                 type: "text",
                 text: " ",
@@ -162,11 +198,16 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             ?.collapseToEnd();
         },
         allow: ({ state, range }) => {
-          const $from = state.doc.resolve(range.from);
-          const type = state.schema.nodes[LIVEBLOCKS_MENTION_TYPE];
-          const allow = !!$from.parent.type.contentMatch.matchType(type);
+          const $fromParentType = state.doc.resolve(range.from).parent.type;
 
-          return allow;
+          return Boolean(
+            $fromParentType.contentMatch.matchType(
+              state.schema.nodes[LIVEBLOCKS_MENTION_TYPE]
+            ) ||
+              $fromParentType.contentMatch.matchType(
+                state.schema.nodes[LIVEBLOCKS_GROUP_MENTION_TYPE]
+              )
+          );
         },
         allowSpaces: true,
         items: () => [], // we'll let the mentions list component do this

@@ -1,40 +1,50 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { cn } from "@liveblocks/react-ui/_private";
 import type { NodeKey } from "lexical";
 import { $createNodeSelection, $getNodeByKey, $setSelection } from "lexical";
-import type { MouseEvent, ReactNode } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  forwardRef,
+  type MouseEvent,
+} from "react";
 import { useCallback, useSyncExternalStore } from "react";
 
-export function Mention({
-  nodeKey,
-  children,
-}: {
+interface MentionProps extends ComponentPropsWithoutRef<"span"> {
   nodeKey: NodeKey;
-  children: ReactNode;
-}) {
-  const [editor] = useLexicalComposerContext();
-  const isSelected = useIsNodeSelected(nodeKey);
-
-  function handleClick(event: MouseEvent) {
-    editor.update(() => {
-      event.stopPropagation();
-      event.preventDefault();
-
-      const selection = $createNodeSelection();
-      selection.add(nodeKey);
-      $setSelection(selection);
-    });
-  }
-
-  return (
-    <span
-      onClick={handleClick}
-      data-selected={isSelected ? "" : undefined}
-      className="lb-root lb-mention lb-lexical-mention"
-    >
-      {children}
-    </span>
-  );
 }
+
+export const Mention = forwardRef<HTMLSpanElement, MentionProps>(
+  ({ nodeKey, children, className, ...props }, forwardedRef) => {
+    const [editor] = useLexicalComposerContext();
+    const isSelected = useIsNodeSelected(nodeKey);
+
+    const handleClick = useCallback(
+      (event: MouseEvent) => {
+        editor.update(() => {
+          event.stopPropagation();
+          event.preventDefault();
+
+          const selection = $createNodeSelection();
+          selection.add(nodeKey);
+          $setSelection(selection);
+        });
+      },
+      [editor, nodeKey]
+    );
+
+    return (
+      <span
+        onClick={handleClick}
+        data-selected={isSelected ? "" : undefined}
+        className={cn("lb-root lb-mention lb-lexical-mention", className)}
+        ref={forwardedRef}
+        {...props}
+      >
+        {children}
+      </span>
+    );
+  }
+);
 
 function $isNodeSelected(key: NodeKey): boolean {
   const node = $getNodeByKey(key);

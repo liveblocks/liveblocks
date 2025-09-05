@@ -67,6 +67,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type { MentionData } from "./protocol/MentionData";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
 import type { RoomSubscriptionSettings } from "./protocol/RoomSubscriptionSettings";
@@ -1068,7 +1069,7 @@ export type PrivateRoomApi = {
   // For reporting editor metadata
   reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
-  createTextMention(userId: string, mentionId: string): Promise<void>;
+  createTextMention(mentionId: string, mention: MentionData): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
   listTextVersions(): Promise<{
     versions: HistoryVersion[];
@@ -1604,8 +1605,8 @@ export function createRoom<
     roomWillDestroy: makeEventSource<void>(),
   };
 
-  async function createTextMention(userId: string, mentionId: string) {
-    return httpClient.createTextMention({ roomId, userId, mentionId });
+  async function createTextMention(mentionId: string, mention: MentionData) {
+    return httpClient.createTextMention({ roomId, mentionId, mention });
   }
 
   async function deleteTextMention(mentionId: string) {

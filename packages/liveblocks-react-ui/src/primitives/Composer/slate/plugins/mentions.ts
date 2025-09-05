@@ -1,4 +1,4 @@
-import type { MentionData } from "@liveblocks/core";
+import { MENTION_CHARACTER, type MentionData } from "@liveblocks/core";
 import type { Node as SlateNode } from "slate";
 import {
   Editor as SlateEditor,
@@ -7,7 +7,6 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 
-import { MENTION_CHARACTER } from "../../../../constants";
 import type { ComposerBodyMention } from "../../../../types";
 import {
   getCharacterAfter,

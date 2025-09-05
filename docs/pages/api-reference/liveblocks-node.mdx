@@ -85,6 +85,8 @@ To implement your back end, follow these steps:
       publicly visible to all other people in the room. Useful for
       metadata like the user’s full name, or their avatar URL.
 
+      The `tenantId` (optional) is the tenant for this session, will be set to `default` if not provided.
+
     </StepContent>
 
   </Step>
@@ -323,6 +325,9 @@ const { data: rooms, nextCursor } = await liveblocks.getRooms({
       roomType: "whiteboard",
     },
   },
+
+  // Optional, filter for rooms that are created for a specific tenant
+  tenantId: "my-tenant-id",
 
   // Optional, cursor used for pagination, use `nextCursor` from the previous page's response
   startingAfter: "L3YyL3Jvb21z...",
@@ -730,6 +735,161 @@ useEventListener(({ event, user, connectionId }) => {
 
   // `-1`
   console.log(connectionId);
+});
+```
+
+### Groups
+
+Groups allow you to manage users for group mentions in comments and text
+editors.
+
+#### Liveblocks.createGroup [#create-group]
+
+Creates a new group with the specified members. This is a wrapper around the
+[Create Group API](/docs/api-reference/rest-api-endpoints#post-groups) and
+returns the same response.
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "engineering-team",
+  memberIds: ["alice@example.com", "bob@example.com"],
+  tenantId: "acme-corp",
+});
+
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+console.log(group);
+```
+
+You can also create a group without members and add them later:
+
+```ts
+const group = await liveblocks.createGroup({
+  groupId: "design-team",
+  // Optional, add members when creating the group
+  memberIds: ["charlie@example.com"],
+
+  // Optional, set tenant ID for multi-tenant applications
+  tenantId: "company-123",
+
+  // Optional, set group scopes (defaults to { mention: true })
+  scopes: { mention: true },
+});
+```
+
+#### Liveblocks.getGroup [#get-group]
+
+Returns a group by its ID. Throws an error if the group isn't found. This is a
+wrapper around the
+[Get Group API](/docs/api-reference/rest-api-endpoints#get-groups-groupId) and
+returns the same response.
+
+```ts
+const group = await liveblocks.getGroup({
+  groupId: "engineering-team",
+});
+
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+console.log(group);
+```
+
+#### Liveblocks.getGroups [#get-groups]
+
+Returns a list of all groups in your project. This is a wrapper around the
+[Get Groups API](/docs/api-reference/rest-api-endpoints#get-groups) and returns
+the same response.
+
+```ts
+const { data: groups, nextCursor } = await liveblocks.getGroups();
+
+// A list of groups
+// [{ type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }, ...]
+console.log(groups);
+
+// A pagination cursor for the next page
+console.log(nextCursor);
+```
+
+You can also paginate through groups:
+
+```ts
+const { data: groups, nextCursor } = await liveblocks.getGroups({
+  // Optional, the number of groups to return (defaults to 20)
+  limit: 50,
+
+  // Optional, cursor for pagination
+  startingAfter: nextCursor,
+});
+```
+
+#### Liveblocks.getUserGroups [#get-user-groups]
+
+Returns all groups that a specific user is a member of. This is a wrapper around
+the
+[Get User Groups API](/docs/api-reference/rest-api-endpoints#get-users-userId-groups)
+and returns the same response.
+
+```ts
+const { data: userGroups, nextCursor } = await liveblocks.getUserGroups({
+  userId: "alice@example.com",
+});
+
+// A list of groups the user belongs to
+// [{ type: "group", id: "engineering-team", ... }, ...]
+console.log(userGroups);
+```
+
+You can also paginate through user groups:
+
+```ts
+const { data: userGroups, nextCursor } = await liveblocks.getUserGroups({
+  userId: "alice@example.com",
+  limit: 25,
+  startingAfter: "L3YyL2dyb3Vwcy...",
+});
+```
+
+#### Liveblocks.addGroupMembers [#add-group-members]
+
+Adds new members to an existing group. This is a wrapper around the
+[Add Group Members API](/docs/api-reference/rest-api-endpoints#post-groups-groupId-add-members)
+and returns the same response.
+
+```ts
+const updatedGroup = await liveblocks.addGroupMembers({
+  groupId: "engineering-team",
+  memberIds: ["david@example.com", "eve@example.com"],
+});
+
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+console.log(updatedGroup);
+```
+
+#### Liveblocks.removeGroupMembers [#remove-group-members]
+
+Removes members from an existing group. This is a wrapper around the
+[Remove Group Members API](/docs/api-reference/rest-api-endpoints#post-groups-groupId-remove-members)
+and returns the same response.
+
+```ts
+const updatedGroup = await liveblocks.removeGroupMembers({
+  groupId: "engineering-team",
+  memberIds: ["david@example.com"],
+});
+
+// { type: "group", id: "engineering-team", tenantId: "acme-corp", createdAt: "...", updatedAt: "...", scopes: { mention: true }, members: [...] }
+console.log(updatedGroup);
+```
+
+#### Liveblocks.deleteGroup [#delete-group]
+
+Deletes a group. If the group doesn't exist, no error will be thrown. This is a
+wrapper around the
+[Delete Group API](/docs/api-reference/rest-api-endpoints#delete-groups-groupId)
+and returns no response.
+
+```ts
+await liveblocks.deleteGroup({
+  groupId: "old-team",
 });
 ```
 
@@ -1497,24 +1657,6 @@ const thread = await liveblocks.getThread({
 
 // { type: "thread", id: "th_d75sF3...", ... }
 console.log(thread);
-```
-
-#### Liveblocks.getThreadParticipants [#get-rooms-roomId-threads-threadId-participants]
-
-Returns a list of participants found inside a thread. A participant is a user
-who has commented or been mentioned in the thread. Throws an error if the room
-or thread isn’t found. This is a wrapper around the
-[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-participants)
-and returns the same response.
-
-```ts
-const { participantIds } = await liveblocks.getThreadParticipants({
-  roomId: "my-room-id",
-  threadId: "th_d75sF3...",
-});
-
-// ["chris@example.com", "nimesh@example.com", ...]
-console.log(participantIds);
 ```
 
 #### Liveblocks.editThreadMetadata [#post-rooms-roomId-threads-threadId-metadata]
@@ -2966,7 +3108,7 @@ console.log(stringComment);
 A number of options are also available.
 
 ```ts
-import { stringifyCommentBody } from "@liveblocks/node";
+import { stringifyCommentBody } from "@liveblocks/client";
 
 const stringComment = await stringifyCommentBody(comment.body, {
   // Optional, convert to specific format, "plain" (default) | "markdown" | "html"
@@ -2988,21 +3130,35 @@ const stringComment = await stringifyCommentBody(comment.body, {
     link: ({ element, href }) =>
       `<a href="${href}" target="_blank">${element.url}</a>`,
 
-    // Optional, override the `mention` element. `user` available if `resolveUsers` supplied
-    mention: ({ element, user }) =>
-      `<a href="${user.profileUrl}">${element.id}</a>`,
+    // Optional, override the `mention` element.
+    // `user` and `group` are the optional data returned from `resolveUsers` and `resolveGroupsInfo`
+    mention: ({ element, user, group }) =>
+      `<a href="${user?.profileUrl ?? group?.settingsUrl ?? "#"}">${element.id}</a>`,
   },
 
-  // Optional, get your user's names and info from their ID to be displayed in mentions
+  // Optional, get your user’s names and info from their ID to be displayed in mentions
   async resolveUsers({ userIds }) {
     const usersData = await __getUsersFromDB__(userIds);
 
     return usersData.map((userData) => ({
-      // Name is inserted into the output instead of a user's ID
+      // Name is inserted into the output instead of a user’s ID
       name: userData.name,
 
       // Custom formatting in `elements.mention` allows custom properties to be used
       profileUrl: userData.profileUrl,
+    }));
+  },
+
+  // Optional, get your group’s names and info from their ID to be displayed in mentions
+  async resolveGroupsInfo({ groupIds }) {
+    const groupsData = await __getGroupsFromDB__(groupIds);
+
+    return groupsData.map((groupData) => ({
+      // Name is inserted into the output instead of a group’s ID
+      name: groupData.name,
+
+      // Custom formatting in `elements.mention` allows custom properties to be used
+      settingsUrl: groupData.settingsUrl,
     }));
   },
 });
@@ -3228,6 +3384,30 @@ Please refer to [our upgrade guide](/docs/platform/upgrading/1.2) if you’re
 using the `authorize` function in your back end, and adopt
 [`Liveblocks.prepareSession`](#access-tokens) or
 [`Liveblocks.identifyUser`](#id-tokens) APIs instead.
+
+#### Liveblocks.getThreadParticipants [#get-rooms-roomId-threads-threadId-participants] [@badge=Deprecated]
+
+Returns a list of participants found inside a thread. A participant is a user
+who has commented or been mentioned in the thread. Throws an error if the room
+or thread isn’t found. This is a wrapper around the
+[Get Thread Participants API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId-threads-threadId-participants)
+and returns the same response.
+
+This method is deprecated, prefer using
+[`getMentionsFromCommentBody`](#get-mentions-from-comment-body) to extract
+mentions from comments and threads, or
+[`Liveblocks.getThreadSubscriptions`](#get-rooms-roomId-threads-threadId-subscriptions)
+to get the list of users who are subscribed to a thread.
+
+```ts
+const { participantIds } = await liveblocks.getThreadParticipants({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+});
+
+// ["chris@example.com", "nimesh@example.com", ...]
+console.log(participantIds);
+```
 
 #### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
 

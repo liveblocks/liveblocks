@@ -1,6 +1,8 @@
-import type {
-  BaseUserMeta,
-  InboxNotificationThreadData,
+import {
+  type BaseUserMeta,
+  type GroupData,
+  type InboxNotificationThreadData,
+  MENTION_CHARACTER,
 } from "@liveblocks/core";
 import type { ThreadData } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
@@ -8,7 +10,6 @@ import { http, HttpResponse } from "msw";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
 import type { ConvertCommentBodyElements } from "../comment-body";
-import { MENTION_CHARACTER } from "../lib/constants";
 import type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
@@ -59,9 +60,11 @@ describe("thread notification", () => {
   const setServerHandlers = ({
     thread,
     inboxNotification,
+    groups,
   }: {
     thread: ThreadData;
     inboxNotification: InboxNotificationThreadData;
+    groups: GroupData[];
   }): void => {
     server.use(
       http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
@@ -70,6 +73,9 @@ describe("thread notification", () => {
       http.get(
         `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
         () => HttpResponse.json(inboxNotification, { status: 200 })
+      ),
+      http.get(`${SERVER_BASE_URL}/v2/users/:userId/groups`, () =>
+        HttpResponse.json({ data: groups, nextCursor: null }, { status: 200 })
       )
     );
   };
@@ -150,7 +156,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-dracula",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-mina" }),
         createdAt: new Date("2024-09-10T08:10:00.000Z"),
       });
       const comment2 = makeComment({
@@ -174,6 +180,7 @@ describe("thread notification", () => {
 
       const lastCommentWithMention1 = getLastUnreadCommentWithMention({
         comments: unreadComments,
+        groups: new Map(),
         mentionedUserId: "user-mina",
       });
 
@@ -185,7 +192,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-dracula",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-mina" }),
         createdAt: new Date("2024-09-10T08:10:00.000Z"),
       });
       const comment2 = makeComment({
@@ -197,7 +204,7 @@ describe("thread notification", () => {
       const comment3 = makeComment({
         userId: "user-carmilla",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-mina" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-mina" }),
         createdAt: new Date("2024-09-10T08:16:00.000Z"),
       });
 
@@ -214,6 +221,7 @@ describe("thread notification", () => {
       });
 
       const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
+        groups: new Map(),
         comments: unreadComments,
         mentionedUserId: "user-mina",
       });
@@ -226,7 +234,7 @@ describe("thread notification", () => {
       const comment = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const thread = makeThread({ threadId, comments: [comment] });
@@ -236,7 +244,7 @@ describe("thread notification", () => {
         readAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -254,7 +262,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const comment2 = makeComment({
@@ -269,7 +277,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -315,7 +323,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -339,7 +347,7 @@ describe("thread notification", () => {
       const comment1 = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-dante" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-dante" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const comment2 = makeComment({
@@ -364,7 +372,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:12:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -392,8 +400,8 @@ describe("thread notification", () => {
       paragraph: ({ children }) => children.join(""),
       text: ({ element }) => element.text,
       link: ({ element }) => element.text ?? element.url,
-      mention: ({ element, user }) =>
-        `${MENTION_CHARACTER}${user?.name ?? element.id}`,
+      mention: ({ element, user, group }) =>
+        `${MENTION_CHARACTER}${user?.name ?? group?.name ?? element.id}`,
     };
 
     test("should prepare for last unread comment with mention", async () => {
@@ -401,7 +409,7 @@ describe("thread notification", () => {
       const comment = makeComment({
         userId: "user-0",
         threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        body: buildCommentBodyWithMention({ kind: "user", id: "user-1" }),
         createdAt: new Date("2024-09-10T08:04:00.000Z"),
       });
       const thread = makeThread({ threadId, comments: [comment] });
@@ -410,7 +418,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -497,7 +505,7 @@ describe("thread notification", () => {
         notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
       });
 
-      setServerHandlers({ thread, inboxNotification });
+      setServerHandlers({ thread, inboxNotification, groups: [] });
 
       const event = makeThreadNotificationEvent({
         threadId,
@@ -642,6 +650,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -733,6 +742,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -814,6 +824,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -908,6 +919,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsHTML = await promise();
@@ -1007,6 +1019,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1025,8 +1038,8 @@ describe("thread notification", () => {
     describe("unread mention w/ custom components", () => {
       const components: Partial<ConvertCommentBodyAsReactComponents> = {
         Container: ({ children }) => <main>{children}</main>,
-        Mention: ({ element, user }) => (
-          <span>u#{user?.name ?? element.id}</span>
+        Mention: ({ element, user, group }) => (
+          <span>u#{user?.name ?? group?.name ?? element.id}</span>
         ),
       };
 
@@ -1124,6 +1137,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1236,6 +1250,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
@@ -1353,6 +1368,7 @@ describe("thread notification", () => {
           setServerHandlers({
             thread,
             inboxNotification,
+            groups: [],
           });
 
           const threadNotificationEmailAsReact = await promise();
