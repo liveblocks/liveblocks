@@ -4,11 +4,7 @@ import { use } from "react";
 import { AiChat } from "@liveblocks/react-ui";
 import { LiveblocksProvider } from "@liveblocks/react";
 
-export default function Home({
-  params,
-}: {
-  params: Promise<{ chatId: string }>;
-}) {
+export default function Home({ params }: { params: Promise<{ chatId: string }> }) {
   const { chatId } = use(params);
   return (
     <main className="h-screen w-full">

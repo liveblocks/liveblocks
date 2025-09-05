@@ -231,11 +231,7 @@ function BothApps() {
   );
 }
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ chatId: string }>;
-}) {
+export default function Page({ params }: { params: Promise<{ chatId: string }> }) {
   const { chatId } = use(params);
   const [selectedTab, setSelectedTab] = useState(1);
   return (

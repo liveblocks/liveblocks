@@ -1,7 +1,6 @@
 import { MutableSignal } from "./lib/signals";
 import { SortedList } from "./lib/SortedList";
-import type { ISODateString } from "./lib/utils";
-import type { AiChat, AiChatsQuery } from "./types/ai";
+import type { AiChat, AiChatsQuery, ISODateString } from "./types/ai";
 
 export class AiChatDB {
   #byId: Map<string, AiChat>; // A map of chat id to chat details

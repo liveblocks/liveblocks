@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 import { createRandomChat, cleanupAllChats } from "./test-helpers";
 
 async function setupSimpleChat(page: Page, chatId: string) {
-  await page.goto(`/simple/${chatId}`, { waitUntil: "networkidle" });
+  await page.goto(`/simple/${chatId}`);
 
   // Wait for the chat interface to load
   await expect(page.locator(".lb-ai-composer")).toBeVisible();
