@@ -5,6 +5,7 @@
   "workspaces": [
     "shared/*",
     "packages/*",
+    "!packages/liveblocks-react-blocknote",
     "tools/*",
     "e2e/next-ai-kitchen-sink",
     "e2e/next-sandbox",

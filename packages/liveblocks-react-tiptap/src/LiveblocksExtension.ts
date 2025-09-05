@@ -18,8 +18,13 @@ import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { getYjsProviderForRoom } from "@liveblocks/yjs";
 import type { AnyExtension, Editor } from "@tiptap/core";
 import { Extension, getMarkType, Mark } from "@tiptap/core";
-import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import Collaboration, {
+  type CollaborationOptions,
+  type CollaborationStorage,
+} from "@tiptap/extension-collaboration";
+import CollaborationCursor, {
+  type CollaborationCaretOptions,
+} from "@tiptap/extension-collaboration-caret";
 import type { Mark as PMMark } from "@tiptap/pm/model";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 
@@ -76,10 +81,10 @@ const LiveblocksCollab = Collaboration.extend({
       );
     }
     if (
-      this.editor.extensionManager.extensions.find((e) => e.name === "history")
+      this.editor.extensionManager.extensions.find((e) => e.name === "undoRedo")
     ) {
       console.warn(
-        "[Liveblocks] The history extension is enabled, Liveblocks extension provides its own. Please remove or disable the History plugin to prevent unwanted conflicts."
+        "[Liveblocks] The undoRedo extension is enabled, Liveblocks extension provides its own. Please remove or disable the undoRedo extension to prevent conflicts."
       );
     }
   },
@@ -248,7 +253,7 @@ export const useLiveblocksExtension = (
   const createTextMention = useCreateTextMention();
   const deleteTextMention = useDeleteTextMention();
 
-  return Extension.create<never, LiveblocksExtensionStorage>({
+  return Extension.create<{}, LiveblocksExtensionStorage>({
     name: "liveblocksExtension",
 
     onCreate() {
@@ -388,16 +393,17 @@ export const useLiveblocksExtension = (
     addExtensions() {
       const extensions: AnyExtension[] = [
         YChangeMark,
+
         LiveblocksCollab.configure({
           ySyncOptions: {
             permanentUserData: this.storage.permanentUserData,
           },
           document: this.storage.doc,
           field: options.field,
-        }),
+        }) as Extension<CollaborationOptions, CollaborationStorage>, // I don't really think this is needed...
         CollaborationCursor.configure({
           provider: this.storage.provider,
-        }),
+        }) as Extension<CollaborationCaretOptions>,
       ];
 
       if (options.comments) {
