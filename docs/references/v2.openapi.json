@@ -3892,7 +3892,7 @@
       },
       "post": {
         "summary": "Update AI copilot",
-        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).",
+        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).\n\nThis endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422 response with an error message explaining where the validation failed.",
         "tags": ["AI"],
         "parameters": [
           {
@@ -5335,99 +5335,337 @@
       },
       "AiCopilot": {
         "title": "AiCopilot",
-        "type": "object",
-        "properties": {
-          "type": {
-            "const": "copilot"
-          },
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "systemPrompt": {
-            "type": "string"
-          },
-          "knowledgePrompt": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string",
-            "enum": ["openai", "anthropic", "google", "openai-compatible"]
-          },
-          "providerModel": {
-            "type": "string"
-          },
-          "compatibleProviderName": {
-            "type": "string"
-          },
-          "providerBaseUrl": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastUsedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "providerOptions": {
-            "type": "object"
-          },
-          "settings": {
+        "oneOf": [
+          {
             "type": "object",
             "properties": {
-              "maxTokens": {
-                "type": "number"
+              "type": {
+                "const": "copilot"
               },
-              "temperature": {
-                "type": "number"
+              "id": {
+                "type": "string"
               },
-              "topP": {
-                "type": "number"
+              "name": {
+                "type": "string"
               },
-              "topK": {
-                "type": "number"
+              "description": {
+                "type": "string"
               },
-              "frequencyPenalty": {
-                "type": "number"
+              "systemPrompt": {
+                "type": "string"
               },
-              "presencePenalty": {
-                "type": "number"
+              "knowledgePrompt": {
+                "type": "string"
               },
-              "stopSequences": {
-                "type": "array",
-                "items": {
-                  "type": "string"
+              "provider": {
+                "const": "openai"
+              },
+              "providerModel": {
+                "type": "string",
+                "enum": [
+                  "o1",
+                  "o1-mini",
+                  "o3",
+                  "o3-mini",
+                  "o4-mini",
+                  "gpt-4.1",
+                  "gpt-4.1-mini",
+                  "gpt-4.1-nano",
+                  "gpt-4o",
+                  "gpt-4o-mini",
+                  "gpt-4-turbo",
+                  "gpt-4"
+                ]
+              },
+              "providerOptions": {
+                "type": "object",
+                "properties": {
+                  "openai": {
+                    "type": "object",
+                    "properties": {
+                      "reasoningEffort": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"]
+                      }
+                    }
+                  }
                 }
               },
-              "seed": {
-                "type": "number"
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
               },
-              "maxRetries": {
-                "type": "number"
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
               }
-            }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "anthropic"
+              },
+              "providerModel": {
+                "type": "string",
+                "enum": [
+                  "claude-4-opus-20250514",
+                  "claude-4-sonnet-20250514",
+                  "claude-3-7-sonnet-20250219",
+                  "claude-3-5-sonnet-latest",
+                  "claude-3-5-haiku-latest",
+                  "claude-3-opus-latest"
+                ]
+              },
+              "providerOptions": {
+                "type": "object",
+                "properties": {
+                  "anthropic": {
+                    "type": "object",
+                    "properties": {
+                      "thinking": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "enabled"
+                              },
+                              "budgetToken": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["type", "budgetToken"]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "disabled"
+                              }
+                            },
+                            "required": ["type"]
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["thinking"]
+                  }
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "google"
+              },
+              "providerModel": {
+                "type": "string",
+                "enum": [
+                  "gemini-2.5-flash",
+                  "gemini-2.5-pro",
+                  "gemini-2.0-flash-001",
+                  "gemini-1.5-flash",
+                  "gemini-1.5-pro"
+                ]
+              },
+              "providerOptions": {
+                "type": "object",
+                "properties": {
+                  "google": {
+                    "type": "object",
+                    "properties": {
+                      "thinkingConfig": {
+                        "type": "object",
+                        "properties": {
+                          "thinkingBudget": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["thinkingBudget"]
+                      }
+                    },
+                    "required": ["thinkingConfig"]
+                  }
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "createdAt",
+              "updatedAt"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "copilot"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "systemPrompt": {
+                "type": "string"
+              },
+              "knowledgePrompt": {
+                "type": "string"
+              },
+              "provider": {
+                "const": "openai-compatible"
+              },
+              "providerModel": {
+                "type": "string"
+              },
+              "compatibleProviderName": {
+                "type": "string"
+              },
+              "providerBaseUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastUsedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "settings": {
+                "$ref": "#/components/schemas/CopilotSettings"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "name",
+              "systemPrompt",
+              "provider",
+              "providerModel",
+              "compatibleProviderName",
+              "providerBaseUrl",
+              "createdAt",
+              "updatedAt"
+            ]
           }
-        },
-        "required": [
-          "type",
-          "id",
-          "name",
-          "systemPrompt",
-          "provider",
-          "createdAt",
-          "updatedAt"
-        ]
+        ],
+        "discriminator": {
+          "propertyName": "provider"
+        }
       },
       "CreateAiCopilot": {
         "title": "CreateAiCopilot",
@@ -5436,71 +5674,123 @@
           "name": {
             "type": "string"
           },
-          "providerApiKey": {
-            "type": "string"
-          },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "systemPrompt": {
             "type": "string"
           },
           "knowledgePrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerApiKey": {
             "type": "string"
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "providerOptions": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "openai": {
+                    "type": "object",
+                    "properties": {
+                      "reasoningEffort": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "anthropic": {
+                    "type": "object",
+                    "properties": {
+                      "thinking": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "enabled"
+                              },
+                              "budgetToken": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["type", "budgetToken"]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "disabled"
+                              }
+                            },
+                            "required": ["type"]
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["thinking"]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "google": {
+                    "type": "object",
+                    "properties": {
+                      "thinkingConfig": {
+                        "type": "object",
+                        "properties": {
+                          "thinkingBudget": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["thinkingBudget"]
+                      }
+                    },
+                    "required": ["thinkingConfig"]
+                  }
+                }
+              }
+            ],
+            "nullable": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/CopilotSettings",
+            "nullable": true
           },
           "provider": {
             "type": "string",
             "enum": ["openai", "anthropic", "google", "openai-compatible"]
           },
-          "providerModel": {
-            "type": "string"
-          },
           "compatibleProviderName": {
             "type": "string"
           },
           "providerBaseUrl": {
-            "type": "string"
-          },
-          "providerOptions": {
-            "type": "object"
-          },
-          "settings": {
-            "type": "object",
-            "properties": {
-              "maxTokens": {
-                "type": "number"
-              },
-              "temperature": {
-                "type": "number"
-              },
-              "topP": {
-                "type": "number"
-              },
-              "topK": {
-                "type": "number"
-              },
-              "frequencyPenalty": {
-                "type": "number"
-              },
-              "presencePenalty": {
-                "type": "number"
-              },
-              "stopSequences": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "seed": {
-                "type": "number"
-              },
-              "maxRetries": {
-                "type": "number"
-              }
-            }
+            "type": "string",
+            "format": "uri"
           }
         },
-        "required": ["name", "systemPrompt", "provider"]
+        "required": [
+          "name",
+          "systemPrompt",
+          "provider",
+          "providerApiKey",
+          "providerModel"
+        ]
       },
       "UpdateAiCopilot": {
         "title": "UpdateAiCopilot",
@@ -5509,68 +5799,150 @@
           "name": {
             "type": "string"
           },
-          "providerApiKey": {
-            "type": "string"
-          },
           "description": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "systemPrompt": {
             "type": "string"
           },
           "knowledgePrompt": {
+            "type": "string",
+            "nullable": true
+          },
+          "providerApiKey": {
             "type": "string"
+          },
+          "providerModel": {
+            "type": "string"
+          },
+          "providerOptions": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "openai": {
+                    "type": "object",
+                    "properties": {
+                      "reasoningEffort": {
+                        "type": "string",
+                        "enum": ["low", "medium", "high"]
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "anthropic": {
+                    "type": "object",
+                    "properties": {
+                      "thinking": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "enabled"
+                              },
+                              "budgetToken": {
+                                "type": "number",
+                                "minimum": 0
+                              }
+                            },
+                            "required": ["type", "budgetToken"]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "const": "disabled"
+                              }
+                            },
+                            "required": ["type"]
+                          }
+                        ]
+                      }
+                    },
+                    "required": ["thinking"]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "google": {
+                    "type": "object",
+                    "properties": {
+                      "thinkingConfig": {
+                        "type": "object",
+                        "properties": {
+                          "thinkingBudget": {
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": ["thinkingBudget"]
+                      }
+                    },
+                    "required": ["thinkingConfig"]
+                  }
+                }
+              }
+            ],
+            "nullable": true
+          },
+          "settings": {
+            "$ref": "#/components/schemas/CopilotSettings",
+            "nullable": true
           },
           "provider": {
             "type": "string",
             "enum": ["openai", "anthropic", "google", "openai-compatible"]
           },
-          "providerModel": {
-            "type": "string"
-          },
           "compatibleProviderName": {
             "type": "string"
           },
           "providerBaseUrl": {
-            "type": "string"
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "CopilotSettings": {
+        "title": "CopilotSettings",
+        "type": "object",
+        "properties": {
+          "maxTokens": {
+            "type": "number"
           },
-          "providerOptions": {
-            "type": "object"
+          "temperature": {
+            "type": "number"
           },
-          "settings": {
-            "type": "object",
-            "properties": {
-              "maxTokens": {
-                "type": "number"
-              },
-              "temperature": {
-                "type": "number"
-              },
-              "topP": {
-                "type": "number"
-              },
-              "topK": {
-                "type": "number"
-              },
-              "frequencyPenalty": {
-                "type": "number"
-              },
-              "presencePenalty": {
-                "type": "number"
-              },
-              "stopSequences": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "seed": {
-                "type": "number"
-              },
-              "maxRetries": {
-                "type": "number"
-              }
+          "topP": {
+            "type": "number"
+          },
+          "topK": {
+            "type": "number"
+          },
+          "frequencyPenalty": {
+            "type": "number"
+          },
+          "presencePenalty": {
+            "type": "number"
+          },
+          "stopSequences": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
+          },
+          "seed": {
+            "type": "number"
+          },
+          "maxRetries": {
+            "type": "number"
           }
         }
       },
