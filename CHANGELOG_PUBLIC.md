@@ -40,7 +40,7 @@ list and feel free to give them credit at the end of a line, e.g.:
 - Better type safety for copilot creation and update options.
 - Add missing type export for AI Copilot and knowledge sources.
 
-## v3.5.2
+## v3.5.4
 
 ### `@liveblocks/client`
 
