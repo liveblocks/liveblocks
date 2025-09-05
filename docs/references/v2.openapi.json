@@ -3892,7 +3892,7 @@
       },
       "post": {
         "summary": "Update AI copilot",
-        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).",
+        "description": "This endpoint updates an existing AI copilot's configuration. Corresponds to [`liveblocks.updateAiCopilot`](/docs/api-reference/liveblocks-node#update-ai-copilot).\n\nThis endpoint returns a 422 response if the update doesn't apply due to validation failures. For example, if the existing copilot uses the \"openai\" provider and you attempt to update the provider model to an incompatible value for the provider, like \"gemini-2.5-pro\", you'll receive a 422 response with an error message explaining where the validation failed.",
         "tags": ["AI"],
         "parameters": [
           {
