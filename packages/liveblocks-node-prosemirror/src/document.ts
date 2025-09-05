@@ -1,10 +1,10 @@
 import type { Liveblocks } from "@liveblocks/node";
-import type { TextSerializer } from "@tiptap/core";
+import type { Extension, TextSerializer } from "@tiptap/core";
 import { getSchema, getText } from "@tiptap/core";
 import type { Node, Schema } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { EditorState } from "@tiptap/pm/state";
-//import StarterKit from "@tiptap/starter-kit";
+import StarterKit, { type StarterKitOptions } from "@tiptap/starter-kit";
 import type { MarkdownSerializer } from "prosemirror-markdown";
 import { defaultMarkdownSerializer } from "prosemirror-markdown";
 import { initProseMirrorDoc, updateYFragment } from "y-prosemirror";
@@ -37,7 +37,11 @@ export type LiveblocksDocumentApi = {
   toMarkdown: () => string;
 };
 
-const DEFAULT_SCHEMA = getSchema([CommentExtension, MentionExtension]);
+const DEFAULT_SCHEMA = getSchema([
+  CommentExtension,
+  MentionExtension,
+  StarterKit as Extension<StarterKitOptions>, // this as shouldn't be required...
+]);
 
 const getLiveblocksDocumentState = async (
   roomId: string,
