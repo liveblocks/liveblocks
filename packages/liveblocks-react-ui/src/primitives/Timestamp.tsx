@@ -94,7 +94,7 @@ const localesWithBrokenNarrowRelativeFormatting = [
 /**
  * Formats a date relatively.
  */
-function formatRelativeDate(date: Date, locale?: string) {
+export function formatRelativeDate(date: Date, locale?: string) {
   let resolvedLocale: string;
 
   if (locale) {
@@ -139,19 +139,19 @@ function formatRelativeDate(date: Date, locale?: string) {
 }
 
 /**
- * Formats a date relatively if it's recent,
+ * Formats a date relatively if it's recent or soon,
  * otherwise absolutely with only the day and month.
  */
 function formatDynamicDate(date: Date, locale?: string) {
-  return date.getTime() > Date.now() - DYNAMIC_DATE_THRESHOLD
+  return Math.abs(date.getTime() - Date.now()) <= DYNAMIC_DATE_THRESHOLD
     ? formatRelativeDate(date, locale)
     : formatShortDate(date, locale);
 }
 
 /**
  * Displays a formatted date, and automatically re-renders to support relative
- * formatting. Defaults to relative formatting for recent dates and a short
- * absolute formatting for older ones.
+ * formatting. Defaults to relative formatting for nearby dates and a short
+ * absolute formatting for more distant ones.
  *
  * @example
  * <Timestamp date={new Date()} />
@@ -188,7 +188,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
           ? renderTitle(parsedDate, locale)
           : renderTitle,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [renderTitle, parsedDate, key]
+      [renderTitle, parsedDate, locale, key]
     );
     const children = useMemo(
       () =>
@@ -196,7 +196,7 @@ export const Timestamp = forwardRef<HTMLTimeElement, TimestampProps>(
           ? renderChildren(parsedDate, locale)
           : renderChildren,
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [renderChildren, parsedDate, key]
+      [renderChildren, parsedDate, locale, key]
     );
 
     useInterval(rerender, interval);

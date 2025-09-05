@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.7.0
+
 This release introduces group mentions (e.g. `@engineering`) across all packages
 and first-class support for tenants. Learn more about [group mentions](#) and
 [tenants](#) in the docs.
@@ -46,9 +48,29 @@ and first-class support for tenants. Learn more about [group mentions](#) and
   accept a `resolveGroupsInfo` option that passes the results to mentions as
   `group`.
 
+## v3.5.3
+
+### `@liveblocks/client`
+
+- Auto-abort this client's tool calls on page unload to prevent hanging chats.
+
+### `@liveblocks/react-ui`
+
+- Reasoning in `AiChat` now displays how long it took.
+- `AiChat` nows shows when a copilot is searching its knowledge defined on the
+  dashboard, as a "Searching 'What is RAG?'…" indicator. It also displays how
+  long it took.
+- Add `Duration` primitive to display formatted durations, similar to the
+  existing `Timestamp` primitive.
+
+### `@liveblocks/node`
+
+- Better type safety for copilot creation and update options.
+- Add missing type export for AI Copilot and knowledge sources.
+
 ## v3.5.2
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Throttle incoming AI delta updates to prevent excessive re-renders during fast
   streaming.
@@ -95,7 +117,7 @@ and first-class support for tenants. Learn more about [group mentions](#) and
 
 ## v3.4.1
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Fix a bug where copilot id wasn't passed when setting tool call result if a
   tool call was defined with `execute` callback.

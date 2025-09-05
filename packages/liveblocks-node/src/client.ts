@@ -175,35 +175,101 @@ export type RoomData = {
 
 type RoomDataPlain = DateToString<RoomData>;
 
+type AiCopilotProviderSettings = {
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  stopSequences?: string[];
+  seed?: number;
+  maxRetries?: number;
+};
+
+type OpenAiModel =
+  | "o1"
+  | "o1-mini"
+  | "o3"
+  | "o3-mini"
+  | "o4-mini"
+  | "gpt-4.1"
+  | "gpt-4.1-mini"
+  | "gpt-4.1-nano"
+  | "gpt-4o"
+  | "gpt-4o-mini"
+  | "gpt-4-turbo"
+  | "gpt-4";
+
+type OpenAiProviderOptions = {
+  openai: {
+    reasoningEffort: "low" | "medium" | "high";
+  };
+};
+
+type AnthropicModel =
+  | "claude-4-opus-20250514"
+  | "claude-4-sonnet-20250514"
+  | "claude-3-7-sonnet-20250219"
+  | "claude-3-5-sonnet-latest"
+  | "claude-3-5-haiku-latest"
+  | "claude-3-opus-latest";
+type AnthropicProviderOptions = {
+  anthropic: {
+    thinking: {
+      type: "enabled" | "disabled";
+      budgetToken: number;
+    };
+  };
+};
+
+type GoogleModel =
+  | "gemini-2.5-flash"
+  | "gemini-2.5-pro"
+  | "gemini-2.0-flash-001"
+  | "gemini-1.5-flash"
+  | "gemini-1.5-pro";
+type GoogleProviderOptions = {
+  google: {
+    thinkingConfig: {
+      thinkingBudget: number;
+    };
+  };
+};
+
 export type AiCopilot = {
   type: "copilot";
   id: string;
   name: string;
+  description?: string;
+
   systemPrompt: string;
   knowledgePrompt?: string;
-  description?: string;
+
   createdAt: Date;
   updatedAt: Date;
   lastUsedAt?: Date;
-  providerModel: string;
-  providerOptions?: Record<string, Record<string, string | Json>>;
-  settings?: {
-    maxTokens?: number;
-    temperature?: number;
-    topP?: number;
-    topK?: number;
-    frequencyPenalty?: number;
-    presencePenalty?: number;
-    stopSequences?: string[];
-    seed?: number;
-    maxRetries?: number;
-  };
+
+  settings?: AiCopilotProviderSettings;
 } & (
   | {
-      provider: "openai" | "anthropic" | "google";
+      provider: "openai";
+      providerModel: OpenAiModel;
+      providerOptions?: OpenAiProviderOptions;
+    }
+  | {
+      provider: "anthropic";
+      providerModel: AnthropicModel;
+      providerOptions?: AnthropicProviderOptions;
+    }
+  | {
+      provider: "google";
+      providerModel: GoogleModel;
+      providerOptions?: GoogleProviderOptions;
     }
   | {
       provider: "openai-compatible";
+      providerModel: string;
       compatibleProviderName: string;
       providerBaseUrl: string;
     }
@@ -367,33 +433,37 @@ export type UpsertRoomOptions = {
 };
 
 export type GetAiCopilotsOptions = PaginationOptions;
-type ProviderSettings = {
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  topK?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  stopSequences?: string[];
-  seed?: number;
-  maxRetries?: number;
-};
 
 export type CreateAiCopilotOptions = {
   name: string;
-  providerApiKey: string;
-  providerModel: string;
   description?: string;
+
   systemPrompt: string;
   knowledgePrompt?: string;
-  providerOptions?: Record<string, Record<string, string | Json>>;
-  settings?: ProviderSettings;
+
+  settings?: AiCopilotProviderSettings;
+
+  providerApiKey: string;
 } & (
   | {
-      provider: "openai" | "anthropic" | "google";
+      provider: "openai";
+      providerModel: OpenAiModel;
+
+      providerOptions?: OpenAiProviderOptions;
+    }
+  | {
+      provider: "anthropic";
+      providerModel: AnthropicModel;
+      providerOptions?: AnthropicProviderOptions;
+    }
+  | {
+      provider: "google";
+      providerModel: GoogleModel;
+      providerOptions?: GoogleProviderOptions;
     }
   | {
       provider: "openai-compatible";
+      providerModel: string;
       compatibleProviderName: string;
       providerBaseUrl: string;
     }
@@ -401,23 +471,42 @@ export type CreateAiCopilotOptions = {
 
 export type UpdateAiCopilotOptions = {
   name?: string;
-  providerApiKey?: string;
-  providerModel?: string;
   description?: string | null;
+
   systemPrompt?: string;
   knowledgePrompt?: string | null;
-  providerOptions?: Record<string, Record<string, string | Json>> | null;
-  settings?: ProviderSettings | null;
+
+  settings?: AiCopilotProviderSettings | null;
+
+  providerApiKey?: string;
 } & (
   | {
-      provider?: "openai" | "anthropic" | "google";
-      compatibleProviderName?: null;
-      providerBaseUrl?: null;
+      provider?: "openai";
+      providerModel?: OpenAiModel;
+      providerOptions?: OpenAiProviderOptions | null;
+      compatibleProviderName?: never;
+      providerBaseUrl?: never;
+    }
+  | {
+      provider?: "anthropic";
+      providerModel?: AnthropicModel;
+      providerOptions?: AnthropicProviderOptions | null;
+      compatibleProviderName?: never;
+      providerBaseUrl?: never;
+    }
+  | {
+      provider?: "google";
+      providerModel?: GoogleModel;
+      providerOptions?: GoogleProviderOptions | null;
+      compatibleProviderName?: never;
+      providerBaseUrl?: never;
     }
   | {
       provider?: "openai-compatible";
+      providerModel?: string;
       compatibleProviderName?: string;
       providerBaseUrl?: string;
+      providerOptions?: never;
     }
 );
 
