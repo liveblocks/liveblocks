@@ -32,8 +32,6 @@ export type {
   ComposerSuggestionsListProps,
 } from "./Composer/types";
 export { AttachmentTooLargeError } from "./Composer/utils";
-export type { DurationProps } from "./Duration";
-export { Duration } from "./Duration";
 export type { FileSizeProps } from "./FileSize";
 export { FileSize } from "./FileSize";
 export type { TimestampProps } from "./Timestamp";

@@ -11,7 +11,7 @@ test.describe("Knowledge Registration - Simple", () => {
   }) => {
     // Create unique test chat and go to knowledge page
     const chatId = createRandomChat(page);
-    await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
+    await page.goto(`/knowledge/${chatId}`);
 
     // Wait for the page to load - verify default tab is "Todo app"
     await expect(

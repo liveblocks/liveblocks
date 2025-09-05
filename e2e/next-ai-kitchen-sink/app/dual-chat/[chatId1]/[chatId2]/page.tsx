@@ -65,11 +65,7 @@ function ChatWithoutLocalKnowledge({ chatId }: { chatId: string }) {
   );
 }
 
-export default function DualChatPage({
-  params,
-}: {
-  params: Promise<{ chatId1: string; chatId2: string }>;
-}) {
+export default function DualChatPage({ params }: { params: Promise<{ chatId1: string; chatId2: string }> }) {
   const { chatId1, chatId2 } = use(params);
   const [globalKnowledge, setGlobalKnowledge] = useState("Tiramisu");
 

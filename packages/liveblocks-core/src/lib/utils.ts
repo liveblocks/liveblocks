@@ -3,8 +3,6 @@ import type { Json } from "./Json";
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
 
-export type ISODateString = Brand<string, "ISODateString">;
-
 export type DistributiveOmit<T, K extends PropertyKey> = T extends any
   ? Omit<T, K>
   : never;
@@ -262,8 +260,4 @@ export function findLastIndex<T>(
     }
   }
   return -1;
-}
-
-export function iso(s: string): ISODateString {
-  return new Date(s).toISOString() as ISODateString;
 }
