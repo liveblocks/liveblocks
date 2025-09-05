@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.5.3
+
 ### `@liveblocks/client`
 
 - Auto-abort this client's tool calls on page unload to prevent hanging chats.
@@ -12,6 +14,11 @@
   long it took.
 - Add `Duration` primitive to display formatted durations, similar to the
   existing `Timestamp` primitive.
+
+### `@liveblocks/node`
+
+- Better type safety for copilot creation and update options.
+- Add missing type export for AI Copilot and knowledge sources.
 
 ## v3.5.2
 

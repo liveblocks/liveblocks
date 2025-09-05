@@ -5,10 +5,18 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
+  AiCopilot,
+  CreateAiCopilotOptions,
+  CreateFileKnowledgeSourceOptions,
   CreateRoomOptions,
+  CreateWebKnowledgeSourceOptions,
+  GetAiCopilotsOptions,
   GetInboxNotificationsOptions,
+  GetKnowledgeSourcesOptions,
   GetRoomsOptions,
+  GetWebKnowledgeSourceLinksOptions,
   InboxNotificationsQueryCriteria,
+  KnowledgeSource,
   LiveblocksOptions,
   MassMutateStorageCallback,
   MassMutateStorageOptions,
@@ -23,8 +31,10 @@ export type {
   RoomUser,
   Schema,
   ThreadParticipants,
+  UpdateAiCopilotOptions,
   UpdateRoomOptions,
   UpsertRoomOptions,
+  WebKnowledgeSourceLink,
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export type {

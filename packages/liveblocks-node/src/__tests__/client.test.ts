@@ -12,7 +12,13 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
-import { type AiCopilot, Liveblocks, LiveblocksError } from "../client";
+import {
+  type AiCopilot,
+  type CreateAiCopilotOptions,
+  Liveblocks,
+  LiveblocksError,
+  type UpdateAiCopilotOptions,
+} from "../client";
 import { getBaseUrl } from "../utils";
 
 const DEFAULT_BASE_URL = getBaseUrl();
@@ -2368,7 +2374,6 @@ describe("client", () => {
       providerModel: "gpt-4o",
       knowledgePrompt: "Use the provided knowledge",
       provider: "openai",
-      providerOptions: {},
       createdAt: new Date("2023-01-01T00:00:00.000Z"),
       updatedAt: new Date("2023-01-02T00:00:00.000Z"),
       lastUsedAt: new Date("2023-01-03T00:00:00.000Z"),
@@ -2455,7 +2460,7 @@ describe("client", () => {
 
     describe("create AI copilot", () => {
       test("should create an AI copilot when createAiCopilot receives a successful response", async () => {
-        const createData = {
+        const createData: CreateAiCopilotOptions = {
           name: "Test Copilot",
           description: "A test AI copilot",
           systemPrompt: "You are a helpful assistant",
@@ -2463,10 +2468,6 @@ describe("client", () => {
           provider: "openai" as const,
           providerApiKey: "sk_xxx",
           providerModel: "gpt-4o",
-          settings: {
-            maxTokens: 1000,
-            temperature: 0.7,
-          },
         };
 
         server.use(
@@ -2555,7 +2556,7 @@ describe("client", () => {
 
     describe("update AI copilot", () => {
       test("should update an AI copilot when updateAiCopilot receives a successful response", async () => {
-        const updateData = {
+        const updateData: UpdateAiCopilotOptions = {
           name: "Updated Copilot",
           systemPrompt: "You are an updated assistant",
         };
