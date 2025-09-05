@@ -198,6 +198,29 @@ test(
 );
 
 test(
+  "move + set / move + move",
+  prepareTestsConflicts(
+    { list: new LiveList<string>(["a", "b"]) },
+
+    async ({ root1, root2, control, assert }) => {
+      // Client A moves "a" after "b" and then sets "b" to "🟢"
+      root1.get("list").move(0, 1);
+      root1.get("list").set(0, "🟢");
+
+      // Client B swaps "a" and "b" and then swaps them back again
+      root2.get("list").move(0, 1);
+      root2.get("list").move(0, 1);
+
+      await control.flushA();
+      assert({ list: ["🟢", "a"] });
+
+      await control.flushB();
+      assert({ list: ["🟢", "a"] });
+    }
+  )
+);
+
+test(
   "set + move / move + set",
   prepareTestsConflicts(
     { list: new LiveList<string>(["a", "b"]) },
