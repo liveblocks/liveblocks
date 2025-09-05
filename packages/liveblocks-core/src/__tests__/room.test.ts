@@ -4,6 +4,7 @@ import {
   describe,
   expect,
   type MockInstance,
+  onTestFinished,
   test,
   vi,
 } from "vitest";
@@ -180,7 +181,7 @@ describe("room / auth", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    config.errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(config.errorEventSource.subscribeOnce((e) => (err = e)));
 
     await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");
@@ -327,7 +328,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
     await waitUntilStatus(room, "disconnected");
 
@@ -348,7 +349,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
     await waitUntilStatus(room, "connected");
 
@@ -426,7 +427,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "disconnected");
@@ -447,7 +448,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
     await waitUntilStatus(room, "connected");
 
@@ -480,7 +481,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
     // Will try to reconnect, then gets refused, then disconnects
     await waitUntilStatus(room, "connecting");
@@ -501,7 +502,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as LiveblocksError;
-    errorEventSource.subscribeOnce((e) => (err = e));
+    onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
     await waitUntilStatus(room, "connected");
 
@@ -1361,7 +1362,7 @@ describe("room", () => {
 
       const callback = vi.fn();
 
-      room.events.myPresence.subscribe(callback);
+      onTestFinished(room.events.myPresence.subscribe(callback));
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1390,8 +1391,8 @@ describe("room", () => {
 
       const presenceSubscriber = vi.fn();
       const storageRootSubscriber = vi.fn();
-      room.subscribe("my-presence", presenceSubscriber);
-      room.subscribe(storage.root, storageRootSubscriber);
+      onTestFinished(room.subscribe("my-presence", presenceSubscriber));
+      onTestFinished(room.subscribe(storage.root, storageRootSubscriber));
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1483,7 +1484,9 @@ describe("room", () => {
       const items = storage.root.get("items");
 
       let refOthers: readonly User<P, M>[] | undefined;
-      refRoom.events.others.subscribe((ev) => (refOthers = ev.others));
+      onTestFinished(
+        refRoom.events.others.subscribe((ev) => (refOthers = ev.others))
+      );
 
       room.batch(() => {
         room.updatePresence({ x: 0 });
@@ -1532,8 +1535,10 @@ describe("room", () => {
 
       let receivedUpdates: StorageUpdate[] = [];
 
-      room.events.storageBatch.subscribe(
-        (updates) => (receivedUpdates = updates)
+      onTestFinished(
+        room.events.storageBatch.subscribe(
+          (updates) => (receivedUpdates = updates)
+        )
       );
 
       const immutableState = root.toImmutable() as {
@@ -1576,7 +1581,7 @@ describe("room", () => {
       const { room } = createTestableRoom({});
 
       const callback = vi.fn();
-      room.events.history.subscribe(callback);
+      onTestFinished(room.events.history.subscribe(callback));
 
       room.batch(() => {
         room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -1592,6 +1597,7 @@ describe("room", () => {
 
       const callback = vi.fn();
       const unsubscribe = room.events.myPresence.subscribe(callback);
+      onTestFinished(unsubscribe);
 
       room.updatePresence({ x: 0 });
 
@@ -1618,6 +1624,7 @@ describe("room", () => {
       const unsubscribe = room.events.others.subscribe(
         (ev) => (others = ev.others)
       );
+      onTestFinished(unsubscribe);
 
       await waitUntilStatus(room, "connected");
 
@@ -1707,7 +1714,7 @@ describe("room", () => {
       });
 
       const callback = vi.fn();
-      room.events.customEvent.subscribe(callback);
+      onTestFinished(room.events.customEvent.subscribe(callback));
 
       await waitUntilCustomEvent(room);
 
@@ -1757,7 +1764,7 @@ describe("room", () => {
       });
 
       const callback = vi.fn();
-      room.events.customEvent.subscribe(callback);
+      onTestFinished(room.events.customEvent.subscribe(callback));
 
       await waitUntilCustomEvent(room);
 
@@ -1966,7 +1973,9 @@ describe("room", () => {
 
       const storageStatusCallback = vi.fn();
 
-      room.events.storageStatus.subscribe(storageStatusCallback);
+      onTestFinished(
+        room.events.storageStatus.subscribe(storageStatusCallback)
+      );
 
       wss.last.close(
         new CloseEvent("close", {
@@ -2084,7 +2093,7 @@ describe("room", () => {
       room.connect();
 
       let err = {} as LiveblocksError;
-      errorEventSource.subscribeOnce((e) => (err = e));
+      onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
       wss.onConnection((conn) => {
         conn.server.close(
@@ -2115,7 +2124,7 @@ describe("room", () => {
       room.connect();
 
       let err = {} as LiveblocksError;
-      errorEventSource.subscribeOnce((e) => (err = e));
+      onTestFinished(errorEventSource.subscribeOnce((e) => (err = e)));
 
       // Close the connection 1.111 second after it opened
       wss.onConnection((conn) => {
@@ -2511,7 +2520,9 @@ describe("room", () => {
 
       let others: readonly User<P, U>[] | undefined;
 
-      room.events.others.subscribe((ev) => (others = ev.others));
+      onTestFinished(
+        room.events.others.subscribe((ev) => (others = ev.others))
+      );
 
       await waitUntilOthersEvent(room);
       expect(others).toEqual([

@@ -765,15 +765,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const previousIndex = this.#items.indexOf(child);
     const existingItemIndex = this._indexOfPosition(newKey);
 
-    // Assign a temporary position until we get the fix from the backend
+    // If position is occupied, find a free position for item being moved
+    let actualNewKey = newKey;
     if (existingItemIndex !== -1) {
-      this.#items[existingItemIndex]._setParentLink(
-        this,
-        makePosition(newKey, this.#items[existingItemIndex + 1]?._parentPos)
+      // Find a free position near the desired position
+      actualNewKey = makePosition(
+        newKey,
+        this.#items[existingItemIndex + 1]?._parentPos
       );
     }
 
-    child._setParentLink(this, newKey);
+    child._setParentLink(this, actualNewKey);
 
     this._sortItems();
 

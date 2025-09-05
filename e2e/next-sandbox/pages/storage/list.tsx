@@ -190,6 +190,25 @@ function Sandbox() {
         <Button id="redo" enabled={canRedo} onClick={redo}>
           Redo
         </Button>
+
+        {/* Test-specific buttons for deterministic operations */}
+        <Button
+          id="move-2-to-0"
+          enabled={items.length > 2}
+          onClick={() => move(2, 0)}
+          subtitle="Move index 2 → 0"
+        >
+          Move 2→0
+        </Button>
+
+        <Button
+          id="insert-at-3"
+          enabled={items.length >= 3}
+          onClick={() => insert(3, padItem(me.connectionId, item))}
+          subtitle={`Insert at 3: ${padItem(me.connectionId, item)}`}
+        >
+          Insert@3
+        </Button>
       </div>
       <table style={styles.dataTable}>
         <tbody>

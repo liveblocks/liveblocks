@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect, onTestFinished } from "vitest";
 
 import { createApiClient } from "../api-client";
 import { createAuthManager } from "../auth-manager";
@@ -297,36 +297,38 @@ export async function prepareStorageTest<
     scopes
   );
 
-  subject.wss.onReceive.subscribe((data) => {
-    const messages = parseAsClientMsgs(data);
-    for (const message of messages) {
-      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        operations.push(...message.ops);
+  onTestFinished(
+    subject.wss.onReceive.subscribe((data) => {
+      const messages = parseAsClientMsgs(data);
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          operations.push(...message.ops);
 
-        ref.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-        subject.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-      } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
-        ref.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_PRESENCE,
-            data: message.data,
-            actor: currentActor,
-            targetActor: message.targetActor,
-          })
-        );
+          ref.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          subject.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+        } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
+          ref.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_PRESENCE,
+              data: message.data,
+              actor: currentActor,
+              targetActor: message.targetActor,
+            })
+          );
+        }
       }
-    }
-  });
+    })
+  );
 
   // Mock Server messages for Presence
 
@@ -489,34 +491,40 @@ export async function prepareStorageUpdateTest<
   const ref = await prepareRoomWithStorage(items, -1);
   const subject = await prepareRoomWithStorage<P, S, U, E, M>(items, -2);
 
-  subject.wss.onReceive.subscribe((data) => {
-    const messages = parseAsClientMsgs(data);
-    for (const message of messages) {
-      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        ref.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-        subject.wss.last.send(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
+  onTestFinished(
+    subject.wss.onReceive.subscribe((data) => {
+      const messages = parseAsClientMsgs(data);
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          ref.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          subject.wss.last.send(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+        }
       }
-    }
-  });
+    })
+  );
 
   const jsonUpdates: JsonStorageUpdate[][] = [];
   const refJsonUpdates: JsonStorageUpdate[][] = [];
 
-  subject.room.events.storageBatch.subscribe((updates) =>
-    jsonUpdates.push(updates.map(serializeUpdateToJson))
+  onTestFinished(
+    subject.room.events.storageBatch.subscribe((updates) =>
+      jsonUpdates.push(updates.map(serializeUpdateToJson))
+    )
   );
-  ref.room.events.storageBatch.subscribe((updates) =>
-    refJsonUpdates.push(updates.map(serializeUpdateToJson))
+  onTestFinished(
+    ref.room.events.storageBatch.subscribe((updates) =>
+      refJsonUpdates.push(updates.map(serializeUpdateToJson))
+    )
   );
 
   function expectUpdatesInBothClients(updates: JsonStorageUpdate[][]) {
@@ -548,10 +556,12 @@ export async function prepareDisconnectedStorageUpdateTest<
 
   const receivedUpdates: JsonStorageUpdate[][] = [];
 
-  room.subscribe(
-    storage.root,
-    (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
-    { isDeep: true }
+  onTestFinished(
+    room.subscribe(
+      storage.root,
+      (updates) => receivedUpdates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    )
   );
 
   function expectUpdates(updates: JsonStorageUpdate[][]) {
