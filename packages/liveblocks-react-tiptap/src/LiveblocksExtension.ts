@@ -81,10 +81,10 @@ const LiveblocksCollab = Collaboration.extend({
       );
     }
     if (
-      this.editor.extensionManager.extensions.find((e) => e.name === "history")
+      this.editor.extensionManager.extensions.find((e) => e.name === "undoRedo")
     ) {
       console.warn(
-        "[Liveblocks] The history extension is enabled, Liveblocks extension provides its own. Please remove or disable the History plugin to prevent unwanted conflicts."
+        "[Liveblocks] The undoRedo extension is enabled, Liveblocks extension provides its own. Please remove or disable the undoRedo extension to prevent conflicts."
       );
     }
   },
@@ -302,7 +302,6 @@ export const useLiveblocksExtension = (
           info.name !== storedUser?.name ||
           info.color !== storedUser?.color
         ) {
-          
           this.editor.commands.updateUser({
             name: info.name,
             color: info.color,
