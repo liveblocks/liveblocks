@@ -1,5 +1,13 @@
 ## vNEXT (not yet published)
 
+## v3.5.4
+
+- Identical to v3.5.2, corrects a bad release.
+
+## v3.5.3
+
+- Bad release, please use v3.5.4 instead.
+
 ## v3.5.2
 
 ### `@liveblocks/core`
