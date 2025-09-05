@@ -20,13 +20,47 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 36 (2025-09-05)
 
+## v3.6.0
+
+### `@liveblocks/client`
+
+- Auto-abort this client's tool calls on page unload to prevent hanging chats.
+
+### `@liveblocks/react-ui`
+
+- Reasoning in `AiChat` now displays how long it took.
+- `AiChat` nows shows when a copilot is searching its knowledge defined on the
+  dashboard, as a "Searching 'What is RAG?'…" indicator. It also displays how
+  long it took.
+- Add `Duration` primitive to display formatted durations, similar to the
+  existing `Timestamp` primitive.
+
+### `@liveblocks/node`
+
+- Better type safety for copilot creation and update options.
+- Add missing type export for AI Copilot and knowledge sources.
+
+## v3.5.2
+
+### `@liveblocks/client`
+
+- Throttle incoming AI delta updates to prevent excessive re-renders during fast
+  streaming.
+- Optimized partial JSON parser for improved tool invocation streaming
+  performance.
+
+### `@liveblocks/react-tiptap`
+
+- Fixes a bug where the a comment could not be selected if it was within a
+  previously deleted comment.
+
 ## Dashboard
 
 - Add API reference modal to AI Copilot detail pages, with React, Node.js, and REST API snippets to get started quickly.
 
 ## Contributors
 
-pierrelevaillant
+pierrelevaillant, nvie, jrowny, nimeshnayaju, marcbouchenoire
 
 # Week 35 (2025-08-29)
 
