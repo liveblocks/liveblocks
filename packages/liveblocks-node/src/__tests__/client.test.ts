@@ -17,6 +17,7 @@ import {
   type CreateAiCopilotOptions,
   Liveblocks,
   LiveblocksError,
+  type UpdateAiCopilotOptions,
 } from "../client";
 import { getBaseUrl } from "../utils";
 
@@ -2467,10 +2468,6 @@ describe("client", () => {
           provider: "openai" as const,
           providerApiKey: "sk_xxx",
           providerModel: "gpt-4o",
-          settings: {
-            maxTokens: 1000,
-            temperature: 0.7,
-          },
         };
 
         server.use(
@@ -2559,7 +2556,7 @@ describe("client", () => {
 
     describe("update AI copilot", () => {
       test("should update an AI copilot when updateAiCopilot receives a successful response", async () => {
-        const updateData = {
+        const updateData: UpdateAiCopilotOptions = {
           name: "Updated Copilot",
           systemPrompt: "You are an updated assistant",
         };
