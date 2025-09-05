@@ -1,6 +1,6 @@
 ## vNEXT (not yet published)
 
-## v3.5.3
+## v3.6.0
 
 ### `@liveblocks/client`
 
@@ -19,6 +19,14 @@
 
 - Better type safety for copilot creation and update options.
 - Add missing type export for AI Copilot and knowledge sources.
+
+## v3.5.4
+
+- Identical to v3.5.2, corrects a bad release.
+
+## v3.5.3
+
+- Bad release, please use v3.5.4 instead.
 
 ## v3.5.2
 
