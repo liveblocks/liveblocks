@@ -20,7 +20,13 @@ list and feel free to give them credit at the end of a line, e.g.:
 
 # Week 36 (2025-09-05)
 
+## Dashboard
+
+- Add API reference modal to AI Copilot detail pages, with React, Node.js, and REST API snippets to get started quickly.
+
 ## Contributors
+
+pierrelevaillant
 
 # Week 35 (2025-08-29)
 
