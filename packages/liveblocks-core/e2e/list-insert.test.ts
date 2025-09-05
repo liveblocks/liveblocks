@@ -9,17 +9,18 @@ test(
     {
       list: new LiveList<string>([]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").push("A");
-      root2.get("list").push("B");
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").push("a");
+      root2.get("list").push("b");
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert(
+        { list: ["a"] }, //
+        { list: ["a", "b"] }
+      );
 
-      assert({ list: ["A"] }, { list: ["A", "B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["A", "B"] });
+      await control.flushB();
+      assert({ list: ["a", "b"] });
     }
   )
 );
@@ -28,21 +29,24 @@ test(
   "remote insert conflicts with move",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B"]),
+      list: new LiveList(["a", "b"]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").push("C");
-      root2.get("list").move(0, 1);
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").push("✨"); // Client A inserts "✨"
+      root2.get("list").move(0, 1); // Client B moves "a" after "b"
+      assert(
+        { list: ["a", "b", "✨"] }, //
+        { list: ["b", "a"] }
+      );
 
-      assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
+      await control.flushA();
+      assert(
+        { list: ["a", "b", "✨"] }, //
+        { list: ["b", "✨", "a"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B", "C", "A"] });
+      await control.flushB();
+      assert({ list: ["b", "✨", "a"] });
     }
   )
 );
@@ -51,20 +55,26 @@ test(
   "remote insert conflicts with move via undo",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B"]),
+      list: new LiveList(["a", "b"]),
     },
-    async ({ root1, root2, room2, wsUtils, assert }) => {
-      root1.get("list").push("C");
+    async ({ root1, root2, room2, control, assert }) => {
+      root1.get("list").push("c");
       root2.get("list").move(0, 1);
       root2.get("list").move(1, 0);
       room2.history.undo();
-      assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
+      assert(
+        { list: ["a", "b", "c"] }, //
+        { list: ["b", "a"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-      assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
+      await control.flushA();
+      assert(
+        { list: ["a", "b", "c"] }, //
+        { list: ["b", "c", "a"] }
+      );
 
-      await wsUtils.flushSocket2Messages();
-      assert({ list: ["B", "C", "A"] });
+      await control.flushB();
+      assert({ list: ["b", "c", "a"] });
     }
   )
 );
@@ -75,17 +85,23 @@ test(
     {
       list: new LiveList<string>([]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").push("A");
-      root2.get("list").push("B");
-      root2.get("list").set(0, "C");
-      assert({ list: ["A"] }, { list: ["C"] });
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").push("a");
+      root2.get("list").push("b");
+      root2.get("list").set(0, "c");
+      assert(
+        { list: ["a"] }, //
+        { list: ["c"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-      assert({ list: ["A"] }, { list: ["A", "C"] });
+      await control.flushA();
+      assert(
+        { list: ["a"] }, //
+        { list: ["a", "c"] }
+      );
 
-      await wsUtils.flushSocket2Messages();
-      assert({ list: ["C"] });
+      await control.flushB();
+      assert({ list: ["c"] });
     }
   )
 );

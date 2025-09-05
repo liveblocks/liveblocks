@@ -12,11 +12,11 @@ import type { Status } from "../src/connection";
 import type { LiveObject } from "../src/crdts/LiveObject";
 import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
+import { controlledPromise } from "../src/lib/controlledPromise";
 import type { Json, JsonObject } from "../src/lib/Json";
 import { wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
-import { controlledPromise } from "../src/lib/controlledPromise";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -108,14 +108,6 @@ async function initializeRoomForTest<
  *
  * Client A and B are set up not to use any throttling to make timing these
  * tests exactly is easier.
- *
- * Available utilities:
- * - wsUtils.flushSocket1Messages()  Sends network messages from Client A -> B,
- *                                   and waits for B to have processed them
- * - wsUtils.flushSocket2Messages()  Sends network messages from Client B -> A,
- *                                   and waits for B to have processed them
- *
- * To send messages from Client A -> Client B and wait for Client B to have received/processed them, use
  */
 export function prepareTestsConflicts<S extends LsonObject>(
   initialStorage: S,
@@ -132,9 +124,18 @@ export function prepareTestsConflicts<S extends LsonObject>(
      * states updated with the updates generated from conflicts are equal.
      */
     assert: (immRoot1: ToImmutable<S>, immRoot2?: ToImmutable<S>) => void;
-    wsUtils: {
-      flushSocket1Messages: () => Promise<void>;
-      flushSocket2Messages: () => Promise<void>;
+    /** Test utilities to exactly control message passing */
+    control: {
+      /**
+       * Sends all buffered messages from Client A to Client B, and waits
+       * until Client B has processed them.
+       */
+      flushA: () => Promise<void>;
+      /**
+       * Sends all buffered messages from Client B to Client A, and waits
+       * until Client A has processed them.
+       */
+      flushB: () => Promise<void>;
     };
   }) => Promise<void>
 ): () => Promise<void> {
@@ -200,8 +201,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
       return p$;
     }
 
-    const wsUtils = {
-      flushSocket1Messages: async () => {
+    const control = {
+      flushA: async () => {
         const beaconId = nanoid();
         const beacon$ = registerBeacon(beaconId);
         actor1.room.broadcastEvent({ beacon: beaconId });
@@ -219,7 +220,8 @@ export function prepareTestsConflicts<S extends LsonObject>(
           "Client B did not receive beacon from Client A within 2s"
         );
       },
-      flushSocket2Messages: async () => {
+
+      flushB: async () => {
         const beaconId = nanoid();
         const beacon$ = registerBeacon(beaconId);
         actor2.room.broadcastEvent({ beacon: beaconId });
@@ -287,7 +289,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
         room2: actor2.room,
         root1,
         root2,
-        wsUtils,
+        control,
         assert,
       });
       actor1.leave();

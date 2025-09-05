@@ -7,21 +7,24 @@ test(
   "remote move conflicts with move",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B", "C"]),
+      list: new LiveList(["a", "b", "c"]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
+    async ({ root1, root2, control, assert }) => {
       root1.get("list").move(0, 2);
       root2.get("list").move(1, 2);
+      assert(
+        { list: ["b", "c", "a"] }, //
+        { list: ["a", "c", "b"] }
+      );
 
-      assert({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
+      await control.flushA();
+      assert(
+        { list: ["b", "c", "a"] }, //
+        { list: ["c", "a", "b"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["C", "A", "B"] });
+      await control.flushB();
+      assert({ list: ["c", "a", "b"] });
     }
   )
 );
@@ -30,23 +33,26 @@ test(
   "remote move conflicts with move via undo",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B", "C"]),
+      list: new LiveList(["a", "b", "c"]),
     },
-    async ({ root1, root2, room2, wsUtils, assert }) => {
+    async ({ root1, root2, room2, control, assert }) => {
       root1.get("list").move(0, 2);
       root2.get("list").move(1, 2);
       root2.get("list").move(2, 1);
       room2.history.undo();
+      assert(
+        { list: ["b", "c", "a"] }, //
+        { list: ["a", "c", "b"] }
+      );
 
-      assert({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
+      await control.flushA();
+      assert(
+        { list: ["b", "c", "a"] }, //
+        { list: ["c", "a", "b"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["C", "A", "B"] });
+      await control.flushB();
+      assert({ list: ["c", "a", "b"] });
     }
   )
 );
@@ -55,22 +61,25 @@ test(
   "remote move conflicts with set",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B"]),
+      list: new LiveList(["a", "b"]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
+    async ({ root1, root2, control, assert }) => {
       root1.get("list").move(0, 1);
-      root2.get("list").push("C");
-      root2.get("list").set(2, "D");
+      root2.get("list").push("c");
+      root2.get("list").set(2, "d");
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["a", "b", "d"] }
+      );
 
-      assert({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
+      await control.flushA();
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["b", "a", "d"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B", "D"] });
+      await control.flushB();
+      assert({ list: ["b", "d"] });
     }
   )
 );
@@ -79,24 +88,27 @@ test(
   "remote move conflicts with set via undo",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B"]),
+      list: new LiveList(["a", "b"]),
     },
-    async ({ root1, root2, room2, wsUtils, assert }) => {
+    async ({ root1, root2, room2, control, assert }) => {
       root1.get("list").move(0, 1);
-      root2.get("list").push("C");
-      root2.get("list").set(2, "D");
+      root2.get("list").push("c");
+      root2.get("list").set(2, "d");
       root2.get("list").set(2, "E");
       room2.history.undo();
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["a", "b", "d"] }
+      );
 
-      assert({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
+      await control.flushA();
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["b", "a", "d"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B", "D"] });
+      await control.flushB();
+      assert({ list: ["b", "d"] });
     }
   )
 );
@@ -105,21 +117,24 @@ test(
   "remote move conflicts with delete",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B"]),
+      list: new LiveList(["a", "b"]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
+    async ({ root1, root2, control, assert }) => {
       root1.get("list").move(0, 1);
       root2.get("list").delete(0);
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["b"] }
+      );
 
-      assert({ list: ["B", "A"] }, { list: ["B"] });
+      await control.flushA();
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["b"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B", "A"] }, { list: ["B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B"] });
+      await control.flushB();
+      assert({ list: ["b"] });
     }
   )
 );
@@ -128,21 +143,24 @@ test(
   "remote move conflicts with insert",
   prepareTestsConflicts(
     {
-      list: new LiveList(["A", "B"]),
+      list: new LiveList(["a", "b"]),
     },
-    async ({ root1, root2, wsUtils, assert }) => {
+    async ({ root1, root2, control, assert }) => {
       root1.get("list").move(0, 1);
-      root2.get("list").push("C");
+      root2.get("list").push("c");
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["a", "b", "c"] }
+      );
 
-      assert({ list: ["B", "A"] }, { list: ["A", "B", "C"] });
+      await control.flushA();
+      assert(
+        { list: ["b", "a"] }, //
+        { list: ["b", "a", "c"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B", "A"] }, { list: ["B", "A", "C"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B", "A", "C"] });
+      await control.flushB();
+      assert({ list: ["b", "a", "c"] });
     }
   )
 );

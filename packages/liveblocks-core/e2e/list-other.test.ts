@@ -6,25 +6,33 @@ import { prepareTestsConflicts } from "./utils";
 test(
   "push + set / push + set",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>([]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").push("A");
-      root1.get("list").set(0, "B");
+    { list: new LiveList<string>([]) },
 
-      root2.get("list").push("C");
-      root2.get("list").set(0, "D");
+    async ({ room1, room2, root1, root2, control, assert }) => {
+      // Client A pushes "oops" and then immediately corrects it to "a"
+      room1.batch(() => {
+        root1.get("list").push("oops");
+        root1.get("list").set(0, "a");
+      });
 
-      assert({ list: ["B"] }, { list: ["D"] });
+      // Client B pushes "oops, too" and then immediately corrects it to "b"
+      room2.batch(() => {
+        root2.get("list").push("oops, too");
+        root2.get("list").set(0, "b");
+      });
+      assert(
+        { list: ["a"] }, //
+        { list: ["b"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert(
+        { list: ["a"] }, //
+        { list: ["a", "b"] }
+      );
 
-      assert({ list: ["B"] }, { list: ["B", "D"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["D"] });
+      await control.flushB();
+      assert({ list: ["b"] });
     }
   )
 );
@@ -32,23 +40,25 @@ test(
 test(
   "set / insert + set",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").set(0, "B");
-      root2.get("list").insert("C", 0);
-      root2.get("list").set(0, "D");
+    { list: new LiveList<string>(["a"]) },
 
-      assert({ list: ["B"] }, { list: ["D", "A"] });
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").set(0, "b");
+      root2.get("list").insert("c", 0);
+      root2.get("list").set(0, "🟢");
+      assert(
+        { list: ["b"] }, //
+        { list: ["🟢", "a"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert(
+        { list: ["b"] }, //
+        { list: ["🟢", "b"] }
+      );
 
-      assert({ list: ["B"] }, { list: ["D", "B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["D", "B"] });
+      await control.flushB();
+      assert({ list: ["🟢", "b"] });
     }
   )
 );
@@ -56,23 +66,27 @@ test(
 test(
   "delete + push / set",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A", "B"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
+    { list: new LiveList<string>(["a", "b"]) },
+
+    async ({ root1, root2, control, assert }) => {
+      // Client A deletes "b" and then pushes "🟢"
       root1.get("list").delete(1);
-      root1.get("list").push("C");
-      root2.get("list").set(1, "D");
+      root1.get("list").push("🟢");
+      // Client B sets "b" to "🌕"
+      root2.get("list").set(1, "🌕");
+      assert(
+        { list: ["a", "🟢"] }, //
+        { list: ["a", "🌕"] }
+      );
 
-      assert({ list: ["A", "C"] }, { list: ["A", "D"] });
+      await control.flushA();
+      assert(
+        { list: ["a", "🟢"] }, //
+        { list: ["a", "🟢", "🌕"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["A", "C"] }, { list: ["A", "C", "D"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["A", "D"] });
+      await control.flushB();
+      assert({ list: ["a", "🌕"] });
     }
   )
 );
@@ -80,24 +94,29 @@ test(
 test(
   "set + move / move + move",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A", "B"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
-      root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
-      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
-      root2.get("list").move(0, 1); //  Client2 moves "B" after "A"
+    { list: new LiveList<string>(["a", "b"]) },
 
-      assert({ list: ["B", "C"] }, { list: ["A", "B"] });
+    async ({ root1, root2, control, assert }) => {
+      // Client A changes "a" to "🟢" and then moves it after "b"
+      root1.get("list").set(0, "🟢");
+      root1.get("list").move(0, 1);
 
-      await wsUtils.flushSocket1Messages();
+      // Client B swaps "a" and "b" and then swaps it back again
+      root2.get("list").move(0, 1);
+      root2.get("list").move(0, 1);
+      assert(
+        { list: ["b", "🟢"] }, //
+        { list: ["a", "b"] }
+      );
 
-      assert({ list: ["B", "C"] }, { list: ["C", "B"] }); // A(0.3), B(0.4) => C(0.1),B(0.4) => C(0.3),B(0.4)
+      await control.flushA();
+      assert(
+        { list: ["b", "🟢"] }, //
+        { list: ["🟢", "b"] }
+      );
 
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["C", "B"] });
+      await control.flushB();
+      assert({ list: ["🟢", "b"] });
     }
   )
 );
@@ -105,21 +124,24 @@ test(
 test(
   "delete + insert / set",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
+    { list: new LiveList<string>(["a"]) },
+
+    async ({ root1, root2, control, assert }) => {
+      // Client A deletes "a" and then inserts "b" at front
       root1.get("list").delete(0);
-      root1.get("list").insert("B", 0);
-      root2.get("list").set(0, "C");
+      root1.get("list").insert("b", 0);
 
-      await wsUtils.flushSocket1Messages();
+      // Client B changes "a" to "🟢"
+      root2.get("list").set(0, "🟢");
 
-      assert({ list: ["B"] }, { list: ["B", "C"] });
+      await control.flushA();
+      assert(
+        { list: ["b"] }, //
+        { list: ["b", "🟢"] }
+      );
 
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["C"] });
+      await control.flushB();
+      assert({ list: ["🟢"] });
     }
   )
 );
@@ -127,19 +149,24 @@ test(
 test(
   "set / delete + insert",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").set(0, "C");
+    { list: new LiveList<string>(["a"]) },
+
+    async ({ root1, root2, control, assert }) => {
+      // Client A changes "a" to "🟢"
+      root1.get("list").set(0, "🟢");
+
+      // Client B deletes "a" and then inserts "b" at front
       root2.get("list").delete(0);
-      root2.get("list").insert("B", 0);
+      root2.get("list").insert("b", 0);
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert(
+        { list: ["🟢"] }, //
+        { list: ["🟢"] } // Note: "b" momentarily disappears from client B
+      );
 
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["C", "B"] });
+      await control.flushB();
+      assert({ list: ["🟢", "b"] });
     }
   )
 );
@@ -147,22 +174,25 @@ test(
 test(
   "move + move / move + set",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A", "B"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").move(0, 1); //  Client1 moves "A" after "B"
-      root1.get("list").move(0, 1); //  Client1 moves "B" after "A"
-      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
-      root2.get("list").set(0, "C"); //  Client2 sets "B" to "C"
+    { list: new LiveList<string>(["a", "b"]) },
 
-      await wsUtils.flushSocket1Messages();
+    async ({ root1, root2, control, assert }) => {
+      // Client A swaps "a" and "b" and then swaps them back again
+      root1.get("list").move(0, 1);
+      root1.get("list").move(0, 1);
 
-      assert({ list: ["A", "B"] }, { list: ["C", "A"] });
+      // Client B moves "a" after "b" and then sets "b" to "🟢"
+      root2.get("list").move(0, 1);
+      root2.get("list").set(0, "🟢");
 
-      await wsUtils.flushSocket2Messages();
+      await control.flushA();
+      assert(
+        { list: ["a", "b"] }, //
+        { list: ["🟢", "a"] }
+      );
 
-      assert({ list: ["C", "A"] });
+      await control.flushB();
+      assert({ list: ["🟢", "a"] });
     }
   )
 );
@@ -170,22 +200,22 @@ test(
 test(
   "set + move / move + set",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A", "B"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").set(0, "C");
+    { list: new LiveList<string>(["a", "b"]) },
+
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").set(0, "c");
       root1.get("list").move(0, 1);
       root2.get("list").move(0, 1);
-      root2.get("list").set(0, "D");
+      root2.get("list").set(0, "🌕");
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert(
+        { list: ["b", "c"] }, //
+        { list: ["🌕", "c"] }
+      );
 
-      assert({ list: ["B", "C"] }, { list: ["D", "C"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["D", "C"] });
+      await control.flushB();
+      assert({ list: ["🌕", "c"] });
     }
   )
 );
@@ -193,23 +223,28 @@ test(
 test(
   "insert + delete / insert",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>([]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").insert("A", 0);
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, control, assert }) => {
+      // Client A inserts "a" at position 0 and then deletes it
+      root1.get("list").insert("a", 0);
       root1.get("list").delete(0);
-      root2.get("list").insert("B", 0);
 
-      assert({ list: [] }, { list: ["B"] });
+      // Client B inserts "b" at position 0
+      root2.get("list").insert("b", 0);
+      assert(
+        { list: [] }, //
+        { list: ["b"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert(
+        { list: [] }, //
+        { list: ["b"] }
+      );
 
-      assert({ list: [] }, { list: ["B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B"] });
+      await control.flushB();
+      assert({ list: ["b"] });
     }
   )
 );
@@ -217,24 +252,26 @@ test(
 test(
   "set + delete / move + insert",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>(["A", "B"]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").set(0, "C");
+    { list: new LiveList<string>(["a", "b"]) },
+
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").set(0, "c");
       root1.get("list").delete(0);
       root2.get("list").move(0, 1);
-      root2.get("list").insert("D", 0);
+      root2.get("list").insert("d", 0);
+      assert(
+        { list: ["b"] }, //
+        { list: ["d", "b", "a"] }
+      );
 
-      assert({ list: ["B"] }, { list: ["D", "B", "A"] });
+      await control.flushA();
+      assert(
+        { list: ["b"] }, //
+        { list: ["b"] }
+      ); // D(0.1), B(0.2), A(0.3) => D,B =>  C(0.1), D(0.15), B(0.2) => D(0.15), B(0.2)
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["B"] }, { list: ["B"] }); // D(0.1), B(0.2), A(0.3) => D,B =>  C(0.1), D(0.15), B(0.2) => D(0.15), B(0.2)
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["D", "B"] });
+      await control.flushB();
+      assert({ list: ["d", "b"] });
     }
   )
 );
@@ -242,24 +279,26 @@ test(
 test(
   "push + delete / push",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>([]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("list").push("A");
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, control, assert }) => {
+      root1.get("list").push("a");
       root1.get("list").delete(0);
 
-      root2.get("list").push("B");
+      root2.get("list").push("b");
+      assert(
+        { list: [] }, //
+        { list: ["b"] }
+      );
 
-      assert({ list: [] }, { list: ["B"] });
+      await control.flushA();
+      assert(
+        { list: [] }, //
+        { list: ["b"] }
+      ); // B(0.2)
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: [] }, { list: ["B"] }); // B(0.2)
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["B"] });
+      await control.flushB();
+      assert({ list: ["b"] });
     }
   )
 );
@@ -267,24 +306,26 @@ test(
 test(
   "remote insert conflicts with another insert via undo",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>([]),
-    },
-    async ({ root1, root2, room2, wsUtils, assert }) => {
-      root1.get("list").push("A");
-      root2.get("list").push("B");
+    { list: new LiveList<string>([]) },
+
+    async ({ root1, root2, room2, control, assert }) => {
+      root1.get("list").push("a");
+      root2.get("list").push("b");
       root2.get("list").delete(0);
       room2.history.undo();
+      assert(
+        { list: ["a"] }, //
+        { list: ["b"] }
+      );
 
-      assert({ list: ["A"] }, { list: ["B"] });
+      await control.flushA();
+      assert(
+        { list: ["a"] }, //
+        { list: ["a", "b"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["A"] }, { list: ["A", "B"] });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ list: ["A", "B"] });
+      await control.flushB();
+      assert({ list: ["a", "b"] });
     }
   )
 );
@@ -292,29 +333,33 @@ test(
 test(
   "undo insert + redo insert / delete",
   prepareTestsConflicts(
-    {
-      list: new LiveList<string>([]),
-    },
-    async ({ root1, root2, room1, wsUtils, assert }) => {
-      root1.get("list").push("A");
+    { list: new LiveList<string>([]) },
 
-      await wsUtils.flushSocket1Messages();
+    async ({ root1, root2, room1, control, assert }) => {
+      root1.get("list").push("a");
 
-      assert({ list: ["A"] }, { list: ["A"] });
+      await control.flushA();
+      assert(
+        { list: ["a"] }, //
+        { list: ["a"] }
+      );
 
       room1.history.undo();
       room1.history.redo();
 
       root2.get("list").delete(0);
+      assert(
+        { list: ["a"] }, //
+        { list: [] }
+      );
 
-      assert({ list: ["A"] }, { list: [] });
+      await control.flushA();
+      assert(
+        { list: ["a"] }, //
+        { list: ["a"] }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ list: ["A"] }, { list: ["A"] });
-
-      await wsUtils.flushSocket2Messages();
-
+      await control.flushB();
       assert({ list: [] });
     }
   )

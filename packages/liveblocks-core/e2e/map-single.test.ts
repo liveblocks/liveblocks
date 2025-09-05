@@ -16,14 +16,13 @@ test(
         isDeep: true,
       });
 
-      root.get("map").set("key", "A");
-      root.get("map").set("key", "B");
+      root.get("map").set("key", "a");
+      root.get("map").set("key", "b");
 
       await flushSocketMessages();
-
       expect(states).toEqual([
-        { map: new Map([["key", "A"]]) },
-        { map: new Map([["key", "B"]]) },
+        { map: new Map([["key", "a"]]) },
+        { map: new Map([["key", "b"]]) },
       ]);
     }
   )

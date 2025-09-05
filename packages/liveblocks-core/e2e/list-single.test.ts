@@ -9,7 +9,7 @@ test(
   "fast consecutive sets on same index",
   prepareSingleClientTest(
     {
-      list: new LiveList(["A"]),
+      list: new LiveList(["a"]),
     },
     async ({ root, flushSocketMessages, room }) => {
       const states: Json[] = [];
@@ -17,12 +17,11 @@ test(
         isDeep: true,
       });
 
-      root.get("list").set(0, "B");
-      root.get("list").set(0, "C");
+      root.get("list").set(0, "b");
+      root.get("list").set(0, "c");
 
       await flushSocketMessages();
-
-      expect(states).toEqual([{ list: ["B"] }, { list: ["C"] }]);
+      expect(states).toEqual([{ list: ["b"] }, { list: ["c"] }]);
     }
   )
 );
@@ -39,14 +38,13 @@ test(
         isDeep: true,
       });
 
-      const liveList = new LiveList<string>(["A"]);
+      const liveList = new LiveList<string>(["a"]);
       root.set("list", liveList);
 
-      liveList.set(0, "B");
+      liveList.set(0, "b");
 
       await flushSocketMessages();
-
-      expect(states).toEqual([{ list: ["A"] }, { list: ["B"] }]);
+      expect(states).toEqual([{ list: ["a"] }, { list: ["b"] }]);
     }
   )
 );

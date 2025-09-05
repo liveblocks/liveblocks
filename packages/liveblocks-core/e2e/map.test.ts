@@ -6,25 +6,21 @@ import { prepareTestsConflicts } from "./utils";
 test(
   "remote set conflicts with another set",
   prepareTestsConflicts(
-    {
-      map: new LiveMap<string, string>(),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
-      root1.get("map").set("key", "A");
-      root2.get("map").set("key", "B");
+    { map: new LiveMap<string, string>() },
 
+    async ({ root1, root2, control, assert }) => {
+      root1.get("map").set("key", "a");
+      root2.get("map").set("key", "b");
       assert(
-        { map: new Map([["key", "A"]]) },
-        { map: new Map([["key", "B"]]) }
+        { map: new Map([["key", "a"]]) },
+        { map: new Map([["key", "b"]]) }
       );
 
-      await wsUtils.flushSocket1Messages();
+      await control.flushA();
+      assert({ map: new Map([["key", "a"]]) });
 
-      assert({ map: new Map([["key", "A"]]) });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ map: new Map([["key", "B"]]) });
+      await control.flushB();
+      assert({ map: new Map([["key", "b"]]) });
     }
   )
 );
@@ -32,22 +28,24 @@ test(
 test(
   "remote set conflicts with a delete",
   prepareTestsConflicts(
-    {
-      map: new LiveMap<string, string>([["key", "A"]]),
-    },
-    async ({ root1, root2, wsUtils, assert }) => {
+    { map: new LiveMap<string, string>([["key", "a"]]) },
+
+    async ({ root1, root2, control, assert }) => {
       root1.get("map").delete("key");
-      root2.get("map").set("key", "B");
+      root2.get("map").set("key", "b");
+      assert(
+        { map: new Map() }, //
+        { map: new Map([["key", "b"]]) }
+      );
 
-      assert({ map: new Map() }, { map: new Map([["key", "B"]]) });
+      await control.flushA();
+      assert(
+        { map: new Map() }, //
+        { map: new Map([["key", "b"]]) }
+      );
 
-      await wsUtils.flushSocket1Messages();
-
-      assert({ map: new Map() }, { map: new Map([["key", "B"]]) });
-
-      await wsUtils.flushSocket2Messages();
-
-      assert({ map: new Map([["key", "B"]]) });
+      await control.flushB();
+      assert({ map: new Map([["key", "b"]]) });
     }
   )
 );
