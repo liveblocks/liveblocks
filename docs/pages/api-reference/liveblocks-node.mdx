@@ -2480,7 +2480,11 @@ const copilot = await liveblocks.createAiCopilot({
   providerApiKey: "sk-...",
 
   // Optional, provider-specific options
-  providerOptions: {},
+  providerOptions: {
+    openai: {
+      reasoningEffort: "low",
+    },
+  },
 
   // Optional, model settings
   settings: {
@@ -2506,7 +2510,7 @@ const copilot = await liveblocks.createAiCopilot({
   compatibleProviderName: "my-custom-provider",
   providerBaseUrl: "https://api.mycustomprovider.com/v1",
   providerApiKey: "your-api-key-here", // Your API key for the custom provider
-  // Note: providerModel is not used with openai-compatible providers
+  providerModel: "custom-provider-model",
 });
 ```
 
@@ -2559,7 +2563,7 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
   knowledgePrompt: "Reference our latest guidelines.",
 
   // Optional, update provider-specific options
-  providerOptions: {},
+  providerOptions: null,
 
   // Optional, update model settings
   settings: {
@@ -2568,6 +2572,29 @@ const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
   },
 });
 ```
+
+Certain properties can be set to `null` to clear them from the copilot's
+configuration. This includes `description`, `knowledgePrompt`, `settings`, and
+`providerOptions`.
+
+```ts
+const updatedCopilot = await liveblocks.updateAiCopilot("co_abc123...", {
+  // Clear the description
+  description: null,
+
+  // Clear the knowledge prompt
+  knowledgePrompt: null,
+
+  // Clear all model settings
+  settings: null,
+});
+```
+
+The method returns a 422 response if the update doesn't apply due to validation
+failures. For example, if the existing copilot uses the "openai" provider and
+you attempt to update the provider model to an incompatible value for the
+provider, like "gemini-2.5-pro", you'll receive a 422 response with an error
+message explaining where the validation failed.
 
 #### Liveblocks.deleteAiCopilot [#delete-ai-copilot]
 

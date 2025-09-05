@@ -19,7 +19,7 @@ function ChatDeleter({ chatId }: { chatId: string }) {
   }, [deleteChat, chatId]);
 
   if (error) {
-    return <div style={{ color: 'red' }}>Error deleting chat: {error}</div>;
+    return <div style={{ color: "red" }}>Error deleting chat: {error}</div>;
   }
 
   if (deleted) {

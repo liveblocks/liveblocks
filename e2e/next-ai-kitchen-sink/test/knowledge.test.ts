@@ -71,6 +71,7 @@ test.describe("Knowledge Registration", () => {
     page,
   }) => {
     const chatId = createRandomChat(page);
+    await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
     await test.step("Setup and verify todo app view", async () => {
       await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
@@ -115,7 +116,7 @@ test.describe("Knowledge Registration", () => {
   test("should use nickname knowledge when enabled", async ({ page }) => {
     // Create unique test chat and go to knowledge page
     const chatId = createRandomChat(page);
-    await page.goto(`/knowledge/${chatId}`);
+    await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
     // Find the nickname checkbox specifically by its label text
     const nicknameCheckbox = page.locator(
@@ -147,7 +148,7 @@ test.describe("Knowledge Registration", () => {
   test("should use dark mode knowledge and tool", async ({ page }) => {
     // Create unique test chat and go to knowledge page
     const chatId = createRandomChat(page);
-    await page.goto(`/knowledge/${chatId}`);
+    await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
     // Find the expose dark mode checkbox by its label text
     const exposeCheckbox = page.locator(
@@ -197,7 +198,7 @@ test.describe("Knowledge Registration", () => {
   }) => {
     // Create unique test chat and go to knowledge page
     const chatId = createRandomChat(page);
-    await page.goto(`/knowledge/${chatId}`);
+    await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
     // Start on Todo app tab
     await expect(page.getByTestId("tab-todo-app")).toContainClass("font-bold");
@@ -238,7 +239,7 @@ test.describe("Knowledge Registration", () => {
   test("should handle knowledge being disabled", async ({ page }) => {
     // Create unique test chat and go to knowledge page
     const chatId = createRandomChat(page);
-    await page.goto(`/knowledge/${chatId}`);
+    await page.goto(`/knowledge/${chatId}`, { waitUntil: "networkidle" });
 
     // Find and disable dark mode knowledge exposure
     const exposeCheckbox = page.getByTestId("expose-dark-mode-checkbox");

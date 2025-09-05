@@ -2811,7 +2811,14 @@
   animation: lb-animation-shimmer-text 2s cubic-bezier(0.1, 0, 0.9, 1) infinite;
 }
 
-.lb-ai-chat-message-thinking {
+.lb-ai-chat-message-thinking,
+.lb-ai-chat-message-retrieval,
+.lb-ai-chat-message-reasoning {
+  margin-block-end: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-ai-chat-message-thinking,
+.lb-ai-chat-message-retrieval {
   inline-size: fit-content;
   max-inline-size: 100%;
   color: var(--lb-foreground-tertiary);
@@ -2824,7 +2831,6 @@
 
 .lb-ai-chat-message-reasoning {
   position: relative;
-  margin-block-end: calc(0.75 * var(--lb-spacing));
 
   &::after {
     content: "";
@@ -2872,6 +2878,18 @@
     color: var(--lb-foreground);
     font-size: 0.875em;
     opacity: 0.75;
+  }
+}
+
+.lb-ai-chat-message-retrieval-query {
+  font-weight: 500;
+
+  &::before {
+    content: "“";
+  }
+
+  &::after {
+    content: "”";
   }
 }
 

@@ -1,3 +1,4 @@
+import type { AiAssistantMessage } from "@liveblocks/core";
 import { Slot } from "@radix-ui/react-slot";
 import { forwardRef, useMemo } from "react";
 
@@ -18,6 +19,7 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
   ReasoningPart: ({ part }) => {
     return <Markdown content={part.text} />;
   },
+  RetrievalPart: () => null,
   ToolInvocationPart: ({ part, message }) => {
     return (
       <ErrorBoundary fallback={null}>
@@ -41,15 +43,17 @@ const defaultMessageContentComponents: AiMessageContentComponents = {
 const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
   ({ message, components, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "div";
-    const { TextPart, ReasoningPart, ToolInvocationPart } = useMemo(
-      () => ({ ...defaultMessageContentComponents, ...components }),
-      [components]
-    );
+    const { ReasoningPart, RetrievalPart, TextPart, ToolInvocationPart } =
+      useMemo(
+        () => ({ ...defaultMessageContentComponents, ...components }),
+        [components]
+      );
 
     const content = message.content ?? message.contentSoFar;
     const numParts = content.length;
     const isGenerating =
       message.role === "assistant" && message.status === "generating";
+
     return (
       <Component {...props} ref={forwardedRef}>
         {content.map((part, index) => {
@@ -61,15 +65,21 @@ const AiMessageContent = forwardRef<HTMLDivElement, AiMessageContentProps>(
           switch (part.type) {
             case "text":
               return <TextPart key={index} part={part} {...extra} />;
+
             case "reasoning":
               return <ReasoningPart key={index} part={part} {...extra} />;
+
+            case "retrieval":
+              return <RetrievalPart key={index} part={part} {...extra} />;
+
             case "tool-invocation":
               return (
                 <ToolInvocationPart
                   key={index}
                   part={part}
                   {...extra}
-                  message={message}
+                  // For tool invocations, we know for sure it's an AiAssistantMessage
+                  message={message as AiAssistantMessage}
                 />
               );
             default:

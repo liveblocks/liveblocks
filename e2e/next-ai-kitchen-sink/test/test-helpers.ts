@@ -14,7 +14,7 @@ export function createRandomChat(page: Page): string {
 
   const cleanupFn = async () => {
     try {
-      await page.goto(`/cleanup/${chatId}`);
+      await page.goto(`/cleanup/${chatId}`, { waitUntil: "networkidle" });
       // Wait for the deletion to complete - should show "Chat deleted" on success
       await expect(page.locator("text=Chat deleted")).toBeVisible({
         timeout: 10000,
