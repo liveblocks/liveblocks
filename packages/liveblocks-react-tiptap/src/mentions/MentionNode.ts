@@ -4,7 +4,7 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { LIVEBLOCKS_MENTION_TYPE } from "../types";
 import { Mention } from "./Mention";
 
-export const MentionNode = Node.create<never, never>({
+export const MentionNode = Node.create<{}>({
   name: LIVEBLOCKS_MENTION_TYPE,
   group: "inline",
   inline: true,

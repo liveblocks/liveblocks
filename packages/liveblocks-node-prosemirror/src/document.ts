@@ -4,7 +4,7 @@ import { getSchema, getText } from "@tiptap/core";
 import type { Node, Schema } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { EditorState } from "@tiptap/pm/state";
-import StarterKit from "@tiptap/starter-kit";
+//import StarterKit from "@tiptap/starter-kit";
 import type { MarkdownSerializer } from "prosemirror-markdown";
 import { defaultMarkdownSerializer } from "prosemirror-markdown";
 import { initProseMirrorDoc, updateYFragment } from "y-prosemirror";
@@ -37,11 +37,7 @@ export type LiveblocksDocumentApi = {
   toMarkdown: () => string;
 };
 
-const DEFAULT_SCHEMA = getSchema([
-  StarterKit,
-  CommentExtension,
-  MentionExtension,
-]);
+const DEFAULT_SCHEMA = getSchema([CommentExtension, MentionExtension]);
 
 const getLiveblocksDocumentState = async (
   roomId: string,

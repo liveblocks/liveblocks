@@ -28,7 +28,6 @@ import {
   type AiExtensionOptions,
   type AiExtensionStorage,
   type AiToolbarState,
-  type LiveblocksExtensionStorage,
   type ResolveContextualPromptResponse,
   type YSyncPluginState,
 } from "../types";
@@ -46,12 +45,9 @@ function getYjsBinding(editor: Editor) {
 }
 
 function getLiveblocksYjsProvider(editor: Editor) {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-  return (
-    editor.extensionStorage.liveblocksExtension as
-      | LiveblocksExtensionStorage
-      | undefined
-  )?.provider as LiveblocksYjsProvider | undefined;
+  return editor.extensionStorage.liveblocksExtension?.provider as
+    | LiveblocksYjsProvider
+    | undefined;
 }
 
 export function isContextualPromptDiffResponse(
