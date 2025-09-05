@@ -3,7 +3,6 @@ import {
   type ContextualPromptResponse,
   HttpError,
 } from "@liveblocks/core";
-import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { CommandProps, Editor } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import { Fragment, Slice } from "@tiptap/pm/model";
@@ -45,9 +44,7 @@ function getYjsBinding(editor: Editor) {
 }
 
 function getLiveblocksYjsProvider(editor: Editor) {
-  return editor.extensionStorage.liveblocksExtension?.provider as
-    | LiveblocksYjsProvider
-    | undefined;
+  return editor.extensionStorage.liveblocksExtension?.provider;
 }
 
 export function isContextualPromptDiffResponse(
