@@ -1,5 +1,7 @@
 ## vNEXT (not yet published)
 
+## v3.5.3
+
 ### `@liveblocks/client`
 
 - Auto-abort this client's tool calls on page unload to prevent hanging chats.
