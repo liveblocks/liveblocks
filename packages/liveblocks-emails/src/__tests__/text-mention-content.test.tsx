@@ -6,35 +6,7 @@ import {
   convertTextMentionContent,
   type ConvertTextMentionContentElements,
 } from "../text-mention-content";
-import { resolveUsers } from "./_helpers";
-
-const buildMentionTextEditorNodes = ({
-  mentionedUserId,
-}: {
-  mentionedUserId: string;
-}): LiveblocksTextEditorNode[] => [
-  {
-    type: "text",
-    text: "Hello ",
-    bold: false,
-    italic: false,
-    strikethrough: false,
-    code: false,
-  },
-  {
-    type: "mention",
-    kind: "user",
-    id: mentionedUserId,
-  },
-  {
-    type: "text",
-    text: " !",
-    bold: false,
-    italic: false,
-    strikethrough: false,
-    code: false,
-  },
-];
+import { resolveGroupsInfo, resolveUsers } from "./_helpers";
 
 describe("convert text mention content", () => {
   const elements: ConvertTextMentionContentElements<string> = {
@@ -83,14 +55,47 @@ describe("convert text mention content", () => {
   };
 
   test("should convert text mention content", async () => {
-    const mention = buildMentionTextEditorNodes({
-      mentionedUserId: "user-dracula",
-    });
+    const mention: LiveblocksTextEditorNode[] = [
+      {
+        type: "text",
+        text: "Hello ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "user",
+        id: "user-dracula",
+      },
+      {
+        type: "text",
+        text: " and ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "group",
+        id: "group-vampires",
+      },
+      {
+        type: "text",
+        text: " !",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+    ];
     const content = await convertTextMentionContent<string>(mention, {
       elements,
     });
     const expected =
-      "<div>Hello <span data-mention>@user-dracula</span> !</div>";
+      "<div>Hello <span data-mention>@user-dracula</span> and <span data-mention>@group-vampires</span> !</div>";
 
     expect(content).toEqual(expected);
   });
@@ -162,13 +167,69 @@ describe("convert text mention content", () => {
   });
 
   test("should resolve user info", async () => {
-    const mention = buildMentionTextEditorNodes({ mentionedUserId: "user-0" });
+    const mention: LiveblocksTextEditorNode[] = [
+      {
+        type: "text",
+        text: "Hello ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "user",
+        id: "user-0",
+      },
+      {
+        type: "text",
+        text: " !",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+    ];
     const content = await convertTextMentionContent<string>(mention, {
       elements,
       resolveUsers,
     });
     const expected =
       "<div>Hello <span data-mention>@Charlie Layne</span> !</div>";
+
+    expect(content).toEqual(expected);
+  });
+
+  test("should resolve group info", async () => {
+    const mention: LiveblocksTextEditorNode[] = [
+      {
+        type: "text",
+        text: "Hello ",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+      {
+        type: "mention",
+        kind: "group",
+        id: "group-0",
+      },
+      {
+        type: "text",
+        text: " !",
+        bold: false,
+        italic: false,
+        strikethrough: false,
+        code: false,
+      },
+    ];
+    const content = await convertTextMentionContent<string>(mention, {
+      elements,
+      resolveGroupsInfo,
+    });
+    const expected =
+      "<div>Hello <span data-mention>@Engineering</span> !</div>";
 
     expect(content).toEqual(expected);
   });
@@ -199,10 +260,30 @@ describe("convert text mention content", () => {
       expect(content).toEqual(expected);
     });
 
-    test("should escape html entities in mention w/ username", async () => {
-      const mention = buildMentionTextEditorNodes({
-        mentionedUserId: "user-mina",
-      });
+    test("should escape html entities in mention w/ name", async () => {
+      const mention: LiveblocksTextEditorNode[] = [
+        {
+          type: "text",
+          text: "Hello ",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+        {
+          type: "mention",
+          kind: "user",
+          id: "user-dracula",
+        },
+        {
+          type: "text",
+          text: " !",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+      ];
       const content = await convertTextMentionContent<string>(mention, {
         elements,
         resolveUsers: ({ userIds }) => {

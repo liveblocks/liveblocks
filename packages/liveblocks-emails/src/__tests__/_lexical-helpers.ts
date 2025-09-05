@@ -1,7 +1,4 @@
-import type {
-  LexicalMentionNodeWithContext,
-  SerializedLexicalRootNode,
-} from "../lexical-editor";
+import type { SerializedLexicalRootNode } from "../lexical-editor";
 
 /**
  * A simple `Uint8Array` representing a Lexical document
@@ -58,7 +55,9 @@ export const docUpdate = new Uint8Array([
 export const docUpdateBuffer = docUpdate.buffer;
 
 export const MENTIONED_USER_ID = "user-4";
+export const MENTIONED_GROUP_ID = "group-2";
 export const MENTION_ID = "in_QQ6EOi7jsH-LNw0C8Lpaf";
+export const GROUP_MENTION_ID = "in_QQ6EOi7jsH-LNw0C8Lpaf";
 
 // Without line breaks
 export const docStateRoot: SerializedLexicalRootNode = {
@@ -192,52 +191,4 @@ export const docStateRoot2: SerializedLexicalRootNode = {
   attributes: {
     __dir: "ltr",
   },
-};
-
-export const createLexicalMentionNodeWithContext = ({
-  mentionedId,
-  textMentionId,
-}: {
-  mentionedId: string;
-  textMentionId: string;
-}): LexicalMentionNodeWithContext => {
-  return {
-    before: [
-      {
-        type: "text",
-        group: "text",
-        attributes: {
-          __type: "text",
-          __format: 1,
-          __style: "",
-          __mode: 0,
-          __detail: 0,
-        },
-        text: "Some things to add ",
-      },
-    ],
-    mention: {
-      type: "lb-mention",
-      group: "decorator",
-      attributes: {
-        __type: "lb-mention",
-        __id: textMentionId,
-        __userId: mentionedId,
-      },
-    },
-    after: [
-      {
-        type: "text",
-        group: "text",
-        attributes: {
-          __type: "text",
-          __format: 0,
-          __style: "",
-          __mode: 0,
-          __detail: 0,
-        },
-        text: "?",
-      },
-    ],
-  };
 };

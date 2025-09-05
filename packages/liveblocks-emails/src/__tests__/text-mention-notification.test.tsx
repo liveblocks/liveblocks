@@ -47,7 +47,6 @@ import {
   textMentionContentAsReactToStaticMarkup,
 } from "./_helpers";
 import {
-  createTipTapMentionNodeWithContext,
   docUpdateBuffer as docUpdateBufferTiptap,
   MENTION_ID as MENTION_ID_TIPTAP,
   MENTIONED_USER_ID as MENTIONED_USER_ID_TIPTAP,
@@ -234,14 +233,47 @@ describe("text mention notification", () => {
         event,
       });
 
-      const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionedId: MENTIONED_USER_ID_TIPTAP,
-        textMentionId: MENTION_ID_TIPTAP,
-      });
-
       const expected: TextMentionNotificationData = {
         editor: "tiptap",
-        mentionNodeWithContext,
+        mentionNodeWithContext: {
+          before: [
+            {
+              type: "text",
+              text: "Hey this a tip tap ",
+            },
+            {
+              type: "text",
+              text: "example",
+              marks: [
+                {
+                  type: "bold",
+                  attrs: {},
+                },
+                {
+                  type: "italic",
+                  attrs: {},
+                },
+              ],
+            },
+            {
+              type: "text",
+              text: " hiha! ",
+            },
+          ],
+          mention: {
+            type: "liveblocksMention",
+            attrs: {
+              id: MENTIONED_USER_ID_TIPTAP,
+              notificationId: MENTION_ID_TIPTAP,
+            },
+          },
+          after: [
+            {
+              type: "text",
+              text: " fun right?",
+            },
+          ],
+        },
         mentionData: {
           kind: "user",
           id: MENTIONED_USER_ID_TIPTAP,
