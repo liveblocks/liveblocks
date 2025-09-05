@@ -271,10 +271,9 @@ export function prepareTestsConflicts<S extends LsonObject>(
       immRoot2: ToImmutable<S> = immRoot1
     ) {
       try {
-        expect(root1.toImmutable()).toEqual(immRoot1);
+        expect({ root1: root1.toImmutable() }).toEqual({ root1: immRoot1 });
         expect(immutableStorage1).toEqual(immRoot1);
-        expect(root2.toImmutable()).toEqual(immRoot2);
-
+        expect({ root2: root2.toImmutable() }).toEqual({ root2: immRoot2 });
         expect(immutableStorage2).toEqual(immRoot2);
       } catch (error) {
         // Better stack trace (point to where assert is called instead)
