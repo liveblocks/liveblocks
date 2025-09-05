@@ -48,7 +48,7 @@ and first-class support for tenants. Learn more about [group mentions](#) and
   accept a `resolveGroupsInfo` option that passes the results to mentions as
   `group`.
 
-## v3.5.3
+## v3.6.0
 
 ### `@liveblocks/client`
 
@@ -67,6 +67,14 @@ and first-class support for tenants. Learn more about [group mentions](#) and
 
 - Better type safety for copilot creation and update options.
 - Add missing type export for AI Copilot and knowledge sources.
+
+## v3.5.4
+
+- Identical to v3.5.2, corrects a bad release.
+
+## v3.5.3
+
+- Bad release, please use v3.5.4 instead.
 
 ## v3.5.2
 
