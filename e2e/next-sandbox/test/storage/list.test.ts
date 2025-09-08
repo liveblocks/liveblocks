@@ -171,7 +171,6 @@ test.describe("Storage - LiveList", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       const initialState = await page1.$eval("#items", (el) => el.textContent);
-      console.log(`Initial state: ${initialState}`);
     });
 
     await test.step("Client A moves item from index 2 to index 0", async () => {
@@ -180,7 +179,6 @@ test.describe("Storage - LiveList", () => {
       // Before: [e1, e2, e3, e4] -> After: [e3, e1, e2, e4]
 
       const initialItems = await page1.$eval("#items", (el) => el.textContent);
-      console.log(`Before move: ${initialItems}`);
 
       // Use the deterministic move button
       await page1.click("#move-2-to-0");
@@ -190,7 +188,6 @@ test.describe("Storage - LiveList", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       const afterMove = await page1.$eval("#items", (el) => el.textContent);
-      console.log(`After move: ${afterMove}`);
     });
 
     await test.step("Client B inserts an item at index 3", async () => {
@@ -204,7 +201,6 @@ test.describe("Storage - LiveList", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       const afterInsert = await page1.$eval("#items", (el) => el.textContent);
-      console.log(`After insert at index 3: ${afterInsert}`);
     });
 
     await test.step("Client A undoes the move", async () => {
@@ -216,7 +212,6 @@ test.describe("Storage - LiveList", () => {
       await waitUntilEqualOnAllPages(pages, "#items");
 
       const finalState = await page1.$eval("#items", (el) => el.textContent);
-      console.log(`Final state after undo: ${finalState}`);
     });
 
     await test.step("Verify both clients have consistent state", async () => {
@@ -226,8 +221,6 @@ test.describe("Storage - LiveList", () => {
       const client1State = await page1.$eval("#items", (el) => el.textContent);
       const client2State = await page2.$eval("#items", (el) => el.textContent);
 
-      console.log(`Client 1 final state: ${client1State}`);
-      console.log(`Client 2 final state: ${client2State}`);
 
       // The test passes if waitUntilEqualOnAllPages doesn't throw
       // This ensures both clients converged to the same state
