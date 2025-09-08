@@ -15,7 +15,7 @@ type Props = {
  * @param userIds - The user ids to get
  * @param search - The term to filter your users by, checks users' ids and names
  */
-export async function getUsers({ userIds, search }: Props) {
+export async function getUsers({ userIds, search }: Props = {}) {
   const usersPromises: Promise<User | null>[] = [];
 
   // Filter by userIds or get all users
