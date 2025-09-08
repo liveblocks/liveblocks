@@ -619,10 +619,21 @@ describe("useInboxNotifications: polling", () => {
   });
 
   test("should fetch inbox notifications for a given query", async () => {
-    const roomId = nanoid();
-    const threads = [dummyThreadData({ roomId })];
+    const roomA = nanoid();
+    const roomB = nanoid();
+    const threads = [
+      dummyThreadData({ roomId: roomA }),
+      dummyThreadData({ roomId: roomB }),
+    ];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
+      dummyThreadInboxNotificationData({
+        roomId: roomA,
+        threadId: threads[0]!.id,
+      }),
+      dummyThreadInboxNotificationData({
+        roomId: roomB,
+        threadId: threads[1]!.id,
+      }),
     ];
     const subscriptions = [
       dummySubscriptionData({ subjectId: threads[0]!.id }),
@@ -630,6 +641,25 @@ describe("useInboxNotifications: polling", () => {
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
+        const query = _req.url.searchParams.get("query");
+
+        // For the sake of simplicity, the server mock assumes that if a query is provided, it's for roomA.
+        if (query) {
+          return res(
+            ctx.json({
+              threads: threads.filter((thread) => thread.roomId === roomA),
+              inboxNotifications: inboxNotifications.filter(
+                (inboxNotification) => inboxNotification.roomId === roomA
+              ),
+              subscriptions,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: null,
+              },
+            })
+          );
+        }
+
         return res(
           ctx.json({
             threads,
@@ -664,7 +694,7 @@ describe("useInboxNotifications: polling", () => {
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useInboxNotifications({ query: { roomId: "roomA" } }),
+      () => useInboxNotifications({ query: { roomId: roomA } }),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -677,7 +707,9 @@ describe("useInboxNotifications: polling", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        inboxNotifications,
+        inboxNotifications: inboxNotifications.filter(
+          (inboxNotification) => inboxNotification.roomId === roomA
+        ),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: true,
@@ -686,6 +718,30 @@ describe("useInboxNotifications: polling", () => {
     );
 
     unmount();
+
+    const { result: result2, unmount: unmount2 } = renderHook(
+      () => useInboxNotifications(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result2.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result2.current).toEqual({
+        isLoading: false,
+        inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount2();
   });
 
   test("should restart polling after a component is remounted", async () => {
