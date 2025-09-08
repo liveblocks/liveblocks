@@ -3691,6 +3691,22 @@ function Inbox() {
 }
 ```
 
+#### Querying inbox notifications [#useInboxNotifications-query]
+
+It’s possible to return inbox notifications that match a certain query with the
+`query` option. You can filter inbox notifications based on their associated
+roomId.
+
+```tsx
+// Returns threads that match the entire `query`, e.g. { roomId: "room1", ... }
+const { inboxNotifications } = useInboxNotifications({
+  query: {
+    // Filter for roomId
+    roomId: "room1",
+  },
+});
+```
+
 #### Pagination [#useInboxNotifications-pagination]
 
 By default, the `useInboxNotifications` hook returns up to 50 notifications. To
