@@ -41,7 +41,7 @@ const ALPHABET =
  */
 function genPos() {
   const digits = fc.constantFrom(...ALPHABET);
-  return fc.stringOf(digits, { minLength: 1 }).map(asPos);
+  return fc.string({ unit: digits, minLength: 1 }).map(asPos);
 }
 
 /**
@@ -62,9 +62,8 @@ function genUnverifiedPos() {
       // But ensure to throw in a higher likeliness of position-like values
       fc.constantFrom(...ALPHABET),
 
-      // Also throw in a couple definitely-illegal chars from the entire ASCII charset
-      fc.ascii(),
-      fc.unicodeString()
+      // Also throw in a couple definitely-illegal chars
+      fc.string({ unit: "binary" })
     )
     .map(
       (s) =>
@@ -79,7 +78,7 @@ function genUnverifiedPos() {
  * Possible values: "", " ", "  ", "   ", etc.
  */
 function genZeroes() {
-  return fc.stringOf(fc.constantFrom(ZERO));
+  return fc.string({ unit: fc.constantFrom(ZERO) });
 }
 
 /**

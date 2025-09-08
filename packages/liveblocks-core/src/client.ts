@@ -499,6 +499,9 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /** @internal */
   enableDebugLogging?: boolean;
+
+  /** @internal */
+  __DANGEROUSLY_disableThrottling?: true; // for unit testing purposes only, never use this in production
 } & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
@@ -541,7 +544,11 @@ export function createClient<U extends BaseUserMeta = DU>(
   options: ClientOptions<U>
 ): Client<U> {
   const clientOptions = options;
-  const throttleDelay = getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
+  const throttleDelay =
+    process.env.NODE_ENV !== "production" &&
+    clientOptions.__DANGEROUSLY_disableThrottling
+      ? 0
+      : getThrottle(clientOptions.throttle ?? DEFAULT_THROTTLE);
   const lostConnectionTimeout = getLostConnectionTimeout(
     clientOptions.lostConnectionTimeout ?? DEFAULT_LOST_CONNECTION_TIMEOUT
   );

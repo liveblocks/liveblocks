@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, onTestFinished, test, vi } from "vitest";
 
 import {
   listUpdate,
@@ -1151,7 +1151,7 @@ describe("LiveList", () => {
       );
 
       const callback = vi.fn();
-      room.events.storageBatch.subscribe(callback);
+      onTestFinished(room.events.storageBatch.subscribe(callback));
 
       const root = storage.root;
       const liveList = root.get("items");
@@ -1189,7 +1189,7 @@ describe("LiveList", () => {
       );
 
       const callback = vi.fn();
-      room.events.storageBatch.subscribe(callback);
+      onTestFinished(room.events.storageBatch.subscribe(callback));
 
       const root = storage.root;
       const liveList = root.get("items");
@@ -1225,9 +1225,9 @@ describe("LiveList", () => {
 
       const listItems = root.get("items");
 
-      room.subscribe(root, rootCallback);
-      room.subscribe(root, rootDeepCallback, { isDeep: true });
-      room.subscribe(listItems, listCallback);
+      onTestFinished(room.subscribe(root, rootCallback));
+      onTestFinished(room.subscribe(root, rootDeepCallback, { isDeep: true }));
+      onTestFinished(room.subscribe(listItems, listCallback));
 
       expectStorage({ items: ["a"] });
 
@@ -1308,9 +1308,9 @@ describe("LiveList", () => {
 
       const listItems = root.get("items");
 
-      room.subscribe(root, rootCallback);
-      room.subscribe(root, rootDeepCallback, { isDeep: true });
-      room.subscribe(listItems, listCallback);
+      onTestFinished(room.subscribe(root, rootCallback));
+      onTestFinished(room.subscribe(root, rootDeepCallback, { isDeep: true }));
+      onTestFinished(room.subscribe(listItems, listCallback));
 
       expectStorage({ items: ["a", "b"] });
 
@@ -1379,9 +1379,9 @@ describe("LiveList", () => {
 
       const listItems = root.get("items");
 
-      room.subscribe(root, rootCallback);
-      room.subscribe(root, rootDeepCallback, { isDeep: true });
-      room.subscribe(listItems, listCallback);
+      onTestFinished(room.subscribe(root, rootCallback));
+      onTestFinished(room.subscribe(root, rootDeepCallback, { isDeep: true }));
+      onTestFinished(room.subscribe(listItems, listCallback));
 
       expectStorage({ items: ["a", "b"] });
 
@@ -1506,7 +1506,7 @@ describe("LiveList", () => {
         const items = root.get("items");
 
         const callback = vi.fn();
-        room.events.storageBatch.subscribe(callback);
+        onTestFinished(room.events.storageBatch.subscribe(callback));
 
         applyRemoteOperations([
           {
@@ -1582,7 +1582,7 @@ describe("LiveList", () => {
         items.delete(0);
 
         const callback = vi.fn();
-        room.subscribe(items, callback, { isDeep: true });
+        onTestFinished(room.subscribe(items, callback, { isDeep: true }));
 
         applyRemoteOperations([
           {
@@ -1624,7 +1624,7 @@ describe("LiveList", () => {
         });
 
         const callback = vi.fn();
-        room.subscribe(items, callback, { isDeep: true });
+        onTestFinished(room.subscribe(items, callback, { isDeep: true }));
 
         applyRemoteOperations([
           {

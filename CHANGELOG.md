@@ -1,5 +1,16 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/client`
+
+- Fixes a bug where a specific combination of concurrent LiveList mutations
+  could break eventual consistency (two clients disagreeing on the final
+  document state).
+
+### `@liveblocks/react-ui`
+
+- Only show retrieval and reasoning durations in `AiChat` when they are 3
+  seconds or longer.
+
 ## v3.6.0
 
 ### `@liveblocks/client`

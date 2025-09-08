@@ -269,7 +269,10 @@ function getDateTime(date: Date | string | number) {
 /**
  * Get a duration between two Date or Date-like values.
  */
-function getDuration(from: Date | string | number, to: Date | string | number) {
+export function getDuration(
+  from: Date | string | number,
+  to: Date | string | number
+) {
   return getDateTime(to) - getDateTime(from);
 }
 

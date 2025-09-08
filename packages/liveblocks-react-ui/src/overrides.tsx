@@ -9,9 +9,11 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 
 import { Emoji } from "./components/internal/Emoji";
-import { Duration } from "./primitives/Duration";
+import { Duration, getDuration } from "./primitives/Duration";
 import type { ComposerBodyMark, Direction } from "./types";
 import { pluralize } from "./utils/pluralize";
+
+const MINIMUM_VISIBLE_DURATION = 3 * 1000;
 
 // TODO: Move overrides to single-argument-as-object with Liveblocks 4.0,
 //       it didn't make the cut for 3.0 but we should do it next time.
@@ -147,6 +149,13 @@ type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
 }>;
 
+function isDurationVisible(
+  from: Date | string | number,
+  to: Date | string | number | undefined
+) {
+  return getDuration(from, to ?? Date.now()) >= MINIMUM_VISIBLE_DURATION;
+}
+
 export const defaultOverrides: Overrides = {
   locale: "en",
   dir: "ltr",
@@ -251,12 +260,18 @@ export const defaultOverrides: Overrides = {
       <>Reasoning…</>
     ) : (
       <>
-        Reasoned for{" "}
-        <Duration
-          className="lb-duration lb-ai-chat-message-reasoning-duration"
-          from={part.startedAt}
-          to={part.endedAt}
-        />
+        Reasoned
+        {isDurationVisible(part.startedAt, part.endedAt) ? (
+          <>
+            {" "}
+            for{" "}
+            <Duration
+              className="lb-duration lb-ai-chat-message-reasoning-duration"
+              from={part.startedAt}
+              to={part.endedAt}
+            />
+          </>
+        ) : null}
       </>
     ),
   AI_CHAT_MESSAGE_RETRIEVAL: (isStreaming: boolean, part: AiRetrievalPart) =>
@@ -269,13 +284,18 @@ export const defaultOverrides: Overrides = {
     ) : (
       <>
         Searched{" "}
-        <span className="lb-ai-chat-message-retrieval-query">{part.query}</span>{" "}
-        for{" "}
-        <Duration
-          className="lb-duration lb-ai-chat-message-retrieval-duration"
-          from={part.startedAt}
-          to={part.endedAt}
-        />
+        <span className="lb-ai-chat-message-retrieval-query">{part.query}</span>
+        {isDurationVisible(part.startedAt, part.endedAt) ? (
+          <>
+            {" "}
+            for{" "}
+            <Duration
+              className="lb-duration lb-ai-chat-message-retrieval-duration"
+              from={part.startedAt}
+              to={part.endedAt}
+            />
+          </>
+        ) : null}
       </>
     ),
   AI_CHAT_MESSAGES_ERROR: () =>
