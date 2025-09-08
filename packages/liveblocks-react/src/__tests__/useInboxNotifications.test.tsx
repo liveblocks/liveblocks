@@ -532,7 +532,7 @@ describe("useInboxNotifications: polling", () => {
   afterAll(() => {
     jest.useRealTimers();
   });
-  test("should poll threads every x seconds", async () => {
+  test("should poll inbox notifications every x seconds", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
@@ -614,6 +614,76 @@ describe("useInboxNotifications: polling", () => {
     // Wait for the second polling to occur
     expect(initialCount).toBe(1);
     await waitFor(() => expect(pollerCount).toBe(2));
+
+    unmount();
+  });
+
+  test("should fetch inbox notifications for a given query", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
+    ];
+    const subscriptions = [
+      dummySubscriptionData({ subjectId: threads[0]!.id }),
+    ];
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            subscriptions,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            subscriptions,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            deletedSubscriptions: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useInboxNotifications({ query: { roomId: "roomA" } }),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
 
     unmount();
   });
