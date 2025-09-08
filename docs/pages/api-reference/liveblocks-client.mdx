@@ -3454,7 +3454,28 @@ console.log(subscriptions);
   </PropertiesListItem>
 </PropertiesList>
 
-<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+<PropertiesList title="Options">
+  <PropertiesListItem name="roomId" type="string">
+    Only return inbox notifications for the given room. [Learn
+    more](#filtering-by-room-id).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Filtering by room ID [#filtering-by-room-id]
+
+You can filter inbox notifications by those that are associated with a specific
+room, by passing a `string` to `query.roomId`.
+
+```ts
+// Filtering for threads that are unresolved
+const { inboxNotifications } = await client.getInboxNotifications({
+  query: {
+    // +++
+    roomId: "room1",
+    // +++
+  },
+});
+```
 
 ### Client.getInboxNotificationsSince
 
