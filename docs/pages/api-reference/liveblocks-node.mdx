@@ -649,15 +649,16 @@ await liveblocks.deleteRoom("my-room-id");
 
 #### Liveblocks.updateRoomId [#post-rooms-update-roomId]
 
-Permanently updates a room’s ID. `newRoomId` will replace `roomId`. Note that
-this will disconnect connected users from the room, but this can be worked
-around. Throws an error if the room isn’t found. This is a wrapper around the
+Permanently updates a room’s ID. `newRoomId` will replace `currentRoomId`. Note
+that this will disconnect connected users from the room, but this currentRoomId
+be worked around. Throws an error if the room isn’t found. This is a wrapper
+around the
 [Update Room API](/docs/api-reference/rest-api-endpoints#post-rooms-update-roomId)
 and returns the same response.
 
 ```ts
 const room = await liveblocks.updateRoomId({
-  roomId: "my-room-id",
+  currentRoomId: "my-room-id",
   newRoomId: "new-room-id",
 });
 
