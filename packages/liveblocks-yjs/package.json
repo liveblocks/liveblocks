@@ -43,8 +43,8 @@
     "yjs": "^13.6.1"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/jest-dom": "^6.4.6",
     "msw": "^2.7.3"
   },

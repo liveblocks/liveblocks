@@ -13,14 +13,14 @@
     "start": "next start --port 3007"
   },
   "dependencies": {
-    "@liveblocks/client": "*",
-    "@liveblocks/core": "*",
-    "@liveblocks/node": "*",
-    "@liveblocks/react": "*",
-    "@liveblocks/react-ui": "*",
-    "@liveblocks/redux": "*",
-    "@liveblocks/yjs": "*",
-    "@liveblocks/zustand": "*",
+    "@liveblocks/client": "workspace:*",
+    "@liveblocks/core": "workspace:*",
+    "@liveblocks/node": "workspace:*",
+    "@liveblocks/react": "workspace:*",
+    "@liveblocks/react-ui": "workspace:*",
+    "@liveblocks/redux": "workspace:*",
+    "@liveblocks/yjs": "workspace:*",
+    "@liveblocks/zustand": "workspace:*",
     "@reduxjs/toolkit": "^2.8.2",
     "encoding": "^0.1.13",
     "next": "^14.2.20",
@@ -32,8 +32,8 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/jest-config": "workspace:*",
     "@playwright/test": "^1.55.0",
     "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.13",

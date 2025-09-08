@@ -46,8 +46,8 @@
     "lexical": "0.24.0"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*"
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"

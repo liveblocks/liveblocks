@@ -41,8 +41,8 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@testing-library/dom": "^10.4.0",
     "msw": "^2.10.4",
     "zustand": "^5.0.1"

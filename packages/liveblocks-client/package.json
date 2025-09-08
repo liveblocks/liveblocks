@@ -37,8 +37,8 @@
     "@liveblocks/core": "3.5.2"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*"
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*"
   },
   "sideEffects": false,
   "bugs": {

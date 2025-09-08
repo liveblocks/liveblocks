@@ -48,8 +48,8 @@
     "yjs": "^13.6.20"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "msw": "^2.10.4"
   },
   "bugs": {

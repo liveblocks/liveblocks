@@ -40,8 +40,8 @@
     "node-fetch": "^2.6.1"
   },
   "devDependencies": {
-    "@liveblocks/eslint-config": "*",
-    "@liveblocks/vitest-config": "*",
+    "@liveblocks/eslint-config": "workspace:*",
+    "@liveblocks/vitest-config": "workspace:*",
     "@types/node-fetch": "^2.6.6",
     "msw": "^2.10.4",
     "svix": "^0.75.0"

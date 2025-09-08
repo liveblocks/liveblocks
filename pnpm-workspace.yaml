@@ -1,0 +1,22 @@
+packages:
+  - shared/*
+  - packages/*
+  - tools/*
+  - e2e/next-ai-kitchen-sink
+  - e2e/next-sandbox
+  - e2e/node-sandbox
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - lmdb
+  - msgpackr-extract
+  - msw
+  - sharp
+  - unrs-resolver
+
+
+overrides:
+  
