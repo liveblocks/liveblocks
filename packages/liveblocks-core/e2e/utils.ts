@@ -187,7 +187,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
           // Unfortunately there is no public API to know this has happened. It
           // typically happens within ~5 ms, so we'll wait a multitude of that
           // here, just to be sure.
-          setTimeout(resolve, 30);
+          setTimeout(resolve, 150);
         }
         beacons.delete(event.beacon);
       }
@@ -246,8 +246,7 @@ export function prepareTestsConflicts<S extends LsonObject>(
     actor2.ws.pause();
 
     // Ensure both clients have synchronized initial storage before starting the test
-    await control.flushA();
-    await control.flushB();
+    await Promise.all([control.flushA(), control.flushB()]);
 
     const expectedStorage = mapValues(initialStorage, (value) =>
       isLiveStructure(value) ? value.toImmutable() : value
