@@ -14,9 +14,10 @@ import type { LsonObject } from "../src/crdts/Lson";
 import type { ToImmutable } from "../src/crdts/utils";
 import { controlledPromise } from "../src/lib/controlledPromise";
 import type { Json, JsonObject } from "../src/lib/Json";
-import { wait, withTimeout } from "../src/lib/utils";
+import { mapValues, wait, withTimeout } from "../src/lib/utils";
 import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
 import type { Room, RoomEventMessage } from "../src/room";
+import { isLiveStructure } from "../src/crdts/liveblocks-helpers";
 
 async function initializeRoomForTest<
   P extends JsonObject = JsonObject,
@@ -241,15 +242,22 @@ export function prepareTestsConflicts<S extends LsonObject>(
       },
     };
 
-    // Waiting until every messages are received by all clients.
-    // We don't have a public way to know if everything has been received so we have to rely on time
-    await wait(600);
-
     actor1.ws.pause();
     actor2.ws.pause();
 
+    // Ensure both clients have synchronized initial storage before starting the test
+    await control.flushA();
+    await control.flushB();
+
+    const expectedStorage = mapValues(initialStorage, (value) =>
+      isLiveStructure(value) ? value.toImmutable() : value
+    );
     let immutableStorage1 = root1.toImmutable();
     let immutableStorage2 = root2.toImmutable();
+
+    // Initial storage should be equal at the start of the test
+    expect(immutableStorage1).toEqual(expectedStorage);
+    expect(immutableStorage2).toEqual(immutableStorage1);
 
     actor1.room.subscribe(
       root1,
