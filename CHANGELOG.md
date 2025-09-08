@@ -1,5 +1,10 @@
 ## vNEXT (not yet published)
 
+### `@liveblocks/react-ui`
+
+- Only show retrieval and reasoning durations in `AiChat` when they are 3
+  seconds or longer.
+
 ## v3.6.0
 
 ### `@liveblocks/client`
