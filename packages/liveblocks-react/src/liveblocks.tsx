@@ -1618,8 +1618,8 @@ function useInboxNotifications(options?: UseInboxNotificationsOptions) {
  * @example
  * const { inboxNotifications } = useInboxNotifications();
  */
-function useInboxNotificationsSuspense() {
-  return useInboxNotificationsSuspense_withClient(useClient());
+function useInboxNotificationsSuspense(options?: UseInboxNotificationsOptions) {
+  return useInboxNotificationsSuspense_withClient(useClient(), options);
 }
 
 function useInboxNotificationThread<M extends BaseMetadata>(

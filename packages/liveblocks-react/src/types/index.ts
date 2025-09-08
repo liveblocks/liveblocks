@@ -1470,7 +1470,9 @@ export type LiveblocksContextBundle<
              * @example
              * const { inboxNotifications } = useInboxNotifications();
              */
-            useInboxNotifications(): InboxNotificationsAsyncSuccess;
+            useInboxNotifications(
+              options?: UseInboxNotificationsOptions
+            ): InboxNotificationsAsyncSuccess;
 
             /**
              * Returns the number of unread inbox notifications for the current user.
