@@ -351,7 +351,12 @@ test(
             }
           }
         ),
-        { numRuns: 20, verbose: true }
+        {
+          // Run as many tests as you can run in 30 seconds
+          interruptAfterTimeLimit: 30_000,
+          numRuns: Number.POSITIVE_INFINITY,
+          verbose: true,
+        }
       );
     }
   ),
