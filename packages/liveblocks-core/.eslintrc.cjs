@@ -42,7 +42,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ["src/**/__tests__/**"],
+      files: ["src/**/__tests__/**", "e2e/**"],
 
       // Special config for test files
       rules: {
@@ -55,6 +55,9 @@ module.exports = {
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unsafe-call": "off",
         "@typescript-eslint/no-unsafe-member-access": "off",
+
+        // No need for fancy console logging in tests
+        "rulesdir/console-must-be-fancy": "off",
       },
     },
   ],

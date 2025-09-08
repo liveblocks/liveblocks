@@ -392,7 +392,10 @@ describe("SortedList", () => {
   });
 
   test("test with more complex data structures (asc)", () => {
-    const thread = fc.record({ id: fc.nat(), updatedAt: fc.date() });
+    const thread = fc.record({
+      id: fc.nat(),
+      updatedAt: fc.date({ noInvalidDate: true }),
+    });
 
     fc.assert(
       fc.property(
@@ -424,7 +427,10 @@ describe("SortedList", () => {
   });
 
   test("test with more complex data structures (desc)", () => {
-    const thread = fc.record({ id: fc.nat(), updatedAt: fc.date() });
+    const thread = fc.record({
+      id: fc.nat(),
+      updatedAt: fc.date({ noInvalidDate: true }),
+    });
 
     fc.assert(
       fc.property(
