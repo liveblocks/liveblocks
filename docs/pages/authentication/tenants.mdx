@@ -1,0 +1,114 @@
+---
+meta:
+  title: "Tenants"
+  parentTitle: "Authentication"
+  description: "Learn more about tenants"
+---
+
+Tenants allow you to compartmentalize Liveblocks resources, such as rooms (and
+everything associated with a room, including comments and storage), as well as
+inbox notifications and AI Copilot Knowledge (soon).
+
+Tenants represent organizations or customers in your system. They are mainly
+used for authorization. If you are using tenants, when you generate a client
+token, it will only give access to one specified tenant.
+
+Tenants can be used with both [Access Tokens](/docs/authentication/access-token)
+and [ID Tokens](/docs/authentication/id-token).
+
+<Banner title="The use of tenants is optional">
+
+If you don't set up anything, all resources of a project belong to the same
+tenant `default`, and you don't have to configure anything.
+
+</Banner>
+
+<Banner title="Multi-tenant support" type="warning">
+
+Multi-tenant support is an enterprise feature. You can only use it if you are on
+the [Enterprise plan](https://liveblocks.io/pricing).
+
+</Banner>
+
+<Figure>
+  <Image
+    src="/assets/tenants/concept-tenants.png"
+    alt="Concept of tenants"
+    width={1494}
+    height={840}
+    quality={100}
+  />
+</Figure>
+
+### Setting up tenants
+
+To set up tenants, you just need to set a `tenantId` when creating a resource.
+
+For example, to create a room with a specific tenant, you can do:
+
+```ts highlight="2"
+const room = await liveblocks.createRoom("room1", {
+  tenantId: "tenant123",
+});
+```
+
+When a room, or any other resource is created with a tenant, it's not possible
+to change it later. You need to migrate the room into another one in the right
+tenant.
+
+You can set the `tenantId` for those resources:
+
+- Rooms (it includes comments and storage)
+- Inbox notifications
+- Mentions Groups
+- AI Copilot Knowledge sources (soon)
+
+### Authentication
+
+Tenants are mainly used for authorization. They have a role to play when you
+generate tokens for your users. You can use them with both Access Tokens and ID
+Tokens.
+
+#### With Access tokens
+
+When using Access tokens, you can set the tenantId when you prepare a session.
+When a token is generated for a specific tenant, it will only give access to
+resources inside this tenant, even if the token has permissions to rooms in
+other tenants.
+
+```ts highlight="2"
+const session = liveblocks.prepareSession("olivier@example.com", {
+  tenantId: "tenant123",
+});
+
+// Giving full access to one room
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+
+// Give full access to every room with an ID beginning with "Vu78Rt:product:"
+session.allow("Vu78Rt:product:*", session.FULL_ACCESS);
+
+const { body, status } = await session.authorize();
+```
+
+You can check more details about
+[Access tokens](/docs/authentication/access-token).
+
+#### With ID tokens
+
+When using ID tokens, you can set the `tenantId` when using `identifyUser`.
+
+When a token is generated for a specific tenant, it will only give access to
+resources inside this tenant, even if the user has access to rooms in other
+tenants.
+
+```ts highlight="3"
+const { body, status } = await liveblocks.identifyUser({
+  userId: "olivier@example.com",
+  tenantId: "tenant123",
+});
+
+// '{ token: "eyJga7..." }'
+console.log(body);
+```
+
+You can check more details about [ID tokens](/docs/authentication/id-token).
