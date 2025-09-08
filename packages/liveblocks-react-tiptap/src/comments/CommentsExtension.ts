@@ -313,10 +313,6 @@ export const CommentsExtension = Extension.create<
         },
     };
   },
-
-  // @ts-expect-error - this is incorrectly typed upstream in Mark.ts of TipTap. This event does include transaction
-  // correct: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/types.ts#L60
-  // incorrect: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/Mark.ts#L330
   onSelectionUpdate(
     this: { storage: CommentsExtensionStorage }, // NOTE: there are more types here I didn't override, this gets removed after submitting PR to tiptap
     { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap
