@@ -5,10 +5,14 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import Router from "next/router";
 import { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { DOCUMENT_URL } from "@/constants";
 import { authorizeLiveblocks, getSpecificDocuments } from "@/lib/actions";
 import { getUsers, getGroups } from "@/lib/database";
+import { syncLiveblocksGroups } from "@/lib/actions/syncLiveblocksGroups";
+
+const SYNC_LIVEBLOCKS_GROUPS_KEY = "sync-liveblocks-groups";
+const SYNC_LIVEBLOCKS_GROUPS_VALUE = "1";
 
 export function Providers({
   children,
@@ -17,6 +21,30 @@ export function Providers({
   children: ReactNode;
   session: Session | null;
 }) {
+  // Sync the starter kit's groups with Liveblocks once per
+  // session and only during development
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") {
+      return;
+    }
+
+    if (
+      sessionStorage.getItem(SYNC_LIVEBLOCKS_GROUPS_KEY) ===
+      SYNC_LIVEBLOCKS_GROUPS_VALUE
+    ) {
+      return;
+    }
+
+    sessionStorage.setItem(
+      SYNC_LIVEBLOCKS_GROUPS_KEY,
+      SYNC_LIVEBLOCKS_GROUPS_VALUE
+    );
+
+    syncLiveblocksGroups().catch(() => {
+      sessionStorage.removeItem(SYNC_LIVEBLOCKS_GROUPS_KEY);
+    });
+  }, []);
+
   return (
     <SessionProvider session={session}>
       <LiveblocksProvider
