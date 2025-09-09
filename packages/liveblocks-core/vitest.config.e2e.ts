@@ -1,3 +1,4 @@
+import type { ViteUserConfig } from "vitest/config";
 import { defaultLiveblocksVitestConfig } from "@liveblocks/vitest-config";
 
 export default defaultLiveblocksVitestConfig({
@@ -8,6 +9,6 @@ export default defaultLiveblocksVitestConfig({
     // Enable test globals like describe, it, test, expect
     // Use node environment for e2e tests instead of jsdom
     environment: "node",
-    timeout: 30000,
+    testTimeout: 30000,
   },
-});
+} satisfies ViteUserConfig);

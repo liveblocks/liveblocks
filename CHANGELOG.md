@@ -48,6 +48,20 @@ and first-class support for tenants. Learn more about [group mentions](#) and
   accept a `resolveGroupsInfo` option that passes the results to mentions as
   `group`.
 
+## v3.6.1
+
+### `@liveblocks/client`
+
+- Fixes a bug where a specific combination of concurrent LiveList mutations
+  could break eventual consistency (two clients disagreeing on the final
+  document state).
+
+### `@liveblocks/react-ui`
+
+- Only show retrieval and reasoning durations in `AiChat` when they are 3
+  seconds or longer.
+- Make `AiTool` titles selectable.
+
 ## v3.6.0
 
 ### `@liveblocks/client`
