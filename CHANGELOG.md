@@ -1,9 +1,5 @@
 ## vNEXT (not yet published)
 
-### `@liveblocks/client`
-
-- Fix incorrect type definition for `AiReasoningDelta`.
-
 ## v3.6.1
 
 ### `@liveblocks/client`
