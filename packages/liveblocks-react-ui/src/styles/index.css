@@ -2949,6 +2949,8 @@
 
 .lb-ai-tool-header-title {
   @include truncate;
+
+  user-select: auto;
 }
 
 .lb-ai-tool-header-status {

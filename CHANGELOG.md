@@ -1,5 +1,9 @@
 ## vNEXT (not yet published)
 
+## v3.7.0
+
+## v3.6.1
+
 ### `@liveblocks/client`
 
 - Fixes a bug where a specific combination of concurrent LiveList mutations
@@ -10,6 +14,7 @@
 
 - Only show retrieval and reasoning durations in `AiChat` when they are 3
   seconds or longer.
+- Make `AiTool` titles selectable.
 
 ## v3.6.0
 
