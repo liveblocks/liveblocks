@@ -3,8 +3,9 @@
 ## v3.7.0
 
 This release introduces group mentions (e.g. `@engineering`) across all packages
-and first-class support for tenants. Learn more about [group mentions](#) and
-[tenants](#) in the docs.
+and first-class support for tenants. Learn more about
+[group mentions](https://liveblocks.io/docs/ready-made-features/comments/users-and-mentions)
+and [tenants](http://liveblocks.io/docs/authentication/tenants) in the docs.
 
 ### `@liveblocks/client`
 
