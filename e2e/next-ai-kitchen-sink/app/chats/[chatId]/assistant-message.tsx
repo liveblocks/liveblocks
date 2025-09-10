@@ -4,6 +4,7 @@ import { useClient } from "@liveblocks/react/suspense";
 import { HTMLAttributes, memo, useEffect, useState } from "react";
 import {
   AiAssistantMessage,
+  AiRetrievalPart,
   CopilotId,
   kInternal,
   MessageId,
@@ -201,6 +202,15 @@ function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
 
           ReasoningPart: ({ part }) => (
             <ReasoningPart text={part.text} isPending={isReasoning} />
+
+          RetrievalPart: (props) => (
+            <RetrievalPart
+              part={props.part}
+              isStreaming={
+                // NOTE: This exists, but it's a private prop for now
+                (props as any).isStreaming
+              }
+            />
           ),
         }}
       />
@@ -230,6 +240,30 @@ function ReasoningPart({ text }: { text: string; isPending: boolean }) {
 
       <Collapsible.Content className="pt-2">{text}</Collapsible.Content>
     </Collapsible.Root>
+  );
+}
+
+function RetrievalPart({
+  part,
+  isStreaming,
+}: {
+  part: AiRetrievalPart;
+  isStreaming: boolean;
+}) {
+  return (
+    <div className="flex flex-col border rounded-lg p-3 bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+      <div className="flex items-center gap-2 text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+        {isStreaming ? "Searching…" : "Retrieved Knowledge"}
+      </div>
+      <div className="text-sm text-gray-700 dark:text-gray-300 p-2 bg-white dark:bg-gray-900 rounded border border-green-100 dark:border-green-900">
+        <div className="font-medium mb-1">Query: {part.query}</div>
+        <div className="text-xs text-green-600 dark:text-green-400">
+          Started: {new Date(part.startedAt).toLocaleTimeString()}
+          {part.endedAt &&
+            ` • Completed: ${new Date(part.endedAt).toLocaleTimeString()}`}
+        </div>
+      </div>
+    </div>
   );
 }
 
