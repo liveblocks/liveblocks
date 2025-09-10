@@ -200,8 +200,15 @@ function AssistantMessageContent({ message }: { message: UiAssistantMessage }) {
             />
           ),
 
-          ReasoningPart: ({ part }) => (
-            <ReasoningPart text={part.text} isPending={isReasoning} />
+          ReasoningPart: (props) => (
+            <ReasoningPart
+              text={props.part.text}
+              isStreaming={
+                // NOTE: This exists, but it's a private prop for now
+                (props as any).isStreaming
+              }
+            />
+          ),
 
           RetrievalPart: (props) => (
             <RetrievalPart
@@ -225,20 +232,40 @@ function TextPart({
   return <Markdown content={text} {...props} />;
 }
 
-function ReasoningPart({ text }: { text: string; isPending: boolean }) {
-  const [isOpen, setIsOpen] = useState(false);
+function ReasoningPart({
+  text,
+  isStreaming,
+}: {
+  text: string;
+  isStreaming: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(isStreaming);
+
+  // Auto-collapse when reasoning is done
+  useEffect(() => {
+    if (!isStreaming) {
+      setIsOpen(false);
+    }
+  }, [isStreaming]);
+
   return (
     <Collapsible.Root
-      className="flex flex-col"
+      className="flex flex-col border rounded-lg p-3 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800"
       open={isOpen}
       onOpenChange={setIsOpen}
     >
-      <Collapsible.Trigger className="flex items-center gap-1">
-        Reasoning
-        {isOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+      <Collapsible.Trigger className="flex items-center gap-1 text-sm font-medium text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200">
+        {isStreaming ? "Reasoning…" : "Reasoning"}
+        {isOpen ? (
+          <ChevronDownIcon className="size-4" />
+        ) : (
+          <ChevronRightIcon className="size-4" />
+        )}
       </Collapsible.Trigger>
 
-      <Collapsible.Content className="pt-2">{text}</Collapsible.Content>
+      <Collapsible.Content className="pt-2 text-sm whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+        {text}
+      </Collapsible.Content>
     </Collapsible.Root>
   );
 }
