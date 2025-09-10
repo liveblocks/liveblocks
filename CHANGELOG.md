@@ -1,5 +1,11 @@
 ## vNEXT (not yet published)
 
+## 3.6.2
+
+### `@liveblocks/node`
+
+- Rename `budgetToken` to `budgetTokens` in `AnthropicProviderOptions`.
+
 ## v3.6.1
 
 ### `@liveblocks/client`
