@@ -419,8 +419,8 @@ function makeLiveblocksContextBundle<
     suspense: {
       LiveblocksProvider,
 
-      useInboxNotifications: () =>
-        useInboxNotificationsSuspense_withClient(client),
+      useInboxNotifications: (options?: UseInboxNotificationsOptions) =>
+        useInboxNotificationsSuspense_withClient(client, options),
       useUnreadInboxNotificationsCount: () =>
         useUnreadInboxNotificationsCountSuspense_withClient(client),
 
