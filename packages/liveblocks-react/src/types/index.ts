@@ -159,6 +159,12 @@ export type InboxNotificationsQuery = {
    * all the user's inbox notifications will be returned.
    */
   roomId?: string;
+
+  /**
+   * Whether to only return inbox notifications for a specific kind. If not provided,
+   * all the user's inbox notifications will be returned.
+   */
+  kind?: string;
 };
 
 export type UseInboxNotificationsOptions = {

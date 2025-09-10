@@ -400,7 +400,7 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 export interface NotificationHttpApi<M extends BaseMetadata> {
   getInboxNotifications(options?: {
     cursor?: string;
-    query?: { roomId?: string };
+    query?: { roomId?: string; kind?: string };
   }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
@@ -411,7 +411,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   getInboxNotificationsSince(options: {
     since: Date;
-    query?: { roomId?: string };
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }): Promise<{
     inboxNotifications: {
@@ -1512,7 +1512,7 @@ export function createApiClient<M extends BaseMetadata>({
    * -----------------------------------------------------------------------------------------------*/
   async function getInboxNotifications(options?: {
     cursor?: string;
-    query?: { roomId?: string };
+    query?: { roomId?: string; kind?: string };
   }) {
     const PAGE_SIZE = 50;
 
@@ -1553,7 +1553,7 @@ export function createApiClient<M extends BaseMetadata>({
 
   async function getInboxNotificationsSince(options: {
     since: Date;
-    query?: { roomId?: string };
+    query?: { roomId?: string; kind?: string };
     signal?: AbortSignal;
   }) {
     let query: string | undefined;

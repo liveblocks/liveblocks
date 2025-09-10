@@ -3464,14 +3464,15 @@ console.log(subscriptions);
 #### Filtering by room ID [#filtering-by-room-id]
 
 You can filter inbox notifications by those that are associated with a specific
-room, by passing a `string` to `query.roomId`.
+room or kind, by passing a `string` to `query.roomId` or `query.kind`.
 
 ```ts
-// Filtering for threads that are unresolved
+// Filtering for inbox notifications that are associated with a specific room or kind
 const { inboxNotifications } = await client.getInboxNotifications({
   query: {
     // +++
     roomId: "room1",
+    kind: "thread",
     // +++
   },
 });

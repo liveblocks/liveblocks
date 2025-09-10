@@ -9,7 +9,8 @@
 ```
 const inboxNotifications = await client.getInboxNotifications({
   query: {
-    roomId:"room1"
+    roomId:"room1",
+    kind:"thread"
   },
 });
 ```
@@ -21,7 +22,8 @@ const inboxNotifications = await client.getInboxNotifications({
 ```
 const { inboxNotifications } = useInboxNotifications({
   query: {
-     roomId:"room1"
+     roomId:"room1",
+     kind:"thread"
   }
 });
 ```
