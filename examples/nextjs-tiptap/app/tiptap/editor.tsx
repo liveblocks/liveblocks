@@ -18,27 +18,31 @@ import VersionsDialog from "../version-history-dialog";
 import { ThreadData } from "@liveblocks/core";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 
-const useActiveThreads = () => {
-  const { threads = [], isLoading } = useThreads({ scrollOnLoad: false });
-  const filteredThreads = threads.filter((thread) => thread.comments[0] && !thread.comments[0].deletedAt);
-  return { threads: filteredThreads, isLoading };
-};
 
-const filterMyThreads = (threads: ThreadData[], myUserId: string | null) => {
+
+
+export const filterMyThreads = (threads: ThreadData[], myUserId: string | null) => {
   if (!myUserId) {
     return [];
   }
   return threads.filter((thread) => thread.comments[0] && thread.comments[0].userId === myUserId).filter((t) => t.comments.length === 1);;
 };
+// HELPERS
+export const useActiveThreads = (myUserId: string | null) => {
+  const { threads = [], isLoading } = useThreads({ scrollOnLoad: false });
+  const filteredThreads = filterMyThreads(threads, myUserId);
+  return { threads: filteredThreads, isLoading };
+};
+
 
 export default function TiptapEditor() {
-  const { threads } = useActiveThreads();
   const myUserId = useSelf((me) => me.id);
-  const myFilteredThreads = filterMyThreads(threads, myUserId);
+  const { threads, isLoading } = useActiveThreads(myUserId);
+  console.log('myFilteredThreads', myUserId, threads);
   const createThread = useCreateThread();
   const liveblocks = useLiveblocksExtension({
     mentions: false,
-    threads_experimental: myFilteredThreads,
+    threads_experimental: threads,
   });
   const [createdThreadId, setCreatedThreadId] = useState<string | null>(null);
 
@@ -49,6 +53,7 @@ export default function TiptapEditor() {
         class: "outline-none flex-1 transition-all",
       },
     },
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         history: false,
@@ -56,7 +61,6 @@ export default function TiptapEditor() {
       liveblocks,
     ],
   });
-
 
   const handleComposerSubmit = useCallback(
     (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>): void => {
@@ -101,15 +105,15 @@ export default function TiptapEditor() {
         </div>
 
         <div className="xl:[&:not(:has(.lb-tiptap-anchored-threads))]:pr-[200px] [&:not(:has(.lb-tiptap-anchored-threads))]:pr-[50px]">
-          <Threads editor={editor} />
+          <Threads threads={threads} editor={editor} />
         </div>
       </div>
     </div>
   );
 }
 
-function Threads({ editor }: { editor: Editor | null }) {
-  const { threads } = useThreads();
+function Threads({ editor, threads }: { editor: Editor | null, threads: ThreadData[] }) {
+
   const isMobile = useIsMobile();
 
   if (!threads || !editor) {

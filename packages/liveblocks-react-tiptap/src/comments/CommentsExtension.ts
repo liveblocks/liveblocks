@@ -280,6 +280,7 @@ export const CommentsExtension = Extension.create<
         const filtered = FILTERED_THREADS_PLUGIN_KEY.getState(
           this.editor.state
         )?.filteredThreads;
+        console.log("filtered inside selectThread", filtered);
         if (id && filtered && !filtered.has(id)) {
           this.editor.view.dispatch(
             this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {

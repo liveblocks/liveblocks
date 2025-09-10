@@ -8,14 +8,6 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
       avatar: "https://liveblocks.io/avatars/avatar-1.png",
     },
   },
-  {
-    id: "mislav.abha@example.com",
-    info: {
-      name: "Mislav Abha",
-      color: "#F08385",
-      avatar: "https://liveblocks.io/avatars/avatar-2.png",
-    },
-  },
 ];
 
 export function getRandomUser() {
