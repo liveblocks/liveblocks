@@ -5467,12 +5467,12 @@
                               "type": {
                                 "const": "enabled"
                               },
-                              "budgetToken": {
+                              "budgetTokens": {
                                 "type": "number",
                                 "minimum": 0
                               }
                             },
-                            "required": ["type", "budgetToken"]
+                            "required": ["type", "s"]
                           },
                           {
                             "type": "object",
@@ -5721,12 +5721,12 @@
                               "type": {
                                 "const": "enabled"
                               },
-                              "budgetToken": {
+                              "budgetTokens": {
                                 "type": "number",
                                 "minimum": 0
                               }
                             },
-                            "required": ["type", "budgetToken"]
+                            "required": ["type", "budgetTokens"]
                           },
                           {
                             "type": "object",
@@ -5846,12 +5846,12 @@
                               "type": {
                                 "const": "enabled"
                               },
-                              "budgetToken": {
+                              "budgetTokens": {
                                 "type": "number",
                                 "minimum": 0
                               }
                             },
-                            "required": ["type", "budgetToken"]
+                            "required": ["type", "budgetTokens"]
                           },
                           {
                             "type": "object",
