@@ -1550,9 +1550,7 @@ export function createApiClient<M extends BaseMetadata>({
 
     // Instead of being returned publicly, the user's groups are put in
     // a separate store which is also used for on-demand fetching.
-    for (const group of groups) {
-      groupsStore.fill(group.id, group);
-    }
+    groupsStore.setData(groups.map((group) => [group.id, group]));
 
     return {
       inboxNotifications: json.inboxNotifications.map(

@@ -16,7 +16,7 @@ export type BatchCallback<O, I> = (
 export type BatchStore<O, I> = {
   subscribe: (callback: Callback<void>) => UnsubscribeCallback;
   enqueue: (input: I) => Promise<void>;
-  fill: (input: I, data: O) => void;
+  setData: (entries: [I, O][]) => void;
   getItemState: (input: I) => AsyncResult<O> | undefined;
   getData: (input: I) => O | undefined;
   invalidate: (inputs?: I[]) => void;
@@ -177,9 +177,25 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return stableStringify(args);
   }
 
-  function update(cacheKey: string, state: AsyncResult<O>) {
+  function update(
+    entryOrEntries:
+      | {
+          key: string;
+          state: AsyncResult<O>;
+        }
+      | {
+          key: string;
+          state: AsyncResult<O>;
+        }[]
+  ) {
     signal.mutate((cache) => {
-      cache.set(cacheKey, state);
+      if (Array.isArray(entryOrEntries)) {
+        for (const entry of entryOrEntries) {
+          cache.set(entry.key, entry.state);
+        }
+      } else {
+        cache.set(entryOrEntries.key, entryOrEntries.state);
+      }
     });
   }
 
@@ -208,13 +224,13 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
 
     try {
       // Set the state to loading.
-      update(cacheKey, { isLoading: true });
+      update({ key: cacheKey, state: { isLoading: true } });
 
       // Wait for the batch to process this call.
       const result = await batch.get(input);
 
       // Set the state to the result.
-      update(cacheKey, { isLoading: false, data: result });
+      update({ key: cacheKey, state: { isLoading: false, data: result } });
     } catch (error) {
       // // TODO: Differentiate whole batch errors from individual errors.
       // if (batch.error) {
@@ -231,16 +247,20 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
       // }
 
       // If there was an error (for various reasons), set the state to the error.
-      update(cacheKey, {
-        isLoading: false,
-        error: error as Error,
+      update({
+        key: cacheKey,
+        state: { isLoading: false, error: error as Error },
       });
     }
   }
 
-  function fill(input: I, data: O): void {
-    const cacheKey = getCacheKey(input);
-    update(cacheKey, { isLoading: false, data });
+  function setData(entries: [I, O][]): void {
+    update(
+      entries.map((entry) => ({
+        key: getCacheKey(entry[0]),
+        state: { isLoading: false, data: entry[1] },
+      }))
+    );
   }
 
   function getItemState(input: I): AsyncResult<O> | undefined {
@@ -264,7 +284,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
   return {
     subscribe: signal.subscribe,
     enqueue,
-    fill,
+    setData,
     getItemState,
     getData,
     invalidate,
